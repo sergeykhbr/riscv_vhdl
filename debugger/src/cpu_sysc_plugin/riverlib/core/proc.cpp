@@ -472,7 +472,7 @@ void Processor::comb() {
     w_fetch_pipeline_hold = !w.e.d_ready | dbg.halt;
     w_any_pipeline_hold = w.f.pipeline_hold | !w.e.d_ready | dbg.halt;
 
-    wb_exec_dport_npc = dbg.core_wdata.read()(BUS_ADDR_WIDTH-1, 0);
+    wb_exec_dport_npc = dbg.core_wdata.read()(CFG_RIVER_ADDR_BITS-1, 0);
 
     w_writeback_ready = !w.e.wena.read();
     if (w.e.wena.read() == 1) {

@@ -601,6 +601,13 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+      <File Path="$PPRDIR/../../riverlib/river_serdes.vhd">
+        <FileInfo>
+          <Attr Name="Library" Val="riverlib"/>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PPRDIR/../../riverlib/river_top.vhd">
         <FileInfo>
           <Attr Name="Library" Val="riverlib"/>

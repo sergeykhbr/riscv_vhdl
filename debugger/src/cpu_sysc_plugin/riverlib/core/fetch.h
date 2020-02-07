@@ -28,26 +28,26 @@ SC_MODULE(InstrFetch) {
     sc_in<bool> i_pipeline_hold;
     sc_in<bool> i_mem_req_ready;
     sc_out<bool> o_mem_addr_valid;
-    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_mem_addr;
+    sc_out<sc_uint<CFG_RIVER_ADDR_BITS>> o_mem_addr;
     sc_in<bool> i_mem_data_valid;
-    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_mem_data_addr;
+    sc_in<sc_uint<CFG_RIVER_ADDR_BITS>> i_mem_data_addr;
     sc_in<sc_uint<32>> i_mem_data;
     sc_in<bool> i_mem_load_fault;
     sc_in<bool> i_mem_executable;
     sc_out<bool> o_mem_resp_ready;
 
     sc_in<bool> i_e_fencei;
-    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_predict_npc;
+    sc_in<sc_uint<CFG_RIVER_ADDR_BITS>> i_predict_npc;
 
     sc_out<bool> o_mem_req_fire;                    // used by branch predictor to form new npc value
     sc_out<bool> o_instr_load_fault;
     sc_out<bool> o_instr_executable;
     sc_out<bool> o_valid;
-    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_pc;
+    sc_out<sc_uint<CFG_RIVER_ADDR_BITS>> o_pc;
     sc_out<sc_uint<32>> o_instr;
     sc_out<bool> o_hold;                                // Hold due no response from icache yet
     sc_in<bool> i_br_fetch_valid;                       // Fetch injection address/instr are valid
-    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_br_address_fetch;  // Fetch injection address to skip ebreak instruciton only once
+    sc_in<sc_uint<CFG_RIVER_ADDR_BITS>> i_br_address_fetch;  // Fetch injection address to skip ebreak instruciton only once
     sc_in<sc_uint<32>> i_br_instr_fetch;                // Real instruction value that was replaced by ebreak
 
     void comb();
@@ -62,10 +62,10 @@ SC_MODULE(InstrFetch) {
  private:
     struct RegistersType {
         sc_signal<bool> wait_resp;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> br_address;
+        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> br_address;
         sc_signal<sc_uint<32>> br_instr;
 
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> resp_address;
+        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> resp_address;
         sc_signal<sc_uint<32>> resp_data;
         sc_signal<bool> resp_valid;
         sc_signal<bool> instr_load_fault;

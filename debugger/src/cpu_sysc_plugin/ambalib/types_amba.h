@@ -14,22 +14,41 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_SRC_CPU_SYSC_PLUGIN_TYPES_RIVER_H__
-#define __DEBUGGER_SRC_CPU_SYSC_PLUGIN_TYPES_RIVER_H__
+#ifndef __DEBUGGER_SRC_CPU_SYSC_PLUGIN_AMBALIB_TYPES_AMBA_H__
+#define __DEBUGGER_SRC_CPU_SYSC_PLUGIN_AMBALIB_TYPES_AMBA_H__
 
-#include "river_cfg.h"
-#include "../ambalib/types_amba.h"
 #include <systemc.h>
 #include <string>
 #include <iomanip>
 
 namespace debugger {
 
-class axi4_river_in_type {
- public:
-    axi4_river_in_type(){}
+static const int BUS_ADDR_WIDTH      = 64;
 
-    inline bool operator == (const axi4_river_in_type &rhs) const {
+static const int CFG_LOG2_BUS_DATA_BYTES = 3;
+static const int BUS_DATA_BYTES      = (1 << CFG_LOG2_BUS_DATA_BYTES);
+static const int BUS_DATA_WIDTH      = 8 * BUS_DATA_BYTES;
+static const int BUS_ID_BITS         = 5;
+static const int BUS_USER_BITS       = 1;
+
+struct axi4_meta_type {
+    sc_uint<BUS_ADDR_WIDTH> addr;
+    sc_uint<8> len;              // burst len = len[7:0] + 1
+    sc_uint<3> size;             // 0=1B; 1=2B; 2=4B; 3=8B; ...
+    sc_uint<2> burst;            // 00=FIXED; 01=INCR; 10=WRAP; 11=reserved
+    bool lock;
+    sc_uint<4> cache;
+    sc_uint<3> prot;
+    sc_uint<4> qos;
+    sc_uint<4> region;
+};
+
+
+class axi4_master_in_type {
+ public:
+    axi4_master_in_type(){}
+
+    inline bool operator == (const axi4_master_in_type &rhs) const {
         return (rhs.aw_ready == aw_ready
              && rhs.w_ready == w_ready
              && rhs.b_valid == b_valid
@@ -42,16 +61,10 @@ class axi4_river_in_type {
              && rhs.r_data == r_data
              && rhs.r_last == r_last
              && rhs.r_id == r_id
-             && rhs.r_user == r_user
-             && rhs.ac_valid == ac_valid
-             && rhs.ac_addr == ac_addr
-             && rhs.ac_snoop == ac_snoop
-             && rhs.ac_prot == ac_prot
-             && rhs.cr_ready == cr_ready
-             && rhs.cd_ready == cd_ready);
+             && rhs.r_user == r_user);
     }
 
-    inline axi4_river_in_type& operator = (const axi4_river_in_type &rhs) {
+    inline axi4_master_in_type& operator = (const axi4_master_in_type &rhs) {
         aw_ready = rhs.aw_ready;
         w_ready = rhs.w_ready;
         b_valid = rhs.b_valid;
@@ -65,17 +78,11 @@ class axi4_river_in_type {
         r_last = rhs.r_last;
         r_id = rhs.r_id;
         r_user = rhs.r_user;
-        ac_valid = rhs.ac_valid;
-        ac_addr = rhs.ac_addr;
-        ac_snoop = rhs.ac_snoop;
-        ac_prot = rhs.ac_prot;
-        cr_ready = rhs.cr_ready;
-        cd_ready = rhs.cd_ready;
         return *this;
     }
 
     inline friend void sc_trace(sc_trace_file *tf,
-                                const axi4_river_in_type &v,
+                                const axi4_master_in_type &v,
                                 const std::string &NAME) {
         sc_trace(tf, v.aw_ready, NAME + ".aw_ready");
         sc_trace(tf, v.w_ready, NAME + ".w_ready");
@@ -90,16 +97,10 @@ class axi4_river_in_type {
         sc_trace(tf, v.r_last, NAME + ".r_last");
         sc_trace(tf, v.r_id, NAME + ".r_id");
         sc_trace(tf, v.r_user, NAME + ".r_user");
-        sc_trace(tf, v.ac_valid, NAME + ".ac_valid");
-        sc_trace(tf, v.ac_addr, NAME + ".ac_addr");
-        sc_trace(tf, v.ac_snoop, NAME + ".ac_snoop");
-        sc_trace(tf, v.ac_prot, NAME + ".ac_prot");
-        sc_trace(tf, v.cr_ready, NAME + ".cr_ready");
-        sc_trace(tf, v.cd_ready, NAME + ".cd_ready");
     }
 
     inline friend ostream &operator << (ostream &os,
-                                        axi4_river_in_type const &v) {
+                                        axi4_master_in_type const &v) {
         os << "("
         << v.aw_ready << ","
         << v.w_ready << ","
@@ -113,13 +114,7 @@ class axi4_river_in_type {
         << v.r_data << ","
         << v.r_last << ","
         << v.r_id << ","
-        << v.r_user << ","
-        << v.ac_valid << ","
-        << v.ac_addr << ","
-        << v.ac_snoop << ","
-        << v.ac_prot << ","
-        << v.cr_ready << ","
-        << v.cd_ready << ")";
+        << v.r_user << ")";
         return os;
     }
 
@@ -128,29 +123,23 @@ class axi4_river_in_type {
     bool w_ready;
     bool b_valid;
     sc_uint<2> b_resp;
-    sc_uint<CFG_RIVER_ID_BITS> b_id;
-    sc_uint<1> b_user;
+    sc_uint<BUS_ID_BITS> b_id;
+    sc_uint<BUS_USER_BITS> b_user;
     bool ar_ready;
     bool r_valid;
-    sc_uint<4> r_resp;
-    sc_biguint<L1CACHE_LINE_BITS> r_data;
+    sc_uint<2> r_resp;
+    sc_uint<BUS_DATA_WIDTH> r_data;
     bool r_last;
-    sc_uint<CFG_RIVER_ID_BITS> r_id;
-    sc_uint<1> r_user;
-    bool ac_valid;
-    sc_uint<CFG_RIVER_ADDR_BITS> ac_addr;
-    sc_uint<4> ac_snoop;                  // Table C3-19
-    sc_uint<3> ac_prot;
-    bool cr_ready;
-    bool cd_ready;
+    sc_uint<BUS_ID_BITS> r_id;
+    sc_uint<BUS_USER_BITS> r_user;
 };
 
 
-class axi4_river_out_type {
+class axi4_master_out_type {
  public:
-    axi4_river_out_type(){}
+    axi4_master_out_type(){}
 
-    inline bool operator == (const axi4_river_out_type &rhs) const {
+    inline bool operator == (const axi4_master_out_type &rhs) const {
         return (rhs.aw_valid == aw_valid
             && rhs.aw_bits.addr == aw_bits.addr
             && rhs.aw_bits.len == aw_bits.len
@@ -181,24 +170,10 @@ class axi4_river_out_type {
             && rhs.ar_bits.region == ar_bits.region
             && rhs.ar_id == ar_id
             && rhs.ar_user == ar_user
-            && rhs.r_ready == r_ready
-            && rhs.ar_domain == ar_domain
-            && rhs.ar_snoop == ar_snoop
-            && rhs.ar_bar == ar_bar
-            && rhs.aw_domain == aw_domain
-            && rhs.aw_snoop == aw_snoop
-            && rhs.aw_bar == aw_bar
-            && rhs.ac_ready == ac_ready
-            && rhs.cr_valid == cr_valid
-            && rhs.cr_resp == cr_resp
-            && rhs.cd_valid == cd_valid
-            && rhs.cd_data == cd_data
-            && rhs.cd_last == cd_last
-            && rhs.rack == rack
-            && rhs.wack == wack);
+            && rhs.r_ready == r_ready);
     }
 
-    inline axi4_river_out_type& operator = (const axi4_river_out_type &rhs) {
+    inline axi4_master_out_type& operator = (const axi4_master_out_type &rhs) {
         aw_valid = rhs.aw_valid;
         aw_bits.addr = rhs.aw_bits.addr;
         aw_bits.len = rhs.aw_bits.len;
@@ -230,25 +205,11 @@ class axi4_river_out_type {
         ar_id = rhs.ar_id;
         ar_user = rhs.ar_user;
         r_ready = rhs.r_ready;
-        ar_domain = rhs.ar_domain;
-        ar_snoop = rhs.ar_snoop;
-        ar_bar = rhs.ar_bar;
-        aw_domain = rhs.aw_domain;
-        aw_snoop = rhs.aw_snoop;
-        aw_bar = rhs.aw_bar;
-        ac_ready = rhs.ac_ready;
-        cr_valid = rhs.cr_valid;
-        cr_resp = rhs.cr_resp;
-        cd_valid = rhs.cd_valid;
-        cd_data = rhs.cd_data;
-        cd_last = rhs.cd_last;
-        rack = rhs.rack;
-        wack = rhs.wack;
         return *this;
     }
 
     inline friend void sc_trace(sc_trace_file *tf,
-                                const axi4_river_out_type &v,
+                                const axi4_master_out_type &v,
                                 const std::string &NAME) {
         sc_trace(tf, v.aw_valid, NAME + ".aw_valid");
         sc_trace(tf, v.aw_bits.addr, NAME + ".aw_bits.addr");
@@ -281,24 +242,10 @@ class axi4_river_out_type {
         sc_trace(tf, v.ar_id, NAME + ".ar_id");
         sc_trace(tf, v.ar_user, NAME + ".ar_user");
         sc_trace(tf, v.r_ready, NAME + ".r_ready");
-        sc_trace(tf, v.ar_domain, NAME + ".ar_domain");
-        sc_trace(tf, v.ar_snoop, NAME + ".ar_snoop");
-        sc_trace(tf, v.ar_bar, NAME + ".ar_bar");
-        sc_trace(tf, v.aw_domain, NAME + ".aw_domain");
-        sc_trace(tf, v.aw_snoop, NAME + ".aw_snoop");
-        sc_trace(tf, v.aw_bar, NAME + ".aw_bar");
-        sc_trace(tf, v.ac_ready, NAME + ".ac_ready");
-        sc_trace(tf, v.cr_valid, NAME + ".cr_valid");
-        sc_trace(tf, v.cr_resp, NAME + ".cr_resp");
-        sc_trace(tf, v.cd_valid, NAME + ".cd_valid");
-        sc_trace(tf, v.cd_data, NAME + ".cd_data");
-        sc_trace(tf, v.cd_last, NAME + ".cd_last");
-        sc_trace(tf, v.rack, NAME + ".rack");
-        sc_trace(tf, v.wack, NAME + ".wack");
     }
 
     inline friend ostream &operator << (ostream &os,
-                                        axi4_river_out_type const &v) {
+                                        axi4_master_out_type const &v) {
         os << "("
         << v.aw_valid << ","
         << v.aw_bits.addr << ","
@@ -330,56 +277,29 @@ class axi4_river_out_type {
         << v.ar_bits.region << ","
         << v.ar_id << ","
         << v.ar_user << ","
-        << v.r_ready << ","
-        << v.ar_domain << ","
-        << v.ar_snoop << ","
-        << v.ar_bar << ","
-        << v.aw_domain << ","
-        << v.aw_snoop << ","
-        << v.aw_bar << ","
-        << v.ac_ready << ","
-        << v.cr_valid << ","
-        << v.cr_resp << ","
-        << v.cd_valid << ","
-        << v.cd_data << ","
-        << v.cd_last << ","
-        << v.rack << ","
-        << v.wack << ")";
+        << v.r_ready
+        << ")";
         return os;
     }
 
  public:
     bool aw_valid;
     axi4_meta_type aw_bits;
-    sc_uint<CFG_RIVER_ID_BITS> aw_id;
-    bool aw_user;
+    sc_uint<BUS_ID_BITS> aw_id;
+    sc_uint<BUS_USER_BITS> aw_user;
     bool w_valid;
-    sc_biguint<L1CACHE_LINE_BITS> w_data;
+    sc_uint<BUS_DATA_WIDTH> w_data;
     bool w_last;
-    sc_uint<L1CACHE_BYTES_PER_LINE> w_strb;
-    bool w_user;
+    sc_uint<BUS_DATA_BYTES> w_strb;
+    sc_uint<BUS_USER_BITS> w_user;
     bool b_ready;
     bool ar_valid;
     axi4_meta_type ar_bits;
-    sc_uint<CFG_RIVER_ID_BITS> ar_id;
-    bool ar_user;
+    sc_uint<BUS_ID_BITS> ar_id;
+    sc_uint<BUS_USER_BITS> ar_user;
     bool r_ready;
-    sc_uint<2> ar_domain;                // 00=Non-shareable (single master in domain)
-    sc_uint<4> ar_snoop;                 // Table C3-7:
-    sc_uint<2> ar_bar;                   // read barrier transaction
-    sc_uint<2> aw_domain;
-    sc_uint<4> aw_snoop;                 // Table C3-8
-    sc_uint<2> aw_bar;                   // write barrier transaction
-    bool ac_ready;
-    bool cr_valid;
-    sc_uint<5> cr_resp;
-    bool cd_valid;
-    sc_biguint<L1CACHE_LINE_BITS> cd_data;
-    bool cd_last;
-    bool rack;
-    bool wack;
 };
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_SRC_CPU_SYSC_PLUGIN_TYPES_RIVER_H__
+#endif  // __DEBUGGER_SRC_CPU_SYSC_PLUGIN_AMBALIB_TYPES_AMBA_H__

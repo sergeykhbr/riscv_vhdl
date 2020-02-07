@@ -34,12 +34,12 @@ SC_MODULE(CsrRegs) {
     sc_in<sc_uint<RISCV_ARCH>> i_wdata;     // CSR writing value
     sc_out<sc_uint<RISCV_ARCH>> o_rdata;    // CSR read value
     sc_in<bool> i_trap_ready;               // trap branch request was accepted
-    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_ex_pc;
-    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_ex_npc;
-    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_ex_data_addr;  // Data path: address must be equal to the latest request address
+    sc_in<sc_uint<CFG_RIVER_ADDR_BITS>> i_ex_pc;
+    sc_in<sc_uint<CFG_RIVER_ADDR_BITS>> i_ex_npc;
+    sc_in<sc_uint<CFG_RIVER_ADDR_BITS>> i_ex_data_addr;  // Data path: address must be equal to the latest request address
     sc_in<bool> i_ex_data_load_fault;       // Data path: Bus response with SLVERR or DECERR on read
     sc_in<bool> i_ex_data_store_fault;      // Data path: Bus response with SLVERR or DECERR on write
-    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_ex_data_store_fault_addr;  // Write data miss access
+    sc_in<sc_uint<CFG_RIVER_ADDR_BITS>> i_ex_data_store_fault_addr;  // Write data miss access
     sc_in<bool> i_ex_instr_load_fault;
     sc_in<bool> i_ex_instr_not_executable;
     sc_in<bool> i_ex_illegal_instr;
@@ -55,15 +55,15 @@ SC_MODULE(CsrRegs) {
     sc_in<bool> i_fpu_valid;                // FPU output is valid
     sc_in<bool> i_irq_external;
     sc_out<bool> o_trap_valid;              // Trap pulse
-    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_trap_pc;
+    sc_out<sc_uint<CFG_RIVER_ADDR_BITS>> o_trap_pc;
 
     sc_in<bool> i_break_mode;               // Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
     sc_out<bool> o_break_event;             // Breakpoint event to raise status flag in dport interfae
 
     sc_out<bool> o_mpu_region_we;
     sc_out<sc_uint<CFG_MPU_TBL_WIDTH>> o_mpu_region_idx;
-    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_mpu_region_addr;
-    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_mpu_region_mask;
+    sc_out<sc_uint<CFG_RIVER_ADDR_BITS>> o_mpu_region_addr;
+    sc_out<sc_uint<CFG_RIVER_ADDR_BITS>> o_mpu_region_mask;
     sc_out<sc_uint<CFG_MPU_FL_TOTAL>> o_mpu_region_flags;  // {ena, cachable, r, w, x}
 
     sc_in<bool> i_dport_ena;                  // Debug port request is enabled
@@ -85,9 +85,9 @@ private:
     struct RegistersType {
         sc_signal<sc_uint<RISCV_ARCH>> mtvec;
         sc_signal<sc_uint<RISCV_ARCH>> mscratch;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> mstackovr;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> mstackund;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> mbadaddr;
+        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> mstackovr;
+        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> mstackund;
+        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> mbadaddr;
         sc_signal<sc_uint<2>> mode;
         sc_signal<bool> uie;                    // User level interrupts ena for current priv. mode
         sc_signal<bool> mie;                    // Machine level interrupts ena for current priv. mode
@@ -98,8 +98,8 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> mepc;
         sc_signal<bool> ext_irq;
 
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> mpu_addr;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> mpu_mask;
+        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> mpu_addr;
+        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> mpu_mask;
         sc_signal<sc_uint<CFG_MPU_TBL_WIDTH>> mpu_idx;
         sc_signal<sc_uint<CFG_MPU_FL_TOTAL>> mpu_flags;
         sc_signal<bool> mpu_we;
@@ -111,11 +111,11 @@ private:
         sc_signal<bool> ex_fpu_inexact;           // FPU Exception: inexact
         sc_signal<bool> trap_irq;
         sc_signal<sc_uint<5>> trap_code;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> trap_addr;
+        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> trap_addr;
         sc_signal<bool> break_event;            // 1 clock pulse
         sc_signal<bool> hold_data_store_fault;
         sc_signal<bool> hold_data_load_fault;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> hold_mbadaddr;
+        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> hold_mbadaddr;
     } v, r;
 
     void R_RESET(RegistersType &iv) {

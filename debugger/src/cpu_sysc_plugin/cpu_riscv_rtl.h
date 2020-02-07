@@ -42,6 +42,7 @@
 #include "cmds/cmd_csr.h"
 #include "rtl_wrapper.h"
 #include "axiserdes.h"
+#include "ambalib/types_amba.h"
 #include "riverlib/river_amba.h"
 #include <systemc.h>
 
@@ -120,72 +121,7 @@ class CpuRiscV_RTL : public IService,
 
     // AXI4 input structure:
     sc_signal<axi4_river_in_type> corei_i;
-    sc_signal<bool> corei_aw_ready_i;
-    sc_signal<bool> corei_w_ready_i;
-    sc_signal<bool> corei_b_valid_i;
-    sc_signal<sc_uint<2>> corei_b_resp_i;
-    sc_signal<sc_uint<CFG_ID_BITS>> corei_b_id_i;
-    sc_signal<bool> corei_b_user_i;
-    sc_signal<bool> corei_ar_ready_i;
-    sc_signal<bool> corei_r_valid_i;
-    sc_signal<sc_uint<4>> corei_r_resp_i;
-    sc_signal<sc_biguint<L1CACHE_LINE_BITS>> corei_r_data_i;
-    sc_signal<bool> corei_r_last_i;
-    sc_signal<sc_uint<CFG_ID_BITS>> corei_r_id_i;
-    sc_signal<bool> corei_r_user_i;
-    // AXI4 output structure:
-    sc_signal<bool> coreo_aw_valid_o;
-    sc_signal<sc_uint<BUS_ADDR_WIDTH>> coreo_aw_bits_addr_o;
-    sc_signal<sc_uint<8>> coreo_aw_bits_len_o;
-    sc_signal<sc_uint<3>> coreo_aw_bits_size_o;
-    sc_signal<sc_uint<2>> coreo_aw_bits_burst_o;
-    sc_signal<bool> coreo_aw_bits_lock_o;
-    sc_signal<sc_uint<4>> coreo_aw_bits_cache_o;
-    sc_signal<sc_uint<3>> coreo_aw_bits_prot_o;
-    sc_signal<sc_uint<4>> coreo_aw_bits_qos_o;
-    sc_signal<sc_uint<4>> coreo_aw_bits_region_o;
-    sc_signal<sc_uint<CFG_ID_BITS>> coreo_aw_id_o;
-    sc_signal<bool> coreo_aw_user_o;
-    sc_signal<bool> coreo_w_valid_o;
-    sc_signal<sc_biguint<L1CACHE_LINE_BITS>> coreo_w_data_o;
-    sc_signal<bool> coreo_w_last_o;
-    sc_signal<sc_uint<L1CACHE_BYTES_PER_LINE>> coreo_w_strb_o;
-    sc_signal<bool> coreo_w_user_o;
-    sc_signal<bool> coreo_b_ready_o;
-    sc_signal<bool> coreo_ar_valid_o;
-    sc_signal<sc_uint<BUS_ADDR_WIDTH>> coreo_ar_bits_addr_o;
-    sc_signal<sc_uint<8>> coreo_ar_bits_len_o;
-    sc_signal<sc_uint<3>> coreo_ar_bits_size_o;
-    sc_signal<sc_uint<2>> coreo_ar_bits_burst_o;
-    sc_signal<bool> coreo_ar_bits_lock_o;
-    sc_signal<sc_uint<4>> coreo_ar_bits_cache_o;
-    sc_signal<sc_uint<3>> coreo_ar_bits_prot_o;
-    sc_signal<sc_uint<4>> coreo_ar_bits_qos_o;
-    sc_signal<sc_uint<4>> coreo_ar_bits_region_o;
-    sc_signal<sc_uint<CFG_ID_BITS>> coreo_ar_id_o;
-    sc_signal<bool> coreo_ar_user_o;
-    sc_signal<bool> coreo_r_ready_o;
-    // ACE signals
-    sc_signal<bool> corei_ac_valid_i;
-    sc_signal<sc_uint<BUS_ADDR_WIDTH>> corei_ac_addr_i;
-    sc_signal<sc_uint<4>> corei_ac_snoop_i;
-    sc_signal<sc_uint<3>> corei_ac_prot_i;
-    sc_signal<bool> corei_cr_ready_i;
-    sc_signal<bool> corei_cd_ready_i;
-    sc_signal<sc_uint<2>> coreo_ar_domain_o;
-    sc_signal<sc_uint<4>> coreo_ar_snoop_o;
-    sc_signal<sc_uint<2>> coreo_ar_bar_o;
-    sc_signal<sc_uint<2>> coreo_aw_domain_o;
-    sc_signal<sc_uint<4>> coreo_aw_snoop_o;
-    sc_signal<sc_uint<2>> coreo_aw_bar_o;
-    sc_signal<bool> coreo_ac_ready_o;
-    sc_signal<bool> coreo_cr_valid_o;
-    sc_signal<sc_uint<5>> coreo_cr_resp_o;
-    sc_signal<bool> coreo_cd_valid_o;
-    sc_signal<sc_biguint<L1CACHE_LINE_BITS>> coreo_cd_data_o;
-    sc_signal<bool> coreo_cd_last_o;
-    sc_signal<bool> coreo_rack_o;
-    sc_signal<bool> coreo_wack_o;
+    sc_signal<axi4_river_out_type> coreo_o;
     /** Interrupt line from external interrupts controller. */
     sc_signal<bool> w_interrupt;
     // Debug interface
@@ -198,52 +134,8 @@ class CpuRiscV_RTL : public IService,
     sc_signal<sc_uint<RISCV_ARCH>> wb_dport_rdata;
     sc_signal<bool> w_halted;
 
-#if 1
-    sc_signal<bool> msti_aw_ready_i;
-    sc_signal<bool> msti_w_ready_i;
-    sc_signal<bool> msti_b_valid_i;
-    sc_signal<sc_uint<2>> msti_b_resp_i;
-    sc_signal<sc_uint<CFG_ID_BITS>> msti_b_id_i;
-    sc_signal<bool> msti_b_user_i;
-    sc_signal<bool> msti_ar_ready_i;
-    sc_signal<bool> msti_r_valid_i;
-    sc_signal<sc_uint<2>> msti_r_resp_i;
-    sc_signal<sc_uint<BUS_DATA_WIDTH>> msti_r_data_i;
-    sc_signal<bool> msti_r_last_i;
-    sc_signal<sc_uint<CFG_ID_BITS>> msti_r_id_i;
-    sc_signal<bool> msti_r_user_i;
-    sc_signal<bool> msto_aw_valid_o;
-    sc_signal<sc_uint<BUS_ADDR_WIDTH>> msto_aw_bits_addr_o;
-    sc_signal<sc_uint<8>> msto_aw_bits_len_o;
-    sc_signal<sc_uint<3>> msto_aw_bits_size_o;
-    sc_signal<sc_uint<2>> msto_aw_bits_burst_o;
-    sc_signal<bool> msto_aw_bits_lock_o;
-    sc_signal<sc_uint<4>> msto_aw_bits_cache_o;
-    sc_signal<sc_uint<3>> msto_aw_bits_prot_o;
-    sc_signal<sc_uint<4>> msto_aw_bits_qos_o;
-    sc_signal<sc_uint<4>> msto_aw_bits_region_o;
-    sc_signal<sc_uint<CFG_ID_BITS>> msto_aw_id_o;
-    sc_signal<bool> msto_aw_user_o;
-    sc_signal<bool> msto_w_valid_o;
-    sc_signal<sc_uint<BUS_DATA_WIDTH>> msto_w_data_o;
-    sc_signal<bool> msto_w_last_o;
-    sc_signal<sc_uint<BUS_DATA_BYTES>> msto_w_strb_o;
-    sc_signal<bool> msto_w_user_o;
-    sc_signal<bool> msto_b_ready_o;
-    sc_signal<bool> msto_ar_valid_o;
-    sc_signal<sc_uint<BUS_ADDR_WIDTH>> msto_ar_bits_addr_o;
-    sc_signal<sc_uint<8>> msto_ar_bits_len_o;
-    sc_signal<sc_uint<3>> msto_ar_bits_size_o;
-    sc_signal<sc_uint<2>> msto_ar_bits_burst_o;
-    sc_signal<bool> msto_ar_bits_lock_o;
-    sc_signal<sc_uint<4>> msto_ar_bits_cache_o;
-    sc_signal<sc_uint<3>> msto_ar_bits_prot_o;
-    sc_signal<sc_uint<4>> msto_ar_bits_qos_o;
-    sc_signal<sc_uint<4>> msto_ar_bits_region_o;
-    sc_signal<sc_uint<CFG_ID_BITS>> msto_ar_id_o;
-    sc_signal<bool> msto_ar_user_o;
-    sc_signal<bool> msto_r_ready_o;
-#endif
+    sc_signal<axi4_master_in_type> msti_i;
+    sc_signal<axi4_master_out_type> msto_o;
 
     sc_trace_file *i_vcd_;      // stimulus pattern
     sc_trace_file *o_vcd_;      // reference pattern for comparision

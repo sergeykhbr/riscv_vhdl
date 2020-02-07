@@ -34,7 +34,7 @@ SC_MODULE(InstrExecute) {
     sc_in<sc_uint<6>> i_d_radr2;
     sc_in<sc_uint<6>> i_d_waddr;
     sc_in<sc_uint<RISCV_ARCH>> i_d_imm;
-    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_d_pc;      // Instruction pointer on decoded instruction
+    sc_in<sc_uint<CFG_RIVER_ADDR_BITS>> i_d_pc;      // Instruction pointer on decoded instruction
     sc_in<sc_uint<32>> i_d_instr;               // Decoded instruction value
     sc_in<sc_uint<6>> i_wb_waddr;               // write back address
     sc_in<bool> i_memop_store;                  // Store to memory operation
@@ -52,7 +52,7 @@ SC_MODULE(InstrExecute) {
     sc_in<bool> i_instr_executable;             // MPU flag
 
     sc_in<bool> i_dport_npc_write;              // Write npc value from debug port
-    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_dport_npc; // Debug port npc value to write
+    sc_in<sc_uint<CFG_RIVER_ADDR_BITS>> i_dport_npc; // Debug port npc value to write
 
     sc_in<sc_uint<RISCV_ARCH>> i_rdata1;        // Integer/Float register value 1
     sc_in<bool> i_rhazard1;
@@ -70,10 +70,10 @@ SC_MODULE(InstrExecute) {
     sc_in<sc_uint<RISCV_ARCH>> i_csr_rdata;     // CSR current value
     sc_out<sc_uint<RISCV_ARCH>> o_csr_wdata;    // CSR new value
     sc_in<bool> i_trap_valid;                   // async trap event
-    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_trap_pc;   // jump to address
+    sc_in<sc_uint<CFG_RIVER_ADDR_BITS>> i_trap_pc;   // jump to address
 
     // exceptions:
-    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_ex_npc;   // npc on before trap
+    sc_out<sc_uint<CFG_RIVER_ADDR_BITS>> o_ex_npc;   // npc on before trap
     sc_out<bool> o_ex_instr_load_fault;         // fault instruction's address
     sc_out<bool> o_ex_instr_not_executable;     // MPU prohibit this instruction
     sc_out<bool> o_ex_illegal_instr;
@@ -92,7 +92,7 @@ SC_MODULE(InstrExecute) {
     sc_out<bool> o_memop_load;                  // Load data instruction
     sc_out<bool> o_memop_store;                 // Store data instruction
     sc_out<sc_uint<2>> o_memop_size;            // 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
-    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_memop_addr;// Memory access address
+    sc_out<sc_uint<CFG_RIVER_ADDR_BITS>> o_memop_addr;// Memory access address
     sc_out<sc_uint<RISCV_ARCH>> o_memop_wdata;
     sc_out<sc_uint<6>> o_memop_waddr;
     sc_out<sc_uint<4>> o_memop_wtag;
@@ -100,8 +100,8 @@ SC_MODULE(InstrExecute) {
 
     sc_out<bool> o_trap_ready;                  // trap branch request accepted
     sc_out<bool> o_valid;                       // Output is valid
-    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_pc;       // Valid instruction pointer
-    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_npc;      // Next instruction pointer. Next decoded pc must match to this value or will be ignored.
+    sc_out<sc_uint<CFG_RIVER_ADDR_BITS>> o_pc;       // Valid instruction pointer
+    sc_out<sc_uint<CFG_RIVER_ADDR_BITS>> o_npc;      // Next instruction pointer. Next decoded pc must match to this value or will be ignored.
     sc_out<sc_uint<32>> o_instr;                // Valid instruction value
     sc_in<bool> i_flushd_end;
     sc_out<bool> o_flushd;
@@ -135,8 +135,8 @@ private:
     };
 
     struct RegistersType {
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> pc;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> npc;
+        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> pc;
+        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> npc;
         sc_signal<sc_uint<32>> instr;
         sc_signal<sc_uint<6>> memop_waddr;
         sc_signal<sc_uint<4>> memop_wtag;
@@ -145,7 +145,7 @@ private:
         sc_signal<bool> memop_store;
         bool memop_sign_ext;
         sc_uint<2> memop_size;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> memop_addr;
+        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> memop_addr;
         sc_signal<sc_uint<RISCV_ARCH>> memop_wdata;
 
         sc_signal<bool> valid;

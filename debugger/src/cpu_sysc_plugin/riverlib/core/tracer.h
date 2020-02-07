@@ -30,7 +30,7 @@ SC_MODULE(Tracer) {
     sc_in<bool> i_nrst;
     sc_in<sc_uint<64>> i_dbg_executed_cnt;
     sc_in<bool> i_e_valid;
-    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_e_pc;
+    sc_in<sc_uint<CFG_RIVER_ADDR_BITS>> i_e_pc;
     sc_in<sc_uint<32>> i_e_instr;
     sc_in<bool> i_e_multi_ready;
     sc_in<bool> i_e_wena;
@@ -39,7 +39,7 @@ SC_MODULE(Tracer) {
     sc_in<sc_uint<RISCV_ARCH>> i_e_wdata;
     sc_in<bool> i_e_memop_store;
     sc_in<bool> i_e_memop_load;
-    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_e_memop_addr;
+    sc_in<sc_uint<CFG_RIVER_ADDR_BITS>> i_e_memop_addr;
     sc_in<sc_uint<RISCV_ARCH>> i_e_memop_wdata;
     sc_in<bool> i_m_wena;
     sc_in<sc_uint<6>> i_m_waddr;

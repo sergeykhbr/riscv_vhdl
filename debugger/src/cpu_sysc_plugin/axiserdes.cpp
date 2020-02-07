@@ -21,179 +21,17 @@ namespace debugger {
 AxiSerDes::AxiSerDes(sc_module_name name, bool async_reset) : sc_module(name),
     i_clk("i_clk"),
     i_nrst("o_nrst"),
-    // CPU[0] AXI4 + ACE:
     o_corei("o_corei"),
-    o_corei_aw_ready("o_corei_aw_ready"),
-    o_corei_w_ready("o_corei_w_ready"),
-    o_corei_b_valid("o_corei_b_valid"),
-    o_corei_b_resp("o_corei_b_resp"),
-    o_corei_b_id("o_corei_b_id"),
-    o_corei_b_user("o_corei_b_user"),
-    o_corei_ar_ready("o_corei_ar_ready"),
-    o_corei_r_valid("o_corei_r_valid"),
-    o_corei_r_resp("o_corei_r_resp"),
-    o_corei_r_data("o_corei_r_data"),
-    o_corei_r_last("o_corei_r_last"),
-    o_corei_r_id("o_corei_r_id"),
-    o_corei_r_user("o_corei_r_user"),
-    o_corei_ac_valid("o_corei_ac_valid"),
-    o_corei_ac_addr("o_corei_ac_addr"),
-    o_corei_ac_snoop("o_corei_ac_snoop"),
-    o_corei_ac_prot("o_corei_ac_prot"),
-    o_corei_cr_ready("o_corei_cr_ready"),
-    o_corei_cd_ready("o_corei_cd_ready"),
-    i_coreo_aw_valid("i_coreo_aw_valid"),
-    i_coreo_aw_bits_addr("i_coreo_aw_bits_addr"),
-    i_coreo_aw_bits_len("i_coreo_aw_bits_len"),
-    i_coreo_aw_bits_size("i_coreo_aw_bits_size"),
-    i_coreo_aw_bits_burst("i_coreo_aw_bits_burst"),
-    i_coreo_aw_bits_lock("i_coreo_aw_bits_lock"),
-    i_coreo_aw_bits_cache("i_coreo_aw_bits_cache"),
-    i_coreo_aw_bits_prot("i_coreo_aw_bits_prot"),
-    i_coreo_aw_bits_qos("i_coreo_aw_bits_qos"),
-    i_coreo_aw_bits_region("i_coreo_aw_bits_region"),
-    i_coreo_aw_id("i_coreo_aw_id"),
-    i_coreo_aw_user("i_coreo_aw_user"),
-    i_coreo_w_valid("i_coreo_w_valid"),
-    i_coreo_w_data("i_coreo_w_data"),
-    i_coreo_w_last("i_coreo_w_last"),
-    i_coreo_w_strb("i_coreo_w_strb"),
-    i_coreo_w_user("i_coreo_w_user"),
-    i_coreo_b_ready("i_coreo_b_ready"),
-    i_coreo_ar_valid("i_coreo_ar_valid"),
-    i_coreo_ar_bits_addr("i_coreo_ar_bits_addr"),
-    i_coreo_ar_bits_len("i_coreo_ar_bits_len"),
-    i_coreo_ar_bits_size("i_coreo_ar_bits_size"),
-    i_coreo_ar_bits_burst("i_coreo_ar_bits_burst"),
-    i_coreo_ar_bits_lock("i_coreo_ar_bits_lock"),
-    i_coreo_ar_bits_cache("i_coreo_ar_bits_cache"),
-    i_coreo_ar_bits_prot("i_coreo_ar_bits_prot"),
-    i_coreo_ar_bits_qos("i_coreo_ar_bits_qos"),
-    i_coreo_ar_bits_region("i_coreo_ar_bits_region"),
-    i_coreo_ar_id("i_coreo_ar_id"),
-    i_coreo_ar_user("i_coreo_ar_user"),
-    i_coreo_r_ready("i_coreo_r_ready"),
-    i_coreo_ar_domain("i_coreo_ar_domain"),
-    i_coreo_ar_snoop("i_coreo_ar_snoop"),
-    i_coreo_ar_bar("i_coreo_ar_bar"),
-    i_coreo_aw_domain("i_coreo_aw_domain"),
-    i_coreo_aw_snoop("i_coreo_aw_snoop"),
-    i_coreo_aw_bar("i_coreo_aw_bar"),
-    i_coreo_ac_ready("i_coreo_ac_ready"),
-    i_coreo_cr_valid("i_coreo_cr_valid"),
-    i_coreo_cr_resp("i_coreo_cr_resp"),
-    i_coreo_cd_valid("i_coreo_cd_valid"),
-    i_coreo_cd_data("i_coreo_cd_data"),
-    i_coreo_cd_last("i_coreo_cd_last"),
-    i_coreo_rack("i_coreo_rack"),
-    i_coreo_wack("i_coreo_wack"),
+    i_coreo("i_coreo"),
     // Master interface:
-    i_msti_aw_ready("i_msti_aw_ready"),
-    i_msti_w_ready("i_msti_w_ready"),
-    i_msti_b_valid("i_msti_b_valid"),
-    i_msti_b_resp("i_msti_b_resp"),
-    i_msti_b_id("i_msti_b_id"),
-    i_msti_b_user("i_msti_b_user"),
-    i_msti_ar_ready("i_msti_ar_ready"),
-    i_msti_r_valid("i_msti_r_valid"),
-    i_msti_r_resp("i_msti_r_resp"),
-    i_msti_r_data("i_msti_r_data"),
-    i_msti_r_last("i_msti_r_last"),
-    i_msti_r_id("i_msti_r_id"),
-    i_msti_r_user("i_msti_r_user"),
-    o_msto_aw_valid("o_msto_aw_valid"),
-    o_msto_aw_bits_addr("o_msto_aw_bits_addr"),
-    o_msto_aw_bits_len("o_msto_aw_bits_len"),
-    o_msto_aw_bits_size("o_msto_aw_bits_size"),
-    o_msto_aw_bits_burst("o_msto_aw_bits_burst"),
-    o_msto_aw_bits_lock("o_msto_aw_bits_lock"),
-    o_msto_aw_bits_cache("o_msto_aw_bits_cache"),
-    o_msto_aw_bits_prot("o_msto_aw_bits_prot"),
-    o_msto_aw_bits_qos("o_msto_aw_bits_qos"),
-    o_msto_aw_bits_region("o_msto_aw_bits_region"),
-    o_msto_aw_id("o_msto_aw_id"),
-    o_msto_aw_user("o_msto_aw_user"),
-    o_msto_w_valid("o_msto_w_valid"),
-    o_msto_w_data("o_msto_w_data"),
-    o_msto_w_last("o_msto_w_last"),
-    o_msto_w_strb("o_msto_w_strb"),
-    o_msto_w_user("o_msto_w_user"),
-    o_msto_b_ready("o_msto_b_ready"),
-    o_msto_ar_valid("o_msto_ar_valid"),
-    o_msto_ar_bits_addr("o_msto_ar_bits_addr"),
-    o_msto_ar_bits_len("o_msto_ar_bits_len"),
-    o_msto_ar_bits_size("o_msto_ar_bits_size"),
-    o_msto_ar_bits_burst("o_msto_ar_bits_burst"),
-    o_msto_ar_bits_lock("o_msto_ar_bits_lock"),
-    o_msto_ar_bits_cache("o_msto_ar_bits_cache"),
-    o_msto_ar_bits_prot("o_msto_ar_bits_prot"),
-    o_msto_ar_bits_qos("o_msto_ar_bits_qos"),
-    o_msto_ar_bits_region("o_msto_ar_bits_region"),
-    o_msto_ar_id("o_msto_ar_id"),
-    o_msto_ar_user("o_msto_ar_user"),
-    o_msto_r_ready("o_msto_r_ready") {
+    i_msti("i_msti"),
+    o_msto("o_msto") {
 
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
-    sensitive << i_coreo_aw_valid;
-    sensitive << i_coreo_aw_bits_addr;
-    sensitive << i_coreo_aw_bits_len;
-    sensitive << i_coreo_aw_bits_size;
-    sensitive << i_coreo_aw_bits_burst;
-    sensitive << i_coreo_aw_bits_lock;
-    sensitive << i_coreo_aw_bits_cache;
-    sensitive << i_coreo_aw_bits_prot;
-    sensitive << i_coreo_aw_bits_qos;
-    sensitive << i_coreo_aw_bits_region;
-    sensitive << i_coreo_aw_id;
-    sensitive << i_coreo_aw_user;
-    sensitive << i_coreo_w_valid;
-    sensitive << i_coreo_w_data;
-    sensitive << i_coreo_w_last;
-    sensitive << i_coreo_w_strb;
-    sensitive << i_coreo_w_user;
-    sensitive << i_coreo_b_ready;
-    sensitive << i_coreo_ar_valid;
-    sensitive << i_coreo_ar_bits_addr;
-    sensitive << i_coreo_ar_bits_len;
-    sensitive << i_coreo_ar_bits_size;
-    sensitive << i_coreo_ar_bits_burst;
-    sensitive << i_coreo_ar_bits_lock;
-    sensitive << i_coreo_ar_bits_cache;
-    sensitive << i_coreo_ar_bits_prot;
-    sensitive << i_coreo_ar_bits_qos;
-    sensitive << i_coreo_ar_bits_region;
-    sensitive << i_coreo_ar_id;
-    sensitive << i_coreo_ar_user;
-    sensitive << i_coreo_r_ready;
-    sensitive << i_coreo_ar_domain;
-    sensitive << i_coreo_ar_snoop;
-    sensitive << i_coreo_ar_bar;
-    sensitive << i_coreo_aw_domain;
-    sensitive << i_coreo_aw_snoop;
-    sensitive << i_coreo_aw_bar;
-    sensitive << i_coreo_ac_ready;
-    sensitive << i_coreo_cr_valid;
-    sensitive << i_coreo_cr_resp;
-    sensitive << i_coreo_cd_valid;
-    sensitive << i_coreo_cd_data;
-    sensitive << i_coreo_cd_last;
-    sensitive << i_coreo_rack;
-    sensitive << i_coreo_wack;
-    sensitive << i_msti_aw_ready;
-    sensitive << i_msti_w_ready;
-    sensitive << i_msti_b_valid;
-    sensitive << i_msti_b_resp;
-    sensitive << i_msti_b_id;
-    sensitive << i_msti_b_user;
-    sensitive << i_msti_ar_ready;
-    sensitive << i_msti_r_valid;
-    sensitive << i_msti_r_resp;
-    sensitive << i_msti_r_data;
-    sensitive << i_msti_r_last;
-    sensitive << i_msti_r_id;
-    sensitive << i_msti_r_user;
+    sensitive << i_coreo;
+    sensitive << i_msti;
     sensitive << r.req_len;
     sensitive << r.b_wait;
     sensitive << r.state;
@@ -209,50 +47,8 @@ AxiSerDes::~AxiSerDes() {
 
 void AxiSerDes::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, o_msto_aw_valid, o_msto_aw_valid.name());
-        sc_trace(o_vcd, o_msto_aw_bits_addr, o_msto_aw_bits_addr.name());
-        sc_trace(o_vcd, o_msto_aw_bits_len, o_msto_aw_bits_len.name());
-        sc_trace(o_vcd, o_msto_aw_bits_size, o_msto_aw_bits_size.name());
-        sc_trace(o_vcd, o_msto_aw_bits_burst, o_msto_aw_bits_burst.name());
-        sc_trace(o_vcd, o_msto_aw_bits_lock, o_msto_aw_bits_lock.name());
-        sc_trace(o_vcd, o_msto_aw_bits_cache, o_msto_aw_bits_cache.name());
-        sc_trace(o_vcd, o_msto_aw_bits_prot, o_msto_aw_bits_prot.name());
-        sc_trace(o_vcd, o_msto_aw_bits_qos, o_msto_aw_bits_qos.name());
-        sc_trace(o_vcd, o_msto_aw_bits_region, o_msto_aw_bits_region.name());
-        sc_trace(o_vcd, o_msto_aw_id, o_msto_aw_id.name());
-        sc_trace(o_vcd, o_msto_aw_user, o_msto_aw_user.name());
-        sc_trace(o_vcd, o_msto_w_valid, o_msto_w_valid.name());
-        sc_trace(o_vcd, o_msto_w_data, o_msto_w_data.name());
-        sc_trace(o_vcd, o_msto_w_last, o_msto_w_last.name());
-        sc_trace(o_vcd, o_msto_w_strb, o_msto_w_strb.name());
-        sc_trace(o_vcd, o_msto_w_user, o_msto_w_user.name());
-        sc_trace(o_vcd, o_msto_b_ready, o_msto_b_ready.name());
-        sc_trace(o_vcd, o_msto_ar_valid, o_msto_ar_valid.name());
-        sc_trace(o_vcd, o_msto_ar_bits_addr, o_msto_ar_bits_addr.name());
-        sc_trace(o_vcd, o_msto_ar_bits_len, o_msto_ar_bits_len.name());
-        sc_trace(o_vcd, o_msto_ar_bits_size, o_msto_ar_bits_size.name());
-        sc_trace(o_vcd, o_msto_ar_bits_burst, o_msto_ar_bits_burst.name());
-        sc_trace(o_vcd, o_msto_ar_bits_lock, o_msto_ar_bits_lock.name());
-        sc_trace(o_vcd, o_msto_ar_bits_cache, o_msto_ar_bits_cache.name());
-        sc_trace(o_vcd, o_msto_ar_bits_prot, o_msto_ar_bits_prot.name());
-        sc_trace(o_vcd, o_msto_ar_bits_qos, o_msto_ar_bits_qos.name());
-        sc_trace(o_vcd, o_msto_ar_bits_region, o_msto_ar_bits_region.name());
-        sc_trace(o_vcd, o_msto_ar_id, o_msto_ar_id.name());
-        sc_trace(o_vcd, o_msto_ar_user, o_msto_ar_user.name());
-        sc_trace(o_vcd, o_msto_r_ready, o_msto_r_ready.name());
-        sc_trace(o_vcd, i_msti_aw_ready, i_msti_aw_ready.name());
-        sc_trace(o_vcd, i_msti_w_ready, i_msti_w_ready.name());
-        sc_trace(o_vcd, i_msti_b_valid, i_msti_b_valid.name());
-        sc_trace(o_vcd, i_msti_b_resp, i_msti_b_resp.name());
-        sc_trace(o_vcd, i_msti_b_id, i_msti_b_id.name());
-        sc_trace(o_vcd, i_msti_b_user, i_msti_b_user.name());
-        sc_trace(o_vcd, i_msti_ar_ready, i_msti_ar_ready.name());
-        sc_trace(o_vcd, i_msti_r_valid, i_msti_r_valid.name());
-        sc_trace(o_vcd, i_msti_r_resp, i_msti_r_resp.name());
-        sc_trace(o_vcd, i_msti_r_data, i_msti_r_data.name());
-        sc_trace(o_vcd, i_msti_r_last, i_msti_r_last.name());
-        sc_trace(o_vcd, i_msti_r_id, i_msti_r_id.name());
-        sc_trace(o_vcd, i_msti_r_user, i_msti_r_user.name());
+        sc_trace(o_vcd, o_msto, o_msto.name());
+        sc_trace(o_vcd, i_msti, i_msti.name());
 
         sc_trace(o_vcd, o_corei, o_corei.name());
 
@@ -294,6 +90,8 @@ void AxiSerDes::comb() {
     bool v_w_last;
     bool v_w_ready;
     sc_uint<8> vb_len;
+    axi4_river_in_type vcorei;
+    axi4_master_out_type vmsto;
 
     v_req_mem_ready = 0;
     v_r_valid = 0;
@@ -302,15 +100,15 @@ void AxiSerDes::comb() {
     v_w_ready = 0;
     vb_len = 0;
 
-    vb_r_data = i_msti_r_data.read();
+    vb_r_data = i_msti.read().r_data;
     vb_line_o = r.line.read();
-    for (int i = 0; i < L1CACHE_BURST_LEN; i++) {
+    for (int i = 0; i < SERDES_BURST_LEN; i++) {
         if (r.rmux.read()[i] == 1) {
             vb_line_o((i+1)*BUS_DATA_WIDTH-1, i*BUS_DATA_WIDTH) = vb_r_data;
         }
     }
 
-    if (i_coreo_b_ready.read() == 1) {
+    if (i_coreo.read().b_ready == 1) {
         v.b_wait = 0;
     }
 
@@ -319,7 +117,7 @@ void AxiSerDes::comb() {
         v_req_mem_ready = 1;
         break;
     case State_Read:
-        if (i_msti_r_valid.read() == 1) {
+        if (i_msti.read().r_valid == 1) {
             v.line = vb_line_o;
             v.rmux = r.rmux.read() << 1;
             if (r.req_len.read() == 0) {
@@ -335,7 +133,7 @@ void AxiSerDes::comb() {
         if (r.req_len.read() == 0) {
             v_w_last = 1;
         }
-        if (i_msti_w_ready.read()) {
+        if (i_msti.read().w_ready) {
             v.line = (0, r.line.read()(L1CACHE_LINE_BITS-1, BUS_DATA_WIDTH));
             v.wstrb = (0, r.wstrb.read()(L1CACHE_BYTES_PER_LINE-1, BUS_DATA_BYTES));
             if (r.req_len.read() == 0) {
@@ -351,15 +149,15 @@ void AxiSerDes::comb() {
     }
 
     if (v_req_mem_ready == 1) {
-        if (i_coreo_ar_valid.read() && i_msti_ar_ready.read()) {
+        if (i_coreo.read().ar_valid && i_msti.read().ar_ready) {
             v.state = State_Read;
             v.rmux = 1;
-            vb_len = size2len(i_coreo_ar_bits_size.read());
-        } else if (i_coreo_aw_valid.read() && i_msti_aw_ready.read()) {
-            v.line = i_coreo_w_data.read();                     // Undocumented RIVER (Axi-lite feature)
-            v.wstrb = i_coreo_w_strb.read();
+            vb_len = size2len(i_coreo.read().ar_bits.size);
+        } else if (i_coreo.read().aw_valid && i_msti.read().aw_ready) {
+            v.line = i_coreo.read().w_data;                     // Undocumented RIVER (Axi-lite feature)
+            v.wstrb = i_coreo.read().w_strb;
             v.state = State_Write;
-            vb_len = size2len(i_coreo_aw_bits_size.read());
+            vb_len = size2len(i_coreo.read().aw_bits.size);
         } else {
             v.state = State_Idle;
         }
@@ -371,59 +169,61 @@ void AxiSerDes::comb() {
     }
 
     vb_r_resp(3, 2) = 0;
-    vb_r_resp(1, 0) = i_msti_r_resp.read(); // OKAY
+    vb_r_resp(1, 0) = i_msti.read().r_resp; // OKAY
 
-    o_msto_aw_valid = i_coreo_aw_valid;
-    o_msto_aw_bits_addr = i_coreo_aw_bits_addr;
-    o_msto_aw_bits_len = vb_len;              // burst len = len[7:0] + 1
-    o_msto_aw_bits_size = 0x3;             // 0=1B; 1=2B; 2=4B; 3=8B; ...
-    o_msto_aw_bits_burst = 0x1;            // 00=FIXED; 01=INCR; 10=WRAP; 11=reserved
-    o_msto_aw_bits_lock = i_coreo_aw_bits_lock;
-    o_msto_aw_bits_cache = i_coreo_aw_bits_cache;
-    o_msto_aw_bits_prot = i_coreo_aw_bits_prot;
-    o_msto_aw_bits_qos = i_coreo_aw_bits_qos;
-    o_msto_aw_bits_region = i_coreo_aw_bits_region;
-    o_msto_aw_id = i_coreo_aw_id;
-    o_msto_aw_user = i_coreo_aw_user;
-    o_msto_w_valid = v_w_valid;
-    o_msto_w_last = v_w_last;
-    o_msto_w_data = r.line.read()(BUS_DATA_WIDTH-1, 0).to_uint64();
-    o_msto_w_strb = r.wstrb.read()(BUS_DATA_BYTES-1, 0);
-    o_msto_w_user = i_coreo_w_user;
-    o_msto_b_ready = i_coreo_b_ready;
-    o_msto_ar_valid = i_coreo_ar_valid;
-    o_msto_ar_bits_addr = i_coreo_ar_bits_addr;
-    o_msto_ar_bits_len = vb_len;              // burst len = len[7:0] + 1
-    o_msto_ar_bits_size = 0x3;             // 0=1B; 1=2B; 2=4B; 3=8B; ...
-    o_msto_ar_bits_burst = 0x1;            // 00=FIXED; 01=INCR; 10=WRAP; 11=reserved
-    o_msto_ar_bits_lock = i_coreo_ar_bits_lock;
-    o_msto_ar_bits_cache = i_coreo_ar_bits_cache;
-    o_msto_ar_bits_prot = i_coreo_ar_bits_prot;
-    o_msto_ar_bits_qos = i_coreo_ar_bits_qos;
-    o_msto_ar_bits_region = i_coreo_ar_bits_region;
-    o_msto_ar_id = i_coreo_ar_id;
-    o_msto_ar_user = i_coreo_ar_user;
-    o_msto_r_ready = i_coreo_r_ready;
+    vmsto.aw_valid = i_coreo.read().aw_valid;
+    vmsto.aw_bits.addr = i_coreo.read().aw_bits.addr;
+    vmsto.aw_bits.len = vb_len;              // burst len = len[7:0] + 1
+    vmsto.aw_bits.size = 0x3;             // 0=1B; 1=2B; 2=4B; 3=8B; ...
+    vmsto.aw_bits.burst = 0x1;            // 00=FIXED; 01=INCR; 10=WRAP; 11=reserved
+    vmsto.aw_bits.lock = i_coreo.read().aw_bits.lock;
+    vmsto.aw_bits.cache = i_coreo.read().aw_bits.cache;
+    vmsto.aw_bits.prot = i_coreo.read().aw_bits.prot;
+    vmsto.aw_bits.qos = i_coreo.read().aw_bits.qos;
+    vmsto.aw_bits.region = i_coreo.read().aw_bits.region;
+    vmsto.aw_id = (0, i_coreo.read().aw_id);
+    vmsto.aw_user = i_coreo.read().aw_user;
+    vmsto.w_valid = v_w_valid;
+    vmsto.w_last = v_w_last;
+    vmsto.w_data = r.line.read()(BUS_DATA_WIDTH-1, 0).to_uint64();
+    vmsto.w_strb = r.wstrb.read()(BUS_DATA_BYTES-1, 0);
+    vmsto.w_user = i_coreo.read().w_user;
+    vmsto.b_ready = i_coreo.read().b_ready;
+    vmsto.ar_valid = i_coreo.read().ar_valid;
+    vmsto.ar_bits.addr = i_coreo.read().ar_bits.addr;
+    vmsto.ar_bits.len = vb_len;              // burst len = len[7:0] + 1
+    vmsto.ar_bits.size = 0x3;             // 0=1B; 1=2B; 2=4B; 3=8B; ...
+    vmsto.ar_bits.burst = 0x1;            // 00=FIXED; 01=INCR; 10=WRAP; 11=reserved
+    vmsto.ar_bits.lock = i_coreo.read().ar_bits.lock;
+    vmsto.ar_bits.cache = i_coreo.read().ar_bits.cache;
+    vmsto.ar_bits.prot = i_coreo.read().ar_bits.prot;
+    vmsto.ar_bits.qos = i_coreo.read().ar_bits.qos;
+    vmsto.ar_bits.region = i_coreo.read().ar_bits.region;
+    vmsto.ar_id = (0, i_coreo.read().ar_id);
+    vmsto.ar_user = i_coreo.read().ar_user;
+    vmsto.r_ready = i_coreo.read().r_ready;
+    o_msto = vmsto;     // to trigger event
 
-    o_corei_aw_ready = i_msti_aw_ready;
-    o_corei_w_ready = v_w_ready;
-    o_corei_b_valid = i_msti_b_valid.read() && r.b_wait.read();
-    o_corei_b_resp = i_msti_b_resp.read();
-    o_corei_b_id = i_msti_b_id;
-    o_corei_b_user = i_msti_b_user;
-    o_corei_ar_ready = i_msti_ar_ready;
-    o_corei_r_valid = v_r_valid;
-    o_corei_r_resp = vb_r_resp;
-    o_corei_r_data = vb_line_o;
-    o_corei_r_last = v_r_valid;
-    o_corei_r_id = i_msti_r_id;
-    o_corei_r_user = i_msti_r_user;
-    o_corei_ac_valid = 0;
-    o_corei_ac_addr = 0;
-    o_corei_ac_snoop = 0;
-    o_corei_ac_prot = 0;
-    o_corei_cr_ready = 0;
-    o_corei_cd_ready = 0;
+    vcorei.aw_ready = i_msti.read().aw_ready;
+    vcorei.w_ready = v_w_ready;
+    vcorei.b_valid = i_msti.read().b_valid && r.b_wait.read();
+    vcorei.b_resp = i_msti.read().b_resp;
+    vcorei.b_id = (0, i_msti.read().b_id);
+    vcorei.b_user = i_msti.read().b_user;
+    vcorei.ar_ready = i_msti.read().ar_ready;
+    vcorei.r_valid = v_r_valid;
+    vcorei.r_resp = vb_r_resp;
+    vcorei.r_data = vb_line_o;
+    vcorei.r_last = v_r_valid;
+    vcorei.r_id = (0, i_msti.read().r_id);
+    vcorei.r_user = i_msti.read().r_user;
+    vcorei.ac_valid = 0;
+    vcorei.ac_addr = 0;
+    vcorei.ac_snoop = 0;
+    vcorei.ac_prot = 0;
+    vcorei.cr_ready = 0;
+    vcorei.cd_ready = 0;
+    o_corei = vcorei;    // to trigger event
 }
 
 void AxiSerDes::registers() {

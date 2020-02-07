@@ -27,11 +27,11 @@ SC_MODULE(BranchPredictor) {
     sc_in<bool> i_nrst;                 // Reset. Active LOW.
     sc_in<bool> i_req_mem_fire;         // Memory request was accepted
     sc_in<bool> i_resp_mem_valid;       // Memory response from ICache is valid
-    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_resp_mem_addr; // Memory response address
+    sc_in<sc_uint<CFG_RIVER_ADDR_BITS>> i_resp_mem_addr; // Memory response address
     sc_in<sc_uint<32>> i_resp_mem_data; // Memory response value
-    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_e_npc;         // Valid instruction value awaited by 'Executor'
+    sc_in<sc_uint<CFG_RIVER_ADDR_BITS>> i_e_npc;         // Valid instruction value awaited by 'Executor'
     sc_in<sc_uint<RISCV_ARCH>> i_ra;    // Return address register value
-    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_npc_predict;  // Predicted next instruction address
+    sc_out<sc_uint<CFG_RIVER_ADDR_BITS>> o_npc_predict;  // Predicted next instruction address
 
     void comb();
     void registers();
@@ -44,8 +44,8 @@ SC_MODULE(BranchPredictor) {
 
  private:
     struct HistoryType {
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> resp_pc;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> resp_npc;
+        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> resp_pc;
+        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> resp_npc;
     };
     struct RegistersType {
         HistoryType h[3];
@@ -60,7 +60,7 @@ SC_MODULE(BranchPredictor) {
         iv.wait_resp = 0;
     }
 
-    sc_uint<BUS_ADDR_WIDTH> vb_npc;
+    sc_uint<CFG_RIVER_ADDR_BITS> vb_npc;
     bool v_jal;     // JAL instruction
     bool v_branch;  // One of branch instructions (only negative offset)
     bool v_c_j;     // compressed J instruction

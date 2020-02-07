@@ -27,7 +27,7 @@ SC_MODULE(MemAccess) {
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;
     sc_in<bool> i_e_valid;                          // Execution stage outputs are valid
-    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_e_pc;          // Execution stage instruction pointer
+    sc_in<sc_uint<CFG_RIVER_ADDR_BITS>> i_e_pc;          // Execution stage instruction pointer
     sc_in<sc_uint<32>> i_e_instr;                   // Execution stage instruction value
     sc_in<bool> i_e_flushd;
     sc_out<bool> o_flushd;
@@ -39,7 +39,7 @@ SC_MODULE(MemAccess) {
     sc_in<bool> i_memop_load;                       // Load data from memory and write to i_res_addr
     sc_in<bool> i_memop_store;                      // Store i_res_data value into memory
     sc_in<sc_uint<2>> i_memop_size;                 // Encoded memory transaction size in bytes: 0=1B; 1=2B; 2=4B; 3=8B
-    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_memop_addr;    // Memory access address
+    sc_in<sc_uint<CFG_RIVER_ADDR_BITS>> i_memop_addr;    // Memory access address
     sc_out<bool> o_memop_ready;                     // Ready to accept memop request
     sc_out<bool> o_wb_wena;                         // Write enable signal
     sc_out<sc_uint<6>> o_wb_waddr;                  // Output register address (0 = x0 = no write)
@@ -51,11 +51,11 @@ SC_MODULE(MemAccess) {
     sc_in<bool> i_mem_req_ready;                    // Data cache is ready to accept read/write request
     sc_out<bool> o_mem_valid;                       // Memory request is valid
     sc_out<bool> o_mem_write;                       // Memory write request
-    sc_out<sc_uint<BUS_ADDR_WIDTH>> o_mem_addr;     // Data path requested address
+    sc_out<sc_uint<CFG_RIVER_ADDR_BITS>> o_mem_addr;     // Data path requested address
     sc_out<sc_uint<64>> o_mem_wdata;                // Data path requested data (write transaction)
     sc_out<sc_uint<8>> o_mem_wstrb;                 // 8-bytes aligned strobs
     sc_in<bool> i_mem_data_valid;                   // Data path memory response is valid
-    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_mem_data_addr; // Data path memory response address
+    sc_in<sc_uint<CFG_RIVER_ADDR_BITS>> i_mem_data_addr; // Data path memory response address
     sc_in<sc_uint<64>> i_mem_data;                  // Data path memory response value
     sc_out<bool> o_mem_resp_ready;                  // Pipeline is ready to accept memory operation response
 
@@ -78,13 +78,13 @@ private:
     struct RegistersType {
         sc_signal<sc_uint<2>> state;
         sc_signal<bool> memop_w;
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> memop_addr;
+        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> memop_addr;
         sc_signal<sc_uint<64>> memop_wdata;
         sc_signal<sc_uint<8>> memop_wstrb;
         sc_signal<bool> memop_sign_ext;
         sc_signal<sc_uint<2>> memop_size;
 
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> memop_res_pc;
+        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> memop_res_pc;
         sc_signal<sc_uint<32>> memop_res_instr;
         sc_signal<sc_uint<6>> memop_res_addr;
         sc_signal<sc_uint<RISCV_ARCH>> memop_res_data;
@@ -118,11 +118,11 @@ private:
                                  + RISCV_ARCH
                                  + 6
                                  + 32
-                                 + BUS_ADDR_WIDTH
+                                 + CFG_RIVER_ADDR_BITS
                                  + 2
                                  + 1
                                  + 1
-                                 + BUS_ADDR_WIDTH;
+                                 + CFG_RIVER_ADDR_BITS;
 
     Queue<2, QUEUE_WIDTH> *queue0;
 

@@ -31,6 +31,9 @@
     <Filter Include="riverlib\l2">
       <UniqueIdentifier>{93d1e04d-eb31-4733-85f9-e065dd59d667}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ambalib">
+      <UniqueIdentifier>{63a50a98-e7f8-4098-8590-7b6bdfa8d44c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\common\attribute.cpp">
@@ -330,6 +333,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\types_river.h">
       <Filter>riverlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\ambalib\types_amba.h">
+      <Filter>ambalib</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

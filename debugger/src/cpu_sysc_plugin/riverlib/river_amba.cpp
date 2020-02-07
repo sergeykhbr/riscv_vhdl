@@ -22,70 +22,8 @@ RiverAmba::RiverAmba(sc_module_name name_, uint32_t hartid, bool async_reset,
     bool fpu_ena, bool tracer_ena) : sc_module(name_),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
-    i_msti_aw_ready("i_msti_aw_ready"),
-    i_msti_w_ready("i_msti_w_ready"),
-    i_msti_b_valid("i_msti_b_valid"),
-    i_msti_b_resp("i_msti_b_resp"),
-    i_msti_b_id("i_msti_b_id"),
-    i_msti_b_user("i_msti_b_user"),
-    i_msti_ar_ready("i_msti_ar_ready"),
-    i_msti_r_valid("i_msti_r_valid"),
-    i_msti_r_resp("i_msti_r_resp"),
-    i_msti_r_data("i_msti_r_data"),
-    i_msti_r_last("i_msti_r_last"),
-    i_msti_r_id("i_msti_r_id"),
-    i_msti_r_user("i_msti_r_user"),
-    o_msto_aw_valid("o_msto_aw_valid"),
-    o_msto_aw_bits_addr("o_msto_aw_bits_addr"),
-    o_msto_aw_bits_len("o_msto_aw_bits_len"),
-    o_msto_aw_bits_size("o_msto_aw_bits_size"),
-    o_msto_aw_bits_burst("o_msto_aw_bits_burst"),
-    o_msto_aw_bits_lock("o_msto_aw_bits_lock"),
-    o_msto_aw_bits_cache("o_msto_aw_bits_cache"),
-    o_msto_aw_bits_prot("o_msto_aw_bits_prot"),
-    o_msto_aw_bits_qos("o_msto_aw_bits_qos"),
-    o_msto_aw_bits_region("o_msto_aw_bits_region"),
-    o_msto_aw_id("o_msto_aw_id"),
-    o_msto_aw_user("o_msto_aw_user"),
-    o_msto_w_valid("o_msto_w_valid"),
-    o_msto_w_data("o_msto_w_data"),
-    o_msto_w_last("o_msto_w_last"),
-    o_msto_w_strb("o_msto_w_strb"),
-    o_msto_w_user("o_msto_w_user"),
-    o_msto_b_ready("o_msto_b_ready"),
-    o_msto_ar_valid("o_msto_ar_valid"),
-    o_msto_ar_bits_addr("o_msto_ar_bits_addr"),
-    o_msto_ar_bits_len("o_msto_ar_bits_len"),
-    o_msto_ar_bits_size("o_msto_ar_bits_size"),
-    o_msto_ar_bits_burst("o_msto_ar_bits_burst"),
-    o_msto_ar_bits_lock("o_msto_ar_bits_lock"),
-    o_msto_ar_bits_cache("o_msto_ar_bits_cache"),
-    o_msto_ar_bits_prot("o_msto_ar_bits_prot"),
-    o_msto_ar_bits_qos("o_msto_ar_bits_qos"),
-    o_msto_ar_bits_region("o_msto_ar_bits_region"),
-    o_msto_ar_id("o_msto_ar_id"),
-    o_msto_ar_user("o_msto_ar_user"),
-    o_msto_r_ready("o_msto_r_ready"),
-    i_msti_ac_valid("i_msti_ac_valid"),
-    i_msti_ac_addr("i_msti_ac_addr"),
-    i_msti_ac_snoop("i_msti_ac_snoop"),
-    i_msti_ac_prot("i_msti_ac_prot"),
-    i_msti_cr_ready("i_msti_cr_ready"),
-    i_msti_cd_ready("i_msti_cd_ready"),
-    o_msto_ar_domain("o_msto_ar_domain"),
-    o_msto_ar_snoop("o_msto_ar_snoop"),
-    o_msto_ar_bar("o_msto_ar_bar"),
-    o_msto_aw_domain("o_msto_aw_domain"),
-    o_msto_aw_snoop("o_msto_aw_snoop"),
-    o_msto_aw_bar("o_msto_aw_bar"),
-    o_msto_ac_ready("o_msto_ac_ready"),
-    o_msto_cr_valid("o_msto_cr_valid"),
-    o_msto_cr_resp("o_msto_cr_resp"),
-    o_msto_cd_valid("o_msto_cd_valid"),
-    o_msto_cd_data("o_msto_cd_data"),
-    o_msto_cd_last("o_msto_cd_last"),
-    o_msto_rack("o_msto_rack"),
-    o_msto_wack("o_msto_wack"),
+    i_msti("i_msti"),
+    o_msto("o_msto"),
     i_ext_irq("i_ext_irq"),
     o_time("o_time"),
     o_exec_cnt("o_exec_cnt"),
@@ -111,7 +49,7 @@ RiverAmba::RiverAmba(sc_module_name name_, uint32_t hartid, bool async_reset,
     river0->o_req_mem_data(req_mem_data_o);
     river0->i_resp_mem_valid(resp_mem_valid_i);
     river0->i_resp_mem_path(r.resp_path);
-    river0->i_resp_mem_data(i_msti_r_data);
+    river0->i_resp_mem_data(wb_msti_r_data);
     river0->i_resp_mem_load_fault(resp_mem_load_fault_i);
     river0->i_resp_mem_store_fault(resp_mem_store_fault_i);
     river0->i_resp_mem_store_fault_addr(r.b_addr);
@@ -129,19 +67,7 @@ RiverAmba::RiverAmba(sc_module_name name_, uint32_t hartid, bool async_reset,
 
     SC_METHOD(comb);
     sensitive << i_nrst;
-    sensitive << i_msti_aw_ready;
-    sensitive << i_msti_w_ready;
-    sensitive << i_msti_b_valid;
-    sensitive << i_msti_b_resp;
-    sensitive << i_msti_b_id;
-    sensitive << i_msti_b_user;
-    sensitive << i_msti_ar_ready;
-    sensitive << i_msti_r_valid;
-    sensitive << i_msti_r_resp;
-    sensitive << i_msti_r_data;
-    sensitive << i_msti_r_last;
-    sensitive << i_msti_r_id;
-    sensitive << i_msti_r_user;
+    sensitive << i_msti;
     sensitive << req_mem_path_o;
     sensitive << req_mem_valid_o;
     sensitive << req_mem_write_o;
@@ -170,36 +96,8 @@ void RiverAmba::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_dport_ready, o_dport_ready.name());
         sc_trace(o_vcd, o_dport_rdata, o_dport_rdata.name());
 
-        sc_trace(o_vcd, i_msti_aw_ready, i_msti_aw_ready.name());
-        sc_trace(o_vcd, i_msti_w_ready, i_msti_w_ready.name());
-        sc_trace(o_vcd, i_msti_b_valid, i_msti_b_valid.name());
-        sc_trace(o_vcd, i_msti_b_resp, i_msti_b_resp.name());
-        sc_trace(o_vcd, i_msti_ar_ready, i_msti_ar_ready.name());
-        sc_trace(o_vcd, i_msti_r_valid, i_msti_r_valid.name());
-        sc_trace(o_vcd, i_msti_r_resp, i_msti_r_resp.name());
-        sc_trace(o_vcd, i_msti_r_data, i_msti_r_data.name());
-        sc_trace(o_vcd, i_msti_r_last, i_msti_r_last.name());
-
-        sc_trace(o_vcd, o_msto_aw_valid, o_msto_aw_valid.name());
-        sc_trace(o_vcd, o_msto_aw_bits_addr, o_msto_aw_bits_addr.name());
-        sc_trace(o_vcd, o_msto_aw_bits_len, o_msto_aw_bits_len.name());
-        sc_trace(o_vcd, o_msto_aw_bits_size, o_msto_aw_bits_size.name());
-        sc_trace(o_vcd, o_msto_aw_bits_burst, o_msto_aw_bits_burst.name());
-        sc_trace(o_vcd, o_msto_aw_bits_lock, o_msto_aw_bits_lock.name());
-        sc_trace(o_vcd, o_msto_aw_bits_cache, o_msto_aw_bits_cache.name());
-        sc_trace(o_vcd, o_msto_w_valid, o_msto_w_valid.name());
-        sc_trace(o_vcd, o_msto_w_data, o_msto_w_data.name());
-        sc_trace(o_vcd, o_msto_w_last, o_msto_w_last.name());
-        sc_trace(o_vcd, o_msto_w_strb, o_msto_w_strb.name());
-        sc_trace(o_vcd, o_msto_b_ready, o_msto_b_ready.name());
-        sc_trace(o_vcd, o_msto_ar_valid, o_msto_ar_valid.name());
-        sc_trace(o_vcd, o_msto_ar_bits_addr, o_msto_ar_bits_addr.name());
-        sc_trace(o_vcd, o_msto_ar_bits_len, o_msto_ar_bits_len.name());
-        sc_trace(o_vcd, o_msto_ar_bits_size, o_msto_ar_bits_size.name());
-        sc_trace(o_vcd, o_msto_ar_bits_burst, o_msto_ar_bits_burst.name());
-        sc_trace(o_vcd, o_msto_ar_bits_lock, o_msto_ar_bits_lock.name());
-        sc_trace(o_vcd, o_msto_ar_bits_cache, o_msto_ar_bits_cache.name());
-        sc_trace(o_vcd, o_msto_r_ready, o_msto_r_ready.name());
+        sc_trace(o_vcd, i_msti, i_msti.name());
+        sc_trace(o_vcd, o_msto, o_msto.name());
 
         std::string pn(name());
         sc_trace(o_vcd, req_mem_path_o, pn + ".req_mem_path_o");
@@ -222,30 +120,28 @@ void RiverAmba::comb() {
     bool v_mem_er_load_fault;
     bool v_mem_er_store_fault;
     bool v_next_ready;
-    bool vmsto_r_ready;
-    bool vmsto_w_valid;
-    bool vmsto_w_last;
-    bool vmsto_ar_valid;
-    bool vmsto_aw_valid;
+    axi4_river_out_type vmsto;
     sc_uint<3> vmsto_size;
     sc_uint<3> vmsto_prot;
 
     v = r;
+    
+    wb_msti_r_data = i_msti.read().r_data;  // can't directly pass to lower level
 
     v_req_mem_ready = 0;
     v_resp_mem_valid = 0;
     v_mem_er_load_fault = 0;
-    v_mem_er_store_fault = i_msti_b_valid.read() && i_msti_b_resp.read()[1]
+    v_mem_er_store_fault = i_msti.read().b_valid && i_msti.read().b_resp[1]
                            && r.b_wait.read();
     v_next_ready = 0;
 
-    vmsto_r_ready = 1;
-    vmsto_w_valid = 0;
-    vmsto_w_last = 0;
-    vmsto_ar_valid = 0;
-    vmsto_aw_valid = 0;
+    vmsto.r_ready = 1;
+    vmsto.w_valid = 0;
+    vmsto.w_last = 0;
+    vmsto.ar_valid = 0;
+    vmsto.aw_valid = 0;
 
-    if (i_msti_b_valid.read() == 1) {
+    if (i_msti.read().b_valid == 1) {
         v.b_wait = 0;
     }
 
@@ -255,22 +151,22 @@ void RiverAmba::comb() {
         break;
 
     case reading:
-        vmsto_r_ready = 1;
-        v_mem_er_load_fault = i_msti_r_valid.read() && i_msti_r_resp.read()[1];
-        v_resp_mem_valid = i_msti_r_valid.read();
+        vmsto.r_ready = 1;
+        v_mem_er_load_fault = i_msti.read().r_valid && i_msti.read().r_resp[1];
+        v_resp_mem_valid = i_msti.read().r_valid;
         // r_valid and r_last always should be in the same time
-        if (i_msti_r_valid.read() == 1 && i_msti_r_last.read() == 1) {
+        if (i_msti.read().r_valid == 1 && i_msti.read().r_last == 1) {
             v_next_ready = 1;
             v.state = idle;
         }
         break;
 
     case writing:
-        vmsto_w_valid = 1;
-        vmsto_w_last = 1;
-        v_resp_mem_valid = i_msti_w_ready.read();
+        vmsto.w_valid = 1;
+        vmsto.w_last = 1;
+        v_resp_mem_valid = i_msti.read().w_ready;
         // Write full line without burst transactions:
-        if (i_msti_w_ready.read() == 1) {
+        if (i_msti.read().w_ready == 1) {
             v_next_ready = 1;
             v.state = idle;
             v.b_addr = r.w_addr;
@@ -285,14 +181,14 @@ void RiverAmba::comb() {
         if (req_mem_valid_o.read() == 1) {
             v.resp_path = req_mem_path_o.read();
             if (req_mem_write_o.read() == 0) {
-                vmsto_ar_valid = 1;
-                if (i_msti_ar_ready.read() == 1) {
+                vmsto.ar_valid = 1;
+                if (i_msti.read().ar_ready == 1) {
                     v_req_mem_ready = 1;
                     v.state = reading;
                 }
             } else {
-                vmsto_aw_valid = 1;
-                if (i_msti_aw_ready.read() == 1) {
+                vmsto.aw_valid = 1;
+                if (i_msti.read().aw_ready == 1) {
                     v_req_mem_ready = 1;
                     v.state = writing;
                     v.w_addr = req_mem_addr_o.read();
@@ -318,39 +214,40 @@ void RiverAmba::comb() {
     vmsto_prot[1] = 0;                      // 0=Secure access; 1=Non-secure access
     vmsto_prot[2] = req_mem_path_o.read();  // 0=Data; 1=Instruction
 
-    o_msto_aw_valid = vmsto_aw_valid;
-    o_msto_aw_bits_addr = req_mem_addr_o;
-    o_msto_aw_bits_len = 0;
-    o_msto_aw_bits_size = vmsto_size;           // 0=1B; 1=2B; 2=4B; 3=8B; 4=16B; 5=32B; 6=64B; 7=128B
-    o_msto_aw_bits_burst = 0x1;                 // 00=FIX; 01=INCR; 10=WRAP
-    o_msto_aw_bits_lock = 0;
-    o_msto_aw_bits_cache = req_mem_cached_o.read();
-    o_msto_aw_bits_prot = vmsto_prot;
-    o_msto_aw_bits_qos = 0;
-    o_msto_aw_bits_region = 0;
-    o_msto_aw_id = 0;
-    o_msto_aw_user = 0;
-    o_msto_w_valid = vmsto_w_valid;
-    o_msto_w_data = req_mem_data_o;
-    o_msto_w_last = vmsto_w_last;
-    o_msto_w_strb = req_mem_strob_o;
-    o_msto_w_user = 0;
-    o_msto_b_ready = 1;
+    //o_msto_aw_valid = vmsto_aw_valid;
+    vmsto.aw_bits.addr = req_mem_addr_o;
+    vmsto.aw_bits.len = 0;
+    vmsto.aw_bits.size = vmsto_size;           // 0=1B; 1=2B; 2=4B; 3=8B; 4=16B; 5=32B; 6=64B; 7=128B
+    vmsto.aw_bits.burst = 0x1;                 // 00=FIX; 01=INCR; 10=WRAP
+    vmsto.aw_bits.lock = 0;
+    vmsto.aw_bits.cache = req_mem_cached_o.read();
+    vmsto.aw_bits.prot = vmsto_prot;
+    vmsto.aw_bits.qos = 0;
+    vmsto.aw_bits.region = 0;
+    vmsto.aw_id = 0;
+    vmsto.aw_user = 0;
+    //vmsto.w_valid = vmsto_w_valid;
+    vmsto.w_data = req_mem_data_o;
+    //vmsto.w_last = vmsto_w_last;
+    vmsto.w_strb = req_mem_strob_o;
+    vmsto.w_user = 0;
+    vmsto.b_ready = 1;
 
-    o_msto_ar_valid = vmsto_ar_valid;
-    o_msto_ar_bits_addr = req_mem_addr_o;
-    o_msto_ar_bits_len = 0;
-    o_msto_ar_bits_size = vmsto_size;           // 0=1B; 1=2B; 2=4B; 3=8B; ...
-    o_msto_ar_bits_burst = 0x1;                 // INCR
-    o_msto_ar_bits_lock = 0;
-    o_msto_ar_bits_cache = req_mem_cached_o.read();
-    o_msto_ar_bits_prot = vmsto_prot;
-    o_msto_ar_bits_qos = 0;
-    o_msto_ar_bits_region = 0;
-    o_msto_ar_id = 0;
-    o_msto_ar_user = 0;
-    o_msto_r_ready = vmsto_r_ready;
+    //vmsto.ar_valid = vmsto_ar_valid;
+    vmsto.ar_bits.addr = req_mem_addr_o;
+    vmsto.ar_bits.len = 0;
+    vmsto.ar_bits.size = vmsto_size;           // 0=1B; 1=2B; 2=4B; 3=8B; ...
+    vmsto.ar_bits.burst = 0x1;                 // INCR
+    vmsto.ar_bits.lock = 0;
+    vmsto.ar_bits.cache = req_mem_cached_o.read();
+    vmsto.ar_bits.prot = vmsto_prot;
+    vmsto.ar_bits.qos = 0;
+    vmsto.ar_bits.region = 0;
+    vmsto.ar_id = 0;
+    vmsto.ar_user = 0;
+    //vmsto.r_ready = vmsto_r_ready;
 
+    o_msto = vmsto;
 
     req_mem_ready_i = v_req_mem_ready;  
     resp_mem_valid_i = v_resp_mem_valid;

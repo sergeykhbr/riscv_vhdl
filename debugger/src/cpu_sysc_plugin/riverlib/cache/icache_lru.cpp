@@ -50,7 +50,7 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset)
     o_state("o_state") {
     async_reset_ = async_reset;
 
-    memcouple = new TagMemCoupled<BUS_ADDR_WIDTH,
+    memcouple = new TagMemCoupled<CFG_RIVER_ADDR_BITS,
                             CFG_ILOG2_NWAYS,
                             CFG_ILOG2_LINES_PER_WAY,
                             CFG_ILOG2_BYTES_PER_LINE,
@@ -160,7 +160,7 @@ void ICacheLru::comb() {
     bool v_resp_er_load_fault;
     bool v_flush;
     bool v_line_cs;
-    sc_uint<BUS_ADDR_WIDTH> vb_line_addr;
+    sc_uint<CFG_RIVER_ADDR_BITS> vb_line_addr;
     sc_biguint<ICACHE_LINE_BITS> vb_line_wdata;
     sc_uint<ICACHE_BYTES_PER_LINE> vb_line_wstrb;
     sc_uint<ITAG_FL_TOTAL> v_line_wflags;
@@ -262,17 +262,16 @@ void ICacheLru::comb() {
 
             if (i_mpu_flags.read()[CFG_MPU_FL_CACHABLE] == 1) {
                 if (line_hit_o.read() == 0) {
-                    v.mem_addr = r.req_addr.read()(BUS_ADDR_WIDTH-1,
+                    v.mem_addr = r.req_addr.read()(CFG_RIVER_ADDR_BITS-1,
                             CFG_ILOG2_BYTES_PER_LINE) << CFG_ILOG2_BYTES_PER_LINE;
                 } else {
                     v.write_addr = r.req_addr_next;
-                    v.mem_addr = r.req_addr_next.read()(BUS_ADDR_WIDTH-1,
+                    v.mem_addr = r.req_addr_next.read()(CFG_RIVER_ADDR_BITS-1,
                             CFG_ILOG2_BYTES_PER_LINE) << CFG_ILOG2_BYTES_PER_LINE;
                 }
                 v.cached = 1;
             } else {
-                v.mem_addr = r.req_addr.read()(BUS_ADDR_WIDTH-1, CFG_LOG2_DATA_BYTES)
-                             << CFG_LOG2_DATA_BYTES;
+                v.mem_addr = r.req_addr.read()(CFG_RIVER_ADDR_BITS-1, 3) << 3;
                 v.cached = 0;
             }
         }

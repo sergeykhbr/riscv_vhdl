@@ -51,7 +51,7 @@ package config_target is
   --!
   --! @details Read Only unique platform identificator that could be
   --!          read by firmware from the Plug'n'Play support module.
-  constant CFG_HW_ID : std_logic_vector(31 downto 0) := X"20200107";
+  constant CFG_HW_ID : std_logic_vector(31 downto 0) := X"20200207";
 
   --! @brief Enabling Ethernet MAC interface.
   --! @details By default MAC module enables support of the debug feature EDCL.

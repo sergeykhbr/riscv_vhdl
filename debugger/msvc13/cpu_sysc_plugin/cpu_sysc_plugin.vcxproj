@@ -159,6 +159,7 @@
     <ClInclude Include="..\..\src\common\iface.h" />
     <ClInclude Include="..\..\src\common\iservice.h" />
     <ClInclude Include="..\..\src\common\riscv-isa.h" />
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\ambalib\types_amba.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\axiserdes.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\cmds\cmd_br_riscv.h" />
     <ClInclude Include="..\..\src\cpu_sysc_plugin\cmds\cmd_csr.h" />

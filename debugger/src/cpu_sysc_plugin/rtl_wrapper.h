@@ -24,6 +24,7 @@
 #include "coreservices/icpugen.h"
 #include "coreservices/iclock.h"
 #include "coreservices/icpuriscv.h"
+#include "ambalib/types_amba.h"
 #include "riverlib/river_cfg.h"
 #include <systemc.h>
 
@@ -38,53 +39,8 @@ class RtlWrapper : public sc_module,
     sc_out<bool> o_nrst;
     // Timer:
     sc_in<sc_uint<RISCV_ARCH>> i_time;
-    // Memory interface:
-    // AXI4 input structure:
-    sc_out<bool> o_msti_aw_ready;
-    sc_out<bool> o_msti_w_ready;
-    sc_out<bool> o_msti_b_valid;
-    sc_out<sc_uint<2>> o_msti_b_resp;
-    sc_out<sc_uint<CFG_ID_BITS>> o_msti_b_id;
-    sc_out<bool> o_msti_b_user;
-    sc_out<bool> o_msti_ar_ready;
-    sc_out<bool> o_msti_r_valid;
-    sc_out<sc_uint<2>> o_msti_r_resp;                    // 0=OKAY;1=EXOKAY;2=SLVERR;3=DECER
-    sc_out<sc_uint<BUS_DATA_WIDTH>> o_msti_r_data;
-    sc_out<bool> o_msti_r_last;
-    sc_out<sc_uint<CFG_ID_BITS>> o_msti_r_id;
-    sc_out<bool> o_msti_r_user;
-    // AXI4 output structure:
-    sc_in<bool> i_msto_aw_valid;
-    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_msto_aw_bits_addr;
-    sc_in<sc_uint<8>> i_msto_aw_bits_len;              // burst len = len[7:0] + 1
-    sc_in<sc_uint<3>> i_msto_aw_bits_size;             // 0=1B; 1=2B; 2=4B; 3=8B; ...
-    sc_in<sc_uint<2>> i_msto_aw_bits_burst;            // 00=FIXED; 01=INCR; 10=WRAP; 11=reserved
-    sc_in<bool> i_msto_aw_bits_lock;
-    sc_in<sc_uint<4>> i_msto_aw_bits_cache;
-    sc_in<sc_uint<3>> i_msto_aw_bits_prot;
-    sc_in<sc_uint<4>> i_msto_aw_bits_qos;
-    sc_in<sc_uint<4>> i_msto_aw_bits_region;
-    sc_in<sc_uint<CFG_ID_BITS>> i_msto_aw_id;
-    sc_in<bool> i_msto_aw_user;
-    sc_in<bool> i_msto_w_valid;
-    sc_in<sc_uint<BUS_DATA_WIDTH>> i_msto_w_data;
-    sc_in<bool> i_msto_w_last;
-    sc_in<sc_uint<BUS_DATA_BYTES>> i_msto_w_strb;
-    sc_in<bool> i_msto_w_user;
-    sc_in<bool> i_msto_b_ready;
-    sc_in<bool> i_msto_ar_valid;
-    sc_in<sc_uint<BUS_ADDR_WIDTH>> i_msto_ar_bits_addr;
-    sc_in<sc_uint<8>> i_msto_ar_bits_len;              // burst len = len[7:0] + 1
-    sc_in<sc_uint<3>> i_msto_ar_bits_size;             // 0=1B; 1=2B; 2=4B; 3=8B; ...
-    sc_in<sc_uint<2>> i_msto_ar_bits_burst;            // 00=FIXED; 01=INCR; 10=WRAP; 11=reserved
-    sc_in<bool> i_msto_ar_bits_lock;
-    sc_in<sc_uint<4>> i_msto_ar_bits_cache;
-    sc_in<sc_uint<3>> i_msto_ar_bits_prot;
-    sc_in<sc_uint<4>> i_msto_ar_bits_qos;
-    sc_in<sc_uint<4>> i_msto_ar_bits_region;
-    sc_in<sc_uint<CFG_ID_BITS>> i_msto_ar_id;
-    sc_in<bool> i_msto_ar_user;
-    sc_in<bool> i_msto_r_ready;
+    sc_out<axi4_master_in_type> o_msti;
+    sc_in<axi4_master_out_type> i_msto;
     /** Interrupt line from external interrupts controller. */
     sc_out<bool> o_interrupt;
     // Debug interface

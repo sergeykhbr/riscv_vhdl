@@ -18,6 +18,7 @@
 #define __DEBUGGER_RIVER_CFG_H__
 
 #include <systemc.h>
+#include "../ambalib/types_amba.h"   // to re-use BUS_ADDR_WIDTH
 
 namespace debugger {
 
@@ -27,13 +28,8 @@ static const bool CFG_HW_FPU_ENABLE         = true;
 
 static const int RISCV_ARCH     = 64;
 
-static const int BUS_ADDR_WIDTH      = 64;
-static const int CFG_LOG2_DATA_BYTES = 3;
-static const int BUS_DATA_BYTES      = (1 << CFG_LOG2_DATA_BYTES);
-static const int BUS_DATA_WIDTH      = 8 * BUS_DATA_BYTES;
-static const int LOG2_DATA_BYTES_MASK = BUS_DATA_BYTES - 1;
+static const int CFG_RIVER_ADDR_BITS       = BUS_ADDR_WIDTH;
 static const int CFG_RIVER_ID_BITS         = 1;
-static const int CFG_ID_BITS         = 5;   // BUS ID move to bus data
 
 /** 
  * ICacheLru config (16 KB by default)
@@ -48,9 +44,6 @@ static const int ICACHE_LINES_PER_WAY     = 1 << CFG_ILOG2_LINES_PER_WAY;
 static const int ICACHE_WAYS              = 1 << CFG_ILOG2_NWAYS;
 static const int LOG2_ILINE_BYTES_MASK    = ICACHE_BYTES_PER_LINE - 1;
 
-static const int ICACHE_LOG2_BURST_LEN    =
-                CFG_ILOG2_BYTES_PER_LINE - CFG_LOG2_DATA_BYTES;
-static const int ICACHE_BURST_LEN         = 1 << ICACHE_LOG2_BURST_LEN;
 static const int ICACHE_LINE_BITS         = 8*ICACHE_BYTES_PER_LINE;
 
 // Information: To define the CACHE SIZE in Bytes use the following:
@@ -73,9 +66,6 @@ static const int DCACHE_LINES_PER_WAY     = 1 << CFG_DLOG2_LINES_PER_WAY;
 static const int DCACHE_WAYS              = 1 << CFG_DLOG2_NWAYS;
 static const int LOG2_DLINE_BYTES_MASK    = DCACHE_BYTES_PER_LINE - 1;
 
-static const int DCACHE_LOG2_BURST_LEN    =
-                CFG_DLOG2_BYTES_PER_LINE - CFG_LOG2_DATA_BYTES;
-static const int DCACHE_BURST_LEN         = 1 << DCACHE_LOG2_BURST_LEN;
 static const int DCACHE_LINE_BITS         = 8*DCACHE_BYTES_PER_LINE;
 
 // Information: To define the CACHE SIZE in Bytes use the following:
@@ -93,7 +83,6 @@ static const int DTAG_FL_TOTAL      = 3;
  */
 static const int L1CACHE_BYTES_PER_LINE   = DCACHE_BYTES_PER_LINE;
 static const int L1CACHE_LINE_BITS        = 8*DCACHE_BYTES_PER_LINE;
-static const int L1CACHE_BURST_LEN        = DCACHE_BURST_LEN;
 
 /** MPU config */
 static const int CFG_MPU_TBL_WIDTH   = 2;    // [1:0]  log2(MPU_TBL_SIZE)

@@ -27,50 +27,8 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     o_clk("clk", 10, SC_NS),
     o_nrst("o_nrst"),
     i_time("i_time"),
-    o_msti_aw_ready("o_msti_aw_ready"),
-    o_msti_w_ready("o_msti_w_ready"),
-    o_msti_b_valid("o_msti_b_valid"),
-    o_msti_b_resp("o_msti_b_resp"),
-    o_msti_b_id("o_msti_b_id"),
-    o_msti_b_user("o_msti_b_user"),
-    o_msti_ar_ready("o_msti_ar_ready"),
-    o_msti_r_valid("o_msti_r_valid"),
-    o_msti_r_resp("o_msti_r_resp"),
-    o_msti_r_data("o_msti_r_data"),
-    o_msti_r_last("o_msti_r_last"),
-    o_msti_r_id("o_msti_r_id"),
-    o_msti_r_user("o_msti_r_user"),
-    i_msto_aw_valid("i_msto_aw_valid"),
-    i_msto_aw_bits_addr("i_msto_aw_bits_addr"),
-    i_msto_aw_bits_len("i_msto_aw_bits_len"),
-    i_msto_aw_bits_size("i_msto_aw_bits_size"),
-    i_msto_aw_bits_burst("i_msto_aw_bits_burst"),
-    i_msto_aw_bits_lock("i_msto_aw_bits_lock"),
-    i_msto_aw_bits_cache("i_msto_aw_bits_cache"),
-    i_msto_aw_bits_prot("i_msto_aw_bits_prot"),
-    i_msto_aw_bits_qos("i_msto_aw_bits_qos"),
-    i_msto_aw_bits_region("i_msto_aw_bits_region"),
-    i_msto_aw_id("i_msto_aw_id"),
-    i_msto_aw_user("i_msto_aw_user"),
-    i_msto_w_valid("i_msto_w_valid"),
-    i_msto_w_data("i_msto_w_data"),
-    i_msto_w_last("i_msto_w_last"),
-    i_msto_w_strb("i_msto_w_strb"),
-    i_msto_w_user("i_msto_w_user"),
-    i_msto_b_ready("i_msto_b_ready"),
-    i_msto_ar_valid("i_msto_ar_valid"),
-    i_msto_ar_bits_addr("i_msto_ar_bits_addr"),
-    i_msto_ar_bits_len("i_msto_ar_bits_len"),
-    i_msto_ar_bits_size("i_msto_ar_bits_size"),
-    i_msto_ar_bits_burst("i_msto_ar_bits_burst"),
-    i_msto_ar_bits_lock("i_msto_ar_bits_lock"),
-    i_msto_ar_bits_cache("i_msto_ar_bits_cache"),
-    i_msto_ar_bits_prot("i_msto_ar_bits_prot"),
-    i_msto_ar_bits_qos("i_msto_ar_bits_qos"),
-    i_msto_ar_bits_region("i_msto_ar_bits_region"),
-    i_msto_ar_id("i_msto_ar_id"),
-    i_msto_ar_user("i_msto_ar_user"),
-    i_msto_r_ready("i_msto_r_ready"),
+    o_msti("o_msti"),
+    i_msto("i_msto"),
     o_interrupt("o_interrupt"),
     o_dport_valid("o_dport_valid"),
     o_dport_write("o_dport_write"),
@@ -104,37 +62,7 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     SC_METHOD(comb);
     sensitive << w_interrupt;
     sensitive << i_halted;
-    sensitive << i_msto_aw_valid;
-    sensitive << i_msto_aw_bits_addr;
-    sensitive << i_msto_aw_bits_len;
-    sensitive << i_msto_aw_bits_size;
-    sensitive << i_msto_aw_bits_burst;
-    sensitive << i_msto_aw_bits_lock;
-    sensitive << i_msto_aw_bits_cache;
-    sensitive << i_msto_aw_bits_prot;
-    sensitive << i_msto_aw_bits_qos;
-    sensitive << i_msto_aw_bits_region;
-    sensitive << i_msto_aw_id;
-    sensitive << i_msto_aw_user;
-    sensitive << i_msto_w_valid;
-    sensitive << i_msto_w_data;
-    sensitive << i_msto_w_last;
-    sensitive << i_msto_w_strb;
-    sensitive << i_msto_w_user;
-    sensitive << i_msto_b_ready;
-    sensitive << i_msto_ar_valid;
-    sensitive << i_msto_ar_bits_addr;
-    sensitive << i_msto_ar_bits_len;
-    sensitive << i_msto_ar_bits_size;
-    sensitive << i_msto_ar_bits_burst;
-    sensitive << i_msto_ar_bits_lock;
-    sensitive << i_msto_ar_bits_cache;
-    sensitive << i_msto_ar_bits_prot;
-    sensitive << i_msto_ar_bits_qos;
-    sensitive << i_msto_ar_bits_region;
-    sensitive << i_msto_ar_id;
-    sensitive << i_msto_ar_user;
-    sensitive << i_msto_r_ready;
+    sensitive << i_msto;
     sensitive << i_halted;
     sensitive << r.req_addr;
     sensitive << r.req_len;
@@ -172,50 +100,8 @@ void RtlWrapper::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (i_vcd) {
     }
     if (o_vcd) {
-        sc_trace(o_vcd, i_msto_aw_valid, i_msto_aw_valid.name());
-        sc_trace(o_vcd, i_msto_aw_bits_addr, i_msto_aw_bits_addr.name());
-        sc_trace(o_vcd, i_msto_aw_bits_len, i_msto_aw_bits_len.name());
-        sc_trace(o_vcd, i_msto_aw_bits_size, i_msto_aw_bits_size.name());
-        sc_trace(o_vcd, i_msto_aw_bits_burst, i_msto_aw_bits_burst.name());
-        sc_trace(o_vcd, i_msto_aw_bits_lock, i_msto_aw_bits_lock.name());
-        sc_trace(o_vcd, i_msto_aw_bits_cache, i_msto_aw_bits_cache.name());
-        sc_trace(o_vcd, i_msto_aw_bits_prot, i_msto_aw_bits_prot.name());
-        sc_trace(o_vcd, i_msto_aw_bits_qos, i_msto_aw_bits_qos.name());
-        sc_trace(o_vcd, i_msto_aw_bits_region, i_msto_aw_bits_region.name());
-        sc_trace(o_vcd, i_msto_aw_id, i_msto_aw_id.name());
-        sc_trace(o_vcd, i_msto_aw_user, i_msto_aw_user.name());
-        sc_trace(o_vcd, i_msto_w_valid, i_msto_w_valid.name());
-        sc_trace(o_vcd, i_msto_w_data, i_msto_w_data.name());
-        sc_trace(o_vcd, i_msto_w_last, i_msto_w_last.name());
-        sc_trace(o_vcd, i_msto_w_strb, i_msto_w_strb.name());
-        sc_trace(o_vcd, i_msto_w_user, i_msto_w_user.name());
-        sc_trace(o_vcd, i_msto_b_ready, i_msto_b_ready.name());
-        sc_trace(o_vcd, i_msto_ar_valid, i_msto_ar_valid.name());
-        sc_trace(o_vcd, i_msto_ar_bits_addr, i_msto_ar_bits_addr.name());
-        sc_trace(o_vcd, i_msto_ar_bits_len, i_msto_ar_bits_len.name());
-        sc_trace(o_vcd, i_msto_ar_bits_size, i_msto_ar_bits_size.name());
-        sc_trace(o_vcd, i_msto_ar_bits_burst, i_msto_ar_bits_burst.name());
-        sc_trace(o_vcd, i_msto_ar_bits_lock, i_msto_ar_bits_lock.name());
-        sc_trace(o_vcd, i_msto_ar_bits_cache, i_msto_ar_bits_cache.name());
-        sc_trace(o_vcd, i_msto_ar_bits_prot, i_msto_ar_bits_prot.name());
-        sc_trace(o_vcd, i_msto_ar_bits_qos, i_msto_ar_bits_qos.name());
-        sc_trace(o_vcd, i_msto_ar_bits_region, i_msto_ar_bits_region.name());
-        sc_trace(o_vcd, i_msto_ar_id, i_msto_ar_id.name());
-        sc_trace(o_vcd, i_msto_ar_user, i_msto_ar_user.name());
-        sc_trace(o_vcd, i_msto_r_ready, i_msto_r_ready.name());
-        sc_trace(o_vcd, o_msti_aw_ready, o_msti_aw_ready.name());
-        sc_trace(o_vcd, o_msti_w_ready, o_msti_w_ready.name());
-        sc_trace(o_vcd, o_msti_b_valid, o_msti_b_valid.name());
-        sc_trace(o_vcd, o_msti_b_resp, o_msti_b_resp.name());
-        sc_trace(o_vcd, o_msti_b_id, o_msti_b_id.name());
-        sc_trace(o_vcd, o_msti_b_user, o_msti_b_user.name());
-        sc_trace(o_vcd, o_msti_ar_ready, o_msti_ar_ready.name());
-        sc_trace(o_vcd, o_msti_r_valid, o_msti_r_valid.name());
-        sc_trace(o_vcd, o_msti_r_resp, o_msti_r_resp.name());
-        sc_trace(o_vcd, o_msti_r_data, o_msti_r_data.name());
-        sc_trace(o_vcd, o_msti_r_last, o_msti_r_last.name());
-        sc_trace(o_vcd, o_msti_r_id, o_msti_r_id.name());
-        sc_trace(o_vcd, o_msti_r_user, o_msti_r_user.name());
+        sc_trace(o_vcd, i_msto, i_msto.name());
+        sc_trace(o_vcd, o_msti, o_msti.name());
 
         std::string pn(name());
         sc_trace(o_vcd, r.nrst, pn + ".r_nrst");
@@ -243,7 +129,7 @@ void RtlWrapper::comb() {
     bool v_w_ready;
     sc_uint<BUS_DATA_WIDTH> vb_wdata;
     sc_uint<BUS_DATA_BYTES> vb_wstrb;
-    int tmux = (L1CACHE_BURST_LEN - 1) - r.req_len.read().to_int();
+    axi4_master_in_type vmsti;
 
     w_req_mem_ready = 0;
     vb_r_resp = 0; // OKAY
@@ -285,8 +171,8 @@ void RtlWrapper::comb() {
         }
         break;
     case State_Write:
-        vb_wdata = i_msto_w_data.read();
-        vb_wstrb = i_msto_w_strb.read();
+        vb_wdata = i_msto.read().w_data;
+        vb_wstrb = i_msto.read().w_strb;
         v_w_ready = 1;
         if (r.req_len.read() == 0) {
             v.b_valid = 1;
@@ -312,16 +198,16 @@ void RtlWrapper::comb() {
     if (w_req_mem_ready == 1) {
         v.r_error = 0;
         v.w_error = 0;
-        if (i_msto_ar_valid.read()) {
+        if (i_msto.read().ar_valid) {
             v.state = State_Read;
-            v.req_addr = i_msto_ar_bits_addr.read();
-            v.req_burst = i_msto_ar_bits_burst.read();
-            v.req_len = i_msto_ar_bits_len.read();
-        } else if (i_msto_aw_valid.read()) {
+            v.req_addr = i_msto.read().ar_bits.addr;
+            v.req_burst = i_msto.read().ar_bits.burst;
+            v.req_len = i_msto.read().ar_bits.len;
+        } else if (i_msto.read().aw_valid) {
             v.state = State_Write;
-            v.req_addr = i_msto_aw_bits_addr.read();
-            v.req_burst = i_msto_aw_bits_burst.read();
-            v.req_len = i_msto_aw_bits_len.read();
+            v.req_addr = i_msto.read().aw_bits.addr;
+            v.req_burst = i_msto.read().aw_bits.burst;
+            v.req_len = i_msto.read().aw_bits.len;
         } else {
             v.state = State_Idle;
         }
@@ -336,20 +222,21 @@ void RtlWrapper::comb() {
 
     o_nrst = r.nrst.read()[1].to_bool();
 
-    o_msti_aw_ready = w_req_mem_ready;
-    o_msti_w_ready = v_w_ready;
-    o_msti_b_valid = r.b_valid;
-    o_msti_b_resp = r.b_resp;
-    o_msti_b_id = 0;
-    o_msti_b_user = 0;
+    vmsti.aw_ready = w_req_mem_ready;
+    vmsti.w_ready = v_w_ready;
+    vmsti.b_valid = r.b_valid;
+    vmsti.b_resp = r.b_resp;
+    vmsti.b_id = 0;
+    vmsti.b_user = 0;
 
-    o_msti_ar_ready = w_req_mem_ready;
-    o_msti_r_valid = v_r_valid;
-    o_msti_r_resp = vb_r_resp;                    // 0=OKAY;1=EXOKAY;2=SLVERR;3=DECER
-    o_msti_r_data = wb_resp_data;
-    o_msti_r_last = v_r_last;
-    o_msti_r_id = 0;
-    o_msti_r_user = 0;
+    vmsti.ar_ready = w_req_mem_ready;
+    vmsti.r_valid = v_r_valid;
+    vmsti.r_resp = vb_r_resp;                    // 0=OKAY;1=EXOKAY;2=SLVERR;3=DECER
+    vmsti.r_data = wb_resp_data;
+    vmsti.r_last = v_r_last;
+    vmsti.r_id = 0;
+    vmsti.r_user = 0;
+    o_msti = vmsti;     // to trigger event;
 
     o_interrupt = r.interrupt;
 
