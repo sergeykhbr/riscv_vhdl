@@ -122,7 +122,7 @@ void RtlWrapper::clk_gen() {
 
 void RtlWrapper::comb() {
     bool w_req_mem_ready;
-    sc_uint<BUS_ADDR_WIDTH> vb_req_addr;
+    sc_uint<CFG_BUS_ADDR_WIDTH> vb_req_addr;
     sc_uint<4> vb_r_resp;
     bool v_r_valid;
     bool v_r_last;

@@ -56,7 +56,7 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset)
     o_state("o_state") {
     async_reset_ = async_reset;
 
-    mem = new TagMemNWay<CFG_RIVER_ADDR_BITS,
+    mem = new TagMemNWay<CFG_CPU_ADDR_BITS,
                          CFG_DLOG2_NWAYS,
                          CFG_DLOG2_LINES_PER_WAY,
                          CFG_DLOG2_BYTES_PER_LINE,
@@ -197,12 +197,12 @@ void DCacheLru::comb() {
     bool v_flush;
     bool v_flush_end;
     bool v_line_cs;
-    sc_uint<CFG_RIVER_ADDR_BITS> vb_line_addr;
+    sc_uint<CFG_CPU_ADDR_BITS> vb_line_addr;
     sc_biguint<DCACHE_LINE_BITS> vb_line_wdata;
     sc_uint<DCACHE_BYTES_PER_LINE> vb_line_wstrb;
     sc_biguint<64> vb_req_mask;
     sc_uint<DTAG_FL_TOTAL> v_line_wflags;
-    sc_uint<CFG_RIVER_ADDR_BITS> vb_err_addr;
+    sc_uint<CFG_CPU_ADDR_BITS> vb_err_addr;
     sc_uint<CFG_DLOG2_BYTES_PER_LINE-3> ridx;
     bool v_req_same_line;
    
@@ -228,8 +228,8 @@ void DCacheLru::comb() {
     }
 
     v_req_same_line = 0;
-    if (r.req_addr.read()(CFG_RIVER_ADDR_BITS-1, CFG_DLOG2_BYTES_PER_LINE)
-        == i_req_addr.read()(CFG_RIVER_ADDR_BITS-1, CFG_DLOG2_BYTES_PER_LINE)) {
+    if (r.req_addr.read()(CFG_CPU_ADDR_BITS-1, CFG_DLOG2_BYTES_PER_LINE)
+        == i_req_addr.read()(CFG_CPU_ADDR_BITS-1, CFG_DLOG2_BYTES_PER_LINE)) {
         v_req_same_line = 1;
     }
 
@@ -381,17 +381,17 @@ void DCacheLru::comb() {
                     line_rflags_o.read()[DTAG_FL_DIRTY] == 1) {
                     v.write_first = 1;
                     v.mem_write = 1;
-                    v.mem_addr = line_raddr_o.read()(CFG_RIVER_ADDR_BITS-1,
+                    v.mem_addr = line_raddr_o.read()(CFG_CPU_ADDR_BITS-1,
                                 CFG_DLOG2_BYTES_PER_LINE) << CFG_DLOG2_BYTES_PER_LINE;
                 } else {
-                    v.mem_addr = r.req_addr.read()(CFG_RIVER_ADDR_BITS-1,
+                    v.mem_addr = r.req_addr.read()(CFG_CPU_ADDR_BITS-1,
                                 CFG_DLOG2_BYTES_PER_LINE) << CFG_DLOG2_BYTES_PER_LINE;
                 }
                 v.mem_wstrb = ~0ul;
                 v.cached = 1;
                 v.cache_line_o = line_rdata_o;
             } else {
-                v.mem_addr = r.req_addr.read()(CFG_RIVER_ADDR_BITS-1, 3) << 3;
+                v.mem_addr = r.req_addr.read()(CFG_CPU_ADDR_BITS-1, 3) << 3;
                 v.mem_wstrb = (0, r.req_wstrb.read());
                 v.mem_write = r.req_write.read();
                 v.cached = 0;
@@ -462,7 +462,7 @@ void DCacheLru::comb() {
                 // Offloading Cache line on flush request
                 v.state = State_FlushAddr;
             } else if (r.write_first.read() == 1) {
-                v.mem_addr = r.req_addr.read()(CFG_RIVER_ADDR_BITS-1, CFG_DLOG2_BYTES_PER_LINE)
+                v.mem_addr = r.req_addr.read()(CFG_CPU_ADDR_BITS-1, CFG_DLOG2_BYTES_PER_LINE)
                             << CFG_DLOG2_BYTES_PER_LINE;
                 v.req_mem_valid = 1;
                 v.write_first = 0;

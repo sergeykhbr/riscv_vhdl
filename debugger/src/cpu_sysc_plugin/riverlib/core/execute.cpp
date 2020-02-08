@@ -328,9 +328,9 @@ void InstrExecute::comb() {
     sc_uint<12> vb_csr_addr;
     sc_uint<RISCV_ARCH> vb_csr_wdata;
     sc_uint<RISCV_ARCH> vb_res;
-    sc_uint<CFG_RIVER_ADDR_BITS> vb_prog_npc;
-    sc_uint<CFG_RIVER_ADDR_BITS> vb_npc_incr;
-    sc_uint<CFG_RIVER_ADDR_BITS> vb_npc;
+    sc_uint<CFG_CPU_ADDR_BITS> vb_prog_npc;
+    sc_uint<CFG_CPU_ADDR_BITS> vb_npc_incr;
+    sc_uint<CFG_CPU_ADDR_BITS> vb_npc;
     sc_uint<RISCV_ARCH> vb_off;
     sc_uint<RISCV_ARCH> vb_sum64;
     sc_uint<RISCV_ARCH> vb_sum32;
@@ -339,7 +339,7 @@ void InstrExecute::comb() {
     sc_uint<RISCV_ARCH> vb_and64;
     sc_uint<RISCV_ARCH> vb_or64;
     sc_uint<RISCV_ARCH> vb_xor64;
-    sc_uint<CFG_RIVER_ADDR_BITS> vb_memop_addr;
+    sc_uint<CFG_CPU_ADDR_BITS> vb_memop_addr;
     sc_bv<Instr_Total> wv;
     int opcode_len;
     bool v_call;
@@ -470,10 +470,10 @@ void InstrExecute::comb() {
 
     if (i_memop_load) {
         vb_memop_addr =
-            vb_rdata1(CFG_RIVER_ADDR_BITS-1, 0) + vb_rdata2(CFG_RIVER_ADDR_BITS-1, 0);
+            vb_rdata1(CFG_CPU_ADDR_BITS-1, 0) + vb_rdata2(CFG_CPU_ADDR_BITS-1, 0);
     } else if (i_memop_store) {
         vb_memop_addr = 
-            vb_rdata1(CFG_RIVER_ADDR_BITS-1, 0) + vb_off(CFG_RIVER_ADDR_BITS-1, 0);
+            vb_rdata1(CFG_CPU_ADDR_BITS-1, 0) + vb_off(CFG_CPU_ADDR_BITS-1, 0);
     }
 
     w_exception_store = 0;
@@ -536,11 +536,11 @@ void InstrExecute::comb() {
     vb_npc_incr = i_d_pc.read() + opcode_len;
 
     if (v_pc_branch) {
-        vb_prog_npc = i_d_pc.read() + vb_off(CFG_RIVER_ADDR_BITS-1, 0);
+        vb_prog_npc = i_d_pc.read() + vb_off(CFG_CPU_ADDR_BITS-1, 0);
     } else if (wv[Instr_JAL].to_bool()) {
-        vb_prog_npc = vb_rdata1(CFG_RIVER_ADDR_BITS-1, 0) + vb_off(CFG_RIVER_ADDR_BITS-1, 0);
+        vb_prog_npc = vb_rdata1(CFG_CPU_ADDR_BITS-1, 0) + vb_off(CFG_CPU_ADDR_BITS-1, 0);
     } else if (wv[Instr_JALR].to_bool()) {
-        vb_prog_npc = vb_rdata1(CFG_RIVER_ADDR_BITS-1, 0) + vb_rdata2(CFG_RIVER_ADDR_BITS-1, 0);
+        vb_prog_npc = vb_rdata1(CFG_CPU_ADDR_BITS-1, 0) + vb_rdata2(CFG_CPU_ADDR_BITS-1, 0);
         vb_prog_npc[0] = 0;
     } else if (wv[Instr_MRET].to_bool()) {
         vb_prog_npc = i_csr_rdata;

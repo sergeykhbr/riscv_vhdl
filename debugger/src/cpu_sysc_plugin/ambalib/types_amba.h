@@ -23,16 +23,16 @@
 
 namespace debugger {
 
-static const int BUS_ADDR_WIDTH      = 64;
-
+static const int CFG_BUS_ADDR_WIDTH      = 64;
 static const int CFG_LOG2_BUS_DATA_BYTES = 3;
+static const int CFG_BUS_ID_BITS         = 5;
+static const int CFG_BUS_USER_BITS       = 1;
+
 static const int BUS_DATA_BYTES      = (1 << CFG_LOG2_BUS_DATA_BYTES);
 static const int BUS_DATA_WIDTH      = 8 * BUS_DATA_BYTES;
-static const int BUS_ID_BITS         = 5;
-static const int BUS_USER_BITS       = 1;
 
 struct axi4_meta_type {
-    sc_uint<BUS_ADDR_WIDTH> addr;
+    sc_uint<CFG_BUS_ADDR_WIDTH> addr;
     sc_uint<8> len;              // burst len = len[7:0] + 1
     sc_uint<3> size;             // 0=1B; 1=2B; 2=4B; 3=8B; ...
     sc_uint<2> burst;            // 00=FIXED; 01=INCR; 10=WRAP; 11=reserved
@@ -123,15 +123,15 @@ class axi4_master_in_type {
     bool w_ready;
     bool b_valid;
     sc_uint<2> b_resp;
-    sc_uint<BUS_ID_BITS> b_id;
-    sc_uint<BUS_USER_BITS> b_user;
+    sc_uint<CFG_BUS_ID_BITS> b_id;
+    sc_uint<CFG_BUS_USER_BITS> b_user;
     bool ar_ready;
     bool r_valid;
     sc_uint<2> r_resp;
     sc_uint<BUS_DATA_WIDTH> r_data;
     bool r_last;
-    sc_uint<BUS_ID_BITS> r_id;
-    sc_uint<BUS_USER_BITS> r_user;
+    sc_uint<CFG_BUS_ID_BITS> r_id;
+    sc_uint<CFG_BUS_USER_BITS> r_user;
 };
 
 
@@ -285,18 +285,18 @@ class axi4_master_out_type {
  public:
     bool aw_valid;
     axi4_meta_type aw_bits;
-    sc_uint<BUS_ID_BITS> aw_id;
-    sc_uint<BUS_USER_BITS> aw_user;
+    sc_uint<CFG_BUS_ID_BITS> aw_id;
+    sc_uint<CFG_BUS_USER_BITS> aw_user;
     bool w_valid;
     sc_uint<BUS_DATA_WIDTH> w_data;
     bool w_last;
     sc_uint<BUS_DATA_BYTES> w_strb;
-    sc_uint<BUS_USER_BITS> w_user;
+    sc_uint<CFG_BUS_USER_BITS> w_user;
     bool b_ready;
     bool ar_valid;
     axi4_meta_type ar_bits;
-    sc_uint<BUS_ID_BITS> ar_id;
-    sc_uint<BUS_USER_BITS> ar_user;
+    sc_uint<CFG_BUS_ID_BITS> ar_id;
+    sc_uint<CFG_BUS_USER_BITS> ar_user;
     bool r_ready;
 };
 

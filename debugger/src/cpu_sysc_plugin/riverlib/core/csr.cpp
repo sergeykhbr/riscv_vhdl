@@ -340,25 +340,25 @@ void CsrRegs::procedure_RegAccess(uint64_t iaddr, bool iwena,
     case CSR_mstackovr:// - Machine Stack Overflow
         (*ordata) = ir.mstackovr;
         if (iwena) {
-            ov->mstackovr = iwdata(CFG_RIVER_ADDR_BITS-1, 0);
-            ov->mstackovr_ena = iwdata(CFG_RIVER_ADDR_BITS-1, 0).or_reduce();
+            ov->mstackovr = iwdata(CFG_CPU_ADDR_BITS-1, 0);
+            ov->mstackovr_ena = iwdata(CFG_CPU_ADDR_BITS-1, 0).or_reduce();
         }
         break;
     case CSR_mstackund:// - Machine Stack Underflow
         (*ordata) = ir.mstackund;
         if (iwena) {
-            ov->mstackund = iwdata(CFG_RIVER_ADDR_BITS-1, 0);
-            ov->mstackund_ena = iwdata(CFG_RIVER_ADDR_BITS-1, 0).or_reduce();
+            ov->mstackund = iwdata(CFG_CPU_ADDR_BITS-1, 0);
+            ov->mstackund_ena = iwdata(CFG_CPU_ADDR_BITS-1, 0).or_reduce();
         }
         break;
     case CSR_mpu_addr:  // [WO] MPU address
         if (iwena) {
-            ov->mpu_addr = iwdata(CFG_RIVER_ADDR_BITS-1, 0);
+            ov->mpu_addr = iwdata(CFG_CPU_ADDR_BITS-1, 0);
         }
         break;
     case CSR_mpu_mask:  // [WO] MPU mask
         if (iwena) {
-            ov->mpu_mask = iwdata(CFG_RIVER_ADDR_BITS-1, 0);
+            ov->mpu_mask = iwdata(CFG_CPU_ADDR_BITS-1, 0);
         }
         break;
     case CSR_mpu_ctrl:  // [WO] MPU flags and write ena
@@ -381,11 +381,11 @@ void CsrRegs::comb() {
     bool w_ext_irq;
     bool w_dport_wena;
     bool w_trap_valid;
-    sc_uint<CFG_RIVER_ADDR_BITS> wb_trap_pc;
+    sc_uint<CFG_CPU_ADDR_BITS> wb_trap_pc;
     bool w_trap_irq;
     bool w_exception_xret;
     sc_uint<5> wb_trap_code;
-    sc_uint<CFG_RIVER_ADDR_BITS> wb_mbadaddr;
+    sc_uint<CFG_CPU_ADDR_BITS> wb_mbadaddr;
     bool w_mstackovr;
     bool w_mstackund;
 
@@ -419,12 +419,12 @@ void CsrRegs::comb() {
     }
 
     w_mstackovr = 0;
-    if (i_sp.read()(CFG_RIVER_ADDR_BITS-1, 0) < r.mstackovr.read()) {
+    if (i_sp.read()(CFG_CPU_ADDR_BITS-1, 0) < r.mstackovr.read()) {
         w_mstackovr = 1;
     }
 
     w_mstackund = 0;
-    if (i_sp.read()(CFG_RIVER_ADDR_BITS-1, 0) > r.mstackund.read()) {
+    if (i_sp.read()(CFG_CPU_ADDR_BITS-1, 0) > r.mstackund.read()) {
         w_mstackund = 1;
     }
 
@@ -440,7 +440,7 @@ void CsrRegs::comb() {
     w_trap_irq = 0;
     wb_trap_code = 0;
     v.break_event = 0;
-    wb_trap_pc = r.mtvec.read()(CFG_RIVER_ADDR_BITS-1, 0);
+    wb_trap_pc = r.mtvec.read()(CFG_CPU_ADDR_BITS-1, 0);
     wb_mbadaddr = i_ex_pc.read();
 
     if (i_ex_instr_load_fault.read() == 1) {
@@ -535,7 +535,7 @@ void CsrRegs::comb() {
         }
     } else if (w_ext_irq == 1 && r.ext_irq.read() == 0) {
         w_trap_valid = 1;
-        wb_trap_pc = r.mtvec.read()(CFG_RIVER_ADDR_BITS-1, 0);
+        wb_trap_pc = r.mtvec.read()(CFG_CPU_ADDR_BITS-1, 0);
         wb_trap_code = 0xB;
         w_trap_irq = 1;
     }

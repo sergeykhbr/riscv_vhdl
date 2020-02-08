@@ -62,7 +62,7 @@ class RtlWrapper : public sc_module,
 
     struct RegistersType {
         // AXI4 Request 
-        sc_signal<sc_uint<BUS_ADDR_WIDTH>> req_addr;
+        sc_signal<sc_uint<CFG_BUS_ADDR_WIDTH>> req_addr;
         sc_signal<sc_uint<8>> req_len;
         sc_signal<sc_uint<2>> req_burst;
         // AXI4 B-Channel

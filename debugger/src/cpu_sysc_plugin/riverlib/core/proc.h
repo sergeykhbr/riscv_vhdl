@@ -39,9 +39,9 @@ SC_MODULE(Processor) {
     // Control path:
     sc_in<bool> i_req_ctrl_ready;                       // ICache is ready to accept request
     sc_out<bool> o_req_ctrl_valid;                      // Request to ICache is valid
-    sc_out<sc_uint<CFG_RIVER_ADDR_BITS>> o_req_ctrl_addr;    // Requesting address to ICache
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_req_ctrl_addr;    // Requesting address to ICache
     sc_in<bool> i_resp_ctrl_valid;                      // ICache response is valid
-    sc_in<sc_uint<CFG_RIVER_ADDR_BITS>> i_resp_ctrl_addr;    // Response address must be equal to the latest request address
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_resp_ctrl_addr;    // Response address must be equal to the latest request address
     sc_in<sc_uint<32>> i_resp_ctrl_data;                // Read value
     sc_in<bool> i_resp_ctrl_load_fault;
     sc_in<bool> i_resp_ctrl_executable;                 // MPU flag
@@ -50,13 +50,13 @@ SC_MODULE(Processor) {
     sc_in<bool> i_req_data_ready;                       // DCache is ready to accept request
     sc_out<bool> o_req_data_valid;                      // Request to DCache is valid
     sc_out<bool> o_req_data_write;                      // Read/Write transaction
-    sc_out<sc_uint<CFG_RIVER_ADDR_BITS>> o_req_data_addr;    // Requesting address to DCache
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_req_data_addr;    // Requesting address to DCache
     sc_out<sc_uint<64>> o_req_data_wdata;               // Writing value
     sc_out<sc_uint<8>> o_req_data_wstrb;                // 8-bytes aligned strobs
     sc_in<bool> i_resp_data_valid;                      // DCache response is valid
-    sc_in<sc_uint<CFG_RIVER_ADDR_BITS>> i_resp_data_addr;    // DCache response address must be equal to the latest request address
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_resp_data_addr;    // DCache response address must be equal to the latest request address
     sc_in<sc_uint<64>> i_resp_data_data;                // Read value
-    sc_in<sc_uint<CFG_RIVER_ADDR_BITS>> i_resp_data_store_fault_addr;  // write-error address (B-channel)
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_resp_data_store_fault_addr;  // write-error address (B-channel)
     sc_in<bool> i_resp_data_load_fault;                 // Bus response with SLVERR or DECERR on read
     sc_in<bool> i_resp_data_store_fault;                // Bus response with SLVERR or DECERR on write
     sc_in<bool> i_resp_data_er_mpu_load;
@@ -69,8 +69,8 @@ SC_MODULE(Processor) {
     // MPU interface
     sc_out<bool> o_mpu_region_we;
     sc_out<sc_uint<CFG_MPU_TBL_WIDTH>> o_mpu_region_idx;
-    sc_out<sc_uint<CFG_RIVER_ADDR_BITS>> o_mpu_region_addr;
-    sc_out<sc_uint<CFG_RIVER_ADDR_BITS>> o_mpu_region_mask;
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mpu_region_addr;
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mpu_region_mask;
     sc_out<sc_uint<CFG_MPU_FL_TOTAL>> o_mpu_region_flags;  // {ena, cachable, r, w, x}
     // Debug interface
     sc_in<bool> i_dport_valid;                          // Debug access from DSU is valid
@@ -82,9 +82,9 @@ SC_MODULE(Processor) {
     sc_out<sc_uint<RISCV_ARCH>> o_dport_rdata;          // Response value
     sc_out<bool> o_halted;                              // CPU halted via debug interface
     // Cache debug signals:
-    sc_out<sc_uint<CFG_RIVER_ADDR_BITS>> o_flush_address;    // Address of instruction to remove from ICache
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_flush_address;    // Address of instruction to remove from ICache
     sc_out<bool> o_flush_valid;                         // Remove address from ICache is valid
-    sc_out<sc_uint<CFG_RIVER_ADDR_BITS>> o_data_flush_address;    // Address of instruction to remove from D$
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_data_flush_address;    // Address of instruction to remove from D$
     sc_out<bool> o_data_flush_valid;                         // Remove address from D$ is valid
     sc_in<bool> i_data_flush_end;
     sc_in<sc_uint<4>> i_istate;                         // ICache transaction state
@@ -106,15 +106,15 @@ private:
         sc_signal<bool> instr_load_fault;
         sc_signal<bool> instr_executable;
         sc_signal<bool> valid;
-        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> pc;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
         sc_signal<sc_uint<32>> instr;
         sc_signal<bool> imem_req_valid;
-        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> imem_req_addr;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> imem_req_addr;
         sc_signal<bool> pipeline_hold;
     };
 
     struct InstructionDecodeType {
-        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> pc;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
         sc_signal<sc_uint<32>> instr;
         sc_signal<bool> instr_valid;
         sc_signal<bool> memop_store;
@@ -140,9 +140,9 @@ private:
         sc_signal<bool> trap_ready;
         sc_signal<bool> valid;
         sc_signal<sc_uint<32>> instr;
-        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> pc;
-        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> npc;
-        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> ex_npc;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> npc;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> ex_npc;
 
         sc_signal<bool> wena;
         sc_signal<sc_uint<6>> waddr;
@@ -172,7 +172,7 @@ private:
         sc_signal<bool> memop_load;
         sc_signal<bool> memop_store;
         sc_signal<sc_uint<2>> memop_size;
-        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> memop_addr;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> memop_addr;
         sc_signal<sc_uint<RISCV_ARCH>> memop_wdata;
         sc_signal<sc_uint<6>> memop_waddr;
         sc_signal<sc_uint<4>> memop_wtag;
@@ -217,7 +217,7 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> rdata;
         sc_signal<sc_uint<RISCV_ARCH>> dport_rdata;
         sc_signal<bool> trap_valid;
-        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> trap_pc;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> trap_pc;
         sc_signal<bool> break_event;             // ebreak detected 1 clock pulse
     } csr;
 
@@ -235,14 +235,14 @@ private:
         sc_signal<sc_uint<64>> executed_cnt;        // Number of executed instruction
         sc_signal<bool> break_mode;                          // Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
         sc_signal<bool> br_fetch_valid;                      // Fetch injection address/instr are valid
-        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> br_address_fetch; // Fetch injection address to skip ebreak instruciton only once
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> br_address_fetch; // Fetch injection address to skip ebreak instruciton only once
         sc_signal<sc_uint<32>> br_instr_fetch;               // Real instruction value that was replaced by ebreak
-        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> flush_address;    // Address of instruction to remove from ICache
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> flush_address;    // Address of instruction to remove from ICache
         sc_signal<bool> flush_valid;                         // Remove address from ICache is valid
     } dbg;
 
     struct BranchPredictorType {
-        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> npc;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> npc;
     } bp;
 
     /** 5-stages CPU pipeline */
@@ -254,7 +254,7 @@ private:
         WriteBackType w;                        // Write back registers value
     } w;
 
-    sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> wb_exec_dport_npc;
+    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_exec_dport_npc;
 
     sc_signal<bool> w_fetch_pipeline_hold;
     sc_signal<bool> w_any_pipeline_hold;

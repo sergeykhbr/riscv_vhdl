@@ -33,7 +33,7 @@ SC_MODULE(RiverTop) {
     sc_out<bool> o_req_mem_valid;                       // AXI memory request is valid
     sc_out<bool> o_req_mem_write;                       // AXI memory request is write type
     sc_out<bool> o_req_mem_cached;
-    sc_out<sc_uint<CFG_RIVER_ADDR_BITS>> o_req_mem_addr;     // AXI memory request address
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_req_mem_addr;     // AXI memory request address
     sc_out<sc_uint<L1CACHE_BYTES_PER_LINE>> o_req_mem_strob;  // Writing strob. 1 bit per Byte (uncached only)
     sc_out<sc_biguint<L1CACHE_LINE_BITS>> o_req_mem_data;     // Writing data
     sc_in<bool> i_resp_mem_valid;                       // AXI response is valid
@@ -41,7 +41,7 @@ SC_MODULE(RiverTop) {
     sc_in<sc_biguint<L1CACHE_LINE_BITS>> i_resp_mem_data;     // Read data
     sc_in<bool> i_resp_mem_load_fault;
     sc_in<bool> i_resp_mem_store_fault;
-    sc_in<sc_uint<CFG_RIVER_ADDR_BITS>> i_resp_mem_store_fault_addr;
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_resp_mem_store_fault_addr;
     /** Interrupt line from external interrupts controller (PLIC). */
     sc_in<bool> i_ext_irq;
     sc_out<sc_uint<64>> o_time;                         // Clock/Step counter depending attribute "GenerateRef"
@@ -72,9 +72,9 @@ SC_MODULE(RiverTop) {
     // Control path:
     sc_signal<bool> w_req_ctrl_ready;
     sc_signal<bool> w_req_ctrl_valid;
-    sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> wb_req_ctrl_addr;
+    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_req_ctrl_addr;
     sc_signal<bool> w_resp_ctrl_valid;
-    sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> wb_resp_ctrl_addr;
+    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_resp_ctrl_addr;
     sc_signal<sc_uint<32>> wb_resp_ctrl_data;
     sc_signal<bool> w_resp_ctrl_load_fault;
     sc_signal<bool> w_resp_ctrl_executable;
@@ -83,26 +83,26 @@ SC_MODULE(RiverTop) {
     sc_signal<bool> w_req_data_ready;
     sc_signal<bool> w_req_data_valid;
     sc_signal<bool> w_req_data_write;
-    sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> wb_req_data_addr;
+    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_req_data_addr;
     sc_signal<sc_uint<64>> wb_req_data_wdata;
     sc_signal<sc_uint<8>> wb_req_data_wstrb;
     sc_signal<bool> w_resp_data_valid;
-    sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> wb_resp_data_addr;
+    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_resp_data_addr;
     sc_signal<sc_uint<64>> wb_resp_data_data;
     sc_signal<bool> w_resp_data_load_fault;
     sc_signal<bool> w_resp_data_store_fault;
     sc_signal<bool> w_resp_data_er_mpu_load;
     sc_signal<bool> w_resp_data_er_mpu_store;
-    sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> wb_resp_data_store_fault_addr;
+    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_resp_data_store_fault_addr;
     sc_signal<bool> w_resp_data_ready;
     sc_signal<bool> w_mpu_region_we;
     sc_signal<sc_uint<CFG_MPU_TBL_WIDTH>> wb_mpu_region_idx;
-    sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> wb_mpu_region_addr;
-    sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> wb_mpu_region_mask;
+    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_mpu_region_addr;
+    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_mpu_region_mask;
     sc_signal<sc_uint<CFG_MPU_FL_TOTAL>> wb_mpu_region_flags;
-    sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> wb_flush_address;
+    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_flush_address;
     sc_signal<bool> w_flush_valid;
-    sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> wb_data_flush_address;
+    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_data_flush_address;
     sc_signal<bool> w_data_flush_valid;
     sc_signal<bool> w_data_flush_end;
     sc_signal<sc_uint<4>> wb_istate;

@@ -331,9 +331,9 @@ void DbgPort::comb() {
                 // todo: remove hardware breakpoint
                 break;
             case 7:
-                wb_rdata(CFG_RIVER_ADDR_BITS-1, 0) = r.br_address_fetch;
+                wb_rdata(CFG_CPU_ADDR_BITS-1, 0) = r.br_address_fetch;
                 if (i_dport_write.read()) {
-                    v.br_address_fetch = i_dport_wdata.read()(CFG_RIVER_ADDR_BITS-1, 0);
+                    v.br_address_fetch = i_dport_wdata.read()(CFG_CPU_ADDR_BITS-1, 0);
                 }
                 break;
             case 8:
@@ -345,11 +345,11 @@ void DbgPort::comb() {
                 }
                 break;
             case 9:
-                wb_rdata(CFG_RIVER_ADDR_BITS-1, 0) = r.flush_address;
+                wb_rdata(CFG_CPU_ADDR_BITS-1, 0) = r.flush_address;
                 if (i_dport_write.read()) {
                     v.flush_valid = 1;
                     v.flush_address =
-                        i_dport_wdata.read()(CFG_RIVER_ADDR_BITS-1, 0);
+                        i_dport_wdata.read()(CFG_CPU_ADDR_BITS-1, 0);
                 }
                 break;
             default:;
@@ -361,10 +361,10 @@ void DbgPort::comb() {
     v.rdata = wb_rdata;
     if (r.rd_trbuf_ena.read()) {
         if (r.rd_trbuf_addr0.read() == 0) {
-            wb_o_rdata = wb_stack_rdata.read()(CFG_RIVER_ADDR_BITS-1, 0);
+            wb_o_rdata = wb_stack_rdata.read()(CFG_CPU_ADDR_BITS-1, 0);
         } else {
-            wb_o_rdata = wb_stack_rdata.read()(2*CFG_RIVER_ADDR_BITS-1,
-                                               CFG_RIVER_ADDR_BITS);
+            wb_o_rdata = wb_stack_rdata.read()(2*CFG_CPU_ADDR_BITS-1,
+                                               CFG_CPU_ADDR_BITS);
         }
     } else {
         wb_o_rdata = r.rdata;

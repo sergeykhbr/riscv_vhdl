@@ -64,7 +64,7 @@ SC_MODULE(InstrDecoder) {
     sc_in<bool> i_nrst;                         // Reset active low
     sc_in<bool> i_any_hold;                     // Hold pipeline by any reason
     sc_in<bool> i_f_valid;                      // Fetch input valid
-    sc_in<sc_uint<CFG_RIVER_ADDR_BITS>> i_f_pc;      // Fetched pc
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_f_pc;      // Fetched pc
     sc_in<sc_uint<32>> i_f_instr;               // Fetched instruction value
     sc_in<bool> i_instr_load_fault;             // fault instruction's address
     sc_in<bool> i_instr_executable;             // MPU flag
@@ -77,7 +77,7 @@ SC_MODULE(InstrDecoder) {
     sc_in<bool> i_e_ready;
     sc_in<bool> i_e_fencei;
     sc_out<bool> o_valid;                       // Current output values are valid
-    sc_out<sc_uint<CFG_RIVER_ADDR_BITS>> o_pc;       // Current instruction pointer value
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_pc;       // Current instruction pointer value
     sc_out<sc_uint<32>> o_instr;                // Current instruction value
     sc_out<bool> o_memop_store;                 // Store to memory operation
     sc_out<bool> o_memop_load;                  // Load from memoru operation
@@ -105,7 +105,7 @@ SC_MODULE(InstrDecoder) {
 private:
     struct RegistersType {
         sc_signal<bool> valid;
-        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> pc;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
         sc_bv<ISA_Total> isa_type;
         sc_bv<Instr_Total> instr_vec;
         sc_signal<sc_uint<32>> instr;

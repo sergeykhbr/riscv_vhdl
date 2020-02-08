@@ -26,12 +26,12 @@ namespace debugger {
 SC_MODULE(MPU) {
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;
-    sc_in<sc_uint<CFG_RIVER_ADDR_BITS>> i_iaddr;
-    sc_in<sc_uint<CFG_RIVER_ADDR_BITS>> i_daddr;
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_iaddr;
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_daddr;
     sc_in<bool> i_region_we;
     sc_in<sc_uint<CFG_MPU_TBL_WIDTH>> i_region_idx;
-    sc_in<sc_uint<CFG_RIVER_ADDR_BITS>> i_region_addr;
-    sc_in<sc_uint<CFG_RIVER_ADDR_BITS>> i_region_mask;
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_region_addr;
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_region_mask;
     sc_in<sc_uint<CFG_MPU_FL_TOTAL>> i_region_flags;  // {ena, cachable, r, w, x}
     sc_out<sc_uint<CFG_MPU_FL_TOTAL>> o_iflags;
     sc_out<sc_uint<CFG_MPU_FL_TOTAL>> o_dflags;
@@ -47,8 +47,8 @@ SC_MODULE(MPU) {
 
  private:
     struct MpuTableItemType {
-        sc_uint<CFG_RIVER_ADDR_BITS> addr;
-        sc_uint<CFG_RIVER_ADDR_BITS> mask;
+        sc_uint<CFG_CPU_ADDR_BITS> addr;
+        sc_uint<CFG_CPU_ADDR_BITS> mask;
         sc_uint<CFG_MPU_FL_TOTAL> flags;
     };
 

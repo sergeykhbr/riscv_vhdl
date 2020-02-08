@@ -80,14 +80,14 @@ void BranchPredictor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
 void BranchPredictor::comb() {
     sc_uint<32> vb_tmp;
-    sc_uint<CFG_RIVER_ADDR_BITS> vb_npc_predicted;
-    sc_uint<CFG_RIVER_ADDR_BITS> vb_pc;
-    sc_uint<CFG_RIVER_ADDR_BITS> vb_jal_off;
-    sc_uint<CFG_RIVER_ADDR_BITS> vb_jal_addr;
-    sc_uint<CFG_RIVER_ADDR_BITS> vb_branch_off;
-    sc_uint<CFG_RIVER_ADDR_BITS> vb_branch_addr;
-    sc_uint<CFG_RIVER_ADDR_BITS> vb_c_j_off;
-    sc_uint<CFG_RIVER_ADDR_BITS> vb_c_j_addr;
+    sc_uint<CFG_CPU_ADDR_BITS> vb_npc_predicted;
+    sc_uint<CFG_CPU_ADDR_BITS> vb_pc;
+    sc_uint<CFG_CPU_ADDR_BITS> vb_jal_off;
+    sc_uint<CFG_CPU_ADDR_BITS> vb_jal_addr;
+    sc_uint<CFG_CPU_ADDR_BITS> vb_branch_off;
+    sc_uint<CFG_CPU_ADDR_BITS> vb_branch_addr;
+    sc_uint<CFG_CPU_ADDR_BITS> vb_c_j_off;
+    sc_uint<CFG_CPU_ADDR_BITS> vb_c_j_addr;
 
     v = r;
 
@@ -96,9 +96,9 @@ void BranchPredictor::comb() {
 
     // Unconditional jump "J"
     if (vb_tmp[31]) {
-        vb_jal_off(CFG_RIVER_ADDR_BITS-1, 20) = ~0;
+        vb_jal_off(CFG_CPU_ADDR_BITS-1, 20) = ~0;
     } else {
-        vb_jal_off(CFG_RIVER_ADDR_BITS-1, 20) = 0;
+        vb_jal_off(CFG_CPU_ADDR_BITS-1, 20) = 0;
     }
     vb_jal_off(19, 12) = vb_tmp(19, 12);
     vb_jal_off[11] = vb_tmp[20];
@@ -116,9 +116,9 @@ void BranchPredictor::comb() {
     // Conditional branches "BEQ", "BNE", "BLT", "BGE", BLTU", "BGEU"
     // Only negative offset leads to predicted jumps
     if (vb_tmp[31]) {
-        vb_branch_off(CFG_RIVER_ADDR_BITS-1, 12) = ~0;
+        vb_branch_off(CFG_CPU_ADDR_BITS-1, 12) = ~0;
     } else {
-        vb_branch_off(CFG_RIVER_ADDR_BITS-1, 12) = 0;
+        vb_branch_off(CFG_CPU_ADDR_BITS-1, 12) = 0;
     }
     vb_branch_off[11] = vb_tmp[7];
     vb_branch_off(10, 5) = vb_tmp(30, 25);
@@ -136,9 +136,9 @@ void BranchPredictor::comb() {
 
     // Check Compressed "C_J" unconditional jump
     if (vb_tmp[12]) {
-        vb_c_j_off(CFG_RIVER_ADDR_BITS-1, 11) = ~0;
+        vb_c_j_off(CFG_CPU_ADDR_BITS-1, 11) = ~0;
     } else {
-        vb_c_j_off(CFG_RIVER_ADDR_BITS-1, 11) = 0;
+        vb_c_j_off(CFG_CPU_ADDR_BITS-1, 11) = 0;
     }
     vb_c_j_off[10] = vb_tmp[8];
     vb_c_j_off(9, 8) = vb_tmp(10, 9);

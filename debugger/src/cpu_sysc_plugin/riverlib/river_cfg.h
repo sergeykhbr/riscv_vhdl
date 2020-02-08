@@ -18,7 +18,7 @@
 #define __DEBUGGER_RIVER_CFG_H__
 
 #include <systemc.h>
-#include "../ambalib/types_amba.h"   // to re-use BUS_ADDR_WIDTH
+#include "../ambalib/types_amba.h"   // to re-use CFG_BUS_ADDR_WIDTH
 
 namespace debugger {
 
@@ -28,8 +28,9 @@ static const bool CFG_HW_FPU_ENABLE         = true;
 
 static const int RISCV_ARCH     = 64;
 
-static const int CFG_RIVER_ADDR_BITS       = BUS_ADDR_WIDTH;
-static const int CFG_RIVER_ID_BITS         = 1;
+static const int CFG_CPU_ADDR_BITS       = CFG_BUS_ADDR_WIDTH;
+static const int CFG_CPU_ID_BITS         = 1;
+static const int CFG_CPU_USER_BITS       = 1;
 
 /** 
  * ICacheLru config (16 KB by default)

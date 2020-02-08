@@ -31,14 +31,14 @@ SC_MODULE(DCacheLru) {
     // Control path:
     sc_in<bool> i_req_valid;
     sc_in<bool> i_req_write;
-    sc_in<sc_uint<CFG_RIVER_ADDR_BITS>> i_req_addr;
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_req_addr;
     sc_in<sc_uint<64>> i_req_wdata;
     sc_in<sc_uint<8>> i_req_wstrb;
     sc_out<bool> o_req_ready;
     sc_out<bool> o_resp_valid;
-    sc_out<sc_uint<CFG_RIVER_ADDR_BITS>> o_resp_addr;
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_resp_addr;
     sc_out<sc_uint<64>> o_resp_data;
-    sc_out<sc_uint<CFG_RIVER_ADDR_BITS>> o_resp_er_addr;
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_resp_er_addr;
     sc_out<bool> o_resp_er_load_fault;
     sc_out<bool> o_resp_er_store_fault;
     sc_out<bool> o_resp_er_mpu_load;        // No access rights to read/execute
@@ -49,7 +49,7 @@ SC_MODULE(DCacheLru) {
     sc_out<bool> o_req_mem_valid;
     sc_out<bool> o_req_mem_write;
     sc_out<bool> o_req_mem_cached;
-    sc_out<sc_uint<CFG_RIVER_ADDR_BITS>> o_req_mem_addr;
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_req_mem_addr;
     sc_out<sc_uint<DCACHE_BYTES_PER_LINE>> o_req_mem_strob;
     sc_out<sc_biguint<DCACHE_LINE_BITS>> o_req_mem_data;
     sc_in<bool> i_mem_data_valid;
@@ -57,10 +57,10 @@ SC_MODULE(DCacheLru) {
     sc_in<bool> i_mem_load_fault;
     sc_in<bool> i_mem_store_fault;
     // Mpu interface
-    sc_out<sc_uint<CFG_RIVER_ADDR_BITS>> o_mpu_addr;
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mpu_addr;
     sc_in<sc_uint<CFG_MPU_FL_TOTAL>> i_mpu_flags;
     // Debug interface
-    sc_in<sc_uint<CFG_RIVER_ADDR_BITS>> i_flush_address;
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_flush_address;
     sc_in<bool> i_flush_valid;
     sc_out<bool> o_flush_end;
     sc_out<sc_uint<4>> o_state;
@@ -91,26 +91,26 @@ SC_MODULE(DCacheLru) {
     };
 
     sc_signal<bool> line_cs_i;
-    sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> line_addr_i;
+    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> line_addr_i;
     sc_signal<sc_biguint<DCACHE_LINE_BITS>> line_wdata_i;
     sc_signal<sc_uint<DCACHE_BYTES_PER_LINE>> line_wstrb_i;
     sc_signal<sc_uint<DTAG_FL_TOTAL>> line_wflags_i;
     sc_signal<bool> line_flush_i;
-    sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> line_raddr_o;
+    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> line_raddr_o;
     sc_signal<sc_biguint<DCACHE_LINE_BITS>> line_rdata_o;
     sc_signal<sc_uint<DTAG_FL_TOTAL>> line_rflags_o;
     sc_signal<bool> line_hit_o;
 
     struct RegistersType {
         sc_signal<bool> req_write;
-        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> req_addr;
-        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> req_addr_b_resp;  // to support delayed store error response
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_addr;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_addr_b_resp;  // to support delayed store error response
         sc_signal<sc_uint<64>> req_wdata;
         sc_signal<sc_uint<8>> req_wstrb;
         sc_signal<sc_uint<4>> state;
         sc_signal<bool> req_mem_valid;
         sc_signal<bool> mem_write;
-        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> mem_addr;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mem_addr;
         sc_signal<bool> cached;
         sc_signal<bool> mpu_er_store;
         sc_signal<bool> mpu_er_load;
@@ -119,7 +119,7 @@ SC_MODULE(DCacheLru) {
         sc_signal<bool> write_flush;
         sc_signal<sc_uint<DCACHE_BYTES_PER_LINE>> mem_wstrb;
         sc_signal<bool> req_flush;
-        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> req_flush_addr;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_flush_addr;
         sc_signal<sc_uint<CFG_DLOG2_LINES_PER_WAY + CFG_DLOG2_NWAYS>> req_flush_cnt;
         sc_signal<sc_uint<CFG_DLOG2_LINES_PER_WAY + CFG_DLOG2_NWAYS>> flush_cnt;
         sc_signal<sc_biguint<DCACHE_LINE_BITS>> cache_line_i;
@@ -153,7 +153,7 @@ SC_MODULE(DCacheLru) {
         iv.init = 1;
     }
 
-    TagMemNWay<CFG_RIVER_ADDR_BITS,
+    TagMemNWay<CFG_CPU_ADDR_BITS,
                CFG_DLOG2_NWAYS,
                CFG_DLOG2_LINES_PER_WAY,
                CFG_DLOG2_BYTES_PER_LINE,
@@ -185,14 +185,14 @@ private:
     // Control path:
     sc_signal<bool> w_req_valid;
     sc_signal<bool> w_req_write;
-    sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> wb_req_addr;
-    sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_req_wdata;
-    sc_signal<sc_uint<BUS_DATA_BYTES>> wb_req_wstrb;
+    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_req_addr;
+    sc_signal<sc_uint<64>> wb_req_wdata;
+    sc_signal<sc_uint<8>> wb_req_wstrb;
     sc_signal<bool> w_req_ready;
     sc_signal<bool> w_resp_valid;
-    sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> wb_resp_addr;
-    sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_resp_data;
-    sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> wb_resp_er_addr;
+    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_resp_addr;
+    sc_signal<sc_uint<64>> wb_resp_data;
+    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_resp_er_addr;
     sc_signal<bool> w_resp_er_load_fault;
     sc_signal<bool> w_resp_er_store_fault;
     sc_signal<bool> w_resp_er_mpu_load;
@@ -202,19 +202,19 @@ private:
     sc_signal<bool> w_req_mem_ready;
     sc_signal<bool> w_req_mem_valid;
     sc_signal<bool> w_req_mem_write;
-    sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> wb_req_mem_addr;
-    sc_signal<sc_uint<BUS_DATA_BYTES>> wb_req_mem_strob;
-    sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_req_mem_data;
+    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_req_mem_addr;
+    sc_signal<sc_uint<8>> wb_req_mem_strob;
+    sc_signal<sc_uint<64>> wb_req_mem_data;
     sc_signal<sc_uint<8>> wb_req_mem_len;       // burst transactions num
     sc_signal<sc_uint<2>> wb_req_mem_burst;     // "01" INCR; "10" burst WRAP
     sc_signal<bool> w_req_mem_last;            // last in sequence flag
     sc_signal<bool> w_mem_data_valid;
-    sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_mem_data;
+    sc_signal<sc_uint<64>> wb_mem_data;
     sc_signal<bool> w_mem_load_fault;
     sc_signal<bool> w_mem_store_fault;
-    sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> wb_mpu_addr;
+    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_mpu_addr;
     sc_signal<sc_uint<CFG_MPU_FL_TOTAL>> w_mpu_flags;
-    sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> wb_flush_address;
+    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_flush_address;
     sc_signal<bool> w_flush_valid;
     sc_signal<sc_uint<4>> wb_state;
 
@@ -230,8 +230,8 @@ private:
 
     struct BusRegistersType {
         sc_signal<sc_uint<2>> state;
-        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> mpu_addr;
-        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> burst_addr;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mpu_addr;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> burst_addr;
         sc_signal<sc_uint<8>> burst_cnt;
     } vbus, rbus;
 

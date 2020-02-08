@@ -103,7 +103,7 @@ void InstrFetch::comb() {
     bool w_o_req_valid;
     bool w_o_req_fire;
     bool w_o_hold;
-    sc_uint<CFG_RIVER_ADDR_BITS> wb_o_pc;
+    sc_uint<CFG_CPU_ADDR_BITS> wb_o_pc;
     sc_uint<32> wb_o_instr;
 
     v = r;

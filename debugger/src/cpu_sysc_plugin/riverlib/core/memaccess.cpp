@@ -160,7 +160,7 @@ void MemAccess::comb() {
     bool v_mem_write;
     bool v_mem_sign_ext;
     sc_uint<2> vb_mem_sz;
-    sc_uint<CFG_RIVER_ADDR_BITS> vb_mem_addr;
+    sc_uint<CFG_CPU_ADDR_BITS> vb_mem_addr;
     sc_uint<64> vb_mem_rdata;
     bool v_queue_re;
     bool v_flushd;
@@ -172,7 +172,7 @@ void MemAccess::comb() {
     sc_uint<64> vb_mem_data_signed;
     sc_uint<RISCV_ARCH> vb_res_data;
     sc_uint<6> vb_res_addr;
-    sc_uint<CFG_RIVER_ADDR_BITS> vb_e_pc;
+    sc_uint<CFG_CPU_ADDR_BITS> vb_e_pc;
     sc_uint<32> vb_e_instr;
     bool v_memop_ready;
     bool v_o_wena;
@@ -260,24 +260,24 @@ void MemAccess::comb() {
     queue_we = i_e_valid & (i_memop_load | i_memop_store | i_e_flushd);
 
     // Split Queue outputs:
-    v_flushd = queue_data_o.read()[2*CFG_RIVER_ADDR_BITS+RISCV_ARCH+8+64+46];
-    vb_mem_wtag = queue_data_o.read()(2*CFG_RIVER_ADDR_BITS+RISCV_ARCH+8+64+45,
-                                      2*CFG_RIVER_ADDR_BITS+RISCV_ARCH+8+64+42);
-    vb_mem_wdata = queue_data_o.read()(2*CFG_RIVER_ADDR_BITS+RISCV_ARCH+8+64+42-1,
-                                      2*CFG_RIVER_ADDR_BITS+RISCV_ARCH+8+42);
-    vb_mem_wstrb = queue_data_o.read()(2*CFG_RIVER_ADDR_BITS+RISCV_ARCH+8+42-1,
-                                      2*CFG_RIVER_ADDR_BITS+RISCV_ARCH+42);
-    vb_res_data = queue_data_o.read()(2*CFG_RIVER_ADDR_BITS+RISCV_ARCH+42-1,
-                                      2*CFG_RIVER_ADDR_BITS+42);
-    vb_res_addr = queue_data_o.read()(2*CFG_RIVER_ADDR_BITS+42-1,
-                                      2*CFG_RIVER_ADDR_BITS+36);
-    vb_e_instr = queue_data_o.read()(2*CFG_RIVER_ADDR_BITS+36-1,
-                                     2*CFG_RIVER_ADDR_BITS+4);
-    vb_e_pc = queue_data_o.read()(2*CFG_RIVER_ADDR_BITS+4-1, CFG_RIVER_ADDR_BITS+4);
-    vb_mem_sz = queue_data_o.read()(CFG_RIVER_ADDR_BITS+3, CFG_RIVER_ADDR_BITS+2);
-    v_mem_sign_ext = queue_data_o.read()[CFG_RIVER_ADDR_BITS+1];
-    v_mem_write = queue_data_o.read()[CFG_RIVER_ADDR_BITS];
-    vb_mem_addr = queue_data_o.read()(CFG_RIVER_ADDR_BITS-1, 0);
+    v_flushd = queue_data_o.read()[2*CFG_CPU_ADDR_BITS+RISCV_ARCH+8+64+46];
+    vb_mem_wtag = queue_data_o.read()(2*CFG_CPU_ADDR_BITS+RISCV_ARCH+8+64+45,
+                                      2*CFG_CPU_ADDR_BITS+RISCV_ARCH+8+64+42);
+    vb_mem_wdata = queue_data_o.read()(2*CFG_CPU_ADDR_BITS+RISCV_ARCH+8+64+42-1,
+                                      2*CFG_CPU_ADDR_BITS+RISCV_ARCH+8+42);
+    vb_mem_wstrb = queue_data_o.read()(2*CFG_CPU_ADDR_BITS+RISCV_ARCH+8+42-1,
+                                      2*CFG_CPU_ADDR_BITS+RISCV_ARCH+42);
+    vb_res_data = queue_data_o.read()(2*CFG_CPU_ADDR_BITS+RISCV_ARCH+42-1,
+                                      2*CFG_CPU_ADDR_BITS+42);
+    vb_res_addr = queue_data_o.read()(2*CFG_CPU_ADDR_BITS+42-1,
+                                      2*CFG_CPU_ADDR_BITS+36);
+    vb_e_instr = queue_data_o.read()(2*CFG_CPU_ADDR_BITS+36-1,
+                                     2*CFG_CPU_ADDR_BITS+4);
+    vb_e_pc = queue_data_o.read()(2*CFG_CPU_ADDR_BITS+4-1, CFG_CPU_ADDR_BITS+4);
+    vb_mem_sz = queue_data_o.read()(CFG_CPU_ADDR_BITS+3, CFG_CPU_ADDR_BITS+2);
+    v_mem_sign_ext = queue_data_o.read()[CFG_CPU_ADDR_BITS+1];
+    v_mem_write = queue_data_o.read()[CFG_CPU_ADDR_BITS];
+    vb_mem_addr = queue_data_o.read()(CFG_CPU_ADDR_BITS-1, 0);
 
     switch (r.memop_addr.read()(2, 0)) {
     case 1:

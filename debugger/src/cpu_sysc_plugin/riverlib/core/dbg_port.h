@@ -45,8 +45,8 @@ SC_MODULE(DbgPort) {
     sc_out<bool> o_ireg_write;                          // Region 1: Integer registers bank write pulse
     sc_out<bool> o_npc_write;                           // Region 1: npc write enable
     sc_in<sc_uint<RISCV_ARCH>> i_ireg_rdata;            // Region 1: Integer register read value
-    sc_in<sc_uint<CFG_RIVER_ADDR_BITS>> i_pc;                // Region 1: Instruction pointer
-    sc_in<sc_uint<CFG_RIVER_ADDR_BITS>> i_npc;               // Region 1: Next Instruction pointer
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_pc;                // Region 1: Instruction pointer
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_npc;               // Region 1: Next Instruction pointer
     sc_in<bool> i_e_next_ready;
     sc_in<bool> i_e_valid;                              // Stepping control signal
     sc_in<bool> i_e_call;                               // pseudo-instruction CALL
@@ -57,9 +57,9 @@ SC_MODULE(DbgPort) {
     sc_in<bool> i_ebreak;                               // ebreak instruction decoded
     sc_out<bool> o_break_mode;                          // Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
     sc_out<bool> o_br_fetch_valid;                      // Fetch injection address/instr are valid
-    sc_out<sc_uint<CFG_RIVER_ADDR_BITS>> o_br_address_fetch; // Fetch injection address to skip ebreak instruciton only once
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_br_address_fetch; // Fetch injection address to skip ebreak instruciton only once
     sc_out<sc_uint<32>> o_br_instr_fetch;               // Real instruction value that was replaced by ebreak
-    sc_out<sc_uint<CFG_RIVER_ADDR_BITS>> o_flush_address;    // Address of instruction to remove from ICache
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_flush_address;    // Address of instruction to remove from ICache
     sc_out<bool> o_flush_valid;                         // Remove address from ICache is valid
     // Cache debug signals:
     sc_in<sc_uint<4>> i_istate;                         // ICache transaction state
@@ -84,10 +84,10 @@ private:
         sc_signal<bool> stepping_mode;
         sc_signal<sc_uint<RISCV_ARCH>> stepping_mode_cnt;
         sc_signal<bool> trap_on_break;
-        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> br_address_fetch;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> br_address_fetch;
         sc_signal<sc_uint<32>> br_instr_fetch;
         sc_signal<bool> br_fetch_valid;
-        sc_signal<sc_uint<CFG_RIVER_ADDR_BITS>> flush_address;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> flush_address;
         sc_signal<bool> flush_valid;
 
         sc_signal<sc_uint<RISCV_ARCH>> rdata;
@@ -121,10 +121,10 @@ private:
     }
 
     sc_signal<sc_uint<5>> wb_stack_raddr;
-    sc_signal<sc_biguint<2*CFG_RIVER_ADDR_BITS>> wb_stack_rdata;
+    sc_signal<sc_biguint<2*CFG_CPU_ADDR_BITS>> wb_stack_rdata;
     sc_signal<bool> w_stack_we;
     sc_signal<sc_uint<5>> wb_stack_waddr;
-    sc_signal<sc_biguint<2*CFG_RIVER_ADDR_BITS>> wb_stack_wdata;
+    sc_signal<sc_biguint<2*CFG_CPU_ADDR_BITS>> wb_stack_wdata;
 
     StackTraceBuffer *trbuf0;
     bool async_reset_;

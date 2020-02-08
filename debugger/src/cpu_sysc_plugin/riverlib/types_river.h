@@ -25,6 +25,8 @@
 
 namespace debugger {
 
+const int CFG_TOTAL_CPU_MAX = 4;
+
 class axi4_river_in_type {
  public:
     axi4_river_in_type(){}
@@ -128,17 +130,17 @@ class axi4_river_in_type {
     bool w_ready;
     bool b_valid;
     sc_uint<2> b_resp;
-    sc_uint<CFG_RIVER_ID_BITS> b_id;
-    sc_uint<1> b_user;
+    sc_uint<CFG_CPU_ID_BITS> b_id;
+    sc_uint<CFG_CPU_USER_BITS> b_user;
     bool ar_ready;
     bool r_valid;
     sc_uint<4> r_resp;
     sc_biguint<L1CACHE_LINE_BITS> r_data;
     bool r_last;
-    sc_uint<CFG_RIVER_ID_BITS> r_id;
-    sc_uint<1> r_user;
+    sc_uint<CFG_CPU_ID_BITS> r_id;
+    sc_uint<CFG_CPU_USER_BITS> r_user;
     bool ac_valid;
-    sc_uint<CFG_RIVER_ADDR_BITS> ac_addr;
+    sc_uint<CFG_CPU_ADDR_BITS> ac_addr;
     sc_uint<4> ac_snoop;                  // Table C3-19
     sc_uint<3> ac_prot;
     bool cr_ready;
@@ -351,18 +353,18 @@ class axi4_river_out_type {
  public:
     bool aw_valid;
     axi4_meta_type aw_bits;
-    sc_uint<CFG_RIVER_ID_BITS> aw_id;
-    bool aw_user;
+    sc_uint<CFG_CPU_ID_BITS> aw_id;
+    sc_uint<CFG_CPU_USER_BITS> aw_user;
     bool w_valid;
     sc_biguint<L1CACHE_LINE_BITS> w_data;
     bool w_last;
     sc_uint<L1CACHE_BYTES_PER_LINE> w_strb;
-    bool w_user;
+    sc_uint<CFG_CPU_USER_BITS> w_user;
     bool b_ready;
     bool ar_valid;
     axi4_meta_type ar_bits;
-    sc_uint<CFG_RIVER_ID_BITS> ar_id;
-    bool ar_user;
+    sc_uint<CFG_CPU_ID_BITS> ar_id;
+    sc_uint<CFG_CPU_USER_BITS> ar_user;
     bool r_ready;
     sc_uint<2> ar_domain;                // 00=Non-shareable (single master in domain)
     sc_uint<4> ar_snoop;                 // Table C3-7:
