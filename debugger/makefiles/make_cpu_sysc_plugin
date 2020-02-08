@@ -33,8 +33,8 @@ SRC_PATH =\
 	$(TOP_DIR)src/common/generic \
 	$(TOP_DIR)src/cpu_sysc_plugin \
 	$(TOP_DIR)src/cpu_sysc_plugin/cmds \
+	$(TOP_DIR)src/cpu_sysc_plugin/l2 \
 	$(TOP_DIR)src/cpu_sysc_plugin/riverlib \
-	$(TOP_DIR)src/cpu_sysc_plugin/riverlib/l2 \
 	$(TOP_DIR)src/cpu_sysc_plugin/riverlib/core \
 	$(TOP_DIR)src/cpu_sysc_plugin/riverlib/core/arith \
 	$(TOP_DIR)src/cpu_sysc_plugin/riverlib/core/fpu_d \
