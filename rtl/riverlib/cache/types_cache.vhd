@@ -121,10 +121,10 @@ package types_cache is
     i_nrst : in std_logic;
     -- Control path:
     i_req_valid : in std_logic;
-    i_req_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_req_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_req_ready : out std_logic;
     o_resp_valid : out std_logic;
-    o_resp_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_resp_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_resp_data : out std_logic_vector(31 downto 0);
     o_resp_load_fault : out std_logic;
     o_resp_executable : out std_logic;
@@ -136,17 +136,17 @@ package types_cache is
     o_req_mem_valid : out std_logic;
     o_req_mem_write : out std_logic;
     o_req_mem_cached : out std_logic;
-    o_req_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_req_mem_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_req_mem_strob : out std_logic_vector(ICACHE_BYTES_PER_LINE-1 downto 0);
     o_req_mem_data : out std_logic_vector(ICACHE_LINE_BITS-1 downto 0);
     i_mem_data_valid : in std_logic;
     i_mem_data : in std_logic_vector(ICACHE_LINE_BITS-1 downto 0);
     i_mem_load_fault : in std_logic;
     -- MPU interface:
-    o_mpu_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_mpu_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_mpu_flags : in std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);
     -- Debug Signals:
-    i_flush_address : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);  -- clear ICache address from debug interface
+    i_flush_address : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);  -- clear ICache address from debug interface
     i_flush_valid : in std_logic;                                      -- address to clear icache is valid
     o_state : out std_logic_vector(3 downto 0)
   );
@@ -163,14 +163,14 @@ package types_cache is
     -- Control path:
     i_req_valid : in std_logic;
     i_req_write : in std_logic;
-    i_req_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_req_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_req_wdata : in std_logic_vector(63 downto 0);
     i_req_wstrb : in std_logic_vector(7 downto 0);
     o_req_ready : out std_logic;
     o_resp_valid : out std_logic;
-    o_resp_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_resp_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_resp_data : out std_logic_vector(63 downto 0);
-    o_resp_er_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_resp_er_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_resp_er_load_fault : out std_logic;
     o_resp_er_store_fault : out std_logic;
     o_resp_er_mpu_load : out std_logic;
@@ -181,7 +181,7 @@ package types_cache is
     o_req_mem_valid : out std_logic;
     o_req_mem_write : out std_logic;
     o_req_mem_cached : out std_logic;
-    o_req_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_req_mem_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_req_mem_strob : out std_logic_vector(DCACHE_BYTES_PER_LINE-1 downto 0);
     o_req_mem_data : out std_logic_vector(DCACHE_LINE_BITS-1 downto 0);
     i_mem_data_valid : in std_logic;
@@ -189,10 +189,10 @@ package types_cache is
     i_mem_load_fault : in std_logic;
     i_mem_store_fault : in std_logic;
     -- MPU interface
-    o_mpu_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_mpu_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_mpu_flags : in std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);
     -- Debug Signals:
-    i_flush_address : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_flush_address : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_flush_valid : in std_logic;
     o_flush_end : out std_logic;
     o_state : out std_logic_vector(3 downto 0)
@@ -206,12 +206,12 @@ package types_cache is
   port (
     i_clk : in std_logic;
     i_nrst : in std_logic;
-    i_iaddr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    i_daddr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_iaddr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    i_daddr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_region_we : in std_logic;
     i_region_idx : in std_logic_vector(CFG_MPU_TBL_WIDTH-1 downto 0);
-    i_region_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    i_region_mask : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_region_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    i_region_mask : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_region_flags : in std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);  -- {ena, cachable, r, w, x}
     o_iflags : out std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);
     o_dflags : out std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0)

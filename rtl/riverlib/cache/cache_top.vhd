@@ -33,10 +33,10 @@ entity CacheTop is generic (
     i_nrst : in std_logic;                             -- Reset. Active LOW.
     -- Control path:
     i_req_ctrl_valid : in std_logic;
-    i_req_ctrl_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_req_ctrl_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_req_ctrl_ready : out std_logic;
     o_resp_ctrl_valid : out std_logic;
-    o_resp_ctrl_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_resp_ctrl_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_resp_ctrl_data : out std_logic_vector(31 downto 0);
     o_resp_ctrl_load_fault : out std_logic;
     o_resp_ctrl_executable : out std_logic;
@@ -44,14 +44,14 @@ entity CacheTop is generic (
     -- Data path:
     i_req_data_valid : in std_logic;
     i_req_data_write : in std_logic;
-    i_req_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_req_data_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_req_data_wdata : in std_logic_vector(63 downto 0);
     i_req_data_wstrb : in std_logic_vector(7 downto 0);
     o_req_data_ready : out std_logic;
     o_resp_data_valid : out std_logic;
-    o_resp_data_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_resp_data_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_resp_data_data : out std_logic_vector(63 downto 0);
-    o_resp_data_store_fault_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_resp_data_store_fault_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_resp_data_load_fault : out std_logic;
     o_resp_data_store_fault : out std_logic;
     o_resp_data_er_mpu_load : out std_logic;
@@ -63,7 +63,7 @@ entity CacheTop is generic (
     o_req_mem_valid : out std_logic;
     o_req_mem_write : out std_logic;
     o_req_mem_cached : out std_logic;
-    o_req_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_req_mem_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_req_mem_strob : out std_logic_vector(L1CACHE_BYTES_PER_LINE-1 downto 0);
     o_req_mem_data : out std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);  -- burst transaction length
     i_resp_mem_valid : in std_logic;
@@ -71,17 +71,17 @@ entity CacheTop is generic (
     i_resp_mem_data : in std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);
     i_resp_mem_load_fault : in std_logic;                             -- Bus response with SLVERR or DECERR on read
     i_resp_mem_store_fault : in std_logic;                            -- Bus response with SLVERR or DECERR on write
-    i_resp_mem_store_fault_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_resp_mem_store_fault_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     -- MPU interface:
     i_mpu_region_we : in std_logic;
     i_mpu_region_idx : in std_logic_vector(CFG_MPU_TBL_WIDTH-1 downto 0);
-    i_mpu_region_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    i_mpu_region_mask : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_mpu_region_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    i_mpu_region_mask : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_mpu_region_flags : in std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);
     -- Debug signals:
-    i_flush_address : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);  -- clear ICache address from debug interface
+    i_flush_address : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);  -- clear ICache address from debug interface
     i_flush_valid : in std_logic;                                      -- address to clear icache is valid
-    i_data_flush_address : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);  -- clear D$ address
+    i_data_flush_address : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);  -- clear D$ address
     i_data_flush_valid : in std_logic;                                      -- address to clear D$ is valid
     o_data_flush_end : out std_logic;
     o_istate : out std_logic_vector(3 downto 0);                      -- ICache state machine value
@@ -94,7 +94,7 @@ architecture arch_CacheTop of CacheTop is
   constant DATA_PATH : std_logic := '0';
   constant CTRL_PATH : std_logic := '1';
   constant CACHE_QUEUE_WIDTH : integer :=
-        BUS_ADDR_WIDTH      -- addr
+        CFG_CPU_ADDR_BITS      -- addr
         + 1                 -- 0=uncached/1=cached
         + 1                 -- 0=read/1=write
         + 1                 -- 1=instruction; 0=data
@@ -105,10 +105,10 @@ architecture arch_CacheTop of CacheTop is
       req_mem_valid : std_logic;
       req_mem_write : std_logic;
       req_mem_cached : std_logic;
-      req_mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      req_mem_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
       req_mem_strob : std_logic_vector(DCACHE_BYTES_PER_LINE-1 downto 0);
       req_mem_wdata : std_logic_vector(DCACHE_LINE_BITS-1 downto 0);
-      mpu_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      mpu_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   end record;
 
 
@@ -165,10 +165,10 @@ begin
 
     o_req_mem_valid <= queue_nempty_o;
 
-    o_req_mem_path <= queue_rdata_o(BUS_ADDR_WIDTH+2);
-    o_req_mem_write <= queue_rdata_o(BUS_ADDR_WIDTH+1);
-    o_req_mem_cached <= queue_rdata_o(BUS_ADDR_WIDTH);
-    o_req_mem_addr <= queue_rdata_o(BUS_ADDR_WIDTH-1 downto 0);
+    o_req_mem_path <= queue_rdata_o(CFG_CPU_ADDR_BITS+2);
+    o_req_mem_write <= queue_rdata_o(CFG_CPU_ADDR_BITS+1);
+    o_req_mem_cached <= queue_rdata_o(CFG_CPU_ADDR_BITS);
+    o_req_mem_addr <= queue_rdata_o(CFG_CPU_ADDR_BITS-1 downto 0);
 
     o_req_mem_strob <= d.req_mem_strob;
     o_req_mem_data <= d.req_mem_wdata;

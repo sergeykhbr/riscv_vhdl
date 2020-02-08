@@ -33,7 +33,7 @@ entity InstrDecoder is generic (
     i_nrst : in std_logic;
     i_any_hold : in std_logic;                               -- Hold pipeline by any reason
     i_f_valid : in std_logic;                                -- Fetch input valid
-    i_f_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- Fetched pc
+    i_f_pc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- Fetched pc
     i_f_instr : in std_logic_vector(31 downto 0);            -- Fetched instruction value
     i_instr_load_fault : in std_logic;                       -- Instruction fetched from fault address
     i_instr_executable : in std_logic;                       -- MPU flag
@@ -46,7 +46,7 @@ entity InstrDecoder is generic (
     i_e_ready : in std_logic;
     i_e_fencei : in std_logic;
     o_valid : out std_logic;                                 -- Current output values are valid
-    o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);  -- Current instruction pointer value
+    o_pc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);  -- Current instruction pointer value
     o_instr : out std_logic_vector(31 downto 0);             -- Current instruction value
     o_memop_store : out std_logic;                           -- Store to memory operation
     o_memop_load : out std_logic;                            -- Load from memoru operation
@@ -124,7 +124,7 @@ architecture arch_InstrDecoder of InstrDecoder is
 
   type RegistersType is record
       valid : std_logic;
-      pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      pc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
       isa_type : std_logic_vector(ISA_Total-1 downto 0);
       instr_vec : std_logic_vector(Instr_Total-1 downto 0);
       instr : std_logic_vector(31 downto 0);

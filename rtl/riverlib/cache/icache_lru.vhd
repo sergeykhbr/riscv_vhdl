@@ -32,10 +32,10 @@ entity icache_lru is generic (
     i_nrst : in std_logic;
     -- Control path:
     i_req_valid : in std_logic;
-    i_req_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_req_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_req_ready : out std_logic;
     o_resp_valid : out std_logic;
-    o_resp_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_resp_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_resp_data : out std_logic_vector(31 downto 0);
     o_resp_load_fault : out std_logic;
     o_resp_executable : out std_logic;
@@ -47,17 +47,17 @@ entity icache_lru is generic (
     o_req_mem_valid : out std_logic;
     o_req_mem_write : out std_logic;
     o_req_mem_cached : out std_logic;
-    o_req_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_req_mem_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_req_mem_strob : out std_logic_vector(ICACHE_BYTES_PER_LINE-1 downto 0);
     o_req_mem_data : out std_logic_vector(ICACHE_LINE_BITS-1 downto 0);
     i_mem_data_valid : in std_logic;
     i_mem_data : in std_logic_vector(ICACHE_LINE_BITS-1 downto 0);
     i_mem_load_fault : in std_logic;
     -- MPU interface:
-    o_mpu_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_mpu_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_mpu_flags : in std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);
     -- Debug Signals:
-    i_flush_address : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);  -- clear ICache address from debug interface
+    i_flush_address : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);  -- clear ICache address from debug interface
     i_flush_valid : in std_logic;                                      -- address to clear icache is valid
     o_state : out std_logic_vector(3 downto 0)
   );
@@ -77,17 +77,17 @@ architecture arch_icache_lru of icache_lru is
   constant State_Flush : std_logic_vector(3 downto 0) := "0111";
 
   type RegistersType is record
-      req_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-      req_addr_next : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-      write_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      req_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+      req_addr_next : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+      write_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
       state : std_logic_vector(3 downto 0);
       req_mem_valid : std_logic;
-      mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      mem_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
       cached : std_logic;
       executable : std_logic;
       load_fault : std_logic;
       req_flush : std_logic;
-      req_flush_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      req_flush_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
       req_flush_cnt : std_logic_vector(CFG_ILOG2_LINES_PER_WAY+CFG_ILOG2_NWAYS-1 downto 0);
       flush_cnt : std_logic_vector(CFG_ILOG2_LINES_PER_WAY+CFG_ILOG2_NWAYS-1 downto 0);
       cache_line_i : std_logic_vector(ICACHE_LINE_BITS-1 downto 0);
@@ -109,12 +109,12 @@ architecture arch_icache_lru of icache_lru is
 
   signal r, rin : RegistersType;
   signal line_cs_i : std_logic;
-  signal line_addr_i : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+  signal line_addr_i : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   signal line_wdata_i : std_logic_vector(ICACHE_LINE_BITS-1 downto 0);
   signal line_wstrb_i : std_logic_vector(2**CFG_ILOG2_BYTES_PER_LINE-1 downto 0);
   signal line_wflags_i : std_logic_vector(ITAG_FL_TOTAL-1 downto 0);
   signal line_flush_i : std_logic;
-  signal line_raddr_o : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+  signal line_raddr_o : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   signal line_rdata_o : std_logic_vector(ICACHE_LINE_BITS+15 downto 0);
   signal line_rflags_o : std_logic_vector(ITAG_FL_TOTAL-1 downto 0);
   signal line_hit_o : std_logic;
@@ -125,7 +125,7 @@ begin
   memcouple : tagmemcoupled generic map (
       memtech => memtech,
       async_reset => async_reset,
-      abus => BUS_ADDR_WIDTH,
+      abus => CFG_CPU_ADDR_BITS,
       waybits => CFG_ILOG2_NWAYS,
       ibits => CFG_ILOG2_LINES_PER_WAY,
       lnbits => CFG_ILOG2_BYTES_PER_LINE,
@@ -161,7 +161,7 @@ begin
     variable v_resp_er_load_fault : std_logic;
     variable v_flush : std_logic;
     variable v_line_cs : std_logic;
-    variable vb_line_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable vb_line_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     variable vb_line_wdata : std_logic_vector(ICACHE_LINE_BITS-1 downto 0);
     variable vb_line_wstrb : std_logic_vector(ICACHE_BYTES_PER_LINE-1 downto 0);
     variable v_line_wflags : std_logic_vector(ITAG_FL_TOTAL-1 downto 0);
@@ -216,7 +216,7 @@ begin
                 v.req_addr := (others => '0');
                 v.flush_cnt := (others => '1');
             else
-                v.req_addr := r.req_flush_addr(BUS_ADDR_WIDTH-1 downto CFG_ILOG2_BYTES_PER_LINE)
+                v.req_addr := r.req_flush_addr(CFG_CPU_ADDR_BITS-1 downto CFG_ILOG2_BYTES_PER_LINE)
                               & zero64(CFG_ILOG2_BYTES_PER_LINE-1 downto 0);
                 v.flush_cnt := r.req_flush_cnt;
             end if;
@@ -263,16 +263,16 @@ begin
 
             if i_mpu_flags(CFG_MPU_FL_CACHABLE) = '1' then
                 if line_hit_o = '0' then
-                    v.mem_addr := r.req_addr(BUS_ADDR_WIDTH-1 downto CFG_ILOG2_BYTES_PER_LINE)
+                    v.mem_addr := r.req_addr(CFG_CPU_ADDR_BITS-1 downto CFG_ILOG2_BYTES_PER_LINE)
                                 & zero64(CFG_ILOG2_BYTES_PER_LINE-1 downto 0);
                 else
                     v.write_addr := r.req_addr_next;
-                    v.mem_addr := r.req_addr_next(BUS_ADDR_WIDTH-1 downto CFG_ILOG2_BYTES_PER_LINE)
+                    v.mem_addr := r.req_addr_next(CFG_CPU_ADDR_BITS-1 downto CFG_ILOG2_BYTES_PER_LINE)
                                 & zero64(CFG_ILOG2_BYTES_PER_LINE-1 downto 0);
                 end if;
                 v.cached := '1';
             else
-                v.mem_addr := r.req_addr(BUS_ADDR_WIDTH-1 downto CFG_LOG2_DATA_BYTES)
+                v.mem_addr := r.req_addr(CFG_CPU_ADDR_BITS-1 downto CFG_LOG2_DATA_BYTES)
                              & zero64(CFG_LOG2_DATA_BYTES-1 downto 0);
                 v.cached := '0';
             end if;
@@ -322,8 +322,8 @@ begin
             v.flush_cnt := r.flush_cnt - 1;
             if r.req_addr(CFG_ILOG2_NWAYS-1 downto 0) =
                conv_std_logic_vector(ICACHE_WAYS-1, CFG_ILOG2_NWAYS) then
-                v.req_addr(BUS_ADDR_WIDTH-1 downto CFG_ILOG2_BYTES_PER_LINE) := 
-                    r.req_addr(BUS_ADDR_WIDTH-1 downto CFG_ILOG2_BYTES_PER_LINE) + 1;
+                v.req_addr(CFG_CPU_ADDR_BITS-1 downto CFG_ILOG2_BYTES_PER_LINE) := 
+                    r.req_addr(CFG_CPU_ADDR_BITS-1 downto CFG_ILOG2_BYTES_PER_LINE) + 1;
                 v.req_addr(CFG_ILOG2_BYTES_PER_LINE-1 downto 0) := (others => '0');
             else
                 v.req_addr := r.req_addr + 1;

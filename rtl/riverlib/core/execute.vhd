@@ -38,7 +38,7 @@ entity InstrExecute is generic (
     i_d_radr2 : in std_logic_vector(5 downto 0);
     i_d_waddr : in std_logic_vector(5 downto 0);
     i_d_imm : in std_logic_vector(RISCV_ARCH-1 downto 0);
-    i_d_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Instruction pointer on decoded instruction
+    i_d_pc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);    -- Instruction pointer on decoded instruction
     i_d_instr : in std_logic_vector(31 downto 0);               -- Decoded instruction value
     i_wb_waddr : in std_logic_vector(5 downto 0);               -- Write back address
     i_memop_store : in std_logic;                               -- Store to memory operation
@@ -55,7 +55,7 @@ entity InstrExecute is generic (
     i_instr_load_fault : in std_logic;                          -- Instruction fetched from fault address
     i_instr_executable : in std_logic;                          -- MPU flag
     i_dport_npc_write : in std_logic;                           -- Write npc value from debug port
-    i_dport_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Debug port npc value to write
+    i_dport_npc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);-- Debug port npc value to write
 
     i_rdata1 : in std_logic_vector(RISCV_ARCH-1 downto 0);      -- Integer/FPU registers value 1
     i_rhazard1 : in std_logic;
@@ -73,9 +73,9 @@ entity InstrExecute is generic (
     i_csr_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0);   -- CSR current value
     o_csr_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);  -- CSR new value
     i_trap_valid : in std_logic;
-    i_trap_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_trap_pc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     -- exceptions:
-    o_ex_npc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_ex_npc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_ex_instr_load_fault : out std_logic;                      -- Instruction fetched from fault address
     o_ex_instr_not_executable : out std_logic;                  -- MPU prohibit this instruction
     o_ex_illegal_instr : out std_logic;
@@ -94,7 +94,7 @@ entity InstrExecute is generic (
     o_memop_load : out std_logic;                               -- Load data instruction
     o_memop_store : out std_logic;                              -- Store data instruction
     o_memop_size : out std_logic_vector(1 downto 0);            -- 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
-    o_memop_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Memory access address
+    o_memop_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);-- Memory access address
     o_memop_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
     o_memop_waddr : out std_logic_vector(5 downto 0);
     o_memop_wtag : out std_logic_vector(3 downto 0);
@@ -102,8 +102,8 @@ entity InstrExecute is generic (
 
     o_trap_ready : out std_logic;                               -- Trap branch request was accepted
     o_valid : out std_logic;                                    -- Output is valid
-    o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);     -- Valid instruction pointer
-    o_npc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Next instruction pointer. Next decoded pc must match to this value or will be ignored.
+    o_pc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);     -- Valid instruction pointer
+    o_npc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);    -- Next instruction pointer. Next decoded pc must match to this value or will be ignored.
     o_instr : out std_logic_vector(31 downto 0);                -- Valid instruction value
     i_flushd_end : in std_logic;
     o_flushd : out std_logic;
@@ -129,8 +129,8 @@ architecture arch_InstrExecute of InstrExecute is
       of std_logic_vector(RISCV_ARCH-1 downto 0);
 
   type RegistersType is record
-        pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-        npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+        pc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+        npc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
         instr : std_logic_vector(31 downto 0);
         memop_waddr : std_logic_vector(5 downto 0);
         memop_wtag : std_logic_vector(3 downto 0);
@@ -139,7 +139,7 @@ architecture arch_InstrExecute of InstrExecute is
         memop_store : std_logic;
         memop_sign_ext : std_logic;
         memop_size : std_logic_vector(1 downto 0);
-        memop_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+        memop_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
         memop_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
 
         valid : std_logic;
@@ -358,9 +358,9 @@ begin
     variable vb_csr_addr : std_logic_vector(11 downto 0);
     variable vb_csr_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable vb_res : std_logic_vector(RISCV_ARCH-1 downto 0);
-    variable vb_prog_npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    variable vb_npc_incr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    variable vb_npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable vb_prog_npc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    variable vb_npc_incr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    variable vb_npc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     variable vb_off : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable vb_sum64 : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable vb_sum32 : std_logic_vector(RISCV_ARCH-1 downto 0);
@@ -369,7 +369,7 @@ begin
     variable vb_and64 : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable vb_or64 : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable vb_xor64 : std_logic_vector(RISCV_ARCH-1 downto 0);
-    variable vb_memop_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable vb_memop_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     variable wv : std_logic_vector(Instr_Total-1 downto 0);
     variable opcode_len : integer;
     variable v_call : std_logic;
@@ -432,10 +432,10 @@ begin
         vb_rdata2 := vb_i_rdata2;
         vb_off := i_d_imm;
     elsif i_isa_type(ISA_UJ_type) = '1' then
-        vb_rdata1(BUS_ADDR_WIDTH-1 downto 0) := i_d_pc;
+        vb_rdata1(CFG_CPU_ADDR_BITS-1 downto 0) := i_d_pc;
         vb_off := i_d_imm;
     elsif i_isa_type(ISA_U_type) = '1' then
-        vb_rdata1(BUS_ADDR_WIDTH-1 downto 0) := i_d_pc;
+        vb_rdata1(CFG_CPU_ADDR_BITS-1 downto 0) := i_d_pc;
         vb_rdata2 := i_d_imm;
     elsif i_isa_type(ISA_S_type) = '1' then
         vb_rdata1 := vb_i_rdata1;
@@ -505,10 +505,10 @@ begin
 
     if i_memop_load = '1' then
         vb_memop_addr :=
-            vb_rdata1(BUS_ADDR_WIDTH-1 downto 0) + vb_rdata2(BUS_ADDR_WIDTH-1 downto 0);
+            vb_rdata1(CFG_CPU_ADDR_BITS-1 downto 0) + vb_rdata2(CFG_CPU_ADDR_BITS-1 downto 0);
     elsif i_memop_store = '1' then
         vb_memop_addr := 
-            vb_rdata1(BUS_ADDR_WIDTH-1 downto 0) + vb_off(BUS_ADDR_WIDTH-1 downto 0);
+            vb_rdata1(CFG_CPU_ADDR_BITS-1 downto 0) + vb_off(CFG_CPU_ADDR_BITS-1 downto 0);
     end if;
 
     w_exception_store := '0';
@@ -568,16 +568,16 @@ begin
 
 
     if v_pc_branch = '1' then
-        vb_prog_npc := i_d_pc + vb_off(BUS_ADDR_WIDTH-1 downto 0);
+        vb_prog_npc := i_d_pc + vb_off(CFG_CPU_ADDR_BITS-1 downto 0);
     elsif wv(Instr_JAL) = '1' then
-        vb_prog_npc := vb_rdata1(BUS_ADDR_WIDTH-1 downto 0) + vb_off(BUS_ADDR_WIDTH-1 downto 0);
+        vb_prog_npc := vb_rdata1(CFG_CPU_ADDR_BITS-1 downto 0) + vb_off(CFG_CPU_ADDR_BITS-1 downto 0);
     elsif wv(Instr_JALR) = '1' then
-        vb_prog_npc := vb_rdata1(BUS_ADDR_WIDTH-1 downto 0) + vb_rdata2(BUS_ADDR_WIDTH-1 downto 0);
+        vb_prog_npc := vb_rdata1(CFG_CPU_ADDR_BITS-1 downto 0) + vb_rdata2(CFG_CPU_ADDR_BITS-1 downto 0);
         vb_prog_npc(0) := '0';
     elsif wv(Instr_MRET) = '1' then
-        vb_prog_npc := i_csr_rdata(BUS_ADDR_WIDTH-1 downto 0);
+        vb_prog_npc := i_csr_rdata(CFG_CPU_ADDR_BITS-1 downto 0);
     elsif wv(Instr_URET) = '1' then
-        vb_prog_npc := i_csr_rdata(BUS_ADDR_WIDTH-1 downto 0);
+        vb_prog_npc := i_csr_rdata(CFG_CPU_ADDR_BITS-1 downto 0);
     else
         vb_prog_npc := vb_npc_incr;
     end if;
@@ -600,12 +600,12 @@ begin
     elsif i_memop_store = '1' then
         vb_res := vb_rdata2;
     elsif wv(Instr_JAL) = '1' then
-        vb_res(BUS_ADDR_WIDTH-1 downto 0) := vb_npc_incr;
+        vb_res(CFG_CPU_ADDR_BITS-1 downto 0) := vb_npc_incr;
         if int_waddr = Reg_ra then
             v_call := '1';
         end if;
     elsif wv(Instr_JALR) = '1' then
-        vb_res(BUS_ADDR_WIDTH-1 downto 0) := vb_npc_incr;
+        vb_res(CFG_CPU_ADDR_BITS-1 downto 0) := vb_npc_incr;
         if int_waddr = Reg_ra then
             v_call := '1';
         elsif or_reduce(vb_rdata2) = '0' and int_radr1 = Reg_ra then
@@ -679,11 +679,11 @@ begin
         vb_csr_wdata(RISCV_ARCH-1 downto 5) := (others => '0');
         vb_csr_wdata(4 downto 0) := i_d_radr1(4 downto 0);  -- zero-extending 5 to 64-bits
     elsif wv(Instr_MRET) = '1' then
-        vb_res(BUS_ADDR_WIDTH-1 downto 0) := vb_npc_incr;
+        vb_res(CFG_CPU_ADDR_BITS-1 downto 0) := vb_npc_incr;
         v_csr_wena := '0';
         vb_csr_addr := CSR_mepc;
     elsif wv(Instr_URET) = '1' then
-        vb_res(BUS_ADDR_WIDTH-1 downto 0) := vb_npc_incr;
+        vb_res(CFG_CPU_ADDR_BITS-1 downto 0) := vb_npc_incr;
         v_csr_wena := '0';
         vb_csr_addr := CSR_uepc;
     end if;

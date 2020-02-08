@@ -37,9 +37,9 @@ entity Processor is
     -- Control path:
     i_req_ctrl_ready : in std_logic;                                  -- ICache is ready to accept request
     o_req_ctrl_valid : out std_logic;                                 -- Request to ICache is valid
-    o_req_ctrl_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Requesting address to ICache
+    o_req_ctrl_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);-- Requesting address to ICache
     i_resp_ctrl_valid : in std_logic;                                 -- ICache response is valid
-    i_resp_ctrl_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Response address must be equal to the latest request address
+    i_resp_ctrl_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);-- Response address must be equal to the latest request address
     i_resp_ctrl_data : in std_logic_vector(31 downto 0);              -- Read value
     i_resp_ctrl_load_fault : in std_logic;                            -- bus response with error
     i_resp_ctrl_executable : in std_logic;
@@ -48,13 +48,13 @@ entity Processor is
     i_req_data_ready : in std_logic;                                  -- DCache is ready to accept request
     o_req_data_valid : out std_logic;                                 -- Request to DCache is valid
     o_req_data_write : out std_logic;                                 -- Read/Write transaction
-    o_req_data_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Requesting address to DCache
+    o_req_data_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);-- Requesting address to DCache
     o_req_data_wdata : out std_logic_vector(63 downto 0);             -- Writing value
     o_req_data_wstrb : out std_logic_vector(7 downto 0);              -- 8-bytes aligned strobs
     i_resp_data_valid : in std_logic;                                 -- DCache response is valid
-    i_resp_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- DCache response address must be equal to the latest request address
+    i_resp_data_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);-- DCache response address must be equal to the latest request address
     i_resp_data_data : in std_logic_vector(63 downto 0);              -- Read value
-    i_resp_data_store_fault_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_resp_data_store_fault_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_resp_data_load_fault : in std_logic;                            -- Bus response with SLVERR or DECERR on read
     i_resp_data_store_fault : in std_logic;                           -- Bus response with SLVERR or DECERR on write
     i_resp_data_er_mpu_load : in std_logic;
@@ -67,8 +67,8 @@ entity Processor is
     -- MPU interface
     o_mpu_region_we : out std_logic;
     o_mpu_region_idx : out std_logic_vector(CFG_MPU_TBL_WIDTH-1 downto 0);
-    o_mpu_region_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    o_mpu_region_mask : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_mpu_region_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    o_mpu_region_mask : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_mpu_region_flags : out std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);  -- {ena, cachable, r, w, x}
     -- Debug interface:
     i_dport_valid : in std_logic;                                     -- Debug access from DSU is valid
@@ -80,9 +80,9 @@ entity Processor is
     o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);      -- Response value
     o_halted : out std_logic;
     -- Debug signals:
-    o_flush_address : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Address of instruction to remove from ICache
+    o_flush_address : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);-- Address of instruction to remove from ICache
     o_flush_valid : out std_logic;                                    -- Remove address from ICache is valid
-    o_data_flush_address : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Address of instruction to remove from D$
+    o_data_flush_address : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);    -- Address of instruction to remove from D$
     o_data_flush_valid : out std_logic;                               -- Remove address from D$ is valid
     i_data_flush_end : in std_logic;
     i_istate : in std_logic_vector(3 downto 0);                       -- ICache state machine value
@@ -98,15 +98,15 @@ architecture arch_Processor of Processor is
         instr_load_fault : std_logic;
         instr_executable : std_logic;
         valid : std_logic;
-        pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+        pc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
         instr : std_logic_vector(31 downto 0);
         imem_req_valid : std_logic;
-        imem_req_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+        imem_req_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
         pipeline_hold : std_logic;
     end record;
 
     type InstructionDecodeType is record
-        pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+        pc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
         instr : std_logic_vector(31 downto 0);
         instr_valid : std_logic;
         memop_store : std_logic;
@@ -132,9 +132,9 @@ architecture arch_Processor of Processor is
         trap_ready : std_logic;
         valid : std_logic;
         instr : std_logic_vector(31 downto 0);
-        pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-        npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-        ex_npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+        pc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+        npc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+        ex_npc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
 
         wena : std_logic;
         waddr : std_logic_vector(5 downto 0);
@@ -164,7 +164,7 @@ architecture arch_Processor of Processor is
         memop_load : std_logic;
         memop_store : std_logic;
         memop_size : std_logic_vector(1 downto 0);
-        memop_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+        memop_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
         memop_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
         memop_waddr : std_logic_vector(5 downto 0);
         memop_wtag : std_logic_vector(3 downto 0);
@@ -203,7 +203,7 @@ architecture arch_Processor of Processor is
         rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
         dport_rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
         trap_valid : std_logic;
-        trap_pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+        trap_pc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
         break_event : std_logic;
     end record;
 
@@ -230,14 +230,14 @@ architecture arch_Processor of Processor is
         executed_cnt : std_logic_vector(63 downto 0);        -- Number of executed instruction
         break_mode : std_logic;                              -- Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
         br_fetch_valid : std_logic;                          -- Fetch injection address/instr are valid
-        br_address_fetch : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- Fetch injection address to skip ebreak instruciton only once
+        br_address_fetch : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- Fetch injection address to skip ebreak instruciton only once
         br_instr_fetch : std_logic_vector(31 downto 0);      -- Real instruction value that was replaced by ebreak
-        flush_address : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Address of instruction to remove from ICache
+        flush_address : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);-- Address of instruction to remove from ICache
         flush_valid : std_logic;                                    -- Remove address from ICache is valid
     end record;
 
     type BranchPredictorType is record
-       npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+       npc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     end record;
 
     signal ireg : IntRegsType;
@@ -246,7 +246,7 @@ architecture arch_Processor of Processor is
     signal dbg : DebugType;
     signal bp : BranchPredictorType;
 
-    signal wb_exec_dport_npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    signal wb_exec_dport_npc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     
     signal w_fetch_pipeline_hold : std_logic;
     signal w_any_pipeline_hold : std_logic;
@@ -263,7 +263,7 @@ begin
     w_fetch_pipeline_hold <= not w.e.d_ready or dbg.halt;
     w_any_pipeline_hold <= w.f.pipeline_hold or not w.e.d_ready or dbg.halt;
 
-    wb_exec_dport_npc <= dbg.core_wdata(BUS_ADDR_WIDTH-1 downto 0);
+    wb_exec_dport_npc <= dbg.core_wdata(CFG_CPU_ADDR_BITS-1 downto 0);
 
     w_writeback_ready <= not w.e.wena;
     w_reg_wena <= w.e.wena when w.e.wena = '1' else w.w.wena;

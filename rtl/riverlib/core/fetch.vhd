@@ -33,26 +33,26 @@ entity InstrFetch is generic (
     i_pipeline_hold : in std_logic;
     i_mem_req_ready : in std_logic;
     o_mem_addr_valid : out std_logic;
-    o_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_mem_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_mem_data_valid : in std_logic;
-    i_mem_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_mem_data_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_mem_data : in std_logic_vector(31 downto 0);
     i_mem_load_fault : in std_logic;
     i_mem_executable : in std_logic;
     o_mem_resp_ready : out std_logic;
     i_e_fencei : in std_logic;
 
-    i_predict_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_predict_npc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
 
     o_mem_req_fire : out std_logic;                    -- used by branch predictor to form new npc value
     o_instr_load_fault : out std_logic;                -- fault instruction's address
     o_instr_executable : out std_logic;
     o_valid : out std_logic;
-    o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_pc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_instr : out std_logic_vector(31 downto 0);
     o_hold : out std_logic;                                -- Hold due no response from icache yet
     i_br_fetch_valid : in std_logic;                       -- Fetch injection address/instr are valid
-    i_br_address_fetch : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- Fetch injection address to skip ebreak instruciton only once
+    i_br_address_fetch : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- Fetch injection address to skip ebreak instruciton only once
     i_br_instr_fetch : in std_logic_vector(31 downto 0)   -- Real instruction value that was replaced by ebreak
   );
 end; 
@@ -61,10 +61,10 @@ architecture arch_InstrFetch of InstrFetch is
 
   type RegistersType is record
       wait_resp : std_logic;
-      br_address : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      br_address : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
       br_instr : std_logic_vector(31 downto 0);
 
-      resp_address : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      resp_address : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
       resp_data : std_logic_vector(31 downto 0);
       resp_valid : std_logic;
       instr_load_fault : std_logic;
@@ -92,7 +92,7 @@ begin
     variable w_o_req_valid : std_logic;
     variable w_o_req_fire : std_logic;
     variable w_o_hold : std_logic;
-    variable wb_o_pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable wb_o_pc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     variable wb_o_instr : std_logic_vector(31 downto 0);
   begin
 

@@ -65,8 +65,8 @@ architecture arch_river_amba of river_amba is
   type RegistersType is record
       state : state_type;
       resp_path : std_logic;
-      w_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-      b_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      w_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+      b_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
       b_wait : std_logic;
   end record;
 
@@ -81,7 +81,7 @@ architecture arch_river_amba of river_amba is
   signal req_mem_valid_o : std_logic;
   signal req_mem_write_o : std_logic;
   signal req_mem_cached_o : std_logic;
-  signal req_mem_addr_o : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+  signal req_mem_addr_o : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   signal req_mem_strob_o : std_logic_vector(L1CACHE_BYTES_PER_LINE-1 downto 0);
   signal req_mem_data_o : std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);
   signal resp_mem_valid_i : std_logic;

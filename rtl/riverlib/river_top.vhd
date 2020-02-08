@@ -40,7 +40,7 @@ entity RiverTop is
     o_req_mem_valid : out std_logic;                                  -- AXI memory request is valid
     o_req_mem_write : out std_logic;                                  -- AXI memory request is write type
     o_req_mem_cached : out std_logic;
-    o_req_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- AXI memory request address
+    o_req_mem_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- AXI memory request address
     o_req_mem_strob : out std_logic_vector(L1CACHE_BYTES_PER_LINE-1 downto 0);-- Writing strob. 1 bit per Byte
     o_req_mem_data : out std_logic_vector(L1CACHE_LINE_BITS-1 downto 0); -- Writing data
     i_resp_mem_valid : in std_logic;                                  -- AXI response is valid
@@ -48,7 +48,7 @@ entity RiverTop is
     i_resp_mem_data : in std_logic_vector(L1CACHE_LINE_BITS-1 downto 0); -- Read data
     i_resp_mem_load_fault : in std_logic;                             -- Bus response with SLVERR or DECERR on read
     i_resp_mem_store_fault : in std_logic;                            -- Bus response with SLVERR or DECERR on write
-    i_resp_mem_store_fault_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_resp_mem_store_fault_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     -- Interrupt line from external interrupts controller (PLIC).
     i_ext_irq : in std_logic;
     o_time : out std_logic_vector(63 downto 0);                       -- Timer. Clock counter except halt state.
@@ -70,9 +70,9 @@ architecture arch_RiverTop of RiverTop is
   -- Control path:
   signal w_req_ctrl_ready : std_logic;
   signal w_req_ctrl_valid : std_logic;
-  signal wb_req_ctrl_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+  signal wb_req_ctrl_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   signal w_resp_ctrl_valid : std_logic;
-  signal wb_resp_ctrl_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+  signal wb_resp_ctrl_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   signal wb_resp_ctrl_data : std_logic_vector(31 downto 0);
   signal w_resp_ctrl_load_fault : std_logic;
   signal w_resp_ctrl_executable : std_logic;
@@ -81,26 +81,26 @@ architecture arch_RiverTop of RiverTop is
   signal w_req_data_ready : std_logic;
   signal w_req_data_valid : std_logic;
   signal w_req_data_write : std_logic;
-  signal wb_req_data_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+  signal wb_req_data_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   signal wb_req_data_wdata : std_logic_vector(63 downto 0);
   signal wb_req_data_wstrb : std_logic_vector(7 downto 0);
   signal w_resp_data_valid : std_logic;
-  signal wb_resp_data_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+  signal wb_resp_data_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   signal wb_resp_data_data : std_logic_vector(63 downto 0);
   signal w_resp_data_load_fault : std_logic;
   signal w_resp_data_store_fault : std_logic;
   signal w_resp_data_er_mpu_load : std_logic;
   signal w_resp_data_er_mpu_store : std_logic;
-  signal wb_resp_data_store_fault_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+  signal wb_resp_data_store_fault_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   signal w_resp_data_ready : std_logic;
   signal w_mpu_region_we : std_logic;
   signal wb_mpu_region_idx : std_logic_vector(CFG_MPU_TBL_WIDTH-1 downto 0);
-  signal wb_mpu_region_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-  signal wb_mpu_region_mask : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+  signal wb_mpu_region_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+  signal wb_mpu_region_mask : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   signal wb_mpu_region_flags : std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);
-  signal wb_flush_address : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+  signal wb_flush_address : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   signal w_flush_valid : std_logic;
-  signal wb_data_flush_address : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+  signal wb_data_flush_address : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   signal w_data_flush_valid : std_logic;
   signal w_data_flush_end : std_logic;
   signal wb_istate : std_logic_vector(3 downto 0);

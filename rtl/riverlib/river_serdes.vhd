@@ -104,8 +104,8 @@ begin
     vb_aw_id := (others => '0');
     vb_ar_id := (others => '0');
 
-    vb_aw_id(CFG_RIVER_ID_BITS-1 downto 0) := i_coreo.aw_id;
-    vb_ar_id(CFG_RIVER_ID_BITS-1 downto 0) := i_coreo.ar_id;
+    vb_aw_id(CFG_CPU_ID_BITS-1 downto 0) := i_coreo.aw_id;
+    vb_ar_id(CFG_CPU_ID_BITS-1 downto 0) := i_coreo.ar_id;
 
     vb_line_o := r.cacheline;
 
@@ -222,14 +222,14 @@ begin
     o_corei.w_ready <= v_w_ready;
     o_corei.b_valid <= i_msti.b_valid and r.b_wait;
     o_corei.b_resp <= i_msti.b_resp;
-    o_corei.b_id <= i_msti.b_id(CFG_RIVER_ID_BITS-1 downto 0);
+    o_corei.b_id <= i_msti.b_id(CFG_CPU_ID_BITS-1 downto 0);
     o_corei.b_user <= i_msti.b_user;
     o_corei.ar_ready <= i_msti.ar_ready;
     o_corei.r_valid <= v_r_valid;
     o_corei.r_resp <= vb_r_resp;
     o_corei.r_data <= vb_line_o;
     o_corei.r_last <= v_r_valid;
-    o_corei.r_id <= i_msti.r_id(CFG_RIVER_ID_BITS-1 downto 0);
+    o_corei.r_id <= i_msti.r_id(CFG_CPU_ID_BITS-1 downto 0);
     o_corei.r_user <= i_msti.r_user;
     o_corei.ac_valid <= '0';
     o_corei.ac_addr <= (others => '0');

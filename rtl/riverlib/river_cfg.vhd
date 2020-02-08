@@ -37,13 +37,15 @@ package river_cfg is
   --! @{
 
   --! @brief   Address bus bit-size.
-  constant BUS_ADDR_WIDTH : integer := 32;
+  constant CFG_CPU_ADDR_BITS : integer := 32;
+  constant CFG_CPU_ID_BITS : integer := 1;
+  constant CFG_CPU_USER_BITS : integer := 1;
+
   --! @brief   Data bus bit-size.
   constant CFG_LOG2_DATA_BYTES : integer := 3;
   constant BUS_DATA_BYTES : integer := (2**CFG_LOG2_DATA_BYTES);
   constant BUS_DATA_WIDTH : integer := 8 * BUS_DATA_BYTES;
   constant LOG2_DATA_BYTES_MASK : integer := (2**CFG_LOG2_DATA_BYTES) - 1;
-  constant CFG_RIVER_ID_BITS : integer := 1;
   --! @}
 
 
@@ -126,24 +128,24 @@ package river_cfg is
   --! Non-maskable interrupts (exceptions) table.
   --!  It can be freely changed to optimize memory consumption/performance
   --!
-  constant CFG_NMI_RESET_VECTOR         : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000000";
-  constant CFG_NMI_INSTR_UNALIGNED_ADDR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000008";
-  constant CFG_NMI_INSTR_FAULT_ADDR     : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000010";
-  constant CFG_NMI_INSTR_ILLEGAL_ADDR   : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000018";
-  constant CFG_NMI_BREAKPOINT_ADDR      : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000020";
-  constant CFG_NMI_LOAD_UNALIGNED_ADDR  : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000028";
-  constant CFG_NMI_LOAD_FAULT_ADDR      : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000030";
-  constant CFG_NMI_STORE_UNALIGNED_ADDR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000038";
-  constant CFG_NMI_STORE_FAULT_ADDR     : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000040";
-  constant CFG_NMI_CALL_FROM_UMODE_ADDR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000048";
-  constant CFG_NMI_CALL_FROM_SMODE_ADDR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000050";
-  constant CFG_NMI_CALL_FROM_HMODE_ADDR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000058";
-  constant CFG_NMI_CALL_FROM_MMODE_ADDR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000060";
-  constant CFG_NMI_INSTR_PAGE_FAULT_ADDR: std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000068";
-  constant CFG_NMI_LOAD_PAGE_FAULT_ADDR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000070";
-  constant CFG_NMI_STORE_PAGE_FAULT_ADDR: std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000078";
-  constant CFG_NMI_STACK_OVERFLOW_ADDR  : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000080";
-  constant CFG_NMI_STACK_UNDERFLOW_ADDR : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0) := X"00000088";
+  constant CFG_NMI_RESET_VECTOR         : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0) := X"00000000";
+  constant CFG_NMI_INSTR_UNALIGNED_ADDR : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0) := X"00000008";
+  constant CFG_NMI_INSTR_FAULT_ADDR     : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0) := X"00000010";
+  constant CFG_NMI_INSTR_ILLEGAL_ADDR   : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0) := X"00000018";
+  constant CFG_NMI_BREAKPOINT_ADDR      : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0) := X"00000020";
+  constant CFG_NMI_LOAD_UNALIGNED_ADDR  : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0) := X"00000028";
+  constant CFG_NMI_LOAD_FAULT_ADDR      : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0) := X"00000030";
+  constant CFG_NMI_STORE_UNALIGNED_ADDR : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0) := X"00000038";
+  constant CFG_NMI_STORE_FAULT_ADDR     : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0) := X"00000040";
+  constant CFG_NMI_CALL_FROM_UMODE_ADDR : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0) := X"00000048";
+  constant CFG_NMI_CALL_FROM_SMODE_ADDR : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0) := X"00000050";
+  constant CFG_NMI_CALL_FROM_HMODE_ADDR : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0) := X"00000058";
+  constant CFG_NMI_CALL_FROM_MMODE_ADDR : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0) := X"00000060";
+  constant CFG_NMI_INSTR_PAGE_FAULT_ADDR: std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0) := X"00000068";
+  constant CFG_NMI_LOAD_PAGE_FAULT_ADDR : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0) := X"00000070";
+  constant CFG_NMI_STORE_PAGE_FAULT_ADDR: std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0) := X"00000078";
+  constant CFG_NMI_STACK_OVERFLOW_ADDR  : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0) := X"00000080";
+  constant CFG_NMI_STACK_UNDERFLOW_ADDR : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0) := X"00000088";
 
   --! Number of elements each 2*CFG_ADDR_WIDTH in stack trace buffer, 0 = disabled
   constant CFG_STACK_TRACE_BUF_SIZE : integer := 32;
@@ -501,9 +503,9 @@ package river_cfg is
     i_nrst : in std_logic;
     i_req_mem_fire : in std_logic;
     i_resp_mem_valid : in std_logic;
-    i_resp_mem_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_resp_mem_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_resp_mem_data : in std_logic_vector(31 downto 0);
-    i_e_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_e_npc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_ra : in std_logic_vector(RISCV_ARCH-1 downto 0);
     o_npc_predict : out std_logic_vector(31 downto 0)
   );
@@ -543,12 +545,12 @@ package river_cfg is
     i_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
     o_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
     i_trap_ready : in std_logic;
-    i_ex_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    i_ex_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    i_ex_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_ex_pc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    i_ex_npc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    i_ex_data_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_ex_data_load_fault : in std_logic;
     i_ex_data_store_fault : in std_logic;
-    i_ex_data_store_fault_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_ex_data_store_fault_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_ex_instr_load_fault : in std_logic;
     i_ex_illegal_instr : in std_logic;
     i_ex_unalign_store : in std_logic;
@@ -563,13 +565,13 @@ package river_cfg is
     i_fpu_valid : in std_logic;
     i_irq_external : in std_logic;
     o_trap_valid : out std_logic;
-    o_trap_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_trap_pc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_break_mode : in std_logic;
     o_break_event : out std_logic;
     o_mpu_region_we : out std_logic;
     o_mpu_region_idx : out std_logic_vector(CFG_MPU_TBL_WIDTH-1 downto 0);
-    o_mpu_region_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    o_mpu_region_mask : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_mpu_region_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    o_mpu_region_mask : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_mpu_region_flags : out std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);
     i_dport_ena : in std_logic;
     i_dport_write : in std_logic;
@@ -610,7 +612,7 @@ package river_cfg is
     i_nrst : in std_logic;
     i_any_hold : in std_logic;                               -- Hold pipeline by any reason
     i_f_valid : in std_logic;                                -- Fetch input valid
-    i_f_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- Fetched pc
+    i_f_pc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- Fetched pc
     i_f_instr : in std_logic_vector(31 downto 0);            -- Fetched instruction value
     i_instr_load_fault : in std_logic;                       -- Instruction fetched from fault address
     i_instr_executable : in std_logic;                       -- MPU flag
@@ -623,7 +625,7 @@ package river_cfg is
     i_e_ready : in std_logic;
     i_e_fencei : in std_logic;
     o_valid : out std_logic;                                 -- Current output values are valid
-    o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);  -- Current instruction pointer value
+    o_pc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);  -- Current instruction pointer value
     o_instr : out std_logic_vector(31 downto 0);             -- Current instruction value
     o_memop_store : out std_logic;                           -- Store to memory operation
     o_memop_load : out std_logic;                            -- Load from memoru operation
@@ -714,7 +716,7 @@ package river_cfg is
     i_d_radr2 : in std_logic_vector(5 downto 0);
     i_d_waddr : in std_logic_vector(5 downto 0);
     i_d_imm : in std_logic_vector(RISCV_ARCH-1 downto 0);
-    i_d_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Instruction pointer on decoded instruction
+    i_d_pc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);    -- Instruction pointer on decoded instruction
     i_d_instr : in std_logic_vector(31 downto 0);               -- Decoded instruction value
     i_wb_waddr : in std_logic_vector(5 downto 0);               -- Write back address
     i_memop_store : in std_logic;                               -- Store to memory operation
@@ -731,7 +733,7 @@ package river_cfg is
     i_instr_load_fault : in std_logic;                          -- Instruction fetched from fault address
     i_instr_executable : in std_logic;                          -- MPU flag
     i_dport_npc_write : in std_logic;                           -- Write npc value from debug port
-    i_dport_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Debug port npc value to write
+    i_dport_npc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);-- Debug port npc value to write
 
     i_rdata1 : in std_logic_vector(RISCV_ARCH-1 downto 0);      -- Integer/FPU registers value 1
     i_rhazard1 : in std_logic;
@@ -749,9 +751,9 @@ package river_cfg is
     i_csr_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0);   -- CSR current value
     o_csr_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);  -- CSR new value
     i_trap_valid : in std_logic;
-    i_trap_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_trap_pc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     -- exceptions:
-    o_ex_npc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_ex_npc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_ex_instr_load_fault : out std_logic;                      -- Instruction fetched from fault address
     o_ex_instr_not_executable : out std_logic;                  -- MPU prohibit this instruction
     o_ex_illegal_instr : out std_logic;
@@ -770,7 +772,7 @@ package river_cfg is
     o_memop_load : out std_logic;                               -- Load data instruction
     o_memop_store : out std_logic;                              -- Store data instruction
     o_memop_size : out std_logic_vector(1 downto 0);            -- 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
-    o_memop_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Memory access address
+    o_memop_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);-- Memory access address
     o_memop_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
     o_memop_waddr : out std_logic_vector(5 downto 0);
     o_memop_wtag : out std_logic_vector(3 downto 0);
@@ -778,8 +780,8 @@ package river_cfg is
 
     o_trap_ready : out std_logic;                               -- Trap branch request was accepted
     o_valid : out std_logic;                                    -- Output is valid
-    o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);     -- Valid instruction pointer
-    o_npc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Next instruction pointer. Next decoded pc must match to this value or will be ignored.
+    o_pc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);     -- Valid instruction pointer
+    o_npc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);    -- Next instruction pointer. Next decoded pc must match to this value or will be ignored.
     o_instr : out std_logic_vector(31 downto 0);                -- Valid instruction value
     i_flushd_end : in std_logic;
     o_flushd : out std_logic;
@@ -820,26 +822,26 @@ package river_cfg is
     i_pipeline_hold : in std_logic;
     i_mem_req_ready : in std_logic;
     o_mem_addr_valid : out std_logic;
-    o_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_mem_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_mem_data_valid : in std_logic;
-    i_mem_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_mem_data_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_mem_data : in std_logic_vector(31 downto 0);
     i_mem_load_fault : in std_logic;
     i_mem_executable : in std_logic;
     o_mem_resp_ready : out std_logic;
     i_e_fencei : in std_logic;
 
-    i_predict_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_predict_npc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
 
     o_mem_req_fire : out std_logic;                    -- used by branch predictor to form new npc value
     o_instr_load_fault : out std_logic;                -- fault instruction's address
     o_instr_executable : out std_logic;
     o_valid : out std_logic;
-    o_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_pc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_instr : out std_logic_vector(31 downto 0);
     o_hold : out std_logic;                                -- Hold due no response from icache yet
     i_br_fetch_valid : in std_logic;                       -- Fetch injection address/instr are valid
-    i_br_address_fetch : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- Fetch injection address to skip ebreak instruciton only once
+    i_br_address_fetch : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- Fetch injection address to skip ebreak instruciton only once
     i_br_instr_fetch : in std_logic_vector(31 downto 0)   -- Real instruction value that was replaced by ebreak
   );
   end component; 
@@ -881,7 +883,7 @@ package river_cfg is
     i_clk  : in std_logic;
     i_nrst : in std_logic;
     i_e_valid : in std_logic;                                         -- Execution stage outputs are valid
-    i_e_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);          -- Execution stage instruction pointer
+    i_e_pc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);          -- Execution stage instruction pointer
     i_e_instr : in std_logic_vector(31 downto 0);                     -- Execution stage instruction value
     i_e_flushd : in std_logic;
     o_flushd : out std_logic;
@@ -893,7 +895,7 @@ package river_cfg is
     i_memop_load : in std_logic;                                      -- Load data from memory and write to i_res_addr
     i_memop_store : in std_logic;                                     -- Store i_res_data value into memory
     i_memop_size : in std_logic_vector(1 downto 0);                   -- Encoded memory transaction size in bytes: 0=1B; 1=2B; 2=4B; 3=8B
-    i_memop_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Memory access address
+    i_memop_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);    -- Memory access address
     o_memop_ready : out std_logic;                                    -- Ready to accept memop request
     o_wb_wena : out std_logic;                                        -- Write enable signal
     o_wb_waddr : out std_logic_vector(5 downto 0);                    -- Output register address (0 = x0 = no write)
@@ -905,11 +907,11 @@ package river_cfg is
     i_mem_req_ready : in std_logic;
     o_mem_valid : out std_logic;                                      -- Memory request is valid
     o_mem_write : out std_logic;                                      -- Memory write request
-    o_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);     -- Data path requested address
+    o_mem_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);     -- Data path requested address
     o_mem_wdata : out std_logic_vector(63 downto 0);                  -- Data path requested data (write transaction)
     o_mem_wstrb : out std_logic_vector(7 downto 0);                   -- 8-bytes aligned strobs
     i_mem_data_valid : in std_logic;                                  -- Data path memory response is valid
-    i_mem_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- Data path memory response address
+    i_mem_data_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- Data path memory response address
     i_mem_data : in std_logic_vector(63 downto 0);                    -- Data path memory response value
     o_mem_resp_ready : out std_logic
   );
@@ -1022,8 +1024,8 @@ package river_cfg is
     o_ireg_write : out std_logic;                             -- Region 1: Integer registers bank write pulse
     o_npc_write : out std_logic;                              -- Region 1: npc write enable
     i_ireg_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0);-- Region 1: Integer register read value
-    i_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Region 1: Instruction pointer
-    i_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);   -- Region 1: Next Instruction pointer
+    i_pc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);    -- Region 1: Instruction pointer
+    i_npc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);   -- Region 1: Next Instruction pointer
     i_e_next_ready : in std_logic;
     i_e_valid : in std_logic;                                 -- Stepping control signal
     i_e_call : in std_logic;                                  -- pseudo-instruction CALL
@@ -1034,9 +1036,9 @@ package river_cfg is
     i_ebreak : in std_logic;                                  -- ebreak instruction decoded
     o_break_mode : out std_logic;                             -- Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
     o_br_fetch_valid : out std_logic;                         -- Fetch injection address/instr are valid
-    o_br_address_fetch : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- Fetch injection address to skip ebreak instruciton only once
+    o_br_address_fetch : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- Fetch injection address to skip ebreak instruciton only once
     o_br_instr_fetch : out std_logic_vector(31 downto 0);     -- Real instruction value that was replaced by ebreak
-    o_flush_address : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);  -- Address of instruction to remove from ICache
+    o_flush_address : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);  -- Address of instruction to remove from ICache
     o_flush_valid : out std_logic;                            -- Remove address from ICache is valid
     i_istate : in std_logic_vector(3 downto 0);               -- ICache state machine value
     i_dstate : in std_logic_vector(3 downto 0);               -- DCache state machine value
@@ -1094,9 +1096,9 @@ package river_cfg is
     -- Control path:
     i_req_ctrl_ready : in std_logic;                                  -- ICache is ready to accept request
     o_req_ctrl_valid : out std_logic;                                 -- Request to ICache is valid
-    o_req_ctrl_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Requesting address to ICache
+    o_req_ctrl_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);-- Requesting address to ICache
     i_resp_ctrl_valid : in std_logic;                                 -- ICache response is valid
-    i_resp_ctrl_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Response address must be equal to the latest request address
+    i_resp_ctrl_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);-- Response address must be equal to the latest request address
     i_resp_ctrl_data : in std_logic_vector(31 downto 0);              -- Read value
     i_resp_ctrl_load_fault : in std_logic;                            -- bus response with error
     i_resp_ctrl_executable : in std_logic;
@@ -1105,13 +1107,13 @@ package river_cfg is
     i_req_data_ready : in std_logic;                                  -- DCache is ready to accept request
     o_req_data_valid : out std_logic;                                 -- Request to DCache is valid
     o_req_data_write : out std_logic;                                 -- Read/Write transaction
-    o_req_data_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Requesting address to DCache
+    o_req_data_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);-- Requesting address to DCache
     o_req_data_wdata : out std_logic_vector(63 downto 0);             -- Writing value
     o_req_data_wstrb : out std_logic_vector(7 downto 0);              -- 8-bytes aligned strobs
     i_resp_data_valid : in std_logic;                                 -- DCache response is valid
-    i_resp_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- DCache response address must be equal to the latest request address
+    i_resp_data_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);-- DCache response address must be equal to the latest request address
     i_resp_data_data : in std_logic_vector(63 downto 0);              -- Read value
-    i_resp_data_store_fault_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_resp_data_store_fault_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_resp_data_load_fault : in std_logic;                            -- Bus response with SLVERR or DECERR on read
     i_resp_data_store_fault : in std_logic;                           -- Bus response with SLVERR or DECERR on write
     i_resp_data_er_mpu_load : in std_logic;
@@ -1124,8 +1126,8 @@ package river_cfg is
     -- MPU interface
     o_mpu_region_we : out std_logic;
     o_mpu_region_idx : out std_logic_vector(CFG_MPU_TBL_WIDTH-1 downto 0);
-    o_mpu_region_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    o_mpu_region_mask : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_mpu_region_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    o_mpu_region_mask : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_mpu_region_flags : out std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);  -- {ena, cachable, r, w, x}
     -- Debug interface:
     i_dport_valid : in std_logic;                                     -- Debug access from DSU is valid
@@ -1137,9 +1139,9 @@ package river_cfg is
     o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);      -- Response value
     o_halted : out std_logic;
     -- Debug signals:
-    o_flush_address : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Address of instruction to remove from ICache
+    o_flush_address : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);-- Address of instruction to remove from ICache
     o_flush_valid : out std_logic;                                    -- Remove address from ICache is valid
-    o_data_flush_address : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Address of instruction to remove from D$
+    o_data_flush_address : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);    -- Address of instruction to remove from D$
     o_data_flush_valid : out std_logic;                               -- Remove address from D$ is valid
     i_data_flush_end : in std_logic;
     i_istate : in std_logic_vector(3 downto 0);                       -- ICache state machine value
@@ -1196,10 +1198,10 @@ package river_cfg is
     i_nrst : in std_logic;                             -- Reset. Active LOW.
     -- Control path:
     i_req_ctrl_valid : in std_logic;
-    i_req_ctrl_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_req_ctrl_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_req_ctrl_ready : out std_logic;
     o_resp_ctrl_valid : out std_logic;
-    o_resp_ctrl_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_resp_ctrl_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_resp_ctrl_data : out std_logic_vector(31 downto 0);
     o_resp_ctrl_load_fault : out std_logic;
     o_resp_ctrl_executable : out std_logic;
@@ -1207,14 +1209,14 @@ package river_cfg is
     -- Data path:
     i_req_data_valid : in std_logic;
     i_req_data_write : in std_logic;
-    i_req_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_req_data_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_req_data_wdata : in std_logic_vector(63 downto 0);
     i_req_data_wstrb : in std_logic_vector(7 downto 0);
     o_req_data_ready : out std_logic;
     o_resp_data_valid : out std_logic;
-    o_resp_data_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_resp_data_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_resp_data_data : out std_logic_vector(63 downto 0);
-    o_resp_data_store_fault_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_resp_data_store_fault_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_resp_data_load_fault : out std_logic;
     o_resp_data_store_fault : out std_logic;
     o_resp_data_er_mpu_load : out std_logic;
@@ -1226,7 +1228,7 @@ package river_cfg is
     o_req_mem_valid : out std_logic;
     o_req_mem_write : out std_logic;
     o_req_mem_cached : out std_logic;
-    o_req_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_req_mem_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_req_mem_strob : out std_logic_vector(L1CACHE_BYTES_PER_LINE-1 downto 0);
     o_req_mem_data : out std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);  -- burst transaction length
     i_resp_mem_valid : in std_logic;
@@ -1234,17 +1236,17 @@ package river_cfg is
     i_resp_mem_data : in std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);
     i_resp_mem_load_fault : in std_logic;                             -- Bus response with SLVERR or DECERR on read
     i_resp_mem_store_fault : in std_logic;                            -- Bus response with SLVERR or DECERR on write
-    i_resp_mem_store_fault_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_resp_mem_store_fault_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     -- MPU interface:
     i_mpu_region_we : in std_logic;
     i_mpu_region_idx : in std_logic_vector(CFG_MPU_TBL_WIDTH-1 downto 0);
-    i_mpu_region_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    i_mpu_region_mask : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_mpu_region_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    i_mpu_region_mask : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_mpu_region_flags : in std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);
     -- Debug signals:
-    i_flush_address : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);  -- clear ICache address from debug interface
+    i_flush_address : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);  -- clear ICache address from debug interface
     i_flush_valid : in std_logic;                                      -- address to clear icache is valid
-    i_data_flush_address : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);  -- clear D$ address
+    i_data_flush_address : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);  -- clear D$ address
     i_data_flush_valid : in std_logic;                                      -- address to clear D$ is valid
     o_data_flush_end : out std_logic;
     o_istate : out std_logic_vector(3 downto 0);                      -- ICache state machine value
@@ -1295,7 +1297,7 @@ package river_cfg is
     o_req_mem_valid : out std_logic;                                  -- AXI memory request is valid
     o_req_mem_write : out std_logic;                                  -- AXI memory request is write type
     o_req_mem_cached : out std_logic;
-    o_req_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- AXI memory request address
+    o_req_mem_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- AXI memory request address
     o_req_mem_strob : out std_logic_vector(L1CACHE_BYTES_PER_LINE-1 downto 0);-- Writing strob. 1 bit per Byte
     o_req_mem_data : out std_logic_vector(L1CACHE_LINE_BITS-1 downto 0); -- Writing data
     i_resp_mem_valid : in std_logic;                                  -- AXI response is valid
@@ -1303,7 +1305,7 @@ package river_cfg is
     i_resp_mem_data : in std_logic_vector(L1CACHE_LINE_BITS-1 downto 0); -- Read data
     i_resp_mem_load_fault : in std_logic;                             -- Bus response with SLVERR or DECERR on read
     i_resp_mem_store_fault : in std_logic;                            -- Bus response with SLVERR or DECERR on write
-    i_resp_mem_store_fault_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_resp_mem_store_fault_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     -- Interrupt line from external interrupts controller (PLIC).
     i_ext_irq : in std_logic;
     o_time : out std_logic_vector(63 downto 0);                       -- Timer. Clock counter except halt state.

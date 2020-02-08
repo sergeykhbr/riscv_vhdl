@@ -40,12 +40,12 @@ entity CsrRegs is
     i_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);   -- CSR writing value
     o_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);  -- CSR read value
     i_trap_ready : in std_logic;                            -- Trap branch request was accepted
-    i_ex_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    i_ex_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    i_ex_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Data path: address must be equal to the latest request address
+    i_ex_pc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    i_ex_npc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    i_ex_data_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);-- Data path: address must be equal to the latest request address
     i_ex_data_load_fault : in std_logic;                    -- Data path: Bus response with SLVERR or DECERR on read
     i_ex_data_store_fault : in std_logic;                   -- Data path: Bus response with SLVERR or DECERR on write
-    i_ex_data_store_fault_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_ex_data_store_fault_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_ex_instr_load_fault : in std_logic;
     i_ex_illegal_instr : in std_logic;
     i_ex_unalign_store : in std_logic;
@@ -60,15 +60,15 @@ entity CsrRegs is
     i_fpu_valid : in std_logic;                -- FPU output is valid
     i_irq_external : in std_logic;
     o_trap_valid : out std_logic;                              -- Trap pulse
-    o_trap_pc : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- trap on pc
+    o_trap_pc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);-- trap on pc
 
     i_break_mode : in std_logic;                            -- Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
     o_break_event : out std_logic;                          -- 1 clock EBREAK detected
 
     o_mpu_region_we : out std_logic;
     o_mpu_region_idx : out std_logic_vector(CFG_MPU_TBL_WIDTH-1 downto 0);
-    o_mpu_region_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    o_mpu_region_mask : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_mpu_region_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    o_mpu_region_mask : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_mpu_region_flags : out std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);  -- {ena, cachable, r, w, x}
 
     i_dport_ena : in std_logic;                              -- Debug port request is enabled
@@ -84,9 +84,9 @@ architecture arch_CsrRegs of CsrRegs is
   type RegistersType is record
       mtvec : std_logic_vector(RISCV_ARCH-1 downto 0);
       mscratch : std_logic_vector(RISCV_ARCH-1 downto 0);
-      mstackovr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-      mstackund : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-      mbadaddr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      mstackovr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+      mstackund : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+      mbadaddr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
       mode : std_logic_vector(1 downto 0);
       uie : std_logic;                       -- User level interrupts ena for current priv. mode
       mie : std_logic;                       -- Machine level interrupts ena for current priv. mode
@@ -97,8 +97,8 @@ architecture arch_CsrRegs of CsrRegs is
       mepc : std_logic_vector(RISCV_ARCH-1 downto 0);
       ext_irq : std_logic;
 
-      mpu_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-      mpu_mask : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      mpu_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+      mpu_mask : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
       mpu_idx : std_logic_vector(CFG_MPU_TBL_WIDTH-1 downto 0);
       mpu_flags : std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);
       mpu_we : std_logic;
@@ -110,11 +110,11 @@ architecture arch_CsrRegs of CsrRegs is
       ex_fpu_inexact : std_logic;            -- FPU Exception: inexact
       trap_irq : std_logic;
       trap_code : std_logic_vector(4 downto 0);
-      trap_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      trap_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
       break_event : std_logic;
       hold_data_store_fault : std_logic;
       hold_data_load_fault : std_logic;
-      hold_mbadaddr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      hold_mbadaddr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   end record;
 
   constant R_RESET : RegistersType := (
@@ -273,27 +273,27 @@ architecture arch_CsrRegs of CsrRegs is
         ordata(63) := ir.trap_irq;
         ordata(4 downto 0) := ir.trap_code;
     when CSR_mbadaddr =>   -- Machine bad address
-        ordata(BUS_ADDR_WIDTH-1 downto 0) := ir.mbadaddr;
+        ordata(CFG_CPU_ADDR_BITS-1 downto 0) := ir.mbadaddr;
     when CSR_mip =>        -- Machine interrupt pending
     when CSR_mstackovr =>  -- Machine stack overflow
-        ordata(BUS_ADDR_WIDTH-1 downto 0) := ir.mstackovr;
+        ordata(CFG_CPU_ADDR_BITS-1 downto 0) := ir.mstackovr;
         if iwena = '1' then
-            ov.mstackovr := iwdata(BUS_ADDR_WIDTH-1 downto 0);
-            ov.mstackovr_ena := or_reduce(iwdata(BUS_ADDR_WIDTH-1 downto 0));
+            ov.mstackovr := iwdata(CFG_CPU_ADDR_BITS-1 downto 0);
+            ov.mstackovr_ena := or_reduce(iwdata(CFG_CPU_ADDR_BITS-1 downto 0));
         end if;
     when CSR_mstackund =>  -- Machine stack underflow
-        ordata(BUS_ADDR_WIDTH-1 downto 0) := ir.mstackund;
+        ordata(CFG_CPU_ADDR_BITS-1 downto 0) := ir.mstackund;
         if iwena = '1' then
-            ov.mstackund := iwdata(BUS_ADDR_WIDTH-1 downto 0);
-            ov.mstackund_ena := or_reduce(iwdata(BUS_ADDR_WIDTH-1 downto 0));
+            ov.mstackund := iwdata(CFG_CPU_ADDR_BITS-1 downto 0);
+            ov.mstackund_ena := or_reduce(iwdata(CFG_CPU_ADDR_BITS-1 downto 0));
         end if;
     when CSR_mpu_addr =>
         if iwena = '1' then
-            ov.mpu_addr := iwdata(BUS_ADDR_WIDTH-1 downto 0);
+            ov.mpu_addr := iwdata(CFG_CPU_ADDR_BITS-1 downto 0);
         end if;
     when CSR_mpu_mask =>
         if iwena = '1' then
-            ov.mpu_mask := iwdata(BUS_ADDR_WIDTH-1 downto 0);
+            ov.mpu_mask := iwdata(CFG_CPU_ADDR_BITS-1 downto 0);
         end if;
     when CSR_mpu_ctrl =>
         ordata(15 downto 8) := conv_std_logic_vector(CFG_MPU_TBL_SIZE, 8);
@@ -324,11 +324,11 @@ begin
     variable w_ext_irq : std_logic;
     variable w_dport_wena : std_logic;
     variable w_trap_valid : std_logic;
-    variable wb_trap_pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable wb_trap_pc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     variable w_trap_irq : std_logic;
     variable w_exception_xret : std_logic;
     variable wb_trap_code : std_logic_vector(4 downto 0);
-    variable wb_mbadaddr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable wb_mbadaddr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     variable w_mstackovr : std_logic;
     variable w_mstackund : std_logic;
   begin
@@ -363,12 +363,12 @@ begin
     end if;
 
     w_mstackovr := '0';
-    if i_sp(BUS_ADDR_WIDTH-1 downto 0) < r.mstackovr then
+    if i_sp(CFG_CPU_ADDR_BITS-1 downto 0) < r.mstackovr then
         w_mstackovr := '1';
     end if;
 
     w_mstackund := '0';
-    if i_sp(BUS_ADDR_WIDTH-1 downto 0) > r.mstackund then
+    if i_sp(CFG_CPU_ADDR_BITS-1 downto 0) > r.mstackund then
         w_mstackund := '1';
     end if;
 
@@ -384,7 +384,7 @@ begin
     w_trap_irq := '0';
     wb_trap_code := (others => '0');
     v.break_event := '0';
-    wb_trap_pc := r.mtvec(BUS_ADDR_WIDTH-1 downto 0);
+    wb_trap_pc := r.mtvec(CFG_CPU_ADDR_BITS-1 downto 0);
     wb_mbadaddr := i_ex_pc;
 
     if i_ex_instr_load_fault = '1' then
@@ -473,7 +473,7 @@ begin
         end if;
     elsif w_ext_irq = '1' and r.ext_irq = '0' then
         w_trap_valid := '1';
-        wb_trap_pc := r.mtvec(BUS_ADDR_WIDTH-1 downto 0);
+        wb_trap_pc := r.mtvec(CFG_CPU_ADDR_BITS-1 downto 0);
         wb_trap_code := INTERRUPT_MExternal;
         w_trap_irq := '1';
     end if;
@@ -492,8 +492,8 @@ begin
     if (w_trap_valid and i_trap_ready and (i_break_mode or not i_ex_breakpoint)) = '1' then
         v.mie := '0';
         v.mpp := r.mode;
-        v.mepc(RISCV_ARCH-1 downto BUS_ADDR_WIDTH) := (others => '0');
-        v.mepc(BUS_ADDR_WIDTH-1 downto 0) := i_ex_npc;
+        v.mepc(RISCV_ARCH-1 downto CFG_CPU_ADDR_BITS) := (others => '0');
+        v.mepc(CFG_CPU_ADDR_BITS-1 downto 0) := i_ex_npc;
         v.mbadaddr := wb_mbadaddr;
         v.trap_code := wb_trap_code;
         v.trap_irq := w_trap_irq;

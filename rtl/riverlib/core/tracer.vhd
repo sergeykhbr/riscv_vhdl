@@ -33,11 +33,11 @@ entity tracer is generic (
     i_nrst : in std_logic;                                  -- Reset. Active LOW.
     i_dbg_executed_cnt : in std_logic_vector(63 downto 0)
     i_e_valid : in std_logic;
-    i_e_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0)
+    i_e_pc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0)
     i_e_instr : in std_logic_vector(31 downto 0)
     i_e_memop_store : in std_logic;
     i_e_memop_load : in std_logic;
-    i_e_memop_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0)
+    i_e_memop_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0)
     i_e_res_data : in std_logic_vector(RISCV_ARCH-1 downto 0);
     i_e_res_addr : in std_logic_vector(5 downto 0)
     i_m_wena : in std_logic;
@@ -63,7 +63,7 @@ architecture arch_tracer of tracer is
 
   type RegistersType is record
       load_reg : std_logic;
-      load_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      load_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   end record;
 
   constant R_RESET : RegistersType := ('0', (others => '0'));

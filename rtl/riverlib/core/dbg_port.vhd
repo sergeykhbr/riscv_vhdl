@@ -49,8 +49,8 @@ entity DbgPort is generic (
     o_ireg_write : out std_logic;                             -- Region 1: Integer registers bank write pulse
     o_npc_write : out std_logic;                              -- Region 1: npc write enable
     i_ireg_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0);-- Region 1: Integer register read value
-    i_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Region 1: Instruction pointer
-    i_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);   -- Region 1: Next Instruction pointer
+    i_pc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);    -- Region 1: Instruction pointer
+    i_npc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);   -- Region 1: Next Instruction pointer
     i_e_next_ready : in std_logic;
     i_e_valid : in std_logic;                                 -- Stepping control signal
     i_e_call : in std_logic;                                  -- pseudo-instruction CALL
@@ -61,9 +61,9 @@ entity DbgPort is generic (
     i_ebreak : in std_logic;                                  -- ebreak instruction decoded
     o_break_mode : out std_logic;                             -- Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
     o_br_fetch_valid : out std_logic;                         -- Fetch injection address/instr are valid
-    o_br_address_fetch : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- Fetch injection address to skip ebreak instruciton only once
+    o_br_address_fetch : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- Fetch injection address to skip ebreak instruciton only once
     o_br_instr_fetch : out std_logic_vector(31 downto 0);     -- Real instruction value that was replaced by ebreak
-    o_flush_address : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);  -- Address of instruction to remove from ICache
+    o_flush_address : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);  -- Address of instruction to remove from ICache
     o_flush_valid : out std_logic;                            -- Remove address from ICache is valid
     -- Debug signals:
     i_istate : in std_logic_vector(3 downto 0);               -- ICache state machine value
@@ -85,10 +85,10 @@ architecture arch_DbgPort of DbgPort is
       stepping_mode : std_logic;
       stepping_mode_cnt : std_logic_vector(RISCV_ARCH-1 downto 0);
       trap_on_break : std_logic;
-      br_address_fetch : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      br_address_fetch : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
       br_instr_fetch : std_logic_vector(31 downto 0);
       br_fetch_valid : std_logic;
-      flush_address : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      flush_address : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
       flush_valid : std_logic;
 
       rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
@@ -112,10 +112,10 @@ architecture arch_DbgPort of DbgPort is
 
   signal r, rin : RegistersType;
   signal wb_stack_raddr : std_logic_vector(STACKTR_ADRSZ-1 downto 0);
-  signal wb_stack_rdata : std_logic_vector(2*BUS_ADDR_WIDTH-1 downto 0);
+  signal wb_stack_rdata : std_logic_vector(2*CFG_CPU_ADDR_BITS-1 downto 0);
   signal w_stack_we : std_logic;
   signal wb_stack_waddr : std_logic_vector(STACKTR_ADRSZ-1 downto 0);
-  signal wb_stack_wdata : std_logic_vector(2*BUS_ADDR_WIDTH-1 downto 0);
+  signal wb_stack_wdata : std_logic_vector(2*CFG_CPU_ADDR_BITS-1 downto 0);
 
   component StackTraceBuffer is
   generic (
@@ -138,7 +138,7 @@ begin
   stacktr_ena : if CFG_STACK_TRACE_BUF_SIZE /= 0 generate 
     stacktr0 : StackTraceBuffer generic map (
       abits => STACKTR_ADRSZ,
-      dbits => 2*BUS_ADDR_WIDTH
+      dbits => 2*CFG_CPU_ADDR_BITS
     ) port map (
       i_clk   => i_clk,
       i_raddr => wb_stack_raddr,
@@ -249,9 +249,9 @@ begin
                 end if;
             elsif wb_idx = 32 then
                 --! Read only register
-                wb_rdata(BUS_ADDR_WIDTH-1 downto 0) := i_pc;
+                wb_rdata(CFG_CPU_ADDR_BITS-1 downto 0) := i_pc;
             elsif wb_idx = 33 then
-                wb_rdata(BUS_ADDR_WIDTH-1 downto 0) := i_npc;
+                wb_rdata(CFG_CPU_ADDR_BITS-1 downto 0) := i_npc;
                 if i_dport_write = '1' then
                     w_o_npc_write := '1';
                     wb_o_core_wdata := i_dport_wdata;
@@ -312,9 +312,9 @@ begin
             when 6 =>
                 -- todo: remove hardware breakpoint
             when 7 =>
-                wb_rdata(BUS_ADDR_WIDTH-1 downto 0) := r.br_address_fetch;
+                wb_rdata(CFG_CPU_ADDR_BITS-1 downto 0) := r.br_address_fetch;
                 if i_dport_write = '1' then
-                    v.br_address_fetch := i_dport_wdata(BUS_ADDR_WIDTH-1 downto 0);
+                    v.br_address_fetch := i_dport_wdata(CFG_CPU_ADDR_BITS-1 downto 0);
                 end if;
             when 8 =>
                 wb_rdata(31 downto 0) := r.br_instr_fetch;
@@ -324,10 +324,10 @@ begin
                     v.br_instr_fetch := i_dport_wdata(31 downto 0);
                 end if;
             when 9 =>
-                wb_rdata(BUS_ADDR_WIDTH-1 downto 0) := r.flush_address;
+                wb_rdata(CFG_CPU_ADDR_BITS-1 downto 0) := r.flush_address;
                 if i_dport_write = '1' then
                     v.flush_valid := '1';
-                    v.flush_address := i_dport_wdata(BUS_ADDR_WIDTH-1 downto 0);
+                    v.flush_address := i_dport_wdata(CFG_CPU_ADDR_BITS-1 downto 0);
                 end if;
             when others =>
             end case;
@@ -337,11 +337,11 @@ begin
     v.rdata := wb_rdata;
     if r.rd_trbuf_ena = '1' then
         if r.rd_trbuf_addr0 = '0' then
-            wb_o_rdata(BUS_ADDR_WIDTH-1 downto 0) :=
-					wb_stack_rdata(BUS_ADDR_WIDTH-1 downto 0);
+            wb_o_rdata(CFG_CPU_ADDR_BITS-1 downto 0) :=
+					wb_stack_rdata(CFG_CPU_ADDR_BITS-1 downto 0);
         else
-            wb_o_rdata(BUS_ADDR_WIDTH-1 downto 0) :=
-					wb_stack_rdata(2*BUS_ADDR_WIDTH-1 downto BUS_ADDR_WIDTH);
+            wb_o_rdata(CFG_CPU_ADDR_BITS-1 downto 0) :=
+					wb_stack_rdata(2*CFG_CPU_ADDR_BITS-1 downto CFG_CPU_ADDR_BITS);
         end if;
     else
         wb_o_rdata := r.rdata;

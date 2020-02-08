@@ -31,7 +31,7 @@ entity MemAccess is generic (
     i_clk  : in std_logic;
     i_nrst : in std_logic;
     i_e_valid : in std_logic;                                         -- Execution stage outputs are valid
-    i_e_pc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);          -- Execution stage instruction pointer
+    i_e_pc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);          -- Execution stage instruction pointer
     i_e_instr : in std_logic_vector(31 downto 0);                     -- Execution stage instruction value
     i_e_flushd : in std_logic;
     o_flushd : out std_logic;
@@ -43,7 +43,7 @@ entity MemAccess is generic (
     i_memop_load : in std_logic;                                      -- Load data from memory and write to i_res_addr
     i_memop_store : in std_logic;                                     -- Store i_res_data value into memory
     i_memop_size : in std_logic_vector(1 downto 0);                   -- Encoded memory transaction size in bytes: 0=1B; 1=2B; 2=4B; 3=8B
-    i_memop_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);    -- Memory access address
+    i_memop_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);    -- Memory access address
     o_memop_ready : out std_logic;                                    -- Ready to accept memop request
     o_wb_wena : out std_logic;                                        -- Write enable signal
     o_wb_waddr : out std_logic_vector(5 downto 0);                    -- Output register address (0 = x0 = no write)
@@ -55,11 +55,11 @@ entity MemAccess is generic (
     i_mem_req_ready : in std_logic;
     o_mem_valid : out std_logic;                                      -- Memory request is valid
     o_mem_write : out std_logic;                                      -- Memory write request
-    o_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);     -- Data path requested address
+    o_mem_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);     -- Data path requested address
     o_mem_wdata : out std_logic_vector(63 downto 0);                  -- Data path requested data (write transaction)
     o_mem_wstrb : out std_logic_vector(7 downto 0);                   -- 8-bytes aligned strobs
     i_mem_data_valid : in std_logic;                                  -- Data path memory response is valid
-    i_mem_data_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0); -- Data path memory response address
+    i_mem_data_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- Data path memory response address
     i_mem_data : in std_logic_vector(63 downto 0);                    -- Data path memory response value
     o_mem_resp_ready : out std_logic
   );
@@ -77,13 +77,13 @@ architecture arch_MemAccess of MemAccess is
   type RegistersType is record
       state : std_logic_vector(1 downto 0);
       memop_w : std_logic;
-      memop_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      memop_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
       memop_wdata : std_logic_vector(63 downto 0);
       memop_wstrb : std_logic_vector(7 downto 0);
       memop_sign_ext : std_logic;
       memop_size : std_logic_vector(1 downto 0);
       
-      memop_res_pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      memop_res_pc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
       memop_res_instr : std_logic_vector(31 downto 0);
       memop_res_addr : std_logic_vector(5 downto 0);
       memop_res_data : std_logic_vector(RISCV_ARCH-1 downto 0);
@@ -116,11 +116,11 @@ architecture arch_MemAccess of MemAccess is
                                   + RISCV_ARCH 
                                   + 6
                                   + 32
-                                  + BUS_ADDR_WIDTH
+                                  + CFG_CPU_ADDR_BITS
                                   + 2
                                   + 1
                                   + 1
-                                  + BUS_ADDR_WIDTH
+                                  + CFG_CPU_ADDR_BITS
                                   ;
 
   signal queue_we : std_logic;
@@ -160,7 +160,7 @@ begin
     variable v_mem_write : std_logic;
     variable v_mem_sign_ext : std_logic;
     variable vb_mem_sz : std_logic_vector(1 downto 0);
-    variable vb_mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable vb_mem_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     variable vb_mem_rdata : std_logic_vector(63 downto 0);
     variable v_queue_re : std_logic;
     variable v_flushd : std_logic;
@@ -172,7 +172,7 @@ begin
     variable vb_mem_data_signed : std_logic_vector(63 downto 0);
     variable vb_res_data : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable vb_res_addr : std_logic_vector(5 downto 0);
-    variable vb_e_pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable vb_e_pc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     variable vb_e_instr : std_logic_vector(31 downto 0);
     variable v_memop_ready : std_logic;
     variable v_o_wena : std_logic;
@@ -255,24 +255,24 @@ begin
     queue_we <= i_e_valid and (i_memop_load or i_memop_store or i_e_flushd);
 
     -- Split Queue outputs:
-    v_flushd := queue_data_o(2*BUS_ADDR_WIDTH+RISCV_ARCH+8+64+46);
-    vb_mem_wtag := queue_data_o(2*BUS_ADDR_WIDTH+RISCV_ARCH+8+64+45 downto
-                                2*BUS_ADDR_WIDTH+RISCV_ARCH+8+64+42);
-    vb_mem_wdata := queue_data_o(2*BUS_ADDR_WIDTH+RISCV_ARCH+8+64+42-1 downto
-                                 2*BUS_ADDR_WIDTH+RISCV_ARCH+8+42);
-    vb_mem_wstrb := queue_data_o(2*BUS_ADDR_WIDTH+RISCV_ARCH+8+42-1 downto
-                                      2*BUS_ADDR_WIDTH+RISCV_ARCH+42);
-    vb_res_data := queue_data_o(2*BUS_ADDR_WIDTH+RISCV_ARCH+42-1 downto
-                                      2*BUS_ADDR_WIDTH+42);
-    vb_res_addr := queue_data_o(2*BUS_ADDR_WIDTH+42-1 downto
-                                2*BUS_ADDR_WIDTH+36);
-    vb_e_instr := queue_data_o(2*BUS_ADDR_WIDTH+36-1 downto
-                               2*BUS_ADDR_WIDTH+4);
-    vb_e_pc := queue_data_o(2*BUS_ADDR_WIDTH+4-1 downto BUS_ADDR_WIDTH+4);
-    vb_mem_sz := queue_data_o(BUS_ADDR_WIDTH+3 downto BUS_ADDR_WIDTH+2);
-    v_mem_sign_ext := queue_data_o(BUS_ADDR_WIDTH+1);
-    v_mem_write := queue_data_o(BUS_ADDR_WIDTH);
-    vb_mem_addr := queue_data_o(BUS_ADDR_WIDTH-1 downto 0);
+    v_flushd := queue_data_o(2*CFG_CPU_ADDR_BITS+RISCV_ARCH+8+64+46);
+    vb_mem_wtag := queue_data_o(2*CFG_CPU_ADDR_BITS+RISCV_ARCH+8+64+45 downto
+                                2*CFG_CPU_ADDR_BITS+RISCV_ARCH+8+64+42);
+    vb_mem_wdata := queue_data_o(2*CFG_CPU_ADDR_BITS+RISCV_ARCH+8+64+42-1 downto
+                                 2*CFG_CPU_ADDR_BITS+RISCV_ARCH+8+42);
+    vb_mem_wstrb := queue_data_o(2*CFG_CPU_ADDR_BITS+RISCV_ARCH+8+42-1 downto
+                                      2*CFG_CPU_ADDR_BITS+RISCV_ARCH+42);
+    vb_res_data := queue_data_o(2*CFG_CPU_ADDR_BITS+RISCV_ARCH+42-1 downto
+                                      2*CFG_CPU_ADDR_BITS+42);
+    vb_res_addr := queue_data_o(2*CFG_CPU_ADDR_BITS+42-1 downto
+                                2*CFG_CPU_ADDR_BITS+36);
+    vb_e_instr := queue_data_o(2*CFG_CPU_ADDR_BITS+36-1 downto
+                               2*CFG_CPU_ADDR_BITS+4);
+    vb_e_pc := queue_data_o(2*CFG_CPU_ADDR_BITS+4-1 downto CFG_CPU_ADDR_BITS+4);
+    vb_mem_sz := queue_data_o(CFG_CPU_ADDR_BITS+3 downto CFG_CPU_ADDR_BITS+2);
+    v_mem_sign_ext := queue_data_o(CFG_CPU_ADDR_BITS+1);
+    v_mem_write := queue_data_o(CFG_CPU_ADDR_BITS);
+    vb_mem_addr := queue_data_o(CFG_CPU_ADDR_BITS-1 downto 0);
 
     case r.memop_addr(2 downto 0) is
     when "001" => vb_mem_resp_shifted := zero64(7 downto 0) & i_mem_data(63 downto 8);
@@ -444,7 +444,7 @@ begin
 
     o_mem_valid <= v_mem_valid;
     o_mem_write <= v_mem_write;
-    o_mem_addr <= vb_mem_addr(BUS_ADDR_WIDTH-1 downto CFG_LOG2_DATA_BYTES)
+    o_mem_addr <= vb_mem_addr(CFG_CPU_ADDR_BITS-1 downto CFG_LOG2_DATA_BYTES)
                 & zero64(CFG_LOG2_DATA_BYTES-1 downto 0);
     o_mem_wdata <= vb_mem_wdata;
     o_mem_wstrb <= vb_mem_wstrb;

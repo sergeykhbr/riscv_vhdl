@@ -34,14 +34,14 @@ architecture behavior of dcache_lru_tb is
   signal i_clk : std_logic := '0';
   signal i_req_valid : std_logic;
   signal i_req_write : std_logic;
-  signal i_req_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-  signal i_req_wdata : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-  signal i_req_wstrb : std_logic_vector(BUS_DATA_BYTES-1 downto 0);
+  signal i_req_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+  signal i_req_wdata : std_logic_vector(64-1 downto 0);
+  signal i_req_wstrb : std_logic_vector(8-1 downto 0);
   signal o_req_ready : std_logic;
   signal o_resp_valid : std_logic;
-  signal o_resp_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-  signal o_resp_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-  signal o_resp_er_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+  signal o_resp_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+  signal o_resp_data : std_logic_vector(64-1 downto 0);
+  signal o_resp_er_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   signal o_resp_er_load_fault : std_logic;
   signal o_resp_er_store_fault : std_logic;
   signal o_resp_er_mpu_load : std_logic;
@@ -51,16 +51,16 @@ architecture behavior of dcache_lru_tb is
   signal o_req_mem_valid : std_logic;
   signal o_req_mem_write : std_logic;
   signal o_req_mem_cached : std_logic;
-  signal o_req_mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+  signal o_req_mem_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   signal o_req_mem_strob : std_logic_vector(L1CACHE_BYTES_PER_LINE-1 downto 0);
   signal o_req_mem_data : std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);
   signal i_mem_data_valid : std_logic;
   signal i_mem_data : std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);
   signal i_mem_load_fault : std_logic;
   signal i_mem_store_fault : std_logic;
-  signal o_mpu_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+  signal o_mpu_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   signal i_mpu_flags : std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);
-  signal i_flush_address : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+  signal i_flush_address : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   signal i_flush_valid : std_logic;
   signal o_state : std_logic_vector(3 downto 0);
 
@@ -68,8 +68,8 @@ architecture behavior of dcache_lru_tb is
 
   type BusRegisterType is record
       state : bus_state_type;
-      mpu_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-      burst_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      mpu_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+      burst_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   end record;
 
   signal r, rin : BusRegisterType;
@@ -85,12 +85,12 @@ begin
   comb_fecth : process (i_clk, clk_cnt)
     variable v_req_valid : std_logic;
     variable v_req_write : std_logic;
-    variable vb_req_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    variable vb_req_wdata : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-    variable vb_req_wstrb : std_logic_vector(BUS_DATA_BYTES-1 downto 0);
+    variable vb_req_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    variable vb_req_wdata : std_logic_vector(64-1 downto 0);
+    variable vb_req_wstrb : std_logic_vector(8-1 downto 0);
     variable vb_mpu_flags : std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);
     variable v_flush_valid : std_logic;
-    variable vb_flush_address : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable vb_flush_address : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   begin
     v_req_valid := '0';
     v_req_write := '0';
@@ -138,15 +138,15 @@ begin
         v_req_valid := '1';
         v_req_write := '1';
         vb_req_addr(31 downto 0) := X"00012008";
-        vb_req_wdata := conv_std_logic_vector(16#0000CC00#, BUS_DATA_WIDTH);
-        vb_req_wstrb := conv_std_logic_vector(16#02#, BUS_DATA_BYTES);
+        vb_req_wdata := conv_std_logic_vector(16#0000CC00#, 64);
+        vb_req_wstrb := conv_std_logic_vector(16#02#, 8);
     when START_POINT2 + 10 =>
         -- Uncached write directly on bus 
         v_req_valid := '1';
         v_req_write := '1';
         vb_req_addr(31 downto 0) := X"80012008";
         vb_req_wdata := X"00000000_0000CCBB";
-        vb_req_wstrb := conv_std_logic_vector(16#0F#, BUS_DATA_BYTES);
+        vb_req_wstrb := conv_std_logic_vector(16#0F#, 8);
     when START_POINT2 + 20 =>
         -- Uncached read directly on bus
         v_req_valid := '1';
@@ -162,7 +162,7 @@ begin
         v_req_write := '1';
         vb_req_addr(31 downto 0) := X"00000028";
         vb_req_wdata := X"00000000_BBAA0000";
-        vb_req_wstrb := conv_std_logic_vector(16#0C#, BUS_DATA_BYTES);
+        vb_req_wstrb := conv_std_logic_vector(16#0C#, 8);
     when others =>
     end case;
 

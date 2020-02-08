@@ -40,7 +40,7 @@ constant CFG_TOTAL_CPU_MAX : integer := 2;
 type axi4_river_out_type is record
   aw_valid : std_logic;
   aw_bits : axi4_metadata_type;
-  aw_id   : std_logic_vector(CFG_RIVER_ID_BITS-1 downto 0);
+  aw_id   : std_logic_vector(CFG_CPU_ID_BITS-1 downto 0);
   aw_user : std_logic;
   w_valid : std_logic;
   w_data : std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);
@@ -50,7 +50,7 @@ type axi4_river_out_type is record
   b_ready : std_logic;
   ar_valid : std_logic;
   ar_bits : axi4_metadata_type;
-  ar_id   : std_logic_vector(CFG_RIVER_ID_BITS-1 downto 0);
+  ar_id   : std_logic_vector(CFG_CPU_ID_BITS-1 downto 0);
   ar_user : std_logic;
   r_ready : std_logic;
   -- ACE signals
@@ -82,18 +82,18 @@ type axi4_river_in_type is record
   w_ready : std_logic;
   b_valid : std_logic;
   b_resp : std_logic_vector(1 downto 0);
-  b_id   : std_logic_vector(CFG_RIVER_ID_BITS-1 downto 0);
+  b_id   : std_logic_vector(CFG_CPU_ID_BITS-1 downto 0);
   b_user : std_logic;
   ar_ready : std_logic;
   r_valid : std_logic;
   r_resp : std_logic_vector(3 downto 0);
   r_data : std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);
   r_last : std_logic;
-  r_id   : std_logic_vector(CFG_RIVER_ID_BITS-1 downto 0);
+  r_id   : std_logic_vector(CFG_CPU_ID_BITS-1 downto 0);
   r_user : std_logic;
   -- ACE signals
   ac_valid : std_logic;
-  ac_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+  ac_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   ac_snoop : std_logic_vector(3 downto 0);                  -- Table C3-19
   ac_prot : std_logic_vector(2 downto 0);
   cr_ready : std_logic;

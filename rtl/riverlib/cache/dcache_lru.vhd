@@ -33,14 +33,14 @@ entity dcache_lru is generic (
     -- Control path:
     i_req_valid : in std_logic;
     i_req_write : in std_logic;
-    i_req_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_req_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_req_wdata : in std_logic_vector(63 downto 0);
     i_req_wstrb : in std_logic_vector(7 downto 0);
     o_req_ready : out std_logic;
     o_resp_valid : out std_logic;
-    o_resp_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_resp_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_resp_data : out std_logic_vector(63 downto 0);
-    o_resp_er_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_resp_er_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_resp_er_load_fault : out std_logic;
     o_resp_er_store_fault : out std_logic;
     o_resp_er_mpu_load : out std_logic;
@@ -51,7 +51,7 @@ entity dcache_lru is generic (
     o_req_mem_valid : out std_logic;
     o_req_mem_write : out std_logic;
     o_req_mem_cached : out std_logic;
-    o_req_mem_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_req_mem_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_req_mem_strob : out std_logic_vector(DCACHE_BYTES_PER_LINE-1 downto 0);
     o_req_mem_data : out std_logic_vector(DCACHE_LINE_BITS-1 downto 0);
     i_mem_data_valid : in std_logic;
@@ -59,10 +59,10 @@ entity dcache_lru is generic (
     i_mem_load_fault : in std_logic;
     i_mem_store_fault : in std_logic;
     -- MPU interface
-    o_mpu_addr : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    o_mpu_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_mpu_flags : in std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);
     -- Debug Signals:
-    i_flush_address : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_flush_address : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_flush_valid : in std_logic;
     o_flush_end : out std_logic;
     o_state : out std_logic_vector(3 downto 0)
@@ -85,26 +85,26 @@ architecture arch_dcache_lru of dcache_lru is
   constant State_FlushCheck : std_logic_vector(3 downto 0) := "1001";
 
   signal line_cs_i : std_logic;
-  signal line_addr_i : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+  signal line_addr_i : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   signal line_wdata_i : std_logic_vector(DCACHE_LINE_BITS-1 downto 0);
   signal line_wstrb_i : std_logic_vector(DCACHE_BYTES_PER_LINE-1 downto 0);
   signal line_wflags_i : std_logic_vector(DTAG_FL_TOTAL-1 downto 0);
   signal line_flush_i : std_logic;
-  signal line_raddr_o : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+  signal line_raddr_o : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   signal line_rdata_o : std_logic_vector(DCACHE_LINE_BITS-1 downto 0);
   signal line_rflags_o : std_logic_vector(DTAG_FL_TOTAL-1 downto 0);
   signal line_hit_o : std_logic;
 
   type RegistersType is record
       req_write : std_logic;
-      req_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-      req_addr_b_resp : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-      req_wdata : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-      req_wstrb : std_logic_vector(BUS_DATA_BYTES-1 downto 0);
+      req_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+      req_addr_b_resp : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+      req_wdata : std_logic_vector(63 downto 0);
+      req_wstrb : std_logic_vector(7 downto 0);
       state : std_logic_vector(3 downto 0);
       req_mem_valid : std_logic;
       mem_write : std_logic;
-      mem_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      mem_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
       cached : std_logic;
       mpu_er_store : std_logic;
       mpu_er_load : std_logic;
@@ -113,7 +113,7 @@ architecture arch_dcache_lru of dcache_lru is
       write_flush : std_logic;
       mem_wstrb : std_logic_vector(DCACHE_BYTES_PER_LINE-1 downto 0);
       req_flush : std_logic;
-      req_flush_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      req_flush_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
       req_flush_cnt : std_logic_vector(CFG_DLOG2_LINES_PER_WAY + CFG_DLOG2_NWAYS-1 downto 0);
       flush_cnt : std_logic_vector(CFG_DLOG2_LINES_PER_WAY + CFG_DLOG2_NWAYS-1 downto 0);
       cache_line_i : std_logic_vector(DCACHE_LINE_BITS-1 downto 0);
@@ -152,7 +152,7 @@ begin
   tagmem0 : tagmemnway generic map (
       memtech => memtech,
       async_reset => async_reset,
-      abus => BUS_ADDR_WIDTH,
+      abus => CFG_CPU_ADDR_BITS,
       waybits => CFG_DLOG2_NWAYS,
       ibits => CFG_DLOG2_LINES_PER_WAY,
       lnbits => CFG_DLOG2_BYTES_PER_LINE,
@@ -184,21 +184,21 @@ begin
     variable vb_line_rdata_o_wstrb : std_logic_vector(DCACHE_BYTES_PER_LINE-1 downto 0);
     
     variable v_req_ready : std_logic;
-    variable vb_cached_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
-    variable vb_uncached_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    variable vb_cached_data : std_logic_vector(63 downto 0);
+    variable vb_uncached_data : std_logic_vector(63 downto 0);
     variable v_resp_valid : std_logic;
-    variable vb_resp_data : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    variable vb_resp_data : std_logic_vector(63 downto 0);
     variable v_resp_er_load_fault : std_logic;
     variable v_resp_er_store_fault : std_logic;
     variable v_flush : std_logic;
     variable v_flush_end : std_logic;
     variable v_line_cs : std_logic;
-    variable vb_line_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable vb_line_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     variable vb_line_wdata : std_logic_vector(DCACHE_LINE_BITS-1 downto 0);
     variable vb_line_wstrb : std_logic_vector(DCACHE_BYTES_PER_LINE-1 downto 0);
-    variable vb_req_mask : std_logic_vector(BUS_DATA_WIDTH-1 downto 0);
+    variable vb_req_mask : std_logic_vector(63 downto 0);
     variable v_line_wflags : std_logic_vector(DTAG_FL_TOTAL-1 downto 0);
-    variable vb_err_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable vb_err_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     variable ridx : integer range 0 to DCACHE_BURST_LEN-1;
     variable v_req_same_line : std_logic;
   begin
@@ -214,9 +214,9 @@ begin
     v_flush_end := '0';
     ridx := conv_integer(r.req_addr(CFG_DLOG2_BYTES_PER_LINE-1 downto CFG_LOG2_DATA_BYTES));
 
-    vb_cached_data := line_rdata_o((ridx+1)*BUS_DATA_WIDTH - 1 downto
-                                         ridx*BUS_DATA_WIDTH);
-    vb_uncached_data := r.cache_line_i(BUS_DATA_WIDTH-1 downto 0);
+    vb_cached_data := line_rdata_o((ridx+1)*64 - 1 downto
+                                         ridx*64);
+    vb_uncached_data := r.cache_line_i(63 downto 0);
 
     if i_mem_store_fault = '1' then
         vb_err_addr := r.req_addr_b_resp;
@@ -225,8 +225,8 @@ begin
     end if;
 
     v_req_same_line := '0';
-    if r.req_addr(BUS_ADDR_WIDTH-1 downto CFG_DLOG2_BYTES_PER_LINE)
-        = i_req_addr(BUS_ADDR_WIDTH-1 downto CFG_DLOG2_BYTES_PER_LINE) then
+    if r.req_addr(CFG_CPU_ADDR_BITS-1 downto CFG_DLOG2_BYTES_PER_LINE)
+        = i_req_addr(CFG_CPU_ADDR_BITS-1 downto CFG_DLOG2_BYTES_PER_LINE) then
         v_req_same_line := '1';
     end if;
 
@@ -243,7 +243,7 @@ begin
         end if;
     end if;
 
-    for i in 0 to BUS_DATA_BYTES-1 loop
+    for i in 0 to 7 loop
         vb_req_mask(8*i+7 downto 8*i) := (others => r.req_wstrb(i));
     end loop;
 
@@ -252,15 +252,15 @@ begin
     vb_line_rdata_o_wstrb := (others => '0');
     for i in 0 to DCACHE_BURST_LEN-1 loop
         if i = ridx then
-            vb_line_rdata_o_modified(BUS_DATA_WIDTH*(i+1)-1 downto BUS_DATA_WIDTH*i) :=
-                (vb_line_rdata_o_modified(BUS_DATA_WIDTH*(i+1)-1 downto BUS_DATA_WIDTH*i)
+            vb_line_rdata_o_modified(64*(i+1)-1 downto 64*i) :=
+                (vb_line_rdata_o_modified(64*(i+1)-1 downto 64*i)
                  and not vb_req_mask) or (r.req_wdata and vb_req_mask);
 
-            vb_cache_line_i_modified(BUS_DATA_WIDTH*(i+1)-1 downto BUS_DATA_WIDTH*i) :=
-                (vb_cache_line_i_modified(BUS_DATA_WIDTH*(i+1)-1 downto BUS_DATA_WIDTH*i)
+            vb_cache_line_i_modified(64*(i+1)-1 downto 64*i) :=
+                (vb_cache_line_i_modified(64*(i+1)-1 downto 64*i)
                  and not vb_req_mask) or (r.req_wdata and vb_req_mask);
 
-            vb_line_rdata_o_wstrb(BUS_DATA_BYTES*(i+1)-1 downto BUS_DATA_BYTES*i) :=
+            vb_line_rdata_o_wstrb(8*(i+1)-1 downto 8*i) :=
                 r.req_wstrb;
         end if;
     end loop;
@@ -286,7 +286,7 @@ begin
                 v.flush_cnt := (others => '1');
             else
                 v.req_addr := r.req_flush_addr;
-                v.req_addr := r.req_flush_addr(BUS_ADDR_WIDTH-1 downto CFG_DLOG2_BYTES_PER_LINE)
+                v.req_addr := r.req_flush_addr(CFG_CPU_ADDR_BITS-1 downto CFG_DLOG2_BYTES_PER_LINE)
                               & zero64(CFG_DLOG2_BYTES_PER_LINE-1 downto 0);
                 v.flush_cnt := r.req_flush_cnt;
             end if;
@@ -371,20 +371,20 @@ begin
                     line_rflags_o(DTAG_FL_DIRTY) = '1' then
                     v.write_first := '1';
                     v.mem_write := '1';
-                    v.mem_addr(BUS_ADDR_WIDTH-1 downto CFG_DLOG2_BYTES_PER_LINE) := 
-                        line_raddr_o(BUS_ADDR_WIDTH-1 downto CFG_DLOG2_BYTES_PER_LINE);
+                    v.mem_addr(CFG_CPU_ADDR_BITS-1 downto CFG_DLOG2_BYTES_PER_LINE) := 
+                        line_raddr_o(CFG_CPU_ADDR_BITS-1 downto CFG_DLOG2_BYTES_PER_LINE);
                     v.mem_addr(CFG_DLOG2_BYTES_PER_LINE-1 downto 0) := (others => '0');
                 else
-                    v.mem_addr(BUS_ADDR_WIDTH-1 downto CFG_DLOG2_BYTES_PER_LINE) :=
-                        r.req_addr(BUS_ADDR_WIDTH-1 downto CFG_DLOG2_BYTES_PER_LINE);
+                    v.mem_addr(CFG_CPU_ADDR_BITS-1 downto CFG_DLOG2_BYTES_PER_LINE) :=
+                        r.req_addr(CFG_CPU_ADDR_BITS-1 downto CFG_DLOG2_BYTES_PER_LINE);
                     v.mem_addr(CFG_DLOG2_BYTES_PER_LINE-1 downto 0) := (others => '0');
                 end if;
                 v.mem_wstrb := (others => '1');
                 v.cached := '1';
                 v.cache_line_o := line_rdata_o;
             else
-                v.mem_addr(BUS_ADDR_WIDTH-1 downto CFG_LOG2_DATA_BYTES) :=
-                    r.req_addr(BUS_ADDR_WIDTH-1 downto CFG_LOG2_DATA_BYTES);
+                v.mem_addr(CFG_CPU_ADDR_BITS-1 downto CFG_LOG2_DATA_BYTES) :=
+                    r.req_addr(CFG_CPU_ADDR_BITS-1 downto CFG_LOG2_DATA_BYTES);
                 v.mem_addr(CFG_LOG2_DATA_BYTES-1 downto 0) := (others => '0');
                 v.mem_wstrb := (others => '0');
                 v.mem_wstrb(7 downto 0) := r.req_wstrb;
@@ -392,7 +392,7 @@ begin
                 v.cached := '0';
 
                 v.cache_line_o := (others => '0');
-                v.cache_line_o(BUS_DATA_WIDTH-1 downto 0) := r.req_wdata;
+                v.cache_line_o(63 downto 0) := r.req_wdata;
             end if;
         end if;
         v.cache_line_i := (others => '0');
@@ -451,7 +451,7 @@ begin
                 -- Offloading Cache line on flush request
                 v.state := State_FlushAddr;
             elsif r.write_first = '1' then
-                v.mem_addr := r.req_addr(BUS_ADDR_WIDTH-1 downto CFG_DLOG2_BYTES_PER_LINE)
+                v.mem_addr := r.req_addr(CFG_CPU_ADDR_BITS-1 downto CFG_DLOG2_BYTES_PER_LINE)
                             & zero64(CFG_DLOG2_BYTES_PER_LINE-1 downto 0);
                 v.req_mem_valid := '1';
                 v.write_first := '0';
@@ -503,8 +503,8 @@ begin
             -- Use lsb address bits to manually select memory WAY bank:
             if r.req_addr(CFG_DLOG2_NWAYS-1 downto 0) =
                conv_std_logic_vector(DCACHE_WAYS-1, CFG_DLOG2_NWAYS) then
-                v.req_addr(BUS_ADDR_WIDTH-1 downto CFG_DLOG2_BYTES_PER_LINE) := 
-                    r.req_addr(BUS_ADDR_WIDTH-1 downto CFG_DLOG2_BYTES_PER_LINE) + 1;
+                v.req_addr(CFG_CPU_ADDR_BITS-1 downto CFG_DLOG2_BYTES_PER_LINE) := 
+                    r.req_addr(CFG_CPU_ADDR_BITS-1 downto CFG_DLOG2_BYTES_PER_LINE) + 1;
                 v.req_addr(CFG_DLOG2_BYTES_PER_LINE-1 downto 0) := (others => '0');
             else
                 v.req_addr := r.req_addr + 1;

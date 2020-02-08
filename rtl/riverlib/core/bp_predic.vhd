@@ -32,19 +32,19 @@ entity BranchPredictor is generic (
     i_nrst : in std_logic;                             -- Reset. Active LOW.
     i_req_mem_fire : in std_logic;                     -- Memory request was accepted
     i_resp_mem_valid : in std_logic;                   -- Memory response from ICache is valid
-    i_resp_mem_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);-- Memory response address
+    i_resp_mem_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);-- Memory response address
     i_resp_mem_data : in std_logic_vector(31 downto 0);-- Memory response value
-    i_e_npc : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);  -- Valid instruction value awaited by 'Executor'
+    i_e_npc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);  -- Valid instruction value awaited by 'Executor'
     i_ra : in std_logic_vector(RISCV_ARCH-1 downto 0); -- Return address register value
-    o_npc_predict : out std_logic_vector(BUS_ADDR_WIDTH-1 downto 0)  -- Predicted next instruction address
+    o_npc_predict : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0)  -- Predicted next instruction address
   );
 end; 
  
 architecture arch_BranchPredictor of BranchPredictor is
 
   type HistoryType is record
-      resp_pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-      resp_npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      resp_pc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+      resp_npc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   end record;
   constant history_none : HistoryType := (
     (others => '1'), (others => '1')
@@ -69,18 +69,18 @@ begin
                  i_resp_mem_data, i_e_npc, i_ra, r)
     variable v : RegistersType;
     variable vb_tmp : std_logic_vector(31 downto 0);
-    variable vb_npc_predicted : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    variable vb_pc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    variable vb_npc : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable vb_npc_predicted : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    variable vb_pc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    variable vb_npc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     variable v_jal : std_logic;
-    variable vb_jal_off : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    variable vb_jal_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable vb_jal_off : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    variable vb_jal_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     variable v_branch : std_logic;
-    variable vb_branch_off : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    variable vb_branch_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable vb_branch_off : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    variable vb_branch_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     variable v_c_j : std_logic;
-    variable vb_c_j_off : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    variable vb_c_j_addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    variable vb_c_j_off : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    variable vb_c_j_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     variable v_c_ret : std_logic;
   begin
 
@@ -90,7 +90,7 @@ begin
     vb_tmp := i_resp_mem_data;
  
     -- Unconditional jump "J"
-    vb_jal_off(BUS_ADDR_WIDTH-1 downto 20) := (others => vb_tmp(31));
+    vb_jal_off(CFG_CPU_ADDR_BITS-1 downto 20) := (others => vb_tmp(31));
     vb_jal_off(19 downto 12) := vb_tmp(19 downto 12);
     vb_jal_off(11) := vb_tmp(20);
     vb_jal_off(10 downto 1) := vb_tmp(30 downto 21);
@@ -107,9 +107,9 @@ begin
     -- Conditional branches "BEQ", "BNE", "BLT", "BGE", BLTU", "BGEU"
     -- Only negative offset leads to predicted jumps
     if vb_tmp(31) = '1' then
-        vb_branch_off(BUS_ADDR_WIDTH-1 downto 12) := (others => '1');
+        vb_branch_off(CFG_CPU_ADDR_BITS-1 downto 12) := (others => '1');
     else
-        vb_branch_off(BUS_ADDR_WIDTH-1 downto 12) := (others => '0');
+        vb_branch_off(CFG_CPU_ADDR_BITS-1 downto 12) := (others => '0');
     end if;
     vb_branch_off(11) := vb_tmp(7);
     vb_branch_off(10 downto 5) := vb_tmp(30 downto 25);
@@ -127,9 +127,9 @@ begin
 
     -- Check Compressed "C_J" unconditional jump
     if vb_tmp(12) = '1' then
-        vb_c_j_off(BUS_ADDR_WIDTH-1 downto 11) := (others => '1');
+        vb_c_j_off(CFG_CPU_ADDR_BITS-1 downto 11) := (others => '1');
     else
-        vb_c_j_off(BUS_ADDR_WIDTH-1 downto 11) := (others => '0');
+        vb_c_j_off(CFG_CPU_ADDR_BITS-1 downto 11) := (others => '0');
     end if;
     vb_c_j_off(10) := vb_tmp(8);
     vb_c_j_off(9 downto 8) := vb_tmp(10 downto 9);
@@ -161,7 +161,7 @@ begin
     elsif v_c_j = '1' then
         vb_npc_predicted := vb_c_j_addr;
     elsif v_c_ret = '1' then
-        vb_npc_predicted := i_ra(BUS_ADDR_WIDTH-1 downto 0);
+        vb_npc_predicted := i_ra(CFG_CPU_ADDR_BITS-1 downto 0);
     elsif vb_tmp(1 downto 0) = "11" then
         vb_npc_predicted := r.h(0).resp_pc + 4;
     else

@@ -28,12 +28,12 @@ entity mpu  is generic (
   port (
     i_clk : in std_logic;
     i_nrst : in std_logic;
-    i_iaddr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    i_daddr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_iaddr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    i_daddr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_region_we : in std_logic;
     i_region_idx : in std_logic_vector(CFG_MPU_TBL_WIDTH-1 downto 0);
-    i_region_addr : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-    i_region_mask : in std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+    i_region_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    i_region_mask : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_region_flags : in std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);  -- {ena, cachable, r, w, x}
     o_iflags : out std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);
     o_dflags : out std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0)
@@ -43,8 +43,8 @@ end;
 architecture arch_mpu of mpu is
 
   type MpuTableItemType is record
-      addr : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
-      mask : std_logic_vector(BUS_ADDR_WIDTH-1 downto 0);
+      addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+      mask : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
       flags : std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);
   end record;
 
