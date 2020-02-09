@@ -45,15 +45,24 @@ end;
  
 architecture arch_river_serdes of river_serdes is
 
+  -- TODO as generic parameters
+  constant linew : integer := L1CACHE_LINE_BITS;
+  constant busw : integer := CFG_SYSBUS_DATA_BITS;
+
+  constant lineb : integer := linew / 8;
+  constant busb : integer := busw / 8;
+
+  constant SERDES_BURST_LEN : integer := lineb / busb;
+
   type state_type is (Idle, Read, Write);
 
   type RegistersType is record
       state : state_type;
       req_len : std_logic_vector(7 downto 0);
       b_wait : std_logic;
-      cacheline : std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);
-      wstrb : std_logic_vector(L1CACHE_BYTES_PER_LINE-1 downto 0);
-      rmux : std_logic_vector(L1CACHE_BURST_LEN-1 downto 0);
+      cacheline : std_logic_vector(linew-1 downto 0);
+      wstrb : std_logic_vector(lineb-1 downto 0);
+      rmux : std_logic_vector(SERDES_BURST_LEN-1 downto 0);
   end record;
 
   constant R_RESET : RegistersType := (
@@ -82,15 +91,15 @@ begin
   comb : process(i_nrst, i_coreo, i_msti, r)
     variable v : RegistersType;
     variable v_req_mem_ready : std_logic;
-    variable vb_line_o : std_logic_vector(DCACHE_LINE_BITS-1 downto 0);
+    variable vb_line_o : std_logic_vector(linew-1 downto 0);
     variable vb_r_resp : std_logic_vector(3 downto 0);
     variable v_r_valid : std_logic;
     variable v_w_valid : std_logic;
     variable v_w_last : std_logic;
     variable v_w_ready : std_logic;
     variable vb_len : std_logic_vector(7 downto 0);
-    variable vb_aw_id : std_logic_vector(CFG_ROCKET_ID_BITS-1 downto 0);
-    variable vb_ar_id : std_logic_vector(CFG_ROCKET_ID_BITS-1 downto 0);
+    variable vb_aw_id : std_logic_vector(CFG_SYSBUS_ID_BITS-1 downto 0);
+    variable vb_ar_id : std_logic_vector(CFG_SYSBUS_ID_BITS-1 downto 0);
   begin
 
     v := r;
@@ -109,9 +118,9 @@ begin
 
     vb_line_o := r.cacheline;
 
-    for i in 0 to L1CACHE_BURST_LEN-1 loop
+    for i in 0 to SERDES_BURST_LEN-1 loop
         if r.rmux(i) = '1' then
-            vb_line_o((i+1)*BUS_DATA_WIDTH-1 downto i*BUS_DATA_WIDTH) := i_msti.r_data;
+            vb_line_o((i+1)*busw-1 downto i*busw) := i_msti.r_data;
         end if;
     end loop;
 
@@ -127,7 +136,7 @@ begin
     when Read =>
         if i_msti.r_valid = '1' then
             v.cacheline := vb_line_o;
-            v.rmux := r.rmux(L1CACHE_BURST_LEN-2 downto 0) & '0';
+            v.rmux := r.rmux(SERDES_BURST_LEN-2 downto 0) & '0';
             if r.req_len = X"00" then
                 v_r_valid := '1';
                 v_req_mem_ready := '1';
@@ -142,14 +151,10 @@ begin
             v_w_last := '1';
         end if;
         if i_msti.w_ready = '1' then
-            v.cacheline(L1CACHE_LINE_BITS-1 downto L1CACHE_LINE_BITS-BUS_DATA_WIDTH) := 
-                (others => '0');
-            v.cacheline(L1CACHE_LINE_BITS-BUS_DATA_WIDTH-1 downto 0) := 
-                r.cacheline(L1CACHE_LINE_BITS-1 downto BUS_DATA_WIDTH);
-            v.wstrb(L1CACHE_BYTES_PER_LINE-1 downto L1CACHE_BYTES_PER_LINE-BUS_DATA_BYTES) := 
-                (others => '0');
-            v.wstrb(L1CACHE_BYTES_PER_LINE-BUS_DATA_BYTES-1 downto 0) :=
-                r.wstrb(L1CACHE_BYTES_PER_LINE-1 downto BUS_DATA_BYTES);
+            v.cacheline(linew-1 downto linew-busw) := (others => '0');
+            v.cacheline(linew-busw-1 downto 0) := r.cacheline(linew-1 downto busw);
+            v.wstrb(lineb-1 downto lineb-busb) := (others => '0');
+            v.wstrb(lineb-busb-1 downto 0) := r.wstrb(lineb-1 downto busb);
             if r.req_len = X"00" then
                 v_w_ready := '1';
                 v.b_wait := '1';
@@ -165,7 +170,7 @@ begin
     if v_req_mem_ready = '1' then
         if (i_coreo.ar_valid and i_msti.ar_ready) = '1' then
             v.state := Read;
-            v.rmux := conv_std_logic_vector(1, L1CACHE_BURST_LEN);
+            v.rmux := conv_std_logic_vector(1, SERDES_BURST_LEN);
             vb_len := size2len(i_coreo.ar_bits.size);
         elsif (i_coreo.aw_valid and i_msti.aw_ready) = '1' then
             v.cacheline := i_coreo.w_data;                     -- Undocumented River (Axi-lite) feature
@@ -200,8 +205,8 @@ begin
     o_msto.aw_user <= i_coreo.aw_user;
     o_msto.w_valid <= v_w_valid;
     o_msto.w_last <= v_w_last;
-    o_msto.w_data <= r.cacheline(BUS_DATA_WIDTH-1 downto 0);
-    o_msto.w_strb <= r.wstrb(BUS_DATA_BYTES-1 downto 0);
+    o_msto.w_data <= r.cacheline(busw-1 downto 0);
+    o_msto.w_strb <= r.wstrb(busb-1 downto 0);
     o_msto.w_user <= i_coreo.w_user;
     o_msto.b_ready <= i_coreo.b_ready;
     o_msto.ar_valid <= i_coreo.ar_valid;

@@ -272,8 +272,7 @@ begin
                 end if;
                 v.cached := '1';
             else
-                v.mem_addr := r.req_addr(CFG_CPU_ADDR_BITS-1 downto CFG_LOG2_DATA_BYTES)
-                             & zero64(CFG_LOG2_DATA_BYTES-1 downto 0);
+                v.mem_addr := r.req_addr(CFG_CPU_ADDR_BITS-1 downto 3) & "000";
                 v.cached := '0';
             end if;
         end if;

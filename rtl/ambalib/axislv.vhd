@@ -59,9 +59,9 @@ architecture arch_axi4_slave of axi4_slave is
     rsize  : integer;
     raddr  : global_addr_array_type;
     rlen   : integer;                       --! AXI4 supports 256 burst operation
-    rid    : std_logic_vector(CFG_ROCKET_ID_BITS-1 downto 0);
+    rid    : std_logic_vector(CFG_SYSBUS_ID_BITS-1 downto 0);
     rresp  : std_logic_vector(1 downto 0);  --! OK=0
-    ruser  : std_logic;
+    ruser  : std_logic_vector(CFG_SYSBUS_USER_BITS-1 downto 0);
     rswap : std_logic;
     rwaitready : std_logic;                 --! Reading wait state flag: 0=waiting. User's waitstates
     
@@ -69,9 +69,9 @@ architecture arch_axi4_slave of axi4_slave is
     wsize  : integer;                       -- code in range 0=1 Bytes upto 7=128 Bytes. 
     waddr  : global_addr_array_type;        --! 4 KB bank
     wlen   : integer;                       --! AXI4 supports 256 burst operation
-    wid    : std_logic_vector(CFG_ROCKET_ID_BITS-1 downto 0);
+    wid    : std_logic_vector(CFG_SYSBUS_ID_BITS-1 downto 0);
     wresp  : std_logic_vector(1 downto 0);  --! OK=0
-    wuser  : std_logic;
+    wuser  : std_logic_vector(CFG_SYSBUS_USER_BITS-1 downto 0);
     wswap : std_logic;
     b_valid : std_logic;
   end record;
@@ -79,8 +79,8 @@ architecture arch_axi4_slave of axi4_slave is
   --! Reset value of the template bank of registers of a slave device.
   constant AXI_SLAVE_BANK_RESET : axi_slave_bank_type := (
     rwait, wwait,
-    AXI_BURST_FIXED, 0, (others=>(others=>'0')), 0, (others=>'0'), AXI_RESP_OKAY, '0', '0', '1',
-    AXI_BURST_FIXED, 0, (others=>(others=>'0')), 0, (others=>'0'), AXI_RESP_OKAY, '0', '0', '0'
+    AXI_BURST_FIXED, 0, (others=>(others=>'0')), 0, (others=>'0'), AXI_RESP_OKAY, (others => '0'), '0', '1',
+    AXI_BURST_FIXED, 0, (others=>(others=>'0')), 0, (others=>'0'), AXI_RESP_OKAY, (others => '0'), '0', '0'
   );
 
   signal rin, r : axi_slave_bank_type;

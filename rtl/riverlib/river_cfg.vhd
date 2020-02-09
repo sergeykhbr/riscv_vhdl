@@ -32,22 +32,9 @@ package river_cfg is
   --! Architecture size difinition.
   constant RISCV_ARCH : integer := 64;
 
-  --! @name System bus parameters
-  --! @brief Constants specify AXI bus global settigns
-  --! @{
-
-  --! @brief   Address bus bit-size.
   constant CFG_CPU_ADDR_BITS : integer := 32;
-  constant CFG_CPU_ID_BITS : integer := 1;
+  constant CFG_CPU_ID_BITS   : integer := 1;
   constant CFG_CPU_USER_BITS : integer := 1;
-
-  --! @brief   Data bus bit-size.
-  constant CFG_LOG2_DATA_BYTES : integer := 3;
-  constant BUS_DATA_BYTES : integer := (2**CFG_LOG2_DATA_BYTES);
-  constant BUS_DATA_WIDTH : integer := 8 * BUS_DATA_BYTES;
-  constant LOG2_DATA_BYTES_MASK : integer := (2**CFG_LOG2_DATA_BYTES) - 1;
-  --! @}
-
 
   -- 
   -- ICacheLru config (16 KB by default)
@@ -60,10 +47,6 @@ package river_cfg is
   constant ICACHE_BYTES_PER_LINE    : integer := 2**CFG_ILOG2_BYTES_PER_LINE;
   constant ICACHE_LINES_PER_WAY     : integer := 2**CFG_ILOG2_LINES_PER_WAY;
   constant ICACHE_WAYS              : integer := 2**CFG_ILOG2_NWAYS;
-
-  constant ICACHE_LOG2_BURST_LEN    : integer :=
-                  CFG_ILOG2_BYTES_PER_LINE - CFG_LOG2_DATA_BYTES;
-  constant ICACHE_BURST_LEN         : integer := 2**ICACHE_LOG2_BURST_LEN;
   constant ICACHE_LINE_BITS         : integer := 8*ICACHE_BYTES_PER_LINE;
 
   -- Information: To define the CACHE SIZE in Bytes use the following:
@@ -84,10 +67,6 @@ package river_cfg is
   constant DCACHE_BYTES_PER_LINE    : integer := 2**CFG_DLOG2_BYTES_PER_LINE;
   constant DCACHE_LINES_PER_WAY     : integer := 2**CFG_DLOG2_LINES_PER_WAY;
   constant DCACHE_WAYS              : integer := 2**CFG_DLOG2_NWAYS;
-
-  constant DCACHE_LOG2_BURST_LEN    : integer :=
-                CFG_DLOG2_BYTES_PER_LINE - CFG_LOG2_DATA_BYTES;
-  constant DCACHE_BURST_LEN         : integer := 2**DCACHE_LOG2_BURST_LEN;
   constant DCACHE_LINE_BITS         : integer := 8*DCACHE_BYTES_PER_LINE;
 
   -- Information: To define the CACHE SIZE in Bytes use the following:
@@ -102,7 +81,6 @@ package river_cfg is
   -- L1 cache common parameters (suppose I$ and D$ have the same size)
   constant L1CACHE_BYTES_PER_LINE : integer := DCACHE_BYTES_PER_LINE;
   constant L1CACHE_LINE_BITS      : integer := 8*DCACHE_BYTES_PER_LINE;
-  constant L1CACHE_BURST_LEN      : integer := DCACHE_BURST_LEN;
 
   -- MPU config:
   constant CFG_MPU_TBL_WIDTH   : integer := 2;    -- [1:0]  log2(MPU_TBL_SIZE)

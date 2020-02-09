@@ -444,8 +444,7 @@ begin
 
     o_mem_valid <= v_mem_valid;
     o_mem_write <= v_mem_write;
-    o_mem_addr <= vb_mem_addr(CFG_CPU_ADDR_BITS-1 downto CFG_LOG2_DATA_BYTES)
-                & zero64(CFG_LOG2_DATA_BYTES-1 downto 0);
+    o_mem_addr <= vb_mem_addr(CFG_CPU_ADDR_BITS-1 downto 3) & "000";
     o_mem_wdata <= vb_mem_wdata;
     o_mem_wstrb <= vb_mem_wstrb;
 

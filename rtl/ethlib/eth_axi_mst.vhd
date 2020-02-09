@@ -80,12 +80,12 @@ begin
 
     
     vaximo := axi4_master_out_none;
-    vaximo.ar_user       := '0';
-    vaximo.ar_id         := conv_std_logic_vector(0, CFG_ROCKET_ID_BITS);
+    vaximo.ar_user       := (others => '0');
+    vaximo.ar_id         := conv_std_logic_vector(0, CFG_SYSBUS_ID_BITS);
     vaximo.ar_bits.size  := "010"; -- 4 bytes
     vaximo.ar_bits.burst := AXI_BURST_INCR;
-    vaximo.aw_user       := '0';
-    vaximo.aw_id         := conv_std_logic_vector(0, CFG_ROCKET_ID_BITS);
+    vaximo.aw_user       := (others => '0');
+    vaximo.aw_id         := conv_std_logic_vector(0, CFG_SYSBUS_ID_BITS);
     vaximo.aw_bits.size  := "010"; -- 4 bytes
     vaximo.aw_bits.burst := AXI_BURST_INCR;
     

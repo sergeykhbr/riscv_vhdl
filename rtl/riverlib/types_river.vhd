@@ -1,5 +1,5 @@
 --!
---! Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+--! Copyright 2020 Sergey Khabarov, sergeykhbr@gmail.com
 --!
 --! Licensed under the Apache License, Version 2.0 (the "License");
 --! you may not use this file except in compliance with the License.
@@ -41,17 +41,17 @@ type axi4_river_out_type is record
   aw_valid : std_logic;
   aw_bits : axi4_metadata_type;
   aw_id   : std_logic_vector(CFG_CPU_ID_BITS-1 downto 0);
-  aw_user : std_logic;
+  aw_user : std_logic_vector(CFG_CPU_USER_BITS-1 downto 0);
   w_valid : std_logic;
   w_data : std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);
   w_last : std_logic;
   w_strb : std_logic_vector(L1CACHE_BYTES_PER_LINE-1 downto 0);
-  w_user : std_logic;
+  w_user : std_logic_vector(CFG_CPU_USER_BITS-1 downto 0);
   b_ready : std_logic;
   ar_valid : std_logic;
   ar_bits : axi4_metadata_type;
   ar_id   : std_logic_vector(CFG_CPU_ID_BITS-1 downto 0);
-  ar_user : std_logic;
+  ar_user : std_logic_vector(CFG_CPU_USER_BITS-1 downto 0);
   r_ready : std_logic;
   -- ACE signals
   ar_domain : std_logic_vector(1 downto 0);                -- 00=Non-shareable (single master in domain)
@@ -71,9 +71,9 @@ type axi4_river_out_type is record
 end record;
 
 constant axi4_river_out_none : axi4_river_out_type := (
-      '0', META_NONE, (others=>'0'), '0',
-      '0', (others=>'0'), '0', (others=>'0'), '0', 
-      '0', '0', META_NONE, (others=>'0'), '0', '0',
+      '0', META_NONE, (others=>'0'), (others => '0'),
+      '0', (others=>'0'), '0', (others=>'0'), (others => '0'), 
+      '0', '0', META_NONE, (others=>'0'), (others => '0'), '0',
        "00", X"0", "00", "00", X"0", "00", '0', '0',
        "00000", '0', (others => '0'), '0', '0', '0');
 
@@ -83,14 +83,14 @@ type axi4_river_in_type is record
   b_valid : std_logic;
   b_resp : std_logic_vector(1 downto 0);
   b_id   : std_logic_vector(CFG_CPU_ID_BITS-1 downto 0);
-  b_user : std_logic;
+  b_user : std_logic_vector(CFG_CPU_USER_BITS-1 downto 0);
   ar_ready : std_logic;
   r_valid : std_logic;
   r_resp : std_logic_vector(3 downto 0);
   r_data : std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);
   r_last : std_logic;
   r_id   : std_logic_vector(CFG_CPU_ID_BITS-1 downto 0);
-  r_user : std_logic;
+  r_user : std_logic_vector(CFG_CPU_USER_BITS-1 downto 0);
   -- ACE signals
   ac_valid : std_logic;
   ac_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
@@ -101,8 +101,8 @@ type axi4_river_in_type is record
 end record;
 
 constant axi4_river_in_none : axi4_river_in_type := (
-      '0', '0', '0', AXI_RESP_OKAY, (others=>'0'), '0',
-      '0', '0', (others => '0'), (others=>'0'), '0', (others=>'0'), '0',
+      '0', '0', '0', AXI_RESP_OKAY, (others=>'0'), (others => '0'),
+      '0', '0', (others => '0'), (others=>'0'), '0', (others=>'0'), (others => '0'),
       '0', (others => '0'), X"0", "000", '0', '0');
 
 type axi4_river_in_vector is array (0 to CFG_TOTAL_CPU_MAX-1) of axi4_river_in_type;

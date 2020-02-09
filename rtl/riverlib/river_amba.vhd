@@ -242,12 +242,12 @@ begin
     o_msto.aw_bits.qos <= (others => '0');
     o_msto.aw_bits.region <= (others => '0');
     o_msto.aw_id <= (others => '0');
-    o_msto.aw_user <= '0';
+    o_msto.aw_user <= (others => '0');
     o_msto.w_valid <= vmsto_w_valid;
     o_msto.w_data <= req_mem_data_o;
     o_msto.w_last <= vmsto_w_last;
     o_msto.w_strb <= req_mem_strob_o;
-    o_msto.w_user <= '0';
+    o_msto.w_user <= (others => '0');
     o_msto.b_ready <= '1';
 
     o_msto.ar_valid <= vmsto_ar_valid;
@@ -261,7 +261,7 @@ begin
     o_msto.ar_bits.qos <= (others => '0');
     o_msto.ar_bits.region <= (others => '0');
     o_msto.ar_id <= (others => '0');
-    o_msto.ar_user <= '0';
+    o_msto.ar_user <= (others => '0');
     o_msto.r_ready <= vmsto_r_ready;
 
     req_mem_ready_i <= v_req_mem_ready;  

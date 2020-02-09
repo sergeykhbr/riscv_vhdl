@@ -199,7 +199,7 @@ begin
     variable vb_req_mask : std_logic_vector(63 downto 0);
     variable v_line_wflags : std_logic_vector(DTAG_FL_TOTAL-1 downto 0);
     variable vb_err_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
-    variable ridx : integer range 0 to DCACHE_BURST_LEN-1;
+    variable ridx : integer range 0 to (DCACHE_BYTES_PER_LINE/8)-1;
     variable v_req_same_line : std_logic;
   begin
 
@@ -212,7 +212,7 @@ begin
     v_resp_er_store_fault := '0';
     v_flush := '0';
     v_flush_end := '0';
-    ridx := conv_integer(r.req_addr(CFG_DLOG2_BYTES_PER_LINE-1 downto CFG_LOG2_DATA_BYTES));
+    ridx := conv_integer(r.req_addr(CFG_DLOG2_BYTES_PER_LINE-1 downto 3));
 
     vb_cached_data := line_rdata_o((ridx+1)*64 - 1 downto
                                          ridx*64);
@@ -250,7 +250,7 @@ begin
     vb_line_rdata_o_modified := line_rdata_o;
     vb_cache_line_i_modified := r.cache_line_i;
     vb_line_rdata_o_wstrb := (others => '0');
-    for i in 0 to DCACHE_BURST_LEN-1 loop
+    for i in 0 to (DCACHE_BYTES_PER_LINE/8)-1 loop
         if i = ridx then
             vb_line_rdata_o_modified(64*(i+1)-1 downto 64*i) :=
                 (vb_line_rdata_o_modified(64*(i+1)-1 downto 64*i)
@@ -383,9 +383,7 @@ begin
                 v.cached := '1';
                 v.cache_line_o := line_rdata_o;
             else
-                v.mem_addr(CFG_CPU_ADDR_BITS-1 downto CFG_LOG2_DATA_BYTES) :=
-                    r.req_addr(CFG_CPU_ADDR_BITS-1 downto CFG_LOG2_DATA_BYTES);
-                v.mem_addr(CFG_LOG2_DATA_BYTES-1 downto 0) := (others => '0');
+                v.mem_addr := r.req_addr(CFG_CPU_ADDR_BITS-1 downto 3) & "000";
                 v.mem_wstrb := (others => '0');
                 v.mem_wstrb(7 downto 0) := r.req_wstrb;
                 v.mem_write := r.req_write;
