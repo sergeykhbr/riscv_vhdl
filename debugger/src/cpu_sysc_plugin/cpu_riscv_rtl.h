@@ -41,9 +41,10 @@
 #include "cmds/cmd_regs_riscv.h"
 #include "cmds/cmd_csr.h"
 #include "rtl_wrapper.h"
-#include "axiserdes.h"
+#include "l1serdes.h"
 #include "ambalib/types_amba.h"
 #include "riverlib/river_amba.h"
+#include "riverlib/l2cache/l2_top.h"
 #include <systemc.h>
 
 namespace debugger {
@@ -101,6 +102,7 @@ class CpuRiscV_RTL : public IService,
     AttributeType asyncReset_;
     AttributeType fpuEnable_;
     AttributeType tracerEnable_;
+    AttributeType l2CacheEnable_;
     AttributeType bus_;
     AttributeType cmdexec_;
     AttributeType tap_;
@@ -120,8 +122,17 @@ class CpuRiscV_RTL : public IService,
     sc_signal<sc_uint<64>> wb_exec_cnt;
 
     // AXI4 input structure:
-    sc_signal<axi4_river_in_type> corei_i;
-    sc_signal<axi4_river_out_type> coreo_o;
+    sc_signal<axi4_l1_in_type> corei0;
+    sc_signal<axi4_l1_out_type> coreo0;
+    sc_signal<axi4_l1_in_type> corei1;
+    sc_signal<axi4_l1_out_type> coreo1;
+    sc_signal<axi4_l1_in_type> corei2;
+    sc_signal<axi4_l1_out_type> coreo2;
+    sc_signal<axi4_l1_in_type> corei3;
+    sc_signal<axi4_l1_out_type> coreo3;
+    sc_signal<axi4_master_out_type> acpo;
+    sc_signal<axi4_master_in_type> acpi;
+
     /** Interrupt line from external interrupts controller. */
     sc_signal<bool> w_interrupt;
     // Debug interface
@@ -134,14 +145,15 @@ class CpuRiscV_RTL : public IService,
     sc_signal<sc_uint<RISCV_ARCH>> wb_dport_rdata;
     sc_signal<bool> w_halted;
 
-    sc_signal<axi4_master_in_type> msti_i;
-    sc_signal<axi4_master_out_type> msto_o;
+    sc_signal<axi4_master_in_type> msti;
+    sc_signal<axi4_master_out_type> msto;
 
     sc_trace_file *i_vcd_;      // stimulus pattern
     sc_trace_file *o_vcd_;      // reference pattern for comparision
     RiverAmba *core_;
     RtlWrapper *wrapper_;
-    AxiSerDes *serdes_;
+    L1SerDes *l1serdes_;
+    L2Top *l2cache_;
 
     CmdBrRiscv *pcmd_br_;
     CmdRegRiscv *pcmd_reg_;

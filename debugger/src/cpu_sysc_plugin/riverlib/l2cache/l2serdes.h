@@ -14,38 +14,44 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_SRC_CPU_SYSC_PLUGIN_AXISERDES_H__
-#define __DEBUGGER_SRC_CPU_SYSC_PLUGIN_AXISERDES_H__
+#ifndef __DEBUGGER_SRC_CPU_SYSC_PLUGIN_L2_L2SERDES_H__
+#define __DEBUGGER_SRC_CPU_SYSC_PLUGIN_L2_L2SERDES_H__
 
 #include "api_core.h"
-#include "ambalib/types_amba.h"
-#include "riverlib/types_river.h"
+#include "../types_river.h"
+#include "../../ambalib/types_amba.h"
 #include <systemc.h>
 
 namespace debugger {
 
-SC_MODULE(AxiSerDes) {
+SC_MODULE(L2SerDes) {
     sc_in<bool> i_clk;                                  // CPU clock
     sc_in<bool> i_nrst;
-    sc_out<axi4_river_in_type> o_corei;
-    sc_in<axi4_river_out_type> i_coreo;
+    sc_out<axi4_l2_in_type> o_l2i;
+    sc_in<axi4_l2_out_type> i_l2o;
     sc_in<axi4_master_in_type> i_msti;
     sc_out<axi4_master_out_type> o_msto;
 
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(AxiSerDes);
+    SC_HAS_PROCESS(L2SerDes);
 
-    AxiSerDes(sc_module_name name, bool async_reset);
-    virtual ~AxiSerDes();
+    L2SerDes(sc_module_name name, bool async_reset);
+    virtual ~L2SerDes();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
     sc_uint<8> size2len(sc_uint<3> size);
 
-    static const int SERDES_BURST_LEN = L1CACHE_BYTES_PER_LINE / BUS_DATA_BYTES;
+    // TODO as generic parameters
+    static const int linew = L2CACHE_LINE_BITS;
+    static const int busw = BUS_DATA_WIDTH;
+
+    static const int lineb = linew / 8;
+    static const int busb = busw / 8;
+    static const int SERDES_BURST_LEN = lineb / busb;
 
     enum EState {
         State_Idle,
@@ -57,8 +63,8 @@ SC_MODULE(AxiSerDes) {
         sc_signal<sc_uint<3>> state;
         sc_signal<sc_uint<8>> req_len;
         sc_signal<bool> b_wait;
-        sc_signal<sc_biguint<L1CACHE_LINE_BITS>> line;
-        sc_signal<sc_uint<L1CACHE_BYTES_PER_LINE>> wstrb;
+        sc_signal<sc_biguint<linew>> line;
+        sc_signal<sc_uint<lineb>> wstrb;
         sc_signal<sc_uint<SERDES_BURST_LEN>> rmux;
     } r, v;
 
@@ -76,4 +82,4 @@ SC_MODULE(AxiSerDes) {
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_SRC_CPU_SYSC_PLUGIN_AXISERDES_H__
+#endif  // __DEBUGGER_SRC_CPU_SYSC_PLUGIN_L2_L2SERDES_H__

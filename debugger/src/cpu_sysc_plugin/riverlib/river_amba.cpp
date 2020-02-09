@@ -120,7 +120,7 @@ void RiverAmba::comb() {
     bool v_mem_er_load_fault;
     bool v_mem_er_store_fault;
     bool v_next_ready;
-    axi4_river_out_type vmsto;
+    axi4_l1_out_type vmsto;
     sc_uint<3> vmsto_size;
     sc_uint<3> vmsto_prot;
 

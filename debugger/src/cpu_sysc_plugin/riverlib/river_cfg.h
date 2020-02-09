@@ -85,6 +85,39 @@ static const int DTAG_FL_TOTAL      = 3;
 static const int L1CACHE_BYTES_PER_LINE   = DCACHE_BYTES_PER_LINE;
 static const int L1CACHE_LINE_BITS        = 8*DCACHE_BYTES_PER_LINE;
 
+/** 
+ * L2 cache config (16 KB by default)
+ */
+static const int CFG_L2_LOG2_BYTES_PER_LINE = 5;    // [4:0] 32 Bytes = 4x8 B log2(Bytes per line)
+static const int CFG_L2_LOG2_LINES_PER_WAY  = 7;
+static const int CFG_L2_LOG2_NWAYS          = 2;
+
+// Derivatives D$ constants:
+static const int L2CACHE_BYTES_PER_LINE    = 1 << CFG_L2_LOG2_BYTES_PER_LINE;
+static const int L2CACHE_LINES_PER_WAY     = 1 << CFG_L2_LOG2_LINES_PER_WAY;
+static const int L2CACHE_WAYS              = 1 << CFG_L2_LOG2_NWAYS;
+
+static const int L2CACHE_LINE_BITS         = 8*L2CACHE_BYTES_PER_LINE;
+static const int L2CACHE_SIZE_BYTES =
+    L2CACHE_WAYS * L2CACHE_LINES_PER_WAY * L2CACHE_BYTES_PER_LINE;
+
+static const int L2TAG_FL_DIRTY      = 1;
+static const int L2TAG_FL_SHARED     = 2;
+static const int L2TAG_FL_LOAD_FAULT = 3;
+static const int L2TAG_FL_TOTAL      = 4;
+
+static const int L2_MSG_NONE        = 0;
+static const int L2_MSG_AR_ACCEPT   = 1;
+static const int L2_MSG_AW_ACCEPT   = 2;
+static const int L2_MSG_R_DONE      = 3;
+static const int L2_MSG_W_DONE      = 4;
+static const int L2_MSG_B_DONE      = 5;
+static const int L2_MSG_WB_DONE     = 6;            // W & B without ack
+
+const int L2_MSG_PAYLOAD_BITS = L1CACHE_LINE_BITS   // r_data
+                              + 2;                  // r_resp
+
+
 /** MPU config */
 static const int CFG_MPU_TBL_WIDTH   = 2;    // [1:0]  log2(MPU_TBL_SIZE)
 static const int CFG_MPU_TBL_SIZE    = 1 << CFG_MPU_TBL_WIDTH;

@@ -14,16 +14,15 @@
  *  limitations under the License.
  */
 
-#include "axiserdes.h"
+#include "l1serdes.h"
 
 namespace debugger {
 
-AxiSerDes::AxiSerDes(sc_module_name name, bool async_reset) : sc_module(name),
+L1SerDes::L1SerDes(sc_module_name name, bool async_reset) : sc_module(name),
     i_clk("i_clk"),
-    i_nrst("o_nrst"),
+    i_nrst("i_nrst"),
     o_corei("o_corei"),
     i_coreo("i_coreo"),
-    // Master interface:
     i_msti("i_msti"),
     o_msto("o_msto") {
 
@@ -42,10 +41,10 @@ AxiSerDes::AxiSerDes(sc_module_name name, bool async_reset) : sc_module(name),
     sensitive << i_clk.pos();
 }
 
-AxiSerDes::~AxiSerDes() {
+L1SerDes::~L1SerDes() {
 }
 
-void AxiSerDes::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+void L1SerDes::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
         sc_trace(o_vcd, o_msto, o_msto.name());
         sc_trace(o_vcd, i_msti, i_msti.name());
@@ -59,7 +58,7 @@ void AxiSerDes::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
 }
 
-sc_uint<8> AxiSerDes::size2len(sc_uint<3> size) {
+sc_uint<8> L1SerDes::size2len(sc_uint<3> size) {
     sc_uint<8> ret;
     switch (size) {
     case 4: // 16 Bytes
@@ -80,17 +79,17 @@ sc_uint<8> AxiSerDes::size2len(sc_uint<3> size) {
     return ret;
 }
 
-void AxiSerDes::comb() {
+void L1SerDes::comb() {
     bool v_req_mem_ready;
-    sc_uint<BUS_DATA_WIDTH> vb_r_data;
-    sc_biguint<DCACHE_LINE_BITS> vb_line_o;
+    sc_uint<busw> vb_r_data;
+    sc_biguint<linew> vb_line_o;
     sc_uint<4> vb_r_resp;
     bool v_r_valid;
     bool v_w_valid;
     bool v_w_last;
     bool v_w_ready;
     sc_uint<8> vb_len;
-    axi4_river_in_type vcorei;
+    axi4_l1_in_type vcorei;
     axi4_master_out_type vmsto;
 
     v_req_mem_ready = 0;
@@ -104,7 +103,7 @@ void AxiSerDes::comb() {
     vb_line_o = r.line.read();
     for (int i = 0; i < SERDES_BURST_LEN; i++) {
         if (r.rmux.read()[i] == 1) {
-            vb_line_o((i+1)*BUS_DATA_WIDTH-1, i*BUS_DATA_WIDTH) = vb_r_data;
+            vb_line_o((i+1)*busw-1, i*busw) = vb_r_data;
         }
     }
 
@@ -134,8 +133,8 @@ void AxiSerDes::comb() {
             v_w_last = 1;
         }
         if (i_msti.read().w_ready) {
-            v.line = (0, r.line.read()(L1CACHE_LINE_BITS-1, BUS_DATA_WIDTH));
-            v.wstrb = (0, r.wstrb.read()(L1CACHE_BYTES_PER_LINE-1, BUS_DATA_BYTES));
+            v.line = (0, r.line.read()(linew-1, busw));
+            v.wstrb = (0, r.wstrb.read()(lineb-1, busb));
             if (r.req_len.read() == 0) {
                 v_w_ready = 1;
                 v.b_wait = 1;
@@ -185,8 +184,8 @@ void AxiSerDes::comb() {
     vmsto.aw_user = i_coreo.read().aw_user;
     vmsto.w_valid = v_w_valid;
     vmsto.w_last = v_w_last;
-    vmsto.w_data = r.line.read()(BUS_DATA_WIDTH-1, 0).to_uint64();
-    vmsto.w_strb = r.wstrb.read()(BUS_DATA_BYTES-1, 0);
+    vmsto.w_data = r.line.read()(busw-1, 0).to_uint64();
+    vmsto.w_strb = r.wstrb.read()(busb-1, 0);
     vmsto.w_user = i_coreo.read().w_user;
     vmsto.b_ready = i_coreo.read().b_ready;
     vmsto.ar_valid = i_coreo.read().ar_valid;
@@ -226,7 +225,7 @@ void AxiSerDes::comb() {
     o_corei = vcorei;    // to trigger event
 }
 
-void AxiSerDes::registers() {
+void L1SerDes::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
         R_RESET(r);
     } else {

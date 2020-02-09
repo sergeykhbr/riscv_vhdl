@@ -27,8 +27,8 @@ namespace debugger {
 SC_MODULE(RiverAmba) {
     sc_in<bool> i_clk;                                  // CPU clock
     sc_in<bool> i_nrst;                                 // Reset: active LOW
-    sc_in<axi4_river_in_type> i_msti;
-    sc_out<axi4_river_out_type> o_msto;
+    sc_in<axi4_l1_in_type> i_msti;
+    sc_out<axi4_l1_out_type> o_msto;
     /** Interrupt line from external interrupts controller (PLIC). */
     sc_in<bool> i_ext_irq;
     sc_out<sc_uint<64>> o_time;                         // Clock/Step counter depending attribute "GenerateRef"

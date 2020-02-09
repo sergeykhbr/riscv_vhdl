@@ -28,11 +28,11 @@
     <Filter Include="riverlib\cache\mem">
       <UniqueIdentifier>{73c24c19-0ba9-4fd6-98ec-b0295f6d5cd4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="riverlib\l2">
-      <UniqueIdentifier>{93d1e04d-eb31-4733-85f9-e065dd59d667}</UniqueIdentifier>
-    </Filter>
     <Filter Include="ambalib">
       <UniqueIdentifier>{63a50a98-e7f8-4098-8590-7b6bdfa8d44c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="riverlib\l2cache">
+      <UniqueIdentifier>{93d1e04d-eb31-4733-85f9-e065dd59d667}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -153,11 +153,26 @@
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\river_amba.cpp">
       <Filter>riverlib</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\l2\l2_top.cpp">
-      <Filter>riverlib\l2</Filter>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\l2cache\l2_top.cpp">
+      <Filter>riverlib\l2cache</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\cpu_sysc_plugin\axiserdes.cpp">
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\l2cache\l2cache_lru.cpp">
+      <Filter>riverlib\l2cache</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\l2cache\l2_amba.cpp">
+      <Filter>riverlib\l2cache</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\l1serdes.cpp">
       <Filter>riverlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\l2cache\l2serdes.cpp">
+      <Filter>riverlib\l2cache</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\l2cache\l2_src.cpp">
+      <Filter>riverlib\l2cache</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\l2cache\l2_dst.cpp">
+      <Filter>riverlib\l2cache</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -325,17 +340,32 @@
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\river_amba.h">
       <Filter>riverlib</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\l2\l2_top.h">
-      <Filter>riverlib\l2</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\cpu_sysc_plugin\axiserdes.h">
-      <Filter>riverlib</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\types_river.h">
       <Filter>riverlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\ambalib\types_amba.h">
       <Filter>ambalib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\l2cache\l2_top.h">
+      <Filter>riverlib\l2cache</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\l2cache\l2cache_lru.h">
+      <Filter>riverlib\l2cache</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\l2cache\l2_amba.h">
+      <Filter>riverlib\l2cache</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\l1serdes.h">
+      <Filter>riverlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\l2cache\l2serdes.h">
+      <Filter>riverlib\l2cache</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\l2cache\l2_src.h">
+      <Filter>riverlib\l2cache</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\l2cache\l2_dst.h">
+      <Filter>riverlib\l2cache</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

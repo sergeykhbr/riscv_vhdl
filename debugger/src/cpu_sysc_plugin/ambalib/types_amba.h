@@ -84,19 +84,19 @@ class axi4_master_in_type {
     inline friend void sc_trace(sc_trace_file *tf,
                                 const axi4_master_in_type &v,
                                 const std::string &NAME) {
-        sc_trace(tf, v.aw_ready, NAME + ".aw_ready");
-        sc_trace(tf, v.w_ready, NAME + ".w_ready");
-        sc_trace(tf, v.b_valid, NAME + ".b_valid");
-        sc_trace(tf, v.b_resp, NAME + ".b_resp");
-        sc_trace(tf, v.b_id, NAME + ".b_id");
-        sc_trace(tf, v.b_user, NAME + ".b_user");
-        sc_trace(tf, v.ar_ready, NAME + ".ar_ready");
-        sc_trace(tf, v.r_valid, NAME + ".r_valid");
-        sc_trace(tf, v.r_resp, NAME + ".r_resp");
-        sc_trace(tf, v.r_data, NAME + ".r_data");
-        sc_trace(tf, v.r_last, NAME + ".r_last");
-        sc_trace(tf, v.r_id, NAME + ".r_id");
-        sc_trace(tf, v.r_user, NAME + ".r_user");
+        sc_trace(tf, v.aw_ready, NAME + "_aw_ready");
+        sc_trace(tf, v.w_ready, NAME + "_w_ready");
+        sc_trace(tf, v.b_valid, NAME + "_b_valid");
+        sc_trace(tf, v.b_resp, NAME + "_b_resp");
+        sc_trace(tf, v.b_id, NAME + "_b_id");
+        sc_trace(tf, v.b_user, NAME + "_b_user");
+        sc_trace(tf, v.ar_ready, NAME + "_ar_ready");
+        sc_trace(tf, v.r_valid, NAME + "_r_valid");
+        sc_trace(tf, v.r_resp, NAME + "_r_resp");
+        sc_trace(tf, v.r_data, NAME + "_r_data");
+        sc_trace(tf, v.r_last, NAME + "_r_last");
+        sc_trace(tf, v.r_id, NAME + "_r_id");
+        sc_trace(tf, v.r_user, NAME + "_r_user");
     }
 
     inline friend ostream &operator << (ostream &os,
@@ -211,37 +211,37 @@ class axi4_master_out_type {
     inline friend void sc_trace(sc_trace_file *tf,
                                 const axi4_master_out_type &v,
                                 const std::string &NAME) {
-        sc_trace(tf, v.aw_valid, NAME + ".aw_valid");
-        sc_trace(tf, v.aw_bits.addr, NAME + ".aw_bits.addr");
-        sc_trace(tf, v.aw_bits.len, NAME + ".aw_bits.len");
-        sc_trace(tf, v.aw_bits.size, NAME + ".aw_bits.size");
-        sc_trace(tf, v.aw_bits.burst, NAME + ".aw_bits.burst");
-        sc_trace(tf, v.aw_bits.lock, NAME + ".aw_bits.lock");
-        sc_trace(tf, v.aw_bits.cache, NAME + ".aw_bits.cache");
-        sc_trace(tf, v.aw_bits.prot, NAME + ".aw_bits.prot");
-        sc_trace(tf, v.aw_bits.qos, NAME + ".aw_bits.qos");
-        sc_trace(tf, v.aw_bits.region, NAME + ".aw_bits.region");
-        sc_trace(tf, v.aw_id, NAME + ".aw_id");
-        sc_trace(tf, v.aw_user, NAME + ".aw_user");
-        sc_trace(tf, v.w_valid, NAME + ".w_valid");
-        sc_trace(tf, v.w_data, NAME + ".w_data");
-        sc_trace(tf, v.w_last, NAME + ".w_last");
-        sc_trace(tf, v.w_strb, NAME + ".w_strb");
-        sc_trace(tf, v.w_user, NAME + ".w_user");
-        sc_trace(tf, v.b_ready, NAME + ".b_ready");
-        sc_trace(tf, v.ar_valid, NAME + ".ar_valid");
-        sc_trace(tf, v.ar_bits.addr, NAME + ".ar_bits.addr");
-        sc_trace(tf, v.ar_bits.len, NAME + ".ar_bits.len");
-        sc_trace(tf, v.ar_bits.size, NAME + ".ar_bits.size");
-        sc_trace(tf, v.ar_bits.burst, NAME + ".ar_bits.burst");
-        sc_trace(tf, v.ar_bits.lock, NAME + ".ar_bits.lock");
-        sc_trace(tf, v.ar_bits.cache, NAME + ".ar_bits.cache");
-        sc_trace(tf, v.ar_bits.prot, NAME + ".ar_bits.prot");
-        sc_trace(tf, v.ar_bits.qos, NAME + ".ar_bits.qos");
-        sc_trace(tf, v.ar_bits.region, NAME + ".ar_bits.region");
-        sc_trace(tf, v.ar_id, NAME + ".ar_id");
-        sc_trace(tf, v.ar_user, NAME + ".ar_user");
-        sc_trace(tf, v.r_ready, NAME + ".r_ready");
+        sc_trace(tf, v.aw_valid, NAME + "_aw_valid");
+        sc_trace(tf, v.aw_bits.addr, NAME + "_aw_bits_addr");
+        sc_trace(tf, v.aw_bits.len, NAME + "_aw_bits_len");
+        sc_trace(tf, v.aw_bits.size, NAME + "_aw_bits_size");
+        sc_trace(tf, v.aw_bits.burst, NAME + "_aw_bits_burst");
+        sc_trace(tf, v.aw_bits.lock, NAME + "_aw_bits_lock");
+        sc_trace(tf, v.aw_bits.cache, NAME + "_aw_bits_cache");
+        sc_trace(tf, v.aw_bits.prot, NAME + "_aw_bits_prot");
+        sc_trace(tf, v.aw_bits.qos, NAME + "_aw_bits_qos");
+        sc_trace(tf, v.aw_bits.region, NAME + "_aw_bits_region");
+        sc_trace(tf, v.aw_id, NAME + "_aw_id");
+        sc_trace(tf, v.aw_user, NAME + "_aw_user");
+        sc_trace(tf, v.w_valid, NAME + "_w_valid");
+        sc_trace(tf, v.w_data, NAME + "_w_data");
+        sc_trace(tf, v.w_last, NAME + "_w_last");
+        sc_trace(tf, v.w_strb, NAME + "_w_strb");
+        sc_trace(tf, v.w_user, NAME + "_w_user");
+        sc_trace(tf, v.b_ready, NAME + "_b_ready");
+        sc_trace(tf, v.ar_valid, NAME + "_ar_valid");
+        sc_trace(tf, v.ar_bits.addr, NAME + "_ar_bits_addr");
+        sc_trace(tf, v.ar_bits.len, NAME + "_ar_bits_len");
+        sc_trace(tf, v.ar_bits.size, NAME + "_ar_bits_size");
+        sc_trace(tf, v.ar_bits.burst, NAME + "_ar_bits_burst");
+        sc_trace(tf, v.ar_bits.lock, NAME + "_ar_bits_lock");
+        sc_trace(tf, v.ar_bits.cache, NAME + "_ar_bits_cache");
+        sc_trace(tf, v.ar_bits.prot, NAME + "_ar_bits_prot");
+        sc_trace(tf, v.ar_bits.qos, NAME + "_ar_bits_qos");
+        sc_trace(tf, v.ar_bits.region, NAME + "_ar_bits_region");
+        sc_trace(tf, v.ar_id, NAME + "_ar_id");
+        sc_trace(tf, v.ar_user, NAME + "_ar_user");
+        sc_trace(tf, v.r_ready, NAME + "_r_ready");
     }
 
     inline friend ostream &operator << (ostream &os,
@@ -299,6 +299,8 @@ class axi4_master_out_type {
     sc_uint<CFG_BUS_USER_BITS> ar_user;
     bool r_ready;
 };
+
+static const axi4_master_in_type axi4_master_in_none;
 
 }  // namespace debugger
 

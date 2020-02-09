@@ -28,6 +28,7 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     registerAttribute("AsyncReset", &asyncReset_);
     registerAttribute("FpuEnable", &fpuEnable_);
     registerAttribute("TracerEnable", &tracerEnable_);
+    registerAttribute("L2CacheEnable", &l2CacheEnable_);
     registerAttribute("Bus", &bus_);
     registerAttribute("CmdExecutor", &cmdexec_);
     registerAttribute("Tap", &tap_);
@@ -95,8 +96,11 @@ void CpuRiscV_RTL::postinitService() {
     wrapper_->setBus(ibus_);
     wrapper_->setClockHz(freqHz_.to_int());
     wrapper_->generateVCD(i_vcd_, o_vcd_);
-    if (serdes_) {
-        serdes_->generateVCD(i_vcd_, o_vcd_);
+    if (l2cache_) {
+        l2cache_->generateVCD(i_vcd_, o_vcd_);
+    }
+    if (l1serdes_) {
+        l1serdes_->generateVCD(i_vcd_, o_vcd_);
     }
     core_->generateVCD(i_vcd_, o_vcd_);
 
@@ -140,8 +144,8 @@ void CpuRiscV_RTL::createSystemC() {
     w_clk = wrapper_->o_clk;
     wrapper_->o_nrst(w_nrst);
     wrapper_->i_time(wb_time);
-    wrapper_->o_msti(msti_i);
-    wrapper_->i_msto(msto_o);
+    wrapper_->o_msti(msti);
+    wrapper_->i_msto(msto);
     wrapper_->o_interrupt(w_interrupt);
     wrapper_->o_dport_valid(w_dport_valid);
     wrapper_->o_dport_write(w_dport_write);
@@ -152,13 +156,35 @@ void CpuRiscV_RTL::createSystemC() {
     wrapper_->i_dport_rdata(wb_dport_rdata);
     wrapper_->i_halted(w_halted);
 
-    serdes_ = new AxiSerDes("serdes0", asyncReset_.to_bool());
-    serdes_->i_clk(wrapper_->o_clk);
-    serdes_->i_nrst(w_nrst);
-    serdes_->o_corei(corei_i);
-    serdes_->i_coreo(coreo_o);
-    serdes_->i_msti(msti_i);
-    serdes_->o_msto(msto_o);
+    if (l2CacheEnable_.to_bool()) {
+        l2cache_ = new L2Top("l2top", asyncReset_.to_bool());
+        l2cache_->i_clk(wrapper_->o_clk);
+        l2cache_->i_nrst(w_nrst);
+        l2cache_->o_l1i0(corei0);
+        l2cache_->i_l1o0(coreo0);
+        l2cache_->o_l1i1(corei1);
+        l2cache_->i_l1o1(coreo1);
+        l2cache_->o_l1i2(corei2);
+        l2cache_->i_l1o2(coreo2);
+        l2cache_->o_l1i3(corei3);
+        l2cache_->i_l1o3(coreo3);
+        l2cache_->i_acpo(acpo);
+        l2cache_->o_acpi(acpi);
+        l2cache_->i_msti(msti);
+        l2cache_->o_msto(msto);
+
+        l1serdes_ = 0;
+    } else {
+        l1serdes_ = new L1SerDes("l1serdes0", asyncReset_.to_bool());
+        l1serdes_->i_clk(wrapper_->o_clk);
+        l1serdes_->i_nrst(w_nrst);
+        l1serdes_->o_corei(corei0);
+        l1serdes_->i_coreo(coreo0);
+        l1serdes_->i_msti(msti);
+        l1serdes_->o_msto(msto);
+
+        l2cache_ = 0;
+    }
 
     core_ = new RiverAmba("core0", hartid_.to_uint32(),
                                asyncReset_.to_bool(),
@@ -166,8 +192,8 @@ void CpuRiscV_RTL::createSystemC() {
                                tracerEnable_.to_bool());
     core_->i_clk(wrapper_->o_clk);
     core_->i_nrst(w_nrst);
-    core_->i_msti(corei_i);
-    core_->o_msto(coreo_o);
+    core_->i_msti(corei0);
+    core_->o_msto(coreo0);
     core_->i_ext_irq(w_interrupt);
     core_->o_time(wb_time);
     core_->o_exec_cnt(wb_exec_cnt);
@@ -197,8 +223,11 @@ void CpuRiscV_RTL::createSystemC() {
 void CpuRiscV_RTL::deleteSystemC() {
     delete wrapper_;
     delete core_;
-    if (serdes_) {
-        delete serdes_;
+    if (l1serdes_) {
+        delete l1serdes_;
+    }
+    if (l2cache_) {
+        delete l2cache_;
     }
 }
 
