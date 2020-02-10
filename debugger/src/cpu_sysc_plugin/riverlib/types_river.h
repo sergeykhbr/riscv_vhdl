@@ -1093,6 +1093,7 @@ class axi4_domain_out_type {
 };
 
 static const axi4_l1_in_type axi4_l1_in_none;
+static const axi4_l1_out_type axi4_l1_out_none;
 
 }  // namespace debugger
 

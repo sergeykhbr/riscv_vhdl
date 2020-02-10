@@ -59,7 +59,6 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     i_resp_mem_data("i_resp_mem_data"),
     i_resp_mem_load_fault("i_resp_mem_load_fault"),
     i_resp_mem_store_fault("i_resp_mem_store_fault"),
-    i_resp_mem_store_fault_addr("i_resp_mem_store_fault_addr"),
     i_mpu_region_we("i_mpu_region_we"),
     i_mpu_region_idx("i_mpu_region_idx"),
     i_mpu_region_addr("i_mpu_region_addr"),
@@ -157,7 +156,6 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     d0->i_mem_data(wb_data_resp_mem_data);
     d0->i_mem_load_fault(w_data_resp_mem_load_fault);
     d0->i_mem_store_fault(i_resp_mem_store_fault);
-    //d0->i_resp_mem_store_fault_addr(i_resp_mem_store_fault_addr);
     d0->o_mpu_addr(d.mpu_addr);
     d0->i_mpu_flags(wb_mpu_dflags);
     d0->i_flush_address(i_data_flush_address);

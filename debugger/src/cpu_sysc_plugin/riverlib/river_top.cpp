@@ -34,7 +34,6 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     i_resp_mem_data("i_resp_mem_data"),
     i_resp_mem_load_fault("i_resp_mem_load_fault"),
     i_resp_mem_store_fault("i_resp_mem_store_fault"),
-    i_resp_mem_store_fault_addr("i_resp_mem_store_fault_addr"),
     i_ext_irq("i_ext_irq"),
     o_time("o_time"),
     o_exec_cnt("o_exec_cnt"),
@@ -139,7 +138,6 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     cache0->i_resp_mem_data(i_resp_mem_data);
     cache0->i_resp_mem_load_fault(i_resp_mem_load_fault);
     cache0->i_resp_mem_store_fault(i_resp_mem_store_fault);
-    cache0->i_resp_mem_store_fault_addr(i_resp_mem_store_fault_addr);
     cache0->i_mpu_region_we(w_mpu_region_we);
     cache0->i_mpu_region_idx(wb_mpu_region_idx);
     cache0->i_mpu_region_addr(wb_mpu_region_addr);

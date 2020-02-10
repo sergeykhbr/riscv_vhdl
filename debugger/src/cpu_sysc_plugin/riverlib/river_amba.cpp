@@ -48,11 +48,10 @@ RiverAmba::RiverAmba(sc_module_name name_, uint32_t hartid, bool async_reset,
     river0->o_req_mem_strob(req_mem_strob_o);
     river0->o_req_mem_data(req_mem_data_o);
     river0->i_resp_mem_valid(resp_mem_valid_i);
-    river0->i_resp_mem_path(r.resp_path);
-    river0->i_resp_mem_data(wb_msti_r_data);
+    river0->i_resp_mem_path(r.req_path);
+    river0->i_resp_mem_data(resp_mem_data_i);
     river0->i_resp_mem_load_fault(resp_mem_load_fault_i);
     river0->i_resp_mem_store_fault(resp_mem_store_fault_i);
-    river0->i_resp_mem_store_fault_addr(r.b_addr);
     river0->i_ext_irq(i_ext_irq);
     river0->o_time(o_time);
     river0->o_exec_cnt(o_exec_cnt);
@@ -76,9 +75,13 @@ RiverAmba::RiverAmba(sc_module_name name_, uint32_t hartid, bool async_reset,
     sensitive << req_mem_strob_o;
     sensitive << req_mem_data_o;
     sensitive << r.state;
-    sensitive << r.resp_path;
-    sensitive << r.w_addr;
-    sensitive << r.b_addr;
+    sensitive << r.req_addr;
+    sensitive << r.req_path;
+    sensitive << r.req_cached;
+    sensitive << r.req_wdata;
+    sensitive << r.req_wstrb;
+    sensitive << r.req_size;
+    sensitive << r.req_prot;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -115,142 +118,117 @@ void RiverAmba::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void RiverAmba::comb() {
-    bool v_req_mem_ready;
     bool v_resp_mem_valid;
     bool v_mem_er_load_fault;
     bool v_mem_er_store_fault;
     bool v_next_ready;
     axi4_l1_out_type vmsto;
-    sc_uint<3> vmsto_size;
-    sc_uint<3> vmsto_prot;
 
     v = r;
     
-    wb_msti_r_data = i_msti.read().r_data;  // can't directly pass to lower level
-
-    v_req_mem_ready = 0;
     v_resp_mem_valid = 0;
     v_mem_er_load_fault = 0;
-    v_mem_er_store_fault = i_msti.read().b_valid && i_msti.read().b_resp[1]
-                           && r.b_wait.read();
+    v_mem_er_store_fault = 0;
     v_next_ready = 0;
 
-    vmsto.r_ready = 1;
-    vmsto.w_valid = 0;
-    vmsto.w_last = 0;
-    vmsto.ar_valid = 0;
-    vmsto.aw_valid = 0;
-
-    if (i_msti.read().b_valid == 1) {
-        v.b_wait = 0;
-    }
+    vmsto = axi4_l1_out_none;
+    vmsto.ar_bits.burst = 0x1;  // INCR (possible any value actually)
+    vmsto.aw_bits.burst = 0x1;  // INCR (possible any value actually)
 
     switch (r.state.read()) {
-    case idle:
+    case state_idle:
         v_next_ready = 1;
+        if (req_mem_valid_o.read() == 1) {
+            v.req_path = req_mem_path_o.read();
+            v.req_addr = req_mem_addr_o;
+            v.req_cached = req_mem_cached_o;
+            if (req_mem_cached_o.read() == 1) {
+                v.req_size = 0x5;   // 32 Bytes
+            } else if (req_mem_path_o.read() == 1) {
+                v.req_size = 0x4;   // 16 Bytes: Uncached Instruction
+            } else {
+                v.req_size = 0x3;   // 8 Bytes: Uncached Data
+            }
+            // [0] 0=Unpriv/1=Priv;
+            // [1] 0=Secure/1=Non-secure;
+            // [2]  0=Data/1=Instruction
+            v.req_prot = req_mem_path_o.read() << 2;
+            if (req_mem_write_o.read() == 0) {
+                v.state = state_ar;
+                v.req_wdata = 0;
+                v.req_wstrb = 0;
+            } else {
+                v.state = state_aw;
+                v.req_wdata = req_mem_data_o;
+                v.req_wstrb = req_mem_strob_o;
+            }
+        }
         break;
 
-    case reading:
+    case state_ar:
+        vmsto.ar_valid = 1;
+        vmsto.ar_bits.addr = r.req_addr;
+        vmsto.ar_bits.cache = r.req_cached;
+        vmsto.ar_bits.size = r.req_size;
+        vmsto.ar_bits.prot = r.req_prot;
+        if (i_msti.read().ar_ready == 1) {
+            v.state = state_r;
+        }
+        break;
+    case state_r:
         vmsto.r_ready = 1;
-        v_mem_er_load_fault = i_msti.read().r_valid && i_msti.read().r_resp[1];
+        v_mem_er_load_fault = i_msti.read().r_resp[1];
         v_resp_mem_valid = i_msti.read().r_valid;
         // r_valid and r_last always should be in the same time
         if (i_msti.read().r_valid == 1 && i_msti.read().r_last == 1) {
-            v_next_ready = 1;
-            v.state = idle;
+            v.state = state_idle;
         }
         break;
 
-    case writing:
+    case state_aw:
+        vmsto.aw_valid = 1;
+        vmsto.aw_bits.addr = r.req_addr;
+        vmsto.aw_bits.cache = r.req_cached;
+        vmsto.aw_bits.size = r.req_size;
+        vmsto.aw_bits.prot = r.req_prot;
+        // undocumented feature (axi lite) to simplify L2-cache
+        vmsto.w_data = r.req_wdata;
+        vmsto.w_strb = r.req_wstrb;
+        if (i_msti.read().aw_ready == 1) {
+            v.state = state_w;
+        }
+        break;
+    case state_w:
         vmsto.w_valid = 1;
         vmsto.w_last = 1;
-        v_resp_mem_valid = i_msti.read().w_ready;
+        vmsto.w_data = r.req_wdata;
+        vmsto.w_strb = r.req_wstrb;
         // Write full line without burst transactions:
         if (i_msti.read().w_ready == 1) {
-            v_next_ready = 1;
-            v.state = idle;
-            v.b_addr = r.w_addr;
-            v.b_wait = 1;
+            v.state = state_b;
         }
         break;
-
+    case state_b:
+        vmsto.b_ready = 1;
+        v_resp_mem_valid = i_msti.read().b_valid;
+        v_mem_er_store_fault = i_msti.read().b_resp[1];
+        if (i_msti.read().b_valid == 1) {
+            v.state = state_idle;
+        }
+        break;
     default:;
     }
-
-    if (v_next_ready == 1) {
-        if (req_mem_valid_o.read() == 1) {
-            v.resp_path = req_mem_path_o.read();
-            if (req_mem_write_o.read() == 0) {
-                vmsto.ar_valid = 1;
-                if (i_msti.read().ar_ready == 1) {
-                    v_req_mem_ready = 1;
-                    v.state = reading;
-                }
-            } else {
-                vmsto.aw_valid = 1;
-                if (i_msti.read().aw_ready == 1) {
-                    v_req_mem_ready = 1;
-                    v.state = writing;
-                    v.w_addr = req_mem_addr_o.read();
-                }
-            }
-        }
-    }
-
 
     if (!async_reset_ && !i_nrst.read()) {
         R_RESET(v);
     }
 
-    if (req_mem_cached_o.read() == 1) {
-        vmsto_size = 0x5;   // 32 Bytes
-    } else if (req_mem_path_o.read() == 1) {
-        vmsto_size = 0x4;   // 16 Bytes: Uncached Instruction
-    } else {
-        vmsto_size = 0x3;   // 8 Bytes: Uncached Data
-    }
-
-    vmsto_prot[0] = 0;                      // 0=Unpriviledge; 1=Priviledge access
-    vmsto_prot[1] = 0;                      // 0=Secure access; 1=Non-secure access
-    vmsto_prot[2] = req_mem_path_o.read();  // 0=Data; 1=Instruction
-
-    //o_msto_aw_valid = vmsto_aw_valid;
-    vmsto.aw_bits.addr = req_mem_addr_o;
-    vmsto.aw_bits.len = 0;
-    vmsto.aw_bits.size = vmsto_size;           // 0=1B; 1=2B; 2=4B; 3=8B; 4=16B; 5=32B; 6=64B; 7=128B
-    vmsto.aw_bits.burst = 0x1;                 // 00=FIX; 01=INCR; 10=WRAP
-    vmsto.aw_bits.lock = 0;
-    vmsto.aw_bits.cache = req_mem_cached_o.read();
-    vmsto.aw_bits.prot = vmsto_prot;
-    vmsto.aw_bits.qos = 0;
-    vmsto.aw_bits.region = 0;
-    vmsto.aw_id = 0;
-    vmsto.aw_user = 0;
-    //vmsto.w_valid = vmsto_w_valid;
-    vmsto.w_data = req_mem_data_o;
-    //vmsto.w_last = vmsto_w_last;
-    vmsto.w_strb = req_mem_strob_o;
-    vmsto.w_user = 0;
-    vmsto.b_ready = 1;
-
-    //vmsto.ar_valid = vmsto_ar_valid;
-    vmsto.ar_bits.addr = req_mem_addr_o;
-    vmsto.ar_bits.len = 0;
-    vmsto.ar_bits.size = vmsto_size;           // 0=1B; 1=2B; 2=4B; 3=8B; ...
-    vmsto.ar_bits.burst = 0x1;                 // INCR
-    vmsto.ar_bits.lock = 0;
-    vmsto.ar_bits.cache = req_mem_cached_o.read();
-    vmsto.ar_bits.prot = vmsto_prot;
-    vmsto.ar_bits.qos = 0;
-    vmsto.ar_bits.region = 0;
-    vmsto.ar_id = 0;
-    vmsto.ar_user = 0;
-    //vmsto.r_ready = vmsto_r_ready;
 
     o_msto = vmsto;
 
-    req_mem_ready_i = v_req_mem_ready;  
+    req_mem_ready_i = v_next_ready;  
     resp_mem_valid_i = v_resp_mem_valid;
+    resp_mem_data_i = i_msti.read().r_data;
     resp_mem_load_fault_i = v_mem_er_load_fault;
     resp_mem_store_fault_i = v_mem_er_store_fault;
 }

@@ -69,7 +69,6 @@ SC_MODULE(CacheTop) {
     sc_in<sc_biguint<L1CACHE_LINE_BITS>> i_resp_mem_data;   // Read value
     sc_in<bool> i_resp_mem_load_fault;                  // Bus response with SLVERR or DECERR on read
     sc_in<bool> i_resp_mem_store_fault;                 // Bus response with SLVERR or DECERR on write
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_resp_mem_store_fault_addr;
     // MPU interface
     sc_in<bool> i_mpu_region_we;
     sc_in<sc_uint<CFG_MPU_TBL_WIDTH>> i_mpu_region_idx;

@@ -60,7 +60,6 @@ SC_MODULE(RiverAmba) {
  private:
     RiverTop *river0;
 
-    sc_signal<sc_biguint<L1CACHE_LINE_BITS>> wb_msti_r_data;
 
     sc_signal<bool> req_mem_ready_i;
     sc_signal<bool> req_mem_path_o;
@@ -70,30 +69,40 @@ SC_MODULE(RiverAmba) {
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_mem_addr_o;
     sc_signal<sc_uint<L1CACHE_BYTES_PER_LINE>> req_mem_strob_o;
     sc_signal<sc_biguint<L1CACHE_LINE_BITS>> req_mem_data_o;
+    sc_signal<sc_biguint<L1CACHE_LINE_BITS>> resp_mem_data_i;
     sc_signal<bool> resp_mem_valid_i;
     sc_signal<bool> resp_mem_load_fault_i;
     sc_signal<bool> resp_mem_store_fault_i;
 
     enum state_type {
-        idle,
-        reading,
-        writing
+        state_idle,
+        state_ar,
+        state_r,
+        state_aw,
+        state_w,
+        state_b
     };
 
     struct RegistersType {
-        sc_signal<sc_uint<2>> state;
-        sc_signal<bool> resp_path;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> w_addr;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> b_addr;
-        sc_signal<bool> b_wait;
+        sc_signal<sc_uint<3>> state;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_addr;
+        sc_signal<bool> req_path;
+        sc_signal<bool> req_cached;
+        sc_signal<sc_biguint<L1CACHE_LINE_BITS>> req_wdata;
+        sc_signal<sc_uint<L1CACHE_BYTES_PER_LINE>> req_wstrb;
+        sc_signal<sc_biguint<3>> req_size;
+        sc_signal<sc_biguint<3>> req_prot;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
-        iv.state = idle;
-        iv.resp_path = 0;
-        iv.w_addr = 0;
-        iv.b_addr = 0;
-        iv.b_wait = 0;
+        iv.state = state_idle;
+        iv.req_addr = 0;
+        iv.req_path = 0;
+        iv.req_cached = 0;
+        iv.req_wdata = 0;
+        iv.req_wstrb = 0;
+        iv.req_size = 0;
+        iv.req_prot = 0;
     }
 
     bool async_reset_;

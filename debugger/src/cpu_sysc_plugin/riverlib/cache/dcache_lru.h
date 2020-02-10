@@ -104,7 +104,6 @@ SC_MODULE(DCacheLru) {
     struct RegistersType {
         sc_signal<bool> req_write;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_addr;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_addr_b_resp;  // to support delayed store error response
         sc_signal<sc_uint<64>> req_wdata;
         sc_signal<sc_uint<8>> req_wstrb;
         sc_signal<sc_uint<4>> state;
@@ -130,7 +129,6 @@ SC_MODULE(DCacheLru) {
     void R_RESET(RegistersType &iv) {
         iv.req_write = 0;
         iv.req_addr = 0;
-        iv.req_addr_b_resp = 0;
         iv.req_wdata = 0;
         iv.req_wstrb = 0;
         iv.state = State_FlushAddr;

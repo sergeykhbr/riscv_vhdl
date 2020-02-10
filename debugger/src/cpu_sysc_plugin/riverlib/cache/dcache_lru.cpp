@@ -96,7 +96,6 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset)
     sensitive << line_hit_o;
     sensitive << line_rflags_o;
     sensitive << r.req_addr;
-    sensitive << r.req_addr_b_resp;
     sensitive << r.state;
     sensitive << r.req_mem_valid;
     sensitive << r.mem_write;
@@ -202,7 +201,6 @@ void DCacheLru::comb() {
     sc_uint<DCACHE_BYTES_PER_LINE> vb_line_wstrb;
     sc_biguint<64> vb_req_mask;
     sc_uint<DTAG_FL_TOTAL> v_line_wflags;
-    sc_uint<CFG_CPU_ADDR_BITS> vb_err_addr;
     sc_uint<CFG_DLOG2_BYTES_PER_LINE-3> ridx;
     bool v_req_same_line;
    
@@ -220,12 +218,6 @@ void DCacheLru::comb() {
     vb_cached_data = line_rdata_o.read()((ridx+1)*64 - 1,
                                          ridx*64);
     vb_uncached_data = r.cache_line_i.read()(63, 0);
-
-    if (i_mem_store_fault.read() == 1) {
-        vb_err_addr = r.req_addr_b_resp.read();
-    } else {
-        vb_err_addr = r.req_addr.read();
-    }
 
     v_req_same_line = 0;
     if (r.req_addr.read()(CFG_CPU_ADDR_BITS-1, CFG_DLOG2_BYTES_PER_LINE)
@@ -457,11 +449,11 @@ void DCacheLru::comb() {
         break;
     case State_WriteBus:
         if (i_mem_data_valid.read()) {
-            v.req_addr_b_resp = r.req_addr;
             if (r.write_flush.read() == 1) {
                 // Offloading Cache line on flush request
                 v.state = State_FlushAddr;
             } else if (r.write_first.read() == 1) {
+                // Obsolete line was offloaded, now read new line
                 v.mem_addr = r.req_addr.read()(CFG_CPU_ADDR_BITS-1, CFG_DLOG2_BYTES_PER_LINE)
                             << CFG_DLOG2_BYTES_PER_LINE;
                 v.req_mem_valid = 1;
@@ -472,10 +464,8 @@ void DCacheLru::comb() {
                 // Non-cached write
                 v.state = State_Idle;
                 v_resp_valid = 1;
+                v_resp_er_store_fault = i_mem_store_fault.read();
             }
-            //if (i_resp_mem_store_fault.read() == 1) {
-            //    v.store_fault = 1;
-            //}
         }
         break;
     case State_FlushAddr:
@@ -549,7 +539,7 @@ void DCacheLru::comb() {
     o_resp_valid = v_resp_valid;
     o_resp_data = vb_resp_data;
     o_resp_addr = r.req_addr.read();
-    o_resp_er_addr = vb_err_addr;
+    o_resp_er_addr = r.req_addr.read();
     o_resp_er_load_fault = v_resp_er_load_fault;
     o_resp_er_store_fault = v_resp_er_store_fault;
     o_resp_er_mpu_load = r.mpu_er_load;
