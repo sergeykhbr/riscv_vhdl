@@ -137,7 +137,7 @@
                 ['AsyncReset',false],
                 ['FpuEnable',true, 'Enable Hardware FPU module'],
                 ['TracerEnable',false, 'Enable Verification Trace collector module'],
-                ['L2CacheEnable',false, 'Enable coherent L2-cache model'],
+                ['L2CacheEnable',true, 'Enable coherent L2-cache model'],
                 ['Bus','axi0'],
                 ['CmdExecutor','cmdexec0']
                 ['Tap','edcltap']

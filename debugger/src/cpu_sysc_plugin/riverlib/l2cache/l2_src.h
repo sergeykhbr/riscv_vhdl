@@ -85,7 +85,7 @@ SC_MODULE(L2Source) {
 
     struct RegistersType {
         sc_signal<sc_uint<3>> state;
-        sc_signal<sc_uint<CFG_BUS_ADDR_WIDTH>> req_addr;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_addr;
         sc_signal<sc_uint<3>> req_size;
         sc_signal<sc_uint<3>> req_prot;
         sc_signal<sc_uint<5>> req_src;

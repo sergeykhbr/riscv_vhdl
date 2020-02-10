@@ -95,8 +95,6 @@ void L2Source::comb() {
     bool v_req_write;
     sc_uint<3> vb_msg_type;
     sc_uint<5> vb_req_srcid;
-    sc_uint<5> vb_aw_ready;
-    sc_uint<5> vb_ar_ready;
     sc_biguint<L1CACHE_LINE_BITS> vb_req_wdata;
     sc_uint<L1CACHE_BYTES_PER_LINE> vb_req_wstrb;
     req_addr_type reqa[5];
@@ -106,8 +104,6 @@ void L2Source::comb() {
 
     v_req_valid = 0;
     v_req_write = 0;
-    vb_aw_ready = 0;
-    vb_ar_ready = 0;
     vb_req_wdata = 0;
     vb_req_wstrb = 0;
     vb_req_srcid = 0;

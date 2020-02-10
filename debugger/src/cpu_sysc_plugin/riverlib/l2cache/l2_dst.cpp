@@ -149,6 +149,7 @@ void L2Destination::comb() {
                     }
                 }
             }
+            v.src = i_msg_src;
             v.state = WriteAck;
         }
         break;

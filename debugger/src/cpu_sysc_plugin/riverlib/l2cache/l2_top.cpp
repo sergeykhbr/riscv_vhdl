@@ -172,8 +172,6 @@ void L2Top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
 void L2Top::comb() {
     // It is possible only one message per clock period
-    uint32_t t1 = wb_src_msg_type.read();
-    uint32_t t2 = wb_cache_msg_type.read();
     wb_msg_src = wb_src_msg_src.read() | wb_cache_msg_src.read();
     wb_msg_type = wb_src_msg_type.read() | wb_cache_msg_type.read();
     wb_msg_payload = wb_cache_msg_payload;

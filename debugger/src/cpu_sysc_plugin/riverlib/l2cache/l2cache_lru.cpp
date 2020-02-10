@@ -165,6 +165,7 @@ void L2CacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.state, pn + ".r_state");
         sc_trace(o_vcd, r.req_addr, pn + ".r_req_addr");
         sc_trace(o_vcd, r.req_wstrb, pn + ".r_req_wstrb");
+        sc_trace(o_vcd, r.req_wdata, pn + ".r_req_wdata");
         sc_trace(o_vcd, line_addr_i, pn + ".linei_addr_i");
         sc_trace(o_vcd, line_wstrb_i, pn + ".linei_wstrb_i");
         sc_trace(o_vcd, line_raddr_o, pn + ".line_raddr_o");
@@ -260,15 +261,15 @@ void L2CacheLru::comb() {
         if (i != ridx) {
             continue;
         }
-        vb_line_rdata_o_modified(L1CACHE_BYTES_PER_LINE*(i+1)-1, L1CACHE_BYTES_PER_LINE*i) =
-            (vb_line_rdata_o_modified(L1CACHE_BYTES_PER_LINE*(i+1)-1, L1CACHE_BYTES_PER_LINE*i)
+        vb_line_rdata_o_modified(L1CACHE_LINE_BITS*(i+1)-1, L1CACHE_LINE_BITS*i) =
+            (vb_line_rdata_o_modified(L1CACHE_LINE_BITS*(i+1)-1, L1CACHE_LINE_BITS*i)
              & ~vb_req_mask) | (r.req_wdata.read() & vb_req_mask);
 
-        vb_cache_line_i_modified(L1CACHE_BYTES_PER_LINE*(i+1)-1, L1CACHE_BYTES_PER_LINE*i) =
-            (vb_cache_line_i_modified(L1CACHE_BYTES_PER_LINE*(i+1)-1, L1CACHE_BYTES_PER_LINE*i)
+        vb_cache_line_i_modified(L1CACHE_LINE_BITS*(i+1)-1, L1CACHE_LINE_BITS*i) =
+            (vb_cache_line_i_modified(L1CACHE_LINE_BITS*(i+1)-1, L1CACHE_LINE_BITS*i)
              & ~vb_req_mask) | (r.req_wdata.read() & vb_req_mask);
 
-        vb_line_rdata_o_wstrb(8*(i+1)-1, 8*i) =
+        vb_line_rdata_o_wstrb(L1CACHE_BYTES_PER_LINE*(i+1)-1, L1CACHE_BYTES_PER_LINE*i) =
             r.req_wstrb.read();
     }
     
