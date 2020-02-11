@@ -84,6 +84,7 @@ DpiClient::DpiClient(const char *name) : IService(name),
     cmd_(static_cast<IService *>(this)) {
     registerInterface(static_cast<IThread *>(this));
     registerInterface(static_cast<IDpi *>(this));
+    registerInterface(static_cast<ITap *>(this));
     registerAttribute("Enable", &isEnable_);
     registerAttribute("CmdExecutor", &cmdexec_);
     registerAttribute("Timeout", &timeout_);
@@ -350,6 +351,14 @@ void DpiClient::axi4_read(uint64_t addr, int bytes, uint64_t *data) {
     AttributeType &d = syncResponse_[DpiResp_Data];
     AttributeType &rdata = d["rdata"];
     *data = rdata[0u].to_uint64();
+}
+
+int DpiClient::read(uint64_t addr, int bytes, uint8_t *obuf) {
+    return bytes;
+}
+
+int DpiClient::write(uint64_t addr, int bytes, uint8_t *ibuf) {
+    return bytes;
 }
 
 bool DpiClient::is_irq() {

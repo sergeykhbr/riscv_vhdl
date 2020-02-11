@@ -1,4 +1,0 @@
-LIBRARY libsv_stub
-EXPORTS
-	sv_func_info
-	simulation_start

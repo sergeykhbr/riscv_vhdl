@@ -22,6 +22,7 @@
 #include "coreservices/ithread.h"
 #include "coreservices/idpi.h"
 #include "coreservices/icmdexec.h"
+#include "coreservices/itap.h"
 
 namespace debugger {
 
@@ -37,9 +38,12 @@ class CmdDpi : public ICommand  {
     IService *parent_;
 };
 
+
+
 class DpiClient : public IService,
                   public IThread,
-                  public IDpi {
+                  public IDpi,
+                  public ITap {
  public:
     explicit DpiClient(const char *name);
     virtual ~DpiClient();
@@ -53,6 +57,10 @@ class DpiClient : public IService,
     virtual void axi4_read(uint64_t addr, int bytes, uint64_t *data);
     virtual bool is_irq();
     virtual int get_irq();
+
+    /** ITap interface */
+    virtual int read(uint64_t addr, int bytes, uint8_t *obuf);
+    virtual int write(uint64_t addr, int bytes, uint8_t *ibuf);
 
     /** Common methods */
     double getHartBeatTime() { return hartbeatTime_; }

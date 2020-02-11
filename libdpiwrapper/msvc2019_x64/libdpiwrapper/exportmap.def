@@ -1,5 +1,0 @@
-LIBRARY libdpiwrapper
-EXPORTS
-	c_task_server_start
-	c_task_slv_clk_posedge
-
