@@ -95,6 +95,10 @@ SC_MODULE(L2CacheLru) {
     sc_signal<sc_biguint<L2CACHE_LINE_BITS>> line_rdata_o;
     sc_signal<sc_uint<L2TAG_FL_TOTAL>> line_rflags_o;
     sc_signal<bool> line_hit_o;
+    // Snoop signals:
+    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> line_snoop_addr_i;
+    sc_signal<bool> line_snoop_ready_o;
+    sc_signal<sc_uint<L2TAG_FL_TOTAL>> line_snoop_flags_o;
 
     struct RegistersType {
         sc_signal<sc_uint<5>> req_src;
@@ -154,7 +158,8 @@ SC_MODULE(L2CacheLru) {
                CFG_L2_LOG2_NWAYS,
                CFG_L2_LOG2_LINES_PER_WAY,
                CFG_L2_LOG2_BYTES_PER_LINE,
-               L2TAG_FL_TOTAL> *mem;
+               L2TAG_FL_TOTAL,
+               0> *mem;
 
     bool async_reset_;
 };

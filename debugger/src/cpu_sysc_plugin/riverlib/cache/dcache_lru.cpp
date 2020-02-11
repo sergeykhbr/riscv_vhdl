@@ -50,6 +50,14 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset)
     i_mem_store_fault("i_mem_store_fault"),
     o_mpu_addr("o_mpu_addr"),
     i_mpu_flags("i_mpu_flags"),
+    i_req_snoop_valid("i_req_snoop_valid"),
+    i_req_snoop_getdata("i_req_snoop_getdata"),
+    o_req_snoop_ready("o_req_snoop_ready"),
+    i_req_snoop_addr("i_req_snoop_addr"),
+    i_resp_snoop_ready("i_resp_snoop_ready"),
+    o_resp_snoop_valid("o_resp_snoop_valid"),
+    o_resp_snoop_data("o_resp_snoop_data"),
+    o_resp_snoop_flags("o_resp_snoop_flags"),
     i_flush_address("i_flush_address"),
     i_flush_valid("i_flush_valid"),
     o_flush_end("o_flush_end"),
@@ -60,7 +68,8 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset)
                          CFG_DLOG2_NWAYS,
                          CFG_DLOG2_LINES_PER_WAY,
                          CFG_DLOG2_BYTES_PER_LINE,
-                         DTAG_FL_TOTAL>("mem0", async_reset);
+                         DTAG_FL_TOTAL,
+                         CFG_SNOOP_ENA>("mem0", async_reset);
     mem->i_clk(i_clk);
     mem->i_nrst(i_nrst);
     mem->i_cs(line_cs_i);
@@ -73,6 +82,9 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset)
     mem->o_rdata(line_rdata_o);
     mem->o_rflags(line_rflags_o);
     mem->o_hit(line_hit_o);
+    mem->i_snoop_addr(line_snoop_addr_i);
+    mem->o_snoop_ready(line_snoop_ready_o);
+    mem->o_snoop_flags(line_snoop_flags_o);
 
 
     SC_METHOD(comb);
@@ -526,6 +538,7 @@ void DCacheLru::comb() {
     line_wstrb_i = vb_line_wstrb;
     line_wflags_i = v_line_wflags;
     line_flush_i = v_flush;
+    line_snoop_addr_i = i_req_snoop_addr;
 
     o_req_ready = v_req_ready;
 
@@ -545,6 +558,11 @@ void DCacheLru::comb() {
     o_resp_er_mpu_load = r.mpu_er_load;
     o_resp_er_mpu_store = r.mpu_er_store;
     o_mpu_addr = r.req_addr.read();
+    o_req_snoop_ready = line_snoop_ready_o;
+    o_resp_snoop_valid = 0;
+    o_resp_snoop_data = 0;
+    o_resp_snoop_flags = line_snoop_flags_o;
+
     o_flush_end = v_flush_end;
     o_state = r.state;
 }

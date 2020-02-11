@@ -41,6 +41,15 @@ SC_MODULE(RiverTop) {
     sc_in<sc_biguint<L1CACHE_LINE_BITS>> i_resp_mem_data;     // Read data
     sc_in<bool> i_resp_mem_load_fault;
     sc_in<bool> i_resp_mem_store_fault;
+    // D$ Snoop interface
+    sc_in<bool> i_req_snoop_valid;
+    sc_in<bool> i_req_snoop_getdata;                    // 0=check availability; 1=read line
+    sc_out<bool> o_req_snoop_ready;
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> i_req_snoop_addr;
+    sc_in<bool> i_resp_snoop_ready;
+    sc_out<bool> o_resp_snoop_valid;
+    sc_out<sc_biguint<L1CACHE_LINE_BITS>> o_resp_snoop_data;
+    sc_out<sc_uint<DTAG_FL_TOTAL>> o_resp_snoop_flags;
     /** Interrupt line from external interrupts controller (PLIC). */
     sc_in<bool> i_ext_irq;
     sc_out<sc_uint<64>> o_time;                         // Clock/Step counter depending attribute "GenerateRef"

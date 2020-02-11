@@ -74,7 +74,8 @@ SC_MODULE(TagMemCoupled) {
                                     waybits,
                                     ibits-1,
                                     lnbits,
-                                    flbits>(tagname, async_reset);
+                                    flbits,
+                                    0>(tagname, async_reset);
 
             mem[i]->i_clk(i_clk);
             mem[i]->i_nrst(i_nrst);
@@ -88,6 +89,9 @@ SC_MODULE(TagMemCoupled) {
             mem[i]->o_rdata(lineo[i].rdata);
             mem[i]->o_rflags(lineo[i].rflags);
             mem[i]->o_hit(lineo[i].hit);
+            mem[i]->i_snoop_addr(linei[i].snoop_addr);
+            mem[i]->o_snoop_ready(lineo[i].snoop_ready);
+            mem[i]->o_snoop_flags(lineo[i].snoop_flags);
         }
 
         SC_METHOD(comb);
@@ -134,6 +138,7 @@ SC_MODULE(TagMemCoupled) {
         sc_signal<sc_uint<(1<<lnbits)>> wstrb;
         sc_signal<sc_uint<flbits>> wflags;
         sc_signal<bool> flush;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> snoop_addr;
     };
 
     struct tagmem_out_type {
@@ -141,6 +146,8 @@ SC_MODULE(TagMemCoupled) {
         sc_signal<sc_biguint<8*(1<<lnbits)>> rdata;
         sc_signal<sc_uint<flbits>> rflags;
         sc_signal<bool> hit;
+        sc_signal<bool> snoop_ready;
+        sc_signal<sc_uint<ITAG_FL_TOTAL>> snoop_flags;
     };
 
     sc_signal<sc_uint<abus>> r_req_addr;
@@ -152,7 +159,8 @@ SC_MODULE(TagMemCoupled) {
             waybits,
             ibits-1,
             lnbits,
-            flbits> *mem[MemTotal];
+            flbits,
+            0> *mem[MemTotal];
 
     bool async_reset_;
 };

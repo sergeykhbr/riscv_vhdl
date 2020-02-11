@@ -52,6 +52,14 @@ RiverAmba::RiverAmba(sc_module_name name_, uint32_t hartid, bool async_reset,
     river0->i_resp_mem_data(resp_mem_data_i);
     river0->i_resp_mem_load_fault(resp_mem_load_fault_i);
     river0->i_resp_mem_store_fault(resp_mem_store_fault_i);
+    river0->i_req_snoop_valid(req_snoop_valid_i);
+    river0->i_req_snoop_getdata(req_snoop_getdata_i);
+    river0->o_req_snoop_ready(req_snoop_ready_o);
+    river0->i_req_snoop_addr(req_snoop_addr_i);
+    river0->i_resp_snoop_ready(resp_snoop_ready_i);
+    river0->o_resp_snoop_valid(resp_snoop_valid_o);
+    river0->o_resp_snoop_data(resp_snoop_data_o);
+    river0->o_resp_snoop_flags(resp_snoop_flags_o);
     river0->i_ext_irq(i_ext_irq);
     river0->o_time(o_time);
     river0->o_exec_cnt(o_exec_cnt);
@@ -231,6 +239,11 @@ void RiverAmba::comb() {
     resp_mem_data_i = i_msti.read().r_data;
     resp_mem_load_fault_i = v_mem_er_load_fault;
     resp_mem_store_fault_i = v_mem_er_store_fault;
+
+    req_snoop_valid_i = 0;
+    req_snoop_getdata_i = 0;      // 0=check availability; 1=read line
+    req_snoop_addr_i = 0;
+    resp_snoop_ready_i = 1;
 }
 
 void RiverAmba::registers() {

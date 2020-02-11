@@ -26,8 +26,9 @@ namespace debugger {
     ibits = lines memory address width (usually 6..8)
     lnbits = One line bits: log2(bytes_per_line)
     flbits = total flags number saved with address tag
+    snoop = 0 Snoop port disabled; 1 Enabled (L2 caching)
 */
-template <int abus, int ibits, int lnbits, int flbits>
+template <int abus, int ibits, int lnbits, int flbits, int snoop>
 SC_MODULE(TagMem) {
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;
@@ -39,6 +40,10 @@ SC_MODULE(TagMem) {
     sc_out<sc_biguint<8*(1<<lnbits)>> o_rdata;
     sc_out<sc_uint<flbits>> o_rflags;
     sc_out<bool> o_hit;
+    // L2 snoop port, active when snoop = 1
+    sc_in<sc_uint<abus>> i_snoop_addr;
+    sc_out<bool> o_snoop_ready;     // single port memory not used for writing
+    sc_out<sc_uint<flbits>> o_snoop_flags;
 
     void comb();
     void registers();
@@ -56,7 +61,10 @@ SC_MODULE(TagMem) {
         o_raddr("o_raddr"),
         o_rdata("o_rdata"),
         o_rflags("o_rflags"),
-        o_hit("o_hit") {
+        o_hit("o_hit"),
+        i_snoop_addr("i_snoop_addr"),
+        o_snoop_ready("o_snoop_ready"),
+        o_snoop_flags("o_snoop_flags") {
         async_reset_ = async_reset;
         wayidx_ = wayidx;
 
@@ -79,16 +87,32 @@ SC_MODULE(TagMem) {
         tag0->i_wdata(tagi_wdata);
         tag0->o_rdata(tago_rdata);
     
+        if (snoop) {
+            tagsnoop0 = new ram<ibits, TAG_WITH_FLAGS>("snooptag0");
+            tagsnoop0->i_clk(i_clk);
+            tagsnoop0->i_adr(wb_snoop_index);
+            tagsnoop0->i_wena(tagi_we);
+            tagsnoop0->i_wdata(tagi_wdata);
+            tagsnoop0->o_rdata(tago_snoop_rdata);
+        } else {
+            tagsnoop0 = 0;
+            tago_snoop_rdata = 0;
+        }
+
         SC_METHOD(comb);
         sensitive << i_addr;
         sensitive << i_wstrb;
         sensitive << i_wdata;
         sensitive << i_wflags;
+        sensitive << i_snoop_addr;
         sensitive << tago_rdata;
+        sensitive << tago_snoop_rdata;
         for (int i = 0; i < (1<<lnbits); i++) {
             sensitive << datao_rdata[i];
         }
-        sensitive << rb_tagi;
+        sensitive << rb_tagaddr;
+        sensitive << rb_index;
+        sensitive << rb_snoop_tagaddr;
 
         SC_METHOD(registers);
         sensitive << i_nrst;
@@ -100,6 +124,9 @@ SC_MODULE(TagMem) {
             delete datax[i];
         }
         delete tag0;
+        if (tagsnoop0) {
+            delete tagsnoop0;
+        }
     }
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
@@ -111,6 +138,7 @@ SC_MODULE(TagMem) {
 
     ram<ibits, 8> *datax[(1<<lnbits)];
     ram<ibits, TAG_WITH_FLAGS> *tag0;
+    ram<ibits, TAG_WITH_FLAGS> *tagsnoop0;
     
     sc_signal<sc_uint<ibits>> wb_index;
     sc_signal<sc_uint<8>> datao_rdata[(1<<lnbits)];
@@ -121,16 +149,21 @@ SC_MODULE(TagMem) {
     sc_signal<sc_uint<TAG_WITH_FLAGS>> tagi_wdata;
     sc_signal<bool> tagi_we;
 
-    sc_signal<sc_uint<TAG_BITS>> rb_tagi;
+    sc_signal<sc_uint<ibits>> wb_snoop_index;
+    sc_uint<TAG_BITS> wb_snoop_tagaddr;
+    sc_signal<sc_uint<TAG_WITH_FLAGS>> tago_snoop_rdata;
+
+    sc_signal<sc_uint<TAG_BITS>> rb_tagaddr;
     sc_signal<sc_uint<ibits>> rb_index;
+    sc_signal<sc_uint<TAG_BITS>> rb_snoop_tagaddr;
     sc_uint<TAG_BITS> t_tago_tag;
 
     bool async_reset_;
     int wayidx_;
 };
 
-template <int abus, int ibits, int lnbits, int flbits>
-void TagMem<abus, ibits, lnbits, flbits>::generateVCD (
+template <int abus, int ibits, int lnbits, int flbits, int snoop>
+void TagMem<abus, ibits, lnbits, flbits, snoop>::generateVCD (
     sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
         sc_trace(o_vcd, i_addr, i_addr.name());
@@ -143,19 +176,23 @@ void TagMem<abus, ibits, lnbits, flbits>::generateVCD (
         std::string pn(name());
         sc_trace(o_vcd, tago_rdata, pn + ".tago_rdata");
         sc_trace(o_vcd, tagi_wdata, pn + ".tagi_wdata");
-        sc_trace(o_vcd, rb_tagi, pn + ".rb_tagi");
+        sc_trace(o_vcd, rb_tagaddr, pn + ".rb_tagaddr");
         sc_trace(o_vcd, rb_index, pn + ".rb_index");
         sc_trace(o_vcd, t_tago_tag, pn + ".t_tago_tag");
     }
 }
 
-template <int abus, int ibits, int lnbits, int flbits>
-void TagMem<abus, ibits, lnbits, flbits>::comb() {
+template <int abus, int ibits, int lnbits, int flbits, int snoop>
+void TagMem<abus, ibits, lnbits, flbits, snoop>::comb() {
     sc_uint<ibits> vb_index;
     sc_uint<abus> vb_raddr;
     sc_biguint<8*(1<<lnbits)> vb_rdata;
     sc_uint<TAG_WITH_FLAGS> vb_tagi_wdata;
     bool v_hit;
+    bool v_snoop_ready;
+    sc_uint<ibits> vb_snoop_index;
+    sc_uint<TAG_BITS> vb_snoop_tagaddr;
+    sc_uint<flbits> vb_snoop_flags;
 
     v_hit = 0;
     for (int i = 0; i < (1<<lnbits); i++) {
@@ -166,7 +203,7 @@ void TagMem<abus, ibits, lnbits, flbits>::comb() {
     }
 
     t_tago_tag = tago_rdata.read()(TAG_BITS-1, 0);
-    if (rb_tagi.read() == t_tago_tag) {
+    if (rb_tagaddr.read() == t_tago_tag) {
         v_hit = 1;
     }
 
@@ -178,6 +215,23 @@ void TagMem<abus, ibits, lnbits, flbits>::comb() {
     tagi_we = i_wstrb.read().or_reduce();
     vb_tagi_wdata(TAG_BITS-1, 0) = i_addr.read()(abus - 1, ibits + lnbits);
     vb_tagi_wdata(TAG_WITH_FLAGS-1, TAG_BITS) = i_wflags.read();
+
+    if (snoop) {
+        v_snoop_ready = 1;
+        vb_snoop_flags = tago_snoop_rdata.read()(TAG_WITH_FLAGS-1, TAG_BITS);
+        vb_snoop_index = i_snoop_addr.read()(ibits + lnbits - 1, lnbits);
+        vb_snoop_tagaddr = i_snoop_addr.read()(abus - 1, ibits + lnbits);
+
+        if (tagi_we == 1) {
+            v_snoop_ready = 0;
+            vb_snoop_tagaddr = i_addr.read()(abus - 1, ibits + lnbits);
+        }
+
+        if (rb_snoop_tagaddr.read() != tago_snoop_rdata.read()(TAG_BITS-1, 0)) {
+            vb_snoop_flags = 0;
+        }
+    }
+
 
     if (!async_reset_ && i_nrst.read() == 0) {
         vb_tagi_wdata = 0;
@@ -191,16 +245,23 @@ void TagMem<abus, ibits, lnbits, flbits>::comb() {
     o_rdata = vb_rdata;
     o_rflags = tago_rdata.read()(TAG_WITH_FLAGS-1, TAG_BITS);
     o_hit = v_hit;
+
+    wb_snoop_index = vb_snoop_index;
+    wb_snoop_tagaddr = vb_snoop_tagaddr;
+    o_snoop_ready = v_snoop_ready;
+    o_snoop_flags = vb_snoop_flags;
 }
 
-template <int abus, int ibits, int lnbits, int flbits>
-void TagMem<abus, ibits, lnbits, flbits>::registers() {
+template <int abus, int ibits, int lnbits, int flbits, int snoop>
+void TagMem<abus, ibits, lnbits, flbits, snoop>::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
-        rb_tagi = 0;
+        rb_tagaddr = 0;
         rb_index = 0;
+        rb_snoop_tagaddr = 0;
     } else {
-        rb_tagi = tagi_wdata.read()(TAG_BITS-1, 0);
+        rb_tagaddr = tagi_wdata.read()(TAG_BITS-1, 0);
         rb_index = wb_index;
+        rb_snoop_tagaddr = wb_snoop_tagaddr;
     }
 }
 

@@ -34,6 +34,14 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     i_resp_mem_data("i_resp_mem_data"),
     i_resp_mem_load_fault("i_resp_mem_load_fault"),
     i_resp_mem_store_fault("i_resp_mem_store_fault"),
+    i_req_snoop_valid("i_req_snoop_valid"),
+    i_req_snoop_getdata("i_req_snoop_getdata"),
+    o_req_snoop_ready("o_req_snoop_ready"),
+    i_req_snoop_addr("i_req_snoop_addr"),
+    i_resp_snoop_ready("i_resp_snoop_ready"),
+    o_resp_snoop_valid("o_resp_snoop_valid"),
+    o_resp_snoop_data("o_resp_snoop_data"),
+    o_resp_snoop_flags("o_resp_snoop_flags"),
     i_ext_irq("i_ext_irq"),
     o_time("o_time"),
     o_exec_cnt("o_exec_cnt"),
@@ -143,6 +151,14 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     cache0->i_mpu_region_addr(wb_mpu_region_addr);
     cache0->i_mpu_region_mask(wb_mpu_region_mask);
     cache0->i_mpu_region_flags(wb_mpu_region_flags);
+    cache0->i_req_snoop_valid(i_req_snoop_valid);
+    cache0->i_req_snoop_getdata(i_req_snoop_getdata);
+    cache0->o_req_snoop_ready(o_req_snoop_ready);
+    cache0->i_req_snoop_addr(i_req_snoop_addr);
+    cache0->i_resp_snoop_ready(i_resp_snoop_ready);
+    cache0->o_resp_snoop_valid(o_resp_snoop_valid);
+    cache0->o_resp_snoop_data(o_resp_snoop_data);
+    cache0->o_resp_snoop_flags(o_resp_snoop_flags);
     cache0->i_flush_address(wb_flush_address);
     cache0->i_flush_valid(w_flush_valid);
     cache0->i_data_flush_address(wb_data_flush_address);

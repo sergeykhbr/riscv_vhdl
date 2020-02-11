@@ -64,6 +64,14 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     i_mpu_region_addr("i_mpu_region_addr"),
     i_mpu_region_mask("i_mpu_region_mask"),
     i_mpu_region_flags("i_mpu_region_flags"),
+    i_req_snoop_valid("i_req_snoop_valid"),
+    i_req_snoop_getdata("i_req_snoop_getdata"),
+    o_req_snoop_ready("o_req_snoop_ready"),
+    i_req_snoop_addr("i_req_snoop_addr"),
+    i_resp_snoop_ready("i_resp_snoop_ready"),
+    o_resp_snoop_valid("o_resp_snoop_valid"),
+    o_resp_snoop_data("o_resp_snoop_data"),
+    o_resp_snoop_flags("o_resp_snoop_flags"),
     i_flush_address("i_flush_address"),
     i_flush_valid("i_flush_valid"),
     i_data_flush_address("i_data_flush_address"),
@@ -158,6 +166,14 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     d0->i_mem_store_fault(i_resp_mem_store_fault);
     d0->o_mpu_addr(d.mpu_addr);
     d0->i_mpu_flags(wb_mpu_dflags);
+    d0->i_req_snoop_valid(i_req_snoop_valid);
+    d0->i_req_snoop_getdata(i_req_snoop_getdata);
+    d0->o_req_snoop_ready(o_req_snoop_ready);
+    d0->i_req_snoop_addr(i_req_snoop_addr);
+    d0->i_resp_snoop_ready(i_resp_snoop_ready);
+    d0->o_resp_snoop_valid(o_resp_snoop_valid);
+    d0->o_resp_snoop_data(o_resp_snoop_data);
+    d0->o_resp_snoop_flags(o_resp_snoop_flags);
     d0->i_flush_address(i_data_flush_address);
     d0->i_flush_valid(i_data_flush_valid);
     d0->o_flush_end(o_data_flush_end);

@@ -58,7 +58,8 @@ L2CacheLru::L2CacheLru(sc_module_name name_, bool async_reset)
                          CFG_L2_LOG2_NWAYS,
                          CFG_L2_LOG2_LINES_PER_WAY,
                          CFG_L2_LOG2_BYTES_PER_LINE,
-                         L2TAG_FL_TOTAL>("mem0", async_reset);
+                         L2TAG_FL_TOTAL,
+                         0>("mem0", async_reset);
     mem->i_clk(i_clk);
     mem->i_nrst(i_nrst);
     mem->i_cs(line_cs_i);
@@ -71,7 +72,9 @@ L2CacheLru::L2CacheLru(sc_module_name name_, bool async_reset)
     mem->o_rdata(line_rdata_o);
     mem->o_rflags(line_rflags_o);
     mem->o_hit(line_hit_o);
-
+    mem->i_snoop_addr(line_snoop_addr_i);
+    mem->o_snoop_ready(line_snoop_ready_o);
+    mem->o_snoop_flags(line_snoop_flags_o);
 
     SC_METHOD(comb);
     sensitive << i_nrst;

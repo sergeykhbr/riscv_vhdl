@@ -59,6 +59,15 @@ SC_MODULE(DCacheLru) {
     // Mpu interface
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mpu_addr;
     sc_in<sc_uint<CFG_MPU_FL_TOTAL>> i_mpu_flags;
+    // D$ Snoop interface
+    sc_in<bool> i_req_snoop_valid;
+    sc_in<bool> i_req_snoop_getdata;                    // 0=check availability; 1=read line
+    sc_out<bool> o_req_snoop_ready;
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> i_req_snoop_addr;
+    sc_in<bool> i_resp_snoop_ready;
+    sc_out<bool> o_resp_snoop_valid;
+    sc_out<sc_biguint<L1CACHE_LINE_BITS>> o_resp_snoop_data;
+    sc_out<sc_uint<DTAG_FL_TOTAL>> o_resp_snoop_flags;
     // Debug interface
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_flush_address;
     sc_in<bool> i_flush_valid;
@@ -100,6 +109,11 @@ SC_MODULE(DCacheLru) {
     sc_signal<sc_biguint<DCACHE_LINE_BITS>> line_rdata_o;
     sc_signal<sc_uint<DTAG_FL_TOTAL>> line_rflags_o;
     sc_signal<bool> line_hit_o;
+    // Snoop signals:
+    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> line_snoop_addr_i;
+    sc_signal<bool> line_snoop_ready_o;
+    sc_signal<sc_uint<DTAG_FL_TOTAL>> line_snoop_flags_o;
+
 
     struct RegistersType {
         sc_signal<bool> req_write;
@@ -151,11 +165,13 @@ SC_MODULE(DCacheLru) {
         iv.init = 1;
     }
 
+    static const int CFG_SNOOP_ENA = 1;
     TagMemNWay<CFG_CPU_ADDR_BITS,
                CFG_DLOG2_NWAYS,
                CFG_DLOG2_LINES_PER_WAY,
                CFG_DLOG2_BYTES_PER_LINE,
-               DTAG_FL_TOTAL> *mem;
+               DTAG_FL_TOTAL,
+               CFG_SNOOP_ENA> *mem;
 
     bool async_reset_;
 };

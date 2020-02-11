@@ -73,6 +73,15 @@ SC_MODULE(RiverAmba) {
     sc_signal<bool> resp_mem_valid_i;
     sc_signal<bool> resp_mem_load_fault_i;
     sc_signal<bool> resp_mem_store_fault_i;
+    // D$ Snoop interface
+    sc_signal<bool> req_snoop_valid_i;
+    sc_signal<bool> req_snoop_getdata_i;      // 0=check availability; 1=read line
+    sc_signal<bool> req_snoop_ready_o;
+    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_snoop_addr_i;
+    sc_signal<bool> resp_snoop_ready_i;
+    sc_signal<bool> resp_snoop_valid_o;
+    sc_signal<sc_biguint<L1CACHE_LINE_BITS>> resp_snoop_data_o;
+    sc_signal<sc_uint<DTAG_FL_TOTAL>> resp_snoop_flags_o;
 
     enum state_type {
         state_idle,
