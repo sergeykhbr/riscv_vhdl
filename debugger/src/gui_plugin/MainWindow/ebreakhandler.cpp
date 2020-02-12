@@ -29,11 +29,8 @@ EBreakHandler::EBreakHandler(IGui *gui) {
     reqReadBr_.make_string("br");
     reqReadNpc_.make_string("reg npc");
 
-    DsuMapType *dsu = DSUBASE();
-    dsu_sw_br_ =
-        reinterpret_cast<uint64_t>(&dsu->udbg.v.br_address_fetch);
-    dsu_hw_br_ =
-        reinterpret_cast<uint64_t>(&dsu->udbg.v.remove_breakpoint);
+    dsu_sw_br_ = DSUREGBASE(udbg.v.br_address_fetch);
+    dsu_hw_br_ = DSUREGBASE(udbg.v.remove_breakpoint);
 }
 
 EBreakHandler::~EBreakHandler() {
