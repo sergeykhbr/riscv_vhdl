@@ -154,7 +154,13 @@ void DpiClient::busyLoop() {
                           (struct sockaddr *)&sockaddr_ipv4_,
                           sizeof(struct sockaddr));
             if (err < 0) {
-                RISCV_error("connection failed", 0);
+                RISCV_error("error connect(): %s", strerror(
+#if defined(_WIN32) || defined(__CYGWIN__)
+                GetLastError()
+#else
+                errno
+#endif
+                ));
                 RISCV_sleep_ms(2000);
                 continue;
             }
@@ -260,6 +266,7 @@ int DpiClient::createServerSocket() {
     struct timeval tv;
     addr_size_t addr_sz;
     int nodelay = 1;
+    int err;
 
     memset(&sockaddr_ipv4_, 0, sizeof(struct sockaddr_in));
     sockaddr_ipv4_.sin_family = AF_INET;
@@ -290,9 +297,19 @@ int DpiClient::createServerSocket() {
                     reinterpret_cast<char *>(&nodelay), sizeof(nodelay));
 
     addr_sz = sizeof(sockaddr_ipv4_);
-    getsockname(hsock_,
+    err = getsockname(hsock_,
                 reinterpret_cast<struct sockaddr *>(&sockaddr_ipv4_),
                 &addr_sz);
+    if (err < 0) {
+        RISCV_error("error getsockname(): %s", strerror(
+#if defined(_WIN32) || defined(__CYGWIN__)
+        GetLastError()
+#else
+        errno
+#endif
+        ));
+    }
+
 
     RISCV_info("IPv4 address %s:%d . . . created",
                 inet_ntoa(sockaddr_ipv4_.sin_addr),
