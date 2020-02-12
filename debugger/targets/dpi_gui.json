@@ -3,7 +3,7 @@
     'SimEnable':false,
     'GUI':true,
     'InitCommands':[
-                    'loadelf ./../../../examples/zephyr/gcc711/zephyr.elf nocode',
+                    'loadelf ./../../../examples/dhrystone21/makefiles/bin/dhrystone21.elf nocode',
                     'loadelf ./../../../examples/boot/linuxbuild/bin/bootimage nocode',
                    ],
     'Description':'This configuration instantiates functional RISC-V model'

@@ -6,6 +6,7 @@
 include util.mak
 
 ## Enable CentOS 6 pathes to build Qt plugin
+# source /opt/rh/devtools-6/enable
 CENTOS6=0
 
 TOP_DIR=../

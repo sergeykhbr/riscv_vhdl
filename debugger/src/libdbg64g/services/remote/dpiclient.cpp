@@ -154,13 +154,11 @@ void DpiClient::busyLoop() {
                           (struct sockaddr *)&sockaddr_ipv4_,
                           sizeof(struct sockaddr));
             if (err < 0) {
-                RISCV_error("error connect(): %s", strerror(
 #if defined(_WIN32) || defined(__CYGWIN__)
-                GetLastError()
+                RISCV_error("error connect(): %s", strerror(GetLastError()));
 #else
-                errno
+                RISCV_error("error connect(): %s", strerror(errno));
 #endif
-                ));
                 RISCV_sleep_ms(2000);
                 continue;
             }
@@ -264,16 +262,9 @@ bool DpiClient::syncRequest(const char *buf, unsigned size) {
 
 int DpiClient::createServerSocket() {
     struct timeval tv;
-    addr_size_t addr_sz;
     int nodelay = 1;
-    int err;
 
-    memset(&sockaddr_ipv4_, 0, sizeof(struct sockaddr_in));
-    sockaddr_ipv4_.sin_family = AF_INET;
-    sockaddr_ipv4_.sin_addr.s_addr = inet_addr(hostIP_.to_string());
-    sockaddr_ipv4_.sin_port = htons(static_cast<uint16_t>(hostPort_.to_int()));
-
-    hsock_ = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    hsock_ = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (hsock_ < 0) {
         hsock_ = 0;
         RISCV_error("%s", "Error: socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)");
@@ -296,25 +287,25 @@ int DpiClient::createServerSocket() {
     setsockopt(hsock_, SOL_SOCKET, TCP_NODELAY,
                     reinterpret_cast<char *>(&nodelay), sizeof(nodelay));
 
-    addr_sz = sizeof(sockaddr_ipv4_);
-    err = getsockname(hsock_,
-                reinterpret_cast<struct sockaddr *>(&sockaddr_ipv4_),
-                &addr_sz);
-    if (err < 0) {
-        RISCV_error("error getsockname(): %s", strerror(
+
+    /* gethostbyname: get the server's DNS entry */
+    struct hostent *server = gethostbyname(hostIP_.to_string());
+    if (server == NULL) {
 #if defined(_WIN32) || defined(__CYGWIN__)
-        GetLastError()
+        RISCV_error("error gethostbyname(): %s", strerror(GetLastError()));
 #else
-        errno
+        RISCV_error("error gethostbyname(): %s", strerror(errno));
 #endif
-        ));
     }
 
+    memset(&sockaddr_ipv4_, 0, sizeof(struct sockaddr_in));
+    sockaddr_ipv4_.sin_family = AF_INET;
+    inet_pton(AF_INET, hostIP_.to_string(), &sockaddr_ipv4_.sin_addr);
+    sockaddr_ipv4_.sin_port = htons(static_cast<uint16_t>(hostPort_.to_int()));
 
     RISCV_info("IPv4 address %s:%d . . . created",
                 inet_ntoa(sockaddr_ipv4_.sin_addr),
                 ntohs(sockaddr_ipv4_.sin_port));
-
     return 0;
 }
 
