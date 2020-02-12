@@ -1,0 +1,98 @@
+{
+  'GlobalSettings':{
+    'SimEnable':false,
+    'GUI':true,
+    'InitCommands':[
+                    'loadelf ./../../../examples/zephyr/gcc711/zephyr.elf nocode',
+                    'loadelf ./../../../examples/boot/linuxbuild/bin/bootimage nocode',
+                   ],
+    'Description':'This configuration instantiates functional RISC-V model'
+  },
+  'Services':[
+    {'Class':'GuiPluginClass','Instances':[
+                {'Name':'gui0','Attr':[
+                ['LogLevel',4],
+                ['WidgetsConfig',{
+                  'OpenViews':['RegsQMdiSubWindow','AsmQMdiSubWindow'],
+                  'Serial':'port1',
+                  'AutoComplete':'autocmd0',
+                  'StepToSecHz':40000000.0,
+                  'PollingMs':250,
+                  'EventsLoopMs':10,
+                  'RegsViewWidget':{
+                     'RegisterSet':[
+                         {'RegList':[['ra', 's0',  'a0'],
+                                     ['sp', 's1',  'a1'],
+                                     ['gp', 's2',  'a2'],
+                                     ['tp', 's3',  'a3'],
+                                     [''  , 's4',  'a4'],
+                                     ['t0', 's5',  'a5'],
+                                     ['t1', 's6',  'a6'],
+                                     ['t2', 's7',  'a7'],
+                                     ['t3', 's8',  ''],
+                                     ['t4', 's9',  ''],
+                                     ['t5', 's10', 'pc'],
+                                     ['t6', 's11', 'npc']],
+                          'RegWidthBytes':8},
+                         {'RegList':[],
+                          'RegWidthBytes':8}],
+                     'CpuContext':[
+                         {'CpuIndex':0,
+                          'RegisterSetIndex':0,
+                          'Description':'River 64-bits integer bank'},
+                         {'CpuIndex':1,
+                          'RegisterSetIndex':0,
+                          'Description':'River 64-bits integer bank'}]
+                     },
+                }],
+                ['CmdExecutor','cmdexec0']
+                ]}]},
+    {'Class':'DpiClientClass','Instances':[
+          {'Name':'dpitap','Attr':[
+                ['LogLevel',4],
+                ['Enable',true],
+                ['CmdExecutor','cmdexec0'],
+                ['Timeout',500],
+                ['HostIP','127.0.0.1'],
+                ['HostPort',8689]
+          ]}]},
+    {'Class':'CpuStubRiscVFpgaClass','Instances':[
+          {'Name':'cpustub0','Attr':[
+                ['CmdExecutor','cmdexec0'],
+                ['Tap','dpitap']
+                ]}]},
+    {'Class':'ElfReaderServiceClass','Instances':[
+          {'Name':'loader0','Attr':[
+                ['LogLevel',4],
+                ['SourceProc','src0']]}]},
+    {'Class':'ConsoleServiceClass','Instances':[
+          {'Name':'console0','Attr':[
+                ['LogLevel',4],
+                ['Enable',true],
+                ['StepQueue','core0'],
+                ['AutoComplete','autocmd0'],
+                ['CmdExecutor','cmdexec0'],
+                ['DefaultLogFile','default.log'],
+                ['Signals','gpio0'],
+                ['InputPort','port1']]}]},
+    {'Class':'AutoCompleterClass','Instances':[
+          {'Name':'autocmd0','Attr':[
+                ['LogLevel',4],
+                ['HistorySize',64],
+                ['History',[
+                     'csr MCPUID',
+                     'csr MTIME',
+                     'read 0xfffff004 128',
+                     'loadelf helloworld'
+                     ]]
+                ]}]},
+    {'Class':'CmdExecutorClass','Instances':[
+          {'Name':'cmdexec0','Attr':[
+                ['LogLevel',4],
+                ['Tap','dpitap']
+                ]}]},
+    {'Class':'RiscvSourceServiceClass','Instances':[
+          {'Name':'src0','Attr':[
+                ['LogLevel',4]]}]},
+  ]
+}

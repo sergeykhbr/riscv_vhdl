@@ -44,8 +44,7 @@ void CmdIsRunning::exec(AttributeType *args, AttributeType *res) {
 
     Reg64Type t1;
     GenericCpuControlType ctrl;
-    DsuMapType *pdsu = DSUBASE();
-    uint64_t addr = reinterpret_cast<uint64_t>(&pdsu->udbg.v.control);
+    uint64_t addr = DSUREGBASE(udbg.v.control);
     tap_->read(addr, 8, t1.buf);
     ctrl.val = t1.val;
     if (ctrl.bits.halt) {

@@ -49,9 +49,7 @@ void CmdReset::exec(AttributeType *args, AttributeType *res) {
     res->make_nil();
 
     Reg64Type rst;
-    DsuMapType *dsu = DSUBASE();
-    uint64_t sw_rst_addr =
-           reinterpret_cast<uint64_t>(&dsu->ulocal.v.soft_reset);
+    uint64_t sw_rst_addr = DSUREGBASE(ulocal.v.soft_reset);
 
     if (args->size() == 2) {
         rst.val = (*args)[1].to_uint64();

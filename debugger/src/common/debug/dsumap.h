@@ -115,10 +115,11 @@ struct DsuMapType {
 };
 
 
-#define DSUREG(x) (reinterpret_cast<uint64_t>(& \
+#define DSUREG(x) (0xFFFFFFFFull & reinterpret_cast<uint64_t>(& \
         (reinterpret_cast<DsuMapType*>(0))->x))
-
-#define DSUBASE() reinterpret_cast<DsuMapType *>(DSU_OFFSET)
+#define DSUREGBASE(x) (DSU_OFFSET + \
+        (0xFFFFFFFFull & reinterpret_cast<uint64_t>(& \
+        (reinterpret_cast<DsuMapType*>(0))->x)))
 
 struct ECpuRegMapping {
     const char name[16];

@@ -241,6 +241,9 @@ void DpiClient::writeTx(const char *buf, unsigned size) {
 }
 
 bool DpiClient::syncRequest(const char *buf, unsigned size) {
+    if (!connected_) {
+        return false;
+    }
     RISCV_event_clear(&event_cmd_);
     writeTx(buf, size);
     processTx();
@@ -353,11 +356,187 @@ void DpiClient::axi4_read(uint64_t addr, int bytes, uint64_t *data) {
     *data = rdata[0u].to_uint64();
 }
 
+void DpiClient::msgRead(uint64_t addr, int bytes) {
+    tmpsz_ = RISCV_sprintf(tmpbuf_, sizeof(tmpbuf_),
+        "["
+           "'%s',"
+           "'AXI4',"
+           "{"
+               "'we':0,"
+               "'addr':0x%" RV_PRI64 "x,"
+               "'bytes':%d"
+           "}"
+        "]",
+        getObjName(), addr, bytes);
+}
+
+void DpiClient::msgWrite(uint64_t addr, int bytes, uint8_t *buf) {
+    uint64_t off = addr & 0x7;
+    Reg64Type t;
+    if (off != 0 && (off + bytes) > 8) {
+        RISCV_error("Wrong write request %016" RV_PRI64 "x", addr);
+        return;
+    }
+    if (bytes < 8) {
+        t.val = 0;
+        memcpy(t.buf, buf, bytes);
+
+        tmpsz_ = RISCV_sprintf(tmpbuf_, sizeof(tmpbuf_),
+            "["
+               "'%s',"
+               "'AXI4',"
+               "{"
+                   "'we':1,"
+                   "'addr':0x%" RV_PRI64 "x,"
+                   "'bytes':%d,"
+                   "'wdata':[0x%" RV_PRI64 "x]"
+                "}"
+            "]",
+            getObjName(), addr, bytes, t.val);
+    } else {
+        tmpsz_ = RISCV_sprintf(tmpbuf_, sizeof(tmpbuf_),
+            "["
+               "'%s',"
+               "'AXI4',"
+               "{"
+                   "'we':1,"
+                   "'addr':0x%" RV_PRI64 "x,"
+                   "'bytes':%d,"
+                   "'wdata':[",
+            getObjName(), addr, bytes);
+
+        for (int i = 0; i < bytes/8; i++) {
+            if (i != 0) {
+                tmpbuf_[tmpsz_++] = ',';
+            }
+            memcpy(t.buf, &buf[8*i], 8);
+            tmpsz_ += RISCV_sprintf(&tmpbuf_[tmpsz_], sizeof(tmpbuf_) - tmpsz_,
+                    "0x%" RV_PRI64 "x", t.val);
+        }
+
+        tmpsz_ += RISCV_sprintf(&tmpbuf_[tmpsz_], sizeof(tmpbuf_) - tmpsz_,
+            "%s",
+                   "]"
+                "}"
+            "]");
+    }
+}
+
 int DpiClient::read(uint64_t addr, int bytes, uint8_t *obuf) {
+    uint8_t *pout = obuf;
+    int bytes_total = bytes;
+    Reg64Type t;
+
+    // Read unaligned first qword
+    if ((addr & 0x7) != 0 || bytes < 8) {
+        int toffset;
+        int tbytes;
+        toffset = addr & 0x7;
+        tbytes = 8 - toffset;
+        if (tbytes > bytes_total) {
+            tbytes = bytes_total;
+        }
+        msgRead(addr & ~0x7ull, 8);                 // 8-bytes alignment
+        if (!syncRequest(tmpbuf_, tmpsz_ + 1)) {
+            return bytes;
+        }
+        AttributeType &d = syncResponse_[DpiResp_Data];
+        AttributeType &rdata = d["rdata"];
+        t.val = rdata[0u].to_uint64();
+        memcpy(pout, &t.buf[toffset], tbytes);
+
+        addr += tbytes;
+        pout += tbytes;
+        bytes_total -= tbytes;
+    }
+
+    // Request aligned/burst transaction:
+    int burstbytes = bytes_total & ~0x7;
+    int bulksz;
+    while (burstbytes) {
+        bulksz = burstbytes;
+        if (bulksz > BURST_LEN_MAX) {
+            bulksz = BURST_LEN_MAX;
+        }
+        msgRead(addr, bulksz);                 // 8-bytes alignment
+        if (!syncRequest(tmpbuf_, tmpsz_ + 1)) {
+            return bytes;
+        }
+        AttributeType &d = syncResponse_[DpiResp_Data];
+        AttributeType &rdata = d["rdata"];
+        for (unsigned i = 0; i < rdata.size(); i++) {
+            t.val = rdata[i].to_uint64();
+            memcpy(pout, t.buf, 8);
+            pout += 8;
+        }
+
+        addr += bulksz;
+        bytes_total -= bulksz;
+        burstbytes -= bulksz;
+    }
+
+    // Ending unaligned bytes
+    if (bytes_total) {
+        msgRead(addr, 8);                 // 8-bytes alignment
+        if (!syncRequest(tmpbuf_, tmpsz_ + 1)) {
+            return bytes;
+        }
+        AttributeType &d = syncResponse_[DpiResp_Data];
+        AttributeType &rdata = d["rdata"];
+        Reg64Type t;
+        t.val = rdata[0u].to_uint64();
+        memcpy(pout, t.buf, bytes_total);
+
+        addr += bytes_total;
+        pout += bytes_total;
+        bytes_total = 0;
+    }
     return bytes;
 }
 
 int DpiClient::write(uint64_t addr, int bytes, uint8_t *ibuf) {
+    uint8_t *pin = ibuf;
+    int bytes_total = bytes;
+
+    // Read unaligned first qword
+    if ((addr & 0x7) != 0 || bytes < 8) {
+        int toffset;
+        int tbytes;
+        toffset = addr & 0x7;
+        tbytes = 8 - toffset;
+        if (tbytes > bytes_total) {
+            tbytes = bytes_total;
+        }
+        msgWrite(addr, tbytes, pin);
+        syncRequest(tmpbuf_, tmpsz_ + 1);
+
+        addr += tbytes;
+        pin += tbytes;
+        bytes_total -= tbytes;
+    }
+
+    // Request aligned/burst transaction:
+    int burstbytes = bytes_total & ~0x7;
+    int bulksz;
+    while (burstbytes) {
+        bulksz = burstbytes;
+        if (bulksz > BURST_LEN_MAX) {
+            bulksz = BURST_LEN_MAX;
+        }
+        msgWrite(addr, bulksz, pin);
+        syncRequest(tmpbuf_, tmpsz_ + 1);
+
+        pin += bulksz;
+        addr += bulksz;
+        bytes_total -= bulksz;
+        burstbytes -= bulksz;
+    }
+
+    // Ending unaligned bytes
+    if (bytes_total) {
+        msgWrite(addr, bytes_total, pin);
+        syncRequest(tmpbuf_, tmpsz_ + 1);
+    }
     return bytes;
 }
 

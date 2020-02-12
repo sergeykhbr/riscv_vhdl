@@ -75,9 +75,8 @@ void CmdLoadElf::exec(AttributeType *args, AttributeType *res) {
         return;
     }
 
-    DsuMapType *dsu = DSUBASE();
     uint64_t soft_reset = 1;
-    uint64_t addr = reinterpret_cast<uint64_t>(&dsu->ulocal.v.soft_reset);
+    uint64_t addr = DSUREGBASE(ulocal.v.soft_reset);
     tap_->write(addr, 8, reinterpret_cast<uint8_t *>(&soft_reset));
 
     uint64_t sec_addr;

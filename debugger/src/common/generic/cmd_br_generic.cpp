@@ -82,8 +82,6 @@ void CmdBrGeneric::exec(AttributeType *args, AttributeType *res) {
         flags |= BreakFlag_HW;
     }
 
-    DsuMapType *pdsu = DSUBASE();
-
     Reg64Type braddr;
     Reg64Type brinstr;
     uint32_t brlen = 4;
@@ -106,16 +104,14 @@ void CmdBrGeneric::exec(AttributeType *args, AttributeType *res) {
 
         isrc_->registerBreakpoint(braddr.val, flags, brinstr.val);
         if (isHardware(flags)) {
-            uint64_t dsuaddr =
-                reinterpret_cast<uint64_t>(&pdsu->udbg.v.add_breakpoint);
+            uint64_t dsuaddr = DSUREGBASE(udbg.v.add_breakpoint);
             tap_->write(dsuaddr, 8, braddr.buf);
         } else {
             getSwBreakpointInstr(&brinstr, &brlen);
             tap_->write(braddr.val, brlen, brinstr.buf);
 
             // flush address from ICache
-            uint64_t dsuaddr =
-                reinterpret_cast<uint64_t>(&pdsu->udbg.v.br_flush_addr);
+            uint64_t dsuaddr = DSUREGBASE(udbg.v.br_flush_addr);
             tap_->write(dsuaddr, 8, braddr.buf);
         }
         return;
@@ -124,8 +120,7 @@ void CmdBrGeneric::exec(AttributeType *args, AttributeType *res) {
     if ((*args)[1].is_equal("rm")) {
         isrc_->unregisterBreakpoint(braddr.val, &flags, &brinstr.val);
         if (isHardware(flags)) {
-            uint64_t dsuaddr = 
-                reinterpret_cast<uint64_t>(&pdsu->udbg.v.remove_breakpoint);
+            uint64_t dsuaddr = DSUREGBASE(udbg.v.remove_breakpoint);
             tap_->write(dsuaddr, 8, braddr.buf);
         } else {
             // get restoring instruction length
@@ -134,8 +129,7 @@ void CmdBrGeneric::exec(AttributeType *args, AttributeType *res) {
             tap_->write(braddr.val, brlen, brinstr.buf);
 
             // flush address from ICache
-            uint64_t dsuaddr =
-                reinterpret_cast<uint64_t>(&pdsu->udbg.v.br_flush_addr);
+            uint64_t dsuaddr = DSUREGBASE(udbg.v.br_flush_addr);
             tap_->write(dsuaddr, 8, braddr.buf);
         }
     }

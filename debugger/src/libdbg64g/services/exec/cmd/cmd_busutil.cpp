@@ -59,7 +59,6 @@ int CmdBusUtil::isValid(AttributeType *args) {
 }
 
 void CmdBusUtil::exec(AttributeType *args, AttributeType *res) {
-    DsuMapType *dsu = DSUBASE();
     uint64_t addr;
     Reg64Type rd;
     res->make_nil();
@@ -80,14 +79,14 @@ void CmdBusUtil::exec(AttributeType *args, AttributeType *res) {
         Reg64Type r_cnt;
     } mst_stat;
     Reg64Type cnt_total;
-    addr = reinterpret_cast<uint64_t>(&dsu->udbg.v.clock_cnt);
+    addr = DSUREGBASE(udbg.v.clock_cnt);
     tap_->read(addr, 8, cnt_total.buf);
     double d_cnt_total = static_cast<double>(cnt_total.val - clock_cnt_z_);
     if (d_cnt_total == 0) {
         return;
     }
 
-    addr = reinterpret_cast<uint64_t>(dsu->ulocal.v.bus_util);
+    addr = DSUREGBASE(ulocal.v.bus_util);
     for (unsigned i = 0; i < mst_total_; i++) {
         AttributeType &mst = (*res)[i];
         if (!mst.is_list() || mst.size() != 2) {

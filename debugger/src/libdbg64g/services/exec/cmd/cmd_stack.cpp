@@ -50,12 +50,11 @@ void CmdStack::exec(AttributeType *args, AttributeType *res) {
     res->make_list(0);
 
     Reg64Type t1;
-    DsuMapType *pdsu = DSUBASE();
-    uint64_t addr = reinterpret_cast<uint64_t>(&pdsu->ureg.v.stack_trace_cnt);
+    uint64_t addr = DSUREGBASE(ureg.v.stack_trace_cnt);
     t1.val = 0;
     tap_->read(addr, 8, t1.buf);
 
-    addr = reinterpret_cast<uint64_t>(&pdsu->ureg.v.stack_trace_buf[0]);
+    addr = DSUREGBASE(ureg.v.stack_trace_buf[0]);
     unsigned trace_sz = t1.buf32[0];
     if (args->size() == 2 && args[1].to_uint64() < trace_sz) {
         addr += 8 * (trace_sz - args[1].to_uint32());

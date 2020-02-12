@@ -49,8 +49,7 @@ void CmdStatus::exec(AttributeType *args, AttributeType *res) {
     res->make_nil();
 
     Reg64Type t1;
-    DsuMapType *pdsu = DSUBASE();
-    uint64_t addr = reinterpret_cast<uint64_t>(&pdsu->udbg.v.control);
+    uint64_t addr = DSUREGBASE(udbg.v.control);
     if (tap_->read(addr, 8, t1.buf) == TAP_ERROR) {
         return;
     }

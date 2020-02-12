@@ -84,9 +84,8 @@ void CmdLoadH86::exec(AttributeType *args, AttributeType *res) {
         binFileBuf = new uint8_t[binFileSz];
     }
 
-    DsuMapType *dsu = DSUBASE();
     uint64_t soft_reset = 1;
-    uint64_t addr = reinterpret_cast<uint64_t>(&dsu->ulocal.v.soft_reset);
+    uint64_t addr = DSUREGBASE(ulocal.v.soft_reset);
     if (binFileBuf == 0) {
         tap_->write(addr, 8, reinterpret_cast<uint8_t *>(&soft_reset));
     }

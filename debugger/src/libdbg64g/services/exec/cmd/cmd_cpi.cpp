@@ -65,8 +65,7 @@ void CmdCpi::exec(AttributeType *args, AttributeType *res) {
         CpiRegsType regs;
         uint8_t buf[sizeof(CpiRegsType)];
     } t1;
-    DsuMapType *dsu = DSUBASE();
-    uint64_t addr = reinterpret_cast<uint64_t>(&dsu->udbg.v.clock_cnt);
+    uint64_t addr = DSUREGBASE(udbg.v.clock_cnt);
     uint64_t d1, d2;
     tap_->read(addr, 16, t1.buf);
 

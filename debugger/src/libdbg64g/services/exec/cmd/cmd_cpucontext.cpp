@@ -47,8 +47,7 @@ void CmdCpuContext::exec(AttributeType *args, AttributeType *res) {
     res->attr_free();
     res->make_nil();
 
-    DsuMapType *pdsu = DSUBASE();
-    uint64_t addr = reinterpret_cast<uint64_t>(&pdsu->ulocal.v.cpu_context);
+    uint64_t addr = DSUREGBASE(ulocal.v.cpu_context);
     Reg64Type t1;
 
     if (args->size() == 1) {

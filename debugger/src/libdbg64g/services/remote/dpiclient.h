@@ -78,7 +78,12 @@ class DpiClient : public IService,
     void writeTx(const char *buf, unsigned size);
     bool syncRequest(const char *buf, unsigned size);
 
+    void msgRead(uint64_t addr, int bytes);
+    void msgWrite(uint64_t addr, int bytes, uint8_t *buf);
+
  private:
+    static const int BURST_LEN_MAX = 4*8;    // hardcoded in libdpiwrapper
+
     AttributeType isEnable_;
     AttributeType cmdexec_;
     AttributeType timeout_;
@@ -104,6 +109,10 @@ class DpiClient : public IService,
     bool connected_;
     double hartbeatTime_;
     uint64_t hartbeatClkcnt_;
+
+    char tmpbuf_[1024];
+    int tmpsz_;
+
 };
 
 DECLARE_CLASS(DpiClient)
