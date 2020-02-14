@@ -253,6 +253,7 @@ void TagMemNWay<abus, waybits, ibits, lnbits, flbits, snoop>::comb() {
             way_i[i].wstrb = 0;
         }
         way_i[i].wflags = i_wflags.read();
+        way_i[i].snoop_addr = i_snoop_addr.read();
     }
 
     lrui_flush = i_flush.read();

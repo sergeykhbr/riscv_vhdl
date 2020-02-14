@@ -149,7 +149,6 @@ void RiverAmba::comb() {
         if (req_mem_valid_o.read() == 1) {
             v.req_path = req_mem_path_o.read();
             v.req_addr = req_mem_addr_o;
-            v.req_cached = req_mem_cached_o;
             if (req_mem_cached_o.read() == 1) {
                 v.req_size = 0x5;   // 32 Bytes
             } else if (req_mem_path_o.read() == 1) {
@@ -165,10 +164,20 @@ void RiverAmba::comb() {
                 v.state = state_ar;
                 v.req_wdata = 0;
                 v.req_wstrb = 0;
+                if (req_mem_cached_o.read() == 1) {
+                    v.req_cached = ARCACHE_WRBACK_READ_ALLOCATE;
+                } else {
+                    v.req_cached = ARCACHE_DEVICE_NON_BUFFERABLE;
+                }
             } else {
                 v.state = state_aw;
                 v.req_wdata = req_mem_data_o;
                 v.req_wstrb = req_mem_strob_o;
+                if (req_mem_cached_o.read() == 1) {
+                    v.req_cached = AWCACHE_WRBACK_WRITE_ALLOCATE;
+                } else {
+                    v.req_cached = AWCACHE_DEVICE_NON_BUFFERABLE;
+                }
             }
         }
         break;
@@ -199,19 +208,23 @@ void RiverAmba::comb() {
         vmsto.aw_bits.cache = r.req_cached;
         vmsto.aw_bits.size = r.req_size;
         vmsto.aw_bits.prot = r.req_prot;
-        // undocumented feature (axi lite) to simplify L2-cache
+        // axi lite to simplify L2-cache
+        vmsto.w_valid = 1;
         vmsto.w_data = r.req_wdata;
         vmsto.w_strb = r.req_wstrb;
         if (i_msti.read().aw_ready == 1) {
-            v.state = state_w;
+            if (i_msti.read().w_ready == 1) {
+                v.state = state_b;
+            } else {
+                v.state = state_w;
+            }
         }
         break;
     case state_w:
+        // Shoudln't get here because of Lite interface:
         vmsto.w_valid = 1;
-        vmsto.w_last = 1;
         vmsto.w_data = r.req_wdata;
         vmsto.w_strb = r.req_wstrb;
-        // Write full line without burst transactions:
         if (i_msti.read().w_ready == 1) {
             v.state = state_b;
         }

@@ -57,12 +57,12 @@ SC_MODULE(L1SerDes) {
         State_Idle,
         State_Read,
         State_Write,
+        State_WriteAck,
     };
 
     struct RegistersType {
         sc_signal<sc_uint<3>> state;
         sc_signal<sc_uint<8>> req_len;
-        sc_signal<bool> b_wait;
         sc_signal<sc_biguint<linew>> line;
         sc_signal<sc_uint<lineb>> wstrb;
         sc_signal<sc_uint<SERDES_BURST_LEN>> rmux;
@@ -71,7 +71,6 @@ SC_MODULE(L1SerDes) {
     void R_RESET(RegistersType &iv) {
         iv.state = State_Idle;
         iv.req_len = 0;
-        iv.b_wait = 0;
         iv.line = 0;
         iv.wstrb = 0;
         iv.rmux = 0;

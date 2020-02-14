@@ -60,6 +60,11 @@ SC_MODULE(RiverAmba) {
  private:
     RiverTop *river0;
 
+    static const unsigned ARCACHE_DEVICE_NON_BUFFERABLE = 0x0;  // 4'b0000
+    static const unsigned ARCACHE_WRBACK_READ_ALLOCATE  = 0xF;  // 4'b1111
+
+    static const unsigned AWCACHE_DEVICE_NON_BUFFERABLE = 0x0;  // 4'b0000
+    static const unsigned AWCACHE_WRBACK_WRITE_ALLOCATE = 0xF;  // 4'b1111
 
     sc_signal<bool> req_mem_ready_i;
     sc_signal<bool> req_mem_path_o;
@@ -96,7 +101,7 @@ SC_MODULE(RiverAmba) {
         sc_signal<sc_uint<3>> state;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_addr;
         sc_signal<bool> req_path;
-        sc_signal<bool> req_cached;
+        sc_signal<sc_uint<3>> req_cached;
         sc_signal<sc_biguint<L1CACHE_LINE_BITS>> req_wdata;
         sc_signal<sc_uint<L1CACHE_BYTES_PER_LINE>> req_wstrb;
         sc_signal<sc_biguint<3>> req_size;

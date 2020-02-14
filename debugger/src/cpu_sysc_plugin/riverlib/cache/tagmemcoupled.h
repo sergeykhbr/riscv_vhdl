@@ -138,7 +138,7 @@ SC_MODULE(TagMemCoupled) {
         sc_signal<sc_uint<(1<<lnbits)>> wstrb;
         sc_signal<sc_uint<flbits>> wflags;
         sc_signal<bool> flush;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> snoop_addr;
+        sc_signal<sc_uint<abus>> snoop_addr;
     };
 
     struct tagmem_out_type {
@@ -147,7 +147,7 @@ SC_MODULE(TagMemCoupled) {
         sc_signal<sc_uint<flbits>> rflags;
         sc_signal<bool> hit;
         sc_signal<bool> snoop_ready;
-        sc_signal<sc_uint<ITAG_FL_TOTAL>> snoop_flags;
+        sc_signal<sc_uint<flbits>> snoop_flags;
     };
 
     sc_signal<sc_uint<abus>> r_req_addr;

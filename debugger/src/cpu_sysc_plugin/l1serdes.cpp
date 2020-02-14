@@ -32,7 +32,6 @@ L1SerDes::L1SerDes(sc_module_name name, bool async_reset) : sc_module(name),
     sensitive << i_coreo;
     sensitive << i_msti;
     sensitive << r.req_len;
-    sensitive << r.b_wait;
     sensitive << r.state;
     sensitive << r.line;
     sensitive << r.wstrb;
@@ -54,7 +53,6 @@ void L1SerDes::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         std::string pn(name());
         sc_trace(o_vcd, r.state, pn + ".r_state");
         sc_trace(o_vcd, r.req_len, pn + ".r_req_len");
-        sc_trace(o_vcd, r.b_wait, pn + ".r_b_wait");
     }
 }
 
@@ -87,7 +85,6 @@ void L1SerDes::comb() {
     bool v_r_valid;
     bool v_w_valid;
     bool v_w_last;
-    bool v_w_ready;
     sc_uint<8> vb_len;
     axi4_l1_in_type vcorei;
     axi4_master_out_type vmsto;
@@ -96,7 +93,6 @@ void L1SerDes::comb() {
     v_r_valid = 0;
     v_w_valid = 0;
     v_w_last = 0;
-    v_w_ready = 0;
     vb_len = 0;
 
     vb_r_data = i_msti.read().r_data;
@@ -105,10 +101,6 @@ void L1SerDes::comb() {
         if (r.rmux.read()[i] == 1) {
             vb_line_o((i+1)*busw-1, i*busw) = vb_r_data;
         }
-    }
-
-    if (i_coreo.read().b_ready == 1) {
-        v.b_wait = 0;
     }
 
     switch (r.state.read()) {
@@ -136,12 +128,16 @@ void L1SerDes::comb() {
             v.line = (0, r.line.read()(linew-1, busw));
             v.wstrb = (0, r.wstrb.read()(lineb-1, busb));
             if (r.req_len.read() == 0) {
-                v_w_ready = 1;
-                v.b_wait = 1;
-                v_req_mem_ready = 1;
+                v.state = State_WriteAck;
             } else {
                 v.req_len = r.req_len.read() - 1;
             }
+        }
+        break;
+    case State_WriteAck:
+        if (i_msti.read().b_valid == 1 && i_coreo.read().b_ready == 1) {
+            v_req_mem_ready = 1;
+            v.state = State_Idle;
         }
         break;
     default:;
@@ -153,7 +149,7 @@ void L1SerDes::comb() {
             v.rmux = 1;
             vb_len = size2len(i_coreo.read().ar_bits.size);
         } else if (i_coreo.read().aw_valid && i_msti.read().aw_ready) {
-            v.line = i_coreo.read().w_data;                     // Undocumented RIVER (Axi-lite feature)
+            v.line = i_coreo.read().w_data;                     // RIVER (Axi-lite feature)
             v.wstrb = i_coreo.read().w_strb;
             v.state = State_Write;
             vb_len = size2len(i_coreo.read().aw_bits.size);
@@ -204,8 +200,8 @@ void L1SerDes::comb() {
     o_msto = vmsto;     // to trigger event
 
     vcorei.aw_ready = i_msti.read().aw_ready;
-    vcorei.w_ready = v_w_ready;
-    vcorei.b_valid = i_msti.read().b_valid && r.b_wait.read();
+    vcorei.w_ready = i_msti.read().aw_ready;    // AXi-lite on CPU side
+    vcorei.b_valid = i_msti.read().b_valid;
     vcorei.b_resp = i_msti.read().b_resp;
     vcorei.b_id = (0, i_msti.read().b_id);
     vcorei.b_user = i_msti.read().b_user;

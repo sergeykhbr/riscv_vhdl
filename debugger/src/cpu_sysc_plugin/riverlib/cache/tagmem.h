@@ -150,7 +150,7 @@ SC_MODULE(TagMem) {
     sc_signal<bool> tagi_we;
 
     sc_signal<sc_uint<ibits>> wb_snoop_index;
-    sc_uint<TAG_BITS> wb_snoop_tagaddr;
+    sc_signal<sc_uint<TAG_BITS>> wb_snoop_tagaddr;
     sc_signal<sc_uint<TAG_WITH_FLAGS>> tago_snoop_rdata;
 
     sc_signal<sc_uint<TAG_BITS>> rb_tagaddr;
