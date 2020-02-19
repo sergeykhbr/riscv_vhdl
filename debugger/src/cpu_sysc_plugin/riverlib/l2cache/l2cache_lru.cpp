@@ -164,6 +164,7 @@ void L2CacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.req_wstrb, pn + ".r_req_wstrb");
         sc_trace(o_vcd, r.req_wdata, pn + ".r_req_wdata");
         sc_trace(o_vcd, line_addr_i, pn + ".linei_addr_i");
+        sc_trace(o_vcd, line_wdata_i, pn + ".line_wdata_i");
         sc_trace(o_vcd, line_wstrb_i, pn + ".linei_wstrb_i");
         sc_trace(o_vcd, line_raddr_o, pn + ".line_raddr_o");
         sc_trace(o_vcd, line_rdata_o, pn + ".line_rdata_o");
@@ -196,7 +197,8 @@ void L2CacheLru::comb() {
     sc_uint<L2_REQ_TYPE_BITS> vb_resp_status;
     bool v_flush;
     bool v_flush_end;
-    bool v_line_cs;
+    bool v_line_cs_read;
+    bool v_line_cs_write;   // 'cs' should be active when write line and there's no new request
     sc_uint<CFG_CPU_ADDR_BITS> vb_line_addr;
     sc_biguint<L2CACHE_LINE_BITS> vb_line_wdata;
     sc_uint<L2CACHE_BYTES_PER_LINE> vb_line_wstrb;
@@ -271,7 +273,8 @@ void L2CacheLru::comb() {
             r.req_wstrb.read();
     }
     
-    v_line_cs = 0;
+    v_line_cs_read = 0;
+    v_line_cs_write = 0;
     vb_line_addr = r.req_addr.read();
     vb_line_wdata = r.cache_line_i.read();
     vb_line_wstrb = 0;
@@ -289,7 +292,7 @@ void L2CacheLru::comb() {
             v_resp_valid = 1;
             if (r.req_write.read() == 1) {
                 // Modify tagged mem output with request and write back
-                v_line_cs = 1;
+                v_line_cs_write = 1;
                 v_line_wflags[TAG_FL_VALID] = 1;
                 v_line_wflags[L2TAG_FL_DIRTY] = 1;
                 v.req_write = 0;
@@ -376,7 +379,7 @@ void L2CacheLru::comb() {
             v.state = State_Idle;
         } else {
             v.state = State_SetupReadAdr;
-            v_line_cs = 1;
+            v_line_cs_write = 1;
             v_line_wflags[TAG_FL_VALID] = 1;
             vb_line_wstrb = ~0ul;  // write full line
             if (r.req_write.read() == 1) {
@@ -477,7 +480,7 @@ void L2CacheLru::comb() {
                 v.flush_cnt = r.req_flush_cnt.read();
             }
         } else {
-            v_line_cs = i_req_valid.read();
+            v_line_cs_read = i_req_valid.read();
             v_req_ready = 1;
             vb_line_addr = i_req_addr.read();
             if (i_req_valid.read() == 1) {
@@ -518,7 +521,7 @@ void L2CacheLru::comb() {
     }
 
 
-    line_cs_i = v_line_cs;
+    line_cs_i = v_line_cs_read || v_line_cs_write;
     line_addr_i = vb_line_addr;
     line_wdata_i = vb_line_wdata;
     line_wstrb_i = vb_line_wstrb;

@@ -47,8 +47,7 @@ SC_MODULE(DCacheLru) {
     // Memory interface:
     sc_in<bool> i_req_mem_ready;
     sc_out<bool> o_req_mem_valid;
-    sc_out<bool> o_req_mem_write;
-    sc_out<bool> o_req_mem_cached;
+    sc_out<sc_uint<L1_REQ_TYPE_BITS>> o_req_mem_type;
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_req_mem_addr;
     sc_out<sc_uint<DCACHE_BYTES_PER_LINE>> o_req_mem_strob;
     sc_out<sc_biguint<DCACHE_LINE_BITS>> o_req_mem_data;
@@ -96,7 +95,9 @@ SC_MODULE(DCacheLru) {
         State_SetupReadAdr,
         State_WriteBus,
         State_FlushAddr,
-        State_FlushCheck
+        State_FlushCheck,
+        State_WaitGrantMakeExclusiveL2,
+        State_WaitRespMakeExclusiveL2
     };
 
     sc_signal<bool> line_cs_i;
@@ -122,9 +123,8 @@ SC_MODULE(DCacheLru) {
         sc_signal<sc_uint<8>> req_wstrb;
         sc_signal<sc_uint<4>> state;
         sc_signal<bool> req_mem_valid;
-        sc_signal<bool> mem_write;
+        sc_signal<sc_uint<L1_REQ_TYPE_BITS>> req_mem_type;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mem_addr;
-        sc_signal<bool> cached;
         sc_signal<bool> mpu_er_store;
         sc_signal<bool> mpu_er_load;
         sc_signal<bool> load_fault;
@@ -147,9 +147,8 @@ SC_MODULE(DCacheLru) {
         iv.req_wstrb = 0;
         iv.state = State_FlushAddr;
         iv.req_mem_valid = 0;
-        iv.mem_write = 0;
+        iv.req_mem_type = 0;
         iv.mem_addr = 0;
-        iv.cached = 0;
         iv.mpu_er_store = 0;
         iv.mpu_er_load = 0;
         iv.load_fault = 0;
@@ -174,6 +173,7 @@ SC_MODULE(DCacheLru) {
                CFG_SNOOP_ENA> *mem;
 
     bool async_reset_;
+    bool coherence_ena_;
 };
 
 

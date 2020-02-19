@@ -42,8 +42,7 @@ RiverAmba::RiverAmba(sc_module_name name_, uint32_t hartid, bool async_reset,
     river0->i_req_mem_ready(req_mem_ready_i);
     river0->o_req_mem_path(req_mem_path_o);
     river0->o_req_mem_valid(req_mem_valid_o);
-    river0->o_req_mem_write(req_mem_write_o);
-    river0->o_req_mem_cached(req_mem_cached_o);
+    river0->o_req_mem_type(req_mem_type_o);
     river0->o_req_mem_addr(req_mem_addr_o);
     river0->o_req_mem_strob(req_mem_strob_o);
     river0->o_req_mem_data(req_mem_data_o);
@@ -77,8 +76,7 @@ RiverAmba::RiverAmba(sc_module_name name_, uint32_t hartid, bool async_reset,
     sensitive << i_msti;
     sensitive << req_mem_path_o;
     sensitive << req_mem_valid_o;
-    sensitive << req_mem_write_o;
-    sensitive << req_mem_cached_o;
+    sensitive << req_mem_type_o;
     sensitive << req_mem_addr_o;
     sensitive << req_mem_strob_o;
     sensitive << req_mem_data_o;
@@ -113,8 +111,7 @@ void RiverAmba::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         std::string pn(name());
         sc_trace(o_vcd, req_mem_path_o, pn + ".req_mem_path_o");
         sc_trace(o_vcd, req_mem_valid_o, pn + ".req_mem_valid_o");
-        sc_trace(o_vcd, req_mem_write_o, pn + ".req_mem_write_o");
-        sc_trace(o_vcd, req_mem_cached_o, pn + ".req_mem_cached_o");
+        sc_trace(o_vcd, req_mem_type_o, pn + ".req_mem_type_o");
         sc_trace(o_vcd, req_mem_addr_o, pn + ".req_mem_addr_o");
         sc_trace(o_vcd, req_mem_strob_o, pn + ".req_mem_strob_o");
         sc_trace(o_vcd, req_mem_data_o, pn + ".req_mem_data_o");
@@ -149,7 +146,7 @@ void RiverAmba::comb() {
         if (req_mem_valid_o.read() == 1) {
             v.req_path = req_mem_path_o.read();
             v.req_addr = req_mem_addr_o;
-            if (req_mem_cached_o.read() == 1) {
+            if (req_mem_type_o.read()[L1_REQ_TYPE_CACHED] == 1) {
                 v.req_size = 0x5;   // 32 Bytes
             } else if (req_mem_path_o.read() == 1) {
                 v.req_size = 0x4;   // 16 Bytes: Uncached Instruction
@@ -160,11 +157,11 @@ void RiverAmba::comb() {
             // [1] 0=Secure/1=Non-secure;
             // [2]  0=Data/1=Instruction
             v.req_prot = req_mem_path_o.read() << 2;
-            if (req_mem_write_o.read() == 0) {
+            if (req_mem_type_o.read()[L1_REQ_TYPE_WRITE] == 0) {
                 v.state = state_ar;
                 v.req_wdata = 0;
                 v.req_wstrb = 0;
-                if (req_mem_cached_o.read() == 1) {
+                if (req_mem_type_o.read()[L1_REQ_TYPE_CACHED] == 1) {
                     v.req_cached = ARCACHE_WRBACK_READ_ALLOCATE;
                 } else {
                     v.req_cached = ARCACHE_DEVICE_NON_BUFFERABLE;
@@ -173,7 +170,7 @@ void RiverAmba::comb() {
                 v.state = state_aw;
                 v.req_wdata = req_mem_data_o;
                 v.req_wstrb = req_mem_strob_o;
-                if (req_mem_cached_o.read() == 1) {
+                if (req_mem_type_o.read()[L1_REQ_TYPE_CACHED] == 1) {
                     v.req_cached = AWCACHE_WRBACK_WRITE_ALLOCATE;
                 } else {
                     v.req_cached = AWCACHE_DEVICE_NON_BUFFERABLE;
@@ -210,6 +207,7 @@ void RiverAmba::comb() {
         vmsto.aw_bits.prot = r.req_prot;
         // axi lite to simplify L2-cache
         vmsto.w_valid = 1;
+        vmsto.w_last = 1;
         vmsto.w_data = r.req_wdata;
         vmsto.w_strb = r.req_wstrb;
         if (i_msti.read().aw_ready == 1) {
@@ -223,6 +221,7 @@ void RiverAmba::comb() {
     case state_w:
         // Shoudln't get here because of Lite interface:
         vmsto.w_valid = 1;
+        vmsto.w_last = 1;
         vmsto.w_data = r.req_wdata;
         vmsto.w_strb = r.req_wstrb;
         if (i_msti.read().w_ready == 1) {

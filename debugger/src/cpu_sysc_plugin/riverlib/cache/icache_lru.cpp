@@ -35,8 +35,7 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset)
     i_resp_ready("i_resp_ready"),
     i_req_mem_ready("i_req_mem_ready"),
     o_req_mem_valid("o_req_mem_valid"),
-    o_req_mem_write("o_req_mem_write"),
-    o_req_mem_cached("o_req_mem_cached"),
+    o_req_mem_type("o_req_mem_type"),
     o_req_mem_addr("o_req_mem_addr"),
     o_req_mem_strob("o_req_mem_strob"),
     o_req_mem_data("o_req_mem_data"),
@@ -92,7 +91,7 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset)
     sensitive << r.state;
     sensitive << r.req_mem_valid;
     sensitive << r.mem_addr;
-    sensitive << r.cached;
+    sensitive << r.req_mem_type;
     sensitive << r.load_fault;
     sensitive << r.req_flush;
     sensitive << r.req_flush_addr;
@@ -123,8 +122,7 @@ void ICacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
         sc_trace(o_vcd, i_req_mem_ready, i_req_mem_ready.name());
         sc_trace(o_vcd, o_req_mem_valid, o_req_mem_valid.name());
-        sc_trace(o_vcd, o_req_mem_write, o_req_mem_write.name());
-        sc_trace(o_vcd, o_req_mem_cached, o_req_mem_cached.name());
+        sc_trace(o_vcd, o_req_mem_type, o_req_mem_type.name());
         sc_trace(o_vcd, o_req_mem_addr, o_req_mem_addr.name());
         sc_trace(o_vcd, o_req_mem_strob, o_req_mem_strob.name());
         sc_trace(o_vcd, o_req_mem_data, o_req_mem_data.name());
@@ -139,7 +137,7 @@ void ICacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         std::string pn(name());
         sc_trace(o_vcd, r.state, pn + ".r_state");
         sc_trace(o_vcd, r.req_addr, pn + ".r_req_addr");
-        sc_trace(o_vcd, r.cached, pn + ".r_cached");
+        sc_trace(o_vcd, r.req_mem_type, pn + ".r_req_mem_type");
         sc_trace(o_vcd, r.cache_line_i, pn + ".r_cache_line_i");
         sc_trace(o_vcd, r.executable, pn + ".r_executable");
         sc_trace(o_vcd, r.flush_cnt, pn + ".r_flush_cnt");
@@ -166,9 +164,11 @@ void ICacheLru::comb() {
     sc_uint<ITAG_FL_TOTAL> v_line_wflags;
     int sel_cached;
     int sel_uncached;
+    sc_uint<L1_REQ_TYPE_BITS> vb_req_mem_type;
 
     v = r;
 
+    vb_req_mem_type = r.req_mem_type;
     v_req_ready = 0;
     v_resp_valid = 0;
     vb_resp_data = 0;
@@ -250,11 +250,11 @@ void ICacheLru::comb() {
         }
         break;
     case State_CheckMPU:
+        vb_req_mem_type = 0x0;
         if (i_mpu_flags.read()[CFG_MPU_FL_EXEC] == 0) {
             t_cache_line_i = 0;
             v.cache_line_i = ~t_cache_line_i;
             v.state = State_CheckResp;
-            v.cached = 0;
         } else {
             v.req_mem_valid = 1;
             v.state = State_WaitGrant;
@@ -269,10 +269,9 @@ void ICacheLru::comb() {
                     v.mem_addr = r.req_addr_next.read()(CFG_CPU_ADDR_BITS-1,
                             CFG_ILOG2_BYTES_PER_LINE) << CFG_ILOG2_BYTES_PER_LINE;
                 }
-                v.cached = 1;
+                vb_req_mem_type[L1_REQ_TYPE_CACHED] = 1;
             } else {
                 v.mem_addr = r.req_addr.read()(CFG_CPU_ADDR_BITS-1, 3) << 3;
-                v.cached = 0;
             }
         }
 
@@ -298,7 +297,8 @@ void ICacheLru::comb() {
         break;
     case State_CheckResp:
         v.req_addr = r.write_addr;              // Restore req_addr after line write
-        if (r.cached.read() == 0 || r.load_fault.read() == 1) {
+        if (r.req_mem_type.read()[L1_REQ_TYPE_CACHED] == 0 ||
+            r.load_fault.read() == 1) {
             v_resp_valid = 1;
             vb_resp_data = vb_uncached_data;
             v_resp_er_load_fault = r.load_fault;
@@ -335,6 +335,7 @@ void ICacheLru::comb() {
     default:;
     }
 
+    v.req_mem_type = vb_req_mem_type;
 
     if (!async_reset_ && !i_nrst.read()) {
         R_RESET(v);
@@ -351,8 +352,7 @@ void ICacheLru::comb() {
 
     o_req_mem_valid = r.req_mem_valid.read();
     o_req_mem_addr = r.mem_addr.read();
-    o_req_mem_write = false;
-    o_req_mem_cached = r.cached.read();
+    o_req_mem_type = r.req_mem_type.read();
     o_req_mem_strob = 0;
     o_req_mem_data = 0;
 

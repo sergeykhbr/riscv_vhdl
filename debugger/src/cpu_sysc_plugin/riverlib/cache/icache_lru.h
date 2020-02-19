@@ -43,8 +43,7 @@ SC_MODULE(ICacheLru) {
     // Memory interface:
     sc_in<bool> i_req_mem_ready;
     sc_out<bool> o_req_mem_valid;
-    sc_out<bool> o_req_mem_write;
-    sc_out<bool> o_req_mem_cached;
+    sc_out<sc_uint<L1_REQ_TYPE_BITS>> o_req_mem_type;
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_req_mem_addr;
     sc_out<sc_uint<ICACHE_BYTES_PER_LINE>> o_req_mem_strob;    // unused
     sc_out<sc_biguint<ICACHE_LINE_BITS>> o_req_mem_data;
@@ -88,7 +87,7 @@ SC_MODULE(ICacheLru) {
         sc_signal<sc_uint<4>> state;
         sc_signal<bool> req_mem_valid;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mem_addr;
-        sc_signal<bool> cached;
+        sc_signal<sc_uint<L1_REQ_TYPE_BITS>> req_mem_type;
         sc_signal<bool> executable;
         sc_signal<bool> load_fault;
         sc_signal<bool> req_flush;
@@ -105,7 +104,7 @@ SC_MODULE(ICacheLru) {
         iv.state = State_Flush;
         iv.req_mem_valid = 0;
         iv.mem_addr = 0;
-        iv.cached = 0;
+        iv.req_mem_type = 0;
         iv.executable = 0;
         iv.load_fault = 0;
         iv.req_flush = 0;           // init flush request

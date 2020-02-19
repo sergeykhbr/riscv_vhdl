@@ -25,8 +25,7 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     i_req_mem_ready("i_req_mem_ready"),
     o_req_mem_path("o_req_mem_path"),
     o_req_mem_valid("o_req_mem_valid"),
-    o_req_mem_write("o_req_mem_write"),
-    o_req_mem_cached("o_req_mem_cached"),
+    o_req_mem_type("o_req_mem_type"),
     o_req_mem_addr("o_req_mem_addr"),
     o_req_mem_strob("o_req_mem_strob"),
     o_req_mem_data("o_req_mem_data"),
@@ -136,8 +135,7 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     cache0->i_req_mem_ready(i_req_mem_ready);
     cache0->o_req_mem_path(o_req_mem_path);
     cache0->o_req_mem_valid(o_req_mem_valid);
-    cache0->o_req_mem_write(o_req_mem_write);
-    cache0->o_req_mem_cached(o_req_mem_cached);
+    cache0->o_req_mem_type(o_req_mem_type);
     cache0->o_req_mem_addr(o_req_mem_addr);
     cache0->o_req_mem_strob(o_req_mem_strob);
     cache0->o_req_mem_data(o_req_mem_data);
@@ -222,7 +220,7 @@ void RiverTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
     if (o_vcd) {
         sc_trace(o_vcd, o_req_mem_valid, "o_req_mem_valid");
-        sc_trace(o_vcd, o_req_mem_write, "o_req_mem_write");
+        sc_trace(o_vcd, o_req_mem_type, "o_req_mem_type");
         sc_trace(o_vcd, o_req_mem_addr, "o_req_mem_addr");
         sc_trace(o_vcd, o_req_mem_strob, "o_req_mem_strob");
         sc_trace(o_vcd, o_req_mem_data, "o_req_mem_data");

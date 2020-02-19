@@ -75,7 +75,7 @@ static const int DCACHE_SIZE_BYTES =
 
 static const int TAG_FL_VALID       = 0;    // always 0
 static const int DTAG_FL_DIRTY      = 1;
-static const int DTAG_FL_LOAD_FAULT = 2;
+static const int DTAG_FL_SHARED     = 2;
 static const int DTAG_FL_TOTAL      = 3;
 
 
@@ -84,6 +84,11 @@ static const int DTAG_FL_TOTAL      = 3;
  */
 static const int L1CACHE_BYTES_PER_LINE   = DCACHE_BYTES_PER_LINE;
 static const int L1CACHE_LINE_BITS        = 8*DCACHE_BYTES_PER_LINE;
+
+static const int L1_REQ_TYPE_WRITE        = 1 << 0;
+static const int L1_REQ_TYPE_CACHED       = 1 << 1;
+static const int L1_REQ_TYPE_EXCLUSIVE    = 1 << 2;
+static const int L1_REQ_TYPE_BITS         = 3;
 
 /** 
  * L2 cache config (16 KB by default)
