@@ -27,18 +27,16 @@ SC_MODULE(L2CacheLru) {
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;
     sc_in<bool> i_req_valid;
-    sc_in<sc_uint<5>> i_req_src;
-    sc_in<bool> i_req_write;
-    sc_in<bool> i_req_cached;
+    sc_in<sc_uint<L2_REQ_TYPE_BITS>> i_req_type;
     sc_in<sc_uint<3>> i_req_size;
     sc_in<sc_uint<3>> i_req_prot;
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_req_addr;
     sc_in<sc_biguint<L1CACHE_LINE_BITS>> i_req_wdata;
     sc_in<sc_uint<L1CACHE_BYTES_PER_LINE>> i_req_wstrb;
     sc_out<bool> o_req_ready;
-    sc_out<sc_uint<5>> o_msg_src;
-    sc_out<sc_uint<3>> o_msg_type;
-    sc_out<sc_biguint<L2_MSG_PAYLOAD_BITS>> o_msg_payload;
+    sc_out<bool> o_resp_valid;
+    sc_out<sc_biguint<L1CACHE_LINE_BITS>> o_resp_rdata;
+    sc_out<sc_uint<2>> o_resp_status;
     // Memory interface:
     sc_in<bool> i_req_mem_ready;
     sc_out<bool> o_req_mem_valid;
@@ -101,7 +99,6 @@ SC_MODULE(L2CacheLru) {
     sc_signal<sc_uint<L2TAG_FL_TOTAL>> line_snoop_flags_o;
 
     struct RegistersType {
-        sc_signal<sc_uint<5>> req_src;
         sc_signal<bool> req_write;
         sc_signal<bool> req_cached;
         sc_signal<sc_uint<3>> req_size;
@@ -128,7 +125,6 @@ SC_MODULE(L2CacheLru) {
     } v, r;
 
     void R_RESET(RegistersType &iv) {
-        iv.req_src = 0;
         iv.req_write = 0;
         iv.req_cached = 0;
         iv.req_size = 0;

@@ -36,34 +36,12 @@ L2Top::L2Top(sc_module_name name, bool async_reset) : sc_module(name),
 
     async_reset_ = async_reset;
 
-    src_ = new L2Source("src0", async_reset);
-    src_->i_clk(i_clk);
-    src_->i_nrst(i_nrst);
-    src_->i_coreo0(i_l1o0);
-    src_->i_coreo1(i_l1o1);
-    src_->i_coreo2(i_l1o2);
-    src_->i_coreo3(i_l1o3);
-    src_->i_acpo(i_acpo);
-    src_->i_eos(w_eos);
-    src_->i_req_ready(w_req_ready);
-    src_->o_req_valid(w_req_valid);
-    src_->o_req_src(wb_req_src);
-    src_->o_req_write(w_req_write);
-    src_->o_req_cached(w_req_cached);
-    src_->o_msg_src(wb_src_msg_src);
-    src_->o_msg_type(wb_src_msg_type);
-    src_->o_req_addr(wb_req_addr);
-    src_->o_req_size(wb_req_size);
-    src_->o_req_prot(wb_req_prot);
-    src_->o_req_wdata(wb_req_wdata);
-    src_->o_req_wstrb(wb_req_wstrb);
-
     dst_ = new L2Destination("dst0", async_reset);
     dst_->i_clk(i_clk);
     dst_->i_nrst(i_nrst);
-    dst_->i_msg_type(wb_msg_type);
-    dst_->i_msg_src(wb_msg_src);    // 0=acp; 1=core0; 2=core1; 3=core2; 4=core3
-    dst_->i_msg_payload(wb_msg_payload);
+    dst_->i_resp_valid(w_cache_valid);
+    dst_->i_resp_rdata(wb_cache_rdata);
+    dst_->i_resp_status(wb_cache_status);
     dst_->i_l1o0(i_l1o0);
     dst_->o_l1i0(o_l1i0);
     dst_->i_l1o1(i_l1o1);
@@ -74,24 +52,29 @@ L2Top::L2Top(sc_module_name name, bool async_reset) : sc_module(name),
     dst_->o_l1i3(o_l1i3);
     dst_->i_acpo(i_acpo);
     dst_->o_acpi(o_acpi);
-    dst_->o_eos(w_eos);
+    dst_->i_req_ready(w_req_ready);
+    dst_->o_req_valid(w_req_valid);
+    dst_->o_req_type(wb_req_type);
+    dst_->o_req_addr(wb_req_addr);
+    dst_->o_req_size(wb_req_size);
+    dst_->o_req_prot(wb_req_prot);
+    dst_->o_req_wdata(wb_req_wdata);
+    dst_->o_req_wstrb(wb_req_wstrb);
 
     cache_ = new L2CacheLru("cache0", async_reset);
     cache_->i_clk(i_clk);
     cache_->i_nrst(i_nrst);
     cache_->i_req_valid(w_req_valid);
-    cache_->i_req_src(wb_req_src);
-    cache_->i_req_write(w_req_write);
-    cache_->i_req_cached(w_req_cached);
+    cache_->i_req_type(wb_req_type);
     cache_->i_req_size(wb_req_size);
     cache_->i_req_prot(wb_req_prot);
     cache_->i_req_addr(wb_req_addr);
     cache_->i_req_wdata(wb_req_wdata);
     cache_->i_req_wstrb(wb_req_wstrb);
     cache_->o_req_ready(w_req_ready);
-    cache_->o_msg_src(wb_cache_msg_src);
-    cache_->o_msg_type(wb_cache_msg_type);
-    cache_->o_msg_payload(wb_cache_msg_payload);
+    cache_->o_resp_valid(w_cache_valid);
+    cache_->o_resp_rdata(wb_cache_rdata);
+    cache_->o_resp_status(wb_cache_status);
     cache_->i_req_mem_ready(w_req_mem_ready);
     cache_->o_req_mem_valid(w_req_mem_valid);
     cache_->o_req_mem_write(w_req_mem_write);
@@ -137,17 +120,9 @@ L2Top::L2Top(sc_module_name name, bool async_reset) : sc_module(name),
     serdes_->i_l2o(l2o);
     serdes_->i_msti(i_msti);
     serdes_->o_msto(o_msto);
-
-    SC_METHOD(comb);
-    sensitive << wb_src_msg_src;
-    sensitive << wb_src_msg_type;
-    sensitive << wb_cache_msg_src;
-    sensitive << wb_cache_msg_type;
-    sensitive << wb_cache_msg_payload;
 }
 
 L2Top::~L2Top() {
-    delete src_;
     delete cache_;
     delete amba_;
     delete serdes_;
@@ -160,21 +135,14 @@ void L2Top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_msti, i_msti.name());
 
         std::string pn(name());
-        sc_trace(o_vcd, wb_msg_src, pn + ".wb_msg_src");
-        sc_trace(o_vcd, wb_msg_type, pn + ".wb_msg_type");
+        sc_trace(o_vcd, w_cache_valid, pn + ".w_cache_valid");
+        sc_trace(o_vcd, wb_cache_rdata, pn + ".wb_cache_rdata");
+        sc_trace(o_vcd, wb_cache_status, pn + ".wb_cache_status");
     }
-    src_->generateVCD(i_vcd, o_vcd);
     cache_->generateVCD(i_vcd, o_vcd);
     amba_->generateVCD(i_vcd, o_vcd);
     serdes_->generateVCD(i_vcd, o_vcd);
     dst_->generateVCD(i_vcd, o_vcd);
-}
-
-void L2Top::comb() {
-    // It is possible only one message per clock period
-    wb_msg_src = wb_src_msg_src.read() | wb_cache_msg_src.read();
-    wb_msg_type = wb_src_msg_type.read() | wb_cache_msg_type.read();
-    wb_msg_payload = wb_cache_msg_payload;
 }
 
 }  // namespace debugger

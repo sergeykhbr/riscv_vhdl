@@ -20,7 +20,6 @@
 #include "api_core.h"
 #include "../types_river.h"
 #include "../../ambalib/types_amba.h"
-#include "l2_src.h"
 #include "l2_dst.h"
 #include "l2cache_lru.h"
 #include "l2_amba.h"
@@ -40,12 +39,10 @@ SC_MODULE(L2Top) {
     sc_out<axi4_l1_in_type> o_l1i2;
     sc_in<axi4_l1_out_type> i_l1o3;
     sc_out<axi4_l1_in_type> o_l1i3;
-    sc_in<axi4_master_out_type> i_acpo;
-    sc_out<axi4_master_in_type> o_acpi;
+    sc_in<axi4_l1_out_type> i_acpo;
+    sc_out<axi4_l1_in_type> o_acpi;
     sc_in<axi4_master_in_type> i_msti;
     sc_out<axi4_master_out_type> o_msto;
-
-    void comb();
 
     SC_HAS_PROCESS(L2Top);
 
@@ -55,23 +52,19 @@ SC_MODULE(L2Top) {
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
+    sc_signal<bool> w_req_ready;
     sc_signal<bool> w_req_valid;
-    sc_signal<sc_uint<5>> wb_req_src;
-    sc_signal<bool> w_req_write;
-    sc_signal<bool> w_req_cached;
-    sc_signal<sc_uint<5>> wb_src_msg_src;    // 0=acp; 1=core0; 2=core1; 3=core2; 4=core3
-    sc_signal<sc_uint<3>> wb_src_msg_type;
-    sc_signal<sc_uint<5>> wb_ar_ready;
+    sc_signal<sc_uint<3>> wb_req_type;
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_req_addr;
     sc_signal<sc_uint<3>> wb_req_size;
     sc_signal<sc_uint<3>> wb_req_prot;
     sc_signal<sc_biguint<L1CACHE_LINE_BITS>> wb_req_wdata;
     sc_signal<sc_uint<L1CACHE_BYTES_PER_LINE>> wb_req_wstrb;
 
-    sc_signal<bool> w_req_ready;
-    sc_signal<sc_uint<5>> wb_cache_msg_src;
-    sc_signal<sc_uint<3>> wb_cache_msg_type;
-    sc_signal<sc_biguint<L2_MSG_PAYLOAD_BITS>> wb_cache_msg_payload;
+    sc_signal<bool> w_cache_valid;
+    sc_signal<sc_biguint<L1CACHE_LINE_BITS>> wb_cache_rdata;
+    sc_signal<sc_uint<2>> wb_cache_status;
+
     // Memory interface:
     sc_signal<bool> w_req_mem_ready;
     sc_signal<bool> w_req_mem_valid;
@@ -95,12 +88,6 @@ SC_MODULE(L2Top) {
     sc_signal<axi4_l2_in_type> l2i;
     sc_signal<axi4_l2_out_type> l2o;
 
-    sc_signal<sc_uint<5>> wb_msg_src;    // 0=acp; 1=core0; 2=core1; 3=core2; 4=core3
-    sc_signal<sc_uint<3>> wb_msg_type;
-    sc_signal<sc_biguint<L2_MSG_PAYLOAD_BITS>> wb_msg_payload;
-    sc_signal<bool> w_eos;
-
-    L2Source *src_;
     L2CacheLru *cache_;
     L2Amba *amba_;
     L2SerDes *serdes_;

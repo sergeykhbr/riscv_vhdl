@@ -106,17 +106,13 @@ static const int L2TAG_FL_SHARED     = 2;
 static const int L2TAG_FL_LOAD_FAULT = 3;
 static const int L2TAG_FL_TOTAL      = 4;
 
-static const int L2_MSG_NONE        = 0;
-static const int L2_MSG_AR_ACCEPT   = 1;
-static const int L2_MSG_AW_ACCEPT   = 2;
-static const int L2_MSG_R_DONE      = 3;
-static const int L2_MSG_W_DONE      = 4;
-static const int L2_MSG_B_DONE      = 5;
-static const int L2_MSG_WB_DONE     = 6;            // W & B without ack
-
-const int L2_MSG_PAYLOAD_BITS = L1CACHE_LINE_BITS   // r_data
-                              + 2;                  // r_resp
-
+enum EReqTypeL2 {
+    L2_ReqUncachedRead,
+    L2_ReqUncachedWrite,
+    L2_ReqCachedRead,
+    L2_ReqCachedWrite,
+};
+static const int L2_REQ_TYPE_BITS = 3;
 
 /** MPU config */
 static const int CFG_MPU_TBL_WIDTH   = 2;    // [1:0]  log2(MPU_TBL_SIZE)

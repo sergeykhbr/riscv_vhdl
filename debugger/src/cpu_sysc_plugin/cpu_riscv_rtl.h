@@ -130,8 +130,8 @@ class CpuRiscV_RTL : public IService,
     sc_signal<axi4_l1_out_type> coreo2;
     sc_signal<axi4_l1_in_type> corei3;
     sc_signal<axi4_l1_out_type> coreo3;
-    sc_signal<axi4_master_out_type> acpo;
-    sc_signal<axi4_master_in_type> acpi;
+    sc_signal<axi4_l1_in_type> acpi;
+    sc_signal<axi4_l1_out_type> acpo;
 
     /** Interrupt line from external interrupts controller. */
     sc_signal<bool> w_interrupt;
