@@ -85,6 +85,45 @@ SC_MODULE(DCacheLru) {
 
  private:
 
+    sc_uint<L1_REQ_TYPE_BITS> ReadNoSnoop() {
+        sc_uint<L1_REQ_TYPE_BITS> ret = 0x0;
+        return ret;
+    }
+
+    sc_uint<L1_REQ_TYPE_BITS> ReadShared() {
+        sc_uint<L1_REQ_TYPE_BITS> ret = 0x0;
+        ret[L1_REQ_TYPE_CACHED] = 1;
+        return ret;
+    }
+
+    sc_uint<L1_REQ_TYPE_BITS> ReadMakeUnique() {
+        sc_uint<L1_REQ_TYPE_BITS> ret = 0x0;
+        ret[L1_REQ_TYPE_CACHED] = 1;
+        ret[L1_REQ_TYPE_UNIQUE] = 1;
+        return ret;
+    }
+
+    sc_uint<L1_REQ_TYPE_BITS> WriteNoSnoop() {
+        sc_uint<L1_REQ_TYPE_BITS> ret = 0x0;
+        ret[L1_REQ_TYPE_WRITE] = 1;
+        return ret;
+    }
+
+    sc_uint<L1_REQ_TYPE_BITS> WriteLineUnique() {
+        sc_uint<L1_REQ_TYPE_BITS> ret = 0x0;
+        ret[L1_REQ_TYPE_WRITE] = 1;
+        ret[L1_REQ_TYPE_CACHED] = 1;
+        ret[L1_REQ_TYPE_UNIQUE] = 1;
+        return ret;
+    }
+
+    sc_uint<L1_REQ_TYPE_BITS> WriteBack() {
+        sc_uint<L1_REQ_TYPE_BITS> ret = 0x0;
+        ret[L1_REQ_TYPE_WRITE] = 1;
+        ret[L1_REQ_TYPE_CACHED] = 1;
+        return ret;
+    }
+
     enum EState {
         State_Idle,
         State_CheckHit,

@@ -220,13 +220,11 @@ void DCacheLru::comb() {
     sc_uint<CFG_DLOG2_BYTES_PER_LINE-3> ridx;
     bool v_req_same_line;
     bool v_ready_next;
-    sc_uint<L1_REQ_TYPE_BITS> vb_req_mem_type;
     bool v_req_snoop_ready;
     bool v_resp_snoop_valid;
    
     v = r;
 
-    vb_req_mem_type = r.req_mem_type;
     v_ready_next = 0;
     v_req_ready = 0;
     v_resp_valid = 0;
@@ -320,10 +318,7 @@ void DCacheLru::comb() {
                         // Make line: 'shared' -> 'unique' using write request
                         v_resp_valid = 0;
                         v.req_mem_valid = 1;
-                        vb_req_mem_type = 0x0;
-                        vb_req_mem_type[L1_REQ_TYPE_WRITE] = 1;
-                        vb_req_mem_type[L1_REQ_TYPE_CACHED] = 1;
-                        vb_req_mem_type[L1_REQ_TYPE_UNIQUE] = 1;
+                        v.req_mem_type = WriteLineUnique();
                         v.mem_addr = line_raddr_o.read()(CFG_CPU_ADDR_BITS-1,
                                     CFG_DLOG2_BYTES_PER_LINE) << CFG_DLOG2_BYTES_PER_LINE;
                         v.mem_wstrb = vb_line_rdata_o_wstrb;
@@ -348,10 +343,6 @@ void DCacheLru::comb() {
         }
         break;
     case State_CheckMPU:
-        v.req_mem_valid = 1;
-        vb_req_mem_type = 0x0;
-        v.state = State_WaitGrant;
-
         if (r.req_write.read() == 1
             && i_mpu_flags.read()[CFG_MPU_FL_WR] == 0) {
             v.mpu_er_store = 1;
@@ -365,12 +356,14 @@ void DCacheLru::comb() {
             v.cache_line_i = ~t_cache_line_i;
             v.state = State_CheckResp;
         } else {
+            v.req_mem_valid = 1;
+            v.state = State_WaitGrant;
             if (i_mpu_flags.read()[CFG_MPU_FL_CACHABLE] == 1) {
                 // Cached:
                 if (line_rflags_o.read()[TAG_FL_VALID] == 1 &&
                     line_rflags_o.read()[DTAG_FL_DIRTY] == 1) {
                     v.write_first = 1;
-                    vb_req_mem_type[L1_REQ_TYPE_WRITE] = 1;
+                    v.req_mem_type = WriteBack();
                     v.mem_addr = line_raddr_o.read()(CFG_CPU_ADDR_BITS-1,
                                 CFG_DLOG2_BYTES_PER_LINE) << CFG_DLOG2_BYTES_PER_LINE;
                 } else {
@@ -379,18 +372,22 @@ void DCacheLru::comb() {
                     v.mem_addr = r.req_addr.read()(CFG_CPU_ADDR_BITS-1,
                                 CFG_DLOG2_BYTES_PER_LINE) << CFG_DLOG2_BYTES_PER_LINE;
                     if (r.req_write.read() == 1) {
-                        // Read line with flag make unique:
-                        vb_req_mem_type[L1_REQ_TYPE_UNIQUE] = 1;
+                        v.req_mem_type = ReadMakeUnique();
+                    } else {
+                        v.req_mem_type = ReadShared();
                     }
                 }
                 v.mem_wstrb = ~0ul;
-                vb_req_mem_type[L1_REQ_TYPE_CACHED] = 1;
                 v.cache_line_o = line_rdata_o;
             } else {
                 // Uncached read/write
                 v.mem_addr = r.req_addr.read()(CFG_CPU_ADDR_BITS-1, 3) << 3;
                 v.mem_wstrb = (0, r.req_wstrb.read());
-                vb_req_mem_type[L1_REQ_TYPE_WRITE] = r.req_write.read();
+                if (r.req_write.read() == 1) {
+                    v.req_mem_type = WriteNoSnoop();
+                } else {
+                    v.req_mem_type = ReadNoSnoop();
+                }
                 t_cache_line_i = 0;
                 t_cache_line_i(63, 0) = r.req_wdata.read();
                 v.cache_line_o = t_cache_line_i;
@@ -466,10 +463,11 @@ void DCacheLru::comb() {
                             << CFG_DLOG2_BYTES_PER_LINE;
                 v.req_mem_valid = 1;
                 v.write_first = 0;
-                vb_req_mem_type[L1_REQ_TYPE_WRITE] = 0;
                 if (r.req_write.read() == 1) {
                     // read request: read-modify-save cache line
-                    vb_req_mem_type[L1_REQ_TYPE_UNIQUE] = 1;
+                    v.req_mem_type = ReadMakeUnique();
+                } else {
+                    v.req_mem_type = ReadShared();
                 }
                 v.state = State_WaitGrant;
             } else {
@@ -499,8 +497,7 @@ void DCacheLru::comb() {
             v.write_flush = 1;
             v.mem_addr = line_raddr_o.read();
             v.req_mem_valid = 1;
-            vb_req_mem_type[L1_REQ_TYPE_WRITE] = 1;
-            vb_req_mem_type[L1_REQ_TYPE_CACHED] = 1;
+            v.req_mem_type = WriteBack();
             v.mem_wstrb = ~0ul;
             v.state = State_WaitGrant;
         } else {
@@ -557,13 +554,13 @@ void DCacheLru::comb() {
     }
 
     v_req_snoop_ready =
-        line_snoop_ready_o.read() && i_req_snoop_type.read() == 0;
+        (line_snoop_ready_o.read() && !i_req_snoop_type.read().or_reduce()) ||
+        (coherence_ena_ && v_ready_next && i_req_snoop_type.read().or_reduce());
 
     if (v_ready_next == 1) {
         if (coherence_ena_ &&
             i_req_snoop_valid.read() == 1 && i_req_snoop_type.read() != 0x0) {
             // Access cache data
-            v_req_snoop_ready = 1;
             vb_line_addr = i_req_snoop_addr.read();
             v.req_addr = i_req_snoop_addr.read();
             v.req_snoop_type = i_req_snoop_type.read();
@@ -592,8 +589,6 @@ void DCacheLru::comb() {
             }
         }
     }
-
-    v.req_mem_type = vb_req_mem_type;
 
     if (!async_reset_ && !i_nrst.read()) {
         R_RESET(v);

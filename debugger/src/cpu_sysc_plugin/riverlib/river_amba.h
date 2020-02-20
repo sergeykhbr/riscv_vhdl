@@ -62,11 +62,33 @@ SC_MODULE(RiverAmba) {
  private:
     RiverTop *river0;
 
-    static const unsigned ARCACHE_DEVICE_NON_BUFFERABLE = 0x0;  // 4'b0000
-    static const unsigned ARCACHE_WRBACK_READ_ALLOCATE  = 0xF;  // 4'b1111
+    sc_uint<4> reqtype2arsnoop(sc_uint<L1_REQ_TYPE_BITS> reqtype) {
+        sc_uint<4> ret = 0;
+        if (reqtype[L1_REQ_TYPE_CACHED] == 0) {
+            ret = ARSNOOP_READ_NO_SNOOP;
+        } else {
+            if (reqtype[L1_REQ_TYPE_UNIQUE] == 0) {
+                ret = ARSNOOP_READ_SHARED;
+            } else {
+                ret = ARSNOOP_READ_MAKE_UNIQUE;
+            }
+        }
+        return ret;
+    }
 
-    static const unsigned AWCACHE_DEVICE_NON_BUFFERABLE = 0x0;  // 4'b0000
-    static const unsigned AWCACHE_WRBACK_WRITE_ALLOCATE = 0xF;  // 4'b1111
+    sc_uint<3> reqtype2awsnoop(sc_uint<L1_REQ_TYPE_BITS> reqtype) {
+        sc_uint<3> ret = 0;
+        if (reqtype[L1_REQ_TYPE_CACHED] == 0) {
+            ret = AWSNOOP_WRITE_NO_SNOOP;
+        } else {
+            if (reqtype[L1_REQ_TYPE_UNIQUE] == 0) {
+                ret = AWSNOOP_WRITE_BACK;
+            } else {
+                ret = AWSNOOP_WRITE_LINE_UNIQUE;
+            }
+        }
+        return ret;
+    }
 
     sc_signal<bool> req_mem_ready_i;
     sc_signal<bool> req_mem_path_o;
@@ -128,6 +150,8 @@ SC_MODULE(RiverAmba) {
         sc_signal<sc_uint<L1CACHE_BYTES_PER_LINE>> req_wstrb;
         sc_signal<sc_biguint<3>> req_size;
         sc_signal<sc_biguint<3>> req_prot;
+        sc_signal<sc_uint<4>> req_ar_snoop;
+        sc_signal<sc_uint<3>> req_aw_snoop;
     } v, r;
 
     struct SnoopRegistersType {
@@ -148,6 +172,8 @@ SC_MODULE(RiverAmba) {
         iv.req_wstrb = 0;
         iv.req_size = 0;
         iv.req_prot = 0;
+        iv.req_ar_snoop = 0;
+        iv.req_aw_snoop = 0;
     }
 
     void SR_RESET(SnoopRegistersType &iv) {

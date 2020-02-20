@@ -91,6 +91,8 @@ RiverAmba::RiverAmba(sc_module_name name_, uint32_t hartid, bool async_reset,
     sensitive << r.req_wstrb;
     sensitive << r.req_size;
     sensitive << r.req_prot;
+    sensitive << r.req_ar_snoop;
+    sensitive << r.req_aw_snoop;
     sensitive << w_ac_ready;
     sensitive << w_cr_valid;
     sensitive << wb_cr_resp;
@@ -202,6 +204,9 @@ void RiverAmba::comb() {
                 } else {
                     v.req_cached = ARCACHE_DEVICE_NON_BUFFERABLE;
                 }
+                if (coherence_ena_) {
+                    v.req_ar_snoop = reqtype2arsnoop(req_mem_type_o.read());
+                }
             } else {
                 v.state = state_aw;
                 v.req_wdata = req_mem_data_o;
@@ -210,6 +215,9 @@ void RiverAmba::comb() {
                     v.req_cached = AWCACHE_WRBACK_WRITE_ALLOCATE;
                 } else {
                     v.req_cached = AWCACHE_DEVICE_NON_BUFFERABLE;
+                }
+                if (coherence_ena_) {
+                    v.req_aw_snoop = reqtype2awsnoop(req_mem_type_o.read());
                 }
             }
         }
@@ -221,6 +229,7 @@ void RiverAmba::comb() {
         vmsto.ar_bits.cache = r.req_cached;
         vmsto.ar_bits.size = r.req_size;
         vmsto.ar_bits.prot = r.req_prot;
+        vmsto.ar_snoop = r.req_ar_snoop;
         if (i_msti.read().ar_ready == 1) {
             v.state = state_r;
         }
@@ -241,6 +250,7 @@ void RiverAmba::comb() {
         vmsto.aw_bits.cache = r.req_cached;
         vmsto.aw_bits.size = r.req_size;
         vmsto.aw_bits.prot = r.req_prot;
+        vmsto.aw_snoop = r.req_aw_snoop;
         // axi lite to simplify L2-cache
         vmsto.w_valid = 1;
         vmsto.w_last = 1;

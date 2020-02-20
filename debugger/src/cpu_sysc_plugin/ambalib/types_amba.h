@@ -31,6 +31,32 @@ static const int CFG_BUS_USER_BITS       = 1;
 static const int BUS_DATA_BYTES      = (1 << CFG_LOG2_BUS_DATA_BYTES);
 static const int BUS_DATA_WIDTH      = 8 * BUS_DATA_BYTES;
 
+static const unsigned ARCACHE_DEVICE_NON_BUFFERABLE = 0x0;  // 4'b0000
+static const unsigned ARCACHE_WRBACK_READ_ALLOCATE  = 0xF;  // 4'b1111
+
+static const unsigned AWCACHE_DEVICE_NON_BUFFERABLE = 0x0;  // 4'b0000
+static const unsigned AWCACHE_WRBACK_WRITE_ALLOCATE = 0xF;  // 4'b1111
+
+// see table C3-7 Permitted read address control signal combinations
+//
+//    read  |  cached  |  unique  |
+//     0    |    0     |    *     |    ReadNoSnoop
+//     0    |    1     |    0     |    ReadShared
+//     0    |    1     |    1     |    ReadMakeUnique
+static const int ARSNOOP_READ_NO_SNOOP     = 0x0;
+static const int ARSNOOP_READ_SHARED       = 0x1;
+static const int ARSNOOP_READ_MAKE_UNIQUE  = 0xC;
+
+// see table C3-8 Permitted read address control signal combinations
+//
+//   write  |  cached  |  unique  |
+//     1    |    0     |    *     |    WriteNoSnoop
+//     1    |    1     |    1     |    WriteLineUnique
+//     1    |    1     |    0     |    WriteBack
+static const int AWSNOOP_WRITE_NO_SNOOP    = 0x0;
+static const int AWSNOOP_WRITE_LINE_UNIQUE = 0x1;
+static const int AWSNOOP_WRITE_BACK        = 0x3;
+
 // see table C3-19
 static const int AC_SNOOP_READ_UNIQUE   = 0x7;
 static const int AC_SNOOP_MAKE_INVALID  = 0xD;

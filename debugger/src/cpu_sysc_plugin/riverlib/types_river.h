@@ -437,7 +437,7 @@ class axi4_l1_out_type {
     sc_uint<4> ar_snoop;                 // Table C3-7:
     sc_uint<2> ar_bar;                   // read barrier transaction
     sc_uint<2> aw_domain;
-    sc_uint<4> aw_snoop;                 // Table C3-8
+    sc_uint<3> aw_snoop;                 // Table C3-8
     sc_uint<2> aw_bar;                   // write barrier transaction
     bool ac_ready;
     bool cr_valid;
