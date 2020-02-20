@@ -54,7 +54,7 @@ SC_MODULE(L2Top) {
  private:
     sc_signal<bool> w_req_ready;
     sc_signal<bool> w_req_valid;
-    sc_signal<sc_uint<3>> wb_req_type;
+    sc_signal<sc_uint<L2_REQ_TYPE_BITS>> wb_req_type;
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_req_addr;
     sc_signal<sc_uint<3>> wb_req_size;
     sc_signal<sc_uint<3>> wb_req_prot;

@@ -60,7 +60,7 @@ SC_MODULE(DCacheLru) {
     sc_in<sc_uint<CFG_MPU_FL_TOTAL>> i_mpu_flags;
     // D$ Snoop interface
     sc_in<bool> i_req_snoop_valid;
-    sc_in<bool> i_req_snoop_getdata;                    // 0=check availability; 1=read line
+    sc_in<sc_uint<SNOOP_REQ_TYPE_BITS>> i_req_snoop_type;
     sc_out<bool> o_req_snoop_ready;
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> i_req_snoop_addr;
     sc_in<bool> i_resp_snoop_ready;
@@ -78,7 +78,7 @@ SC_MODULE(DCacheLru) {
 
     SC_HAS_PROCESS(DCacheLru);
 
-    DCacheLru(sc_module_name name_, bool async_reset);
+    DCacheLru(sc_module_name name_, bool async_reset, bool coherence_ena);
     virtual ~DCacheLru();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
@@ -96,8 +96,10 @@ SC_MODULE(DCacheLru) {
         State_WriteBus,
         State_FlushAddr,
         State_FlushCheck,
-        State_WaitGrantMakeExclusiveL2,
-        State_WaitRespMakeExclusiveL2
+        State_WaitGrantMakeUniqueL2,
+        State_WaitRespMakeUniqueL2,
+        State_SnoopSetupAddr,
+        State_SnoopModify,
     };
 
     sc_signal<bool> line_cs_i;
@@ -137,6 +139,7 @@ SC_MODULE(DCacheLru) {
         sc_signal<sc_uint<CFG_DLOG2_LINES_PER_WAY + CFG_DLOG2_NWAYS>> flush_cnt;
         sc_signal<sc_biguint<DCACHE_LINE_BITS>> cache_line_i;
         sc_signal<sc_biguint<DCACHE_LINE_BITS>> cache_line_o;
+        sc_signal<sc_uint<SNOOP_REQ_TYPE_BITS>> req_snoop_type;
         sc_signal<bool> init;   // remove xxx from memory simulation
     } v, r;
 
@@ -161,6 +164,7 @@ SC_MODULE(DCacheLru) {
         iv.flush_cnt = ~0ul;
         iv.cache_line_i = 0;
         iv.cache_line_o = 0;
+        iv.req_snoop_type = 0;
         iv.init = 1;
     }
 

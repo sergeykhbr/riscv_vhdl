@@ -103,6 +103,7 @@ class CpuRiscV_RTL : public IService,
     AttributeType fpuEnable_;
     AttributeType tracerEnable_;
     AttributeType l2CacheEnable_;
+    AttributeType coherenceEnable_;
     AttributeType bus_;
     AttributeType cmdexec_;
     AttributeType tap_;

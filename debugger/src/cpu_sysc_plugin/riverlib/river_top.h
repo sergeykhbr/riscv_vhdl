@@ -42,7 +42,7 @@ SC_MODULE(RiverTop) {
     sc_in<bool> i_resp_mem_store_fault;
     // D$ Snoop interface
     sc_in<bool> i_req_snoop_valid;
-    sc_in<bool> i_req_snoop_getdata;                    // 0=check availability; 1=read line
+    sc_in<sc_uint<SNOOP_REQ_TYPE_BITS>> i_req_snoop_type;
     sc_out<bool> o_req_snoop_ready;
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> i_req_snoop_addr;
     sc_in<bool> i_resp_snoop_ready;
@@ -67,6 +67,7 @@ SC_MODULE(RiverTop) {
              uint32_t hartid,
              bool async_reset,
              bool fpu_ena,
+             bool coherence_ena,
              bool tracer_ena);
     virtual ~RiverTop();
 

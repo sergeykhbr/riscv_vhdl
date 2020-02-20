@@ -85,10 +85,14 @@ static const int DTAG_FL_TOTAL      = 3;
 static const int L1CACHE_BYTES_PER_LINE   = DCACHE_BYTES_PER_LINE;
 static const int L1CACHE_LINE_BITS        = 8*DCACHE_BYTES_PER_LINE;
 
-static const int L1_REQ_TYPE_WRITE        = 1 << 0;
-static const int L1_REQ_TYPE_CACHED       = 1 << 1;
-static const int L1_REQ_TYPE_EXCLUSIVE    = 1 << 2;
+static const int L1_REQ_TYPE_WRITE        = 0;
+static const int L1_REQ_TYPE_CACHED       = 1;
+static const int L1_REQ_TYPE_UNIQUE       = 2;
 static const int L1_REQ_TYPE_BITS         = 3;
+
+static const int SNOOP_REQ_TYPE_READDATA     = 0;   // 0=check flags; 1=data transfer
+static const int SNOOP_REQ_TYPE_MAKEINVALID  = 1;   // 0=do nothing; 1=invalidate line
+static const int SNOOP_REQ_TYPE_BITS         = 2;
 
 /** 
  * L2 cache config (16 KB by default)
@@ -111,13 +115,9 @@ static const int L2TAG_FL_SHARED     = 2;
 static const int L2TAG_FL_LOAD_FAULT = 3;
 static const int L2TAG_FL_TOTAL      = 4;
 
-enum EReqTypeL2 {
-    L2_ReqUncachedRead,
-    L2_ReqUncachedWrite,
-    L2_ReqCachedRead,
-    L2_ReqCachedWrite,
-};
-static const int L2_REQ_TYPE_BITS = 3;
+static const int L2_REQ_TYPE_WRITE   = 0;
+static const int L2_REQ_TYPE_CACHED  = 1;
+static const int L2_REQ_TYPE_BITS    = 2;
 
 /** MPU config */
 static const int CFG_MPU_TBL_WIDTH   = 2;    // [1:0]  log2(MPU_TBL_SIZE)

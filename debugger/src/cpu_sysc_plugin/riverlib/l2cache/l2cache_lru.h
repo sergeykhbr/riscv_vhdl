@@ -99,8 +99,7 @@ SC_MODULE(L2CacheLru) {
     sc_signal<sc_uint<L2TAG_FL_TOTAL>> line_snoop_flags_o;
 
     struct RegistersType {
-        sc_signal<bool> req_write;
-        sc_signal<bool> req_cached;
+        sc_signal<sc_uint<L2_REQ_TYPE_BITS>> req_type;
         sc_signal<sc_uint<3>> req_size;
         sc_signal<sc_uint<3>> req_prot;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_addr;
@@ -125,8 +124,7 @@ SC_MODULE(L2CacheLru) {
     } v, r;
 
     void R_RESET(RegistersType &iv) {
-        iv.req_write = 0;
-        iv.req_cached = 0;
+        iv.req_type = 0;
         iv.req_size = 0;
         iv.req_prot = 0;
         iv.req_addr = 0;

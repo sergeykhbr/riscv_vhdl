@@ -19,7 +19,7 @@
 namespace debugger {
 
 RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
-    bool fpu_ena, bool tracer_ena) : sc_module(name_),
+    bool fpu_ena, bool coherence_ena, bool tracer_ena) : sc_module(name_),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
     i_req_mem_ready("i_req_mem_ready"),
@@ -34,7 +34,7 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     i_resp_mem_load_fault("i_resp_mem_load_fault"),
     i_resp_mem_store_fault("i_resp_mem_store_fault"),
     i_req_snoop_valid("i_req_snoop_valid"),
-    i_req_snoop_getdata("i_req_snoop_getdata"),
+    i_req_snoop_type("i_req_snoop_type"),
     o_req_snoop_ready("o_req_snoop_ready"),
     i_req_snoop_addr("i_req_snoop_addr"),
     i_resp_snoop_ready("i_resp_snoop_ready"),
@@ -105,7 +105,7 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     proc0->i_dstate(wb_dstate);
     proc0->i_cstate(wb_cstate);
 
-    cache0 = new CacheTop("cache0", async_reset);
+    cache0 = new CacheTop("cache0", async_reset, coherence_ena);
     cache0->i_clk(i_clk);
     cache0->i_nrst(i_nrst);
     cache0->i_req_ctrl_valid(w_req_ctrl_valid);
@@ -150,7 +150,7 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     cache0->i_mpu_region_mask(wb_mpu_region_mask);
     cache0->i_mpu_region_flags(wb_mpu_region_flags);
     cache0->i_req_snoop_valid(i_req_snoop_valid);
-    cache0->i_req_snoop_getdata(i_req_snoop_getdata);
+    cache0->i_req_snoop_type(i_req_snoop_type);
     cache0->o_req_snoop_ready(o_req_snoop_ready);
     cache0->i_req_snoop_addr(i_req_snoop_addr);
     cache0->i_resp_snoop_ready(i_resp_snoop_ready);

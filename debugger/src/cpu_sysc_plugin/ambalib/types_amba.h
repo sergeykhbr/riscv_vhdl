@@ -31,6 +31,10 @@ static const int CFG_BUS_USER_BITS       = 1;
 static const int BUS_DATA_BYTES      = (1 << CFG_LOG2_BUS_DATA_BYTES);
 static const int BUS_DATA_WIDTH      = 8 * BUS_DATA_BYTES;
 
+// see table C3-19
+static const int AC_SNOOP_READ_UNIQUE   = 0x7;
+static const int AC_SNOOP_MAKE_INVALID  = 0xD;
+
 struct axi4_meta_type {
     sc_uint<CFG_BUS_ADDR_WIDTH> addr;
     sc_uint<8> len;              // burst len = len[7:0] + 1

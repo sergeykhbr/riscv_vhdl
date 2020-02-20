@@ -29,6 +29,7 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     registerAttribute("FpuEnable", &fpuEnable_);
     registerAttribute("TracerEnable", &tracerEnable_);
     registerAttribute("L2CacheEnable", &l2CacheEnable_);
+    registerAttribute("CoherenceEnable", &coherenceEnable_);
     registerAttribute("Bus", &bus_);
     registerAttribute("CmdExecutor", &cmdexec_);
     registerAttribute("Tap", &tap_);
@@ -189,6 +190,7 @@ void CpuRiscV_RTL::createSystemC() {
     core_ = new RiverAmba("core0", hartid_.to_uint32(),
                                asyncReset_.to_bool(),
                                fpuEnable_.to_bool(),
+                               coherenceEnable_.to_bool(),
                                tracerEnable_.to_bool());
     core_->i_clk(wrapper_->o_clk);
     core_->i_nrst(w_nrst);

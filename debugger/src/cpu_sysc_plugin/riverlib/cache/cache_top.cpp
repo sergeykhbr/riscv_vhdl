@@ -18,7 +18,7 @@
 
 namespace debugger {
 
-CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
+CacheTop::CacheTop(sc_module_name name_, bool async_reset, bool coherence_ena) :
     sc_module(name_),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
@@ -64,7 +64,7 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     i_mpu_region_mask("i_mpu_region_mask"),
     i_mpu_region_flags("i_mpu_region_flags"),
     i_req_snoop_valid("i_req_snoop_valid"),
-    i_req_snoop_getdata("i_req_snoop_getdata"),
+    i_req_snoop_type("i_req_snoop_type"),
     o_req_snoop_ready("o_req_snoop_ready"),
     i_req_snoop_addr("i_req_snoop_addr"),
     i_resp_snoop_ready("i_resp_snoop_ready"),
@@ -131,7 +131,7 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     i1->i_flush_valid(i_flush_valid);
     i1->o_state(o_istate);
 
-    d0 = new DCacheLru("d0", async_reset);
+    d0 = new DCacheLru("d0", async_reset, coherence_ena);
     d0->i_clk(i_clk);
     d0->i_nrst(i_nrst);
     d0->i_req_valid(i_req_data_valid);
@@ -162,7 +162,7 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset) :
     d0->o_mpu_addr(d.mpu_addr);
     d0->i_mpu_flags(wb_mpu_dflags);
     d0->i_req_snoop_valid(i_req_snoop_valid);
-    d0->i_req_snoop_getdata(i_req_snoop_getdata);
+    d0->i_req_snoop_type(i_req_snoop_type);
     d0->o_req_snoop_ready(o_req_snoop_ready);
     d0->i_req_snoop_addr(i_req_snoop_addr);
     d0->i_resp_snoop_ready(i_resp_snoop_ready);

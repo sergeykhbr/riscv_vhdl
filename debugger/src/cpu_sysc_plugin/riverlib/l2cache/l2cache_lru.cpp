@@ -95,8 +95,7 @@ L2CacheLru::L2CacheLru(sc_module_name name_, bool async_reset)
     sensitive << line_rdata_o;
     sensitive << line_hit_o;
     sensitive << line_rflags_o;
-    sensitive << r.req_write;
-    sensitive << r.req_cached;
+    sensitive << r.req_type;
     sensitive << r.req_size;
     sensitive << r.req_prot;
     sensitive << r.req_addr;
@@ -208,8 +207,10 @@ void L2CacheLru::comb() {
     int ridx = 0;
     bool v_req_same_line;
     bool v_ready_next;
+    sc_uint<L2_REQ_TYPE_BITS> vb_req_type;
    
     v = r;
+    vb_req_type = r.req_type;   // systemc specific
 
     v_ready_next = 0;
     v_resp_valid = 0;
@@ -290,12 +291,13 @@ void L2CacheLru::comb() {
         if (line_hit_o.read() == 1) {
             // Hit
             v_resp_valid = 1;
-            if (r.req_write.read() == 1) {
+            if (r.req_type.read()[L2_REQ_TYPE_WRITE] == 1) {
                 // Modify tagged mem output with request and write back
                 v_line_cs_write = 1;
                 v_line_wflags[TAG_FL_VALID] = 1;
                 v_line_wflags[L2TAG_FL_DIRTY] = 1;
-                v.req_write = 0;
+                vb_req_type[L2_REQ_TYPE_WRITE] = 0;
+                v.req_type = vb_req_type;
                 vb_line_wstrb = vb_line_rdata_o_wstrb;
                 vb_line_wdata = vb_line_rdata_o_modified;
                 if (v_req_same_line == 1) {
@@ -320,7 +322,7 @@ void L2CacheLru::comb() {
         v.mem_write = 0;
         v.state = State_WaitGrant;
 
-        if (r.req_cached.read() == 1) {
+        if (r.req_type.read()[L2_REQ_TYPE_CACHED] == 1) {
             if (line_rflags_o.read()[TAG_FL_VALID] == 1 &&
                 line_rflags_o.read()[L2TAG_FL_DIRTY] == 1) {
                 v.write_first = 1;
@@ -337,7 +339,7 @@ void L2CacheLru::comb() {
         } else {
             v.mem_addr = r.req_addr.read();
             v.mem_wstrb = (0, r.req_wstrb.read());
-            v.mem_write = r.req_write.read();
+            v.mem_write = r.req_type.read()[L2_REQ_TYPE_WRITE];
             v.cached = 0;
             t_cache_line_i = 0;
             t_cache_line_i(63, 0) = r.req_wdata.read();
@@ -351,7 +353,8 @@ void L2CacheLru::comb() {
         if (i_req_mem_ready.read()) {
             if (r.write_flush.read() == 1 ||
                 r.write_first.read() == 1 ||
-                (r.req_write.read() == 1 && r.cached.read() == 0)) {
+                (r.req_type.read()[L2_REQ_TYPE_WRITE] == 1
+                    && r.req_type.read()[L2_REQ_TYPE_CACHED] == 0)) {
                 v.state = State_WriteBus;
             } else {
                 // 1. uncached read
@@ -382,9 +385,10 @@ void L2CacheLru::comb() {
             v_line_cs_write = 1;
             v_line_wflags[TAG_FL_VALID] = 1;
             vb_line_wstrb = ~0ul;  // write full line
-            if (r.req_write.read() == 1) {
+            if (r.req_type.read()[L2_REQ_TYPE_WRITE] == 1) {
                 // Modify tagged mem output with request before write
-                v.req_write = 0;
+                vb_req_type[L2_REQ_TYPE_WRITE] = 0;
+                v.req_type = vb_req_type;
                 v_line_wflags[L2TAG_FL_DIRTY] = 1;
                 vb_line_wdata = vb_cache_line_i_modified;
                 v_resp_valid = 1;
@@ -487,26 +491,7 @@ void L2CacheLru::comb() {
                 v.req_addr = i_req_addr.read();
                 v.req_wstrb = i_req_wstrb.read();
                 v.req_wdata = i_req_wdata.read();
-                switch (i_req_type.read()) {
-                case L2_ReqUncachedRead:
-                    v.req_write = 0;
-                    v.req_cached = 0;
-                    break;
-                case L2_ReqUncachedWrite:
-                    v.req_write = 1;
-                    v.req_cached = 0;
-                    break;
-                case L2_ReqCachedRead:
-                    v.req_write = 0;
-                    v.req_cached = 1;
-                    break;
-                case L2_ReqCachedWrite:
-                    v.req_write = 1;
-                    v.req_cached = 1;
-                    break;
-                default:
-                    printf("!!!!!!!!!!fatal_error\n");
-                }
+                v.req_type = i_req_type.read();
                 v.req_size = i_req_size.read();
                 v.req_prot = i_req_prot.read();
                 v.rb_resp = 0;  // RESP OK
@@ -514,7 +499,6 @@ void L2CacheLru::comb() {
             }
         }
     }
-
 
     if (!async_reset_ && !i_nrst.read()) {
         R_RESET(v);

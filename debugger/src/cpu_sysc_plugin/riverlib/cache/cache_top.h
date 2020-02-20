@@ -76,7 +76,7 @@ SC_MODULE(CacheTop) {
     sc_in<sc_uint<CFG_MPU_FL_TOTAL>> i_mpu_region_flags;   // {ena, cachable, r, w, x}
     // D$ Snoop interface
     sc_in<bool> i_req_snoop_valid;
-    sc_in<bool> i_req_snoop_getdata;                    // 0=check availability; 1=read line
+    sc_in<sc_uint<SNOOP_REQ_TYPE_BITS>> i_req_snoop_type;
     sc_out<bool> o_req_snoop_ready;
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> i_req_snoop_addr;
     sc_in<bool> i_resp_snoop_ready;
@@ -97,7 +97,7 @@ SC_MODULE(CacheTop) {
 
     SC_HAS_PROCESS(CacheTop);
 
-    CacheTop(sc_module_name name_, bool async_reset);
+    CacheTop(sc_module_name name_, bool async_reset, bool coherence_ena);
     virtual ~CacheTop();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);

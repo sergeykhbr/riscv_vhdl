@@ -18,7 +18,7 @@
 
 namespace debugger {
 
-DCacheLru::DCacheLru(sc_module_name name_, bool async_reset)
+DCacheLru::DCacheLru(sc_module_name name_, bool async_reset, bool coherence_ena)
     : sc_module(name_),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
@@ -50,7 +50,7 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset)
     o_mpu_addr("o_mpu_addr"),
     i_mpu_flags("i_mpu_flags"),
     i_req_snoop_valid("i_req_snoop_valid"),
-    i_req_snoop_getdata("i_req_snoop_getdata"),
+    i_req_snoop_type("i_req_snoop_type"),
     o_req_snoop_ready("o_req_snoop_ready"),
     i_req_snoop_addr("i_req_snoop_addr"),
     i_resp_snoop_ready("i_resp_snoop_ready"),
@@ -62,7 +62,7 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset)
     o_flush_end("o_flush_end"),
     o_state("o_state") {
     async_reset_ = async_reset;
-    coherence_ena_ = false;
+    coherence_ena_ = coherence_ena;
 
     mem = new TagMemNWay<CFG_CPU_ADDR_BITS,
                          CFG_DLOG2_NWAYS,
@@ -99,6 +99,11 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset)
     sensitive << i_mem_load_fault;
     sensitive << i_mem_store_fault;
     sensitive << i_resp_ready;
+    sensitive << i_req_snoop_valid;
+    sensitive << i_req_snoop_type;
+    sensitive << o_req_snoop_ready;
+    sensitive << i_req_snoop_addr;
+    sensitive << i_resp_snoop_ready;
     sensitive << i_flush_address;
     sensitive << i_flush_valid;
     sensitive << i_req_mem_ready;
@@ -122,6 +127,7 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset)
     sensitive << r.flush_cnt;
     sensitive << r.cache_line_i;
     sensitive << r.cache_line_o;
+    sensitive << r.req_snoop_type;
     sensitive << r.init;
 
     SC_METHOD(registers);
@@ -204,7 +210,8 @@ void DCacheLru::comb() {
     bool v_resp_er_store_fault;
     bool v_flush;
     bool v_flush_end;
-    bool v_line_cs;
+    bool v_line_cs_read;
+    bool v_line_cs_write;
     sc_uint<CFG_CPU_ADDR_BITS> vb_line_addr;
     sc_biguint<DCACHE_LINE_BITS> vb_line_wdata;
     sc_uint<DCACHE_BYTES_PER_LINE> vb_line_wstrb;
@@ -212,11 +219,15 @@ void DCacheLru::comb() {
     sc_uint<DTAG_FL_TOTAL> v_line_wflags;
     sc_uint<CFG_DLOG2_BYTES_PER_LINE-3> ridx;
     bool v_req_same_line;
+    bool v_ready_next;
     sc_uint<L1_REQ_TYPE_BITS> vb_req_mem_type;
+    bool v_req_snoop_ready;
+    bool v_resp_snoop_valid;
    
     v = r;
 
     vb_req_mem_type = r.req_mem_type;
+    v_ready_next = 0;
     v_req_ready = 0;
     v_resp_valid = 0;
     vb_resp_data = 0;
@@ -224,6 +235,8 @@ void DCacheLru::comb() {
     v_resp_er_store_fault = 0;
     v_flush = 0;
     v_flush_end = 0;
+    v_req_snoop_ready = 0;
+    v_resp_snoop_valid = 0;
     ridx = r.req_addr.read()(CFG_DLOG2_BYTES_PER_LINE-1, 3);
 
     vb_cached_data = line_rdata_o.read()((ridx+1)*64 - 1,
@@ -274,7 +287,8 @@ void DCacheLru::comb() {
             r.req_wstrb.read();
     }
     
-    v_line_cs = 0;
+    v_line_cs_read = 0;
+    v_line_cs_write = 0;
     vb_line_addr = r.req_addr.read();
     vb_line_wdata = r.cache_line_i.read();
     vb_line_wstrb = 0;
@@ -286,72 +300,46 @@ void DCacheLru::comb() {
     case State_Idle:
         v.mpu_er_store = 0;
         v.mpu_er_load = 0;
-        if (r.req_flush.read() == 1) {
-            v.state = State_FlushAddr;
-            v.req_flush = 0;
-            v.cache_line_i = 0;
-            if (r.req_flush_addr.read()[0] == 1) {
-                v.req_addr = 0;
-                v.flush_cnt = ~0u;
-            } else {
-                v.req_addr = r.req_flush_addr.read() & ~LOG2_DLINE_BYTES_MASK;
-                v.flush_cnt = r.req_flush_cnt.read();
-            }
-        } else {
-            v_line_cs = i_req_valid.read();
-            v_req_ready = 1;
-            vb_line_addr = i_req_addr.read();
-            if (i_req_valid.read() == 1) {
-                v.req_addr = i_req_addr.read();
-                v.req_wstrb = i_req_wstrb.read();
-                v.req_wdata = i_req_wdata.read();
-                v.req_write = i_req_write.read();
-                v.state = State_CheckHit;
-            }
-        }
+        v_ready_next = 1;
         break;
     case State_CheckHit:
         vb_resp_data = vb_cached_data;
         if (line_hit_o.read() == 1) {
             // Hit
             v_resp_valid = 1;
-            if (r.req_write.read() == 1) {
-                // Modify tagged mem output with request and write back
-                v_line_cs = 1;
-                v_line_wflags[TAG_FL_VALID] = 1;
-                v_line_wflags[DTAG_FL_DIRTY] = 1;
-                v.req_write = 0;
-                vb_line_wstrb = vb_line_rdata_o_wstrb;
-                vb_line_wdata = vb_line_rdata_o_modified;
-                if (i_resp_ready.read() == 0) {
-                    // Do nothing: wait accept
-                } else if (v_req_same_line == 1 && i_req_valid.read() == 1) {
-                    // 1 clock write cycle using previously set read address
-                    v_req_ready = 1;
-                    v.state = State_CheckHit;
-                    v_line_cs = i_req_valid.read();
-                    v.req_addr = i_req_addr.read();
-                    v.req_wstrb = i_req_wstrb.read();
-                    v.req_wdata = i_req_wdata.read();
-                    v.req_write = i_req_write.read();
-                    vb_line_addr = i_req_addr.read();
+            if (i_resp_ready.read() == 1) {
+                if (r.req_write.read() == 1) {
+                    // Modify tagged mem output with request and write back
+                    v_line_cs_write = 1;
+                    v_line_wflags[TAG_FL_VALID] = 1;
+                    v_line_wflags[DTAG_FL_DIRTY] = 1;
+                    v.req_write = 0;
+                    vb_line_wstrb = vb_line_rdata_o_wstrb;
+                    vb_line_wdata = vb_line_rdata_o_modified;
+                    if (coherence_ena_ && line_rflags_o.read()[DTAG_FL_SHARED] == 1) {
+                        // Make line: 'shared' -> 'unique' using write request
+                        v_resp_valid = 0;
+                        v.req_mem_valid = 1;
+                        vb_req_mem_type = 0x0;
+                        vb_req_mem_type[L1_REQ_TYPE_WRITE] = 1;
+                        vb_req_mem_type[L1_REQ_TYPE_CACHED] = 1;
+                        vb_req_mem_type[L1_REQ_TYPE_UNIQUE] = 1;
+                        v.mem_addr = line_raddr_o.read()(CFG_CPU_ADDR_BITS-1,
+                                    CFG_DLOG2_BYTES_PER_LINE) << CFG_DLOG2_BYTES_PER_LINE;
+                        v.mem_wstrb = vb_line_rdata_o_wstrb;
+                        v.cache_line_o = vb_line_rdata_o_modified;
+                        v.state = State_WaitGrantMakeUniqueL2;
+                    } else {
+                        if (v_req_same_line == 1) {
+                            // Write address is the same as the next requested, so use it to write
+                            // value and update state machine
+                            v_ready_next = 1;
+                        }
+                        v.state = State_Idle;
+                    }
                 } else {
+                    v_ready_next = 1;
                     v.state = State_Idle;
-                }
-            } else {
-                v_req_ready = !r.req_flush.read();
-                if (i_resp_ready.read() == 0) {
-                    // Do nothing: wait accept
-                } else if (i_req_valid.read() == 0 || r.req_flush.read() == 1) {
-                    v.state = State_Idle;
-                } else {
-                    v.state = State_CheckHit;
-                    v_line_cs = i_req_valid.read();
-                    v.req_addr = i_req_addr.read();
-                    v.req_wstrb = i_req_wstrb.read();
-                    v.req_wdata = i_req_wdata.read();
-                    v.req_write = i_req_write.read();
-                    vb_line_addr = i_req_addr.read();
                 }
             }
         } else {
@@ -378,6 +366,7 @@ void DCacheLru::comb() {
             v.state = State_CheckResp;
         } else {
             if (i_mpu_flags.read()[CFG_MPU_FL_CACHABLE] == 1) {
+                // Cached:
                 if (line_rflags_o.read()[TAG_FL_VALID] == 1 &&
                     line_rflags_o.read()[DTAG_FL_DIRTY] == 1) {
                     v.write_first = 1;
@@ -385,13 +374,20 @@ void DCacheLru::comb() {
                     v.mem_addr = line_raddr_o.read()(CFG_CPU_ADDR_BITS-1,
                                 CFG_DLOG2_BYTES_PER_LINE) << CFG_DLOG2_BYTES_PER_LINE;
                 } else {
+                    // 1. Read -> Save cache
+                    // 2. Read -> Modify -> Save cache
                     v.mem_addr = r.req_addr.read()(CFG_CPU_ADDR_BITS-1,
                                 CFG_DLOG2_BYTES_PER_LINE) << CFG_DLOG2_BYTES_PER_LINE;
+                    if (r.req_write.read() == 1) {
+                        // Read line with flag make unique:
+                        vb_req_mem_type[L1_REQ_TYPE_UNIQUE] = 1;
+                    }
                 }
                 v.mem_wstrb = ~0ul;
                 vb_req_mem_type[L1_REQ_TYPE_CACHED] = 1;
                 v.cache_line_o = line_rdata_o;
             } else {
+                // Uncached read/write
                 v.mem_addr = r.req_addr.read()(CFG_CPU_ADDR_BITS-1, 3) << 3;
                 v.mem_wstrb = (0, r.req_wstrb.read());
                 vb_req_mem_type[L1_REQ_TYPE_WRITE] = r.req_write.read();
@@ -441,7 +437,7 @@ void DCacheLru::comb() {
             }
         } else {
             v.state = State_SetupReadAdr;
-            v_line_cs = 1;
+            v_line_cs_write = 1;
             v_line_wflags[TAG_FL_VALID] = 1;
             v_line_wflags[DTAG_FL_SHARED] = 1;
             vb_line_wstrb = ~0ul;  // write full line
@@ -451,16 +447,8 @@ void DCacheLru::comb() {
                 v_line_wflags[DTAG_FL_DIRTY] = 1;
                 v_line_wflags[DTAG_FL_SHARED] = 0;
                 vb_line_wdata = vb_cache_line_i_modified;
-                if (coherence_ena_) {
-                    v.state = State_WaitGrantMakeExclusiveL2;
-                    vb_req_mem_type[L1_REQ_TYPE_WRITE] = 1;
-                    vb_req_mem_type[L1_REQ_TYPE_CACHED] = 1;
-                    vb_req_mem_type[L1_REQ_TYPE_EXCLUSIVE] = 1;
-                    v.req_mem_valid = 1;
-                } else {
-                    v_resp_valid = 1;
-                    v.state = State_Idle;
-                }
+                v_resp_valid = 1;
+                v.state = State_Idle;
             }
         }
         break;
@@ -479,6 +467,10 @@ void DCacheLru::comb() {
                 v.req_mem_valid = 1;
                 v.write_first = 0;
                 vb_req_mem_type[L1_REQ_TYPE_WRITE] = 0;
+                if (r.req_write.read() == 1) {
+                    // read request: read-modify-save cache line
+                    vb_req_mem_type[L1_REQ_TYPE_UNIQUE] = 1;
+                }
                 v.state = State_WaitGrant;
             } else {
                 // Non-cached write
@@ -533,18 +525,72 @@ void DCacheLru::comb() {
         }
         break;
 
-    case State_WaitGrantMakeExclusiveL2:
+    case State_WaitGrantMakeUniqueL2:
         if (i_req_mem_ready.read()) {
             v.req_mem_valid = 0;
-            v.state = State_WaitRespMakeExclusiveL2;
+            v.state = State_WaitRespMakeUniqueL2;
         }
         break;
-    case State_WaitRespMakeExclusiveL2:
-        v_resp_valid = 1;
+    case State_WaitRespMakeUniqueL2:
+        if (i_mem_data_valid.read()) {
+            v_resp_valid = 1;
+            v.state = State_Idle;
+        }
+        break;
+    case State_SnoopSetupAddr:
+        if (r.req_snoop_type.read()[SNOOP_REQ_TYPE_READDATA] == 1) {
+            v_resp_snoop_valid = 1;
+            v.state = State_Idle;
+        } else {
+            v.state = State_SnoopModify;
+        }
+        break;
+    case State_SnoopModify:
+        v_line_wflags = 0;      // flag valid = 0
+        vb_line_wstrb = ~0ul;   // write full line
+        v_flush = 1;
         v.state = State_Idle;
+        v_resp_snoop_valid = 1;
         break;
 
     default:;
+    }
+
+    v_req_snoop_ready =
+        line_snoop_ready_o.read() && i_req_snoop_type.read() == 0;
+
+    if (v_ready_next == 1) {
+        if (coherence_ena_ &&
+            i_req_snoop_valid.read() == 1 && i_req_snoop_type.read() != 0x0) {
+            // Access cache data
+            v_req_snoop_ready = 1;
+            vb_line_addr = i_req_snoop_addr.read();
+            v.req_addr = i_req_snoop_addr.read();
+            v.req_snoop_type = i_req_snoop_type.read();
+            v.state = State_SnoopSetupAddr;
+        } else if (r.req_flush.read() == 1) {
+            v.state = State_FlushAddr;
+            v.req_flush = 0;
+            v.cache_line_i = 0;
+            if (r.req_flush_addr.read()[0] == 1) {
+                v.req_addr = 0;
+                v.flush_cnt = ~0u;
+            } else {
+                v.req_addr = r.req_flush_addr.read() & ~LOG2_DLINE_BYTES_MASK;
+                v.flush_cnt = r.req_flush_cnt.read();
+            }
+        } else {
+            v_line_cs_read = i_req_valid.read();
+            v_req_ready = 1;
+            vb_line_addr = i_req_addr.read();
+            if (i_req_valid.read() == 1) {
+                v.req_addr = i_req_addr.read();
+                v.req_wstrb = i_req_wstrb.read();
+                v.req_wdata = i_req_wdata.read();
+                v.req_write = i_req_write.read();
+                v.state = State_CheckHit;
+            }
+        }
     }
 
     v.req_mem_type = vb_req_mem_type;
@@ -554,7 +600,7 @@ void DCacheLru::comb() {
     }
 
 
-    line_cs_i = v_line_cs;
+    line_cs_i = v_line_cs_read || v_line_cs_write;
     line_addr_i = vb_line_addr;
     line_wdata_i = vb_line_wdata;
     line_wstrb_i = vb_line_wstrb;
@@ -579,9 +625,10 @@ void DCacheLru::comb() {
     o_resp_er_mpu_load = r.mpu_er_load;
     o_resp_er_mpu_store = r.mpu_er_store;
     o_mpu_addr = r.req_addr.read();
-    o_req_snoop_ready = line_snoop_ready_o;
-    o_resp_snoop_valid = 0;
-    o_resp_snoop_data = 0;
+
+    o_req_snoop_ready = v_req_snoop_ready;
+    o_resp_snoop_valid = v_resp_snoop_valid;
+    o_resp_snoop_data = line_rdata_o;
     o_resp_snoop_flags = line_snoop_flags_o;
 
     o_flush_end = v_flush_end;

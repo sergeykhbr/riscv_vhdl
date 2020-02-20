@@ -44,6 +44,7 @@ SC_MODULE(RiverAmba) {
     sc_out<bool> o_halted;                              // CPU halted via debug interface
 
     void comb();
+    void snoopcomb();
     void registers();
 
     SC_HAS_PROCESS(RiverAmba);
@@ -52,6 +53,7 @@ SC_MODULE(RiverAmba) {
              uint32_t hartid,
              bool async_reset,
              bool fpu_ena,
+             bool coherence_ena,
              bool tracer_ena);
     virtual ~RiverAmba();
 
@@ -79,13 +81,24 @@ SC_MODULE(RiverAmba) {
     sc_signal<bool> resp_mem_store_fault_i;
     // D$ Snoop interface
     sc_signal<bool> req_snoop_valid_i;
-    sc_signal<bool> req_snoop_getdata_i;      // 0=check availability; 1=read line
+    sc_signal<sc_uint<SNOOP_REQ_TYPE_BITS>> req_snoop_type_i;
     sc_signal<bool> req_snoop_ready_o;
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_snoop_addr_i;
     sc_signal<bool> resp_snoop_ready_i;
     sc_signal<bool> resp_snoop_valid_o;
     sc_signal<sc_biguint<L1CACHE_LINE_BITS>> resp_snoop_data_o;
     sc_signal<sc_uint<DTAG_FL_TOTAL>> resp_snoop_flags_o;
+
+    // Signals from snoopcomb to comb process
+    sc_signal<bool> w_ac_ready;
+    sc_signal<bool> w_cr_valid;
+    sc_signal<sc_uint<5>> wb_cr_resp;
+    sc_signal<bool> w_cd_valid;
+    sc_signal<sc_biguint<L1CACHE_LINE_BITS>> wb_cd_data;
+    sc_signal<bool> w_cd_last;
+    sc_signal<bool> w_rack;
+    sc_signal<bool> w_wack;
+
 
     enum state_type {
         state_idle,
@@ -94,6 +107,16 @@ SC_MODULE(RiverAmba) {
         state_aw,
         state_w,
         state_b
+    };
+
+    enum snooptate_type {
+        snoop_idle,
+        snoop_ac_wait_accept,
+        snoop_read_flags,
+        snoop_cr_wait_accept,
+        snoop_req,
+        snoop_resp,
+        snoop_cd_wait_accept,
     };
 
     struct RegistersType {
@@ -107,6 +130,15 @@ SC_MODULE(RiverAmba) {
         sc_signal<sc_biguint<3>> req_prot;
     } v, r;
 
+    struct SnoopRegistersType {
+        sc_signal<sc_uint<3>> snoop_state;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> ac_addr;
+        sc_signal<sc_uint<4>> ac_snoop;                  // Table C3-19
+        sc_signal<sc_uint<5>> cr_resp;
+        sc_signal<sc_uint<SNOOP_REQ_TYPE_BITS>> req_snoop_type;
+        sc_signal<sc_biguint<L1CACHE_LINE_BITS>> resp_snoop_data;
+    } sv, sr;
+
     void R_RESET(RegistersType &iv) {
         iv.state = state_idle;
         iv.req_addr = 0;
@@ -118,7 +150,17 @@ SC_MODULE(RiverAmba) {
         iv.req_prot = 0;
     }
 
+    void SR_RESET(SnoopRegistersType &iv) {
+        iv.snoop_state = snoop_idle;
+        iv.ac_addr = 0;
+        iv.ac_snoop = 0;
+        iv.cr_resp = 0;
+        iv.req_snoop_type = 0;
+        iv.resp_snoop_data = 0;
+    }
+
     bool async_reset_;
+    bool coherence_ena_;
 };
 
 }  // namespace debugger

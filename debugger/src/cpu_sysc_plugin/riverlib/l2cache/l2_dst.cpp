@@ -97,8 +97,10 @@ void L2Destination::comb() {
     sc_uint<4> vb_ar_type;
     sc_uint<3> vb_aw_type;
     bool v_req_valid;
+    sc_uint<L2_REQ_TYPE_BITS> vb_req_type;
 
     v = r;
+    vb_req_type = r.req_type;
 
     vcoreo[0] = i_acpo.read();
     vcoreo[1] = i_l1o0.read();
@@ -137,6 +139,7 @@ void L2Destination::comb() {
 
     switch (r.state.read()) {
     case Idle:
+        vb_req_type = 0x0;
         if (vb_src_aw.or_reduce() == 1) {
             v.state = CacheWriteReq;
             vlxi[vb_srcid.to_int()].aw_ready = 1;
@@ -146,10 +149,9 @@ void L2Destination::comb() {
             v.req_addr = vcoreo[vb_srcid.to_int()].aw_bits.addr;
             v.req_size = vcoreo[vb_srcid.to_int()].aw_bits.size;
             v.req_prot = vcoreo[vb_srcid.to_int()].aw_bits.prot;
+            vb_req_type[L2_REQ_TYPE_WRITE] = 1;
             if (vcoreo[vb_srcid.to_int()].aw_bits.cache[0] == 1) {
-                v.req_type = L2_ReqCachedWrite;
-            } else {
-                v.req_type = L2_ReqUncachedWrite;
+                vb_req_type[L2_REQ_TYPE_CACHED] = 1;
             }
         } else if (vb_src_ar.or_reduce() == 1) {
             v.state = CacheReadReq;
@@ -160,11 +162,10 @@ void L2Destination::comb() {
             v.req_size = vcoreo[vb_srcid.to_int()].ar_bits.size;
             v.req_prot = vcoreo[vb_srcid.to_int()].ar_bits.prot;
             if (vcoreo[vb_srcid.to_int()].ar_bits.cache[0] == 1) {
-                v.req_type = L2_ReqCachedRead;
-            } else {
-                v.req_type = L2_ReqUncachedRead;
+                vb_req_type[L2_REQ_TYPE_CACHED] = 1;
             }
         }
+        v.req_type = vb_req_type;
         // Lite-interface
         v.req_wdata = vcoreo[vb_srcid.to_int()].w_data;
         v.req_wstrb = vcoreo[vb_srcid.to_int()].w_strb;
