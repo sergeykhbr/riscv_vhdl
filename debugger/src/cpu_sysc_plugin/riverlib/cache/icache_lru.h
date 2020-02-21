@@ -43,7 +43,7 @@ SC_MODULE(ICacheLru) {
     // Memory interface:
     sc_in<bool> i_req_mem_ready;
     sc_out<bool> o_req_mem_valid;
-    sc_out<sc_uint<L1_REQ_TYPE_BITS>> o_req_mem_type;
+    sc_out<sc_uint<REQ_MEM_TYPE_BITS>> o_req_mem_type;
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_req_mem_addr;
     sc_out<sc_uint<ICACHE_BYTES_PER_LINE>> o_req_mem_strob;    // unused
     sc_out<sc_biguint<ICACHE_LINE_BITS>> o_req_mem_data;
@@ -69,21 +69,10 @@ SC_MODULE(ICacheLru) {
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
-    sc_uint<L1_REQ_TYPE_BITS> ReadNoSnoop() {
-        sc_uint<L1_REQ_TYPE_BITS> ret = 0x0;
-        return ret;
-    }
-
-    sc_uint<L1_REQ_TYPE_BITS> ReadShared() {
-        sc_uint<L1_REQ_TYPE_BITS> ret = 0x0;
-        ret[L1_REQ_TYPE_CACHED] = 1;
-        return ret;
-    }
-
     enum EState {
         State_Idle,
         State_CheckHit,
-        State_CheckMPU,
+        State_TranslateAddress,
         State_WaitGrant,
         State_WaitResp,
         State_CheckResp,
@@ -101,10 +90,11 @@ SC_MODULE(ICacheLru) {
         sc_signal<sc_uint<4>> state;
         sc_signal<bool> req_mem_valid;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mem_addr;
-        sc_signal<sc_uint<L1_REQ_TYPE_BITS>> req_mem_type;
+        sc_signal<sc_uint<REQ_MEM_TYPE_BITS>> req_mem_type;
         sc_signal<bool> executable;
         sc_signal<bool> load_fault;
         sc_signal<bool> req_flush;
+        sc_signal<bool> req_flush_all;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_flush_addr;
         sc_signal<sc_uint<CFG_ILOG2_LINES_PER_WAY+CFG_ILOG2_NWAYS>> req_flush_cnt;
         sc_signal<sc_uint<CFG_ILOG2_LINES_PER_WAY+CFG_ILOG2_NWAYS>> flush_cnt;
@@ -122,6 +112,7 @@ SC_MODULE(ICacheLru) {
         iv.executable = 0;
         iv.load_fault = 0;
         iv.req_flush = 0;           // init flush request
+        iv.req_flush_all = 0;
         iv.req_flush_addr = 0;   // [0]=1 flush all
         iv.req_flush_cnt = 0;
         iv.flush_cnt = ~0ul;

@@ -47,7 +47,7 @@ SC_MODULE(DCacheLru) {
     // Memory interface:
     sc_in<bool> i_req_mem_ready;
     sc_out<bool> o_req_mem_valid;
-    sc_out<sc_uint<L1_REQ_TYPE_BITS>> o_req_mem_type;
+    sc_out<sc_uint<REQ_MEM_TYPE_BITS>> o_req_mem_type;
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_req_mem_addr;
     sc_out<sc_uint<DCACHE_BYTES_PER_LINE>> o_req_mem_strob;
     sc_out<sc_biguint<DCACHE_LINE_BITS>> o_req_mem_data;
@@ -85,45 +85,6 @@ SC_MODULE(DCacheLru) {
 
  private:
 
-    sc_uint<L1_REQ_TYPE_BITS> ReadNoSnoop() {
-        sc_uint<L1_REQ_TYPE_BITS> ret = 0x0;
-        return ret;
-    }
-
-    sc_uint<L1_REQ_TYPE_BITS> ReadShared() {
-        sc_uint<L1_REQ_TYPE_BITS> ret = 0x0;
-        ret[L1_REQ_TYPE_CACHED] = 1;
-        return ret;
-    }
-
-    sc_uint<L1_REQ_TYPE_BITS> ReadMakeUnique() {
-        sc_uint<L1_REQ_TYPE_BITS> ret = 0x0;
-        ret[L1_REQ_TYPE_CACHED] = 1;
-        ret[L1_REQ_TYPE_UNIQUE] = 1;
-        return ret;
-    }
-
-    sc_uint<L1_REQ_TYPE_BITS> WriteNoSnoop() {
-        sc_uint<L1_REQ_TYPE_BITS> ret = 0x0;
-        ret[L1_REQ_TYPE_WRITE] = 1;
-        return ret;
-    }
-
-    sc_uint<L1_REQ_TYPE_BITS> WriteLineUnique() {
-        sc_uint<L1_REQ_TYPE_BITS> ret = 0x0;
-        ret[L1_REQ_TYPE_WRITE] = 1;
-        ret[L1_REQ_TYPE_CACHED] = 1;
-        ret[L1_REQ_TYPE_UNIQUE] = 1;
-        return ret;
-    }
-
-    sc_uint<L1_REQ_TYPE_BITS> WriteBack() {
-        sc_uint<L1_REQ_TYPE_BITS> ret = 0x0;
-        ret[L1_REQ_TYPE_WRITE] = 1;
-        ret[L1_REQ_TYPE_CACHED] = 1;
-        return ret;
-    }
-
     enum EState {
         State_Idle,
         State_CheckHit,
@@ -140,6 +101,7 @@ SC_MODULE(DCacheLru) {
         State_WaitGrantMakeUniqueL2,
         State_WaitRespMakeUniqueL2,
         State_SnoopSetupAddr,
+        State_SnoopReadData,
     };
 
     sc_signal<bool> line_direct_access_i;
@@ -166,7 +128,7 @@ SC_MODULE(DCacheLru) {
         sc_signal<sc_uint<8>> req_wstrb;
         sc_signal<sc_uint<4>> state;
         sc_signal<bool> req_mem_valid;
-        sc_signal<sc_uint<L1_REQ_TYPE_BITS>> req_mem_type;
+        sc_signal<sc_uint<REQ_MEM_TYPE_BITS>> req_mem_type;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mem_addr;
         sc_signal<bool> mpu_er_store;
         sc_signal<bool> mpu_er_load;
@@ -175,6 +137,7 @@ SC_MODULE(DCacheLru) {
         sc_signal<bool> write_flush;
         sc_signal<sc_uint<DCACHE_BYTES_PER_LINE>> mem_wstrb;
         sc_signal<bool> req_flush;
+        sc_signal<bool> req_flush_all;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_flush_addr;
         sc_signal<sc_uint<CFG_DLOG2_LINES_PER_WAY + CFG_DLOG2_NWAYS>> req_flush_cnt;
         sc_signal<sc_uint<CFG_DLOG2_LINES_PER_WAY + CFG_DLOG2_NWAYS>> flush_cnt;
@@ -199,7 +162,8 @@ SC_MODULE(DCacheLru) {
         iv.write_flush = 0;
         iv.mem_wstrb = 0;
         iv.req_flush = 0;           // init flush request
-        iv.req_flush_addr = 0;   // [0]=1 flush all
+        iv.req_flush_all = 0;
+        iv.req_flush_addr = 0;      // [0]=1 flush all
         iv.req_flush_cnt = 0;
         iv.flush_cnt = ~0ul;
         iv.cache_line_i = 0;

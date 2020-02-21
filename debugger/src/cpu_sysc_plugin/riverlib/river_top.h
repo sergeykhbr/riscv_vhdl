@@ -31,7 +31,7 @@ SC_MODULE(RiverTop) {
     sc_in<bool> i_req_mem_ready;                        // System Bus is ready to accept memory operation request
     sc_out<bool> o_req_mem_path;                        // 0=ctrl; 1=data path
     sc_out<bool> o_req_mem_valid;                       // AXI memory request is valid
-    sc_out<sc_uint<L1_REQ_TYPE_BITS>> o_req_mem_type;   // AXI memory request type
+    sc_out<sc_uint<REQ_MEM_TYPE_BITS>> o_req_mem_type;   // AXI memory request type
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_req_mem_addr;     // AXI memory request address
     sc_out<sc_uint<L1CACHE_BYTES_PER_LINE>> o_req_mem_strob;  // Writing strob. 1 bit per Byte (uncached only)
     sc_out<sc_biguint<L1CACHE_LINE_BITS>> o_req_mem_data;     // Writing data

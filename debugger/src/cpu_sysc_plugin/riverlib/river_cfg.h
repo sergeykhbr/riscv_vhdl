@@ -43,7 +43,6 @@ static const int CFG_ILOG2_NWAYS          = 2;
 static const int ICACHE_BYTES_PER_LINE    = 1 << CFG_ILOG2_BYTES_PER_LINE;
 static const int ICACHE_LINES_PER_WAY     = 1 << CFG_ILOG2_LINES_PER_WAY;
 static const int ICACHE_WAYS              = 1 << CFG_ILOG2_NWAYS;
-static const int LOG2_ILINE_BYTES_MASK    = ICACHE_BYTES_PER_LINE - 1;
 
 static const int ICACHE_LINE_BITS         = 8*ICACHE_BYTES_PER_LINE;
 
@@ -65,7 +64,6 @@ static const int CFG_DLOG2_NWAYS          = 2;
 static const int DCACHE_BYTES_PER_LINE    = 1 << CFG_DLOG2_BYTES_PER_LINE;
 static const int DCACHE_LINES_PER_WAY     = 1 << CFG_DLOG2_LINES_PER_WAY;
 static const int DCACHE_WAYS              = 1 << CFG_DLOG2_NWAYS;
-static const int LOG2_DLINE_BYTES_MASK    = DCACHE_BYTES_PER_LINE - 1;
 
 static const int DCACHE_LINE_BITS         = 8*DCACHE_BYTES_PER_LINE;
 
@@ -85,14 +83,54 @@ static const int DTAG_FL_TOTAL      = 3;
 static const int L1CACHE_BYTES_PER_LINE   = DCACHE_BYTES_PER_LINE;
 static const int L1CACHE_LINE_BITS        = 8*DCACHE_BYTES_PER_LINE;
 
-static const int L1_REQ_TYPE_WRITE        = 0;
-static const int L1_REQ_TYPE_CACHED       = 1;
-static const int L1_REQ_TYPE_UNIQUE       = 2;
-static const int L1_REQ_TYPE_BITS         = 3;
+static const int REQ_MEM_TYPE_WRITE        = 0;
+static const int REQ_MEM_TYPE_CACHED       = 1;
+static const int REQ_MEM_TYPE_UNIQUE       = 2;
+static const int REQ_MEM_TYPE_BITS         = 3;
 
 static const int SNOOP_REQ_TYPE_READDATA     = 0;   // 0=check flags; 1=data transfer
 static const int SNOOP_REQ_TYPE_MAKEINVALID  = 1;   // 0=do nothing; 1=invalidate line
 static const int SNOOP_REQ_TYPE_BITS         = 2;
+
+static sc_uint<REQ_MEM_TYPE_BITS> ReadNoSnoop() {
+    sc_uint<REQ_MEM_TYPE_BITS> ret = 0x0;
+    return ret;
+}
+
+static sc_uint<REQ_MEM_TYPE_BITS> ReadShared() {
+    sc_uint<REQ_MEM_TYPE_BITS> ret = 0x0;
+    ret[REQ_MEM_TYPE_CACHED] = 1;
+    return ret;
+}
+
+static sc_uint<REQ_MEM_TYPE_BITS> ReadMakeUnique() {
+    sc_uint<REQ_MEM_TYPE_BITS> ret = 0x0;
+    ret[REQ_MEM_TYPE_CACHED] = 1;
+    ret[REQ_MEM_TYPE_UNIQUE] = 1;
+    return ret;
+}
+
+static sc_uint<REQ_MEM_TYPE_BITS> WriteNoSnoop() {
+    sc_uint<REQ_MEM_TYPE_BITS> ret = 0x0;
+    ret[REQ_MEM_TYPE_WRITE] = 1;
+    return ret;
+}
+
+static sc_uint<REQ_MEM_TYPE_BITS> WriteLineUnique() {
+    sc_uint<REQ_MEM_TYPE_BITS> ret = 0x0;
+    ret[REQ_MEM_TYPE_WRITE] = 1;
+    ret[REQ_MEM_TYPE_CACHED] = 1;
+    ret[REQ_MEM_TYPE_UNIQUE] = 1;
+    return ret;
+}
+
+static sc_uint<REQ_MEM_TYPE_BITS> WriteBack() {
+    sc_uint<REQ_MEM_TYPE_BITS> ret = 0x0;
+    ret[REQ_MEM_TYPE_WRITE] = 1;
+    ret[REQ_MEM_TYPE_CACHED] = 1;
+    return ret;
+}
+
 
 /** 
  * L2 cache config (16 KB by default)

@@ -235,7 +235,7 @@ void TagMemNWay<abus, waybits, ibits, lnbits, flbits, snoop>::comb() {
         }
     }
 
-    if (r.invalidate.read() == 1 && hit) {
+    if (r.invalidate.read() == 1) {
         vb_wflags = 0;
         vb_wstrb = ~0ul;
     } else {
@@ -315,6 +315,7 @@ generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd)  {
         sc_trace(o_vcd, i_wdata, i_wdata.name());
         sc_trace(o_vcd, i_wstrb, i_wstrb.name());
         sc_trace(o_vcd, o_rdata, o_rdata.name());
+        sc_trace(o_vcd, o_rflags, o_rflags.name());
 
         std::string pn(name());
         sc_trace(o_vcd, way_o[0].rflags, pn + ".rflags0");

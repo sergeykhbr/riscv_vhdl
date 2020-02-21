@@ -29,8 +29,7 @@ SC_MODULE(L2Amba) {
     sc_in<bool> i_nrst;                                 // Reset: active LOW
     sc_out<bool> o_req_ready;
     sc_in<bool> i_req_valid;
-    sc_in<bool> i_req_write;
-    sc_in<bool> i_req_cached;
+    sc_in<sc_uint<REQ_MEM_TYPE_BITS>> i_req_type;
     sc_in<sc_uint<3>> i_req_size;
     sc_in<sc_uint<3>> i_req_prot;
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_req_addr;

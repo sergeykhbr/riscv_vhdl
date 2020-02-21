@@ -303,8 +303,8 @@ void CacheTop::comb() {
 
     to = queue_rdata_o.read();
     o_req_mem_valid = queue_nempty_o;
-    o_req_mem_path = to[CFG_CPU_ADDR_BITS+L1_REQ_TYPE_BITS];
-    o_req_mem_type = to(CFG_CPU_ADDR_BITS+L1_REQ_TYPE_BITS-1, CFG_CPU_ADDR_BITS).to_uint();
+    o_req_mem_path = to[CFG_CPU_ADDR_BITS+REQ_MEM_TYPE_BITS];
+    o_req_mem_type = to(CFG_CPU_ADDR_BITS+REQ_MEM_TYPE_BITS-1, CFG_CPU_ADDR_BITS).to_uint();
     o_req_mem_addr = to(CFG_CPU_ADDR_BITS-1, 0).to_uint64();
     o_req_mem_strob = d.req_mem_strob;
     o_req_mem_data = d.req_mem_wdata;

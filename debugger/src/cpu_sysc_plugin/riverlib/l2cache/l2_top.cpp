@@ -77,8 +77,7 @@ L2Top::L2Top(sc_module_name name, bool async_reset) : sc_module(name),
     cache_->o_resp_status(wb_cache_status);
     cache_->i_req_mem_ready(w_req_mem_ready);
     cache_->o_req_mem_valid(w_req_mem_valid);
-    cache_->o_req_mem_write(w_req_mem_write);
-    cache_->o_req_mem_cached(w_req_mem_cached);
+    cache_->o_req_mem_type(wb_req_mem_type);
     cache_->o_req_mem_size(wb_req_mem_size);
     cache_->o_req_mem_prot(wb_req_mem_prot);
     cache_->o_req_mem_addr(wb_req_mem_addr);
@@ -98,8 +97,7 @@ L2Top::L2Top(sc_module_name name, bool async_reset) : sc_module(name),
     amba_->i_nrst(i_nrst);
     amba_->o_req_ready(w_req_mem_ready);
     amba_->i_req_valid(w_req_mem_valid);
-    amba_->i_req_write(w_req_mem_write);
-    amba_->i_req_cached(w_req_mem_cached);
+    amba_->i_req_type(wb_req_mem_type);
     amba_->i_req_size(wb_req_mem_size);
     amba_->i_req_prot(wb_req_mem_prot);
     amba_->i_req_addr(wb_req_mem_addr);

@@ -59,7 +59,7 @@ SC_MODULE(CacheTop) {
     sc_in<bool> i_req_mem_ready;                        // System Bus (AXI) is available
     sc_out<bool> o_req_mem_path;                        // 0=ctrl; 1=data path
     sc_out<bool> o_req_mem_valid;                       // Memory operation to system bus is valid
-    sc_out<sc_uint<L1_REQ_TYPE_BITS>> o_req_mem_type;   // Memory operation type
+    sc_out<sc_uint<REQ_MEM_TYPE_BITS>> o_req_mem_type;  // Memory operation type
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_req_mem_addr;     // Requesting address
     sc_out<sc_uint<L1CACHE_BYTES_PER_LINE>> o_req_mem_strob;  // Writing strob 1 bit per 1 byte (AXI compliance)
     sc_out<sc_biguint<L1CACHE_LINE_BITS>> o_req_mem_data;     // Writing value
@@ -108,13 +108,13 @@ SC_MODULE(CacheTop) {
 
     static const int QUEUE_WIDTH =
         CFG_CPU_ADDR_BITS       // addr
-        + L1_REQ_TYPE_BITS      // req_type
+        + REQ_MEM_TYPE_BITS     // req_type
         + 1                     // 0=instruction; 1=data
         ;
 
     struct CacheOutputType {
         sc_signal<bool> req_mem_valid;
-        sc_signal<sc_uint<L1_REQ_TYPE_BITS>> req_mem_type;
+        sc_signal<sc_uint<REQ_MEM_TYPE_BITS>> req_mem_type;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_mem_addr;
         sc_signal<sc_uint<DCACHE_BYTES_PER_LINE>> req_mem_strob;
         sc_signal<sc_biguint<DCACHE_LINE_BITS>> req_mem_wdata;

@@ -122,6 +122,7 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset, bool coherence_ena)
     sensitive << r.write_flush;
     sensitive << r.mem_wstrb;
     sensitive << r.req_flush;
+    sensitive << r.req_flush_all;
     sensitive << r.req_flush_addr;
     sensitive << r.req_flush_cnt;
     sensitive << r.flush_cnt;
@@ -222,6 +223,7 @@ void DCacheLru::comb() {
     bool v_ready_next;
     bool v_req_snoop_ready;
     bool v_resp_snoop_valid;
+    sc_uint<CFG_CPU_ADDR_BITS> vb_addr_direct_next;
    
     v = r;
 
@@ -251,11 +253,12 @@ void DCacheLru::comb() {
 
     if (i_flush_valid.read() == 1) {
         v.req_flush = 1;
+        v.req_flush_all = i_flush_address.read()[0];
         if (i_flush_address.read()[0] == 1) {
             v.req_flush_cnt = ~0u;
             v.req_flush_addr = 0;
         } else {
-            v.req_flush_cnt = DCACHE_WAYS-1;
+            v.req_flush_cnt = 0;
             v.req_flush_addr = i_flush_address.read();
         }
     }
@@ -285,7 +288,16 @@ void DCacheLru::comb() {
         vb_line_rdata_o_wstrb(8*(i+1)-1, 8*i) =
             r.req_wstrb.read();
     }
-    
+
+    // Flush counter when direct access
+    if (r.req_addr.read()(CFG_DLOG2_NWAYS-1, 0) == DCACHE_WAYS-1) {
+        vb_addr_direct_next = (r.req_addr.read() + DCACHE_BYTES_PER_LINE) 
+                    & ~((1<<CFG_DLOG2_BYTES_PER_LINE)-1);
+    } else {
+        vb_addr_direct_next = r.req_addr.read() + 1;
+    }
+
+
     v_line_cs_read = 0;
     v_line_cs_write = 0;
     vb_line_addr = r.req_addr.read();
@@ -403,7 +415,7 @@ void DCacheLru::comb() {
             if (r.write_flush.read() == 1 ||
                 r.write_first.read() == 1 ||
                 (r.req_write.read() == 1 &&
-                    r.req_mem_type.read()[L1_REQ_TYPE_CACHED] == 0)) {
+                    r.req_mem_type.read()[REQ_MEM_TYPE_CACHED] == 0)) {
                 v.state = State_WriteBus;
             } else {
                 // 1. uncached read
@@ -423,7 +435,7 @@ void DCacheLru::comb() {
         }
         break;
     case State_CheckResp:
-        if (r.req_mem_type.read()[L1_REQ_TYPE_CACHED] == 0 ||
+        if (r.req_mem_type.read()[REQ_MEM_TYPE_CACHED] == 0 ||
             r.load_fault.read() == 1) {
             // uncached read only (write goes to WriteBus) or cached load-modify fault
             v_resp_valid = 1;
@@ -481,12 +493,15 @@ void DCacheLru::comb() {
         break;
     case State_FlushAddr:
         v.state = State_FlushCheck;
-        v_invalidate = 1;               // will be applied on next clock if hit
+        v_direct_access = r.req_flush_all;      // 0=only if hit; 1=will be applied ignoring hit
+        v_invalidate = 1;                       // generate: wstrb='1; wflags='0
         v.write_flush = 0;
         v.cache_line_i = 0;
         break;
     case State_FlushCheck:
         v.cache_line_o = line_rdata_o.read();
+        v_direct_access = r.req_flush_all;
+        v_line_cs_write = r.req_flush_all;
         if (line_rflags_o.read()[TAG_FL_VALID] == 1 &&
             line_rflags_o.read()[DTAG_FL_DIRTY] == 1) {
             /** Off-load valid line */
@@ -506,30 +521,26 @@ void DCacheLru::comb() {
         }
         if (r.flush_cnt.read().or_reduce() == 1) {
             v.flush_cnt = r.flush_cnt.read() - 1;
-            v.req_addr = r.req_addr.read() + DCACHE_BYTES_PER_LINE;
+            if (r.req_flush_all == 1) {
+                v.req_addr = vb_addr_direct_next;
+            } else {
+                v.req_addr = r.req_addr.read() + DCACHE_BYTES_PER_LINE;
+            }
         }
         break;
     case State_Reset:
         /** Write clean line */
         v_direct_access = 1;
+        v_invalidate = 1;                       // generate: wstrb='1; wflags='0
         v.state = State_ResetWrite;
         break;
     case State_ResetWrite:
         v_direct_access = 1;
         v_line_cs_write = 1;
-        v_line_wflags = 0;      // flag valid = 0
-        vb_line_wstrb = ~0ul;   // write full line
         v.state = State_Reset;
-
         if (r.flush_cnt.read().or_reduce() == 1) {
             v.flush_cnt = r.flush_cnt.read() - 1;
-            /** Use lsb address bits to manually select memory WAY bank: */
-            if (r.req_addr.read()(CFG_DLOG2_NWAYS-1, 0) == DCACHE_WAYS-1) {
-                v.req_addr = (r.req_addr.read() + DCACHE_BYTES_PER_LINE) 
-                            & ~LOG2_DLINE_BYTES_MASK;
-            } else {
-                v.req_addr = r.req_addr.read() + 1;
-            }
+            v.req_addr = vb_addr_direct_next;
         } else {
             v.state = State_Idle;
         }
@@ -548,15 +559,23 @@ void DCacheLru::comb() {
         }
         break;
     case State_SnoopSetupAddr:
-        v_resp_snoop_valid = 1;
         if (r.req_snoop_type.read()[SNOOP_REQ_TYPE_READDATA] == 1) {
-            v.state = State_Idle;
-        } else {
-            v.state = State_FlushCheck;     // address already setup
+            v.state = State_SnoopReadData;
+        } else if (r.req_snoop_type.read()[SNOOP_REQ_TYPE_MAKEINVALID] == 1) {
+            v_resp_snoop_valid = 1;
+            v_invalidate = 1; 
             v.flush_cnt = 0;
+            v.req_flush_all = 0;            // invalid only 'hit' line
+            v.state = State_FlushCheck;     // address already setup
+        } else {
+            v_resp_snoop_valid = 1;
+            v.state = State_Idle;
         }
         break;
-
+    case State_SnoopReadData:
+        v_resp_snoop_valid = 1;
+        v.state = State_Idle;
+        break;
     default:;
     }
 
@@ -576,13 +595,8 @@ void DCacheLru::comb() {
             v.state = State_FlushAddr;
             v.req_flush = 0;
             v.cache_line_i = 0;
-            if (r.req_flush_addr.read()[0] == 1) {
-                v.req_addr = 0;
-                v.flush_cnt = ~0u;
-            } else {
-                v.req_addr = r.req_flush_addr.read() & ~LOG2_DLINE_BYTES_MASK;
-                v.flush_cnt = r.req_flush_cnt.read();
-            }
+            v.req_addr = r.req_flush_addr.read() & ~((1<<CFG_DLOG2_BYTES_PER_LINE)-1);
+            v.flush_cnt = r.req_flush_cnt.read();
         } else {
             v_req_ready = 1;
             v_line_cs_read = i_req_valid.read();

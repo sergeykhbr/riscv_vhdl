@@ -23,8 +23,7 @@ L2Amba::L2Amba(sc_module_name name_, bool async_reset) : sc_module(name_),
     i_nrst("i_nrst"),
     o_req_ready("o_req_ready"),
     i_req_valid("i_req_valid"),
-    i_req_write("i_req_write"),
-    i_req_cached("i_req_cached"),
+    i_req_type("i_req_type"),
     i_req_size("i_req_size"),
     i_req_prot("i_req_prot"),
     i_req_addr("i_req_addr"),
@@ -42,8 +41,7 @@ L2Amba::L2Amba(sc_module_name name_, bool async_reset) : sc_module(name_),
     sensitive << i_nrst;
     sensitive << i_msti;
     sensitive << i_req_valid;
-    sensitive << i_req_write;
-    sensitive << i_req_cached;
+    sensitive << i_req_type;
     sensitive << i_req_size;
     sensitive << i_req_prot;
     sensitive << i_req_addr;
@@ -62,8 +60,7 @@ L2Amba::~L2Amba() {
 void L2Amba::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
         sc_trace(o_vcd, i_req_valid, i_req_valid.name());
-        sc_trace(o_vcd, i_req_write, i_req_write.name());
-        sc_trace(o_vcd, i_req_cached, i_req_cached.name());
+        sc_trace(o_vcd, i_req_type, i_req_type.name());
         sc_trace(o_vcd, i_req_size, i_req_size.name());
         sc_trace(o_vcd, i_req_prot, i_req_prot.name());
         sc_trace(o_vcd, i_req_addr, i_req_addr.name());
@@ -142,7 +139,7 @@ void L2Amba::comb() {
 
     if (v_next_ready == 1) {
         if (i_req_valid.read() == 1) {
-            if (i_req_write.read() == 0) {
+            if (i_req_type.read()[REQ_MEM_TYPE_WRITE] == 0) {
                 vmsto.ar_valid = 1;
                 if (i_msti.read().ar_ready == 1) {
                     v_req_mem_ready = 1;
@@ -171,7 +168,7 @@ void L2Amba::comb() {
     vmsto.aw_bits.size = i_req_size;           // 0=1B; 1=2B; 2=4B; 3=8B; 4=16B; 5=32B; 6=64B; 7=128B
     vmsto.aw_bits.burst = 0x1;                 // 00=FIX; 01=INCR; 10=WRAP
     vmsto.aw_bits.lock = 0;
-    vmsto.aw_bits.cache = i_req_cached;
+    vmsto.aw_bits.cache = i_req_type.read()[REQ_MEM_TYPE_CACHED];
     vmsto.aw_bits.prot = i_req_prot;
     vmsto.aw_bits.qos = 0;
     vmsto.aw_bits.region = 0;
@@ -190,7 +187,7 @@ void L2Amba::comb() {
     vmsto.ar_bits.size = i_req_size;           // 0=1B; 1=2B; 2=4B; 3=8B; ...
     vmsto.ar_bits.burst = 0x1;                 // INCR
     vmsto.ar_bits.lock = 0;
-    vmsto.ar_bits.cache = i_req_cached;
+    vmsto.ar_bits.cache = i_req_type.read()[REQ_MEM_TYPE_CACHED];
     vmsto.ar_bits.prot = i_req_prot;
     vmsto.ar_bits.qos = 0;
     vmsto.ar_bits.region = 0;

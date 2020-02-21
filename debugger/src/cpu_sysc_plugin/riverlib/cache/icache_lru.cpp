@@ -96,6 +96,7 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset)
     sensitive << r.req_mem_type;
     sensitive << r.load_fault;
     sensitive << r.req_flush;
+    sensitive << r.req_flush_all;
     sensitive << r.req_flush_addr;
     sensitive << r.req_flush_cnt;
     sensitive << r.flush_cnt;
@@ -169,6 +170,7 @@ void ICacheLru::comb() {
     int sel_cached;
     int sel_uncached;
     bool v_ready_next;
+    sc_uint<CFG_CPU_ADDR_BITS> vb_addr_direct_next;
 
     v = r;
 
@@ -189,6 +191,7 @@ void ICacheLru::comb() {
     // flush request via debug interface
     if (i_flush_valid.read() == 1) {
         v.req_flush = 1;
+        v.req_flush_all = i_flush_address.read()[0];
         if (i_flush_address.read()[0] == 1) {
             v.req_flush_cnt = ~0u;
             v.req_flush_addr = 0;
@@ -199,6 +202,14 @@ void ICacheLru::comb() {
             v.req_flush_cnt = 0;
             v.req_flush_addr = i_flush_address.read();
         }
+    }
+
+    // Flush counter when direct access
+    if (r.req_addr.read()(CFG_ILOG2_NWAYS-1, 0) == ICACHE_WAYS-1) {
+        vb_addr_direct_next = (r.req_addr.read() + ICACHE_BYTES_PER_LINE) 
+                    & ~((1<<CFG_ILOG2_BYTES_PER_LINE)-1);
+    } else {
+        vb_addr_direct_next = r.req_addr.read() + 1;
     }
 
     v_line_cs_read = 0;
@@ -224,10 +235,10 @@ void ICacheLru::comb() {
             }
         } else {
             // Miss
-            v.state = State_CheckMPU;
+            v.state = State_TranslateAddress;
         }
         break;
-    case State_CheckMPU:
+    case State_TranslateAddress:
         if (i_mpu_flags.read()[CFG_MPU_FL_EXEC] == 0) {
             t_cache_line_i = 0;
             v.cache_line_i = ~t_cache_line_i;
@@ -275,7 +286,7 @@ void ICacheLru::comb() {
         break;
     case State_CheckResp:
         v.req_addr = r.write_addr;              // Restore req_addr after line write
-        if (r.req_mem_type.read()[L1_REQ_TYPE_CACHED] == 0 ||
+        if (r.req_mem_type.read()[REQ_MEM_TYPE_CACHED] == 0 ||
             r.load_fault.read() == 1) {
             v_resp_valid = 1;
             vb_resp_data = vb_uncached_data;
@@ -295,39 +306,39 @@ void ICacheLru::comb() {
         break;
     case State_FlushAddr:
         v.state = State_FlushCheck;
-        v_invalidate = 1;               // will be applied on next clock if hit
+        v_direct_access = r.req_flush_all;      // 0=only if hit; 1=will be applied ignoring hit
+        v_invalidate = 1;                       // generate: wstrb='1; wflags='0
         v.cache_line_i = 0;
         break;
     case State_FlushCheck:
         v.state = State_FlushAddr;
-        if (r.flush_cnt.read().or_reduce() == 0) {
-            v.state = State_Idle;
-        } else {
+        v_direct_access = r.req_flush_all;
+        v_line_cs_write = r.req_flush_all;
+        if (r.flush_cnt.read().or_reduce() == 1) {
             v.flush_cnt = r.flush_cnt.read() - 1;
-            v.req_addr = r.req_addr.read() + ICACHE_BYTES_PER_LINE;
+            if (r.req_flush_all == 1) {
+                v.req_addr = vb_addr_direct_next;
+            } else {
+                v.req_addr = r.req_addr.read() + ICACHE_BYTES_PER_LINE;
+            }
+        } else {
+            v.state = State_Idle;
         }
         break;
     case State_Reset:
         /** Write clean line */
         v_direct_access = 1;
+        v_invalidate = 1;                       // generate: wstrb='1; wflags='0
         v.state = State_ResetWrite;
         break;
     case State_ResetWrite:
         v_direct_access = 1;
         v_line_cs_write = 1;
-        v_line_wflags = 0;      // flag valid = 0
-        vb_line_wstrb = ~0ul;   // write full line
         v.state = State_Reset;
 
         if (r.flush_cnt.read().or_reduce() == 1) {
             v.flush_cnt = r.flush_cnt.read() - 1;
-            /** Use lsb address bits to manually select memory WAY bank: */
-            if (r.req_addr.read()(CFG_ILOG2_NWAYS-1, 0) == ICACHE_WAYS-1) {
-                v.req_addr = (r.req_addr.read() + ICACHE_BYTES_PER_LINE) 
-                            & ~LOG2_ILINE_BYTES_MASK;
-            } else {
-                v.req_addr = r.req_addr.read() + 1;
-            }
+            v.req_addr = vb_addr_direct_next;
         } else {
             v.state = State_Idle;
         }
@@ -340,13 +351,8 @@ void ICacheLru::comb() {
             v.state = State_FlushAddr;
             v.req_flush = 0;
             v.cache_line_i = 0;
-            if (r.req_flush_addr.read()[0] == 1) {
-                v.req_addr = 0;
-                v.flush_cnt = ~0u;
-            } else {
-                v.req_addr = r.req_flush_addr.read() & ~LOG2_ILINE_BYTES_MASK;
-                v.flush_cnt = r.req_flush_cnt.read();
-            }
+            v.req_addr = r.req_flush_addr.read() & ~((1<<CFG_ILOG2_BYTES_PER_LINE)-1);
+            v.flush_cnt = r.req_flush_cnt.read();
         } else {
             v_req_ready = 1;
             v_line_cs_read = i_req_valid.read();

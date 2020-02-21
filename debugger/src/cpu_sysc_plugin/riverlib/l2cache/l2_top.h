@@ -68,8 +68,7 @@ SC_MODULE(L2Top) {
     // Memory interface:
     sc_signal<bool> w_req_mem_ready;
     sc_signal<bool> w_req_mem_valid;
-    sc_signal<bool> w_req_mem_write;
-    sc_signal<bool> w_req_mem_cached;
+    sc_signal<sc_uint<REQ_MEM_TYPE_BITS>> wb_req_mem_type;
     sc_signal<sc_uint<3>> wb_req_mem_size;
     sc_signal<sc_uint<3>> wb_req_mem_prot;
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_req_mem_addr;

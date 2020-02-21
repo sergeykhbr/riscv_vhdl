@@ -40,8 +40,7 @@ SC_MODULE(L2CacheLru) {
     // Memory interface:
     sc_in<bool> i_req_mem_ready;
     sc_out<bool> o_req_mem_valid;
-    sc_out<bool> o_req_mem_write;
-    sc_out<bool> o_req_mem_cached;
+    sc_out<sc_uint<REQ_MEM_TYPE_BITS>> o_req_mem_type;
     sc_out<sc_uint<3>> o_req_mem_size;
     sc_out<sc_uint<3>> o_req_mem_prot;
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_req_mem_addr;
@@ -78,7 +77,6 @@ SC_MODULE(L2CacheLru) {
         State_CheckResp,
         State_SetupReadAdr,
         State_WriteBus,
-        State_WriteAck,
         State_FlushAddr,
         State_FlushCheck,
         State_Reset,
@@ -110,14 +108,14 @@ SC_MODULE(L2CacheLru) {
         sc_signal<sc_uint<L1CACHE_BYTES_PER_LINE>> req_wstrb;
         sc_signal<sc_uint<4>> state;
         sc_signal<bool> req_mem_valid;
-        sc_signal<bool> mem_write;
+        sc_signal<sc_uint<REQ_MEM_TYPE_BITS>> req_mem_type;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mem_addr;
-        sc_signal<bool> cached;
         sc_signal<sc_uint<2>> rb_resp;     // r_resp, b_resp
         sc_signal<bool> write_first;
         sc_signal<bool> write_flush;
         sc_signal<sc_uint<L2CACHE_BYTES_PER_LINE>> mem_wstrb;
         sc_signal<bool> req_flush;
+        sc_signal<bool> req_flush_all;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_flush_addr;
         sc_signal<sc_uint<CFG_L2_LOG2_LINES_PER_WAY + CFG_L2_LOG2_NWAYS>> req_flush_cnt;
         sc_signal<sc_uint<CFG_L2_LOG2_LINES_PER_WAY + CFG_L2_LOG2_NWAYS>> flush_cnt;
@@ -134,14 +132,14 @@ SC_MODULE(L2CacheLru) {
         iv.req_wstrb = 0;
         iv.state = State_Reset;
         iv.req_mem_valid = 0;
-        iv.mem_write = 0;
+        iv.req_mem_type = 0;
         iv.mem_addr = 0;
-        iv.cached = 0;
         iv.rb_resp = 0;
         iv.write_first = 0;
         iv.write_flush = 0;
         iv.mem_wstrb = 0;
         iv.req_flush = 0;           // init flush request
+        iv.req_flush_all = 0;
         iv.req_flush_addr = 0;   // [0]=1 flush all
         iv.req_flush_cnt = 0;
         iv.flush_cnt = ~0ul;

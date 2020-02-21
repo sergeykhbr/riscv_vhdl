@@ -35,8 +35,7 @@ L2CacheLru::L2CacheLru(sc_module_name name_, bool async_reset)
     o_resp_status("o_resp_status"),
     i_req_mem_ready("i_req_mem_ready"),
     o_req_mem_valid("o_req_mem_valid"),
-    o_req_mem_write("o_req_mem_write"),
-    o_req_mem_cached("o_req_mem_cached"),
+    o_req_mem_type("o_req_mem_type"),
     o_req_mem_size("o_req_mem_size"),
     o_req_mem_prot("o_req_mem_prot"),
     o_req_mem_addr("o_req_mem_addr"),
@@ -101,14 +100,14 @@ L2CacheLru::L2CacheLru(sc_module_name name_, bool async_reset)
     sensitive << r.req_addr;
     sensitive << r.state;
     sensitive << r.req_mem_valid;
-    sensitive << r.mem_write;
+    sensitive << r.req_mem_type;
     sensitive << r.mem_addr;
-    sensitive << r.cached;
     sensitive << r.rb_resp;
     sensitive << r.write_first;
     sensitive << r.write_flush;
     sensitive << r.mem_wstrb;
     sensitive << r.req_flush;
+    sensitive << r.req_flush_all;
     sensitive << r.req_flush_addr;
     sensitive << r.req_flush_cnt;
     sensitive << r.flush_cnt;
@@ -141,8 +140,7 @@ void L2CacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
         sc_trace(o_vcd, i_req_mem_ready, i_req_mem_ready.name());
         sc_trace(o_vcd, o_req_mem_valid, o_req_mem_valid.name());
-        sc_trace(o_vcd, o_req_mem_write, o_req_mem_write.name());
-        sc_trace(o_vcd, o_req_mem_cached, o_req_mem_cached.name());
+        sc_trace(o_vcd, o_req_mem_type, o_req_mem_type.name());
         sc_trace(o_vcd, o_req_mem_size, o_req_mem_size.name());
         sc_trace(o_vcd, o_req_mem_addr, o_req_mem_addr.name());
         sc_trace(o_vcd, o_req_mem_strob, o_req_mem_strob.name());
@@ -167,7 +165,7 @@ void L2CacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, line_raddr_o, pn + ".line_raddr_o");
         sc_trace(o_vcd, line_rdata_o, pn + ".line_rdata_o");
         sc_trace(o_vcd, r.rb_resp, pn + ".r_rb_resp");
-        sc_trace(o_vcd, r.cached, pn + ".r_cached");
+        sc_trace(o_vcd, r.req_mem_type, pn + ".r_req_mem_type");
         sc_trace(o_vcd, r.cache_line_i, pn + ".r_cache_line_i");
         sc_trace(o_vcd, r.cache_line_o, pn + ".r_cache_line_o");
         sc_trace(o_vcd, r.write_first, pn + ".r_write_first");
@@ -208,6 +206,7 @@ void L2CacheLru::comb() {
     bool v_req_same_line;
     bool v_ready_next;
     sc_uint<L2_REQ_TYPE_BITS> vb_req_type;
+    sc_uint<CFG_CPU_ADDR_BITS> vb_addr_direct_next;
    
     v = r;
     vb_req_type = r.req_type;   // systemc specific
@@ -240,11 +239,12 @@ void L2CacheLru::comb() {
 
     if (i_flush_valid.read() == 1) {
         v.req_flush = 1;
+        v.req_flush_all = i_flush_address.read()[0];
         if (i_flush_address.read()[0] == 1) {
             v.req_flush_cnt = ~0u;
             v.req_flush_addr = 0;
         } else {
-            v.req_flush_cnt = L2CACHE_WAYS-1;
+            v.req_flush_cnt = 0;
             v.req_flush_addr = i_flush_address.read();
         }
     }
@@ -275,6 +275,14 @@ void L2CacheLru::comb() {
             r.req_wstrb.read();
     }
     
+    // Flush counter when direct access
+    if (r.req_addr.read()(CFG_L2_LOG2_NWAYS-1, 0) == L2CACHE_WAYS-1) {
+        vb_addr_direct_next = (r.req_addr.read() + L2CACHE_BYTES_PER_LINE) 
+                    & ~((1<<CFG_L2_LOG2_BYTES_PER_LINE)-1);
+    } else {
+        vb_addr_direct_next = r.req_addr.read() + 1;
+    }
+
     v_line_cs_read = 0;
     v_line_cs_write = 0;
     vb_line_addr = r.req_addr.read();
@@ -320,28 +328,34 @@ void L2CacheLru::comb() {
         break;
     case State_TranslateAddress:
         v.req_mem_valid = 1;
-        v.mem_write = 0;
         v.state = State_WaitGrant;
 
         if (r.req_type.read()[L2_REQ_TYPE_CACHED] == 1) {
             if (line_rflags_o.read()[TAG_FL_VALID] == 1 &&
                 line_rflags_o.read()[L2TAG_FL_DIRTY] == 1) {
                 v.write_first = 1;
-                v.mem_write = 1;
+                v.req_mem_type = WriteBack();
                 v.mem_addr = line_raddr_o.read()(CFG_CPU_ADDR_BITS-1,
                             CFG_L2_LOG2_BYTES_PER_LINE) << CFG_L2_LOG2_BYTES_PER_LINE;
             } else {
                 v.mem_addr = r.req_addr.read()(CFG_CPU_ADDR_BITS-1,
                             CFG_L2_LOG2_BYTES_PER_LINE) << CFG_L2_LOG2_BYTES_PER_LINE;
+                if (r.req_type.read()[L2_REQ_TYPE_WRITE] == 1) {
+                    v.req_mem_type = ReadMakeUnique();
+                } else {
+                    v.req_mem_type = ReadShared();
+                }
             }
             v.mem_wstrb = ~0ul;
-            v.cached = 1;
             v.cache_line_o = line_rdata_o;
         } else {
             v.mem_addr = r.req_addr.read();
             v.mem_wstrb = (0, r.req_wstrb.read());
-            v.mem_write = r.req_type.read()[L2_REQ_TYPE_WRITE];
-            v.cached = 0;
+            if (r.req_type.read()[L2_REQ_TYPE_WRITE] == 1) {
+                v.req_mem_type = WriteNoSnoop();
+            } else {
+                v.req_mem_type = ReadNoSnoop();
+            }
             t_cache_line_i = 0;
             t_cache_line_i(63, 0) = r.req_wdata.read();
             v.cache_line_o = t_cache_line_i;
@@ -375,7 +389,8 @@ void L2CacheLru::comb() {
         }
         break;
     case State_CheckResp:
-        if (r.cached.read() == 0 || r.rb_resp.read() != 0) {
+        if (r.req_mem_type.read()[REQ_MEM_TYPE_CACHED] == 0 ||
+            r.rb_resp.read() != 0) {
             // uncached read only (write goes to WriteBus) or cached load-modify fault
             v_resp_valid = 1;
             vb_resp_rdata = vb_uncached_data;
@@ -402,11 +417,6 @@ void L2CacheLru::comb() {
         break;
     case State_WriteBus:
         if (i_mem_data_valid.read()) {
-            v.state = State_WriteAck;
-        }
-        break;
-    case State_WriteAck:
-        if (i_mem_data_ack.read() == 1) {
             if (r.write_flush.read() == 1) {
                 // Offloading Cache line on flush request
                 v.state = State_FlushAddr;
@@ -415,7 +425,12 @@ void L2CacheLru::comb() {
                             << CFG_L2_LOG2_BYTES_PER_LINE;
                 v.req_mem_valid = 1;
                 v.write_first = 0;
-                v.mem_write = 0;
+                if (r.req_type.read()[L2_REQ_TYPE_WRITE] == 1) {
+                    // read request: read-modify-save cache line
+                    v.req_mem_type = ReadMakeUnique();
+                } else {
+                    v.req_mem_type = ReadShared();
+                }
                 v.state = State_WaitGrant;
             } else {
                 // Non-cached write
@@ -427,21 +442,23 @@ void L2CacheLru::comb() {
         break;
     case State_FlushAddr:
         v.state = State_FlushCheck;
-        v_invalidate = 1;               // will be applied on next clock if hit
+        v_direct_access = r.req_flush_all;      // 0=only if hit; 1=will be applied ignoring hit
+        v_invalidate = 1;                       // generate: wstrb='1; wflags='0
         v.write_flush = 0;
         v.cache_line_i = 0;
         break;
     case State_FlushCheck:
         v.cache_line_o = line_rdata_o.read();
+        v_direct_access = r.req_flush_all;
+        v_line_cs_write = r.req_flush_all;
         if (line_rflags_o.read()[TAG_FL_VALID] == 1 &&
             line_rflags_o.read()[L2TAG_FL_DIRTY] == 1) {
             /** Off-load valid line */
             v.write_flush = 1;
             v.mem_addr = line_raddr_o.read();
             v.req_mem_valid = 1;
-            v.mem_write = 1;
+            v.req_mem_type = WriteBack();
             v.mem_wstrb = ~0ul;
-            v.cached = 1;
             v.state = State_WaitGrant;
         } else {
             /** Write clean line */
@@ -453,30 +470,26 @@ void L2CacheLru::comb() {
         }
         if (r.flush_cnt.read().or_reduce() == 1) {
             v.flush_cnt = r.flush_cnt.read() - 1;
-            v.req_addr = r.req_addr.read() + L2CACHE_BYTES_PER_LINE;
+            if (r.req_flush_all == 1) {
+                v.req_addr = vb_addr_direct_next;
+            } else {
+                v.req_addr = r.req_addr.read() + L2CACHE_BYTES_PER_LINE;
+            }
         }
         break;
     case State_Reset:
         /** Write clean line */
         v_direct_access = 1;
+        v_invalidate = 1;                       // generate: wstrb='1; wflags='0
         v.state = State_ResetWrite;
         break;
     case State_ResetWrite:
         v_direct_access = 1;
         v_line_cs_write = 1;
-        v_line_wflags = 0;      // flag valid = 0
-        vb_line_wstrb = ~0ul;   // write full line
         v.state = State_Reset;
-
         if (r.flush_cnt.read().or_reduce() == 1) {
             v.flush_cnt = r.flush_cnt.read() - 1;
-            /** Use lsb address bits to manually select memory WAY bank: */
-            if (r.req_addr.read()(CFG_L2_LOG2_NWAYS-1, 0) == L2CACHE_WAYS-1) {
-                v.req_addr = (r.req_addr.read() + L2CACHE_BYTES_PER_LINE) 
-                            & ~((1<<CFG_L2_LOG2_BYTES_PER_LINE)-1);
-            } else {
-                v.req_addr = r.req_addr.read() + 1;
-            }
+            v.req_addr = vb_addr_direct_next;
         } else {
             v.state = State_Idle;
         }
@@ -489,13 +502,8 @@ void L2CacheLru::comb() {
             v.state = State_FlushAddr;
             v.req_flush = 0;
             v.cache_line_i = 0;
-            if (r.req_flush_addr.read()[0] == 1) {
-                v.req_addr = 0;
-                v.flush_cnt = ~0u;
-            } else {
-                v.req_addr = r.req_flush_addr.read() & ~((1<<CFG_L2_LOG2_BYTES_PER_LINE)-1);
-                v.flush_cnt = r.req_flush_cnt.read();
-            }
+            v.req_addr = r.req_flush_addr.read() & ~((1<<CFG_L2_LOG2_BYTES_PER_LINE)-1);
+            v.flush_cnt = r.req_flush_cnt.read();
         } else {
             v_line_cs_read = i_req_valid.read();
             v_req_ready = 1;
@@ -529,8 +537,7 @@ void L2CacheLru::comb() {
     o_req_ready = v_req_ready;
 
     o_req_mem_valid = r.req_mem_valid.read();
-    o_req_mem_write = r.mem_write.read();
-    o_req_mem_cached = r.cached.read();
+    o_req_mem_type = r.req_mem_type.read();
     o_req_mem_size = r.req_size.read();
     o_req_mem_prot = r.req_prot.read();
     o_req_mem_addr = r.mem_addr.read();

@@ -62,12 +62,12 @@ SC_MODULE(RiverAmba) {
  private:
     RiverTop *river0;
 
-    sc_uint<4> reqtype2arsnoop(sc_uint<L1_REQ_TYPE_BITS> reqtype) {
+    sc_uint<4> reqtype2arsnoop(sc_uint<REQ_MEM_TYPE_BITS> reqtype) {
         sc_uint<4> ret = 0;
-        if (reqtype[L1_REQ_TYPE_CACHED] == 0) {
+        if (reqtype[REQ_MEM_TYPE_CACHED] == 0) {
             ret = ARSNOOP_READ_NO_SNOOP;
         } else {
-            if (reqtype[L1_REQ_TYPE_UNIQUE] == 0) {
+            if (reqtype[REQ_MEM_TYPE_UNIQUE] == 0) {
                 ret = ARSNOOP_READ_SHARED;
             } else {
                 ret = ARSNOOP_READ_MAKE_UNIQUE;
@@ -76,12 +76,12 @@ SC_MODULE(RiverAmba) {
         return ret;
     }
 
-    sc_uint<3> reqtype2awsnoop(sc_uint<L1_REQ_TYPE_BITS> reqtype) {
+    sc_uint<3> reqtype2awsnoop(sc_uint<REQ_MEM_TYPE_BITS> reqtype) {
         sc_uint<3> ret = 0;
-        if (reqtype[L1_REQ_TYPE_CACHED] == 0) {
+        if (reqtype[REQ_MEM_TYPE_CACHED] == 0) {
             ret = AWSNOOP_WRITE_NO_SNOOP;
         } else {
-            if (reqtype[L1_REQ_TYPE_UNIQUE] == 0) {
+            if (reqtype[REQ_MEM_TYPE_UNIQUE] == 0) {
                 ret = AWSNOOP_WRITE_BACK;
             } else {
                 ret = AWSNOOP_WRITE_LINE_UNIQUE;
@@ -93,7 +93,7 @@ SC_MODULE(RiverAmba) {
     sc_signal<bool> req_mem_ready_i;
     sc_signal<bool> req_mem_path_o;
     sc_signal<bool> req_mem_valid_o;
-    sc_signal<sc_uint<L1_REQ_TYPE_BITS>> req_mem_type_o;
+    sc_signal<sc_uint<REQ_MEM_TYPE_BITS>> req_mem_type_o;
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_mem_addr_o;
     sc_signal<sc_uint<L1CACHE_BYTES_PER_LINE>> req_mem_strob_o;
     sc_signal<sc_biguint<L1CACHE_LINE_BITS>> req_mem_data_o;

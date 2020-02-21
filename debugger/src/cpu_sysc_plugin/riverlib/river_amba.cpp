@@ -184,7 +184,7 @@ void RiverAmba::comb() {
         if (req_mem_valid_o.read() == 1) {
             v.req_path = req_mem_path_o.read();
             v.req_addr = req_mem_addr_o;
-            if (req_mem_type_o.read()[L1_REQ_TYPE_CACHED] == 1) {
+            if (req_mem_type_o.read()[REQ_MEM_TYPE_CACHED] == 1) {
                 v.req_size = 0x5;   // 32 Bytes
             } else if (req_mem_path_o.read() == 1) {
                 v.req_size = 0x4;   // 16 Bytes: Uncached Instruction
@@ -195,11 +195,11 @@ void RiverAmba::comb() {
             // [1] 0=Secure/1=Non-secure;
             // [2]  0=Data/1=Instruction
             v.req_prot = req_mem_path_o.read() << 2;
-            if (req_mem_type_o.read()[L1_REQ_TYPE_WRITE] == 0) {
+            if (req_mem_type_o.read()[REQ_MEM_TYPE_WRITE] == 0) {
                 v.state = state_ar;
                 v.req_wdata = 0;
                 v.req_wstrb = 0;
-                if (req_mem_type_o.read()[L1_REQ_TYPE_CACHED] == 1) {
+                if (req_mem_type_o.read()[REQ_MEM_TYPE_CACHED] == 1) {
                     v.req_cached = ARCACHE_WRBACK_READ_ALLOCATE;
                 } else {
                     v.req_cached = ARCACHE_DEVICE_NON_BUFFERABLE;
@@ -211,7 +211,7 @@ void RiverAmba::comb() {
                 v.state = state_aw;
                 v.req_wdata = req_mem_data_o;
                 v.req_wstrb = req_mem_strob_o;
-                if (req_mem_type_o.read()[L1_REQ_TYPE_CACHED] == 1) {
+                if (req_mem_type_o.read()[REQ_MEM_TYPE_CACHED] == 1) {
                     v.req_cached = AWCACHE_WRBACK_WRITE_ALLOCATE;
                 } else {
                     v.req_cached = AWCACHE_DEVICE_NON_BUFFERABLE;
