@@ -35,8 +35,10 @@ template <int abus, int waybits, int ibits, int lnbits, int flbits, int snoop>
 SC_MODULE(TagMemNWay) {
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;
-    sc_in<bool> i_cs;
-    sc_in<bool> i_flush;
+    sc_in<bool> i_direct_access;    // lsb bits of address forms way index to access
+    sc_in<bool> i_invalidate;
+    sc_in<bool> i_re;
+    sc_in<bool> i_we;
     sc_in<sc_uint<abus>> i_addr;
     sc_in<sc_biguint<8*(1<<lnbits)>> i_wdata;
     sc_in<sc_uint<(1<<lnbits)>> i_wstrb;
@@ -44,7 +46,6 @@ SC_MODULE(TagMemNWay) {
     sc_out<sc_uint<abus>> o_raddr;
     sc_out<sc_biguint<8*(1<<lnbits)>> o_rdata;
     sc_out<sc_uint<flbits>> o_rflags;
-    sc_out<bool> o_hit;
     // L2 snoop port, active when snoop = 1
     sc_in<sc_uint<abus>> i_snoop_addr;
     sc_out<bool> o_snoop_ready;     // single port memory not used for writing
@@ -59,8 +60,10 @@ SC_MODULE(TagMemNWay) {
         : sc_module(name_),
         i_clk("i_clk"),
         i_nrst("i_nrst"),
-        i_cs("i_cs"),
-        i_flush("i_flush"),
+        i_direct_access("i_direct_access"),
+        i_invalidate("i_invalidate"),
+        i_re("i_re"),
+        i_we("i_we"),
         i_addr("i_addr"),
         i_wdata("i_wdata"),
         i_wstrb("i_wstrb"),
@@ -68,7 +71,6 @@ SC_MODULE(TagMemNWay) {
         o_raddr("o_raddr"),
         o_rdata("o_rdata"),
         o_rflags("o_rflags"),
-        o_hit("o_hit"),
         i_snoop_addr("i_snoop_addr"),
         o_snoop_ready("o_snoop_ready"),
         o_snoop_flags("o_snoop_flags") {
@@ -90,20 +92,23 @@ SC_MODULE(TagMemNWay) {
             wayx[i]->o_rflags(way_o[i].rflags);
             wayx[i]->o_hit(way_o[i].hit);
             wayx[i]->i_snoop_addr(way_i[i].snoop_addr);
-            wayx[i]->o_snoop_ready(way_o[i].snoop_ready);
             wayx[i]->o_snoop_flags(way_o[i].snoop_flags);
         }
 
         lru = new lrunway<ibits, waybits>("lru0");
         lru->i_clk(i_clk);
-        lru->i_flush(lrui_flush);
+        lru->i_init(lrui_init);
         lru->i_addr(lrui_addr);
-        lru->i_we(lrui_we);
+        lru->i_up(lrui_up);
+        lru->i_down(lrui_down);
         lru->i_lru(lrui_lru);
         lru->o_lru(lruo_lru);
 
         SC_METHOD(comb);
-        sensitive << i_flush;
+        sensitive << i_direct_access;
+        sensitive << i_invalidate;
+        sensitive << i_re;
+        sensitive << i_we;
         sensitive << i_addr;
         sensitive << i_wdata;
         sensitive << i_wstrb;
@@ -114,11 +119,12 @@ SC_MODULE(TagMemNWay) {
             sensitive << way_o[i].rdata;
             sensitive << way_o[i].rflags;
             sensitive << way_o[i].hit;
-            sensitive << way_o[i].snoop_ready;
             sensitive << way_o[i].snoop_flags;
         }
         sensitive << lruo_lru;
         sensitive << r.req_addr;
+        sensitive << r.direct_access;
+        sensitive << r.invalidate;
         sensitive << r.re;
 
         SC_METHOD(registers);
@@ -151,7 +157,6 @@ SC_MODULE(TagMemNWay) {
         sc_signal<sc_biguint<8*(1<<lnbits)>> rdata;
         sc_signal<sc_uint<flbits>> rflags;
         sc_signal<bool> hit;
-        sc_signal<bool> snoop_ready;
         sc_signal<sc_uint<flbits>> snoop_flags;
     };
 
@@ -161,26 +166,25 @@ SC_MODULE(TagMemNWay) {
     WayInType way_i[NWAYS];
     WayOutType way_o[NWAYS];
 
-    sc_signal<bool> lrui_flush;
+    sc_signal<bool> lrui_init;
     sc_signal<sc_uint<ibits>> lrui_addr;
-    sc_signal<bool> lrui_we;
+    sc_signal<bool> lrui_up;
+    sc_signal<bool> lrui_down;
     sc_signal<sc_uint<waybits>> lrui_lru;
     sc_signal<sc_uint<waybits>> lruo_lru;
 
-    sc_uint<abus> mux_raddr;
-    sc_biguint<8*(1<<lnbits)> mux_rdata;
-    sc_uint<flbits> mux_rflags;
-
     struct RegistersType {
         sc_signal<sc_uint<abus>> req_addr;
+        sc_signal<bool> direct_access;
+        sc_signal<bool> invalidate;
         sc_signal<bool> re;
-        sc_signal<bool> flush;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
         iv.req_addr = 0;
+        iv.direct_access = 0;
+        iv.invalidate = 0;
         iv.re = 0;
-        iv.flush = 0;
     }
 
     bool async_reset_;
@@ -189,55 +193,55 @@ SC_MODULE(TagMemNWay) {
 
 template <int abus, int waybits, int ibits, int lnbits, int flbits, int snoop>
 void TagMemNWay<abus, waybits, ibits, lnbits, flbits, snoop>::comb() {
-    sc_uint<waybits> vb_wayidx_o;
-    sc_uint<ibits> vb_lineadr;
-    bool v_lrui_we;
     bool hit;
-    sc_uint<waybits> vb_snoop_wayidx_o;
-    sc_uint<flbits> mux_snoop_flags;
-    bool mux_snoop_ready;
+    sc_uint<abus> vb_raddr;
+    sc_biguint<8*(1<<lnbits)> vb_rdata;
+    sc_uint<flbits> vb_rflags;
+    sc_uint<waybits> vb_hit_idx;
+    bool v_way_we;
+    sc_uint<(1<<lnbits)> vb_wstrb;
+    sc_uint<flbits> vb_wflags;
+
+    bool v_snoop_ready;
+    sc_uint<waybits> vb_snoop_hit_idx;
+    sc_uint<flbits> vb_snoop_flags;
 
     hit = 0;
-    v_lrui_we = 0;
+
+    v.direct_access = i_direct_access;
+    v.invalidate = i_invalidate;
+    v.re = i_re;
     v.req_addr = i_addr.read();
-    v.re = i_cs.read();
-    v.flush = i_flush.read();
 
-    vb_lineadr = i_addr.read()(ibits+lnbits-1, lnbits);
-
-    if (i_cs.read() == 1) {
-        if (i_wstrb.read() != 0) {
-            v_lrui_we = 1;
-        }
-    }
-
-    vb_wayidx_o = lruo_lru.read();
-    for (int i = 0; i < NWAYS; i++) {
-        if (r.flush.read() == 1 && r.req_addr.read()(waybits-1, 0) == i) {
-            vb_wayidx_o = i;
-        } else if (way_o[i].hit.read() == 1 &&
-            way_o[i].rflags.read()[FL_VALID] == 1) {
-            hit = 1;
-            vb_wayidx_o = i;
-            v_lrui_we = r.re.read();
-        }
-    }
-
-    mux_raddr = way_o[vb_wayidx_o.to_int()].raddr;
-    mux_rdata = way_o[vb_wayidx_o.to_int()].rdata;
-    mux_rflags = way_o[vb_wayidx_o.to_int()].rflags;
-
-    if (snoop) {
-        vb_snoop_wayidx_o = lruo_lru.read();
+    vb_raddr = 0;
+    vb_rdata = 0;
+    vb_rflags = 0;
+    vb_hit_idx = lruo_lru.read();
+    if (r.direct_access.read() == 1) {
+        vb_hit_idx = r.req_addr.read()(waybits-1, 0);
+        vb_raddr = way_o[vb_hit_idx.to_int()].raddr;
+        vb_rdata = way_o[vb_hit_idx.to_int()].rdata;
+        vb_rflags = way_o[vb_hit_idx.to_int()].rflags;
+    } else {
         for (int i = 0; i < NWAYS; i++) {
-            if (way_o[i].snoop_flags.read()[FL_VALID] == 1) {
-                vb_snoop_wayidx_o = i;
+            if (way_o[i].hit.read() == 1 &&
+                way_o[i].rflags.read()[FL_VALID] == 1) {
+                hit = 1;
+                vb_hit_idx = i;
+                vb_raddr = way_o[i].raddr;
+                vb_rdata = way_o[i].rdata;
+                vb_rflags = way_o[i].rflags;
             }
         }
-        mux_snoop_flags = way_o[vb_snoop_wayidx_o.to_int()].snoop_flags;
-        mux_snoop_ready = way_o[vb_snoop_wayidx_o.to_int()].snoop_ready;
     }
 
+    if (r.invalidate.read() == 1 && hit) {
+        vb_wflags = 0;
+        vb_wstrb = ~0ul;
+    } else {
+        vb_wflags = i_wflags.read();
+        vb_wstrb = i_wstrb.read();
+    }
     /**
         Warning: we can write only into previously read line,
                     if the previuosly read line is hit and contains valid flags
@@ -246,31 +250,47 @@ void TagMemNWay<abus, waybits, ibits, lnbits, flbits, snoop>::comb() {
     for (int i = 0; i < NWAYS; i++) {
         way_i[i].addr = i_addr.read();
         way_i[i].wdata = i_wdata.read();
-        if ((i_flush.read() == 1 && i_addr.read()(waybits-1, 0) == i) 
-            || (i_cs.read() == 1 && vb_wayidx_o == i)) {
-            way_i[i].wstrb = i_wstrb.read();
-        } else {
-            way_i[i].wstrb = 0;
-        }
-        way_i[i].wflags = i_wflags.read();
+        way_i[i].wstrb = 0;
+        way_i[i].wflags = vb_wflags;
         way_i[i].snoop_addr = i_snoop_addr.read();
     }
 
-    lrui_flush = i_flush.read();
-    lrui_addr = vb_lineadr;
-    lrui_we = v_lrui_we;
-    lrui_lru = vb_wayidx_o;
+    v_way_we = i_we.read() || (r.invalidate.read() == 1 && hit);
+    if (v_way_we == 1) {
+        way_i[vb_hit_idx.to_int()].wstrb = vb_wstrb;
+    }
+
+    v_snoop_ready = 1;
+    vb_snoop_flags = 0;
+    if (snoop) {
+        vb_snoop_hit_idx = lruo_lru.read();
+        for (int i = 0; i < NWAYS; i++) {
+            if (way_o[i].snoop_flags.read()[FL_VALID] == 1) {
+                vb_snoop_hit_idx = i;
+                vb_snoop_flags = way_o[i].snoop_flags;
+            }
+        }
+        // Writing into snoop tag memory, output value won't be valid on next clock
+        if (v_way_we == 1) {
+            v_snoop_ready = 0;
+        }
+    }
 
     if (!async_reset_ && i_nrst.read() == 0) {
         R_RESET(v);
     }
 
-    o_raddr = mux_raddr;
-    o_rdata = mux_rdata;
-    o_rflags = mux_rflags;
-    o_hit = hit;
-    o_snoop_ready = mux_snoop_ready;
-    o_snoop_flags = mux_snoop_flags;
+    lrui_init = r.direct_access.read();
+    lrui_addr = r.req_addr.read()(ibits+lnbits-1, lnbits);
+    lrui_up = i_we.read() || (hit && r.re.read());
+    lrui_down = (hit && r.invalidate.read());
+    lrui_lru = vb_hit_idx;
+
+    o_raddr = vb_raddr;
+    o_rdata = vb_rdata;
+    o_rflags = vb_rflags;
+    o_snoop_ready = v_snoop_ready;
+    o_snoop_flags = vb_snoop_flags;
 }
 
 template <int abus, int waybits, int ibits, int lnbits, int flbits, int snoop>
@@ -286,13 +306,14 @@ template <int abus, int waybits, int ibits, int lnbits, int flbits, int snoop>
 void TagMemNWay<abus, waybits, ibits, lnbits, flbits, snoop>::
 generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd)  {
     if (o_vcd) {
-        sc_trace(o_vcd, i_cs, i_cs.name());
-        sc_trace(o_vcd, i_flush, i_flush.name());
+        sc_trace(o_vcd, i_direct_access, i_direct_access.name());
+        sc_trace(o_vcd, i_invalidate, i_invalidate.name());
+        sc_trace(o_vcd, i_re, i_re.name());
+        sc_trace(o_vcd, i_we, i_we.name());
         sc_trace(o_vcd, i_addr, i_addr.name());
         sc_trace(o_vcd, i_wflags, i_wflags.name());
         sc_trace(o_vcd, i_wdata, i_wdata.name());
         sc_trace(o_vcd, i_wstrb, i_wstrb.name());
-        sc_trace(o_vcd, o_hit, o_hit.name());
         sc_trace(o_vcd, o_rdata, o_rdata.name());
 
         std::string pn(name());

@@ -57,8 +57,10 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset)
 
     memcouple->i_clk(i_clk);
     memcouple->i_nrst(i_nrst);
-    memcouple->i_cs(line_cs_i);
-    memcouple->i_flush(line_flush_i);
+    memcouple->i_direct_access(line_direct_access_i);
+    memcouple->i_invalidate(line_invalidate_i);
+    memcouple->i_re(line_re_i);
+    memcouple->i_we(line_we_i);
     memcouple->i_addr(line_addr_i);
     memcouple->i_wdata(line_wdata_i);
     memcouple->i_wstrb(line_wstrb_i);
@@ -156,24 +158,27 @@ void ICacheLru::comb() {
     sc_uint<32> vb_uncached_data;
     sc_uint<32> vb_resp_data;
     bool v_resp_er_load_fault;
-    bool v_flush;
-    bool v_line_cs;
+    bool v_direct_access;
+    bool v_invalidate;
+    bool v_line_cs_read;
+    bool v_line_cs_write;
     sc_uint<CFG_CPU_ADDR_BITS> vb_line_addr;
     sc_biguint<ICACHE_LINE_BITS> vb_line_wdata;
     sc_uint<ICACHE_BYTES_PER_LINE> vb_line_wstrb;
     sc_uint<ITAG_FL_TOTAL> v_line_wflags;
     int sel_cached;
     int sel_uncached;
-    sc_uint<L1_REQ_TYPE_BITS> vb_req_mem_type;
+    bool v_ready_next;
 
     v = r;
 
-    vb_req_mem_type = r.req_mem_type;
+    v_ready_next = 0;
     v_req_ready = 0;
     v_resp_valid = 0;
     vb_resp_data = 0;
     v_resp_er_load_fault = 0;
-    v_flush = 0;
+    v_direct_access = 0;
+    v_invalidate = 0;
     sel_cached = r.req_addr.read()(CFG_ILOG2_BYTES_PER_LINE-1, 1).to_int();
     sel_uncached = r.req_addr.read()(2, 1).to_int();
 
@@ -188,15 +193,16 @@ void ICacheLru::comb() {
             v.req_flush_cnt = ~0u;
             v.req_flush_addr = 0;
         } else if (i_flush_address.read()(CFG_ILOG2_BYTES_PER_LINE-1, 1).and_reduce() == 1) {
-            v.req_flush_cnt = 2*ICACHE_WAYS - 1;
+            v.req_flush_cnt = 1;
             v.req_flush_addr = i_flush_address.read();
         } else {
-            v.req_flush_cnt = ICACHE_WAYS - 1;
+            v.req_flush_cnt = 0;
             v.req_flush_addr = i_flush_address.read();
         }
     }
 
-    v_line_cs = 0;
+    v_line_cs_read = 0;
+    v_line_cs_write = 0;
     vb_line_addr = r.req_addr.read();
     vb_line_wdata = r.cache_line_i.read();
     vb_line_wstrb = 0;
@@ -205,44 +211,16 @@ void ICacheLru::comb() {
     switch (r.state.read()) {
     case State_Idle:
         v.executable = 1;
-        if (r.req_flush.read() == 1) {
-            v.state = State_Flush;
-            v.req_flush = 0;
-            v.cache_line_i = 0;
-            if (r.req_flush_addr.read()[0] == 1) {
-                v.req_addr = 0;
-                v.flush_cnt = ~0u;
-            } else {
-                v.req_addr = r.req_flush_addr.read() & ~LOG2_ILINE_BYTES_MASK;
-                v.flush_cnt = r.req_flush_cnt.read();
-            }
-        } else {
-            v_req_ready = 1;
-            v_line_cs = i_req_valid.read();
-            vb_line_addr = i_req_addr.read();
-            if (i_req_valid.read() == 1) {
-                v.req_addr = i_req_addr.read();
-                v.req_addr_next = i_req_addr.read() + ICACHE_BYTES_PER_LINE;
-                v.state = State_CheckHit;
-            }
-        }
+        v_ready_next = 1;
         break;
     case State_CheckHit:
         vb_resp_data = vb_cached_data;
         if (line_hit_o.read() == 1 && line_hit_next_o.read() == 1) {
             // Hit
-            v_req_ready = !r.req_flush.read();
             v_resp_valid = 1;
-            if (i_resp_ready.read() == 0) {
-                // Do nothing: wait accept
-            } else if (i_req_valid.read() == 0 || r.req_flush.read() == 1) {
+            if (i_resp_ready.read() == 1) {
+                v_ready_next = 1;
                 v.state = State_Idle;
-            } else {
-                v.state = State_CheckHit;
-                v_line_cs = i_req_valid.read();
-                v.req_addr = i_req_addr.read();
-                v.req_addr_next = i_req_addr.read() + ICACHE_BYTES_PER_LINE;
-                vb_line_addr = i_req_addr.read();
             }
         } else {
             // Miss
@@ -250,7 +228,6 @@ void ICacheLru::comb() {
         }
         break;
     case State_CheckMPU:
-        vb_req_mem_type = 0x0;
         if (i_mpu_flags.read()[CFG_MPU_FL_EXEC] == 0) {
             t_cache_line_i = 0;
             v.cache_line_i = ~t_cache_line_i;
@@ -269,9 +246,10 @@ void ICacheLru::comb() {
                     v.mem_addr = r.req_addr_next.read()(CFG_CPU_ADDR_BITS-1,
                             CFG_ILOG2_BYTES_PER_LINE) << CFG_ILOG2_BYTES_PER_LINE;
                 }
-                vb_req_mem_type[L1_REQ_TYPE_CACHED] = 1;
+                v.req_mem_type = ReadShared();
             } else {
                 v.mem_addr = r.req_addr.read()(CFG_CPU_ADDR_BITS-1, 3) << 3;
+                v.req_mem_type = ReadNoSnoop();
             }
         }
 
@@ -307,7 +285,7 @@ void ICacheLru::comb() {
             }
         } else {
             v.state = State_SetupReadAdr;
-            v_line_cs = 1;
+            v_line_cs_write = 1;
             v_line_wflags[TAG_FL_VALID] = 1;
             vb_line_wstrb = ~0ul;  // write full line
         }
@@ -315,38 +293,84 @@ void ICacheLru::comb() {
     case State_SetupReadAdr:
         v.state = State_CheckHit;
         break;
-    case State_Flush:
-        v_line_wflags = 0;      // flag valid = 0
-        vb_line_wstrb = ~0ul;   // write full line
-        v_flush = 1;
+    case State_FlushAddr:
+        v.state = State_FlushCheck;
+        v_invalidate = 1;               // will be applied on next clock if hit
+        v.cache_line_i = 0;
+        break;
+    case State_FlushCheck:
+        v.state = State_FlushAddr;
         if (r.flush_cnt.read().or_reduce() == 0) {
             v.state = State_Idle;
         } else {
             v.flush_cnt = r.flush_cnt.read() - 1;
-            /// Use lsb address bits to manually select memory WAY bank:
+            v.req_addr = r.req_addr.read() + ICACHE_BYTES_PER_LINE;
+        }
+        break;
+    case State_Reset:
+        /** Write clean line */
+        v_direct_access = 1;
+        v.state = State_ResetWrite;
+        break;
+    case State_ResetWrite:
+        v_direct_access = 1;
+        v_line_cs_write = 1;
+        v_line_wflags = 0;      // flag valid = 0
+        vb_line_wstrb = ~0ul;   // write full line
+        v.state = State_Reset;
+
+        if (r.flush_cnt.read().or_reduce() == 1) {
+            v.flush_cnt = r.flush_cnt.read() - 1;
+            /** Use lsb address bits to manually select memory WAY bank: */
             if (r.req_addr.read()(CFG_ILOG2_NWAYS-1, 0) == ICACHE_WAYS-1) {
-                v.req_addr = (r.req_addr.read() + ICACHE_BYTES_PER_LINE)
+                v.req_addr = (r.req_addr.read() + ICACHE_BYTES_PER_LINE) 
                             & ~LOG2_ILINE_BYTES_MASK;
             } else {
                 v.req_addr = r.req_addr.read() + 1;
             }
+        } else {
+            v.state = State_Idle;
         }
         break;
     default:;
     }
 
-    v.req_mem_type = vb_req_mem_type;
+    if (v_ready_next == 1) {
+        if (r.req_flush.read() == 1) {
+            v.state = State_FlushAddr;
+            v.req_flush = 0;
+            v.cache_line_i = 0;
+            if (r.req_flush_addr.read()[0] == 1) {
+                v.req_addr = 0;
+                v.flush_cnt = ~0u;
+            } else {
+                v.req_addr = r.req_flush_addr.read() & ~LOG2_ILINE_BYTES_MASK;
+                v.flush_cnt = r.req_flush_cnt.read();
+            }
+        } else {
+            v_req_ready = 1;
+            v_line_cs_read = i_req_valid.read();
+            vb_line_addr = i_req_addr.read();
+            if (i_req_valid.read() == 1) {
+                v.req_addr = i_req_addr.read();
+                v.req_addr_next = i_req_addr.read() + ICACHE_BYTES_PER_LINE;
+                v.state = State_CheckHit;
+            }
+        }
+    }
 
     if (!async_reset_ && !i_nrst.read()) {
         R_RESET(v);
     }
 
-    line_cs_i = v_line_cs;
+    line_direct_access_i = v_direct_access;
+    line_invalidate_i = v_invalidate;
+    line_re_i = v_line_cs_read;
+    line_we_i = v_line_cs_write;
     line_addr_i = vb_line_addr;
     line_wdata_i = vb_line_wdata;
     line_wstrb_i = vb_line_wstrb;
     line_wflags_i = v_line_wflags;
-    line_flush_i = v_flush;
 
     o_req_ready = v_req_ready;
 

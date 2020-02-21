@@ -33,8 +33,10 @@ template <int abus, int waybits, int ibits, int lnbits, int flbits>
 SC_MODULE(TagMemCoupled) {
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;
-    sc_in<bool> i_cs;
-    sc_in<bool> i_flush;
+    sc_in<bool> i_direct_access;
+    sc_in<bool> i_invalidate;
+    sc_in<bool> i_re;
+    sc_in<bool> i_we;
     sc_in<sc_uint<abus>> i_addr;
     sc_in<sc_biguint<8*(1<<lnbits)>> i_wdata;
     sc_in<sc_uint<(1<<lnbits)>> i_wstrb;
@@ -54,8 +56,10 @@ SC_MODULE(TagMemCoupled) {
         : sc_module(name_),
         i_clk("i_clk"),
         i_nrst("i_nrst"),
-        i_cs("i_cs"),
-        i_flush("i_flush"),
+        i_direct_access("i_direct_access"),
+        i_invalidate("i_invalidate"),
+        i_re("i_re"),
+        i_we("i_we"),
         i_addr("i_addr"),
         i_wdata("i_wdata"),
         i_wstrb("i_wstrb"),
@@ -79,8 +83,10 @@ SC_MODULE(TagMemCoupled) {
 
             mem[i]->i_clk(i_clk);
             mem[i]->i_nrst(i_nrst);
-            mem[i]->i_cs(linei[i].cs);
-            mem[i]->i_flush(linei[i].flush);
+            mem[i]->i_direct_access(linei[i].direct_access);
+            mem[i]->i_invalidate(linei[i].invalidate);
+            mem[i]->i_re(linei[i].re);
+            mem[i]->i_we(linei[i].we);
             mem[i]->i_addr(linei[i].addr);
             mem[i]->i_wdata(linei[i].wdata);
             mem[i]->i_wstrb(linei[i].wstrb);
@@ -88,15 +94,16 @@ SC_MODULE(TagMemCoupled) {
             mem[i]->o_raddr(lineo[i].raddr);
             mem[i]->o_rdata(lineo[i].rdata);
             mem[i]->o_rflags(lineo[i].rflags);
-            mem[i]->o_hit(lineo[i].hit);
             mem[i]->i_snoop_addr(linei[i].snoop_addr);
             mem[i]->o_snoop_ready(lineo[i].snoop_ready);
             mem[i]->o_snoop_flags(lineo[i].snoop_flags);
         }
 
         SC_METHOD(comb);
-        sensitive << i_cs;
-        sensitive << i_flush;
+        sensitive << i_direct_access;
+        sensitive << i_invalidate;
+        sensitive << i_re;
+        sensitive << i_we;
         sensitive << i_addr;
         sensitive << i_wdata;
         sensitive << i_wstrb;
@@ -105,7 +112,6 @@ SC_MODULE(TagMemCoupled) {
             sensitive << lineo[i].raddr;
             sensitive << lineo[i].rdata;
             sensitive << lineo[i].rflags;
-            sensitive << lineo[i].hit;
         }
         sensitive << r_req_addr;
 
@@ -132,12 +138,14 @@ SC_MODULE(TagMemCoupled) {
     };
 
     struct tagmem_in_type {
-        sc_signal<bool> cs;
+        sc_signal<bool> direct_access;
+        sc_signal<bool> invalidate;
+        sc_signal<bool> re;
+        sc_signal<bool> we;
         sc_signal<sc_uint<abus>> addr;
         sc_signal<sc_biguint<8*(1<<lnbits)>> wdata;
         sc_signal<sc_uint<(1<<lnbits)>> wstrb;
         sc_signal<sc_uint<flbits>> wflags;
-        sc_signal<bool> flush;
         sc_signal<sc_uint<abus>> snoop_addr;
     };
 
@@ -145,7 +153,6 @@ SC_MODULE(TagMemCoupled) {
         sc_signal<sc_uint<abus>> raddr;
         sc_signal<sc_biguint<8*(1<<lnbits)>> rdata;
         sc_signal<sc_uint<flbits>> rflags;
-        sc_signal<bool> hit;
         sc_signal<bool> snoop_ready;
         sc_signal<sc_uint<flbits>> snoop_flags;
     };
@@ -228,11 +235,17 @@ void TagMemCoupled<abus, waybits, ibits, lnbits, flbits>::comb() {
         linei[ODD].wstrb = i_wstrb.read();
     }
 
-    linei[EVEN].flush = i_flush.read() && !v_addr_sel;
-    linei[ODD].flush = i_flush.read() && v_addr_sel;
+    linei[EVEN].direct_access = i_direct_access.read() && (!v_addr_sel || v_use_overlay);
+    linei[ODD].direct_access = i_direct_access.read() && (v_addr_sel || v_use_overlay);
 
-    linei[EVEN].cs = i_cs.read() && (!v_addr_sel || v_use_overlay);
-    linei[ODD].cs = i_cs.read() && (v_addr_sel || v_use_overlay);
+    linei[EVEN].invalidate = i_invalidate.read() && (!v_addr_sel || v_use_overlay);
+    linei[ODD].invalidate = i_invalidate.read() && (v_addr_sel || v_use_overlay);
+
+    linei[EVEN].re = i_re.read() && (!v_addr_sel || v_use_overlay);
+    linei[ODD].re = i_re.read() && (v_addr_sel || v_use_overlay);
+
+    linei[EVEN].we = i_we.read() && (!v_addr_sel || v_use_overlay);
+    linei[ODD].we = i_we.read() && (v_addr_sel || v_use_overlay);
 
     linei[EVEN].wdata = i_wdata.read();
     linei[ODD].wdata = i_wdata.read();
@@ -246,22 +259,22 @@ void TagMemCoupled<abus, waybits, ibits, lnbits, flbits>::comb() {
         vb_raddr_tag = lineo[EVEN].raddr;
         vb_o_rflags = lineo[EVEN].rflags;
 
-        v_o_hit = lineo[EVEN].hit;
+        v_o_hit = lineo[EVEN].rflags.read()[TAG_FL_VALID];
         if (v_use_overlay_r == 0) {
-            v_o_hit_next = lineo[EVEN].hit;
+            v_o_hit_next = lineo[EVEN].rflags.read()[TAG_FL_VALID];
         } else {
-            v_o_hit_next = lineo[ODD].hit;
+            v_o_hit_next = lineo[ODD].rflags.read()[TAG_FL_VALID];
         }
     } else {
         vb_o_rdata = (lineo[EVEN].rdata.read()(15, 0), lineo[ODD].rdata);
         vb_raddr_tag = lineo[ODD].raddr;
         vb_o_rflags = lineo[ODD].rflags;
 
-        v_o_hit = lineo[ODD].hit;
+        v_o_hit = lineo[ODD].rflags.read()[TAG_FL_VALID];
         if (v_use_overlay_r == 0) {
-            v_o_hit_next = lineo[ODD].hit;
+            v_o_hit_next = lineo[ODD].rflags.read()[TAG_FL_VALID];
         } else {
-            v_o_hit_next = lineo[EVEN].hit;
+            v_o_hit_next = lineo[EVEN].rflags.read()[TAG_FL_VALID];
         }
     }
 
@@ -290,8 +303,10 @@ template <int abus, int waybits, int ibits, int lnbits, int flbits>
 void TagMemCoupled<abus, waybits, ibits, lnbits, flbits>::
 generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd)  {
     if (o_vcd) {
-        sc_trace(o_vcd, i_cs, i_cs.name());
-        sc_trace(o_vcd, i_flush, i_flush.name());
+        sc_trace(o_vcd, i_direct_access, i_direct_access.name());
+        sc_trace(o_vcd, i_invalidate, i_invalidate.name());
+        sc_trace(o_vcd, i_re, i_re.name());
+        sc_trace(o_vcd, i_we, i_we.name());
         sc_trace(o_vcd, i_addr, i_addr.name());
         sc_trace(o_vcd, i_wflags, i_wflags.name());
         sc_trace(o_vcd, i_wdata, i_wdata.name());

@@ -27,9 +27,10 @@ namespace debugger {
 template <int abits, int waybits>
 SC_MODULE(lrunway) {
     sc_in<bool> i_clk;
-    sc_in<bool> i_flush;
+    sc_in<bool> i_init;
     sc_in<sc_uint<abits>> i_addr;
-    sc_in<bool> i_we;
+    sc_in<bool> i_up;
+    sc_in<bool> i_down;
     sc_in<sc_uint<waybits>> i_lru;
     sc_out<sc_uint<waybits>> o_lru;
 
@@ -40,16 +41,18 @@ SC_MODULE(lrunway) {
 
     lrunway(sc_module_name name_) : sc_module(name_),
         i_clk("i_clk"),
-        i_flush("i_flush"),
+        i_init("i_init"),
         i_addr("i_addr"),
-        i_we("i_we"),
+        i_up("i_up"),
+        i_down("i_down"),
         i_lru("i_lru"),
         o_lru("o_lru") {
 
         SC_METHOD(comb);
-        sensitive << i_flush;
+        sensitive << i_init;
         sensitive << i_addr;
-        sensitive << i_we;
+        sensitive << i_up;
+        sensitive << i_down;
         sensitive << i_lru;
         sensitive << radr;
         sensitive << wb_tbl_rdata;
@@ -79,9 +82,10 @@ template <int abits, int waybits>
 void lrunway<abits, waybits>::generateVCD(sc_trace_file *i_vcd,
                                      sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_flush, i_flush.name());
+        sc_trace(o_vcd, i_init, i_init.name());
         sc_trace(o_vcd, i_addr, i_addr.name());
-        sc_trace(o_vcd, i_we, i_we.name());
+        sc_trace(o_vcd, i_up, i_up.name());
+        sc_trace(o_vcd, i_down, i_down.name());
         sc_trace(o_vcd, i_lru, i_lru.name());
         sc_trace(o_vcd, o_lru, o_lru.name());
 
@@ -95,81 +99,77 @@ void lrunway<abits, waybits>::generateVCD(sc_trace_file *i_vcd,
 
 template <int abits, int waybits>
 void lrunway<abits, waybits>::comb() {
-    //sc_uint<LINE_WIDTH - waybits> vb_shift;
+    sc_uint<abits> vb_tbl_wadr;
+    sc_uint<LINE_WIDTH> vb_tbl_wdata_init;
+    sc_uint<LINE_WIDTH> vb_tbl_wdata_up;
+    sc_uint<LINE_WIDTH> vb_tbl_wdata_down;
     sc_uint<LINE_WIDTH> vb_tbl_wdata;
     sc_uint<LINE_WIDTH> vb_tbl_rdata;
     bool v_we;
-    bool shift_ena;
+    bool shift_ena_up;
+    bool shift_ena_down;
 
     vb_tbl_rdata = wb_tbl_rdata;
-    wb_tbl_wadr = radr.read();
 
-    shift_ena = 0;
-    v_we = i_we.read();
-    vb_tbl_wdata = vb_tbl_rdata;
-    if (i_flush.read() == 1) {
-        v_we = 1;
-        wb_tbl_wadr = i_addr.read();
-        for (int i = 0; i < WAYS_TOTAL; i++) {
-            vb_tbl_wdata((i+1)*waybits-1, i*waybits) = i;
-        }
-        //vb_tbl_wdata = 0xe4;        // 0x3, 0x2, 0x1, 0x0
-    } else if (i_we.read()) {
-#if 1
-        if (vb_tbl_rdata(LINE_WIDTH-1, LINE_WIDTH-waybits) != i_lru.read()) {
-           vb_tbl_wdata(LINE_WIDTH-1, LINE_WIDTH-waybits) = i_lru.read();
-           shift_ena = 1;
+    v_we = i_up.read() || i_down.read() || i_init.read();
 
-           for (int i = WAYS_TOTAL-2; i >= 0; i--) {
-                if (shift_ena == 1) {
-                    vb_tbl_wdata((i+1)*waybits-1, i*waybits) =
-                            vb_tbl_rdata((i+2)*waybits-1, (i+1)*waybits);
-                    if (vb_tbl_rdata((i+1)*waybits-1, i*waybits) == i_lru.read()) {
-                        shift_ena = 0;
-                    }
-                } else {
-                    vb_tbl_wdata((i+1)*waybits-1, i*waybits) =
-                            vb_tbl_rdata((i+1)*waybits-1, i*waybits);
-                }
-            }
-        }
+    // init table value
+    for (int i = 0; i < WAYS_TOTAL; i++) {
+        vb_tbl_wdata_init((i+1)*waybits-1, i*waybits) = i;
+    }
 
-#elif 1
-        vb_shift = vb_tbl_rdata(LINE_WIDTH-waybits-1, 0);  // default
-        if (vb_tbl_rdata(waybits-1, 0) == i_lru.read()) {
-            vb_shift = vb_tbl_rdata(LINE_WIDTH-1, waybits);
-        } else {
-            // All except first and last elements:
-            for (int i = 1; i < WAYS_TOTAL-1; i++) {
+    // LRU next value, last used goes on top
+    shift_ena_up = 0;
+    vb_tbl_wdata_up = vb_tbl_rdata;
+    if (vb_tbl_rdata(LINE_WIDTH-1, LINE_WIDTH-waybits) != i_lru.read()) {
+        vb_tbl_wdata_up(LINE_WIDTH-1, LINE_WIDTH-waybits) = i_lru.read();
+        shift_ena_up = 1;
+
+        for (int i = WAYS_TOTAL-2; i >= 0; i--) {
+            if (shift_ena_up == 1) {
+                vb_tbl_wdata_up((i+1)*waybits-1, i*waybits) =
+                        vb_tbl_rdata((i+2)*waybits-1, (i+1)*waybits);
                 if (vb_tbl_rdata((i+1)*waybits-1, i*waybits) == i_lru.read()) {
-                    vb_shift = (vb_tbl_rdata(LINE_WIDTH-1, (i+1)*waybits),
-                                vb_tbl_rdata(i*waybits-1, 0));
+                    shift_ena_up = 0;
                 }
             }
         }
-        vb_tbl_wdata = (i_lru.read(), vb_shift);
+    }
 
-#else
-        sc_assert(waybits != 2); // TODO: NWAY selector
+    // LRU next value when invalidate, marked as 'invalid' goes down
+    shift_ena_down = 0;
+    vb_tbl_wdata_down = vb_tbl_rdata;
+    if (vb_tbl_rdata(waybits-1, 0) != i_lru.read()) {
+        vb_tbl_wdata_down(waybits-1, 0) = i_lru.read();
+        shift_ena_down = 1;
 
-        if (vb_tbl_rdata(7, 6) == i_lru.read()) {
-            vb_tbl_wdata = vb_tbl_rdata;
-        } else if (vb_tbl_rdata(5, 4) == i_lru.read()) {
-            vb_tbl_wdata = (i_lru.read(),
-                            vb_tbl_rdata(7, 6),
-                            vb_tbl_rdata(3, 0));
-        } else if (vb_tbl_rdata(3, 2) == i_lru.read()) {
-            vb_tbl_wdata = (i_lru.read(),
-                            vb_tbl_rdata(7, 4),
-                            vb_tbl_rdata(1, 0));
-        } else {
-            vb_tbl_wdata = (i_lru.read(),
-                            vb_tbl_rdata(7, 2));
+        for (int i = 1; i < WAYS_TOTAL; i++) {
+            if (shift_ena_down == 1) {
+                vb_tbl_wdata_down((i+1)*waybits-1, i*waybits) =
+                        vb_tbl_rdata(i*waybits-1, (i-1)*waybits);
+                if (vb_tbl_rdata((i+1)*waybits-1, i*waybits) == i_lru.read()) {
+                    shift_ena_down = 0;
+                }
+            }
         }
-#endif
+    }
+
+    if (i_init.read() == 1) {
+        vb_tbl_wadr = i_addr.read();
+    } else {
+        vb_tbl_wadr = radr.read();
+    }
+
+    if (i_init.read() == 1) {
+        vb_tbl_wdata = vb_tbl_wdata_init;
+    } else if (i_up.read()) {
+        vb_tbl_wdata = vb_tbl_wdata_up;
+    } else if (i_down.read()) {
+        vb_tbl_wdata = vb_tbl_wdata_down;
     }
 
     w_we = v_we;
+    wb_tbl_wadr = vb_tbl_wadr;
     wb_tbl_wdata = vb_tbl_wdata;
     o_lru = vb_tbl_rdata(waybits-1, 0);
 }

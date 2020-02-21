@@ -72,7 +72,7 @@ SC_MODULE(L2CacheLru) {
     enum EState {
         State_Idle,
         State_CheckHit,
-        State_CheckMPU,
+        State_TranslateAddress,
         State_WaitGrant,
         State_WaitResp,
         State_CheckResp,
@@ -80,19 +80,22 @@ SC_MODULE(L2CacheLru) {
         State_WriteBus,
         State_WriteAck,
         State_FlushAddr,
-        State_FlushCheck
+        State_FlushCheck,
+        State_Reset,
+        State_ResetWrite,
     };
 
-    sc_signal<bool> line_cs_i;
+    sc_signal<bool> line_direct_access_i;
+    sc_signal<bool> line_invalidate_i;
+    sc_signal<bool> line_re_i;
+    sc_signal<bool> line_we_i;
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> line_addr_i;
     sc_signal<sc_biguint<L2CACHE_LINE_BITS>> line_wdata_i;
     sc_signal<sc_uint<L2CACHE_BYTES_PER_LINE>> line_wstrb_i;
     sc_signal<sc_uint<L2TAG_FL_TOTAL>> line_wflags_i;
-    sc_signal<bool> line_flush_i;
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> line_raddr_o;
     sc_signal<sc_biguint<L2CACHE_LINE_BITS>> line_rdata_o;
     sc_signal<sc_uint<L2TAG_FL_TOTAL>> line_rflags_o;
-    sc_signal<bool> line_hit_o;
     // Snoop signals:
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> line_snoop_addr_i;
     sc_signal<bool> line_snoop_ready_o;
@@ -120,7 +123,6 @@ SC_MODULE(L2CacheLru) {
         sc_signal<sc_uint<CFG_L2_LOG2_LINES_PER_WAY + CFG_L2_LOG2_NWAYS>> flush_cnt;
         sc_signal<sc_biguint<L2CACHE_LINE_BITS>> cache_line_i;
         sc_signal<sc_biguint<L2CACHE_LINE_BITS>> cache_line_o;
-        sc_signal<bool> init;   // remove xxx from memory simulation
     } v, r;
 
     void R_RESET(RegistersType &iv) {
@@ -130,7 +132,7 @@ SC_MODULE(L2CacheLru) {
         iv.req_addr = 0;
         iv.req_wdata = 0;
         iv.req_wstrb = 0;
-        iv.state = State_FlushAddr;
+        iv.state = State_Reset;
         iv.req_mem_valid = 0;
         iv.mem_write = 0;
         iv.mem_addr = 0;
@@ -145,7 +147,6 @@ SC_MODULE(L2CacheLru) {
         iv.flush_cnt = ~0ul;
         iv.cache_line_i = 0;
         iv.cache_line_o = 0;
-        iv.init = 1;
     }
 
     TagMemNWay<CFG_CPU_ADDR_BITS,

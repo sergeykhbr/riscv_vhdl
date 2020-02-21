@@ -69,6 +69,17 @@ SC_MODULE(ICacheLru) {
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
+    sc_uint<L1_REQ_TYPE_BITS> ReadNoSnoop() {
+        sc_uint<L1_REQ_TYPE_BITS> ret = 0x0;
+        return ret;
+    }
+
+    sc_uint<L1_REQ_TYPE_BITS> ReadShared() {
+        sc_uint<L1_REQ_TYPE_BITS> ret = 0x0;
+        ret[L1_REQ_TYPE_CACHED] = 1;
+        return ret;
+    }
+
     enum EState {
         State_Idle,
         State_CheckHit,
@@ -77,7 +88,10 @@ SC_MODULE(ICacheLru) {
         State_WaitResp,
         State_CheckResp,
         State_SetupReadAdr,
-        State_Flush
+        State_FlushAddr,
+        State_FlushCheck,
+        State_Reset,
+        State_ResetWrite,
     };
 
     struct RegistersType {
@@ -101,7 +115,7 @@ SC_MODULE(ICacheLru) {
         iv.req_addr = 0;
         iv.req_addr_next = 0;
         iv.write_addr = 0;
-        iv.state = State_Flush;
+        iv.state = State_Reset;
         iv.req_mem_valid = 0;
         iv.mem_addr = 0;
         iv.req_mem_type = 0;
@@ -114,12 +128,14 @@ SC_MODULE(ICacheLru) {
         iv.cache_line_i = 0;
     }
 
-    sc_signal<bool> line_cs_i;
+    sc_signal<bool> line_direct_access_i;
+    sc_signal<bool> line_invalidate_i;
+    sc_signal<bool> line_re_i;
+    sc_signal<bool> line_we_i;
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> line_addr_i;
     sc_signal<sc_biguint<ICACHE_LINE_BITS>> line_wdata_i;
     sc_signal<sc_uint<(1<<CFG_ILOG2_BYTES_PER_LINE)>> line_wstrb_i;
     sc_signal<sc_uint<ITAG_FL_TOTAL>> line_wflags_i;
-    sc_signal<bool> line_flush_i;
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> line_raddr_o;
     sc_signal<sc_biguint<ICACHE_LINE_BITS+16>> line_rdata_o;
     sc_signal<sc_uint<ITAG_FL_TOTAL>> line_rflags_o;
