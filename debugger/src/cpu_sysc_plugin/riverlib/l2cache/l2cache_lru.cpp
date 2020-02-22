@@ -390,7 +390,7 @@ void L2CacheLru::comb() {
         break;
     case State_CheckResp:
         if (r.req_mem_type.read()[REQ_MEM_TYPE_CACHED] == 0 ||
-            r.rb_resp.read() != 0) {
+            r.rb_resp.read()[1] == 1) {
             // uncached read only (write goes to WriteBus) or cached load-modify fault
             v_resp_valid = 1;
             vb_resp_rdata = vb_uncached_data;

@@ -154,15 +154,6 @@ SC_MODULE(RiverAmba) {
         sc_signal<sc_uint<3>> req_aw_snoop;
     } v, r;
 
-    struct SnoopRegistersType {
-        sc_signal<sc_uint<3>> snoop_state;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> ac_addr;
-        sc_signal<sc_uint<4>> ac_snoop;                  // Table C3-19
-        sc_signal<sc_uint<5>> cr_resp;
-        sc_signal<sc_uint<SNOOP_REQ_TYPE_BITS>> req_snoop_type;
-        sc_signal<sc_biguint<L1CACHE_LINE_BITS>> resp_snoop_data;
-    } sv, sr;
-
     void R_RESET(RegistersType &iv) {
         iv.state = state_idle;
         iv.req_addr = 0;
@@ -175,6 +166,15 @@ SC_MODULE(RiverAmba) {
         iv.req_ar_snoop = 0;
         iv.req_aw_snoop = 0;
     }
+
+    struct SnoopRegistersType {
+        sc_signal<sc_uint<3>> snoop_state;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> ac_addr;
+        sc_signal<sc_uint<4>> ac_snoop;                  // Table C3-19
+        sc_signal<sc_uint<5>> cr_resp;
+        sc_signal<sc_uint<SNOOP_REQ_TYPE_BITS>> req_snoop_type;
+        sc_signal<sc_biguint<L1CACHE_LINE_BITS>> resp_snoop_data;
+    } sv, sr;
 
     void SR_RESET(SnoopRegistersType &iv) {
         iv.snoop_state = snoop_idle;

@@ -119,7 +119,6 @@ void L2Amba::comb() {
     case writing:
         vmsto.w_valid = 1;
         vmsto.w_last = 1;
-        v_resp_mem_valid = i_msti.read().w_ready;
         // Write full line without burst transactions:
         if (i_msti.read().w_ready == 1) {
             v.state = wack;
@@ -128,6 +127,7 @@ void L2Amba::comb() {
     case wack:
         vmsto.b_ready = 1;
         if (i_msti.read().b_valid == 1) {
+            v_resp_mem_valid = 1;
             v_mem_er_store_fault = i_msti.read().b_resp[1];
             v_next_ready = 1;
             v_resp_mem_ack = 1;
@@ -137,20 +137,18 @@ void L2Amba::comb() {
     default:;
     }
 
-    if (v_next_ready == 1) {
-        if (i_req_valid.read() == 1) {
-            if (i_req_type.read()[REQ_MEM_TYPE_WRITE] == 0) {
-                vmsto.ar_valid = 1;
-                if (i_msti.read().ar_ready == 1) {
-                    v_req_mem_ready = 1;
-                    v.state = reading;
-                }
-            } else {
-                vmsto.aw_valid = 1;
-                if (i_msti.read().aw_ready == 1) {
-                    v_req_mem_ready = 1;
-                    v.state = writing;
-                }
+    if (v_next_ready == 1 && i_req_valid.read() == 1) {
+        if (i_req_type.read()[REQ_MEM_TYPE_WRITE] == 0) {
+            vmsto.ar_valid = 1;
+            if (i_msti.read().ar_ready == 1) {
+                v_req_mem_ready = 1;
+                v.state = reading;
+            }
+        } else {
+            vmsto.aw_valid = 1;
+            if (i_msti.read().aw_ready == 1) {
+                v_req_mem_ready = 1;
+                v.state = writing;
             }
         }
     }

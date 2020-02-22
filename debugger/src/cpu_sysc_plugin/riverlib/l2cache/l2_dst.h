@@ -96,8 +96,8 @@ SC_MODULE(L2Destination) {
         AW_Barrier
     };
 
-    sc_uint<4> getArType(axi4_l1_out_type src) {
-        sc_uint<4> ret = AR_ReadNoSnoop;
+    ETYPE_AR getArType(axi4_l1_out_type src) {
+        ETYPE_AR ret = AR_ReadNoSnoop;
         switch (src.ar_snoop) {
         case 0x0:
             if (src.ar_bar[0] == 1) {
@@ -146,8 +146,8 @@ SC_MODULE(L2Destination) {
         return ret;
     }
 
-    sc_uint<3> getAwType(axi4_l1_out_type src) {
-        sc_uint<3> ret = AW_WriteNoSnoop;
+    ETYPE_AW getAwType(axi4_l1_out_type src) {
+        ETYPE_AW ret = AW_WriteNoSnoop;
         switch (src.aw_snoop) {
         case 0x0:
             if (src.aw_bar[0] == 1) {

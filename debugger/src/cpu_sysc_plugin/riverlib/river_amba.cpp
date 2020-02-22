@@ -465,8 +465,10 @@ void RiverAmba::snoopcomb() {
 void RiverAmba::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
         R_RESET(r);
+        SR_RESET(sr);
     } else {
         r = v;
+        sr = sv;
     }
 }
 

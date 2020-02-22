@@ -98,7 +98,8 @@ SC_MODULE(TagMemNWay) {
         lru = new lrunway<ibits, waybits>("lru0");
         lru->i_clk(i_clk);
         lru->i_init(lrui_init);
-        lru->i_addr(lrui_addr);
+        lru->i_raddr(lrui_raddr);
+        lru->i_waddr(lrui_waddr);
         lru->i_up(lrui_up);
         lru->i_down(lrui_down);
         lru->i_lru(lrui_lru);
@@ -167,7 +168,8 @@ SC_MODULE(TagMemNWay) {
     WayOutType way_o[NWAYS];
 
     sc_signal<bool> lrui_init;
-    sc_signal<sc_uint<ibits>> lrui_addr;
+    sc_signal<sc_uint<ibits>> lrui_raddr;
+    sc_signal<sc_uint<ibits>> lrui_waddr;
     sc_signal<bool> lrui_up;
     sc_signal<bool> lrui_down;
     sc_signal<sc_uint<waybits>> lrui_lru;
@@ -281,7 +283,8 @@ void TagMemNWay<abus, waybits, ibits, lnbits, flbits, snoop>::comb() {
     }
 
     lrui_init = r.direct_access.read();
-    lrui_addr = r.req_addr.read()(ibits+lnbits-1, lnbits);
+    lrui_raddr = i_addr.read()(ibits+lnbits-1, lnbits);
+    lrui_waddr = r.req_addr.read()(ibits+lnbits-1, lnbits);
     lrui_up = i_we.read() || (hit && r.re.read());
     lrui_down = (hit && r.invalidate.read());
     lrui_lru = vb_hit_idx;
