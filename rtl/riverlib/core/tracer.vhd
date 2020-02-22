@@ -31,17 +31,17 @@ entity tracer is generic (
   port (
     i_clk : in std_logic;                                   -- CPU clock
     i_nrst : in std_logic;                                  -- Reset. Active LOW.
-    i_dbg_executed_cnt : in std_logic_vector(63 downto 0)
+    i_dbg_executed_cnt : in std_logic_vector(63 downto 0);
     i_e_valid : in std_logic;
-    i_e_pc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0)
-    i_e_instr : in std_logic_vector(31 downto 0)
+    i_e_pc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    i_e_instr : in std_logic_vector(31 downto 0);
     i_e_memop_store : in std_logic;
     i_e_memop_load : in std_logic;
-    i_e_memop_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0)
+    i_e_memop_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_e_res_data : in std_logic_vector(RISCV_ARCH-1 downto 0);
-    i_e_res_addr : in std_logic_vector(5 downto 0)
+    i_e_res_addr : in std_logic_vector(5 downto 0);
     i_m_wena : in std_logic;
-    i_m_waddr : in std_logic_vector(5 downto 0)
+    i_m_waddr : in std_logic_vector(5 downto 0);
     i_m_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0)
   );
 end; 
