@@ -64,6 +64,10 @@ L2Destination::L2Destination(sc_module_name name, bool async_reset) : sc_module(
     sensitive << r.req_type;
     sensitive << r.req_wdata;
     sensitive << r.req_wstrb;
+    sensitive << r.use_snoop;
+    sensitive << r.ac_valid;
+    sensitive << r.cr_ready;
+    sensitive << r.cd_ready;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -93,9 +97,11 @@ void L2Destination::comb() {
     axi4_l1_in_type vlxi[SRC_MUX_WIDTH];
     sc_uint<SRC_MUX_WIDTH> vb_src_aw;
     sc_uint<SRC_MUX_WIDTH> vb_src_ar;
+    sc_uint<SRC_MUX_WIDTH+1> vb_broadband_mask;
+    sc_uint<SRC_MUX_WIDTH+1> vb_ac_valid;
+    sc_uint<SRC_MUX_WIDTH+1> vb_cr_ready;
+    sc_uint<SRC_MUX_WIDTH+1> vb_cd_ready;
     sc_uint<3> vb_srcid;
-    sc_uint<4> vb_ar_type;
-    sc_uint<3> vb_aw_type;
     bool v_req_valid;
     sc_uint<L2_REQ_TYPE_BITS> vb_req_type;
 
@@ -110,8 +116,6 @@ void L2Destination::comb() {
     vcoreo[5] = axi4_l1_out_none;
 
     v_req_valid = 0;
-    vb_ar_type = AR_ReadNoSnoop;
-    vb_aw_type = AW_WriteNoSnoop;
     vb_srcid = SRC_MUX_WIDTH;
     for (int i = 0; i < SRC_MUX_WIDTH; i++) {
         vlxi[i] = axi4_l1_in_none;
@@ -125,17 +129,22 @@ void L2Destination::comb() {
         for (int i = 0; i < SRC_MUX_WIDTH; i++) {
             if (vb_srcid == SRC_MUX_WIDTH && vb_src_ar[i] == 1) {
                 vb_srcid = i;
-                vb_ar_type = getArType(vcoreo[i]);
             }
         }
     } else {
         for (int i = 0; i < SRC_MUX_WIDTH; i++) {
             if (vb_srcid == SRC_MUX_WIDTH && vb_src_aw[i] == 1) {
                 vb_srcid = i;
-                vb_aw_type = getAwType(vcoreo[i]);
             }
         }
     }
+
+    vb_ac_valid = r.ac_valid;
+    vb_cr_ready = r.cr_ready;
+    vb_cd_ready = r.cd_ready;
+
+    vb_broadband_mask = 0x1E;                   // exclude acp
+    vb_broadband_mask[vb_srcid.to_int()] = 0;   // exclude source
 
     switch (r.state.read()) {
     case Idle:
@@ -153,6 +162,13 @@ void L2Destination::comb() {
             if (vcoreo[vb_srcid.to_int()].aw_bits.cache[0] == 1) {
                 vb_req_type[L2_REQ_TYPE_CACHED] = 1;
             }
+            if (vcoreo[vb_srcid.to_int()].aw_snoop == AWSNOOP_WRITE_LINE_UNIQUE) {
+                vb_req_type[L2_REQ_TYPE_UNIQUE] = 1;
+                v.ac_valid = vb_broadband_mask;
+                v.cr_ready = 0;
+                v.cd_ready = 0;
+                v.state = snoop_ac;
+            }
         } else if (vb_src_ar.or_reduce() == 1) {
             v.state = CacheReadReq;
             vlxi[vb_srcid.to_int()].ar_ready = 1;
@@ -164,7 +180,15 @@ void L2Destination::comb() {
             if (vcoreo[vb_srcid.to_int()].ar_bits.cache[0] == 1) {
                 vb_req_type[L2_REQ_TYPE_CACHED] = 1;
             }
+            if (vcoreo[vb_srcid.to_int()].ar_snoop == ARSNOOP_READ_MAKE_UNIQUE) {
+                vb_req_type[L2_REQ_TYPE_UNIQUE] = 1;
+                v.ac_valid = vb_broadband_mask;
+                v.cr_ready = 0;
+                v.cd_ready = 0;
+                v.state = snoop_ac;
+            }
         }
+        v.use_snoop = 0;
         v.req_type = vb_req_type;
         // Lite-interface
         v.req_wdata = vcoreo[vb_srcid.to_int()].w_data;
@@ -185,7 +209,11 @@ void L2Destination::comb() {
     case ReadMem:
         vlxi[r.srcid.read().to_int()].r_valid = i_resp_valid;
         vlxi[r.srcid.read().to_int()].r_last = i_resp_valid;    // Lite interface
-        vlxi[r.srcid.read().to_int()].r_data = i_resp_rdata;
+        if (r.use_snoop.read() == 1) {
+            vlxi[r.srcid.read().to_int()].r_data = r.req_wdata;
+        } else {
+            vlxi[r.srcid.read().to_int()].r_data = i_resp_rdata;
+        }
         if (i_resp_status.read() == 0) {
             vlxi[r.srcid.read().to_int()].r_resp = 0;
         } else {
@@ -204,6 +232,61 @@ void L2Destination::comb() {
         }
         if (i_resp_valid.read() == 1) {
             v.state = Idle;    // Wouldn't implement wait to accept because L1 is always ready
+        }
+        break;
+
+    case snoop_ac:
+        for (int i = 1; i < SRC_MUX_WIDTH; i++) {
+            vlxi[i].ac_valid = r.ac_valid.read()[i];
+            if (r.ac_valid.read()[i] == 1 && vcoreo[i].ac_ready == 1) {
+                vb_ac_valid[i] = 0;
+                vb_cr_ready[i] = 1;
+            }
+        }
+        v.ac_valid = vb_ac_valid;
+        v.cr_ready = vb_cr_ready;
+        if (vb_ac_valid.or_reduce() == 0) {
+            v.state = snoop_cr;
+        }
+        break;
+    case snoop_cr:
+        for (int i = 1; i < SRC_MUX_WIDTH; i++) {
+            vlxi[i].cr_ready = r.cr_ready.read()[i];
+            if (r.cr_ready.read()[i] == 1 && vcoreo[i].cr_valid == 1) {
+                vb_cr_ready[i] = 0;
+                if (vcoreo[i].cr_resp[0] == 1) {  // data transaction flag ACE spec
+                    vb_cd_ready[i] = 1;
+                }
+            }
+        }
+        v.cr_ready = vb_cr_ready;
+        v.cd_ready = vb_cd_ready;
+        if (vb_cr_ready.or_reduce() == 0) {
+            if (vb_cd_ready.or_reduce() == 1) {
+                v.state = snoop_cd;
+            } else if (r.req_type.read()[L2_REQ_TYPE_WRITE] == 1) {
+                v.state = CacheWriteReq;
+            } else {
+                v.state = CacheReadReq;
+            }
+        }
+        break;
+    case snoop_cd:
+        // Here only to read Unique data from L1
+        for (int i = 1; i < SRC_MUX_WIDTH; i++) {
+            vlxi[i].cd_ready = r.cd_ready.read()[i];
+            if (r.cd_ready.read()[i] == 1 && vcoreo[i].cd_valid == 1) {
+                vb_cd_ready[i] = 0;
+                v.req_wdata = vcoreo[i].cd_data;
+            }
+        }
+        if (vb_cd_ready.or_reduce() == 0) {
+            if (r.req_type.read()[L2_REQ_TYPE_WRITE] == 1) {
+                v.state = CacheWriteReq;
+            } else {
+                v.use_snoop = 1;
+                v.state = CacheReadReq;
+            }
         }
         break;
     default:;

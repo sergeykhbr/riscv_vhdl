@@ -292,7 +292,7 @@ void RiverAmba::comb() {
     vmsto.ac_ready = w_ac_ready;
     vmsto.cr_valid = w_cr_valid;
     vmsto.cr_resp = wb_cr_resp;
-    vmsto.cr_valid = w_cd_valid;
+    vmsto.cd_valid = w_cd_valid;
     vmsto.cd_data = wb_cd_data;
     vmsto.cd_last = w_cd_last;
     vmsto.rack = w_rack;
@@ -337,7 +337,7 @@ void RiverAmba::snoopcomb() {
     case snoop_ac_wait_accept:
         req_snoop_valid = 1;
         vb_req_snoop_addr = sr.ac_addr;
-        if (resp_snoop_ready_i.read() == 1) {
+        if (req_snoop_ready_o.read() == 1) {
             sv.snoop_state = snoop_read_flags;
         }
         break;
@@ -435,10 +435,10 @@ void RiverAmba::snoopcomb() {
             vb_req_snoop_addr = i_msti.read().ac_addr;
             sv.ac_addr = i_msti.read().ac_addr;
             sv.ac_snoop = i_msti.read().ac_snoop;
-            if (resp_snoop_ready_i.read() == 1) {
-                sv.snoop_state = snoop_ac_wait_accept;
-            } else {
+            if (req_snoop_ready_o.read() == 1) {
                 sv.snoop_state = snoop_read_flags;
+            } else {
+                sv.snoop_state = snoop_ac_wait_accept;
             }
         }
     }

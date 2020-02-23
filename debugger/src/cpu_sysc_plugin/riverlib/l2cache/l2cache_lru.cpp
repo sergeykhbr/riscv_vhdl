@@ -321,9 +321,22 @@ void L2CacheLru::comb() {
                 v_ready_next = 1;
                 v.state = State_Idle;
             }
+            if (r.req_type.read()[L2_REQ_TYPE_UNIQUE] == 1) {
+                v_line_cs_write = 0;
+                v_ready_next = 0;
+                v_invalidate = 1;
+            }
         } else {
             // Miss
-            v.state = State_TranslateAddress;
+            if (r.req_type.read()[L2_REQ_TYPE_WRITE] == 1
+              && r.req_type.read()[L2_REQ_TYPE_UNIQUE] == 1) {
+                // This command analog of invalidate line
+                // no need to read it form memory
+                v.state = State_Idle;
+                v_resp_valid = 1;
+            } else {
+                v.state = State_TranslateAddress;
+            }
         }
         break;
     case State_TranslateAddress:

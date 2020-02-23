@@ -67,113 +67,10 @@ SC_MODULE(L2Destination) {
         CacheWriteReq,
         ReadMem,
         WriteMem,
+        snoop_ac,
+        snoop_cr,
+        snoop_cd
     };
-
-    enum ETYPE_AR {
-        AR_ReadNoSnoop,
-        AR_ReadOnce,
-        AR_ReadShared,
-        AR_ReadClean,
-        AR_ReadNotSharedDirty,
-        AR_ReadUnique,
-        AR_CleanUnique,
-        AR_MakeUnique,
-        AR_CleanShared,
-        AR_CleanInvalid,
-        AR_MakeInvalid,
-        AR_Barrier,
-        AR_DVM_Complete,
-        AR_DVM_Message
-    };
-
-    enum ETYPE_AW {
-        AW_WriteNoSnoop,
-        AW_WriteUnique,
-        AW_WriteLineUnique,
-        AW_WriteClean,
-        AW_WriteBack,
-        AW_Evict,
-        AW_Barrier
-    };
-
-    ETYPE_AR getArType(axi4_l1_out_type src) {
-        ETYPE_AR ret = AR_ReadNoSnoop;
-        switch (src.ar_snoop) {
-        case 0x0:
-            if (src.ar_bar[0] == 1) {
-                ret = AR_Barrier;
-            } else if ((src.ar_domain[1] ^ src.ar_domain[0]) != 0) {
-                ret = AR_ReadOnce;
-            } else {
-                ret = AR_ReadNoSnoop;
-            }
-            break;
-        case 0x1:
-            ret = AR_ReadShared;
-            break;
-        case 0x2:
-            ret = AR_ReadClean;
-            break;
-        case 0x3:
-            ret = AR_ReadNotSharedDirty;
-            break;
-        case 0x7:
-            ret = AR_ReadUnique;
-            break;
-        case 0xB:
-            ret = AR_CleanUnique;
-            break;
-        case 0xC:
-            ret = AR_MakeUnique;
-            break;
-        case 0x8:
-            ret = AR_CleanShared;
-            break;
-        case 0x9:
-            ret = AR_CleanInvalid;
-            break;
-        case 0xD:
-            ret = AR_MakeInvalid;
-            break;
-        case 0xE:
-            ret = AR_DVM_Complete;
-            break;
-        case 0xF:
-            ret = AR_DVM_Message;
-            break;
-        default:;
-        }
-        return ret;
-    }
-
-    ETYPE_AW getAwType(axi4_l1_out_type src) {
-        ETYPE_AW ret = AW_WriteNoSnoop;
-        switch (src.aw_snoop) {
-        case 0x0:
-            if (src.aw_bar[0] == 1) {
-                ret = AW_Barrier;
-            } else if ((src.aw_domain[1] ^ src.aw_domain[0]) != 0) {
-                ret = AW_WriteUnique;
-            } else {
-                ret = AW_WriteNoSnoop;
-            }
-            break;
-        case 0x1:
-            ret = AW_WriteLineUnique;
-            break;
-        case 0x2:
-            ret = AW_WriteClean;
-            break;
-        case 0x3:
-            ret = AW_WriteBack;
-            break;
-        case 0x4:
-            ret = AW_Evict;
-            break;
-        default:;
-        }
-        return ret;
-    }
 
     static const int SRC_MUX_WIDTH = 5; // 4 cores + acp
     struct RegistersType {
@@ -187,6 +84,11 @@ SC_MODULE(L2Destination) {
         sc_signal<sc_uint<L2_REQ_TYPE_BITS>> req_type;
         sc_signal<sc_biguint<L1CACHE_LINE_BITS>> req_wdata;
         sc_signal<sc_uint<L1CACHE_BYTES_PER_LINE>> req_wstrb;
+
+        sc_signal<bool> use_snoop;
+        sc_signal<sc_uint<SRC_MUX_WIDTH+1>> ac_valid;
+        sc_signal<sc_uint<SRC_MUX_WIDTH+1>> cr_ready;
+        sc_signal<sc_uint<SRC_MUX_WIDTH+1>> cd_ready;
     } r, v;
 
     void R_RESET(RegistersType &iv) {
@@ -199,6 +101,10 @@ SC_MODULE(L2Destination) {
         iv.req_type = 0;
         iv.req_wdata = 0;
         iv.req_wstrb = 0;
+        iv.use_snoop = 0;
+        iv.ac_valid = 0;
+        iv.cr_ready = 0;
+        iv.cd_ready = 0;
     }
 
     bool async_reset_;

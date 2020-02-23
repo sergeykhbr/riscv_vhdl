@@ -129,6 +129,7 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset, bool coherence_ena)
     sensitive << r.cache_line_i;
     sensitive << r.cache_line_o;
     sensitive << r.req_snoop_type;
+    sensitive << r.snoop_flags_valid;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -237,7 +238,7 @@ void DCacheLru::comb() {
     v_invalidate = 0;
     v_flush_end = 0;
     v_req_snoop_ready = 0;
-    v_resp_snoop_valid = 0;
+    v_resp_snoop_valid = r.snoop_flags_valid;
     ridx = r.req_addr.read()(CFG_DLOG2_BYTES_PER_LINE-1, 3);
 
     vb_cached_data = line_rdata_o.read()((ridx.to_int()+1)*64 - 1,
@@ -582,6 +583,9 @@ void DCacheLru::comb() {
     v_req_snoop_ready =
         (line_snoop_ready_o.read() && !i_req_snoop_type.read().or_reduce()) ||
         (coherence_ena_ && v_ready_next && i_req_snoop_type.read().or_reduce());
+
+    v.snoop_flags_valid = i_req_snoop_valid.read() &&
+        line_snoop_ready_o.read() && !i_req_snoop_type.read().or_reduce();
 
     if (v_ready_next == 1) {
         if (coherence_ena_ &&

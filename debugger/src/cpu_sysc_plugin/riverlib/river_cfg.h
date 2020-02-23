@@ -155,7 +155,8 @@ static const int L2TAG_FL_TOTAL      = 4;
 
 static const int L2_REQ_TYPE_WRITE   = 0;
 static const int L2_REQ_TYPE_CACHED  = 1;
-static const int L2_REQ_TYPE_BITS    = 2;
+static const int L2_REQ_TYPE_UNIQUE  = 2;
+static const int L2_REQ_TYPE_BITS    = 3;
 
 /** MPU config */
 static const int CFG_MPU_TBL_WIDTH   = 2;    // [1:0]  log2(MPU_TBL_SIZE)

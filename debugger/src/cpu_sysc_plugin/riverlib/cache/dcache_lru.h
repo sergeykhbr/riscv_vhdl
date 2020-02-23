@@ -144,6 +144,7 @@ SC_MODULE(DCacheLru) {
         sc_signal<sc_biguint<DCACHE_LINE_BITS>> cache_line_i;
         sc_signal<sc_biguint<DCACHE_LINE_BITS>> cache_line_o;
         sc_signal<sc_uint<SNOOP_REQ_TYPE_BITS>> req_snoop_type;
+        sc_signal<bool> snoop_flags_valid;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
@@ -169,6 +170,7 @@ SC_MODULE(DCacheLru) {
         iv.cache_line_i = 0;
         iv.cache_line_o = 0;
         iv.req_snoop_type = 0;
+        iv.snoop_flags_valid = 0;
     }
 
     static const int CFG_SNOOP_ENA = 1;
