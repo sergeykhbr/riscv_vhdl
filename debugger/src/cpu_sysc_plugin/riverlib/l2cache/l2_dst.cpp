@@ -238,6 +238,8 @@ void L2Destination::comb() {
     case snoop_ac:
         for (int i = 1; i < SRC_MUX_WIDTH; i++) {
             vlxi[i].ac_valid = r.ac_valid.read()[i];
+            vlxi[i].ac_addr = r.req_addr;
+            vlxi[i].ac_snoop = AC_SNOOP_READ_UNIQUE;
             if (r.ac_valid.read()[i] == 1 && vcoreo[i].ac_ready == 1) {
                 vb_ac_valid[i] = 0;
                 vb_cr_ready[i] = 1;

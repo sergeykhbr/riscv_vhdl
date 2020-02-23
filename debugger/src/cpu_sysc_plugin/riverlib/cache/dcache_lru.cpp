@@ -562,6 +562,7 @@ void DCacheLru::comb() {
     case State_SnoopSetupAddr:
         if (r.req_snoop_type.read()[SNOOP_REQ_TYPE_READDATA] == 1) {
             v.state = State_SnoopReadData;
+            v_invalidate = 1; 
         } else if (r.req_snoop_type.read()[SNOOP_REQ_TYPE_MAKEINVALID] == 1) {
             v_resp_snoop_valid = 1;
             v_invalidate = 1; 

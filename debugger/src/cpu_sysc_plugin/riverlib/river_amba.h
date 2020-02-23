@@ -134,10 +134,9 @@ SC_MODULE(RiverAmba) {
     enum snooptate_type {
         snoop_idle,
         snoop_ac_wait_accept,
-        snoop_read_flags,
+        snoop_cr,
         snoop_cr_wait_accept,
-        snoop_req,
-        snoop_resp,
+        snoop_cd,
         snoop_cd_wait_accept,
     };
 
@@ -174,6 +173,7 @@ SC_MODULE(RiverAmba) {
         sc_signal<sc_uint<5>> cr_resp;
         sc_signal<sc_uint<SNOOP_REQ_TYPE_BITS>> req_snoop_type;
         sc_signal<sc_biguint<L1CACHE_LINE_BITS>> resp_snoop_data;
+        sc_signal<bool> cache_access;
     } sv, sr;
 
     void SR_RESET(SnoopRegistersType &iv) {
@@ -183,6 +183,7 @@ SC_MODULE(RiverAmba) {
         iv.cr_resp = 0;
         iv.req_snoop_type = 0;
         iv.resp_snoop_data = 0;
+        iv.cache_access = 0;
     }
 
     bool async_reset_;

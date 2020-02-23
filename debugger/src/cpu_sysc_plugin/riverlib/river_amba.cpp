@@ -116,6 +116,7 @@ RiverAmba::RiverAmba(sc_module_name name_, uint32_t hartid, bool async_reset,
         sensitive << sr.cr_resp;
         sensitive << sr.req_snoop_type;
         sensitive << sr.resp_snoop_data;
+        sensitive << sr.cache_access;
     } else {
         w_ac_ready = 1;
         w_cr_valid = 1;
@@ -314,7 +315,6 @@ void RiverAmba::snoopcomb() {
     sc_uint<SNOOP_REQ_TYPE_BITS> vb_req_snoop_type;
     bool v_cr_valid;
     sc_uint<5> vb_cr_resp;
-    sc_uint<3> vb_snoop_state;
     bool v_cd_valid;
     sc_biguint<L1CACHE_LINE_BITS> vb_cd_data;
 
@@ -326,7 +326,6 @@ void RiverAmba::snoopcomb() {
     vb_req_snoop_type = 0;
     v_cr_valid = 0;
     vb_cr_resp = 0;
-    vb_snoop_state = 0;
     v_cd_valid = 0;
     vb_cd_data = 0;
 
@@ -337,44 +336,39 @@ void RiverAmba::snoopcomb() {
     case snoop_ac_wait_accept:
         req_snoop_valid = 1;
         vb_req_snoop_addr = sr.ac_addr;
+        vb_req_snoop_type = sr.req_snoop_type;
         if (req_snoop_ready_o.read() == 1) {
-            sv.snoop_state = snoop_read_flags;
+            if (sr.cache_access == 0) {
+                sv.snoop_state = snoop_cr;
+            } else {
+                sv.snoop_state = snoop_cd;
+            }
         }
         break;
-    case snoop_read_flags:
+    case snoop_cr:
         if (resp_snoop_valid_o.read() == 1) {
             v_cr_valid = 1;
-            switch (sr.ac_snoop.read()) {
-            case AC_SNOOP_READ_UNIQUE:
-                if (resp_snoop_flags_o.read()[TAG_FL_VALID] == 1
+            if (resp_snoop_flags_o.read()[TAG_FL_VALID] == 1
                     && resp_snoop_flags_o.read()[DTAG_FL_SHARED] == 0) {
-                    // see table C3-21 "Snoop response bit allocation"
-                    vb_cr_resp[0] = 1;          // will be Data transfer
-                    vb_cr_resp[4] = 1;          // WasUnique
-                    vb_req_snoop_type[SNOOP_REQ_TYPE_READDATA] = 1;
-                    sv.req_snoop_type = vb_req_snoop_type;
-                    vb_snoop_state = snoop_req;
-                } else {
-                    vb_snoop_state = snoop_idle;
-                }
+                // Need second request with cache access
+                sv.cache_access = 1;
+                // see table C3-21 "Snoop response bit allocation"
+                vb_cr_resp[0] = 1;          // will be Data transfer
+                vb_cr_resp[4] = 1;          // WasUnique
+                //if (sr.ac_snoop.read() == AC_SNOOP_MAKE_INVALID) {
+                //} else if (sr.ac_snoop.read() == AC_SNOOP_READ_UNIQUE) {
+                //} else {
+                //}
+                vb_req_snoop_type[SNOOP_REQ_TYPE_READDATA] = 1;
+                sv.req_snoop_type = vb_req_snoop_type;
+                sv.snoop_state = snoop_ac_wait_accept;
                 if (i_msti.read().cr_ready == 1) {
-                    sv.snoop_state = vb_snoop_state;
+                    sv.snoop_state = snoop_ac_wait_accept;
                 } else {
                     sv.snoop_state = snoop_cr_wait_accept;
                 }
-                break;
-            case AC_SNOOP_MAKE_INVALID:
-                if (resp_snoop_flags_o.read()[TAG_FL_VALID] == 1) {
-                    vb_req_snoop_type[SNOOP_REQ_TYPE_MAKEINVALID] = 1;
-                    sv.req_snoop_type = vb_req_snoop_type;
-                    sv.snoop_state = snoop_req;
-                } else if (i_msti.read().cr_ready == 1) {
-                    vb_snoop_state = snoop_idle;
-                } else {
-                    vb_snoop_state = snoop_cr_wait_accept;
-                }
-                break;
-            default:
+            } else {
+                vb_cr_resp = 0;
                 if (i_msti.read().cr_ready == 1) {
                     sv.snoop_state = snoop_idle;
                 } else {
@@ -388,33 +382,22 @@ void RiverAmba::snoopcomb() {
         v_cr_valid = 1;
         vb_cr_resp = sr.cr_resp;
         if (i_msti.read().cr_ready == 1) {
-            if (sr.cr_resp.read()[0] == 1) {
-                sv.snoop_state = snoop_req;
+            if (sr.cache_access == 1) {
+                sv.snoop_state = snoop_ac_wait_accept;
             } else {
                 sv.snoop_state = snoop_idle;
             }
         }
         break;
-    case snoop_req:
-        req_snoop_valid = 1;
-        if (req_snoop_ready_o.read() == 1) {
-            sv.snoop_state = snoop_resp;
-        }
-        break;
-    case snoop_resp:
+    case snoop_cd:
         if (resp_snoop_valid_o.read() == 1) {
-            if (sr.req_snoop_type.read()[SNOOP_REQ_TYPE_MAKEINVALID] == 1) {
-                v_cr_valid = 1;
-                vb_cr_resp = sr.cr_resp;
-                if (i_msti.read().cr_ready == 1) {
-                    sv.snoop_state = snoop_idle;
-                } else {
-                    sv.snoop_state = snoop_cr_wait_accept;
-                }
+            v_cd_valid = 1;
+            vb_cd_data = resp_snoop_data_o;
+            sv.resp_snoop_data = resp_snoop_data_o;
+            if (i_msti.read().cd_ready == 1) {
+                sv.snoop_state = snoop_idle;
             } else {
-                v_cd_valid = 1;
-                vb_cd_data = resp_snoop_data_o;
-                sv.resp_snoop_data = resp_snoop_data_o;
+                sv.snoop_state = snoop_cd_wait_accept;
             }
         }
         break;
@@ -431,12 +414,14 @@ void RiverAmba::snoopcomb() {
     if (v_next_ready == 1) {
         if (i_msti.read().ac_valid == 1) {
             req_snoop_valid = 1;
+            sv.cache_access = 0;
             vb_req_snoop_type = 0;              // First snoop operation always just to read flags
+            sv.req_snoop_type = 0;
             vb_req_snoop_addr = i_msti.read().ac_addr;
             sv.ac_addr = i_msti.read().ac_addr;
             sv.ac_snoop = i_msti.read().ac_snoop;
             if (req_snoop_ready_o.read() == 1) {
-                sv.snoop_state = snoop_read_flags;
+                sv.snoop_state = snoop_cr;
             } else {
                 sv.snoop_state = snoop_ac_wait_accept;
             }
