@@ -89,7 +89,7 @@ static const int REQ_MEM_TYPE_UNIQUE       = 2;
 static const int REQ_MEM_TYPE_BITS         = 3;
 
 static const int SNOOP_REQ_TYPE_READDATA     = 0;   // 0=check flags; 1=data transfer
-static const int SNOOP_REQ_TYPE_MAKEINVALID  = 1;   // 0=do nothing; 1=invalidate line
+static const int SNOOP_REQ_TYPE_READCLEAN    = 1;   // 0=do nothing; 1=read and invalidate line
 static const int SNOOP_REQ_TYPE_BITS         = 2;
 
 static sc_uint<REQ_MEM_TYPE_BITS> ReadNoSnoop() {
@@ -153,10 +153,11 @@ static const int L2TAG_FL_SHARED     = 2;
 static const int L2TAG_FL_LOAD_FAULT = 3;
 static const int L2TAG_FL_TOTAL      = 4;
 
-static const int L2_REQ_TYPE_WRITE   = 0;
-static const int L2_REQ_TYPE_CACHED  = 1;
-static const int L2_REQ_TYPE_UNIQUE  = 2;
-static const int L2_REQ_TYPE_BITS    = 3;
+static const int L2_REQ_TYPE_WRITE  = 0;
+static const int L2_REQ_TYPE_CACHED = 1;
+static const int L2_REQ_TYPE_UNIQUE = 2;
+static const int L2_REQ_TYPE_SNOOP  = 3;    // Use data received through snoop channel (no memory request)
+static const int L2_REQ_TYPE_BITS   = 4;
 
 /** MPU config */
 static const int CFG_MPU_TBL_WIDTH   = 2;    // [1:0]  log2(MPU_TBL_SIZE)

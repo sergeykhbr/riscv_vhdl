@@ -349,17 +349,18 @@ void RiverAmba::snoopcomb() {
         if (resp_snoop_valid_o.read() == 1) {
             v_cr_valid = 1;
             if (resp_snoop_flags_o.read()[TAG_FL_VALID] == 1
-                    && resp_snoop_flags_o.read()[DTAG_FL_SHARED] == 0) {
+                    && (resp_snoop_flags_o.read()[DTAG_FL_SHARED] == 0
+                        || sr.ac_snoop.read() == AC_SNOOP_READ_UNIQUE)) {
                 // Need second request with cache access
                 sv.cache_access = 1;
                 // see table C3-21 "Snoop response bit allocation"
                 vb_cr_resp[0] = 1;          // will be Data transfer
                 vb_cr_resp[4] = 1;          // WasUnique
-                //if (sr.ac_snoop.read() == AC_SNOOP_MAKE_INVALID) {
-                //} else if (sr.ac_snoop.read() == AC_SNOOP_READ_UNIQUE) {
-                //} else {
-                //}
-                vb_req_snoop_type[SNOOP_REQ_TYPE_READDATA] = 1;
+                if (sr.ac_snoop.read() == AC_SNOOP_READ_UNIQUE) {
+                    vb_req_snoop_type[SNOOP_REQ_TYPE_READCLEAN] = 1;
+                } else {
+                    vb_req_snoop_type[SNOOP_REQ_TYPE_READDATA] = 1;
+                }
                 sv.req_snoop_type = vb_req_snoop_type;
                 sv.snoop_state = snoop_ac_wait_accept;
                 if (i_msti.read().cr_ready == 1) {

@@ -85,7 +85,6 @@ SC_MODULE(L2Destination) {
         sc_signal<sc_biguint<L1CACHE_LINE_BITS>> req_wdata;
         sc_signal<sc_uint<L1CACHE_BYTES_PER_LINE>> req_wstrb;
 
-        sc_signal<bool> use_snoop;
         sc_signal<sc_uint<SRC_MUX_WIDTH+1>> ac_valid;
         sc_signal<sc_uint<SRC_MUX_WIDTH+1>> cr_ready;
         sc_signal<sc_uint<SRC_MUX_WIDTH+1>> cd_ready;
@@ -101,7 +100,6 @@ SC_MODULE(L2Destination) {
         iv.req_type = 0;
         iv.req_wdata = 0;
         iv.req_wstrb = 0;
-        iv.use_snoop = 0;
         iv.ac_valid = 0;
         iv.cr_ready = 0;
         iv.cd_ready = 0;

@@ -145,6 +145,9 @@ SC_MODULE(DCacheLru) {
         sc_signal<sc_biguint<DCACHE_LINE_BITS>> cache_line_o;
         sc_signal<sc_uint<SNOOP_REQ_TYPE_BITS>> req_snoop_type;
         sc_signal<bool> snoop_flags_valid;
+        sc_signal<bool> snoop_restore_wait_resp;
+        sc_signal<bool> snoop_restore_write_bus;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_addr_restore;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
@@ -171,6 +174,9 @@ SC_MODULE(DCacheLru) {
         iv.cache_line_o = 0;
         iv.req_snoop_type = 0;
         iv.snoop_flags_valid = 0;
+        iv.snoop_restore_wait_resp = 0;
+        iv.snoop_restore_write_bus = 0;
+        iv.req_addr_restore = 0;
     }
 
     static const int CFG_SNOOP_ENA = 1;

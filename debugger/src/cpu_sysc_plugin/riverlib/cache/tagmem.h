@@ -218,8 +218,8 @@ void TagMem<abus, ibits, lnbits, flbits, snoop>::comb() {
         vb_snoop_index = i_snoop_addr.read()(ibits + lnbits - 1, lnbits);
         vb_snoop_tagaddr = i_snoop_addr.read()(abus - 1, ibits + lnbits);
 
-        if (tagi_we == 1) {
-            vb_snoop_tagaddr = i_addr.read()(abus - 1, ibits + lnbits);
+        if (i_wstrb.read().or_reduce() == 1) {
+            vb_snoop_index = vb_index;
         }
 
         if (rb_snoop_tagaddr.read() != tago_snoop_rdata.read()(TAG_BITS-1, 0)) {

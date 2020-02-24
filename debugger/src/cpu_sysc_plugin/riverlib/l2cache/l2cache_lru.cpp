@@ -300,7 +300,12 @@ void L2CacheLru::comb() {
         if (line_rflags_o.read()[TAG_FL_VALID] == 1) {
             // Hit
             v_resp_valid = 1;
-            if (r.req_type.read()[L2_REQ_TYPE_WRITE] == 1) {
+            vb_resp_rdata = vb_cached_data;
+            vb_resp_status = r.rb_resp.read();
+            if (r.req_type.read()[L2_REQ_TYPE_UNIQUE] == 1) {
+                v_line_cs_write = 0;
+                v_invalidate = 1;
+            } else if (r.req_type.read()[L2_REQ_TYPE_WRITE] == 1) {
                 // Modify tagged mem output with request and write back
                 v_line_cs_write = 1;
                 v_line_wflags[TAG_FL_VALID] = 1;
@@ -314,22 +319,15 @@ void L2CacheLru::comb() {
                     // value and update state machine
                     v_ready_next = 1;
                 }
-                v.state = State_Idle;
             } else {
-                vb_resp_rdata = vb_cached_data;
-                vb_resp_status = r.rb_resp.read();
                 v_ready_next = 1;
-                v.state = State_Idle;
             }
-            if (r.req_type.read()[L2_REQ_TYPE_UNIQUE] == 1) {
-                v_line_cs_write = 0;
-                v_ready_next = 0;
-                v_invalidate = 1;
-            }
+            v.state = State_Idle;
         } else {
             // Miss
-            if (r.req_type.read()[L2_REQ_TYPE_WRITE] == 1
-              && r.req_type.read()[L2_REQ_TYPE_UNIQUE] == 1) {
+            if ((r.req_type.read()[L2_REQ_TYPE_WRITE] == 1
+              && r.req_type.read()[L2_REQ_TYPE_UNIQUE] == 1)
+              || r.req_type.read()[L2_REQ_TYPE_SNOOP] == 1) {
                 // This command analog of invalidate line
                 // no need to read it form memory
                 v.state = State_Idle;

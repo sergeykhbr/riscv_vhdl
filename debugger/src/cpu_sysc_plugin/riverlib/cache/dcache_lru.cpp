@@ -130,6 +130,9 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset, bool coherence_ena)
     sensitive << r.cache_line_o;
     sensitive << r.req_snoop_type;
     sensitive << r.snoop_flags_valid;
+    sensitive << r.snoop_restore_wait_resp;
+    sensitive << r.snoop_restore_write_bus;
+    sensitive << r.req_addr_restore;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -223,6 +226,7 @@ void DCacheLru::comb() {
     bool v_req_same_line;
     bool v_ready_next;
     bool v_req_snoop_ready;
+    bool v_req_snoop_ready_on_wait;
     bool v_resp_snoop_valid;
     sc_uint<CFG_CPU_ADDR_BITS> vb_addr_direct_next;
    
@@ -238,6 +242,7 @@ void DCacheLru::comb() {
     v_invalidate = 0;
     v_flush_end = 0;
     v_req_snoop_ready = 0;
+    v_req_snoop_ready_on_wait = 0;
     v_resp_snoop_valid = r.snoop_flags_valid;
     ridx = r.req_addr.read()(CFG_DLOG2_BYTES_PER_LINE-1, 3);
 
@@ -433,6 +438,15 @@ void DCacheLru::comb() {
             if (i_mem_load_fault.read() == 1) {
                 v.load_fault = 1;
             }
+        } else if (coherence_ena_ &&
+            i_req_snoop_valid.read() == 1 && i_req_snoop_type.read() != 0x0) {
+            // Access cache data
+            v_req_snoop_ready_on_wait = 1;
+            v.snoop_restore_wait_resp = 1;
+            v.req_addr_restore = r.req_addr;
+            v.req_addr = i_req_snoop_addr.read();
+            v.req_snoop_type = i_req_snoop_type.read();
+            v.state = State_SnoopSetupAddr;
         }
         break;
     case State_CheckResp:
@@ -490,6 +504,15 @@ void DCacheLru::comb() {
                 v_resp_valid = 1;
                 v_resp_er_store_fault = i_mem_store_fault.read();
             }
+        } else if (coherence_ena_ &&
+            i_req_snoop_valid.read() == 1 && i_req_snoop_type.read() != 0x0) {
+            // Access cache data cannot be in the same clock as i_mem_data_valid
+            v_req_snoop_ready_on_wait = 1;
+            v.snoop_restore_write_bus = 1;
+            v.req_addr_restore = r.req_addr;
+            v.req_addr = i_req_snoop_addr.read();
+            v.req_snoop_type = i_req_snoop_type.read();
+            v.state = State_SnoopSetupAddr;
         }
         break;
     case State_FlushAddr:
@@ -560,30 +583,30 @@ void DCacheLru::comb() {
         }
         break;
     case State_SnoopSetupAddr:
-        if (r.req_snoop_type.read()[SNOOP_REQ_TYPE_READDATA] == 1) {
-            v.state = State_SnoopReadData;
-            v_invalidate = 1; 
-        } else if (r.req_snoop_type.read()[SNOOP_REQ_TYPE_MAKEINVALID] == 1) {
-            v_resp_snoop_valid = 1;
-            v_invalidate = 1; 
-            v.flush_cnt = 0;
-            v.req_flush_all = 0;            // invalid only 'hit' line
-            v.state = State_FlushCheck;     // address already setup
-        } else {
-            v_resp_snoop_valid = 1;
-            v.state = State_Idle;
-        }
+        v.state = State_SnoopReadData;
+        v_invalidate = r.req_snoop_type.read()[SNOOP_REQ_TYPE_READCLEAN]; 
         break;
     case State_SnoopReadData:
         v_resp_snoop_valid = 1;
-        v.state = State_Idle;
+        v.snoop_restore_wait_resp = 0;
+        v.snoop_restore_write_bus = 0;
+        if (r.snoop_restore_wait_resp.read() == 1) {
+            v.req_addr = r.req_addr_restore;
+            v.state = State_WaitResp;
+        } else if (r.snoop_restore_write_bus.read() == 1) {
+            v.req_addr = r.req_addr_restore;
+            v.state = State_WriteBus;
+        } else {
+            v.state = State_Idle;
+        }
         break;
     default:;
     }
 
     v_req_snoop_ready =
         (line_snoop_ready_o.read() && !i_req_snoop_type.read().or_reduce()) ||
-        (coherence_ena_ && v_ready_next && i_req_snoop_type.read().or_reduce());
+        (coherence_ena_ && v_ready_next && i_req_snoop_type.read().or_reduce())
+        || v_req_snoop_ready_on_wait;
 
     v.snoop_flags_valid = i_req_snoop_valid.read() &&
         line_snoop_ready_o.read() && !i_req_snoop_type.read().or_reduce();
@@ -592,7 +615,6 @@ void DCacheLru::comb() {
         if (coherence_ena_ &&
             i_req_snoop_valid.read() == 1 && i_req_snoop_type.read() != 0x0) {
             // Access cache data
-            vb_line_addr = i_req_snoop_addr.read();
             v.req_addr = i_req_snoop_addr.read();
             v.req_snoop_type = i_req_snoop_type.read();
             v.state = State_SnoopSetupAddr;
