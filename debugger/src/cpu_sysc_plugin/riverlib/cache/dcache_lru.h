@@ -98,8 +98,6 @@ SC_MODULE(DCacheLru) {
         State_FlushCheck,
         State_Reset,
         State_ResetWrite,
-        State_WaitGrantMakeUniqueL2,
-        State_WaitRespMakeUniqueL2,
         State_SnoopSetupAddr,
         State_SnoopReadData,
     };
@@ -135,6 +133,7 @@ SC_MODULE(DCacheLru) {
         sc_signal<bool> load_fault;
         sc_signal<bool> write_first;
         sc_signal<bool> write_flush;
+        sc_signal<bool> write_share;
         sc_signal<sc_uint<DCACHE_BYTES_PER_LINE>> mem_wstrb;
         sc_signal<bool> req_flush;
         sc_signal<bool> req_flush_all;
@@ -164,6 +163,7 @@ SC_MODULE(DCacheLru) {
         iv.load_fault = 0;
         iv.write_first = 0;
         iv.write_flush = 0;
+        iv.write_share = 0;
         iv.mem_wstrb = 0;
         iv.req_flush = 0;           // init flush request
         iv.req_flush_all = 0;

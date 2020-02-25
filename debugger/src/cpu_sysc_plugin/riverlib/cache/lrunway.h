@@ -162,6 +162,8 @@ void lrunway<abits, waybits>::comb() {
         vb_tbl_wdata = vb_tbl_wdata_up;
     } else if (i_down.read()) {
         vb_tbl_wdata = vb_tbl_wdata_down;
+    } else {
+        vb_tbl_wdata = 0;
     }
 
     w_we = v_we;

@@ -325,13 +325,24 @@ void L2CacheLru::comb() {
             v.state = State_Idle;
         } else {
             // Miss
-            if ((r.req_type.read()[L2_REQ_TYPE_WRITE] == 1
-              && r.req_type.read()[L2_REQ_TYPE_UNIQUE] == 1)
-              || r.req_type.read()[L2_REQ_TYPE_SNOOP] == 1) {
+            if (r.req_type.read()[L2_REQ_TYPE_WRITE] == 1
+              && r.req_type.read()[L2_REQ_TYPE_UNIQUE] == 1) {
                 // This command analog of invalidate line
                 // no need to read it form memory
                 v.state = State_Idle;
                 v_resp_valid = 1;
+            } else if (r.req_type.read()[L2_REQ_TYPE_WRITE] == 0
+                      && r.req_type.read()[L2_REQ_TYPE_UNIQUE] == 0
+                      && r.req_type.read()[L2_REQ_TYPE_SNOOP] == 1) {
+                v.state = State_Idle;
+                v_resp_valid = 1;
+
+                // Save into cache read via Snoop channel data
+                v_line_cs_write = 1;
+                v_line_wflags[TAG_FL_VALID] = 1;
+                v_line_wflags[L2TAG_FL_DIRTY] = 1;
+                vb_line_wstrb = vb_line_rdata_o_wstrb;
+                vb_line_wdata = vb_line_rdata_o_modified;
             } else {
                 v.state = State_TranslateAddress;
             }

@@ -277,8 +277,6 @@ void L2Destination::comb() {
         break;
     case snoop_cd:
         // Here only to read Unique data from L1
-        vb_req_type[L2_REQ_TYPE_SNOOP] = 1;
-        v.req_type = vb_req_type;
         for (int i = 1; i < SRC_MUX_WIDTH; i++) {
             vlxi[i].cd_ready = r.cd_ready.read()[i];
             if (r.cd_ready.read()[i] == 1 && vcoreo[i].cd_valid == 1) {
@@ -286,12 +284,18 @@ void L2Destination::comb() {
                 v.req_wdata = vcoreo[i].cd_data;
             }
         }
+        v.cd_ready = vb_cd_ready;
         if (vb_cd_ready.or_reduce() == 0) {
             if (r.req_type.read()[L2_REQ_TYPE_WRITE] == 1) {
                 v.state = CacheWriteReq;
             } else {
                 v.state = CacheReadReq;
+                v.req_wstrb = ~0ul;
             }
+            // write to L2 for Read and Write requests
+            vb_req_type[L2_REQ_TYPE_WRITE] = 1;
+            vb_req_type[L2_REQ_TYPE_SNOOP] = 1;
+            v.req_type = vb_req_type;
         }
         break;
     default:;

@@ -120,6 +120,7 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset, bool coherence_ena)
     sensitive << r.load_fault;
     sensitive << r.write_first;
     sensitive << r.write_flush;
+    sensitive << r.write_share;
     sensitive << r.mem_wstrb;
     sensitive << r.req_flush;
     sensitive << r.req_flush_all;
@@ -190,6 +191,7 @@ void DCacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.cache_line_o, pn + ".r_cache_line_o");
         sc_trace(o_vcd, r.write_first, pn + ".r_write_first");
         sc_trace(o_vcd, r.write_flush, pn + ".r_write_flush");
+        sc_trace(o_vcd, r.write_share, pn + ".r_write_share");
         sc_trace(o_vcd, r.mem_wstrb, pn + ".r_mem_wstrb");
         sc_trace(o_vcd, r.flush_cnt, pn + ".r_flush_cnt");
         sc_trace(o_vcd, r.req_flush, pn + ".r_req_flush");
@@ -335,14 +337,8 @@ void DCacheLru::comb() {
                     vb_line_wdata = vb_line_rdata_o_modified;
                     if (coherence_ena_ && line_rflags_o.read()[DTAG_FL_SHARED] == 1) {
                         // Make line: 'shared' -> 'unique' using write request
-                        v_resp_valid = 0;
-                        v.req_mem_valid = 1;
-                        v.req_mem_type = WriteLineUnique();
-                        v.mem_addr = line_raddr_o.read()(CFG_CPU_ADDR_BITS-1,
-                                    CFG_DLOG2_BYTES_PER_LINE) << CFG_DLOG2_BYTES_PER_LINE;
-                        v.mem_wstrb = vb_line_rdata_o_wstrb;
-                        v.cache_line_o = vb_line_rdata_o_modified;
-                        v.state = State_WaitGrantMakeUniqueL2;
+                        v.write_share = 1;
+                        v.state = State_TranslateAddress;
                     } else {
                         if (v_req_same_line == 1) {
                             // Write address is the same as the next requested, so use it to write
@@ -379,7 +375,11 @@ void DCacheLru::comb() {
             v.state = State_WaitGrant;
             if (i_mpu_flags.read()[CFG_MPU_FL_CACHABLE] == 1) {
                 // Cached:
-                if (line_rflags_o.read()[TAG_FL_VALID] == 1 &&
+                if (r.write_share == 1) {
+                    v.req_mem_type = WriteLineUnique();
+                    v.mem_addr = line_raddr_o.read()(CFG_CPU_ADDR_BITS-1,
+                                CFG_DLOG2_BYTES_PER_LINE) << CFG_DLOG2_BYTES_PER_LINE;
+                } else if (line_rflags_o.read()[TAG_FL_VALID] == 1 &&
                     line_rflags_o.read()[DTAG_FL_DIRTY] == 1) {
                     v.write_first = 1;
                     v.req_mem_type = WriteBack();
@@ -420,6 +420,7 @@ void DCacheLru::comb() {
         if (i_req_mem_ready.read()) {
             if (r.write_flush.read() == 1 ||
                 r.write_first.read() == 1 ||
+                r.write_share.read() == 1 ||
                 (r.req_write.read() == 1 &&
                     r.req_mem_type.read()[REQ_MEM_TYPE_CACHED] == 0)) {
                 v.state = State_WriteBus;
@@ -482,7 +483,10 @@ void DCacheLru::comb() {
         break;
     case State_WriteBus:
         if (i_mem_data_valid.read()) {
-            if (r.write_flush.read() == 1) {
+            if (r.write_share == 1) {
+                v.write_share = 0;
+                v.state = State_Idle;
+            } else if (r.write_flush.read() == 1) {
                 // Offloading Cache line on flush request
                 v.state = State_FlushAddr;
             } else if (r.write_first.read() == 1) {
@@ -570,24 +574,21 @@ void DCacheLru::comb() {
         }
         break;
 
-    case State_WaitGrantMakeUniqueL2:
-        if (i_req_mem_ready.read()) {
-            v.req_mem_valid = 0;
-            v.state = State_WaitRespMakeUniqueL2;
-        }
-        break;
-    case State_WaitRespMakeUniqueL2:
-        if (i_mem_data_valid.read()) {
-            v_resp_valid = 1;
-            v.state = State_Idle;
-        }
-        break;
     case State_SnoopSetupAddr:
         v.state = State_SnoopReadData;
         v_invalidate = r.req_snoop_type.read()[SNOOP_REQ_TYPE_READCLEAN]; 
         break;
     case State_SnoopReadData:
         v_resp_snoop_valid = 1;
+        if (r.req_snoop_type.read()[SNOOP_REQ_TYPE_READCLEAN] == 0) {
+            v_line_cs_write = 1;
+            vb_line_wdata = line_rdata_o;
+            vb_line_wstrb = 1;
+            v_line_wflags = line_rflags_o;
+            v_line_wflags[DTAG_FL_DIRTY] = 0;
+            v_line_wflags[DTAG_FL_SHARED] = 1;
+        }
+        // restore state
         v.snoop_restore_wait_resp = 0;
         v.snoop_restore_write_bus = 0;
         if (r.snoop_restore_wait_resp.read() == 1) {

@@ -149,9 +149,7 @@ static const int L2CACHE_SIZE_BYTES =
     L2CACHE_WAYS * L2CACHE_LINES_PER_WAY * L2CACHE_BYTES_PER_LINE;
 
 static const int L2TAG_FL_DIRTY      = 1;
-static const int L2TAG_FL_SHARED     = 2;
-static const int L2TAG_FL_LOAD_FAULT = 3;
-static const int L2TAG_FL_TOTAL      = 4;
+static const int L2TAG_FL_TOTAL      = 2;
 
 static const int L2_REQ_TYPE_WRITE  = 0;
 static const int L2_REQ_TYPE_CACHED = 1;
