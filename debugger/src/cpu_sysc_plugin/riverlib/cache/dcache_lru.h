@@ -113,6 +113,7 @@ SC_MODULE(DCacheLru) {
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> line_raddr_o;
     sc_signal<sc_biguint<DCACHE_LINE_BITS>> line_rdata_o;
     sc_signal<sc_uint<DTAG_FL_TOTAL>> line_rflags_o;
+    sc_signal<bool> line_hit_o;
     // Snoop signals:
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> line_snoop_addr_i;
     sc_signal<bool> line_snoop_ready_o;

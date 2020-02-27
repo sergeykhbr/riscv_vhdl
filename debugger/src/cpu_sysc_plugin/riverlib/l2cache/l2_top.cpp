@@ -92,6 +92,9 @@ L2Top::L2Top(sc_module_name name, bool async_reset) : sc_module(name),
     cache_->i_flush_valid(w_flush_valid);
     cache_->o_flush_end(w_flush_end);
 
+    wb_flush_address = 0;
+    w_flush_end = 0;
+
     amba_ = new L2Amba("amba0", async_reset);
     amba_->i_clk(i_clk);
     amba_->i_nrst(i_nrst);

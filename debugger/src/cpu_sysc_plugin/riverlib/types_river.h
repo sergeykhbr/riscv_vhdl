@@ -48,8 +48,8 @@ class axi4_l1_in_type {
         ac_addr = 0;
         ac_snoop = 0;
         ac_prot = 0;
-        cr_ready = 0;
-        cd_ready = 0;
+        cr_ready = 1;
+        cd_ready = 1;
     }
 
     inline bool operator == (const axi4_l1_in_type &rhs) const {
@@ -209,8 +209,8 @@ class axi4_l1_out_type {
         aw_domain = 0;
         aw_snoop = 0;
         aw_bar = 0;
-        ac_ready = 0;
-        cr_valid = 0;
+        ac_ready = 1;
+        cr_valid = 1;
         cr_resp = 0;
         cd_valid = 0;
         cd_data = 0;

@@ -83,6 +83,7 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset, bool coherence_ena)
     mem->o_raddr(line_raddr_o);
     mem->o_rdata(line_rdata_o);
     mem->o_rflags(line_rflags_o);
+    mem->o_hit(line_hit_o);
     mem->i_snoop_addr(line_snoop_addr_i);
     mem->o_snoop_ready(line_snoop_ready_o);
     mem->o_snoop_flags(line_snoop_flags_o);
@@ -112,6 +113,7 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset, bool coherence_ena)
     sensitive << line_raddr_o;
     sensitive << line_rdata_o;
     sensitive << line_rflags_o;
+    sensitive << line_hit_o;
     sensitive << r.req_addr;
     sensitive << r.state;
     sensitive << r.req_mem_valid;
@@ -195,6 +197,7 @@ void DCacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.mem_wstrb, pn + ".r_mem_wstrb");
         sc_trace(o_vcd, r.flush_cnt, pn + ".r_flush_cnt");
         sc_trace(o_vcd, r.req_flush, pn + ".r_req_flush");
+        sc_trace(o_vcd, r.req_flush_all, pn + ".r_req_flush_all");
         sc_trace(o_vcd, r.req_flush_addr, pn + ".r_req_flush_addr");
         sc_trace(o_vcd, r.req_flush_cnt, pn + ".r_req_flush_cnt");
     }
@@ -323,7 +326,7 @@ void DCacheLru::comb() {
         break;
     case State_CheckHit:
         vb_resp_data = vb_cached_data;
-        if (line_rflags_o.read()[TAG_FL_VALID] == 1) {
+        if (line_hit_o.read() == 1) {
             // Hit
             v_resp_valid = 1;
             if (i_resp_ready.read() == 1) {

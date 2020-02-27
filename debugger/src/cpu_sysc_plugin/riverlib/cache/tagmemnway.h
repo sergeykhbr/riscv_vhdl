@@ -46,6 +46,7 @@ SC_MODULE(TagMemNWay) {
     sc_out<sc_uint<abus>> o_raddr;
     sc_out<sc_biguint<8*(1<<lnbits)>> o_rdata;
     sc_out<sc_uint<flbits>> o_rflags;
+    sc_out<bool> o_hit;
     // L2 snoop port, active when snoop = 1
     sc_in<sc_uint<abus>> i_snoop_addr;
     sc_out<bool> o_snoop_ready;     // single port memory not used for writing
@@ -71,6 +72,7 @@ SC_MODULE(TagMemNWay) {
         o_raddr("o_raddr"),
         o_rdata("o_rdata"),
         o_rflags("o_rflags"),
+        o_hit("o_hit"),
         i_snoop_addr("i_snoop_addr"),
         o_snoop_ready("o_snoop_ready"),
         o_snoop_flags("o_snoop_flags") {
@@ -195,47 +197,37 @@ SC_MODULE(TagMemNWay) {
 
 template <int abus, int waybits, int ibits, int lnbits, int flbits, int snoop>
 void TagMemNWay<abus, waybits, ibits, lnbits, flbits, snoop>::comb() {
-    bool hit;
     sc_uint<abus> vb_raddr;
     sc_biguint<8*(1<<lnbits)> vb_rdata;
     sc_uint<flbits> vb_rflags;
+    bool v_hit;
     sc_uint<waybits> vb_hit_idx;
     bool v_way_we;
     sc_uint<(1<<lnbits)> vb_wstrb;
     sc_uint<flbits> vb_wflags;
 
     bool v_snoop_ready;
-    sc_uint<waybits> vb_snoop_hit_idx;
     sc_uint<flbits> vb_snoop_flags;
-
-    hit = 0;
 
     v.direct_access = i_direct_access;
     v.invalidate = i_invalidate;
     v.re = i_re;
     v.req_addr = i_addr.read();
 
-    vb_raddr = 0;
-    vb_rdata = 0;
-    vb_rflags = 0;
     vb_hit_idx = lruo_lru.read();
     if (r.direct_access.read() == 1) {
         vb_hit_idx = r.req_addr.read()(waybits-1, 0);
-        vb_raddr = way_o[vb_hit_idx.to_int()].raddr;
-        vb_rdata = way_o[vb_hit_idx.to_int()].rdata;
-        vb_rflags = way_o[vb_hit_idx.to_int()].rflags;
     } else {
         for (int i = 0; i < NWAYS; i++) {
-            if (way_o[i].hit.read() == 1 &&
-                way_o[i].rflags.read()[FL_VALID] == 1) {
-                hit = 1;
+            if (way_o[i].hit.read() == 1) {
                 vb_hit_idx = i;
-                vb_raddr = way_o[i].raddr;
-                vb_rdata = way_o[i].rdata;
-                vb_rflags = way_o[i].rflags;
             }
         }
     }
+    vb_raddr = way_o[vb_hit_idx.to_int()].raddr;
+    vb_rdata = way_o[vb_hit_idx.to_int()].rdata;
+    vb_rflags = way_o[vb_hit_idx.to_int()].rflags;
+    v_hit = way_o[vb_hit_idx.to_int()].hit;
 
     if (r.invalidate.read() == 1) {
         vb_wflags = 0;
@@ -257,7 +249,7 @@ void TagMemNWay<abus, waybits, ibits, lnbits, flbits, snoop>::comb() {
         way_i[i].snoop_addr = i_snoop_addr.read();
     }
 
-    v_way_we = i_we.read() || (r.invalidate.read() == 1 && hit);
+    v_way_we = i_we.read() || (r.invalidate.read() == 1 && v_hit);
     if (v_way_we == 1) {
         way_i[vb_hit_idx.to_int()].wstrb = vb_wstrb;
     }
@@ -265,10 +257,9 @@ void TagMemNWay<abus, waybits, ibits, lnbits, flbits, snoop>::comb() {
     v_snoop_ready = 1;
     vb_snoop_flags = 0;
     if (snoop) {
-        vb_snoop_hit_idx = lruo_lru.read();
         for (int i = 0; i < NWAYS; i++) {
+            // tagmem already cleared snoop flags if there's no snoop hit
             if (way_o[i].snoop_flags.read()[FL_VALID] == 1) {
-                vb_snoop_hit_idx = i;
                 vb_snoop_flags = way_o[i].snoop_flags;
             }
         }
@@ -285,13 +276,14 @@ void TagMemNWay<abus, waybits, ibits, lnbits, flbits, snoop>::comb() {
     lrui_init = r.direct_access.read();
     lrui_raddr = i_addr.read()(ibits+lnbits-1, lnbits);
     lrui_waddr = r.req_addr.read()(ibits+lnbits-1, lnbits);
-    lrui_up = i_we.read() || (hit && r.re.read());
-    lrui_down = (hit && r.invalidate.read());
+    lrui_up = i_we.read() || (v_hit && r.re.read());
+    lrui_down = (v_hit && r.invalidate.read());
     lrui_lru = vb_hit_idx;
 
     o_raddr = vb_raddr;
     o_rdata = vb_rdata;
     o_rflags = vb_rflags;
+    o_hit = v_hit;
     o_snoop_ready = v_snoop_ready;
     o_snoop_flags = vb_snoop_flags;
 }

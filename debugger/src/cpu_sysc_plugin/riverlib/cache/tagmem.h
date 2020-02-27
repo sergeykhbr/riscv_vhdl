@@ -201,7 +201,7 @@ void TagMem<abus, ibits, lnbits, flbits, snoop>::comb() {
 
     t_tago_tag = tago_rdata.read()(TAG_BITS-1, 0);
     if (rb_tagaddr.read() == t_tago_tag) {
-        v_hit = 1;
+        v_hit = tago_rdata.read()[TAG_BITS];   // valid bit
     }
 
     vb_raddr = 0;
@@ -225,6 +225,10 @@ void TagMem<abus, ibits, lnbits, flbits, snoop>::comb() {
         if (rb_snoop_tagaddr.read() != tago_snoop_rdata.read()(TAG_BITS-1, 0)) {
             vb_snoop_flags = 0;
         }
+    } else {
+        vb_snoop_flags = 0;
+        vb_snoop_index = 0;
+        vb_snoop_tagaddr = 0;
     }
 
 

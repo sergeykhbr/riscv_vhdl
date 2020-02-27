@@ -70,6 +70,7 @@ L2CacheLru::L2CacheLru(sc_module_name name_, bool async_reset)
     mem->o_raddr(line_raddr_o);
     mem->o_rdata(line_rdata_o);
     mem->o_rflags(line_rflags_o);
+    mem->o_hit(line_hit_o);
     mem->i_snoop_addr(line_snoop_addr_i);
     mem->o_snoop_ready(line_snoop_ready_o);
     mem->o_snoop_flags(line_snoop_flags_o);
@@ -94,6 +95,7 @@ L2CacheLru::L2CacheLru(sc_module_name name_, bool async_reset)
     sensitive << line_raddr_o;
     sensitive << line_rdata_o;
     sensitive << line_rflags_o;
+    sensitive << line_hit_o;
     sensitive << r.req_type;
     sensitive << r.req_size;
     sensitive << r.req_prot;
@@ -297,7 +299,7 @@ void L2CacheLru::comb() {
         v_ready_next = 1;
         break;
     case State_CheckHit:
-        if (line_rflags_o.read()[TAG_FL_VALID] == 1) {
+        if (line_hit_o.read() == 1) {
             // Hit
             v_resp_valid = 1;
             vb_resp_rdata = vb_cached_data;

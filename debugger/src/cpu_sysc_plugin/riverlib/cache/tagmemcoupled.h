@@ -94,6 +94,7 @@ SC_MODULE(TagMemCoupled) {
             mem[i]->o_raddr(lineo[i].raddr);
             mem[i]->o_rdata(lineo[i].rdata);
             mem[i]->o_rflags(lineo[i].rflags);
+            mem[i]->o_hit(lineo[i].hit);
             mem[i]->i_snoop_addr(linei[i].snoop_addr);
             mem[i]->o_snoop_ready(lineo[i].snoop_ready);
             mem[i]->o_snoop_flags(lineo[i].snoop_flags);
@@ -112,6 +113,7 @@ SC_MODULE(TagMemCoupled) {
             sensitive << lineo[i].raddr;
             sensitive << lineo[i].rdata;
             sensitive << lineo[i].rflags;
+            sensitive << lineo[i].hit;
         }
         sensitive << r_req_addr;
 
@@ -153,6 +155,7 @@ SC_MODULE(TagMemCoupled) {
         sc_signal<sc_uint<abus>> raddr;
         sc_signal<sc_biguint<8*(1<<lnbits)>> rdata;
         sc_signal<sc_uint<flbits>> rflags;
+        sc_signal<bool> hit;
         sc_signal<bool> snoop_ready;
         sc_signal<sc_uint<flbits>> snoop_flags;
     };
@@ -259,22 +262,22 @@ void TagMemCoupled<abus, waybits, ibits, lnbits, flbits>::comb() {
         vb_raddr_tag = lineo[EVEN].raddr;
         vb_o_rflags = lineo[EVEN].rflags;
 
-        v_o_hit = lineo[EVEN].rflags.read()[TAG_FL_VALID];
+        v_o_hit = lineo[EVEN].hit;
         if (v_use_overlay_r == 0) {
-            v_o_hit_next = lineo[EVEN].rflags.read()[TAG_FL_VALID];
+            v_o_hit_next = lineo[EVEN].hit;
         } else {
-            v_o_hit_next = lineo[ODD].rflags.read()[TAG_FL_VALID];
+            v_o_hit_next = lineo[ODD].hit;
         }
     } else {
         vb_o_rdata = (lineo[EVEN].rdata.read()(15, 0), lineo[ODD].rdata);
         vb_raddr_tag = lineo[ODD].raddr;
         vb_o_rflags = lineo[ODD].rflags;
 
-        v_o_hit = lineo[ODD].rflags.read()[TAG_FL_VALID];
+        v_o_hit = lineo[ODD].hit;
         if (v_use_overlay_r == 0) {
-            v_o_hit_next = lineo[ODD].rflags.read()[TAG_FL_VALID];
+            v_o_hit_next = lineo[ODD].hit;
         } else {
-            v_o_hit_next = lineo[EVEN].rflags.read()[TAG_FL_VALID];
+            v_o_hit_next = lineo[EVEN].hit;
         }
     }
 
