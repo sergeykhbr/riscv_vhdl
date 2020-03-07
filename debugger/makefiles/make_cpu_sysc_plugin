@@ -33,13 +33,13 @@ SRC_PATH =\
 	$(TOP_DIR)src/common/generic \
 	$(TOP_DIR)src/cpu_sysc_plugin \
 	$(TOP_DIR)src/cpu_sysc_plugin/cmds \
-	$(TOP_DIR)src/cpu_sysc_plugin/l2 \
 	$(TOP_DIR)src/cpu_sysc_plugin/riverlib \
 	$(TOP_DIR)src/cpu_sysc_plugin/riverlib/core \
 	$(TOP_DIR)src/cpu_sysc_plugin/riverlib/core/arith \
 	$(TOP_DIR)src/cpu_sysc_plugin/riverlib/core/fpu_d \
 	$(TOP_DIR)src/cpu_sysc_plugin/riverlib/cache \
-	$(TOP_DIR)src/cpu_sysc_plugin/riverlib/cache/mem
+	$(TOP_DIR)src/cpu_sysc_plugin/riverlib/cache/mem \
+	$(TOP_DIR)src/cpu_sysc_plugin/riverlib/l2cache
 
 VPATH = $(SRC_PATH)
 
@@ -57,7 +57,7 @@ SOURCES = \
 	rtl_wrapper \
 	river_top \
 	river_amba \
-	axiserdes \
+	l1serdes \
 	icache_lru \
 	dcache_lru \
 	mpu \
@@ -86,7 +86,11 @@ SOURCES = \
 	stacktrbuf \
 	dbg_port \
 	tracer \
-	l2_top
+	l2_amba \
+	l2_dst \
+	l2cache_lru \
+	l2_top \
+	l2serdes
 
 LIBS = \
 	dbg64g \

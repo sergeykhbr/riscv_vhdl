@@ -92,44 +92,12 @@ static const int SNOOP_REQ_TYPE_READDATA     = 0;   // 0=check flags; 1=data tra
 static const int SNOOP_REQ_TYPE_READCLEAN    = 1;   // 0=do nothing; 1=read and invalidate line
 static const int SNOOP_REQ_TYPE_BITS         = 2;
 
-static sc_uint<REQ_MEM_TYPE_BITS> ReadNoSnoop() {
-    sc_uint<REQ_MEM_TYPE_BITS> ret = 0x0;
-    return ret;
-}
-
-static sc_uint<REQ_MEM_TYPE_BITS> ReadShared() {
-    sc_uint<REQ_MEM_TYPE_BITS> ret = 0x0;
-    ret[REQ_MEM_TYPE_CACHED] = 1;
-    return ret;
-}
-
-static sc_uint<REQ_MEM_TYPE_BITS> ReadMakeUnique() {
-    sc_uint<REQ_MEM_TYPE_BITS> ret = 0x0;
-    ret[REQ_MEM_TYPE_CACHED] = 1;
-    ret[REQ_MEM_TYPE_UNIQUE] = 1;
-    return ret;
-}
-
-static sc_uint<REQ_MEM_TYPE_BITS> WriteNoSnoop() {
-    sc_uint<REQ_MEM_TYPE_BITS> ret = 0x0;
-    ret[REQ_MEM_TYPE_WRITE] = 1;
-    return ret;
-}
-
-static sc_uint<REQ_MEM_TYPE_BITS> WriteLineUnique() {
-    sc_uint<REQ_MEM_TYPE_BITS> ret = 0x0;
-    ret[REQ_MEM_TYPE_WRITE] = 1;
-    ret[REQ_MEM_TYPE_CACHED] = 1;
-    ret[REQ_MEM_TYPE_UNIQUE] = 1;
-    return ret;
-}
-
-static sc_uint<REQ_MEM_TYPE_BITS> WriteBack() {
-    sc_uint<REQ_MEM_TYPE_BITS> ret = 0x0;
-    ret[REQ_MEM_TYPE_WRITE] = 1;
-    ret[REQ_MEM_TYPE_CACHED] = 1;
-    return ret;
-}
+sc_uint<REQ_MEM_TYPE_BITS> ReadNoSnoop();
+sc_uint<REQ_MEM_TYPE_BITS> ReadShared();
+sc_uint<REQ_MEM_TYPE_BITS> ReadMakeUnique();
+sc_uint<REQ_MEM_TYPE_BITS> WriteNoSnoop();
+sc_uint<REQ_MEM_TYPE_BITS> WriteLineUnique();
+sc_uint<REQ_MEM_TYPE_BITS> WriteBack();
 
 
 /** 

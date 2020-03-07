@@ -879,51 +879,54 @@ class axi4_domain_out_type {
     inline bool operator == (const axi4_domain_out_type &rhs) const {
         bool t;
         for (int i = 0; i < CFG_TOTAL_CPU_MAX; i++) {
-        t = (rhs.arr[i].aw_valid == arr[i].aw_valid
-            && rhs.arr[i].aw_bits.addr == arr[i].aw_bits.addr
-            && rhs.arr[i].aw_bits.len == arr[i].aw_bits.len
-            && rhs.arr[i].aw_bits.size == arr[i].aw_bits.size
-            && rhs.arr[i].aw_bits.burst == arr[i].aw_bits.burst
-            && rhs.arr[i].aw_bits.lock == arr[i].aw_bits.lock
-            && rhs.arr[i].aw_bits.cache == arr[i].aw_bits.cache
-            && rhs.arr[i].aw_bits.prot == arr[i].aw_bits.prot
-            && rhs.arr[i].aw_bits.qos == arr[i].aw_bits.qos
-            && rhs.arr[i].aw_bits.region == arr[i].aw_bits.region
-            && rhs.arr[i].aw_id == arr[i].aw_id
-            && rhs.arr[i].aw_user == arr[i].aw_user
-            && rhs.arr[i].w_valid == arr[i].w_valid
-            && rhs.arr[i].w_data == arr[i].w_data
-            && rhs.arr[i].w_last == arr[i].w_last
-            && rhs.arr[i].w_strb == arr[i].w_strb
-            && rhs.arr[i].w_user == arr[i].w_user
-            && rhs.arr[i].b_ready == arr[i].b_ready
-            && rhs.arr[i].ar_valid == arr[i].ar_valid
-            && rhs.arr[i].ar_bits.addr == arr[i].ar_bits.addr
-            && rhs.arr[i].ar_bits.len == arr[i].ar_bits.len
-            && rhs.arr[i].ar_bits.size == arr[i].ar_bits.size
-            && rhs.arr[i].ar_bits.burst == arr[i].ar_bits.burst
-            && rhs.arr[i].ar_bits.lock == arr[i].ar_bits.lock
-            && rhs.arr[i].ar_bits.cache == arr[i].ar_bits.cache
-            && rhs.arr[i].ar_bits.prot == arr[i].ar_bits.prot
-            && rhs.arr[i].ar_bits.qos == arr[i].ar_bits.qos
-            && rhs.arr[i].ar_bits.region == arr[i].ar_bits.region
-            && rhs.arr[i].ar_id == arr[i].ar_id
-            && rhs.arr[i].ar_user == arr[i].ar_user
-            && rhs.arr[i].r_ready == arr[i].r_ready
-            && rhs.arr[i].ar_domain == arr[i].ar_domain
-            && rhs.arr[i].ar_snoop == arr[i].ar_snoop
-            && rhs.arr[i].ar_bar == arr[i].ar_bar
-            && rhs.arr[i].aw_domain == arr[i].aw_domain
-            && rhs.arr[i].aw_snoop == arr[i].aw_snoop
-            && rhs.arr[i].aw_bar == arr[i].aw_bar
-            && rhs.arr[i].ac_ready == arr[i].ac_ready
-            && rhs.arr[i].cr_valid == arr[i].cr_valid
-            && rhs.arr[i].cr_resp == arr[i].cr_resp
-            && rhs.arr[i].cd_valid == arr[i].cd_valid
-            && rhs.arr[i].cd_data == arr[i].cd_data
-            && rhs.arr[i].cd_last == arr[i].cd_last
-            && rhs.arr[i].rack == arr[i].rack
-            && rhs.arr[i].wack == arr[i].wack);
+            t = (rhs.arr[i].aw_valid == arr[i].aw_valid
+                && rhs.arr[i].aw_bits.addr == arr[i].aw_bits.addr
+                && rhs.arr[i].aw_bits.len == arr[i].aw_bits.len
+                && rhs.arr[i].aw_bits.size == arr[i].aw_bits.size
+                && rhs.arr[i].aw_bits.burst == arr[i].aw_bits.burst
+                && rhs.arr[i].aw_bits.lock == arr[i].aw_bits.lock
+                && rhs.arr[i].aw_bits.cache == arr[i].aw_bits.cache
+                && rhs.arr[i].aw_bits.prot == arr[i].aw_bits.prot
+                && rhs.arr[i].aw_bits.qos == arr[i].aw_bits.qos
+                && rhs.arr[i].aw_bits.region == arr[i].aw_bits.region
+                && rhs.arr[i].aw_id == arr[i].aw_id
+                && rhs.arr[i].aw_user == arr[i].aw_user
+                && rhs.arr[i].w_valid == arr[i].w_valid
+                && rhs.arr[i].w_data == arr[i].w_data
+                && rhs.arr[i].w_last == arr[i].w_last
+                && rhs.arr[i].w_strb == arr[i].w_strb
+                && rhs.arr[i].w_user == arr[i].w_user
+                && rhs.arr[i].b_ready == arr[i].b_ready
+                && rhs.arr[i].ar_valid == arr[i].ar_valid
+                && rhs.arr[i].ar_bits.addr == arr[i].ar_bits.addr
+                && rhs.arr[i].ar_bits.len == arr[i].ar_bits.len
+                && rhs.arr[i].ar_bits.size == arr[i].ar_bits.size
+                && rhs.arr[i].ar_bits.burst == arr[i].ar_bits.burst
+                && rhs.arr[i].ar_bits.lock == arr[i].ar_bits.lock
+                && rhs.arr[i].ar_bits.cache == arr[i].ar_bits.cache
+                && rhs.arr[i].ar_bits.prot == arr[i].ar_bits.prot
+                && rhs.arr[i].ar_bits.qos == arr[i].ar_bits.qos
+                && rhs.arr[i].ar_bits.region == arr[i].ar_bits.region
+                && rhs.arr[i].ar_id == arr[i].ar_id
+                && rhs.arr[i].ar_user == arr[i].ar_user
+                && rhs.arr[i].r_ready == arr[i].r_ready
+                && rhs.arr[i].ar_domain == arr[i].ar_domain
+                && rhs.arr[i].ar_snoop == arr[i].ar_snoop
+                && rhs.arr[i].ar_bar == arr[i].ar_bar
+                && rhs.arr[i].aw_domain == arr[i].aw_domain
+                && rhs.arr[i].aw_snoop == arr[i].aw_snoop
+                && rhs.arr[i].aw_bar == arr[i].aw_bar
+                && rhs.arr[i].ac_ready == arr[i].ac_ready
+                && rhs.arr[i].cr_valid == arr[i].cr_valid
+                && rhs.arr[i].cr_resp == arr[i].cr_resp
+                && rhs.arr[i].cd_valid == arr[i].cd_valid
+                && rhs.arr[i].cd_data == arr[i].cd_data
+                && rhs.arr[i].cd_last == arr[i].cd_last
+                && rhs.arr[i].rack == arr[i].rack
+                && rhs.arr[i].wack == arr[i].wack);
+            if (!t) {
+                return false;
+            }
         }
         return true;
     }
