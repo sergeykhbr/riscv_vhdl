@@ -45,7 +45,8 @@ package types_cache is
     abus : integer := 64;          -- system bus address bus (32 or 64 bits)
     ibits : integer := 7;          -- lines memory addres width (usually 6..8)
     lnbits : integer := 5;         -- One line bits: log2(bytes_per_line)
-    flbits : integer := 1          -- Total flags number saved with address tag
+    flbits : integer := 1;         -- Total flags number saved with address tag
+    snoop : integer := 0           -- snoop channel (only with enabled L2-cache)
   );
   port (
     i_clk : in std_logic;
@@ -57,7 +58,9 @@ package types_cache is
     o_raddr : out std_logic_vector(abus-1 downto 0);
     o_rdata : out std_logic_vector(8*(2**lnbits)-1 downto 0);
     o_rflags : out std_logic_vector(flbits-1 downto 0);
-    o_hit : out std_logic
+    o_hit : out std_logic;
+    i_snoop_addr : in std_logic_vector(abus-1 downto 0);
+    o_snoop_flags : out std_logic_vector(flbits-1 downto 0)
   );
   end component;
 

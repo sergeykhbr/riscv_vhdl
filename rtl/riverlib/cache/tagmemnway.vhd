@@ -59,6 +59,7 @@ architecture arch_tagmemnway of tagmemnway is
       wstrb : std_logic_vector((2**lnbits)-1 downto 0);
       wdata : std_logic_vector(8*(2**lnbits)-1 downto 0);
       wflags : std_logic_vector(flbits-1 downto 0);
+      snoop_addr : std_logic_vector(abus-1 downto 0);
   end record;
 
   type WayOutType is record
@@ -66,6 +67,7 @@ architecture arch_tagmemnway of tagmemnway is
       rdata : std_logic_vector(8*(2**lnbits)-1 downto 0);
       rflags : std_logic_vector(flbits-1 downto 0);
       hit : std_logic;
+      snoop_flags : std_logic_vector(flbits-1 downto 0);
   end record;
 
   type way_in_vector is array (0 to NWAYS-1) of WayInType;
@@ -99,7 +101,8 @@ begin
       abus => abus,
       ibits => ibits,
       lnbits => lnbits,
-      flbits => flbits
+      flbits => flbits,
+      snoop => 0
     ) port map (
       i_clk => i_clk,
       i_nrst => i_nrst,
@@ -110,7 +113,9 @@ begin
       o_raddr => way_o(i).raddr,
       o_rdata => way_o(i).rdata,
       o_rflags => way_o(i).rflags,
-      o_hit => way_o(i).hit
+      o_hit => way_o(i).hit,
+      i_snoop_addr => way_i(i).snoop_addr,
+      o_snoop_flags => way_o(i).snoop_flags
     );
   end generate;
 

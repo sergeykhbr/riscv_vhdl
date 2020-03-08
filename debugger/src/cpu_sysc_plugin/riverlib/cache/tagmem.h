@@ -209,7 +209,6 @@ void TagMem<abus, ibits, lnbits, flbits, snoop>::comb() {
     vb_raddr(ibits + lnbits - 1, lnbits) = rb_index.read();
 
     vb_index = i_addr.read()(ibits + lnbits - 1, lnbits);
-    tagi_we = i_wstrb.read().or_reduce();
     vb_tagi_wdata(TAG_BITS-1, 0) = i_addr.read()(abus - 1, ibits + lnbits);
     vb_tagi_wdata(TAG_WITH_FLAGS-1, TAG_BITS) = i_wflags.read();
 
@@ -238,6 +237,7 @@ void TagMem<abus, ibits, lnbits, flbits, snoop>::comb() {
     }
 
     wb_index = vb_index;
+    tagi_we = i_wstrb.read().or_reduce();
     tagi_wdata = vb_tagi_wdata;
 
     o_raddr = vb_raddr;
