@@ -184,6 +184,7 @@ component river_amba is
     hartid : integer;
     async_reset : boolean;
     fpu_ena : boolean;
+    coherence_ena : boolean;
     tracer_ena : boolean
   );
   port ( 

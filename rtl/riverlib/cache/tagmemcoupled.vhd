@@ -36,8 +36,10 @@ entity tagmemcoupled is generic (
   port (
     i_clk : in std_logic;
     i_nrst : in std_logic;
-    i_cs : in std_logic;
-    i_flush : in std_logic;
+    i_direct_access : in std_logic;
+    i_invalidate : in std_logic;
+    i_re : in std_logic;
+    i_we : in std_logic;
     i_addr : in std_logic_vector(abus-1 downto 0);
     i_wdata : in std_logic_vector(8*(2**lnbits)-1 downto 0);
     i_wstrb : in std_logic_vector(2**lnbits-1 downto 0);
@@ -58,12 +60,15 @@ architecture arch_tagmemcoupled of tagmemcoupled is
   constant MemTotal : integer := 2;
 
   type tagmem_in_type is record
-      cs : std_logic;
+      direct_access : std_logic;
+      invalidate : std_logic;
+      re : std_logic;
+      we : std_logic;
       addr : std_logic_vector(abus-1 downto 0);
       wdata : std_logic_vector(8*(2**lnbits)-1 downto 0);
       wstrb : std_logic_vector((2**lnbits)-1 downto 0);
       wflags : std_logic_vector(flbits-1 downto 0);
-      flush : std_logic;
+      snoop_addr : std_logic_vector(abus-1 downto 0);
   end record;
 
   type tagmem_out_type is record
@@ -71,6 +76,8 @@ architecture arch_tagmemcoupled of tagmemcoupled is
       rdata : std_logic_vector(8*(2**lnbits)-1 downto 0);
       rflags : std_logic_vector(flbits-1 downto 0);
       hit : std_logic;
+      snoop_ready : std_logic;
+      snoop_flags : std_logic_vector(flbits-1 downto 0);
   end record;
 
   type tagmem_in_vector is array (0 to MemTotal-1) of tagmem_in_type;
@@ -91,12 +98,15 @@ begin
       waybits => waybits,
       ibits => ibits - 1,
       lnbits => lnbits,
-      flbits => flbits
+      flbits => flbits,
+      snoop => false
     ) port map (
       i_clk => i_clk,
       i_nrst => i_nrst,
-      i_cs => linei(i).cs,
-      i_flush => linei(i).flush,
+      i_direct_access => linei(i).direct_access,
+      i_invalidate => linei(i).invalidate,
+      i_re => linei(i).re,
+      i_we => linei(i).we,
       i_addr => linei(i).addr,
       i_wdata => linei(i).wdata,
       i_wstrb => linei(i).wstrb,
@@ -104,12 +114,16 @@ begin
       o_raddr => lineo(i).raddr,
       o_rdata => lineo(i).rdata,
       o_rflags => lineo(i).rflags,
-      o_hit => lineo(i).hit
+      o_hit => lineo(i).hit,
+      i_snoop_addr => linei(i).snoop_addr,
+      o_snoop_ready => lineo(i).snoop_ready,
+      o_snoop_flags => lineo(i).snoop_flags
     );
   end generate;
 
 
-  comb : process(i_nrst, i_cs, i_flush, i_addr, i_wstrb, i_wdata, i_wflags,
+  comb : process(i_nrst, i_direct_access, i_invalidate, i_re, i_we,
+                 i_addr, i_wstrb, i_wdata, i_wflags,
                  lineo, r_req_addr)
     variable v_addr_sel : std_logic;
     variable v_addr_sel_r : std_logic;
@@ -166,11 +180,17 @@ begin
         linei(ODD).wstrb <= i_wstrb;
     end if;
 
-    linei(EVEN).flush <= i_flush and not v_addr_sel;
-    linei(ODD).flush <= i_flush and v_addr_sel;
+    linei(EVEN).direct_access <= i_direct_access and ((not v_addr_sel) or v_use_overlay);
+    linei(ODD).direct_access <= i_direct_access and (v_addr_sel or v_use_overlay);
 
-    linei(EVEN).cs <= i_cs and ((not v_addr_sel) or v_use_overlay);
-    linei(ODD).cs <= i_cs and (v_addr_sel or v_use_overlay);
+    linei(EVEN).invalidate <= i_invalidate and ((not v_addr_sel) or v_use_overlay);
+    linei(ODD).invalidate <= i_invalidate and (v_addr_sel or v_use_overlay);
+
+    linei(EVEN).re <= i_re and ((not v_addr_sel) or v_use_overlay);
+    linei(ODD).re <= i_re and (v_addr_sel or v_use_overlay);
+
+    linei(EVEN).we <= i_we and ((not v_addr_sel) or v_use_overlay);
+    linei(ODD).we <= i_we and (v_addr_sel or v_use_overlay);
 
     linei(EVEN).wdata <= i_wdata;
     linei(ODD).wdata <= i_wdata;

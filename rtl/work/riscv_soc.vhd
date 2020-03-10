@@ -217,6 +217,7 @@ begin
             hartid => n,
             async_reset => CFG_ASYNC_RESET,
             fpu_ena => true,
+            coherence_ena => false,
             tracer_ena => false
           ) port map ( 
             i_nrst   => w_bus_nrst,

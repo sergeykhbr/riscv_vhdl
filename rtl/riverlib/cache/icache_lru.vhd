@@ -45,8 +45,7 @@ entity icache_lru is generic (
     -- Memory interface:
     i_req_mem_ready : in std_logic;
     o_req_mem_valid : out std_logic;
-    o_req_mem_write : out std_logic;
-    o_req_mem_cached : out std_logic;
+    o_req_mem_type : out std_logic_vector(REQ_MEM_TYPE_BITS-1 downto 0);
     o_req_mem_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_req_mem_strob : out std_logic_vector(ICACHE_BYTES_PER_LINE-1 downto 0);
     o_req_mem_data : out std_logic_vector(ICACHE_LINE_BITS-1 downto 0);
@@ -69,12 +68,15 @@ architecture arch_icache_lru of icache_lru is
 
   constant State_Idle : std_logic_vector(3 downto 0) := "0000";
   constant State_CheckHit : std_logic_vector(3 downto 0) := "0001";
-  constant State_CheckMPU : std_logic_vector(3 downto 0) := "0010";
+  constant State_TranslateAddress : std_logic_vector(3 downto 0) := "0010";
   constant State_WaitGrant : std_logic_vector(3 downto 0) := "0011";
   constant State_WaitResp : std_logic_vector(3 downto 0) := "0100";
   constant State_CheckResp : std_logic_vector(3 downto 0) := "0101";
   constant State_SetupReadAdr : std_logic_vector(3 downto 0) := "0110";
-  constant State_Flush : std_logic_vector(3 downto 0) := "0111";
+  constant State_FlushAddr : std_logic_vector(3 downto 0) := "0111";
+  constant State_FlushCheck : std_logic_vector(3 downto 0) := "1000";
+  constant State_ResetAddr : std_logic_vector(3 downto 0) := "1001";
+  constant State_ResetWrite : std_logic_vector(3 downto 0) := "1010";
 
   type RegistersType is record
       req_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
@@ -83,10 +85,11 @@ architecture arch_icache_lru of icache_lru is
       state : std_logic_vector(3 downto 0);
       req_mem_valid : std_logic;
       mem_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
-      cached : std_logic;
+      req_mem_type : std_logic_vector(REQ_MEM_TYPE_BITS-1 downto 0);
       executable : std_logic;
       load_fault : std_logic;
       req_flush : std_logic;
+      req_flush_all : std_logic;
       req_flush_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
       req_flush_cnt : std_logic_vector(CFG_ILOG2_LINES_PER_WAY+CFG_ILOG2_NWAYS-1 downto 0);
       flush_cnt : std_logic_vector(CFG_ILOG2_LINES_PER_WAY+CFG_ILOG2_NWAYS-1 downto 0);
@@ -96,24 +99,27 @@ architecture arch_icache_lru of icache_lru is
   constant R_RESET : RegistersType := (
     (others => '0'), (others => '0'),       -- req_addr, req_addr_next
     (others => '0'),                        -- write_addr
-    State_Flush,                            -- state
+    State_ResetAddr,                        -- state
     '0', (others => '0'),                   -- req_mem_valid, mem_addr,
-    '0',                                    -- cached
+    (others => '0'),                        -- req_mem_type
     '0',                                    -- executable
     '0',                                    -- load_fault
     '0',                                    -- req_flush
+    '0',                                    -- req_flush_all
     (others => '0'), (others => '0'),       -- req_flush_addr, req_flush_cnt
     (others => '1'),                        -- flush_cnt
     (others => '0')                         -- cache_line_i
   );
 
   signal r, rin : RegistersType;
-  signal line_cs_i : std_logic;
+  signal line_direct_access_i : std_logic;
+  signal line_invalidate_i : std_logic;
+  signal line_re_i : std_logic;
+  signal line_we_i : std_logic;
   signal line_addr_i : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   signal line_wdata_i : std_logic_vector(ICACHE_LINE_BITS-1 downto 0);
   signal line_wstrb_i : std_logic_vector(2**CFG_ILOG2_BYTES_PER_LINE-1 downto 0);
   signal line_wflags_i : std_logic_vector(ITAG_FL_TOTAL-1 downto 0);
-  signal line_flush_i : std_logic;
   signal line_raddr_o : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   signal line_rdata_o : std_logic_vector(ICACHE_LINE_BITS+15 downto 0);
   signal line_rflags_o : std_logic_vector(ITAG_FL_TOTAL-1 downto 0);
@@ -133,8 +139,10 @@ begin
   ) port map (
       i_clk => i_clk,
       i_nrst => i_nrst,
-      i_cs => line_cs_i,
-      i_flush => line_flush_i,
+      i_direct_access => line_direct_access_i,
+      i_invalidate => line_invalidate_i,
+      i_re => line_re_i,
+      i_we => line_we_i,
       i_addr => line_addr_i,
       i_wdata => line_wdata_i,
       i_wstrb => line_wstrb_i,
@@ -159,23 +167,29 @@ begin
     variable vb_uncached_data : std_logic_vector(31 downto 0);
     variable vb_resp_data : std_logic_vector(31 downto 0);
     variable v_resp_er_load_fault : std_logic;
-    variable v_flush : std_logic;
-    variable v_line_cs : std_logic;
+    variable v_direct_access : std_logic;
+    variable v_invalidate : std_logic;
+    variable v_line_cs_read : std_logic;
+    variable v_line_cs_write : std_logic;
     variable vb_line_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     variable vb_line_wdata : std_logic_vector(ICACHE_LINE_BITS-1 downto 0);
     variable vb_line_wstrb : std_logic_vector(ICACHE_BYTES_PER_LINE-1 downto 0);
     variable v_line_wflags : std_logic_vector(ITAG_FL_TOTAL-1 downto 0);
     variable sel_cached : integer;
     variable sel_uncached : integer;
+    variable v_ready_next : std_logic;
+    variable vb_addr_direct_next : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   begin
 
     v := r;
 
+    v_ready_next := '0';
     v_req_ready := '0';
     v_resp_valid := '0';
     vb_resp_data := (others => '0');
     v_resp_er_load_fault := '0';
-    v_flush := '0';
+    v_direct_access := '0';
+    v_invalidate := '0';
     sel_cached := conv_integer(r.req_addr(CFG_ILOG2_BYTES_PER_LINE-1 downto 1));
     sel_uncached := conv_integer(r.req_addr(2 downto 1));
 
@@ -185,21 +199,33 @@ begin
     -- flush request via debug interface
     if i_flush_valid = '1' then
         v.req_flush := '1';
+        v.req_flush_all := i_flush_address(0);
         if i_flush_address(0) = '1' then
             v.req_flush_cnt := (others => '1');
             v.req_flush_addr := (others => '0');
         elsif and_reduce(i_flush_address(CFG_ILOG2_BYTES_PER_LINE-1 downto 1)) = '1' then
-            v.req_flush_cnt := conv_std_logic_vector(2*ICACHE_WAYS-1,
+            v.req_flush_cnt := conv_std_logic_vector(1,
                                CFG_ILOG2_LINES_PER_WAY+CFG_ILOG2_NWAYS);
             v.req_flush_addr := i_flush_address;
         else
-            v.req_flush_cnt := conv_std_logic_vector(ICACHE_WAYS-1,
-                               CFG_ILOG2_LINES_PER_WAY+CFG_ILOG2_NWAYS);
+            v.req_flush_cnt := (others => '0');
             v.req_flush_addr := i_flush_address;
         end if;
     end if;
 
-    v_line_cs := '0';
+    -- Flush counter when direct access
+    if r.req_addr(CFG_ILOG2_NWAYS-1 downto 0) =
+        conv_std_logic_vector(ICACHE_WAYS-1, CFG_ILOG2_NWAYS) then
+        vb_addr_direct_next(CFG_CPU_ADDR_BITS-1 downto CFG_ILOG2_BYTES_PER_LINE) := 
+            r.req_addr(CFG_CPU_ADDR_BITS-1 downto CFG_ILOG2_BYTES_PER_LINE) + 1;
+        vb_addr_direct_next(CFG_ILOG2_BYTES_PER_LINE-1 downto 0) := (others => '0');
+    else
+        vb_addr_direct_next := r.req_addr + 1;
+    end if;
+
+
+    v_line_cs_read := '0';
+    v_line_cs_write := '0';
     vb_line_addr := r.req_addr;
     vb_line_wdata := r.cache_line_i;
     vb_line_wstrb := (others => '0');
@@ -208,54 +234,24 @@ begin
     case r.state is
     when State_Idle =>
         v.executable := '1';
-        if r.req_flush = '1' then
-            v.state := State_Flush;
-            v.req_flush := '0';
-            v.cache_line_i := (others => '0');
-            if r.req_flush_addr(0) = '1' then
-                v.req_addr := (others => '0');
-                v.flush_cnt := (others => '1');
-            else
-                v.req_addr := r.req_flush_addr(CFG_CPU_ADDR_BITS-1 downto CFG_ILOG2_BYTES_PER_LINE)
-                              & zero64(CFG_ILOG2_BYTES_PER_LINE-1 downto 0);
-                v.flush_cnt := r.req_flush_cnt;
-            end if;
-        else
-            v_req_ready := '1';
-            v_line_cs := i_req_valid;
-            vb_line_addr := i_req_addr;
-            if i_req_valid = '1' then
-                v.req_addr := i_req_addr;
-                v.req_addr_next := i_req_addr + ICACHE_BYTES_PER_LINE;
-                v.state := State_CheckHit;
-            end if;
-        end if;
+        v_ready_next := '1';
     when State_CheckHit =>
         vb_resp_data := vb_cached_data;
         if line_hit_o = '1' and line_hit_next_o = '1' then
             -- Hit
-            v_req_ready := not r.req_flush;
             v_resp_valid := '1';
-            if i_resp_ready = '0' then
-                -- Do nothing: wait accept
-            elsif i_req_valid = '0' or r.req_flush = '1' then
+            if i_resp_ready = '1' then
+                v_ready_next := '1';
                 v.state := State_Idle;
-            else
-                v.state := State_CheckHit;
-                v_line_cs := i_req_valid;
-                v.req_addr := i_req_addr;
-                v.req_addr_next := i_req_addr + ICACHE_BYTES_PER_LINE;
-                vb_line_addr := i_req_addr;
             end if;
         else
             -- Miss
-            v.state := State_CheckMPU;
+            v.state := State_TranslateAddress;
         end if;
-    when State_CheckMPU =>
+    when State_TranslateAddress =>
         if i_mpu_flags(CFG_MPU_FL_EXEC) = '0' then
             v.cache_line_i := (others => '1');
             v.state := State_CheckResp;
-            v.cached := '0';
         else
             v.req_mem_valid := '1';
             v.state := State_WaitGrant;
@@ -270,10 +266,10 @@ begin
                     v.mem_addr := r.req_addr_next(CFG_CPU_ADDR_BITS-1 downto CFG_ILOG2_BYTES_PER_LINE)
                                 & zero64(CFG_ILOG2_BYTES_PER_LINE-1 downto 0);
                 end if;
-                v.cached := '1';
+                v.req_mem_type := ReadShared;
             else
                 v.mem_addr := r.req_addr(CFG_CPU_ADDR_BITS-1 downto 3) & "000";
-                v.cached := '0';
+                v.req_mem_type := ReadNoSnoop;
             end if;
         end if;
 
@@ -296,7 +292,7 @@ begin
         end if;
     when State_CheckResp =>
         v.req_addr := r.write_addr;              -- Restore req_addr after line write
-        if r.cached = '0' or r.load_fault = '1' then
+        if r.req_mem_type(REQ_MEM_TYPE_CACHED) = '0' or r.load_fault = '1' then
             v_resp_valid := '1';
             vb_resp_data := vb_uncached_data;
             v_resp_er_load_fault := r.load_fault;
@@ -305,50 +301,89 @@ begin
             end if;
         else
             v.state := State_SetupReadAdr;
-            v_line_cs := '1';
+            v_line_cs_write := '1';
             v_line_wflags(TAG_FL_VALID) := '1';
             vb_line_wstrb := (others => '1');  -- write full line
         end if;
     when State_SetupReadAdr =>
         v.state := State_CheckHit;
-    when State_Flush =>
-        v_line_wflags := (others => '0');      -- flag valid = 0
-        vb_line_wstrb := (others => '1');   -- write full line
-        v_flush := '1';
-        if or_reduce(r.flush_cnt) = '0' then
-            v.state := State_Idle;
-        else 
+    when State_FlushAddr =>
+        v.state := State_FlushCheck;
+        v_direct_access := r.req_flush_all;    -- 0=only if hit; 1=will be applied ignoring hit
+        v_invalidate := '1';                   -- generate: wstrb='1; wflags='0
+        v.cache_line_i := (others => '0');
+    when State_FlushCheck =>
+        v.state := State_FlushAddr;
+        v_direct_access := r.req_flush_all;
+        v_line_cs_write := r.req_flush_all;
+        if or_reduce(r.flush_cnt) = '1' then
             v.flush_cnt := r.flush_cnt - 1;
-            if r.req_addr(CFG_ILOG2_NWAYS-1 downto 0) =
-               conv_std_logic_vector(ICACHE_WAYS-1, CFG_ILOG2_NWAYS) then
-                v.req_addr(CFG_CPU_ADDR_BITS-1 downto CFG_ILOG2_BYTES_PER_LINE) := 
-                    r.req_addr(CFG_CPU_ADDR_BITS-1 downto CFG_ILOG2_BYTES_PER_LINE) + 1;
-                v.req_addr(CFG_ILOG2_BYTES_PER_LINE-1 downto 0) := (others => '0');
+            if r.req_flush_all = '1' then
+                v.req_addr := vb_addr_direct_next;
             else
-                v.req_addr := r.req_addr + 1;
+                v.req_addr := r.req_addr + ICACHE_BYTES_PER_LINE;
             end if;
+        else 
+            v.state := State_Idle;
+        end if;
+    when State_ResetAddr =>
+        -- Write clean line
+        v_direct_access := '1';
+        v_invalidate := '1';                       -- generate: wstrb='1; wflags='0
+        v.state := State_ResetWrite;
+    when State_ResetWrite =>
+        v_direct_access := '1';
+        v_line_cs_write := '1';
+        v.state := State_ResetAddr;
+
+        if or_reduce(r.flush_cnt) = '1' then
+            v.flush_cnt := r.flush_cnt - 1;
+            v.req_addr := vb_addr_direct_next;
+        else
+            v.state := State_Idle;
         end if;
     when others =>
     end case;
+
+    if v_ready_next = '1' then
+        if r.req_flush = '1' then
+            v.state := State_FlushAddr;
+            v.req_flush := '0';
+            v.cache_line_i := (others => '0');
+            v.req_addr := r.req_flush_addr(CFG_CPU_ADDR_BITS-1 downto CFG_ILOG2_BYTES_PER_LINE)
+                          & zero64(CFG_ILOG2_BYTES_PER_LINE-1 downto 0);
+            v.flush_cnt := r.req_flush_cnt;
+        else
+            v_req_ready := '1';
+            v_line_cs_read := i_req_valid;
+            vb_line_addr := i_req_addr;
+            if i_req_valid = '1' then
+                v.req_addr := i_req_addr;
+                v.req_addr_next := i_req_addr + ICACHE_BYTES_PER_LINE;
+                v.state := State_CheckHit;
+            end if;
+        end if;
+    end if;
 
 
     if not async_reset and i_nrst = '0' then
         v := R_RESET;
     end if;
 
-    line_cs_i <= v_line_cs;
+    line_direct_access_i <= v_direct_access;
+    line_invalidate_i <= v_invalidate;
+    line_re_i <= v_line_cs_read;
+    line_we_i <= v_line_cs_write;
     line_addr_i <= vb_line_addr;
     line_wdata_i <= vb_line_wdata;
     line_wstrb_i <= vb_line_wstrb;
     line_wflags_i <= v_line_wflags;
-    line_flush_i <= v_flush;
 
     o_req_ready <= v_req_ready;
 
     o_req_mem_valid <= r.req_mem_valid;
     o_req_mem_addr <= r.mem_addr;
-    o_req_mem_write <= '0';
-    o_req_mem_cached <= r.cached;
+    o_req_mem_type <= r.req_mem_type;
     o_req_mem_strob <= (others => '0');
     o_req_mem_data <= (others => '0');
 

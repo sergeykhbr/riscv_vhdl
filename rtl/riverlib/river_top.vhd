@@ -29,6 +29,7 @@ entity RiverTop is
     hartid : integer := 0;
     async_reset : boolean := false;
     fpu_ena : boolean := true;
+    coherence_ena : boolean := false;
     tracer_ena : boolean := false
   );
   port (
@@ -38,8 +39,7 @@ entity RiverTop is
     i_req_mem_ready : in std_logic;                                   -- AXI request was accepted
     o_req_mem_path : out std_logic;                                   -- 0=ctrl; 1=data path
     o_req_mem_valid : out std_logic;                                  -- AXI memory request is valid
-    o_req_mem_write : out std_logic;                                  -- AXI memory request is write type
-    o_req_mem_cached : out std_logic;
+    o_req_mem_type : out std_logic_vector(REQ_MEM_TYPE_BITS-1 downto 0);-- AXI memory request is write type
     o_req_mem_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- AXI memory request address
     o_req_mem_strob : out std_logic_vector(L1CACHE_BYTES_PER_LINE-1 downto 0);-- Writing strob. 1 bit per Byte
     o_req_mem_data : out std_logic_vector(L1CACHE_LINE_BITS-1 downto 0); -- Writing data
@@ -48,11 +48,19 @@ entity RiverTop is
     i_resp_mem_data : in std_logic_vector(L1CACHE_LINE_BITS-1 downto 0); -- Read data
     i_resp_mem_load_fault : in std_logic;                             -- Bus response with SLVERR or DECERR on read
     i_resp_mem_store_fault : in std_logic;                            -- Bus response with SLVERR or DECERR on write
-    i_resp_mem_store_fault_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     -- Interrupt line from external interrupts controller (PLIC).
     i_ext_irq : in std_logic;
     o_time : out std_logic_vector(63 downto 0);                       -- Timer. Clock counter except halt state.
     o_exec_cnt : out std_logic_vector(63 downto 0);
+    -- D$ Snoop interface
+    i_req_snoop_valid : in std_logic;
+    i_req_snoop_type : in std_logic_vector(SNOOP_REQ_TYPE_BITS-1 downto 0);
+    o_req_snoop_ready : out std_logic;
+    i_req_snoop_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    i_resp_snoop_ready : in std_logic;
+    o_resp_snoop_valid : out std_logic;
+    o_resp_snoop_data : out std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);
+    o_resp_snoop_flags : out std_logic_vector(DTAG_FL_TOTAL-1 downto 0);
     -- Debug interface:
     i_dport_valid : in std_logic;                                     -- Debug access from DSU is valid
     i_dport_write : in std_logic;                                     -- Write command flag
@@ -168,7 +176,8 @@ begin
 
     cache0 :  CacheTop generic map (
         memtech => memtech,
-        async_reset => async_reset
+        async_reset => async_reset,
+        coherence_ena => coherence_ena
      ) port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
@@ -199,8 +208,7 @@ begin
         i_req_mem_ready => i_req_mem_ready,
         o_req_mem_path => o_req_mem_path,
         o_req_mem_valid => o_req_mem_valid,
-        o_req_mem_write => o_req_mem_write,
-        o_req_mem_cached => o_req_mem_cached,
+        o_req_mem_type => o_req_mem_type,
         o_req_mem_addr => o_req_mem_addr,
         o_req_mem_strob => o_req_mem_strob,
         o_req_mem_data => o_req_mem_data,
@@ -209,12 +217,19 @@ begin
         i_resp_mem_data => i_resp_mem_data,
         i_resp_mem_load_fault => i_resp_mem_load_fault,
         i_resp_mem_store_fault => i_resp_mem_store_fault,
-        i_resp_mem_store_fault_addr => i_resp_mem_store_fault_addr,
         i_mpu_region_we => w_mpu_region_we,
         i_mpu_region_idx => wb_mpu_region_idx,
         i_mpu_region_addr => wb_mpu_region_addr,
         i_mpu_region_mask => wb_mpu_region_mask,
         i_mpu_region_flags => wb_mpu_region_flags,
+        i_req_snoop_valid => i_req_snoop_valid,
+        i_req_snoop_type => i_req_snoop_type,
+        o_req_snoop_ready => o_req_snoop_ready,
+        i_req_snoop_addr => i_req_snoop_addr,
+        i_resp_snoop_ready => i_resp_snoop_ready,
+        o_resp_snoop_valid => o_resp_snoop_valid,
+        o_resp_snoop_data => o_resp_snoop_data,
+        o_resp_snoop_flags => o_resp_snoop_flags,
         i_flush_address => wb_flush_address,
         i_flush_valid => w_flush_valid,
         i_data_flush_address => wb_data_flush_address,

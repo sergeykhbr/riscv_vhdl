@@ -26,7 +26,8 @@ use riverlib.types_cache.all;
 
 entity CacheTop is generic (
     memtech : integer;
-    async_reset : boolean
+    async_reset : boolean;
+    coherence_ena : boolean
   );
   port (
     i_clk : in std_logic;                              -- CPU clock
@@ -61,8 +62,7 @@ entity CacheTop is generic (
     i_req_mem_ready : in std_logic;                                    -- AXI request was accepted
     o_req_mem_path : out std_logic;
     o_req_mem_valid : out std_logic;
-    o_req_mem_write : out std_logic;
-    o_req_mem_cached : out std_logic;
+    o_req_mem_type : out std_logic_vector(REQ_MEM_TYPE_BITS-1 downto 0);
     o_req_mem_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_req_mem_strob : out std_logic_vector(L1CACHE_BYTES_PER_LINE-1 downto 0);
     o_req_mem_data : out std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);  -- burst transaction length
@@ -71,13 +71,21 @@ entity CacheTop is generic (
     i_resp_mem_data : in std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);
     i_resp_mem_load_fault : in std_logic;                             -- Bus response with SLVERR or DECERR on read
     i_resp_mem_store_fault : in std_logic;                            -- Bus response with SLVERR or DECERR on write
-    i_resp_mem_store_fault_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     -- MPU interface:
     i_mpu_region_we : in std_logic;
     i_mpu_region_idx : in std_logic_vector(CFG_MPU_TBL_WIDTH-1 downto 0);
     i_mpu_region_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_mpu_region_mask : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_mpu_region_flags : in std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);
+    -- D$ Snoop interface
+    i_req_snoop_valid : in std_logic;
+    i_req_snoop_type : in std_logic_vector(SNOOP_REQ_TYPE_BITS-1 downto 0);
+    o_req_snoop_ready : out std_logic;
+    i_req_snoop_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    i_resp_snoop_ready : in std_logic;
+    o_resp_snoop_valid : out std_logic;
+    o_resp_snoop_data : out std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);
+    o_resp_snoop_flags : out std_logic_vector(DTAG_FL_TOTAL-1 downto 0);
     -- Debug signals:
     i_flush_address : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);  -- clear ICache address from debug interface
     i_flush_valid : in std_logic;                                      -- address to clear icache is valid
@@ -95,16 +103,14 @@ architecture arch_CacheTop of CacheTop is
   constant CTRL_PATH : std_logic := '1';
   constant CACHE_QUEUE_WIDTH : integer :=
         CFG_CPU_ADDR_BITS      -- addr
-        + 1                 -- 0=uncached/1=cached
-        + 1                 -- 0=read/1=write
-        + 1                 -- 1=instruction; 0=data
+        + REQ_MEM_TYPE_BITS    -- req_type
+        + 1                     -- 1=instruction; 0=data
         ;
 
 
   type CacheOutputType is record
       req_mem_valid : std_logic;
-      req_mem_write : std_logic;
-      req_mem_cached : std_logic;
+      req_mem_type : std_logic_vector(REQ_MEM_TYPE_BITS-1 downto 0);
       req_mem_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
       req_mem_strob : std_logic_vector(DCACHE_BYTES_PER_LINE-1 downto 0);
       req_mem_wdata : std_logic_vector(DCACHE_LINE_BITS-1 downto 0);
@@ -142,13 +148,11 @@ architecture arch_CacheTop of CacheTop is
 begin
 
     wb_ctrl_bus <= CTRL_PATH &
-                   i.req_mem_write &
-                   i.req_mem_cached &
+                   i.req_mem_type &
                    i.req_mem_addr;
 
     wb_data_bus <= DATA_PATH &
-                   d.req_mem_write &
-                   d.req_mem_cached &
+                   d.req_mem_type &
                    d.req_mem_addr;
 
     queue_wdata_i <= wb_data_bus when d.req_mem_valid = '1' else wb_ctrl_bus;
@@ -165,9 +169,8 @@ begin
 
     o_req_mem_valid <= queue_nempty_o;
 
-    o_req_mem_path <= queue_rdata_o(CFG_CPU_ADDR_BITS+2);
-    o_req_mem_write <= queue_rdata_o(CFG_CPU_ADDR_BITS+1);
-    o_req_mem_cached <= queue_rdata_o(CFG_CPU_ADDR_BITS);
+    o_req_mem_path <= queue_rdata_o(CFG_CPU_ADDR_BITS+REQ_MEM_TYPE_BITS);
+    o_req_mem_type <= queue_rdata_o(CFG_CPU_ADDR_BITS+REQ_MEM_TYPE_BITS-1 downto CFG_CPU_ADDR_BITS);
     o_req_mem_addr <= queue_rdata_o(CFG_CPU_ADDR_BITS-1 downto 0);
 
     o_req_mem_strob <= d.req_mem_strob;
@@ -209,8 +212,7 @@ begin
         i_resp_ready => i_resp_ctrl_ready,
         i_req_mem_ready => w_ctrl_req_ready,
         o_req_mem_valid => i.req_mem_valid,
-        o_req_mem_write => i.req_mem_write,
-        o_req_mem_cached => i.req_mem_cached,
+        o_req_mem_type => i.req_mem_type,
         o_req_mem_addr => i.req_mem_addr,
         o_req_mem_strob => i.req_mem_strob,
         o_req_mem_data => i.req_mem_wdata,
@@ -226,7 +228,8 @@ begin
 
     d0 : dcache_lru generic map (
         memtech => memtech,
-        async_reset => async_reset
+        async_reset => async_reset,
+        coherence_ena => coherence_ena
      ) port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
@@ -247,8 +250,7 @@ begin
         i_resp_ready => i_resp_data_ready,
         i_req_mem_ready => w_data_req_ready,
         o_req_mem_valid => d.req_mem_valid,
-        o_req_mem_write => d.req_mem_write,
-        o_req_mem_cached => d.req_mem_cached,
+        o_req_mem_type => d.req_mem_type,
         o_req_mem_addr => d.req_mem_addr,
         o_req_mem_strob => d.req_mem_strob,
         o_req_mem_data => d.req_mem_wdata,
@@ -256,9 +258,16 @@ begin
         i_mem_data => i_resp_mem_data,
         i_mem_load_fault => w_data_resp_mem_load_fault,
         i_mem_store_fault => i_resp_mem_store_fault,
-        --i_resp_mem_store_fault_addr => i_resp_mem_store_fault_addr,
         o_mpu_addr => d.mpu_addr,
         i_mpu_flags => wb_mpu_dflags,
+        i_req_snoop_valid => i_req_snoop_valid,
+        i_req_snoop_type => i_req_snoop_type,
+        o_req_snoop_ready => o_req_snoop_ready,
+        i_req_snoop_addr => i_req_snoop_addr,
+        i_resp_snoop_ready => i_resp_snoop_ready,
+        o_resp_snoop_valid => o_resp_snoop_valid,
+        o_resp_snoop_data => o_resp_snoop_data,
+        o_resp_snoop_flags => o_resp_snoop_flags,
         i_flush_address => i_data_flush_address,
         i_flush_valid => i_data_flush_valid,
         o_flush_end => o_data_flush_end,

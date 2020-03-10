@@ -30,7 +30,7 @@ entity tagmem is generic (
     ibits : integer := 7;          -- lines memory addres width (usually 6..8)
     lnbits : integer := 5;         -- One line bits: log2(bytes_per_line)
     flbits : integer := 1;         -- Total flags number saved with address tag
-    snoop : integer := 0           -- snoop channel (only with enabled L2-cache)
+    snoop : boolean := false       -- snoop channel (only with enabled L2-cache)
   );
   port (
     i_clk : in std_logic;
@@ -97,7 +97,7 @@ begin
     o_rdata => tago_rdata
   );
 
-  snoopena : if snoop /= 0 generate
+  snoopena : if snoop generate
     tagsnoop0 : ram_tech generic map (
       memtech => memtech,
       abits => ibits,
@@ -110,7 +110,7 @@ begin
       o_rdata => tago_snoop_rdata
     );
   end generate;
-  snoopdis : if snoop = 0 generate
+  snoopdis : if not snoop generate
     tago_snoop_rdata <= (others => '0');
   end generate;
 
@@ -118,7 +118,7 @@ begin
                  tago_rdata, tago_snoop_rdata, rb_tagaddr, rb_index)
     variable vb_index : std_logic_vector(ibits-1 downto 0);
     variable vb_raddr : std_logic_vector(abus-1 downto 0);
-    variable vb_tagi_wdata : std_logic_vector(TAG_BITS-1 downto 0);
+    variable vb_tagi_wdata : std_logic_vector(TAG_WITH_FLAGS-1 downto 0);
     variable v_hit : std_logic;
     variable vb_snoop_index : std_logic_vector(ibits-1 downto 0);
     variable vb_snoop_tagaddr : std_logic_vector(TAG_BITS-1 downto 0);
@@ -136,7 +136,7 @@ begin
     vb_index := i_addr(ibits + lnbits - 1 downto lnbits);
     vb_tagi_wdata := i_wflags & i_addr(abus-1 downto ibits + lnbits);
 
-    if snoop /= 0 then
+    if snoop then
         vb_snoop_flags := tago_snoop_rdata(TAG_WITH_FLAGS-1 downto TAG_BITS);
         vb_snoop_index := i_snoop_addr(ibits + lnbits - 1 downto lnbits);
         vb_snoop_tagaddr := i_snoop_addr(abus - 1 downto ibits + lnbits);

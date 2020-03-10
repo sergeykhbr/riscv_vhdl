@@ -75,12 +75,29 @@ package river_cfg is
 
   constant TAG_FL_VALID       : integer := 0;    -- always 0
   constant DTAG_FL_DIRTY      : integer := 1;
-  constant DTAG_FL_LOAD_FAULT : integer := 2;
+  constant DTAG_FL_SHARED     : integer := 2;
   constant DTAG_FL_TOTAL      : integer := 3;
 
   -- L1 cache common parameters (suppose I$ and D$ have the same size)
   constant L1CACHE_BYTES_PER_LINE : integer := DCACHE_BYTES_PER_LINE;
   constant L1CACHE_LINE_BITS      : integer := 8*DCACHE_BYTES_PER_LINE;
+
+  constant REQ_MEM_TYPE_WRITE        : integer := 0;
+  constant REQ_MEM_TYPE_CACHED       : integer := 1;
+  constant REQ_MEM_TYPE_UNIQUE       : integer := 2;
+  constant REQ_MEM_TYPE_BITS         : integer := 3;
+
+  constant SNOOP_REQ_TYPE_READDATA   : integer := 0;   -- 0=check flags; 1=data transfer
+  constant SNOOP_REQ_TYPE_READCLEAN  : integer := 1;   -- 0=do nothing; 1=read and invalidate line
+  constant SNOOP_REQ_TYPE_BITS       : integer := 2;
+
+  function ReadNoSnoop return std_logic_vector;
+  function ReadShared return std_logic_vector;
+  function ReadMakeUnique return std_logic_vector;
+  function WriteNoSnoop return std_logic_vector;
+  function WriteLineUnique return std_logic_vector;
+  function WriteBack return std_logic_vector;
+
 
   -- MPU config:
   constant CFG_MPU_TBL_WIDTH   : integer := 2;    -- [1:0]  log2(MPU_TBL_SIZE)
@@ -1169,7 +1186,8 @@ package river_cfg is
   --! @param[out] o_cstate        cachetop state machine value
   component CacheTop is generic (
     memtech : integer;
-    async_reset : boolean
+    async_reset : boolean;
+    coherence_ena : boolean
   );
   port (
     i_clk : in std_logic;                              -- CPU clock
@@ -1204,8 +1222,7 @@ package river_cfg is
     i_req_mem_ready : in std_logic;                                    -- AXI request was accepted
     o_req_mem_path : out std_logic;
     o_req_mem_valid : out std_logic;
-    o_req_mem_write : out std_logic;
-    o_req_mem_cached : out std_logic;
+    o_req_mem_type : out std_logic_vector(REQ_MEM_TYPE_BITS-1 downto 0);
     o_req_mem_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_req_mem_strob : out std_logic_vector(L1CACHE_BYTES_PER_LINE-1 downto 0);
     o_req_mem_data : out std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);  -- burst transaction length
@@ -1214,13 +1231,21 @@ package river_cfg is
     i_resp_mem_data : in std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);
     i_resp_mem_load_fault : in std_logic;                             -- Bus response with SLVERR or DECERR on read
     i_resp_mem_store_fault : in std_logic;                            -- Bus response with SLVERR or DECERR on write
-    i_resp_mem_store_fault_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     -- MPU interface:
     i_mpu_region_we : in std_logic;
     i_mpu_region_idx : in std_logic_vector(CFG_MPU_TBL_WIDTH-1 downto 0);
     i_mpu_region_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_mpu_region_mask : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_mpu_region_flags : in std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);
+    -- D$ Snoop interface
+    i_req_snoop_valid : in std_logic;
+    i_req_snoop_type : in std_logic_vector(SNOOP_REQ_TYPE_BITS-1 downto 0);
+    o_req_snoop_ready : out std_logic;
+    i_req_snoop_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    i_resp_snoop_ready : in std_logic;
+    o_resp_snoop_valid : out std_logic;
+    o_resp_snoop_data : out std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);
+    o_resp_snoop_flags : out std_logic_vector(DTAG_FL_TOTAL-1 downto 0);
     -- Debug signals:
     i_flush_address : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);  -- clear ICache address from debug interface
     i_flush_valid : in std_logic;                                      -- address to clear icache is valid
@@ -1264,6 +1289,7 @@ package river_cfg is
     hartid : integer := 0;
     async_reset : boolean := false;
     fpu_ena : boolean := true;
+    coherence_ena : boolean := false;
     tracer_ena : boolean := false
   );
   port (
@@ -1273,8 +1299,7 @@ package river_cfg is
     i_req_mem_ready : in std_logic;                                   -- AXI request was accepted
     o_req_mem_path : out std_logic;                                   -- 0=ctrl; 1=data path
     o_req_mem_valid : out std_logic;                                  -- AXI memory request is valid
-    o_req_mem_write : out std_logic;                                  -- AXI memory request is write type
-    o_req_mem_cached : out std_logic;
+    o_req_mem_type : out std_logic_vector(REQ_MEM_TYPE_BITS-1 downto 0);-- AXI memory request is write type
     o_req_mem_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- AXI memory request address
     o_req_mem_strob : out std_logic_vector(L1CACHE_BYTES_PER_LINE-1 downto 0);-- Writing strob. 1 bit per Byte
     o_req_mem_data : out std_logic_vector(L1CACHE_LINE_BITS-1 downto 0); -- Writing data
@@ -1283,7 +1308,15 @@ package river_cfg is
     i_resp_mem_data : in std_logic_vector(L1CACHE_LINE_BITS-1 downto 0); -- Read data
     i_resp_mem_load_fault : in std_logic;                             -- Bus response with SLVERR or DECERR on read
     i_resp_mem_store_fault : in std_logic;                            -- Bus response with SLVERR or DECERR on write
-    i_resp_mem_store_fault_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    -- D$ Snoop interface
+    i_req_snoop_valid : in std_logic;
+    i_req_snoop_type : in std_logic_vector(SNOOP_REQ_TYPE_BITS-1 downto 0);
+    o_req_snoop_ready : out std_logic;
+    i_req_snoop_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    i_resp_snoop_ready : in std_logic;
+    o_resp_snoop_valid : out std_logic;
+    o_resp_snoop_data : out std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);
+    o_resp_snoop_flags : out std_logic_vector(DTAG_FL_TOTAL-1 downto 0);
     -- Interrupt line from external interrupts controller (PLIC).
     i_ext_irq : in std_logic;
     o_time : out std_logic_vector(63 downto 0);                       -- Timer. Clock counter except halt state.
@@ -1316,6 +1349,63 @@ package river_cfg is
     o_nempty : out std_logic
   );
   end component;
+
+end;
+
+
+package body river_cfg is
+
+
+function ReadNoSnoop return std_logic_vector is
+    variable ret : std_logic_vector(REQ_MEM_TYPE_BITS-1 downto 0);
+begin
+    ret := (others => '0');
+    return ret;
+end function;
+
+function ReadShared return std_logic_vector is
+    variable ret : std_logic_vector(REQ_MEM_TYPE_BITS-1 downto 0);
+begin
+    ret := (others => '0');
+    ret(REQ_MEM_TYPE_CACHED) := '1';
+    return ret;
+end function;
+
+function ReadMakeUnique return std_logic_vector is
+    variable ret : std_logic_vector(REQ_MEM_TYPE_BITS-1 downto 0);
+begin
+    ret := (others => '0');
+    ret(REQ_MEM_TYPE_CACHED) := '1';
+    ret(REQ_MEM_TYPE_UNIQUE) := '1';
+    return ret;
+end function;
+
+function WriteNoSnoop return std_logic_vector is
+    variable ret : std_logic_vector(REQ_MEM_TYPE_BITS-1 downto 0);
+begin
+    ret := (others => '0');
+    ret(REQ_MEM_TYPE_WRITE) := '1';
+    return ret;
+end function;
+
+function WriteLineUnique return std_logic_vector is
+    variable ret : std_logic_vector(REQ_MEM_TYPE_BITS-1 downto 0);
+begin
+    ret := (others => '0');
+    ret(REQ_MEM_TYPE_WRITE) := '1';
+    ret(REQ_MEM_TYPE_CACHED) := '1';
+    ret(REQ_MEM_TYPE_UNIQUE) := '1';
+    return ret;
+end function;
+
+function WriteBack return std_logic_vector is
+    variable ret : std_logic_vector(REQ_MEM_TYPE_BITS-1 downto 0);
+begin
+    ret := (others => '0');
+    ret(REQ_MEM_TYPE_WRITE) := '1';
+    ret(REQ_MEM_TYPE_CACHED) := '1';
+    return ret;
+end function;
 
 
 end; -- package body

@@ -243,6 +243,36 @@ constant axi4_master_config_none : axi4_master_config_type := (
     PNP_CFG_MASTER_DESCR_BYTES, PNP_CFG_TYPE_MASTER, 
     VENDOR_GNSSSENSOR, MST_DID_EMPTY);
 
+constant ARCACHE_DEVICE_NON_BUFFERABLE : std_logic_vector(3 downto 0) := "0000";
+constant ARCACHE_WRBACK_READ_ALLOCATE : std_logic_vector(3 downto 0) := "1111";
+
+constant AWCACHE_DEVICE_NON_BUFFERABLE : std_logic_vector(3 downto 0) := "0000";
+constant AWCACHE_WRBACK_WRITE_ALLOCATE : std_logic_vector(3 downto 0) := "1111";
+
+-- see table C3-7 Permitted read address control signal combinations
+--
+--    read  |  cached  |  unique  |
+--     0    |    0     |    *     |    ReadNoSnoop
+--     0    |    1     |    0     |    ReadShared
+--     0    |    1     |    1     |    ReadMakeUnique
+constant ARSNOOP_READ_NO_SNOOP : std_logic_vector(3 downto 0) := "0000";
+constant ARSNOOP_READ_SHARED : std_logic_vector(3 downto 0) := "0001";
+constant ARSNOOP_READ_MAKE_UNIQUE : std_logic_vector(3 downto 0) := "1100";
+
+-- see table C3-8 Permitted read address control signal combinations
+--
+--   write  |  cached  |  unique  |
+--     1    |    0     |    *     |    WriteNoSnoop
+--     1    |    1     |    1     |    WriteLineUnique
+--     1    |    1     |    0     |    WriteBack
+constant AWSNOOP_WRITE_NO_SNOOP : std_logic_vector(2 downto 0) := "000";
+constant AWSNOOP_WRITE_LINE_UNIQUE : std_logic_vector(2 downto 0) := "001";
+constant AWSNOOP_WRITE_BACK : std_logic_vector(2 downto 0) := "011";
+
+-- see table C3-19
+constant AC_SNOOP_READ_UNIQUE : std_logic_vector(3 downto 0) := "0111";
+constant AC_SNOOP_MAKE_INVALID : std_logic_vector(3 downto 0) := "1101";
+
 
 --! @brief AMBA AXI4 compliant data structure.
 type axi4_metadata_type is record

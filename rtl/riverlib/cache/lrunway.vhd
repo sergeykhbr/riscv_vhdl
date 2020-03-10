@@ -25,9 +25,11 @@ entity lrunway is generic (
 );
 port (
     i_clk : in std_logic;
-    i_flush : in std_logic;
-    i_addr : in std_logic_vector(abits-1 downto 0);
-    i_we : in std_logic;
+    i_init : in std_logic;
+    i_raddr : in std_logic_vector(abits-1 downto 0);
+    i_waddr : in std_logic_vector(abits-1 downto 0);
+    i_up : in std_logic;
+    i_down : in std_logic;
     i_lru : in std_logic_vector(waybits-1 downto 0);
     o_lru : out std_logic_vector(waybits-1 downto 0)
   );
@@ -41,56 +43,79 @@ architecture arch_lrunway of lrunway is
 
   type array_type is array (0 to LINES_TOTAL-1) of std_logic_vector(LINE_WIDTH-1 downto 0);
 
-  signal radr : std_logic_vector(abits-1 downto 0);
   signal tbl : array_type;
+  signal radr : std_logic_vector(abits-1 downto 0);
   signal wb_tbl_rdata : std_logic_vector(LINE_WIDTH-1 downto 0);
   signal wb_tbl_wdata : std_logic_vector(LINE_WIDTH-1 downto 0);
-  signal wb_tbl_waddr :std_logic_vector(abits-1 downto 0);
   signal w_we : std_logic;
 
 begin
 
-  comb : process(i_flush, i_addr, i_we, i_lru, wb_tbl_rdata, radr)
-    variable vb_tbl_wdata : std_logic_vector(7 downto 0);
-    variable vb_tbl_waddr :std_logic_vector(abits-1 downto 0);
+  comb : process(i_init, i_up, i_down, i_lru, wb_tbl_rdata, radr)
+    variable vb_tbl_wdata_init : std_logic_vector(LINE_WIDTH-1 downto 0);
+    variable vb_tbl_wdata_up : std_logic_vector(LINE_WIDTH-1 downto 0);
+    variable vb_tbl_wdata_down : std_logic_vector(LINE_WIDTH-1 downto 0);
+    variable vb_tbl_wdata : std_logic_vector(LINE_WIDTH-1 downto 0);
     variable v_we : std_logic;
-    variable shift_ena : std_logic;
+    variable shift_ena_up : std_logic;
+    variable shift_ena_down : std_logic;
   begin
 
-    shift_ena := '0';
-    v_we := i_we;
-    vb_tbl_wdata := wb_tbl_rdata;
-    vb_tbl_waddr := radr;
+    v_we := i_up or i_down or i_init;
 
-    if i_flush = '1' then
-        v_we := '1';
-        vb_tbl_waddr := i_addr;
-        for i in 0 to WAYS_TOTAL-1 loop
-            vb_tbl_wdata((i+1)*waybits-1 downto i*waybits) := conv_std_logic_vector(i, waybits);
-        end loop;
-    elsif i_we = '1' then
-        if wb_tbl_rdata(LINE_WIDTH-1 downto LINE_WIDTH-waybits) /= i_lru then
-           vb_tbl_wdata(LINE_WIDTH-1 downto LINE_WIDTH-waybits) := i_lru;
-           shift_ena := '1';
+    -- init table value
+    for i in 0 to WAYS_TOTAL-1 loop
+        vb_tbl_wdata_init((i+1)*waybits-1 downto i*waybits) := conv_std_logic_vector(i, waybits);
+    end loop;
 
-           for i in WAYS_TOTAL-2 downto 0 loop
-                if shift_ena = '1' then
-                    vb_tbl_wdata((i+1)*waybits-1 downto i*waybits) :=
-                            wb_tbl_rdata((i+2)*waybits-1 downto (i+1)*waybits);
-                    if wb_tbl_rdata((i+1)*waybits-1 downto i*waybits) = i_lru then
-                        shift_ena := '0';
-                    end if;
-                else
-                    vb_tbl_wdata((i+1)*waybits-1 downto i*waybits) :=
-                            wb_tbl_rdata((i+1)*waybits-1 downto i*waybits);
+    -- LRU next value, last used goes on top
+    shift_ena_up := '0';
+    vb_tbl_wdata_up := wb_tbl_rdata;
+    if wb_tbl_rdata(LINE_WIDTH-1 downto LINE_WIDTH-waybits) /= i_lru then
+       vb_tbl_wdata_up(LINE_WIDTH-1 downto LINE_WIDTH-waybits) := i_lru;
+       shift_ena_up := '1';
+
+       for i in WAYS_TOTAL-2 downto 0 loop
+            if shift_ena_up = '1' then
+                vb_tbl_wdata_up((i+1)*waybits-1 downto i*waybits) :=
+                        wb_tbl_rdata((i+2)*waybits-1 downto (i+1)*waybits);
+                if wb_tbl_rdata((i+1)*waybits-1 downto i*waybits) = i_lru then
+                    shift_ena_up := '0';
                 end if;
-            end loop;
-        end if;
+            end if;
+        end loop;
+    end if;
+
+    -- LRU next value when invalidate, marked as 'invalid' goes down
+    shift_ena_down := '0';
+    vb_tbl_wdata_down := wb_tbl_rdata;
+    if wb_tbl_rdata(waybits-1 downto 0) /= i_lru then
+        vb_tbl_wdata_down(waybits-1 downto 0) := i_lru;
+        shift_ena_down := '1';
+
+        for i in 1 to WAYS_TOTAL-1 loop
+            if shift_ena_down = '1' then
+                vb_tbl_wdata_down((i+1)*waybits-1 downto i*waybits) :=
+                        wb_tbl_rdata(i*waybits-1 downto (i-1)*waybits);
+                if wb_tbl_rdata((i+1)*waybits-1 downto i*waybits) = i_lru then
+                    shift_ena_down := '0';
+                end if;
+            end if;
+        end loop;
+    end if;
+
+    if i_init = '1' then
+        vb_tbl_wdata := vb_tbl_wdata_init;
+    elsif i_up = '1' then
+        vb_tbl_wdata := vb_tbl_wdata_up;
+    elsif i_down = '1' then
+        vb_tbl_wdata := vb_tbl_wdata_down;
+    else
+        vb_tbl_wdata := (others => '0');
     end if;
 
     w_we <= v_we;
     wb_tbl_wdata <= vb_tbl_wdata;
-    wb_tbl_waddr <= vb_tbl_waddr;
   end process;
 
   wb_tbl_rdata <= tbl(conv_integer(radr));
@@ -98,9 +123,9 @@ begin
 
   reg : process (i_clk) begin
     if rising_edge(i_clk) then 
-      radr <= i_addr;
+      radr <= i_raddr;
       if w_we = '1' then
-        tbl(conv_integer(wb_tbl_waddr)) <= wb_tbl_wdata;
+        tbl(conv_integer(i_waddr)) <= wb_tbl_wdata;
       end if;
     end if;
   end process;

@@ -30,9 +30,11 @@ package types_cache is
   );
   port (
     i_clk : in std_logic;
-    i_flush : in std_logic;
-    i_addr : in std_logic_vector(abits-1 downto 0);
-    i_we : in std_logic;
+    i_init : in std_logic;
+    i_raddr : in std_logic_vector(abits-1 downto 0);
+    i_waddr : in std_logic_vector(abits-1 downto 0);
+    i_up : in std_logic;
+    i_down : in std_logic;
     i_lru : in std_logic_vector(waybits-1 downto 0);
     o_lru : out std_logic_vector(waybits-1 downto 0)
   );
@@ -46,7 +48,7 @@ package types_cache is
     ibits : integer := 7;          -- lines memory addres width (usually 6..8)
     lnbits : integer := 5;         -- One line bits: log2(bytes_per_line)
     flbits : integer := 1;         -- Total flags number saved with address tag
-    snoop : integer := 0           -- snoop channel (only with enabled L2-cache)
+    snoop : boolean := false       -- snoop channel (only with enabled L2-cache)
   );
   port (
     i_clk : in std_logic;
@@ -71,13 +73,16 @@ package types_cache is
     waybits : integer := 2;        -- log2 of number of ways bits (=2 for 4 ways)
     ibits : integer := 7;          -- lines memory addres width (usually 6..8)
     lnbits : integer := 5;         -- One line bits: log2(bytes_per_line)
-    flbits : integer := 1          -- Total flags number saved with address tag
+    flbits : integer := 1;         -- Total flags number saved with address tag
+    snoop : boolean := false       -- Snoop port disabled; 1 Enabled (L2 caching)
   );
   port (
     i_clk : in std_logic;
     i_nrst : in std_logic;
-    i_cs : in std_logic;
-    i_flush : in std_logic;
+    i_direct_access : in std_logic;
+    i_invalidate : in std_logic;
+    i_re : in std_logic;
+    i_we : in std_logic;
     i_addr : in std_logic_vector(abus-1 downto 0);
     i_wdata : in std_logic_vector(8*(2**lnbits)-1 downto 0);
     i_wstrb : in std_logic_vector(2**lnbits-1 downto 0);
@@ -85,7 +90,11 @@ package types_cache is
     o_raddr : out std_logic_vector(abus-1 downto 0);
     o_rdata : out std_logic_vector(8*(2**lnbits)-1 downto 0);
     o_rflags : out std_logic_vector(flbits-1 downto 0);
-    o_hit : out std_logic
+    o_hit : out std_logic;
+    -- L2 snoop port, active when snoop = 1
+    i_snoop_addr : in std_logic_vector(abus-1 downto 0);
+    o_snoop_ready : out std_logic;
+    o_snoop_flags : out std_logic_vector(flbits-1 downto 0)
   );
   end component;
 
@@ -101,8 +110,10 @@ package types_cache is
   port (
     i_clk : in std_logic;
     i_nrst : in std_logic;
-    i_cs : in std_logic;
-    i_flush : in std_logic;
+    i_direct_access : in std_logic;
+    i_invalidate : in std_logic;
+    i_re : in std_logic;
+    i_we : in std_logic;
     i_addr : in std_logic_vector(abus-1 downto 0);
     i_wdata : in std_logic_vector(8*(2**lnbits)-1 downto 0);
     i_wstrb : in std_logic_vector(2**lnbits-1 downto 0);
@@ -137,8 +148,7 @@ package types_cache is
     -- Memory interface:
     i_req_mem_ready : in std_logic;
     o_req_mem_valid : out std_logic;
-    o_req_mem_write : out std_logic;
-    o_req_mem_cached : out std_logic;
+    o_req_mem_type : out std_logic_vector(REQ_MEM_TYPE_BITS-1 downto 0);
     o_req_mem_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_req_mem_strob : out std_logic_vector(ICACHE_BYTES_PER_LINE-1 downto 0);
     o_req_mem_data : out std_logic_vector(ICACHE_LINE_BITS-1 downto 0);
@@ -158,7 +168,8 @@ package types_cache is
 
   component dcache_lru is generic (
     memtech : integer;
-    async_reset : boolean
+    async_reset : boolean;
+    coherence_ena : boolean
   );
   port (
     i_clk : in std_logic;
@@ -182,8 +193,7 @@ package types_cache is
     -- Memory interface:
     i_req_mem_ready : in std_logic;
     o_req_mem_valid : out std_logic;
-    o_req_mem_write : out std_logic;
-    o_req_mem_cached : out std_logic;
+    o_req_mem_type : out std_logic_vector(REQ_MEM_TYPE_BITS-1 downto 0);
     o_req_mem_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_req_mem_strob : out std_logic_vector(DCACHE_BYTES_PER_LINE-1 downto 0);
     o_req_mem_data : out std_logic_vector(DCACHE_LINE_BITS-1 downto 0);
@@ -194,6 +204,15 @@ package types_cache is
     -- MPU interface
     o_mpu_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_mpu_flags : in std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);
+    -- D$ Snoop interface
+    i_req_snoop_valid : in std_logic;
+    i_req_snoop_type : in std_logic_vector(SNOOP_REQ_TYPE_BITS-1 downto 0);
+    o_req_snoop_ready : out std_logic;
+    i_req_snoop_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    i_resp_snoop_ready : in std_logic;
+    o_resp_snoop_valid : out std_logic;
+    o_resp_snoop_data : out std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);
+    o_resp_snoop_flags : out std_logic_vector(DTAG_FL_TOTAL-1 downto 0);
     -- Debug Signals:
     i_flush_address : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_flush_valid : in std_logic;

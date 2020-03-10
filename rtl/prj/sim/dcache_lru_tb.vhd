@@ -49,8 +49,7 @@ architecture behavior of dcache_lru_tb is
   signal i_resp_ready : std_logic;
   signal i_req_mem_ready : std_logic;
   signal o_req_mem_valid : std_logic;
-  signal o_req_mem_write : std_logic;
-  signal o_req_mem_cached : std_logic;
+  signal o_req_mem_type : std_logic_vector(REQ_MEM_TYPE_BITS-1 downto 0);
   signal o_req_mem_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   signal o_req_mem_strob : std_logic_vector(L1CACHE_BYTES_PER_LINE-1 downto 0);
   signal o_req_mem_data : std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);
@@ -180,7 +179,7 @@ begin
 
 
   comb_bus : process (i_nrst, r,
-                      o_req_mem_valid, o_req_mem_write, o_req_mem_cached,
+                      o_req_mem_valid, o_req_mem_type,
                       o_req_mem_addr, o_req_mem_strob, o_req_mem_data, 
                       o_mpu_addr)
     variable v : BusRegisterType;
@@ -242,7 +241,8 @@ begin
 
   tt : dcache_lru generic map (
     memtech => 0,
-    async_reset => false
+    async_reset => false,
+    coherence_ena => false
   ) port map (
     i_clk => i_clk,
     i_nrst => i_nrst,
@@ -263,8 +263,7 @@ begin
     i_resp_ready => i_resp_ready,
     i_req_mem_ready => i_req_mem_ready,
     o_req_mem_valid => o_req_mem_valid,
-    o_req_mem_write => o_req_mem_write,
-    o_req_mem_cached => o_req_mem_cached,
+    o_req_mem_type => o_req_mem_type,
     o_req_mem_addr => o_req_mem_addr,
     o_req_mem_strob => o_req_mem_strob,
     o_req_mem_data => o_req_mem_data,
@@ -274,6 +273,15 @@ begin
     i_mem_store_fault => i_mem_store_fault,
     o_mpu_addr => o_mpu_addr,
     i_mpu_flags => i_mpu_flags,
+    -- D$ Snoop interface
+    i_req_snoop_valid => '0',
+    i_req_snoop_type => "00",
+    o_req_snoop_ready => open,
+    i_req_snoop_addr => (others => '0'),
+    i_resp_snoop_ready => '1',
+    o_resp_snoop_valid => open,
+    o_resp_snoop_data => open,
+    o_resp_snoop_flags => open,
     i_flush_address => i_flush_address,
     i_flush_valid => i_flush_valid,
     o_state => o_state
