@@ -126,7 +126,7 @@ begin
   begin
     v_hit := '0';
     if rb_tagaddr = tago_rdata(TAG_BITS-1 downto 0) then
-        v_hit := '1';
+        v_hit := tago_rdata(TAG_BITS);  -- valid bit
     end if;
 
     vb_raddr := (others => '0');
