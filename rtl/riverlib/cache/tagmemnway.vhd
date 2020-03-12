@@ -231,6 +231,7 @@ begin
     lrui_raddr <= i_addr(ibits+lnbits-1 downto lnbits);
     lrui_waddr <= r.req_addr(ibits+lnbits-1 downto lnbits);
     lrui_up <= i_we or (v_hit and r.re);
+    lrui_down <= v_hit and r.invalidate;
     lrui_lru <= vb_hit_idx;
 
     rin <= v;

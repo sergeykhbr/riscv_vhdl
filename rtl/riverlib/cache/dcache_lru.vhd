@@ -148,7 +148,7 @@ architecture arch_dcache_lru of dcache_lru is
     '0',                                    -- req_write
     (others => '0'),                        -- req_addr
     (others => '0'), (others => '0'),       -- req_wdata, req_wstrb
-    State_FlushAddr,                        -- state
+    State_ResetAddr,                        -- state
     '0',                                    -- req_mem_valid
     (others => '0'),                        -- req_mem_type
     (others => '0'),                        -- mem_addr,
