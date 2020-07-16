@@ -1,0 +1,5 @@
+linuxbuild/obj
+*.elf
+*.dump
+*.lst
+*.err

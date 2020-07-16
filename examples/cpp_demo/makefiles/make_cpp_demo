@@ -1,0 +1,92 @@
+include util.mak
+
+CC=riscv-none-embed-gcc
+CPP=riscv-none-embed-gcc
+OBJDUMP=riscv-none-embed-objdump
+
+FPU_ENABLED=0
+
+CFLAGS= -c -g -O0 -DSYS_HZ=40000000
+ifeq ($(FPU_ENABLED), 1)
+  CFLAGS += -march=rv64imafd -DFPU_ENABLED
+else
+  CFLAGS += -march=rv64imac -mabi=lp64
+endif
+
+
+LDFLAGS=-T cpp_demo.ld
+ifeq ($(FPU_ENABLED), 1)
+else
+  LDFLAGS += -march=rv64imac -mabi=lp64
+endif
+
+
+INCL_KEY=-I
+DIR_KEY=-B
+
+
+# include sub-folders list
+INCL_PATH=\
+	$(TOP_DIR)../common \
+	$(TOP_DIR)src
+
+# source files directories list:
+SRC_PATH =\
+	$(TOP_DIR)src
+
+LIB_NAMES =\
+	gcc \
+	c \
+	m
+
+VPATH = $(SRC_PATH)
+
+SOURCES = main \
+	uart \
+	trap \
+	crt \
+	stubc++
+
+OBJ_FILES = $(addsuffix .o,$(SOURCES))
+OUTFILENAME = cpp_demo
+EXECUTABLE = $(OUTFILENAME).elf
+DUMPFILE = $(OUTFILENAME).dump
+HEXFILE = $(OUTFILENAME).hex
+LSTFILE = $(OUTFILENAME).lst
+
+all: cpp_demo
+
+.PHONY: $(EXECUTABLE) $(DUMPFILE)
+
+
+cpp_demo: $(EXECUTABLE) $(DUMPFILE) $(HEXFILE)
+$(HEXFILE): $(EXECUTABLE)
+	echo elf2rawx $(addprefix $(ELF_DIR)/,$<) -h -f 262144 -l 8 -o $(addprefix $(ELF_DIR)/,$(OUTFILENAME).hex)
+	elf2rawx $(addprefix $(ELF_DIR)/,$<) -h -f 262144 -l 8 -o $(addprefix $(ELF_DIR)/,$(OUTFILENAME).hex)
+
+$(DUMPFILE): $(EXECUTABLE)
+	echo $(OBJDUMP) --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.data $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
+	$(OBJDUMP) --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.data $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
+	$(OBJDUMP) -S $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$(LSTFILE))
+
+
+$(EXECUTABLE): $(OBJ_FILES)
+	echo $(CPP) $(LDFLAGS) $(addprefix $(OBJ_DIR)/,$(OBJ_FILES)) -o $(addprefix $(ELF_DIR)/,$@) $(addprefix -l,$(LIB_NAMES))
+	$(CPP) $(LDFLAGS) $(addprefix $(OBJ_DIR)/,$(OBJ_FILES)) -o $(addprefix $(ELF_DIR)/,$@) $(addprefix -l,$(LIB_NAMES))
+	$(ECHO) "\n  Shared Library has been built successfully.\n"
+
+#.cpp.o:
+%.o: %.cpp
+	echo $(CPP) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+	$(CPP) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+
+#.c.o:
+%.o: %.c
+	echo $(CC) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+	$(CC) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+
+%.o: %.S
+	echo $(CC) $(CFLAGS) -D__ASSEMBLY__=1 $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+	$(CC) $(CFLAGS) -D__ASSEMBLY__=1 $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $(addprefix $(OBJ_DIR)/,$@)
+
+
