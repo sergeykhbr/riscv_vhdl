@@ -65,10 +65,10 @@ struct DsuMapType {
     union udbg_type {
         uint8_t buf[1 << (12 + 3)];
         struct debug_region_type {
-            GenericCpuControlType control;
-            uint64_t stepping_mode_steps;
-            uint64_t clock_cnt;
-            uint64_t executed_cnt;
+            GenericCpuControlType control;  // 0x0000
+            uint64_t stepping_mode_steps;   // 0x0008
+            uint64_t clock_cnt;             // 0x0010
+            uint64_t executed_cnt;          // 0x0018
             union breakpoint_control_reg {
                 uint64_t val;
                 struct {
@@ -79,23 +79,23 @@ struct DsuMapType {
                     uint64_t trap_on_break : 1;
                     uint64_t rsv1          : 63;
                 } bits;
-            } br_ctrl;
-            uint64_t add_breakpoint;
-            uint64_t remove_breakpoint;
+            } br_ctrl;                      // 0x0020
+            uint64_t add_breakpoint;        // 0x0028
+            uint64_t remove_breakpoint;     // 0x0030
             /**
              * Don't fetch instruction from this address use specified
              * below instead.
              */
-            uint64_t br_address_fetch;
+            uint64_t br_address_fetch;      // 0x0038
             /**
              * True instruction value instead of injected one. Use this
              * instruction instead of memory.
              */
-            uint64_t br_instr_fetch;
+            uint64_t br_instr_fetch;        // 0x0040
             /**
              * Flush software instruction address from instruction cache.
              */
-            uint64_t br_flush_addr;
+            uint64_t br_flush_addr;         // 0x0048
         } v;
     } udbg;
     // Base Address + 0x18000 (Region 3)
