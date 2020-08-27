@@ -95,7 +95,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)\..\win32build\$(Configuration)\;$(SYSTEMC_PATH)\msvc80\SystemC\Release;$(SYSTEMC_PATH)\msvc10\SystemC\Release;$(SYSTEMC_PATH)\msvc10\SystemC\Release</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)\..\win32build\$(Configuration)\;$(SYSTEMC_PATH)\msvc80\SystemC\Release;$(SYSTEMC_PATH)\msvc10\SystemC\Release</AdditionalLibraryDirectories>
       <AdditionalDependencies>libdbg64g.lib;SystemC.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>$(ProjectDir)exportmap.def</ModuleDefinitionFile>
     </Link>
