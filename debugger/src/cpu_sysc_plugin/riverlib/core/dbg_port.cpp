@@ -42,11 +42,8 @@ DbgPort::DbgPort(sc_module_name name_, bool async_reset) :
     i_pc("i_pc"),
     i_npc("i_npc"),
     i_e_next_ready("i_e_next_ready"),
-    i_e_valid("i_e_valid"),
     i_e_call("i_e_call"),
     i_e_ret("i_e_ret"),
-    o_clock_cnt("o_clock_cnt"),
-    o_executed_cnt("o_executed_cnt"),
     o_halt("o_halt"),
     i_ebreak("i_ebreak"),
     o_break_mode("o_break_mode"),
@@ -74,7 +71,6 @@ DbgPort::DbgPort(sc_module_name name_, bool async_reset) :
     sensitive << i_e_call;
     sensitive << i_e_ret;
     sensitive << i_e_next_ready;
-    sensitive << i_e_valid;
     sensitive << i_ebreak;
     sensitive << i_istate;
     sensitive << i_dstate;
@@ -84,8 +80,6 @@ DbgPort::DbgPort(sc_module_name name_, bool async_reset) :
     sensitive << r.halt;
     sensitive << r.breakpoint;
     sensitive << r.stepping_mode;
-    sensitive << r.clock_cnt;
-    sensitive << r.executed_cnt;
     sensitive << r.stepping_mode_cnt;
     sensitive << r.trap_on_break;
     sensitive << r.flush_address;
@@ -135,11 +129,8 @@ void DbgPort::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_pc, i_pc.name());
         sc_trace(o_vcd, i_npc, i_npc.name());
         sc_trace(o_vcd, i_e_next_ready, i_e_next_ready.name());
-        sc_trace(o_vcd, i_e_valid, i_e_valid.name());
         sc_trace(o_vcd, i_e_call, i_e_call.name());
         sc_trace(o_vcd, i_e_ret, i_e_ret.name());
-        sc_trace(o_vcd, o_clock_cnt, o_clock_cnt.name());
-        sc_trace(o_vcd, o_executed_cnt, o_executed_cnt.name());
         sc_trace(o_vcd, o_halt, o_halt.name());
         sc_trace(o_vcd, i_ebreak, i_ebreak.name());
         sc_trace(o_vcd, o_break_mode, o_break_mode.name());
@@ -153,7 +144,6 @@ void DbgPort::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_cstate, i_cstate.name());
 
         std::string pn(name());
-        sc_trace(o_vcd, r.clock_cnt, pn + ".r_clock_cnt");
         sc_trace(o_vcd, r.stepping_mode_cnt, pn + ".r_stepping_mode_cnt");
         sc_trace(o_vcd, r.stepping_mode, pn + ".r_stepping_mode");
         sc_trace(o_vcd, r.breakpoint, pn + ".r_breakpoint");
@@ -212,12 +202,6 @@ void DbgPort::comb() {
         }
     }
 
-    if (r.halt == 0) {
-        v.clock_cnt = r.clock_cnt.read() + 1;
-    }
-    if (i_e_valid.read()) {
-        v.executed_cnt = r.executed_cnt.read() + 1;
-    }
     if (i_ebreak.read()) {
         v.breakpoint = 1;
         if (!r.trap_on_break) {
@@ -308,12 +292,6 @@ void DbgPort::comb() {
                     v.stepping_mode_steps = i_dport_wdata.read();
                 }
                 break;
-            case 2:
-                wb_rdata = r.clock_cnt;
-                break;
-            case 3:
-                wb_rdata = r.executed_cnt;
-                break;
             case 4:
                 /** Trap on instruction:
                     *      0 = Halt pipeline on ECALL instruction
@@ -382,8 +360,6 @@ void DbgPort::comb() {
     o_ireg_ena = w_o_ireg_ena;
     o_ireg_write = w_o_ireg_write;
     o_npc_write = w_o_npc_write;
-    o_clock_cnt = r.clock_cnt;
-    o_executed_cnt = r.executed_cnt;
     o_halt = r.halt | w_cur_halt;
     o_break_mode = r.trap_on_break;
     o_br_fetch_valid = r.br_fetch_valid;

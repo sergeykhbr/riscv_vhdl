@@ -354,25 +354,11 @@ package river_cfg is
   --! @{
   
   -- FPU Accrued Exceptions fields from FCSR
-  constant CSR_fflags            : std_logic_vector(11 downto 0) := X"001";
+  constant CSR_fflags        : std_logic_vector(11 downto 0) := X"001";
   -- FPU dynamic Rounding Mode fields from FCSR
-  constant CSR_frm               : std_logic_vector(11 downto 0) := X"002";
+  constant CSR_frm           : std_logic_vector(11 downto 0) := X"002";
   -- FPU Control and Status register (frm + fflags)
-  constant CSR_fcsr              : std_logic_vector(11 downto 0) := X"003";
-  -- ISA and extensions supported.
-  constant CSR_misa              : std_logic_vector(11 downto 0) := X"f10";
-  -- Vendor ID.
-  constant CSR_mvendorid         : std_logic_vector(11 downto 0) := X"f11";
-  -- Architecture ID.
-  constant CSR_marchid           : std_logic_vector(11 downto 0) := X"f12";
-  -- Vendor ID.
-  constant CSR_mimplementationid : std_logic_vector(11 downto 0) := X"f13";
-  -- Thread id (the same as core).
-  constant CSR_mhartid           : std_logic_vector(11 downto 0) := X"f14";
-  -- Machine wall-clock time
-  constant CSR_mtime         : std_logic_vector(11 downto 0) := X"701";
-  -- Software reset.
-  constant CSR_mreset        : std_logic_vector(11 downto 0) := X"782";
+  constant CSR_fcsr          : std_logic_vector(11 downto 0) := X"003";
 
   -- machine mode status read/write register.
   constant CSR_mstatus       : std_logic_vector(11 downto 0) := X"300";
@@ -384,8 +370,6 @@ package river_cfg is
   constant CSR_mie           : std_logic_vector(11 downto 0) := X"304";
   -- The base address of the M-mode trap vector.
   constant CSR_mtvec         : std_logic_vector(11 downto 0) := X"305";
-  -- Machine wall-clock timer compare value.
-  constant CSR_mtimecmp      : std_logic_vector(11 downto 0) := X"321";
   -- Scratch register for machine trap handlers.
   constant CSR_mscratch      : std_logic_vector(11 downto 0) := X"340";
   -- Exception program counters.
@@ -409,6 +393,29 @@ package river_cfg is
   constant CSR_mpu_mask      : std_logic_vector(11 downto 0) := X"353";
   -- MPU region control (non-standard CSR).
   constant CSR_mpu_ctrl      : std_logic_vector(11 downto 0) := X"354";
+  -- Software reset.
+  constant CSR_mreset        : std_logic_vector(11 downto 0) := X"782";
+  -- Machine Cycle counter
+  constant CSR_mcycle        : std_logic_vector(11 downto 0) := X"B00";
+  -- Machine Instructions-retired counter
+  constant CSR_minsret       : std_logic_vector(11 downto 0) := X"B02";
+  -- User Cycle counter for RDCYCLE pseudo-instruction
+  constant CSR_cycle         : std_logic_vector(11 downto 0) := X"C00";
+  -- User Timer for RDTIME pseudo-instruction
+  constant CSR_time          : std_logic_vector(11 downto 0) := X"C01";
+  -- User Instructions-retired counter for RDINSTRET pseudo-instruction
+  constant CSR_insret        : std_logic_vector(11 downto 0) := X"C02";
+  -- 0xC00 to 0xC1F reserved for counters 
+  -- ISA and extensions supported.
+  constant CSR_misa          : std_logic_vector(11 downto 0) := X"f10";
+  -- Vendor ID.
+  constant CSR_mvendorid     : std_logic_vector(11 downto 0) := X"f11";
+  -- Architecture ID.
+  constant CSR_marchid       : std_logic_vector(11 downto 0) := X"f12";
+  -- Vendor ID.
+  constant CSR_mimplementationid : std_logic_vector(11 downto 0) := X"f13";
+  -- Thread id (the same as core).
+  constant CSR_mhartid       : std_logic_vector(11 downto 0) := X"f14";
   --! @}
 
   --! @name   Exceptions
@@ -559,6 +566,10 @@ package river_cfg is
     i_ex_fpu_inexact : in std_logic;
     i_fpu_valid : in std_logic;
     i_irq_external : in std_logic;
+    i_e_valid : in std_logic;
+    i_halt : in std_logic;
+    o_cycle_cnt : out std_logic_vector(63 downto 0);
+    o_executed_cnt : out std_logic_vector(63 downto 0);
     o_trap_valid : out std_logic;
     o_trap_pc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_break_mode : in std_logic;
@@ -980,12 +991,9 @@ package river_cfg is
   --! @param[in] i_freg_rdata  Region 1: Float register read value
   --! @param[in] i_pc             Region 1: Instruction pointer
   --! @param[in] i_npc            Region 1: Next Instruction pointer
-  --! @param[in] i_e_valid        Stepping control signal
   --! @param[in] i_e_call         Pseudo-instruction CALL
   --! @param[in] i_e_ret          Pseudo-instruction RET
   --! @param[in] i_m_valid        To compute number of valid executed instruction
-  --! @param[out] o_clock_cnt     Number of clocks excluding halt state
-  --! @param[out] o_executed_cnt  Number of executed instructions
   --! @param[out] o_halt          Halt signal is equal to hold pipeline
   --! @param[in] i_ebreak            ebreak instruction decoded
   --! @param[out] o_break_mode       Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
@@ -1022,11 +1030,8 @@ package river_cfg is
     i_pc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);    -- Region 1: Instruction pointer
     i_npc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);   -- Region 1: Next Instruction pointer
     i_e_next_ready : in std_logic;
-    i_e_valid : in std_logic;                                 -- Stepping control signal
     i_e_call : in std_logic;                                  -- pseudo-instruction CALL
     i_e_ret : in std_logic;                                   -- pseudo-instruction RET
-    o_clock_cnt : out std_logic_vector(63 downto 0);          -- Number of clocks excluding halt state
-    o_executed_cnt : out std_logic_vector(63 downto 0);       -- Number of executed instructions
     o_halt : out std_logic;                                   -- Halt signal is equal to hold pipeline
     i_ebreak : in std_logic;                                  -- ebreak instruction decoded
     o_break_mode : out std_logic;                             -- Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap

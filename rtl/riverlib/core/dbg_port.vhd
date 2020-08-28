@@ -52,11 +52,8 @@ entity DbgPort is generic (
     i_pc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);    -- Region 1: Instruction pointer
     i_npc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);   -- Region 1: Next Instruction pointer
     i_e_next_ready : in std_logic;
-    i_e_valid : in std_logic;                                 -- Stepping control signal
     i_e_call : in std_logic;                                  -- pseudo-instruction CALL
     i_e_ret : in std_logic;                                   -- pseudo-instruction RET
-    o_clock_cnt : out std_logic_vector(63 downto 0);          -- Number of clocks excluding halt state
-    o_executed_cnt : out std_logic_vector(63 downto 0);       -- Number of executed instructions
     o_halt : out std_logic;                                   -- Halt signal is equal to hold pipeline
     i_ebreak : in std_logic;                                  -- ebreak instruction decoded
     o_break_mode : out std_logic;                             -- Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
@@ -93,8 +90,6 @@ architecture arch_DbgPort of DbgPort is
 
       rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
       stepping_mode_steps : std_logic_vector(RISCV_ARCH-1 downto 0); -- Number of steps before halt in stepping mode
-      clock_cnt : std_logic_vector(63 downto 0);               -- Timer in clocks.
-      executed_cnt : std_logic_vector(63 downto 0);            -- Number of valid executed instructions
       stack_trace_cnt : integer range 0 to CFG_STACK_TRACE_BUF_SIZE-1; -- Stack trace buffer counter
       rd_trbuf_ena : std_logic;
       rd_trbuf_addr0 : std_logic;
@@ -106,7 +101,6 @@ architecture arch_DbgPort of DbgPort is
     (others => '0'), (others => '0'), '0',  -- br_address_fetch, br_instr_fetch, br_fetch_valid
     (others => '0'), '0',                   -- flush_address, flush_valid
     (others => '0'), (others => '0'),       -- rdata, stepping_mode_steps
-    (others => '0'), (others => '0'),       -- clock_cnt, executed_cnt
     0, '0', '0'                             -- stack_trace_cnt, rd_trbuf_ena, rd_trbuf_addr0
   );
 
@@ -151,7 +145,7 @@ begin
 
   comb : process(i_nrst, i_dport_valid, i_dport_write, i_dport_region, 
                  i_dport_addr, i_dport_wdata, i_ireg_rdata,
-                 i_csr_rdata, i_pc, i_npc, i_e_next_ready, i_e_valid, i_ebreak, r,
+                 i_csr_rdata, i_pc, i_npc, i_e_next_ready, i_ebreak, r,
                  wb_stack_rdata, i_e_call, i_e_ret, i_istate, i_dstate,
                  i_cstate)
     variable v : RegistersType;
@@ -202,13 +196,6 @@ begin
                 v.stepping_mode := '0';
             end if;
         end if;
-    end if;
-
-    if r.halt = '0' then
-        v.clock_cnt := r.clock_cnt + 1;
-    end if;
-    if i_e_valid = '1' then
-        v.executed_cnt := r.executed_cnt + 1;
     end if;
     if i_ebreak = '1' then
         v.breakpoint := '1';
@@ -295,10 +282,6 @@ begin
                 if i_dport_write = '1' then
                     v.stepping_mode_steps := i_dport_wdata;
                 end if;
-            when 2 =>
-                wb_rdata := r.clock_cnt;
-            when 3 =>
-                wb_rdata := r.executed_cnt;
             when 4 =>
                 --! Trap on instruction:
                 --!      0 = Halt pipeline on ECALL instruction
@@ -362,8 +345,6 @@ begin
     o_ireg_ena <= w_o_ireg_ena;
     o_ireg_write <= w_o_ireg_write;
     o_npc_write <= w_o_npc_write;
-    o_clock_cnt <= r.clock_cnt;
-    o_executed_cnt <= r.executed_cnt;
     o_halt <= r.halt or w_cur_halt;
     o_break_mode <= r.trap_on_break;
     o_br_fetch_valid <= r.br_fetch_valid;

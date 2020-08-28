@@ -16,6 +16,7 @@
 
 #include "cmd_cpi.h"
 #include "debug/dsumap.h"
+#include <riscv-isa.h>
 
 namespace debugger {
 
@@ -25,7 +26,7 @@ CmdCpi::CmdCpi(ITap *tap)
     briefDescr_.make_string("Compute Clocks Per Instruction (CPI) rate");
     detailedDescr_.make_string(
         "Description:\n"
-        "    This commands reads CPU registers: 'clock counter' and.\n"
+        "    This commands reads CSR registers: 'cycle counter' and\n"
         "    'step counter' and computes Clocks Per Instruction (CPI) rate\n"
         "    in run-time.\n"
         "Output format:\n"
@@ -58,26 +59,27 @@ void CmdCpi::exec(AttributeType *args, AttributeType *res) {
     (*res)[1].make_uint64(0);
 
     struct CpiRegsType {
-        Reg64Type clock_cnt;
-        Reg64Type executed_cnt;
+        Reg64Type user_cycle;
+        Reg64Type user_timer;
+        Reg64Type user_insret;
     };
     union CpiRegionType {
         CpiRegsType regs;
         uint8_t buf[sizeof(CpiRegsType)];
     } t1;
-    uint64_t addr = DSUREGBASE(udbg.v.clock_cnt);
+    uint64_t addr_user_timers = DSUREGBASE(csr[CSR_cycle]);
     uint64_t d1, d2;
-    tap_->read(addr, 16, t1.buf);
+    tap_->read(addr_user_timers, 3*8, t1.buf);
 
-    d1 = t1.regs.clock_cnt.val - clockCnt_z;
-    d2 = t1.regs.executed_cnt.val - stepCnt_z;
+    d1 = t1.regs.user_cycle.val - clockCnt_z;
+    d2 = t1.regs.user_insret.val - stepCnt_z;
 
-    (*res)[0u].make_uint64(t1.regs.clock_cnt.val);
-    (*res)[1].make_uint64(t1.regs.executed_cnt.val);
+    (*res)[0u].make_uint64(t1.regs.user_cycle.val);
+    (*res)[1].make_uint64(t1.regs.user_insret.val);
     (*res)[2].make_uint64(d1);
     (*res)[3].make_uint64(d2);
     if (d2 == 0) {
-        if (t1.regs.executed_cnt.val == 0) {
+        if (t1.regs.user_insret.val == 0) {
             (*res)[4].make_floating(0);
         } else {
             (*res)[4].make_floating(1.0);
@@ -87,8 +89,8 @@ void CmdCpi::exec(AttributeType *args, AttributeType *res) {
             static_cast<double>(d1) / static_cast<double>(d2));
     }
 
-    clockCnt_z = t1.regs.clock_cnt.val;
-    stepCnt_z = t1.regs.executed_cnt.val;
+    clockCnt_z = t1.regs.user_cycle.val;
+    stepCnt_z = t1.regs.user_insret.val;
 }
 
 }  // namespace debugger

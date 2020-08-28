@@ -551,19 +551,6 @@ static const uint16_t CSR_fflags            = 0x001;
 static const uint16_t CSR_frm               = 0x002;
 /** FPU Control and Status register (frm + fflags) */
 static const uint16_t CSR_fcsr              = 0x003;
-/** ISA and extensions supported. */
-static const uint16_t CSR_misa              = 0xf10;
-/** Vendor ID. */
-static const uint16_t CSR_mvendorid         = 0xf11;
-/** Architecture ID. */
-static const uint16_t CSR_marchid           = 0xf12;
-/** Vendor ID. */
-static const uint16_t CSR_mimplementationid = 0xf13;
-/** Thread id (the same as core). */
-static const uint16_t CSR_mhartid           = 0xf14;
-/** Machine wall-clock time */
-static const uint16_t CSR_mtime         = 0x701;
-
 /** machine mode status read/write register. */
 static const uint16_t CSR_mstatus       = 0x300;
 /** Machine exception delegation  */
@@ -574,8 +561,6 @@ static const uint16_t CSR_mideleg       = 0x303;
 static const uint16_t CSR_mie           = 0x304;
 /** The base address of the M-mode trap vector. */
 static const uint16_t CSR_mtvec         = 0x305;
-/** Machine wall-clock timer compare value. */
-static const uint16_t CSR_mtimecmp      = 0x321;
 /** Scratch register for machine trap handlers. */
 static const uint16_t CSR_mscratch      = 0x340;
 /** Exception program counters. */
@@ -599,6 +584,27 @@ static const uint16_t CSR_mpu_addr       = 0x352;
 static const uint16_t CSR_mpu_mask       = 0x353;
 /** MPU region control (non-standard CSR). */
 static const uint16_t CSR_mpu_ctrl       = 0x354;
+/** Machine Cycle counter */
+static const uint16_t CSR_mcycle         = 0xB00;
+/** Machine Instructions-retired counter */
+static const uint16_t CSR_minsret        = 0xB02;
+/** User Cycle counter for RDCYCLE pseudo-instruction */
+static const uint16_t CSR_cycle          = 0xC00;
+/** User Timer for RDTIME pseudo-instruction */
+static const uint16_t CSR_time           = 0xC01;
+/** User Instructions-retired counter for RDINSTRET pseudo-instruction */
+static const uint16_t CSR_insret         = 0xC02;
+/** 0xC00 to 0xC1F reserved for counters */
+/** ISA and extensions supported. */
+static const uint16_t CSR_misa              = 0xf10;
+/** Vendor ID. */
+static const uint16_t CSR_mvendorid         = 0xf11;
+/** Architecture ID. */
+static const uint16_t CSR_marchid           = 0xf12;
+/** Vendor ID. */
+static const uint16_t CSR_mimplementationid = 0xf13;
+/** Thread id (the same as core). */
+static const uint16_t CSR_mhartid           = 0xf14;
 /// @}
 
 /** Exceptions */

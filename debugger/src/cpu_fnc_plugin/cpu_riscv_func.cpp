@@ -299,8 +299,14 @@ void CpuRiver_Functional::exceptionStoreData(Axi4TransactionType *tr) {
 }
 
 uint64_t CpuRiver_Functional::readCSR(int idx) {
-    if (idx == CSR_mtime) {
+    switch (idx) {
+    case CSR_mcycle:
+    case CSR_minsret:
+    case CSR_cycle:
+    case CSR_time:
+    case CSR_insret:
         return step_cnt_;
+    default:;
     }
     return portCSR_.read(idx).val;
 }
@@ -314,7 +320,12 @@ void CpuRiver_Functional::writeCSR(int idx, uint64_t val) {
     case CSR_mimplementationid:
     case CSR_mhartid:
         break;
-    case CSR_mtime:
+    // read only timers:
+    case CSR_mcycle:
+    case CSR_minsret:
+    case CSR_cycle:
+    case CSR_time:
+    case CSR_insret:
         break;
     default:
         portCSR_.write(idx, val);

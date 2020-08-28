@@ -48,11 +48,8 @@ SC_MODULE(DbgPort) {
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_pc;                // Region 1: Instruction pointer
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_npc;               // Region 1: Next Instruction pointer
     sc_in<bool> i_e_next_ready;
-    sc_in<bool> i_e_valid;                              // Stepping control signal
     sc_in<bool> i_e_call;                               // pseudo-instruction CALL
     sc_in<bool> i_e_ret;                                // pseudo-instruction RET
-    sc_out<sc_uint<64>> o_clock_cnt;                    // Number of clocks excluding halt state
-    sc_out<sc_uint<64>> o_executed_cnt;                 // Number of executed instructions
     sc_out<bool> o_halt;                                // Halt signal is equal to hold pipeline
     sc_in<bool> i_ebreak;                               // ebreak instruction decoded
     sc_out<bool> o_break_mode;                          // Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
@@ -92,8 +89,6 @@ private:
 
         sc_signal<sc_uint<RISCV_ARCH>> rdata;
         sc_signal<sc_uint<RISCV_ARCH>> stepping_mode_steps; // Number of steps before halt in stepping mode
-        sc_signal<sc_uint<64>> clock_cnt;                   // Timer in clocks.
-        sc_signal<sc_uint<64>> executed_cnt;                // Number of valid executed instructions
         sc_signal<sc_uint<5>> stack_trace_cnt;              // Stack trace buffer counter (Log2[CFG_STACK_TRACE_BUF_SIZE])
         sc_signal<bool> rd_trbuf_ena;
         sc_signal<bool> rd_trbuf_addr0;
@@ -113,8 +108,6 @@ private:
         iv.flush_valid = 0;
         iv.rdata = 0;
         iv.stepping_mode_steps = 0;
-        iv.clock_cnt = 0;
-        iv.executed_cnt = 0;
         iv.stack_trace_cnt = 0;
         iv.rd_trbuf_ena = 0;
         iv.rd_trbuf_addr0 = 0;

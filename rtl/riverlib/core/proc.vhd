@@ -205,6 +205,8 @@ architecture arch_Processor of Processor is
         trap_valid : std_logic;
         trap_pc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
         break_event : std_logic;
+        cycle_cnt : std_logic_vector(63 downto 0);           -- Number of clocks excluding halt state
+        executed_cnt : std_logic_vector(63 downto 0);        -- Number of executed instruction
     end record;
 
     --! 5-stages CPU pipeline
@@ -226,8 +228,6 @@ architecture arch_Processor of Processor is
         ireg_write : std_logic;                              -- Region 1: Integer registers bank write pulse
         npc_write : std_logic;                               -- Region 1: npc write enable
         halt : std_logic;                                    -- Halt signal is equal to hold pipeline
-        clock_cnt : std_logic_vector(63 downto 0);           -- Number of clocks excluding halt state
-        executed_cnt : std_logic_vector(63 downto 0);        -- Number of executed instruction
         break_mode : std_logic;                              -- Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
         br_fetch_valid : std_logic;                          -- Fetch injection address/instr are valid
         br_address_fetch : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- Fetch injection address to skip ebreak instruciton only once
@@ -274,8 +274,8 @@ begin
 
     o_req_ctrl_valid <= w.f.imem_req_valid;
     o_req_ctrl_addr <= w.f.imem_req_addr;
-    o_time <= dbg.clock_cnt;
-    o_exec_cnt <= dbg.executed_cnt;
+    o_time <= csr.cycle_cnt;
+    o_exec_cnt <= csr.executed_cnt;
 
     o_flush_valid <= w.e.flushi or dbg.flush_valid or csr.break_event;
     o_flush_address <= (others => '1') when w.e.flushi = '1'
@@ -543,6 +543,10 @@ begin
         i_ex_fpu_inexact => w.e.ex_fpu_inexact,
         i_fpu_valid => w.e.fpu_valid,
         i_irq_external => i_ext_irq,
+        i_e_valid => w.e.valid,
+        i_halt => dbg.halt,
+        o_cycle_cnt => csr.cycle_cnt,
+        o_executed_cnt => csr.executed_cnt,
         o_trap_valid => csr.trap_valid,
         o_trap_pc => csr.trap_pc,
         i_break_mode => dbg.break_mode,
@@ -584,11 +588,8 @@ begin
         i_pc => w.e.pc,
         i_npc => w.e.npc,
         i_e_next_ready => w.e.trap_ready,
-        i_e_valid => w.e.valid,
         i_e_call => w.e.call,
         i_e_ret => w.e.ret,
-        o_clock_cnt => dbg.clock_cnt,
-        o_executed_cnt => dbg.executed_cnt,
         o_halt => dbg.halt,
         i_ebreak => csr.break_event,
         o_break_mode => dbg.break_mode,

@@ -219,6 +219,8 @@ private:
         sc_signal<bool> trap_valid;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> trap_pc;
         sc_signal<bool> break_event;             // ebreak detected 1 clock pulse
+        sc_signal<sc_uint<64>> cycle_cnt;           // Number of clocks excluding halt state
+        sc_signal<sc_uint<64>> executed_cnt;        // Number of executed instruction
     } csr;
 
     struct DebugType {
@@ -231,8 +233,6 @@ private:
         sc_signal<bool> ireg_write;                 // Region 1: Integer registers bank write pulse
         sc_signal<bool> npc_write;                  // Region 1: npc write enable
         sc_signal<bool> halt;                       // Halt signal is equal to hold pipeline
-        sc_signal<sc_uint<64>> clock_cnt;           // Number of clocks excluding halt state
-        sc_signal<sc_uint<64>> executed_cnt;        // Number of executed instruction
         sc_signal<bool> break_mode;                          // Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
         sc_signal<bool> br_fetch_valid;                      // Fetch injection address/instr are valid
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> br_address_fetch; // Fetch injection address to skip ebreak instruciton only once

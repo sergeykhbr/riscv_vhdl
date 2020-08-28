@@ -93,8 +93,8 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     sensitive << w.f.imem_req_valid;
     sensitive << w.f.imem_req_addr;
     sensitive << w.f.valid;
-    sensitive << dbg.clock_cnt;
-    sensitive << dbg.executed_cnt;
+    sensitive << csr.cycle_cnt;
+    sensitive << csr.executed_cnt;
     sensitive << dbg.csr_addr;
     sensitive << dbg.reg_addr;
     sensitive << dbg.halt;
@@ -308,27 +308,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     iregs0->o_ra(ireg.ra);
     iregs0->o_sp(ireg.sp);
 
-/*    if (fpu_ena_) {
-        fregs0 = new RegFloatBank("fregs0", async_reset);
-        fregs0->i_clk(i_clk);
-        fregs0->i_nrst(i_nrst);
-        fregs0->i_radr1(w.d.radr1);
-        fregs0->o_rdata1(freg.rdata1);
-        fregs0->i_radr2(w.d.radr2);
-        fregs0->o_rdata2(freg.rdata2);
-        fregs0->i_waddr(w.w.waddr);
-        fregs0->i_wena(w.w.wena);
-        fregs0->i_wdata(w.w.wdata);
-        fregs0->i_dport_addr(wb_freg_dport_addr);
-        fregs0->i_dport_ena(dbg.freg_ena);
-        fregs0->i_dport_write(dbg.freg_write);
-        fregs0->i_dport_wdata(dbg.core_wdata);
-        fregs0->o_dport_rdata(freg.dport_rdata);
-    } else {
-        freg.rdata1 = 0;
-        freg.rdata2 = 0;
-        freg.dport_rdata = 0;
-    }*/
 
     csr0 = new CsrRegs("csr0", hartid, async_reset);
     csr0->i_clk(i_clk);
@@ -361,6 +340,10 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     csr0->i_ex_fpu_inexact(w.e.ex_fpu_inexact);
     csr0->i_fpu_valid(w.e.fpu_valid);
     csr0->i_irq_external(i_ext_irq);
+    csr0->i_e_valid(w.e.valid);
+    csr0->i_halt(dbg.halt);
+    csr0->o_cycle_cnt(csr.cycle_cnt);
+    csr0->o_executed_cnt(csr.executed_cnt);
     csr0->o_trap_valid(csr.trap_valid);
     csr0->o_trap_pc(csr.trap_pc);
     csr0->i_break_mode(dbg.break_mode);
@@ -401,9 +384,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     dbg0->i_e_call(w.e.call);
     dbg0->i_e_ret(w.e.ret);
     dbg0->i_e_next_ready(w.e.trap_ready);
-    dbg0->i_e_valid(w.e.valid);
-    dbg0->o_clock_cnt(dbg.clock_cnt);
-    dbg0->o_executed_cnt(dbg.executed_cnt);
     dbg0->o_halt(dbg.halt);
     dbg0->i_ebreak(csr.break_event);
     dbg0->o_break_mode(dbg.break_mode);
@@ -421,7 +401,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
         trace0 = new Tracer("trace0", async_reset, "trace_river_sysc.log");
         trace0->i_clk(i_clk);
         trace0->i_nrst(i_nrst);
-        trace0->i_dbg_executed_cnt(dbg.executed_cnt);
+        trace0->i_dbg_executed_cnt(csr.executed_cnt);
         trace0->i_e_valid(w.e.valid);
         trace0->i_e_pc(w.e.pc);
         trace0->i_e_instr(w.e.instr);
@@ -491,8 +471,8 @@ void Processor::comb() {
 
     o_req_ctrl_valid = w.f.imem_req_valid;
     o_req_ctrl_addr = w.f.imem_req_addr;
-    o_time = dbg.clock_cnt;
-    o_exec_cnt = dbg.executed_cnt;
+    o_time = csr.cycle_cnt;
+    o_exec_cnt = csr.executed_cnt;
 
     o_flush_valid = w.e.flushi.read() || dbg.flush_valid.read()
                 || csr.break_event.read();

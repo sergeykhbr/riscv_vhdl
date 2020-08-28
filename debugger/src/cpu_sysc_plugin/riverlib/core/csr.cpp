@@ -50,6 +50,10 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     i_ex_fpu_inexact("i_ex_fpu_inexact"),
     i_fpu_valid("i_fpu_valid"),
     i_irq_external("i_irq_external"),
+    i_e_valid("i_e_valid"),
+    i_halt("i_halt"),
+    o_cycle_cnt("o_cycle_cnt"),
+    o_executed_cnt("o_executed_cnt"),
     o_trap_valid("o_trap_valid"),
     o_trap_pc("o_trap_pc"),
     i_break_mode("i_break_mode"),
@@ -96,6 +100,8 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << i_ex_fpu_inexact;
     sensitive << i_fpu_valid;
     sensitive << i_irq_external;
+    sensitive << i_e_valid;
+    sensitive << i_halt;
     sensitive << i_break_mode;
     sensitive << i_dport_ena;
     sensitive << i_dport_write;
@@ -127,6 +133,9 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << r.hold_data_store_fault;
     sensitive << r.hold_data_load_fault;
     sensitive << r.hold_mbadaddr;
+    sensitive << r.timer;
+    sensitive << r.cycle_cnt;
+    sensitive << r.executed_cnt;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -163,6 +172,8 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_ex_fpu_inexact, i_ex_fpu_inexact.name());
         sc_trace(o_vcd, i_fpu_valid, i_fpu_valid.name());
         sc_trace(o_vcd, i_irq_external, i_irq_external.name());
+        sc_trace(o_vcd, o_cycle_cnt, o_cycle_cnt.name());
+        sc_trace(o_vcd, o_executed_cnt, o_executed_cnt.name());
         sc_trace(o_vcd, o_trap_valid, o_trap_valid.name());
         sc_trace(o_vcd, o_trap_pc, o_trap_pc.name());
         sc_trace(o_vcd, i_break_mode, i_break_mode.name());
@@ -313,8 +324,6 @@ void CsrRegs::procedure_RegAccess(uint64_t iaddr, bool iwena,
             ov->mtvec = iwdata;
         }
         break;
-    case CSR_mtimecmp:// - Machine wall-clock timer compare value
-        break;
     case CSR_mscratch:// - Machine scratch register
         (*ordata) = ir.mscratch;
         if (iwena) {
@@ -336,6 +345,15 @@ void CsrRegs::procedure_RegAccess(uint64_t iaddr, bool iwena,
         (*ordata) = ir.mbadaddr;
         break;
     case CSR_mip:// - Machine interrupt pending
+        break;
+    case CSR_cycle:
+        (*ordata) = ir.cycle_cnt;
+        break;
+    case CSR_time:
+        (*ordata) = ir.timer;
+        break;
+    case CSR_insret:
+        (*ordata) = ir.executed_cnt;
         break;
     case CSR_mstackovr:// - Machine Stack Overflow
         (*ordata) = ir.mstackovr;
@@ -573,10 +591,21 @@ void CsrRegs::comb() {
         }
     }
 
+    if (i_halt.read() == 0 || i_e_valid.read() == 1) {
+        v.cycle_cnt = r.cycle_cnt.read() + 1;
+    }
+    if (i_e_valid.read()) {
+        v.executed_cnt = r.executed_cnt.read() + 1;
+    }
+    v.timer = r.timer.read() + 1;
+
+
     if (!async_reset_ && !i_nrst.read()) {
         R_RESET(v);
     }
 
+    o_cycle_cnt = r.cycle_cnt;
+    o_executed_cnt = r.executed_cnt;
     o_trap_valid = w_trap_valid;
     o_trap_pc = wb_trap_pc;
     o_rdata = wb_rdata;

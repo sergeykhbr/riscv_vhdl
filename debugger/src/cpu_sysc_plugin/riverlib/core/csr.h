@@ -54,6 +54,10 @@ SC_MODULE(CsrRegs) {
     sc_in<bool> i_ex_fpu_inexact;           // FPU Exception: inexact
     sc_in<bool> i_fpu_valid;                // FPU output is valid
     sc_in<bool> i_irq_external;
+    sc_in<bool> i_e_valid;
+    sc_in<bool> i_halt;
+    sc_out<sc_uint<64>> o_cycle_cnt;                    // Number of clocks excluding halt state
+    sc_out<sc_uint<64>> o_executed_cnt;                 // Number of executed instructions
     sc_out<bool> o_trap_valid;              // Trap pulse
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_trap_pc;
 
@@ -116,6 +120,10 @@ private:
         sc_signal<bool> hold_data_store_fault;
         sc_signal<bool> hold_data_load_fault;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> hold_mbadaddr;
+
+        sc_signal<sc_uint<64>> timer;                       // Timer in clocks.
+        sc_signal<sc_uint<64>> cycle_cnt;                   // Cycle in clocks.
+        sc_signal<sc_uint<64>> executed_cnt;                // Number of valid executed instructions
     } v, r;
 
     void R_RESET(RegistersType &iv) {
@@ -150,6 +158,9 @@ private:
         iv.hold_data_store_fault = 0;
         iv.hold_data_load_fault = 0;
         iv.hold_mbadaddr = 0;
+        iv.timer = 0;
+        iv.cycle_cnt = 0;
+        iv.executed_cnt = 0;
     }
 
     uint32_t hartid_;

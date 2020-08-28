@@ -59,6 +59,10 @@ entity CsrRegs is
     i_ex_fpu_inexact : in std_logic;           -- FPU Exception: inexact
     i_fpu_valid : in std_logic;                -- FPU output is valid
     i_irq_external : in std_logic;
+    i_e_valid : in std_logic;
+    i_halt : in std_logic;
+    o_cycle_cnt : out std_logic_vector(63 downto 0);           -- Number of clocks excluding halt state
+    o_executed_cnt : out std_logic_vector(63 downto 0);        -- Number of executed instructions
     o_trap_valid : out std_logic;                              -- Trap pulse
     o_trap_pc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);-- trap on pc
 
@@ -115,6 +119,10 @@ architecture arch_CsrRegs of CsrRegs is
       hold_data_store_fault : std_logic;
       hold_data_load_fault : std_logic;
       hold_mbadaddr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+
+      timer : std_logic_vector(63 downto 0);                   -- Timer in clocks.
+      cycle_cnt : std_logic_vector(63 downto 0);               -- Cycle in clocks.
+      executed_cnt : std_logic_vector(63 downto 0);            -- Number of valid executed instructions
   end record;
 
   constant R_RESET : RegistersType := (
@@ -135,7 +143,10 @@ architecture arch_CsrRegs of CsrRegs is
         '0',             -- mpu_we
         '0', '0', '0', '0', '0', 
         '0', (others => '0'), (others => '0'), '0',
-        '0', '0', (others => '0'));
+        '0', '0', (others => '0'),
+        (others => '0'), --timer
+        (others => '0'), --cycle_cnt
+        (others => '0')); -- executed_cnt
 
   signal r, rin : RegistersType;
   
@@ -258,7 +269,6 @@ architecture arch_CsrRegs of CsrRegs is
         if iwena = '1' then
             ov.mtvec := iwdata;
         end if;
-    when CSR_mtimecmp => -- Machine wall-clock timer compare value
     when CSR_mscratch => -- Machine scratch register
         ordata := ir.mscratch;
         if iwena = '1' then
@@ -275,6 +285,12 @@ architecture arch_CsrRegs of CsrRegs is
     when CSR_mbadaddr =>   -- Machine bad address
         ordata(CFG_CPU_ADDR_BITS-1 downto 0) := ir.mbadaddr;
     when CSR_mip =>        -- Machine interrupt pending
+    when CSR_cycle =>
+        ordata := ir.cycle_cnt;
+    when CSR_time =>
+        ordata := ir.timer;
+    when CSR_insret =>
+        ordata := ir.executed_cnt;
     when CSR_mstackovr =>  -- Machine stack overflow
         ordata(CFG_CPU_ADDR_BITS-1 downto 0) := ir.mstackovr;
         if iwena = '1' then
@@ -315,6 +331,7 @@ begin
                  i_ex_breakpoint, i_ex_ecall, 
                  i_ex_fpu_invalidop, i_ex_fpu_divbyzero, i_ex_fpu_overflow,
                  i_ex_fpu_underflow, i_ex_fpu_inexact, i_fpu_valid, i_irq_external,
+                 i_e_valid, i_halt,
                  i_break_mode, i_dport_ena, i_dport_write, i_dport_addr, i_dport_wdata,
                  r)
     variable tv1, tv2, v : RegistersType;
@@ -507,11 +524,21 @@ begin
         end case;
     end if;
 
+    if i_halt = '0' or i_e_valid = '1' then
+        v.cycle_cnt := r.cycle_cnt + 1;
+    end ifl
+    if i_e_valid = '1' then
+        v.executed_cnt := r.executed_cnt + 1;
+    end if;
+    v.timer := r.timer + 1;
+
 
     if not async_reset and i_nrst = '0' then
         v := R_RESET;
     end if;
 
+    o_cycle_cnt <= r.cycle_cnt;
+    o_executed_cnt <= r.executed_cnt;
     o_trap_valid <= w_trap_valid;
     o_trap_pc <= wb_trap_pc;
     o_rdata <= wb_rdata;
