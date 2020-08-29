@@ -64,8 +64,6 @@ SC_MODULE(Processor) {
     sc_out<bool> o_resp_data_ready;                     // Core is ready to accept response from DCache
     // External interrupt pin
     sc_in<bool> i_ext_irq;                              // PLIC interrupt accordingly with spec
-    sc_out<sc_uint<64>> o_time;                         // Clock/Step counter depending attribute "GenerateRef"
-    sc_out<sc_uint<64>> o_exec_cnt;
     // MPU interface
     sc_out<bool> o_mpu_region_we;
     sc_out<sc_uint<CFG_MPU_TBL_WIDTH>> o_mpu_region_idx;
@@ -87,9 +85,6 @@ SC_MODULE(Processor) {
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_data_flush_address;    // Address of instruction to remove from D$
     sc_out<bool> o_data_flush_valid;                         // Remove address from D$ is valid
     sc_in<bool> i_data_flush_end;
-    sc_in<sc_uint<4>> i_istate;                         // ICache transaction state
-    sc_in<sc_uint<4>> i_dstate;                         // DCache transaction state
-    sc_in<sc_uint<2>> i_cstate;                         // CacheTop state machine value
 
     void comb();
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
@@ -219,7 +214,6 @@ private:
         sc_signal<bool> trap_valid;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> trap_pc;
         sc_signal<bool> break_event;             // ebreak detected 1 clock pulse
-        sc_signal<sc_uint<64>> cycle_cnt;           // Number of clocks excluding halt state
         sc_signal<sc_uint<64>> executed_cnt;        // Number of executed instruction
     } csr;
 

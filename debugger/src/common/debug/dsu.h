@@ -35,7 +35,8 @@ namespace debugger {
 
 class DSU : public RegMemBankGeneric,
             public DsuRegisters,
-            public IDsuGeneric {
+            public IDsuGeneric,
+            public IDbgNbResponse {
  public:
     explicit DSU(const char *name);
     virtual ~DSU();
@@ -46,14 +47,29 @@ class DSU : public RegMemBankGeneric,
     /** IDsuGeneric */
     virtual void incrementRdAccess(int mst_id);
     virtual void incrementWrAccess(int mst_id);
+
+    /** IDbgNbResponse */
+    virtual void nb_response_debug_port(DebugPortTransactionType *trans);
+
     void softReset(bool val);
+    bool isCpuHalted(unsigned idx);
+    void haltCpu(unsigned idx);
+    void resumeCpu(unsigned idx);
+
+    unsigned getCpuTotal() { return icpulist_.size(); }
     void setCpuContext(unsigned n);
+    unsigned getCpuContext() { return hartsel_; }
+
+ protected:
+    void nb_debug_write(unsigned hartid, uint8_t region, uint16_t addr, uint64_t wdata);
 
  private:
     AttributeType cpu_;
     AttributeType icpulist_;
 
+    unsigned hartsel_;
     ICpuGeneric *icpu_context_;     // current cpu context
+    event_def nb_event_;
 };
 
 DECLARE_CLASS(DSU)

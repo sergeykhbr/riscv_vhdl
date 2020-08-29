@@ -45,6 +45,14 @@ enum EEndianessType {
     BigEndian,
 };
 
+enum EHaltCause {
+    HaltDoNotChange,
+    HaltSwBreakpoint,
+    HaltHwTrigger,
+    HaltExternal,
+    HaltStepping
+};
+
 static const char *const IFACE_CPU_FUNCTIONAL = "ICpuFunctional";
 
 class ICpuFunctional : public IFace {
@@ -68,11 +76,8 @@ class ICpuFunctional : public IFace {
     virtual void exceptionLoadData(Axi4TransactionType *tr) = 0;
     virtual void exceptionStoreData(Axi4TransactionType *tr) = 0;
     virtual bool isOn() = 0;
-    virtual bool isHalt() = 0;
-    virtual bool isSwBreakpoint() = 0;
-    virtual bool isHwBreakpoint() = 0;
     virtual void go() = 0;
-    virtual void halt(const char *descr) = 0;
+    virtual void halt(EHaltCause cause, const char *descr) = 0;
     virtual void step() = 0;
     virtual void addHwBreakpoint(uint64_t addr) = 0;
     virtual void removeHwBreakpoint(uint64_t addr) = 0;

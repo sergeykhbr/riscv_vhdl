@@ -19,6 +19,7 @@
  */
 
 #include "cmd_busutil.h"
+#include <riscv-isa.h>
 
 namespace debugger {
 
@@ -79,7 +80,7 @@ void CmdBusUtil::exec(AttributeType *args, AttributeType *res) {
         Reg64Type r_cnt;
     } mst_stat;
     Reg64Type cnt_total;
-    addr = DSUREGBASE(udbg.v.clock_cnt);
+    addr = DSUREGBASE(csr[CSR_time]);
     tap_->read(addr, 8, cnt_total.buf);
     double d_cnt_total = static_cast<double>(cnt_total.val - clock_cnt_z_);
     if (d_cnt_total == 0) {

@@ -331,9 +331,8 @@ static const ECpuRegMapping RISCV_DEBUG_REG_MAP[] = {
     {"t4",    4, DSU_OFFSET + DSUREG(ureg.v.iregs[29])},
     {"t5",    4, DSU_OFFSET + DSUREG(ureg.v.iregs[30])},
     {"t6",    4, DSU_OFFSET + DSUREG(ureg.v.iregs[31])},
-    {"pc",    4, DSU_OFFSET + DSUREG(ureg.v.pc)},
-    {"npc",   4, DSU_OFFSET + DSUREG(ureg.v.npc)},
-    {"steps", 8, DSU_OFFSET + DSUREG(udbg.v.clock_cnt)},
+    {"npc",   4, DSU_OFFSET + DSUREG(csr[0x7b1])},
+    {"steps", 8, DSU_OFFSET + DSUREG(csr[0xC02])},  // CSR_insret
     {"",      0, 0},
     {"ft0",   8, DSU_OFFSET + DSUREG(ureg.v.fregs[0])},
     {"ft1",   8, DSU_OFFSET + DSUREG(ureg.v.fregs[1])},
@@ -584,6 +583,16 @@ static const uint16_t CSR_mpu_addr       = 0x352;
 static const uint16_t CSR_mpu_mask       = 0x353;
 /** MPU region control (non-standard CSR). */
 static const uint16_t CSR_mpu_ctrl       = 0x354;
+// Software reset.
+static const uint16_t CSR_mreset         = 0x782;
+// Debug Control and status
+static const uint16_t CSR_dcsr           = 0x7b0;
+// Debug PC
+static const uint16_t CSR_dpc            = 0x7b1;
+// Debug Scratch Register 0
+static const uint16_t CSR_dscratch0      = 0x7b2;
+// Debug Scratch Register 1
+static const uint16_t CSR_dscratch1      = 0x7b3;
 /** Machine Cycle counter */
 static const uint16_t CSR_mcycle         = 0xB00;
 /** Machine Instructions-retired counter */
@@ -606,6 +615,13 @@ static const uint16_t CSR_mimplementationid = 0xf13;
 /** Thread id (the same as core). */
 static const uint16_t CSR_mhartid           = 0xf14;
 /// @}
+
+// DCSR register halt causes:
+static const uint64_t HALT_CAUSE_EBREAK       = 1;  // software breakpoint
+static const uint64_t HALT_CAUSE_TRIGGER      = 2;  // hardware breakpoint
+static const uint64_t HALT_CAUSE_HALTREQ      = 3;  // halt request via debug interface
+static const uint64_t HALT_CAUSE_STEP         = 4;  // step done
+static const uint64_t HALT_CAUSE_RESETHALTREQ = 5;  // not implemented
 
 /** Exceptions */
 enum ESignals {
@@ -674,6 +690,7 @@ enum ESignals {
     SIGNAL_HardReset,
     SIGNAL_Total
 };
+
 
 }  // namespace debugger
 

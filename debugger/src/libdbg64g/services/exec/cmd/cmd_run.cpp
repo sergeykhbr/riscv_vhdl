@@ -51,21 +51,21 @@ void CmdRun::exec(AttributeType *args, AttributeType *res) {
     res->attr_free();
     res->make_nil();
     Reg64Type runctrl;
-    uint64_t addr_run_ctrl = DSUREGBASE(udbg.v.control);
-    uint64_t addr_step_cnt = DSUREGBASE(udbg.v.stepping_mode_steps);
+    uint64_t addr_dmcontrol = DSUREGBASE(ulocal.v.dmcontrol);
 
     if (args->size() == 1) {
         runctrl.val = 0;
-        tap_->write(addr_run_ctrl, 8, runctrl.buf);
+        runctrl.bits.b30 = 1;   // resumereq
+        tap_->write(addr_dmcontrol, 8, runctrl.buf);
     } else if (args->size() == 2) {
+        uint64_t addr_dcsr = DSUREGBASE(csr[0x7b0]);
+        uint64_t addr_step_cnt = DSUREGBASE(udbg.v.stepping_mode_steps);
+        Reg64Type t1;
         runctrl.val = (*args)[1].to_uint64();
         tap_->write(addr_step_cnt, 8, runctrl.buf);
-
-        GenericCpuControlType ctrl;
-        ctrl.val = 0;
-        ctrl.bits.stepping = 1;
-        runctrl.val = ctrl.val;
-        tap_->write(addr_run_ctrl, 8, runctrl.buf);
+        t1.val = 0;
+        t1.bits.b2 = 1;     // step
+        tap_->write(addr_dcsr, 8, t1.buf);
     }
 }
 

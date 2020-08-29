@@ -26,7 +26,7 @@
                                      ['r1', 'r7',  'fp'],
                                      ['r2', 'r8',  'sp'],
                                      ['r3', 'r9',  'lr'],
-                                     ['r4', 'r10', 'pc'],
+                                     ['r4', 'r10', ''],
                                      ['r5', 'r11', 'npc']],
                            'RegWidthBytes':4}],
                      'CpuContext':[
@@ -421,8 +421,9 @@
                 ['MapList',[['dsu0','csr_region'],
                             ['dsu0','reg_region'],
                             ['dsu0','dbg_region'],
-                            ['dsu0','soft_reset'],
-                            ['dsu0','cpu_context'],
+                            ['dsu0','dmcontrol'],
+                            ['dsu0','dmstatus'],
+                            ['dsu0','haltsum0'],
                             ['dsu0','bus_util'],
                            ]]
                 ]}]},
@@ -436,10 +437,10 @@
           {'Name':'dbgbus0','Attr':[
                 ['LogLevel',1],
                 ['UseHash',false],
-                ['MapList',[['core0','pc'],
-                            ['core0','npc'],
+                ['MapList',[['core0','npc'],
                             ['core0','status'],
                             ['core0','regs'],
+                            ['core0','dcsr'],
                             ['core0','stepping_cnt'],
                             ['core0','clock_cnt'],
                             ['core0','executed_cnt'],

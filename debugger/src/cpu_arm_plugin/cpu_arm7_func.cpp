@@ -98,7 +98,7 @@ void CpuCortex_Functional::handleTrap() {
             sw_breakpoint_ = true;
             interrupt_pending_[0] &= ~(1ull << Interrupt_SoftwareIdx);
             setNPC(getPC());
-            halt("SWI Breakpoint");
+            halt(HaltSwBreakpoint, "SWI Breakpoint");
             return;
         }
     }

@@ -50,12 +50,10 @@ void CmdHalt::exec(AttributeType *args, AttributeType *res) {
     res->attr_free();
     res->make_nil();
     Reg64Type t1;
-    GenericCpuControlType ctrl;
-    uint64_t addr_run_ctrl = DSUREGBASE(udbg.v.control);
-    ctrl.val = 0;
-    ctrl.bits.halt = 1;
-    t1.val = ctrl.val;
-    tap_->write(addr_run_ctrl, 8, t1.buf);
+    uint64_t addr_dmcontrol = DSUREGBASE(ulocal.v.dmcontrol);
+    t1.val = 0;
+    t1.bits.b31 = 1;        // haltreq
+    tap_->write(addr_dmcontrol, 8, t1.buf);
 }
 
 }  // namespace debugger

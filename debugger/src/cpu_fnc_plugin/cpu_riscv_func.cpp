@@ -129,7 +129,7 @@ void CpuRiver_Functional::handleTrap() {
             sw_breakpoint_ = true;
             interrupt_pending_[0] &= ~(1ull << EXCEPTION_Breakpoint);
             setNPC(getPC());
-            halt("EBREAK Breakpoint");
+            halt(HaltSwBreakpoint, "EBREAK Breakpoint");
             return;
         }
     }

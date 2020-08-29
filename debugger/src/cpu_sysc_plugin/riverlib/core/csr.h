@@ -56,8 +56,7 @@ SC_MODULE(CsrRegs) {
     sc_in<bool> i_irq_external;
     sc_in<bool> i_e_valid;
     sc_in<bool> i_halt;
-    sc_out<sc_uint<64>> o_cycle_cnt;                    // Number of clocks excluding halt state
-    sc_out<sc_uint<64>> o_executed_cnt;                 // Number of executed instructions
+    sc_out<sc_uint<64>> o_executed_cnt;     // Number of executed instructions
     sc_out<bool> o_trap_valid;              // Trap pulse
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_trap_pc;
 

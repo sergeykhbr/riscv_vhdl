@@ -75,10 +75,7 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset, bool coherence_ena) :
     i_flush_valid("i_flush_valid"),
     i_data_flush_address("i_data_flush_address"),
     i_data_flush_valid("i_data_flush_valid"),
-    o_data_flush_end("o_data_flush_end"),
-    o_istate("o_istate"),
-    o_dstate("o_dstate"),
-    o_cstate("o_cstate") {
+    o_data_flush_end("o_data_flush_end") {
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
@@ -129,7 +126,6 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset, bool coherence_ena) :
     i1->i_mpu_flags(wb_mpu_iflags);
     i1->i_flush_address(i_flush_address);
     i1->i_flush_valid(i_flush_valid);
-    i1->o_state(o_istate);
 
     d0 = new DCacheLru("d0", async_reset, coherence_ena);
     d0->i_clk(i_clk);
@@ -172,7 +168,6 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset, bool coherence_ena) :
     d0->i_flush_address(i_data_flush_address);
     d0->i_flush_valid(i_data_flush_valid);
     d0->o_flush_end(o_data_flush_end);
-    d0->o_state(o_dstate);
 
     mpu0 = new MPU("mpu0", async_reset);
 
@@ -222,9 +217,6 @@ void CacheTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_resp_mem_valid, i_resp_mem_valid.name());
         sc_trace(o_vcd, i_resp_mem_path, i_resp_mem_path.name());
         sc_trace(o_vcd, i_resp_mem_data, i_resp_mem_data.name());
-        sc_trace(o_vcd, o_istate, o_istate.name());
-        sc_trace(o_vcd, o_dstate, o_dstate.name());
-        sc_trace(o_vcd, o_cstate, o_cstate.name());
 
         std::string pn(name());
         sc_trace(o_vcd, w_data_req_ready, pn + ".w_data_req_ready");
@@ -308,7 +300,6 @@ void CacheTop::comb() {
     o_req_mem_addr = to(CFG_CPU_ADDR_BITS-1, 0).to_uint64();
     o_req_mem_strob = d.req_mem_strob;
     o_req_mem_data = d.req_mem_wdata;
-    o_cstate = 0;
 }
 
 }  // namespace debugger

@@ -52,7 +52,6 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     i_irq_external("i_irq_external"),
     i_e_valid("i_e_valid"),
     i_halt("i_halt"),
-    o_cycle_cnt("o_cycle_cnt"),
     o_executed_cnt("o_executed_cnt"),
     o_trap_valid("o_trap_valid"),
     o_trap_pc("o_trap_pc"),
@@ -172,7 +171,6 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_ex_fpu_inexact, i_ex_fpu_inexact.name());
         sc_trace(o_vcd, i_fpu_valid, i_fpu_valid.name());
         sc_trace(o_vcd, i_irq_external, i_irq_external.name());
-        sc_trace(o_vcd, o_cycle_cnt, o_cycle_cnt.name());
         sc_trace(o_vcd, o_executed_cnt, o_executed_cnt.name());
         sc_trace(o_vcd, o_trap_valid, o_trap_valid.name());
         sc_trace(o_vcd, o_trap_pc, o_trap_pc.name());
@@ -604,7 +602,6 @@ void CsrRegs::comb() {
         R_RESET(v);
     }
 
-    o_cycle_cnt = r.cycle_cnt;
     o_executed_cnt = r.executed_cnt;
     o_trap_valid = w_trap_valid;
     o_trap_pc = wb_trap_pc;

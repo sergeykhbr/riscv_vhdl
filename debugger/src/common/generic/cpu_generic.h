@@ -36,16 +36,6 @@
 
 namespace debugger {
 
-class GenericPCType : public MappedReg64Type {
- public:
-    GenericPCType(IService *parent, const char *name, uint64_t addr) :
-        MappedReg64Type(parent, name, addr, 10) {
-    }
- protected:
-    virtual uint64_t aboutToRead(uint64_t cur_val) override;
-    virtual uint64_t aboutToWrite(uint64_t new_val) override;
-};
-
 class GenericNPCType : public MappedReg64Type {
  public:
     GenericNPCType(IService *parent, const char *name, uint64_t addr) :
@@ -56,13 +46,48 @@ class GenericNPCType : public MappedReg64Type {
     virtual uint64_t aboutToWrite(uint64_t new_val) override;
 };
 
+class CsrDebugStatusType : public MappedReg64Type {
+ public:
+    CsrDebugStatusType(IService *parent, const char *name, uint64_t addr)
+        : MappedReg64Type(parent, name, addr, 10) {
+    }
+
+    union ValueType {
+        uint64_t val;
+        struct bits_type {
+            uint64_t prv : 2;       // [1:0] 
+            uint64_t step : 1;      // [2]
+            uint64_t rsv5_3 : 3;    // [5:3]
+            uint64_t cause : 3;     // [8:6]
+            uint64_t stoptime : 1;  // [9]
+            uint64_t stopcount : 1; // [10]
+            uint64_t rsv11 : 1;     // [11]
+            uint64_t ebreaku : 1;   // [12]
+            uint64_t ebreaks : 1;   // [13]
+            uint64_t ebreakh : 1;   // [14]
+            uint64_t ebreakm : 1;   // [15]
+            uint64_t rsv27_16 : 12; // [27:16]
+            uint64_t xdebugver : 4; // [31:28] 0=no external debug support; 4=exists as in spec 0.13
+            uint64_t rsv : 32;      // [63:32]
+        } bits;
+    };
+
+    void setHaltCause(EHaltCause cause) {
+        ValueType t1;
+        t1.val = value_.val;
+        t1.bits.cause = cause;
+        value_.val = t1.val;
+    }
+ protected:
+    virtual uint64_t aboutToWrite(uint64_t new_val) override;
+};
+
 class GenericStatusType : public MappedReg64Type {
  public:
     GenericStatusType(IService *parent, const char *name, uint64_t addr) :
         MappedReg64Type(parent, name, addr, 10) {
     }
  protected:
-    virtual uint64_t aboutToRead(uint64_t cur_val) override;
     virtual uint64_t aboutToWrite(uint64_t new_val) override;
 };
 
@@ -127,6 +152,7 @@ class CpuGeneric : public IService,
     virtual void postinitService();
 
     /** ICpuGeneric interface */
+    virtual bool isHalt() { return estate_ == CORE_Halted; }
     virtual void raiseSignal(int idx) = 0;
     virtual void lowerSignal(int idx) = 0;
     virtual void nb_transport_debug_port(DebugPortTransactionType *trans,
@@ -149,11 +175,8 @@ class CpuGeneric : public IService,
     virtual void exceptionLoadData(Axi4TransactionType *tr) {}
     virtual void exceptionStoreData(Axi4TransactionType *tr) {}
     virtual bool isOn() { return estate_ != CORE_OFF; }
-    virtual bool isHalt() { return estate_ == CORE_Halted; }
-    virtual bool isSwBreakpoint() { return sw_breakpoint_; }
-    virtual bool isHwBreakpoint() { return hw_breakpoint_; }
     virtual void go();
-    virtual void halt(const char *descr);
+    virtual void halt(EHaltCause cause, const char *descr);
     virtual void step();
     virtual void addHwBreakpoint(uint64_t addr);
     virtual void removeHwBreakpoint(uint64_t addr);
@@ -242,8 +265,8 @@ class CpuGeneric : public IService,
     uint64_t *NPC_;
 
     GenericReg64Bank portRegs_;
-    GenericPCType dbgpc_;
     GenericNPCType dbgnpc_;
+    CsrDebugStatusType dcsr_;
     GenericStatusType status_;
     MappedReg64Type stepping_cnt_;
     StepCounterType clock_cnt_;

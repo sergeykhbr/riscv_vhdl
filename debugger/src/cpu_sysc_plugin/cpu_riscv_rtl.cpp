@@ -144,7 +144,6 @@ void CpuRiscV_RTL::createSystemC() {
     registerInterface(static_cast<IResetListener *>(wrapper_));
     w_clk = wrapper_->o_clk;
     wrapper_->o_nrst(w_nrst);
-    wrapper_->i_time(wb_time);
     wrapper_->o_msti(msti);
     wrapper_->i_msto(msto);
     wrapper_->o_interrupt(w_interrupt);
@@ -197,8 +196,6 @@ void CpuRiscV_RTL::createSystemC() {
     core_->i_msti(corei0);
     core_->o_msto(coreo0);
     core_->i_ext_irq(w_interrupt);
-    core_->o_time(wb_time);
-    core_->o_exec_cnt(wb_exec_cnt);
     core_->i_dport_valid(w_dport_valid);
     core_->i_dport_write(w_dport_write);
     core_->i_dport_region(wb_dport_region);

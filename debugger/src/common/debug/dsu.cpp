@@ -27,9 +27,12 @@ DSU::DSU(const char *name) :
     registerInterface(static_cast<IDsuGeneric *>(this));
     registerAttribute("CPU", &cpu_);
     icpulist_.make_list(0);
+    RISCV_event_create(&nb_event_, "DSU_event_nb");
+
 }
 
 DSU::~DSU() {
+    RISCV_event_close(&nb_event_);
 }
 
 void DSU::postinitService() {
@@ -51,6 +54,28 @@ void DSU::postinitService() {
 
     // Set default context
     setCpuContext(0);
+}
+
+void DSU::nb_response_debug_port(DebugPortTransactionType *trans) {
+    RISCV_event_set(&nb_event_);
+}
+
+void DSU::nb_debug_write(unsigned hartid, uint8_t region, uint16_t addr,
+                                  uint64_t wdata) {
+    if (hartid >= getCpuTotal()) {
+        RISCV_error("Debug Access index out of range %d", hartid);
+        return;
+    }
+    ICpuGeneric *icpu = static_cast<ICpuGeneric *>(icpulist_[hartid].to_iface());
+    nb_trans_.region = region;
+    nb_trans_.addr = addr;
+    nb_trans_.wdata = wdata;
+    nb_trans_.write = 1;
+    nb_trans_.bytes = 8;
+
+    RISCV_event_clear(&nb_event_);
+    icpu->nb_transport_debug_port(&nb_trans_, static_cast<IDbgNbResponse *>(this));
+    RISCV_event_wait(&nb_event_);
 }
 
 void DSU::incrementRdAccess(int mst_id) {
@@ -76,16 +101,36 @@ void DSU::softReset(bool val) {
     }
 }
 
+void DSU::haltCpu(unsigned idx) {
+    nb_debug_write(idx, 2, 0x0, 0x1);   // control register halt = 1
+}
+
+void DSU::resumeCpu(unsigned idx) {
+    nb_debug_write(idx, 2, 0x0, 0x0);
+}
+
 void DSU::setCpuContext(unsigned n) {
     if (n >= icpulist_.size()) {
+        hartsel_ = icpulist_.size();
         RISCV_error("Context index out of range %d", n);
         return;
     }
     ICpuGeneric *pcpu = static_cast<ICpuGeneric *>(icpulist_[n].to_iface());
+    hartsel_ = n;
     csr_region_.setCpu(pcpu);
     reg_region_.setCpu(pcpu);
     dbg_region_.setCpu(pcpu);
-    cpu_context_.setValue(n);
+}
+
+bool DSU::isCpuHalted(unsigned idx) {
+    if (idx >= icpulist_.size()) {
+        return false;
+    }
+    ICpuGeneric *pcpu = static_cast<ICpuGeneric *>(icpulist_[idx].to_iface());
+    if (!pcpu) {
+        return false;
+    }
+    return pcpu->isHalt();
 }
 
 }  // namespace debugger

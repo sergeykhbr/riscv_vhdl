@@ -49,18 +49,19 @@ void CmdReset::exec(AttributeType *args, AttributeType *res) {
     res->make_nil();
 
     Reg64Type rst;
-    uint64_t sw_rst_addr = DSUREGBASE(ulocal.v.soft_reset);
+    rst.val = 0;
+    uint64_t dmcontrol_addr = DSUREGBASE(ulocal.v.dmcontrol);
 
     if (args->size() == 2) {
-        rst.val = (*args)[1].to_uint64();
-        tap_->write(sw_rst_addr, 8, rst.buf);
+        rst.bits.b1 = (*args)[1].to_uint64();       // [1] ndmreset
+        tap_->write(dmcontrol_addr, 8, rst.buf);
     } else {
         // Reboot
-        rst.val = 1;
-        tap_->write(sw_rst_addr, 8, rst.buf);
+        rst.bits.b1 = 1;
+        tap_->write(dmcontrol_addr, 8, rst.buf);
         RISCV_sleep_ms(10);
-        rst.val = 0;
-        tap_->write(sw_rst_addr, 8, rst.buf);
+        rst.bits.b1 = 0;
+        tap_->write(dmcontrol_addr, 8, rst.buf);
     }
 }
 

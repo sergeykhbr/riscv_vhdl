@@ -58,10 +58,6 @@ SC_MODULE(DbgPort) {
     sc_out<sc_uint<32>> o_br_instr_fetch;               // Real instruction value that was replaced by ebreak
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_flush_address;    // Address of instruction to remove from ICache
     sc_out<bool> o_flush_valid;                         // Remove address from ICache is valid
-    // Cache debug signals:
-    sc_in<sc_uint<4>> i_istate;                         // ICache transaction state
-    sc_in<sc_uint<4>> i_dstate;                         // DCache transaction state
-    sc_in<sc_uint<2>> i_cstate;                         // CacheTop state machine value
 
     void comb();
     void registers();

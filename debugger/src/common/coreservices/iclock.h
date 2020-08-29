@@ -40,7 +40,6 @@ class IClock : public IFace {
     IClock() : IFace(IFACE_CLOCK) {}
 
     virtual uint64_t getStepCounter() = 0;
-    virtual uint64_t getExecCounter() { return getStepCounter(); };
 
     /** Executed instruction counter.
      *

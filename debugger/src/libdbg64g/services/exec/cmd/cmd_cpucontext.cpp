@@ -47,15 +47,18 @@ void CmdCpuContext::exec(AttributeType *args, AttributeType *res) {
     res->attr_free();
     res->make_nil();
 
-    uint64_t addr = DSUREGBASE(ulocal.v.cpu_context);
+    uint64_t addr = DSUREGBASE(ulocal.v.dmcontrol);
     Reg64Type t1;
+    uint64_t hartsel;
 
     if (args->size() == 1) {
         tap_->read(addr, 8, t1.buf);
+        hartsel = (t1.val >> 6) & 0x3FF;    // hartselhi
+        hartsel = (hartsel << 10) | ((t1.val >> 16) & 0x3FF);   // hartsello
         res->make_uint64(t1.val);
         return;
     }
-    t1.val = (*args)[1].to_uint64();
+    t1.val = (*args)[1].to_uint64() << 16;      // hartsello
     tap_->write(addr, 8, t1.buf);
 }
 

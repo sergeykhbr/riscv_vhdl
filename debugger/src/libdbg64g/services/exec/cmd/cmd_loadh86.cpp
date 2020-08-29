@@ -84,10 +84,12 @@ void CmdLoadH86::exec(AttributeType *args, AttributeType *res) {
         binFileBuf = new uint8_t[binFileSz];
     }
 
-    uint64_t soft_reset = 1;
-    uint64_t addr = DSUREGBASE(ulocal.v.soft_reset);
+    Reg64Type t1;
+    t1.val = 0;
+    t1.bits.b1 = 1; // ndmreset
+    uint64_t addr = DSUREGBASE(ulocal.v.dmcontrol);
     if (binFileBuf == 0) {
-        tap_->write(addr, 8, reinterpret_cast<uint8_t *>(&soft_reset));
+        tap_->write(addr, 8, t1.buf);
     }
 
     while (code != -1) {

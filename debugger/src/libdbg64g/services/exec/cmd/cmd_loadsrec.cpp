@@ -127,9 +127,11 @@ void CmdLoadSrec::exec(AttributeType *args, AttributeType *res) {
 
     int off = check_header(image);
 
-    uint64_t soft_reset = 1;
-    uint64_t addr = DSUREGBASE(ulocal.v.soft_reset);
-    tap_->write(addr, 8, reinterpret_cast<uint8_t *>(&soft_reset));
+    Reg64Type t1;
+    t1.val = 0;
+    t1.bits.b1 = 1; // ndmreset
+    uint64_t addr = DSUREGBASE(ulocal.v.dmcontrol);
+    tap_->write(addr, 8, t1.buf);
 
     uint64_t sec_addr;
     int sec_sz;

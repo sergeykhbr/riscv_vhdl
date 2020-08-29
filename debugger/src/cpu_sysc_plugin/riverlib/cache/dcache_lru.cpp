@@ -59,8 +59,7 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset, bool coherence_ena)
     o_resp_snoop_flags("o_resp_snoop_flags"),
     i_flush_address("i_flush_address"),
     i_flush_valid("i_flush_valid"),
-    o_flush_end("o_flush_end"),
-    o_state("o_state") {
+    o_flush_end("o_flush_end") {
     async_reset_ = async_reset;
     coherence_ena_ = coherence_ena;
 
@@ -178,7 +177,6 @@ void DCacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_mpu_flags, i_mpu_flags.name());
         sc_trace(o_vcd, i_flush_address, i_flush_address.name());
         sc_trace(o_vcd, i_flush_valid, i_flush_valid.name());
-        sc_trace(o_vcd, o_state, o_state.name());
 
         std::string pn(name());
         sc_trace(o_vcd, r.state, pn + ".r_state");
@@ -681,7 +679,6 @@ void DCacheLru::comb() {
     o_resp_snoop_flags = line_snoop_flags_o;
 
     o_flush_end = v_flush_end;
-    o_state = r.state;
 }
 
 void DCacheLru::registers() {

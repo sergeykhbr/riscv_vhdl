@@ -26,8 +26,10 @@ namespace debugger {
 
 EBreakHandler::EBreakHandler(IGui *gui) {
     igui_ = gui;
+    reqDCSR_.make_string("csr 0x7b0");
     reqReadBr_.make_string("br");
     reqReadNpc_.make_string("reg npc");
+    estate_ = State_Idle;
 
     dsu_sw_br_ = DSUREGBASE(udbg.v.br_address_fetch);
     dsu_hw_br_ = DSUREGBASE(udbg.v.remove_breakpoint);
@@ -38,40 +40,66 @@ EBreakHandler::~EBreakHandler() {
 }
 
 void EBreakHandler::skip() {
+    estate_ = State_Cause;
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this),
-                            reqReadBr_.to_string(), &brList_, true);
-    igui_->registerCommand(static_cast<IGuiCmdHandler *>(this),
-                            reqReadNpc_.to_string(), &respReadNpc_, true);
+                            reqDCSR_.to_string(), &respDCSR_, true);
 }
 
 void EBreakHandler::handleResponse(const char *cmd) {
-    if (strcmp(cmd, "br") == 0) {
-        return;
-    }
-    uint64_t br_addr = respReadNpc_.to_uint64();
-    uint32_t br_instr = 0;
+    uint64_t br_addr;
+    uint32_t br_instr;
     uint64_t br_flags;
-    for (unsigned i = 0; i < brList_.size(); i++) {
-        const AttributeType &br = brList_[i];
-        if (br_addr == br[BrkList_address].to_uint64()) {
-            br_instr = br[BrkList_instr].to_int();
-            br_flags = br[BrkList_flags].to_uint64();
-            break;
+    uint64_t cause;
+
+    switch (estate_) {
+    case State_Cause:
+        estate_ = State_Idle;
+        if (reqDCSR_.is_equal(cmd) ) {
+            cause = (respDCSR_.to_uint64() >> 6) & 0x7;     // dcsr[8:6] cause field
+            if (cause == 1 || cause == 2) {                 // 1=ebreak; 2=hw trigger
+                estate_ = State_npc;
+                igui_->registerCommand(static_cast<IGuiCmdHandler *>(this),
+                                        reqReadNpc_.to_string(), &respReadNpc_, true);
+            }
         }
+        break;
+    case State_npc:
+        if (reqReadNpc_.is_equal(cmd) ) {
+            estate_ = State_CheckBreakpoint;
+            igui_->registerCommand(static_cast<IGuiCmdHandler *>(this),
+                                    reqReadBr_.to_string(), &brList_, true);
+        } else {
+            estate_ = State_Idle;
+        }
+        break;
+    case State_CheckBreakpoint:
+        estate_ = State_Idle;
+        br_addr = respReadNpc_.to_uint64();
+        br_instr = 0;
+        br_flags;
+        for (unsigned i = 0; i < brList_.size(); i++) {
+            const AttributeType &br = brList_[i];
+            if (br_addr == br[BrkList_address].to_uint64()) {
+                br_instr = br[BrkList_instr].to_int();
+                br_flags = br[BrkList_flags].to_uint64();
+                break;
+            }
+        }
+        if (br_instr) {
+            if (br_flags & BreakFlag_HW) {
+                RISCV_sprintf(reqWriteMem_, sizeof(reqWriteMem_),
+                        "write 0x%08" RV_PRI64 "x 8 0x%" RV_PRI64 "x",
+                        dsu_hw_br_, br_addr);
+            } else {
+                RISCV_sprintf(reqWriteMem_, sizeof(reqWriteMem_),
+                        "write 0x%08" RV_PRI64 "x 16 [0x%" RV_PRI64 "x,0x%x]",
+                        dsu_sw_br_, br_addr, br_instr);
+            }
+            igui_->registerCommand(NULL, reqWriteMem_, &respmemWrite_, true);
+        }
+        break;
+    default:;
     }
-    if (br_instr == 0) {
-        return;
-    }
-    if (br_flags & BreakFlag_HW) {
-        RISCV_sprintf(reqWriteMem_, sizeof(reqWriteMem_),
-                "write 0x%08" RV_PRI64 "x 8 0x%" RV_PRI64 "x",
-                dsu_hw_br_, br_addr);
-    } else {
-        RISCV_sprintf(reqWriteMem_, sizeof(reqWriteMem_),
-                "write 0x%08" RV_PRI64 "x 16 [0x%" RV_PRI64 "x,0x%x]",
-                dsu_sw_br_, br_addr, br_instr);
-    }
-    igui_->registerCommand(NULL, reqWriteMem_, &respmemWrite_, true);
 }
 
 }  // namespace debugger

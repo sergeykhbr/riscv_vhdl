@@ -51,8 +51,6 @@ SC_MODULE(RiverTop) {
     sc_out<sc_uint<DTAG_FL_TOTAL>> o_resp_snoop_flags;
     /** Interrupt line from external interrupts controller (PLIC). */
     sc_in<bool> i_ext_irq;
-    sc_out<sc_uint<64>> o_time;                         // Clock/Step counter depending attribute "GenerateRef"
-    sc_out<sc_uint<64>> o_exec_cnt;
     // Debug interface
     sc_in<bool> i_dport_valid;                          // Debug access from DSU is valid
     sc_in<bool> i_dport_write;                          // Write command flag
@@ -113,9 +111,6 @@ SC_MODULE(RiverTop) {
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_data_flush_address;
     sc_signal<bool> w_data_flush_valid;
     sc_signal<bool> w_data_flush_end;
-    sc_signal<sc_uint<4>> wb_istate;
-    sc_signal<sc_uint<4>> wb_dstate;
-    sc_signal<sc_uint<2>> wb_cstate;
 };
 
 }  // namespace debugger

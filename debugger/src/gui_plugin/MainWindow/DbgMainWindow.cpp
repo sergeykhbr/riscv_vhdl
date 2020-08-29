@@ -127,14 +127,13 @@ void DbgMainWindow::handleResponse(const char *cmd) {
         if (respStatus_.is_nil()) {
             return;
         }
-        GenericCpuControlType ctrl;
-        ctrl.val = respStatus_.to_uint64();
-        if ((actionRun_->isChecked() && ctrl.bits.halt)
-            || (!actionRun_->isChecked() && !ctrl.bits.halt)) {
-            emit signalTargetStateChanged(ctrl.bits.halt == 0);
-        }
-        if ((ctrl.bits.sw_breakpoint || ctrl.bits.hw_breakpoint) && ebreak_) {
-            ebreak_->skip();
+        uint64_t halted = respStatus_.to_uint64() & (1 << 0);       // hart select = 0
+        if ((actionRun_->isChecked() && halted)
+            || (!actionRun_->isChecked() && !halted)) {
+            emit signalTargetStateChanged(halted == 0);
+            if (halted && ebreak_) {
+                ebreak_->skip();
+            }
         }
     } else if (strcmp(cmd, cmdSteps_.to_string()) == 0) {
         double tsec =

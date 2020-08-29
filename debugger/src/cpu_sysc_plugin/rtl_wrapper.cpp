@@ -26,7 +26,6 @@ namespace debugger {
 RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     o_clk("clk", 10, SC_NS),
     o_nrst("o_nrst"),
-    i_time("i_time"),
     o_msti("o_msti"),
     i_msto("i_msto"),
     o_interrupt("o_interrupt"),
@@ -54,6 +53,8 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     v.halted = false;
     v.state = State_Idle;
     r.state = State_Idle;
+    v.clk_cnt = 0;
+    r.clk_cnt = 0;
     RISCV_event_create(&dport_.valid, "dport_valid");
     dport_.trans_idx_up = 0;
     dport_.trans_idx_down = 0;
@@ -64,6 +65,7 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     sensitive << i_halted;
     sensitive << i_msto;
     sensitive << i_halted;
+    sensitive << r.clk_cnt;
     sensitive << r.req_addr;
     sensitive << r.req_len;
     sensitive << r.req_burst;
@@ -142,6 +144,7 @@ void RtlWrapper::comb() {
     vb_wdata = 0;
     vb_wstrb = 0;
 
+    v.clk_cnt = r.clk_cnt.read() + 1;
     v.interrupt = w_interrupt;
     v.halted = i_halted.read();
 
@@ -263,7 +266,7 @@ void RtlWrapper::sys_bus_proc() {
 
     step_queue_.initProc();
     step_queue_.pushPreQueued();
-    uint64_t step_cnt = i_time.read();
+    uint64_t step_cnt = r.clk_cnt.read();
     while ((cb = step_queue_.getNext(step_cnt)) != 0) {
         static_cast<IClockListener *>(cb)->stepCallback(step_cnt);
     }
@@ -368,12 +371,16 @@ void RtlWrapper::setClockHz(double hz) {
     
 void RtlWrapper::registerStepCallback(IClockListener *cb, uint64_t t) {
     if (request_reset) {
-        if (i_time.read() == t) {
+        if (r.clk_cnt.read() == t) {
             cb->stepCallback(t);
         }
     } else {
         step_queue_.put(t, cb);
     }
+}
+
+bool RtlWrapper::isHalt() {
+    return i_halted.read();
 }
 
 void RtlWrapper::raiseSignal(int idx) {

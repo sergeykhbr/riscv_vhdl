@@ -23,6 +23,7 @@
 #include <ihap.h>
 #include "coreservices/ilink.h"
 #include "coreservices/ithread.h"
+#include "coreservices/icpugen.h"
 #include "coreservices/icpufunctional.h"
 #include "coreservices/icmdexec.h"
 #include "coreservices/isrccode.h"
@@ -94,6 +95,7 @@ class TcpCommandsGen : public IRawListener,
     IService *parent_;
     ICmdExecutor *iexec_;
     ISourceCode *isrc_;
+    ICpuGeneric *icpugen_;
     ICpuFunctional *icpufunc_;
     IClock *iclk_;
     IGui *igui_;

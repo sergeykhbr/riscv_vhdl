@@ -43,11 +43,9 @@ void CmdIsRunning::exec(AttributeType *args, AttributeType *res) {
     res->make_boolean(false);
 
     Reg64Type t1;
-    GenericCpuControlType ctrl;
-    uint64_t addr = DSUREGBASE(udbg.v.control);
+    uint64_t addr = DSUREGBASE(ulocal.v.dmstatus);
     tap_->read(addr, 8, t1.buf);
-    ctrl.val = t1.val;
-    if (ctrl.bits.halt) {
+    if (t1.bits.b11) {      // allrunning
         res->make_boolean(false);
     } else {
         res->make_boolean(true);

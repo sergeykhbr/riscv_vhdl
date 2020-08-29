@@ -61,7 +61,7 @@ void CmdCsr::exec(AttributeType *args, AttributeType *res) {
             return;
         }
     } else {
-        addr = arg1.to_uint64();
+        addr = DSUREGBASE(csr[arg1.to_uint64()]);
     }
 
     if (args->size() == 2) {

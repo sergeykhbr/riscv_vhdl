@@ -51,10 +51,7 @@ DbgPort::DbgPort(sc_module_name name_, bool async_reset) :
     o_br_address_fetch("o_br_address_fetch"),
     o_br_instr_fetch("o_br_instr_fetch"),
     o_flush_address("o_flush_address"),
-    o_flush_valid("o_flush_valid"),
-    i_istate("i_istate"),
-    i_dstate("i_dstate"),
-    i_cstate("i_cstate") {
+    o_flush_valid("o_flush_valid") {
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
@@ -72,9 +69,6 @@ DbgPort::DbgPort(sc_module_name name_, bool async_reset) :
     sensitive << i_e_ret;
     sensitive << i_e_next_ready;
     sensitive << i_ebreak;
-    sensitive << i_istate;
-    sensitive << i_dstate;
-    sensitive << i_cstate;
     sensitive << r.ready;
     sensitive << r.rdata;
     sensitive << r.halt;
@@ -139,9 +133,6 @@ void DbgPort::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_br_instr_fetch, o_br_instr_fetch.name());
         sc_trace(o_vcd, o_flush_address, o_flush_address.name());
         sc_trace(o_vcd, o_flush_valid, o_flush_valid.name());
-        sc_trace(o_vcd, i_istate, i_istate.name());
-        sc_trace(o_vcd, i_dstate, i_dstate.name());
-        sc_trace(o_vcd, i_cstate, i_cstate.name());
 
         std::string pn(name());
         sc_trace(o_vcd, r.stepping_mode_cnt, pn + ".r_stepping_mode_cnt");
@@ -275,9 +266,6 @@ void DbgPort::comb() {
             case 0:
                 wb_rdata[0] = r.halt;
                 wb_rdata[2] = r.breakpoint;
-                wb_rdata(35, 32) = i_istate.read();
-                wb_rdata(39, 36) = i_dstate.read();
-                wb_rdata(41, 40) = i_cstate.read();
                 if (i_dport_write.read()) {
                     v.halt = i_dport_wdata.read()[0];
                     v.stepping_mode = i_dport_wdata.read()[1];

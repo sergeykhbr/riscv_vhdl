@@ -24,22 +24,63 @@ DsuRegisters::DsuRegisters(IService *parent) :
     csr_region_(parent, "csr_region", 0, 0x00000, 4096),
     reg_region_(parent, "reg_region", 1, 0x08000, 4096),
     dbg_region_(parent, "dbg_region", 2, 0x10000, 4096),
-    soft_reset_(parent, "soft_reset", 0x18000),
-    cpu_context_(parent, "cpu_context", 0x18008),
+    dmcontrol_(parent, "dmcontrol", 0x18000 + 0x10*8),
+    dmstatus_(parent, "dmstatus", 0x18000 + 0x11*8),
+    haltsum0_(parent, "haltsum0", 0x18000 + 0x40*8),
     bus_util_(parent, "bus_util", 0x18040, 2*64) {
 }
 
-uint64_t DsuRegisters::SOFT_RESET_TYPE::aboutToWrite(uint64_t new_val) {
-    new_val &= 0x1;
+uint64_t DsuRegisters::DMCONTROL_TYPE::aboutToWrite(uint64_t new_val) {
     DSU *p = static_cast<DSU *>(parent_);
-    p->softReset(new_val ? true: false);
+    ValueType tnew;
+    ValueType tprv;
+    tprv.val = value_.val;
+    tnew.val = new_val;
+    uint64_t hartid = (tnew.bits.hartselhi << 10) | tnew.bits.hartsello;
+
+    if (tnew.bits.ndmreset != tprv.bits.ndmreset) {
+        p->softReset(tnew.bits.ndmreset ? true: false);
+    }
+    if (tnew.bits.haltreq) {
+        p->haltCpu(static_cast<uint32_t>(hartid));
+    } else if (tnew.bits.resumereq) {
+        p->resumeCpu(static_cast<uint32_t>(hartid));
+    }
     return new_val;
 }
 
-uint64_t DsuRegisters::CPU_CONTEXT_TYPE::aboutToWrite(uint64_t new_val) {
+uint64_t DsuRegisters::DMCONTROL_TYPE::aboutToRead(uint64_t cur_val) {
     DSU *p = static_cast<DSU *>(parent_);
-    p->setCpuContext(static_cast<unsigned>(new_val));
-    return new_val;
+    ValueType t;
+    t.val = cur_val;
+    t.bits.hartsello = p->getCpuContext();
+    t.bits.dmactive = 1;
+    return t.val;
+}
+
+uint64_t DsuRegisters::DMSTATUS_TYPE::aboutToRead(uint64_t cur_val) {
+    DSU *p = static_cast<DSU *>(parent_);
+    ValueType t;
+    bool halted = p->isCpuHalted(p->getCpuContext());
+    t.val = 0;
+    t.bits.allhalted = halted;
+    t.bits.anyhalted = halted;
+    t.bits.allrunning = !halted;
+    t.bits.anyrunning = !halted;
+    t.bits.authenticated = 1;
+    t.bits.version = 2;
+    return t.val;
+}
+
+uint64_t DsuRegisters::HALTSUM_TYPE::aboutToRead(uint64_t cur_val) {
+    DSU *p = static_cast<DSU *>(parent_);
+    uint64_t ret = 0;
+    for (unsigned i = 0; i < p->getCpuTotal(); i++) {
+        if (p->isCpuHalted(i)) {
+            ret |= 1ull << i;
+        }
+    }
+    return ret;
 }
 
 ETransStatus

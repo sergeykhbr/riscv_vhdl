@@ -65,8 +65,6 @@ RiverAmba::RiverAmba(sc_module_name name_, uint32_t hartid, bool async_reset,
     i_msti("i_msti"),
     o_msto("o_msto"),
     i_ext_irq("i_ext_irq"),
-    o_time("o_time"),
-    o_exec_cnt("o_exec_cnt"),
     i_dport_valid("i_dport_valid"),
     i_dport_write("i_dport_write"),
     i_dport_region("i_dport_region"),
@@ -103,8 +101,6 @@ RiverAmba::RiverAmba(sc_module_name name_, uint32_t hartid, bool async_reset,
     river0->o_resp_snoop_data(resp_snoop_data_o);
     river0->o_resp_snoop_flags(resp_snoop_flags_o);
     river0->i_ext_irq(i_ext_irq);
-    river0->o_time(o_time);
-    river0->o_exec_cnt(o_exec_cnt);
     river0->i_dport_valid(i_dport_valid);
     river0->i_dport_write(i_dport_write);
     river0->i_dport_region(i_dport_region);
@@ -179,7 +175,6 @@ RiverAmba::~RiverAmba() {
 
 void RiverAmba::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, o_time, o_time.name());
         sc_trace(o_vcd, o_halted, o_halted.name());
         sc_trace(o_vcd, o_dport_ready, o_dport_ready.name());
         sc_trace(o_vcd, o_dport_rdata, o_dport_rdata.name());

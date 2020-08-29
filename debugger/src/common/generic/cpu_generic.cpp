@@ -23,12 +23,12 @@ namespace debugger {
 CpuGeneric::CpuGeneric(const char *name)  
     : IService(name), IHap(HAP_ConfigDone),
     portRegs_(this, "regs", DSUREG(ureg.v.iregs[0]), 0x1000),    // 4096 bytes region of DSU
-    dbgpc_(this, "pc", DSUREG(ureg.v.pc)),
-    dbgnpc_(this, "npc", DSUREG(ureg.v.npc)),
-    status_(this, "status", DSUREG(udbg.v.control)),
+    dbgnpc_(this, "npc", DSUREG(csr[0x7b1])),
+    dcsr_(this, "dcsr", DSUREG(csr[0x7b0])),
+    status_(this, "status", DSUREG(udbg.v.runcontrol)),
     stepping_cnt_(this, "stepping_cnt", DSUREG(udbg.v.stepping_mode_steps)),
-    clock_cnt_(this, "clock_cnt", DSUREG(udbg.v.clock_cnt)),
-    executed_cnt_(this, "executed_cnt", DSUREG(udbg.v.executed_cnt)),
+    clock_cnt_(this, "clock_cnt", DSUREG(csr[0xC00])),
+    executed_cnt_(this, "executed_cnt", DSUREG(csr[0xC02])),
     stackTraceCnt_(this, "stack_trace_cnt", DSUREG(ureg.v.stack_trace_cnt)),
     stackTraceBuf_(this, "stack_trace_buf", DSUREG(ureg.v.stack_trace_buf), 0),
     br_control_(this, "br_control", DSUREG(udbg.v.br_ctrl)),
@@ -257,7 +257,7 @@ bool CpuGeneric::updateState() {
         break;
     case CORE_Stepping:
         if (hw_stepping_break_ <= step_cnt_) {
-            halt("Stepping breakpoint");
+            halt(HaltStepping, "Stepping breakpoint");
             upd = false;
         }
         break;
@@ -472,7 +472,7 @@ void CpuGeneric::step() {
     estate_ = CORE_Stepping;
 }
 
-void CpuGeneric::halt(const char *descr) {
+void CpuGeneric::halt(EHaltCause cause, const char *descr) {
     if (estate_ == CORE_OFF) {
         RISCV_error("CPU is turned-off", 0);
         return;
@@ -480,6 +480,9 @@ void CpuGeneric::halt(const char *descr) {
     char strop[32];
     uint8_t tbyte;
     unsigned bytetot = oplen_;
+    if (cause != HaltDoNotChange) {
+        dcsr_.setHaltCause(cause);
+    }
     if (!bytetot) {
         bytetot = 1;
     }
@@ -603,7 +606,7 @@ bool CpuGeneric::checkHwBreakpoint() {
         if (pc == bradr) {
             hw_break_addr_ = pc;
             hw_breakpoint_ = true;
-            halt("Hw breakpoint");
+            halt(HaltHwTrigger, "Hw breakpoint");
             return true;
         }
     }
@@ -613,17 +616,6 @@ bool CpuGeneric::checkHwBreakpoint() {
 void CpuGeneric::skipBreakpoint() {
     skip_sw_breakpoint_ = true;
     sw_breakpoint_ = false;
-}
-
-uint64_t GenericPCType::aboutToRead(uint64_t cur_val) {
-    CpuGeneric *pcpu = static_cast<CpuGeneric *>(parent_);
-    return pcpu->getPC();
-}
-
-uint64_t GenericPCType::aboutToWrite(uint64_t new_val) {
-    CpuGeneric *pcpu = static_cast<CpuGeneric *>(parent_);
-    pcpu->setPC(new_val);
-    return new_val;
 }
 
 uint64_t GenericNPCType::aboutToRead(uint64_t cur_val) {
@@ -637,24 +629,20 @@ uint64_t GenericNPCType::aboutToWrite(uint64_t new_val) {
     return new_val;
 }
 
-uint64_t GenericStatusType::aboutToRead(uint64_t cur_val) {
-    GenericCpuControlType ctrl;
+uint64_t CsrDebugStatusType::aboutToWrite(uint64_t new_val) {
     CpuGeneric *pcpu = static_cast<CpuGeneric *>(parent_);
-    ctrl.val = 0;
-    ctrl.bits.halt = pcpu->isHalt() || !pcpu->isOn() ? 1 : 0;
-    ctrl.bits.sw_breakpoint = pcpu->isSwBreakpoint() ? 1 : 0;
-    ctrl.bits.hw_breakpoint = pcpu->isHwBreakpoint() ? 1 : 0;
-    return ctrl.val;
+    if (new_val & 0x4) {    // [2] step
+        pcpu->step();
+    }
+    return new_val;
 }
 
 uint64_t GenericStatusType::aboutToWrite(uint64_t new_val) {
-    GenericCpuControlType ctrl;
+    RunControlType ctrl;
     CpuGeneric *pcpu = static_cast<CpuGeneric *>(parent_);
     ctrl.val = new_val;
     if (ctrl.bits.halt) {
-        pcpu->halt("halted from DSU");
-    } else if (ctrl.bits.stepping) {
-        pcpu->step();
+        pcpu->halt(HaltExternal, "halted from DSU");
     } else {
         pcpu->go();
     }

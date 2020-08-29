@@ -48,8 +48,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     i_resp_data_er_mpu_store("i_resp_data_er_mpu_store"),
     o_resp_data_ready("o_resp_data_ready"),
     i_ext_irq("i_ext_irq"),
-    o_time("o_time"),
-    o_exec_cnt("o_exec_cnt"),
     o_mpu_region_we("o_mpu_region_we"),
     o_mpu_region_idx("o_mpu_region_idx"),
     o_mpu_region_addr("o_mpu_region_addr"),
@@ -67,10 +65,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     o_flush_valid("o_flush_valid"),
     o_data_flush_address("o_data_flush_address"),
     o_data_flush_valid("o_data_flush_valid"),
-    i_data_flush_end("i_data_flush_end"),
-    i_istate("i_istate"),
-    i_dstate("i_dstate"),
-    i_cstate("i_cstate") {
+    i_data_flush_end("i_data_flush_end") {
     fpu_ena_ = fpu_ena;
     tracer_ena_ = tracer_ena;
 
@@ -93,7 +88,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     sensitive << w.f.imem_req_valid;
     sensitive << w.f.imem_req_addr;
     sensitive << w.f.valid;
-    sensitive << csr.cycle_cnt;
     sensitive << csr.executed_cnt;
     sensitive << dbg.csr_addr;
     sensitive << dbg.reg_addr;
@@ -342,7 +336,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     csr0->i_irq_external(i_ext_irq);
     csr0->i_e_valid(w.e.valid);
     csr0->i_halt(dbg.halt);
-    csr0->o_cycle_cnt(csr.cycle_cnt);
     csr0->o_executed_cnt(csr.executed_cnt);
     csr0->o_trap_valid(csr.trap_valid);
     csr0->o_trap_pc(csr.trap_pc);
@@ -390,9 +383,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     dbg0->o_br_fetch_valid(dbg.br_fetch_valid);
     dbg0->o_br_address_fetch(dbg.br_address_fetch);
     dbg0->o_br_instr_fetch(dbg.br_instr_fetch);
-    dbg0->i_istate(i_istate);
-    dbg0->i_dstate(i_dstate);
-    dbg0->i_cstate(i_cstate);
     dbg0->o_flush_address(dbg.flush_address);
     dbg0->o_flush_valid(dbg.flush_valid);
 
@@ -469,11 +459,6 @@ void Processor::comb() {
         wb_reg_wtag = w.w.wtag;
     }
 
-    o_req_ctrl_valid = w.f.imem_req_valid;
-    o_req_ctrl_addr = w.f.imem_req_addr;
-    o_time = csr.cycle_cnt;
-    o_exec_cnt = csr.executed_cnt;
-
     o_flush_valid = w.e.flushi.read() || dbg.flush_valid.read()
                 || csr.break_event.read();
     if (w.e.flushi.read() == 1) {
@@ -486,6 +471,8 @@ void Processor::comb() {
     o_data_flush_address = ~0ull;
     o_data_flush_valid = w.m.flushd;
 
+    o_req_ctrl_valid = w.f.imem_req_valid;
+    o_req_ctrl_addr = w.f.imem_req_addr;
     o_halted = dbg.halt;
 }
 

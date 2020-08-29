@@ -19,8 +19,6 @@
 
 namespace debugger {
 
-//#define GENERATE_REF_ZEPHYR
-
 UART::UART(const char *name) : RegMemBankGeneric(name),
     status_(static_cast<IService *>(this), "status", 0x00),
     scaler_(static_cast<IService *>(this), "scaler", 0x04),
@@ -89,10 +87,6 @@ void UART::postinitService() {
         pcmd_ = new UartCmdType(static_cast<IService *>(this), getObjName());
         icmdexec_->registerCommand(pcmd_);
     }
-
-#ifdef GENERATE_REF_ZEPHYR
-    iclk_->registerStepCallback(static_cast<IClockListener *>(this), 1);
-#endif
 }
 
 void UART::predeleteService() {
@@ -156,16 +150,6 @@ void UART::closePort() {
 }
 
 void UART::stepCallback(uint64_t t) {
-#ifdef GENERATE_REF_ZEPHYR
-    iclk_->registerStepCallback(static_cast<IClockListener *>(this), t+1);
-    if (iclk_->getExecCounter() == 6454+0*4) {
-        iwire_->raiseLine();
-    }
-    if (iclk_->getExecCounter() == 14558+0*4) {
-        writeData("help\r\n", 6);
-        iwire_->raiseLine();
-    }
-#else
     if (tx_total_) {
         tx_rcnt_ = (tx_rcnt_ + 1) % FIFOSZ;
         tx_total_--;
@@ -174,7 +158,6 @@ void UART::stepCallback(uint64_t t) {
             iwire_->raiseLine();
         }
     }
-#endif
 }
 
 void UART::putByte(char v) {
@@ -191,11 +174,9 @@ void UART::putByte(char v) {
     }
     RISCV_mutex_unlock(&mutexListeners_);
 
-#if!defined(GENERATE_REF_ZEPHYR)
     if (status_.getTyped().b.tx_irq_ena) {
         iwire_->raiseLine();
     }
-#endif
 
     //if (tx_total_ < FIFOSZ) {
     //    tx_fifo_[tx_wcnt_] = v;

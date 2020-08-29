@@ -31,8 +31,6 @@ SC_MODULE(RiverAmba) {
     sc_out<axi4_l1_out_type> o_msto;
     /** Interrupt line from external interrupts controller (PLIC). */
     sc_in<bool> i_ext_irq;
-    sc_out<sc_uint<64>> o_time;                         // Clock/Step counter depending attribute "GenerateRef"
-    sc_out<sc_uint<64>> o_exec_cnt;
     // Debug interface
     sc_in<bool> i_dport_valid;                          // Debug access from DSU is valid
     sc_in<bool> i_dport_write;                          // Write command flag

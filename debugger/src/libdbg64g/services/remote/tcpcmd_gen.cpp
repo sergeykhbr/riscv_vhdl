@@ -45,6 +45,9 @@ TcpCommandsGen::TcpCommandsGen(IService *parent) : IHap(HAP_All) {
     cpuLogLevel_ = static_cast<AttributeType *>(
                         iservcpu->getAttribute("LogLevel"));
 
+    icpugen_ = static_cast<ICpuGeneric *>(
+        RISCV_get_service_iface(cpu_.to_string(), IFACE_CPU_GENERIC));
+
     icpufunc_ = static_cast<ICpuFunctional *>(
         RISCV_get_service_iface(cpu_.to_string(), IFACE_CPU_FUNCTIONAL));
 

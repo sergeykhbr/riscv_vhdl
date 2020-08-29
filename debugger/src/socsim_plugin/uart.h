@@ -97,7 +97,6 @@ class UART : public RegMemBankGeneric,
     int getTxTotal() { return tx_total_; }
     void putByte(char v);
     char getByte();
-    uint64_t getExecCounter() { return iclk_->getExecCounter(); }
 
  protected:
     class STATUS_TYPE : public MappedReg32Type {

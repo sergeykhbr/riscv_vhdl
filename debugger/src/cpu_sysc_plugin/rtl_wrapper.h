@@ -38,7 +38,6 @@ class RtlWrapper : public sc_module,
     sc_clock o_clk;
     sc_out<bool> o_nrst;
     // Timer:
-    sc_in<sc_uint<RISCV_ARCH>> i_time;
     sc_out<axi4_master_in_type> o_msti;
     sc_in<axi4_master_out_type> i_msto;
     /** Interrupt line from external interrupts controller. */
@@ -61,6 +60,7 @@ class RtlWrapper : public sc_module,
     };
 
     struct RegistersType {
+        sc_signal<sc_uint<64>> clk_cnt;
         // AXI4 Request 
         sc_signal<sc_uint<CFG_BUS_ADDR_WIDTH>> req_addr;
         sc_signal<sc_uint<8>> req_len;
@@ -117,6 +117,7 @@ class RtlWrapper : public sc_module,
     void setClockHz(double hz);
    
     /** ICpuGeneric interface */
+    virtual bool isHalt();
     virtual void raiseSignal(int idx);
     virtual void lowerSignal(int idx);
     virtual void nb_transport_debug_port(DebugPortTransactionType *trans,
@@ -127,6 +128,7 @@ class RtlWrapper : public sc_module,
     void virtual writeCSR(int idx, uint64_t val) {}
 
     /** IClock */
+    virtual uint64_t getClockCounter() { return r.clk_cnt.read(); }
     virtual void registerStepCallback(IClockListener *cb, uint64_t t);
 
     /** IResetListener */

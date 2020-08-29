@@ -381,9 +381,8 @@ static const ECpuRegMapping ARM_DEBUG_REG_MAP[] = {
     {"sp",    4, DSU_OFFSET + DSUREG(ureg.v.iregs[13])},
     {"lr",    4, DSU_OFFSET + DSUREG(ureg.v.iregs[14])},
     {"cpsr",  4, DSU_OFFSET + DSUREG(ureg.v.iregs[16])},
-    {"pc",    4, DSU_OFFSET + DSUREG(ureg.v.pc)},
-    {"npc",   4, DSU_OFFSET + DSUREG(ureg.v.npc)},
-    {"steps", 8, DSU_OFFSET + DSUREG(udbg.v.clock_cnt)},
+    {"npc",   4, DSU_OFFSET + DSUREG(csr[0x7b1])},
+    {"steps", 8, DSU_OFFSET + DSUREG(csr[0xC02])},
     {"",      0, 0}
 };
 

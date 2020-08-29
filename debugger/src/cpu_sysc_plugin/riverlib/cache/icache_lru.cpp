@@ -45,8 +45,7 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset)
     o_mpu_addr("o_mpu_addr"),
     i_mpu_flags("i_mpu_flags"),
     i_flush_address("i_flush_address"),
-    i_flush_valid("i_flush_valid"),
-    o_state("o_state") {
+    i_flush_valid("i_flush_valid") {
     async_reset_ = async_reset;
 
     memcouple = new TagMemCoupled<CFG_CPU_ADDR_BITS,
@@ -135,7 +134,6 @@ void ICacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
         sc_trace(o_vcd, i_flush_address, i_flush_address.name());
         sc_trace(o_vcd, i_flush_valid, i_flush_valid.name());
-        sc_trace(o_vcd, o_state, o_state.name());
 
         std::string pn(name());
         sc_trace(o_vcd, r.state, pn + ".r_state");
@@ -394,7 +392,6 @@ void ICacheLru::comb() {
     o_resp_writable = 0;
     o_resp_readable = 0;
     o_mpu_addr = r.req_addr.read();
-    o_state = r.state.read();
 }
 
 void ICacheLru::registers() {

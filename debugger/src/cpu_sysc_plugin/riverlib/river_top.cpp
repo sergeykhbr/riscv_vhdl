@@ -42,8 +42,6 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     o_resp_snoop_data("o_resp_snoop_data"),
     o_resp_snoop_flags("o_resp_snoop_flags"),
     i_ext_irq("i_ext_irq"),
-    o_time("o_time"),
-    o_exec_cnt("o_exec_cnt"),
     i_dport_valid("i_dport_valid"),
     i_dport_write("i_dport_write"),
     i_dport_region("i_dport_region"),
@@ -81,8 +79,6 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     proc0->i_resp_data_er_mpu_store(w_resp_data_er_mpu_store);
     proc0->o_resp_data_ready(w_resp_data_ready);
     proc0->i_ext_irq(i_ext_irq);
-    proc0->o_time(o_time);
-    proc0->o_exec_cnt(o_exec_cnt);
     proc0->o_mpu_region_we(w_mpu_region_we);
     proc0->o_mpu_region_idx(wb_mpu_region_idx);
     proc0->o_mpu_region_addr(wb_mpu_region_addr);
@@ -101,9 +97,6 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     proc0->o_data_flush_address(wb_data_flush_address);
     proc0->o_data_flush_valid(w_data_flush_valid);
     proc0->i_data_flush_end(w_data_flush_end);
-    proc0->i_istate(wb_istate);
-    proc0->i_dstate(wb_dstate);
-    proc0->i_cstate(wb_cstate);
 
     cache0 = new CacheTop("cache0", async_reset, coherence_ena);
     cache0->i_clk(i_clk);
@@ -162,9 +155,6 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     cache0->i_data_flush_address(wb_data_flush_address);
     cache0->i_data_flush_valid(w_data_flush_valid);
     cache0->o_data_flush_end(w_data_flush_end);
-    cache0->o_istate(wb_istate);
-    cache0->o_dstate(wb_dstate);
-    cache0->o_cstate(wb_cstate);
 };
 
 RiverTop::~RiverTop() {
@@ -224,7 +214,6 @@ void RiverTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_req_mem_addr, "o_req_mem_addr");
         sc_trace(o_vcd, o_req_mem_strob, "o_req_mem_strob");
         sc_trace(o_vcd, o_req_mem_data, "o_req_mem_data");
-        sc_trace(o_vcd, o_time, "o_time");
         sc_trace(o_vcd, o_halted, "o_halted");
         sc_trace(o_vcd, o_dport_ready, "o_dport_ready");
         sc_trace(o_vcd, o_dport_rdata, "o_dport_rdata");

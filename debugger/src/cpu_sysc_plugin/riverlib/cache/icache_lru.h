@@ -56,7 +56,6 @@ SC_MODULE(ICacheLru) {
     // Debug interface
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_flush_address;
     sc_in<bool> i_flush_valid;
-    sc_out<sc_uint<4>> o_state;
 
     void comb();
     void registers();

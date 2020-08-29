@@ -24,12 +24,9 @@ CmdStatus::CmdStatus(ITap *tap) : ICommand ("status", tap) {
     briefDescr_.make_string("Read target's status register");
     detailedDescr_.make_string(
         "Description:\n"
-        "    Read target's status register as a uint64_t value.\n"
+        "    Read Harts halt summary register as a uint64_t value.\n"
         "    Status register bits:\n"
-        "        [0]     - Halt bit. 0 = running; 1 = is halted.\n"
-        "        [1]     - Stepping mode enable bit.\n"
-        "        [2]     - Breakpoint hit signaling bit.\n"
-        "        [19:4]  - Core ID hardwired value.\n"
+        "        [n-1:0]     - Halt bits. 0 = running; 1 = is halted.\n"
         "Example:\n"
         "    status\n");
 }
@@ -49,7 +46,7 @@ void CmdStatus::exec(AttributeType *args, AttributeType *res) {
     res->make_nil();
 
     Reg64Type t1;
-    uint64_t addr = DSUREGBASE(udbg.v.control);
+    uint64_t addr = DSUREGBASE(ulocal.v.haltsum0);
     if (tap_->read(addr, 8, t1.buf) == TAP_ERROR) {
         return;
     }

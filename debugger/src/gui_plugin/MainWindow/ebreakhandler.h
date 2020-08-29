@@ -37,6 +37,8 @@ class EBreakHandler : public IGuiCmdHandler {
     void skip();
 
  private:
+    AttributeType reqDCSR_;
+    AttributeType respDCSR_;
     AttributeType reqReadBr_;
     AttributeType brList_;
     AttributeType reqReadNpc_;
@@ -47,6 +49,13 @@ class EBreakHandler : public IGuiCmdHandler {
     IGui *igui_;
     uint64_t dsu_sw_br_;
     uint64_t dsu_hw_br_;
+
+    enum EState {
+        State_Idle,
+        State_Cause,
+        State_npc,
+        State_CheckBreakpoint
+    } estate_;
 }; 
 
 }  // namespace debugger
