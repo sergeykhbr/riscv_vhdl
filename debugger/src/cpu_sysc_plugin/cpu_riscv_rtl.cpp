@@ -147,12 +147,14 @@ void CpuRiscV_RTL::createSystemC() {
     wrapper_->o_msti(msti);
     wrapper_->i_msto(msto);
     wrapper_->o_interrupt(w_interrupt);
-    wrapper_->o_dport_valid(w_dport_valid);
+    wrapper_->o_dport_req_valid(w_dport_req_valid);
     wrapper_->o_dport_write(w_dport_write);
     wrapper_->o_dport_region(wb_dport_region);
     wrapper_->o_dport_addr(wb_dport_addr);
     wrapper_->o_dport_wdata(wb_dport_wdata);
-    wrapper_->i_dport_ready(w_dport_ready);
+    wrapper_->i_dport_req_ready(w_dport_req_ready);
+    wrapper_->o_dport_resp_ready(w_dport_resp_ready);
+    wrapper_->i_dport_resp_valid(w_dport_resp_valid);
     wrapper_->i_dport_rdata(wb_dport_rdata);
     wrapper_->i_halted(w_halted);
 
@@ -196,12 +198,14 @@ void CpuRiscV_RTL::createSystemC() {
     core_->i_msti(corei0);
     core_->o_msto(coreo0);
     core_->i_ext_irq(w_interrupt);
-    core_->i_dport_valid(w_dport_valid);
+    core_->i_dport_req_valid(w_dport_req_valid);
     core_->i_dport_write(w_dport_write);
     core_->i_dport_region(wb_dport_region);
     core_->i_dport_addr(wb_dport_addr);
     core_->i_dport_wdata(wb_dport_wdata);
-    core_->o_dport_ready(w_dport_ready);
+    core_->o_dport_req_ready(w_dport_req_ready);
+    core_->i_dport_resp_ready(w_dport_resp_ready);
+    core_->o_dport_resp_valid(w_dport_resp_valid);
     core_->o_dport_rdata(wb_dport_rdata);
     core_->o_halted(w_halted);
 

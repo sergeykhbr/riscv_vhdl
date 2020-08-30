@@ -130,12 +130,14 @@ class CpuRiscV_RTL : public IService,
     /** Interrupt line from external interrupts controller. */
     sc_signal<bool> w_interrupt;
     // Debug interface
-    sc_signal<bool> w_dport_valid;
+    sc_signal<bool> w_dport_req_valid;
     sc_signal<bool> w_dport_write;
     sc_signal<sc_uint<2>> wb_dport_region;
     sc_signal<sc_uint<12>> wb_dport_addr;
     sc_signal<sc_uint<RISCV_ARCH>> wb_dport_wdata;
-    sc_signal<bool> w_dport_ready;
+    sc_signal<bool> w_dport_req_ready;
+    sc_signal<bool> w_dport_resp_ready;
+    sc_signal<bool> w_dport_resp_valid;
     sc_signal<sc_uint<RISCV_ARCH>> wb_dport_rdata;
     sc_signal<bool> w_halted;
 

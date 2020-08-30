@@ -71,12 +71,14 @@ SC_MODULE(Processor) {
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mpu_region_mask;
     sc_out<sc_uint<CFG_MPU_FL_TOTAL>> o_mpu_region_flags;  // {ena, cachable, r, w, x}
     // Debug interface
-    sc_in<bool> i_dport_valid;                          // Debug access from DSU is valid
+    sc_in<bool> i_dport_req_valid;                      // Debug access from DSU is valid
     sc_in<bool> i_dport_write;                          // Write command flag
     sc_in<sc_uint<2>> i_dport_region;                   // Registers region ID: 0=CSR; 1=IREGS; 2=Control
     sc_in<sc_uint<12>> i_dport_addr;                    // Register idx
     sc_in<sc_uint<RISCV_ARCH>> i_dport_wdata;           // Write value
-    sc_out<bool> o_dport_ready;                         // Response is ready
+    sc_out<bool> o_dport_req_ready;
+    sc_in<bool> i_dport_resp_ready;                     // ready to accepd response
+    sc_out<bool> o_dport_resp_valid;                    // Response is valid
     sc_out<sc_uint<RISCV_ARCH>> o_dport_rdata;          // Response value
     sc_out<bool> o_halted;                              // CPU halted via debug interface
     // Cache debug signals:
@@ -210,11 +212,15 @@ private:
 
     struct CsrType {
         sc_signal<sc_uint<RISCV_ARCH>> rdata;
+        sc_signal<bool> dport_valid;
         sc_signal<sc_uint<RISCV_ARCH>> dport_rdata;
         sc_signal<bool> trap_valid;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> trap_pc;
         sc_signal<bool> break_event;             // ebreak detected 1 clock pulse
         sc_signal<sc_uint<64>> executed_cnt;        // Number of executed instruction
+        sc_signal<bool> dbg_pc_write;                  // Region 1: npc write enable
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> dbg_pc;
+        sc_signal<bool> halt;                       // Halt signal is equal to hold pipeline
     } csr;
 
     struct DebugType {
@@ -225,9 +231,9 @@ private:
         sc_signal<bool> csr_write;                  // Region 0: CSR write enable
         sc_signal<bool> ireg_ena;                   // Region 1: Access to integer register bank is enabled
         sc_signal<bool> ireg_write;                 // Region 1: Integer registers bank write pulse
-        sc_signal<bool> npc_write;                  // Region 1: npc write enable
-        sc_signal<bool> halt;                       // Halt signal is equal to hold pipeline
-        sc_signal<bool> break_mode;                          // Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
+        sc_signal<bool> progbuf_ena;                // execute instruction from progbuf
+        sc_signal<sc_uint<32>> progbuf_pc;          // progbuf instruction counter
+        sc_signal<sc_uint<32>> progbuf_data;        // progbuf instruction to execute
         sc_signal<bool> br_fetch_valid;                      // Fetch injection address/instr are valid
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> br_address_fetch; // Fetch injection address to skip ebreak instruciton only once
         sc_signal<sc_uint<32>> br_instr_fetch;               // Real instruction value that was replaced by ebreak
@@ -247,8 +253,6 @@ private:
         MemoryType m;                           // Memory load/store
         WriteBackType w;                        // Write back registers value
     } w;
-
-    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_exec_dport_npc;
 
     sc_signal<bool> w_fetch_pipeline_hold;
     sc_signal<bool> w_any_pipeline_hold;

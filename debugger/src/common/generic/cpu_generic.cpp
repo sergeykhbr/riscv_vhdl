@@ -15,6 +15,7 @@
  */
 
 #include <api_core.h>
+#include <generic-isa.h>
 #include "cpu_generic.h"
 #include "debug/dsumap.h"
 
@@ -23,12 +24,12 @@ namespace debugger {
 CpuGeneric::CpuGeneric(const char *name)  
     : IService(name), IHap(HAP_ConfigDone),
     portRegs_(this, "regs", DSUREG(ureg.v.iregs[0]), 0x1000),    // 4096 bytes region of DSU
-    dbgnpc_(this, "npc", DSUREG(csr[0x7b1])),
-    dcsr_(this, "dcsr", DSUREG(csr[0x7b0])),
-    status_(this, "status", DSUREG(udbg.v.runcontrol)),
+    dbgnpc_(this, "npc", DSUREG(csr[CSR_dpc])),
+    dcsr_(this, "dcsr", DSUREG(csr[CSR_dcsr])),
+    status_(this, "status", DSUREG(csr[CSR_runcontrol])),
     stepping_cnt_(this, "stepping_cnt", DSUREG(udbg.v.stepping_mode_steps)),
-    clock_cnt_(this, "clock_cnt", DSUREG(csr[0xC00])),
-    executed_cnt_(this, "executed_cnt", DSUREG(csr[0xC02])),
+    clock_cnt_(this, "clock_cnt", DSUREG(csr[CSR_cycle])),
+    executed_cnt_(this, "executed_cnt", DSUREG(csr[CSR_insret])),
     stackTraceCnt_(this, "stack_trace_cnt", DSUREG(ureg.v.stack_trace_cnt)),
     stackTraceBuf_(this, "stack_trace_buf", DSUREG(ureg.v.stack_trace_buf), 0),
     br_control_(this, "br_control", DSUREG(udbg.v.br_ctrl)),
@@ -638,12 +639,12 @@ uint64_t CsrDebugStatusType::aboutToWrite(uint64_t new_val) {
 }
 
 uint64_t GenericStatusType::aboutToWrite(uint64_t new_val) {
-    RunControlType ctrl;
+    Reg64Type ctrl;
     CpuGeneric *pcpu = static_cast<CpuGeneric *>(parent_);
     ctrl.val = new_val;
-    if (ctrl.bits.halt) {
+    if (ctrl.bits.b31) {            // halt request
         pcpu->halt(HaltExternal, "halted from DSU");
-    } else {
+    } else if (ctrl.bits.b30) {     // resume request
         pcpu->go();
     }
     return new_val;

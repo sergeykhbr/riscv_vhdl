@@ -52,12 +52,14 @@ SC_MODULE(RiverTop) {
     /** Interrupt line from external interrupts controller (PLIC). */
     sc_in<bool> i_ext_irq;
     // Debug interface
-    sc_in<bool> i_dport_valid;                          // Debug access from DSU is valid
+    sc_in<bool> i_dport_req_valid;                      // Debug access from DSU is valid
     sc_in<bool> i_dport_write;                          // Write command flag
     sc_in<sc_uint<2>> i_dport_region;                   // Registers region ID: 0=CSR; 1=IREGS; 2=Control
     sc_in<sc_uint<12>> i_dport_addr;                    // Register idx
     sc_in<sc_uint<RISCV_ARCH>> i_dport_wdata;           // Write value
-    sc_out<bool> o_dport_ready;                         // Response is ready
+    sc_out<bool> o_dport_req_ready;
+    sc_in<bool> i_dport_resp_ready;                     // ready to accepd response
+    sc_out<bool> o_dport_resp_valid;                    // Response is valid
     sc_out<sc_uint<RISCV_ARCH>> o_dport_rdata;          // Response value
     sc_out<bool> o_halted;                              // CPU halted via debug interface
 

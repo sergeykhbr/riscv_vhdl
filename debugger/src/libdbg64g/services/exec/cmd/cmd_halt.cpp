@@ -16,6 +16,7 @@
 
 #include "cmd_halt.h"
 #include "debug/dsumap.h"
+#include <generic-isa.h>
 
 namespace debugger {
 
@@ -50,7 +51,7 @@ void CmdHalt::exec(AttributeType *args, AttributeType *res) {
     res->attr_free();
     res->make_nil();
     Reg64Type t1;
-    uint64_t addr_dmcontrol = DSUREGBASE(ulocal.v.dmcontrol);
+    uint64_t addr_dmcontrol = DSUREGBASE(csr[CSR_runcontrol]);
     t1.val = 0;
     t1.bits.b31 = 1;        // haltreq
     tap_->write(addr_dmcontrol, 8, t1.buf);

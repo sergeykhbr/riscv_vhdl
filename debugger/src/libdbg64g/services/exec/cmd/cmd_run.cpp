@@ -16,6 +16,7 @@
 
 #include "cmd_run.h"
 #include "debug/dsumap.h"
+#include <generic-isa.h>
 
 namespace debugger {
 
@@ -51,15 +52,15 @@ void CmdRun::exec(AttributeType *args, AttributeType *res) {
     res->attr_free();
     res->make_nil();
     Reg64Type runctrl;
-    uint64_t addr_dmcontrol = DSUREGBASE(ulocal.v.dmcontrol);
+    uint64_t addr_runcontrol = DSUREGBASE(csr[CSR_runcontrol]);
 
     if (args->size() == 1) {
         runctrl.val = 0;
         runctrl.bits.b30 = 1;   // resumereq
-        tap_->write(addr_dmcontrol, 8, runctrl.buf);
+        tap_->write(addr_runcontrol, 8, runctrl.buf);
     } else if (args->size() == 2) {
-        uint64_t addr_dcsr = DSUREGBASE(csr[0x7b0]);
-        uint64_t addr_step_cnt = DSUREGBASE(udbg.v.stepping_mode_steps);
+        uint64_t addr_dcsr = DSUREGBASE(csr[CSR_dcsr]);
+        uint64_t addr_step_cnt = DSUREGBASE(csr[CSR_insperstep]);
         Reg64Type t1;
         runctrl.val = (*args)[1].to_uint64();
         tap_->write(addr_step_cnt, 8, runctrl.buf);

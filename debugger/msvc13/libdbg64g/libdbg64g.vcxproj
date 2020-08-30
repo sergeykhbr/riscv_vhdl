@@ -173,6 +173,7 @@
     <ClInclude Include="..\..\src\common\coreservices\itap.h" />
     <ClInclude Include="..\..\src\common\coreservices\ithread.h" />
     <ClInclude Include="..\..\src\common\coreservices\iwire.h" />
+    <ClInclude Include="..\..\src\common\generic-isa.h" />
     <ClInclude Include="..\..\src\common\generic\bus_generic.h" />
     <ClInclude Include="..\..\src\common\generic\mapreg.h" />
     <ClInclude Include="..\..\src\common\generic\mem_generic.h" />

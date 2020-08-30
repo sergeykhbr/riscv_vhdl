@@ -53,12 +53,14 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     o_mpu_region_addr("o_mpu_region_addr"),
     o_mpu_region_mask("o_mpu_region_mask"),
     o_mpu_region_flags("o_mpu_region_flags"),
-    i_dport_valid("i_dport_valid"),
+    i_dport_req_valid("i_dport_req_valid"),
     i_dport_write("i_dport_write"),
     i_dport_region("i_dport_region"),
     i_dport_addr("i_dport_addr"),
     i_dport_wdata("i_dport_wdata"),
-    o_dport_ready("o_dport_ready"),
+    o_dport_req_ready("o_dport_req_ready"),
+    i_dport_resp_ready("i_dport_resp_ready"),
+    o_dport_resp_valid("o_dport_resp_valid"),
     o_dport_rdata("o_dport_rdata"),
     o_halted("o_halted"),
     o_flush_address("o_flush_address"),
@@ -91,7 +93,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     sensitive << csr.executed_cnt;
     sensitive << dbg.csr_addr;
     sensitive << dbg.reg_addr;
-    sensitive << dbg.halt;
+    sensitive << csr.halt;
     sensitive << dbg.core_wdata;
     sensitive << csr.break_event;
     sensitive << dbg.flush_valid;
@@ -179,8 +181,8 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->i_unsup_exception(w.d.exception);
     exec0->i_instr_load_fault(w.d.instr_load_fault);
     exec0->i_instr_executable(w.d.instr_executable);
-    exec0->i_dport_npc_write(dbg.npc_write);
-    exec0->i_dport_npc(wb_exec_dport_npc);
+    exec0->i_dport_npc_write(csr.dbg_pc_write);
+    exec0->i_dport_npc(csr.dbg_pc);
     exec0->i_rdata1(ireg.rdata1);
     exec0->i_rhazard1(ireg.rhazard1);
     exec0->i_rdata2(ireg.rdata2);
@@ -314,7 +316,8 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     csr0->i_wdata(w.e.csr_wdata);
     csr0->o_rdata(csr.rdata);
     csr0->i_trap_ready(w.e.trap_ready);
-    csr0->i_ex_pc(w.e.npc);
+    csr0->i_e_pc(w.e.pc);
+    csr0->i_e_npc(w.e.npc);
     csr0->i_ex_npc(w.e.ex_npc);
     csr0->i_ex_data_addr(i_resp_data_addr);
     csr0->i_ex_data_load_fault(i_resp_data_load_fault);
@@ -325,6 +328,8 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     csr0->i_ex_illegal_instr(w.e.ex_illegal_instr);
     csr0->i_ex_unalign_store(w.e.ex_unalign_store);
     csr0->i_ex_unalign_load(w.e.ex_unalign_load);
+    csr0->i_ex_mpu_store(i_resp_data_er_mpu_store);
+    csr0->i_ex_mpu_load(i_resp_data_er_mpu_load);
     csr0->i_ex_breakpoint(w.e.ex_breakpoint);
     csr0->i_ex_ecall(w.e.ex_ecall);
     csr0->i_ex_fpu_invalidop(w.e.ex_fpu_invalidop);
@@ -334,12 +339,13 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     csr0->i_ex_fpu_inexact(w.e.ex_fpu_inexact);
     csr0->i_fpu_valid(w.e.fpu_valid);
     csr0->i_irq_external(i_ext_irq);
+    csr0->i_e_next_ready(w.e.trap_ready);
     csr0->i_e_valid(w.e.valid);
-    csr0->i_halt(dbg.halt);
     csr0->o_executed_cnt(csr.executed_cnt);
     csr0->o_trap_valid(csr.trap_valid);
     csr0->o_trap_pc(csr.trap_pc);
-    csr0->i_break_mode(dbg.break_mode);
+    csr0->o_dbg_pc_write(csr.dbg_pc_write);
+    csr0->o_dbg_pc(csr.dbg_pc);
     csr0->o_break_event(csr.break_event);
     csr0->o_mpu_region_we(o_mpu_region_we);
     csr0->o_mpu_region_idx(o_mpu_region_idx);
@@ -350,36 +356,39 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     csr0->i_dport_write(dbg.csr_write);
     csr0->i_dport_addr(dbg.csr_addr);
     csr0->i_dport_wdata(dbg.core_wdata);
+    csr0->o_dport_valid(csr.dport_valid);
     csr0->o_dport_rdata(csr.dport_rdata);
+    csr0->o_halt(csr.halt);
 
     dbg0 = new DbgPort("dbg0", async_reset);
     dbg0->i_clk(i_clk);
     dbg0->i_nrst(i_nrst);
-    dbg0->i_dport_valid(i_dport_valid);
+    dbg0->i_dport_req_valid(i_dport_req_valid);
     dbg0->i_dport_write(i_dport_write);
     dbg0->i_dport_region(i_dport_region);
     dbg0->i_dport_addr(i_dport_addr);
     dbg0->i_dport_wdata(i_dport_wdata);
-    dbg0->o_dport_ready(o_dport_ready);
+    dbg0->o_dport_req_ready(o_dport_req_ready);
+    dbg0->i_dport_resp_ready(i_dport_resp_ready);
+    dbg0->o_dport_resp_valid(o_dport_resp_valid);
     dbg0->o_dport_rdata(o_dport_rdata);
     dbg0->o_csr_addr(dbg.csr_addr);
     dbg0->o_reg_addr(dbg.reg_addr);
     dbg0->o_core_wdata(dbg.core_wdata);
     dbg0->o_csr_ena(dbg.csr_ena);
     dbg0->o_csr_write(dbg.csr_write);
+    dbg0->i_csr_valid(csr.dport_valid);
     dbg0->i_csr_rdata(csr.dport_rdata);
     dbg0->o_ireg_ena(dbg.ireg_ena);
     dbg0->o_ireg_write(dbg.ireg_write);
-    dbg0->o_npc_write(dbg.npc_write);
     dbg0->i_ireg_rdata(ireg.dport_rdata);
     dbg0->i_pc(w.e.pc);
     dbg0->i_npc(w.e.npc);
     dbg0->i_e_call(w.e.call);
     dbg0->i_e_ret(w.e.ret);
-    dbg0->i_e_next_ready(w.e.trap_ready);
-    dbg0->o_halt(dbg.halt);
-    dbg0->i_ebreak(csr.break_event);
-    dbg0->o_break_mode(dbg.break_mode);
+    dbg0->o_progbuf_ena(dbg.progbuf_ena);
+    dbg0->o_progbuf_pc(dbg.progbuf_pc);
+    dbg0->o_progbuf_data(dbg.progbuf_data);
     dbg0->o_br_fetch_valid(dbg.br_fetch_valid);
     dbg0->o_br_address_fetch(dbg.br_address_fetch);
     dbg0->o_br_instr_fetch(dbg.br_instr_fetch);
@@ -439,10 +448,8 @@ void Processor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void Processor::comb() {
-    w_fetch_pipeline_hold = !w.e.d_ready | dbg.halt;
-    w_any_pipeline_hold = w.f.pipeline_hold | !w.e.d_ready | dbg.halt;
-
-    wb_exec_dport_npc = dbg.core_wdata.read()(CFG_CPU_ADDR_BITS-1, 0);
+    w_fetch_pipeline_hold = !w.e.d_ready | csr.halt;
+    w_any_pipeline_hold = w.f.pipeline_hold | !w.e.d_ready | csr.halt;
 
     w_writeback_ready = !w.e.wena.read();
     if (w.e.wena.read() == 1) {
@@ -473,7 +480,7 @@ void Processor::comb() {
 
     o_req_ctrl_valid = w.f.imem_req_valid;
     o_req_ctrl_addr = w.f.imem_req_addr;
-    o_halted = dbg.halt;
+    o_halted = csr.halt;
 }
 
 }  // namespace debugger

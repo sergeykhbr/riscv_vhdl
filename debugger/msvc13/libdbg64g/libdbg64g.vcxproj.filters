@@ -448,5 +448,8 @@
     <ClInclude Include="..\..\src\libdbg64g\services\remote\tcpcmd_gen.h">
       <Filter>Source Files\services\remote</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\common\generic-isa.h">
+      <Filter>Source Files\common</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

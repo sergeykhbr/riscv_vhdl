@@ -30,7 +30,8 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     i_wdata("i_wdata"),
     o_rdata("o_rdata"),
     i_trap_ready("i_trap_ready"),
-    i_ex_pc("i_ex_pc"),
+    i_e_pc("i_e_pc"),
+    i_e_npc("i_e_npc"),
     i_ex_npc("i_ex_npc"),
     i_ex_data_addr("i_ex_data_addr"),
     i_ex_data_load_fault("i_ex_data_load_fault"),
@@ -41,6 +42,8 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     i_ex_illegal_instr("i_ex_illegal_instr"),
     i_ex_unalign_store("i_ex_unalign_store"),
     i_ex_unalign_load("i_ex_unalign_load"),
+    i_ex_mpu_store("i_ex_mpu_store"),
+    i_ex_mpu_load("i_ex_mpu_load"),
     i_ex_breakpoint("i_ex_breakpoint"),
     i_ex_ecall("i_ex_ecall"),
     i_ex_fpu_invalidop("i_ex_fpu_invalidop"),
@@ -50,12 +53,13 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     i_ex_fpu_inexact("i_ex_fpu_inexact"),
     i_fpu_valid("i_fpu_valid"),
     i_irq_external("i_irq_external"),
+    i_e_next_ready("i_e_next_ready"),
     i_e_valid("i_e_valid"),
-    i_halt("i_halt"),
     o_executed_cnt("o_executed_cnt"),
     o_trap_valid("o_trap_valid"),
     o_trap_pc("o_trap_pc"),
-    i_break_mode("i_break_mode"),
+    o_dbg_pc_write("o_dbg_pc_write"),
+    o_dbg_pc("o_dbg_pc"),
     o_break_event("o_break_event"),
     o_mpu_region_we("o_mpu_region_we"),
     o_mpu_region_idx("o_mpu_region_idx"),
@@ -66,7 +70,9 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     i_dport_write("i_dport_write"),
     i_dport_addr("i_dport_addr"),
     i_dport_wdata("i_dport_wdata"),
-    o_dport_rdata("o_dport_rdata") {
+    o_dport_valid("o_dport_valid"),
+    o_dport_rdata("o_dport_rdata"),
+    o_halt("o_halt") {
     hartid_ = hartid;
     async_reset_ = async_reset;
 
@@ -79,7 +85,8 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << i_wena;
     sensitive << i_wdata;
     sensitive << i_trap_ready;
-    sensitive << i_ex_pc;
+    sensitive << i_e_pc;
+    sensitive << i_e_npc;
     sensitive << i_ex_npc;
     sensitive << i_ex_data_addr;
     sensitive << i_ex_data_load_fault;
@@ -90,6 +97,8 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << i_ex_illegal_instr;
     sensitive << i_ex_unalign_store;
     sensitive << i_ex_unalign_load;
+    sensitive << i_ex_mpu_store;
+    sensitive << i_ex_mpu_load;
     sensitive << i_ex_breakpoint;
     sensitive << i_ex_ecall;
     sensitive << i_ex_fpu_invalidop;
@@ -99,9 +108,8 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << i_ex_fpu_inexact;
     sensitive << i_fpu_valid;
     sensitive << i_irq_external;
+    sensitive << i_e_next_ready;
     sensitive << i_e_valid;
-    sensitive << i_halt;
-    sensitive << i_break_mode;
     sensitive << i_dport_ena;
     sensitive << i_dport_write;
     sensitive << i_dport_addr;
@@ -151,7 +159,8 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_wdata, i_wdata.name());
         sc_trace(o_vcd, o_rdata, o_rdata.name());
         sc_trace(o_vcd, i_trap_ready, i_trap_ready.name()),
-        sc_trace(o_vcd, i_ex_pc, i_ex_pc.name());
+        sc_trace(o_vcd, i_e_pc, i_e_pc.name());
+        sc_trace(o_vcd, i_e_npc, i_e_npc.name());
         sc_trace(o_vcd, i_ex_npc, i_ex_npc.name());
         sc_trace(o_vcd, i_ex_data_addr, i_ex_data_addr.name());
         sc_trace(o_vcd, i_ex_data_load_fault, i_ex_data_load_fault.name());
@@ -162,6 +171,8 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_ex_illegal_instr, i_ex_illegal_instr.name());
         sc_trace(o_vcd, i_ex_unalign_store, i_ex_unalign_store.name());
         sc_trace(o_vcd, i_ex_unalign_load, i_ex_unalign_load.name());
+        sc_trace(o_vcd, i_ex_mpu_store, i_ex_mpu_store.name());
+        sc_trace(o_vcd, i_ex_mpu_load, i_ex_mpu_load.name());
         sc_trace(o_vcd, i_ex_breakpoint, i_ex_breakpoint.name());
         sc_trace(o_vcd, i_ex_ecall, i_ex_ecall.name());
         sc_trace(o_vcd, i_ex_fpu_invalidop, i_ex_fpu_invalidop.name());
@@ -174,13 +185,16 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_executed_cnt, o_executed_cnt.name());
         sc_trace(o_vcd, o_trap_valid, o_trap_valid.name());
         sc_trace(o_vcd, o_trap_pc, o_trap_pc.name());
-        sc_trace(o_vcd, i_break_mode, i_break_mode.name());
+        sc_trace(o_vcd, o_dbg_pc_write, o_dbg_pc_write.name());
+        sc_trace(o_vcd, o_dbg_pc, o_dbg_pc.name());
         sc_trace(o_vcd, o_break_event, o_break_event.name());
         sc_trace(o_vcd, i_dport_ena, i_dport_ena.name());
         sc_trace(o_vcd, i_dport_write, i_dport_write.name());
         sc_trace(o_vcd, i_dport_addr, i_dport_addr.name());
         sc_trace(o_vcd, i_dport_wdata, i_dport_wdata.name());
+        sc_trace(o_vcd, o_dport_valid, o_dport_valid.name());
         sc_trace(o_vcd, o_dport_rdata, o_dport_rdata.name());
+        sc_trace(o_vcd, o_halt, o_halt.name());
 
         std::string pn(name());
         sc_trace(o_vcd, r.mode, pn + ".r_mode");
@@ -193,47 +207,87 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
 }
 
-void CsrRegs::procedure_RegAccess(uint64_t iaddr, bool iwena,
-                                 sc_uint<RISCV_ARCH> iwdata,
-                                 RegistersType &ir, RegistersType *ov,
-                                 sc_uint<RISCV_ARCH> *ordata) {
-    *ordata = 0;
-    switch (iaddr) {
+void CsrRegs::comb() {
+    bool w_ie;
+    bool w_ext_irq;
+    bool w_trap_valid;
+    sc_uint<CFG_CPU_ADDR_BITS> wb_trap_pc;
+    bool v_dbg_pc_write;
+    sc_uint<CFG_CPU_ADDR_BITS> vb_dbg_pc;
+    bool w_trap_irq;
+    bool w_exception_xret;
+    sc_uint<5> wb_trap_code;
+    sc_uint<CFG_CPU_ADDR_BITS> wb_mbadaddr;
+    bool w_mstackovr;
+    bool w_mstackund;
+    sc_uint<12> vb_csr_addr;
+    sc_uint<RISCV_ARCH> vb_csr_wdata;
+    bool v_csr_wena;
+    bool v_dport_valid;
+    sc_uint<RISCV_ARCH> vb_rdata;
+    bool v_cur_halt;
+    bool v_req_halt;
+    bool v_req_resume;
+    bool v_clear_progbuferr;
+
+    v = r;
+
+    vb_rdata = 0;
+    v_dbg_pc_write = 0;
+    vb_dbg_pc = 0;
+    v_cur_halt = 0;
+    v_req_halt = 0;
+    v_req_resume = 0;
+    v_clear_progbuferr = 0;
+
+    if (i_wena.read() == 1) {
+        vb_csr_addr = i_addr.read();
+        vb_csr_wdata = i_wdata.read();
+        v_csr_wena = 1;
+        v_dport_valid = 0;
+    } else {
+        vb_csr_addr = i_dport_addr.read();
+        v_csr_wena = i_dport_ena.read() & i_dport_write.read();
+        vb_csr_wdata = i_dport_wdata.read();
+        v_dport_valid = 1;
+    }
+
+    switch (vb_csr_addr) {
     case CSR_fflags:
-        (*ordata)[0] = ir.ex_fpu_inexact;
-        (*ordata)[1] = ir.ex_fpu_underflow;
-        (*ordata)[2] = ir.ex_fpu_overflow;
-        (*ordata)[3] = ir.ex_fpu_divbyzero;
-        (*ordata)[4] = ir.ex_fpu_invalidop;
+        vb_rdata[0] = r.ex_fpu_inexact;
+        vb_rdata[1] = r.ex_fpu_underflow;
+        vb_rdata[2] = r.ex_fpu_overflow;
+        vb_rdata[3] = r.ex_fpu_divbyzero;
+        vb_rdata[4] = r.ex_fpu_invalidop;
         if (CFG_HW_FPU_ENABLE) {
-            if (iwena) {
-                ov->ex_fpu_inexact = iwdata[0];
-                ov->ex_fpu_underflow = iwdata[1];
-                ov->ex_fpu_overflow = iwdata[2];
-                ov->ex_fpu_divbyzero = iwdata[3];
-                ov->ex_fpu_invalidop = iwdata[4];
+            if (v_csr_wena) {
+                v.ex_fpu_inexact = vb_csr_wdata[0];
+                v.ex_fpu_underflow = vb_csr_wdata[1];
+                v.ex_fpu_overflow = vb_csr_wdata[2];
+                v.ex_fpu_divbyzero = vb_csr_wdata[3];
+                v.ex_fpu_invalidop = vb_csr_wdata[4];
             }
         }
         break;
     case CSR_frm:
         if (CFG_HW_FPU_ENABLE) {
-            (*ordata)(2, 0) = 0x4;  // Round mode: round to Nearest (RMM)
+            vb_rdata(2, 0) = 0x4;  // Round mode: round to Nearest (RMM)
         }
         break;
     case CSR_fcsr:
-        (*ordata)[0] = ir.ex_fpu_inexact;
-        (*ordata)[1] = ir.ex_fpu_underflow;
-        (*ordata)[2] = ir.ex_fpu_overflow;
-        (*ordata)[3] = ir.ex_fpu_divbyzero;
-        (*ordata)[4] = ir.ex_fpu_invalidop;
+        vb_rdata[0] = r.ex_fpu_inexact;
+        vb_rdata[1] = r.ex_fpu_underflow;
+        vb_rdata[2] = r.ex_fpu_overflow;
+        vb_rdata[3] = r.ex_fpu_divbyzero;
+        vb_rdata[4] = r.ex_fpu_invalidop;
         if (CFG_HW_FPU_ENABLE) {
-            (*ordata)(7, 5) = 0x4;  // Round mode: round to Nearest (RMM)
-            if (iwena) {
-                ov->ex_fpu_inexact = iwdata[0];
-                ov->ex_fpu_underflow = iwdata[1];
-                ov->ex_fpu_overflow = iwdata[2];
-                ov->ex_fpu_divbyzero = iwdata[3];
-                ov->ex_fpu_invalidop = iwdata[4];
+            vb_rdata(7, 5) = 0x4;  // Round mode: round to Nearest (RMM)
+            if (v_csr_wena) {
+                v.ex_fpu_inexact = vb_csr_wdata[0];
+                v.ex_fpu_underflow = vb_csr_wdata[1];
+                v.ex_fpu_overflow = vb_csr_wdata[2];
+                v.ex_fpu_divbyzero = vb_csr_wdata[3];
+                v.ex_fpu_invalidop = vb_csr_wdata[4];
             }
         }
         break; 
@@ -243,7 +297,7 @@ void CsrRegs::procedure_RegAccess(uint64_t iaddr, bool iwena,
          *      2 = 64
          *      3 = 128
          */
-        (*ordata)(RISCV_ARCH-1, RISCV_ARCH-2) = 2;
+        vb_rdata(RISCV_ARCH-1, RISCV_ARCH-2) = 2;
         /** BitCharacterDescription
          * 0  A Atomic extension
          * 1  B Tentatively reserved for Bit operations extension
@@ -272,42 +326,42 @@ void CsrRegs::procedure_RegAccess(uint64_t iaddr, bool iwena,
          * 24 Y Reserved
          * 25 Z Reserve
          */
-        //(*ordata)['A' - 'A'] = 1;
-        (*ordata)['I' - 'A'] = 1;
-        (*ordata)['M' - 'A'] = 1;
-        (*ordata)['U' - 'A'] = 1;
-        (*ordata)['C' - 'A'] = 1;
+        //vb_rdata['A' - 'A'] = 1;
+        vb_rdata['I' - 'A'] = 1;
+        vb_rdata['M' - 'A'] = 1;
+        vb_rdata['U' - 'A'] = 1;
+        vb_rdata['C' - 'A'] = 1;
         if (CFG_HW_FPU_ENABLE) {
-            (*ordata)['D' - 'A'] = 1;
+            vb_rdata['D' - 'A'] = 1;
         }
         break;
     case CSR_mvendorid:
-        (*ordata) = CFG_VENDOR_ID;
+        vb_rdata = CFG_VENDOR_ID;
         break;
     case CSR_marchid:
         break;
     case CSR_mimplementationid:
-        (*ordata) = CFG_IMPLEMENTATION_ID;
+        vb_rdata = CFG_IMPLEMENTATION_ID;
         break;
     case CSR_mhartid:
-        (*ordata)(63, 0) = hartid_;
+        vb_rdata(63, 0) = hartid_;
         break;
     case CSR_uepc:// - User mode program counter
         break;
     case CSR_mstatus:// - Machine mode status register
-        (*ordata)[0] = ir.uie;
-        (*ordata)[3] = ir.mie;
-        (*ordata)[7] = ir.mpie;
-        (*ordata)(12, 11) = ir.mpp;
+        vb_rdata[0] = r.uie;
+        vb_rdata[3] = r.mie;
+        vb_rdata[7] = r.mpie;
+        vb_rdata(12, 11) = r.mpp;
         if (CFG_HW_FPU_ENABLE) {
-            (*ordata)(14, 13) = 0x1;   // FS field: Initial state
+            vb_rdata(14, 13) = 0x1;   // FS field: Initial state
         }
-        (*ordata)(33, 32) = 0x2;       // UXL: User mode supported 64-bits
-        if (iwena) {
-            ov->uie = iwdata[0];
-            ov->mie = iwdata[3];
-            ov->mpie = iwdata[7];
-            ov->mpp = iwdata(12, 11);
+        vb_rdata(33, 32) = 0x2;       // UXL: User mode supported 64-bits
+        if (v_csr_wena) {
+            v.uie = vb_csr_wdata[0];
+            v.mie = vb_csr_wdata[3];
+            v.mpie = vb_csr_wdata[7];
+            v.mpp = vb_csr_wdata(12, 11);
         }
         break;
     case CSR_medeleg:// - Machine exception delegation
@@ -317,103 +371,137 @@ void CsrRegs::procedure_RegAccess(uint64_t iaddr, bool iwena,
     case CSR_mie:// - Machine interrupt enable bit
         break;
     case CSR_mtvec:
-        (*ordata) = ir.mtvec;
-        if (iwena) {
-            ov->mtvec = iwdata;
+        vb_rdata = r.mtvec;
+        if (v_csr_wena) {
+            v.mtvec = vb_csr_wdata;
         }
         break;
     case CSR_mscratch:// - Machine scratch register
-        (*ordata) = ir.mscratch;
-        if (iwena) {
-            ov->mscratch = iwdata;
+        vb_rdata = r.mscratch;
+        if (v_csr_wena) {
+            v.mscratch = vb_csr_wdata;
         }
         break;
     case CSR_mepc:// - Machine program counter
-        (*ordata) = ir.mepc;
-        if (iwena) {
-            ov->mepc = iwdata;
+        vb_rdata = r.mepc;
+        if (v_csr_wena) {
+            v.mepc = vb_csr_wdata;
         }
         break;
     case CSR_mcause:// - Machine trap cause
-        (*ordata) = 0;
-        (*ordata)[63] = ir.trap_irq;
-        (*ordata)(4, 0) = ir.trap_code;
+        vb_rdata = 0;
+        vb_rdata[63] = r.trap_irq;
+        vb_rdata(4, 0) = r.trap_code;
         break;
     case CSR_mbadaddr:// - Machine bad address
-        (*ordata) = ir.mbadaddr;
+        vb_rdata = r.mbadaddr;
         break;
     case CSR_mip:// - Machine interrupt pending
         break;
     case CSR_cycle:
-        (*ordata) = ir.cycle_cnt;
+        vb_rdata = r.cycle_cnt;
         break;
     case CSR_time:
-        (*ordata) = ir.timer;
+        vb_rdata = r.timer;
         break;
     case CSR_insret:
-        (*ordata) = ir.executed_cnt;
+        vb_rdata = r.executed_cnt;
         break;
     case CSR_mstackovr:// - Machine Stack Overflow
-        (*ordata) = ir.mstackovr;
-        if (iwena) {
-            ov->mstackovr = iwdata(CFG_CPU_ADDR_BITS-1, 0);
-            ov->mstackovr_ena = iwdata(CFG_CPU_ADDR_BITS-1, 0).or_reduce();
+        vb_rdata = r.mstackovr;
+        if (v_csr_wena) {
+            v.mstackovr = vb_csr_wdata(CFG_CPU_ADDR_BITS-1, 0);
+            v.mstackovr_ena = vb_csr_wdata(CFG_CPU_ADDR_BITS-1, 0).or_reduce();
         }
         break;
     case CSR_mstackund:// - Machine Stack Underflow
-        (*ordata) = ir.mstackund;
-        if (iwena) {
-            ov->mstackund = iwdata(CFG_CPU_ADDR_BITS-1, 0);
-            ov->mstackund_ena = iwdata(CFG_CPU_ADDR_BITS-1, 0).or_reduce();
+        vb_rdata = r.mstackund;
+        if (v_csr_wena) {
+            v.mstackund = vb_csr_wdata(CFG_CPU_ADDR_BITS-1, 0);
+            v.mstackund_ena = vb_csr_wdata(CFG_CPU_ADDR_BITS-1, 0).or_reduce();
         }
         break;
     case CSR_mpu_addr:  // [WO] MPU address
-        if (iwena) {
-            ov->mpu_addr = iwdata(CFG_CPU_ADDR_BITS-1, 0);
+        if (v_csr_wena) {
+            v.mpu_addr = vb_csr_wdata(CFG_CPU_ADDR_BITS-1, 0);
         }
         break;
     case CSR_mpu_mask:  // [WO] MPU mask
-        if (iwena) {
-            ov->mpu_mask = iwdata(CFG_CPU_ADDR_BITS-1, 0);
+        if (v_csr_wena) {
+            v.mpu_mask = vb_csr_wdata(CFG_CPU_ADDR_BITS-1, 0);
         }
         break;
     case CSR_mpu_ctrl:  // [WO] MPU flags and write ena
-        (*ordata) = CFG_MPU_TBL_SIZE << 8;
-        if (iwena) {
-            ov->mpu_idx = iwdata(8+CFG_MPU_TBL_WIDTH-1, 8);
-            ov->mpu_flags = iwdata(CFG_MPU_FL_TOTAL-1, 0);
-            ov->mpu_we = 1;
+        vb_rdata = CFG_MPU_TBL_SIZE << 8;
+        if (v_csr_wena) {
+            v.mpu_idx = vb_csr_wdata(8+CFG_MPU_TBL_WIDTH-1, 8);
+            v.mpu_flags = vb_csr_wdata(CFG_MPU_FL_TOTAL-1, 0);
+            v.mpu_we = 1;
+        }
+        break;
+    case CSR_runcontrol:
+        if (v_csr_wena) {
+            v_req_halt = vb_csr_wdata[31];
+            v_req_resume = vb_csr_wdata[30];
+        }
+        break;
+    case CSR_insperstep:
+        vb_rdata = r.ins_per_step;
+        if (v_csr_wena == 1) {
+            v.ins_per_step = vb_csr_wdata;
+            if (vb_csr_wdata.or_reduce() == 0) {
+                v.ins_per_step = 1;  // cannot be zero
+            }
+            if (r.halt.read() == 1) {
+                v.stepping_mode_cnt = vb_csr_wdata;
+            }
+        }
+        break;
+    case CSR_progbuf:
+        break;
+    case CSR_abstractcs:
+        vb_rdata(28,24) = CFG_PROGBUF_REG_TOTAL;
+        vb_rdata[12] = r.progbuf_ena;       // busy
+        vb_rdata(10,8) = r.progbuf_err;
+        vb_rdata(3,0) = CFG_DATA_REG_TOTAL;
+        if (v_csr_wena) {
+            v_clear_progbuferr = vb_csr_wdata[8];
+        }
+        break;
+    case CSR_dcsr:
+        vb_rdata(31,28) = 4;          // xdebugver: 4=External debug supported
+        vb_rdata(8,6) = r.halt_cause;    // cause:
+        vb_rdata[2] = r.stepping_mode;   // step:
+        vb_rdata(1,0) = 3;            // prv: privilege in debug mode: 3=machine
+        if (v_csr_wena == 1) {
+            v.stepping_mode = vb_csr_wdata[2];
+            if (vb_csr_wdata[2] == 1) {
+                v.stepping_mode_cnt = r.ins_per_step;  // default =1
+                v_req_resume = 1;
+            }
+        }
+        break;
+    case CSR_dpc:
+        // Upon entry into debug mode DPC must contains:
+        //       cause        |   Address
+        // -------------------|----------------
+        // ebreak             |  Address of ebreak instruction
+        // single step        |  Address of next instruction to be executed
+        // trigger (HW BREAK) |  if timing=0, cause isntruction, if timing=1 enxt instruction
+        // halt request       |  next instruction
+        //
+        if (r.halt_cause.read() == HALT_CAUSE_EBREAK) {
+            vb_rdata(CFG_CPU_ADDR_BITS-1, 0) = i_e_pc.read();
+        } else {
+            vb_rdata(CFG_CPU_ADDR_BITS-1, 0) = i_e_npc.read();
+        }
+        if (v_csr_wena == 1) {
+            v_dbg_pc_write = 1;
+            vb_dbg_pc = vb_csr_wdata;
         }
         break;
     default:;
     }
-
-}
-
-void CsrRegs::comb() {
-    sc_uint<RISCV_ARCH> wb_rdata = 0;
-    sc_uint<RISCV_ARCH> wb_dport_rdata = 0;
-    bool w_ie;
-    bool w_ext_irq;
-    bool w_dport_wena;
-    bool w_trap_valid;
-    sc_uint<CFG_CPU_ADDR_BITS> wb_trap_pc;
-    bool w_trap_irq;
-    bool w_exception_xret;
-    sc_uint<5> wb_trap_code;
-    sc_uint<CFG_CPU_ADDR_BITS> wb_mbadaddr;
-    bool w_mstackovr;
-    bool w_mstackund;
-
-    v = r;
-
-    w_dport_wena = i_dport_ena & i_dport_write;
-
-    procedure_RegAccess(i_addr.read(), i_wena.read(), i_wdata.read(),
-                        r, &v, &wb_rdata);
-
-    procedure_RegAccess(i_dport_addr.read(), w_dport_wena,
-                        i_dport_wdata.read(), r, &v, &wb_dport_rdata);
 
     if (r.mpu_we.read() == 1) {
         v.mpu_we = 0;
@@ -457,7 +545,7 @@ void CsrRegs::comb() {
     wb_trap_code = 0;
     v.break_event = 0;
     wb_trap_pc = r.mtvec.read()(CFG_CPU_ADDR_BITS-1, 0);
-    wb_mbadaddr = i_ex_pc.read();
+    wb_mbadaddr = i_e_npc.read();
 
     if (i_ex_instr_load_fault.read() == 1) {
         w_trap_valid = 1;
@@ -477,8 +565,8 @@ void CsrRegs::comb() {
         v.break_event = 1;
         w_trap_valid = 1;
         wb_trap_code = EXCEPTION_Breakpoint;
-        if (i_break_mode.read() == 0) {
-            wb_trap_pc = i_ex_pc;
+        if (r.break_mode.read() == 0) {
+            wb_trap_pc = i_e_npc;
         } else {
             wb_trap_pc = CFG_NMI_BREAKPOINT_ADDR;
         }
@@ -570,7 +658,7 @@ void CsrRegs::comb() {
     //     0 = halt;
     //     1 = generate trap
     if (w_trap_valid && i_trap_ready.read() &&
-        (i_break_mode.read() || !i_ex_breakpoint.read())) {
+        (r.break_mode.read() || !i_ex_breakpoint.read())) {
         v.mie = 0;
         v.mpp = r.mode;
         v.mepc = i_ex_npc.read();
@@ -589,14 +677,71 @@ void CsrRegs::comb() {
         }
     }
 
-    if (i_halt.read() == 0 || i_e_valid.read() == 1) {
+    if (r.halt.read() == 0 || i_e_next_ready.read() == 1) {
         v.cycle_cnt = r.cycle_cnt.read() + 1;
     }
-    if (i_e_valid.read()) {
+    if (i_e_next_ready.read()) {
         v.executed_cnt = r.executed_cnt.read() + 1;
     }
     v.timer = r.timer.read() + 1;
 
+    if (i_e_next_ready.read()) {
+        if (r.progbuf_ena.read() == 1) {
+            int t1 = 16*r.progbuf_data_npc.read();
+            v.progbuf_data_out = r.progbuf_data.read()(t1 + 31, t1).to_uint();
+            v.progbuf_data_pc = r.progbuf_data_npc.read();
+            if (r.progbuf_data.read()(t1 + 1, t1) == 0x3) {
+                v.progbuf_data_npc = r.progbuf_data_npc.read() + 2;
+            } else {
+                v.progbuf_data_npc = r.progbuf_data_npc.read() + 1;
+            }
+            if (r.progbuf_data_pc.read()(4, 1).and_reduce() == 1) {  // use end of buffer as a watchdog
+                v.progbuf_ena = 0;
+                v.halt        = 1;
+            }
+        } else if (r.stepping_mode_cnt.read().or_reduce() == 1) {
+            v.stepping_mode_cnt = r.stepping_mode_cnt.read() - 1;
+            if (r.stepping_mode_cnt.read()(RISCV_ARCH-1, 1).or_reduce() == 0) {
+                v.halt = 1;
+                v_cur_halt = 1;
+                v.stepping_mode = 0;
+                v.halt_cause = HALT_CAUSE_STEP;
+            }
+        }
+    }
+
+    if (r.break_event.read() == 1) {
+        if (r.progbuf_ena.read() == 1) {
+            v.halt = 1;  // do not modify halt cause in debug mode
+            v.progbuf_ena = 0;
+        } else {
+            if (r.break_mode.read() == 0) {
+                v.halt = 1;
+                v.halt_cause = HALT_CAUSE_EBREAK;
+            }
+        }
+    } else if (v_req_halt == 1 && r.halt.read() == 0) {
+        if (r.progbuf_ena.read() == 0 && r.stepping_mode == 0) {
+            v.halt = 1;
+            v.halt_cause = HALT_CAUSE_HALTREQ;
+        }
+    } else if (v_req_resume == 1 && r.halt.read() == 1) {
+        v.halt = 0;
+    }
+
+    if (v_clear_progbuferr == 1) {
+        v.progbuf_err = 0;
+    } else if (r.progbuf_ena.read() == 1) {
+        if (i_ex_data_load_fault.read() == 1
+            || i_ex_data_store_fault.read() == 1) {
+            v.progbuf_err = 3;
+        } else if (i_ex_unalign_store.read() == 1
+                || i_ex_unalign_load.read() == 1
+                || i_ex_mpu_store.read() == 1
+                || i_ex_mpu_load.read() == 1) {
+            v.progbuf_err = 5;
+        }
+    }
 
     if (!async_reset_ && !i_nrst.read()) {
         R_RESET(v);
@@ -605,14 +750,18 @@ void CsrRegs::comb() {
     o_executed_cnt = r.executed_cnt;
     o_trap_valid = w_trap_valid;
     o_trap_pc = wb_trap_pc;
-    o_rdata = wb_rdata;
-    o_dport_rdata = wb_dport_rdata;
+    o_dbg_pc_write = v_dbg_pc_write;
+    o_dbg_pc = vb_dbg_pc;
+    o_rdata = vb_rdata;
+    o_dport_valid = v_dport_valid;
+    o_dport_rdata = vb_rdata;
     o_break_event = r.break_event;
     o_mpu_region_we = r.mpu_we;
     o_mpu_region_idx = r.mpu_idx;
     o_mpu_region_addr = r.mpu_addr;
     o_mpu_region_mask = r.mpu_mask;
     o_mpu_region_flags = r.mpu_flags;
+    o_halt = r.halt | v_cur_halt;
 }
 
 void CsrRegs::registers() {

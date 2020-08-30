@@ -24,14 +24,6 @@ namespace debugger {
 const uint64_t REG_ADDR_ERROR = 0xFFFFFFFFFFFFFFFFull;
 const uint64_t DSU_OFFSET  = 0x80080000ull;
 
-union RunControlType {
-    uint64_t val;
-    struct {
-        uint64_t halt     : 1;
-        uint64_t rsv      : 63;
-    } bits;
-};
-
 struct DsuMapType {
     // Base Address + 0x00000 (Region 0)
     uint64_t csr[1 << 12];
@@ -51,7 +43,7 @@ struct DsuMapType {
     union udbg_type {
         uint8_t buf[1 << (12 + 3)];
         struct debug_region_type {
-            RunControlType runcontrol;      // 0x0000
+            uint64_t reserved_runcontrol;      // 0x0000
             uint64_t stepping_mode_steps;   // 0x0008
             uint64_t reserved_0x10_0x18[2];             // 0x0010, 0x0018
             union breakpoint_control_reg {
