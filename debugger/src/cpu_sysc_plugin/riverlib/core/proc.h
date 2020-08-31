@@ -73,8 +73,7 @@ SC_MODULE(Processor) {
     // Debug interface
     sc_in<bool> i_dport_req_valid;                      // Debug access from DSU is valid
     sc_in<bool> i_dport_write;                          // Write command flag
-    sc_in<sc_uint<2>> i_dport_region;                   // Registers region ID: 0=CSR; 1=IREGS; 2=Control
-    sc_in<sc_uint<12>> i_dport_addr;                    // Register idx
+    sc_in<sc_uint<CFG_DPORT_ADDR_BITS>> i_dport_addr;   // dport address
     sc_in<sc_uint<RISCV_ARCH>> i_dport_wdata;           // Write value
     sc_out<bool> o_dport_req_ready;
     sc_in<bool> i_dport_resp_ready;                     // ready to accepd response
@@ -217,6 +216,9 @@ private:
         sc_signal<bool> trap_valid;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> trap_pc;
         sc_signal<bool> break_event;             // ebreak detected 1 clock pulse
+        sc_signal<bool> progbuf_ena;                // execute instruction from progbuf
+        sc_signal<sc_uint<32>> progbuf_pc;          // progbuf instruction counter
+        sc_signal<sc_uint<32>> progbuf_data;        // progbuf instruction to execute
         sc_signal<sc_uint<64>> executed_cnt;        // Number of executed instruction
         sc_signal<bool> dbg_pc_write;                  // Region 1: npc write enable
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> dbg_pc;
@@ -231,14 +233,6 @@ private:
         sc_signal<bool> csr_write;                  // Region 0: CSR write enable
         sc_signal<bool> ireg_ena;                   // Region 1: Access to integer register bank is enabled
         sc_signal<bool> ireg_write;                 // Region 1: Integer registers bank write pulse
-        sc_signal<bool> progbuf_ena;                // execute instruction from progbuf
-        sc_signal<sc_uint<32>> progbuf_pc;          // progbuf instruction counter
-        sc_signal<sc_uint<32>> progbuf_data;        // progbuf instruction to execute
-        sc_signal<bool> br_fetch_valid;                      // Fetch injection address/instr are valid
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> br_address_fetch; // Fetch injection address to skip ebreak instruciton only once
-        sc_signal<sc_uint<32>> br_instr_fetch;               // Real instruction value that was replaced by ebreak
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> flush_address;    // Address of instruction to remove from ICache
-        sc_signal<bool> flush_valid;                         // Remove address from ICache is valid
     } dbg;
 
     struct BranchPredictorType {

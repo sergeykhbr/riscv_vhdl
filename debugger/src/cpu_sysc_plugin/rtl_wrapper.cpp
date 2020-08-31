@@ -31,7 +31,6 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     o_interrupt("o_interrupt"),
     o_dport_req_valid("o_dport_req_valid"),
     o_dport_write("o_dport_write"),
-    o_dport_region("o_dport_region"),
     o_dport_addr("o_dport_addr"),
     o_dport_wdata("o_dport_wdata"),
     i_dport_req_ready("i_dport_req_ready"),
@@ -86,7 +85,6 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     sensitive << w_dport_req_valid;
     sensitive << w_dport_resp_ready;
     sensitive << w_dport_write;
-    sensitive << wb_dport_region;
     sensitive << wb_dport_addr;
     sensitive << wb_dport_wdata;
 
@@ -250,7 +248,6 @@ void RtlWrapper::comb() {
     o_dport_write = w_dport_write;
     o_dport_resp_ready = w_dport_resp_ready;
     o_dport_write = w_dport_write;
-    o_dport_region = wb_dport_region;
     o_dport_addr = wb_dport_addr;
     o_dport_wdata = wb_dport_wdata;
 
@@ -329,8 +326,7 @@ void RtlWrapper::sys_bus_proc() {
         RISCV_event_clear(&dport_.valid);
         w_dport_req_valid = 1;
         w_dport_write = dport_.trans->write;
-        wb_dport_region = dport_.trans->region;
-        wb_dport_addr = dport_.trans->addr >> 3;
+        wb_dport_addr = dport_.trans->addr;
         wb_dport_wdata = dport_.trans->wdata;
     }
     dport_.idx_missmatch = 0;

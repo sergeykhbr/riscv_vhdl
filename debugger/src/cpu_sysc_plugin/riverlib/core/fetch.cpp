@@ -40,10 +40,7 @@ InstrFetch::InstrFetch(sc_module_name name_, bool async_reset) :
     o_valid("o_valid"),
     o_pc("o_pc"),
     o_instr("o_instr"),
-    o_hold("o_hold"),
-    i_br_fetch_valid("i_br_fetch_valid"),
-    i_br_address_fetch("i_br_address_fetch"),
-    i_br_instr_fetch("i_br_instr_fetch") {
+    o_hold("o_hold") {
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
@@ -57,12 +54,7 @@ InstrFetch::InstrFetch(sc_module_name name_, bool async_reset) :
     sensitive << i_mem_executable;
     sensitive << i_e_fencei;
     sensitive << i_predict_npc;
-    sensitive << i_br_fetch_valid;
-    sensitive << i_br_address_fetch;
-    sensitive << i_br_instr_fetch;
     sensitive << r.wait_resp;
-    sensitive << r.br_address;
-    sensitive << r.br_instr;
     sensitive << r.resp_address;
     sensitive << r.resp_data;
     sensitive << r.resp_valid;
@@ -122,11 +114,6 @@ void InstrFetch::comb() {
         v.wait_resp = 0;
     }
 
-    if (i_br_fetch_valid.read()) {
-        v.br_address = i_br_address_fetch;
-        v.br_instr = i_br_instr_fetch;
-    }
-
     if (i_mem_data_valid.read() && r.wait_resp.read() && !i_pipeline_hold.read()) {
         v.resp_valid = 1;
         v.resp_address = i_mem_data_addr.read();
@@ -141,22 +128,6 @@ void InstrFetch::comb() {
 
     wb_o_pc = r.resp_address.read();
     wb_o_instr = r.resp_data.read();
-
-
-    if (i_br_fetch_valid.read() == 1) {
-         v.br_address = i_br_address_fetch.read();
-         v.br_instr = i_br_instr_fetch.read();
-    }
-
-    // Breakpoint skip logic that allows to continue execution
-    // without actual breakpoint remove only once 
-    if (wb_o_pc == r.br_address.read()) {
-        wb_o_instr = r.br_instr.read();
-        if (i_mem_data_valid.read() && r.wait_resp.read()
-            && !i_pipeline_hold.read()) {
-            v.br_address = ~0ul;
-        }
-    }
 
     if (!async_reset_ && !i_nrst.read()) {
         R_RESET(v);

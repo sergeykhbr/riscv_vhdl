@@ -25,7 +25,6 @@ DbgPort::DbgPort(sc_module_name name_, bool async_reset) :
     i_nrst("i_nrst"),
     i_dport_req_valid("i_dport_req_valid"),
     i_dport_write("i_dport_write"),
-    i_dport_region("i_dport_region"),
     i_dport_addr("i_dport_addr"),
     i_dport_wdata("i_dport_wdata"),
     o_dport_req_ready("o_dport_req_ready"),
@@ -45,22 +44,13 @@ DbgPort::DbgPort(sc_module_name name_, bool async_reset) :
     i_pc("i_pc"),
     i_npc("i_npc"),
     i_e_call("i_e_call"),
-    i_e_ret("i_e_ret"),
-    o_progbuf_ena("o_progbuf_ena"),
-    o_progbuf_pc("o_progbuf_pc"),
-    o_progbuf_data("o_progbuf_data"),
-    o_br_fetch_valid("o_br_fetch_valid"),
-    o_br_address_fetch("o_br_address_fetch"),
-    o_br_instr_fetch("o_br_instr_fetch"),
-    o_flush_address("o_flush_address"),
-    o_flush_valid("o_flush_valid") {
+    i_e_ret("i_e_ret") {
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_dport_req_valid;
     sensitive << i_dport_write;
-    sensitive << i_dport_region;
     sensitive << i_dport_addr;
     sensitive << i_dport_wdata;
     sensitive << i_dport_resp_ready;
@@ -72,20 +62,11 @@ DbgPort::DbgPort(sc_module_name name_, bool async_reset) :
     sensitive << i_e_call;
     sensitive << i_e_ret;
     sensitive << r.dport_write;
-    sensitive << r.dport_region;
     sensitive << r.dport_addr;
     sensitive << r.dport_wdata;
     sensitive << r.dport_rdata;
     sensitive << r.dstate;
     sensitive << r.rdata;
-    sensitive << r.trap_on_break;
-    sensitive << r.flush_address;
-    sensitive << r.flush_valid;
-    sensitive << r.progbuf_ena;
-    sensitive << r.progbuf_data;
-    sensitive << r.progbuf_data_out;
-    sensitive << r.progbuf_data_pc;
-    sensitive << r.progbuf_data_npc;
     sensitive << wb_stack_rdata;
 
     SC_METHOD(registers);
@@ -113,7 +94,6 @@ void DbgPort::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
         sc_trace(o_vcd, i_dport_req_valid, i_dport_req_valid.name());
         sc_trace(o_vcd, i_dport_write, i_dport_write.name());
-        sc_trace(o_vcd, i_dport_region, i_dport_region.name());
         sc_trace(o_vcd, i_dport_addr, i_dport_addr.name());
         sc_trace(o_vcd, i_dport_wdata, i_dport_wdata.name());
         sc_trace(o_vcd, o_dport_req_ready, o_dport_req_ready.name());
@@ -134,14 +114,6 @@ void DbgPort::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_npc, i_npc.name());
         sc_trace(o_vcd, i_e_call, i_e_call.name());
         sc_trace(o_vcd, i_e_ret, i_e_ret.name());
-        sc_trace(o_vcd, o_br_fetch_valid, o_br_fetch_valid.name());
-        sc_trace(o_vcd, o_br_address_fetch, o_br_address_fetch.name());
-        sc_trace(o_vcd, o_br_instr_fetch, o_br_instr_fetch.name());
-        sc_trace(o_vcd, o_progbuf_ena, o_progbuf_ena.name());
-        sc_trace(o_vcd, o_progbuf_pc, o_progbuf_pc.name());
-        sc_trace(o_vcd, o_progbuf_data, o_progbuf_data.name());
-        sc_trace(o_vcd, o_flush_address, o_flush_address.name());
-        sc_trace(o_vcd, o_flush_valid, o_flush_valid.name());
     }
     if (CFG_LOG2_STACK_TRACE_ADDR != 0) {
         trbuf0->generateVCD(i_vcd, o_vcd);
@@ -160,20 +132,17 @@ void DbgPort::comb() {
     bool v_req_ready;
     bool v_resp_valid;
     sc_uint<64> vrdata;
-    int tidx;
 
     v = r;
 
     wb_o_csr_addr = 0;
     wb_o_reg_addr = 0;
     wb_o_core_wdata = 0;
-    wb_idx = i_dport_addr.read();
+    wb_idx = i_dport_addr.read()(11, 0);
     w_o_csr_ena = 0;
     w_o_csr_write = 0;
     w_o_ireg_ena = 0;
     w_o_ireg_write = 0;
-    v.br_fetch_valid = 0;
-    v.flush_valid = 0;
     wb_stack_raddr = 0;
     w_stack_we = 0;
     wb_stack_waddr = 0;
@@ -200,12 +169,11 @@ void DbgPort::comb() {
         vrdata = 0;
         if (i_dport_req_valid.read() == 1) {
             v.dport_write = i_dport_write;
-            v.dport_region = i_dport_region;
             v.dport_addr = i_dport_addr;
             v.dport_wdata = i_dport_wdata;
-            if (i_dport_region.read() == 0x0) {
+            if (i_dport_addr.read()(CFG_DPORT_ADDR_BITS-1, 12) == 0x0) {
                 v.dstate = csr_region;
-            } else if (i_dport_region.read() == 0x1) {
+            } else if (i_dport_addr.read()(CFG_DPORT_ADDR_BITS-1, 12) == 0x1) {
                 if (wb_idx < 64) {
                     v.dstate = reg_bank;
                 } else if (wb_idx == 64) {
@@ -216,8 +184,6 @@ void DbgPort::comb() {
                     vrdata = 0;
                     v.dstate = wait_to_accept;
                 }
-            } else if (i_dport_region.read() == 0x2) {
-                v.dstate = control;
             } else {
                 v.dstate = wait_to_accept;
             }
@@ -225,7 +191,7 @@ void DbgPort::comb() {
         break;
     case csr_region:
         w_o_csr_ena = 1;
-        wb_o_csr_addr = r.dport_addr;
+        wb_o_csr_addr = r.dport_addr.read()(11,0);
         if (r.dport_write == 1) {
              w_o_csr_write   = 1;
              wb_o_core_wdata = r.dport_wdata;
@@ -267,71 +233,6 @@ void DbgPort::comb() {
         }
         v.dstate = wait_to_accept;
         break;
-    case control:
-        switch (r.dport_addr.read()) {
-        case 4:
-            //! Trap on instruction:
-            //!      0 = Halt pipeline on ECALL instruction
-            //!      1 = Generate trap on ECALL instruction
-            vrdata = 0;
-            vrdata[0] = r.trap_on_break;
-            if (r.dport_write.read() == 1) {
-                v.trap_on_break = r.dport_wdata.read()[0];
-            }
-            break;
-        case 7:
-            vrdata = 0;
-            vrdata(CFG_CPU_ADDR_BITS-1, 0) = r.br_address_fetch;
-            if (r.dport_write.read() == 1) {
-                v.br_address_fetch = r.dport_wdata.read()(CFG_CPU_ADDR_BITS-1, 0);
-            }
-            break;
-        case 8:
-            vrdata = 0;
-            vrdata(31, 0) = r.br_instr_fetch;
-            if (r.dport_write == 1) {
-                v.br_fetch_valid = 1;
-                v.br_instr_fetch = r.dport_wdata.read()(31, 0);
-            }
-            break;
-        case 9:
-            vrdata = 0;
-            vrdata(CFG_CPU_ADDR_BITS-1, 0) = r.flush_address;
-            if (r.dport_write == 1) {
-                v.flush_valid = 1;
-                v.flush_address = r.dport_wdata.read()(CFG_CPU_ADDR_BITS-1, 0);
-            }
-            break;
-        case 11:
-            // Read or write access starts execution from progbuf
-            if (r.dport_write == 1) {
-                v.progbuf_ena = 1;
-                v.progbuf_data_out = r.progbuf_data.read()(31,0).to_uint();
-                v.progbuf_data_pc = 0;
-                if (r.progbuf_data.read()(1,0).to_uint() == 0x3) {
-                    v.progbuf_data_npc = 2;
-                } else {
-                    v.progbuf_data_npc = 1;
-                }
-                //v.halt = 0;
-            }
-            break;
-        default:
-            vrdata = 0;
-            if (r.dport_addr.read() >= 0x010 && r.dport_addr.read() < 0x020) {
-                tidx = r.dport_addr.read() - 0x010;
-                vrdata(31, 0) =
-                    r.progbuf_data.read()(32*tidx+31, 32*tidx).to_uint();
-                if (r.dport_write == 1) {
-                    sc_biguint<16*32> t2 = r.progbuf_data;
-                    t2(32*tidx+31, 32*tidx) = r.dport_wdata.read()(31,0);
-                    v.progbuf_data = t2;
-                }
-            }
-            break;
-        }
-        v.dstate = wait_to_accept;
-        break;
     case wait_to_accept:
         v_resp_valid = 1;
         if (i_dport_resp_ready.read() == 1) {
@@ -354,14 +255,6 @@ void DbgPort::comb() {
     o_csr_write = w_o_csr_write;
     o_ireg_ena = w_o_ireg_ena;
     o_ireg_write = w_o_ireg_write;
-    o_progbuf_ena = r.progbuf_ena;
-    o_progbuf_pc = r.progbuf_data_pc.read() << 1;
-    o_progbuf_data = r.progbuf_data_out;
-    o_br_fetch_valid = r.br_fetch_valid;
-    o_br_address_fetch = r.br_address_fetch;
-    o_br_instr_fetch = r.br_instr_fetch;
-    o_flush_address = r.flush_address;
-    o_flush_valid = r.flush_valid;
 
     o_dport_req_ready  = v_req_ready;
     o_dport_resp_valid = v_resp_valid;

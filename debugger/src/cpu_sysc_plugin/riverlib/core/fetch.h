@@ -46,9 +46,6 @@ SC_MODULE(InstrFetch) {
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_pc;
     sc_out<sc_uint<32>> o_instr;
     sc_out<bool> o_hold;                                // Hold due no response from icache yet
-    sc_in<bool> i_br_fetch_valid;                       // Fetch injection address/instr are valid
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_br_address_fetch;  // Fetch injection address to skip ebreak instruciton only once
-    sc_in<sc_uint<32>> i_br_instr_fetch;                // Real instruction value that was replaced by ebreak
 
     void comb();
     void registers();
@@ -62,8 +59,6 @@ SC_MODULE(InstrFetch) {
  private:
     struct RegistersType {
         sc_signal<bool> wait_resp;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> br_address;
-        sc_signal<sc_uint<32>> br_instr;
 
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> resp_address;
         sc_signal<sc_uint<32>> resp_data;
@@ -74,8 +69,6 @@ SC_MODULE(InstrFetch) {
 
     void R_RESET(RegistersType &iv) {
         iv.wait_resp = 0;
-        iv.br_address = ~0ul;
-        iv.br_instr = 0;
         iv.resp_address = 0;
         iv.resp_data = 0;
         iv.resp_valid = 0;

@@ -45,8 +45,7 @@ class RtlWrapper : public sc_module,
     // Debug interface
     sc_out<bool> o_dport_req_valid;                      // Debug access from DSU is valid
     sc_out<bool> o_dport_write;                          // Write value
-    sc_out<sc_uint<2>> o_dport_region;                   // Registers region ID: 0=CSR; 1=IREGS; 2=Control
-    sc_out<sc_uint<12>> o_dport_addr;                    // Register index
+    sc_out<sc_uint<CFG_DPORT_ADDR_BITS>> o_dport_addr;   // Register index
     sc_out<sc_uint<RISCV_ARCH>> o_dport_wdata;           // Write value
     sc_in<bool> i_dport_req_ready;                       // Response is ready
     sc_out<bool> o_dport_resp_ready;                     // ready to accepd response
@@ -90,8 +89,7 @@ class RtlWrapper : public sc_module,
     sc_signal<bool> w_dport_req_valid;
     sc_signal<bool> w_dport_write;
     sc_signal<bool> w_dport_resp_ready;
-    sc_signal<sc_uint<2>> wb_dport_region;
-    sc_signal<sc_uint<12>> wb_dport_addr;
+    sc_signal<sc_uint<CFG_DPORT_ADDR_BITS>> wb_dport_addr;
     sc_signal<sc_uint<RISCV_ARCH>> wb_dport_wdata;
 
     sc_signal<bool> w_interrupt;

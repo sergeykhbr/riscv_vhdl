@@ -55,7 +55,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     o_mpu_region_flags("o_mpu_region_flags"),
     i_dport_req_valid("i_dport_req_valid"),
     i_dport_write("i_dport_write"),
-    i_dport_region("i_dport_region"),
     i_dport_addr("i_dport_addr"),
     i_dport_wdata("i_dport_wdata"),
     o_dport_req_ready("o_dport_req_ready"),
@@ -96,8 +95,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     sensitive << csr.halt;
     sensitive << dbg.core_wdata;
     sensitive << csr.break_event;
-    sensitive << dbg.flush_valid;
-    sensitive << dbg.flush_address;
 
     fetch0 = new InstrFetch("fetch0", async_reset);
     fetch0->i_clk(i_clk);
@@ -121,9 +118,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     fetch0->o_pc(w.f.pc);
     fetch0->o_instr(w.f.instr);
     fetch0->o_hold(w.f.pipeline_hold);
-    fetch0->i_br_fetch_valid(dbg.br_fetch_valid);
-    fetch0->i_br_address_fetch(dbg.br_address_fetch);
-    fetch0->i_br_instr_fetch(dbg.br_instr_fetch);
 
     dec0 = new InstrDecoder("dec0", async_reset, fpu_ena);
     dec0->i_clk(i_clk);
@@ -347,6 +341,9 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     csr0->o_dbg_pc_write(csr.dbg_pc_write);
     csr0->o_dbg_pc(csr.dbg_pc);
     csr0->o_break_event(csr.break_event);
+    csr0->o_progbuf_ena(csr.progbuf_ena);
+    csr0->o_progbuf_pc(csr.progbuf_pc);
+    csr0->o_progbuf_data(csr.progbuf_data);
     csr0->o_mpu_region_we(o_mpu_region_we);
     csr0->o_mpu_region_idx(o_mpu_region_idx);
     csr0->o_mpu_region_addr(o_mpu_region_addr);
@@ -365,7 +362,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     dbg0->i_nrst(i_nrst);
     dbg0->i_dport_req_valid(i_dport_req_valid);
     dbg0->i_dport_write(i_dport_write);
-    dbg0->i_dport_region(i_dport_region);
     dbg0->i_dport_addr(i_dport_addr);
     dbg0->i_dport_wdata(i_dport_wdata);
     dbg0->o_dport_req_ready(o_dport_req_ready);
@@ -386,14 +382,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     dbg0->i_npc(w.e.npc);
     dbg0->i_e_call(w.e.call);
     dbg0->i_e_ret(w.e.ret);
-    dbg0->o_progbuf_ena(dbg.progbuf_ena);
-    dbg0->o_progbuf_pc(dbg.progbuf_pc);
-    dbg0->o_progbuf_data(dbg.progbuf_data);
-    dbg0->o_br_fetch_valid(dbg.br_fetch_valid);
-    dbg0->o_br_address_fetch(dbg.br_address_fetch);
-    dbg0->o_br_instr_fetch(dbg.br_instr_fetch);
-    dbg0->o_flush_address(dbg.flush_address);
-    dbg0->o_flush_valid(dbg.flush_valid);
 
     trace0 = 0;
     if (tracer_ena) {
@@ -466,14 +454,13 @@ void Processor::comb() {
         wb_reg_wtag = w.w.wtag;
     }
 
-    o_flush_valid = w.e.flushi.read() || dbg.flush_valid.read()
-                || csr.break_event.read();
+    o_flush_valid = w.e.flushi.read() || csr.break_event.read();
     if (w.e.flushi.read() == 1) {
         o_flush_address = ~0ull;
     } else if (csr.break_event.read()) {
         o_flush_address = w.e.npc;
     } else {
-        o_flush_address = dbg.flush_address;
+        o_flush_address = 0;
     }
     o_data_flush_address = ~0ull;
     o_data_flush_valid = w.m.flushd;

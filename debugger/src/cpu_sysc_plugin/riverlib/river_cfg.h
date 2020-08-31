@@ -164,13 +164,14 @@ static const uint64_t CFG_NMI_STACK_OVERFLOW_ADDR   = 0x0080;
 static const uint64_t CFG_NMI_STACK_UNDERFLOW_ADDR  = 0x0088;
 
 /** Debug interface configuration: */
+static const int CFG_DPORT_ADDR_BITS        = 16;
 // Valid size 0..16
-static const int CFG_PROGBUF_REG_TOTAL = 16;
+static const int CFG_PROGBUF_REG_TOTAL      = 16;
 // Must be at least 2 to support RV64I
-static const int CFG_DATA_REG_TOTAL = 2;
+static const int CFG_DATA_REG_TOTAL         = 2;
 /** Number of elements each 2*CFG_ADDR_WIDTH in stack trace buffer: */
-static const int CFG_LOG2_STACK_TRACE_ADDR = 5;
-static const int STACK_TRACE_BUF_SIZE = 1 << CFG_LOG2_STACK_TRACE_ADDR;
+static const int CFG_LOG2_STACK_TRACE_ADDR  = 5;
+static const int STACK_TRACE_BUF_SIZE       = 1 << CFG_LOG2_STACK_TRACE_ADDR;
 
 enum EIsaType {
     ISA_R_type,

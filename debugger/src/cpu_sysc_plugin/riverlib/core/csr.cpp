@@ -61,6 +61,9 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     o_dbg_pc_write("o_dbg_pc_write"),
     o_dbg_pc("o_dbg_pc"),
     o_break_event("o_break_event"),
+    o_progbuf_ena("o_progbuf_ena"),
+    o_progbuf_pc("o_progbuf_pc"),
+    o_progbuf_data("o_progbuf_data"),
     o_mpu_region_we("o_mpu_region_we"),
     o_mpu_region_idx("o_mpu_region_idx"),
     o_mpu_region_addr("o_mpu_region_addr"),
@@ -143,6 +146,18 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << r.timer;
     sensitive << r.cycle_cnt;
     sensitive << r.executed_cnt;
+    sensitive << r.break_mode;
+    sensitive << r.halt;
+    sensitive << r.halt_cause;
+    sensitive << r.progbuf_ena;
+    sensitive << r.progbuf_data;
+    sensitive << r.progbuf_data_out;
+    sensitive << r.progbuf_data_pc;
+    sensitive << r.progbuf_data_npc;
+    sensitive << r.progbuf_err;
+    sensitive << r.stepping_mode;
+    sensitive << r.stepping_mode_cnt;
+    sensitive << r.ins_per_step;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -188,6 +203,9 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_dbg_pc_write, o_dbg_pc_write.name());
         sc_trace(o_vcd, o_dbg_pc, o_dbg_pc.name());
         sc_trace(o_vcd, o_break_event, o_break_event.name());
+        sc_trace(o_vcd, o_progbuf_ena, o_progbuf_ena.name());
+        sc_trace(o_vcd, o_progbuf_pc, o_progbuf_pc.name());
+        sc_trace(o_vcd, o_progbuf_data, o_progbuf_data.name());
         sc_trace(o_vcd, i_dport_ena, i_dport_ena.name());
         sc_trace(o_vcd, i_dport_write, i_dport_write.name());
         sc_trace(o_vcd, i_dport_addr, i_dport_addr.name());
@@ -228,6 +246,7 @@ void CsrRegs::comb() {
     bool v_cur_halt;
     bool v_req_halt;
     bool v_req_resume;
+    bool v_req_progbuf;
     bool v_clear_progbuferr;
 
     v = r;
@@ -238,6 +257,7 @@ void CsrRegs::comb() {
     v_cur_halt = 0;
     v_req_halt = 0;
     v_req_resume = 0;
+    v_req_progbuf = 0;
     v_clear_progbuferr = 0;
 
     if (i_wena.read() == 1) {
@@ -443,6 +463,13 @@ void CsrRegs::comb() {
         if (v_csr_wena) {
             v_req_halt = vb_csr_wdata[31];
             v_req_resume = vb_csr_wdata[30];
+            if (vb_csr_wdata[18] == 1) {
+                if (r.halt.read() == 1) {
+                    v_req_progbuf = 1;
+                } else {
+                    v.progbuf_err = PROGBUF_ERR_HALT_RESUME;
+                }
+            }
         }
         break;
     case CSR_insperstep:
@@ -458,6 +485,12 @@ void CsrRegs::comb() {
         }
         break;
     case CSR_progbuf:
+        if (v_csr_wena == 1) {
+            int tidx = vb_csr_wdata(35,32);
+            sc_biguint<CFG_PROGBUF_REG_TOTAL*32> t2 = r.progbuf_data;
+            t2(32*tidx+31, 32*tidx) = vb_csr_wdata(31,0);
+            v.progbuf_data = t2;
+        }
         break;
     case CSR_abstractcs:
         vb_rdata(28,24) = CFG_PROGBUF_REG_TOTAL;
@@ -465,7 +498,7 @@ void CsrRegs::comb() {
         vb_rdata(10,8) = r.progbuf_err;
         vb_rdata(3,0) = CFG_DATA_REG_TOTAL;
         if (v_csr_wena) {
-            v_clear_progbuferr = vb_csr_wdata[8];
+            v_clear_progbuferr = vb_csr_wdata[8];   // W1C err=1
         }
         break;
     case CSR_dcsr:
@@ -725,6 +758,16 @@ void CsrRegs::comb() {
             v.halt = 1;
             v.halt_cause = HALT_CAUSE_HALTREQ;
         }
+    } else if (v_req_progbuf == 1) {
+        v.progbuf_ena = 1;
+        v.progbuf_data_out = r.progbuf_data.read()(31,0).to_uint();
+        v.progbuf_data_pc = 0;
+        if (r.progbuf_data.read()(1,0).to_uint() == 0x3) {
+            v.progbuf_data_npc = 2;
+        } else {
+            v.progbuf_data_npc = 1;
+        }
+        v.halt = 0;
     } else if (v_req_resume == 1 && r.halt.read() == 1) {
         v.halt = 0;
     }
@@ -734,12 +777,12 @@ void CsrRegs::comb() {
     } else if (r.progbuf_ena.read() == 1) {
         if (i_ex_data_load_fault.read() == 1
             || i_ex_data_store_fault.read() == 1) {
-            v.progbuf_err = 3;
+            v.progbuf_err = PROGBUF_ERR_EXCEPTION;
         } else if (i_ex_unalign_store.read() == 1
                 || i_ex_unalign_load.read() == 1
                 || i_ex_mpu_store.read() == 1
                 || i_ex_mpu_load.read() == 1) {
-            v.progbuf_err = 5;
+            v.progbuf_err = PROGBUF_ERR_BUS;
         }
     }
 
@@ -761,6 +804,9 @@ void CsrRegs::comb() {
     o_mpu_region_addr = r.mpu_addr;
     o_mpu_region_mask = r.mpu_mask;
     o_mpu_region_flags = r.mpu_flags;
+    o_progbuf_ena = r.progbuf_ena;
+    o_progbuf_pc = r.progbuf_data_pc.read() << 1;
+    o_progbuf_data = r.progbuf_data_out;
     o_halt = r.halt | v_cur_halt;
 }
 

@@ -66,6 +66,9 @@ SC_MODULE(CsrRegs) {
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_dbg_pc;    // Writing value into pc register
 
     sc_out<bool> o_break_event;             // Breakpoint event to raise status flag in dport interfae
+    sc_out<bool> o_progbuf_ena;               // Execution from prog buffer
+    sc_out<sc_uint<32>> o_progbuf_pc;         // prog buffer instruction counter
+    sc_out<sc_uint<32>> o_progbuf_data;       // prog buffer instruction opcode
 
     sc_out<bool> o_mpu_region_we;
     sc_out<sc_uint<CFG_MPU_TBL_WIDTH>> o_mpu_region_idx;
@@ -187,7 +190,7 @@ private:
         iv.progbuf_data_out = 0;
         iv.progbuf_data_pc = 0;
         iv.progbuf_data_npc = 0;
-        iv.progbuf_err = 0;
+        iv.progbuf_err = PROGBUF_ERR_NONE;
         iv.stepping_mode = 0;
         iv.stepping_mode_cnt = 0;
         iv.ins_per_step = 1;

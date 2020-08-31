@@ -28,7 +28,6 @@ static const uint64_t REG_INVALID   = ~0ull;
 
 struct DebugPortTransactionType {
     bool write;
-    uint8_t region;
     uint16_t addr;
     uint32_t bytes;
     uint64_t wdata;

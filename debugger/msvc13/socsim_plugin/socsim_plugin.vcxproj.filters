@@ -49,6 +49,9 @@
     <ClCompile Include="..\..\src\common\debug\dsu_regs.cpp">
       <Filter>debug</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\common\debug\dmi_regs.cpp">
+      <Filter>debug</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -110,6 +113,9 @@
       <Filter>common\generic</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\common\debug\dsu_regs.h">
+      <Filter>debug</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\debug\dmi_regs.h">
       <Filter>debug</Filter>
     </ClInclude>
   </ItemGroup>

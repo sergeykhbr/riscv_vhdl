@@ -94,6 +94,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\common\attribute.cpp" />
     <ClCompile Include="..\..\src\common\autobuffer.cpp" />
+    <ClCompile Include="..\..\src\common\debug\dmi_regs.cpp" />
     <ClCompile Include="..\..\src\common\debug\dsu.cpp" />
     <ClCompile Include="..\..\src\common\debug\dsu_regs.cpp" />
     <ClCompile Include="..\..\src\common\debug\greth.cpp" />
@@ -119,6 +120,7 @@
     <ClInclude Include="..\..\src\common\api_types.h" />
     <ClInclude Include="..\..\src\common\attribute.h" />
     <ClInclude Include="..\..\src\common\autobuffer.h" />
+    <ClInclude Include="..\..\src\common\debug\dmi_regs.h" />
     <ClInclude Include="..\..\src\common\debug\dsu.h" />
     <ClInclude Include="..\..\src\common\debug\dsumap.h" />
     <ClInclude Include="..\..\src\common\debug\dsu_regs.h" />

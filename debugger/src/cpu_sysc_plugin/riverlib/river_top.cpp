@@ -44,7 +44,6 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     i_ext_irq("i_ext_irq"),
     i_dport_req_valid("i_dport_req_valid"),
     i_dport_write("i_dport_write"),
-    i_dport_region("i_dport_region"),
     i_dport_addr("i_dport_addr"),
     i_dport_wdata("i_dport_wdata"),
     o_dport_req_ready("o_dport_req_ready"),
@@ -88,7 +87,6 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     proc0->o_mpu_region_flags(wb_mpu_region_flags);
     proc0->i_dport_req_valid(i_dport_req_valid);
     proc0->i_dport_write(i_dport_write);
-    proc0->i_dport_region(i_dport_region);
     proc0->i_dport_addr(i_dport_addr);
     proc0->i_dport_wdata(i_dport_wdata);
     proc0->o_dport_req_ready(o_dport_req_ready);
@@ -207,7 +205,6 @@ void RiverTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(i_vcd, i_ext_irq, "i_ext_irq");
         sc_trace(i_vcd, i_dport_req_valid, "i_dport_req_valid");
         sc_trace(i_vcd, i_dport_write, "i_dport_write");
-        sc_trace(i_vcd, i_dport_region, "i_dport_region");
         sc_trace(i_vcd, i_dport_addr, "i_dport_addr");
         sc_trace(i_vcd, i_dport_wdata, "i_dport_wdata");
         sc_trace(i_vcd, i_dport_resp_ready, "i_dport_resp_ready");

@@ -268,7 +268,7 @@ class CpuGeneric : public IService,
     GenericNPCType dbgnpc_;
     CsrDebugStatusType dcsr_;
     GenericStatusType status_;
-    MappedReg64Type stepping_cnt_;
+    MappedReg64Type insperstep_;
     StepCounterType clock_cnt_;
     StepCounterType executed_cnt_;
     MappedReg64Type stackTraceCnt_;         // Hardware stack trace buffer

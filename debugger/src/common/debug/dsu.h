@@ -53,15 +53,12 @@ class DSU : public RegMemBankGeneric,
 
     void softReset(bool val);
     bool isCpuHalted(unsigned idx);
-    void haltCpu(unsigned idx);
-    void resumeCpu(unsigned idx);
 
     unsigned getCpuTotal() { return icpulist_.size(); }
     void setCpuContext(unsigned n);
     unsigned getCpuContext() { return hartsel_; }
 
- protected:
-    void nb_debug_write(unsigned hartid, uint8_t region, uint16_t addr, uint64_t wdata);
+    void nb_debug_write(unsigned hartid, uint16_t addr, uint64_t wdata);
 
  private:
     AttributeType cpu_;

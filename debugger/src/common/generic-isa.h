@@ -29,6 +29,19 @@ static const uint64_t EXT_SIGN_12 = 0xFFFFFFFFFFFFF000LL;
 static const uint64_t EXT_SIGN_16 = 0xFFFFFFFFFFFF0000LL;
 static const uint64_t EXT_SIGN_32 = 0xFFFFFFFF00000000LL;
 
+// CSR Run Control register
+union CrGenericRuncontrolType {
+    uint64_t val;
+    uint8_t u8[8];
+    struct bits_type {
+        uint64_t rsrv17_0 :  18;        // [17:0]
+        uint64_t req_progbuf : 1;       // [18] Exec. program from progbuf request
+        uint64_t rsrv29_19 :  11;       // [29:19]
+        uint64_t req_resume : 1;        // [30] Exec. program from progbuf request
+        uint64_t req_halt : 1;          // [31] Exec. program from progbuf request
+        uint64_t rsvh : 32;             // [63:32]
+    } bits;
+};
 
 /**
  * @name Use RISC-V CSR registers mapping for all platforms: ARM, Leon3, HC08 etc.
@@ -121,6 +134,13 @@ static const uint64_t HALT_CAUSE_HALTREQ      = 3;  // halt request via debug in
 static const uint64_t HALT_CAUSE_STEP         = 4;  // step done
 static const uint64_t HALT_CAUSE_RESETHALTREQ = 5;  // not implemented
 
+static const uint64_t PROGBUF_ERR_NONE = 0;         // no error
+static const uint64_t PROGBUF_ERR_BUSY = 1;         // abstract command in progress
+static const uint64_t PROGBUF_ERR_NOT_SUPPORTED = 2;// Request command not supported
+static const uint64_t PROGBUF_ERR_EXCEPTION = 3;    // Exception occurs while executing progbuf
+static const uint64_t PROGBUF_ERR_HALT_RESUME = 4;  // Command cannot be executed because of wrong CPU state
+static const uint64_t PROGBUF_ERR_BUS = 5;          // Bus error occurs
+static const uint64_t PROGBUF_ERR_OTHER = 7;        // Other reason
 
 }  // namespace debugger
 

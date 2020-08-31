@@ -50,11 +50,11 @@ int CmdHalt::isValid(AttributeType *args) {
 void CmdHalt::exec(AttributeType *args, AttributeType *res) {
     res->attr_free();
     res->make_nil();
-    Reg64Type t1;
+    CrGenericRuncontrolType runctrl;
     uint64_t addr_dmcontrol = DSUREGBASE(csr[CSR_runcontrol]);
-    t1.val = 0;
-    t1.bits.b31 = 1;        // haltreq
-    tap_->write(addr_dmcontrol, 8, t1.buf);
+    runctrl.val = 0;
+    runctrl.bits.req_halt = 1;
+    tap_->write(addr_dmcontrol, 8, runctrl.u8);
 }
 
 }  // namespace debugger

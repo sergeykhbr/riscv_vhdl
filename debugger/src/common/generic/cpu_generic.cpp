@@ -27,7 +27,7 @@ CpuGeneric::CpuGeneric(const char *name)
     dbgnpc_(this, "npc", DSUREG(csr[CSR_dpc])),
     dcsr_(this, "dcsr", DSUREG(csr[CSR_dcsr])),
     status_(this, "status", DSUREG(csr[CSR_runcontrol])),
-    stepping_cnt_(this, "stepping_cnt", DSUREG(udbg.v.stepping_mode_steps)),
+    insperstep_(this, "insperstep", DSUREG(csr[CSR_insperstep])),
     clock_cnt_(this, "clock_cnt", DSUREG(csr[CSR_cycle])),
     executed_cnt_(this, "executed_cnt", DSUREG(csr[CSR_insret])),
     stackTraceCnt_(this, "stack_trace_cnt", DSUREG(ureg.v.stack_trace_cnt)),
@@ -469,7 +469,7 @@ void CpuGeneric::step() {
         RISCV_error("CPU is turned-off", 0);
         return;
     }
-    hw_stepping_break_ = step_cnt_ + stepping_cnt_.getValue().val;
+    hw_stepping_break_ = step_cnt_ + insperstep_.getValue().val;
     estate_ = CORE_Stepping;
 }
 
@@ -553,7 +553,7 @@ void CpuGeneric::updateDebugPort() {
         tr.action = MemAction_Read;
         tr.rpayload.b64[0] = 0;
     }
-    tr.addr = (static_cast<uint64_t>(trans->region) << 15) | trans->addr;
+    tr.addr = static_cast<uint64_t>(trans->addr) << 3;
     idbgbus_->b_transport(&tr);
 
     trans->rdata = tr.rpayload.b64[0];
@@ -639,12 +639,12 @@ uint64_t CsrDebugStatusType::aboutToWrite(uint64_t new_val) {
 }
 
 uint64_t GenericStatusType::aboutToWrite(uint64_t new_val) {
-    Reg64Type ctrl;
+    CrGenericRuncontrolType runctrl;
     CpuGeneric *pcpu = static_cast<CpuGeneric *>(parent_);
-    ctrl.val = new_val;
-    if (ctrl.bits.b31) {            // halt request
+    runctrl.val = new_val;
+    if (runctrl.bits.req_halt) {
         pcpu->halt(HaltExternal, "halted from DSU");
-    } else if (ctrl.bits.b30) {     // resume request
+    } else if (runctrl.bits.req_resume) {
         pcpu->go();
     }
     return new_val;

@@ -28,7 +28,6 @@ DSU::DSU(const char *name) :
     registerAttribute("CPU", &cpu_);
     icpulist_.make_list(0);
     RISCV_event_create(&nb_event_, "DSU_event_nb");
-
 }
 
 DSU::~DSU() {
@@ -60,14 +59,12 @@ void DSU::nb_response_debug_port(DebugPortTransactionType *trans) {
     RISCV_event_set(&nb_event_);
 }
 
-void DSU::nb_debug_write(unsigned hartid, uint8_t region, uint16_t addr,
-                                  uint64_t wdata) {
+void DSU::nb_debug_write(unsigned hartid, uint16_t addr, uint64_t wdata) {
     if (hartid >= getCpuTotal()) {
         RISCV_error("Debug Access index out of range %d", hartid);
         return;
     }
     ICpuGeneric *icpu = static_cast<ICpuGeneric *>(icpulist_[hartid].to_iface());
-    nb_trans_.region = region;
     nb_trans_.addr = addr;
     nb_trans_.wdata = wdata;
     nb_trans_.write = 1;
@@ -101,14 +98,6 @@ void DSU::softReset(bool val) {
     }
 }
 
-void DSU::haltCpu(unsigned idx) {
-    nb_debug_write(idx, 2, 0x0, 0x1);   // control register halt = 1
-}
-
-void DSU::resumeCpu(unsigned idx) {
-    nb_debug_write(idx, 2, 0x0, 0x0);
-}
-
 void DSU::setCpuContext(unsigned n) {
     if (n >= icpulist_.size()) {
         hartsel_ = icpulist_.size();
@@ -117,9 +106,7 @@ void DSU::setCpuContext(unsigned n) {
     }
     ICpuGeneric *pcpu = static_cast<ICpuGeneric *>(icpulist_[n].to_iface());
     hartsel_ = n;
-    csr_region_.setCpu(pcpu);
-    reg_region_.setCpu(pcpu);
-    dbg_region_.setCpu(pcpu);
+    dport_region_.setCpu(pcpu);
 }
 
 bool DSU::isCpuHalted(unsigned idx) {

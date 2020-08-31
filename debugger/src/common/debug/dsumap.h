@@ -43,9 +43,7 @@ struct DsuMapType {
     union udbg_type {
         uint8_t buf[1 << (12 + 3)];
         struct debug_region_type {
-            uint64_t reserved_runcontrol;      // 0x0000
-            uint64_t stepping_mode_steps;   // 0x0008
-            uint64_t reserved_0x10_0x18[2];             // 0x0010, 0x0018
+            uint64_t reserved_0x00_0x18[4];             // 0x0000..0x0018
             union breakpoint_control_reg {
                 uint64_t val;
                 struct {

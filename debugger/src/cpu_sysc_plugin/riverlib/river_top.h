@@ -54,8 +54,7 @@ SC_MODULE(RiverTop) {
     // Debug interface
     sc_in<bool> i_dport_req_valid;                      // Debug access from DSU is valid
     sc_in<bool> i_dport_write;                          // Write command flag
-    sc_in<sc_uint<2>> i_dport_region;                   // Registers region ID: 0=CSR; 1=IREGS; 2=Control
-    sc_in<sc_uint<12>> i_dport_addr;                    // Register idx
+    sc_in<sc_uint<CFG_DPORT_ADDR_BITS>> i_dport_addr;   // dport address
     sc_in<sc_uint<RISCV_ARCH>> i_dport_wdata;           // Write value
     sc_out<bool> o_dport_req_ready;
     sc_in<bool> i_dport_resp_ready;                     // ready to accepd response
