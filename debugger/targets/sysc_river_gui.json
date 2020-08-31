@@ -130,6 +130,15 @@
                 ['Bus','axi0'],
                 ['Transport','udpboard']
                 ]}]},
+    {'Class':'CpuMonitorClass','Instances':[
+          {'Name':'cpumon0','Attr':[
+                ['ObjDescription','This object is polling DMI haltsum0 register and detects halted CPU.
+                                  Main purpose of this polling to add breakpoins on resume and remove
+                                  them on halt events'],
+                ['LogLevel',1],
+                ['PollingMs',100],
+                ['CmdExecutor','cmdexec0']
+                ]}]},
     {'Class':'CpuRiscV_RTLClass','Instances':[
           {'Name':'core0','Attr':[
                 ['LogLevel',4],

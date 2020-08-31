@@ -51,7 +51,6 @@ SOURCES = \
 	async_tqueue \
 	gui_plugin \
 	qt_wrapper \
-	ebreakhandler \
 	DbgMainWindow \
 	MdiAreaWidget \
 	ButtonGenWidget \

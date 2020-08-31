@@ -62,14 +62,14 @@ class ArmSourceService : public IService,
                        AttributeType *asmlist);
 
     virtual void registerBreakpoint(uint64_t addr, uint64_t flags,
-                                    uint64_t instr);
+                                    uint32_t instr, uint32_t opcode,
+                                    uint32_t oplen);
 
-    virtual int unregisterBreakpoint(uint64_t addr, uint64_t *flags,
-                                    uint64_t *instr);
+    virtual int unregisterBreakpoint(uint64_t addr);
 
     virtual void getBreakpointList(AttributeType *list);
 
-    virtual bool isBreakpoint(uint64_t addr, AttributeType *outbr);
+    virtual bool isBreakpoint(uint64_t addr);
 
  private:
     int parseUndefinedInstruction(uint64_t pc, uint32_t instr,

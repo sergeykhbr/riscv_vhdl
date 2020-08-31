@@ -132,8 +132,9 @@ void GuiPlugin::externalCommand(AttributeType *req) {
     ui_->externalCommand(req);
 }
 
-void GuiPlugin::hapTriggered(IFace *isrc, EHapType type, 
-                                  const char *descr) {
+void GuiPlugin::hapTriggered(EHapType type,
+                             uint64_t param,
+                             const char *descr) {
     RISCV_event_set(&config_done_);
 }
 

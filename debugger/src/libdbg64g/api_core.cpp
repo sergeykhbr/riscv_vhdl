@@ -20,6 +20,7 @@
 #include "services/debug/serial_dbglink.h"
 #include "services/debug/udp_dbglink.h"
 #include "services/debug/edcl.h"
+#include "services/debug/cpumonitor.h"
 #include "services/elfloader/elfreader.h"
 #include "services/exec/cmdexec.h"
 #include "services/mem/memlut.h"
@@ -78,6 +79,7 @@ extern "C" int RISCV_init() {
     REGISTER_CLASS_IDX(EdclService, 12);
     REGISTER_CLASS_IDX(RegMemorySim, 13);
     REGISTER_CLASS_IDX(DpiClient, 14);
+    REGISTER_CLASS_IDX(CpuMonitor, 15);
 
     pcore_->load_plugins();
     return 0;
@@ -115,8 +117,7 @@ extern "C" int RISCV_set_configuration(AttributeType *cfg) {
     "  Licensed under the Apache License, Version 2.0.\n"
     "******************************************************************");
 
-    pcore_->triggerHap(getInterface(IFACE_SERVICE), 
-                      HAP_ConfigDone,
+    pcore_->triggerHap(HAP_ConfigDone, 0,
                       "Initial config done");
     return 0;
 }
@@ -137,9 +138,9 @@ extern "C" void RISCV_register_hap(IFace *ihap) {
     pcore_->registerHap(ihap);
 }
 
-extern "C" void RISCV_trigger_hap(IFace *isrc, int type, 
+extern "C" void RISCV_trigger_hap(int type, uint64_t param,
                                   const char *descr) {
-    pcore_->triggerHap(isrc, type, descr);
+    pcore_->triggerHap(type, param, descr);
 }
 
 extern "C" IFace *RISCV_get_class(const char *name) {
@@ -213,8 +214,8 @@ static thread_return_t safe_exit_thread(void *args) {
         printf("Stopped\n");
     }
 
-    pcore_->triggerHap(getInterface(IFACE_SERVICE),
-                       HAP_BreakSimulation,
+    pcore_->triggerHap(HAP_BreakSimulation,
+                       0,
                        "Exiting");
     printf("All threads were stopped!\n");
     pcore_->shutdown();

@@ -42,7 +42,8 @@ class UdpService : public IService,
     virtual int readData(const uint8_t *buf, int maxlen);
 
     /** IHap */
-    virtual void hapTriggered(IFace *isrc, EHapType type, const char *descr);
+    virtual void hapTriggered(EHapType type, uint64_t param,
+                              const char *descr);
 
  protected:
     int createDatagramSocket();

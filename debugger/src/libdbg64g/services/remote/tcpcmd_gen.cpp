@@ -78,8 +78,9 @@ void TcpCommandsGen::setPlatformConfig(AttributeType *cfg) {
     platformConfig_ = *cfg;
 }
 
-void TcpCommandsGen::hapTriggered(IFace *isrc, EHapType type,
-                                const char *descr) {
+void TcpCommandsGen::hapTriggered(EHapType type,
+                                  uint64_t param,
+                                  const char *descr) {
     if (type == HAP_Halt) {
         RISCV_event_set(&eventHalt_);
     } else if (type == HAP_CpuTurnON || type == HAP_CpuTurnOFF) {

@@ -43,7 +43,8 @@ public:
     virtual void predeleteService();
 
     /** IHap */
-    virtual void hapTriggered(IFace *isrc, EHapType type, const char *descr);
+    virtual void hapTriggered(EHapType type, uint64_t param,
+                              const char *descr);
 
     /** IRawListener (default stream) */
     virtual int updateData(const char *buf, int buflen);

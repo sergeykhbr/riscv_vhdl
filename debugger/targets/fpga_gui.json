@@ -66,6 +66,15 @@
                 ['LogFile','uart0.log'],
                 ['ComPortName','COM3'],
                 ['ComPortSpeed',115200]]}]},
+    {'Class':'CpuMonitorClass','Instances':[
+          {'Name':'cpumon0','Attr':[
+                ['ObjDescription','This object is polling DMI haltsum0 register and detects halted CPU.
+                                  Main purpose of this polling to add breakpoins on resume and remove
+                                  them on halt events'],
+                ['LogLevel',1],
+                ['PollingMs',100],
+                ['CmdExecutor','cmdexec0']
+                ]}]},
     {'Class':'CpuStubRiscVFpgaClass','Instances':[
           {'Name':'cpustub0','Attr':[
                 ['CmdExecutor','cmdexec0'],

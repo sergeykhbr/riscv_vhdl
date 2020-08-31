@@ -167,13 +167,18 @@ int ArmSourceService::symbol2Address(const char *name, uint64_t *addr) {
     return -1;
 }
 
-void ArmSourceService::registerBreakpoint(uint64_t addr, uint64_t flags,
-                                       uint64_t instr) {
+void ArmSourceService::registerBreakpoint(uint64_t addr,
+                                          uint64_t flags,
+                                          uint32_t instr,
+                                          uint32_t opcode,
+                                          uint32_t oplen) {
     AttributeType item;
     item.make_list(BrkList_Total);
     item[BrkList_address].make_uint64(addr);
     item[BrkList_flags].make_uint64(flags);
     item[BrkList_instr].make_uint64(instr);
+    item[BrkList_opcode].make_uint64(opcode);
+    item[BrkList_oplen].make_int64(oplen);
 
     bool not_found = true;
     for (unsigned i = 0; i < brList_.size(); i++) {
@@ -187,13 +192,10 @@ void ArmSourceService::registerBreakpoint(uint64_t addr, uint64_t flags,
     }
 }
 
-int ArmSourceService::unregisterBreakpoint(uint64_t addr, uint64_t *flags,
-                                       uint64_t *instr) {
+int ArmSourceService::unregisterBreakpoint(uint64_t addr) {
     for (unsigned i = 0; i < brList_.size(); i++) {
         AttributeType &br = brList_[i];
         if (addr == br[BrkList_address].to_uint64()) {
-            *flags = br[BrkList_flags].to_uint64();
-            *instr = br[BrkList_instr].to_uint64();
             brList_.remove_from_list(i);
             return 0;
         }
@@ -218,11 +220,10 @@ void ArmSourceService::getBreakpointList(AttributeType *list) {
     }
 }
 
-bool ArmSourceService::isBreakpoint(uint64_t addr, AttributeType *outbr) {
+bool ArmSourceService::isBreakpoint(uint64_t addr) {
     for (unsigned i = 0; i < brList_.size(); i++) {
         uint64_t bradr = brList_[i][BrkList_address].to_uint64();
         if (addr == bradr) {
-            *outbr = brList_[i];
             return true;
         }
     }
@@ -293,7 +294,7 @@ void ArmSourceService::disasm(uint64_t pc,
     }
     uint8_t *data = idata->data();
 
-    AttributeType asm_item, symb_item, info, brpoint;
+    AttributeType asm_item, symb_item, info;
     asm_item.make_list(ASM_Total);
     symb_item.make_list(3);
     asm_item[ASM_list_type].make_int64(AsmList_disasm);
@@ -316,11 +317,8 @@ void ArmSourceService::disasm(uint64_t pc,
         asm_item[ASM_breakpoint].make_boolean(false);
         asm_item[ASM_label].make_string("");
 
-        if (isBreakpoint(pc + off, &brpoint)) {
+        if (isBreakpoint(pc + off)) {
             asm_item[ASM_breakpoint].make_boolean(true);
-            if (!(brpoint[BrkList_flags].to_uint64() & BreakFlag_HW)) {
-                code.val = brpoint[BrkList_instr].to_uint32();
-            }
         }
         codesz = disasm(pc + off,
                         code.buf,

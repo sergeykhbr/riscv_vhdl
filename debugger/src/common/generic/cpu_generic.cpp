@@ -190,8 +190,9 @@ void CpuGeneric::postinitService() {
     }
 }
 
-void CpuGeneric::hapTriggered(IFace *isrc, EHapType type,
-                                       const char *descr) {
+void CpuGeneric::hapTriggered(EHapType type,
+                              uint64_t param,
+                              const char *descr) {
     RISCV_event_set(&eventConfigDone_);
 }
 
@@ -484,6 +485,7 @@ void CpuGeneric::halt(EHaltCause cause, const char *descr) {
     if (cause != HaltDoNotChange) {
         dcsr_.setHaltCause(cause);
     }
+
     if (!bytetot) {
         bytetot = 1;
     }
@@ -504,7 +506,6 @@ void CpuGeneric::halt(EHaltCause cause, const char *descr) {
                        getPC(), strop, descr);
     }
     estate_ = CORE_Halted;
-    RISCV_trigger_hap(getInterface(IFACE_SERVICE), HAP_Halt, "Descr");
 }
 
 void CpuGeneric::power(EPowerAction onoff) {
@@ -515,13 +516,11 @@ void CpuGeneric::power(EPowerAction onoff) {
         } else {
             estate_ = CORE_OFF;
         }
-        RISCV_trigger_hap(static_cast<IService *>(this),
-                            HAP_CpuTurnOFF, "CPU Turned OFF");
+        RISCV_trigger_hap(HAP_CpuTurnOFF, 0, "CPU Turned OFF");
     } else if (onoff == POWER_ON && estate_ == CORE_OFF) {
         // Turn ON:
         estate_ = CORE_Normal;
-        RISCV_trigger_hap(static_cast<IService *>(this),
-                            HAP_CpuTurnON, "CPU Turned ON");
+        RISCV_trigger_hap(HAP_CpuTurnON, 0, "CPU Turned ON");
     }
 }
 

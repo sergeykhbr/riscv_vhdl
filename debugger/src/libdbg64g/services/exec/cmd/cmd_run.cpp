@@ -17,6 +17,7 @@
 #include "cmd_run.h"
 #include "debug/dsumap.h"
 #include <generic-isa.h>
+#include <ihap.h>
 
 namespace debugger {
 
@@ -53,6 +54,8 @@ void CmdRun::exec(AttributeType *args, AttributeType *res) {
     res->make_nil();
     CrGenericRuncontrolType runctrl;
     uint64_t addr_runcontrol = DSUREGBASE(csr[CSR_runcontrol]);
+
+    RISCV_trigger_hap(HAP_Resume, 0, "Resume command received");
 
     if (args->size() == 1) {
         runctrl.val = 0;

@@ -38,7 +38,8 @@ class CpuCortex_Functional : public CpuGeneric,
     virtual void predeleteService();
 
     /** IHap */
-    virtual void hapTriggered(IFace *isrc, EHapType type, const char *descr);
+    virtual void hapTriggered(EHapType type, uint64_t param,
+                              const char *descr);
 
     /** IResetListener interface */
     virtual void reset(IFace *isource);

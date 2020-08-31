@@ -14,12 +14,16 @@
  *  limitations under the License.
  */
 
+#include <generic-isa.h>
 #include "cmd_br_generic.h"
 #include "debug/dsumap.h"
+#include "debug/dmi_regs.h"
 
 namespace debugger {
 
-CmdBrGeneric::CmdBrGeneric(ITap *tap) : ICommand ("br", tap) {
+CmdBrGeneric::CmdBrGeneric(ITap *tap) :
+    ICommand ("br", tap),
+    IHap(HAP_Halt) {
 
     briefDescr_.make_string("Add or remove breakpoint.");
     detailedDescr_.make_string(
@@ -53,6 +57,12 @@ CmdBrGeneric::CmdBrGeneric(ITap *tap) : ICommand ("br", tap) {
         isrc_ = static_cast<ISourceCode *>(
                             iserv->getInterface(IFACE_SOURCE_CODE));
     }
+
+    RISCV_event_create(&eventHalted_, "CmDrGeneric_halted");
+}
+
+CmdBrGeneric::~CmdBrGeneric() {
+    RISCV_event_close(&eventHalted_);
 }
 
 int CmdBrGeneric::isValid(AttributeType *args) {
@@ -82,9 +92,9 @@ void CmdBrGeneric::exec(AttributeType *args, AttributeType *res) {
         flags |= BreakFlag_HW;
     }
 
+    CrGenericRuncontrolType runctrl;
+    uint64_t addr_dmcontrol = DSUREGBASE(csr[CSR_runcontrol]);
     Reg64Type braddr;
-    Reg64Type brinstr;
-    uint32_t brlen = 4;
     AttributeType &bpadr = (*args)[2];
     if (bpadr.is_integer()) {
         braddr.val = bpadr.to_uint64();
@@ -97,42 +107,55 @@ void CmdBrGeneric::exec(AttributeType *args, AttributeType *res) {
         generateError(res, "Wrong command format");
         return;
     }
-    
-    if ((*args)[1].is_equal("add")) {
-        brinstr.val = 0;
-        tap_->read(braddr.val, 4, brinstr.buf);
 
-        isrc_->registerBreakpoint(braddr.val, flags, brinstr.val);
-        if (isHardware(flags)) {
-            uint64_t dsuaddr = DSUREGBASE(udbg.v.add_breakpoint);
-            tap_->write(dsuaddr, 8, braddr.buf);
-        } else {
-            getSwBreakpointInstr(&brinstr, &brlen);
-            tap_->write(braddr.val, brlen, brinstr.buf);
-
-            // flush address from ICache
-            uint64_t dsuaddr = DSUREGBASE(udbg.v.br_flush_addr);
-            tap_->write(dsuaddr, 8, braddr.buf);
-        }
-        return;
-    } 
-    
-    if ((*args)[1].is_equal("rm")) {
-        isrc_->unregisterBreakpoint(braddr.val, &flags, &brinstr.val);
-        if (isHardware(flags)) {
-            uint64_t dsuaddr = DSUREGBASE(udbg.v.remove_breakpoint);
-            tap_->write(dsuaddr, 8, braddr.buf);
-        } else {
-            // get restoring instruction length
-            Reg64Type t1 = brinstr;
-            getSwBreakpointInstr(&t1, &brlen);
-            tap_->write(braddr.val, brlen, brinstr.buf);
-
-            // flush address from ICache
-            uint64_t dsuaddr = DSUREGBASE(udbg.v.br_flush_addr);
-            tap_->write(dsuaddr, 8, braddr.buf);
-        }
+    // Add/remove breakpoints only when CPU is halted
+    bool resume = false;
+    RISCV_event_clear(&eventHalted_);
+    if (!isHalted()) {
+        runctrl.val = 0;
+        runctrl.bits.req_halt = 1;
+        tap_->write(addr_dmcontrol, 8, runctrl.u8);
+        
+        RISCV_event_wait(&eventHalted_);
+        resume = true;
     }
+    
+    // Update breakpoints list
+    if ((*args)[1].is_equal("add")) {
+        Reg64Type memdata;
+        Reg64Type brdata;
+        uint32_t brlen;
+
+        memdata.val = 0;
+        tap_->read(braddr.val, 4, memdata.buf);
+
+        brdata = memdata;
+        getSwBreakpointInstr(&brdata, &brlen);
+
+        isrc_->registerBreakpoint(braddr.val,
+                                  flags,
+                                  memdata.buf32[0],
+                                  brdata.buf32[0],
+                                  brlen);
+    } else if ((*args)[1].is_equal("rm")) {
+        isrc_->unregisterBreakpoint(braddr.val);
+    }
+
+    // Continue execution if cpu was running
+    if (resume) {
+        RISCV_trigger_hap(HAP_Resume, 0, "Resume command received");
+
+        runctrl.val = 0;
+        runctrl.bits.req_resume = 1;
+        tap_->write(addr_dmcontrol, 8, runctrl.u8);
+    }
+}
+
+bool CmdBrGeneric::isHalted() {
+    DMSTATUS_TYPE::ValueType dmstatus;
+    uint64_t addr_dmstatus = DSUREGBASE(ulocal.v.dmstatus);
+    tap_->read(addr_dmstatus, 8, dmstatus.u8);
+    return dmstatus.bits.allhalted ? true: false;
 }
 
 }  // namespace debugger

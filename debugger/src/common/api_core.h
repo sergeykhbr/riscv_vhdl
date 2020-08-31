@@ -100,7 +100,7 @@ void RISCV_register_hap(IFace *ihap);
  * @details This method allows to call all registered listeneres of a specific
  *          event from running Service.
  */
-void RISCV_trigger_hap(IFace *isrc, int type, const char *descr);
+void RISCV_trigger_hap(int type, uint64_t param, const char *descr);
 
 /**
  * @brief Get registred class interface by its name.

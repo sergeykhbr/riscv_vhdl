@@ -273,11 +273,6 @@ void RtlWrapper::sys_bus_proc() {
         static_cast<IClockListener *>(cb)->stepCallback(step_cnt);
     }
 
-    if (i_halted.read() && !r.halted.read()) {
-        IService *iserv = static_cast<IService *>(iparent_);
-        RISCV_trigger_hap(iserv, HAP_Halt, "Descr");
-    }
-
     w_interrupt = async_interrupt;
 
     w_resp_valid = 0;

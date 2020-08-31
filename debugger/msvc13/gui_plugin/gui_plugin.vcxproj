@@ -134,7 +134,6 @@
     <ClCompile Include="..\..\src\gui_plugin\GnssWidgets\StreetMapObject.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\gui_plugin.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\DbgMainWindow.cpp" />
-    <ClCompile Include="..\..\src\gui_plugin\MainWindow\ebreakhandler.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\MainWindow\MdiAreaWidget.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\ButtonGenWidget.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\DemoM4Widget.cpp" />
@@ -181,7 +180,6 @@
     <ClInclude Include="..\..\src\gui_plugin\gui_plugin.h" />
     <ClInclude Include="..\..\src\gui_plugin\igui.h" />
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\DbgMainWindow.h" />
-    <ClInclude Include="..\..\src\gui_plugin\MainWindow\ebreakhandler.h" />
     <ClInclude Include="..\..\src\gui_plugin\MainWindow\MdiAreaWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\ButtonGenWidget.h" />
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\DemoM4Widget.h" />

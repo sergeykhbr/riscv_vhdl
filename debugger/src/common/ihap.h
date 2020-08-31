@@ -19,6 +19,7 @@
 
 #include <iface.h>
 #include <stdarg.h>
+#include <inttypes.h>
 
 namespace debugger {
 
@@ -27,8 +28,10 @@ static const char *const IFACE_HAP = "IHap";
 enum EHapType {
     HAP_All,
     HAP_ConfigDone,
-    HAP_Halt,
-    HAP_BreakSimulation,
+    HAP_CpuContextChanged,  // command to switch CPU context was executed
+    HAP_Resume,             // received command to go
+    HAP_Halt,               // CPU halted
+    HAP_BreakSimulation,    // close and exit simulation
     HAP_CpuTurnON,
     HAP_CpuTurnOFF
 };
@@ -39,8 +42,9 @@ class IHap : public IFace {
 
     EHapType getType() { return type_; }
 
-    virtual void hapTriggered(IFace *isrc, EHapType type,
-                             const char *descr) = 0;
+    virtual void hapTriggered(EHapType type,
+                              uint64_t param,
+                              const char *descr) = 0;
 
  protected:
     EHapType type_;

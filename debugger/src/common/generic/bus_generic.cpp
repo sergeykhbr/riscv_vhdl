@@ -72,9 +72,9 @@ void BusGeneric::postinitService() {
 
 /** We need correctly mapped device list to compute hash, postinit
     doesn't allow to guarantee order of initialization. */
-void BusGeneric::hapTriggered(IFace *isrc,
-                                 EHapType type,
-                                 const char *descr) {
+void BusGeneric::hapTriggered(EHapType type,
+                              uint64_t param,
+                              const char *descr) {
     if (!useHash_.to_bool()) {
         return;
     }

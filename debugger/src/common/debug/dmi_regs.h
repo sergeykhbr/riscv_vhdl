@@ -28,6 +28,7 @@ class DMCONTROL_TYPE : public MappedReg64Type {
 
     union ValueType {
         uint64_t val;
+        uint8_t u8[8];
         struct {
             uint64_t dmactive : 1;          // [0] 1=module functioning normally
             uint64_t ndmreset : 1;          // [1] 1=system reset
@@ -53,6 +54,7 @@ class DMSTATUS_TYPE : public MappedReg64Type {
 
     union ValueType {
         uint64_t val;
+        uint8_t u8[8];
         struct {
             uint64_t version : 4;           // [3:0] 2=version 0.13
             uint64_t rsrv6_4 : 3;           // [6:4]

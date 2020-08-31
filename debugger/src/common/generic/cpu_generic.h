@@ -215,7 +215,8 @@ class CpuGeneric : public IService,
     virtual void reset(IFace *isource);
 
     /** IHap */
-    virtual void hapTriggered(IFace *isrc, EHapType type, const char *descr);
+    virtual void hapTriggered(EHapType type, uint64_t param,
+                              const char *descr);
 
  protected:
     /** IThread interface */
@@ -251,7 +252,7 @@ class CpuGeneric : public IService,
     ISourceCode *isrc_;
     ICoverageTracker *icovtracker_;
     ICmdExecutor *icmdexec_;
-    ITap *itap_;
+    ITap *itap_;                // used to register CPU specific commands
     IMemoryOperation *isysbus_;
     IMemoryOperation *idbgbus_;
     GenericInstruction *instr_;

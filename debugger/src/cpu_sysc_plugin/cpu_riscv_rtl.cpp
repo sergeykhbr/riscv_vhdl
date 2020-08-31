@@ -232,7 +232,8 @@ void CpuRiscV_RTL::deleteSystemC() {
     }
 }
 
-void CpuRiscV_RTL::hapTriggered(IFace *isrc, EHapType type,
+void CpuRiscV_RTL::hapTriggered(EHapType type,
+                                uint64_t param,
                                 const char *descr) {
     RISCV_event_set(&config_done_);
 }

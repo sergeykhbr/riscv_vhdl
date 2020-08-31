@@ -69,7 +69,8 @@ void CpuCortex_Functional::predeleteService() {
 }
 
 /** HAP_ConfigDone */
-void CpuCortex_Functional::hapTriggered(IFace *isrc, EHapType type,
+void CpuCortex_Functional::hapTriggered(EHapType type,
+                                        uint64_t param,
                                         const char *descr) {
     AttributeType pwrlist;
     IPower *ipwr;
@@ -79,7 +80,7 @@ void CpuCortex_Functional::hapTriggered(IFace *isrc, EHapType type,
         ipwr->power(POWER_ON);
     }
 
-    CpuGeneric::hapTriggered(isrc, type, descr);
+    CpuGeneric::hapTriggered(type, param, descr);
 }
 
 unsigned CpuCortex_Functional::addSupportedInstruction(

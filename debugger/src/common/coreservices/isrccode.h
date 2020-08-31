@@ -42,8 +42,10 @@ enum ESymbolInfoListItem {
 
 enum EBreakList {
     BrkList_address,
-    BrkList_flags,
-    BrkList_instr,
+    BrkList_flags,  // breakpoint type
+    BrkList_instr,  // original instruction opcode
+    BrkList_opcode, // sw breakpoint instruction opcode
+    BrkList_oplen,  // breakpoint opcode length
     BrkList_Total
 };
 
@@ -109,19 +111,19 @@ class ISourceCode : public IFace {
      *                  won't be modified.
      * @param[in] hw    Breakpoint flags
      * @param[in] instr Original opcode before EBREAK instruction injection.
+     * @param[in] opcode Software breakpoint opcode
+     * @param[in] oplen Original opcode length, typical 2 or 4 bytes.
      */
     virtual void registerBreakpoint(uint64_t addr, uint64_t flags,
-                                    uint64_t instr) = 0;
+                                    uint32_t instr, uint32_t opcode,
+                                    uint32_t oplen) = 0;
 
     /** Unregister breakpoint at specified address.
      *
      * @param[in]  addr  Breakpoint location
-     * @param[out] flags Breakpoint flags.
-     * @param[out] instr Original opcode rewriten by EBREAK instruction.
      * @return 0 if no errors
      */
-    virtual int unregisterBreakpoint(uint64_t addr, uint64_t *flags,
-                                    uint64_t *instr) = 0;
+    virtual int unregisterBreakpoint(uint64_t addr) = 0;
 
     /** Get list of breakpoints.
      *
@@ -130,7 +132,7 @@ class ISourceCode : public IFace {
     virtual void getBreakpointList(AttributeType *list) = 0;
 
     /** Check specified address on breakpoint */
-    virtual bool isBreakpoint(uint64_t addr, AttributeType *outbr) = 0;
+    virtual bool isBreakpoint(uint64_t addr) = 0;
 };
 
 }  // namespace debugger

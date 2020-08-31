@@ -128,21 +128,11 @@ void ConsoleService::postinitService() {
 }
 
 void ConsoleService::predeleteService() {
-    if (isrc_) {
-        char stmp[128];
-        AttributeType brList, res;
-        isrc_->getBreakpointList(&brList);
-        for (unsigned i = 0; i < brList.size(); i++) {
-            const AttributeType &br = brList[i];
-            RISCV_sprintf(stmp, sizeof(stmp), "br rm 0x%" RV_PRI64 "x",
-                           br[BrkList_address].to_uint64());
-            iexec_->exec(stmp, &res, true);
-        }
-    }
     RISCV_remove_default_output(static_cast<IRawListener *>(this));
 }
 
-void ConsoleService::hapTriggered(IFace *isrc, EHapType type, 
+void ConsoleService::hapTriggered(EHapType type, 
+                                  uint64_t param,
                                   const char *descr) {
     RISCV_event_set(&config_done_);
 

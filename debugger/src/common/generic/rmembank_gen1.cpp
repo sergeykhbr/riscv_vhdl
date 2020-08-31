@@ -73,9 +73,9 @@ void RegMemBankGeneric::postinitService() {
 
 /** We need correctly mapped device list to compute hash, postinit
     doesn't allow to guarantee order of initialization. */
-void RegMemBankGeneric::hapTriggered(IFace *isrc,
-                                 EHapType type,
-                                 const char *descr) {
+void RegMemBankGeneric::hapTriggered(EHapType type,
+                                     uint64_t param,
+                                     const char *descr) {
     IMemoryOperation *imem;
     for (unsigned i = 0; i < imap_.size(); i++) {
         imem = static_cast<IMemoryOperation *>(imap_[i].to_iface());

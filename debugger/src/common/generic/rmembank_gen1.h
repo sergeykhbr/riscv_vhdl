@@ -41,7 +41,8 @@ class RegMemBankGeneric : public IService,
 
 
     /** IHap */
-    virtual void hapTriggered(IFace *isrc, EHapType type, const char *descr);
+    virtual void hapTriggered(EHapType type, uint64_t param,
+                              const char *descr);
 
  protected:
     /** Speed-optimized mapping */

@@ -17,23 +17,34 @@
 #ifndef __DEBUGGER_SRC_COMMON_DEBUG_CMD_BR_GENERIC_H__
 #define __DEBUGGER_SRC_COMMON_DEBUG_CMD_BR_GENERIC_H__
 
-#include "api_core.h"
-#include "iservice.h"
+#include <api_core.h>
+#include <iservice.h>
+#include <ihap.h>
 #include "coreservices/itap.h"
 #include "coreservices/icommand.h"
 #include "coreservices/isrccode.h"
 
 namespace debugger {
 
-class CmdBrGeneric : public ICommand  {
+class CmdBrGeneric : public ICommand,
+                     public IHap  {
  public:
     explicit CmdBrGeneric(ITap *tap);
+    virtual ~CmdBrGeneric();
 
     /** ICommand */
     virtual int isValid(AttributeType *args);
     virtual void exec(AttributeType *args, AttributeType *res);
 
+    /** IHap */
+    virtual void hapTriggered(EHapType type,
+                              uint64_t param,
+                              const char *descr) {
+        RISCV_event_set(&eventHalted_);
+    }
+
  protected:
+    virtual bool isHalted();
     virtual bool isHardware(uint64_t flags) {
         return (flags & BreakFlag_HW) ? true: false;
     }
@@ -41,6 +52,7 @@ class CmdBrGeneric : public ICommand  {
 
  protected:
     ISourceCode *isrc_;
+    event_def eventHalted_;
 };
 
 }  // namespace debugger

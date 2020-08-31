@@ -191,6 +191,9 @@
     <ClCompile Include="..\..\src\libdbg64g\services\remote\tcpcmd_gen.cpp">
       <Filter>Source Files\services\remote</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\debug\cpumonitor.cpp">
+      <Filter>Source Files\services\debug</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\attribute.h">
@@ -450,6 +453,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\common\generic-isa.h">
       <Filter>Source Files\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\debug\cpumonitor.h">
+      <Filter>Source Files\services\debug</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

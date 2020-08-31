@@ -74,8 +74,6 @@ DbgMainWindow::DbgMainWindow(IGui *igui) : QMainWindow() {
     
     setUnifiedTitleAndToolBarOnMac(true);
 
-    ebreak_ = new EBreakHandler(igui_);
-
     /** 
      * To use the following type in SIGNAL -> SLOT definitions 
      * we have to register them using qRegisterMetaType template
@@ -100,9 +98,6 @@ DbgMainWindow::DbgMainWindow(IGui *igui) : QMainWindow() {
 }
 
 DbgMainWindow::~DbgMainWindow() {
-    if (ebreak_) {
-        delete ebreak_;
-    }
     igui_->removeFromQueue(static_cast<IGuiCmdHandler *>(this));
 }
 
@@ -131,9 +126,6 @@ void DbgMainWindow::handleResponse(const char *cmd) {
         if ((actionRun_->isChecked() && halted)
             || (!actionRun_->isChecked() && !halted)) {
             emit signalTargetStateChanged(halted == 0);
-            if (halted && ebreak_) {
-                ebreak_->skip();
-            }
         }
     } else if (strcmp(cmd, cmdSteps_.to_string()) == 0) {
         double tsec =

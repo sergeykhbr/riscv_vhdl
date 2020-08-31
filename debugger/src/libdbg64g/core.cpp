@@ -315,13 +315,13 @@ void CoreService::unload_plugins() {
     }
 }
 
-void CoreService::triggerHap(IFace *isrc, int type, const char *descr) {
+void CoreService::triggerHap(int type, uint64_t param, const char *descr) {
     IHap *ihap;
     EHapType etype = static_cast<EHapType>(type);
     for (unsigned i = 0; i < listHap_.size(); i++) {
         ihap = static_cast<IHap *>(listHap_[i].to_iface());
         if (ihap->getType() == HAP_All || ihap->getType() == etype) {
-            ihap->hapTriggered(isrc, etype, descr);
+            ihap->hapTriggered(etype, param, descr);
         }
     }
 }

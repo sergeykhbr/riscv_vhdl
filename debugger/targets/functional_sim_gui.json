@@ -154,6 +154,15 @@
                 ['Bus','axi0'],
                 ['Transport','udpboard']
                 ]}]},
+    {'Class':'CpuMonitorClass','Instances':[
+          {'Name':'cpumon0','Attr':[
+                ['ObjDescription','This object is polling DMI haltsum0 register and detects halted CPU.
+                                  Main purpose of this polling to add breakpoins on resume and remove
+                                  them on halt events'],
+                ['LogLevel',1],
+                ['PollingMs',100],
+                ['CmdExecutor','cmdexec0']
+                ]}]},
     {'Class':'CpuRiver_FunctionalClass','Instances':[
           {'Name':'core0','Attr':[
                 ['Enable',true],
@@ -175,7 +184,7 @@
                 ['ResetVector',0x0000,'Initial intruction pointer value (config parameter)'],
                 ['GenerateTraceFile','','Specify file name to enable tracer'],
                 ['CacheBaseAddress',0x10000000],
-                ['CacheAddressMask',0x7ffff],
+                ['CacheAddressMask',1,0x7ffff],
                 ['ResetState','Halted', 'CPU state after reset signal is raised: Halted or OFF'],
                 ['ExceptionTable',['CFG_NMI_INSTR_UNALIGNED_ADDR',  0x0008,
                                    'CFG_NMI_INSTR_FAULT_ADDR',      0x0010,

@@ -72,7 +72,8 @@ void UdpService::postinitService() {
     }
 }
 
-void UdpService::hapTriggered(IFace *isrc, EHapType type,
+void UdpService::hapTriggered(EHapType type,
+                              uint64_t param,
                               const char *descr) {
     const AttributeType *glb = RISCV_get_global_settings();
     if ((*glb)["SimEnable"].to_bool()) {

@@ -18,7 +18,6 @@
 
 #include "api_core.h"   // MUST BE BEFORE QtWidgets.h or any other Qt header.
 #include "igui.h"
-#include "ebreakhandler.h"
 
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QMenu>
@@ -128,8 +127,6 @@ class DbgMainWindow : public QMainWindow,
     double stepToSecHz_;
     double simSecPrev_;
     uint64_t realMSecPrev_;
-
-    EBreakHandler *ebreak_;
 };
 
 }  // namespace debugger

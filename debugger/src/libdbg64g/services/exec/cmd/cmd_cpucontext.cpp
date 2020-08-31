@@ -14,8 +14,10 @@
  *  limitations under the License.
  */
 
+#include <ihap.h>
 #include "cmd_cpucontext.h"
 #include "debug/dsumap.h"
+#include "debug/dmi_regs.h"
 
 namespace debugger {
 
@@ -48,18 +50,24 @@ void CmdCpuContext::exec(AttributeType *args, AttributeType *res) {
     res->make_nil();
 
     uint64_t addr = DSUREGBASE(ulocal.v.dmcontrol);
-    Reg64Type t1;
+    DMCONTROL_TYPE::ValueType dmcontrol;
     uint64_t hartsel;
 
     if (args->size() == 1) {
-        tap_->read(addr, 8, t1.buf);
-        hartsel = (t1.val >> 6) & 0x3FF;    // hartselhi
-        hartsel = (hartsel << 10) | ((t1.val >> 16) & 0x3FF);   // hartsello
-        res->make_uint64(t1.val);
+        tap_->read(addr, 8, dmcontrol.u8);
+        hartsel = dmcontrol.bits.hartselhi;
+        hartsel = (hartsel << 10) | dmcontrol.bits.hartsello;
+        res->make_uint64(hartsel);
         return;
     }
-    t1.val = (*args)[1].to_uint64() << 16;      // hartsello
-    tap_->write(addr, 8, t1.buf);
+    hartsel = (*args)[1].to_uint64();
+    
+    dmcontrol.val =0;
+    dmcontrol.bits.hartsello = hartsel;
+    dmcontrol.bits.hartselhi = hartsel >> 10;
+    tap_->write(addr, 8, dmcontrol.u8);
+
+    RISCV_trigger_hap(HAP_CpuContextChanged, hartsel, "CPU context changed");
 }
 
 }  // namespace debugger

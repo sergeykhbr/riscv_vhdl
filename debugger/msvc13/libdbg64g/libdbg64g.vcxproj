@@ -102,6 +102,7 @@
     <ClCompile Include="..\..\src\libdbg64g\services\comport\com_win.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\console\autocompleter.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\console\console.cpp" />
+    <ClCompile Include="..\..\src\libdbg64g\services\debug\cpumonitor.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\debug\edcl.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\debug\serial_dbglink.cpp" />
     <ClCompile Include="..\..\src\libdbg64g\services\debug\udp_dbglink.cpp" />
@@ -188,6 +189,7 @@
     <ClInclude Include="..\..\src\libdbg64g\services\comport\comport.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\console\autocompleter.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\console\console.h" />
+    <ClInclude Include="..\..\src\libdbg64g\services\debug\cpumonitor.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\debug\edcl.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\debug\edcl_types.h" />
     <ClInclude Include="..\..\src\libdbg64g\services\debug\serial_dbglink.h" />

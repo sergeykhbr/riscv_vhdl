@@ -94,9 +94,6 @@
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\StackTraceWidget.cpp">
       <Filter>CpuWidget</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\gui_plugin\MainWindow\ebreakhandler.cpp">
-      <Filter>MainWindow</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\gui_plugin\GnssWidgets\StreetMapObject.cpp">
       <Filter>GnssWidgets</Filter>
     </ClCompile>
@@ -221,9 +218,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\StackTraceWidget.h">
       <Filter>CpuWidget</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\gui_plugin\MainWindow\ebreakhandler.h">
-      <Filter>MainWindow</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\gui_plugin\GnssWidgets\StreetMapObject.h">
       <Filter>GnssWidgets</Filter>
