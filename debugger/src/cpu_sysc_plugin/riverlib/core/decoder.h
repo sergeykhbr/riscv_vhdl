@@ -69,13 +69,15 @@ SC_MODULE(InstrDecoder) {
     sc_in<bool> i_instr_load_fault;             // fault instruction's address
     sc_in<bool> i_instr_executable;             // MPU flag
 
-    sc_out<sc_uint<6>> o_radr1;
-    sc_out<sc_uint<6>> o_radr2;
-    sc_out<sc_uint<6>> o_waddr;
-    sc_out<sc_uint<RISCV_ARCH>> o_imm;
+    sc_out<sc_uint<6>> o_radr1;                 // register bank address 1 (rs1)
+    sc_out<sc_uint<6>> o_radr2;                 // register bank address 2 (rs2)
+    sc_out<sc_uint<6>> o_waddr;                 // register bank output (rd)
+    sc_out<sc_uint<12>> o_csr_addr;             // CSR bank output
+    sc_out<sc_uint<RISCV_ARCH>> o_imm;          // immediate constant decoded from instruction
+    sc_in<bool> i_e_ready;                      // execute stage ready to accept next instruction
+    sc_in<bool> i_flush_pipeline;               // reset pipeline and cache
+    sc_in<bool> i_progbuf_ena;                  // executing from progbuf
 
-    sc_in<bool> i_e_ready;
-    sc_in<bool> i_e_fencei;
     sc_out<bool> o_valid;                       // Current output values are valid
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_pc;       // Current instruction pointer value
     sc_out<sc_uint<32>> o_instr;                // Current instruction value
@@ -92,6 +94,7 @@ SC_MODULE(InstrDecoder) {
     sc_out<bool> o_exception;
     sc_out<bool> o_instr_load_fault;            // fault instruction's address
     sc_out<bool> o_instr_executable;            // MPU flag
+    sc_out<bool> o_progbuf_ena;
 
     void comb();
     void registers();
@@ -124,8 +127,9 @@ private:
         sc_signal<sc_uint<6>> radr1;
         sc_signal<sc_uint<6>> radr2;
         sc_signal<sc_uint<6>> waddr;
+        sc_signal<sc_uint<12>> csr_addr;
         sc_signal<sc_uint<RISCV_ARCH>> imm;
-
+        sc_signal<bool> progbuf_ena;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
@@ -148,7 +152,9 @@ private:
         iv.radr1 = 0;
         iv.radr2 = 0;
         iv.waddr = 0;
+        iv.csr_addr = 0;
         iv.imm = 0;
+        iv.progbuf_ena = 0;
     }
 
     bool async_reset_;

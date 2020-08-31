@@ -30,6 +30,8 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     i_d_imm("i_d_imm"),
     i_d_pc("i_d_pc"),
     i_d_instr("i_d_instr"),
+    i_d_progbuf_ena("i_d_progbuf_ena"),
+    i_dbg_progbuf_ena("i_dbg_progbuf_ena"),
     i_wb_waddr("i_wb_waddr"),
     i_memop_store("i_memop_store"),
     i_memop_load("i_memop_load"),
@@ -57,10 +59,11 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     o_wdata("o_wdata"),
     o_wtag("o_wtag"),
     o_d_ready("o_d_ready"),
-    o_csr_addr("o_csr_addr"),
     o_csr_wena("o_csr_wena"),
     i_csr_rdata("i_csr_rdata"),
     o_csr_wdata("o_csr_wdata"),
+    i_mepc("i_mepc"),
+    i_uepc("i_uepc"),
     i_trap_valid("i_trap_valid"),
     i_trap_pc("i_trap_pc"),
     o_ex_npc("o_ex_npc"),
@@ -111,6 +114,8 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << i_d_imm;
     sensitive << i_d_pc;
     sensitive << i_d_instr;
+    sensitive << i_d_progbuf_ena;
+    sensitive << i_dbg_progbuf_ena;
     sensitive << i_wb_waddr;
     sensitive << i_memop_ready;
     sensitive << i_memop_store;
@@ -134,6 +139,8 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << i_rhazard2;
     sensitive << i_wtag;
     sensitive << i_csr_rdata;
+    sensitive << i_mepc;
+    sensitive << i_uepc;
     sensitive << i_trap_valid;
     sensitive << i_trap_pc;
     sensitive << i_flushd_end;
@@ -267,7 +274,6 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_waddr, o_waddr.name());
         sc_trace(o_vcd, o_wdata, o_wdata.name());
         sc_trace(o_vcd, o_d_ready, o_d_ready.name());
-        sc_trace(o_vcd, o_csr_addr, o_csr_addr.name());
         sc_trace(o_vcd, o_csr_wena, o_csr_wena.name());
         sc_trace(o_vcd, i_csr_rdata, i_csr_rdata.name());
         sc_trace(o_vcd, o_csr_wdata, o_csr_wdata.name());
@@ -325,7 +331,6 @@ void InstrExecute::comb() {
     bool v_mret;
     bool v_uret;
     bool v_csr_wena;
-    sc_uint<12> vb_csr_addr;
     sc_uint<RISCV_ARCH> vb_csr_wdata;
     sc_uint<RISCV_ARCH> vb_res;
     sc_uint<CFG_CPU_ADDR_BITS> vb_prog_npc;
@@ -363,11 +368,12 @@ void InstrExecute::comb() {
     bool v_wena;
     bool v_whazard;
     sc_uint<6> vb_waddr;
+    bool v_next_normal;
+    bool v_next_progbuf;
 
     v = r;
 
     v_csr_wena = 0;
-    vb_csr_addr = 0;
     vb_csr_wdata = 0;
     vb_res = 0;
     vb_off = 0;
@@ -431,8 +437,20 @@ void InstrExecute::comb() {
     v_hold_exec = w_hold_hazard || w_hold_memop || w_hold_multi
                 || r.hold_fencei.read();
 
+    v_next_normal = 0;
+    if (i_d_pc.read() == r.npc.read() && i_dbg_progbuf_ena.read() == 0
+        && i_d_progbuf_ena.read() == 0) {
+        v_next_normal = 1;
+    }
+
+    v_next_progbuf = 0;
+    if (i_d_pc.read() == r.progbuf_npc.read() && i_dbg_progbuf_ena.read() == 1
+        && i_d_progbuf_ena.read() == 1) {
+        v_next_progbuf = 1;
+    }
+
     w_next_ready = 0;
-    if (i_d_valid.read() == 1 && i_d_pc.read() == r.npc.read()
+    if (i_d_valid.read() == 1 && (v_next_normal|v_next_progbuf) == 1
         && v_hold_exec == 0) {
         w_next_ready = 1;
     }
@@ -474,6 +492,10 @@ void InstrExecute::comb() {
     } else if (i_memop_store) {
         vb_memop_addr = 
             vb_rdata1(CFG_CPU_ADDR_BITS-1, 0) + vb_off(CFG_CPU_ADDR_BITS-1, 0);
+    } else if ((wv[Instr_FENCE] || wv[Instr_FENCE_I]) == 1) {
+        vb_memop_addr = ~0ull;
+    } else if (wv[Instr_EBREAK] == 1) {
+        vb_memop_addr = i_d_pc.read();
     }
 
     w_exception_store = 0;
@@ -543,9 +565,9 @@ void InstrExecute::comb() {
         vb_prog_npc = vb_rdata1(CFG_CPU_ADDR_BITS-1, 0) + vb_rdata2(CFG_CPU_ADDR_BITS-1, 0);
         vb_prog_npc[0] = 0;
     } else if (wv[Instr_MRET].to_bool()) {
-        vb_prog_npc = i_csr_rdata;
+        vb_prog_npc = i_mepc;
     } else if (wv[Instr_URET].to_bool()) {
-        vb_prog_npc = i_csr_rdata;
+        vb_prog_npc = i_uepc;
     } else {
         vb_prog_npc = vb_npc_incr;
     }
@@ -614,43 +636,29 @@ void InstrExecute::comb() {
     } else if (wv[Instr_CSRRC]) {
         vb_res = i_csr_rdata;
         v_csr_wena = 1;
-        vb_csr_addr = vb_rdata2.range(11, 0);
         vb_csr_wdata = i_csr_rdata.read() & ~vb_rdata1;
     } else if (wv[Instr_CSRRCI]) {
         vb_res = i_csr_rdata;
         v_csr_wena = 1;
-        vb_csr_addr = vb_rdata2.range(11, 0);
         vb_csr_wdata(RISCV_ARCH-1, 5) = i_csr_rdata.read()(RISCV_ARCH-1, 5);
         vb_csr_wdata(4, 0) = i_csr_rdata.read()(4, 0) & ~i_d_radr1.read()(4, 0);  // zero-extending 5 to 64-bits
     } else if (wv[Instr_CSRRS]) {
         vb_res = i_csr_rdata;
         v_csr_wena = 1;
-        vb_csr_addr = vb_rdata2.range(11, 0);
         vb_csr_wdata = i_csr_rdata.read() | vb_rdata1;
     } else if (wv[Instr_CSRRSI]) {
         vb_res = i_csr_rdata;
         v_csr_wena = 1;
-        vb_csr_addr = vb_rdata2.range(11, 0);
         vb_csr_wdata(RISCV_ARCH-1, 5) = i_csr_rdata.read()(RISCV_ARCH-1, 5);
         vb_csr_wdata(4, 0) = i_csr_rdata.read()(4, 0) | i_d_radr1.read()(4, 0);  // zero-extending 5 to 64-bits
     } else if (wv[Instr_CSRRW]) {
         vb_res = i_csr_rdata;
         v_csr_wena = 1;
-        vb_csr_addr = vb_rdata2.range(11, 0);
         vb_csr_wdata = vb_rdata1;
     } else if (wv[Instr_CSRRWI]) {
         vb_res = i_csr_rdata;
         v_csr_wena = 1;
-        vb_csr_addr = vb_rdata2.range(11, 0);
         vb_csr_wdata(4, 0) = i_d_radr1.read()(4, 0);  // zero-extending 5 to 64-bits
-    } else if (wv[Instr_MRET].to_bool()) {
-        vb_res = vb_npc_incr;
-        v_csr_wena = 0;
-        vb_csr_addr = CSR_mepc;
-    } else if (wv[Instr_URET].to_bool()) {
-        vb_res = vb_npc_incr;
-        v_csr_wena = 0;
-        vb_csr_addr = CSR_uepc;
     }
 
 
@@ -662,9 +670,13 @@ void InstrExecute::comb() {
     if (w_next_ready == 1) {
         v.valid = 1;
 
-        v.pc = i_d_pc;
+        if (i_dbg_progbuf_ena.read() == 0) {
+            v.pc = i_d_pc;
+            v.npc = vb_npc;
+        } else {
+            v.progbuf_npc = vb_npc_incr;
+        }
         v.instr = i_d_instr;
-        v.npc = vb_npc;
         v.memop_load = i_memop_load;
         v.memop_sign_ext = i_memop_sign_ext;
         v.memop_store = i_memop_store;
@@ -682,6 +694,10 @@ void InstrExecute::comb() {
         v.ret = v_ret;
         v.flushd = v_fencei || v_fence;
         v.hold_fencei = v_fencei;
+    }
+
+    if (i_dbg_progbuf_ena.read() == 0) {
+        v.progbuf_npc = 0;
     }
 
     if (i_flushd_end.read() == 1) {
@@ -727,7 +743,6 @@ void InstrExecute::comb() {
     o_d_ready = !v_hold_exec;
 
     o_csr_wena = v_csr_wena && w_next_ready;
-    o_csr_addr = vb_csr_addr;
     o_csr_wdata = vb_csr_wdata;
     o_ex_npc = vb_prog_npc;
 

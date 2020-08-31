@@ -32,7 +32,10 @@ InstrFetch::InstrFetch(sc_module_name name_, bool async_reset) :
     i_mem_load_fault("i_mem_load_fault"),
     i_mem_executable("i_mem_executable"),
     o_mem_resp_ready("o_mem_resp_ready"),
-    i_e_fencei("i_e_fencei"),
+    i_flush_pipeline("i_flush_pipeline"),
+    i_progbuf_ena("i_progbuf_ena"),
+    i_progbuf_pc("i_progbuf_pc"),
+    i_progbuf_data("i_progbuf_data"),
     i_predict_npc("i_predict_npc"),
     o_mem_req_fire("o_mem_req_fire"),
     o_instr_load_fault("o_instr_load_fault"),
@@ -52,7 +55,10 @@ InstrFetch::InstrFetch(sc_module_name name_, bool async_reset) :
     sensitive << i_mem_data;
     sensitive << i_mem_load_fault;
     sensitive << i_mem_executable;
-    sensitive << i_e_fencei;
+    sensitive << i_flush_pipeline;
+    sensitive << i_progbuf_ena;
+    sensitive << i_progbuf_pc;
+    sensitive << i_progbuf_data;
     sensitive << i_predict_npc;
     sensitive << r.wait_resp;
     sensitive << r.resp_address;
@@ -73,6 +79,10 @@ void InstrFetch::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_mem_data, i_mem_data.name());
         sc_trace(o_vcd, i_mem_load_fault, i_mem_load_fault.name());
         sc_trace(o_vcd, i_mem_executable, i_mem_executable.name());
+        sc_trace(o_vcd, i_flush_pipeline, i_flush_pipeline.name());
+        sc_trace(o_vcd, i_progbuf_ena, i_progbuf_ena.name());
+        sc_trace(o_vcd, i_progbuf_pc, i_progbuf_pc.name());
+        sc_trace(o_vcd, i_progbuf_data, i_progbuf_data.name());
         sc_trace(o_vcd, o_mem_resp_ready, o_mem_resp_ready.name());
         sc_trace(o_vcd, i_predict_npc, i_predict_npc.name());
         sc_trace(o_vcd, i_pipeline_hold, i_pipeline_hold.name());
@@ -95,17 +105,19 @@ void InstrFetch::comb() {
     bool w_o_req_valid;
     bool w_o_req_fire;
     bool w_o_hold;
+    bool w_o_valid;
     sc_uint<CFG_CPU_ADDR_BITS> wb_o_pc;
     sc_uint<32> wb_o_instr;
 
     v = r;
 
     w_o_req_valid = !i_pipeline_hold.read()
-            & !(r.wait_resp.read() & !i_mem_data_valid.read());
+            & !(r.wait_resp.read() & !i_mem_data_valid.read())
+            & !i_progbuf_ena.read();
     w_o_req_fire =  i_mem_req_ready.read() && w_o_req_valid;
 
-    w_o_hold = !(r.wait_resp.read() && i_mem_data_valid.read());
-    
+    w_o_hold = !(r.wait_resp.read() && i_mem_data_valid.read())
+             & !i_progbuf_ena.read();
 
     // Debug last fetched instructions buffer:
     if (w_o_req_fire) {
@@ -121,13 +133,22 @@ void InstrFetch::comb() {
         v.instr_load_fault = i_mem_load_fault.read();
         v.instr_executable = i_mem_executable.read();
     }
-    if (i_e_fencei.read() == 1) {
+    if (i_flush_pipeline.read() == 1) {
         // Clear pipeline stage
         v.resp_address = ~0ull;
     }
-
     wb_o_pc = r.resp_address.read();
-    wb_o_instr = r.resp_data.read();
+
+    if (i_progbuf_ena.read() == 1) {
+        wb_o_instr = i_progbuf_data.read();
+        wb_o_pc    = i_progbuf_pc.read();
+    } else {
+        wb_o_instr = r.resp_data;
+        wb_o_instr = r.resp_data.read();
+    }
+    w_o_valid = (r.resp_valid.read() || i_progbuf_ena.read())
+            && !(i_pipeline_hold.read() || w_o_hold);
+
 
     if (!async_reset_ && !i_nrst.read()) {
         R_RESET(v);
@@ -138,7 +159,7 @@ void InstrFetch::comb() {
     o_mem_req_fire = w_o_req_fire;
     o_instr_load_fault = r.instr_load_fault;
     o_instr_executable = r.instr_executable;
-    o_valid = r.resp_valid.read() && !(i_pipeline_hold.read() || w_o_hold);
+    o_valid = w_o_valid;
     o_pc = wb_o_pc;
     o_instr = wb_o_instr;
     o_mem_resp_ready = r.wait_resp.read() && !i_pipeline_hold.read();

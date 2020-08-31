@@ -109,7 +109,10 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     fetch0->i_mem_load_fault(i_resp_ctrl_load_fault);
     fetch0->i_mem_executable(i_resp_ctrl_executable);
     fetch0->o_mem_resp_ready(o_resp_ctrl_ready);
-    fetch0->i_e_fencei(w.e.flushi);
+    fetch0->i_flush_pipeline(w_flush_pipeline);
+    fetch0->i_progbuf_ena(csr.progbuf_ena);
+    fetch0->i_progbuf_pc(csr.progbuf_pc);
+    fetch0->i_progbuf_data(csr.progbuf_data);
     fetch0->i_predict_npc(bp.npc);
     fetch0->o_mem_req_fire(w.f.req_fire);
     fetch0->o_instr_load_fault(w.f.instr_load_fault);
@@ -131,9 +134,11 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     dec0->o_radr1(w.d.radr1);
     dec0->o_radr2(w.d.radr2);
     dec0->o_waddr(w.d.waddr);
+    dec0->o_csr_addr(w.d.csr_addr),
     dec0->o_imm(w.d.imm);
     dec0->i_e_ready(w.e.d_ready);
-    dec0->i_e_fencei(w.e.flushi);
+    dec0->i_flush_pipeline(w_flush_pipeline);
+    dec0->i_progbuf_ena(w_flush_pipeline);
     dec0->o_valid(w.d.instr_valid);
     dec0->o_pc(w.d.pc);
     dec0->o_instr(w.d.instr);
@@ -150,6 +155,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     dec0->o_exception(w.d.exception);
     dec0->o_instr_load_fault(w.d.instr_load_fault);
     dec0->o_instr_executable(w.d.instr_executable);
+    dec0->o_progbuf_ena(w.d.progbuf_ena);
 
     exec0 = new InstrExecute("exec0", async_reset, fpu_ena);
     exec0->i_clk(i_clk);
@@ -157,6 +163,8 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->i_d_valid(w.d.instr_valid);
     exec0->i_d_pc(w.d.pc);
     exec0->i_d_instr(w.d.instr);
+    exec0->i_d_progbuf_ena(w.d.progbuf_ena);
+    exec0->i_dbg_progbuf_ena(csr.progbuf_ena);
     exec0->i_d_radr1(w.d.radr1);
     exec0->i_d_radr2(w.d.radr2);
     exec0->i_d_waddr(w.d.waddr);
@@ -188,10 +196,11 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->o_wdata(w.e.wdata);
     exec0->o_wtag(w.e.wtag);
     exec0->o_d_ready(w.e.d_ready);
-    exec0->o_csr_addr(w.e.csr_addr);
     exec0->o_csr_wena(w.e.csr_wena);
     exec0->i_csr_rdata(csr.rdata);
     exec0->o_csr_wdata(w.e.csr_wdata);
+    exec0->i_mepc(csr.mepc);
+    exec0->i_uepc(csr.uepc);
     exec0->i_trap_valid(csr.trap_valid);
     exec0->i_trap_pc(csr.trap_pc);
     exec0->o_ex_npc(w.e.ex_npc);
@@ -305,10 +314,12 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     csr0->i_mret(w.e.mret);
     csr0->i_uret(w.e.uret);
     csr0->i_sp(ireg.sp);
-    csr0->i_addr(w.e.csr_addr);
+    csr0->i_addr(w.d.csr_addr);
     csr0->i_wena(w.e.csr_wena);
     csr0->i_wdata(w.e.csr_wdata);
     csr0->o_rdata(csr.rdata);
+    csr0->o_mepc(csr.mepc);
+    csr0->o_uepc(csr.uepc);
     csr0->i_trap_ready(w.e.trap_ready);
     csr0->i_e_pc(w.e.pc);
     csr0->i_e_npc(w.e.npc);
@@ -454,7 +465,8 @@ void Processor::comb() {
         wb_reg_wtag = w.w.wtag;
     }
 
-    o_flush_valid = w.e.flushi.read() || csr.break_event.read();
+    w_flush_pipeline = w.e.flushi.read() || csr.break_event.read();
+    o_flush_valid = w_flush_pipeline;
     if (w.e.flushi.read() == 1) {
         o_flush_address = ~0ull;
     } else if (csr.break_event.read()) {

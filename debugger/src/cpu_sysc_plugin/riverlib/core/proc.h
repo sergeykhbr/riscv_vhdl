@@ -129,7 +129,9 @@ private:
         sc_signal<sc_uint<6>> radr1;
         sc_signal<sc_uint<6>> radr2;
         sc_signal<sc_uint<6>> waddr;
+        sc_signal<sc_uint<12>> csr_addr;
         sc_signal<sc_uint<RISCV_ARCH>> imm;
+        sc_signal<bool> progbuf_ena;
     };
 
     struct ExecuteType {
@@ -147,7 +149,6 @@ private:
         sc_signal<bool> whazard;
         sc_signal<bool> mret;
         sc_signal<bool> uret;
-        sc_signal<sc_uint<12>> csr_addr;
         sc_signal<bool> csr_wena;
         sc_signal<sc_uint<RISCV_ARCH>> csr_wdata;
         sc_signal<bool> ex_instr_load_fault;
@@ -211,6 +212,8 @@ private:
 
     struct CsrType {
         sc_signal<sc_uint<RISCV_ARCH>> rdata;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mepc;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> uepc;
         sc_signal<bool> dport_valid;
         sc_signal<sc_uint<RISCV_ARCH>> dport_rdata;
         sc_signal<bool> trap_valid;
@@ -220,7 +223,7 @@ private:
         sc_signal<sc_uint<32>> progbuf_pc;          // progbuf instruction counter
         sc_signal<sc_uint<32>> progbuf_data;        // progbuf instruction to execute
         sc_signal<sc_uint<64>> executed_cnt;        // Number of executed instruction
-        sc_signal<bool> dbg_pc_write;                  // Region 1: npc write enable
+        sc_signal<bool> dbg_pc_write;               // modify npc value strob
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> dbg_pc;
         sc_signal<bool> halt;                       // Halt signal is equal to hold pipeline
     } csr;
@@ -250,6 +253,7 @@ private:
 
     sc_signal<bool> w_fetch_pipeline_hold;
     sc_signal<bool> w_any_pipeline_hold;
+    sc_signal<bool> w_flush_pipeline;
 
     InstrFetch *fetch0;
     InstrDecoder *dec0;

@@ -36,7 +36,10 @@ SC_MODULE(InstrFetch) {
     sc_in<bool> i_mem_executable;
     sc_out<bool> o_mem_resp_ready;
 
-    sc_in<bool> i_e_fencei;
+    sc_in<bool> i_flush_pipeline;                   // reset pipeline and cache
+    sc_in<bool> i_progbuf_ena;                      // executing from prog buffer
+    sc_in<sc_uint<32>> i_progbuf_pc;                // progbuf counter
+    sc_in<sc_uint<32>> i_progbuf_data;              // progbuf instruction
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_predict_npc;
 
     sc_out<bool> o_mem_req_fire;                    // used by branch predictor to form new npc value

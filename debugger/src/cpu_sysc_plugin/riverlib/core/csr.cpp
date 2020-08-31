@@ -29,6 +29,8 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     i_wena("i_wena"),
     i_wdata("i_wdata"),
     o_rdata("o_rdata"),
+    o_mepc("o_mepc"),
+    o_uepc("o_uepc"),
     i_trap_ready("i_trap_ready"),
     i_e_pc("i_e_pc"),
     i_e_npc("i_e_npc"),
@@ -130,6 +132,7 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << r.mstackund_ena;
     sensitive << r.mpp;
     sensitive << r.mepc;
+    sensitive << r.uepc;
     sensitive << r.ext_irq;
     sensitive << r.ex_fpu_invalidop;
     sensitive << r.ex_fpu_divbyzero;
@@ -367,6 +370,10 @@ void CsrRegs::comb() {
         vb_rdata(63, 0) = hartid_;
         break;
     case CSR_uepc:// - User mode program counter
+        vb_rdata = r.uepc;
+        if (v_csr_wena) {
+            v.uepc = vb_csr_wdata;
+        }
         break;
     case CSR_mstatus:// - Machine mode status register
         vb_rdata[0] = r.uie;
@@ -796,6 +803,8 @@ void CsrRegs::comb() {
     o_dbg_pc_write = v_dbg_pc_write;
     o_dbg_pc = vb_dbg_pc;
     o_rdata = vb_rdata;
+    o_mepc = r.mepc;
+    o_uepc = r.uepc;
     o_dport_valid = v_dport_valid;
     o_dport_rdata = vb_rdata;
     o_break_event = r.break_event;

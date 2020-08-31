@@ -33,6 +33,8 @@ SC_MODULE(CsrRegs) {
     sc_in<bool> i_wena;                     // Write enable
     sc_in<sc_uint<RISCV_ARCH>> i_wdata;     // CSR writing value
     sc_out<sc_uint<RISCV_ARCH>> o_rdata;    // CSR read value
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mepc;
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_uepc;
     sc_in<bool> i_trap_ready;               // trap branch request was accepted
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_pc;
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_npc;
@@ -108,6 +110,7 @@ private:
         sc_signal<bool> mstackund_ena;          // Stack Underflow control Enabled
         sc_signal<sc_uint<2>> mpp;              // Previous mode
         sc_signal<sc_uint<RISCV_ARCH>> mepc;
+        sc_signal<sc_uint<RISCV_ARCH>> uepc;
         sc_signal<bool> ext_irq;
 
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mpu_addr;
@@ -161,6 +164,7 @@ private:
         iv.mstackund_ena = 0;
         iv.mpp = 0;
         iv.mepc = 0;
+        iv.uepc = 0;
         iv.ext_irq = 0;
         iv.mpu_addr = 0;
         iv.mpu_mask = 0;

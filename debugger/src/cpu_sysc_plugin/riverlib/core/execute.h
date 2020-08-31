@@ -36,6 +36,8 @@ SC_MODULE(InstrExecute) {
     sc_in<sc_uint<RISCV_ARCH>> i_d_imm;
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_d_pc;      // Instruction pointer on decoded instruction
     sc_in<sc_uint<32>> i_d_instr;               // Decoded instruction value
+    sc_in<bool> i_d_progbuf_ena;                // instruction from progbuf passed decoder
+    sc_in<bool> i_dbg_progbuf_ena;              // progbuf mode enabled
     sc_in<sc_uint<6>> i_wb_waddr;               // write back address
     sc_in<bool> i_memop_store;                  // Store to memory operation
     sc_in<bool> i_memop_load;                   // Load from memoru operation
@@ -65,10 +67,11 @@ SC_MODULE(InstrExecute) {
     sc_out<sc_uint<RISCV_ARCH>> o_wdata;        // Value to store
     sc_out<sc_uint<4>> o_wtag;
     sc_out<bool> o_d_ready;                     // Hold pipeline while 'writeback' not done or multi-clock instruction.
-    sc_out<sc_uint<12>> o_csr_addr;             // CSR address. 0 if not a CSR instruction with xret signals mode switching
     sc_out<bool> o_csr_wena;                    // Write new CSR value
     sc_in<sc_uint<RISCV_ARCH>> i_csr_rdata;     // CSR current value
     sc_out<sc_uint<RISCV_ARCH>> o_csr_wdata;    // CSR new value
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_mepc;   // next instruction in a case of MRET
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_uepc;
     sc_in<bool> i_trap_valid;                   // async trap event
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_trap_pc;   // jump to address
 
@@ -100,16 +103,16 @@ SC_MODULE(InstrExecute) {
 
     sc_out<bool> o_trap_ready;                  // trap branch request accepted
     sc_out<bool> o_valid;                       // Output is valid
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_pc;       // Valid instruction pointer
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_npc;      // Next instruction pointer. Next decoded pc must match to this value or will be ignored.
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_pc;    // Valid instruction pointer
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_npc;   // Next instruction pointer. Next decoded pc must match to this value or will be ignored.
     sc_out<sc_uint<32>> o_instr;                // Valid instruction value
     sc_in<bool> i_flushd_end;
     sc_out<bool> o_flushd;
     sc_out<bool> o_flushi;
     sc_out<bool> o_call;                        // CALL pseudo instruction detected
     sc_out<bool> o_ret;                         // RET pseudoinstruction detected
-    sc_out<bool> o_mret;                        // MRET.
-    sc_out<bool> o_uret;                        // MRET.
+    sc_out<bool> o_mret;                        // MRET instruction
+    sc_out<bool> o_uret;                        // URET instruction
     sc_out<bool> o_multi_ready;
 
     void comb();
@@ -153,6 +156,7 @@ private:
         sc_signal<bool> ret;
         sc_signal<bool> flushd;
         sc_signal<bool> hold_fencei;
+        sc_signal<sc_uint<32>> progbuf_npc;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
@@ -174,6 +178,7 @@ private:
         iv.ret = 0;
         iv.flushd = 0;
         iv.hold_fencei = 0;
+        iv.progbuf_npc = 0;
     }
 
     multi_arith_type wb_arith_res;

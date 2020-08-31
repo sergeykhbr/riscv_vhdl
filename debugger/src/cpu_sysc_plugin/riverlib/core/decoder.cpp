@@ -31,9 +31,11 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset,
     o_radr1("o_radr1"),
     o_radr2("o_radr2"),
     o_waddr("o_waddr"),
+    o_csr_addr("o_csr_addr"),
     o_imm("o_imm"),
     i_e_ready("i_e_ready"),
-    i_e_fencei("i_e_fencei"),
+    i_flush_pipeline("i_flush_pipeline"),
+    i_progbuf_ena("i_progbuf_ena"),
     o_valid("o_valid"),
     o_pc("o_pc"),
     o_instr("o_instr"),
@@ -49,7 +51,8 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset,
     o_instr_vec("o_instr_vec"),
     o_exception("o_exception"),
     o_instr_load_fault("o_instr_load_fault"),
-    o_instr_executable("o_instr_executable") {
+    o_instr_executable("o_instr_executable"),
+    o_progbuf_ena("o_progbuf_ena") {
     async_reset_ = async_reset;
     fpu_ena_ = fpu_ena;
 
@@ -62,7 +65,8 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset,
     sensitive << i_instr_load_fault;
     sensitive << i_instr_executable;
     sensitive << i_e_ready;
-    sensitive << i_e_fencei;
+    sensitive << i_flush_pipeline;
+    sensitive << i_progbuf_ena;
     sensitive << r.valid;
     sensitive << r.pc;
     sensitive << r.instr;
@@ -80,7 +84,9 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset,
     sensitive << r.radr1;
     sensitive << r.radr2;
     sensitive << r.waddr;
+    sensitive << r.csr_addr;
     sensitive << r.imm;
+    sensitive << r.progbuf_ena;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -104,6 +110,7 @@ void InstrDecoder::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_radr1, o_radr1.name());
         sc_trace(o_vcd, o_radr2, o_radr2.name());
         sc_trace(o_vcd, o_waddr, o_waddr.name());
+        sc_trace(o_vcd, o_csr_addr, o_csr_addr.name());
         sc_trace(o_vcd, o_imm, o_imm.name());
     }
 }
@@ -123,11 +130,13 @@ void InstrDecoder::comb() {
     sc_uint<6> vb_radr1;
     sc_uint<6> vb_radr2;
     sc_uint<6> vb_waddr;
+    sc_uint<12> vb_csr_addr;
     sc_uint<RISCV_ARCH> vb_imm;
 
     vb_radr1 = 0;
     vb_radr2 = 0;
     vb_waddr = 0;
+    vb_csr_addr = 0;
     vb_imm = 0;
 
     if (wb_instr(1, 0) != 0x3) {
@@ -845,6 +854,7 @@ void InstrDecoder::comb() {
             wb_isa_type[ISA_I_type] = 1;
             vb_radr1 = (0, wb_instr.range(19, 15));
             vb_waddr = wb_instr(11, 7);             // rd
+            vb_csr_addr = wb_instr(31, 20);
             vb_imm(11, 0) = wb_instr.range(31, 20);
             if (wb_instr[31] == 1) {
                 vb_imm(RISCV_ARCH-1, 12) = ~0ull;
@@ -1029,17 +1039,17 @@ void InstrDecoder::comb() {
         wb_instr_out = wb_instr;
     }  // compressed/!compressed
 
-    if (i_e_ready.read() == 1 && i_f_valid.read() == 1) {
+    if (i_flush_pipeline.read() == 1 && i_progbuf_ena.read() == 0) {
+        v.pc = ~0ull;
+        v.valid = 0;
+    } else if (i_e_ready.read() == 1 && i_f_valid.read() == 1) {
         v.valid = 1;
-        if (i_e_fencei.read() == 1) {
-            v.pc = ~0ull;
-        } else {
-            v.pc = i_f_pc;
-        }
+        v.pc = i_f_pc;
         v.instr = i_f_instr.read();
         v.compressed = w_compressed;
         v.instr_load_fault = i_instr_load_fault.read();
         v.instr_executable = i_instr_executable.read();
+        v.progbuf_ena = i_progbuf_ena.read();;
 
         v.isa_type = wb_isa_type;
         v.instr_vec = wb_dec;
@@ -1093,6 +1103,7 @@ void InstrDecoder::comb() {
         v.radr1 = vb_radr1;
         v.radr2 = vb_radr2;
         v.waddr = vb_waddr;
+        v.csr_addr = vb_csr_addr;
         v.imm = vb_imm;
     } else if (!i_any_hold.read()) {
         v.valid = 0;
@@ -1123,7 +1134,9 @@ void InstrDecoder::comb() {
     o_radr1 = r.radr1;
     o_radr2 = r.radr2;
     o_waddr = r.waddr;
+    o_csr_addr = r.csr_addr;
     o_imm = r.imm;
+    o_progbuf_ena = r.progbuf_ena;
 }
 
 void InstrDecoder::registers() {
