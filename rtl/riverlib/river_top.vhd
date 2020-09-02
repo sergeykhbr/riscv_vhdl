@@ -50,8 +50,6 @@ entity RiverTop is
     i_resp_mem_store_fault : in std_logic;                            -- Bus response with SLVERR or DECERR on write
     -- Interrupt line from external interrupts controller (PLIC).
     i_ext_irq : in std_logic;
-    o_time : out std_logic_vector(63 downto 0);                       -- Timer. Clock counter except halt state.
-    o_exec_cnt : out std_logic_vector(63 downto 0);
     -- D$ Snoop interface
     i_req_snoop_valid : in std_logic;
     i_req_snoop_type : in std_logic_vector(SNOOP_REQ_TYPE_BITS-1 downto 0);
@@ -62,13 +60,14 @@ entity RiverTop is
     o_resp_snoop_data : out std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);
     o_resp_snoop_flags : out std_logic_vector(DTAG_FL_TOTAL-1 downto 0);
     -- Debug interface:
-    i_dport_valid : in std_logic;                                     -- Debug access from DSU is valid
-    i_dport_write : in std_logic;                                     -- Write command flag
-    i_dport_region : in std_logic_vector(1 downto 0);                 -- Registers region ID: 0=CSR; 1=IREGS; 2=Control
-    i_dport_addr : in std_logic_vector(11 downto 0);                  -- Register idx
-    i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);       -- Write value
-    o_dport_ready : out std_logic;                                    -- Response is ready
-    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);      -- Response value
+    i_dport_req_valid : in std_logic;                         -- Debug access from DSU is valid
+    i_dport_write : in std_logic;                             -- Write command flag
+    i_dport_addr : in std_logic_vector(CFG_DPORT_ADDR_BITS-1 downto 0); -- Debug Port address
+    i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);-- Write value
+    o_dport_req_ready : out std_logic;                        -- Ready to accept dbg request
+    i_dport_resp_ready : in std_logic;                        -- Read to accept response
+    o_dport_resp_valid : out std_logic;                       -- Response is valid
+    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);-- Response value
     o_halted : out std_logic
   );
 end;
@@ -111,9 +110,6 @@ architecture arch_RiverTop of RiverTop is
   signal wb_data_flush_address : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   signal w_data_flush_valid : std_logic;
   signal w_data_flush_end : std_logic;
-  signal wb_istate : std_logic_vector(3 downto 0);
-  signal wb_dstate : std_logic_vector(3 downto 0);
-  signal wb_cstate : std_logic_vector(1 downto 0);
 
 begin
 
@@ -150,29 +146,25 @@ begin
         i_resp_data_er_mpu_store => w_resp_data_er_mpu_store,
         o_resp_data_ready => w_resp_data_ready,
         i_ext_irq => i_ext_irq,
-        o_time => o_time,
-        o_exec_cnt => o_exec_cnt,
         o_mpu_region_we => w_mpu_region_we,
         o_mpu_region_idx => wb_mpu_region_idx,
         o_mpu_region_addr => wb_mpu_region_addr,
         o_mpu_region_mask => wb_mpu_region_mask,
         o_mpu_region_flags => wb_mpu_region_flags,
-        i_dport_valid => i_dport_valid,
+        i_dport_req_valid => i_dport_req_valid,
         i_dport_write => i_dport_write,
-        i_dport_region => i_dport_region,
         i_dport_addr => i_dport_addr,
         i_dport_wdata => i_dport_wdata,
-        o_dport_ready => o_dport_ready,
+        o_dport_req_ready => o_dport_req_ready,
+        i_dport_resp_ready => i_dport_resp_ready,
+        o_dport_resp_valid => o_dport_resp_valid,
         o_dport_rdata => o_dport_rdata,
         o_halted => o_halted,
         o_flush_address => wb_flush_address,
         o_flush_valid => w_flush_valid,
         o_data_flush_address => wb_data_flush_address,
         o_data_flush_valid => w_data_flush_valid,
-        i_data_flush_end => w_data_flush_end,
-        i_istate => wb_istate,
-        i_dstate => wb_dstate,
-        i_cstate => wb_cstate);
+        i_data_flush_end => w_data_flush_end);
 
     cache0 :  CacheTop generic map (
         memtech => memtech,
@@ -234,9 +226,6 @@ begin
         i_flush_valid => w_flush_valid,
         i_data_flush_address => wb_data_flush_address,
         i_data_flush_valid => w_data_flush_valid,
-        o_data_flush_end => w_data_flush_end,
-        o_istate => wb_istate,
-        o_dstate => wb_dstate,
-        o_cstate => wb_cstate);
+        o_data_flush_end => w_data_flush_end);
 
 end;

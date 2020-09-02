@@ -61,16 +61,16 @@ struct DsuMapType {
              * Don't fetch instruction from this address use specified
              * below instead.
              */
-            uint64_t br_address_fetch;      // 0x0038
+            uint64_t rsrv_br_address_fetch;      // 0x0038
             /**
              * True instruction value instead of injected one. Use this
              * instruction instead of memory.
              */
-            uint64_t br_instr_fetch;        // 0x0040
+            uint64_t rsrv_br_instr_fetch;        // 0x0040
             /**
              * Flush software instruction address from instruction cache.
              */
-            uint64_t br_flush_addr;         // 0x0048
+            uint64_t rsrv_br_flush_addr;         // 0x0048
         } v;
     } udbg;
     // Base Address + 0x18000 (Region 3)

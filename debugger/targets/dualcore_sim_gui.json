@@ -374,11 +374,9 @@
                             ['core0','executed_cnt'],
                             ['core0','stack_trace_cnt'],
                             ['core0','stack_trace_buf'],
-                            ['core0','br_fetch_addr'],
-                            ['core0','br_fetch_instr'],
                             ['core0','br_hw_add'],
                             ['core0','br_hw_remove'],
-                            ['core0','br_flush_addr'],
+                            ['core0','csr_flushi'],
                            ]]
                 ]}]},
     {'Class':'BusGenericClass','Instances':[
@@ -395,11 +393,9 @@
                             ['core1','executed_cnt'],
                             ['core1','stack_trace_cnt'],
                             ['core1','stack_trace_buf'],
-                            ['core1','br_fetch_addr'],
-                            ['core1','br_fetch_instr'],
                             ['core1','br_hw_add'],
                             ['core1','br_hw_remove'],
-                            ['core1','br_flush_addr'],
+                            ['core0','csr_flushi'],
                            ]]
                 ]}]},
     {'Class':'HardResetClass','Instances':[

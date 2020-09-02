@@ -38,13 +38,15 @@ entity InstrDecoder is generic (
     i_instr_load_fault : in std_logic;                       -- Instruction fetched from fault address
     i_instr_executable : in std_logic;                       -- MPU flag
 
-    o_radr1 : out std_logic_vector(5 downto 0);
-    o_radr2 : out std_logic_vector(5 downto 0);
-    o_waddr : out std_logic_vector(5 downto 0);
-    o_imm : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_radr1 : out std_logic_vector(5 downto 0);              -- register bank address 1 (rs1)
+    o_radr2 : out std_logic_vector(5 downto 0);              -- register bank address 2 (rs2)
+    o_waddr : out std_logic_vector(5 downto 0);              -- register bank output (rd)
+    o_csr_addr : out std_logic_vector(11 downto 0);          -- CSR bank output
+    o_imm : out std_logic_vector(RISCV_ARCH-1 downto 0);     -- immediate constant decoded from instruction
+    i_e_ready : in std_logic;                                -- execute stage ready to accept next instruction
+    i_flush_pipeline : in std_logic;                         -- reset pipeline and cache
+    i_progbuf_ena : in std_logic;                            -- executing from progbuf
 
-    i_e_ready : in std_logic;
-    i_e_fencei : in std_logic;
     o_valid : out std_logic;                                 -- Current output values are valid
     o_pc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);  -- Current instruction pointer value
     o_instr : out std_logic_vector(31 downto 0);             -- Current instruction value
@@ -60,7 +62,8 @@ entity InstrDecoder is generic (
     o_instr_vec : out std_logic_vector(Instr_Total-1 downto 0); -- One bit per decoded instruction bus
     o_exception : out std_logic;                             -- Unimplemented instruction
     o_instr_load_fault : out std_logic;                      -- Instruction fetched from fault address
-    o_instr_executable : out std_logic                       -- MPU flag
+    o_instr_executable : out std_logic;                      -- MPU flag
+    o_progbuf_ena : out std_logic
   );
 end; 
  
@@ -143,7 +146,9 @@ architecture arch_InstrDecoder of InstrDecoder is
       radr1 : std_logic_vector(5 downto 0);
       radr2 : std_logic_vector(5 downto 0);
       waddr : std_logic_vector(5 downto 0);
+      csr_addr : std_logic_vector(11 downto 0);
       imm : std_logic_vector(RISCV_ARCH-1 downto 0);
+      progbuf_ena : std_logic;
   end record;
 
   constant R_RESET : RegistersType := (
@@ -156,7 +161,9 @@ architecture arch_InstrDecoder of InstrDecoder is
      (others => '0'),                        -- radr1
      (others => '0'),                        -- radr2
      (others => '0'),                        -- waddr
-     (others => '0')                         -- imm
+     (others => '0'),                        -- csr_addr
+     (others => '0'),                        -- imm
+     '0'                                     -- progbuf_ena
   );
 
   signal r, rin : RegistersType;
@@ -165,7 +172,7 @@ begin
 
 
   comb : process(i_nrst, i_any_hold, i_f_valid, i_f_pc, i_f_instr, i_instr_load_fault,
-                i_instr_executable, i_e_ready, i_e_fencei, r)
+                i_instr_executable, i_e_ready, i_flush_pipeline, i_progbuf_ena, r)
     variable v : RegistersType;
     variable w_o_valid : std_logic;
     variable w_error : std_logic;
@@ -179,6 +186,7 @@ begin
     variable vb_radr1 : std_logic_vector(5 downto 0);
     variable vb_radr2 : std_logic_vector(5 downto 0);
     variable vb_waddr : std_logic_vector(5 downto 0);
+    variable vb_csr_addr : std_logic_vector(11 downto 0);
     variable vb_imm : std_logic_vector(RISCV_ARCH-1 downto 0);
   begin
 
@@ -193,6 +201,7 @@ begin
     vb_radr1 := (others => '0');
     vb_radr2 := (others => '0');
     vb_waddr := (others => '0');
+    vb_csr_addr := (others => '0');
     vb_imm := (others => '0');
 
     if wb_instr(1 downto 0) /= "11" then
@@ -797,6 +806,7 @@ begin
             wb_isa_type(ISA_I_type) := '1';
             vb_radr1 := '0' & wb_instr(19 downto 15);
             vb_waddr := '0' & wb_instr(11 downto 7);
+            vb_csr_addr(11 downto 0) := wb_instr(31 downto 20);
             vb_imm(11 downto 0) := wb_instr(31 downto 20);
             vb_imm(RISCV_ARCH-1 downto 12) := (others => wb_instr(31));
             case wb_opcode2 is
@@ -953,17 +963,17 @@ begin
     end if;
 
 
-    if i_e_ready = '1' and i_f_valid = '1' then
+    if i_flush_pipeline = '1' and i_progbuf_ena = '0' then
+        v.pc := (others => '1');
+        v.valid := '0';
+    elsif i_e_ready = '1' and i_f_valid = '1' then
         v.valid := '1';
-        if i_e_fencei = '1' then
-            v.pc := (others => '1');
-        else
-            v.pc := i_f_pc;
-        end if;
+        v.pc := i_f_pc;
         v.instr := i_f_instr;
         v.compressed := w_compressed;
         v.instr_load_fault := i_instr_load_fault;
         v.instr_executable := i_instr_executable;
+        v.progbuf_ena := i_progbuf_ena;
 
         v.isa_type := wb_isa_type;
         v.instr_vec := wb_dec;
@@ -1015,6 +1025,7 @@ begin
         v.radr1 := vb_radr1;
         v.radr2 := vb_radr2;
         v.waddr := vb_waddr;
+        v.csr_addr := vb_csr_addr;
         v.imm := vb_imm;
     elsif i_any_hold = '0' then
         v.valid := '0';
@@ -1045,7 +1056,9 @@ begin
     o_radr1 <= r.radr1;
     o_radr2 <= r.radr2;
     o_waddr <= r.waddr;
+    o_csr_addr <= r.csr_addr;
     o_imm <= r.imm;
+    o_progbuf_ena <= r.progbuf_ena;
     
     rin <= v;
   end process;

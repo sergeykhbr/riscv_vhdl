@@ -18,6 +18,8 @@
 #include <iostream>
 #include <stdio.h>
 #include <string.h>
+#include <generic-isa.h>
+#include "debug/dsumap.h"
 #include "cpumonitor.h"
 #include "coreservices/isrccode.h"
 
@@ -108,10 +110,8 @@ uint64_t CpuMonitor::getStatus() {
     return statusResponse_.to_uint64();
 }
 
-void CpuMonitor::executeProgBuffer(uint64_t addr,
-                                  uint32_t opcode,
-                                  uint32_t oplen) {
-    RISCV_error("TODO progbuf exec: 0x%08" RV_PRI64 "x", addr);
+void CpuMonitor::stepOverSwBreakpoint() {
+    icmdexec_->exec("c 1", &statusResponse_, true);
 }
 
 void CpuMonitor::writeBreakpoints() {
@@ -120,6 +120,7 @@ void CpuMonitor::writeBreakpoints() {
     uint64_t br_flags;
     uint32_t br_opcode;   // ebreak opcode
     uint32_t br_oplen;
+    uint64_t addr_flushi = DSUREGBASE(csr[CSR_flushi]);
     char tstr[128];
 
     icmdexec_->exec("reg npc", &npcResponse_, true);
@@ -134,8 +135,7 @@ void CpuMonitor::writeBreakpoints() {
         br_oplen = br[BrkList_oplen].to_uint32();
 
         if (npc == br_addr) {
-            uint32_t br_instr = br[BrkList_instr].to_uint32();
-            executeProgBuffer(br_addr, br_instr, br_oplen);
+            //stepOverSwBreakpoint();
         }
 
         if (br_flags & BreakFlag_HW) {
@@ -147,6 +147,13 @@ void CpuMonitor::writeBreakpoints() {
             icmdexec_->exec(tstr, &writeMemResp_, true);
 
             RISCV_error("Write breakpoint 0x%08" RV_PRI64 "x", br_addr);
+
+            // We can execute FENCE.I from progbuf at the end but it is easier
+            // to use custom CSR_flushi to clear specific address in I$
+            RISCV_sprintf(tstr, sizeof(tstr),
+                    "write 0x%08" RV_PRI64 "x 8 0x%" RV_PRI64 "x",
+                    addr_flushi, br_addr);
+            icmdexec_->exec(tstr, &writeMemResp_, true);
         }
     }
 }

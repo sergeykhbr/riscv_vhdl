@@ -38,8 +38,10 @@ entity InstrExecute is generic (
     i_d_radr2 : in std_logic_vector(5 downto 0);
     i_d_waddr : in std_logic_vector(5 downto 0);
     i_d_imm : in std_logic_vector(RISCV_ARCH-1 downto 0);
-    i_d_pc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);    -- Instruction pointer on decoded instruction
+    i_d_pc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- Instruction pointer on decoded instruction
     i_d_instr : in std_logic_vector(31 downto 0);               -- Decoded instruction value
+    i_d_progbuf_ena : in std_logic;                             -- instruction from progbuf passed decoder
+    i_dbg_progbuf_ena : in std_logic;                           -- progbuf mode enabled
     i_wb_waddr : in std_logic_vector(5 downto 0);               -- Write back address
     i_memop_store : in std_logic;                               -- Store to memory operation
     i_memop_load : in std_logic;                                -- Load from memoru operation
@@ -68,10 +70,11 @@ entity InstrExecute is generic (
     o_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);      -- Value to store
     o_wtag : out std_logic_vector(3 downto 0);
     o_d_ready : out std_logic;                                  -- Hold pipeline while 'writeback' not done or multi-clock instruction.
-    o_csr_addr : out std_logic_vector(11 downto 0);             -- CSR address. 0 if not a CSR instruction with xret signals mode switching
     o_csr_wena : out std_logic;                                 -- Write new CSR value
     i_csr_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0);   -- CSR current value
     o_csr_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);  -- CSR new value
+    i_mepc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- next instruction in a case of MRET
+    i_uepc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- 
     i_trap_valid : in std_logic;
     i_trap_pc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     -- exceptions:
@@ -102,8 +105,8 @@ entity InstrExecute is generic (
 
     o_trap_ready : out std_logic;                               -- Trap branch request was accepted
     o_valid : out std_logic;                                    -- Output is valid
-    o_pc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);     -- Valid instruction pointer
-    o_npc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);    -- Next instruction pointer. Next decoded pc must match to this value or will be ignored.
+    o_pc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);  -- Valid instruction pointer
+    o_npc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- Next instruction pointer. Next decoded pc must match to this value or will be ignored.
     o_instr : out std_logic_vector(31 downto 0);                -- Valid instruction value
     i_flushd_end : in std_logic;
     o_flushd : out std_logic;
@@ -147,6 +150,7 @@ architecture arch_InstrExecute of InstrExecute is
         ret : std_logic;
         flushd : std_logic;
         hold_fencei : std_logic;
+        progbuf_npc : std_logic_vector(31 downto 0);
   end record;
 
   constant R_RESET : RegistersType := (
@@ -157,7 +161,8 @@ architecture arch_InstrExecute of InstrExecute is
     (others => '0'),                                   -- memop_wdata
     '0',                                               -- valid
     '0', '0',                                          -- call, ret
-    '0', '0'                                           -- flushd, hold_fencei
+    '0', '0',                                          -- flushd, hold_fencei
+    (others => '0')                                    -- progbuf_ena
   );
 
   signal r, rin : RegistersType;
@@ -330,12 +335,13 @@ begin
   end generate;
 
   comb : process(i_nrst, i_d_valid, i_d_radr1, i_d_radr2, i_d_waddr, i_d_imm,
-                 i_d_pc, i_d_instr, i_wb_waddr,
+                 i_d_pc, i_d_instr, i_d_progbuf_ena, i_dbg_progbuf_ena, i_wb_waddr,
                  i_memop_load, i_memop_store, i_memop_sign_ext,
                  i_memop_size, i_unsigned_op, i_rv32, i_compressed, i_f64, i_isa_type, i_ivec,
                  i_unsup_exception, i_instr_load_fault, i_instr_executable,
                  i_dport_npc_write, i_dport_npc, 
                  i_rdata1, i_rhazard1, i_rdata2, i_rhazard2, i_wtag, i_csr_rdata, 
+                 i_mepc, i_uepc,
                  i_trap_valid, i_trap_pc, i_memop_ready, i_flushd_end,
                  wb_arith_res, w_arith_valid, w_arith_busy,
                  wb_sll, wb_sllw, wb_srl, wb_srlw, wb_sra, wb_sraw, r)
@@ -355,7 +361,6 @@ begin
     variable v_mret : std_logic;
     variable v_uret : std_logic;
     variable v_csr_wena : std_logic;
-    variable vb_csr_addr : std_logic_vector(11 downto 0);
     variable vb_csr_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable vb_res : std_logic_vector(RISCV_ARCH-1 downto 0);
     variable vb_prog_npc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
@@ -395,13 +400,14 @@ begin
     variable v_wena : std_logic;
     variable v_whazard : std_logic;
     variable vb_waddr : std_logic_vector(5 downto 0);
+    variable v_next_normal : std_logic;
+    variable v_next_progbuf : std_logic;
 
   begin
 
     v := r;
 
     v_csr_wena := '0';
-    vb_csr_addr := (others => '0');
     vb_csr_wdata := (others => '0');
     vb_res := (others => '0');
     vb_off := (others => '0');
@@ -467,8 +473,21 @@ begin
     v_hold_exec := w_hold_hazard or w_hold_memop or w_hold_multi
                    or r.hold_fencei;
 
+    v_next_normal := '0';
+    if i_d_pc = r.npc and i_dbg_progbuf_ena = '0'
+        and i_d_progbuf_ena = '0' then
+        v_next_normal := '1';
+    end if;
+
+    v_next_progbuf := '0';
+    if i_d_pc = r.progbuf_npc and i_dbg_progbuf_ena = '1'
+        and i_d_progbuf_ena = '1' then
+        v_next_progbuf := '1';
+    end if;
+
     w_next_ready := '0';
-    if i_d_valid = '1' and i_d_pc = r.npc and v_hold_exec = '0' then
+    if i_d_valid = '1' and (v_next_normal or v_next_progbuf) = '1'
+       and v_hold_exec = '0' then
         w_next_ready := '1';
     end if;
 
@@ -509,6 +528,10 @@ begin
     elsif i_memop_store = '1' then
         vb_memop_addr := 
             vb_rdata1(CFG_CPU_ADDR_BITS-1 downto 0) + vb_off(CFG_CPU_ADDR_BITS-1 downto 0);
+    elsif (wv(Instr_FENCE) or wv(Instr_FENCE_I)) = '1' then
+        vb_memop_addr := (others => '1');
+    elsif wv(Instr_EBREAK) = '1' then
+        vb_memop_addr := i_d_pc;
     end if;
 
     w_exception_store := '0';
@@ -575,9 +598,9 @@ begin
         vb_prog_npc := vb_rdata1(CFG_CPU_ADDR_BITS-1 downto 0) + vb_rdata2(CFG_CPU_ADDR_BITS-1 downto 0);
         vb_prog_npc(0) := '0';
     elsif wv(Instr_MRET) = '1' then
-        vb_prog_npc := i_csr_rdata(CFG_CPU_ADDR_BITS-1 downto 0);
+        vb_prog_npc := i_mepc;
     elsif wv(Instr_URET) = '1' then
-        vb_prog_npc := i_csr_rdata(CFG_CPU_ADDR_BITS-1 downto 0);
+        vb_prog_npc := i_uepc;
     else
         vb_prog_npc := vb_npc_incr;
     end if;
@@ -648,44 +671,30 @@ begin
     elsif wv(Instr_CSRRC) = '1' then
         vb_res := i_csr_rdata;
         v_csr_wena := '1';
-        vb_csr_addr := vb_rdata2(11 downto 0);
         vb_csr_wdata := i_csr_rdata and (not vb_rdata1);
     elsif wv(Instr_CSRRCI) = '1' then
         vb_res := i_csr_rdata;
         v_csr_wena := '1';
-        vb_csr_addr := vb_rdata2(11 downto 0);
         vb_csr_wdata(RISCV_ARCH-1 downto 5) := i_csr_rdata(RISCV_ARCH-1 downto 5);
         vb_csr_wdata(4 downto 0) := i_csr_rdata(4 downto 0) and not i_d_radr1(4 downto 0);  -- zero-extending 5 to 64-bits
     elsif wv(Instr_CSRRS) = '1' then
         vb_res := i_csr_rdata;
         v_csr_wena := '1';
-        vb_csr_addr := vb_rdata2(11 downto 0);
         vb_csr_wdata := i_csr_rdata or vb_rdata1;
     elsif wv(Instr_CSRRSI) = '1' then
         vb_res := i_csr_rdata;
         v_csr_wena := '1';
-        vb_csr_addr := vb_rdata2(11 downto 0);
         vb_csr_wdata(RISCV_ARCH-1 downto 5) := i_csr_rdata(RISCV_ARCH-1 downto 5);
         vb_csr_wdata(4 downto 0) := i_csr_rdata(4 downto 0) or i_d_radr1(4 downto 0);  -- zero-extending 5 to 64-bits
     elsif wv(Instr_CSRRW) = '1' then
         vb_res := i_csr_rdata;
         v_csr_wena := '1';
-        vb_csr_addr := vb_rdata2(11 downto 0);
         vb_csr_wdata := vb_rdata1;
     elsif wv(Instr_CSRRWI) = '1' then
         vb_res := i_csr_rdata;
         v_csr_wena := '1';
-        vb_csr_addr := vb_rdata2(11 downto 0);
         vb_csr_wdata(RISCV_ARCH-1 downto 5) := (others => '0');
         vb_csr_wdata(4 downto 0) := i_d_radr1(4 downto 0);  -- zero-extending 5 to 64-bits
-    elsif wv(Instr_MRET) = '1' then
-        vb_res(CFG_CPU_ADDR_BITS-1 downto 0) := vb_npc_incr;
-        v_csr_wena := '0';
-        vb_csr_addr := CSR_mepc;
-    elsif wv(Instr_URET) = '1' then
-        vb_res(CFG_CPU_ADDR_BITS-1 downto 0) := vb_npc_incr;
-        v_csr_wena := '0';
-        vb_csr_addr := CSR_uepc;
     end if;
 
 
@@ -697,9 +706,13 @@ begin
     if w_next_ready = '1' then
         v.valid := '1';
 
-        v.pc := i_d_pc;
+        if i_dbg_progbuf_ena = '0' then
+            v.pc := i_d_pc;
+            v.npc := vb_npc;
+        else
+            v.progbuf_npc := vb_npc_incr;
+        end if;
         v.instr := i_d_instr;
-        v.npc := vb_npc;
         v.memop_load := i_memop_load;
         v.memop_sign_ext := i_memop_sign_ext;
         v.memop_store := i_memop_store;
@@ -717,6 +730,10 @@ begin
         v.ret := v_ret;
         v.flushd := v_fencei or v_fence;
         v.hold_fencei := v_fencei;
+    end if;
+
+    if i_dbg_progbuf_ena = '0' then
+        v.progbuf_npc := (others => '0');
     end if;
 
     if i_flushd_end = '1' then
@@ -762,7 +779,6 @@ begin
     o_d_ready <= not v_hold_exec;
 
     o_csr_wena <= v_csr_wena and w_next_ready;
-    o_csr_addr <= vb_csr_addr;
     o_csr_wdata <= vb_csr_wdata;
     o_ex_npc <= vb_prog_npc;
 

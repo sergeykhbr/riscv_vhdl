@@ -142,8 +142,15 @@ package river_cfg is
   constant CFG_NMI_STACK_OVERFLOW_ADDR  : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0) := X"00000080";
   constant CFG_NMI_STACK_UNDERFLOW_ADDR : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0) := X"00000088";
 
+  --! Debug interface configuration:
+  constant CFG_DPORT_ADDR_BITS       : integer := 16;
+  -- Valid size 0..16
+  constant CFG_PROGBUF_REG_TOTAL     : integer := 16;
+  -- Must be at least 2 to support RV64I
+  constant CFG_DATA_REG_TOTAL        : integer := 2;
   --! Number of elements each 2*CFG_ADDR_WIDTH in stack trace buffer, 0 = disabled
-  constant CFG_STACK_TRACE_BUF_SIZE : integer := 32;
+  constant CFG_LOG2_STACK_TRACE_ADDR : integer := 5;
+  constant STACK_TRACE_BUF_SIZE      : integer := 2**CFG_LOG2_STACK_TRACE_ADDR;
 
   --! @name   Integer Registers specified by ISA
   --! @{
@@ -393,8 +400,26 @@ package river_cfg is
   constant CSR_mpu_mask      : std_logic_vector(11 downto 0) := X"353";
   -- MPU region control (non-standard CSR).
   constant CSR_mpu_ctrl      : std_logic_vector(11 downto 0) := X"354";
+  -- Halt/resume requests handling
+  constant CSR_runcontrol    : std_logic_vector(11 downto 0) := X"355";
+  -- Instruction per single step
+  constant CSR_insperstep    : std_logic_vector(11 downto 0) := X"356";
+  -- Write value into progbuf
+  constant CSR_progbuf       : std_logic_vector(11 downto 0) := X"357";
+  -- Abstract commmand control status (ABSTRACTCS)
+  constant CSR_abstractcs    : std_logic_vector(11 downto 0) := X"358";
+  -- Flush specified address in I-cache module without execution of fence.i
+  constant CSR_flushi        : std_logic_vector(11 downto 0) := X"359";
   -- Software reset.
   constant CSR_mreset        : std_logic_vector(11 downto 0) := X"782";
+  -- Debug Control and status
+  constant CSR_dcsr          : std_logic_vector(11 downto 0) := X"7b0";
+  -- Debug PC
+  constant CSR_dpc           : std_logic_vector(11 downto 0) := X"7b1";
+  -- Debug Scratch Register 0
+  constant CSR_dscratch0     : std_logic_vector(11 downto 0) := X"7b2";
+  -- Debug Scratch Register 1
+  constant CSR_dscratch1     : std_logic_vector(11 downto 0) := X"7b3";
   -- Machine Cycle counter
   constant CSR_mcycle        : std_logic_vector(11 downto 0) := X"B00";
   -- Machine Instructions-retired counter
@@ -486,6 +511,21 @@ package river_cfg is
   constant INTERRUPT_MExternal       : std_logic_vector(4 downto 0) := "01011";
   --! @}
 
+  -- DCSR register halt causes:
+  constant HALT_CAUSE_EBREAK       : std_logic_vector(2 downto 0) := "001";  -- software breakpoint
+  constant HALT_CAUSE_TRIGGER      : std_logic_vector(2 downto 0) := "010";  -- hardware breakpoint
+  constant HALT_CAUSE_HALTREQ      : std_logic_vector(2 downto 0) := "011";  -- halt request via debug interface
+  constant HALT_CAUSE_STEP         : std_logic_vector(2 downto 0) := "100";  -- step done
+  constant HALT_CAUSE_RESETHALTREQ : std_logic_vector(2 downto 0) := "101";  -- not implemented
+
+  constant PROGBUF_ERR_NONE  : std_logic_vector(2 downto 0) := "000";         -- no error
+  constant PROGBUF_ERR_BUSY  : std_logic_vector(2 downto 0) := "001";         -- abstract command in progress
+  constant PROGBUF_ERR_NOT_SUPPORTED  : std_logic_vector(2 downto 0) := "010";-- Request command not supported
+  constant PROGBUF_ERR_EXCEPTION  : std_logic_vector(2 downto 0) := "011";    -- Exception occurs while executing progbuf
+  constant PROGBUF_ERR_HALT_RESUME  : std_logic_vector(2 downto 0) := "100";  -- Command cannot be executed because of wrong CPU state
+  constant PROGBUF_ERR_BUS  : std_logic_vector(2 downto 0) := "101";          -- Bus error occurs
+  constant PROGBUF_ERR_OTHER  : std_logic_vector(2 downto 0) := "111";        -- Other reason
+
 
   --! @param[in] i_clk             CPU clock
   --! @param[in] i_nrst            Reset. Active LOW.
@@ -520,6 +560,8 @@ package river_cfg is
   --! @param[in] i_wena         Write enable
   --! @param[in] i_wdata        CSR writing value
   --! @param[out] o_rdata       CSR read value
+  --! @param[out] o_mepc        Instruction pointer on mret
+  --! @param[out] o_uepc        Instruction pointer on uret
   --! @param[in] i_trap_ready   Trap branch request was accepted
   --! @param[in] i_ex_data_addr    Data path: address must be equal to the latest request address
   --! @param[in] i_ex_data_load_fault Data path: Bus response with SLVERR or DECERR on read
@@ -546,8 +588,11 @@ package river_cfg is
     i_wena : in std_logic;
     i_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
     o_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_mepc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    o_uepc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_trap_ready : in std_logic;
-    i_ex_pc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    i_e_pc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    i_e_npc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_ex_npc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_ex_data_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_ex_data_load_fault : in std_logic;
@@ -557,6 +602,8 @@ package river_cfg is
     i_ex_illegal_instr : in std_logic;
     i_ex_unalign_store : in std_logic;
     i_ex_unalign_load : in std_logic;
+    i_ex_mpu_store : in std_logic;
+    i_ex_mpu_load : in std_logic;
     i_ex_breakpoint : in std_logic;
     i_ex_ecall : in std_logic;
     i_ex_fpu_invalidop : in std_logic;
@@ -566,14 +613,18 @@ package river_cfg is
     i_ex_fpu_inexact : in std_logic;
     i_fpu_valid : in std_logic;
     i_irq_external : in std_logic;
+    i_e_next_ready: in std_logic;
     i_e_valid : in std_logic;
-    i_halt : in std_logic;
-    o_cycle_cnt : out std_logic_vector(63 downto 0);
     o_executed_cnt : out std_logic_vector(63 downto 0);
     o_trap_valid : out std_logic;
     o_trap_pc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
-    i_break_mode : in std_logic;
-    o_break_event : out std_logic;
+    o_dbg_pc_write : out std_logic;                                 -- Modify pc via debug interface
+    o_dbg_pc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);  -- Writing value into pc register
+    o_progbuf_ena : out std_logic;
+    o_progbuf_pc : out std_logic_vector(31 downto 0);
+    o_progbuf_data : out std_logic_vector(31 downto 0);
+    o_flushi_ena : out std_logic;                             -- clear specified addr in ICache without execution of fence.i
+    o_flushi_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- ICache address to flush
     o_mpu_region_we : out std_logic;
     o_mpu_region_idx : out std_logic_vector(CFG_MPU_TBL_WIDTH-1 downto 0);
     o_mpu_region_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
@@ -583,7 +634,9 @@ package river_cfg is
     i_dport_write : in std_logic;
     i_dport_addr : in std_logic_vector(11 downto 0);
     i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
-    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0)
+    o_dport_valid : out std_logic;
+    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);
+    o_halt : out std_logic
   );
   end component; 
 
@@ -626,10 +679,12 @@ package river_cfg is
     o_radr1 : out std_logic_vector(5 downto 0);
     o_radr2 : out std_logic_vector(5 downto 0);
     o_waddr : out std_logic_vector(5 downto 0);
+    o_csr_addr : out std_logic_vector(11 downto 0);
     o_imm : out std_logic_vector(RISCV_ARCH-1 downto 0);
-
     i_e_ready : in std_logic;
-    i_e_fencei : in std_logic;
+    i_flush_pipeline : in std_logic;                         -- reset pipeline and cache
+    i_progbuf_ena : in std_logic;                            -- executing from progbuf
+
     o_valid : out std_logic;                                 -- Current output values are valid
     o_pc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);  -- Current instruction pointer value
     o_instr : out std_logic_vector(31 downto 0);             -- Current instruction value
@@ -645,7 +700,8 @@ package river_cfg is
     o_instr_vec : out std_logic_vector(Instr_Total-1 downto 0); -- One bit per decoded instruction bus
     o_exception : out std_logic;                             -- Unimplemented instruction
     o_instr_load_fault : out std_logic;                      -- Instruction fetched from fault address
-    o_instr_executable : out std_logic                       -- MPU flag
+    o_instr_executable : out std_logic;                      -- MPU flag
+    o_progbuf_ena : out std_logic
   );
   end component; 
 
@@ -679,7 +735,6 @@ package river_cfg is
   --! @param[out] o_res_addr Address to store result of the instruction (0=do not store)
   --! @param[out] o_res_data Value to store
   --! @param[out] o_pipeline_hold Hold pipeline while 'writeback' not done or multi-clock instruction.
-  --! @param[out] o_csr_addr CSR address. 0 if not a CSR instruction with xret signals mode switching
   --! @param[out] o_csr_wena Write new CSR value
   --! @param[in] i_csr_rdata CSR current value
   --! @param[out] o_csr_wdata CSR new value
@@ -722,8 +777,10 @@ package river_cfg is
     i_d_radr2 : in std_logic_vector(5 downto 0);
     i_d_waddr : in std_logic_vector(5 downto 0);
     i_d_imm : in std_logic_vector(RISCV_ARCH-1 downto 0);
-    i_d_pc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);    -- Instruction pointer on decoded instruction
+    i_d_pc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- Instruction pointer on decoded instruction
     i_d_instr : in std_logic_vector(31 downto 0);               -- Decoded instruction value
+    i_d_progbuf_ena : in std_logic;                             -- instruction from progbuf passed decoder
+    i_dbg_progbuf_ena : in std_logic;                           -- progbuf mode enabled
     i_wb_waddr : in std_logic_vector(5 downto 0);               -- Write back address
     i_memop_store : in std_logic;                               -- Store to memory operation
     i_memop_load : in std_logic;                                -- Load from memoru operation
@@ -752,10 +809,11 @@ package river_cfg is
     o_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);      -- Value to store
     o_wtag : out std_logic_vector(3 downto 0);
     o_d_ready : out std_logic;                                  -- Hold pipeline while 'writeback' not done or multi-clock instruction.
-    o_csr_addr : out std_logic_vector(11 downto 0);             -- CSR address. 0 if not a CSR instruction with xret signals mode switching
     o_csr_wena : out std_logic;                                 -- Write new CSR value
     i_csr_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0);   -- CSR current value
     o_csr_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);  -- CSR new value
+    i_mepc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- next instruction in a case of MRET
+    i_uepc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- 
     i_trap_valid : in std_logic;
     i_trap_pc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     -- exceptions:
@@ -786,8 +844,8 @@ package river_cfg is
 
     o_trap_ready : out std_logic;                               -- Trap branch request was accepted
     o_valid : out std_logic;                                    -- Output is valid
-    o_pc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);     -- Valid instruction pointer
-    o_npc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);    -- Next instruction pointer. Next decoded pc must match to this value or will be ignored.
+    o_pc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);  -- Valid instruction pointer
+    o_npc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- Next instruction pointer. Next decoded pc must match to this value or will be ignored.
     o_instr : out std_logic_vector(31 downto 0);                -- Valid instruction value
     i_flushd_end : in std_logic;
     o_flushd : out std_logic;
@@ -816,9 +874,6 @@ package river_cfg is
   --! @param[out] o_pc
   --! @param[out] o_instr
   --! @param[out] o_hold            Hold due no response from icache yet
-  --! @param[in] i_br_fetch_valid   Fetch injection address/instr are valid
-  --! @param[in] i_br_address_fetch Fetch injection address to skip ebreak instruciton only once
-  --! @param[in] i_br_instr_fetch   Real instruction value that was replaced by ebreak
   component InstrFetch is generic (
     async_reset : boolean
   );
@@ -835,8 +890,11 @@ package river_cfg is
     i_mem_load_fault : in std_logic;
     i_mem_executable : in std_logic;
     o_mem_resp_ready : out std_logic;
-    i_e_fencei : in std_logic;
 
+    i_flush_pipeline : in std_logic;                   -- reset pipeline and cache
+    i_progbuf_ena : in std_logic;                      -- executing from prog buffer
+    i_progbuf_pc : in std_logic_vector(31 downto 0);   -- progbuf counter
+    i_progbuf_data : in std_logic_vector(31 downto 0); -- progbuf instruction
     i_predict_npc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
 
     o_mem_req_fire : out std_logic;                    -- used by branch predictor to form new npc value
@@ -845,10 +903,7 @@ package river_cfg is
     o_valid : out std_logic;
     o_pc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_instr : out std_logic_vector(31 downto 0);
-    o_hold : out std_logic;                                -- Hold due no response from icache yet
-    i_br_fetch_valid : in std_logic;                       -- Fetch injection address/instr are valid
-    i_br_address_fetch : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- Fetch injection address to skip ebreak instruciton only once
-    i_br_instr_fetch : in std_logic_vector(31 downto 0)   -- Real instruction value that was replaced by ebreak
+    o_hold : out std_logic                                 -- Hold due no response from icache yet
   );
   end component; 
 
@@ -972,7 +1027,6 @@ package river_cfg is
   --! @param[in] i_nrst           Reset. Active LOW.
   --! @param[in] i_dport_valid    Debug access from DSU is valid
   --! @param[in] i_dport_write    Write command flag
-  --! @param[in] i_dport_region   Registers region ID: 0=CSR; 1=IREGS; 2=Control
   --! @param[in] i_dport_addr     Register idx
   --! @param[in] i_dport_wdata    Write value
   --! @param[out] o_dport_ready   Response is ready
@@ -981,68 +1035,43 @@ package river_cfg is
   --! @param[out] o_core_wdata    Write data
   --! @param[out] o_csr_ena       Region 0: Access to CSR bank is enabled.
   --! @param[out] o_csr_write     Region 0: CSR write enable
+  --! @param[in] i_csr_valid      Region 0: CSR value is valid
   --! @param[in] i_csr_rdata      Region 0: CSR read value
   --! @param[out] o_ireg_ena      Region 1: Access to integer register bank is enabled
   --! @param[out] o_ireg_write    Region 1: Integer registers bank write pulse
-  --! @param[out] o_freg_ena      Region 1: Access to float register bank is enabled
-  --! @param[out] o_freg_write    Region 1: Float registers bank write pulse
-  --! @param[out] o_npc_write     Region 1: npc write enable
   --! @param[in] i_ireg_rdata     Region 1: Integer register read value
-  --! @param[in] i_freg_rdata  Region 1: Float register read value
   --! @param[in] i_pc             Region 1: Instruction pointer
   --! @param[in] i_npc            Region 1: Next Instruction pointer
   --! @param[in] i_e_call         Pseudo-instruction CALL
   --! @param[in] i_e_ret          Pseudo-instruction RET
-  --! @param[in] i_m_valid        To compute number of valid executed instruction
-  --! @param[out] o_halt          Halt signal is equal to hold pipeline
-  --! @param[in] i_ebreak            ebreak instruction decoded
-  --! @param[out] o_break_mode       Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
-  --! @param[out] o_br_fetch_valid   Fetch injection address/instr are valid
-  --! @param[out] o_br_address_fetch Fetch injection address to skip ebreak instruciton only once
-  --! @param[out] o_br_instr_fetch   Real instruction value that was replaced by ebreak
-  --! @param[out] o_flush_address    Address of instruction to remove from ICache
-  --! @param[out] o_flush_valid      Remove address from ICache is valid
-  --! @param[in] i_istate            ICache state machine value
-  --! @param[in] i_dstate            DCache state machine value
   component DbgPort is generic (
     async_reset : boolean
   );
   port (
     i_clk : in std_logic;                                     -- CPU clock
     i_nrst : in std_logic;                                    -- Reset. Active LOW.
-    i_dport_valid : in std_logic;                             -- Debug access from DSU is valid
+    i_dport_req_valid : in std_logic;                         -- Debug access from DSU is valid
     i_dport_write : in std_logic;                             -- Write command flag
-    i_dport_region : in std_logic_vector(1 downto 0);         -- Registers region ID: 0=CSR; 1=IREGS; 2=Control
-    i_dport_addr : in std_logic_vector(11 downto 0);          -- Register idx
+    i_dport_addr : in std_logic_vector(CFG_DPORT_ADDR_BITS-1 downto 0); -- Debug Port address
     i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);-- Write value
-    o_dport_ready : out std_logic;                            -- Response is ready
+    o_dport_req_ready : out std_logic;                        -- Ready to accept dbg request
+    i_dport_resp_ready : in std_logic;                        -- Read to accept response
+    o_dport_resp_valid : out std_logic;                       -- Response is valid
     o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);-- Response value
-    o_csr_addr : out std_logic_vector(11 downto 0);            -- Address of the sub-region register
+    o_csr_addr : out std_logic_vector(11 downto 0);           -- Address of the sub-region register
     o_reg_addr : out std_logic_vector(5 downto 0);
     o_core_wdata : out std_logic_vector(RISCV_ARCH-1 downto 0);-- Write data
     o_csr_ena : out std_logic;                                -- Region 0: Access to CSR bank is enabled.
     o_csr_write : out std_logic;                              -- Region 0: CSR write enable
+    i_csr_valid : in std_logic;
     i_csr_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0); -- Region 0: CSR read value
     o_ireg_ena : out std_logic;                               -- Region 1: Access to integer register bank is enabled
     o_ireg_write : out std_logic;                             -- Region 1: Integer registers bank write pulse
-    o_npc_write : out std_logic;                              -- Region 1: npc write enable
     i_ireg_rdata : in std_logic_vector(RISCV_ARCH-1 downto 0);-- Region 1: Integer register read value
-    i_pc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);    -- Region 1: Instruction pointer
-    i_npc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);   -- Region 1: Next Instruction pointer
-    i_e_next_ready : in std_logic;
+    i_pc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- Region 1: Instruction pointer
+    i_npc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);-- Region 1: Next Instruction pointer
     i_e_call : in std_logic;                                  -- pseudo-instruction CALL
-    i_e_ret : in std_logic;                                   -- pseudo-instruction RET
-    o_halt : out std_logic;                                   -- Halt signal is equal to hold pipeline
-    i_ebreak : in std_logic;                                  -- ebreak instruction decoded
-    o_break_mode : out std_logic;                             -- Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
-    o_br_fetch_valid : out std_logic;                         -- Fetch injection address/instr are valid
-    o_br_address_fetch : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- Fetch injection address to skip ebreak instruciton only once
-    o_br_instr_fetch : out std_logic_vector(31 downto 0);     -- Real instruction value that was replaced by ebreak
-    o_flush_address : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);  -- Address of instruction to remove from ICache
-    o_flush_valid : out std_logic;                            -- Remove address from ICache is valid
-    i_istate : in std_logic_vector(3 downto 0);               -- ICache state machine value
-    i_dstate : in std_logic_vector(3 downto 0);               -- DCache state machine value
-    i_cstate : in std_logic_vector(1 downto 0)                -- CacheTop state machine value
+    i_e_ret : in std_logic                                    -- pseudo-instruction RET
   );
   end component;
 
@@ -1080,9 +1109,6 @@ package river_cfg is
   --! @param[out] o_dport_rdata    Response value
   --! @param[out] o_flush_address  Address of instruction to remove from ICache
   --! @param[out] o_flush_valid    Remove address from ICache is valid
-  --! @param[in] i_istate          ICache state machine value
-  --! @param[in] i_dstate          DCache state machine value
-  --! @param[in] i_cstate          cachetop state machine value
   component Processor is
   generic (
     hartid : integer;
@@ -1121,8 +1147,6 @@ package river_cfg is
     o_resp_data_ready : out std_logic;
     -- External interrupt pin
     i_ext_irq : in std_logic;                                         -- PLIC interrupt accordingly with spec
-    o_time : out std_logic_vector(63 downto 0);                       -- Timer in clock except halt state
-    o_exec_cnt : out std_logic_vector(63 downto 0);
     -- MPU interface
     o_mpu_region_we : out std_logic;
     o_mpu_region_idx : out std_logic_vector(CFG_MPU_TBL_WIDTH-1 downto 0);
@@ -1130,23 +1154,21 @@ package river_cfg is
     o_mpu_region_mask : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_mpu_region_flags : out std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);  -- {ena, cachable, r, w, x}
     -- Debug interface:
-    i_dport_valid : in std_logic;                                     -- Debug access from DSU is valid
-    i_dport_write : in std_logic;                                     -- Write command flag
-    i_dport_region : in std_logic_vector(1 downto 0);                 -- Registers region ID: 0=CSR; 1=IREGS; 2=Control
-    i_dport_addr : in std_logic_vector(11 downto 0);                  -- Register idx
-    i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);       -- Write value
-    o_dport_ready : out std_logic;                                    -- Response is ready
-    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);      -- Response value
+    i_dport_req_valid : in std_logic;                         -- Debug access from DSU is valid
+    i_dport_write : in std_logic;                             -- Write command flag
+    i_dport_addr : in std_logic_vector(CFG_DPORT_ADDR_BITS-1 downto 0); -- Debug Port address
+    i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);-- Write value
+    o_dport_req_ready : out std_logic;                        -- Ready to accept dbg request
+    i_dport_resp_ready : in std_logic;                        -- Read to accept response
+    o_dport_resp_valid : out std_logic;                       -- Response is valid
+    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);-- Response value
     o_halted : out std_logic;
     -- Debug signals:
     o_flush_address : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);-- Address of instruction to remove from ICache
     o_flush_valid : out std_logic;                                    -- Remove address from ICache is valid
     o_data_flush_address : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);    -- Address of instruction to remove from D$
     o_data_flush_valid : out std_logic;                               -- Remove address from D$ is valid
-    i_data_flush_end : in std_logic;
-    i_istate : in std_logic_vector(3 downto 0);                       -- ICache state machine value
-    i_dstate : in std_logic_vector(3 downto 0);                       -- DCache state machine value
-    i_cstate : in std_logic_vector(1 downto 0)                        -- CacheTop state machine value
+    i_data_flush_end : in std_logic
   );
   end component; 
 
@@ -1256,10 +1278,7 @@ package river_cfg is
     i_flush_valid : in std_logic;                                      -- address to clear icache is valid
     i_data_flush_address : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);  -- clear D$ address
     i_data_flush_valid : in std_logic;                                      -- address to clear D$ is valid
-    o_data_flush_end : out std_logic;
-    o_istate : out std_logic_vector(3 downto 0);                      -- ICache state machine value
-    o_dstate : out std_logic_vector(3 downto 0);                      -- DCache state machine value
-    o_cstate : out std_logic_vector(1 downto 0)                       -- cachetop state machine value
+    o_data_flush_end : out std_logic
   );
   end component; 
 
@@ -1324,16 +1343,15 @@ package river_cfg is
     o_resp_snoop_flags : out std_logic_vector(DTAG_FL_TOTAL-1 downto 0);
     -- Interrupt line from external interrupts controller (PLIC).
     i_ext_irq : in std_logic;
-    o_time : out std_logic_vector(63 downto 0);                       -- Timer. Clock counter except halt state.
-    o_exec_cnt : out std_logic_vector(63 downto 0);
     -- Debug interface:
-    i_dport_valid : in std_logic;                                     -- Debug access from DSU is valid
-    i_dport_write : in std_logic;                                     -- Write command flag
-    i_dport_region : in std_logic_vector(1 downto 0);                 -- Registers region ID: 0=CSR; 1=IREGS; 2=Control
-    i_dport_addr : in std_logic_vector(11 downto 0);                  -- Register idx
-    i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);       -- Write value
-    o_dport_ready : out std_logic;                                    -- Response is ready
-    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);      -- Response value
+    i_dport_req_valid : in std_logic;                         -- Debug access from DSU is valid
+    i_dport_write : in std_logic;                             -- Write command flag
+    i_dport_addr : in std_logic_vector(CFG_DPORT_ADDR_BITS-1 downto 0); -- Debug Port address
+    i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);-- Write value
+    o_dport_req_ready : out std_logic;                        -- Ready to accept dbg request
+    i_dport_resp_ready : in std_logic;                        -- Read to accept response
+    o_dport_resp_valid : out std_logic;                       -- Response is valid
+    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);-- Response value
     o_halted : out std_logic
   );
   end component; 

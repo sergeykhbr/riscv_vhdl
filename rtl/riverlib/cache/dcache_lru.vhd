@@ -73,8 +73,7 @@ entity dcache_lru is generic (
     -- Debug Signals:
     i_flush_address : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_flush_valid : in std_logic;
-    o_flush_end : out std_logic;
-    o_state : out std_logic_vector(3 downto 0)
+    o_flush_end : out std_logic
   );
 end; 
  
@@ -678,8 +677,6 @@ begin
     o_resp_snoop_valid <= v_resp_snoop_valid;
     o_resp_snoop_data <= line_rdata_o;
     o_resp_snoop_flags <= line_snoop_flags_o;
-
-    o_state <= r.state;
     
     rin <= v;
   end process;

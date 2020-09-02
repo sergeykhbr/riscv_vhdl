@@ -67,10 +67,11 @@ SC_MODULE(CsrRegs) {
     sc_out<bool> o_dbg_pc_write;            // Modify pc via debug interface
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_dbg_pc;    // Writing value into pc register
 
-    sc_out<bool> o_break_event;             // Breakpoint event to raise status flag in dport interfae
     sc_out<bool> o_progbuf_ena;               // Execution from prog buffer
     sc_out<sc_uint<32>> o_progbuf_pc;         // prog buffer instruction counter
     sc_out<sc_uint<32>> o_progbuf_data;       // prog buffer instruction opcode
+    sc_out<bool> o_flushi_ena;                // clear specified addr in ICache without execution of fence.i
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_flushi_addr; // ICache address to flush
 
     sc_out<bool> o_mpu_region_we;
     sc_out<sc_uint<CFG_MPU_TBL_WIDTH>> o_mpu_region_idx;
@@ -109,8 +110,8 @@ private:
         sc_signal<bool> mstackovr_ena;          // Stack Overflow control Enabled
         sc_signal<bool> mstackund_ena;          // Stack Underflow control Enabled
         sc_signal<sc_uint<2>> mpp;              // Previous mode
-        sc_signal<sc_uint<RISCV_ARCH>> mepc;
-        sc_signal<sc_uint<RISCV_ARCH>> uepc;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mepc;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> uepc;
         sc_signal<bool> ext_irq;
 
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mpu_addr;
@@ -148,6 +149,8 @@ private:
         sc_signal<bool> stepping_mode;
         sc_signal<sc_uint<RISCV_ARCH>> stepping_mode_cnt;
         sc_signal<sc_uint<RISCV_ARCH>> ins_per_step; // Number of steps before halt in stepping mode
+        sc_signal<bool> flushi_ena;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> flushi_addr;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
@@ -198,6 +201,8 @@ private:
         iv.stepping_mode = 0;
         iv.stepping_mode_cnt = 0;
         iv.ins_per_step = 1;
+        iv.flushi_ena = 0;
+        iv.flushi_addr = 0;
     }
 
     uint32_t hartid_;

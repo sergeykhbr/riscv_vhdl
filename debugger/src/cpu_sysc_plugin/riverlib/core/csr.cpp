@@ -62,10 +62,11 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     o_trap_pc("o_trap_pc"),
     o_dbg_pc_write("o_dbg_pc_write"),
     o_dbg_pc("o_dbg_pc"),
-    o_break_event("o_break_event"),
     o_progbuf_ena("o_progbuf_ena"),
     o_progbuf_pc("o_progbuf_pc"),
     o_progbuf_data("o_progbuf_data"),
+    o_flushi_ena("o_flushi_ena"),
+    o_flushi_addr("o_flushi_addr"),
     o_mpu_region_we("o_mpu_region_we"),
     o_mpu_region_idx("o_mpu_region_idx"),
     o_mpu_region_addr("o_mpu_region_addr"),
@@ -205,10 +206,11 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_trap_pc, o_trap_pc.name());
         sc_trace(o_vcd, o_dbg_pc_write, o_dbg_pc_write.name());
         sc_trace(o_vcd, o_dbg_pc, o_dbg_pc.name());
-        sc_trace(o_vcd, o_break_event, o_break_event.name());
         sc_trace(o_vcd, o_progbuf_ena, o_progbuf_ena.name());
         sc_trace(o_vcd, o_progbuf_pc, o_progbuf_pc.name());
         sc_trace(o_vcd, o_progbuf_data, o_progbuf_data.name());
+        sc_trace(o_vcd, o_flushi_ena, o_flushi_ena.name());
+        sc_trace(o_vcd, o_flushi_addr, o_flushi_addr.name());
         sc_trace(o_vcd, i_dport_ena, i_dport_ena.name());
         sc_trace(o_vcd, i_dport_write, i_dport_write.name());
         sc_trace(o_vcd, i_dport_addr, i_dport_addr.name());
@@ -262,6 +264,8 @@ void CsrRegs::comb() {
     v_req_resume = 0;
     v_req_progbuf = 0;
     v_clear_progbuferr = 0;
+    v.flushi_ena = 0;
+    v.flushi_addr = 0;
 
     if (i_wena.read() == 1) {
         vb_csr_addr = i_addr.read();
@@ -372,7 +376,7 @@ void CsrRegs::comb() {
     case CSR_uepc:// - User mode program counter
         vb_rdata = r.uepc;
         if (v_csr_wena) {
-            v.uepc = vb_csr_wdata;
+            v.uepc = vb_csr_wdata(CFG_CPU_ADDR_BITS-1, 0);
         }
         break;
     case CSR_mstatus:// - Machine mode status register
@@ -412,7 +416,7 @@ void CsrRegs::comb() {
     case CSR_mepc:// - Machine program counter
         vb_rdata = r.mepc;
         if (v_csr_wena) {
-            v.mepc = vb_csr_wdata;
+            v.mepc = vb_csr_wdata(CFG_CPU_ADDR_BITS-1, 0);
         }
         break;
     case CSR_mcause:// - Machine trap cause
@@ -508,6 +512,12 @@ void CsrRegs::comb() {
             v_clear_progbuferr = vb_csr_wdata[8];   // W1C err=1
         }
         break;
+    case CSR_flushi:
+        if (v_csr_wena) {
+            v.flushi_ena = 1;
+            v.flushi_addr = vb_csr_wdata(CFG_CPU_ADDR_BITS-1, 0);
+        }
+        break;
     case CSR_dcsr:
         vb_rdata(31,28) = 4;          // xdebugver: 4=External debug supported
         vb_rdata(8,6) = r.halt_cause;    // cause:
@@ -517,7 +527,6 @@ void CsrRegs::comb() {
             v.stepping_mode = vb_csr_wdata[2];
             if (vb_csr_wdata[2] == 1) {
                 v.stepping_mode_cnt = r.ins_per_step;  // default =1
-                v_req_resume = 1;
             }
         }
         break;
@@ -780,7 +789,7 @@ void CsrRegs::comb() {
     }
 
     if (v_clear_progbuferr == 1) {
-        v.progbuf_err = 0;
+        v.progbuf_err = PROGBUF_ERR_NONE;
     } else if (r.progbuf_ena.read() == 1) {
         if (i_ex_data_load_fault.read() == 1
             || i_ex_data_store_fault.read() == 1) {
@@ -807,7 +816,6 @@ void CsrRegs::comb() {
     o_uepc = r.uepc;
     o_dport_valid = v_dport_valid;
     o_dport_rdata = vb_rdata;
-    o_break_event = r.break_event;
     o_mpu_region_we = r.mpu_we;
     o_mpu_region_idx = r.mpu_idx;
     o_mpu_region_addr = r.mpu_addr;
@@ -816,6 +824,8 @@ void CsrRegs::comb() {
     o_progbuf_ena = r.progbuf_ena;
     o_progbuf_pc = r.progbuf_data_pc.read() << 1;
     o_progbuf_data = r.progbuf_data_out;
+    o_flushi_ena = r.flushi_ena;
+    o_flushi_addr = r.flushi_addr;
     o_halt = r.halt | v_cur_halt;
 }
 

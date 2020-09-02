@@ -160,8 +160,7 @@ package types_cache is
     i_mpu_flags : in std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);
     -- Debug Signals:
     i_flush_address : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);  -- clear ICache address from debug interface
-    i_flush_valid : in std_logic;                                      -- address to clear icache is valid
-    o_state : out std_logic_vector(3 downto 0)
+    i_flush_valid : in std_logic                                      -- address to clear icache is valid
   );
   end component; 
 
@@ -216,8 +215,7 @@ package types_cache is
     -- Debug Signals:
     i_flush_address : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_flush_valid : in std_logic;
-    o_flush_end : out std_logic;
-    o_state : out std_logic_vector(3 downto 0)
+    o_flush_end : out std_logic
   );
   end component; 
 

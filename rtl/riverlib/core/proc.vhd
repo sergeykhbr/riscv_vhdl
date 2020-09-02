@@ -62,8 +62,6 @@ entity Processor is
     o_resp_data_ready : out std_logic;
     -- External interrupt pin
     i_ext_irq : in std_logic;                                         -- PLIC interrupt accordingly with spec
-    o_time : out std_logic_vector(63 downto 0);                       -- Timer in clock except halt state
-    o_exec_cnt : out std_logic_vector(63 downto 0);
     -- MPU interface
     o_mpu_region_we : out std_logic;
     o_mpu_region_idx : out std_logic_vector(CFG_MPU_TBL_WIDTH-1 downto 0);
@@ -71,23 +69,21 @@ entity Processor is
     o_mpu_region_mask : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_mpu_region_flags : out std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);  -- {ena, cachable, r, w, x}
     -- Debug interface:
-    i_dport_valid : in std_logic;                                     -- Debug access from DSU is valid
-    i_dport_write : in std_logic;                                     -- Write command flag
-    i_dport_region : in std_logic_vector(1 downto 0);                 -- Registers region ID: 0=CSR; 1=IREGS; 2=Control
-    i_dport_addr : in std_logic_vector(11 downto 0);                  -- Register idx
-    i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);       -- Write value
-    o_dport_ready : out std_logic;                                    -- Response is ready
-    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);      -- Response value
+    i_dport_req_valid : in std_logic;                         -- Debug access from DSU is valid
+    i_dport_write : in std_logic;                             -- Write command flag
+    i_dport_addr : in std_logic_vector(CFG_DPORT_ADDR_BITS-1 downto 0); -- Debug Port address
+    i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);-- Write value
+    o_dport_req_ready : out std_logic;                        -- Ready to accept dbg request
+    i_dport_resp_ready : in std_logic;                        -- Read to accept response
+    o_dport_resp_valid : out std_logic;                       -- Response is valid
+    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);-- Response value
     o_halted : out std_logic;
     -- Debug signals:
     o_flush_address : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);-- Address of instruction to remove from ICache
     o_flush_valid : out std_logic;                                    -- Remove address from ICache is valid
     o_data_flush_address : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);    -- Address of instruction to remove from D$
     o_data_flush_valid : out std_logic;                               -- Remove address from D$ is valid
-    i_data_flush_end : in std_logic;
-    i_istate : in std_logic_vector(3 downto 0);                       -- ICache state machine value
-    i_dstate : in std_logic_vector(3 downto 0);                       -- DCache state machine value
-    i_cstate : in std_logic_vector(1 downto 0)                        -- CacheTop state machine value
+    i_data_flush_end : in std_logic
   );
 end; 
  
@@ -124,8 +120,10 @@ architecture arch_Processor of Processor is
         instr_executable : std_logic;
         radr1 : std_logic_vector(5 downto 0);
         radr2 : std_logic_vector(5 downto 0);
+        csr_addr : std_logic_vector(11 downto 0);
         waddr : std_logic_vector(5 downto 0);
         imm : std_logic_vector(RISCV_ARCH-1 downto 0);
+        progbuf_ena : std_logic;
     end record;
 
     type ExecuteType is record
@@ -143,7 +141,6 @@ architecture arch_Processor of Processor is
         whazard : std_logic;
         mret : std_logic;
         uret : std_logic;
-        csr_addr : std_logic_vector(11 downto 0);
         csr_wena : std_logic;
         csr_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
         ex_instr_load_fault : std_logic;
@@ -201,12 +198,21 @@ architecture arch_Processor of Processor is
 
     type CsrType is record
         rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
+        mepc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+        uepc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+        dport_valid : std_logic;
         dport_rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
         trap_valid : std_logic;
         trap_pc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
-        break_event : std_logic;
-        cycle_cnt : std_logic_vector(63 downto 0);           -- Number of clocks excluding halt state
+        progbuf_ena : std_logic;                             -- execute instruction from progbuf
+        progbuf_pc : std_logic_vector(31 downto 0);          -- progbuf instruction counter
+        progbuf_data : std_logic_vector(31 downto 0);        -- progbuf instruction to execute
+        flushi_ena : std_logic;                              -- clear specified addr in ICache without execution of fence.i
+        flushi_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- ICache address to flush
         executed_cnt : std_logic_vector(63 downto 0);        -- Number of executed instruction
+        dbg_pc_write : std_logic;                            -- modify npc value strob
+        dbg_pc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+        halt : std_logic;
     end record;
 
     --! 5-stages CPU pipeline
@@ -226,14 +232,6 @@ architecture arch_Processor of Processor is
         csr_write : std_logic;                               -- Region 0: CSR write enable
         ireg_ena : std_logic;                                -- Region 1: Access to integer register bank is enabled
         ireg_write : std_logic;                              -- Region 1: Integer registers bank write pulse
-        npc_write : std_logic;                               -- Region 1: npc write enable
-        halt : std_logic;                                    -- Halt signal is equal to hold pipeline
-        break_mode : std_logic;                              -- Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
-        br_fetch_valid : std_logic;                          -- Fetch injection address/instr are valid
-        br_address_fetch : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- Fetch injection address to skip ebreak instruciton only once
-        br_instr_fetch : std_logic_vector(31 downto 0);      -- Real instruction value that was replaced by ebreak
-        flush_address : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);-- Address of instruction to remove from ICache
-        flush_valid : std_logic;                                    -- Remove address from ICache is valid
     end record;
 
     type BranchPredictorType is record
@@ -246,10 +244,10 @@ architecture arch_Processor of Processor is
     signal dbg : DebugType;
     signal bp : BranchPredictorType;
 
-    signal wb_exec_dport_npc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
-    
+   
     signal w_fetch_pipeline_hold : std_logic;
     signal w_any_pipeline_hold : std_logic;
+    signal w_flush_pipeline : std_logic;
 
     signal w_writeback_ready : std_logic;
     signal w_reg_wena : std_logic;
@@ -260,10 +258,8 @@ architecture arch_Processor of Processor is
 
 begin
 
-    w_fetch_pipeline_hold <= not w.e.d_ready or dbg.halt;
-    w_any_pipeline_hold <= w.f.pipeline_hold or not w.e.d_ready or dbg.halt;
-
-    wb_exec_dport_npc <= dbg.core_wdata(CFG_CPU_ADDR_BITS-1 downto 0);
+    w_fetch_pipeline_hold <= not w.e.d_ready or csr.halt;
+    w_any_pipeline_hold <= w.f.pipeline_hold or not w.e.d_ready or csr.halt;
 
     w_writeback_ready <= not w.e.wena;
     w_reg_wena <= w.e.wena when w.e.wena = '1' else w.w.wena;
@@ -272,20 +268,18 @@ begin
     wb_reg_wdata <= w.e.wdata when w.e.wena = '1' else w.w.wdata;
     wb_reg_wtag <= w.e.wtag when w.e.wena = '1' else w.w.wtag;
 
-    o_req_ctrl_valid <= w.f.imem_req_valid;
-    o_req_ctrl_addr <= w.f.imem_req_addr;
-    o_time <= csr.cycle_cnt;
-    o_exec_cnt <= csr.executed_cnt;
-
-    o_flush_valid <= w.e.flushi or dbg.flush_valid or csr.break_event;
+    w_flush_pipeline <= w.e.flushi or w.e.ex_breakpoint or csr.flushi_ena;
+    o_flush_valid <= w_flush_pipeline;
     o_flush_address <= (others => '1') when w.e.flushi = '1'
-                                       else w.e.npc when csr.break_event = '1'
-                                       else dbg.flush_address;
+                                       else w.e.npc when w.e.ex_breakpoint = '1'
+                                                    else csr.flushi_addr;
 
     o_data_flush_address <= (others => '1');
     o_data_flush_valid <= w.m.flushd;
 
-    o_halted <= dbg.halt;
+    o_req_ctrl_valid <= w.f.imem_req_valid;
+    o_req_ctrl_addr <= w.f.imem_req_addr;
+    o_halted <= csr.halt;
 
     
     fetch0 : InstrFetch generic map (
@@ -303,7 +297,10 @@ begin
         i_mem_load_fault => i_resp_ctrl_load_fault,
         i_mem_executable => i_resp_ctrl_executable,
         o_mem_resp_ready => o_resp_ctrl_ready,
-        i_e_fencei => w.e.flushi,
+        i_flush_pipeline => w_flush_pipeline,
+        i_progbuf_ena => csr.progbuf_ena,
+        i_progbuf_pc => csr.progbuf_pc,
+        i_progbuf_data => csr.progbuf_data,
         i_predict_npc => bp.npc,
         o_mem_req_fire => w.f.req_fire,
         o_instr_load_fault => w.f.instr_load_fault,
@@ -311,10 +308,7 @@ begin
         o_valid => w.f.valid,
         o_pc => w.f.pc,
         o_instr => w.f.instr,
-        o_hold => w.f.pipeline_hold,
-        i_br_fetch_valid => dbg.br_fetch_valid,
-        i_br_address_fetch => dbg.br_address_fetch,
-        i_br_instr_fetch => dbg.br_instr_fetch);
+        o_hold => w.f.pipeline_hold);
         
     dec0 : InstrDecoder generic map (
         async_reset => async_reset,
@@ -331,9 +325,11 @@ begin
         o_radr1 => w.d.radr1,
         o_radr2 => w.d.radr2,
         o_waddr => w.d.waddr,
+        o_csr_addr => w.d.csr_addr,
         o_imm => w.d.imm,
         i_e_ready => w.e.d_ready,
-        i_e_fencei => w.e.flushi,
+        i_flush_pipeline => w_flush_pipeline,
+        i_progbuf_ena => w_flush_pipeline,
         o_valid => w.d.instr_valid,
         o_pc => w.d.pc,
         o_instr => w.d.instr,
@@ -349,7 +345,8 @@ begin
         o_instr_vec => w.d.instr_vec,
         o_exception => w.d.exception,
         o_instr_load_fault => w.d.instr_load_fault,
-        o_instr_executable => w.d.instr_executable);
+        o_instr_executable => w.d.instr_executable,
+        o_progbuf_ena => w.d.progbuf_ena);
 
     exec0 : InstrExecute generic map (
         async_reset => async_reset,
@@ -359,6 +356,8 @@ begin
         i_nrst => i_nrst,
         i_d_valid => w.d.instr_valid,
         i_d_pc => w.d.pc,
+        i_d_progbuf_ena => w.d.progbuf_ena,
+        i_dbg_progbuf_ena => csr.progbuf_ena,
         i_d_instr => w.d.instr,
         i_d_radr1 => w.d.radr1,
         i_d_radr2 => w.d.radr2,
@@ -378,8 +377,8 @@ begin
         i_unsup_exception => w.d.exception,
         i_instr_load_fault => w.d.instr_load_fault,
         i_instr_executable => w.d.instr_executable,
-        i_dport_npc_write => dbg.npc_write,
-        i_dport_npc => wb_exec_dport_npc,
+        i_dport_npc_write => csr.dbg_pc_write,
+        i_dport_npc => csr.dbg_pc,
         i_rdata1 => ireg.rdata1,
         i_rhazard1 => ireg.rhazard1,
         i_rdata2 => ireg.rdata2,
@@ -391,10 +390,11 @@ begin
         o_wdata => w.e.wdata,
         o_wtag => w.e.wtag,
         o_d_ready => w.e.d_ready,
-        o_csr_addr => w.e.csr_addr,
         o_csr_wena => w.e.csr_wena,
         i_csr_rdata => csr.rdata,
         o_csr_wdata => w.e.csr_wdata,
+        i_mepc => csr.mepc,
+        i_uepc => csr.uepc,
         i_trap_valid => csr.trap_valid,
         i_trap_pc => csr.trap_pc,
         o_ex_npc => w.e.ex_npc,
@@ -519,12 +519,15 @@ begin
         i_mret => w.e.mret,
         i_uret => w.e.uret,
         i_sp => ireg.sp,
-        i_addr => w.e.csr_addr,
+        i_addr => w.d.csr_addr,
         i_wena => w.e.csr_wena,
         i_wdata => w.e.csr_wdata,
         o_rdata => csr.rdata,
+        o_mepc => csr.mepc,
+        o_uepc => csr.uepc,
         i_trap_ready => w.e.trap_ready,
-        i_ex_pc => w.e.npc,
+        i_e_pc => w.e.pc,
+        i_e_npc => w.e.npc,
         i_ex_npc => w.e.ex_npc,
         i_ex_data_addr => i_resp_data_addr,
         i_ex_data_load_fault => i_resp_data_load_fault,
@@ -534,6 +537,8 @@ begin
         i_ex_illegal_instr => w.e.ex_illegal_instr,
         i_ex_unalign_store => w.e.ex_unalign_store,
         i_ex_unalign_load => w.e.ex_unalign_load,
+        i_ex_mpu_store => i_resp_data_er_mpu_store,
+        i_ex_mpu_load => i_resp_data_er_mpu_load,
         i_ex_breakpoint => w.e.ex_breakpoint,
         i_ex_ecall => w.e.ex_ecall,
         i_ex_fpu_invalidop => w.e.ex_fpu_invalidop,
@@ -543,14 +548,18 @@ begin
         i_ex_fpu_inexact => w.e.ex_fpu_inexact,
         i_fpu_valid => w.e.fpu_valid,
         i_irq_external => i_ext_irq,
+        i_e_next_ready => w.e.trap_ready,
         i_e_valid => w.e.valid,
-        i_halt => dbg.halt,
-        o_cycle_cnt => csr.cycle_cnt,
         o_executed_cnt => csr.executed_cnt,
         o_trap_valid => csr.trap_valid,
         o_trap_pc => csr.trap_pc,
-        i_break_mode => dbg.break_mode,
-        o_break_event => csr.break_event,
+        o_dbg_pc_write => csr.dbg_pc_write,
+        o_dbg_pc => csr.dbg_pc,
+        o_progbuf_ena => csr.progbuf_ena,
+        o_progbuf_pc => csr.progbuf_pc,
+        o_progbuf_data => csr.progbuf_data,
+        o_flushi_ena => csr.flushi_ena,
+        o_flushi_addr => csr.flushi_addr,
         o_mpu_region_we => o_mpu_region_we,
         o_mpu_region_idx => o_mpu_region_idx,
         o_mpu_region_addr => o_mpu_region_addr,
@@ -560,7 +569,9 @@ begin
         i_dport_write => dbg.csr_write,
         i_dport_addr => dbg.csr_addr,
         i_dport_wdata => dbg.core_wdata,
-        o_dport_rdata => csr.dport_rdata);
+        o_dport_valid => csr.dport_valid,
+        o_dport_rdata => csr.dport_rdata,
+        o_halt => csr.halt);
 
 
     dbg0 : DbgPort generic map (
@@ -568,38 +579,27 @@ begin
     ) port map (
         i_clk => i_clk,
         i_nrst => i_nrst,
-        i_dport_valid => i_dport_valid,
+        i_dport_req_valid => i_dport_req_valid,
         i_dport_write => i_dport_write,
-        i_dport_region => i_dport_region,
         i_dport_addr => i_dport_addr,
         i_dport_wdata => i_dport_wdata,
-        o_dport_ready => o_dport_ready,
+        o_dport_req_ready => o_dport_req_ready,
+        i_dport_resp_ready => i_dport_resp_ready,
+        o_dport_resp_valid => o_dport_resp_valid,
         o_dport_rdata => o_dport_rdata,
         o_csr_addr => dbg.csr_addr,
         o_reg_addr => dbg.reg_addr,
         o_core_wdata => dbg.core_wdata,
         o_csr_ena => dbg.csr_ena,
         o_csr_write => dbg.csr_write,
+        i_csr_valid => csr.dport_valid,
         i_csr_rdata => csr.dport_rdata,
         o_ireg_ena => dbg.ireg_ena,
         o_ireg_write => dbg.ireg_write,
-        o_npc_write => dbg.npc_write,
         i_ireg_rdata => ireg.dport_rdata,
         i_pc => w.e.pc,
         i_npc => w.e.npc,
-        i_e_next_ready => w.e.trap_ready,
         i_e_call => w.e.call,
-        i_e_ret => w.e.ret,
-        o_halt => dbg.halt,
-        i_ebreak => csr.break_event,
-        o_break_mode => dbg.break_mode,
-        o_br_fetch_valid => dbg.br_fetch_valid,
-        o_br_address_fetch => dbg.br_address_fetch,
-        o_br_instr_fetch => dbg.br_instr_fetch,
-        o_flush_address => dbg.flush_address,
-        o_flush_valid => dbg.flush_valid,
-        i_istate => i_istate,
-        i_dstate => i_dstate,
-        i_cstate => i_cstate);
+        i_e_ret => w.e.ret);
 
 end;

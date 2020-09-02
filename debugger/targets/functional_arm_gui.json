@@ -291,10 +291,8 @@
                             ['core0','executed_cnt'],
                             ['core0','stack_trace_cnt'],
                             ['core0','stack_trace_buf'],
-                            ['core0','br_fetch_addr'],
-                            ['core0','br_fetch_instr'],
                             ['core0','br_hw_add'],
-                            ['core0','br_hw_remove'],
+                            ['core0','csr_flushi'],
                            ]]
                 ]}]},
     {'Class':'HardResetClass','Instances':[

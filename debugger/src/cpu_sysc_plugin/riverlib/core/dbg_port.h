@@ -93,10 +93,10 @@ private:
         iv.stack_trace_cnt = 0;
     }
 
-    sc_signal<sc_uint<5>> wb_stack_raddr;
+    sc_signal<sc_uint<CFG_LOG2_STACK_TRACE_ADDR>> wb_stack_raddr;
     sc_signal<sc_biguint<2*CFG_CPU_ADDR_BITS>> wb_stack_rdata;
     sc_signal<bool> w_stack_we;
-    sc_signal<sc_uint<5>> wb_stack_waddr;
+    sc_signal<sc_uint<CFG_LOG2_STACK_TRACE_ADDR>> wb_stack_waddr;
     sc_signal<sc_biguint<2*CFG_CPU_ADDR_BITS>> wb_stack_wdata;
 
     StackTraceBuffer *trbuf0;

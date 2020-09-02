@@ -78,10 +78,8 @@ class ICpuFunctional : public IFace {
     virtual bool isOn() = 0;
     virtual void go() = 0;
     virtual void halt(EHaltCause cause, const char *descr) = 0;
-    virtual void step() = 0;
     virtual void addHwBreakpoint(uint64_t addr) = 0;
     virtual void removeHwBreakpoint(uint64_t addr) = 0;
-    virtual void skipBreakpoint() = 0;
     virtual void flush(uint64_t addr) = 0;
     virtual void doNotCache(uint64_t addr) = 0;
 

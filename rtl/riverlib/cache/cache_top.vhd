@@ -91,10 +91,7 @@ entity CacheTop is generic (
     i_flush_valid : in std_logic;                                      -- address to clear icache is valid
     i_data_flush_address : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);  -- clear D$ address
     i_data_flush_valid : in std_logic;                                      -- address to clear D$ is valid
-    o_data_flush_end : out std_logic;
-    o_istate : out std_logic_vector(3 downto 0);                      -- ICache state machine value
-    o_dstate : out std_logic_vector(3 downto 0);                      -- DCache state machine value
-    o_cstate : out std_logic_vector(1 downto 0)                       -- cachetop state machine value
+    o_data_flush_end : out std_logic
   );
 end; 
  
@@ -176,8 +173,6 @@ begin
     o_req_mem_strob <= d.req_mem_strob;
     o_req_mem_data <= d.req_mem_wdata;
 
-    o_cstate <= (others => '0');
-
     queue0 : Queue generic map (
         async_reset => async_reset,
         szbits => 2,
@@ -222,8 +217,7 @@ begin
         o_mpu_addr => i.mpu_addr,
         i_mpu_flags => wb_mpu_iflags,
         i_flush_address => i_flush_address,
-        i_flush_valid => i_flush_valid,
-        o_state => o_istate
+        i_flush_valid => i_flush_valid
     );
 
     d0 : dcache_lru generic map (
@@ -270,8 +264,7 @@ begin
         o_resp_snoop_flags => o_resp_snoop_flags,
         i_flush_address => i_data_flush_address,
         i_flush_valid => i_data_flush_valid,
-        o_flush_end => o_data_flush_end,
-        o_state => o_dstate
+        o_flush_end => o_data_flush_end
     );
 
     mpu0 : mpu generic map (

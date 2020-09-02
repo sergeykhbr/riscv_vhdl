@@ -78,6 +78,12 @@ class CsrDebugStatusType : public MappedReg64Type {
         t1.bits.cause = cause;
         value_.val = t1.val;
     }
+
+    uint64_t isSteppingMode() {
+        ValueType t1;
+        t1.val = value_.val;
+        return t1.bits.step;
+    }
  protected:
     virtual uint64_t aboutToWrite(uint64_t new_val) override;
 };
@@ -91,9 +97,10 @@ class GenericStatusType : public MappedReg64Type {
     virtual uint64_t aboutToWrite(uint64_t new_val) override;
 };
 
-class FetchedBreakpointType : public MappedReg64Type {
+// Flush specified address in I$
+class CsrFlushiType : public MappedReg64Type {
  public:
-    FetchedBreakpointType(IService *parent, const char *name, uint64_t addr)
+    CsrFlushiType(IService *parent, const char *name, uint64_t addr)
         : MappedReg64Type(parent, name, addr, 10) {
     }
  protected:
@@ -127,14 +134,6 @@ class StepCounterType : public MappedReg64Type {
     virtual uint64_t aboutToRead(uint64_t cur_val) override;
 };
 
-class FlushAddressType : public MappedReg64Type {
- public:
-    FlushAddressType(IService *parent, const char *name, uint64_t addr)
-        : MappedReg64Type(parent, name, addr, 10) {
-    }
- protected:
-    virtual uint64_t aboutToWrite(uint64_t new_val) override;
-};
 
 class CpuGeneric : public IService,
                    public IThread,
@@ -177,10 +176,8 @@ class CpuGeneric : public IService,
     virtual bool isOn() { return estate_ != CORE_OFF; }
     virtual void go();
     virtual void halt(EHaltCause cause, const char *descr);
-    virtual void step();
     virtual void addHwBreakpoint(uint64_t addr);
     virtual void removeHwBreakpoint(uint64_t addr);
-    virtual void skipBreakpoint();
     virtual void flush(uint64_t addr);
     virtual void doNotCache(uint64_t addr) { do_not_cache_ = true; }
  protected:
@@ -275,9 +272,7 @@ class CpuGeneric : public IService,
     MappedReg64Type stackTraceCnt_;         // Hardware stack trace buffer
     GenericReg64Bank stackTraceBuf_;        // [[from,to],*]
     MappedReg64Type br_control_;            // Enable/disable Trap on break
-    MappedReg64Type br_fetch_addr_;         // Skip breakpoint at address
-    FetchedBreakpointType br_fetch_instr_;  // Use this instruction on address
-    FlushAddressType br_flush_addr_;        // Flush address from ICache
+    CsrFlushiType csr_flushi_;        // Flush address from ICache
     AddBreakpointType br_hw_add_;
     RemoveBreakpointType br_hw_remove_;
 
@@ -285,7 +280,6 @@ class CpuGeneric : public IService,
     uint64_t pc_z_;
     uint64_t interrupt_pending_[2];
     bool sw_breakpoint_;
-    bool skip_sw_breakpoint_;
     bool hw_breakpoint_;
     uint64_t hw_break_addr_;    // Last hit breakpoint to skip it on next step
     bool do_not_cache_;         // Do not put instruction into ICache

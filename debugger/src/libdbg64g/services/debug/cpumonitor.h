@@ -45,7 +45,7 @@ class CpuMonitor : public IService,
 
     uint64_t getStatus();
     // execute current breakpoint from progbuf
-    void executeProgBuffer(uint64_t addr, uint32_t opcode, uint32_t oplen);
+    void stepOverSwBreakpoint();
     void writeBreakpoints();
     void removeBreakpoints();
 

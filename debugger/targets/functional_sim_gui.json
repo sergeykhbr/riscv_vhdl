@@ -184,7 +184,7 @@
                 ['ResetVector',0x0000,'Initial intruction pointer value (config parameter)'],
                 ['GenerateTraceFile','','Specify file name to enable tracer'],
                 ['CacheBaseAddress',0x10000000],
-                ['CacheAddressMask',1,0x7ffff],
+                ['CacheAddressMask',0x7ffff],
                 ['ResetState','Halted', 'CPU state after reset signal is raised: Halted or OFF'],
                 ['ExceptionTable',['CFG_NMI_INSTR_UNALIGNED_ADDR',  0x0008,
                                    'CFG_NMI_INSTR_FAULT_ADDR',      0x0010,
@@ -361,11 +361,9 @@
                             ['core0','executed_cnt'],
                             ['core0','stack_trace_cnt'],
                             ['core0','stack_trace_buf'],
-                            ['core0','br_fetch_addr'],
-                            ['core0','br_fetch_instr'],
                             ['core0','br_hw_add'],
                             ['core0','br_hw_remove'],
-                            ['core0','br_flush_addr'],
+                            ['core0','csr_flushi'],
                            ]]
                 ]}]},
     {'Class':'HardResetClass','Instances':[

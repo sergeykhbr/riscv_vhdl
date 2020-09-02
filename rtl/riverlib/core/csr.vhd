@@ -39,8 +39,11 @@ entity CsrRegs is
     i_wena : in std_logic;                                  -- Write enable
     i_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);   -- CSR writing value
     o_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);  -- CSR read value
+    o_mepc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    o_uepc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_trap_ready : in std_logic;                            -- Trap branch request was accepted
-    i_ex_pc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    i_e_pc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    i_e_npc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_ex_npc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     i_ex_data_addr : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);-- Data path: address must be equal to the latest request address
     i_ex_data_load_fault : in std_logic;                    -- Data path: Bus response with SLVERR or DECERR on read
@@ -50,6 +53,8 @@ entity CsrRegs is
     i_ex_illegal_instr : in std_logic;
     i_ex_unalign_store : in std_logic;
     i_ex_unalign_load : in std_logic;
+    i_ex_mpu_store : in std_logic;
+    i_ex_mpu_load : in std_logic;
     i_ex_breakpoint : in std_logic;
     i_ex_ecall : in std_logic;
     i_ex_fpu_invalidop : in std_logic;         -- FPU Exception: invalid operation
@@ -59,15 +64,19 @@ entity CsrRegs is
     i_ex_fpu_inexact : in std_logic;           -- FPU Exception: inexact
     i_fpu_valid : in std_logic;                -- FPU output is valid
     i_irq_external : in std_logic;
+    i_e_next_ready: in std_logic;
     i_e_valid : in std_logic;
-    i_halt : in std_logic;
-    o_cycle_cnt : out std_logic_vector(63 downto 0);           -- Number of clocks excluding halt state
     o_executed_cnt : out std_logic_vector(63 downto 0);        -- Number of executed instructions
     o_trap_valid : out std_logic;                              -- Trap pulse
-    o_trap_pc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);-- trap on pc
+    o_trap_pc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- trap on pc
+    o_dbg_pc_write : out std_logic;                                 -- Modify pc via debug interface
+    o_dbg_pc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);  -- Writing value into pc register
 
-    i_break_mode : in std_logic;                            -- Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
-    o_break_event : out std_logic;                          -- 1 clock EBREAK detected
+    o_progbuf_ena : out std_logic;                            -- Execution from prog buffer
+    o_progbuf_pc : out std_logic_vector(31 downto 0);         -- prog buffer instruction counter
+    o_progbuf_data : out std_logic_vector(31 downto 0);       -- prog buffer instruction opcode
+    o_flushi_ena : out std_logic;                             -- clear specified addr in ICache without execution of fence.i
+    o_flushi_addr : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- ICache address to flush
 
     o_mpu_region_we : out std_logic;
     o_mpu_region_idx : out std_logic_vector(CFG_MPU_TBL_WIDTH-1 downto 0);
@@ -79,7 +88,9 @@ entity CsrRegs is
     i_dport_write : in std_logic;                            -- Debug port Write enable
     i_dport_addr : in std_logic_vector(11 downto 0);         -- Debug port CSR address
     i_dport_wdata : in std_logic_vector(RISCV_ARCH-1 downto 0);-- Debug port CSR writing value
-    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0)-- Debug port CSR read value
+    o_dport_valid : out std_logic;                              -- Debug read data is valid
+    o_dport_rdata : out std_logic_vector(RISCV_ARCH-1 downto 0);-- Debug port CSR read value
+    o_halt : out std_logic
   );
 end; 
  
@@ -98,7 +109,8 @@ architecture arch_CsrRegs of CsrRegs is
       mstackovr_ena : std_logic;             -- Stack Overflow control enabled
       mstackund_ena : std_logic;             -- Stack Underflow control enabled
       mpp : std_logic_vector(1 downto 0);    -- Previous mode
-      mepc : std_logic_vector(RISCV_ARCH-1 downto 0);
+      mepc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+      uepc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
       ext_irq : std_logic;
 
       mpu_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
@@ -123,6 +135,21 @@ architecture arch_CsrRegs of CsrRegs is
       timer : std_logic_vector(63 downto 0);                   -- Timer in clocks.
       cycle_cnt : std_logic_vector(63 downto 0);               -- Cycle in clocks.
       executed_cnt : std_logic_vector(63 downto 0);            -- Number of valid executed instructions
+
+      break_mode : std_logic;               -- Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
+      halt : std_logic;
+      halt_cause : std_logic_vector(2 downto 0);      -- 1=ebreak instruction; 2=breakpoint exception; 3=haltreq; 4=step
+      progbuf_ena : std_logic;
+      progbuf_data : std_logic_vector(CFG_PROGBUF_REG_TOTAL*32-1 downto 0);
+      progbuf_data_out : std_logic_vector(31 downto 0);
+      progbuf_data_pc : std_logic_vector(4 downto 0);
+      progbuf_data_npc : std_logic_vector(4 downto 0);
+      progbuf_err : std_logic_vector(2 downto 0);         -- 1=busy;2=cmd not supported;3=exception;4=halt/resume;5=bus error
+      stepping_mode : std_logic;
+      stepping_mode_cnt : std_logic_vector(RISCV_ARCH-1 downto 0);
+      ins_per_step : std_logic_vector(RISCV_ARCH-1 downto 0); -- Number of steps before halt in stepping mode
+      flushi_ena : std_logic;
+      flushi_addr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   end record;
 
   constant R_RESET : RegistersType := (
@@ -135,7 +162,10 @@ architecture arch_CsrRegs of CsrRegs is
         '0', '0', '0',
         '0',             -- mstackovr_ena
         '0',             -- mstackund_ena
-        (others => '0'), (others => '0'), '0', --mpp, mepc, ext_irq
+        (others => '0'),  --mpp
+        (others => '0'), -- mepc
+        (others => '0'), -- uepc
+         '0',            -- ext_irq
         (others => '0'), -- mpu_addr
         (others => '0'), -- mpu_mask
         (others => '0'), -- mpu_idx
@@ -146,54 +176,127 @@ architecture arch_CsrRegs of CsrRegs is
         '0', '0', (others => '0'),
         (others => '0'), --timer
         (others => '0'), --cycle_cnt
-        (others => '0')); -- executed_cnt
+        (others => '0'), -- executed_cnt
+
+        '0',             -- break_mode
+        '0',             -- halt
+        (others => '0'), -- halt_cause
+        '0',             -- progbuf_ena
+        (others => '0'), -- progbuf_data
+        (others => '0'), -- progbuf_data_out
+        (others => '0'), -- progbuf_data_pc
+        (others => '0'), -- progbuf_data_npc
+        PROGBUF_ERR_NONE,-- progbuf_err
+        '0',             -- stepping_mode
+        (others => '0'), -- stepping_mode_cnt
+        (others => '0'), -- ins_per_step
+        '0',             -- flushi_ena
+        (others => '0')  -- flushi_addr
+  );
 
   signal r, rin : RegistersType;
   
-  procedure procedure_RegAccess(
-     iaddr  : in std_logic_vector(11 downto 0);
-     iwena  : in std_logic;
-     iwdata : in std_logic_vector(RISCV_ARCH-1 downto 0);
-     ir : in RegistersType;
-     ov : out RegistersType;
-     ordata : out std_logic_vector(RISCV_ARCH-1 downto 0)) is
+begin
+
+  comb : process(i_nrst, i_mret, i_uret, i_sp, i_addr, i_wena, i_wdata, i_trap_ready,
+                 i_e_pc, i_e_npc, i_ex_npc, i_ex_data_addr, i_ex_data_load_fault, i_ex_data_store_fault,
+                 i_ex_data_store_fault_addr,
+                 i_ex_instr_load_fault, i_ex_illegal_instr, i_ex_unalign_load, i_ex_unalign_store,
+                 i_ex_mpu_store, i_ex_mpu_load, i_ex_breakpoint, i_ex_ecall, 
+                 i_ex_fpu_invalidop, i_ex_fpu_divbyzero, i_ex_fpu_overflow,
+                 i_ex_fpu_underflow, i_ex_fpu_inexact, i_fpu_valid, i_irq_external,
+                 i_e_next_ready, i_e_valid,
+                 i_dport_ena, i_dport_write, i_dport_addr, i_dport_wdata,
+                 r)
+    variable v : RegistersType;
+    variable w_ie : std_logic;
+    variable w_ext_irq : std_logic;
+    variable w_trap_valid : std_logic;
+    variable wb_trap_pc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    variable v_dbg_pc_write : std_logic;
+    variable vb_dbg_pc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    variable w_trap_irq : std_logic;
+    variable w_exception_xret : std_logic;
+    variable wb_trap_code : std_logic_vector(4 downto 0);
+    variable wb_mbadaddr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
+    variable w_mstackovr : std_logic;
+    variable w_mstackund : std_logic;
+    variable vb_csr_addr : std_logic_vector(11 downto 0);
+    variable vb_csr_wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
+    variable v_csr_wena : std_logic;
+    variable v_dport_valid : std_logic;
+    variable vb_rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
+    variable v_cur_halt : std_logic;
+    variable v_req_halt : std_logic;
+    variable v_req_resume : std_logic;
+    variable v_req_progbuf : std_logic;
+    variable v_clear_progbuferr : std_logic;
+    variable tidx : integer range 0 to 15;
+    variable tnpc : integer;
   begin
-    ov := ir;
-    ordata := (others => '0');
-    case iaddr is
+
+    v := r;
+
+    vb_rdata := (others => '0');
+    v_dbg_pc_write := '0';
+    vb_dbg_pc := (others => '0');
+    v_cur_halt := '0';
+    v_req_halt := '0';
+    v_req_resume := '0';
+    v_req_progbuf := '0';
+    v_clear_progbuferr := '0';
+    v.flushi_ena := '0';
+    v.flushi_addr := (others => '0');
+    tnpc := 16*conv_integer(r.progbuf_data_npc);
+
+    if i_wena = '1' then
+        vb_csr_addr := i_addr;
+        vb_csr_wdata := i_wdata;
+        v_csr_wena := '1';
+        v_dport_valid := '0';
+    else
+        vb_csr_addr := i_dport_addr;
+        v_csr_wena := i_dport_ena and i_dport_write;
+        vb_csr_wdata := i_dport_wdata;
+        v_dport_valid := '1';
+    end if;
+
+    tidx := conv_integer(vb_csr_wdata(35 downto 32));
+
+    case vb_csr_addr is
     when CSR_fflags =>
-        ordata(0) := ir.ex_fpu_inexact;
-        ordata(1) := ir.ex_fpu_underflow;
-        ordata(2) := ir.ex_fpu_overflow;
-        ordata(3) := ir.ex_fpu_divbyzero;
-        ordata(4) := ir.ex_fpu_invalidop;
+        vb_rdata(0) := r.ex_fpu_inexact;
+        vb_rdata(1) := r.ex_fpu_underflow;
+        vb_rdata(2) := r.ex_fpu_overflow;
+        vb_rdata(3) := r.ex_fpu_divbyzero;
+        vb_rdata(4) := r.ex_fpu_invalidop;
         if CFG_HW_FPU_ENABLE then
-            if iwena = '1' then
-                ov.ex_fpu_inexact := iwdata(0);
-                ov.ex_fpu_underflow := iwdata(1);
-                ov.ex_fpu_overflow := iwdata(2);
-                ov.ex_fpu_divbyzero := iwdata(3);
-                ov.ex_fpu_invalidop := iwdata(4);
+            if v_csr_wena = '1' then
+                v.ex_fpu_inexact := vb_csr_wdata(0);
+                v.ex_fpu_underflow := vb_csr_wdata(1);
+                v.ex_fpu_overflow := vb_csr_wdata(2);
+                v.ex_fpu_divbyzero := vb_csr_wdata(3);
+                v.ex_fpu_invalidop := vb_csr_wdata(4);
             end if;
         end if;
     when CSR_frm =>
         if CFG_HW_FPU_ENABLE then
-            ordata(2 downto 0) := "100";  -- Round mode: round to Nearest (RMM)
+            vb_rdata(2 downto 0) := "100";  -- Round mode: round to Nearest (RMM)
         end if;
     when CSR_fcsr =>
-        ordata(0) := ir.ex_fpu_inexact;
-        ordata(1) := ir.ex_fpu_underflow;
-        ordata(2) := ir.ex_fpu_overflow;
-        ordata(3) := ir.ex_fpu_divbyzero;
-        ordata(4) := ir.ex_fpu_invalidop;
+        vb_rdata(0) := r.ex_fpu_inexact;
+        vb_rdata(1) := r.ex_fpu_underflow;
+        vb_rdata(2) := r.ex_fpu_overflow;
+        vb_rdata(3) := r.ex_fpu_divbyzero;
+        vb_rdata(4) := r.ex_fpu_invalidop;
         if CFG_HW_FPU_ENABLE then
-            ordata(7 downto 5) := "100";  -- Round mode: round to Nearest (RMM)
-            if iwena = '1' then
-                ov.ex_fpu_inexact := iwdata(0);
-                ov.ex_fpu_underflow := iwdata(1);
-                ov.ex_fpu_overflow := iwdata(2);
-                ov.ex_fpu_divbyzero := iwdata(3);
-                ov.ex_fpu_invalidop := iwdata(4);
+            vb_rdata(7 downto 5) := "100";  -- Round mode: round to Nearest (RMM)
+            if v_csr_wena = '1' then
+                v.ex_fpu_inexact := vb_csr_wdata(0);
+                v.ex_fpu_underflow := vb_csr_wdata(1);
+                v.ex_fpu_overflow := vb_csr_wdata(2);
+                v.ex_fpu_divbyzero := vb_csr_wdata(3);
+                v.ex_fpu_invalidop := vb_csr_wdata(4);
             end if;
         end if;
     when CSR_misa =>
@@ -202,7 +305,7 @@ architecture arch_CsrRegs of CsrRegs is
         --!     2 = 64
         --!     3 = 128
         --!
-        ordata(RISCV_ARCH-1 downto RISCV_ARCH-2) := "10";
+        vb_rdata(RISCV_ARCH-1 downto RISCV_ARCH-2) := "10";
         --! BitCharacterDescription
         --! 0  A Atomic extension
         --! 1  B Tentatively reserved for Bit operations extension
@@ -231,134 +334,168 @@ architecture arch_CsrRegs of CsrRegs is
         --! 24 Y Reserved
         --! 25 Z Reserve
         --!
-        ordata(8) := '1';
-        ordata(12) := '1';
-        ordata(20) := '1';
-        ordata(2) := '1';
+        vb_rdata(8) := '1';
+        vb_rdata(12) := '1';
+        vb_rdata(20) := '1';
+        vb_rdata(2) := '1';
         if CFG_HW_FPU_ENABLE then
-            ordata(3) := '1';
+            vb_rdata(3) := '1';
         end if;
     when CSR_mvendorid =>
-        ordata(31 downto 0) := CFG_VENDOR_ID;
+        vb_rdata(31 downto 0) := CFG_VENDOR_ID;
     when CSR_marchid =>
     when CSR_mimplementationid =>
-        ordata(31 downto 0) := CFG_IMPLEMENTATION_ID;
+        vb_rdata(31 downto 0) := CFG_IMPLEMENTATION_ID;
     when CSR_mhartid =>
-        ordata(31 downto 0) := conv_std_logic_vector(hartid, 32);
+        vb_rdata(31 downto 0) := conv_std_logic_vector(hartid, 32);
     when CSR_uepc =>    -- User mode program counter
-    when CSR_mstatus => -- Machine mode status register
-        ordata(0) := ir.uie;
-        ordata(3) := ir.mie;
-        ordata(7) := ir.mpie;
-        ordata(12 downto 11) := ir.mpp;
-        if CFG_HW_FPU_ENABLE then
-            ordata(14 downto 13) := "01";  -- FS field: Initial state
+        vb_rdata(CFG_CPU_ADDR_BITS-1 downto 0) := r.uepc;
+        if v_csr_wena = '1' then
+            v.uepc := vb_csr_wdata(CFG_CPU_ADDR_BITS-1 downto 0);
         end if;
-        ordata(33 downto 32) := "10";  -- UXL: User mode supported 64-bits
-        if iwena = '1' then
-            ov.uie := iwdata(0);
-            ov.mie := iwdata(3);
-            ov.mpie := iwdata(7);
-            ov.mpp := iwdata(12 downto 11);
+    when CSR_mstatus => -- Machine mode status register
+        vb_rdata(0) := r.uie;
+        vb_rdata(3) := r.mie;
+        vb_rdata(7) := r.mpie;
+        vb_rdata(12 downto 11) := r.mpp;
+        if CFG_HW_FPU_ENABLE then
+            vb_rdata(14 downto 13) := "01";  -- FS field: Initial state
+        end if;
+        vb_rdata(33 downto 32) := "10";  -- UXL: User mode supported 64-bits
+        if v_csr_wena = '1' then
+            v.uie := vb_csr_wdata(0);
+            v.mie := vb_csr_wdata(3);
+            v.mpie := vb_csr_wdata(7);
+            v.mpp := vb_csr_wdata(12 downto 11);
         end if;
     when CSR_medeleg => -- Machine exception delegation
     when CSR_mideleg => -- Machine interrupt delegation
     when CSR_mie =>     -- Machine interrupt enable bit
     when CSR_mtvec =>
-        ordata := ir.mtvec;
-        if iwena = '1' then
-            ov.mtvec := iwdata;
+        vb_rdata := r.mtvec;
+        if v_csr_wena = '1' then
+            v.mtvec := vb_csr_wdata;
         end if;
     when CSR_mscratch => -- Machine scratch register
-        ordata := ir.mscratch;
-        if iwena = '1' then
-            ov.mscratch := iwdata;
+        vb_rdata := r.mscratch;
+        if v_csr_wena = '1' then
+            v.mscratch := vb_csr_wdata;
         end if;
     when CSR_mepc => -- Machine program counter
-        ordata := ir.mepc;
-        if iwena = '1' then
-            ov.mepc := iwdata;
+        vb_rdata(CFG_CPU_ADDR_BITS-1 downto 0) := r.mepc;
+        if v_csr_wena = '1' then
+            v.mepc := vb_csr_wdata(CFG_CPU_ADDR_BITS-1 downto 0);
         end if;
     when CSR_mcause => -- Machine trap cause
-        ordata(63) := ir.trap_irq;
-        ordata(4 downto 0) := ir.trap_code;
+        vb_rdata(63) := r.trap_irq;
+        vb_rdata(4 downto 0) := r.trap_code;
     when CSR_mbadaddr =>   -- Machine bad address
-        ordata(CFG_CPU_ADDR_BITS-1 downto 0) := ir.mbadaddr;
+        vb_rdata(CFG_CPU_ADDR_BITS-1 downto 0) := r.mbadaddr;
     when CSR_mip =>        -- Machine interrupt pending
     when CSR_cycle =>
-        ordata := ir.cycle_cnt;
+        vb_rdata := r.cycle_cnt;
     when CSR_time =>
-        ordata := ir.timer;
+        vb_rdata := r.timer;
     when CSR_insret =>
-        ordata := ir.executed_cnt;
+        vb_rdata := r.executed_cnt;
     when CSR_mstackovr =>  -- Machine stack overflow
-        ordata(CFG_CPU_ADDR_BITS-1 downto 0) := ir.mstackovr;
-        if iwena = '1' then
-            ov.mstackovr := iwdata(CFG_CPU_ADDR_BITS-1 downto 0);
-            ov.mstackovr_ena := or_reduce(iwdata(CFG_CPU_ADDR_BITS-1 downto 0));
+        vb_rdata(CFG_CPU_ADDR_BITS-1 downto 0) := r.mstackovr;
+        if v_csr_wena = '1' then
+            v.mstackovr := vb_csr_wdata(CFG_CPU_ADDR_BITS-1 downto 0);
+            v.mstackovr_ena := or_reduce(vb_csr_wdata(CFG_CPU_ADDR_BITS-1 downto 0));
         end if;
     when CSR_mstackund =>  -- Machine stack underflow
-        ordata(CFG_CPU_ADDR_BITS-1 downto 0) := ir.mstackund;
-        if iwena = '1' then
-            ov.mstackund := iwdata(CFG_CPU_ADDR_BITS-1 downto 0);
-            ov.mstackund_ena := or_reduce(iwdata(CFG_CPU_ADDR_BITS-1 downto 0));
+        vb_rdata(CFG_CPU_ADDR_BITS-1 downto 0) := r.mstackund;
+        if v_csr_wena = '1' then
+            v.mstackund := vb_csr_wdata(CFG_CPU_ADDR_BITS-1 downto 0);
+            v.mstackund_ena := or_reduce(vb_csr_wdata(CFG_CPU_ADDR_BITS-1 downto 0));
         end if;
     when CSR_mpu_addr =>
-        if iwena = '1' then
-            ov.mpu_addr := iwdata(CFG_CPU_ADDR_BITS-1 downto 0);
+        if v_csr_wena = '1' then
+            v.mpu_addr := vb_csr_wdata(CFG_CPU_ADDR_BITS-1 downto 0);
         end if;
     when CSR_mpu_mask =>
-        if iwena = '1' then
-            ov.mpu_mask := iwdata(CFG_CPU_ADDR_BITS-1 downto 0);
+        if v_csr_wena = '1' then
+            v.mpu_mask := vb_csr_wdata(CFG_CPU_ADDR_BITS-1 downto 0);
         end if;
     when CSR_mpu_ctrl =>
-        ordata(15 downto 8) := conv_std_logic_vector(CFG_MPU_TBL_SIZE, 8);
-        if iwena = '1' then
-            ov.mpu_idx := iwdata(8+CFG_MPU_TBL_WIDTH-1 downto 8);
-            ov.mpu_flags := iwdata(CFG_MPU_FL_TOTAL-1 downto 0);
-            ov.mpu_we := '1';
+        vb_rdata(15 downto 8) := conv_std_logic_vector(CFG_MPU_TBL_SIZE, 8);
+        if v_csr_wena = '1' then
+            v.mpu_idx := vb_csr_wdata(8+CFG_MPU_TBL_WIDTH-1 downto 8);
+            v.mpu_flags := vb_csr_wdata(CFG_MPU_FL_TOTAL-1 downto 0);
+            v.mpu_we := '1';
+        end if;
+    when CSR_runcontrol =>
+        if v_csr_wena = '1' then
+            v_req_halt := vb_csr_wdata(31);
+            v_req_resume := vb_csr_wdata(30);
+            if vb_csr_wdata(18) = '1' then
+                if r.halt = '1' then
+                    v_req_progbuf := '1';
+                else
+                    v.progbuf_err := PROGBUF_ERR_HALT_RESUME;
+                end if;
+            end if;
+        end if;
+    when CSR_insperstep =>
+        vb_rdata := r.ins_per_step;
+        if v_csr_wena = '1' then
+            v.ins_per_step := vb_csr_wdata;
+            if or_reduce(vb_csr_wdata) = '0' then
+                v.ins_per_step := conv_std_logic_vector(1, RISCV_ARCH);  -- cannot be zero
+            end if;
+            if r.halt = '1' then
+                v.stepping_mode_cnt := vb_csr_wdata;
+            end if;
+        end if;
+    when CSR_progbuf =>
+        if v_csr_wena = '1' then
+            v.progbuf_data(32*tidx+31 downto 32*tidx) := vb_csr_wdata(31 downto 0);
+        end if;
+    when CSR_abstractcs =>
+        vb_rdata(28 downto 24) := conv_std_logic_vector(CFG_PROGBUF_REG_TOTAL, 5);
+        vb_rdata(12) := r.progbuf_ena;       -- busy
+        vb_rdata(10 downto 8) := r.progbuf_err;
+        vb_rdata(3 downto 0) := conv_std_logic_vector(CFG_DATA_REG_TOTAL, 4);
+        if v_csr_wena = '1' then
+            v_clear_progbuferr := vb_csr_wdata(8);   -- W1C err=1
+        end if;
+    when CSR_flushi =>
+        if v_csr_wena = '1' then
+            v.flushi_ena := '1';
+            v.flushi_addr := vb_csr_wdata(CFG_CPU_ADDR_BITS-1 downto 0);
+        end if;
+    when CSR_dcsr =>
+        vb_rdata(31 downto 28) := "0100";        -- xdebugver: 4=External debug supported
+        vb_rdata(8 downto 6) := r.halt_cause;    -- cause:
+        vb_rdata(2) := r.stepping_mode;          -- step: before resumereq
+        vb_rdata(1 downto 0) := "11";            -- prv: privilege in debug mode: 3=machine
+        if v_csr_wena = '1' then
+            v.stepping_mode := vb_csr_wdata(2);
+            if vb_csr_wdata(2) = '1' then
+                v.stepping_mode_cnt := r.ins_per_step;  -- default =1
+            end if;
+        end if;
+    when CSR_dpc =>
+        -- Upon entry into debug mode DPC must contains:
+        --       cause        |   Address
+        -- -------------------|----------------
+        -- ebreak             |  Address of ebreak instruction
+        -- single step        |  Address of next instruction to be executed
+        -- trigger (HW BREAK) |  if timing=0, cause isntruction, if timing=1 enxt instruction
+        -- halt request       |  next instruction
+        --
+        if r.halt_cause = HALT_CAUSE_EBREAK then
+            vb_rdata(CFG_CPU_ADDR_BITS-1 downto 0) := i_e_pc;
+        else
+            vb_rdata(CFG_CPU_ADDR_BITS-1 downto 0) := i_e_npc;
+        end if;
+        if v_csr_wena = '1' then
+            v_dbg_pc_write := '1';
+            vb_dbg_pc := vb_csr_wdata(CFG_CPU_ADDR_BITS-1 downto 0);
         end if;
     when others =>
     end case;
-  end;
-
-begin
-
-  comb : process(i_nrst, i_mret, i_uret, i_sp, i_addr, i_wena, i_wdata, i_trap_ready,
-                 i_ex_pc, i_ex_npc, i_ex_data_addr, i_ex_data_load_fault, i_ex_data_store_fault,
-                 i_ex_data_store_fault_addr,
-                 i_ex_instr_load_fault, i_ex_illegal_instr, i_ex_unalign_load, i_ex_unalign_store,
-                 i_ex_breakpoint, i_ex_ecall, 
-                 i_ex_fpu_invalidop, i_ex_fpu_divbyzero, i_ex_fpu_overflow,
-                 i_ex_fpu_underflow, i_ex_fpu_inexact, i_fpu_valid, i_irq_external,
-                 i_e_valid, i_halt,
-                 i_break_mode, i_dport_ena, i_dport_write, i_dport_addr, i_dport_wdata,
-                 r)
-    variable tv1, tv2, v : RegistersType;
-    variable wb_rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
-    variable wb_dport_rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
-    variable w_ie : std_logic;
-    variable w_ext_irq : std_logic;
-    variable w_dport_wena : std_logic;
-    variable w_trap_valid : std_logic;
-    variable wb_trap_pc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
-    variable w_trap_irq : std_logic;
-    variable w_exception_xret : std_logic;
-    variable wb_trap_code : std_logic_vector(4 downto 0);
-    variable wb_mbadaddr : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
-    variable w_mstackovr : std_logic;
-    variable w_mstackund : std_logic;
-  begin
-
-    tv1 := r;
-
-    w_dport_wena := i_dport_ena and i_dport_write;
-
-    procedure_RegAccess(i_addr, i_wena, i_wdata,
-                        tv1, tv2, wb_rdata);
-
-    procedure_RegAccess(i_dport_addr, w_dport_wena,
-                        i_dport_wdata, tv2, v, wb_dport_rdata);
 
     if r.mpu_we = '1' then
         v.mpu_we := '0';
@@ -402,7 +539,7 @@ begin
     wb_trap_code := (others => '0');
     v.break_event := '0';
     wb_trap_pc := r.mtvec(CFG_CPU_ADDR_BITS-1 downto 0);
-    wb_mbadaddr := i_ex_pc;
+    wb_mbadaddr := i_e_npc;
 
     if i_ex_instr_load_fault = '1' then
         w_trap_valid := '1';
@@ -422,8 +559,8 @@ begin
         v.break_event := '1';
         w_trap_valid := '1';
         wb_trap_code := EXCEPTION_Breakpoint;
-        if i_break_mode = '0' then
-            wb_trap_pc := i_ex_pc;
+        if r.break_mode = '0' then
+            wb_trap_pc := i_e_npc;
         else
             wb_trap_pc := CFG_NMI_BREAKPOINT_ADDR;
         end if;
@@ -506,11 +643,10 @@ begin
     -- Behaviour on EBREAK instruction defined by 'i_break_mode':
     --     0 = halt;
     --     1 = generate trap
-    if (w_trap_valid and i_trap_ready and (i_break_mode or not i_ex_breakpoint)) = '1' then
+    if (w_trap_valid and i_trap_ready and (r.break_mode or not i_ex_breakpoint)) = '1' then
         v.mie := '0';
         v.mpp := r.mode;
-        v.mepc(RISCV_ARCH-1 downto CFG_CPU_ADDR_BITS) := (others => '0');
-        v.mepc(CFG_CPU_ADDR_BITS-1 downto 0) := i_ex_npc;
+        v.mepc := i_ex_npc;
         v.mbadaddr := wb_mbadaddr;
         v.trap_code := wb_trap_code;
         v.trap_irq := w_trap_irq;
@@ -524,31 +660,108 @@ begin
         end case;
     end if;
 
-    if i_halt = '0' or i_e_valid = '1' then
+    if r.halt = '0' or i_e_next_ready = '1' then
         v.cycle_cnt := r.cycle_cnt + 1;
-    end ifl
-    if i_e_valid = '1' then
+    end if;
+    if i_e_next_ready = '1' then
         v.executed_cnt := r.executed_cnt + 1;
     end if;
     v.timer := r.timer + 1;
+
+    if i_e_next_ready = '1' then
+        if r.progbuf_ena = '1' then
+            v.progbuf_data_out := r.progbuf_data(tnpc + 31 downto tnpc);
+            v.progbuf_data_pc := r.progbuf_data_npc;
+            if r.progbuf_data(tnpc + 1 downto tnpc) = "11" then
+                v.progbuf_data_npc := r.progbuf_data_npc + 2;
+            else 
+                v.progbuf_data_npc := r.progbuf_data_npc + 1;
+            end if;
+            if and_reduce(r.progbuf_data_pc(4 downto 1)) = '1' then
+                -- use end of buffer as a watchdog
+                v.progbuf_ena := '0';
+                v.halt        := '1';
+            end if;
+        elsif or_reduce(r.stepping_mode_cnt) = '1' then
+            v.stepping_mode_cnt := r.stepping_mode_cnt - 1;
+            if or_reduce(r.stepping_mode_cnt(RISCV_ARCH-1 downto 1)) = '0' then
+                v.halt := '1';
+                v_cur_halt := '1';
+                v.stepping_mode := '0';
+                v.halt_cause := HALT_CAUSE_STEP;
+            end if;
+        end if;
+    end if;
+
+    if r.break_event = '1' then
+        if r.progbuf_ena = '1' then
+            v.halt := '1';  -- do not modify halt cause in debug mode
+            v.progbuf_ena := '0';
+        else
+            if r.break_mode = '0' then
+                v.halt := '1';
+                v.halt_cause := HALT_CAUSE_EBREAK;
+            end if;
+        end if;
+    elsif v_req_halt = '1' and r.halt = '0' then
+        if r.progbuf_ena = '0' and r.stepping_mode = '0' then
+            v.halt := '1';
+            v.halt_cause := HALT_CAUSE_HALTREQ;
+        end if;
+    elsif v_req_progbuf = '1' then
+        v.progbuf_ena := '1';
+        v.progbuf_data_out := r.progbuf_data(31 downto 0);
+        v.progbuf_data_pc := (others => '0');
+        if r.progbuf_data(1 downto 0) = "11" then
+            v.progbuf_data_npc := "00010";
+        else
+            v.progbuf_data_npc := "00001";
+        end if;
+        v.halt := '0';
+    elsif v_req_resume = '1' and r.halt = '1' then
+        v.halt := '0';
+    end if;
+
+    if v_clear_progbuferr = '1' then
+        v.progbuf_err := PROGBUF_ERR_NONE;
+    elsif r.progbuf_ena = '1' then
+        if i_ex_data_load_fault = '1'
+            or i_ex_data_store_fault = '1' then
+            v.progbuf_err := PROGBUF_ERR_EXCEPTION;
+        elsif i_ex_unalign_store = '1'
+                or i_ex_unalign_load = '1'
+                or i_ex_mpu_store = '1'
+                or i_ex_mpu_load = '1' then
+            v.progbuf_err := PROGBUF_ERR_BUS;
+        end if;
+    end if;
 
 
     if not async_reset and i_nrst = '0' then
         v := R_RESET;
     end if;
 
-    o_cycle_cnt <= r.cycle_cnt;
     o_executed_cnt <= r.executed_cnt;
     o_trap_valid <= w_trap_valid;
     o_trap_pc <= wb_trap_pc;
-    o_rdata <= wb_rdata;
-    o_dport_rdata <= wb_dport_rdata;
-    o_break_event <= r.break_event;
+    o_dbg_pc_write <= v_dbg_pc_write;
+    o_dbg_pc <= vb_dbg_pc;
+    o_rdata <= vb_rdata;
+    o_mepc <= r.mepc;
+    o_uepc <= r.uepc;
+    o_dport_valid <= v_dport_valid;
+    o_dport_rdata <= vb_rdata;
     o_mpu_region_we <= r.mpu_we;
     o_mpu_region_idx <= r.mpu_idx;
     o_mpu_region_addr <= r.mpu_addr;
     o_mpu_region_mask <= r.mpu_mask;
     o_mpu_region_flags <= r.mpu_flags;
+    o_progbuf_ena <= r.progbuf_ena;
+    o_progbuf_pc <= X"000000" & "00" & r.progbuf_data_pc & '0';
+    o_progbuf_data <= r.progbuf_data_out;
+    o_flushi_ena <= r.flushi_ena;
+    o_flushi_addr <= r.flushi_addr;
+    o_halt <= r.halt or v_cur_halt;
     
     rin <= v;
   end process;

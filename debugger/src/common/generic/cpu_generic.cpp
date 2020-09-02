@@ -33,9 +33,7 @@ CpuGeneric::CpuGeneric(const char *name)
     stackTraceCnt_(this, "stack_trace_cnt", DSUREG(ureg.v.stack_trace_cnt)),
     stackTraceBuf_(this, "stack_trace_buf", DSUREG(ureg.v.stack_trace_buf), 0),
     br_control_(this, "br_control", DSUREG(udbg.v.br_ctrl)),
-    br_fetch_addr_(this, "br_fetch_addr", DSUREG(udbg.v.br_address_fetch)),
-    br_fetch_instr_(this, "br_fetch_instr", DSUREG(udbg.v.br_instr_fetch)),
-    br_flush_addr_(this, "br_flush_addr", DSUREG(udbg.v.br_flush_addr)),
+    csr_flushi_(this, "csr_flushi", DSUREG(csr[CSR_flushi])),
     br_hw_add_(this, "br_hw_add", DSUREG(udbg.v.add_breakpoint)),
     br_hw_remove_(this, "br_hw_remove", DSUREG(udbg.v.remove_breakpoint)) {
     registerInterface(static_cast<IThread *>(this));
@@ -76,7 +74,6 @@ CpuGeneric::CpuGeneric(const char *name)
     interrupt_pending_[1] = 0;
     sw_breakpoint_ = false;
     hw_breakpoint_ = false;
-    skip_sw_breakpoint_ = false;
     hwBreakpoints_.make_list(0);
     do_not_cache_ = false;
 
@@ -302,11 +299,6 @@ void CpuGeneric::fetchILine() {
             exceptionLoadInstruction(&trans_);
         }
         cacheline_[0].val = trans_.rpayload.b64[0];
-        if (skip_sw_breakpoint_ && trans_.addr == br_fetch_addr_.getValue().val) {
-            skip_sw_breakpoint_ = false;
-            cacheline_[0].buf32[0] = br_fetch_instr_.getValue().buf32[0];
-            doNotCache(trans_.addr);
-        }
     }
 }
 
@@ -462,16 +454,12 @@ void CpuGeneric::go() {
         RISCV_error("CPU is turned-off", 0);
         return;
     }
-    estate_ = CORE_Normal;
-}
-
-void CpuGeneric::step() {
-    if (estate_ == CORE_OFF) {
-        RISCV_error("CPU is turned-off", 0);
-        return;
+    if (dcsr_.isSteppingMode()) {
+        hw_stepping_break_ = step_cnt_ + insperstep_.getValue().val;
+        estate_ = CORE_Stepping;
+    } else {
+        estate_ = CORE_Normal;
     }
-    hw_stepping_break_ = step_cnt_ + insperstep_.getValue().val;
-    estate_ = CORE_Stepping;
 }
 
 void CpuGeneric::halt(EHaltCause cause, const char *descr) {
@@ -613,11 +601,6 @@ bool CpuGeneric::checkHwBreakpoint() {
     return false;
 }
 
-void CpuGeneric::skipBreakpoint() {
-    skip_sw_breakpoint_ = true;
-    sw_breakpoint_ = false;
-}
-
 uint64_t GenericNPCType::aboutToRead(uint64_t cur_val) {
     CpuGeneric *pcpu = static_cast<CpuGeneric *>(parent_);
     return pcpu->getNPC();
@@ -630,10 +613,7 @@ uint64_t GenericNPCType::aboutToWrite(uint64_t new_val) {
 }
 
 uint64_t CsrDebugStatusType::aboutToWrite(uint64_t new_val) {
-    CpuGeneric *pcpu = static_cast<CpuGeneric *>(parent_);
-    if (new_val & 0x4) {    // [2] step
-        pcpu->step();
-    }
+    // todo: select enter Debug mode or not
     return new_val;
 }
 
@@ -649,9 +629,9 @@ uint64_t GenericStatusType::aboutToWrite(uint64_t new_val) {
     return new_val;
 }
 
-uint64_t FetchedBreakpointType::aboutToWrite(uint64_t new_val) {
+uint64_t CsrFlushiType::aboutToWrite(uint64_t new_val) {
     CpuGeneric *pcpu = static_cast<CpuGeneric *>(parent_);
-    pcpu->skipBreakpoint();
+    pcpu->flush(new_val);
     return new_val;
 }
 
@@ -670,12 +650,6 @@ uint64_t RemoveBreakpointType::aboutToWrite(uint64_t new_val) {
 uint64_t StepCounterType::aboutToRead(uint64_t cur_val) {
     CpuGeneric *pcpu = static_cast<CpuGeneric *>(parent_);
     return pcpu->getStepCounter();
-}
-
-uint64_t FlushAddressType::aboutToWrite(uint64_t new_val) {
-    CpuGeneric *pcpu = static_cast<CpuGeneric *>(parent_);
-    pcpu->flush(new_val);
-    return new_val;
 }
 
 }  // namespace debugger

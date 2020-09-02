@@ -110,15 +110,15 @@ type axi4_river_out_vector is array (0 to CFG_TOTAL_CPU_MAX-1) of axi4_river_out
 
 
 type dport_in_type is record
-    valid : std_logic;
+    req_valid : std_logic;
+    resp_ready : std_logic;
     write : std_logic;
-    region : std_logic_vector(1 downto 0);
-    addr : std_logic_vector(11 downto 0);
+    addr : std_logic_vector(CFG_DPORT_ADDR_BITS-1 downto 0);
     wdata : std_logic_vector(RISCV_ARCH-1 downto 0);
 end record;
 
 constant dport_in_none : dport_in_type := (
-  '0', '0', (others => '0'), (others => '0'), (others => '0'));
+  '0', '1', '0', (others => '0'), (others => '0'));
 
 type dport_in_vector is array (0 to CFG_TOTAL_CPU_MAX-1) 
        of dport_in_type;
@@ -126,12 +126,13 @@ type dport_in_vector is array (0 to CFG_TOTAL_CPU_MAX-1)
 
 type dport_out_type is record
     halted : std_logic;
-    ready : std_logic;
+    req_ready : std_logic;
+    resp_valid : std_logic;
     rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
 end record;
 
 constant dport_out_none : dport_out_type := (
-    '0', '1', (others => '0'));
+    '0', '1', '0', (others => '0'));
 
 type dport_out_vector is array (0 to CFG_TOTAL_CPU_MAX-1) 
      of dport_out_type;

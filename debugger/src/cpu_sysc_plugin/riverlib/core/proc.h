@@ -218,10 +218,11 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> dport_rdata;
         sc_signal<bool> trap_valid;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> trap_pc;
-        sc_signal<bool> break_event;             // ebreak detected 1 clock pulse
         sc_signal<bool> progbuf_ena;                // execute instruction from progbuf
         sc_signal<sc_uint<32>> progbuf_pc;          // progbuf instruction counter
         sc_signal<sc_uint<32>> progbuf_data;        // progbuf instruction to execute
+        sc_signal<bool> flushi_ena;                 // clear specified addr in ICache without execution of fence.i
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> flushi_addr;
         sc_signal<sc_uint<64>> executed_cnt;        // Number of executed instruction
         sc_signal<bool> dbg_pc_write;               // modify npc value strob
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> dbg_pc;

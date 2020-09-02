@@ -40,8 +40,11 @@ entity InstrFetch is generic (
     i_mem_load_fault : in std_logic;
     i_mem_executable : in std_logic;
     o_mem_resp_ready : out std_logic;
-    i_e_fencei : in std_logic;
 
+    i_flush_pipeline : in std_logic;                   -- reset pipeline and cache
+    i_progbuf_ena : in std_logic;                      -- executing from prog buffer
+    i_progbuf_pc : in std_logic_vector(31 downto 0);   -- progbuf counter
+    i_progbuf_data : in std_logic_vector(31 downto 0); -- progbuf instruction
     i_predict_npc : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
 
     o_mem_req_fire : out std_logic;                    -- used by branch predictor to form new npc value
@@ -50,10 +53,7 @@ entity InstrFetch is generic (
     o_valid : out std_logic;
     o_pc : out std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     o_instr : out std_logic_vector(31 downto 0);
-    o_hold : out std_logic;                                -- Hold due no response from icache yet
-    i_br_fetch_valid : in std_logic;                       -- Fetch injection address/instr are valid
-    i_br_address_fetch : in std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0); -- Fetch injection address to skip ebreak instruciton only once
-    i_br_instr_fetch : in std_logic_vector(31 downto 0)   -- Real instruction value that was replaced by ebreak
+    o_hold : out std_logic                                -- Hold due no response from icache yet
   );
 end; 
  
@@ -86,33 +86,31 @@ begin
 
   comb : process(i_nrst, i_pipeline_hold, i_mem_req_ready, i_mem_data_valid,
                 i_mem_data_addr, i_mem_data, i_mem_load_fault, i_mem_executable,
-                i_e_fencei, i_predict_npc, 
-                i_br_fetch_valid, i_br_address_fetch, i_br_instr_fetch, r)
+                i_flush_pipeline, i_progbuf_ena, i_progbuf_pc, i_progbuf_data,
+                i_predict_npc, r)
     variable v : RegistersType;
     variable w_o_req_valid : std_logic;
     variable w_o_req_fire : std_logic;
     variable w_o_hold : std_logic;
     variable wb_o_pc : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
     variable wb_o_instr : std_logic_vector(31 downto 0);
+    variable w_o_valid : std_logic;
   begin
 
     v := r;
 
     w_o_req_valid := not i_pipeline_hold
-        and not (r.wait_resp and not i_mem_data_valid);
+        and not (r.wait_resp and not i_mem_data_valid)
+        and not i_progbuf_ena;
     w_o_req_fire := i_mem_req_ready and w_o_req_valid;
 
-    w_o_hold := not (r.wait_resp and i_mem_data_valid);
+    w_o_hold := not (r.wait_resp and i_mem_data_valid)
+                and not i_progbuf_ena;
 
     if w_o_req_fire = '1' then
         v.wait_resp := '1';
     elsif i_mem_data_valid = '1' and i_pipeline_hold = '0' then
         v.wait_resp := '0';
-    end if;
-
-    if i_br_fetch_valid = '1' then
-        v.br_address := i_br_address_fetch;
-        v.br_instr := i_br_instr_fetch;
     end if;
 
     if i_mem_data_valid = '1' and r.wait_resp = '1' and i_pipeline_hold = '0' then
@@ -122,13 +120,22 @@ begin
         v.instr_load_fault := i_mem_load_fault;
         v.instr_executable := i_mem_executable;
     end if;
-    if i_e_fencei = '1' then
+    if i_flush_pipeline = '1' then
         -- Clear pipeline stage
         v.resp_address := (others => '1');
     end if;
 
     wb_o_pc := r.resp_address;
-    wb_o_instr := r.resp_data;
+
+    if i_progbuf_ena = '1' then
+        wb_o_instr := i_progbuf_data;
+        wb_o_pc    := i_progbuf_pc;
+    else
+        wb_o_instr := r.resp_data;
+        wb_o_instr := r.resp_data;
+    end if;
+    w_o_valid := (r.resp_valid or i_progbuf_ena)
+            and not (i_pipeline_hold or w_o_hold);
 
 
     -- Breakpoint skip logic that allows to continue execution
@@ -150,7 +157,7 @@ begin
     o_mem_req_fire <= w_o_req_fire;
     o_instr_load_fault <= r.instr_load_fault;
     o_instr_executable <= r.instr_executable;
-    o_valid <= r.resp_valid and not (i_pipeline_hold or w_o_hold);
+    o_valid <= w_o_valid;
     o_pc <= wb_o_pc;
     o_instr <= wb_o_instr;
     o_mem_resp_ready <= r.wait_resp and not i_pipeline_hold;

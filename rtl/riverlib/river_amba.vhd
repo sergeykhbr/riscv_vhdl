@@ -162,14 +162,13 @@ begin
       o_resp_snoop_data => resp_snoop_data_o,
       o_resp_snoop_flags => resp_snoop_flags_o,
       i_ext_irq => i_ext_irq,
-      o_time => open,
-      o_exec_cnt => open,
-      i_dport_valid => i_dport.valid,
+      i_dport_req_valid => i_dport.req_valid,
       i_dport_write => i_dport.write,
-      i_dport_region => i_dport.region,
       i_dport_addr => i_dport.addr,
       i_dport_wdata => i_dport.wdata,
-      o_dport_ready => o_dport.ready,
+      o_dport_req_ready => o_dport.req_ready,
+      i_dport_resp_ready => i_dport.resp_ready,
+      o_dport_resp_valid => o_dport.resp_valid,
       o_dport_rdata => o_dport.rdata,
       o_halted => o_dport.halted
 );

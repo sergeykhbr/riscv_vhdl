@@ -94,7 +94,8 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     sensitive << dbg.reg_addr;
     sensitive << csr.halt;
     sensitive << dbg.core_wdata;
-    sensitive << csr.break_event;
+    sensitive << csr.flushi_ena;
+    sensitive << csr.flushi_addr;
 
     fetch0 = new InstrFetch("fetch0", async_reset);
     fetch0->i_clk(i_clk);
@@ -351,10 +352,11 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     csr0->o_trap_pc(csr.trap_pc);
     csr0->o_dbg_pc_write(csr.dbg_pc_write);
     csr0->o_dbg_pc(csr.dbg_pc);
-    csr0->o_break_event(csr.break_event);
     csr0->o_progbuf_ena(csr.progbuf_ena);
     csr0->o_progbuf_pc(csr.progbuf_pc);
     csr0->o_progbuf_data(csr.progbuf_data);
+    csr0->o_flushi_ena(csr.flushi_ena);
+    csr0->o_flushi_addr(csr.flushi_addr);
     csr0->o_mpu_region_we(o_mpu_region_we);
     csr0->o_mpu_region_idx(o_mpu_region_idx);
     csr0->o_mpu_region_addr(o_mpu_region_addr);
@@ -465,14 +467,15 @@ void Processor::comb() {
         wb_reg_wtag = w.w.wtag;
     }
 
-    w_flush_pipeline = w.e.flushi.read() || csr.break_event.read();
+    w_flush_pipeline = w.e.flushi.read() || w.e.ex_breakpoint.read()
+                      || csr.flushi_ena.read();
     o_flush_valid = w_flush_pipeline;
     if (w.e.flushi.read() == 1) {
         o_flush_address = ~0ull;
-    } else if (csr.break_event.read()) {
+    } else if (w.e.ex_breakpoint.read()) {
         o_flush_address = w.e.npc;
     } else {
-        o_flush_address = 0;
+        o_flush_address = csr.flushi_addr;
     }
     o_data_flush_address = ~0ull;
     o_data_flush_valid = w.m.flushd;

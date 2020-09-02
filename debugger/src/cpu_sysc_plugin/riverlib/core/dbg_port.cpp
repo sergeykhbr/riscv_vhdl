@@ -215,7 +215,8 @@ void DbgPort::comb() {
         vrdata = 0;
         vrdata(CFG_LOG2_STACK_TRACE_ADDR-1, 0) = r.stack_trace_cnt;
         if (r.dport_write == 1) {
-            v.stack_trace_cnt = r.dport_wdata.read();
+            v.stack_trace_cnt =
+                r.dport_wdata.read()(CFG_LOG2_STACK_TRACE_ADDR-1, 0);
         }
         v.dstate = wait_to_accept;
         break;

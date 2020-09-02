@@ -53,24 +53,27 @@ void CmdRun::exec(AttributeType *args, AttributeType *res) {
     res->attr_free();
     res->make_nil();
     CrGenericRuncontrolType runctrl;
+    CrGenericDebugControlType dcs;
     uint64_t addr_runcontrol = DSUREGBASE(csr[CSR_runcontrol]);
+    uint64_t addr_dcsr = DSUREGBASE(csr[CSR_dcsr]);
 
     RISCV_trigger_hap(HAP_Resume, 0, "Resume command received");
 
-    if (args->size() == 1) {
-        runctrl.val = 0;
-        runctrl.bits.req_resume = 1;
-        tap_->write(addr_runcontrol, 8, runctrl.u8);
-    } else if (args->size() == 2) {
-        uint64_t addr_dcsr = DSUREGBASE(csr[CSR_dcsr]);
+    dcs.val = 0;                // disable step mode
+    dcs.bits.ebreakm = 1;       // openocd do the same for m,h,s,u
+    if (args->size() == 2) {
         uint64_t addr_step_cnt = DSUREGBASE(csr[CSR_insperstep]);
         Reg64Type t1;
         t1.val = (*args)[1].to_uint64();
         tap_->write(addr_step_cnt, 8, t1.buf);
-        t1.val = 0;
-        t1.bits.b2 = 1;     // step
-        tap_->write(addr_dcsr, 8, t1.buf);
+
+        dcs.bits.step = 1;
     }
+    tap_->write(addr_dcsr, 8, dcs.u8);
+
+    runctrl.val = 0;
+    runctrl.bits.req_resume = 1;
+    tap_->write(addr_runcontrol, 8, runctrl.u8);
 }
 
 }  // namespace debugger
