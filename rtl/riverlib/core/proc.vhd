@@ -329,7 +329,7 @@ begin
         o_imm => w.d.imm,
         i_e_ready => w.e.d_ready,
         i_flush_pipeline => w_flush_pipeline,
-        i_progbuf_ena => w_flush_pipeline,
+        i_progbuf_ena => csr.progbuf_ena,
         o_valid => w.d.instr_valid,
         o_pc => w.d.pc,
         o_instr => w.d.instr,

@@ -44,9 +44,6 @@ class CpuMonitor : public IService,
     virtual void busyLoop();
 
     uint64_t getStatus();
-    // execute current breakpoint from progbuf
-    void stepOverSwBreakpoint();
-    void writeBreakpoints();
     void removeBreakpoints();
 
  private:

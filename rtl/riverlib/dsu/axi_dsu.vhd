@@ -211,6 +211,10 @@ begin
     case r.state is
     when idle =>
         v_axi_ready := '1';
+        v.addr := (others => '0');
+        v.wdata := (others => '0');
+        v.transfer := '0';
+        v.postexec := '0';
         if w_bus_we = '1' then
             v.write := '1';
             v.addr := wb_bus_waddr(0)(CFG_DPORT_ADDR_BITS+2 downto 3);
@@ -255,31 +259,31 @@ begin
                 -- Auto repead the last command on register access
                 v.addr(13 downto 0) := r.command(13 downto 0);
                 v.write := r.command(16);               -- write
+                v.transfer := r.command(17);
                 v.postexec := r.command(18);            -- postexec
                 v.wdata := r.arg0(63 downto 32) & r.wdata(31 downto 0);
-                if r.command(17) = '1' then             -- transfer
+                if r.command(16) = '0' or r.command(17) = '1' then
+                    -- read operation or write with transfer
                     v.state := dport_request;
-                elsif r.command(18) = '1' then          -- postexec
-                    v.state := dmi_postexec;            -- no need access to registers
                 end if;
             end if;
         elsif r.addr(11 downto 0) = X"005" then            -- DATA1
-                v.rdata(31 downto 0) := r.arg0(63 downto 32);
-                if r.write = '1' then
-                    v.arg0(63 downto 32) := r.wdata(31 downto 0);
+            v.rdata(31 downto 0) := r.arg0(63 downto 32);
+            if r.write = '1' then
+                v.arg0(63 downto 32) := r.wdata(31 downto 0);
+            end if;
+            if r.autoexecdata(1) = '1' and r.command(31 downto 24) = X"00" then
+                -- Auto repead the last command on register access
+                v.addr(13 downto 0) := r.command(13 downto 0);
+                v.write := r.command(16);               -- write
+                v.transfer := r.command(17);
+                v.postexec := r.command(18);            -- postexec
+                v.wdata := r.wdata(31 downto 0) & r.arg0(31 downto 0);
+                if r.command(16) = '0' or r.command(17) = '1' then
+                    -- read operation or write with transfer
+                    v.state := dport_request;
                 end if;
-                if r.autoexecdata(1) = '1' and r.command(31 downto 24) = X"00" then
-                    -- Auto repead the last command on register access
-                    v.addr(13 downto 0) := r.command(13 downto 0);
-                    v.write := r.command(16);               -- write
-                    v.postexec := r.command(18);            -- postexec
-                    v.wdata := r.wdata(31 downto 0) & r.arg0(31 downto 0);
-                    if r.command(17) = '1' then             -- transfer
-                        v.state := dport_request;
-                    elsif r.command(18) = '1' then          -- postexec
-                        v.state := dmi_postexec;            -- no need access to registers
-                    end if;
-                end if;
+            end if;
         elsif r.addr(11 downto 0) = X"010" then         -- DMCONTROL
             v.rdata(1) := r.soft_rst;
             v.rdata(log2x(16+CFG_TOTAL_CPU_MAX)-1 downto 16) := r.cpu_context;
@@ -302,18 +306,21 @@ begin
             v.rdata(17) := r.resumeack;                 -- allresumeack
         elsif r.addr(11 downto 0) = X"016" then         -- ABSTRACTCS
             v.addr(13 downto 0) := "00" & CSR_abstractcs;
+            v.postexec := '0';
             v.state := dport_request;
         elsif r.addr(11 downto 0) = X"017" then         -- COMMAND
-            v.command := r.wdata(31 downto 0);          -- Save for autoexec
-            if r.wdata(31 downto 24) = X"00" then       -- cmdtype: 0=register access
-                v.addr(13 downto 0) := r.wdata(13 downto 0);
-                v.write := r.wdata(16);                 -- write
-                v.postexec := r.wdata(18);              -- postexec
-                v.wdata := r.arg0;
-                if r.wdata(17) = '1' then               -- transfer
-                    v.state := dport_request;
-                elsif r.wdata(18) = '1' then            -- postexec
-                    v.state := dmi_postexec;            -- no need access to registers
+            if r.write = '1' then
+                v.command := r.wdata(31 downto 0);          -- Save for autoexec
+                if r.wdata(31 downto 24) = X"00" then       -- cmdtype: 0=register access
+                    v.addr(13 downto 0) := r.wdata(13 downto 0);
+                    v.write := r.wdata(16);                 -- write
+                    v.transfer := r.command(17);
+                    v.postexec := r.wdata(18);              -- postexec
+                    v.wdata := r.arg0;
+                    if r.command(16) = '0' or r.command(17) = '1' then
+                        -- read operation or write with transfer
+                        v.state := dport_request;
+                    end if;
                 end if;
             end if;
         elsif r.addr(11 downto 0) = X"018" then         -- ABSTRACAUTO
@@ -328,6 +335,8 @@ begin
         end if;
     when dmi_postexec =>
         v.write := '1';
+        v.postexec := '0';
+        v.transfer := '0';
         v.addr(13 downto 0) := "00" & CSR_runcontrol;
         v.wdata := (others => '0');
         v.wdata(18) := '1';             -- req_progbuf: request to execute progbuf
@@ -355,8 +364,6 @@ begin
             end if;
             
             if r.postexec = '1' then
-                v.transfer := '0';
-                v.postexec := '0';
                 v.state := dmi_postexec;
             end if;
         end if;

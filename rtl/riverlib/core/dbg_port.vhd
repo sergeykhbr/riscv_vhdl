@@ -154,7 +154,7 @@ begin
     wb_o_csr_addr := (others => '0');
     wb_o_reg_addr := (others => '0');
     wb_o_core_wdata := (others => '0');
-    wb_idx := conv_integer(i_dport_addr);
+    wb_idx := conv_integer(i_dport_addr(11 downto 0));
     w_o_csr_ena := '0';
     w_o_csr_write := '0';
     w_o_ireg_ena := '0';

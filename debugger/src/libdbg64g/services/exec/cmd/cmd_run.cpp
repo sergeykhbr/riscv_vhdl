@@ -14,10 +14,11 @@
  *  limitations under the License.
  */
 
-#include "cmd_run.h"
-#include "debug/dsumap.h"
 #include <generic-isa.h>
 #include <ihap.h>
+#include <iservice.h>
+#include "cmd_run.h"
+#include "debug/dsumap.h"
 
 namespace debugger {
 
@@ -33,6 +34,15 @@ CmdRun::CmdRun(ITap *tap) : ICommand ("run", tap) {
         "    run\n"
         "    go 1000\n"
         "    c 1\n");
+
+    AttributeType lstServ;
+    RISCV_get_services_with_iface(IFACE_SOURCE_CODE, &lstServ);
+    isrc_ = 0;
+    if (lstServ.size() != 0) {
+        IService *iserv = static_cast<IService *>(lstServ[0u].to_iface());
+        isrc_ = static_cast<ISourceCode *>(
+                            iserv->getInterface(IFACE_SOURCE_CODE));
+    }
 }
 
 
@@ -56,24 +66,106 @@ void CmdRun::exec(AttributeType *args, AttributeType *res) {
     CrGenericDebugControlType dcs;
     uint64_t addr_runcontrol = DSUREGBASE(csr[CSR_runcontrol]);
     uint64_t addr_dcsr = DSUREGBASE(csr[CSR_dcsr]);
+    uint64_t addr_step_cnt = DSUREGBASE(csr[CSR_insperstep]);
+    uint64_t steps_skipped = 0;
+    bool resumereq = true;
 
-    RISCV_trigger_hap(HAP_Resume, 0, "Resume command received");
+    isrc_->getBreakpointList(&brList_);
+    if (brList_.size()) {
+        // Skip breakpoint if npc points to ebreak
+        steps_skipped = checkSwBreakpoint();
+        // Write all breakpoints
+        writeBreakpoints();
+    }
 
     dcs.val = 0;                // disable step mode
     dcs.bits.ebreakm = 1;       // openocd do the same for m,h,s,u
     if (args->size() == 2) {
-        uint64_t addr_step_cnt = DSUREGBASE(csr[CSR_insperstep]);
-        Reg64Type t1;
-        t1.val = (*args)[1].to_uint64();
-        tap_->write(addr_step_cnt, 8, t1.buf);
-
-        dcs.bits.step = 1;
+        Reg64Type step_cnt;
+        step_cnt.val = (*args)[1].to_uint64() - steps_skipped;
+        if (step_cnt.val)  {
+            tap_->write(addr_step_cnt, 8, step_cnt.buf);
+            dcs.bits.step = 1;
+        } else {
+            // Step already done, do not write 'resumereq'
+            resumereq = false;
+        }
     }
     tap_->write(addr_dcsr, 8, dcs.u8);
 
-    runctrl.val = 0;
-    runctrl.bits.req_resume = 1;
-    tap_->write(addr_runcontrol, 8, runctrl.u8);
+    if (resumereq) {
+        runctrl.val = 0;
+        runctrl.bits.req_resume = 1;
+        tap_->write(addr_runcontrol, 8, runctrl.u8);
+    }
+
+    RISCV_trigger_hap(HAP_Resume, 0, "Resume command processed");
 }
+
+uint64_t CmdRun::checkSwBreakpoint() {
+    uint64_t addr_dpc = DSUREGBASE(csr[CSR_dpc]);
+    uint64_t addr_dcsr = DSUREGBASE(csr[CSR_dcsr]);
+    uint64_t addr_runcontrol = DSUREGBASE(csr[CSR_runcontrol]);
+    Reg64Type br_addr;
+    Reg64Type dpc;
+    CrGenericRuncontrolType runctrl;
+    CrGenericDebugControlType dcsr;
+    Reg64Type steps;
+    steps.val = 0;
+
+    tap_->read(addr_dpc, 8, dpc.buf);
+
+    for (unsigned i = 0; i < brList_.size(); i++) {
+        const AttributeType &br = brList_[i];
+        br_addr.val = br[BrkList_address].to_uint64();
+        if (br_addr.val == dpc.val) {
+            // Make step while no breakpoints loaded
+            uint64_t addr_step_cnt = DSUREGBASE(csr[CSR_insperstep]);
+            steps.val = 1;
+            tap_->write(addr_step_cnt, 8, steps.buf);
+
+            // Enable stepping
+            dcsr.val = 0;
+            dcsr.bits.ebreakm = 1;
+            dcsr.bits.step = 1;
+            tap_->write(addr_dcsr, 8, dcsr.u8);
+
+            // resumereq to make step
+            runctrl.val = 0;
+            runctrl.bits.req_resume = 1;
+            tap_->write(addr_runcontrol, 8, runctrl.u8);
+            break;
+        }
+    }
+    return steps.val;
+}
+
+void CmdRun::writeBreakpoints() {
+    uint64_t br_addr;
+    uint64_t br_flags;
+    uint32_t br_oplen;
+    uint64_t addr_flushi = DSUREGBASE(csr[CSR_flushi]);
+    Reg64Type data;
+
+    for (unsigned i = 0; i < brList_.size(); i++) {
+        const AttributeType &br = brList_[i];
+        br_addr = br[BrkList_address].to_uint64();
+        br_flags = br[BrkList_flags].to_uint64();
+        br_oplen = br[BrkList_oplen].to_uint32();
+        data.val = br[BrkList_opcode].to_uint32();
+
+        if (br_flags & BreakFlag_HW) {
+            // TODO: triggers
+        } else {
+            tap_->write(br_addr, br_oplen, data.buf);
+
+            // We can execute FENCE.I from progbuf at the end but it is easier
+            // to use custom CSR_flushi to clear specific address in I$
+            data.val = br_addr;
+            tap_->write(addr_flushi, 8, data.buf);
+        }
+    }
+}
+
 
 }  // namespace debugger

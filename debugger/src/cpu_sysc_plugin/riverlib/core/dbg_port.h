@@ -77,7 +77,7 @@ private:
         sc_signal<sc_uint<CFG_DPORT_ADDR_BITS>> dport_addr;
         sc_signal<sc_uint<RISCV_ARCH>> dport_wdata;
         sc_signal<sc_uint<RISCV_ARCH>> dport_rdata;
-        sc_signal<sc_uint<4>> dstate;
+        sc_signal<sc_uint<3>> dstate;
 
         sc_signal<sc_uint<RISCV_ARCH>> rdata;
         sc_signal<sc_uint<CFG_LOG2_STACK_TRACE_ADDR>> stack_trace_cnt;              // Stack trace buffer counter

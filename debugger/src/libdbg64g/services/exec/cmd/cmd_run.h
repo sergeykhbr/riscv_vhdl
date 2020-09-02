@@ -19,6 +19,7 @@
 
 #include "api_core.h"
 #include "coreservices/icommand.h"
+#include "coreservices/isrccode.h"
 
 namespace debugger {
 
@@ -29,6 +30,14 @@ class CmdRun : public ICommand  {
     /** ICommand */
     virtual int isValid(AttributeType *args);
     virtual void exec(AttributeType *args, AttributeType *res);
+
+ protected:
+    uint64_t checkSwBreakpoint();
+    void writeBreakpoints();
+
+ protected:
+    AttributeType brList_;
+    ISourceCode *isrc_;
 };
 
 }  // namespace debugger

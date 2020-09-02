@@ -189,7 +189,7 @@ architecture arch_CsrRegs of CsrRegs is
         PROGBUF_ERR_NONE,-- progbuf_err
         '0',             -- stepping_mode
         (others => '0'), -- stepping_mode_cnt
-        (others => '0'), -- ins_per_step
+        conv_std_logic_vector(1, RISCV_ARCH), -- ins_per_step
         '0',             -- flushi_ena
         (others => '0')  -- flushi_addr
   );
@@ -632,7 +632,7 @@ begin
         w_trap_irq := '1';
     end if;
 
-    if i_addr = CSR_mepc and (not w_exception_xret and (i_mret or i_uret)) = '1' then
+    if (not w_exception_xret and (i_mret or i_uret)) = '1' then
         -- Switch to previous mode
         v.mie := r.mpie;
         v.mpie := '1';

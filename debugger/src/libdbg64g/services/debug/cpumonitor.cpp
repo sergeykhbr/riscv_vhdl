@@ -52,7 +52,7 @@ void CpuMonitor::postinitService() {
         return;
     }
 
-    haltsum_ = getStatus();;
+    haltsum_ = getStatus();
 
     if (!run()) {
         RISCV_error("Can't create thread.", NULL);
@@ -68,8 +68,6 @@ void CpuMonitor::hapTriggered(EHapType type,
     } else if (type == HAP_CpuContextChanged) {
         hartsel_ = param;
     } else if (type == HAP_Resume) {
-        writeBreakpoints();
-
         // CPU can halt faster than than we poll bits
         RISCV_mutex_lock(&mutex_resume_);
         haltsum_ &= ~(1ull << (hartsel_ & 0x3f));
@@ -110,54 +108,6 @@ uint64_t CpuMonitor::getStatus() {
     return statusResponse_.to_uint64();
 }
 
-void CpuMonitor::stepOverSwBreakpoint() {
-    icmdexec_->exec("c 1", &statusResponse_, true);
-}
-
-void CpuMonitor::writeBreakpoints() {
-    uint64_t npc;
-    uint64_t br_addr;
-    uint64_t br_flags;
-    uint32_t br_opcode;   // ebreak opcode
-    uint32_t br_oplen;
-    uint64_t addr_flushi = DSUREGBASE(csr[CSR_flushi]);
-    char tstr[128];
-
-    icmdexec_->exec("reg npc", &npcResponse_, true);
-    icmdexec_->exec("br", &brList_, true);
-
-    npc = npcResponse_.to_uint64();
-    for (unsigned i = 0; i < brList_.size(); i++) {
-        const AttributeType &br = brList_[i];
-        br_addr = br[BrkList_address].to_uint64();
-        br_flags = br[BrkList_flags].to_uint64();
-        br_opcode = br[BrkList_opcode].to_uint32();
-        br_oplen = br[BrkList_oplen].to_uint32();
-
-        if (npc == br_addr) {
-            //stepOverSwBreakpoint();
-        }
-
-        if (br_flags & BreakFlag_HW) {
-            // TODO: triggers
-        } else {
-            RISCV_sprintf(tstr, sizeof(tstr),
-                    "write 0x%08" RV_PRI64 "x %d 0x%x",
-                    br_addr, br_oplen, br_opcode);
-            icmdexec_->exec(tstr, &writeMemResp_, true);
-
-            RISCV_error("Write breakpoint 0x%08" RV_PRI64 "x", br_addr);
-
-            // We can execute FENCE.I from progbuf at the end but it is easier
-            // to use custom CSR_flushi to clear specific address in I$
-            RISCV_sprintf(tstr, sizeof(tstr),
-                    "write 0x%08" RV_PRI64 "x 8 0x%" RV_PRI64 "x",
-                    addr_flushi, br_addr);
-            icmdexec_->exec(tstr, &writeMemResp_, true);
-        }
-    }
-}
-
 void CpuMonitor::removeBreakpoints() {
     uint64_t br_addr;
     uint32_t br_instr;      // original instruction opcode
@@ -181,8 +131,6 @@ void CpuMonitor::removeBreakpoints() {
                     "write 0x%08" RV_PRI64 "x %d 0x%x",
                     br_addr, br_oplen, br_instr);
             icmdexec_->exec(tstr, &writeMemResp_, true);
-
-            RISCV_error("Remove breakpoint 0x%08" RV_PRI64 "x", br_addr);
         }
     }
 }

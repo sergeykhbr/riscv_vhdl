@@ -139,7 +139,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     dec0->o_imm(w.d.imm);
     dec0->i_e_ready(w.e.d_ready);
     dec0->i_flush_pipeline(w_flush_pipeline);
-    dec0->i_progbuf_ena(w_flush_pipeline);
+    dec0->i_progbuf_ena(csr.progbuf_ena);
     dec0->o_valid(w.d.instr_valid);
     dec0->o_pc(w.d.pc);
     dec0->o_instr(w.d.instr);

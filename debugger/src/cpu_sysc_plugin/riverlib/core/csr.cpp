@@ -694,8 +694,7 @@ void CsrRegs::comb() {
     }
 
 
-    if (i_addr.read() == CSR_mepc && !w_exception_xret && 
-        (i_mret.read() || i_uret.read())) {
+    if (!w_exception_xret && (i_mret.read() || i_uret.read())) {
         // Switch to previous mode
         v.mie = r.mpie;
         v.mpie = 1;
