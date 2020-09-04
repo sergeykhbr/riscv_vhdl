@@ -96,6 +96,9 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     sensitive << dbg.core_wdata;
     sensitive << csr.flushi_ena;
     sensitive << csr.flushi_addr;
+    sensitive << w_fetch_pipeline_hold;
+    sensitive << w_any_pipeline_hold;
+    sensitive << w_flush_pipeline;
 
     fetch0 = new InstrFetch("fetch0", async_reset);
     fetch0->i_clk(i_clk);

@@ -19,6 +19,7 @@
 #include <iservice.h>
 #include "cmd_run.h"
 #include "debug/dsumap.h"
+#include "debug/dmi_regs.h"
 
 namespace debugger {
 
@@ -68,32 +69,32 @@ void CmdRun::exec(AttributeType *args, AttributeType *res) {
     uint64_t addr_dcsr = DSUREGBASE(csr[CSR_dcsr]);
     uint64_t addr_step_cnt = DSUREGBASE(csr[CSR_insperstep]);
     uint64_t steps_skipped = 0;
-    bool resumereq = true;
 
     isrc_->getBreakpointList(&brList_);
     if (brList_.size()) {
         // Skip breakpoint if npc points to ebreak
         steps_skipped = checkSwBreakpoint();
-        // Write all breakpoints
+        // Write all breakpoints before resuming
         writeBreakpoints();
     }
 
-    dcs.val = 0;                // disable step mode
-    dcs.bits.ebreakm = 1;       // openocd do the same for m,h,s,u
     if (args->size() == 2) {
         Reg64Type step_cnt;
         step_cnt.val = (*args)[1].to_uint64() - steps_skipped;
         if (step_cnt.val)  {
             tap_->write(addr_step_cnt, 8, step_cnt.buf);
-            dcs.bits.step = 1;
-        } else {
-            // Step already done, do not write 'resumereq'
-            resumereq = false;
-        }
-    }
-    tap_->write(addr_dcsr, 8, dcs.u8);
 
-    if (resumereq) {
+            dcs.val = 0;                // disable step mode
+            dcs.bits.step = 1;
+            dcs.bits.ebreakm = 1;       // openocd do the same for m,h,s,u
+            tap_->write(addr_dcsr, 8, dcs.u8);
+
+            runctrl.val = 0;
+            runctrl.bits.req_resume = 1;
+            tap_->write(addr_runcontrol, 8, runctrl.u8);
+        }
+    } else {
+        // No need to reset 'step' field in dcs to resume
         runctrl.val = 0;
         runctrl.bits.req_resume = 1;
         tap_->write(addr_runcontrol, 8, runctrl.u8);
@@ -106,10 +107,12 @@ uint64_t CmdRun::checkSwBreakpoint() {
     uint64_t addr_dpc = DSUREGBASE(csr[CSR_dpc]);
     uint64_t addr_dcsr = DSUREGBASE(csr[CSR_dcsr]);
     uint64_t addr_runcontrol = DSUREGBASE(csr[CSR_runcontrol]);
+    uint64_t addr_dmstatus = DSUREGBASE(ulocal.v.dmstatus);
     Reg64Type br_addr;
     Reg64Type dpc;
     CrGenericRuncontrolType runctrl;
     CrGenericDebugControlType dcsr;
+    DMSTATUS_TYPE::ValueType dmstatus;
     Reg64Type steps;
     steps.val = 0;
 
@@ -134,6 +137,11 @@ uint64_t CmdRun::checkSwBreakpoint() {
             runctrl.val = 0;
             runctrl.bits.req_resume = 1;
             tap_->write(addr_runcontrol, 8, runctrl.u8);
+
+            // Wait while hart is running (for low speed simulation)
+            do {
+                tap_->read(addr_dmstatus, 8, dmstatus.u8);
+            } while (!dmstatus.bits.allhalted);
             break;
         }
     }

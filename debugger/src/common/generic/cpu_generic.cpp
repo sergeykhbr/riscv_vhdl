@@ -455,6 +455,7 @@ void CpuGeneric::go() {
         return;
     }
     if (dcsr_.isSteppingMode()) {
+        dcsr_.clearSteppingMode();
         hw_stepping_break_ = step_cnt_ + insperstep_.getValue().val;
         estate_ = CORE_Stepping;
     } else {

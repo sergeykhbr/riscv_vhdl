@@ -84,6 +84,13 @@ class CsrDebugStatusType : public MappedReg64Type {
         t1.val = value_.val;
         return t1.bits.step;
     }
+
+    void clearSteppingMode() {
+        ValueType t1;
+        t1.val = value_.val;
+        t1.bits.step = 0;
+        value_.val = t1.val;
+    }
  protected:
     virtual uint64_t aboutToWrite(uint64_t new_val) override;
 };

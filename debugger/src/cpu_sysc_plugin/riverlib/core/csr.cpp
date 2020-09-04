@@ -227,6 +227,20 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.ext_irq, pn + ".r_ext_irq");
         sc_trace(o_vcd, r.trap_code, pn + ".r_trap_code");
         sc_trace(o_vcd, r.hold_data_load_fault, pn + ".r_hold_data_load_fault");
+        sc_trace(o_vcd, r.break_mode, pn + ".r_break_mode");
+        sc_trace(o_vcd, r.halt, pn + ".r_halt");
+        sc_trace(o_vcd, r.halt_cause, pn + ".r_halt_cause");
+        sc_trace(o_vcd, r.progbuf_ena, pn + ".r_progbuf_ena");
+        //sc_trace(o_vcd, r.progbuf_data, pn + ".r_progbuf_data");
+        sc_trace(o_vcd, r.progbuf_data_out, pn + ".r_progbuf_data_out");
+        sc_trace(o_vcd, r.progbuf_data_pc, pn + ".r_progbuf_data_pc");
+        sc_trace(o_vcd, r.progbuf_data_npc, pn + ".r_progbuf_data_npc");
+        sc_trace(o_vcd, r.progbuf_err, pn + ".r_progbuf_err");
+        sc_trace(o_vcd, r.stepping_mode, pn + ".r_stepping_mode");
+        sc_trace(o_vcd, r.stepping_mode_cnt, pn + ".r_stepping_mode_cnt");
+        sc_trace(o_vcd, r.ins_per_step, pn + ".r_ins_per_step");
+        sc_trace(o_vcd, r.flushi_ena, pn + ".r_flushi_ena");
+        sc_trace(o_vcd, r.flushi_addr, pn + ".r_flushi_addr");
     }
 }
 
