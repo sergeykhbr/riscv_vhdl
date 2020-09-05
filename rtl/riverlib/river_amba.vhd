@@ -130,6 +130,7 @@ architecture arch_river_amba of river_amba is
 begin
 
   o_mstcfg <= xconfig;
+  o_dport.available <= '1';
   
   river0 : RiverTop  generic map (
       memtech => memtech,

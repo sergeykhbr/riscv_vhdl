@@ -166,8 +166,31 @@ architecture arch_riscv_soc of riscv_soc is
   signal w_ext_irq : std_logic;
   signal dport_i : dport_in_vector;
   signal dport_o : dport_out_vector;
+  signal dmi_dport_i : dport_in_vector;
+  signal dmi_dport_o : dport_out_vector;
+  signal dsu_dport_i : dport_in_vector;
+  signal dsu_dport_o : dport_out_vector;
   signal wb_bus_util_w : std_logic_vector(CFG_BUS0_XMST_TOTAL-1 downto 0);
   signal wb_bus_util_r : std_logic_vector(CFG_BUS0_XMST_TOTAL-1 downto 0);
+
+  signal w_dmi_jtag_req_valid : std_logic;
+  signal w_dmi_jtag_req_ready : std_logic;
+  signal w_dmi_jtag_write : std_logic;
+  signal wb_dmi_jtag_addr : std_logic_vector(6 downto 0);
+  signal wb_dmi_jtag_wdata : std_logic_vector(31 downto 0);
+  signal w_dmi_jtag_resp_valid : std_logic;
+  signal w_dmi_jtag_resp_ready : std_logic;
+  signal wb_dmi_jtag_rdata : std_logic_vector(31 downto 0);
+
+  signal w_dmi_dsu_req_valid : std_logic;
+  signal w_dmi_dsu_req_ready : std_logic;
+  signal w_dmi_dsu_write : std_logic;
+  signal wb_dmi_dsu_addr : std_logic_vector(6 downto 0);
+  signal wb_dmi_dsu_wdata : std_logic_vector(31 downto 0);
+  signal w_dmi_dsu_resp_valid : std_logic;
+  signal w_dmi_dsu_resp_ready : std_logic;
+  signal wb_dmi_dsu_rdata : std_logic_vector(31 downto 0);
+  signal wb_dmi_hartsel : std_logic_vector(CFG_LOG2_CPU_MAX-1 downto 0);
   
   signal eth_i : eth_in_type;
   signal eth_o : eth_out_type;
@@ -231,9 +254,12 @@ begin
           );
       end generate;
       emptyx : if n >= CFG_CPU_NUM generate
-          coreo(CFG_BUS0_XMST_CPU0+n) <= axi4_river_out_none;
+          cpudummy0 : river_dummycpu port map ( 
+            o_msto   => coreo(CFG_BUS0_XMST_CPU0+n),
+            o_dport  => dport_o(n),
+            o_flush_l2 => open
+          );
           mst_cfg(CFG_BUS0_XMST_CPU0+n) <= axi4_master_config_none;
-          dport_o(n) <= dport_out_none;
       end generate;
   end generate;
 
@@ -260,6 +286,52 @@ begin
       end generate;
   end generate;
 
+  -- Access to Debug port of the CPUs workgroup
+  dmregs0 : dmi_regs generic map (
+    async_reset => CFG_ASYNC_RESET
+  ) port map (
+    clk    => i_clk,
+    nrst   => w_glob_nrst,
+    -- port[0] connected to JTAG TAP has access to AXI master interface (SBA registers)
+    i_dmi_jtag_req_valid => w_dmi_jtag_req_valid,
+    o_dmi_jtag_req_ready => w_dmi_jtag_req_ready,
+    i_dmi_jtag_write => w_dmi_jtag_write,
+    i_dmi_jtag_addr => wb_dmi_jtag_addr,
+    i_dmi_jtag_wdata => wb_dmi_jtag_wdata,
+    o_dmi_jtag_resp_valid => w_dmi_jtag_resp_valid,
+    i_dmi_jtag_resp_ready => w_dmi_jtag_resp_ready,
+    o_dmi_jtag_rdata => wb_dmi_jtag_rdata,
+    -- port[1] connected to DSU doesn't have access to AXI master interface
+    i_dmi_dsu_req_valid => w_dmi_dsu_req_valid,
+    o_dmi_dsu_req_ready => w_dmi_dsu_req_ready,
+    i_dmi_dsu_write => w_dmi_dsu_write,
+    i_dmi_dsu_addr => wb_dmi_dsu_addr,
+    i_dmi_dsu_wdata => wb_dmi_dsu_wdata,
+    o_dmi_dsu_resp_valid => w_dmi_dsu_resp_valid,
+    i_dmi_dsu_resp_ready => w_dmi_dsu_resp_ready,
+    o_dmi_dsu_rdata => wb_dmi_dsu_rdata,
+    o_hartsel => wb_dmi_hartsel,
+    o_dmstat => open,
+    o_ndmreset => w_soft_rst,
+    o_cfg => mst_cfg(CFG_BUS0_XMST_DMI),
+    i_xmsti  => aximi(CFG_BUS0_XMST_DMI),
+    o_xmsto  => aximo(CFG_BUS0_XMST_DMI),
+    o_dporti => dmi_dport_i,
+    i_dporto => dmi_dport_o
+  );
+
+  icdport0 : ic_dport_2s_1m generic map (
+    async_reset => CFG_ASYNC_RESET
+  ) port map (
+    clk    => i_clk,
+    nrst   => w_glob_nrst,
+    i_sdport0i => dmi_dport_i,
+    o_sdport0o => dmi_dport_o,
+    i_sdport1i => dsu_dport_i,
+    o_sdport1o => dsu_dport_o,
+    o_mdporti => dport_i,
+    i_mdporto => dport_o
+  );
 
 dsu_ena : if CFG_DSU_ENABLE generate
   ------------------------------------
@@ -276,9 +348,17 @@ dsu_ena : if CFG_DSU_ENABLE generate
     o_cfg  => slv_cfg(CFG_BUS0_XSLV_DSU),
     i_axi  => axisi(CFG_BUS0_XSLV_DSU),
     o_axi  => axiso(CFG_BUS0_XSLV_DSU),
-    o_dporti => dport_i,
-    i_dporto => dport_o,
-    o_soft_rst => w_soft_rst,
+    o_dporti => dsu_dport_i,
+    i_dporto => dsu_dport_o,
+    i_dmi_hartsel => wb_dmi_hartsel,
+    o_dmi_req_valid => w_dmi_dsu_req_valid,
+    i_dmi_req_ready => w_dmi_dsu_req_ready,
+    o_dmi_write => w_dmi_dsu_write,
+    o_dmi_addr => wb_dmi_dsu_addr,
+    o_dmi_wdata => wb_dmi_dsu_wdata,
+    i_dmi_resp_valid => w_dmi_dsu_resp_valid,
+    o_dmi_resp_ready => w_dmi_dsu_resp_ready,
+    i_dmi_rdata => wb_dmi_dsu_rdata,
     -- Run time platform statistic signals (move to tracer):
     i_bus_util_w => wb_bus_util_w, -- Write access bus utilization per master statistic
     i_bus_util_r => wb_bus_util_r  -- Read access bus utilization per master statistic
@@ -287,7 +367,12 @@ end generate;
 dsu_dis : if not CFG_DSU_ENABLE generate
     slv_cfg(CFG_BUS0_XSLV_DSU) <= axi4_slave_config_none;
     axiso(CFG_BUS0_XSLV_DSU) <= axi4_slave_out_none;
-    dport_i <= (others => dport_in_none);
+    dsu_dport_i <= (others => dport_in_none);
+    w_dmi_dsu_req_valid <= '0';
+    w_dmi_dsu_write <= '0';
+    wb_dmi_dsu_addr <= (others => '0');
+    wb_dmi_dsu_wdata <= (others => '0');
+    w_dmi_dsu_resp_ready <= '0';
 end generate;
 
   ------------------------------------
@@ -304,10 +389,15 @@ end generate;
     i_tdi  => i_jtag_tdi,
     o_tdo  => o_jtag_tdo,
     o_jtag_vref => o_jtag_vref,
-    i_msti   => aximi(CFG_BUS0_XMST_JTAG),
-    o_msto   => aximo(CFG_BUS0_XMST_JTAG),
-    o_mstcfg => mst_cfg(CFG_BUS0_XMST_JTAG)
-    );
+    i_msti   => aximi(CFG_BUS0_XMST_DMI),
+    o_msto   => open,
+    o_mstcfg => open
+  );
+  w_dmi_jtag_req_valid <= '0';
+  w_dmi_jtag_write <= '0';
+  wb_dmi_jtag_addr <= (others => '0');
+  wb_dmi_jtag_wdata <= (others => '0');
+  w_dmi_jtag_resp_ready <= '0';
 
   ------------------------------------
   --! @brief TAP via UART (debug port) with master interface.

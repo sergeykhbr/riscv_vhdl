@@ -34,7 +34,8 @@ use riverlib.river_cfg.all;
 --! @brief   Declaration of components visible on SoC top level.
 package types_river is
 
-constant CFG_TOTAL_CPU_MAX : integer := 2;
+constant CFG_LOG2_CPU_MAX : integer := 1;
+constant CFG_TOTAL_CPU_MAX : integer := 2**CFG_LOG2_CPU_MAX;
 
 -- AXI4 with ACE channels
 type axi4_river_out_type is record
@@ -126,13 +127,14 @@ type dport_in_vector is array (0 to CFG_TOTAL_CPU_MAX-1)
 
 type dport_out_type is record
     halted : std_logic;
+    available : std_logic;
     req_ready : std_logic;
     resp_valid : std_logic;
     rdata : std_logic_vector(RISCV_ARCH-1 downto 0);
 end record;
 
 constant dport_out_none : dport_out_type := (
-    '0', '1', '0', (others => '0'));
+    '0', '1', '1', '0', (others => '0'));
 
 type dport_out_vector is array (0 to CFG_TOTAL_CPU_MAX-1) 
      of dport_out_type;
@@ -163,9 +165,55 @@ type dport_out_vector is array (0 to CFG_TOTAL_CPU_MAX-1)
     o_axi  : out axi4_slave_out_type;
     o_dporti : out dport_in_vector;
     i_dporto : in dport_out_vector;
-    o_soft_rst : out std_logic;
+    i_dmi_hartsel : in std_logic_vector(CFG_LOG2_CPU_MAX-1 downto 0);
+    o_dmi_req_valid : out std_logic;
+    i_dmi_req_ready : in std_logic;
+    o_dmi_write : out std_logic;
+    o_dmi_addr : out std_logic_vector(6 downto 0);
+    o_dmi_wdata : out std_logic_vector(31 downto 0);
+    i_dmi_resp_valid : in std_logic;
+    o_dmi_resp_ready : out std_logic;
+    i_dmi_rdata : in std_logic_vector(31 downto 0);
     i_bus_util_w : in std_logic_vector(CFG_BUS0_XMST_TOTAL-1 downto 0);
     i_bus_util_r : in std_logic_vector(CFG_BUS0_XMST_TOTAL-1 downto 0)
+  );
+  end component;
+
+  component dmi_regs is
+  generic (
+    async_reset : boolean := false
+  );
+  port 
+  (
+    clk    : in std_logic;
+    nrst   : in std_logic;
+    -- port[0] connected to JTAG TAP has access to AXI master interface (SBA registers)
+    i_dmi_jtag_req_valid : in std_logic;
+    o_dmi_jtag_req_ready : out std_logic;
+    i_dmi_jtag_write : in std_logic;
+    i_dmi_jtag_addr : in std_logic_vector(6 downto 0);
+    i_dmi_jtag_wdata : in std_logic_vector(31 downto 0);
+    o_dmi_jtag_resp_valid : out std_logic;
+    i_dmi_jtag_resp_ready : in std_logic;
+    o_dmi_jtag_rdata : out std_logic_vector(31 downto 0);
+    -- port[1] connected to DSU doesn't have access to AXI master interface
+    i_dmi_dsu_req_valid : in std_logic;
+    o_dmi_dsu_req_ready : out std_logic;
+    i_dmi_dsu_write : in std_logic;
+    i_dmi_dsu_addr : in std_logic_vector(6 downto 0);
+    i_dmi_dsu_wdata : in std_logic_vector(31 downto 0);
+    o_dmi_dsu_resp_valid : out std_logic;
+    i_dmi_dsu_resp_ready : in std_logic;
+    o_dmi_dsu_rdata : out std_logic_vector(31 downto 0);
+    -- Common signals
+    o_hartsel : out std_logic_vector(CFG_LOG2_CPU_MAX-1 downto 0);
+    o_dmstat : out std_logic_vector(1 downto 0);
+    o_ndmreset : out std_logic;        -- non-debug module reset
+    o_cfg  : out axi4_master_config_type;
+    i_xmsti  : in axi4_master_in_type;
+    o_xmsto  : out axi4_master_out_type;
+    o_dporti : out dport_in_vector;
+    i_dporto : in dport_out_vector
   );
   end component;
 
@@ -200,6 +248,15 @@ component river_amba is
   );
 end component;
 
+-- Processor stub should be instantiated for unused CPU slot
+component river_dummycpu is 
+  port ( 
+    o_msto   : out axi4_river_out_type;
+    o_dport  : out dport_out_type;
+    o_flush_l2 : out std_logic
+  );
+end component;
+
 component river_serdes is 
   generic (
     async_reset : boolean
@@ -212,6 +269,27 @@ component river_serdes is
     i_msti  : in axi4_master_in_type;
     o_msto  : out axi4_master_out_type
 );
+end component;
+
+--! Dport interconnect to switch DSU and DMI access
+component ic_dport_2s_1m is
+  generic (
+    async_reset : boolean := false
+  );
+  port 
+  (
+    clk    : in std_logic;
+    nrst   : in std_logic;
+    -- Group <=> DMI interface
+    i_sdport0i : in dport_in_vector;
+    o_sdport0o : out dport_out_vector;
+    -- Group <=> DSU interface
+    i_sdport1i : in dport_in_vector;
+    o_sdport1o : out dport_out_vector;
+    -- Group connection
+    o_mdporti : out dport_in_vector;
+    i_mdporto : in dport_out_vector
+  );
 end component;
 
 end; -- package body

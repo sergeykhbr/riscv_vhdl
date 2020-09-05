@@ -57,8 +57,16 @@ entity axi_dsu is
     o_axi  : out axi4_slave_out_type;
     o_dporti : out dport_in_vector;
     i_dporto : in dport_out_vector;
-    --! reset CPU and interrupt controller
-    o_soft_rst : out std_logic;
+    -- DMI interface
+    i_dmi_hartsel : in std_logic_vector(CFG_LOG2_CPU_MAX-1 downto 0);
+    o_dmi_req_valid : out std_logic;
+    i_dmi_req_ready : in std_logic;
+    o_dmi_write : out std_logic;
+    o_dmi_addr : out std_logic_vector(6 downto 0);
+    o_dmi_wdata : out std_logic_vector(31 downto 0);
+    i_dmi_resp_valid : in std_logic;
+    o_dmi_resp_ready : out std_logic;
+    i_dmi_rdata : in std_logic_vector(31 downto 0);
     -- Platfrom run-time statistic
     i_bus_util_w : in std_logic_vector(CFG_BUS0_XMST_TOTAL-1 downto 0);
     i_bus_util_r : in std_logic_vector(CFG_BUS0_XMST_TOTAL-1 downto 0)
@@ -84,7 +92,7 @@ architecture arch_axi_dsu of axi_dsu is
       wait_write_msb,
       check_request,
       dmi_request,
-      dmi_postexec,
+      dmi_response,
       dport_request,
       dport_wait_resp,
       axi_response,
@@ -101,41 +109,25 @@ architecture arch_axi_dsu of axi_dsu is
     state : state_type;
     r32 : std_logic;
     wdata : std_logic_vector(63 downto 0);
-    soft_rst : std_logic;
     -- Platform statistic:
     clk_cnt : std_logic_vector(63 downto 0);
-    cpu_context : std_logic_vector(log2x(CFG_TOTAL_CPU_MAX)-1 downto 0);
     util_w_cnt : mst_utilization_type;
     util_r_cnt : mst_utilization_type;
     
     addr : std_logic_vector(CFG_DPORT_ADDR_BITS-1 downto 0);
     rdata : std_logic_vector(63 downto 0);
-    arg0 : std_logic_vector(63 downto 0);
-    command : std_logic_vector(31 downto 0);
-    autoexecdata : std_logic_vector(CFG_DATA_REG_TOTAL-1 downto 0);
-    autoexecprogbuf : std_logic_vector(CFG_PROGBUF_REG_TOTAL-1 downto 0);
-    transfer : std_logic;
     write : std_logic;
-    postexec : std_logic;
-    resumeack : std_logic;
   end record;
 
   constant R_RESET : registers := (
      idle, '0',                              -- state, r32
-     (others => '0'), '0',                   -- wdata, soft_rst
-     (others => '0'), (others => '0'),       -- clk_cnt, cpu_context
+     (others => '0'),                        -- wdata,
+     (others => '0'),                        -- clk_cnt
      (others => zero64), (others => zero64),
      
-     (others => '0'),
+     (others => '0'), -- addr
      (others => '0'),  -- rdata
-     (others => '0'),  -- arg0
-     (others => '0'),  -- command
-     (others => '0'),  -- autoexecdata
-     (others => '0'),  -- autoexecprogbuf
-     '0', -- transfer
-     '0',
-     '0',
-     '0'  -- resumeack
+     '0'  -- write
   );
 
   signal r, rin: registers;
@@ -170,6 +162,7 @@ begin
   );
 
   comblogic : process(nrst, i_dporto, i_bus_util_w, i_bus_util_r, r, 
+                      i_dmi_hartsel, i_dmi_req_ready, i_dmi_resp_valid, i_dmi_rdata,
                       w_bus_re, w_bus_r32, wb_bus_raddr, wb_bus_waddr,
                       w_bus_we, wb_bus_wstrb, wb_bus_wdata)
     variable v : registers;
@@ -177,14 +170,17 @@ begin
     variable wb_bus_util_map : mst_utilization_map_type;
     variable cpuidx : integer;
     variable v_axi_ready : std_logic;
-    variable vb_haltsum : std_logic_vector(CFG_TOTAL_CPU_MAX-1 downto 0);
+    variable v_dmi_req_valid : std_logic;
+    variable v_dmi_resp_ready : std_logic;
   begin
     v := r;
 
     v_axi_ready := '0';
+    v_dmi_req_valid := '0';
+    v_dmi_resp_ready := '0';
 
     vdporti := (others => dport_in_none);
-    cpuidx := conv_integer(r.cpu_context);
+    cpuidx := conv_integer(i_dmi_hartsel);
     
     -- Update statistic:
     v.clk_cnt := r.clk_cnt + 1;
@@ -204,17 +200,12 @@ begin
         wb_bus_util_map(2*n+1) := r.util_r_cnt(n);
     end loop;
     
-    for n in 0 to CFG_TOTAL_CPU_MAX-1 loop
-      vb_haltsum(n) := i_dporto(n).halted;
-    end loop;
-
     case r.state is
     when idle =>
         v_axi_ready := '1';
         v.addr := (others => '0');
         v.wdata := (others => '0');
-        v.transfer := '0';
-        v.postexec := '0';
+        v.rdata := (others => '0');
         if w_bus_we = '1' then
             v.write := '1';
             v.addr := wb_bus_waddr(0)(CFG_DPORT_ADDR_BITS+2 downto 3);
@@ -249,98 +240,20 @@ begin
         end if;
           
     when dmi_request =>
-        v.state := axi_response;       -- default no transfer
-        if r.addr(11 downto 0) = X"004" then            -- DATA0
-            v.rdata(31 downto 0) := r.arg0(31 downto 0);
-            if r.write = '1' then
-                v.arg0(31 downto 0) := r.wdata(31 downto 0);
-            end if;
-            if r.autoexecdata(0) = '1' and r.command(31 downto 24) = X"00" then
-                -- Auto repead the last command on register access
-                v.addr(13 downto 0) := r.command(13 downto 0);
-                v.write := r.command(16);               -- write
-                v.transfer := r.command(17);
-                v.postexec := r.command(18);            -- postexec
-                v.wdata := r.arg0(63 downto 32) & r.wdata(31 downto 0);
-                if r.command(16) = '0' or r.command(17) = '1' then
-                    -- read operation or write with transfer
-                    v.state := dport_request;
-                end if;
-            end if;
-        elsif r.addr(11 downto 0) = X"005" then            -- DATA1
-            v.rdata(31 downto 0) := r.arg0(63 downto 32);
-            if r.write = '1' then
-                v.arg0(63 downto 32) := r.wdata(31 downto 0);
-            end if;
-            if r.autoexecdata(1) = '1' and r.command(31 downto 24) = X"00" then
-                -- Auto repead the last command on register access
-                v.addr(13 downto 0) := r.command(13 downto 0);
-                v.write := r.command(16);               -- write
-                v.transfer := r.command(17);
-                v.postexec := r.command(18);            -- postexec
-                v.wdata := r.wdata(31 downto 0) & r.arg0(31 downto 0);
-                if r.command(16) = '0' or r.command(17) = '1' then
-                    -- read operation or write with transfer
-                    v.state := dport_request;
-                end if;
-            end if;
-        elsif r.addr(11 downto 0) = X"010" then         -- DMCONTROL
-            v.rdata(1) := r.soft_rst;
-            v.rdata(log2x(16+CFG_TOTAL_CPU_MAX)-1 downto 16) := r.cpu_context;
-            if r.write = '1' then
-                -- Access to CSR only on writing
-                v.soft_rst := r.wdata(1);               -- ndmreset
-                v.cpu_context := r.wdata(16+log2x(CFG_TOTAL_CPU_MAX)-1 downto 16);  -- hartsello
-                v.resumeack := not r.wdata(31) and r.wdata(30) and i_dporto(cpuidx).halted;
-                v.addr(13 downto 0) := "00" & CSR_runcontrol;
-                v.state := dport_request;
-            end if;
-        elsif r.addr(11 downto 0) = X"011" then         -- DMSTATUS
-            v.rdata(3 downto 0) := X"2";                -- version: dbg spec v0.13
-            v.rdata(7) := '1';                          -- authenticated:
-            v.rdata(8) := i_dporto(cpuidx).halted;      -- anyhalted:
-            v.rdata(9) := i_dporto(cpuidx).halted;      -- allhalted:
-            v.rdata(10) := not i_dporto(cpuidx).halted; -- anyrunning:
-            v.rdata(11) := not i_dporto(cpuidx).halted; -- allrunning:
-            v.rdata(16) := r.resumeack;                 -- anyresumeack
-            v.rdata(17) := r.resumeack;                 -- allresumeack
-        elsif r.addr(11 downto 0) = X"016" then         -- ABSTRACTCS
-            v.addr(13 downto 0) := "00" & CSR_abstractcs;
-            v.postexec := '0';
-            v.state := dport_request;
-        elsif r.addr(11 downto 0) = X"017" then         -- COMMAND
-            if r.write = '1' then
-                v.command := r.wdata(31 downto 0);          -- Save for autoexec
-                if r.wdata(31 downto 24) = X"00" then       -- cmdtype: 0=register access
-                    v.addr(13 downto 0) := r.wdata(13 downto 0);
-                    v.write := r.wdata(16);                 -- write
-                    v.transfer := r.command(17);
-                    v.postexec := r.wdata(18);              -- postexec
-                    v.wdata := r.arg0;
-                    if r.command(16) = '0' or r.command(17) = '1' then
-                        -- read operation or write with transfer
-                        v.state := dport_request;
-                    end if;
-                end if;
-            end if;
-        elsif r.addr(11 downto 0) = X"018" then         -- ABSTRACAUTO
-            v.rdata(CFG_DATA_REG_TOTAL-1 downto 0) := r.autoexecdata;
-            v.rdata(16+CFG_PROGBUF_REG_TOTAL-1 downto 16) := r.autoexecprogbuf;
-        elsif r.addr(11 downto 4) = X"02" then          -- PROGBUF0..PROGBUF15
-            v.addr(13 downto 0) := "00" & CSR_progbuf;
-            v.wdata(35 downto 32) :=  r.addr(3 downto 0);
-            v.state := dport_request;
-        elsif r.addr(11 downto 0) = X"040" then         -- HALTSUM0
-            v.rdata(CFG_TOTAL_CPU_MAX-1 downto 0) := vb_haltsum;
+        v_dmi_req_valid := '1';
+        if i_dmi_req_ready = '1' then
+            v.state := dmi_response;
         end if;
-    when dmi_postexec =>
-        v.write := '1';
-        v.postexec := '0';
-        v.transfer := '0';
-        v.addr(13 downto 0) := "00" & CSR_runcontrol;
-        v.wdata := (others => '0');
-        v.wdata(18) := '1';             -- req_progbuf: request to execute progbuf
-        v.state := dport_request;
+    when dmi_response =>
+        v_dmi_resp_ready := '1';
+        if i_dmi_resp_valid = '1' then
+            v.rdata(31 downto 0) := i_dmi_rdata;
+            if r.write = '1' then
+                v.state := idle;
+            else
+                v.state := axi_response;
+            end if;
+        end if;
           
     when dport_request =>  
         vdporti(cpuidx).req_valid := '1';
@@ -358,13 +271,6 @@ begin
                 v.state := idle;
             else
                 v.state := axi_response;
-                if r.transfer = '1' then
-                    v.arg0 := i_dporto(cpuidx).rdata;
-                end if;
-            end if;
-            
-            if r.postexec = '1' then
-                v.state := dmi_postexec;
             end if;
         end if;
     when axi_response =>
@@ -386,12 +292,17 @@ begin
 
     rin <= v;
 
+    o_dmi_req_valid <= v_dmi_req_valid;
+    o_dmi_write <= r.write;
+    o_dmi_addr <= r.addr(6 downto 0);
+    o_dmi_wdata <= r.wdata(31 downto 0);
+    o_dmi_resp_ready <= v_dmi_resp_ready;
+
     o_dporti <= vdporti;
     w_axi_ready <= v_axi_ready;
   end process;
 
   o_cfg  <= xconfig;
-  o_soft_rst <= r.soft_rst;
 
 
   -- registers:

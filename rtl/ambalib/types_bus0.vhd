@@ -78,8 +78,8 @@ constant CFG_BUS0_XMST_CPU1     : integer := 1;
 constant CFG_BUS0_XMST_ETHMAC   : integer := 2;
 --! Tap via UART (debug port) generic index.
 constant CFG_BUS0_XMST_MSTUART  : integer := 3;
---! Tap via JTAG generic index.
-constant CFG_BUS0_XMST_JTAG     : integer := 4;
+--! Tap via JTAG DMI generic index.
+constant CFG_BUS0_XMST_DMI      : integer := 4;
 --! Total Number of master devices on system bus.
 constant CFG_BUS0_XMST_TOTAL    : integer := 5;
 --! @}
