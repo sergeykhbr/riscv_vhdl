@@ -15,6 +15,8 @@ ELAB_PARAMS=-64 -v93 -namemap_mixgen -timescale ${TIMESCALE} \
             -access +rwc
 SIM_OPTS = -64 -input ./ncsim_settings work.${BENCH} +cycles=${CYCLES}
 
+SRUN=@srun --pty -c 12
+
 prep:
 	@mkdir -p work
 	@mkdir -p ambalib
@@ -33,21 +35,21 @@ clr_logs:
 
 
 comp: prep clr_logs
-	@ncvlog ${VLOG_PARAMS_TB} ${INC}   	-f	vlog.f
-	@ncvhdl ${VHDL_PARAMS} -work commonlib 	-f 	lists/commonlib.f
-	@ncvhdl ${VHDL_PARAMS} -work ambalib   	-f 	lists/ambalib.f
-	@ncvhdl ${VHDL_PARAMS} -work techmap   	-f 	lists/techmap.f
-	@ncvhdl ${VHDL_PARAMS} -work ethlib 	-f 	lists/ethlib.f
-	@ncvhdl ${VHDL_PARAMS} -work misclib  	-f 	lists/misclib.f
-	@ncvhdl ${VHDL_PARAMS} -work riverlib  	-f	lists/riverlib.f
-	@ncvhdl ${VHDL_PARAMS} -work gnsslib  	-f	lists/gnsslib.f
-	@ncvhdl ${VHDL_PARAMS} -work work      	-f 	vhdl.f
+	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC}   	-f	vlog.f
+	${SRUN} xmvhdl ${VHDL_PARAMS} -work commonlib 	-f 	lists/commonlib.f
+	${SRUN} xmvhdl ${VHDL_PARAMS} -work ambalib   	-f 	lists/ambalib.f
+	${SRUN} xmvhdl ${VHDL_PARAMS} -work techmap   	-f 	lists/techmap.f
+	${SRUN} xmvhdl ${VHDL_PARAMS} -work ethlib 	-f 	lists/ethlib.f
+	${SRUN} xmvhdl ${VHDL_PARAMS} -work misclib  	-f 	lists/misclib.f
+	${SRUN} xmvhdl ${VHDL_PARAMS} -work riverlib  	-f	lists/riverlib.f
+	${SRUN} xmvhdl ${VHDL_PARAMS} -work gnsslib  	-f	lists/gnsslib.f
+	${SRUN} xmvhdl ${VHDL_PARAMS} -work work      	-f 	vhdl.f
 
 build: comp
-	@ncelab ${ELAB_PARAMS} ${BENCH}
+	${SRUN} xmelab ${ELAB_PARAMS} ${BENCH}
 
 gui:clr_logs
-	@ncsim ${SIM_OPTS} -gui
+	${SRUN} xmsim ${SIM_OPTS} -gui
 
 clean:
 	@rm -f *.log *.key *.diag *.err

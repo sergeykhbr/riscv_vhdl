@@ -7,7 +7,7 @@ riverlib
 techmap
 gnsslib
 work
-ncsim.key
+xmsim.key
 *.log
 *.shm
 *.diag

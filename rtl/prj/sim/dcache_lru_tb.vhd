@@ -61,7 +61,6 @@ architecture behavior of dcache_lru_tb is
   signal i_mpu_flags : std_logic_vector(CFG_MPU_FL_TOTAL-1 downto 0);
   signal i_flush_address : std_logic_vector(CFG_CPU_ADDR_BITS-1 downto 0);
   signal i_flush_valid : std_logic;
-  signal o_state : std_logic_vector(3 downto 0);
 
   type bus_state_type is (Idle, Read, ReadLast);
 
@@ -283,8 +282,7 @@ begin
     o_resp_snoop_data => open,
     o_resp_snoop_flags => open,
     i_flush_address => i_flush_address,
-    i_flush_valid => i_flush_valid,
-    o_state => o_state
+    i_flush_valid => i_flush_valid
   );
 
 
