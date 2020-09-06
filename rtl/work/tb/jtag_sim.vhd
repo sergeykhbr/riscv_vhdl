@@ -24,17 +24,16 @@ use commonlib.types_util.all;
 
 entity jtag_sim is 
   generic (
-    clock_rate : integer := 10;
-    irlen : integer := 4
+    clock_rate : integer := 10
   ); 
   port (
     rst : in std_logic;
     clk : in std_logic;
-    i_test_ena : in std_logic;
-    i_test_burst : in std_logic_vector(7 downto 0);
-    i_test_addr : in std_logic_vector(31 downto 0);
-    i_test_we : in std_logic;
-    i_test_wdata : in std_logic_vector(31 downto 0);
+    i_dtmcs_re : in std_logic;
+    i_dmi_we : in std_logic;
+    i_dmi_re : in std_logic;
+    i_dmi_addr : in std_logic_vector(6 downto 0);
+    i_dmi_wdata : in std_logic_vector(31 downto 0);
     i_tdi  : in std_logic;
     o_tck : out std_logic;
     o_ntrst : out std_logic;
@@ -49,25 +48,17 @@ architecture jtag_sim_rtl of jtag_sim is
                       pause_dr, exit2_dr, update_dr, select_ir, capture_ir, shift_ir,
                       exit1_ir, pause_ir, exit2_ir, update_ir);
 
-  constant ADDR_WIDTH : integer := 32;
-  constant DATA_WIDTH : integer := 32;
-  constant REG1_LEN : integer := ADDR_WIDTH + 3; -- 3 = 1 bit we field + 2 bits transaction size
-  constant REG2_LEN : integer := DATA_WIDTH + 1; -- 1 bulk bit
-  constant SHIFT_LEN : integer := irlen + REG1_LEN; -- maximal length
-
   type registers is record
       jtagstate : state_type;
       jtagstatez : state_type;
-      burst_cnt : integer;
-      shift_reg1 : std_logic_vector(REG1_LEN-1 downto 0);
-      shift_reg2 : std_logic_vector(REG2_LEN-1 downto 0);
-      shift_reg : std_logic_vector(irlen + REG1_LEN-1 downto 0);
+      dmi_request : std_logic_vector(40 downto 0);
+      shift_reg : std_logic_vector(45 downto 0);
       shift_length : integer;
-      clk_rate_cnt : integer;
       is_data : std_logic;
-      instr : integer range 1 to 2;
+      dtmcs_ena : std_logic;
+      clk_rate_cnt : integer;
       op_cnt : integer;
-      rdata : std_logic_vector(DATA_WIDTH-1 downto 0);
+      rdata : std_logic_vector(40 downto 0);
       edge : std_logic;
       ntrst : std_logic;
       tms : std_logic;
@@ -77,7 +68,7 @@ architecture jtag_sim_rtl of jtag_sim is
   
 begin
 
-  comblogic : process(rst, r, i_tdi, i_test_ena, i_test_addr, i_test_we, i_test_wdata)
+  comblogic : process(rst, r, i_tdi, i_dtmcs_re, i_dmi_we, i_dmi_re, i_dmi_addr, i_dmi_wdata)
     variable v : registers;
     variable w_posedge : std_logic;
     variable w_negedge : std_logic;
@@ -94,18 +85,13 @@ begin
          v.clk_rate_cnt := r.clk_rate_cnt + 1;
      end if;
 
-     if i_test_ena = '1' and r.jtagstate = run_idle then
-        v.burst_cnt := conv_integer(i_test_burst);
-        v.shift_reg1(34) := i_test_we;
-        v.shift_reg1(33 downto 32) := "10"; -- size: 0=1 byte; 1=hword; 2=word; 3=dword
-        v.shift_reg1(31 downto 0) := i_test_addr;
-        if i_test_burst = X"00" then
-            v.shift_reg2(32) := '0'; -- bulk=0
-        else
-            v.shift_reg2(32) := '1'; -- bulk=1
-        end if;
-        v.shift_reg2(31 downto 0) := i_test_wdata;
+     if (i_dtmcs_re or i_dmi_re or i_dmi_we) = '1' and r.jtagstate = run_idle then
         v.is_data := '1';
+        v.dtmcs_ena := i_dtmcs_re;
+        v.dmi_request(0) := i_dmi_re;
+        v.dmi_request(1) := i_dmi_we;
+        v.dmi_request(33 downto 2) := i_dmi_wdata;
+        v.dmi_request(40 downto 34) := i_dmi_addr;
      elsif w_posedge = '1' then
         v.is_data := '0';
      end if;
@@ -125,7 +111,6 @@ begin
         when run_idle =>
             if r.is_data = '1' then
                 v.tms := '1';
-                v.instr := 1;
                 v.op_cnt := 0;
                 v.jtagstate := start_ir;
             end if;
@@ -140,18 +125,19 @@ begin
             v.tms := '0'; 
             v.op_cnt := 0;
             v.jtagstate := shift_ir;
-            if r.instr = 1 then
-                v.shift_reg := r.shift_reg1 & conv_std_logic_vector(2, irlen);
-                v.shift_length := 35-1;
+            if r.dtmcs_ena = '1' then
+                v.shift_reg := (others => '0');
+                v.shift_reg(4 downto 0) := "10000";   -- DTMCS reg
+                v.shift_length := 32-1;
             else
-                v.shift_reg := "00" & r.shift_reg2 & conv_std_logic_vector(3, irlen);
-                v.shift_length := 33-1;
+                v.shift_reg := r.dmi_request & "10001";
+                v.shift_length := 41-1;
             end if;
             v.op_cnt := 0; 
         when shift_ir =>
             v.tms := '0';
             v.op_cnt := r.op_cnt + 1;
-            if r.op_cnt = irlen-1 then
+            if r.op_cnt = 4 then
                 v.tms := '1';
                 v.jtagstate := exit1_ir;
             end if;
@@ -172,7 +158,11 @@ begin
             v.rdata := (others => '0');
         when shift_dr =>
             v.tms := '0';
-            v.rdata := i_tdi & r.rdata(DATA_WIDTH-1 downto 1);
+            if r.dtmcs_ena = '1' then
+                v.rdata(31 downto 0) := i_tdi & r.rdata(31 downto 1);
+            else
+                v.rdata := i_tdi & r.rdata(40 downto 1);
+            end if;
             v.op_cnt := r.op_cnt + 1;
             if r.op_cnt = r.shift_length then
                 v.tms := '1';
@@ -180,33 +170,21 @@ begin
             end if;
         when exit1_dr =>
             v.tms := '1';
-            v.rdata := i_tdi & r.rdata(DATA_WIDTH-1 downto 1);
+            if r.dtmcs_ena = '1' then
+                v.rdata(31 downto 0) := i_tdi & r.rdata(31 downto 1);
+            else
+                v.rdata := i_tdi & r.rdata(40 downto 1);
+            end if;
             v.jtagstate := update_dr;
         when update_dr =>
-            -- TODO: and size == size_bulk
-            if r.instr = 2 then
-                if r.burst_cnt = 0 then
-                    v.tms := '0'; 
-                    v.jtagstate := run_idle;
-                else
-                    v.tms := '1'; 
-                    v.jtagstate := start_ir;
-                    v.burst_cnt := r.burst_cnt - 1;
-                    if r.burst_cnt = 1 then
-                        v.shift_reg2(32) := '0'; -- bulk=0
-                    end if;
-                end if;
-            else
-                v.tms := '1'; 
-                v.instr := 2;
-                v.jtagstate := start_ir;
-            end if;
+            v.tms := '0'; 
+            v.jtagstate := run_idle;
         when others =>
         end case;
 
 
         if r.jtagstatez = shift_ir or r.jtagstatez = shift_dr then
-            v.shift_reg := '0' & r.shift_reg(SHIFT_LEN-1 downto 1);
+            v.shift_reg := '0' & r.shift_reg(45 downto 1);
         end if;
      end if;
 
@@ -217,10 +195,9 @@ begin
         v.clk_rate_cnt := 0;
         v.op_cnt := 0;
         v.is_data := '0';
-        v.shift_reg1 := (others => '0');
-        v.shift_reg2 := (others => '0');
+        v.dtmcs_ena := '0';
+        v.dmi_request := (others => '0');
         v.shift_reg := (others => '0');
-        v.burst_cnt := 0;
         v.edge := '0';
         v.ntrst := '0';
         v.tms := '0';

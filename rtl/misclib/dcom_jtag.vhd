@@ -20,10 +20,6 @@ use commonlib.types_common.all;
 
 entity dcom_jtag is
   generic (
-    irlen  : integer range 2 to 8 := 2;
-    idcode : integer range 0 to 255 := 9;
-    ainst  : integer range 0 to 255 := 2;  -- IR rw,address,size (35 bits)
-    dinst  : integer range 0 to 255 := 3;  -- IR data (32 bits)
     id : std_logic_vector(31 downto 0) := X"01040093");
   port (
     rst         : in std_ulogic;
@@ -34,7 +30,7 @@ entity dcom_jtag is
     tapi_tdo    : in std_ulogic;
     tapo_tck    : out std_ulogic;
     tapo_tdi    : out std_ulogic;
-    tapo_inst   : out std_logic_vector(7 downto 0);
+    tapo_inst   : out std_logic_vector(4 downto 0);
     tapo_rst    : out std_ulogic;
     tapo_capt   : out std_ulogic;
     tapo_shft   : out std_ulogic;
@@ -50,7 +46,7 @@ architecture rtl of dcom_jtag is
   type ltap_out_type is record                           
     tck   : std_ulogic;
     tdi   : std_ulogic;
-    inst  : std_logic_vector(7 downto 0);
+    inst  : std_logic_vector(4 downto 0);
     asel  : std_ulogic;
     dsel  : std_ulogic;
     reset : std_ulogic;
@@ -59,8 +55,9 @@ architecture rtl of dcom_jtag is
     upd   : std_ulogic;     
   end record;
 
-  constant BYPASS : std_logic_vector(irlen-1 downto 0) := (others => '1');
-  constant IDCODE_I : std_logic_vector(irlen-1 downto 0) := conv_std_logic_vector(idcode, irlen);
+  constant IDCODE : std_logic_vector(4 downto 0)     := "00001";
+  constant DTMCS : std_logic_vector(4 downto 0)      := "10000";
+  constant DMI_ACCESS : std_logic_vector(4 downto 0) := "10001";
  
   type state_type is (test_rst, run_idle, select_dr, capture_dr, shift_dr, exit1_dr,
                       pause_dr, exit2_dr, update_dr, select_ir, capture_ir, shift_ir,
@@ -68,7 +65,7 @@ architecture rtl of dcom_jtag is
 
   type reg_type is record
    state  : state_type;
-   inst   : std_logic_vector(irlen-1 downto 0);
+   inst   : std_logic_vector(4 downto 0);
    shft   : std_logic_vector(31 downto 0);
    tdo    : std_ulogic;
    sel_user1 : std_logic;
@@ -90,14 +87,20 @@ begin
     vtapo.reset := '0'; 
     vtapo.tdi := tdi;
     vtapo.inst := (others => '0'); 
-    vtapo.inst(irlen-1 downto 0) := r.inst;
+    vtapo.inst(4 downto 0) := r.inst;
     vtapo.capt := '0'; 
     vtapo.upd := '0'; 
     vtapo.shift := '0'; 
     vtapo.asel := '0'; 
     vtapo.dsel := '0';
-    if (r.inst = IDCODE_I) or (r.inst = BYPASS) then v.tdo := r.shft(0);
-    else                                             v.tdo := tapi_tdo; end if;   
+    if r.inst /= DMI_ACCESS then
+        v.tdo := r.shft(0);
+    else
+        v.tdo := tapi_tdo;
+    end if;   
+
+    --if (r.inst = IDCODE_I) or (r.inst = BYPASS) then v.tdo := r.shft(0);
+    --else                                             v.tdo := tapi_tdo; end if;   
 	                                                     
 	    case r.state is
 	      when test_rst   => if tms = '0' then v.state := run_idle; end if;
@@ -118,83 +121,96 @@ begin
 	      when update_ir  => if tms = '0' then v.state := run_idle; else v.state := select_dr; end if;
 	    end case;
 	     
-	    case r.state is
-	      when test_rst =>
-	        vtapo.reset := '1'; v.inst := IDCODE_I;
-	      when capture_dr =>
-	        vtapo.capt := '1';
-	        if r.inst = BYPASS then v.shft(0) := '0'; end if;       
-	        if r.inst = IDCODE_I then  v.shft := id; end if;
-	      when shift_dr   =>
-	        vtapo.shift := '1';
-	        if r.inst = BYPASS then v.shft(0) := tdi; end if;
-	        if r.inst = IDCODE_I then v.shft := tdi & r.shft(31 downto 1); end if;
-	      when update_dr  =>
-	        vtapo.upd := '1';
+    case r.state is
+    when test_rst =>
+        vtapo.reset := '1';
+        v.inst := IDCODE;
+    when capture_dr =>
+        vtapo.capt := '1';
+        if r.inst = IDCODE then 
+            v.shft := id;
+        elsif r.inst = DTMCS then 
+            v.shft := (others => '0');
+            v.shft(14 downto 12) := "001"; -- idle: 1=Enter Run-Test/Idle and leave it immediately
+            v.shft(11 downto 10) := "00";  -- dmstat: TODO
+            v.shft(9 downto 4) := conv_std_logic_vector(7, 6);  -- abits: 7 bits dmi address width
+            v.shft(3 downto 0) := X"1";   -- version: 1=spec 0.13
+        else
+            v.shft(0) := '0';  -- BYPASS
+        end if;
+--	        if r.inst = BYPASS then v.shft(0) := '0'; end if;       
+--	        if r.inst = IDCODE_I then  v.shft := id; end if;
+    when shift_dr   =>
+        vtapo.shift := '1';
+        if (r.inst = IDCODE) or (r.inst = DTMCS) then
+            v.shft(31 downto 0) := tdi & r.shft(31 downto 1);
+        else
+            v.shft(0) := tdi;  -- BYPASS
+        end if;
+--	        if r.inst = BYPASS then v.shft(0) := tdi; end if;
+--	        if r.inst = IDCODE_I then v.shft := tdi & r.shft(31 downto 1); end if;
+    when update_dr  =>
+        vtapo.upd := '1';
+        v.sel_user1 := '0';
+        v.sel_user2 := '0';
+    when capture_ir => 
+        v.shft(4 downto 2) := r.inst(4 downto 2); 
+        v.shft(1 downto 0) := "01";
+        v.sel_user1 := '0';
+        v.sel_user2 := '0';
+    when shift_ir   => 
+        v.shft(4 downto 0) := tdi & r.shft(4 downto 1);
+    when update_ir  => 
+        v.inst := r.shft(4 downto 0);
+        if r.shft(4 downto 0) = DMI_ACCESS then
+            v.sel_user1 := '1';
+            v.sel_user2 := '0';
+        else 
             v.sel_user1 := '0';
             v.sel_user2 := '0';
-	      when capture_ir => 
-	        v.shft(irlen-1 downto 2) := r.inst(irlen-1 downto 2); 
-	        v.shft(1 downto 0) := "01";
-   	      v.sel_user1 := '0';
-  	       v.sel_user2 := '0';
-	      when shift_ir   => 
-	        v.shft(irlen-1 downto 0) := tdi & r.shft(irlen-1 downto 1);
-	      when update_ir  => 
-	        v.inst := r.shft(irlen-1 downto 0);
-	        if r.shft(irlen-1 downto 0) = conv_std_logic_vector(ainst, irlen) then
-	          v.sel_user1 := '1';
-	          v.sel_user2 := '0';
-          elsif r.shft(irlen-1 downto 0) = conv_std_logic_vector(dinst, irlen) then
-	          v.sel_user1 := '0';
-	          v.sel_user2 := '1';
-          else 
-	          v.sel_user1 := '0';
-	          v.sel_user2 := '0';
-          end if;
-	      when others => 
-	    end case;
+        end if;
+    when others => 
+    end case;
 	
-	    rin <= v; 
+    rin <= v; 
 	    
-	    tdo <= r.tdo;
-	    tapo_tck <= tck;
+    tdo <= r.tdo;
+    tapo_tck <= tck;
       --if (r.sel_user1 or r.sel_user2)='1' then tapo_tck <= tck;
       --else                                     tapo_tck <= '1'; end if;
-	    tapo_tdi <= tdi; 
-	    tapo_inst <= vtapo.inst; 
-	    tapo_rst <= vtapo.reset;
-	    tapo_capt <= vtapo.capt; 
-	    tapo_shft <= vtapo.shift; 
-	    tapo_upd <= vtapo.upd;   
-	    tapo_xsel1 <= r.sel_user1;
-	    tapo_xsel2 <= r.sel_user2;
-	  end process;
+    tapo_tdi <= tdi; 
+    tapo_inst <= vtapo.inst; 
+    tapo_rst <= vtapo.reset;
+    tapo_capt <= vtapo.capt; 
+    tapo_shft <= vtapo.shift; 
+    tapo_upd <= vtapo.upd;   
+    tapo_xsel1 <= r.sel_user1;
+    tapo_xsel2 <= r.sel_user2;
+  end process;
 	 
-   posreg : process(tck, rst) begin
-       if rising_edge(tck) then
-	       r.state <= rin.state;
-	       r.shft  <= rin.shft;
-	     end if;
-	     if rst = '0' then 
-	       r.state <= test_rst; 
-	       r.shft  <= id;
-	     end if;
-   end process;
+  posreg : process(tck, rst) begin
+     if rising_edge(tck) then
+         r.state <= rin.state;
+         r.shft  <= rin.shft;
+     end if;
+     if rst = '0' then 
+         r.state <= test_rst; 
+         r.shft  <= id;
+     end if;
+  end process;
 	
-   negreg : process(tck, rst) begin
-	     if falling_edge(tck) then
-	       r.inst <= rin.inst;
-	       r.tdo  <= rin.tdo;
-	       r.sel_user1 <= rin.sel_user1;
-  	      r.sel_user2 <= rin.sel_user2;
-	     end if;
-	     if rst = '0' then 
-	       r.inst <= IDCODE_I; 
-	       r.sel_user1 <= '0';
-   	     r.sel_user2 <= '0';
-	     end if;
-    end process; 
+  negreg : process(tck, rst) begin
+      if falling_edge(tck) then
+          r.inst <= rin.inst;
+          r.tdo  <= rin.tdo;
+          r.sel_user1 <= rin.sel_user1;
+          r.sel_user2 <= rin.sel_user2;
+      end if;
+      if rst = '0' then 
+          r.inst <= IDCODE; 
+          r.sel_user1 <= '0';
+          r.sel_user2 <= '0';
+      end if;
+  end process; 
 	   
-	 
-	end;  
+end;

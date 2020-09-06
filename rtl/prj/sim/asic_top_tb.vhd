@@ -53,11 +53,11 @@ architecture behavior of asic_top_tb is
   signal uart_bin_data : std_logic_vector(63 downto 0);
   signal uart_bin_bytes_sz : integer;
 
-  signal jtag_test_ena : std_logic;
-  signal jtag_test_burst : std_logic_vector(7 downto 0);
-  signal jtag_test_addr : std_logic_vector(31 downto 0);
-  signal jtag_test_we : std_logic;
-  signal jtag_test_wdata : std_logic_vector(31 downto 0);
+  signal i_dtmcs_re : std_logic;
+  signal i_dmi_we : std_logic;
+  signal i_dmi_re : std_logic;
+  signal i_dmi_addr : std_logic_vector(6 downto 0);
+  signal i_dmi_wdata : std_logic_vector(31 downto 0);
   signal jtag_tdi : std_logic;
   signal jtag_tdo : std_logic;
   signal jtag_tms : std_logic;
@@ -66,10 +66,29 @@ architecture behavior of asic_top_tb is
 
   signal iClkCnt : integer := 0;
   signal iEdclCnt : integer := 0;
+  signal jtag_test_cnt : integer := 0;
 
   constant UART_WR_ENA : std_logic := '0';
-  constant JTAG_WR_ENA : std_logic := '0';
+  constant JTAG_WR_ENA : std_logic := '1';
   constant ETH_WR_ENA : std_logic := '0';
+
+  type jtag_test_type is record
+    idx : integer;
+    dtmcs_re : std_logic;
+    dmi_we : std_logic;
+    dmi_re : std_logic;
+    dmi_addr : std_logic_vector(7 downto 0);  -- actual width may be different and reported in dtmcs
+    wdata : std_logic_vector(31 downto 0);
+  end record;
+  type jtag_test_vector is array (0 to 10) of jtag_test_type;
+
+  constant JTAG_TESTS : jtag_test_vector := (
+    (0,   '1', '0', '0', X"00", X"00000000"),  
+    (1,   '1', '0', '0', X"00", X"00000000"),  
+    (2,   '0', '1', '0', X"04", X"11223344"),
+    (3,   '0', '1', '0', X"05", X"aabbccdd"),
+    others => (-1,  '0', '0', '0', X"00", X"00000000")
+  );
   
   component asic_top is port ( 
     i_rst     : in std_logic;
@@ -150,17 +169,16 @@ architecture behavior of asic_top_tb is
 
   component jtag_sim is 
   generic (
-    clock_rate : integer := 10;
-    irlen : integer := 4
+    clock_rate : integer := 10
   ); 
   port (
     rst : in std_logic;
     clk : in std_logic;
-    i_test_ena : in std_logic;
-    i_test_burst : in std_logic_vector(7 downto 0);
-    i_test_addr : in std_logic_vector(31 downto 0);
-    i_test_we : in std_logic;
-    i_test_wdata : in std_logic_vector(31 downto 0);
+    i_dtmcs_re : in std_logic;
+    i_dmi_we : in std_logic;
+    i_dmi_re : in std_logic;
+    i_dmi_addr : in std_logic_vector(6 downto 0);
+    i_dmi_wdata : in std_logic_vector(31 downto 0);
     i_tdi  : in std_logic;
     o_tck : out std_logic;
     o_ntrst : out std_logic;
@@ -199,6 +217,28 @@ begin
 
   io_gpio <= X"001";
 
+  jtaggen0 : process (i_sclk_n, iClkCnt, jtag_test_cnt)
+    variable test_case : integer;
+  begin
+    if rising_edge(i_sclk_n) then
+        test_case := iClkCnt / 5000;
+        i_dtmcs_re <= '0';
+        i_dmi_we <= '0';
+        i_dmi_re <= '0';
+
+        if (iClkCnt mod 5000) = 4999 then
+            if test_case = JTAG_TESTS(jtag_test_cnt).idx then
+                i_dtmcs_re <= JTAG_WR_ENA and JTAG_TESTS(jtag_test_cnt).dtmcs_re;
+                i_dmi_we <= JTAG_WR_ENA and JTAG_TESTS(jtag_test_cnt).dmi_we;
+                i_dmi_re <= JTAG_WR_ENA and JTAG_TESTS(jtag_test_cnt).dmi_re;
+                i_dmi_addr <= JTAG_TESTS(jtag_test_cnt).dmi_addr(6 downto 0);
+                i_dmi_wdata <= JTAG_TESTS(jtag_test_cnt).wdata;
+                jtag_test_cnt <= jtag_test_cnt + 1;
+            end if;
+        end if;
+    end if;
+  end process;
+
   udatagen0 : process (i_sclk_n, iClkCnt)
   begin
     if rising_edge(i_sclk_n) then
@@ -214,33 +254,6 @@ begin
            uart_instr(4) <= cr;
            uart_instr(5) <= lf;
         end if;
-
-        jtag_test_ena <= '0';
-        if iClkCnt = 3000 then
-           jtag_test_ena <= JTAG_WR_ENA;
-           jtag_test_burst <= (others => '0');
-           jtag_test_addr <= X"10000000";
-           jtag_test_we <= '0';
-           jtag_test_wdata <= (others => '0');
-        elsif iClkCnt = 5000 then
-           jtag_test_ena <= JTAG_WR_ENA;
-           jtag_test_burst <= (others => '0');
-           jtag_test_addr <= X"fffff004";
-           jtag_test_we <= '1';
-           jtag_test_wdata <= X"12345678";
-        elsif iClkCnt = 7000 then
-           jtag_test_ena <= JTAG_WR_ENA;
-           jtag_test_burst <= X"01";
-           jtag_test_addr <= X"10000004";
-           jtag_test_we <= '0';
-           jtag_test_wdata <= (others => '0');
-        elsif iClkCnt = 10000 then
-           jtag_test_ena <= JTAG_WR_ENA;
-           jtag_test_burst <= X"02";
-           jtag_test_addr <= X"FFFFF004";
-           jtag_test_we <= '1';
-           jtag_test_wdata <= X"DEADBEEF";
-       end if;    
     end if;
   end process;
 
@@ -271,16 +284,15 @@ begin
   );
 
   jsim0 : jtag_sim  generic map (
-    clock_rate => 4,
-    irlen => 4
+    clock_rate => 4
   ) port map (
     rst => i_rst,
     clk => i_sclk_p,
-    i_test_ena => jtag_test_ena,
-    i_test_burst => jtag_test_burst,
-    i_test_addr => jtag_test_addr,
-    i_test_we => jtag_test_we,
-    i_test_wdata => jtag_test_wdata,
+    i_dtmcs_re => i_dtmcs_re,
+    i_dmi_we => i_dmi_we,
+    i_dmi_re => i_dmi_re,
+    i_dmi_addr => i_dmi_addr,
+    i_dmi_wdata => i_dmi_wdata,
     i_tdi => jtag_tdi,
     o_tck => jtag_tck,
     o_ntrst => jtag_ntrst,

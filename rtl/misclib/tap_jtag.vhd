@@ -105,7 +105,7 @@ architecture rtl of tap_jtag is
   signal tapo_rst : std_logic;
   signal tapo_tck : std_logic;
   signal tapo_tdi : std_logic;
-  signal tapo_inst : std_logic_vector(7 downto 0);
+  signal tapo_inst : std_logic_vector(4 downto 0);
   signal tapo_capt   : std_logic;
   signal tapo_shft   : std_logic;
   signal tapo_upd    : std_logic;
@@ -118,10 +118,6 @@ architecture rtl of tap_jtag is
   attribute syn_keep of aregq : signal is true;
 
   component dcom_jtag is generic (
-    irlen  : integer range 2 to 8 := 2;
-    idcode : integer range 0 to 255 := 9;
-    ainst  : integer range 0 to 255 := 2;  -- IR rw,address,size (35 bits)
-    dinst  : integer range 0 to 255 := 3;  -- IR data (32 bits)
     id : std_logic_vector(31 downto 0) := X"01040093"
   );
   port (
@@ -133,7 +129,7 @@ architecture rtl of tap_jtag is
     tapi_tdo    : in std_ulogic;
     tapo_tck    : out std_ulogic;
     tapo_tdi    : out std_ulogic;
-    tapo_inst   : out std_logic_vector(7 downto 0);
+    tapo_inst   : out std_logic_vector(4 downto 0);
     tapo_rst    : out std_ulogic;
     tapo_capt   : out std_ulogic;
     tapo_shft   : out std_ulogic;
@@ -364,10 +360,6 @@ begin
   o_mstcfg <= xmstconfig;
 
   jtagcom0 : dcom_jtag generic map (
-      irlen => 4,
-      idcode => 9,
-      ainst => ainst,
-      dinst => dinst,
       id => X"01040093"
   ) port map (
     rst         => nrst,
