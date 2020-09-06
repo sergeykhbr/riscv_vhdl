@@ -202,9 +202,6 @@ end component;
 
 -- JTAG TAP
 component tap_jtag is
-  generic (
-    ainst  : integer range 0 to 255 := 2;
-    dinst  : integer range 0 to 255 := 3);
   port (
     nrst  : in std_logic;
     clk  : in std_logic;
@@ -214,9 +211,15 @@ component tap_jtag is
     i_tdi   : in std_logic;   -- in: Test Data Input
     o_tdo   : out std_logic;   -- out: Test Data Output
     o_jtag_vref : out std_logic;
-    i_msti   : in axi4_master_in_type;
-    o_msto   : out axi4_master_out_type;
-    o_mstcfg : out axi4_master_config_type
+    -- DMI interface
+    o_dmi_req_valid : out std_logic;
+    i_dmi_req_ready : in std_logic;
+    o_dmi_write : out std_logic;
+    o_dmi_addr : out std_logic_vector(6 downto 0);
+    o_dmi_wdata : out std_logic_vector(31 downto 0);
+    i_dmi_resp_valid : in std_logic;
+    o_dmi_resp_ready : out std_logic;
+    i_dmi_rdata : in std_logic_vector(31 downto 0)
     );
 end component;
 

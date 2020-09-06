@@ -25,9 +25,6 @@ library misclib;
 use misclib.types_misc.all;
 
 entity tap_jtag is
-  generic (
-    ainst  : integer range 0 to 255 := 2;
-    dinst  : integer range 0 to 255 := 3);
   port (
     nrst  : in std_logic;
     clk  : in std_logic;
@@ -37,9 +34,15 @@ entity tap_jtag is
     i_tdi   : in std_logic;   -- in: Test Data Input
     o_tdo   : out std_logic;   -- out: Test Data Output
     o_jtag_vref : out std_logic;
-    i_msti   : in axi4_master_in_type;
-    o_msto   : out axi4_master_out_type;
-    o_mstcfg : out axi4_master_config_type
+    -- DMI interface
+    o_dmi_req_valid : out std_logic;
+    i_dmi_req_ready : in std_logic;
+    o_dmi_write : out std_logic;
+    o_dmi_addr : out std_logic_vector(6 downto 0);
+    o_dmi_wdata : out std_logic_vector(31 downto 0);
+    i_dmi_resp_valid : in std_logic;
+    o_dmi_resp_ready : out std_logic;
+    i_dmi_rdata : in std_logic_vector(31 downto 0)
     );
 end;
 
@@ -48,23 +51,16 @@ architecture rtl of tap_jtag is
 
   constant ADDBITS : integer := 10;
 
-  constant xmstconfig : axi4_master_config_type := (
-     descrsize => PNP_CFG_MASTER_DESCR_BYTES,
-     descrtype => PNP_CFG_TYPE_MASTER,
-     vid => VENDOR_GNSSSENSOR,
-     did => GNSSSENSOR_JTAG_TAP
-  );
-
-  type dma_req_state_type is (
-      DMAREQ_IDLE,
-      DMAREQ_SYNC_START,
-      DMAREQ_START,
-      DMAREQ_WAIT_READ_RESP,
-      DMAREQ_SYNC_RESP
+  type dmi_req_state_type is (
+      DMIREQ_IDLE,
+      DMIREQ_SYNC_START,
+      DMIREQ_START,
+      DMIREQ_WAIT_READ_RESP,
+      DMIREQ_SYNC_RESP
    );
 
   type tckpreg_type is record
-    addr       : std_logic_vector(34 downto 0);
+    dmishft    : std_logic_vector(40 downto 0);
     datashft   : std_logic_vector(32 downto 0);
     done_sync  : std_ulogic;
     prun       : std_ulogic;
@@ -81,14 +77,13 @@ architecture rtl of tap_jtag is
   end record;
 
   type axireg_type is record
-    dma : dma_bank_type;
     run_sync:  std_logic_vector(1 downto 0);
     qual_dreg: std_ulogic;
-    qual_areg: std_ulogic;
-    areg: std_logic_vector(34 downto 0);
+    qual_dmireg: std_ulogic;
+    dmireg: std_logic_vector(40 downto 0);
     dreg: std_logic_vector(31 downto 0);
     done: std_ulogic;
-    dma_req_state : dma_req_state_type;
+    dmi_req_state : dmi_req_state_type;
   end record;
 
   signal ar, arin : axireg_type;
@@ -97,7 +92,7 @@ architecture rtl of tap_jtag is
 
   signal qual_rdata, rdataq: std_logic_vector(31 downto 0);
   signal qual_dreg,  dregq: std_logic_vector(31 downto 0);
-  signal qual_areg,  aregqin, aregq: std_logic_vector(34 downto 0);
+  signal qual_dmireg,  dmiregq: std_logic_vector(40 downto 0);
 
   signal dma_response : dma_response_type;
 
@@ -115,7 +110,7 @@ architecture rtl of tap_jtag is
   attribute syn_keep: boolean;
   attribute syn_keep of rdataq : signal is true;
   attribute syn_keep of dregq : signal is true;
-  attribute syn_keep of aregq : signal is true;
+  attribute syn_keep of dmiregq : signal is true;
 
   component dcom_jtag is generic (
     id : std_logic_vector(31 downto 0) := X"01040093"
@@ -148,25 +143,26 @@ begin
   qual_dreg <= (others => ar.qual_dreg);
   dregq <= not (tnr.data(31 downto 0) and qual_dreg(31 downto 0));
 
-  qual_areg <= (others => ar.qual_areg);
-  aregqin <= tpr.addr(34 downto ADDBITS) &
-             tnr.addrlo(ADDBITS-1 downto 2) &
-             tpr.addr(1 downto 0);
-  aregq <= not (aregqin and qual_areg(34 downto 0));
+  qual_dmireg <= (others => ar.qual_dmireg);
+  dmiregq <= not (tpr.dmishft and qual_dmireg);
 
 
   comb : process (nrst, ar, dma_response,
                   tapo_tck, tapo_tdi, tapo_inst, tapo_rst, tapo_capt, tapo_shft, tapo_upd, tapo_xsel1, tapo_xsel2,
-                  i_msti, tpr, tnr, aregq, dregq, rdataq)
+                  i_dmi_req_ready, i_dmi_resp_valid, i_dmi_rdata,
+                  tpr, tnr, dmiregq, dregq, rdataq)
     variable av : axireg_type;
     variable tpv : tckpreg_type;
     variable tnv : tcknreg_type;
-    variable asel, dsel : std_ulogic;
+    variable dsel : std_ulogic;
     variable vtapi_tdo : std_logic;
     variable write, seq : std_ulogic;
-    variable wb_dma_request : dma_request_type;
+    variable v_dmi_req_valid : std_logic;
+    variable v_dmi_write : std_logic;
+    variable vb_dmi_addr : std_logic_vector(6 downto 0);
+    variable vb_dmi_wdata : std_logic_vector(31 downto 0);
+    variable vb_dmi_resp_ready : std_logic;
     variable wb_dma_response : dma_response_type;
-    variable wb_msto : axi4_master_out_type;
 
   begin
 
@@ -177,13 +173,12 @@ begin
     ---------------------------------------------------------------------------
     -- TCK side logic
     ---------------------------------------------------------------------------
-    asel := tapo_xsel1;
     dsel := tapo_xsel2;
-    vtapi_tdo := tpr.addr(0);
+    vtapi_tdo := tpr.dmishft(0);
     if dsel='1' then
       vtapi_tdo := tpr.datashft(0) and tpr.holdn;
     end if;
-    write := tpr.addr(34);
+    write := tpr.dmishft(34);
     seq := tpr.datashft(32);
 
     -- Sync regs using alternating phases
@@ -195,10 +190,6 @@ begin
         tpv.datashft(32 downto 0) := '1' & (not rdataq);
     end if;
 
-    if tapo_capt = '1' then
-        tpv.addr(ADDBITS-1 downto 2) := tnr.addrlo;
-    end if;
-
     -- Track whether we're in the middle of shifting
     if tapo_shft = '1' then
         tpv.inshift:='1';
@@ -208,8 +199,8 @@ begin
     end if;
 
     if tapo_shft = '1' then
-        if asel = '1' and tpr.prun='0'  then
-            tpv.addr(34 downto 0) := tapo_tdi & tpr.addr(34 downto 1);
+        if tapo_xsel1 = '1' and tpr.prun='0'  then
+            tpv.dmishft(40 downto 0) := tapo_tdi & tpr.dmishft(40 downto 1);
         end if;
         if dsel = '1' and tpr.holdn='1' then
             tpv.datashft(32 downto 0) := tapo_tdi & tpr.datashft(32 downto 1);
@@ -224,13 +215,10 @@ begin
     if tpr.prun='0' then
         tnv.qual_rdata := '0';
         if tapo_shft = '0' and tapo_upd = '1' then
-            if asel = '1' then 
-                tnv.addrlo := tpr.addr(ADDBITS-1 downto 2);
-            end if;
             if dsel = '1' then
                 tnv.data := tpr.datashft;
             end if;
-            if (asel and not write) = '1' then
+            if tapo_xsel1 = '1' then
                 tpv.holdn := '0';
                 tnv.run := '1';
             end if;
@@ -260,91 +248,71 @@ begin
     end if;
 
     av.qual_dreg := '0';
-    av.qual_areg := '0';
+    av.qual_dmireg := '0';
 
-    wb_dma_request.valid := '0';
-    wb_dma_request.ready := '0';
-    wb_dma_request.write := '0';
-    wb_dma_request.addr := (others => '0');
-    wb_dma_request.size := (others => '0');
-    wb_dma_request.bytes := (others => '0');
-    wb_dma_request.wdata := (others => '0');
+    v_dmi_req_valid := '0';
+    v_dmi_write := '0';
+    vb_dmi_addr := (others => '0');
+    vb_dmi_wdata := (others => '0');
+    vb_dmi_resp_ready := '0';
 
     --! DMA control
-    case ar.dma_req_state is
-    when DMAREQ_IDLE =>
+    case ar.dmi_req_state is
+    when DMIREQ_IDLE =>
         if ar.run_sync(0) = '1' then
            av.qual_dreg := '1';
-           av.qual_areg := '1';
-           av.dma_req_state := DMAREQ_SYNC_START;
+           av.qual_dmireg := '1';
+           av.dmi_req_state := DMIREQ_SYNC_START;
         end if;
 
-    when DMAREQ_SYNC_START =>
-        av.dma_req_state := DMAREQ_START;
+    when DMIREQ_SYNC_START =>
+        av.dmi_req_state := DMIREQ_START;
 
-    when DMAREQ_START =>
-        wb_dma_request.valid := '1';
-        wb_dma_request.addr := ar.areg(31 downto 0);
-        wb_dma_request.bytes := conv_std_logic_vector(4, 11);
-        wb_dma_request.size := '0' & ar.areg(33 downto 32);  -- 010=4 bytes; 011=8 bytes (not impl. yet)
-        if ar.areg(34) = '1' then
-            wb_dma_request.write := '1';
-            wb_dma_request.wdata := ar.dreg(31 downto 0) & ar.dreg(31 downto 0);
-            if dma_response.ready = '1' then
-                av.done := '1';
-                av.dma_req_state := DMAREQ_SYNC_RESP;
-            end if;
-        else
-            wb_dma_request.write := '0';
-            wb_dma_request.wdata := (others => '0');
-            av.dma_req_state := DMAREQ_WAIT_READ_RESP;
+    when DMIREQ_START =>
+        v_dmi_req_valid := ar.dmireg(1) or ar.dmireg(0);
+        v_dmi_write := ar.dmireg(1);
+        vb_dmi_addr := ar.dmireg(40 downto 34);
+        vb_dmi_wdata := ar.dmireg(33 downto 2);
+        if i_dmi_req_ready = '1' then
+            av.dmi_req_state := DMIREQ_WAIT_READ_RESP;
         end if;
 
-    when DMAREQ_WAIT_READ_RESP =>
-        wb_dma_request.ready := '1';
-        if dma_response.valid = '1' then
+    when DMIREQ_WAIT_READ_RESP =>
+        vb_dmi_resp_ready := '1';
+        if i_dmi_resp_valid = '1' then
             av.done := '1';
-            av.dreg := dma_response.rdata(31 downto 0);
-            av.dma_req_state := DMAREQ_SYNC_RESP;
+            av.dmireg(33 downto 2) := i_dmi_rdata(31 downto 0);
+            av.dmireg(1 downto 0) := "00";  -- status: 00=OK
+            av.dreg := i_dmi_rdata(31 downto 0);
+            av.dmi_req_state := DMIREQ_SYNC_RESP;
         end if;
 
-    when DMAREQ_SYNC_RESP =>
+    when DMIREQ_SYNC_RESP =>
         if ar.run_sync(0) = '0' then
             av.done := '0';
-            av.dma_req_state := DMAREQ_IDLE;
+            av.dmi_req_state := DMIREQ_IDLE;
         end if;
     when others =>
     end case;
 
 
-    procedureAxi4DMA(
-        i_request => wb_dma_request,
-        o_response => wb_dma_response,
-        i_bank => ar.dma,
-        o_bank => av.dma,
-        i_msti => i_msti,
-        o_msto => wb_msto
-    );
-    dma_response <= wb_dma_response;
-
     -- Sync regs and CDC transfer
     av.run_sync := tnr.run & ar.run_sync(1);
 
     if ar.qual_dreg='1' then
-        av.dreg:=not dregq;
+        av.dreg := not dregq;
     end if;
-    if ar.qual_areg='1' then 
-        av.areg := not aregq;
+    if ar.qual_dmireg='1' then 
+        av.dmireg := not dmiregq;
     end if;
 
 
     if (nrst = '0') then
-      av.dma := DMA_BANK_RESET;
-      av.dma_req_state := DMAREQ_IDLE;
+      av.dmi_req_state := DMIREQ_IDLE;
       av.qual_dreg := '0';
-      av.qual_areg := '0';
+      av.qual_dmireg := '0';
       av.done := '0';
-      av.areg := (others => '0');
+      av.dmireg := (others => '0');
       av.dreg := (others => '0');
     end if;
 
@@ -352,12 +320,15 @@ begin
     tnrin <= tnv;
     arin <= av;
     tapi_tdo <= vtapi_tdo;
-    o_msto <= wb_msto;
+    o_dmi_req_valid <= v_dmi_req_valid;
+    o_dmi_write <= v_dmi_write;
+    o_dmi_addr <= vb_dmi_addr;
+    o_dmi_wdata <= vb_dmi_wdata;
+    o_dmi_resp_ready <= vb_dmi_resp_ready;
   end process;
 
 
   o_jtag_vref <= '1';
-  o_mstcfg <= xmstconfig;
 
   jtagcom0 : dcom_jtag generic map (
       id => X"01040093"
@@ -392,7 +363,7 @@ begin
       tpr <= tprin;
     end if;
     if tapo_rst = '1' then
-      tpr.addr <= (others => '0');
+      tpr.dmishft <= (others => '0');
       tpr.datashft <= (others => '0');
       tpr.done_sync <= '0';
       tpr.prun <= '0';

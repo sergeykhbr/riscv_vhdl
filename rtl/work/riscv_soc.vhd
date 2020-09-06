@@ -340,10 +340,7 @@ end generate;
 
   ------------------------------------
   -- JTAG TAP interface
-  jtag0 : tap_jtag  generic map (
-    ainst  => 2,
-    dinst  => 3
-  ) port map (
+  jtag0 : tap_jtag  port map (
     nrst   => w_glob_nrst, 
     clk    => i_clk, 
     i_tck  => i_jtag_tck,
@@ -352,15 +349,16 @@ end generate;
     i_tdi  => i_jtag_tdi,
     o_tdo  => o_jtag_tdo,
     o_jtag_vref => o_jtag_vref,
-    i_msti   => aximi(CFG_BUS0_XMST_DMI),
-    o_msto   => open,
-    o_mstcfg => open
+    -- DMI interface
+    o_dmi_req_valid => w_dmi_jtag_req_valid,
+    i_dmi_req_ready => w_dmi_jtag_req_ready,
+    o_dmi_write => w_dmi_jtag_write,
+    o_dmi_addr => wb_dmi_jtag_addr,
+    o_dmi_wdata => wb_dmi_jtag_wdata,
+    i_dmi_resp_valid => w_dmi_jtag_resp_valid,
+    o_dmi_resp_ready => w_dmi_jtag_resp_ready,
+    i_dmi_rdata => wb_dmi_jtag_rdata
   );
-  w_dmi_jtag_req_valid <= '0';
-  w_dmi_jtag_write <= '0';
-  wb_dmi_jtag_addr <= (others => '0');
-  wb_dmi_jtag_wdata <= (others => '0');
-  w_dmi_jtag_resp_ready <= '0';
 
   ------------------------------------
   --! @brief TAP via UART (debug port) with master interface.
