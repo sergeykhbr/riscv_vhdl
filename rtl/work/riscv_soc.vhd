@@ -151,9 +151,6 @@ architecture arch_riscv_soc of riscv_soc is
   signal spiflashi : spi_in_type;
   signal spiflasho : spi_out_type;
 
-  signal corei   : axi4_river_in_vector;
-  signal coreo   : axi4_river_out_vector;
-
   --! Arbiter is switching only slaves output signal, data from noc
   --! is connected to all slaves and to the arbiter itself.
   signal aximi   : bus0_xmst_in_vector;
@@ -230,61 +227,26 @@ begin
     o_bus_util_r => wb_bus_util_r  -- Bus read access utilization per master statistic
   );
 
-  wb_core_irq <= "0" & w_ext_irq;  -- TODO: other CPU interrupts
+  wb_core_irq(CFG_TOTAL_CPU_MAX-1 downto 1) <= (others => '0');
+  wb_core_irq(0) <= w_ext_irq;  -- TODO: other CPU interrupts
 
-  --! @brief RISC-V Processor core River.
-  cpuslotx : for n in 0 to CFG_TOTAL_CPU_MAX-1 generate
-      cpux : if n < CFG_CPU_NUM generate
-          river0 : river_amba generic map (
-            memtech  => CFG_MEMTECH,
-            hartid => n,
-            async_reset => CFG_ASYNC_RESET,
-            fpu_ena => true,
-            coherence_ena => false,
-            tracer_ena => false
-          ) port map ( 
-            i_nrst   => w_bus_nrst,
-            i_clk    => i_clk,
-            i_msti   => corei(CFG_BUS0_XMST_CPU0+n),
-            o_msto   => coreo(CFG_BUS0_XMST_CPU0+n),
-            o_mstcfg => mst_cfg(CFG_BUS0_XMST_CPU0+n),
-            i_dport => dport_i(n),
-            o_dport => dport_o(n),
-            i_ext_irq => wb_core_irq(n)
-          );
-      end generate;
-      emptyx : if n >= CFG_CPU_NUM generate
-          cpudummy0 : river_dummycpu port map ( 
-            o_msto   => coreo(CFG_BUS0_XMST_CPU0+n),
-            o_dport  => dport_o(n),
-            o_flush_l2 => open
-          );
-          mst_cfg(CFG_BUS0_XMST_CPU0+n) <= axi4_master_config_none;
-      end generate;
-  end generate;
-
-  l2_ena : if CFG_L2CACHE_ENA generate
-      -- TODO:
-  end generate;
-  l2_dis : if not CFG_L2CACHE_ENA generate
-      serdesslotx : for n in 0 to CFG_TOTAL_CPU_MAX-1 generate
-          serdesx : if n < CFG_CPU_NUM generate
-              serdes0 : river_serdes generic map (
-                async_reset => CFG_ASYNC_RESET
-              ) port map ( 
-                i_nrst  => w_bus_nrst,
-                i_clk   => i_clk,
-                i_coreo => coreo(CFG_BUS0_XMST_CPU0+n),
-                o_corei => corei(CFG_BUS0_XMST_CPU0+n),
-                i_msti => aximi(CFG_BUS0_XMST_CPU0+n),
-                o_msto => aximo(CFG_BUS0_XMST_CPU0+n)
-              );
-          end generate;
-          serdesemptyx : if n >= CFG_CPU_NUM generate
-              aximo(CFG_BUS0_XMST_CPU0+n) <= axi4_master_out_none;
-          end generate;
-      end generate;
-  end generate;
+  group0 : river_workgroup generic map (
+    cpunum => CFG_CPU_NUM,
+    memtech => CFG_MEMTECH,
+    async_reset => CFG_ASYNC_RESET,
+    fpu_ena => true,
+    coherence_ena => false,
+    tracer_ena => false
+  ) port map ( 
+    i_nrst   => w_bus_nrst,
+    i_clk    => i_clk,
+    i_msti   => aximi(CFG_BUS0_XMST_WORKGROUP),
+    o_msto   => aximo(CFG_BUS0_XMST_WORKGROUP),
+    o_mstcfg => mst_cfg(CFG_BUS0_XMST_WORKGROUP),
+    i_dport  => dport_i,
+    o_dport  => dport_o,
+    i_ext_irq => wb_core_irq
+);
 
   -- Access to Debug port of the CPUs workgroup
   dmregs0 : dmi_regs generic map (
@@ -320,6 +282,7 @@ begin
     i_dporto => dmi_dport_o
   );
 
+  -- Interconnect between DMI register and DSU debug interfaces
   icdport0 : ic_dport_2s_1m generic map (
     async_reset => CFG_ASYNC_RESET
   ) port map (

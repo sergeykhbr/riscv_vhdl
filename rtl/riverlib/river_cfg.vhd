@@ -25,7 +25,7 @@ use commonlib.types_common.all;
 package river_cfg is
 
   constant CFG_VENDOR_ID : std_logic_vector(31 downto 0) := X"000000F1";
-  constant CFG_IMPLEMENTATION_ID : std_logic_vector(31 downto 0) := X"20191108";
+  constant CFG_IMPLEMENTATION_ID : std_logic_vector(31 downto 0) := X"20200906";
   constant CFG_HW_FPU_ENABLE : boolean := true;
 
 

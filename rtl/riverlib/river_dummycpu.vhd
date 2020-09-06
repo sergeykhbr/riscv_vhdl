@@ -26,7 +26,7 @@ use riverlib.types_river.all;
 
 entity river_dummycpu is 
   port ( 
-    o_msto   : out axi4_river_out_type;
+    o_msto   : out axi4_l1_out_type;
     o_dport  : out dport_out_type;
     o_flush_l2 : out std_logic
 );
@@ -42,7 +42,7 @@ constant dport_out_not_available : dport_out_type := (
     (others => '0'));  -- rdata
 
 begin
-    o_msto <= axi4_river_out_none;
+    o_msto <= axi4_l1_out_none;
     o_dport <= dport_out_not_available;
     o_flush_l2 <= '0';
 end;

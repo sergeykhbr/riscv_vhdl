@@ -34,11 +34,15 @@ use riverlib.river_cfg.all;
 --! @brief   Declaration of components visible on SoC top level.
 package types_river is
 
-constant CFG_LOG2_CPU_MAX : integer := 1;
-constant CFG_TOTAL_CPU_MAX : integer := 2**CFG_LOG2_CPU_MAX;
+  -- Number of CPU per one workgroup:
+  constant CFG_LOG2_CPU_MAX : integer := 2;  -- 1=Dual-core (maximum); 2=Quad-core (maximum)
+  constant CFG_TOTAL_CPU_MAX : integer := 2**CFG_LOG2_CPU_MAX;
+  -- +1 Coherent SBA debug port (not available in River)
+  -- +1 ACP coherent port  (not available in River)
+  constant CFG_SLOT_L1_TOTAL : integer := CFG_TOTAL_CPU_MAX + 0;
 
 -- AXI4 with ACE channels
-type axi4_river_out_type is record
+type axi4_l1_out_type is record
   aw_valid : std_logic;
   aw_bits : axi4_metadata_type;
   aw_id   : std_logic_vector(CFG_CPU_ID_BITS-1 downto 0);
@@ -71,14 +75,14 @@ type axi4_river_out_type is record
   wack : std_logic;
 end record;
 
-constant axi4_river_out_none : axi4_river_out_type := (
+constant axi4_l1_out_none : axi4_l1_out_type := (
       '0', META_NONE, (others=>'0'), (others => '0'),
       '0', (others=>'0'), '0', (others=>'0'), (others => '0'), 
       '0', '0', META_NONE, (others=>'0'), (others => '0'), '0',
        "00", X"0", "00", "00", X"0", "00", '0', '0',
        "00000", '0', (others => '0'), '0', '0', '0');
 
-type axi4_river_in_type is record
+type axi4_l1_in_type is record
   aw_ready : std_logic;
   w_ready : std_logic;
   b_valid : std_logic;
@@ -101,15 +105,61 @@ type axi4_river_in_type is record
   cd_ready : std_logic;
 end record;
 
-constant axi4_river_in_none : axi4_river_in_type := (
+constant axi4_l1_in_none : axi4_l1_in_type := (
       '0', '0', '0', AXI_RESP_OKAY, (others=>'0'), (others => '0'),
       '0', '0', (others => '0'), (others=>'0'), '0', (others=>'0'), (others => '0'),
       '0', (others => '0'), X"0", "000", '0', '0');
 
-type axi4_river_in_vector is array (0 to CFG_TOTAL_CPU_MAX-1) of axi4_river_in_type;
-type axi4_river_out_vector is array (0 to CFG_TOTAL_CPU_MAX-1) of axi4_river_out_type;
+type axi4_l1_in_vector is array (0 to CFG_SLOT_L1_TOTAL-1) of axi4_l1_in_type;
+type axi4_l1_out_vector is array (0 to CFG_SLOT_L1_TOTAL-1) of axi4_l1_out_type;
 
+-- L2 AXI structure
+type axi4_l2_out_type is record
+  aw_valid : std_logic;
+  aw_bits : axi4_metadata_type;
+  aw_id   : std_logic_vector(CFG_CPU_ID_BITS-1 downto 0);
+  aw_user : std_logic_vector(CFG_CPU_USER_BITS-1 downto 0);
+  w_valid : std_logic;
+  w_data : std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);
+  w_last : std_logic;
+  w_strb : std_logic_vector(L1CACHE_BYTES_PER_LINE-1 downto 0);
+  w_user : std_logic_vector(CFG_CPU_USER_BITS-1 downto 0);
+  b_ready : std_logic;
+  ar_valid : std_logic;
+  ar_bits : axi4_metadata_type;
+  ar_id   : std_logic_vector(CFG_CPU_ID_BITS-1 downto 0);
+  ar_user : std_logic_vector(CFG_CPU_USER_BITS-1 downto 0);
+  r_ready : std_logic;
+end record;
 
+constant axi4_l2_out_none : axi4_l2_out_type := (
+      '0', META_NONE, (others=>'0'), (others => '0'),
+      '0', (others=>'0'), '0', (others=>'0'), (others => '0'), 
+      '0', '0', META_NONE, (others=>'0'), (others => '0'), '0'
+);
+
+type axi4_l2_in_type is record
+  aw_ready : std_logic;
+  w_ready : std_logic;
+  b_valid : std_logic;
+  b_resp : std_logic_vector(1 downto 0);
+  b_id   : std_logic_vector(CFG_CPU_ID_BITS-1 downto 0);
+  b_user : std_logic_vector(CFG_CPU_USER_BITS-1 downto 0);
+  ar_ready : std_logic;
+  r_valid : std_logic;
+  r_resp : std_logic_vector(1 downto 0);
+  r_data : std_logic_vector(L1CACHE_LINE_BITS-1 downto 0);
+  r_last : std_logic;
+  r_id   : std_logic_vector(CFG_CPU_ID_BITS-1 downto 0);
+  r_user : std_logic_vector(CFG_CPU_USER_BITS-1 downto 0);
+end record;
+
+constant axi4_l2_in_none : axi4_l2_in_type := (
+      '0', '0', '0', AXI_RESP_OKAY, (others=>'0'), (others => '0'),
+      '0', '0', (others => '0'), (others=>'0'), '0', (others=>'0'), (others => '0')
+);
+
+-- River Debug port interface
 type dport_in_type is record
     req_valid : std_logic;
     resp_ready : std_logic;
@@ -217,62 +267,8 @@ type dport_out_vector is array (0 to CFG_TOTAL_CPU_MAX-1)
   );
   end component;
 
-
---! @brief   RIVER CPU component declaration.
---! @details This module implements Risc-V CPU Core named as
---!          "RIVER" with AXI interface.
---! @param[in] xindex AXI master index
---! @param[in] i_rstn     Reset signal with active LOW level.
---! @param[in] i_clk      System clock (BUS/CPU clock).
---! @param[in] i_msti     Bus-to-Master device signals.
---! @param[out] o_msto    CachedTile-to-Bus request signals.
---! @param[in] i_ext_irq  Interrupts line supported by Rocket chip.
-component river_amba is 
-  generic (
-    memtech : integer;
-    hartid : integer;
-    async_reset : boolean;
-    fpu_ena : boolean;
-    coherence_ena : boolean;
-    tracer_ena : boolean
-  );
-  port ( 
-    i_nrst   : in std_logic;
-    i_clk    : in std_logic;
-    i_msti   : in axi4_river_in_type;
-    o_msto   : out axi4_river_out_type;
-    o_mstcfg : out axi4_master_config_type;
-    i_dport  : in dport_in_type;
-    o_dport  : out dport_out_type;
-    i_ext_irq : in std_logic
-  );
-end component;
-
--- Processor stub should be instantiated for unused CPU slot
-component river_dummycpu is 
-  port ( 
-    o_msto   : out axi4_river_out_type;
-    o_dport  : out dport_out_type;
-    o_flush_l2 : out std_logic
-  );
-end component;
-
-component river_serdes is 
-  generic (
-    async_reset : boolean
-  );
-  port ( 
-    i_nrst  : in std_logic;
-    i_clk   : in std_logic;
-    i_coreo : in axi4_river_out_type;
-    o_corei : out axi4_river_in_type;
-    i_msti  : in axi4_master_in_type;
-    o_msto  : out axi4_master_out_type
-);
-end component;
-
---! Dport interconnect to switch DSU and DMI access
-component ic_dport_2s_1m is
+  --! Dport interconnect to switch DSU and DMI access
+  component ic_dport_2s_1m is
   generic (
     async_reset : boolean := false
   );
@@ -290,6 +286,100 @@ component ic_dport_2s_1m is
     o_mdporti : out dport_in_vector;
     i_mdporto : in dport_out_vector
   );
-end component;
+  end component;
+
+--! @brief   RIVER CPU component declaration.
+--! @details This module implements Risc-V CPU Core named as
+--!          "RIVER" with AXI interface.
+--! @param[in] xindex AXI master index
+--! @param[in] i_rstn     Reset signal with active LOW level.
+--! @param[in] i_clk      System clock (BUS/CPU clock).
+--! @param[in] i_msti     Bus-to-Master device signals.
+--! @param[out] o_msto    CachedTile-to-Bus request signals.
+--! @param[in] i_ext_irq  Interrupts line supported by Rocket chip.
+  component river_amba is 
+  generic (
+    memtech : integer;
+    hartid : integer;
+    async_reset : boolean;
+    fpu_ena : boolean;
+    coherence_ena : boolean;
+    tracer_ena : boolean
+  );
+  port ( 
+    i_nrst   : in std_logic;
+    i_clk    : in std_logic;
+    i_msti   : in axi4_l1_in_type;
+    o_msto   : out axi4_l1_out_type;
+    i_dport  : in dport_in_type;
+    o_dport  : out dport_out_type;
+    i_ext_irq : in std_logic
+  );
+  end component;
+
+  -- Processor stub should be instantiated for unused CPU slot
+  component river_dummycpu is 
+  port ( 
+    o_msto   : out axi4_l1_out_type;
+    o_dport  : out dport_out_type;
+    o_flush_l2 : out std_logic
+  );
+  end component;
+
+  -- L2 cache dummy implementation. Real L2 implemented in Wasserfall SoC.
+  component RiverL2Dummy is
+  generic (
+    async_reset : boolean := false
+  );
+  port (
+    i_clk : in std_logic;
+    i_nrst : in std_logic;
+    -- CPUs Workgroup
+    i_l1o : in axi4_l1_out_vector;
+    o_l1i : out axi4_l1_in_vector;
+    -- System bus
+    i_l2i : in axi4_l2_in_type;
+    o_l2o : out axi4_l2_out_type;
+    i_flush_valid : std_logic
+  );
+  end component;
+
+  -- Convert L2 cache lines into system bus transactions
+  component river_l2serdes is 
+  generic (
+    async_reset : boolean
+  );
+  port ( 
+    i_nrst  : in std_logic;
+    i_clk   : in std_logic;
+    i_l2o   : in axi4_l2_out_type;
+    o_l2i   : out axi4_l2_in_type;
+    i_msti  : in axi4_master_in_type;
+    o_msto  : out axi4_master_out_type
+  );
+  end component;
+
+
+  -- River CPU group with L2-cache (stub or real)
+  component river_workgroup is 
+  generic (
+    cpunum : integer;
+    memtech : integer;
+    async_reset : boolean;
+    fpu_ena : boolean;
+    coherence_ena : boolean;
+    tracer_ena : boolean
+  );
+  port ( 
+    i_nrst   : in std_logic;
+    i_clk    : in std_logic;
+    i_msti   : in axi4_master_in_type;
+    o_msto   : out axi4_master_out_type;
+    o_mstcfg : out axi4_master_config_type;
+    i_dport  : in dport_in_vector;
+    o_dport  : out dport_out_vector;
+    i_ext_irq : in std_logic_vector(CFG_TOTAL_CPU_MAX-1 downto 0)
+  );
+  end component;
 
 end; -- package body

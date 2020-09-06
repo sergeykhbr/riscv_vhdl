@@ -70,18 +70,16 @@ constant CFG_BUS0_XSLV_TOTAL    : integer := 13;
 --!          as an index in the vector array of AXI master bus.
 --! @{
 
---! Cached TileLinkIO bus.
-constant CFG_BUS0_XMST_CPU0     : integer := 0;
---! Uncached TileLinkIO bus.
-constant CFG_BUS0_XMST_CPU1     : integer := 1;
+--! RIVER workgroup.
+constant CFG_BUS0_XMST_WORKGROUP: integer := 0;
 --! Ethernet MAC master interface generic index.
-constant CFG_BUS0_XMST_ETHMAC   : integer := 2;
+constant CFG_BUS0_XMST_ETHMAC   : integer := 1;
 --! Tap via UART (debug port) generic index.
-constant CFG_BUS0_XMST_MSTUART  : integer := 3;
+constant CFG_BUS0_XMST_MSTUART  : integer := 2;
 --! Tap via JTAG DMI generic index.
-constant CFG_BUS0_XMST_DMI      : integer := 4;
+constant CFG_BUS0_XMST_DMI      : integer := 3;
 --! Total Number of master devices on system bus.
-constant CFG_BUS0_XMST_TOTAL    : integer := 5;
+constant CFG_BUS0_XMST_TOTAL    : integer := 4;
 --! @}
 
 

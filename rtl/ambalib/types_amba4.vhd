@@ -106,8 +106,8 @@ constant RISCV_UNCACHED_TILELINK  : std_logic_vector(15 downto 0) := X"0501";
 constant GAISLER_ETH_MAC_MASTER   : std_logic_vector(15 downto 0) := X"0502";
 --! Ethernet MAC master debug interface (EDCL).
 constant GAISLER_ETH_EDCL_MASTER  : std_logic_vector(15 downto 0) := X"0503";
---! "River" CPU Device ID.
-constant RISCV_RIVER_CPU          : std_logic_vector(15 downto 0) := X"0505";
+--! "River" CPU Device workgroup.
+constant RISCV_RIVER_WORKGROUP    : std_logic_vector(15 downto 0) := X"0505";
 --! DMI debug register access to bus through the SBA interface.
 constant RISCV_RIVER_DMI          : std_logic_vector(15 downto 0) := X"0506";
 --! UART with DMA: Test Access Point (TAP)

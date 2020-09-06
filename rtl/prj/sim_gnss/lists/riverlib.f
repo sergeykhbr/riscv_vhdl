@@ -32,8 +32,13 @@ ${RTL_HOME}/riverlib/core/proc.vhd
 ${RTL_HOME}/riverlib/core/regibank.vhd
 ${RTL_HOME}/riverlib/core/stacktrbuf.vhd
 ${RTL_HOME}/riverlib/dsu/axi_dsu.vhd
+${RTL_HOME}/riverlib/dsu/dmi_regs.vhd
+${RTL_HOME}/riverlib/dsu/ic_dport_2s_1m.vhd
+${RTL_HOME}/riverlib/l2cache/river_l2serdes.vhd
+${RTL_HOME}/riverlib/l2cache/river_l2dummy.vhd
 ${RTL_HOME}/riverlib/river_amba.vhd
 ${RTL_HOME}/riverlib/river_cfg.vhd
-${RTL_HOME}/riverlib/river_top.vhd
-${RTL_HOME}/riverlib/river_serdes.vhd
 ${RTL_HOME}/riverlib/types_river.vhd
+${RTL_HOME}/riverlib/river_top.vhd
+${RTL_HOME}/riverlib/river_dummycpu.vhd
+${RTL_HOME}/riverlib/river_workgroup.vhd

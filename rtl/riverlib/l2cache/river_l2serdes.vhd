@@ -1,5 +1,5 @@
 --!
---! Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+--! Copyright 2020 Sergey Khabarov, sergeykhbr@gmail.com
 --!
 --! Licensed under the Apache License, Version 2.0 (the "License");
 --! you may not use this file except in compliance with the License.
@@ -29,21 +29,21 @@ use riverlib.river_cfg.all;
 --! River top level with AMBA interface module declaration
 use riverlib.types_river.all;
 
-entity river_serdes is 
+entity river_l2serdes is 
   generic (
     async_reset : boolean
   );
   port ( 
     i_nrst  : in std_logic;
     i_clk   : in std_logic;
-    i_coreo : in axi4_river_out_type;
-    o_corei : out axi4_river_in_type;
+    i_l2o   : in axi4_l2_out_type;
+    o_l2i   : out axi4_l2_in_type;
     i_msti  : in axi4_master_in_type;
     o_msto  : out axi4_master_out_type
 );
 end;
  
-architecture arch_river_serdes of river_serdes is
+architecture arch_river_l2serdes of river_l2serdes is
 
   -- TODO as generic parameters
   constant linew : integer := L1CACHE_LINE_BITS;
@@ -88,11 +88,10 @@ architecture arch_river_serdes of river_serdes is
 begin
 
 
-  comb : process(i_nrst, i_coreo, i_msti, r)
+  comb : process(i_nrst, i_l2o, i_msti, r)
     variable v : RegistersType;
     variable v_req_mem_ready : std_logic;
     variable vb_line_o : std_logic_vector(linew-1 downto 0);
-    variable vb_r_resp : std_logic_vector(3 downto 0);
     variable v_r_valid : std_logic;
     variable v_w_valid : std_logic;
     variable v_w_last : std_logic;
@@ -113,8 +112,8 @@ begin
     vb_aw_id := (others => '0');
     vb_ar_id := (others => '0');
 
-    vb_aw_id(CFG_CPU_ID_BITS-1 downto 0) := i_coreo.aw_id;
-    vb_ar_id(CFG_CPU_ID_BITS-1 downto 0) := i_coreo.ar_id;
+    vb_aw_id(CFG_CPU_ID_BITS-1 downto 0) := i_l2o.aw_id;
+    vb_ar_id(CFG_CPU_ID_BITS-1 downto 0) := i_l2o.ar_id;
 
     vb_line_o := r.cacheline;
 
@@ -124,7 +123,7 @@ begin
         end if;
     end loop;
 
-    if i_coreo.b_ready = '1' then
+    if i_l2o.b_ready = '1' then
         v.b_wait := '0';
     end if;
 
@@ -168,15 +167,15 @@ begin
     end case;
 
     if v_req_mem_ready = '1' then
-        if (i_coreo.ar_valid and i_msti.ar_ready) = '1' then
+        if (i_l2o.ar_valid and i_msti.ar_ready) = '1' then
             v.state := Read;
             v.rmux := conv_std_logic_vector(1, SERDES_BURST_LEN);
-            vb_len := size2len(i_coreo.ar_bits.size);
-        elsif (i_coreo.aw_valid and i_msti.aw_ready) = '1' then
-            v.cacheline := i_coreo.w_data;                     -- Undocumented River (Axi-lite) feature
-            v.wstrb := i_coreo.w_strb;
+            vb_len := size2len(i_l2o.ar_bits.size);
+        elsif (i_l2o.aw_valid and i_msti.aw_ready) = '1' then
+            v.cacheline := i_l2o.w_data;                     -- Undocumented River (Axi-lite) feature
+            v.wstrb := i_l2o.w_strb;
             v.state := Write;
-            vb_len := size2len(i_coreo.aw_bits.size);
+            vb_len := size2len(i_l2o.aw_bits.size);
         else
             v.state := Idle;
         end if;
@@ -188,60 +187,51 @@ begin
         v := R_RESET;
     end if;
 
-    vb_r_resp(3 downto 2) := "00";
-    vb_r_resp(1 downto 0) := i_msti.r_resp;
-
-    o_msto.aw_valid <= i_coreo.aw_valid;
-    o_msto.aw_bits.addr <= i_coreo.aw_bits.addr;
+    o_msto.aw_valid <= i_l2o.aw_valid;
+    o_msto.aw_bits.addr <= i_l2o.aw_bits.addr;
     o_msto.aw_bits.len <= vb_len;            -- burst len = len[7:0] + 1
     o_msto.aw_bits.size <= "011";            -- 0=1B; 1=2B; 2=4B; 3=8B; ...
     o_msto.aw_bits.burst <= "01";            -- 00=FIXED; 01=INCR; 10=WRAP; 11=reserved
-    o_msto.aw_bits.lock <= i_coreo.aw_bits.lock;
-    o_msto.aw_bits.cache <= i_coreo.aw_bits.cache;
-    o_msto.aw_bits.prot <= i_coreo.aw_bits.prot;
-    o_msto.aw_bits.qos <= i_coreo.aw_bits.qos;
-    o_msto.aw_bits.region <= i_coreo.aw_bits.region;
+    o_msto.aw_bits.lock <= i_l2o.aw_bits.lock;
+    o_msto.aw_bits.cache <= i_l2o.aw_bits.cache;
+    o_msto.aw_bits.prot <= i_l2o.aw_bits.prot;
+    o_msto.aw_bits.qos <= i_l2o.aw_bits.qos;
+    o_msto.aw_bits.region <= i_l2o.aw_bits.region;
     o_msto.aw_id <= vb_aw_id;
-    o_msto.aw_user <= i_coreo.aw_user;
+    o_msto.aw_user <= i_l2o.aw_user;
     o_msto.w_valid <= v_w_valid;
     o_msto.w_last <= v_w_last;
     o_msto.w_data <= r.cacheline(busw-1 downto 0);
     o_msto.w_strb <= r.wstrb(busb-1 downto 0);
-    o_msto.w_user <= i_coreo.w_user;
-    o_msto.b_ready <= i_coreo.b_ready;
-    o_msto.ar_valid <= i_coreo.ar_valid;
-    o_msto.ar_bits.addr <= i_coreo.ar_bits.addr;
+    o_msto.w_user <= i_l2o.w_user;
+    o_msto.b_ready <= i_l2o.b_ready;
+    o_msto.ar_valid <= i_l2o.ar_valid;
+    o_msto.ar_bits.addr <= i_l2o.ar_bits.addr;
     o_msto.ar_bits.len <= vb_len;            -- burst len = len[7:0] + 1
     o_msto.ar_bits.size <= "011";            -- 0=1B; 1=2B; 2=4B; 3=8B; ...
     o_msto.ar_bits.burst <= "01";            -- 00=FIXED; 01=INCR; 10=WRAP; 11=reserved
-    o_msto.ar_bits.lock <= i_coreo.ar_bits.lock;
-    o_msto.ar_bits.cache <= i_coreo.ar_bits.cache;
-    o_msto.ar_bits.prot <= i_coreo.ar_bits.prot;
-    o_msto.ar_bits.qos <= i_coreo.ar_bits.qos;
-    o_msto.ar_bits.region <= i_coreo.ar_bits.region;
+    o_msto.ar_bits.lock <= i_l2o.ar_bits.lock;
+    o_msto.ar_bits.cache <= i_l2o.ar_bits.cache;
+    o_msto.ar_bits.prot <= i_l2o.ar_bits.prot;
+    o_msto.ar_bits.qos <= i_l2o.ar_bits.qos;
+    o_msto.ar_bits.region <= i_l2o.ar_bits.region;
     o_msto.ar_id <= vb_ar_id;
-    o_msto.ar_user <= i_coreo.ar_user;
-    o_msto.r_ready <= i_coreo.r_ready;
+    o_msto.ar_user <= i_l2o.ar_user;
+    o_msto.r_ready <= i_l2o.r_ready;
 
-    o_corei.aw_ready <= i_msti.aw_ready;
-    o_corei.w_ready <= v_w_ready;
-    o_corei.b_valid <= i_msti.b_valid and r.b_wait;
-    o_corei.b_resp <= i_msti.b_resp;
-    o_corei.b_id <= i_msti.b_id(CFG_CPU_ID_BITS-1 downto 0);
-    o_corei.b_user <= i_msti.b_user;
-    o_corei.ar_ready <= i_msti.ar_ready;
-    o_corei.r_valid <= v_r_valid;
-    o_corei.r_resp <= vb_r_resp;
-    o_corei.r_data <= vb_line_o;
-    o_corei.r_last <= v_r_valid;
-    o_corei.r_id <= i_msti.r_id(CFG_CPU_ID_BITS-1 downto 0);
-    o_corei.r_user <= i_msti.r_user;
-    o_corei.ac_valid <= '0';
-    o_corei.ac_addr <= (others => '0');
-    o_corei.ac_snoop <= (others => '0');
-    o_corei.ac_prot <= (others => '0');
-    o_corei.cr_ready <= '0';
-    o_corei.cd_ready <= '0';
+    o_l2i.aw_ready <= i_msti.aw_ready;
+    o_l2i.w_ready <= v_w_ready;
+    o_l2i.b_valid <= i_msti.b_valid and r.b_wait;
+    o_l2i.b_resp <= i_msti.b_resp;
+    o_l2i.b_id <= i_msti.b_id(CFG_CPU_ID_BITS-1 downto 0);
+    o_l2i.b_user <= i_msti.b_user;
+    o_l2i.ar_ready <= i_msti.ar_ready;
+    o_l2i.r_valid <= v_r_valid;
+    o_l2i.r_resp <= i_msti.r_resp;
+    o_l2i.r_data <= vb_line_o;
+    o_l2i.r_last <= v_r_valid;
+    o_l2i.r_id <= i_msti.r_id(CFG_CPU_ID_BITS-1 downto 0);
+    o_l2i.r_user <= i_msti.r_user;
 
     rin <= v;
   end process;

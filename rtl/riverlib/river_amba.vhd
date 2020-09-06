@@ -43,9 +43,8 @@ entity river_amba is
   port ( 
     i_nrst   : in std_logic;
     i_clk    : in std_logic;
-    i_msti   : in axi4_river_in_type;
-    o_msto   : out axi4_river_out_type;
-    o_mstcfg : out axi4_master_config_type;
+    i_msti   : in axi4_l1_in_type;
+    o_msto   : out axi4_l1_out_type;
     i_dport  : in dport_in_type;
     o_dport  : out dport_out_type;
     i_ext_irq : in std_logic
@@ -53,13 +52,6 @@ entity river_amba is
 end;
  
 architecture arch_river_amba of river_amba is
-
-  constant xconfig : axi4_master_config_type := (
-     descrsize => PNP_CFG_MASTER_DESCR_BYTES,
-     descrtype => PNP_CFG_TYPE_MASTER,
-     vid => VENDOR_GNSSSENSOR,
-     did => RISCV_RIVER_CPU
-  );
 
   type state_type is (
       state_idle,
@@ -129,7 +121,6 @@ architecture arch_river_amba of river_amba is
 
 begin
 
-  o_mstcfg <= xconfig;
   o_dport.available <= '1';
   
   river0 : RiverTop  generic map (
@@ -182,7 +173,7 @@ begin
     variable v_mem_er_load_fault : std_logic;
     variable v_mem_er_store_fault : std_logic;
     variable v_next_ready : std_logic;
-    variable vmsto : axi4_river_out_type;
+    variable vmsto : axi4_l1_out_type;
 
   begin
 
@@ -193,7 +184,7 @@ begin
     v_mem_er_store_fault := '0';
     v_next_ready := '0';
 
-    vmsto := axi4_river_out_none;
+    vmsto := axi4_l1_out_none;
     vmsto.ar_bits.burst := "01";  -- INCR (possible any value)
     vmsto.aw_bits.burst := "01";  -- INCR (possible any value)
 
