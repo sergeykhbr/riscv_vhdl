@@ -197,11 +197,13 @@ begin
 
     for n in 0 to CFG_TOTAL_CPU_MAX-1 loop
         o_sdport0o(n).halted <= i_mdporto(n).halted;
+        o_sdport0o(n).available <= i_mdporto(n).available;
         o_sdport0o(n).req_ready <= vb_ic_req_ready(0);
         o_sdport0o(n).resp_valid <= vb_slv0_resp_valid(n);
         o_sdport0o(n).rdata <= r.rdata(n);
 
         o_sdport1o(n).halted <= i_mdporto(n).halted;
+        o_sdport1o(n).available <= i_mdporto(n).available;
         o_sdport1o(n).req_ready <= vb_ic_req_ready(1);
         o_sdport1o(n).resp_valid <= vb_slv1_resp_valid(n);
         o_sdport1o(n).rdata <= r.rdata(n);
