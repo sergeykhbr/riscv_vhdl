@@ -210,7 +210,9 @@ begin
                 i_resp_ready, i_req_mem_ready,
                 i_mem_data_valid, i_mem_data, i_mem_load_fault, i_mem_store_fault,
                 i_mpu_flags, i_flush_address, i_flush_valid,
-                line_raddr_o, line_rdata_o, line_hit_o, line_rflags_o, r)
+                i_req_snoop_type, i_req_snoop_valid, i_req_snoop_addr,
+                line_raddr_o, line_rdata_o, line_hit_o, line_rflags_o,
+                line_snoop_ready_o, r)
     variable v : RegistersType;
     variable vb_cache_line_i_modified : std_logic_vector(DCACHE_LINE_BITS-1 downto 0);
     variable vb_line_rdata_o_modified : std_logic_vector(DCACHE_LINE_BITS-1 downto 0);

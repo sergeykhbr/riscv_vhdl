@@ -30,6 +30,7 @@ entity jtag_sim is
     rst : in std_logic;
     clk : in std_logic;
     i_dtmcs_re : in std_logic;
+    i_dmi_ena : in std_logic;
     i_dmi_we : in std_logic;
     i_dmi_re : in std_logic;
     i_dmi_addr : in std_logic_vector(6 downto 0);
@@ -68,7 +69,7 @@ architecture jtag_sim_rtl of jtag_sim is
   
 begin
 
-  comblogic : process(rst, r, i_tdi, i_dtmcs_re, i_dmi_we, i_dmi_re, i_dmi_addr, i_dmi_wdata)
+  comblogic : process(rst, r, i_tdi, i_dtmcs_re, i_dmi_ena, i_dmi_we, i_dmi_re, i_dmi_addr, i_dmi_wdata)
     variable v : registers;
     variable w_posedge : std_logic;
     variable w_negedge : std_logic;
@@ -85,7 +86,7 @@ begin
          v.clk_rate_cnt := r.clk_rate_cnt + 1;
      end if;
 
-     if (i_dtmcs_re or i_dmi_re or i_dmi_we) = '1' and r.jtagstate = run_idle then
+     if (i_dtmcs_re or i_dmi_ena) = '1' and r.jtagstate = run_idle then
         v.is_data := '1';
         v.dtmcs_ena := i_dtmcs_re;
         v.dmi_request(0) := i_dmi_re;

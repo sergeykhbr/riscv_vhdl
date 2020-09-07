@@ -369,6 +369,8 @@ package river_cfg is
 
   -- machine mode status read/write register.
   constant CSR_mstatus       : std_logic_vector(11 downto 0) := X"300";
+  -- ISA and extensions supported.
+  constant CSR_misa          : std_logic_vector(11 downto 0) := X"301";
   -- Machine exception delegation
   constant CSR_medeleg       : std_logic_vector(11 downto 0) := X"302";
   -- Machine interrupt delegation
@@ -431,8 +433,6 @@ package river_cfg is
   -- User Instructions-retired counter for RDINSTRET pseudo-instruction
   constant CSR_insret        : std_logic_vector(11 downto 0) := X"C02";
   -- 0xC00 to 0xC1F reserved for counters 
-  -- ISA and extensions supported.
-  constant CSR_misa          : std_logic_vector(11 downto 0) := X"f10";
   -- Vendor ID.
   constant CSR_mvendorid     : std_logic_vector(11 downto 0) := X"f11";
   -- Architecture ID.

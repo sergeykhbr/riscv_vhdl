@@ -187,7 +187,8 @@ begin
 
     -- Data CDC
     if tnr.qual_rdata='1' then
-        tpv.datashft(32 downto 0) := '1' & (not rdataq);
+--        tpv.datashft(32 downto 0) := '1' & (not rdataq);
+        tpv.dmishft(33 downto 0) :=  (not rdataq) & "00";  -- 00=status OK
     end if;
 
     -- Track whether we're in the middle of shifting
@@ -231,14 +232,9 @@ begin
             end if;
         end if;
     else
-      if tpr.done_sync='1' and (tpv.inshift='0' or write='1') then
+      if tpr.done_sync='1' and tpv.inshift='0' then
         tnv.run := '0';
-        if write='0' then
-          tnv.qual_rdata := '1';
-        end if;
-        if (write and tnr.data(32)) = '1' then
-          tnv.addrlo := tnr.addrlo + 1;
-        end if;
+        tnv.qual_rdata := '1';
       end if;
     end if;
 
@@ -273,7 +269,11 @@ begin
         v_dmi_write := ar.dmireg(1);
         vb_dmi_addr := ar.dmireg(40 downto 34);
         vb_dmi_wdata := ar.dmireg(33 downto 2);
-        if i_dmi_req_ready = '1' then
+        if v_dmi_req_valid = '0' then
+            -- empty request 'nop'
+            av.done := '1';
+            av.dmi_req_state := DMIREQ_SYNC_RESP;
+        elsif i_dmi_req_ready = '1' then
             av.dmi_req_state := DMIREQ_WAIT_READ_RESP;
         end if;
 
@@ -281,8 +281,6 @@ begin
         vb_dmi_resp_ready := '1';
         if i_dmi_resp_valid = '1' then
             av.done := '1';
-            av.dmireg(33 downto 2) := i_dmi_rdata(31 downto 0);
-            av.dmireg(1 downto 0) := "00";  -- status: 00=OK
             av.dreg := i_dmi_rdata(31 downto 0);
             av.dmi_req_state := DMIREQ_SYNC_RESP;
         end if;
@@ -331,7 +329,7 @@ begin
   o_jtag_vref <= '1';
 
   jtagcom0 : dcom_jtag generic map (
-      id => X"01040093"
+      id => X"00000001"
   ) port map (
     rst         => nrst,
     tck         => i_tck,

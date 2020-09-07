@@ -54,6 +54,7 @@ architecture behavior of asic_top_tb is
   signal uart_bin_bytes_sz : integer;
 
   signal i_dtmcs_re : std_logic;
+  signal i_dmi_ena : std_logic;
   signal i_dmi_we : std_logic;
   signal i_dmi_re : std_logic;
   signal i_dmi_addr : std_logic_vector(6 downto 0);
@@ -80,14 +81,22 @@ architecture behavior of asic_top_tb is
     dmi_addr : std_logic_vector(7 downto 0);  -- actual width may be different and reported in dtmcs
     wdata : std_logic_vector(31 downto 0);
   end record;
-  type jtag_test_vector is array (0 to 10) of jtag_test_type;
+  type jtag_test_vector is array (0 to 31) of jtag_test_type;
 
   constant JTAG_TESTS : jtag_test_vector := (
+  --    | dtm | we | re | adr | wdata
     (0,   '1', '0', '0', X"00", X"00000000"),  
-    (1,   '1', '0', '0', X"00", X"00000000"),  
-    (2,   '0', '1', '0', X"04", X"11223344"),
-    (3,   '0', '1', '0', X"05", X"aabbccdd"),
-    (4,   '0', '0', '1', X"04", X"00000000"),
+    (1,   '0', '1', '0', X"17", X"00320301"),  -- [command] CSR MISA
+    (2,   '0', '0', '0', X"17", X"00000000"),  -- [command] empty
+    (3,   '0', '0', '1', X"16", X"00000000"),  -- [abstracs] read
+    (4,   '0', '0', '0', X"16", X"00000000"),  -- [abstracs] empty
+    (5,   '0', '0', '1', X"05", X"00000000"),  -- [data1] read
+    (6,   '0', '0', '0', X"05", X"00000000"),  -- [data1] empty
+    (7,   '0', '0', '1', X"04", X"00000000"),  -- [data0] read
+    (8,   '0', '0', '0', X"04", X"00000000"),  -- [data0] empty
+    (9,   '0', '1', '0', X"04", X"11223344"),
+    (10,  '0', '1', '0', X"05", X"aabbccdd"),
+    (11,  '0', '0', '1', X"04", X"00000000"),
     others => (-1,  '0', '0', '0', X"00", X"00000000")
   );
   
@@ -176,6 +185,7 @@ architecture behavior of asic_top_tb is
     rst : in std_logic;
     clk : in std_logic;
     i_dtmcs_re : in std_logic;
+    i_dmi_ena : in std_logic;
     i_dmi_we : in std_logic;
     i_dmi_re : in std_logic;
     i_dmi_addr : in std_logic_vector(6 downto 0);
@@ -224,12 +234,14 @@ begin
     if rising_edge(i_sclk_n) then
         test_case := iClkCnt / 5000;
         i_dtmcs_re <= '0';
+        i_dmi_ena <= '0';
         i_dmi_we <= '0';
         i_dmi_re <= '0';
 
         if (iClkCnt mod 5000) = 4999 then
             if test_case = JTAG_TESTS(jtag_test_cnt).idx then
                 i_dtmcs_re <= JTAG_WR_ENA and JTAG_TESTS(jtag_test_cnt).dtmcs_re;
+                i_dmi_ena <= '1';
                 i_dmi_we <= JTAG_WR_ENA and JTAG_TESTS(jtag_test_cnt).dmi_we;
                 i_dmi_re <= JTAG_WR_ENA and JTAG_TESTS(jtag_test_cnt).dmi_re;
                 i_dmi_addr <= JTAG_TESTS(jtag_test_cnt).dmi_addr(6 downto 0);
@@ -290,6 +302,7 @@ begin
     rst => i_rst,
     clk => i_sclk_p,
     i_dtmcs_re => i_dtmcs_re,
+    i_dmi_ena => i_dmi_ena,
     i_dmi_we => i_dmi_we,
     i_dmi_re => i_dmi_re,
     i_dmi_addr => i_dmi_addr,

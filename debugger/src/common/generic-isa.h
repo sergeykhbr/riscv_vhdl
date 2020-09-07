@@ -77,6 +77,8 @@ static const uint16_t CSR_frm            = 0x002;
 static const uint16_t CSR_fcsr           = 0x003;
 /** machine mode status read/write register. */
 static const uint16_t CSR_mstatus        = 0x300;
+/** ISA and extensions supported. */
+static const uint16_t CSR_misa           = 0x301;
 /** Machine exception delegation  */
 static const uint16_t CSR_medeleg        = 0x302;
 /** Machine interrupt delegation  */
@@ -139,8 +141,6 @@ static const uint16_t CSR_time           = 0xC01;
 /** User Instructions-retired counter for RDINSTRET pseudo-instruction */
 static const uint16_t CSR_insret         = 0xC02;
 /** 0xC00 to 0xC1F reserved for counters */
-/** ISA and extensions supported. */
-static const uint16_t CSR_misa              = 0xf10;
 /** Vendor ID. */
 static const uint16_t CSR_mvendorid         = 0xf11;
 /** Architecture ID. */
