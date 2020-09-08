@@ -47,6 +47,7 @@ MemAccess::MemAccess(sc_module_name name_, bool async_reset)
     o_mem_addr("o_mem_addr"),
     o_mem_wdata("o_mem_wdata"),
     o_mem_wstrb("o_mem_wstrb"),
+    o_mem_size("o_mem_size"),
     i_mem_data_valid("i_mem_data_valid"),
     i_mem_data_addr("i_mem_data_addr"),
     i_mem_data("i_mem_data"),
@@ -127,6 +128,7 @@ void MemAccess::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_mem_addr, o_mem_addr.name());
         sc_trace(o_vcd, o_mem_wdata, o_mem_wdata.name());
         sc_trace(o_vcd, o_mem_wstrb, o_mem_wstrb.name());
+        sc_trace(o_vcd, o_mem_size, o_mem_size.name());
         sc_trace(o_vcd, i_mem_data_valid, i_mem_data_valid.name());
         sc_trace(o_vcd, i_mem_data_addr, i_mem_data_addr.name());
         sc_trace(o_vcd, i_mem_data, i_mem_data.name());
@@ -478,9 +480,10 @@ void MemAccess::comb() {
 
     o_mem_valid = v_mem_valid;
     o_mem_write = v_mem_write;
-    o_mem_addr = vb_mem_addr & ~0x7ull;
+    o_mem_addr = vb_mem_addr;
     o_mem_wdata = vb_mem_wdata;
     o_mem_wstrb = vb_mem_wstrb;
+    o_mem_size = vb_mem_sz;
 
     o_memop_ready = v_memop_ready;
     o_wb_wena = v_o_wena;

@@ -53,6 +53,7 @@ SC_MODULE(Processor) {
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_req_data_addr;    // Requesting address to DCache
     sc_out<sc_uint<64>> o_req_data_wdata;               // Writing value
     sc_out<sc_uint<8>> o_req_data_wstrb;                // 8-bytes aligned strobs
+    sc_out<sc_uint<2>> o_req_data_size;                                     // memory operation 1,2,4 or 8 bytes
     sc_in<bool> i_resp_data_valid;                      // DCache response is valid
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_resp_data_addr;    // DCache response address must be equal to the latest request address
     sc_in<sc_uint<64>> i_resp_data_data;                // Read value

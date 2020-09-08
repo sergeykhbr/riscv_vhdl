@@ -85,6 +85,7 @@ RiverAmba::RiverAmba(sc_module_name name_, uint32_t hartid, bool async_reset,
     river0->o_req_mem_path(req_mem_path_o);
     river0->o_req_mem_valid(req_mem_valid_o);
     river0->o_req_mem_type(req_mem_type_o);
+    river0->o_req_mem_size(req_mem_size_o);
     river0->o_req_mem_addr(req_mem_addr_o);
     river0->o_req_mem_strob(req_mem_strob_o);
     river0->o_req_mem_data(req_mem_data_o);
@@ -222,13 +223,7 @@ void RiverAmba::comb() {
         if (req_mem_valid_o.read() == 1) {
             v.req_path = req_mem_path_o.read();
             v.req_addr = req_mem_addr_o;
-            if (req_mem_type_o.read()[REQ_MEM_TYPE_CACHED] == 1) {
-                v.req_size = 0x5;   // 32 Bytes
-            } else if (req_mem_path_o.read() == 1) {
-                v.req_size = 0x4;   // 16 Bytes: Uncached Instruction
-            } else {
-                v.req_size = 0x3;   // 8 Bytes: Uncached Data
-            }
+            v.req_size = req_mem_size_o;
             // [0] 0=Unpriv/1=Priv;
             // [1] 0=Secure/1=Non-secure;
             // [2]  0=Data/1=Instruction

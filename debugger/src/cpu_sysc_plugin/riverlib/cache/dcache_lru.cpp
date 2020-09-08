@@ -27,6 +27,7 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset, bool coherence_ena)
     i_req_addr("i_req_addr"),
     i_req_wdata("i_req_wdata"),
     i_req_wstrb("i_req_wstrb"),
+    i_req_size("i_req_size"),
     o_req_ready("o_req_ready"),
     o_resp_valid("o_resp_valid"),
     o_resp_addr("o_resp_addr"),
@@ -40,6 +41,7 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset, bool coherence_ena)
     i_req_mem_ready("i_req_mem_ready"),
     o_req_mem_valid("o_req_mem_valid"),
     o_req_mem_type("o_req_mem_type"),
+    o_req_mem_size("o_req_mem_size"),
     o_req_mem_addr("o_req_mem_addr"),
     o_req_mem_strob("o_req_mem_strob"),
     o_req_mem_data("o_req_mem_data"),
@@ -95,6 +97,7 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset, bool coherence_ena)
     sensitive << i_req_addr;
     sensitive << i_req_wdata;
     sensitive << i_req_wstrb;
+    sensitive << i_req_size;
     sensitive << i_mem_data_valid;
     sensitive << i_mem_data;
     sensitive << i_mem_load_fault;
@@ -114,9 +117,11 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset, bool coherence_ena)
     sensitive << line_rflags_o;
     sensitive << line_hit_o;
     sensitive << r.req_addr;
+    sensitive << r.req_size;
     sensitive << r.state;
     sensitive << r.req_mem_valid;
     sensitive << r.req_mem_type;
+    sensitive << r.req_mem_size;
     sensitive << r.mem_addr;
     sensitive << r.load_fault;
     sensitive << r.write_first;
@@ -397,12 +402,14 @@ void DCacheLru::comb() {
                         v.req_mem_type = ReadShared();
                     }
                 }
+                v.req_mem_size = CFG_DLOG2_BYTES_PER_LINE;
                 v.mem_wstrb = ~0ul;
                 v.cache_line_o = line_rdata_o;
             } else {
                 // Uncached read/write
-                v.mem_addr = r.req_addr.read()(CFG_CPU_ADDR_BITS-1, 3) << 3;
+                v.mem_addr = r.req_addr.read();
                 v.mem_wstrb = (0, r.req_wstrb.read());
+                v.req_mem_size = i_req_size.read();
                 if (r.req_write.read() == 1) {
                     v.req_mem_type = WriteNoSnoop();
                 } else {
@@ -625,6 +632,7 @@ void DCacheLru::comb() {
             v.req_flush = 0;
             v.cache_line_i = 0;
             v.req_addr = r.req_flush_addr.read() & ~((1<<CFG_DLOG2_BYTES_PER_LINE)-1);
+            v.req_mem_size = CFG_DLOG2_BYTES_PER_LINE;
             v.flush_cnt = r.req_flush_cnt.read();
         } else {
             v_req_ready = 1;
@@ -633,6 +641,7 @@ void DCacheLru::comb() {
             if (i_req_valid.read() == 1) {
                 v.req_addr = i_req_addr.read();
                 v.req_wstrb = i_req_wstrb.read();
+                v.req_size = (0, i_req_size.read());
                 v.req_wdata = i_req_wdata.read();
                 v.req_write = i_req_write.read();
                 v.state = State_CheckHit;
@@ -660,6 +669,7 @@ void DCacheLru::comb() {
     o_req_mem_valid = r.req_mem_valid.read();
     o_req_mem_addr = r.mem_addr.read();
     o_req_mem_type = r.req_mem_type.read();
+    o_req_mem_size = r.req_mem_size.read();
     o_req_mem_strob = r.mem_wstrb.read();
     o_req_mem_data = r.cache_line_o.read();
 

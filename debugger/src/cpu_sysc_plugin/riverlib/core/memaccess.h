@@ -54,6 +54,7 @@ SC_MODULE(MemAccess) {
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mem_addr;     // Data path requested address
     sc_out<sc_uint<64>> o_mem_wdata;                // Data path requested data (write transaction)
     sc_out<sc_uint<8>> o_mem_wstrb;                 // 8-bytes aligned strobs
+    sc_out<sc_uint<2>> o_mem_size;                  // 1,2,4 or 8-bytes operation for uncached access
     sc_in<bool> i_mem_data_valid;                   // Data path memory response is valid
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_mem_data_addr; // Data path memory response address
     sc_in<sc_uint<64>> i_mem_data;                  // Data path memory response value

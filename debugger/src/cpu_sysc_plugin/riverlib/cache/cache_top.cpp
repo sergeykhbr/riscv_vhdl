@@ -36,6 +36,7 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset, bool coherence_ena) :
     i_req_data_addr("i_req_data_addr"),
     i_req_data_wdata("i_req_data_wdata"),
     i_req_data_wstrb("i_req_data_wstrb"),
+    i_req_data_size("i_req_data_size"),
     o_req_data_ready("o_req_data_ready"),
     o_resp_data_valid("o_resp_data_valid"),
     o_resp_data_addr("o_resp_data_addr"),
@@ -50,6 +51,7 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset, bool coherence_ena) :
     o_req_mem_path("o_req_mem_path"),
     o_req_mem_valid("o_req_mem_valid"),
     o_req_mem_type("o_req_mem_type"),
+    o_req_mem_size("o_req_mem_size"),
     o_req_mem_addr("o_req_mem_addr"),
     o_req_mem_strob("o_req_mem_strob"),
     o_req_mem_data("o_req_mem_data"),
@@ -83,11 +85,13 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset, bool coherence_ena) :
     sensitive << i_req_mem_ready;
     sensitive << i.req_mem_valid;
     sensitive << i.req_mem_type;
+    sensitive << i.req_mem_size;
     sensitive << i.req_mem_addr;
     sensitive << i.req_mem_strob;
     sensitive << i.req_mem_wdata;
     sensitive << d.req_mem_valid;
     sensitive << d.req_mem_type;
+    sensitive << d.req_mem_size;
     sensitive << d.req_mem_addr;
     sensitive << d.req_mem_strob;
     sensitive << d.req_mem_wdata;
@@ -116,6 +120,7 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset, bool coherence_ena) :
     i1->i_req_mem_ready(w_ctrl_req_ready);
     i1->o_req_mem_valid(i.req_mem_valid);
     i1->o_req_mem_type(i.req_mem_type);
+    i1->o_req_mem_size(i.req_mem_size);
     i1->o_req_mem_addr(i.req_mem_addr);
     i1->o_req_mem_strob(i.req_mem_strob);
     i1->o_req_mem_data(i.req_mem_wdata);
@@ -135,6 +140,7 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset, bool coherence_ena) :
     d0->i_req_addr(i_req_data_addr);
     d0->i_req_wdata(i_req_data_wdata);
     d0->i_req_wstrb(i_req_data_wstrb);
+    d0->i_req_size(i_req_data_size);
     d0->o_req_ready(o_req_data_ready);
     d0->o_resp_valid(o_resp_data_valid);
     d0->o_resp_addr(o_resp_data_addr);
@@ -148,6 +154,7 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset, bool coherence_ena) :
     d0->i_req_mem_ready(w_data_req_ready);
     d0->o_req_mem_valid(d.req_mem_valid);
     d0->o_req_mem_type(d.req_mem_type);
+    d0->o_req_mem_size(d.req_mem_size);
     d0->o_req_mem_addr(d.req_mem_addr);
     d0->o_req_mem_strob(d.req_mem_strob);
     d0->o_req_mem_data(d.req_mem_wdata);
@@ -258,11 +265,13 @@ void CacheTop::comb() {
     ctrl_path_id = CTRL_PATH;
     vb_ctrl_bus = (ctrl_path_id,
                 i.req_mem_type,
+                i.req_mem_size,
                 i.req_mem_addr);
 
     data_path_id = DATA_PATH;
     vb_data_bus = (data_path_id,
                 d.req_mem_type,
+                d.req_mem_size,
                 d.req_mem_addr);
 
     if (d.req_mem_valid.read() == 1) {
@@ -295,8 +304,9 @@ void CacheTop::comb() {
 
     to = queue_rdata_o.read();
     o_req_mem_valid = queue_nempty_o;
-    o_req_mem_path = to[CFG_CPU_ADDR_BITS+REQ_MEM_TYPE_BITS];
-    o_req_mem_type = to(CFG_CPU_ADDR_BITS+REQ_MEM_TYPE_BITS-1, CFG_CPU_ADDR_BITS).to_uint();
+    o_req_mem_path = to[CFG_CPU_ADDR_BITS+3+REQ_MEM_TYPE_BITS];
+    o_req_mem_type = to(CFG_CPU_ADDR_BITS+3+REQ_MEM_TYPE_BITS-1, CFG_CPU_ADDR_BITS+3).to_uint();
+    o_req_mem_size = to(CFG_CPU_ADDR_BITS+2, CFG_CPU_ADDR_BITS).to_uint();
     o_req_mem_addr = to(CFG_CPU_ADDR_BITS-1, 0).to_uint64();
     o_req_mem_strob = d.req_mem_strob;
     o_req_mem_data = d.req_mem_wdata;

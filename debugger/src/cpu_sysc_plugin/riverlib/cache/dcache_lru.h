@@ -34,6 +34,7 @@ SC_MODULE(DCacheLru) {
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_req_addr;
     sc_in<sc_uint<64>> i_req_wdata;
     sc_in<sc_uint<8>> i_req_wstrb;
+    sc_in<sc_uint<2>> i_req_size;
     sc_out<bool> o_req_ready;
     sc_out<bool> o_resp_valid;
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_resp_addr;
@@ -48,6 +49,7 @@ SC_MODULE(DCacheLru) {
     sc_in<bool> i_req_mem_ready;
     sc_out<bool> o_req_mem_valid;
     sc_out<sc_uint<REQ_MEM_TYPE_BITS>> o_req_mem_type;
+    sc_out<sc_uint<3>> o_req_mem_size;
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_req_mem_addr;
     sc_out<sc_uint<DCACHE_BYTES_PER_LINE>> o_req_mem_strob;
     sc_out<sc_biguint<DCACHE_LINE_BITS>> o_req_mem_data;
@@ -124,9 +126,11 @@ SC_MODULE(DCacheLru) {
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_addr;
         sc_signal<sc_uint<64>> req_wdata;
         sc_signal<sc_uint<8>> req_wstrb;
+        sc_signal<sc_uint<3>> req_size;
         sc_signal<sc_uint<4>> state;
         sc_signal<bool> req_mem_valid;
         sc_signal<sc_uint<REQ_MEM_TYPE_BITS>> req_mem_type;
+        sc_signal<sc_uint<2>> req_mem_size;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mem_addr;
         sc_signal<bool> mpu_er_store;
         sc_signal<bool> mpu_er_load;
@@ -154,9 +158,11 @@ SC_MODULE(DCacheLru) {
         iv.req_addr = 0;
         iv.req_wdata = 0;
         iv.req_wstrb = 0;
+        iv.req_size = 0;
         iv.state = State_Reset;
         iv.req_mem_valid = 0;
         iv.req_mem_type = 0;
+        iv.req_mem_size = 0;
         iv.mem_addr = 0;
         iv.mpu_er_store = 0;
         iv.mpu_er_load = 0;

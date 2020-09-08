@@ -36,6 +36,7 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset)
     i_req_mem_ready("i_req_mem_ready"),
     o_req_mem_valid("o_req_mem_valid"),
     o_req_mem_type("o_req_mem_type"),
+    o_req_mem_size("o_req_mem_size"),
     o_req_mem_addr("o_req_mem_addr"),
     o_req_mem_strob("o_req_mem_strob"),
     o_req_mem_data("o_req_mem_data"),
@@ -93,6 +94,7 @@ ICacheLru::ICacheLru(sc_module_name name_, bool async_reset)
     sensitive << r.req_mem_valid;
     sensitive << r.mem_addr;
     sensitive << r.req_mem_type;
+    sensitive << r.req_mem_size;
     sensitive << r.load_fault;
     sensitive << r.req_flush;
     sensitive << r.req_flush_all;
@@ -256,9 +258,11 @@ void ICacheLru::comb() {
                             CFG_ILOG2_BYTES_PER_LINE) << CFG_ILOG2_BYTES_PER_LINE;
                 }
                 v.req_mem_type = ReadShared();
+                v.req_mem_size = CFG_ILOG2_BYTES_PER_LINE;
             } else {
                 v.mem_addr = r.req_addr.read()(CFG_CPU_ADDR_BITS-1, 3) << 3;
                 v.req_mem_type = ReadNoSnoop();
+                v.req_mem_size = 4; // uncached, 16 B
             }
         }
 
@@ -381,6 +385,7 @@ void ICacheLru::comb() {
     o_req_mem_valid = r.req_mem_valid.read();
     o_req_mem_addr = r.mem_addr.read();
     o_req_mem_type = r.req_mem_type.read();
+    o_req_mem_size = r.req_mem_size.read();
     o_req_mem_strob = 0;
     o_req_mem_data = 0;
 

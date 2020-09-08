@@ -32,6 +32,7 @@ SC_MODULE(RiverTop) {
     sc_out<bool> o_req_mem_path;                        // 0=ctrl; 1=data path
     sc_out<bool> o_req_mem_valid;                       // AXI memory request is valid
     sc_out<sc_uint<REQ_MEM_TYPE_BITS>> o_req_mem_type;   // AXI memory request type
+    sc_out<sc_uint<3>> o_req_mem_size;                  // request size: 0=1 B;...; 7=128 B
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_req_mem_addr;     // AXI memory request address
     sc_out<sc_uint<L1CACHE_BYTES_PER_LINE>> o_req_mem_strob;  // Writing strob. 1 bit per Byte (uncached only)
     sc_out<sc_biguint<L1CACHE_LINE_BITS>> o_req_mem_data;     // Writing data
@@ -93,6 +94,7 @@ SC_MODULE(RiverTop) {
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_req_data_addr;
     sc_signal<sc_uint<64>> wb_req_data_wdata;
     sc_signal<sc_uint<8>> wb_req_data_wstrb;
+    sc_signal<sc_uint<2>> wb_req_data_size;
     sc_signal<bool> w_resp_data_valid;
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_resp_data_addr;
     sc_signal<sc_uint<64>> wb_resp_data_data;

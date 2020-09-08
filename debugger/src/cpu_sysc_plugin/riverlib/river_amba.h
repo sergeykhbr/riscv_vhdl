@@ -93,6 +93,7 @@ SC_MODULE(RiverAmba) {
     sc_signal<bool> req_mem_path_o;
     sc_signal<bool> req_mem_valid_o;
     sc_signal<sc_uint<REQ_MEM_TYPE_BITS>> req_mem_type_o;
+    sc_signal<sc_uint<3>> req_mem_size_o;
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_mem_addr_o;
     sc_signal<sc_uint<L1CACHE_BYTES_PER_LINE>> req_mem_strob_o;
     sc_signal<sc_biguint<L1CACHE_LINE_BITS>> req_mem_data_o;
@@ -146,8 +147,8 @@ SC_MODULE(RiverAmba) {
         sc_signal<sc_uint<4>> req_cached;
         sc_signal<sc_biguint<L1CACHE_LINE_BITS>> req_wdata;
         sc_signal<sc_uint<L1CACHE_BYTES_PER_LINE>> req_wstrb;
-        sc_signal<sc_biguint<3>> req_size;
-        sc_signal<sc_biguint<3>> req_prot;
+        sc_signal<sc_uint<3>> req_size;
+        sc_signal<sc_uint<3>> req_prot;
         sc_signal<sc_uint<4>> req_ar_snoop;
         sc_signal<sc_uint<3>> req_aw_snoop;
     } v, r;

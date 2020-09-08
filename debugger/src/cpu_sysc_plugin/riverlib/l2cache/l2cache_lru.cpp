@@ -527,6 +527,7 @@ void L2CacheLru::comb() {
             v.req_flush = 0;
             v.cache_line_i = 0;
             v.req_addr = r.req_flush_addr.read() & ~((1<<CFG_L2_LOG2_BYTES_PER_LINE)-1);
+            v.req_size = CFG_L2_LOG2_BYTES_PER_LINE;
             v.flush_cnt = r.req_flush_cnt.read();
         } else {
             v_line_cs_read = i_req_valid.read();

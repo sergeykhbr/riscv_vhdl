@@ -38,6 +38,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     o_req_data_addr("o_req_data_addr"),
     o_req_data_wdata("o_req_data_wdata"),
     o_req_data_wstrb("o_req_data_wstrb"),
+    o_req_data_size("o_req_data_size"),
     i_resp_data_valid("i_resp_data_valid"),
     i_resp_data_addr("i_resp_data_addr"),
     i_resp_data_data("i_resp_data_data"),
@@ -272,6 +273,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     mem0->o_mem_addr(o_req_data_addr);
     mem0->o_mem_wdata(o_req_data_wdata);
     mem0->o_mem_wstrb(o_req_data_wstrb);
+    mem0->o_mem_size(o_req_data_size);
     mem0->i_mem_data_valid(i_resp_data_valid);
     mem0->i_mem_data_addr(i_resp_data_addr);
     mem0->i_mem_data(i_resp_data_data);
