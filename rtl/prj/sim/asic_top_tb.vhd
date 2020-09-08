@@ -86,7 +86,7 @@ architecture behavior of asic_top_tb is
   constant JTAG_TESTS : jtag_test_vector := (
   --    | dtm | we | re | adr | wdata
     (0,   '1', '0', '0', X"00", X"00000000"),  
-    (1,   '0', '1', '0', X"17", X"00320301"),  -- [command] CSR MISA
+    (1,   '0', '1', '0', X"17", X"00320301"),  -- [command] [15:0]0x301=MISA; [16]write=0; [17]transfer=1; [18]postexec=0;
     (2,   '0', '0', '0', X"17", X"00000000"),  -- [command] empty
     (3,   '0', '0', '1', X"16", X"00000000"),  -- [abstracs] read
     (4,   '0', '0', '0', X"16", X"00000000"),  -- [abstracs] empty

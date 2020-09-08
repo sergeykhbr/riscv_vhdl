@@ -81,6 +81,7 @@ architecture arch_dmi_regs of dmi_regs is
   type state_type is (
       Idle,
       DmiRequest,
+      AbstractCommand,
       DportRequest,
       DportResponse,
       DportPostexec,
@@ -194,34 +195,16 @@ begin
             if r.write = '1' then
                 v.arg0(31 downto 0) := r.wdata(31 downto 0);
             end if;
-            if r.autoexecdata(0) = '1' and r.command(31 downto 24) = X"00" then  -- cmdtype: register access
-                -- Auto repead the last command on register access
-                v.addr(13 downto 0) := r.command(13 downto 0);
-                v.write := r.command(16);               -- write
-                v.transfer := r.command(17);
-                v.postexec := r.command(18);            -- postexec
-                v.wdata := r.arg0(63 downto 32) & r.wdata(31 downto 0);
-                if r.command(16) = '0' or r.command(17) = '1' then
-                    -- read operation or write with transfer
-                    v.state := DportRequest;
-                end if;
+            if r.autoexecdata(0) = '1'then 
+                v.state := AbstractCommand;
             end if;
         elsif r.addr(11 downto 0) = X"005" then            -- DATA1
             v.rdata(31 downto 0) := r.arg0(63 downto 32);
             if r.write = '1' then
                 v.arg0(63 downto 32) := r.wdata(31 downto 0);
             end if;
-            if r.autoexecdata(1) = '1' and r.command(31 downto 24) = X"00" then
-                -- Auto repead the last command on register access
-                v.addr(13 downto 0) := r.command(13 downto 0);
-                v.write := r.command(16);               -- write
-                v.transfer := r.command(17);
-                v.postexec := r.command(18);            -- postexec
-                v.wdata := r.wdata(31 downto 0) & r.arg0(31 downto 0);
-                if r.command(16) = '0' or r.command(17) = '1' then
-                    -- read operation or write with transfer
-                    v.state := DportRequest;
-                end if;
+            if r.autoexecdata(1) = '1' then
+                v.state := AbstractCommand;
             end if;
         elsif r.addr(11 downto 0) = X"010" then         -- DMCONTROL
             v.rdata(16+HARTSELLEN-1 downto 16) := r.hartsel;
@@ -255,17 +238,7 @@ begin
         elsif r.addr(11 downto 0) = X"017" then         -- COMMAND
             if r.write = '1' then
                 v.command := r.wdata(31 downto 0);          -- original value for auto repeat
-                if r.wdata(31 downto 24) = X"00" then       -- cmdtype: 0=register access
-                    v.addr(13 downto 0) := r.wdata(13 downto 0);
-                    v.write := r.wdata(16);                 -- write
-                    v.transfer := r.command(17);
-                    v.postexec := r.wdata(18);              -- postexec
-                    v.wdata := r.arg0;
-                    if r.command(16) = '0' or r.command(17) = '1' then
-                        -- read operation or write with transfer
-                        v.state := DportRequest;
-                    end if;
-                end if;
+                v.state := AbstractCommand;
             end if;
         elsif r.addr(11 downto 0) = X"018" then         -- ABSTRACAUTO
             v.rdata(CFG_DATA_REG_TOTAL-1 downto 0) := r.autoexecdata;
@@ -277,6 +250,23 @@ begin
             v.state := DportBroadbandRequest;
         elsif r.addr(11 downto 0) = X"040" then         -- HALTSUM0
             v.rdata(CFG_TOTAL_CPU_MAX-1 downto 0) := vb_haltsum;
+        end if;
+
+    when AbstractCommand =>
+        v.state := DmiResponse;  -- no transfer or not implemented command type
+        if r.command(31 downto 24) = X"00" then       -- cmdtype: 0=register access
+            v.wdata := r.arg0;
+            v.addr(13 downto 0) := r.command(13 downto 0); -- regno:
+            v.write := r.command(16);                 -- write:
+            v.transfer := r.command(17);              -- transfer
+            v.postexec := r.command(18);              -- postexec:
+            if r.command(19) = '1' then               -- aarpostincrement
+                v.command(13 downto 0) := r.command(13 downto 0) + 1;
+            end if;
+            if r.command(16) = '0' or r.command(17) = '1' then
+                -- read operation or write with transfer
+                v.state := DportRequest;
+            end if;
         end if;
           
     when DportRequest =>  
