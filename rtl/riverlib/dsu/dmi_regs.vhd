@@ -90,6 +90,11 @@ architecture arch_dmi_regs of dmi_regs is
       DportPostexec,
       DportBroadbandRequest,
       DportBroadbandResponse,
+      Dma_AR,
+      Dma_R,
+      Dma_AW,
+      Dma_W,
+      Dma_B,
       DmiResponse
    );
   
@@ -113,6 +118,13 @@ architecture arch_dmi_regs of dmi_regs is
     postexec : std_logic;
     jtag_dsu : std_logic;
     broadband_req : std_logic_vector(CFG_TOTAL_CPU_MAX-1 downto 0);
+
+    sberror : std_logic_vector(2 downto 0);
+    sbreadonaddr : std_logic;
+    sbaccess : std_logic_vector(2 downto 0);
+    sbautoincrement : std_logic;
+    sbreadondata : std_logic;
+    sbaddress : std_logic_vector(63 downto 0);
   end record;
 
   constant R_RESET : registers := (
@@ -132,7 +144,13 @@ architecture arch_dmi_regs of dmi_regs is
      '0', -- write
      '0',  -- postexec
      '0',  -- jtag_dsu
-     (others => '0')  -- broadband_req
+     (others => '0'),  -- broadband_req
+     (others => '0'),  -- sberror
+     '0',  -- sbreadonaddr
+     (others => '0'),  -- sbaccess
+     '0',  -- sbautoincrement
+     '0',  -- sbreadondata
+     (others => '0')  -- sbaddress
   );
 
   signal r, rin: registers;
@@ -247,11 +265,40 @@ begin
         elsif r.addr(11 downto 0) = X"018" then         -- ABSTRACAUTO
             v.rdata(CFG_DATA_REG_TOTAL-1 downto 0) := r.autoexecdata;
             v.rdata(16+CFG_PROGBUF_REG_TOTAL-1 downto 16) := r.autoexecprogbuf;
+            if r.write = '1' then
+                v.autoexecdata := r.wdata(CFG_DATA_REG_TOTAL-1 downto 0);
+                v.autoexecprogbuf := r.wdata(16+CFG_PROGBUF_REG_TOTAL-1 downto 16);
+            end if;
         elsif r.addr(11 downto 4) = X"02" then          -- PROGBUF0..PROGBUF15
             v.addr(13 downto 0) := "00" & CSR_progbuf;
             v.wdata(35 downto 32) :=  r.addr(3 downto 0);
             v.broadband_req := (others => '1');         -- to all Harts
             v.state := DportBroadbandRequest;
+        elsif r.addr(11 downto 0) = X"38" then            -- SBCS
+            v.rdata(31 downto 29) := "001";               -- sbversion: 1=current spec
+            if (r.state = Dma_AR) or (r.state = Dma_R)
+             or (r.state = Dma_AW) or (r.state = Dma_W) or (r.state = Dma_B) then
+                v.rdata(21) := '1';                       -- sbbusy
+            end if;
+            v.rdata(20) := r.sbreadonaddr;                -- when 1 auto-read on write to sbaddress0
+            v.rdata(19 downto 17) := r.sbaccess;          -- 2=32; 3=64 bits
+            v.rdata(16) := r.sbautoincrement;             -- increment after each system access
+            v.rdata(15) := r.sbreadondata;                -- when 1 every auto-read on read from sbdata0
+            v.rdata(14 downto 12) := r.sberror;           -- 1=timeout; 2=bad address; 3=unalignment;4=wrong size
+            v.rdata(11 downto 5) := conv_std_logic_vector(64,7); -- system bus width in bits
+            v.rdata(3) := '1';                            -- sbaccess64 - supported 64-bit access
+            v.rdata(2) := '1';                            -- sbaccess32 - supported 32-bit access
+            v.rdata(1) := '1';                            -- sbaccess16 - supported 16-bit access
+            v.rdata(0) := '1';                            -- sbaccess8  - supported 8-bit access
+            if r.write = '1' then
+                v.sbreadonaddr := r.wdata(20);
+                v.sbaccess := r.wdata(19 downto 17);
+                v.sbautoincrement := r.wdata(16);
+                v.sbreadondata := r.wdata(15);
+                if r.wdata(12) = '1' then
+                    v.sberror := (others => '0');
+                end if;
+            end if;
         elsif r.addr(11 downto 0) = X"040" then         -- HALTSUM0
             v.rdata(CFG_TOTAL_CPU_MAX-1 downto 0) := vb_haltsum;
         end if;
