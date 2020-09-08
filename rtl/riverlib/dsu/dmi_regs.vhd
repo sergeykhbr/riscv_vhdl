@@ -30,7 +30,8 @@ use riverlib.types_river.all;
 
 entity dmi_regs is
   generic (
-    async_reset : boolean := false
+    async_reset : boolean := false;
+    cpu_available : integer := 1
   );
   port 
   (
@@ -76,7 +77,9 @@ architecture arch_dmi_regs of dmi_regs is
      did => RISCV_RIVER_DMI
   );
 
-  constant HARTSELLEN : integer := log2x(CFG_TOTAL_CPU_MAX);
+  constant HARTSELLEN : integer := CFG_LOG2_CPU_MAX;
+  constant HART_AVAILABLE_MASK : std_logic_vector(HARTSELLEN-1 downto 0) :=
+          conv_std_logic_vector(2**log2(cpu_available) - 1, HARTSELLEN);
   
   type state_type is (
       Idle,
@@ -212,12 +215,13 @@ begin
             v.rdata(0) := '1';                          -- dmactive: 1=module functional normally 
             if r.write = '1' then
                 -- Access to CSR only on writing
-                v.hartsel := r.wdata(16+HARTSELLEN-1 downto 16);  -- hartsello
+                v.hartsel := r.wdata(16+HARTSELLEN-1 downto 16) and HART_AVAILABLE_MASK;  -- hartsello
                 v.ndmreset := r.wdata(1);               -- ndmreset
                 v.resumeack := not r.wdata(31) and r.wdata(30) and i_dporto(conv_integer(v.hartsel)).halted;
-
-                v.state := DportRequest;
-                v.addr(13 downto 0) := "00" & CSR_runcontrol;
+                if (r.wdata(31) or r.wdata(30)) = '1' then
+                    v.state := DportRequest;
+                    v.addr(13 downto 0) := "00" & CSR_runcontrol;
+                end if;
             end if;
         elsif r.addr(11 downto 0) = X"011" then         -- DMSTATUS
             v.rdata(17) := r.resumeack;                 -- allresumeack
@@ -295,7 +299,7 @@ begin
         v.transfer := '0';
         v.addr(13 downto 0) := "00" & CSR_runcontrol;
         v.wdata := (others => '0');
-        v.wdata(18) := '1';             -- req_progbuf: request to execute progbuf
+        v.wdata(27) := '1';             -- req_progbuf: request to execute progbuf
         v.state := DportRequest;
 
     when DportBroadbandRequest =>

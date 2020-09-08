@@ -32,7 +32,7 @@ package config_target is
 
   --! @brief   Number of processors in a system
   --! @details This value may be in a range 1 to CFG_TOTAL_CPU_MAX-1
-  constant CFG_CPU_NUM : integer := 1;
+  constant CFG_CPU_NUM : integer := 2;
 
   --! @brief   HEX-image for the initialization of the Boot ROM.
   --! @details This file is used by \e inferred ROM implementation.

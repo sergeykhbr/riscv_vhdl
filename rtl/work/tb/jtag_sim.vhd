@@ -53,6 +53,9 @@ architecture jtag_sim_rtl of jtag_sim is
       jtagstate : state_type;
       jtagstatez : state_type;
       dmi_request : std_logic_vector(40 downto 0);
+      dmi_resp_addr : std_logic_vector(6 downto 0);
+      dmi_resp_data : std_logic_vector(31 downto 0);
+      dmi_resp_stat : std_logic_vector(1 downto 0);
       shift_reg : std_logic_vector(45 downto 0);
       shift_length : integer;
       is_data : std_logic;
@@ -178,6 +181,11 @@ begin
             end if;
             v.jtagstate := update_dr;
         when update_dr =>
+            if r.dtmcs_ena = '0' then
+                v.dmi_resp_addr := r.rdata(40 downto 34);
+                v.dmi_resp_data := r.rdata(33 downto 2);
+                v.dmi_resp_stat := r.rdata(1 downto 0);
+            end if;
             v.tms := '0'; 
             v.jtagstate := run_idle;
         when others =>
@@ -198,6 +206,9 @@ begin
         v.is_data := '0';
         v.dtmcs_ena := '0';
         v.dmi_request := (others => '0');
+        v.dmi_resp_addr := (others => '0');
+        v.dmi_resp_data := (others => '0');
+        v.dmi_resp_stat := (others => '0');
         v.shift_reg := (others => '0');
         v.edge := '0';
         v.ntrst := '0';

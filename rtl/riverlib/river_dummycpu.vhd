@@ -34,15 +34,8 @@ end;
  
 architecture arch_river_dummycpu of river_dummycpu is
 
-constant dport_out_not_available : dport_out_type := (
-    '0', -- halted
-    '0', -- available
-    '1', -- req_ready
-    '0', -- resp_valid
-    (others => '0'));  -- rdata
-
 begin
     o_msto <= axi4_l1_out_none;
-    o_dport <= dport_out_not_available;
+    o_dport <= dport_out_none;
     o_flush_l2 <= '0';
 end;

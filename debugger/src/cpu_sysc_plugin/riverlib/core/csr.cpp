@@ -488,7 +488,7 @@ void CsrRegs::comb() {
         if (v_csr_wena) {
             v_req_halt = vb_csr_wdata[31];
             v_req_resume = vb_csr_wdata[30];
-            if (vb_csr_wdata[18] == 1) {
+            if (vb_csr_wdata[27] == 1) {
                 if (r.halt.read() == 1) {
                     v_req_progbuf = 1;
                 } else {

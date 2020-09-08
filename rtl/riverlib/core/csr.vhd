@@ -429,7 +429,7 @@ begin
         if v_csr_wena = '1' then
             v_req_halt := vb_csr_wdata(31);
             v_req_resume := vb_csr_wdata(30);
-            if vb_csr_wdata(18) = '1' then
+            if vb_csr_wdata(27) = '1' then
                 if r.halt = '1' then
                     v_req_progbuf := '1';
                 else

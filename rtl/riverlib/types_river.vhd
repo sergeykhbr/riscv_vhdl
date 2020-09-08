@@ -184,7 +184,7 @@ type dport_out_type is record
 end record;
 
 constant dport_out_none : dport_out_type := (
-    '0', '1', '1', '0', (others => '0'));
+    '0', '0', '1', '1', (others => '0'));
 
 type dport_out_vector is array (0 to CFG_TOTAL_CPU_MAX-1) 
      of dport_out_type;
@@ -231,7 +231,8 @@ type dport_out_vector is array (0 to CFG_TOTAL_CPU_MAX-1)
 
   component dmi_regs is
   generic (
-    async_reset : boolean := false
+    async_reset : boolean := false;
+    cpu_available : integer := 1
   );
   port 
   (

@@ -250,7 +250,8 @@ begin
 
   -- Access to Debug port of the CPUs workgroup
   dmregs0 : dmi_regs generic map (
-    async_reset => CFG_ASYNC_RESET
+    async_reset => CFG_ASYNC_RESET,
+    cpu_available => CFG_CPU_NUM
   ) port map (
     clk    => i_clk,
     nrst   => w_glob_nrst,
