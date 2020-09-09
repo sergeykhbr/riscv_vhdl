@@ -80,7 +80,7 @@ architecture arch_dmi_regs of dmi_regs is
   constant HARTSELLEN : integer := CFG_LOG2_CPU_MAX;
   constant HART_AVAILABLE_MASK : std_logic_vector(HARTSELLEN-1 downto 0) :=
           conv_std_logic_vector(2**log2(cpu_available) - 1, HARTSELLEN);
-  
+
   type state_type is (
       Idle,
       DmiRequest,
@@ -110,6 +110,8 @@ architecture arch_dmi_regs of dmi_regs is
     addr : std_logic_vector(CFG_DPORT_ADDR_BITS-1 downto 0);
     rdata : std_logic_vector(63 downto 0);
     wdata : std_logic_vector(63 downto 0);
+    wstrb : std_logic_vector(7 downto 0);
+    memdata : std_logic_vector(63 downto 0);
     arg0 : std_logic_vector(63 downto 0);
     command : std_logic_vector(31 downto 0);
     autoexecdata : std_logic_vector(CFG_DATA_REG_TOTAL-1 downto 0);
@@ -138,6 +140,8 @@ architecture arch_dmi_regs of dmi_regs is
      (others => '0'), -- addr
      (others => '0'), -- rdata
      (others => '0'), -- wdata
+     (others => '0'), -- wstrb
+     (others => '0'), -- memdata
      (others => '0'),  -- arg0
      (others => '0'),  -- command
      (others => '0'),  -- autoexecdata
@@ -155,6 +159,21 @@ architecture arch_dmi_regs of dmi_regs is
      (others => '0')  -- sbaddress
   );
 
+  constant h004_DATA0 : std_logic_vector(11 downto 0) := X"004";
+  constant h005_DATA1 : std_logic_vector(11 downto 0) := X"005";
+  constant h010_DMCONTROL : std_logic_vector(11 downto 0) := X"010";
+  constant h011_DMSTATUS : std_logic_vector(11 downto 0) := X"011";
+  constant h016_ABSTRACTCS : std_logic_vector(11 downto 0) := X"016";
+  constant h017_COMMAND : std_logic_vector(11 downto 0) := X"017";
+  constant h018_ABSTRACTAUTO : std_logic_vector(11 downto 0) := X"018";
+  constant h02n_PROGBUFn : std_logic_vector(11 downto 0) := X"020";
+  constant h038_SBCS : std_logic_vector(11 downto 0) := X"038";
+  constant h039_SBADDRESS0 : std_logic_vector(11 downto 0) := X"039";
+  constant h03A_SBADDRESS1 : std_logic_vector(11 downto 0) := X"03A";
+  constant h03C_SBDATA0 : std_logic_vector(11 downto 0) := X"03C";
+  constant h03D_SBDATA1 : std_logic_vector(11 downto 0) := X"03D";
+  constant h040_HALTSUM0 : std_logic_vector(11 downto 0) := X"040";
+
   signal r, rin: registers;
 
 begin
@@ -169,10 +188,16 @@ begin
     variable v_dmi_jtag_resp_valid : std_logic;
     variable v_dmi_dsu_resp_valid : std_logic;
     variable vdporti : dport_in_vector;
+    variable v_ar_valid : std_logic;
+    variable v_aw_valid : std_logic;
+    variable v_w_valid : std_logic;
     variable vxmsto : axi4_master_out_type;
     variable hsel : integer range 0 to CFG_TOTAL_CPU_MAX-1;
     variable v_axi_ready : std_logic;
     variable vb_haltsum : std_logic_vector(CFG_TOTAL_CPU_MAX-1 downto 0);
+    variable sbaidx3 : integer range 0 to 7;
+    variable sbaidx2 : integer range 0 to 3;
+    variable sbaidx1 : integer range 0 to 1;
   begin
     v := r;
 
@@ -182,7 +207,13 @@ begin
     v_dmi_dsu_resp_valid := '0';
     vdporti := (others => dport_in_none);
     vxmsto := axi4_master_out_none;
+    v_ar_valid := '0';
+    v_aw_valid := '0';
+    v_w_valid := '0';
     hsel := conv_integer(r.hartsel);
+    sbaidx3 := conv_integer(r.sbaddress(2 downto 0));
+    sbaidx2 := conv_integer(r.sbaddress(1 downto 0));
+    sbaidx1 := conv_integer(r.sbaddress(0 downto 0));
     
     for n in 0 to CFG_TOTAL_CPU_MAX-1 loop
       vb_haltsum(n) := i_dporto(n).halted;
@@ -213,7 +244,7 @@ begin
           
     when DmiRequest =>
         v.state := DmiResponse;       -- default no dport transfer
-        if r.addr(11 downto 0) = X"004" then            -- DATA0
+        if r.addr(11 downto 0) = h004_DATA0 then
             v.rdata(31 downto 0) := r.arg0(31 downto 0);
             if r.write = '1' then
                 v.arg0(31 downto 0) := r.wdata(31 downto 0);
@@ -221,7 +252,7 @@ begin
             if r.autoexecdata(0) = '1'then 
                 v.state := AbstractCommand;
             end if;
-        elsif r.addr(11 downto 0) = X"005" then            -- DATA1
+        elsif r.addr(11 downto 0) = h005_DATA1 then
             v.rdata(31 downto 0) := r.arg0(63 downto 32);
             if r.write = '1' then
                 v.arg0(63 downto 32) := r.wdata(31 downto 0);
@@ -229,7 +260,7 @@ begin
             if r.autoexecdata(1) = '1' then
                 v.state := AbstractCommand;
             end if;
-        elsif r.addr(11 downto 0) = X"010" then         -- DMCONTROL
+        elsif r.addr(11 downto 0) = h010_DMCONTROL then
             v.rdata(16+HARTSELLEN-1 downto 16) := r.hartsel;
             v.rdata(1) := r.ndmreset;
             v.rdata(0) := '1';                          -- dmactive: 1=module functional normally 
@@ -251,7 +282,7 @@ begin
                     v.addr(13 downto 0) := "00" & CSR_runcontrol;
                 end if;
             end if;
-        elsif r.addr(11 downto 0) = X"011" then         -- DMSTATUS
+        elsif r.addr(11 downto 0) = h011_DMSTATUS then
             v.rdata(17) := r.resumeack;                 -- allresumeack
             v.rdata(16) := r.resumeack;                 -- anyresumeack
             v.rdata(15) := not i_dporto(hsel).available; -- allnonexistent
@@ -264,27 +295,27 @@ begin
             v.rdata(8) := i_dporto(hsel).halted and i_dporto(hsel).available;      -- anyhalted:
             v.rdata(7) := '1';                          -- authenticated:
             v.rdata(3 downto 0) := X"2";                -- version: dbg spec v0.13
-        elsif r.addr(11 downto 0) = X"016" then         -- ABSTRACTCS
+        elsif r.addr(11 downto 0) = h016_ABSTRACTCS then
             v.state := DportRequest;
             v.addr(13 downto 0) := "00" & CSR_abstractcs;
-        elsif r.addr(11 downto 0) = X"017" then         -- COMMAND
+        elsif r.addr(11 downto 0) = h017_COMMAND then
             if r.write = '1' then
                 v.command := r.wdata(31 downto 0);          -- original value for auto repeat
                 v.state := AbstractCommand;
             end if;
-        elsif r.addr(11 downto 0) = X"018" then         -- ABSTRACAUTO
+        elsif r.addr(11 downto 0) = h018_ABSTRACTAUTO then
             v.rdata(CFG_DATA_REG_TOTAL-1 downto 0) := r.autoexecdata;
             v.rdata(16+CFG_PROGBUF_REG_TOTAL-1 downto 16) := r.autoexecprogbuf;
             if r.write = '1' then
                 v.autoexecdata := r.wdata(CFG_DATA_REG_TOTAL-1 downto 0);
                 v.autoexecprogbuf := r.wdata(16+CFG_PROGBUF_REG_TOTAL-1 downto 16);
             end if;
-        elsif r.addr(11 downto 4) = X"02" then          -- PROGBUF0..PROGBUF15
+        elsif r.addr(11 downto 4) = h02n_PROGBUFn(11 downto 4) then          -- PROGBUF0..PROGBUF15
             v.addr(13 downto 0) := "00" & CSR_progbuf;
             v.wdata(35 downto 32) :=  r.addr(3 downto 0);
             v.broadband_req := (others => '1');         -- to all Harts
             v.state := DportBroadbandRequest;
-        elsif r.addr(11 downto 0) = X"38" then            -- SBCS
+        elsif r.addr(11 downto 0) = h038_SBCS then
             v.rdata(31 downto 29) := "001";               -- sbversion: 1=current spec
             if (r.state = Dma_AR) or (r.state = Dma_R)
              or (r.state = Dma_AW) or (r.state = Dma_W) or (r.state = Dma_B) then
@@ -309,7 +340,48 @@ begin
                     v.sberror := (others => '0');
                 end if;
             end if;
-        elsif r.addr(11 downto 0) = X"040" then         -- HALTSUM0
+        elsif r.addr(11 downto 0) = h039_SBADDRESS0 then
+            v.rdata(31 downto 0) := r.sbaddress(31 downto 0);
+            if r.write = '1' then
+                v.sbaddress(31 downto 0) := r.wdata(31 downto 0);
+                if r.sbreadonaddr = '1' then
+                    v.state := Dma_AR;
+                end if;
+            end if;
+        elsif r.addr(11 downto 0) = h03A_SBADDRESS1 then
+            v.rdata(31 downto 0) := r.sbaddress(63 downto 32);
+            if r.write = '1' then
+                v.sbaddress(63 downto 32) := r.wdata(31 downto 0);
+            end if;
+        elsif r.addr(11 downto 0) = h03C_SBDATA0 then
+            v.rdata(31 downto 0) := r.memdata(31 downto 0);
+            if r.write = '0' then
+                v.state := Dma_AR;
+            else
+                v.state := Dma_AW;
+                v.memdata := (others => '0');
+                v.wstrb := (others => '0');
+                case r.sbaccess is
+                when "000" =>   -- 8-bits access
+                    v.memdata(8*sbaidx3+7 downto 8*sbaidx3) := r.wdata(7 downto 0);
+                    v.wstrb(sbaidx3) := '1';
+                when "001" =>   -- 16-bits access
+                    v.memdata(16*sbaidx2+15 downto 16*sbaidx2) := r.wdata(15 downto 0);
+                    v.wstrb(2*sbaidx2+1 downto 2*sbaidx2) := "11";
+                when "010" =>   -- 32-bits access
+                    v.memdata(32*sbaidx1+31 downto 32*sbaidx1) := r.wdata(31 downto 0);
+                    v.wstrb(4*sbaidx1+3 downto 4*sbaidx1) := X"F";
+                when others =>
+                    v.memdata := r.wdata;
+                    v.wstrb := X"FF";
+                end case;
+            end if;
+        elsif r.addr(11 downto 0) = h03D_SBDATA1 then
+            v.rdata(31 downto 0) := r.memdata(63 downto 32);
+            if r.write = '0' then
+                v.memdata(63 downto 32) := r.wdata(31 downto 0);
+            end if;
+        elsif r.addr(11 downto 0) = h040_HALTSUM0 then
             v.rdata(CFG_TOTAL_CPU_MAX-1 downto 0) := vb_haltsum;
         end if;
 
@@ -384,7 +456,53 @@ begin
             if r.postexec = '1' then
                 v.state := DportPostexec;
             else
-                v.state := DportResponse;
+                v.state := DmiResponse;
+            end if;
+        end if;
+
+    when Dma_AR =>
+        v_ar_valid := '1';
+        if i_xmsti.ar_ready = '1' then
+            v.state := Dma_R;
+        end if;
+    when Dma_R =>
+        case r.sbaccess is
+        when "000" =>   -- 8-bits access
+            v.memdata(7 downto 0) := i_xmsti.r_data(8*sbaidx3+7 downto 8*sbaidx3);
+        when "001" =>   -- 16-bits access
+            v.memdata(15 downto 0) := i_xmsti.r_data(16*sbaidx2+15 downto 16*sbaidx2);
+        when "010" =>   -- 32-bits access
+            v.memdata(31 downto 0) := i_xmsti.r_data(32*sbaidx1+31 downto 32*sbaidx1);
+        when others =>
+            v.memdata := i_xmsti.r_data;
+        end case;
+        if i_xmsti.r_valid = '1' then
+            v.state := DmiResponse;
+            if i_xmsti.r_resp(1) = '1' then
+                v.sberror := "010";   -- Bad address was accessed
+            end if;
+            if r.sbautoincrement = '1' then
+                v.sbaddress := r.sbaddress + XSizeToBytes(sbaidx3);
+            end if;
+        end if;
+    when Dma_AW =>
+        v_aw_valid := '1';
+        if i_xmsti.aw_ready = '1' then
+            v.state := Dma_W;
+        end if;
+    when Dma_W =>
+        v_w_valid := '1';
+        if i_xmsti.w_ready = '1' then
+            v.state := Dma_B;
+        end if;
+    when Dma_B =>
+        if i_xmsti.b_valid = '1' then
+            v.state := DmiResponse;
+            if i_xmsti.b_resp(1) = '1' then
+                v.sberror := "010";   -- Bad address was accessed
+            end if;
+            if r.sbautoincrement = '1' then
+                v.sbaddress := r.sbaddress + XSizeToBytes(sbaidx3);
             end if;
         end if;
 
@@ -401,6 +519,20 @@ begin
     if not async_reset and nrst = '0' then 
         v := R_RESET;
     end if;
+
+    vxmsto.ar_valid := v_ar_valid; 
+    vxmsto.ar_bits.addr := r.sbaddress(CFG_SYSBUS_ADDR_BITS-1 downto 0);
+    vxmsto.ar_bits.size := r.sbaccess;
+    vxmsto.r_ready := '1';
+    
+    vxmsto.aw_valid := v_aw_valid; 
+    vxmsto.aw_bits.addr := r.sbaddress(CFG_SYSBUS_ADDR_BITS-1 downto 0);
+    vxmsto.aw_bits.size := r.sbaccess;
+    vxmsto.w_valid := v_w_valid; 
+    vxmsto.w_data := r.memdata(CFG_SYSBUS_DATA_BITS-1 downto 0);
+    vxmsto.w_strb := r.wstrb(CFG_SYSBUS_DATA_BYTES-1 downto 0);
+    vxmsto.w_last := '1';
+    vxmsto.b_ready := '1';
 
     rin <= v;
 

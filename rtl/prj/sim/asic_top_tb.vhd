@@ -81,7 +81,7 @@ architecture behavior of asic_top_tb is
     dmi_addr : std_logic_vector(7 downto 0);  -- actual width may be different and reported in dtmcs
     wdata : std_logic_vector(31 downto 0);
   end record;
-  type jtag_test_vector is array (0 to 31) of jtag_test_type;
+  type jtag_test_vector is array (0 to 64) of jtag_test_type;
 
   constant JTAG_TESTS : jtag_test_vector := (
   --    | dtm | we | re | adr | wdata
@@ -95,17 +95,35 @@ architecture behavior of asic_top_tb is
     (7,   '0', '0', '1', X"11", X"00000000"),  -- [dmstatus]
     (8,   '0', '0', '0', X"11", X"00000000"),  
 
-    (10,  '0', '1', '0', X"17", X"00320301"),  -- [command] [15:0]0x301=MISA; [16]write=0; [17]transfer=1; [18]postexec=0;
-    (11,  '0', '0', '0', X"17", X"00000000"),  -- [command] empty
-    (12,  '0', '0', '1', X"16", X"00000000"),  -- [abstracs] read
-    (13,  '0', '0', '0', X"16", X"00000000"),  -- [abstracs] empty
-    (14,  '0', '0', '1', X"05", X"00000000"),  -- [data1] read
-    (15,  '0', '0', '0', X"05", X"00000000"),  -- [data1] empty
-    (16,  '0', '0', '1', X"04", X"00000000"),  -- [data0] read
-    (17,  '0', '0', '0', X"04", X"00000000"),  -- [data0] empty
-    (18,  '0', '1', '0', X"04", X"11223344"),
-    (19,  '0', '1', '0', X"05", X"aabbccdd"),
-    (20,  '0', '0', '1', X"04", X"00000000"),
+    (9,   '0', '1', '0', X"20", X"0000100f"),  -- [progbuf0]
+    (10,  '0', '0', '0', X"20", X"00000000"),  
+    (11,  '0', '1', '0', X"21", X"0000000f"),  -- [progbuf1]
+    (12,  '0', '0', '0', X"21", X"00000000"),  
+    (13,  '0', '1', '0', X"22", X"00100073"),  -- [progbuf2]
+    (14,  '0', '0', '0', X"22", X"00000000"),  
+    (15,  '0', '1', '0', X"17", X"00241000"),  -- [command] size=32, posexec=1, transfer=0, write=0, regno=0x1000
+    (16,  '0', '0', '1', X"16", X"00000000"),  
+    (17,  '0', '0', '0', X"16", X"00000000"),  
+
+    (30,  '0', '1', '0', X"05", X"00000000"),  -- [data1] data[63:32]
+    (31,  '0', '0', '0', X"05", X"00000000"),  -- 
+    (32,  '0', '1', '0', X"04", X"00000000"),  -- [data1] data[31:0], step=1, ebreakm=1, ebreaks=1, ebreaku=1, 
+    (33,  '0', '0', '0', X"04", X"00000000"),  -- 
+    (34,  '0', '1', '0', X"17", X"003307b0"),  -- [command] size=64, posexec=0, transfer=1, write=1, regno=0x7b0
+    (35,  '0', '0', '1', X"16", X"00000000"),  -- 
+    (36,  '0', '0', '0', X"16", X"00000000"),  -- 
+
+    (40,  '0', '1', '0', X"17", X"00320301"),  -- [command] [15:0]0x301=MISA; [16]write=0; [17]transfer=1; [18]postexec=0;
+    (41,  '0', '0', '0', X"17", X"00000000"),  -- [command] empty
+    (42,  '0', '0', '1', X"16", X"00000000"),  -- [abstracs] read
+    (43,  '0', '0', '0', X"16", X"00000000"),  -- [abstracs] empty
+    (44,  '0', '0', '1', X"05", X"00000000"),  -- [data1] read
+    (45,  '0', '0', '0', X"05", X"00000000"),  -- [data1] empty
+    (46,  '0', '0', '1', X"04", X"00000000"),  -- [data0] read
+    (47,  '0', '0', '0', X"04", X"00000000"),  -- [data0] empty
+    (48,  '0', '1', '0', X"04", X"11223344"),
+    (49,  '0', '1', '0', X"05", X"aabbccdd"),
+    (50,  '0', '0', '1', X"04", X"00000000"),
     others => (-1,  '0', '0', '0', X"00", X"00000000")
   );
   
