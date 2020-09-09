@@ -212,8 +212,8 @@ begin
     v_w_valid := '0';
     hsel := conv_integer(r.hartsel);
     sbaidx3 := conv_integer(r.sbaddress(2 downto 0));
-    sbaidx2 := conv_integer(r.sbaddress(1 downto 0));
-    sbaidx1 := conv_integer(r.sbaddress(0 downto 0));
+    sbaidx2 := conv_integer(r.sbaddress(2 downto 1));
+    sbaidx1 := conv_integer(r.sbaddress(2 downto 2));
     
     for n in 0 to CFG_TOTAL_CPU_MAX-1 loop
       vb_haltsum(n) := i_dporto(n).halted;
