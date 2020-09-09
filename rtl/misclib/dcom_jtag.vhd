@@ -135,6 +135,8 @@ begin
             v.shft(11 downto 10) := "00";  -- dmstat: TODO
             v.shft(9 downto 4) := conv_std_logic_vector(7, 6);  -- abits: 7 bits dmi address width
             v.shft(3 downto 0) := X"1";   -- version: 1=spec 0.13
+        elsif r.inst = DMI_ACCESS then
+            v.sel_user1 := '1';
         else
             v.shft(0) := '0';  -- BYPASS
         end if;
@@ -162,13 +164,6 @@ begin
         v.shft(4 downto 0) := tdi & r.shft(4 downto 1);
     when update_ir  => 
         v.inst := r.shft(4 downto 0);
-        if r.shft(4 downto 0) = DMI_ACCESS then
-            v.sel_user1 := '1';
-            v.sel_user2 := '0';
-        else 
-            v.sel_user1 := '0';
-            v.sel_user2 := '0';
-        end if;
     when others => 
     end case;
 	

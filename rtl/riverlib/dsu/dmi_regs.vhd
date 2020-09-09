@@ -105,6 +105,7 @@ architecture arch_dmi_regs of dmi_regs is
     hartsel : std_logic_vector(HARTSELLEN-1 downto 0);
     ndmreset : std_logic;   -- non-debug module reset
     resumeack : std_logic;
+    halt_after_reset : std_logic;
     
     addr : std_logic_vector(CFG_DPORT_ADDR_BITS-1 downto 0);
     rdata : std_logic_vector(63 downto 0);
@@ -133,6 +134,7 @@ architecture arch_dmi_regs of dmi_regs is
      (others => '0'), -- hartsel
      '0', -- ndmreset
      '0', -- resumeack
+     '0', -- halt_after_reset
      (others => '0'), -- addr
      (others => '0'), -- rdata
      (others => '0'), -- wdata
@@ -236,7 +238,15 @@ begin
                 v.hartsel := r.wdata(16+HARTSELLEN-1 downto 16) and HART_AVAILABLE_MASK;  -- hartsello
                 v.ndmreset := r.wdata(1);               -- ndmreset
                 v.resumeack := not r.wdata(31) and r.wdata(30) and i_dporto(conv_integer(v.hartsel)).halted;
-                if (r.wdata(31) or r.wdata(30)) = '1' then
+                if r.ndmreset = '1' and r.wdata(1) = '0' and r.halt_after_reset = '1' then
+                    v.state := DportRequest;
+                    v.addr(13 downto 0) := "00" & CSR_runcontrol;
+                    v.wdata := (others => '0');
+                    v.wdata(31) := '1';                  -- haltreq:
+                elsif r.wdata(1) = '1' then              -- ndmreset
+                    -- do not make DPort request the CPU will be resetted and cannot respond
+                    v.halt_after_reset := r.wdata(31);   -- haltreq
+                elsif (r.wdata(31) or r.wdata(30)) = '1' then
                     v.state := DportRequest;
                     v.addr(13 downto 0) := "00" & CSR_runcontrol;
                 end if;

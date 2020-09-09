@@ -66,6 +66,7 @@ architecture jtag_sim_rtl of jtag_sim is
       edge : std_logic;
       ntrst : std_logic;
       tms : std_logic;
+      dmi_dtm : std_logic;  -- last was: 0=DMI; 1=DTM
   end record;
   
   signal r, rin : registers;
@@ -119,8 +120,22 @@ begin
                 v.jtagstate := start_ir;
             end if;
         when start_ir => -- the same as select_dr
-            v.tms := '1';
-            v.jtagstate := select_ir;
+            if r.dmi_dtm /= r.dtmcs_ena then
+                -- IR changed
+                v.tms := '1';
+                v.jtagstate := select_ir;
+            else
+                -- IR the same
+                v.tms := '0';
+                v.jtagstate := capture_dr;
+                if r.dtmcs_ena = '1' then
+                    v.shift_reg := (others => '0');
+                    v.shift_length := 32-1;
+                else
+                    v.shift_reg := "00000" & r.dmi_request;
+                    v.shift_length := 41-1;
+                end if;
+            end if;
 
         when select_ir =>
             v.tms := '0';
@@ -181,6 +196,7 @@ begin
             end if;
             v.jtagstate := update_dr;
         when update_dr =>
+            v.dmi_dtm := r.dtmcs_ena;
             if r.dtmcs_ena = '0' then
                 v.dmi_resp_addr := r.rdata(40 downto 34);
                 v.dmi_resp_data := r.rdata(33 downto 2);
@@ -213,6 +229,7 @@ begin
         v.edge := '0';
         v.ntrst := '0';
         v.tms := '0';
+        v.dmi_dtm := '0';
      end if;
 
      rin <= v;
