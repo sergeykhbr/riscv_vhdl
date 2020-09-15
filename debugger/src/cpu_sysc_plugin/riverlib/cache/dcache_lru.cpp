@@ -197,6 +197,7 @@ void DCacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.write_first, pn + ".r_write_first");
         sc_trace(o_vcd, r.write_flush, pn + ".r_write_flush");
         sc_trace(o_vcd, r.write_share, pn + ".r_write_share");
+        sc_trace(o_vcd, r.req_mem_size, pn + ".r_req_mem_size");
         sc_trace(o_vcd, r.mem_wstrb, pn + ".r_mem_wstrb");
         sc_trace(o_vcd, r.flush_cnt, pn + ".r_flush_cnt");
         sc_trace(o_vcd, r.req_flush, pn + ".r_req_flush");

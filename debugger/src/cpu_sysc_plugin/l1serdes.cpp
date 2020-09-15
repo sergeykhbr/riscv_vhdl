@@ -48,6 +48,7 @@ void L1SerDes::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_msto, o_msto.name());
         sc_trace(o_vcd, i_msti, i_msti.name());
 
+        sc_trace(o_vcd, i_coreo, i_coreo.name());
         sc_trace(o_vcd, o_corei, o_corei.name());
 
         std::string pn(name());
