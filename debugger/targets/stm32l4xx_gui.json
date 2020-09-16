@@ -77,9 +77,13 @@
                 ['Type','json'],
                 ['HostPort',8687],
                 ['ListenDefaultOutput',true, 'Re-direct console output into TCP'],
-                ['PlatformConfig',{'Name':'ARMv7',
-                                   'Display':'',
-                                   'Keys':[],
+                ['PlatformConfig',{'Name':'stm32_demo',
+                                   'Display':'display0',
+                                   'Keys':['BTN_0','BTN_1','BTN_2','BTN_3',
+                                           'BTN_4','BTN_5','BTN_6','BTN_7',
+                                           'BTN_8','BTN_9',
+                                           'BTN_P1','BTN_P2','BTN_P3','BTN_P4',
+                                           'BTN_P5','BTN_P6','BTN_P7'],
                                    'Vars':[],
                                    'Indicators':[],
                                   }]
@@ -148,6 +152,15 @@
                 ['PollingMs',100],
                 ['CmdExecutor','cmdexec0']
                 ]}]},
+    {'Class':'GenericCodeCoverageClass','Instances':[
+          {'Name':'codcov0','Attr':[
+                ['LogLevel',3],
+                ['CmdExecutor','cmdexec0'],
+                ['SourceCode','src0'],
+                ['Paged',True],
+                ['Regions',[[0x8000000,0x800FFFF],
+                           ]],
+                ]}]},
     {'Class':'CpuCortex_FunctionalClass','Instances':[
           {'Name':'core0','Attr':[
                 ['Enable',true],
@@ -164,6 +177,7 @@
                 ['SysBusMasterID',0],
                 ['ResetState','Halted'],
                 ['SourceCode','src0'],
+                ['CoverageTracker','codcov0'],
                 ['GenerateTraceFile','','Specify file name to enable tracer'],
                 ['CacheBaseAddress',0x08000000],
                 ['CacheAddressMask',0x7ffff],

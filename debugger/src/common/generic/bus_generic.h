@@ -47,8 +47,8 @@ class BusGeneric : public IService,
  protected:
     /** Speed-optimized mapping */
     virtual uint64_t adr_hash(uint64_t adr) { return adr; }
-    virtual void maphash(IMemoryOperation *imemop) {}
-    virtual IMemoryOperation *getHashedDevice(uint64_t addr) { return 0; }
+    virtual void maphash(IMemoryOperation *imemop);
+    virtual IMemoryOperation *getHashedDevice(uint64_t addr);
     void getMapedDevice(Axi4TransactionType *trans,
                         IMemoryOperation **pdev, uint32_t *sz);
 

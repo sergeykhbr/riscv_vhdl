@@ -76,6 +76,7 @@ void UdpService::hapTriggered(EHapType type,
                               uint64_t param,
                               const char *descr) {
     const AttributeType *glb = RISCV_get_global_settings();
+    RISCV_unregister_hap(static_cast<IHap *>(this));
     if ((*glb)["SimEnable"].to_bool()) {
         ILink *itrgt = static_cast<ILink *>
                 (RISCV_get_service_iface(simTarget_.to_string(), IFACE_LINK));

@@ -49,6 +49,10 @@ public:
     /** IRawListener (default stream) */
     virtual int updateData(const char *buf, int buflen);
 
+    /** Common methods to test virtual keyboard from unit-tests */
+    virtual void setVirtualKbHit(char s);
+    virtual char getVirtualKbChar();
+
 protected:
     /** IThread interface */
     virtual void busyLoop();
@@ -56,7 +60,8 @@ protected:
 private:
     friend class RawPortType;
     void writeBuffer(const char *buf);
-    bool isData();
+    bool isKbHit();
+    char getChar();
     uint32_t getData();
     void clearLine(int num);
     void processCommandLine();
@@ -118,6 +123,7 @@ private:
     AttributeType defaultLogFile_;
     AttributeType signals_;
     AttributeType inPort_;
+    AttributeType virtualKbEna_;
 
     event_def config_done_;
     mutex_def mutexConsoleOutput_;
@@ -126,6 +132,9 @@ private:
     ISourceCode *isrc_;
 
     RawPortType portSerial_;
+    volatile char virtKbChar_[256];
+    uint8_t virtKbWrCnt_;
+    uint8_t virtKbRdCnt_;
 
     AttributeType cursor_;
     std::string cmdLine_;

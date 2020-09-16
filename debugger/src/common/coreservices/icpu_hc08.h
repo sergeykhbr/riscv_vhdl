@@ -67,6 +67,7 @@ static const ECpuRegMapping HC08_DEBUG_REG_MAP[] = {
     {"hx",    2, DSU_OFFSET + DSUREG(ureg.v.iregs[1])},
     {"sp",    2, DSU_OFFSET + DSUREG(ureg.v.iregs[2])},
     {"ccr",   1, DSU_OFFSET + DSUREG(ureg.v.iregs[3])},
+    {"page",   1, DSU_OFFSET + DSUREG(ureg.v.iregs[4])},
     {"clkhz", 8, DSU_OFFSET + DSUREG(ureg.v.iregs[5])},
     {"pc",    2, DSU_OFFSET + DSUREG(ureg.v.pc)},
     {"npc",   2, DSU_OFFSET + DSUREG(ureg.v.npc)},
@@ -90,6 +91,9 @@ enum EResetType {
 class ICpuHC08 : public IFace {
  public:
     ICpuHC08() : IFace(IFACE_CPU_HC08) {}
+
+    /** Fast access to memory mapped registers */
+    virtual Reg64Type *getpRegs() = 0;
 
     /** External IRQ line status (need for BIH, BIL instructions) */
     virtual bool getIRQ() = 0;

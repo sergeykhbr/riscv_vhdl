@@ -76,12 +76,13 @@ void KeyGeneric::press() {
     RISCV_info("%s pressed", keyName_.to_string());
 
     if (power_on_) {
-        AttributeType pwrlist;
-        IPower *ipwr;
-        RISCV_get_iface_list(IFACE_POWER, &pwrlist);
-        for (unsigned i = 0; i < pwrlist.size(); i++) {
-            ipwr = static_cast<IPower *>(pwrlist[i].to_iface());
-            ipwr->power(POWER_ON);
+        AttributeType res;
+        AttributeType execlist;
+        ICmdExecutor *iexec;
+        RISCV_get_iface_list(IFACE_CMD_EXECUTOR, &execlist);
+        for (unsigned i = 0; i < execlist.size(); i++) {
+            iexec = static_cast<ICmdExecutor *>(execlist[i].to_iface());
+            iexec->exec("POWER ON", &res, true);
         }
     }
 }

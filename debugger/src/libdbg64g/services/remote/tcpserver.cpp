@@ -75,7 +75,7 @@ void TcpServer::busyLoop() {
             RISCV_sprintf(tname, sizeof(tname), "client%d", idx++);
 
             icls = static_cast<IClass *>(RISCV_get_class("TcpClientClass"));
-            isrv = icls->createService(tname);
+            isrv = icls->createService(".", tname);
             AttributeType lst, item;
             lst.make_list(0);
             item.make_list(2);

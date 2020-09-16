@@ -106,7 +106,7 @@ int TcpClient::sendData(uint8_t *buf, int sz) {
     txcnt_ = sz;
     RISCV_mutex_unlock(&mutexTx_);
 
-    RISCV_debug("o<=[%d]: %s", txcnt_, txbuf_);
+    //RISCV_debug("o<=[%d]: %s", txcnt_, txbuf_);
 
     int total = txcnt_;
     char *ptx = txbuf_;

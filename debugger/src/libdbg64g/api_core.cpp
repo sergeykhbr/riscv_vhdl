@@ -21,6 +21,7 @@
 #include "services/debug/udp_dbglink.h"
 #include "services/debug/edcl.h"
 #include "services/debug/cpumonitor.h"
+#include "services/debug/codecov_generic.h"
 #include "services/elfloader/elfreader.h"
 #include "services/exec/cmdexec.h"
 #include "services/mem/memlut.h"
@@ -80,6 +81,7 @@ extern "C" int RISCV_init() {
     REGISTER_CLASS_IDX(RegMemorySim, 13);
     REGISTER_CLASS_IDX(DpiClient, 14);
     REGISTER_CLASS_IDX(CpuMonitor, 15);
+    REGISTER_CLASS_IDX(GenericCodeCoverage, 16);
 
     pcore_->load_plugins();
     return 0;
@@ -134,8 +136,16 @@ extern "C" void RISCV_register_class(IFace *icls) {
     pcore_->registerClass(icls);
 }
 
+extern "C" void RISCV_unregister_class(const char *clsname) {
+    pcore_->unregisterClass(clsname);
+}
+
 extern "C" void RISCV_register_hap(IFace *ihap) {
     pcore_->registerHap(ihap);
+}
+
+extern "C" void RISCV_unregister_hap(IFace *ihap) {
+    pcore_->unregisterHap(ihap);
 }
 
 extern "C" void RISCV_trigger_hap(int type, uint64_t param,
@@ -150,7 +160,7 @@ extern "C" IFace *RISCV_get_class(const char *name) {
 extern "C" IFace *RISCV_create_service(IFace *iclass, const char *name, 
                                         AttributeType *args) {
     IClass *icls = static_cast<IClass *>(iclass);
-    IService *iobj = icls->createService(name);
+    IService *iobj = icls->createService(".", name);
     iobj->initService(args);
     iobj->postinitService();
     return iobj;
@@ -463,17 +473,16 @@ extern "C" void RISCV_thread_join(thread_def th, int ms) {
 extern "C" void RISCV_event_create(event_def *ev, const char *name) {
 #if defined(_WIN32) || defined(__CYGWIN__)
     char event_name[256];
-    wchar_t w_event_name[256];
-    size_t bytes_converted;
+    wchar_t wevent_name[256];
+    size_t converted;
     pcore_->generateUniqueName("", event_name, sizeof(event_name));
-    mbstowcs_s(&bytes_converted, w_event_name, event_name, 256);
-
+    mbstowcs_s(&converted, wevent_name, event_name, sizeof(event_name));
     ev->state = false;
     ev->cond = CreateEventW(
         NULL,               // default security attributes
         TRUE,               // manual-reset event
         FALSE,              // initial state is nonsignaled
-        w_event_name    // object name
+        wevent_name         // object name
         );
 #else
     pthread_mutex_init(&ev->mut, NULL);
@@ -828,24 +837,94 @@ void RISCV_write_json_file(const char *filename, const char *s) {
     fclose(f);
 }
 
-int RISCV_read_json_file(const char *filename, void *outattr) {
-    AttributeType *out = reinterpret_cast<AttributeType *>(outattr);
+int json_file_readline(FILE *f, char *buf, int &sz) {
+    int c = getc(f);
+    int ret = sz;
+    while (c != EOF) {
+        if (ret == sz && (c == '\n' || c == '\r')) {
+            // empty line
+            c = getc(f);
+            continue;
+        }
+        buf[ret++] = static_cast<char>(c);
+        buf[ret] = '\0';
+        if (c == '\n') {
+            break;
+        }
+        c = getc(f);
+    }
+    if (c == EOF && sz != ret) {
+        c = buf[ret - 1];   // EOF but new line is available
+    }
+    sz = ret;
+    return c;
+}
+
+int json_file_readall(const char *filename, char **pout) {
     FILE *f = fopen(filename, "rb");
+    char *incdata;
+    int textcnt;
+    int incsz;
+    int fsz;
+    int ret = 0;
     if (!f) {
         return 0;
     }
     fseek(f, 0, SEEK_END);
-    int sz = ftell(f);
-    out->make_data(sz + 1);
-    memset(out->data(), 0, out->size());
-
+    fsz = ftell(f);
     fseek(f, 0, SEEK_SET);
-    int t1 = 0;
-    while (t1 < sz) {
-        t1 += static_cast<int>(fread(&out->data()[t1], 1, sz - t1, f));
+
+    (*pout) = new char[fsz + 1];
+    memset((*pout), 0, fsz + 1);
+
+    textcnt = 0;
+    while (json_file_readline(f, (*pout), textcnt) != EOF) {
+        char *psub1 = strstr(&(*pout)[ret], "#include");
+        if (psub1 != 0) {
+            char fname[4096];
+            char *pf = fname;
+            psub1 += 8;     // skip #include
+            while (*psub1 == ' ') {
+                psub1++;
+            }
+            if (*psub1 == '"' || *psub1 == '\'') {
+                psub1++;
+            }
+            while (*psub1 && *psub1 != '"' && *psub1 != '\'') {
+                *pf++ = *psub1++;
+                *pf = '\0';
+            }
+            // todo:  read file
+            incsz = json_file_readall(fname, &incdata);
+            if (incsz) {
+                // realloc buffer:
+                char *t1 = new char [fsz + incsz + 1];
+                memset(t1, 0, fsz + incsz + 1);
+                memcpy(t1, (*pout), ret);
+                memcpy(&t1[ret], incdata, incsz);
+                delete [] incdata;
+                delete [] (*pout);
+                (*pout) = t1;
+                fsz += incsz;
+                textcnt = ret + incsz;
+            }
+        }
+        ret = textcnt;
     }
     fclose(f);
+    return ret;
+}
+
+int RISCV_read_json_file(const char *filename, void *outattr) {
+    AttributeType *out = reinterpret_cast<AttributeType *>(outattr);
+    char *tbuf;
+    int sz = json_file_readall(filename, &tbuf);
+    if (sz) {
+        out->make_data(sz, tbuf);
+        delete [] tbuf;
+    }
     return sz;
 }
 
 }  // namespace debugger
+

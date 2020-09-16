@@ -53,7 +53,6 @@ CoreService::~CoreService() {
     RISCV_mutex_lock(&mutexDefaultConsoles_);
     RISCV_mutex_destroy(&mutexDefaultConsoles_);
     RISCV_mutex_destroy(&mutexLogFile_);
-
     RISCV_event_close(&eventExiting_);
 }
 
@@ -74,7 +73,6 @@ void CoreService::setExiting() {
 }
 
 int CoreService::setConfig(AttributeType *cfg) {
-    RISCV_event_create(&eventExiting_, "eventExiting_");
     Config_.clone(cfg);
     if (!Config_.is_dict()) {
         return -1;
@@ -119,7 +117,7 @@ int CoreService::createPlatformServices() {
             AttributeType &Instances = Services[i]["Instances"];
             for (unsigned n = 0; n < Instances.size(); n++) {
                 iserv =
-                    icls->createService(Instances[n]["Name"].to_string());
+                    icls->createService(".", Instances[n]["Name"].to_string());
                 iserv->initService(&Instances[n]["Attr"]);
             }
         }
@@ -148,13 +146,44 @@ const AttributeType *CoreService::getGlobalSettings() {
 }
 
 void CoreService::registerClass(IFace *icls) {
+    IClass *it1, *it2;
+    it1 = static_cast<IClass *>(icls);
+    for (unsigned i = 0; i < listClasses_.size(); i++) {
+        it2 = static_cast<IClass *>(listClasses_[i].to_iface());
+        if (strcmp(it1->getClassName(), it2->getClassName()) == 0) {
+            printf("Error: class %s already registerd\n", it1->getClassName());
+            return;
+        }
+    }
     AttributeType item(icls);
     listClasses_.add_to_list(&item);
+}
+
+void CoreService::unregisterClass(const char *clsname) {
+    IClass *icls;
+    for (unsigned i = 0; i < listClasses_.size(); i++) {
+        icls = static_cast<IClass *>(listClasses_[i].to_iface());
+        if (strcmp(icls->getClassName(), clsname) == 0) {
+            listClasses_.remove_from_list(i);
+            break;
+        }
+    }
 }
 
 void CoreService::registerHap(IFace *ihap) {
     AttributeType item(ihap);
     listHap_.add_to_list(&item);
+}
+
+void CoreService::unregisterHap(IFace *ihap) {
+    IFace *iface;
+    for (unsigned i = 0; i < listHap_.size(); i++) {
+        iface = listHap_[i].to_iface();
+        if (ihap == iface) {
+            listHap_.remove_from_list(i);
+            break;
+        }
+    }
 }
 
 void CoreService::registerConsole(IFace *iconsole) {
@@ -182,6 +211,8 @@ void CoreService::unregisterConsole(IFace *iconsole) {
 void CoreService::load_plugins() {
     std::string plugin_lib;
     plugin_init_proc plugin_init;
+
+    RISCV_event_create(&eventExiting_, "eventExiting_");
 
 #if defined(_WIN32) || defined(__CYGWIN__)
     HMODULE hlib;
@@ -318,12 +349,15 @@ void CoreService::unload_plugins() {
 void CoreService::triggerHap(int type, uint64_t param, const char *descr) {
     IHap *ihap;
     EHapType etype = static_cast<EHapType>(type);
-    for (unsigned i = 0; i < listHap_.size(); i++) {
-        ihap = static_cast<IHap *>(listHap_[i].to_iface());
+    AttributeType haplist = listHap_;
+    // Hap handler can unregister itself so we need to las valid list
+    for (unsigned i = 0; i < haplist.size(); i++) {
+        ihap = static_cast<IHap *>(haplist[i].to_iface());
         if (ihap->getType() == HAP_All || ihap->getType() == etype) {
             ihap->hapTriggered(etype, param, descr);
         }
     }
+    haplist.attr_free();
 }
 
 IFace *CoreService::getClass(const char *name) {

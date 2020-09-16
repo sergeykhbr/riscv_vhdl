@@ -87,6 +87,15 @@ const AttributeType *RISCV_get_global_settings();
 void RISCV_register_class(IFace *icls);
 
 /**
+ * @brief Remove class from the library kernel.
+ * @details If the class with the defined name will be found in the list of
+            of registered classes it will be removed and all plugins loose their
+            capability to create service of this class.
+ * @param [in] clsname String name of the class to remove.
+ */
+void RISCV_unregister_class(const char *clsname);
+
+/**
  * @brief Registration of the system event (hap) listener.
  * @details Haps are used to synchronized different threads by a specific
  *          events in a system. Now there's used such haps as: 
@@ -94,6 +103,11 @@ void RISCV_register_class(IFace *icls);
  *             - Breakpoint
  */
 void RISCV_register_hap(IFace *ihap);
+
+/**
+ * @brief Remove the system event (hap) listener from the core list of haps.
+ */
+void RISCV_unregister_hap(IFace *ihap);
 
 /**
  * @brief Trigger system event (hap) from Service.
@@ -207,6 +221,8 @@ void RISCV_generate_name(AttributeType *name);
 /** Redirect output to specified console. */
 void RISCV_add_default_output(void *iout);
 void RISCV_remove_default_output(void *iout);
+
+/** Provide access to step counter shown in all messages. */
 void RISCV_set_default_clock(void *iclk);
 
 /** 

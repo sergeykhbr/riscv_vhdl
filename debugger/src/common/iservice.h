@@ -47,6 +47,10 @@ class IService : public IFace {
         }*/
     }
 
+    virtual void setNamespace(const char *sname) {
+        namespaceName_.make_string(sname);
+    }
+
     virtual void initService(const AttributeType *args) {
         if (!args || !args->is_list()) {
             return;
@@ -168,6 +172,7 @@ class IService : public IFace {
     }
 
  protected:
+    AttributeType namespaceName_;
     AttributeType listInterfaces_;
     AttributeType listPorts_;       // [['portname',iface],*]
     AttributeType listAttributes_;

@@ -40,6 +40,7 @@ ConsoleService::ConsoleService(const char *name)
     registerAttribute("Signals", &signals_);
     registerAttribute("InputPort", &inPort_);
     registerAttribute("DefaultLogFile", &defaultLogFile_);
+    registerAttribute("VirtualKbEna", &virtualKbEna_);
 
     RISCV_mutex_init(&mutexConsoleOutput_);
     RISCV_event_create(&config_done_, "console_config_done");
@@ -51,9 +52,12 @@ ConsoleService::ConsoleService(const char *name)
 	signals_.make_string("");
     inPort_.make_string("");
     defaultLogFile_.make_string("");
+    virtualKbEna_.make_boolean(false);
 
     isrc_ = NULL;
     cmdSizePrev_ = 0;
+    virtKbWrCnt_ = 0;
+    virtKbRdCnt_ = 0;
 
     cursor_.make_list(2);
     cursor_[0u].make_int64(0);
@@ -87,12 +91,15 @@ ConsoleService::~ConsoleService() {
 }
 
 void ConsoleService::postinitService() {
-    ISerial *iport = static_cast<ISerial *>
-            (RISCV_get_service_iface(inPort_.to_string(), IFACE_SERIAL));
-    if (iport) {
-        iport->registerRawListener(static_cast<IRawListener *>(&portSerial_));
-    } else {
-        RISCV_error("Can't connect to com-port %s.", inPort_.to_string());
+    if (inPort_.size()) {
+        ISerial *iport = static_cast<ISerial *>
+                (RISCV_get_service_iface(inPort_.to_string(), IFACE_SERIAL));
+        if (iport) {
+            iport->registerRawListener(
+                    static_cast<IRawListener *>(&portSerial_));
+        } else {
+            RISCV_error("Can't connect to com-port %s.", inPort_.to_string());
+        }
     }
 
     if (isEnable_.to_bool()) {
@@ -134,6 +141,7 @@ void ConsoleService::predeleteService() {
 void ConsoleService::hapTriggered(EHapType type, 
                                   uint64_t param,
                                   const char *descr) {
+    RISCV_unregister_hap(static_cast<IHap *>(this));
     RISCV_event_set(&config_done_);
 
     // Enable logging:
@@ -157,7 +165,7 @@ void ConsoleService::busyLoop() {
     AttributeType cmd, cmdres;
 
     while (isEnabled()) {
-        if (!isData()) {
+        if (!isKbHit()) {
             RISCV_sleep_ms(50);
             continue;
         }
@@ -221,7 +229,13 @@ void ConsoleService::clearLine(int num) {
     }
 }
 
-bool ConsoleService::isData() {
+bool ConsoleService::isKbHit() {
+    if (virtualKbEna_.to_bool()) {
+        if (virtKbRdCnt_ == virtKbWrCnt_) {
+            return false;
+        }
+        return true;
+    }
 #if defined(_WIN32) || defined(__CYGWIN__)
     return _kbhit() ? true: false;
 #else
@@ -231,18 +245,40 @@ bool ConsoleService::isData() {
 #endif
 }
 
+void ConsoleService::setVirtualKbHit(char s) {
+    virtKbChar_[virtKbWrCnt_++] = s;
+    virtKbChar_[virtKbWrCnt_] = '\0';
+}
+
+char ConsoleService::getVirtualKbChar() {
+    int t1 = virtKbRdCnt_;
+    if (virtKbRdCnt_ != virtKbWrCnt_) {
+        ++virtKbRdCnt_;
+    }
+    return virtKbChar_[t1];
+}
+
+char ConsoleService::getChar() {
+    if (virtualKbEna_.to_bool()) {
+        return getVirtualKbChar();
+    }
+#if defined(_WIN32) || defined(__CYGWIN__)
+    return _getch();
+#else
+    char ret;
+    read(term_fd_, &ret, 1);
+    return ret;
+#endif
+}
+
 uint32_t ConsoleService::getData() {
     Reg64Type tbuf;
     tbuf.val = 0;
     int pos = 0;
-    while (isData()) {
+    while (isKbHit()) {
         tbuf.val <<= 8;
-#if defined(_WIN32) || defined(__CYGWIN__)
-        tbuf.buf[pos++] = static_cast<uint8_t>(_getch());
-#else
-        read(term_fd_, &tbuf.buf[pos], 1);
+        tbuf.buf[0] = static_cast<uint8_t>(getChar());
         pos++;
-#endif
     }
     //printf("\nkey_code=%08x\n", tbuf.buf32[0]);
     switch (tbuf.buf32[0]) {

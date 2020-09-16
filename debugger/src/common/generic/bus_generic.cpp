@@ -78,12 +78,7 @@ void BusGeneric::hapTriggered(EHapType type,
     if (!useHash_.to_bool()) {
         return;
     }
-
-    IMemoryOperation *imem;
-    for (unsigned i = 0; i < imap_.size(); i++) {
-        imem = static_cast<IMemoryOperation *>(imap_[i].to_iface());
-        maphash(imem);
-    }
+    maphash(0);
 }
 
 ETransStatus BusGeneric::b_transport(Axi4TransactionType *trans) {
@@ -92,10 +87,6 @@ ETransStatus BusGeneric::b_transport(Axi4TransactionType *trans) {
     IMemoryOperation *memdev = 0;
 
     RISCV_mutex_lock(&mutexBAccess_);
-
-    if (itranslator_) {
-        itranslator_->translate(trans);
-    }
 
     getMapedDevice(trans, &memdev, &sz);
 
@@ -131,9 +122,6 @@ ETransStatus BusGeneric::nb_transport(Axi4TransactionType *trans,
 
     RISCV_mutex_lock(&mutexNBAccess_);
 
-    if (itranslator_) {
-        itranslator_->translate(trans);
-    }
     getMapedDevice(trans, &memdev, &sz);
 
     if (memdev == 0) {
@@ -185,6 +173,46 @@ void BusGeneric::getMapedDevice(Axi4TransactionType *trans,
             }
         }
     }
+}
+
+void BusGeneric::maphash(IMemoryOperation *imemop) {
+    IMemoryOperation *imem;
+    uint64_t maxadr = 0;
+    uint64_t t;
+    uint64_t bar, barsz;
+    for (unsigned i = 0; i < imap_.size(); i++) {
+        imem = static_cast<IMemoryOperation *>(imap_[i].to_iface());
+        t = imem->getBaseAddress() + imem->getLength();
+        if (t > maxadr) {
+            maxadr = t;
+        }
+    }
+
+    if (maxadr > 0x1000000) {
+        RISCV_error("Hashmap is too big, %x B", maxadr);
+        useHash_.make_boolean(false);
+        return;
+    }
+
+    imaphash_ = new IMemoryOperation *[static_cast<size_t>(maxadr)];
+    memset(imaphash_, 0,
+        static_cast<size_t>(maxadr) * sizeof(IMemoryOperation *));
+    for (unsigned i = 0; i < imap_.size(); i++) {
+        imem = static_cast<IMemoryOperation *>(imap_[i].to_iface());
+        bar = imem->getBaseAddress();
+        barsz = imem->getLength();
+        for (uint64_t addr = bar; addr < (bar + barsz); addr++) {
+            if (imaphash_[addr] == 0) {
+                imaphash_[addr] = imem;
+            } else if (imem->getPriority() > imaphash_[addr]->getPriority()) {
+                imaphash_[addr] = imem;
+            }
+        }
+    }
+}
+
+IMemoryOperation *BusGeneric::getHashedDevice(uint64_t addr) {
+    return imaphash_[addr];
 }
 
 }  // namespace debugger

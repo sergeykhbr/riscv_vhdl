@@ -57,7 +57,9 @@ class CoreService : public IService {
     void load_plugins();
     void unload_plugins();
     void registerClass(IFace *icls);
+    void unregisterClass(const char *clsname);
     void registerHap(IFace *ihap);
+    void unregisterHap(IFace *ihap);
     void triggerHap(int type, uint64_t param, const char *descr);
     void registerConsole(IFace *iconsole);
     void unregisterConsole(IFace *iconsole);

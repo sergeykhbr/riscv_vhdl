@@ -7,17 +7,23 @@
 import threading
 import client
 from events import ConsoleSubStringEvent
+from .configurator import PlatformConfig
 
 class Simulator(object):
     def __init__(self):
         self.client = None
         self.eventDone = threading.Event()
+        self.doxy = None
 
     def connect(self):
         self.eventDone.clear()
         self.client = client.TcpClient("rpcclient", self.eventDone)
         self.client.start()
         self.eventDone.wait()
+        PlatformConfig(self.client).instantiate(self)
+
+    def setDoxyTracer(self, doxy):
+        self.doxy = doxy
 
     def cmd(self, cmd):
         req = ["Command",str(cmd)]
@@ -26,6 +32,31 @@ class Simulator(object):
     def disconnect(self):
         self.client.stop()
         self.client.join()
+
+    def pressButton(self, btn, add_to_doxy=True, comment=""):
+        if self.doxy and add_to_doxy:
+            self.doxy.pressButton(btn, comment)
+        button = getattr(self, btn)
+        button.press()
+        return button
+
+    def releaseButton(self, btn, add_to_doxy=True, comment=""):
+        if self.doxy and add_to_doxy:
+            self.doxy.releaseButton(btn, comment)
+        button = getattr(self, btn)
+        button.release()
+        return button
+
+    def clickButton(self, btn, add_to_doxy=True, press_time=150.0, release_time=100.0, comment=""):
+        self.pressButton(btn, add_to_doxy=add_to_doxy, comment=comment)
+        self.go_msec(press_time)
+        self.releaseButton(btn, add_to_doxy=add_to_doxy, comment=comment)
+        if release_time:
+            self.go_msec(release_time)
+
+    def saveScreenShot(self, comment=""):
+        if self.doxy:
+            self.doxy.saveScreenShot()
 
     def log(self, file):
         req = ["Command","log {0}".format(file)]
@@ -60,8 +91,13 @@ class Simulator(object):
         return self.client.send(req)
 
     def go_msec(self, ms):
+        if self.doxy:
+            self.doxy.go_msec_before(ms)
         req = ["Control",["GoMsec",float(ms)]]
-        return self.client.send(req)
+        ret = self.client.send(req)
+        if self.doxy:
+            self.doxy.go_msec_after(ms)
+        return ret
 
     def go_substr(self, template, timeout=None):
         """
@@ -84,6 +120,8 @@ class Simulator(object):
         return self.client.send(req)
 
     def step(self, count):
+        if self.doxy:
+            self.doxy.step(count)
         req = ["Control",["Step",count]]
         return self.client.send(req)
 

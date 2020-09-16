@@ -190,6 +190,7 @@ void CpuGeneric::postinitService() {
 void CpuGeneric::hapTriggered(EHapType type,
                               uint64_t param,
                               const char *descr) {
+	RISCV_unregister_hap(static_cast<IHap *>(this));
     RISCV_event_set(&eventConfigDone_);
 }
 
@@ -217,10 +218,7 @@ void CpuGeneric::updatePipeline() {
 
     if (!checkHwBreakpoint()) {
         fetchILine();
-        // Checked that it was cached
-        if (!instr_) {
-            instr_ = decodeInstruction(cacheline_);
-        }
+        instr_ = decodeInstruction(cacheline_);
 
         trackContextStart();
         if (instr_) {

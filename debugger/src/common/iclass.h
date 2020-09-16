@@ -39,7 +39,20 @@ class IClass : public IFace {
         }
     }
 
-    virtual IService *createService(const char *obj_name) = 0;
+    virtual IService *createService(const char *nspace,
+                                    const char *obj_name) = 0;
+
+    virtual void deleteService(const char *obj_name) {
+        IService *isrv;
+        for (unsigned i = 0; i < listInstances_.size(); i++) {
+            isrv =  static_cast<IService *>(listInstances_[i].to_iface());
+            if (strcmp(isrv->getObjName(), obj_name) == 0) {
+                listInstances_.remove_from_list(i);
+                delete isrv;
+                break;
+            }
+        }
+    }
 
     virtual void postinitServices() {
         IService *tmp = NULL;
@@ -99,8 +112,9 @@ class IClass : public IFace {
 class name ## Class : public IClass { \
  public: \
     name ## Class() : IClass(# name "Class") {} \
-    virtual IService *createService(const char *obj_name) {  \
+    virtual IService *createService(const char *nspace, const char *obj_name) {  \
         name *serv = new name(obj_name); \
+        serv->setNamespace(nspace); \
         AttributeType item(static_cast<IService *>(serv)); \
         listInstances_.add_to_list(&item); \
         return serv; \

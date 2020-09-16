@@ -81,6 +81,7 @@ void RegMemBankGeneric::hapTriggered(EHapType type,
         imem = static_cast<IMemoryOperation *>(imap_[i].to_iface());
         maphash(imem);
     }
+    RISCV_unregister_hap(static_cast<IHap *>(this));
 }
 
 ETransStatus RegMemBankGeneric::b_transport(Axi4TransactionType *trans) {

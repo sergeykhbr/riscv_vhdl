@@ -17,6 +17,7 @@
 #ifndef __DEBUGGER_COMMON_CORESERVICES_IIOPORT_H__
 #define __DEBUGGER_COMMON_CORESERVICES_IIOPORT_H__
 
+#include <inttypes.h>
 #include <iface.h>
 
 namespace debugger {

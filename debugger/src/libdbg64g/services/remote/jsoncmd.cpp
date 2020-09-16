@@ -61,12 +61,6 @@ int JsonCommands::processCommand(const char *cmdbuf, int bufsz) {
             go_msec(requestAction[1], &resp);
         } else if (requestAction[0u].is_equal("Step")) {
             step(requestAction[1].to_int(), &resp);
-        } else if (requestAction[0u].is_equal("PowerOn")) {
-            power_on(requestAction[1].to_string(), &resp);
-            RISCV_debug("[%" RV_PRI64 "d] Command Power-On", idx);
-        } else if (requestAction[0u].is_equal("PowerOff")) {
-            power_off(requestAction[1].to_string(), &resp);
-            RISCV_debug("[%" RV_PRI64 "d] Command Power-Off", idx);
         } else {
             resp.make_string("Wrong control command");
         }
