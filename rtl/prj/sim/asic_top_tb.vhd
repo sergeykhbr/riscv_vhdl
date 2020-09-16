@@ -268,7 +268,7 @@ begin
         if (iClkCnt mod 5000) = 4999 then
             if test_case = JTAG_TESTS(jtag_test_cnt).idx then
                 i_dtmcs_re <= JTAG_WR_ENA and JTAG_TESTS(jtag_test_cnt).dtmcs_re;
-                i_dmi_ena <= '1';
+                i_dmi_ena <= JTAG_WR_ENA and not JTAG_TESTS(jtag_test_cnt).dtmcs_re;
                 i_dmi_we <= JTAG_WR_ENA and JTAG_TESTS(jtag_test_cnt).dmi_we;
                 i_dmi_re <= JTAG_WR_ENA and JTAG_TESTS(jtag_test_cnt).dmi_re;
                 i_dmi_addr <= JTAG_TESTS(jtag_test_cnt).dmi_addr(6 downto 0);

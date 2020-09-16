@@ -97,8 +97,6 @@ begin
         v.dmi_request(1) := i_dmi_we;
         v.dmi_request(33 downto 2) := i_dmi_wdata;
         v.dmi_request(40 downto 34) := i_dmi_addr;
-     elsif w_posedge = '1' then
-        v.is_data := '0';
      end if;
 
      if w_posedge = '1' then
@@ -115,6 +113,7 @@ begin
             end if;
         when run_idle =>
             if r.is_data = '1' then
+                v.is_data := '0';
                 v.tms := '1';
                 v.op_cnt := 0;
                 v.jtagstate := start_ir;

@@ -130,7 +130,7 @@ SC_MODULE(DCacheLru) {
         sc_signal<sc_uint<4>> state;
         sc_signal<bool> req_mem_valid;
         sc_signal<sc_uint<REQ_MEM_TYPE_BITS>> req_mem_type;
-        sc_signal<sc_uint<2>> req_mem_size;
+        sc_signal<sc_uint<3>> req_mem_size;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mem_addr;
         sc_signal<bool> mpu_er_store;
         sc_signal<bool> mpu_er_load;

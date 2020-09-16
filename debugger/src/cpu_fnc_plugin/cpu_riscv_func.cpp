@@ -215,8 +215,8 @@ void CpuRiver_Functional::traceOutput() {
                        sizeof(trace_data_.disasm));
 
     RISCV_sprintf(tstr, sizeof(tstr),
-        "%9" RV_PRI64 "d: %08" RV_PRI64 "x: %s \n",
-            trace_data_.step_cnt - 1,
+        "%9" RV_PRI64 "d: %08" RV_PRI64 "x: %s \r\n",
+            trace_data_.step_cnt,
             trace_data_.pc,
             trace_data_.disasm);
     (*trace_file_) << tstr;
@@ -226,19 +226,19 @@ void CpuRiver_Functional::traceOutput() {
         trace_action_type *pa = &trace_data_.action[i];
         if (!pa->memop) {
             RISCV_sprintf(tstr, sizeof(tstr),
-                "%20s %10s <= %016" RV_PRI64 "x\n",
+                "%20s %10s <= %016" RV_PRI64 "x\r\n",
                     "",
                     IREGS_NAMES[pa->waddr],
                     pa->wdata);
         } else if (pa->memop_write) {
             RISCV_sprintf(tstr, sizeof(tstr),
-                "%20s [%08" RV_PRI64 "x] <= %016" RV_PRI64 "x\n",
+                "%20s [%08" RV_PRI64 "x] <= %016" RV_PRI64 "x\r\n",
                     "",
                     pa->memop_addr,
                     pa->memop_data.val);
         } else {
             RISCV_sprintf(tstr, sizeof(tstr),
-                "%20s [%08" RV_PRI64 "x] => %016" RV_PRI64 "x\n",
+                "%20s [%08" RV_PRI64 "x] => %016" RV_PRI64 "x\r\n",
                     "",
                     pa->memop_addr,
                     pa->memop_data.val);
