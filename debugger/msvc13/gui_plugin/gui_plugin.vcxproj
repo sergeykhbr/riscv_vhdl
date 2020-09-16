@@ -116,6 +116,9 @@
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\AsmArea.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\AsmControl.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\AsmViewWidget.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\CodeCoverage\CodeCoverageWidget.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\CodeCoverage\CoverageBar.cpp" />
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\CodeCoverage\CoverageTable.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\MemArea.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\MemControl.cpp" />
     <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\MemViewWidget.cpp" />
@@ -161,6 +164,8 @@
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\AsmArea.h" />
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\AsmControl.h" />
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\AsmViewWidget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\CodeCoverage\CodeCoverageWidget.h" />
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\CodeCoverage\CoverageBar.h" />
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\MemArea.h" />
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\MemControl.h" />
     <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\MemViewWidget.h" />

@@ -19,6 +19,9 @@
     <Filter Include="GnssWidgets">
       <UniqueIdentifier>{e364f867-cafb-45ff-b74d-d1799078831c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="CpuWidget\CodeCoverage">
+      <UniqueIdentifier>{17e3e89e-eddb-4b57-a649-91f882819edb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\common\attribute.cpp">
@@ -127,6 +130,15 @@
     </ClCompile>
     <ClCompile Include="..\..\src\gui_plugin\PeriphWidgets\DemoSTM32Keypad.cpp">
       <Filter>PeriphWidgets</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\CodeCoverage\CodeCoverageWidget.cpp">
+      <Filter>CpuWidget\CodeCoverage</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\CodeCoverage\CoverageBar.cpp">
+      <Filter>CpuWidget\CodeCoverage</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\gui_plugin\CpuWidgets\CodeCoverage\CoverageTable.cpp">
+      <Filter>CpuWidget\CodeCoverage</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -255,6 +267,12 @@
     </ClInclude>
     <ClInclude Include="..\..\src\gui_plugin\PeriphWidgets\DemoSTM32Keypad.h">
       <Filter>PeriphWidgets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\CodeCoverage\CodeCoverageWidget.h">
+      <Filter>CpuWidget\CodeCoverage</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\gui_plugin\CpuWidgets\CodeCoverage\CoverageBar.h">
+      <Filter>CpuWidget\CodeCoverage</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

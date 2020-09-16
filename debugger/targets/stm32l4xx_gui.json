@@ -14,7 +14,7 @@
                 {'Name':'gui0','Attr':[
                 ['LogLevel',4],
                 ['WidgetsConfig',{
-                  'OpenViews':['DemoM4Window','AsmQMdiSubWindow'],
+                  'OpenViews':['DemoM4Window','AsmQMdiSubWindow','CodeCoverageQMdiSubWindow'],
                   'Serial':'port1',
                   'AutoComplete':'autocmd0',
                   'StepToSecHz':30000000.0,
@@ -149,7 +149,7 @@
                                   Main purpose of this polling to add breakpoins on resume and remove
                                   them on halt events'],
                 ['LogLevel',1],
-                ['PollingMs',100],
+                ['PollingMs',250],
                 ['CmdExecutor','cmdexec0']
                 ]}]},
     {'Class':'GenericCodeCoverageClass','Instances':[

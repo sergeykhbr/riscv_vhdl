@@ -36,6 +36,9 @@ set GUI_PLUGIN_SRC=..\..\src\gui_plugin\
 %QT_PATH64%\bin\moc.exe -i %GUI_PLUGIN_SRC%\CpuWidgets\MemArea.h -o %GUI_PLUGIN_SRC%\CpuWidgets\moc_MemArea.h
 %QT_PATH64%\bin\moc.exe -i %GUI_PLUGIN_SRC%\CpuWidgets\MemControl.h -o %GUI_PLUGIN_SRC%\CpuWidgets\moc_MemControl.h
 %QT_PATH64%\bin\moc.exe -i %GUI_PLUGIN_SRC%\CpuWidgets\MemViewWidget.h -o %GUI_PLUGIN_SRC%\CpuWidgets\moc_MemViewWidget.h
+%QT_PATH64%\bin\moc.exe -i %GUI_PLUGIN_SRC%\CpuWidgets\CodeCoverage\CodeCoverageWidget.h -o %GUI_PLUGIN_SRC%\CpuWidgets\CodeCoverage\moc_CodeCoverageWidget.h
+%QT_PATH64%\bin\moc.exe -i %GUI_PLUGIN_SRC%\CpuWidgets\CodeCoverage\CoverageTable.h -o %GUI_PLUGIN_SRC%\CpuWidgets\CodeCoverage\moc_CoverageTable.h
+%QT_PATH64%\bin\moc.exe -i %GUI_PLUGIN_SRC%\CpuWidgets\CodeCoverage\CoverageBar.h -o %GUI_PLUGIN_SRC%\CpuWidgets\CodeCoverage\moc_CoverageBar.h
 %QT_PATH64%\bin\moc.exe -i %GUI_PLUGIN_SRC%\GnssWidgets\StreetMapObject.h -o %GUI_PLUGIN_SRC%\GnssWidgets\moc_StreetMapObject.h
 %QT_PATH64%\bin\moc.exe -i %GUI_PLUGIN_SRC%\GnssWidgets\MapWidget.h -o %GUI_PLUGIN_SRC%\GnssWidgets\moc_MapWidget.h
 %QT_PATH64%\bin\moc.exe -i %GUI_PLUGIN_SRC%\GnssWidgets\PlotWidget.h -o %GUI_PLUGIN_SRC%\GnssWidgets\moc_PlotWidget.h

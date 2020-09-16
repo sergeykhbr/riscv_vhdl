@@ -23,6 +23,7 @@
 #include "CpuWidgets/MemViewWidget.h"
 #include "CpuWidgets/SymbolBrowserWidget.h"
 #include "CpuWidgets/StackTraceWidget.h"
+#include "CpuWidgets/CodeCoverage/CodeCoverageWidget.h"
 #include "ControlWidget/ConsoleWidget.h"
 #include "PeriphWidgets/UartWidget.h"
 #include "PeriphWidgets/GpioWidget.h"
@@ -226,6 +227,14 @@ void DbgMainWindow::createActions() {
     connect(actionGnssPlot_, SIGNAL(triggered(bool)),
             this, SLOT(slotActionTriggerGnssPlot(bool)));
 
+    actionCodeCoverage_ = new QAction(QIcon(tr(":/images/coverage_96x96.png")),
+                              tr("&Code Coverage"), this);
+    actionCodeCoverage_->setToolTip(tr("Code Coverage Info"));
+    actionCodeCoverage_->setCheckable(true);
+    actionCodeCoverage_->setChecked(false);
+    connect(actionCodeCoverage_, SIGNAL(triggered(bool)),
+            this, SLOT(slotActionTriggerCodeCoverage(bool)));
+
     actionRun_ = new QAction(QIcon(tr(":/images/start_96x96.png")),
                              tr("&Run"), this);
     actionRun_->setToolTip(tr("Start Execution (F5)"));
@@ -287,6 +296,7 @@ void DbgMainWindow::createMenus() {
     menu->addSeparator();
     menu->addAction(actionRegs_);
     menu->addAction(actionSymbolBrowser_);
+    menu->addAction(actionCodeCoverage_);
     menu->addAction(actionGnssPlot_);
 
     menu = menuBar()->addMenu(tr("&GNSS"));
@@ -356,6 +366,8 @@ void DbgMainWindow::addWidgets() {
             slotActionTriggerGnssMap(true);
         } else if (viewName.is_equal("DemoM4Window")) {
             slotActionTriggerDemoM4(true);
+        } else if (viewName.is_equal("CodeCoverageQMdiSubWindow")) {
+            slotActionTriggerCodeCoverage(true);
         }
     }
 }
@@ -438,6 +450,16 @@ void DbgMainWindow::slotActionTriggerGnssPlot(bool val) {
             new PlotQMdiSubWindow(igui_, mdiArea_, this, actionGnssPlot_);
     } else {
         viewGnssPlot_->close();
+    }
+}
+
+void DbgMainWindow::slotActionTriggerCodeCoverage(bool val) {
+    if (val) {
+        viewCodeCoverage_ =
+            new CodeCoverageQMdiSubWindow(igui_, mdiArea_, this,
+                                          actionCodeCoverage_);
+    } else {
+        viewCodeCoverage_->close();
     }
 }
 

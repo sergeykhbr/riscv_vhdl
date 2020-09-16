@@ -157,6 +157,9 @@ prebuild:
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/SymbolBrowserControl.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/moc_SymbolBrowserControl.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/StackTraceWidget.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/moc_StackTraceWidget.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/StackTraceArea.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/moc_StackTraceArea.h
+	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/CodeCoverage/CodeCoverageWidget.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/CodeCoverage/moc_CodeCoverageWidget.h
+	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/CodeCoverage/CoverageTable.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/CodeCoverage/moc_CoverageTable.h
+	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/CpuWidgets/CodeCoverage/CoverageBar.h -o $(GUI_PLUGIN_SRC)/CpuWidgets/CodeCoverage/moc_CoverageBar.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/GnssWidgets/StreetMapObject.h -o $(GUI_PLUGIN_SRC)/GnssWidgets/moc_StreetMapObject.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/GnssWidgets/MapWidget.h -o $(GUI_PLUGIN_SRC)/GnssWidgets/moc_MapWidget.h
 	$(QT_PATH)/bin/moc -i $(GUI_PLUGIN_SRC)/GnssWidgets/PlotWidget.h -o $(GUI_PLUGIN_SRC)/GnssWidgets/moc_PlotWidget.h
