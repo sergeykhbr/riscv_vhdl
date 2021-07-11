@@ -86,8 +86,6 @@ void CoverageProgressBar::renderAll() {
                 0, rectMargined.height());
 
     uint64_t accBytes = 0;
-    uint32_t minValue_ = 0x08000000;
-    uint32_t maxValue_ = 0x0800FFFF;
     uint64_t diff;
     for (unsigned i = 0; i < info->size(); i++) {
         AttributeType &line = (*info)[i];

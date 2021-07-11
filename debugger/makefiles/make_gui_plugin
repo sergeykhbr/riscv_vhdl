@@ -40,6 +40,7 @@ SRC_PATH =\
 	$(TOP_DIR)src/gui_plugin/MainWindow \
 	$(TOP_DIR)src/gui_plugin/ControlWidget \
 	$(TOP_DIR)src/gui_plugin/CpuWidgets \
+	$(TOP_DIR)src/gui_plugin/CpuWidgets/CodeCoverage \
 	$(TOP_DIR)src/gui_plugin/GnssWidgets \
 	$(TOP_DIR)src/gui_plugin/PeriphWidgets
 
@@ -82,7 +83,10 @@ SOURCES = \
 	linecommon \
 	MapWidget \
 	PlotWidget \
-	PnpWidget
+	PnpWidget \
+	CodeCoverageWidget \
+	CoverageBar \
+	CoverageTable
 
 LIBS = \
 	m \

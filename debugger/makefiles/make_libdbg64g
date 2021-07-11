@@ -49,6 +49,8 @@ SOURCES = \
 	memsim \
 	rmemsim \
 	serial_dbglink \
+	codecov_generic \
+	cpumonitor \
 	udp_dbglink \
 	edcl \
 	elfreader \
