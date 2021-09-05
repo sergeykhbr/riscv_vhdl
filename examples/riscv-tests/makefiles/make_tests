@@ -32,6 +32,7 @@ INCL_PATH=\
 # source files directories list:
 SRC_PATH =\
 	$(TOP_DIR)isa \
+	$(TOP_DIR)isa/rv64ua \
 	$(TOP_DIR)isa/rv64ui \
 	$(TOP_DIR)isa/rv64um \
 	$(TOP_DIR)isa/rv64uc
@@ -44,6 +45,10 @@ LIB_NAMES =\
 VPATH = $(SRC_PATH)
 
 SOURCE_64UI = \
+	amoadd_w amoxor_w amoor_w amoand_w amomin_w amomax_w \
+	amominu_w amomaxu_w amoswap_w \
+	amoadd_d amoxor_d amoor_d amoand_d amomin_d amomax_d \
+	amominu_d amomaxu_d amoswap_d lrsc\
 	add addi addiw addw \
 	and andi \
 	auipc \

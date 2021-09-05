@@ -61,6 +61,18 @@ class CpuRiver_Functional : public CpuGeneric,
     /** ICpuRiscV interface */
     virtual uint64_t readCSR(int idx) override;
     virtual void writeCSR(int idx, uint64_t val) override;
+    virtual void mmuAddrReserve(uint64_t addr) override {
+        mmuReservatedAddr_ = addr;
+        mmuReservedAddrWatchdog_ = 64;
+    }
+    virtual bool mmuAddrRelease(uint64_t addr) override {
+        bool success = 0;
+        if (mmuReservedAddrWatchdog_ && mmuReservatedAddr_ == addr) {
+            success = true;
+            mmuReservedAddrWatchdog_ = 0;
+        }
+        return success;
+    }
 
  protected:
     /** CpuGeneric common methods */
@@ -105,6 +117,9 @@ class CpuRiver_Functional : public CpuGeneric,
     CmdRegRiscv *pcmd_reg_;
     CmdRegsRiscv *pcmd_regs_;
     CmdCsr *pcmd_csr_;
+
+    uint64_t mmuReservatedAddr_;
+    int mmuReservedAddrWatchdog_;   // not exceed 64 instructions between LR/SC
 };
 
 DECLARE_CLASS(CpuRiver_Functional)

@@ -31,6 +31,9 @@ CpuRiver_Functional::CpuRiver_Functional(const char *name) :
     registerAttribute("ListExtISA", &listExtISA_);
     registerAttribute("VectorTable", &vectorTable_);
     registerAttribute("ExceptionTable", &exceptionTable_);
+
+    mmuReservatedAddr_ = 0;
+    mmuReservedAddrWatchdog_ = 0;
 }
 
 CpuRiver_Functional::~CpuRiver_Functional() {
@@ -167,6 +170,7 @@ void CpuRiver_Functional::reset(IFace *isource) {
     portCSR_.write(CSR_mtvec, vectorTable_.to_uint64());
 
     cur_prv_level = PRV_M;           // Current privilege level
+    mmuReservedAddrWatchdog_ = 0;
 }
 
 GenericInstruction *CpuRiver_Functional::decodeInstruction(Reg64Type *cache) {
@@ -191,6 +195,9 @@ GenericInstruction *CpuRiver_Functional::decodeInstruction(Reg64Type *cache) {
             }
             instr = NULL;
         }
+    }
+    if (mmuReservedAddrWatchdog_) {
+        mmuReservedAddrWatchdog_--;
     }
     return instr;
 }

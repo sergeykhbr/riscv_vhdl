@@ -46,6 +46,8 @@ int opcode_0x08(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
 int opcode_0x09(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
+int opcode_0x0B(ISourceCode *isrc, uint64_t pc, uint32_t code,
+                AttributeType *mnemonic, AttributeType *comment);
 int opcode_0x0C(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
 int opcode_0x0D(ISourceCode *isrc, uint64_t pc, uint32_t code,
@@ -114,6 +116,7 @@ RiscvSourceService::RiscvSourceService(const char *name) : IService(name) {
     tblOpcode1_[0x06] = &opcode_0x06;
     tblOpcode1_[0x08] = &opcode_0x08;
     tblOpcode1_[0x09] = &opcode_0x09;
+    tblOpcode1_[0x0B] = &opcode_0x0B;
     tblOpcode1_[0x0C] = &opcode_0x0C;
     tblOpcode1_[0x0D] = &opcode_0x0D;
     tblOpcode1_[0x0E] = &opcode_0x0E;
@@ -672,6 +675,110 @@ int opcode_0x09(ISourceCode *isrc, uint64_t pc, uint32_t code,
             RF[s.bits.rs2], imm, RN[s.bits.rs1]);
         break;
     default:;
+    }
+    mnemonic->make_string(tstr);
+    comment->make_string(tcomm);
+    return 4;
+}
+
+// Atomic Memory Operations (AMO)
+int opcode_0x0B(ISourceCode *isrc, uint64_t pc, uint32_t code,
+                AttributeType *mnemonic, AttributeType *comment) {
+    char tstr[128] = "unimpl";
+    char tcomm[128] = "";
+    const char *aquired[2] = {"", ".aq"};
+    const char *released[2] = {"", ".rl"};
+    size_t tlen = 0;
+    ISA_R_type r;
+    r.value = code;
+    switch (r.amobits.funct3) {
+    case 2: // 32-bits
+        switch (r.amobits.funct5) {
+        case 0x00:
+            tlen = RISCV_sprintf(tstr, sizeof(tstr), "%s", "amoadd_w");
+            break;
+        case 0x01:
+            tlen = RISCV_sprintf(tstr, sizeof(tstr), "%s", "amoswap_w");
+            break;
+        case 0x02:
+            if (r.amobits.rs2 == 0) {
+                tlen = RISCV_sprintf(tstr, sizeof(tstr), "%s", "lr_w");
+            }
+            break;
+        case 0x03:
+            tlen = RISCV_sprintf(tstr, sizeof(tstr), "%s", "sc_w");
+            break;
+        case 0x04:
+            tlen = RISCV_sprintf(tstr, sizeof(tstr), "%s", "amoxor_w");
+            break;
+        case 0x08:
+            tlen = RISCV_sprintf(tstr, sizeof(tstr), "%s", "amoor_w");
+            break;
+        case 0x0C:
+            tlen = RISCV_sprintf(tstr, sizeof(tstr), "%s", "amoand_w");
+            break;
+        case 0x10:
+            tlen = RISCV_sprintf(tstr, sizeof(tstr), "%s", "amomin_w");
+            break;
+        case 0x14:
+            tlen = RISCV_sprintf(tstr, sizeof(tstr), "%s", "amomax_w");
+            break;
+        case 0x18:
+            tlen = RISCV_sprintf(tstr, sizeof(tstr), "%s", "amominu_w");
+            break;
+        case 0x1C:
+            tlen = RISCV_sprintf(tstr, sizeof(tstr), "%s", "amomaxu_w");
+            break;
+        default:;
+        }
+        break;
+    case 3: // RV64 only
+        switch (r.amobits.funct5) {
+        case 0x00:
+            tlen = RISCV_sprintf(tstr, sizeof(tstr), "%s", "amoadd_d");
+            break;
+        case 0x01:
+            tlen = RISCV_sprintf(tstr, sizeof(tstr), "%s", "amoswap_d");
+            break;
+        case 0x02:
+            if (r.amobits.rs2 == 0) {
+                tlen = RISCV_sprintf(tstr, sizeof(tstr), "%s", "lr_d");
+            }
+            break;
+        case 0x03:
+            tlen = RISCV_sprintf(tstr, sizeof(tstr), "%s", "sc_d");
+            break;
+        case 0x04:
+            tlen = RISCV_sprintf(tstr, sizeof(tstr), "%s", "amoxor_d");
+            break;
+        case 0x08:
+            tlen = RISCV_sprintf(tstr, sizeof(tstr), "%s", "amoor_d");
+            break;
+        case 0x0C:
+            tlen = RISCV_sprintf(tstr, sizeof(tstr), "%s", "amoand_d");
+            break;
+        case 0x10:
+            tlen = RISCV_sprintf(tstr, sizeof(tstr), "%s", "amomin_d");
+            break;
+        case 0x14:
+            tlen = RISCV_sprintf(tstr, sizeof(tstr), "%s", "amomax_d");
+            break;
+        case 0x18:
+            tlen = RISCV_sprintf(tstr, sizeof(tstr), "%s", "amominu_d");
+            break;
+        case 0x1C:
+            tlen = RISCV_sprintf(tstr, sizeof(tstr), "%s", "amomaxu_d");
+            break;
+        default:;
+        }
+        break;
+    default:;
+    }
+    if (tlen) {
+        RISCV_sprintf(&tstr[tlen], sizeof(tstr)-tlen, "%s%s %s,%s,(%s)",
+            aquired[r.amobits.aq],
+            released[r.amobits.rl],
+            RN[r.amobits.rd], RN[r.amobits.rs2], RN[r.amobits.rs1]);
     }
     mnemonic->make_string(tstr);
     comment->make_string(tcomm);

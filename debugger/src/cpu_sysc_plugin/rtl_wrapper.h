@@ -127,6 +127,8 @@ class RtlWrapper : public sc_module,
     /** ICpuRiscV interface */
     virtual uint64_t readCSR(int idx) { return 0;}
     void virtual writeCSR(int idx, uint64_t val) {}
+    virtual void mmuAddrReserve(uint64_t addr) { }
+    virtual bool mmuAddrRelease(uint64_t addr) { return true; }
 
     /** IClock */
     virtual uint64_t getClockCounter() { return r.clk_cnt.read(); }

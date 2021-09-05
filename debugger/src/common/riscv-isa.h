@@ -32,6 +32,17 @@ union ISA_R_type {
         uint32_t rs2    : 5;  // [24:20]
         uint32_t funct7 : 7;  // [31:25]
     } bits;
+    // atomic
+    struct amo_bits_type {
+        uint32_t opcode : 7;  // [6:0]
+        uint32_t rd     : 5;  // [11:7]
+        uint32_t funct3 : 3;  // [14:12]
+        uint32_t rs1    : 5;  // [19:15]
+        uint32_t rs2    : 5;  // [24:20]
+        uint32_t rl     : 1;  // [25]
+        uint32_t aq     : 1;  // [26]
+        uint32_t funct5 : 5;  // [31:27]
+    } amobits;
     uint32_t value;
 };
 
@@ -246,7 +257,6 @@ union ISA_CJ_type {
     } bits;
     uint16_t value;
 };
-
 
 static const char *const IREGS_NAMES[] = {
     "zero",     // [0] zero
