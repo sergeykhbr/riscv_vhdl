@@ -91,6 +91,7 @@ SC_MODULE(InstrExecute) {
     sc_out<bool> o_ex_fpu_inexact;              // FPU Exception: inexact
     sc_out<bool> o_fpu_valid;                   // FPU output is valid
 
+    sc_out<bool> o_memop_valid;                 // Request to memory is valid
     sc_out<bool> o_memop_sign_ext;              // Load data with sign extending
     sc_out<bool> o_memop_load;                  // Load data instruction
     sc_out<bool> o_memop_store;                 // Store data instruction
@@ -133,17 +134,27 @@ private:
         Multi_Total
     };
 
+    static const unsigned State_Idle = 0;
+    static const unsigned State_WaitMulti = 1;
+    static const unsigned State_Flushing_I = 2;
+    static const unsigned State_WaitAtomicRead = 3;
+
     struct multi_arith_type {
         sc_signal<sc_uint<RISCV_ARCH>> arr[Multi_Total];
     };
 
     struct RegistersType {
+        sc_signal<sc_uint<2>> state;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> npc;
         sc_signal<sc_uint<32>> instr;
+        sc_signal<sc_biguint<2*REGS_TOTAL>> tagcnt_rd;      // 2-bits tag per register (expected)
+        sc_signal<sc_biguint<2*REGS_TOTAL>> tagcnt_wr;      // 2-bits tag per register (written)
+
         sc_signal<sc_uint<6>> memop_waddr;
         sc_signal<sc_uint<4>> memop_wtag;
         sc_signal<sc_uint<RISCV_ARCH>> wval;
+        sc_signal<bool> memop_valid;
         sc_signal<bool> memop_load;
         sc_signal<bool> memop_store;
         bool memop_sign_ext;
@@ -160,12 +171,16 @@ private:
     } v, r;
 
     void R_RESET(RegistersType &iv) {
+        iv.state = State_Idle;
         iv.pc = 0;
         iv.npc = CFG_NMI_RESET_VECTOR;
         iv.instr = 0;
+        iv.tagcnt_rd = ~0;
+        iv.tagcnt_wr = 0;
         iv.memop_waddr = 0;
         iv.memop_wtag = 0;
         iv.wval = 0;
+        iv.memop_valid = 0;
         iv.memop_load = 0;
         iv.memop_store = 0;
         iv.memop_sign_ext = 0;

@@ -80,6 +80,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     o_ex_fpu_underflow("o_ex_fpu_underflow"),
     o_ex_fpu_inexact("o_ex_fpu_inexact"),
     o_fpu_valid("o_fpu_valid"),
+    o_memop_valid("o_memop_valid"),
     o_memop_sign_ext("o_memop_sign_ext"),
     o_memop_load("o_memop_load"),
     o_memop_store("o_memop_store"),
@@ -144,12 +145,16 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << i_trap_valid;
     sensitive << i_trap_pc;
     sensitive << i_flushd_end;
+    sensitive << r.state;
     sensitive << r.pc;
     sensitive << r.npc;
     sensitive << r.instr;
+    sensitive << r.tagcnt_rd;
+    sensitive << r.tagcnt_wr;
     sensitive << r.memop_waddr;
     sensitive << r.memop_wtag;
     sensitive << r.wval;
+    sensitive << r.memop_valid;
     sensitive << r.memop_load;
     sensitive << r.memop_store;
     sensitive << r.memop_addr;
@@ -280,6 +285,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_trap_valid, i_trap_valid.name());
         sc_trace(o_vcd, i_trap_pc, i_trap_pc.name());
         sc_trace(o_vcd, o_ex_npc, o_ex_npc.name());
+        sc_trace(o_vcd, o_memop_valid, o_memop_valid.name());
         sc_trace(o_vcd, o_memop_load, o_memop_load.name());
         sc_trace(o_vcd, o_memop_store, o_memop_store.name());
         sc_trace(o_vcd, o_memop_size, o_memop_size.name());
@@ -310,6 +316,8 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.hold_fencei, pn + ".r_hold_fencei");
         sc_trace(o_vcd, r.memop_waddr, pn + ".r_memop_waddr");
         sc_trace(o_vcd, r.memop_wtag, pn + ".r_memop_wtag");
+        sc_trace(o_vcd, r.tagcnt_rd, pn + ".r_tagcnt_rd");
+        sc_trace(o_vcd, r.tagcnt_wr, pn + ".r_tagcnt_wr");
         sc_trace(o_vcd, w_next_ready, pn + ".w_next_ready");
         sc_trace(o_vcd, w_multi_ena, pn + ".w_multi_ena");
         sc_trace(o_vcd, w_multi_busy, pn + ".w_multi_busy");
@@ -381,6 +389,7 @@ void InstrExecute::comb() {
     wv = i_ivec.read();
     v_call = 0;
     v_ret = 0;
+    v.memop_valid = 0;
     v.valid = 0;
     v.call = 0;
     v.ret = 0;
@@ -661,6 +670,32 @@ void InstrExecute::comb() {
         vb_csr_wdata(4, 0) = i_d_radr1.read()(4, 0);  // zero-extending 5 to 64-bits
     }
 
+    switch (r.state.read()) {
+    case State_Idle:
+        if (v_multi_ena == 1) {
+            v.state = State_WaitMulti;
+        } else if (v_fencei) {
+            v.state = State_Flushing_I;
+        }
+        break;
+    case State_WaitMulti:
+        if (w_arith_valid[Multi_MUL]
+          | w_arith_valid[Multi_DIV]
+          | w_arith_valid[Multi_FPU]) {
+            v.state = State_Idle;
+        }
+        break;
+    case State_Flushing_I:
+        // Flushing DataCache could take much more time than flushing I
+        // so that we should wait D-cache finish before requesting new
+        // instruction to avoid reading obsolete data.
+        if (i_flushd_end.read() == 1) {
+            v.state = State_Idle;
+        }
+        break;
+    default:;
+    }
+
 
     // Latch ready result
     v_wena = 0;
@@ -677,6 +712,7 @@ void InstrExecute::comb() {
             v.progbuf_npc = vb_npc_incr;
         }
         v.instr = i_d_instr;
+        v.memop_valid = i_memop_load | i_memop_store;
         v.memop_load = i_memop_load;
         v.memop_sign_ext = i_memop_sign_ext;
         v.memop_store = i_memop_store;
@@ -746,6 +782,7 @@ void InstrExecute::comb() {
     o_csr_wdata = vb_csr_wdata;
     o_ex_npc = vb_prog_npc;
 
+    o_memop_valid = r.memop_valid;
     o_memop_sign_ext = r.memop_sign_ext;
     o_memop_load = r.memop_load;
     o_memop_store = r.memop_store;

@@ -443,6 +443,8 @@ enum ERegFpuNames {
     RegFpu_Total
 };
 
+static const int REGS_BUS_WIDTH = 6;
+static const int REGS_TOTAL = (1 << REGS_BUS_WIDTH);//Reg_Total + RegFpu_Total;
 
 union csr_mstatus_type {
     struct bits_type {

@@ -166,6 +166,7 @@ private:
         sc_signal<bool> ex_fpu_inexact;              // FPU Exception: inexact
         sc_signal<bool> fpu_valid;
 
+        sc_signal<bool> memop_valid;
         sc_signal<bool> memop_sign_ext;
         sc_signal<bool> memop_load;
         sc_signal<bool> memop_store;

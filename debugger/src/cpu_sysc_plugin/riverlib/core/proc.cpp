@@ -222,6 +222,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->o_ex_fpu_underflow(w.e.ex_fpu_underflow);
     exec0->o_ex_fpu_inexact(w.e.ex_fpu_inexact);
     exec0->o_fpu_valid(w.e.fpu_valid);
+    exec0->o_memop_valid(w.e.memop_valid);
     exec0->o_memop_sign_ext(w.e.memop_sign_ext);
     exec0->o_memop_load(w.e.memop_load);
     exec0->o_memop_store(w.e.memop_store);
@@ -253,6 +254,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     mem0->i_e_instr(w.e.instr);
     mem0->i_e_flushd(w.e.flushd);
     mem0->o_flushd(w.m.flushd);
+    mem0->i_memop_valid(w.e.memop_valid);
     mem0->i_memop_waddr(w.e.memop_waddr);
     mem0->i_memop_wtag(w.e.memop_wtag);
     mem0->i_memop_wdata(w.e.memop_wdata);

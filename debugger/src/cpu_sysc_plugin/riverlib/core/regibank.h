@@ -63,7 +63,6 @@ private:
     friend struct Processor; // for debug purposes(remove it)s
 
     int REG_MSB() { return 4 + fpu_ena_; }
-    static const int REGS_TOTAL = Reg_Total + RegFpu_Total;
 
     struct reg_score_type {
         sc_uint<RISCV_ARCH> val;

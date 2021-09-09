@@ -32,6 +32,7 @@ SC_MODULE(MemAccess) {
     sc_in<bool> i_e_flushd;
     sc_out<bool> o_flushd;
 
+    sc_in<bool> i_memop_valid;                      // Memory request is valid
     sc_in<sc_uint<6>> i_memop_waddr;                // Register address to be written (0=no writing)
     sc_in<sc_uint<4>> i_memop_wtag;                
     sc_in<sc_uint<RISCV_ARCH>> i_memop_wdata;       // Register value to be written
