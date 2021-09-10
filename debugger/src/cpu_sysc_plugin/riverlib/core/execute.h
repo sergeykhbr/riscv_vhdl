@@ -19,6 +19,7 @@
 
 #include <systemc.h>
 #include "../river_cfg.h"
+#include "riscv-isa.h"
 #include "arith/int_div.h"
 #include "arith/int_mul.h"
 #include "arith/shift.h"
@@ -57,12 +58,15 @@ SC_MODULE(InstrExecute) {
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_dport_npc; // Debug port npc value to write
 
     sc_in<sc_uint<RISCV_ARCH>> i_rdata1;        // Integer/Float register value 1
+    sc_in<sc_uint<2>> i_rtag1;
     sc_in<bool> i_rhazard1;
     sc_in<sc_uint<RISCV_ARCH>> i_rdata2;        // Integer/Float register value 2
+    sc_in<sc_uint<2>> i_rtag2;
     sc_in<bool> i_rhazard2;
     sc_in<sc_uint<4>> i_wtag;
     sc_out<bool> o_wena;
     sc_out<sc_uint<6>> o_waddr;                 // Address to store result of the instruction (0=do not store)
+    sc_out<sc_uint<2>> o_rtag;
     sc_out<bool> o_whazard;
     sc_out<sc_uint<RISCV_ARCH>> o_wdata;        // Value to store
     sc_out<sc_uint<4>> o_wtag;
@@ -135,22 +139,27 @@ private:
     };
 
     static const unsigned State_Idle = 0;
-    static const unsigned State_WaitMulti = 1;
-    static const unsigned State_Flushing_I = 2;
-    static const unsigned State_WaitAtomicRead = 3;
+    static const unsigned State_Miss = 1;
+    static const unsigned State_WaitMemAcces = 2;
+    static const unsigned State_WaitMulti = 3;
+    static const unsigned State_Flushing_I = 4;
+    static const unsigned State_WaitAtomicRead = 5;
 
     struct multi_arith_type {
         sc_signal<sc_uint<RISCV_ARCH>> arr[Multi_Total];
     };
 
     struct RegistersType {
-        sc_signal<sc_uint<2>> state;
+        sc_signal<sc_uint<3>> state;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> npc;
         sc_signal<sc_uint<32>> instr;
+        sc_signal<sc_bv<Instr_Total>> ivec;
         sc_signal<sc_biguint<2*REGS_TOTAL>> tagcnt_rd;      // 2-bits tag per register (expected)
         sc_signal<sc_biguint<2*REGS_TOTAL>> tagcnt_wr;      // 2-bits tag per register (written)
 
+        sc_signal<sc_uint<2>> rtag;
+        sc_signal<bool> memop_wena;
         sc_signal<sc_uint<6>> memop_waddr;
         sc_signal<sc_uint<4>> memop_wtag;
         sc_signal<sc_uint<RISCV_ARCH>> wval;
@@ -175,8 +184,11 @@ private:
         iv.pc = 0;
         iv.npc = CFG_NMI_RESET_VECTOR;
         iv.instr = 0;
+        iv.ivec = 0;
         iv.tagcnt_rd = ~0;
         iv.tagcnt_wr = 0;
+        iv.rtag = 0;
+        iv.memop_wena = 0;
         iv.memop_waddr = 0;
         iv.memop_wtag = 0;
         iv.wval = 0;
@@ -212,6 +224,9 @@ private:
     bool w_hold_multi;
     bool w_hold_hazard;
     bool w_hold_memop;
+
+    bool w_test_hazard1;
+    bool w_test_hazard2;
 
     sc_signal<sc_uint<RISCV_ARCH>> wb_rdata1;
     sc_signal<sc_uint<RISCV_ARCH>> wb_rdata2;

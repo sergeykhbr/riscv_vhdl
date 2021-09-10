@@ -83,10 +83,12 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     sensitive << w.e.waddr;
     sensitive << w.e.wdata;
     sensitive << w.e.wtag;
+    sensitive << w.e.rtag;
     sensitive << w.w.wena;
     sensitive << w.w.waddr;
     sensitive << w.w.wdata;
     sensitive << w.w.wtag;
+    sensitive << w.w.rtag;
     sensitive << w.f.imem_req_valid;
     sensitive << w.f.imem_req_addr;
     sensitive << w.f.valid;
@@ -191,12 +193,15 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->i_dport_npc_write(csr.dbg_pc_write);
     exec0->i_dport_npc(csr.dbg_pc);
     exec0->i_rdata1(ireg.rdata1);
+    exec0->i_rtag1(ireg.rtag1);
     exec0->i_rhazard1(ireg.rhazard1);
     exec0->i_rdata2(ireg.rdata2);
+    exec0->i_rtag2(ireg.rtag2);
     exec0->i_rhazard2(ireg.rhazard2);
     exec0->i_wtag(ireg.wtag);
     exec0->o_wena(w.e.wena);
     exec0->o_waddr(w.e.waddr);
+    exec0->o_rtag(w.e.rtag);
     exec0->o_whazard(w.e.whazard);
     exec0->o_wdata(w.e.wdata);
     exec0->o_wtag(w.e.wtag);
@@ -252,6 +257,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     mem0->i_e_valid(w.e.valid);
     mem0->i_e_pc(w.e.pc);
     mem0->i_e_instr(w.e.instr);
+    mem0->i_e_rtag(w.e.rtag);
     mem0->i_e_flushd(w.e.flushd);
     mem0->o_flushd(w.m.flushd);
     mem0->i_memop_valid(w.e.memop_valid);
@@ -268,6 +274,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     mem0->o_wb_waddr(w.w.waddr);
     mem0->o_wb_wdata(w.w.wdata);
     mem0->o_wb_wtag(w.w.wtag);
+    mem0->o_wb_rtag(w.w.rtag);
     mem0->i_wb_ready(w_writeback_ready);
     mem0->i_mem_req_ready(i_req_data_ready);
     mem0->o_mem_valid(o_req_data_valid);
@@ -297,14 +304,17 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     iregs0->i_nrst(i_nrst);
     iregs0->i_radr1(w.d.radr1);
     iregs0->o_rdata1(ireg.rdata1);
+    iregs0->o_rtag1(ireg.rtag1);
     iregs0->o_rhazard1(ireg.rhazard1);
     iregs0->i_radr2(w.d.radr2);
     iregs0->o_rdata2(ireg.rdata2);
+    iregs0->o_rtag2(ireg.rtag2);
     iregs0->o_rhazard2(ireg.rhazard2);
     iregs0->i_waddr(wb_reg_waddr);
     iregs0->i_wena(w_reg_wena);
     iregs0->i_whazard(w_reg_whazard);
     iregs0->i_wtag(wb_reg_wtag);
+    iregs0->i_rtag(wb_reg_rtag);
     iregs0->i_wdata(wb_reg_wdata);
     iregs0->o_wtag(ireg.wtag);
     iregs0->i_dport_addr(dbg.reg_addr);
@@ -466,12 +476,14 @@ void Processor::comb() {
         wb_reg_waddr = w.e.waddr;
         wb_reg_wdata = w.e.wdata;
         wb_reg_wtag = w.e.wtag;
+        wb_reg_rtag = w.e.rtag;
     } else {
         w_reg_wena = w.w.wena;
         w_reg_whazard = 0;
         wb_reg_waddr = w.w.waddr;
         wb_reg_wdata = w.w.wdata;
         wb_reg_wtag = w.w.wtag;
+        wb_reg_rtag = w.w.rtag;
     }
 
     w_flush_pipeline = w.e.flushi.read() || w.e.ex_breakpoint.read()

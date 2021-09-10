@@ -49,12 +49,15 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     i_dport_npc_write("i_dport_npc_write"),
     i_dport_npc("i_dport_npc"),
     i_rdata1("i_rdata1"),
+    i_rtag1("i_rtag1"),
     i_rhazard1("i_rhazard1"),
     i_rdata2("i_rdata2"),
+    i_rtag2("i_rtag2"),
     i_rhazard2("i_rhazard2"),
     i_wtag("i_wtag"),
     o_wena("o_wena"),
     o_waddr("o_waddr"),
+    o_rtag("o_rtag"),
     o_whazard("o_whazard"),
     o_wdata("o_wdata"),
     o_wtag("o_wtag"),
@@ -135,8 +138,10 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << i_dport_npc_write;
     sensitive << i_dport_npc;
     sensitive << i_rdata1;
+    sensitive << i_rtag1;
     sensitive << i_rhazard1;
     sensitive << i_rdata2;
+    sensitive << i_rtag2;
     sensitive << i_rhazard2;
     sensitive << i_wtag;
     sensitive << i_csr_rdata;
@@ -149,8 +154,11 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << r.pc;
     sensitive << r.npc;
     sensitive << r.instr;
+    sensitive << r.ivec;
     sensitive << r.tagcnt_rd;
     sensitive << r.tagcnt_wr;
+    sensitive << r.rtag;
+    sensitive << r.memop_wena;
     sensitive << r.memop_waddr;
     sensitive << r.memop_wtag;
     sensitive << r.wval;
@@ -271,12 +279,15 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_instr_load_fault, i_instr_load_fault.name());
         sc_trace(o_vcd, i_instr_executable, i_instr_executable.name());
         sc_trace(o_vcd, i_rdata1, i_rdata1.name());
+        sc_trace(o_vcd, i_rtag1, i_rtag1.name());
         sc_trace(o_vcd, i_rhazard1, i_rhazard1.name());
         sc_trace(o_vcd, i_rdata2, i_rdata2.name());
+        sc_trace(o_vcd, i_rtag2, i_rtag2.name());
         sc_trace(o_vcd, i_rhazard2, i_rhazard2.name());
         sc_trace(o_vcd, o_wena, o_wena.name());
         sc_trace(o_vcd, o_whazard, o_whazard.name());
         sc_trace(o_vcd, o_waddr, o_waddr.name());
+        sc_trace(o_vcd, o_rtag, o_rtag.name());
         sc_trace(o_vcd, o_wdata, o_wdata.name());
         sc_trace(o_vcd, o_d_ready, o_d_ready.name());
         sc_trace(o_vcd, o_csr_wena, o_csr_wena.name());
@@ -318,6 +329,8 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.memop_wtag, pn + ".r_memop_wtag");
         sc_trace(o_vcd, r.tagcnt_rd, pn + ".r_tagcnt_rd");
         sc_trace(o_vcd, r.tagcnt_wr, pn + ".r_tagcnt_wr");
+        sc_trace(o_vcd, r.rtag, pn + ".r_rtag");
+        sc_trace(o_vcd, r.memop_wena, pn + ".r_memop_wena");
         sc_trace(o_vcd, w_next_ready, pn + ".w_next_ready");
         sc_trace(o_vcd, w_multi_ena, pn + ".w_multi_ena");
         sc_trace(o_vcd, w_multi_busy, pn + ".w_multi_busy");
@@ -325,6 +338,8 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, w_hold_memop, pn + ".w_hold_memop");
         sc_trace(o_vcd, w_hold_multi, pn + ".w_hold_multi");
         sc_trace(o_vcd, w_hold_hazard, pn + ".w_hold_hazard");
+        sc_trace(o_vcd, w_test_hazard1, pn + ".w_test_hazard1");
+        sc_trace(o_vcd, w_test_hazard2, pn + ".w_test_hazard2");
     }
     mul0->generateVCD(i_vcd, o_vcd);
     div0->generateVCD(i_vcd, o_vcd);
@@ -670,12 +685,75 @@ void InstrExecute::comb() {
         vb_csr_wdata(4, 0) = i_d_radr1.read()(4, 0);  // zero-extending 5 to 64-bits
     }
 
+    v.memop_wena = 0;
+    int t_d_waddr = i_d_waddr.read().to_int();
+    int t_tagcnt_wr;
+    sc_biguint<2*REGS_TOTAL> vb_tagcnt_wr;
+    sc_biguint<2*REGS_TOTAL> vb_tagcnt_rd;
+    t_tagcnt_wr = r.tagcnt_wr.read()(2*t_d_waddr+1,
+                                    2*t_d_waddr).to_int();
+    vb_tagcnt_wr(2*t_d_waddr+1, 2*t_d_waddr) = t_tagcnt_wr + 1;
+    vb_tagcnt_wr(1,0) = 0;
+    vb_tagcnt_rd(2*t_d_waddr+1, 2*t_d_waddr) = t_tagcnt_wr;
+    vb_tagcnt_rd(1,0) = 0;
+
+    int t_d_radr1 = i_d_radr1.read().to_int();
+    int t_d_radr2 = i_d_radr2.read().to_int();
+    w_test_hazard1 = 0;
+    if (r.tagcnt_rd.read()(2*t_d_radr1+1, 2*t_d_radr1) != i_rtag1.read()) {
+        w_test_hazard1 = 1;
+    }
+    w_test_hazard2 = 0;
+    if (r.tagcnt_rd.read()(2*t_d_radr2+1, 2*t_d_radr2) != i_rtag2.read()) {
+        w_test_hazard2 = 1;
+    }
+
     switch (r.state.read()) {
     case State_Idle:
-        if (v_multi_ena == 1) {
-            v.state = State_WaitMulti;
-        } else if (v_fencei) {
-            v.state = State_Flushing_I;
+        if (i_d_pc.read() == r.npc.read() && i_dbg_progbuf_ena.read() == 0
+            && i_d_progbuf_ena.read() == 0) {
+            v.ivec = i_ivec;
+            v.memop_wena = i_d_waddr.read().or_reduce();
+            v.tagcnt_wr = vb_tagcnt_wr;
+            v.tagcnt_rd = vb_tagcnt_rd;
+            v.rtag = t_tagcnt_wr;
+            if (v_multi_ena == 1) {
+                v.state = State_WaitMulti;
+            } else if ((i_memop_load.read() || i_memop_store.read()
+                        || wv[Instr_FENCE] || wv[Instr_FENCE_I])
+                        && !i_memop_ready.read()) {
+                v.state = State_WaitMemAcces;
+            } else if (v_fencei) {
+                v.state = State_Flushing_I;
+            }
+        } else {
+            v.state = State_Miss;
+        }
+        break;
+    case State_Miss:
+        if (i_d_pc.read() == r.npc.read() && i_dbg_progbuf_ena.read() == 0
+            && i_d_progbuf_ena.read() == 0) {
+            v.ivec = i_ivec;
+            v.memop_wena = i_d_waddr.read().or_reduce();
+            v.tagcnt_wr = vb_tagcnt_wr;
+            v.tagcnt_rd = vb_tagcnt_rd;
+            v.rtag = t_tagcnt_wr;
+            if (v_multi_ena == 1) {
+                v.state = State_WaitMulti;
+            } else if (v_fencei) {
+                v.state = State_Flushing_I;
+            } else {
+                v.state = State_Idle;
+            }
+        }
+        break;
+    case State_WaitMemAcces:
+        if (i_memop_ready.read()) {
+            if (r.ivec.read()[Instr_FENCE_I] == 1) {
+                v.state = State_Flushing_I;
+            } else {
+                v.state = State_Idle;
+            }
         }
         break;
     case State_WaitMulti:
@@ -683,6 +761,7 @@ void InstrExecute::comb() {
           | w_arith_valid[Multi_DIV]
           | w_arith_valid[Multi_FPU]) {
             v.state = State_Idle;
+            v.memop_wena = r.memop_waddr.read().or_reduce();
         }
         break;
     case State_Flushing_I:
@@ -695,7 +774,6 @@ void InstrExecute::comb() {
         break;
     default:;
     }
-
 
     // Latch ready result
     v_wena = 0;
@@ -774,6 +852,7 @@ void InstrExecute::comb() {
     o_wena = v_wena;
     o_whazard = v_whazard;
     o_waddr = vb_waddr;
+    o_rtag = r.rtag;
     o_wdata = vb_o_wdata;
     o_wtag = i_wtag;
     o_d_ready = !v_hold_exec;

@@ -145,6 +145,7 @@ private:
 
         sc_signal<bool> wena;
         sc_signal<sc_uint<6>> waddr;
+        sc_signal<sc_uint<2>> rtag;
         sc_signal<sc_uint<RISCV_ARCH>> wdata;
         sc_signal<sc_uint<4>> wtag;
         sc_signal<bool> whazard;
@@ -193,12 +194,15 @@ private:
         sc_signal<sc_uint<6>> waddr;
         sc_signal<sc_uint<RISCV_ARCH>> wdata;
         sc_signal<sc_uint<4>> wtag;
+        sc_signal<sc_uint<2>> rtag;
     };
 
     struct IntRegsType {
         sc_signal<sc_uint<RISCV_ARCH>> rdata1;
+        sc_signal<sc_uint<2>> rtag1;
         sc_signal<bool> rhazard1;
         sc_signal<sc_uint<RISCV_ARCH>> rdata2;
+        sc_signal<sc_uint<2>> rtag2;
         sc_signal<bool> rhazard2;
         sc_signal<sc_uint<4>> wtag;
         sc_signal<sc_uint<RISCV_ARCH>> dport_rdata;
@@ -276,6 +280,7 @@ private:
     sc_signal<sc_uint<6>> wb_reg_waddr;
     sc_signal<sc_uint<RISCV_ARCH>> wb_reg_wdata;
     sc_signal<sc_uint<4>> wb_reg_wtag;
+    sc_signal<sc_uint<2>> wb_reg_rtag;
 
     bool fpu_ena_;
     bool tracer_ena_;
