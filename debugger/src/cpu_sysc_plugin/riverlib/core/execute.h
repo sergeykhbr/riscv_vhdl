@@ -20,6 +20,8 @@
 #include <systemc.h>
 #include "../river_cfg.h"
 #include "riscv-isa.h"
+#include "arith/alu_logic.h"
+#include "arith/int_addsub.h"
 #include "arith/int_div.h"
 #include "arith/int_mul.h"
 #include "arith/shift.h"
@@ -34,6 +36,7 @@ SC_MODULE(InstrExecute) {
     sc_in<sc_uint<6>> i_d_radr1;
     sc_in<sc_uint<6>> i_d_radr2;
     sc_in<sc_uint<6>> i_d_waddr;
+    sc_in<sc_uint<12>> i_d_csr_addr;            // decoded CSR address
     sc_in<sc_uint<RISCV_ARCH>> i_d_imm;
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_d_pc;      // Instruction pointer on decoded instruction
     sc_in<sc_uint<32>> i_d_instr;               // Decoded instruction value
@@ -73,6 +76,7 @@ SC_MODULE(InstrExecute) {
     sc_out<bool> o_d_ready;                     // Hold pipeline while 'writeback' not done or multi-clock instruction.
     sc_out<bool> o_csr_wena;                    // Write new CSR value
     sc_in<sc_uint<RISCV_ARCH>> i_csr_rdata;     // CSR current value
+    sc_out<sc_uint<12>> o_csr_waddr;            // updating CSR value
     sc_out<sc_uint<RISCV_ARCH>> o_csr_wdata;    // CSR new value
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_mepc;   // next instruction in a case of MRET
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_uepc;
@@ -138,15 +142,35 @@ private:
         Multi_Total
     };
 
+    enum EResTypes {
+        Res_Zero,
+        Res_Reg2,
+        Res_Npc,
+        Res_Csr,
+        Res_Alu,
+        Res_AddSub,
+        Res_Shifter,
+        Res_IMul,
+        Res_IDiv,
+        Res_FPU,
+        Res_Total
+    };
+
     static const unsigned State_Idle = 0;
-    static const unsigned State_Miss = 1;
     static const unsigned State_WaitMemAcces = 2;
     static const unsigned State_WaitMulti = 3;
     static const unsigned State_Flushing_I = 4;
-    static const unsigned State_WaitAtomicRead = 5;
+    static const unsigned State_Csr = 5;
+    static const unsigned State_WaitAtomicRead = 6;
 
     struct multi_arith_type {
         sc_signal<sc_uint<RISCV_ARCH>> arr[Multi_Total];
+    };
+
+    struct select_type {
+        sc_signal<bool> ena[Res_Total];
+        sc_signal<bool> valid[Res_Total];
+        sc_signal<sc_uint<RISCV_ARCH>> res[Res_Total];
     };
 
     struct RegistersType {
@@ -154,16 +178,20 @@ private:
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> npc;
         sc_signal<sc_uint<32>> instr;
-        sc_signal<sc_bv<Instr_Total>> ivec;
         sc_signal<sc_biguint<2*REGS_TOTAL>> tagcnt_rd;      // 2-bits tag per register (expected)
         sc_signal<sc_biguint<2*REGS_TOTAL>> tagcnt_wr;      // 2-bits tag per register (written)
 
-        sc_signal<sc_uint<2>> rtag;
-        sc_signal<bool> memop_wena;
+        sc_signal<sc_uint<Res_Total>> select;
+        sc_signal<sc_uint<6>> reg_waddr;
+        sc_signal<sc_uint<2>> reg_wtag;
+
+        sc_signal<bool> csr_write;
+        sc_signal<sc_uint<12>> csr_waddr;
+        sc_signal<sc_uint<RISCV_ARCH>> csr_wdata;
+
+        sc_signal<bool> memop_valid;
         sc_signal<sc_uint<6>> memop_waddr;
         sc_signal<sc_uint<4>> memop_wtag;
-        sc_signal<sc_uint<RISCV_ARCH>> wval;
-        sc_signal<bool> memop_valid;
         sc_signal<bool> memop_load;
         sc_signal<bool> memop_store;
         bool memop_sign_ext;
@@ -171,6 +199,11 @@ private:
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> memop_addr;
         sc_signal<sc_uint<RISCV_ARCH>> memop_wdata;
 
+        sc_signal<sc_uint<RISCV_ARCH>> res_reg2;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> res_npc;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> res_csr;
+
+        sc_signal<bool> reg_write;
         sc_signal<bool> valid;
         sc_signal<bool> call;
         sc_signal<bool> ret;
@@ -184,14 +217,15 @@ private:
         iv.pc = 0;
         iv.npc = CFG_NMI_RESET_VECTOR;
         iv.instr = 0;
-        iv.ivec = 0;
-        iv.tagcnt_rd = ~0;
+        iv.tagcnt_rd = ~0x3;
         iv.tagcnt_wr = 0;
-        iv.rtag = 0;
-        iv.memop_wena = 0;
+        iv.select = 0;
+        iv.reg_waddr = 0;
+        iv.reg_wtag = 0;
+        iv.csr_write = 0;
+        iv.csr_wdata = 0;
         iv.memop_waddr = 0;
         iv.memop_wtag = 0;
-        iv.wval = 0;
         iv.memop_valid = 0;
         iv.memop_load = 0;
         iv.memop_store = 0;
@@ -200,6 +234,11 @@ private:
         iv.memop_addr = 0;
         iv.memop_wdata = 0;
 
+        iv.res_reg2 = 0;
+        iv.res_npc = 0;
+        iv.res_csr = 0;
+
+        iv.reg_write = 0;
         iv.valid = 0;
         iv.call = 0;
         iv.ret = 0;
@@ -208,16 +247,24 @@ private:
         iv.progbuf_npc = 0;
     }
 
-    multi_arith_type wb_arith_res;
+    select_type wb_select;
+    sc_signal<sc_uint<3>> wb_alu_mode;
+    sc_signal<sc_uint<5>> wb_addsub_mode;
+    sc_signal<sc_uint<4>> wb_shifter_mode;
+#ifdef UPDT2
+#else
     sc_signal<bool> w_arith_ena[Multi_Total];
     sc_signal<bool> w_arith_valid[Multi_Total];
+#endif
     sc_signal<bool> w_arith_busy[Multi_Total];
     sc_signal<bool> w_arith_residual_high;
     sc_signal<bool> w_mul_hsu;
     sc_signal<sc_bv<Instr_FPU_Total>> wb_fpu_vec;
     bool w_exception_store;
     bool w_exception_load;
+#if!defined(UPDT2)
     bool w_next_ready;
+#endif
     bool w_multi_ena;
     bool w_multi_ready;
     bool w_multi_busy;
@@ -240,6 +287,8 @@ private:
     sc_signal<sc_uint<RISCV_ARCH>> wb_sra;
     sc_signal<sc_uint<RISCV_ARCH>> wb_sraw;
 
+    AluLogic *alu0;
+    IntAddSub *addsub0;
     IntMul *mul0;
     IntDiv *div0;
     Shifter *sh0;

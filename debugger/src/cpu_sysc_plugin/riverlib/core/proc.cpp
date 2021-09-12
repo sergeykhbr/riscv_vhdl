@@ -175,6 +175,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->i_d_radr1(w.d.radr1);
     exec0->i_d_radr2(w.d.radr2);
     exec0->i_d_waddr(w.d.waddr);
+    exec0->i_d_csr_addr(w.d.csr_addr);
     exec0->i_d_imm(w.d.imm);
     exec0->i_wb_waddr(w.w.waddr);
     exec0->i_memop_store(w.d.memop_store);
@@ -208,6 +209,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->o_d_ready(w.e.d_ready);
     exec0->o_csr_wena(w.e.csr_wena);
     exec0->i_csr_rdata(csr.rdata);
+    exec0->o_csr_waddr(w.e.csr_addr);
     exec0->o_csr_wdata(w.e.csr_wdata);
     exec0->i_mepc(csr.mepc);
     exec0->i_uepc(csr.uepc);
@@ -254,7 +256,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     mem0 = new MemAccess("mem0", async_reset);
     mem0->i_clk(i_clk);
     mem0->i_nrst(i_nrst);
-    mem0->i_e_valid(w.e.valid);
     mem0->i_e_pc(w.e.pc);
     mem0->i_e_instr(w.e.instr);
     mem0->i_e_rtag(w.e.rtag);

@@ -27,6 +27,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     i_d_radr1("i_d_radr1"),
     i_d_radr2("i_d_radr2"),
     i_d_waddr("i_d_waddr"),
+    i_d_csr_addr("i_d_csr_addr"),
     i_d_imm("i_d_imm"),
     i_d_pc("i_d_pc"),
     i_d_instr("i_d_instr"),
@@ -64,6 +65,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     o_d_ready("o_d_ready"),
     o_csr_wena("o_csr_wena"),
     i_csr_rdata("i_csr_rdata"),
+    o_csr_waddr("o_csr_waddr"),
     o_csr_wdata("o_csr_wdata"),
     i_mepc("i_mepc"),
     i_uepc("i_uepc"),
@@ -115,6 +117,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << i_d_radr1;
     sensitive << i_d_radr2;
     sensitive << i_d_waddr;
+    sensitive << i_d_csr_addr;
     sensitive << i_d_imm;
     sensitive << i_d_pc;
     sensitive << i_d_instr;
@@ -154,31 +157,45 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << r.pc;
     sensitive << r.npc;
     sensitive << r.instr;
-    sensitive << r.ivec;
     sensitive << r.tagcnt_rd;
     sensitive << r.tagcnt_wr;
-    sensitive << r.rtag;
-    sensitive << r.memop_wena;
+    sensitive << r.select;
+    sensitive << r.reg_waddr;
+    sensitive << r.reg_wtag;
+    sensitive << r.csr_write;
+    sensitive << r.csr_waddr;
+    sensitive << r.csr_wdata;
     sensitive << r.memop_waddr;
     sensitive << r.memop_wtag;
-    sensitive << r.wval;
     sensitive << r.memop_valid;
     sensitive << r.memop_load;
     sensitive << r.memop_store;
     sensitive << r.memop_addr;
+    sensitive << r.memop_wdata;
+
+    sensitive << r.res_reg2;
+    sensitive << r.res_npc;
+    sensitive << r.res_csr;
+
+    sensitive << r.reg_write;
     sensitive << r.valid;
     sensitive << r.call;
     sensitive << r.ret;
     sensitive << r.hold_fencei;
-    sensitive << wb_arith_res.arr[Multi_MUL];
-    sensitive << wb_arith_res.arr[Multi_DIV];
-    sensitive << wb_arith_res.arr[Multi_FPU];
+#ifdef UPDT2
+    for (int i = 0; i < Res_Total; i++) {
+        sensitive << wb_select.ena[i];
+        sensitive << wb_select.valid[i];
+        sensitive << wb_select.res[i];
+    }
+#else
     sensitive << w_arith_valid[Multi_MUL];
     sensitive << w_arith_valid[Multi_DIV];
     sensitive << w_arith_valid[Multi_FPU];
     sensitive << w_arith_busy[Multi_MUL];
     sensitive << w_arith_busy[Multi_DIV];
     sensitive << w_arith_busy[Multi_FPU];
+#endif
     sensitive << wb_shifter_a1;
     sensitive << wb_shifter_a2;
     sensitive << wb_sll;
@@ -192,62 +209,76 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << i_nrst;
     sensitive << i_clk.pos();
 
+    alu0 = new AluLogic("alu0", async_reset);
+    alu0->i_clk(i_clk);
+    alu0->i_nrst(i_nrst);
+    alu0->i_mode(wb_alu_mode);
+    alu0->i_a1(wb_rdata1);
+    alu0->i_a2(wb_rdata2);
+    alu0->o_res(wb_select.res[Res_Alu]);
+
+    addsub0 = new IntAddSub("addsub0", async_reset);
+    addsub0->i_clk(i_clk);
+    addsub0->i_nrst(i_nrst);
+    addsub0->i_mode(wb_addsub_mode);
+    addsub0->i_a1(wb_rdata1);
+    addsub0->i_a2(wb_rdata2);
+    addsub0->o_res(wb_select.res[Res_AddSub]);
+
     mul0 = new IntMul("mul0", async_reset);
     mul0->i_clk(i_clk);
     mul0->i_nrst(i_nrst);
-    mul0->i_ena(w_arith_ena[Multi_MUL]);
+    mul0->i_ena(wb_select.ena[Res_IMul]);
     mul0->i_unsigned(i_unsigned_op);
     mul0->i_hsu(w_mul_hsu);
     mul0->i_high(w_arith_residual_high);
     mul0->i_rv32(i_rv32);
     mul0->i_a1(wb_rdata1);
     mul0->i_a2(wb_rdata2);
-    mul0->o_res(wb_arith_res.arr[Multi_MUL]);
-    mul0->o_valid(w_arith_valid[Multi_MUL]);
+    mul0->o_res(wb_select.res[Res_IMul]);
+    mul0->o_valid(wb_select.valid[Res_IMul]);
     mul0->o_busy(w_arith_busy[Multi_MUL]);
 
     div0 = new IntDiv("div0", async_reset);
     div0->i_clk(i_clk);
     div0->i_nrst(i_nrst);
-    div0->i_ena(w_arith_ena[Multi_DIV]);
+    div0->i_ena(wb_select.ena[Res_IDiv]);
     div0->i_unsigned(i_unsigned_op);
     div0->i_residual(w_arith_residual_high);
     div0->i_rv32(i_rv32);
     div0->i_a1(wb_rdata1);
     div0->i_a2(wb_rdata2);
-    div0->o_res(wb_arith_res.arr[Multi_DIV]);
-    div0->o_valid(w_arith_valid[Multi_DIV]);
+    div0->o_res(wb_select.res[Res_IDiv]);
+    div0->o_valid(wb_select.valid[Res_IDiv]);
     div0->o_busy(w_arith_busy[Multi_DIV]);
 
-    sh0 = new Shifter("sh0");
+    sh0 = new Shifter("sh0", async_reset);
+    sh0->i_clk(i_clk);
+    sh0->i_nrst(i_nrst);
+    sh0->i_mode(wb_shifter_mode);
     sh0->i_a1(wb_shifter_a1);
     sh0->i_a2(wb_shifter_a2);
-    sh0->o_sll(wb_sll);
-    sh0->o_sllw(wb_sllw);
-    sh0->o_srl(wb_srl);
-    sh0->o_sra(wb_sra);
-    sh0->o_srlw(wb_srlw);
-    sh0->o_sraw(wb_sraw);
+    div0->o_res(wb_select.res[Res_Shifter]);
 
     if (fpu_ena_) {
         fpu0 = new FpuTop("fpu0", async_reset);
         fpu0->i_clk(i_clk);
         fpu0->i_nrst(i_nrst);
-        fpu0->i_ena(w_arith_ena[Multi_FPU]);
+        fpu0->i_ena(wb_select.ena[Res_FPU]);
         fpu0->i_ivec(wb_fpu_vec);
         fpu0->i_a(wb_rdata1);
         fpu0->i_b(wb_rdata2);
-        fpu0->o_res(wb_arith_res.arr[Multi_FPU]);
+        fpu0->o_res(wb_select.res[Res_FPU]);
         fpu0->o_ex_invalidop(o_ex_fpu_invalidop);
         fpu0->o_ex_divbyzero(o_ex_fpu_divbyzero);
         fpu0->o_ex_overflow(o_ex_fpu_overflow);
         fpu0->o_ex_underflow(o_ex_fpu_underflow);
         fpu0->o_ex_inexact(o_ex_fpu_inexact);
-        fpu0->o_valid(w_arith_valid[Multi_FPU]);
+        fpu0->o_valid(wb_select.valid[Res_FPU]);
         fpu0->o_busy(w_arith_busy[Multi_FPU]);
     } else {
-        wb_arith_res.arr[Multi_FPU] = 0;
-        w_arith_valid[Multi_FPU] = 0;
+        wb_select.res[Res_FPU] = 0;
+        wb_select.valid[Res_FPU] = 0;
         w_arith_busy[Multi_FPU] = 0;
         o_fpu_valid = 0;
         o_ex_fpu_invalidop = 0;
@@ -259,6 +290,8 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
 };
 
 InstrExecute::~InstrExecute() {
+    delete alu0;
+    delete addsub0;
     delete mul0;
     delete div0;
     delete sh0;
@@ -273,6 +306,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_d_pc, i_d_pc.name());
         sc_trace(o_vcd, i_d_instr, i_d_instr.name());
         sc_trace(o_vcd, i_d_waddr, i_d_waddr.name());
+        sc_trace(o_vcd, i_d_csr_addr, i_d_csr_addr.name());
         sc_trace(o_vcd, i_wb_waddr, i_wb_waddr.name());
         sc_trace(o_vcd, i_f64, i_f64.name());
         sc_trace(o_vcd, i_unsup_exception, i_unsup_exception.name());
@@ -292,6 +326,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_d_ready, o_d_ready.name());
         sc_trace(o_vcd, o_csr_wena, o_csr_wena.name());
         sc_trace(o_vcd, i_csr_rdata, i_csr_rdata.name());
+        sc_trace(o_vcd, o_csr_waddr, o_csr_waddr.name());
         sc_trace(o_vcd, o_csr_wdata, o_csr_wdata.name());
         sc_trace(o_vcd, i_trap_valid, i_trap_valid.name());
         sc_trace(o_vcd, i_trap_pc, i_trap_pc.name());
@@ -318,20 +353,23 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_ex_instr_not_executable, o_ex_instr_not_executable.name());
 
         std::string pn(name());
-        sc_trace(o_vcd, w_arith_ena[Multi_MUL], pn + ".w_arith_ena(0)");
-        sc_trace(o_vcd, wb_arith_res.arr[Multi_MUL], pn + ".wb_arith_res(0)");
-        sc_trace(o_vcd, w_arith_ena[Multi_DIV], pn + ".w_arith_ena(1)");
-        sc_trace(o_vcd, wb_arith_res.arr[Multi_DIV], pn + ".wb_arith_res(1)");
-        sc_trace(o_vcd, w_arith_ena[Multi_FPU], pn + ".w_arith_ena(2)");
-        sc_trace(o_vcd, wb_arith_res.arr[Multi_FPU], pn + ".wb_arith_res(2)");
+        sc_trace(o_vcd, wb_select.ena[Res_IMul], pn + ".w_arith_ena(5)");
+        sc_trace(o_vcd, wb_select.res[Res_IMul], pn + ".wb_arith_res(5)");
+        sc_trace(o_vcd, wb_select.ena[Res_IDiv], pn + ".w_arith_ena(6)");
+        sc_trace(o_vcd, wb_select.res[Res_IDiv], pn + ".wb_arith_res(6)");
+        sc_trace(o_vcd, wb_select.ena[Res_FPU], pn + ".w_arith_ena(7)");
+        sc_trace(o_vcd, wb_select.res[Res_FPU], pn + ".wb_arith_res(7)");
         sc_trace(o_vcd, r.hold_fencei, pn + ".r_hold_fencei");
         sc_trace(o_vcd, r.memop_waddr, pn + ".r_memop_waddr");
         sc_trace(o_vcd, r.memop_wtag, pn + ".r_memop_wtag");
         sc_trace(o_vcd, r.tagcnt_rd, pn + ".r_tagcnt_rd");
         sc_trace(o_vcd, r.tagcnt_wr, pn + ".r_tagcnt_wr");
-        sc_trace(o_vcd, r.rtag, pn + ".r_rtag");
-        sc_trace(o_vcd, r.memop_wena, pn + ".r_memop_wena");
+        sc_trace(o_vcd, r.select, pn + ".r_select");
+        sc_trace(o_vcd, r.reg_waddr, pn + ".r_reg_waddr");
+        sc_trace(o_vcd, r.reg_wtag, pn + ".r_reg_wtag");
+#if!defined(UPDT2)
         sc_trace(o_vcd, w_next_ready, pn + ".w_next_ready");
+#endif
         sc_trace(o_vcd, w_multi_ena, pn + ".w_multi_ena");
         sc_trace(o_vcd, w_multi_busy, pn + ".w_multi_busy");
         sc_trace(o_vcd, w_multi_ready, pn + ".w_multi_ready");
@@ -341,6 +379,8 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, w_test_hazard1, pn + ".w_test_hazard1");
         sc_trace(o_vcd, w_test_hazard2, pn + ".w_test_hazard2");
     }
+    alu0->generateVCD(i_vcd, o_vcd);
+    addsub0->generateVCD(i_vcd, o_vcd);
     mul0->generateVCD(i_vcd, o_vcd);
     div0->generateVCD(i_vcd, o_vcd);
     if (fpu_ena_) {
@@ -351,6 +391,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 void InstrExecute::comb() {
     bool v_fence;
     bool v_fencei;
+    bool v_fenced;
     bool v_mret;
     bool v_uret;
     bool v_csr_wena;
@@ -373,14 +414,18 @@ void InstrExecute::comb() {
     bool v_call;
     bool v_ret;
     bool v_pc_branch;
-    bool v_less;
-    bool v_gr_equal;
+    bool v_eq;      // equal
+    bool v_ge;      // greater/equal signed
+    bool v_geu;     // greater/equal unsigned
+    bool v_lt;      // less signed
+    bool v_ltu;     // less unsigned
+    bool v_neq;     // not equal
     sc_uint<RISCV_ARCH> vb_i_rdata1;
     sc_uint<RISCV_ARCH> vb_i_rdata2;
     sc_uint<RISCV_ARCH> vb_rdata1;
     sc_uint<RISCV_ARCH> vb_rdata2;
-    sc_uint<RISCV_ARCH> vb_rfdata1;
-    sc_uint<RISCV_ARCH> vb_rfdata2;
+    bool v_check_tag1;
+    bool v_check_tag2;
     bool v_o_valid;
     sc_uint<RISCV_ARCH> vb_o_wdata;
     bool v_hold_exec;
@@ -393,9 +438,16 @@ void InstrExecute::comb() {
     sc_uint<6> vb_waddr;
     bool v_next_normal;
     bool v_next_progbuf;
+    sc_uint<Res_Total> vb_select;
+    sc_biguint<2*REGS_TOTAL> vb_tagcnt_wr;
+    sc_biguint<2*REGS_TOTAL> vb_tagcnt_rd;
+    bool v_d_ready;
+    bool v_latch_input;
+    bool v_memop_ena;
 
     v = r;
 
+    v_d_ready = 0;
     v_csr_wena = 0;
     vb_csr_wdata = 0;
     vb_res = 0;
@@ -408,25 +460,42 @@ void InstrExecute::comb() {
     v.valid = 0;
     v.call = 0;
     v.ret = 0;
+#ifdef UPDT2
+    v.reg_write = 0;
+    v.flushd = 0;
+    v.csr_write = 0;
+#endif
     vb_rdata1 = 0;
     vb_rdata2 = 0;
+    vb_select = 0;
+    for (int i = 0; i < Res_Total; i++) {
+        wb_select.ena[i] = 0;
+    }
 
     vb_i_rdata1 = i_rdata1;
     vb_i_rdata2 = i_rdata2;
+    v_check_tag1 = 0;
+    v_check_tag2 = 0;
 
     if (i_isa_type.read()[ISA_R_type]) {
         vb_rdata1 = vb_i_rdata1;
         vb_rdata2 = vb_i_rdata2;
+        v_check_tag1 = 1;
+        v_check_tag2 = 1;
     } else if (i_isa_type.read()[ISA_I_type]) {
         vb_rdata1 = vb_i_rdata1;
         vb_rdata2 = i_d_imm;
+        v_check_tag1 = 1;
     } else if (i_isa_type.read()[ISA_SB_type]) {
         vb_rdata1 = vb_i_rdata1;
         vb_rdata2 = vb_i_rdata2;
         vb_off = i_d_imm;
+        v_check_tag1 = 1;
+        v_check_tag2 = 1;
     } else if (i_isa_type.read()[ISA_UJ_type]) {
         vb_rdata1 = i_d_pc;
         vb_off = i_d_imm;
+        v_check_tag1 = 1;
     } else if (i_isa_type.read()[ISA_U_type]) {
         vb_rdata1 = i_d_pc;
         vb_rdata2 = i_d_imm;
@@ -434,9 +503,70 @@ void InstrExecute::comb() {
         vb_rdata1 = vb_i_rdata1;
         vb_rdata2 = vb_i_rdata2;
         vb_off = i_d_imm;
+        v_check_tag1 = 1;
+        v_check_tag2 = 1;
     }
 
+#ifdef UPDT2
+    // Check that registers tags are equal to expeted ones
+    vb_tagcnt_wr = r.tagcnt_wr;
+    vb_tagcnt_rd = r.tagcnt_rd;
+
+    int t_d_waddr = i_d_waddr.read().to_int();
+    int t_tagcnt_wr = r.tagcnt_wr.read()(2*t_d_waddr+1,
+                                         2*t_d_waddr).to_int();
+
+    vb_tagcnt_wr(2*t_d_waddr+1, 2*t_d_waddr) = t_tagcnt_wr + 1;
+    vb_tagcnt_wr(1, 0) = 0;
+    vb_tagcnt_rd(2*t_d_waddr+1, 2*t_d_waddr) = t_tagcnt_wr;
+    vb_tagcnt_rd(1, 0) = 0;
+
+    int t_d_radr1 = i_d_radr1.read().to_int();
+    int t_d_radr2 = i_d_radr2.read().to_int();
+    w_test_hazard1 = 0;
+    if (r.tagcnt_rd.read()(2*t_d_radr1+1, 2*t_d_radr1) != i_rtag1.read()) {
+        w_test_hazard1 = v_check_tag1;
+    }
+    w_test_hazard2 = 0;
+    if (r.tagcnt_rd.read()(2*t_d_radr2+1, 2*t_d_radr2) != i_rtag2.read()) {
+        w_test_hazard2 = v_check_tag2;
+    }
+
+    // Compute branch conditions:
+    vb_sub64 = vb_rdata1 - vb_rdata2;
+    v_eq = !vb_sub64.or_reduce();   // equal
+    v_ge = !vb_sub64[63];           // greater/equal (signed)
+    v_geu = 0;
+    if (vb_rdata1 >= vb_rdata2) {
+        v_geu = 1;                  // greater/equal (unsigned)
+    }
+    v_lt = vb_sub64[63];            // less (signed)
+    v_ltu = 0;
+    if (vb_rdata1 < vb_rdata2) {
+        v_ltu = 1;                  // less (unsiged)
+    }
+    v_neq = vb_sub64.or_reduce();   // not equal
+
+    // Relative Branch on some condition:
+    v_pc_branch = 0;
+    if ((wv[Instr_BEQ].to_bool() & v_eq)
+        || (wv[Instr_BGE].to_bool() & v_ge)
+        || (wv[Instr_BGEU].to_bool() & v_geu)
+        || (wv[Instr_BLT].to_bool() & v_lt)
+        || (wv[Instr_BLTU].to_bool() & v_ltu)
+        || (wv[Instr_BNE].to_bool() & v_neq)) {
+        v_pc_branch = 1;
+    }
+#endif
+
     wb_fpu_vec = wv.range(Instr_FSUB_D, Instr_FADD_D);  // directly connected i_ivec
+#ifdef UPDT2
+    v_fence = wv[Instr_FENCE].to_bool();
+    v_fencei = wv[Instr_FENCE_I].to_bool();
+    v_fenced = v_fence | v_fencei;
+    v_mret = wv[Instr_MRET].to_bool();
+    v_uret = wv[Instr_URET].to_bool();
+#else
     w_multi_busy = w_arith_busy[Multi_MUL] | w_arith_busy[Multi_DIV]
                   | w_arith_busy[Multi_FPU];
 
@@ -481,6 +611,7 @@ void InstrExecute::comb() {
 
     v_fence = wv[Instr_FENCE].to_bool() & w_next_ready;
     v_fencei = wv[Instr_FENCE_I].to_bool() & w_next_ready;
+    v_fenced = v_fence | v_fencei;
     v_mret = wv[Instr_MRET].to_bool() & w_next_ready;
     v_uret = wv[Instr_URET].to_bool() & w_next_ready;
 
@@ -497,6 +628,7 @@ void InstrExecute::comb() {
             v_next_fpu_ready = w_next_ready;
         }
     }
+#endif
 
     w_arith_residual_high = (wv[Instr_REM] || wv[Instr_REMU]
                           || wv[Instr_REMW] || wv[Instr_REMUW]
@@ -504,11 +636,13 @@ void InstrExecute::comb() {
 
     w_mul_hsu = wv[Instr_MULHSU].to_bool();
 
+#if!defined(UPDT2)
     v_multi_ena = v_next_mul_ready || v_next_div_ready || v_next_fpu_ready;
 
     w_arith_ena[Multi_MUL] = v_next_mul_ready;
     w_arith_ena[Multi_DIV] = v_next_div_ready;
     w_arith_ena[Multi_FPU] = v_next_fpu_ready;
+#endif
 
     if (i_memop_load) {
         vb_memop_addr =
@@ -537,6 +671,7 @@ void InstrExecute::comb() {
     }
 
 
+#if!defined (UPDT2)
     // parallel ALU:
     vb_sum64 = vb_rdata1 + vb_rdata2;
     vb_sum32(31, 0) = vb_rdata1(31, 0) + vb_rdata2(31, 0);
@@ -555,25 +690,26 @@ void InstrExecute::comb() {
     wb_shifter_a1 = vb_rdata1;
     wb_shifter_a2 = vb_rdata2(5, 0);
 
-    v_less = 0;
-    v_gr_equal = 0;
+    v_ltu = 0;
+    v_geu = 0;
     if (vb_rdata1 < vb_rdata2) {
-        v_less = 1;
+        v_ltu = 1;
     }
     if (vb_rdata1 >= vb_rdata2) {
-        v_gr_equal = 1;
+        v_geu = 1;
     }
 
     // Relative Branch on some condition:
     v_pc_branch = 0;
     if ((wv[Instr_BEQ].to_bool() & (vb_sub64 == 0))
         || (wv[Instr_BGE].to_bool() & (vb_sub64[63] == 0))
-        || (wv[Instr_BGEU].to_bool() & (v_gr_equal))
+        || (wv[Instr_BGEU].to_bool() & (v_geu))
         || (wv[Instr_BLT].to_bool() & (vb_sub64[63] == 1))
-        || (wv[Instr_BLTU].to_bool() & (v_less))
+        || (wv[Instr_BLTU].to_bool() & (v_ltu))
         || (wv[Instr_BNE].to_bool() & (vb_sub64 != 0))) {
         v_pc_branch = 1;
     }
+#endif
 
     opcode_len = 4;
     if (i_compressed.read()) {
@@ -602,13 +738,82 @@ void InstrExecute::comb() {
         vb_npc = vb_prog_npc;
     }
 
+#ifdef UPDT2
+    vb_select[Res_Reg2] = i_memop_store || wv[Instr_LUI];
+    vb_select[Res_Npc] = v_pc_branch || wv[Instr_JAL] || wv[Instr_JALR]
+                        || wv[Instr_MRET] || wv[Instr_URET]
+                        || i_trap_valid;
+    vb_select[Res_Csr] = wv[Instr_CSRRC] || wv[Instr_CSRRCI] || wv[Instr_CSRRS]
+                        || wv[Instr_CSRRSI] || wv[Instr_CSRRW] || wv[Instr_CSRRWI];
+    vb_select[Res_Alu] = wv[Instr_AND] || wv[Instr_ANDI]
+                      || wv[Instr_OR] || wv[Instr_ORI]
+                      || wv[Instr_XOR] || wv[Instr_XORI];
+    vb_select[Res_AddSub] = wv[Instr_ADD] || wv[Instr_ADDI] || wv[Instr_AUIPC]
+                         || wv[Instr_ADDW] || wv[Instr_ADDIW]
+                         || wv[Instr_SUB] || wv[Instr_SUBW]
+                         || wv[Instr_SLT] || wv[Instr_SLTI]
+                         || wv[Instr_SLTU] || wv[Instr_SLTIU];
+    vb_select[Res_Shifter] = wv[Instr_SLL] || wv[Instr_SLLI]
+                          || wv[Instr_SLLW] || wv[Instr_SLLIW]
+                          || wv[Instr_SRL] || wv[Instr_SRLI]
+                          || wv[Instr_SRLW] || wv[Instr_SRLIW]
+                          || wv[Instr_SRA] || wv[Instr_SRAI]
+                          || wv[Instr_SRAW] || wv[Instr_SRAW] || wv[Instr_SRAIW];
+    vb_select[Res_IMul] = wv[Instr_MUL] || wv[Instr_MULW]
+                     || wv[Instr_MULH]|| wv[Instr_MULHSU]
+                     || wv[Instr_MULHU];
+    vb_select[Res_IDiv] = wv[Instr_DIV] || wv[Instr_DIVU]
+                            || wv[Instr_DIVW] || wv[Instr_DIVUW]
+                            || wv[Instr_REM] || wv[Instr_REMU]
+                            || wv[Instr_REMW] || wv[Instr_REMUW];
+    if (fpu_ena_) {
+        vb_select[Res_FPU] = i_f64.read() && !(wv[Instr_FSD] | wv[Instr_FLD]).to_bool();
+    }
+    vb_select[Res_Zero] = !vb_select(Res_Total-1, Res_Zero+1).or_reduce();  // load memory, fence
+
+
+    if ((wv[Instr_JAL] || wv[Instr_JALR]) && i_d_waddr.read() == Reg_ra) {
+        v_call = 1;
+    }
+    if (wv[Instr_JALR] && vb_rdata2 == 0 
+        && i_d_waddr.read() != Reg_ra && i_d_radr1.read() == Reg_ra) {
+        v_ret = 1;
+    }
+
+    wb_select.res[Res_Zero] = 0;
+    wb_select.res[Res_Reg2] = r.res_reg2;
+
+    // Select result:
+    if (r.select.read()[Res_Reg2]) {
+        vb_res = wb_select.res[Res_Reg2];
+    } else if (r.select.read()[Res_Npc]) {
+        vb_res = wb_select.res[Res_Npc];
+    } else if (r.select.read()[Res_Csr]) {
+        vb_res = wb_select.res[Res_Csr];
+    } else if (r.select.read()[Res_Alu]) {
+        vb_res = wb_select.res[Res_Alu];
+    } else if (r.select.read()[Res_AddSub]) {
+        vb_res = wb_select.res[Res_AddSub];
+    } else if (r.select.read()[Res_Shifter]) {
+        vb_res = wb_select.res[Res_Shifter];
+    } else if (r.select.read()[Res_IMul]) {
+        vb_res = wb_select.res[Res_IMul];
+    } else if (r.select.read()[Res_IDiv]) {
+        vb_res = wb_select.res[Res_IDiv];
+    } else if (r.select.read()[Res_FPU]) {
+        vb_res = wb_select.res[Res_FPU];
+    } else {
+        vb_res = 0;
+    }
+
+#else
     // ALU block selector:
     if (w_arith_valid[Multi_MUL]) {
-        vb_res = wb_arith_res.arr[Multi_MUL];
+        vb_res = wb_res.arr[Res_IMul];
     } else if (w_arith_valid[Multi_DIV]) {
-        vb_res = wb_arith_res.arr[Multi_DIV];
+        vb_res = wb_res.arr[Res_IDiv];
     } else if (w_arith_valid[Multi_FPU]) {
-        vb_res = wb_arith_res.arr[Multi_FPU];
+        vb_res = wb_res.arr[Res_FPU];
     } else if (i_memop_load) {
         vb_res = 0;
     } else if (i_memop_store) {
@@ -654,7 +859,7 @@ void InstrExecute::comb() {
     } else if (wv[Instr_SLT] || wv[Instr_SLTI]) {
         vb_res = vb_sub64[63];
     } else if (wv[Instr_SLTU] || wv[Instr_SLTIU]) {
-        vb_res = v_less;
+        vb_res = v_ltu;
     } else if (wv[Instr_LUI]) {
         vb_res = vb_rdata2;
     } else if (wv[Instr_CSRRC]) {
@@ -684,84 +889,51 @@ void InstrExecute::comb() {
         v_csr_wena = 1;
         vb_csr_wdata(4, 0) = i_d_radr1.read()(4, 0);  // zero-extending 5 to 64-bits
     }
+#endif
 
-    v.memop_wena = 0;
-    int t_d_waddr = i_d_waddr.read().to_int();
-    int t_tagcnt_wr;
-    sc_biguint<2*REGS_TOTAL> vb_tagcnt_wr;
-    sc_biguint<2*REGS_TOTAL> vb_tagcnt_rd;
-    t_tagcnt_wr = r.tagcnt_wr.read()(2*t_d_waddr+1,
-                                    2*t_d_waddr).to_int();
-    vb_tagcnt_wr(2*t_d_waddr+1, 2*t_d_waddr) = t_tagcnt_wr + 1;
-    vb_tagcnt_wr(1,0) = 0;
-    vb_tagcnt_rd(2*t_d_waddr+1, 2*t_d_waddr) = t_tagcnt_wr;
-    vb_tagcnt_rd(1,0) = 0;
-
-    int t_d_radr1 = i_d_radr1.read().to_int();
-    int t_d_radr2 = i_d_radr2.read().to_int();
-    w_test_hazard1 = 0;
-    if (r.tagcnt_rd.read()(2*t_d_radr1+1, 2*t_d_radr1) != i_rtag1.read()) {
-        w_test_hazard1 = 1;
-    }
-    w_test_hazard2 = 0;
-    if (r.tagcnt_rd.read()(2*t_d_radr2+1, 2*t_d_radr2) != i_rtag2.read()) {
-        w_test_hazard2 = 1;
-    }
-
+#ifdef UPDT2
+    v_latch_input = 0;
+    v_o_valid = 0;
+    v_memop_ena = i_memop_load.read() || i_memop_store.read() || v_fenced;
     switch (r.state.read()) {
     case State_Idle:
+        v_d_ready = 1;
         if (i_d_pc.read() == r.npc.read() && i_dbg_progbuf_ena.read() == 0
-            && i_d_progbuf_ena.read() == 0) {
-            v.ivec = i_ivec;
-            v.memop_wena = i_d_waddr.read().or_reduce();
-            v.tagcnt_wr = vb_tagcnt_wr;
-            v.tagcnt_rd = vb_tagcnt_rd;
-            v.rtag = t_tagcnt_wr;
-            if (v_multi_ena == 1) {
+            && i_d_progbuf_ena.read() == 0
+            && w_test_hazard1 == 0 && w_test_hazard2 == 0) {
+            v_latch_input = 1;
+            if (vb_select[Res_IMul] || vb_select[Res_IDiv] || vb_select[Res_FPU]) {
                 v.state = State_WaitMulti;
-            } else if ((i_memop_load.read() || i_memop_store.read()
-                        || wv[Instr_FENCE] || wv[Instr_FENCE_I])
-                        && !i_memop_ready.read()) {
+            } else if (v_memop_ena && !i_memop_ready.read()) {
                 v.state = State_WaitMemAcces;
-            } else if (v_fencei) {
-                v.state = State_Flushing_I;
-            }
-        } else {
-            v.state = State_Miss;
-        }
-        break;
-    case State_Miss:
-        if (i_d_pc.read() == r.npc.read() && i_dbg_progbuf_ena.read() == 0
-            && i_d_progbuf_ena.read() == 0) {
-            v.ivec = i_ivec;
-            v.memop_wena = i_d_waddr.read().or_reduce();
-            v.tagcnt_wr = vb_tagcnt_wr;
-            v.tagcnt_rd = vb_tagcnt_rd;
-            v.rtag = t_tagcnt_wr;
-            if (v_multi_ena == 1) {
-                v.state = State_WaitMulti;
+            } else if (v_csr_wena) {
+                v.state = State_Csr;
             } else if (v_fencei) {
                 v.state = State_Flushing_I;
             } else {
-                v.state = State_Idle;
+                v_o_valid = 1;
             }
         }
         break;
     case State_WaitMemAcces:
+        // Fifo exec => memacess is full
         if (i_memop_ready.read()) {
-            if (r.ivec.read()[Instr_FENCE_I] == 1) {
-                v.state = State_Flushing_I;
-            } else {
-                v.state = State_Idle;
-            }
+            v.state = State_Idle;
+            v_o_valid = 1;
         }
         break;
+    case State_Csr:
+        // Extra clock cycle to update CSR
+        v.state = State_Idle;
+        v_o_valid = 1;
+        break;
     case State_WaitMulti:
-        if (w_arith_valid[Multi_MUL]
-          | w_arith_valid[Multi_DIV]
-          | w_arith_valid[Multi_FPU]) {
+        // Wait end of multiclock instructions
+        if (wb_select.valid[Multi_MUL]
+          | wb_select.valid[Multi_DIV]
+          | wb_select.valid[Multi_FPU]) {
             v.state = State_Idle;
-            v.memop_wena = r.memop_waddr.read().or_reduce();
+            v_o_valid = 1;
         }
         break;
     case State_Flushing_I:
@@ -770,10 +942,58 @@ void InstrExecute::comb() {
         // instruction to avoid reading obsolete data.
         if (i_flushd_end.read() == 1) {
             v.state = State_Idle;
+            v_o_valid = 1;
         }
         break;
     default:;
     }
+
+    if (v_latch_input) {
+        if (i_dbg_progbuf_ena.read() == 0) {
+            v.pc = i_d_pc;
+            v.npc = vb_npc;
+        } else {
+            v.progbuf_npc = vb_npc_incr;
+        }
+        v.instr = i_d_instr;
+        v.flushd = v_fenced;
+        v.call = v_call;
+        v.ret = v_ret;
+        v.res_reg2 = vb_rdata2;
+        v.res_npc = vb_npc;
+        v.res_csr = i_csr_rdata;
+
+        if (i_d_waddr.read().or_reduce()) {
+            v.reg_write = 1;
+            v.tagcnt_wr = vb_tagcnt_wr;
+            v.tagcnt_rd = vb_tagcnt_rd;
+            v.reg_waddr = i_d_waddr;
+            v.reg_wtag = t_tagcnt_wr;
+        }
+
+        if (v_csr_wena) {
+            v.csr_write = 1;
+            v.csr_waddr = i_d_csr_addr;
+            v.csr_wdata = vb_csr_wdata;
+        }
+
+        if (v_memop_ena) {
+            v.memop_valid = 1;
+            v.memop_load = i_memop_load;
+            v.memop_sign_ext = i_memop_sign_ext;
+            v.memop_store = i_memop_store;
+            v.memop_size = i_memop_size;
+            v.memop_addr = vb_memop_addr;
+            v.memop_wdata = vb_res;
+        }
+
+        wb_select.ena[Res_IMul] = vb_select[Res_IMul];
+        wb_select.ena[Res_IDiv] = vb_select[Res_IDiv];
+        wb_select.ena[Res_FPU] = vb_select[Res_FPU];
+
+    }
+    v.valid = v_o_valid;
+#else
 
     // Latch ready result
     v_wena = 0;
@@ -806,7 +1026,7 @@ void InstrExecute::comb() {
         v.wval = vb_res;
         v.call = v_call;
         v.ret = v_ret;
-        v.flushd = v_fencei || v_fence;
+        v.flushd = v_fenced;
         v.hold_fencei = v_fencei;
     }
 
@@ -824,6 +1044,7 @@ void InstrExecute::comb() {
     }
 
     v_o_valid = (r.valid && !w_multi_busy) || w_multi_ready;
+#endif
 
     if (i_dport_npc_write.read()) {
         v.npc = i_dport_npc.read();
@@ -837,6 +1058,49 @@ void InstrExecute::comb() {
     wb_rdata1 = vb_rdata1;
     wb_rdata2 = vb_rdata2;
 
+#ifdef UPDT2
+    wb_alu_mode = (
+        wv[Instr_XOR] || wv[Instr_XORI],     //[2]
+        wv[Instr_OR] || wv[Instr_ORI],       //[1]
+        wv[Instr_AND] || wv[Instr_ANDI]);    //[0]
+
+    wb_addsub_mode = (
+        wv[Instr_SLT] || wv[Instr_SLTI],
+        wv[Instr_SLTU] || wv[Instr_SLTIU],
+        wv[Instr_SUB] || wv[Instr_SUBW],
+        wv[Instr_ADD] || wv[Instr_ADDI] || wv[Instr_ADDW] || wv[Instr_ADDIW] || wv[Instr_AUIPC],
+        i_rv32.read());
+
+    wb_shifter_mode = (
+        wv[Instr_SRA] || wv[Instr_SRAI] || wv[Instr_SRAW] || wv[Instr_SRAW] || wv[Instr_SRAIW],
+        wv[Instr_SRL] || wv[Instr_SRLI] || wv[Instr_SRLW] || wv[Instr_SRLIW],
+        wv[Instr_SLL] || wv[Instr_SLLI] || wv[Instr_SLLW] || wv[Instr_SLLIW],
+        i_rv32.read());
+
+    o_trap_ready = r.valid;
+
+    o_ex_instr_load_fault = 0;//i_instr_load_fault.read() & r.valid;
+    o_ex_instr_not_executable = 0;//!i_instr_executable.read() & r.valid;
+    o_ex_illegal_instr = 0;//i_unsup_exception.read() & r.valid;
+    o_ex_unalign_store = 0;//w_exception_store & r.valid;
+    o_ex_unalign_load = 0;//w_exception_load & r.valid;
+    o_ex_breakpoint = 0;//wv[Instr_EBREAK].to_bool() & r.valid;
+    o_ex_ecall = 0;//wv[Instr_ECALL].to_bool() & r.valid;
+
+    o_wena = r.reg_write;
+    o_whazard = w_test_hazard1 || w_test_hazard2;
+    o_waddr = r.reg_waddr;
+    o_rtag = r.reg_wtag;    // remove me duplcate o_wtag
+    o_wdata = vb_res;
+    o_wtag = 0;
+    o_d_ready = !v_d_ready;
+
+    o_csr_wena = r.csr_write;
+    o_csr_waddr = r.csr_waddr;
+    o_csr_wdata = r.csr_wdata;
+    o_ex_npc = vb_prog_npc;
+
+#else
     w_multi_ena = v_multi_ena;
 
     o_trap_ready = w_next_ready;
@@ -860,6 +1124,7 @@ void InstrExecute::comb() {
     o_csr_wena = v_csr_wena && w_next_ready;
     o_csr_wdata = vb_csr_wdata;
     o_ex_npc = vb_prog_npc;
+#endif
 
     o_memop_valid = r.memop_valid;
     o_memop_sign_ext = r.memop_sign_ext;
@@ -871,6 +1136,14 @@ void InstrExecute::comb() {
     o_memop_waddr = r.memop_waddr;
     o_memop_wtag = r.memop_wtag;
     
+#ifdef UPDT2
+    o_pc = r.pc;
+    o_npc = r.npc;
+    o_instr = r.instr;
+    o_flushd = r.flushd;    // must be post in a memory queue to avoid to early flushing
+    o_call = r.call;
+    o_ret = r.ret;
+#else
     o_valid = v_o_valid;
     o_pc = r.pc;
     o_npc = r.npc;
@@ -881,9 +1154,10 @@ void InstrExecute::comb() {
     o_ret = r.ret;
     o_mret = v_mret;
     o_uret = v_uret;
-    o_fpu_valid = w_arith_valid[Multi_FPU];
+    o_fpu_valid = wb_select.valid[Res_FPU];
     // Tracer only:
     o_multi_ready = w_multi_ready;
+#endif
 }
 
 void InstrExecute::registers() {

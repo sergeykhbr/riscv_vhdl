@@ -26,7 +26,6 @@ namespace debugger {
 SC_MODULE(MemAccess) {
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;
-    sc_in<bool> i_e_valid;                          // Execution stage outputs are valid
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_pc;       // Execution stage instruction pointer
     sc_in<sc_uint<32>> i_e_instr;                   // Execution stage instruction value
     sc_in<sc_uint<2>> i_e_rtag;                     // Register tag for load operations

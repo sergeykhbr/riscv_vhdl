@@ -23,6 +23,8 @@
 
 namespace debugger {
 
+#define UPDT2
+
 union ISA_R_type {
     struct bits_type {
         uint32_t opcode : 7;  // [6:0]

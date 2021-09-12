@@ -152,6 +152,7 @@ private:
         sc_signal<bool> mret;
         sc_signal<bool> uret;
         sc_signal<bool> csr_wena;
+        sc_signal<sc_uint<12>> csr_addr;
         sc_signal<sc_uint<RISCV_ARCH>> csr_wdata;
         sc_signal<bool> ex_instr_load_fault;
         sc_signal<bool> ex_instr_not_executable;

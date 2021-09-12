@@ -19,20 +19,26 @@
 
 namespace debugger {
 
-Shifter::Shifter(sc_module_name name_)
+Shifter::Shifter(sc_module_name name_, bool async_reset)
     : sc_module(name_),
+    i_clk("i_clk"),
+    i_nrst("i_nrst"),
+    i_mode("i_mode"),             // operation type: [0]0=rv64;1=rv32;[1]=sll;[2]=srl;[3]=sra
     i_a1("i_a1"),
     i_a2("i_a2"),
-    o_sll("o_sll"),
-    o_sllw("o_sllw"),
-    o_srl("o_srl"),
-    o_sra("o_sra"),
-    o_srlw("o_srlw"),
-    o_sraw("o_sraw") {
+    o_res("o_res") {
+    async_reset_ = async_reset;
 
     SC_METHOD(comb);
+    sensitive << i_nrst;
+    sensitive << i_mode;
     sensitive << i_a1;
     sensitive << i_a2;
+    sensitive << r.res;
+
+    SC_METHOD(registers);
+    sensitive << i_nrst;
+    sensitive << i_clk.pos();
 };
 
 void Shifter::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
@@ -49,6 +55,8 @@ void Shifter::comb() {
     sc_uint<32> v32;
     sc_uint<64> msk64;
     sc_uint<64> msk32;
+
+    v = r;
 
     v64 = i_a1.read();
     v32 = i_a1.read()(31, 0);
@@ -552,22 +560,48 @@ void Shifter::comb() {
     default:;
     }
 
-    o_sll = wb_sll;
     if (wb_sllw[31]) {
         wb_sllw(63, 32) = ~0;
     } else {
         wb_sllw(63, 32) = 0;
     }
-    o_sllw = wb_sllw;
-    o_srl = wb_srl;
-    o_sra = wb_sra;
 
     if (wb_srlw[31]) {
         // when shift right == 0 and a1[31] = 1
         wb_srlw(63, 32) = ~0;
     }
-    o_srlw = wb_srlw;
-    o_sraw = wb_sraw;
+
+    if (i_mode.read()[0]) {
+        if (i_mode.read()[1]) {
+            v.res = wb_sllw;
+        } else if (i_mode.read()[2]) {
+            v.res = wb_srlw;
+        } else {
+            v.res = wb_sraw;
+        }
+    } else {
+        if (i_mode.read()[1]) {
+            v.res = wb_sll;
+        } else if (i_mode.read()[2]) {
+            v.res = wb_srl;
+        } else {
+            v.res = wb_sra;
+        }
+    }
+
+    if (!async_reset_ && i_nrst.read() == 0) {
+        R_RESET(v);
+    }
+
+    o_res = r.res;
+}
+
+void Shifter::registers() {
+    if (async_reset_ && i_nrst.read() == 0) {
+        R_RESET(r);
+    } else {
+        r = v;
+    }
 }
 
 }  // namespace debugger

@@ -22,7 +22,6 @@ MemAccess::MemAccess(sc_module_name name_, bool async_reset)
     : sc_module(name_),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
-    i_e_valid("i_e_valid"),
     i_e_pc("i_e_pc"),
     i_e_instr("i_e_instr"),
     i_e_rtag("i_e_rtag"),
@@ -59,7 +58,6 @@ MemAccess::MemAccess(sc_module_name name_, bool async_reset)
 
     SC_METHOD(comb);
     sensitive << i_nrst;
-    sensitive << i_e_valid;
     sensitive << i_e_pc;
     sensitive << i_e_instr;
     sensitive << i_e_rtag;
@@ -117,7 +115,6 @@ MemAccess::~MemAccess() {
 
 void MemAccess::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_e_valid, i_e_valid.name());
         sc_trace(o_vcd, i_e_pc, i_e_pc.name());
         sc_trace(o_vcd, i_e_instr, i_e_instr.name());
         sc_trace(o_vcd, i_e_rtag, i_e_rtag.name());
@@ -271,7 +268,7 @@ void MemAccess::comb() {
                     i_memop_wdata, i_memop_waddr, i_e_instr, i_e_pc,
                     i_memop_size, i_memop_sign_ext, i_memop_store,
                     i_memop_addr);
-    queue_we = (i_e_valid | i_memop_valid) & (i_memop_load | i_memop_store | i_e_flushd);
+    queue_we = i_memop_valid | i_e_flushd;
 
     // Split Queue outputs:
     v_flushd = queue_data_o.read()[2*CFG_CPU_ADDR_BITS+RISCV_ARCH+8+64+48];
