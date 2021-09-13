@@ -168,13 +168,11 @@ private:
 
         sc_signal<bool> memop_valid;
         sc_signal<bool> memop_sign_ext;
-        sc_signal<bool> memop_load;
-        sc_signal<bool> memop_store;
+        sc_signal<bool> memop_type;
         sc_signal<sc_uint<2>> memop_size;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> memop_addr;
         sc_signal<sc_uint<RISCV_ARCH>> memop_wdata;
         sc_signal<sc_uint<6>> memop_waddr;
-        sc_signal<sc_uint<4>> memop_wtag;
         sc_signal<bool> d_ready;           // Hold pipeline from Execution stage
         sc_signal<bool> flushd;
         sc_signal<bool> flushi;
@@ -274,6 +272,7 @@ private:
     sc_signal<sc_uint<6>> wb_reg_waddr;
     sc_signal<sc_uint<RISCV_ARCH>> wb_reg_wdata;
     sc_signal<sc_uint<2>> wb_reg_wtag;
+    sc_signal<bool> w_reg_inorder;
 
     bool fpu_ena_;
     bool tracer_ena_;

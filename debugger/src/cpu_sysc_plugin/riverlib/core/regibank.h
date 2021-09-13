@@ -38,6 +38,7 @@ SC_MODULE(RegIntBank) {
     sc_in<bool> i_wena;                     // Writing is enabled
     sc_in<sc_uint<2>> i_wtag;               // Writing register tag
     sc_in<sc_uint<RISCV_ARCH>> i_wdata;     // Writing value
+    sc_in<bool> i_inorder;                  // Writing only if tag sequenced
 
     sc_in<sc_uint<6>> i_dport_addr;             // Debug port address
     sc_in<bool> i_dport_ena;                    // Debug port is enabled

@@ -96,13 +96,11 @@ SC_MODULE(InstrExecute) {
 
     sc_out<bool> o_memop_valid;                 // Request to memory is valid
     sc_out<bool> o_memop_sign_ext;              // Load data with sign extending
-    sc_out<bool> o_memop_load;                  // Load data instruction
-    sc_out<bool> o_memop_store;                 // Store data instruction
+    sc_out<bool> o_memop_type;                  // 1=store/0=Load data instruction
     sc_out<sc_uint<2>> o_memop_size;            // 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_memop_addr;// Memory access address
     sc_out<sc_uint<RISCV_ARCH>> o_memop_wdata;
     sc_out<sc_uint<6>> o_memop_waddr;
-    sc_out<sc_uint<4>> o_memop_wtag;
     sc_in<bool> i_memop_ready;
 
     sc_out<bool> o_trap_ready;                  // trap branch request accepted
@@ -172,6 +170,9 @@ private:
         sc_signal<sc_uint<3>> state;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> npc;
+        sc_signal<sc_uint<6>> hold_radr1;
+        sc_signal<sc_uint<6>> hold_radr2;
+
         sc_signal<sc_uint<32>> instr;
         sc_signal<sc_biguint<2*REGS_TOTAL>> tagcnt_rd;      // 2-bits tag per register (expected)
         sc_signal<sc_biguint<2*REGS_TOTAL>> tagcnt_wr;      // 2-bits tag per register (written)
@@ -186,9 +187,7 @@ private:
 
         sc_signal<bool> memop_valid;
         sc_signal<sc_uint<6>> memop_waddr;
-        sc_signal<sc_uint<4>> memop_wtag;
-        sc_signal<bool> memop_load;
-        sc_signal<bool> memop_store;
+        sc_signal<bool> memop_type;     // 0=store/1=load
         bool memop_sign_ext;
         sc_uint<2> memop_size;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> memop_addr;
@@ -211,6 +210,8 @@ private:
         iv.state = State_Idle;
         iv.pc = 0;
         iv.npc = CFG_NMI_RESET_VECTOR;
+        iv.hold_radr1 = 0;
+        iv.hold_radr2 = 0;
         iv.instr = 0;
         iv.tagcnt_rd = ~0x3;
         iv.tagcnt_wr = 0;
@@ -220,10 +221,8 @@ private:
         iv.csr_write = 0;
         iv.csr_wdata = 0;
         iv.memop_waddr = 0;
-        iv.memop_wtag = 0;
         iv.memop_valid = 0;
-        iv.memop_load = 0;
-        iv.memop_store = 0;
+        iv.memop_type = 0;
         iv.memop_sign_ext = 0;
         iv.memop_size = 0;
         iv.memop_addr = 0;
@@ -281,6 +280,8 @@ private:
     sc_signal<sc_uint<RISCV_ARCH>> wb_srlw;
     sc_signal<sc_uint<RISCV_ARCH>> wb_sra;
     sc_signal<sc_uint<RISCV_ARCH>> wb_sraw;
+
+    sc_uint<2> tag_expected[Reg_Total];
 
     AluLogic *alu0;
     IntAddSub *addsub0;

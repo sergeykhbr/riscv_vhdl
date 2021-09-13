@@ -82,13 +82,11 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     o_fpu_valid("o_fpu_valid"),
     o_memop_valid("o_memop_valid"),
     o_memop_sign_ext("o_memop_sign_ext"),
-    o_memop_load("o_memop_load"),
-    o_memop_store("o_memop_store"),
+    o_memop_type("o_memop_type"),
     o_memop_size("o_memop_size"),
     o_memop_addr("o_memop_addr"),
     o_memop_wdata("o_memop_wdata"),
     o_memop_waddr("o_memop_waddr"),
-    o_memop_wtag("o_memop_wtag"),
     i_memop_ready("i_memop_ready"),
     o_trap_ready("o_trap_ready"),
     o_valid("o_valid"),
@@ -149,6 +147,8 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << r.pc;
     sensitive << r.npc;
     sensitive << r.instr;
+    sensitive << r.hold_radr1;
+    sensitive << r.hold_radr2;
     sensitive << r.tagcnt_rd;
     sensitive << r.tagcnt_wr;
     sensitive << r.select;
@@ -158,10 +158,8 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << r.csr_waddr;
     sensitive << r.csr_wdata;
     sensitive << r.memop_waddr;
-    sensitive << r.memop_wtag;
     sensitive << r.memop_valid;
-    sensitive << r.memop_load;
-    sensitive << r.memop_store;
+    sensitive << r.memop_type;
     sensitive << r.memop_addr;
     sensitive << r.memop_wdata;
 
@@ -299,6 +297,8 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_d_valid, i_d_valid.name());
         sc_trace(o_vcd, i_d_pc, i_d_pc.name());
         sc_trace(o_vcd, i_d_instr, i_d_instr.name());
+        sc_trace(o_vcd, i_d_radr1, i_d_radr1.name());
+        sc_trace(o_vcd, i_d_radr2, i_d_radr2.name());
         sc_trace(o_vcd, i_d_waddr, i_d_waddr.name());
         sc_trace(o_vcd, i_d_csr_addr, i_d_csr_addr.name());
         sc_trace(o_vcd, i_wb_waddr, i_wb_waddr.name());
@@ -323,13 +323,11 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_trap_pc, i_trap_pc.name());
         sc_trace(o_vcd, o_ex_npc, o_ex_npc.name());
         sc_trace(o_vcd, o_memop_valid, o_memop_valid.name());
-        sc_trace(o_vcd, o_memop_load, o_memop_load.name());
-        sc_trace(o_vcd, o_memop_store, o_memop_store.name());
+        sc_trace(o_vcd, o_memop_type, o_memop_type.name());
         sc_trace(o_vcd, o_memop_size, o_memop_size.name());
         sc_trace(o_vcd, o_memop_addr, o_memop_addr.name());
         sc_trace(o_vcd, o_memop_wdata, o_memop_wdata.name());
         sc_trace(o_vcd, o_memop_waddr, o_memop_waddr.name());
-        sc_trace(o_vcd, o_memop_wtag, o_memop_wtag.name());
 
         sc_trace(o_vcd, i_memop_ready, i_memop_ready.name());
         sc_trace(o_vcd, o_trap_ready, o_trap_ready.name());
@@ -352,7 +350,6 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, wb_select.res[Res_FPU], pn + ".wb_arith_res(7)");
         sc_trace(o_vcd, r.hold_fencei, pn + ".r_hold_fencei");
         sc_trace(o_vcd, r.memop_waddr, pn + ".r_memop_waddr");
-        sc_trace(o_vcd, r.memop_wtag, pn + ".r_memop_wtag");
         sc_trace(o_vcd, r.tagcnt_rd, pn + ".r_tagcnt_rd");
         sc_trace(o_vcd, r.tagcnt_wr, pn + ".r_tagcnt_wr");
         sc_trace(o_vcd, r.select, pn + ".r_select");
@@ -369,6 +366,9 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, w_hold_hazard, pn + ".w_hold_hazard");
         sc_trace(o_vcd, w_test_hazard1, pn + ".w_test_hazard1");
         sc_trace(o_vcd, w_test_hazard2, pn + ".w_test_hazard2");
+        sc_trace(o_vcd, tag_expected[0xA], pn + ".tag_expected0x0A");
+        sc_trace(o_vcd, tag_expected[0xb], pn + ".tag_expected0x0B");
+        sc_trace(o_vcd, wb_select.res[Res_AddSub], pn + ".t_res_AddSub");
     }
     alu0->generateVCD(i_vcd, o_vcd);
     addsub0->generateVCD(i_vcd, o_vcd);
@@ -890,19 +890,23 @@ void InstrExecute::comb() {
     case State_Idle:
         v_d_ready = 1;
         if (i_d_pc.read() == r.npc.read() && i_dbg_progbuf_ena.read() == 0
-            && i_d_progbuf_ena.read() == 0
-            && w_test_hazard1 == 0 && w_test_hazard2 == 0) {
+            && i_d_progbuf_ena.read() == 0) {
             v_latch_input = 1;
-            if (vb_select[Res_IMul] || vb_select[Res_IDiv] || vb_select[Res_FPU]) {
-                v.state = State_WaitMulti;
-            } else if (v_memop_ena && !i_memop_ready.read()) {
-                v.state = State_WaitMemAcces;
-            } else if (v_csr_wena) {
-                v.state = State_Csr;
-            } else if (v_fencei) {
-                v.state = State_Flushing_I;
+            if (w_test_hazard1 == 0 && w_test_hazard2 == 0) {
+                if (vb_select[Res_IMul] || vb_select[Res_IDiv] || vb_select[Res_FPU]) {
+                    v.state = State_WaitMulti;
+                } else if (v_memop_ena && !i_memop_ready.read()) {
+                    v.state = State_WaitMemAcces;
+                } else if (v_csr_wena) {
+                    v.state = State_Csr;
+                } else if (v_fencei) {
+                    v.state = State_Flushing_I;
+                } else {
+                    v_o_valid = 1;
+                }
             } else {
-                v_o_valid = 1;
+                v_latch_input = 0;
+                v_d_ready = 0;
             }
         }
         break;
@@ -946,6 +950,8 @@ void InstrExecute::comb() {
         } else {
             v.progbuf_npc = vb_npc_incr;
         }
+        v.hold_radr1 = i_d_radr1;
+        v.hold_radr2 = i_d_radr2;
         v.instr = i_d_instr;
         v.flushd = v_fenced;
         v.call = v_call;
@@ -953,6 +959,11 @@ void InstrExecute::comb() {
         v.res_reg2 = vb_rdata2;
         v.res_npc = vb_npc;
         v.res_csr = i_csr_rdata;
+
+        wb_select.ena[Res_IMul] = vb_select[Res_IMul];
+        wb_select.ena[Res_IDiv] = vb_select[Res_IDiv];
+        wb_select.ena[Res_FPU] = vb_select[Res_FPU];
+        v.select = vb_select;
 
         if (i_d_waddr.read().or_reduce()) {
             v.reg_write = 1;
@@ -970,18 +981,12 @@ void InstrExecute::comb() {
 
         if (v_memop_ena) {
             v.memop_valid = 1;
-            v.memop_load = i_memop_load;
+            v.memop_type = i_memop_store;
             v.memop_sign_ext = i_memop_sign_ext;
-            v.memop_store = i_memop_store;
             v.memop_size = i_memop_size;
             v.memop_addr = vb_memop_addr;
             v.memop_wdata = vb_res;
         }
-
-        wb_select.ena[Res_IMul] = vb_select[Res_IMul];
-        wb_select.ena[Res_IDiv] = vb_select[Res_IDiv];
-        wb_select.ena[Res_FPU] = vb_select[Res_FPU];
-
     }
     v.valid = v_o_valid;
 #else
@@ -1050,23 +1055,26 @@ void InstrExecute::comb() {
     wb_rdata2 = vb_rdata2;
 
 #ifdef UPDT2
-    wb_alu_mode = (
-        wv[Instr_XOR] || wv[Instr_XORI],     //[2]
-        wv[Instr_OR] || wv[Instr_ORI],       //[1]
-        wv[Instr_AND] || wv[Instr_ANDI]);    //[0]
+    sc_uint<3> t_alu_mode;
+    t_alu_mode[2] = wv[Instr_XOR] || wv[Instr_XORI];
+    t_alu_mode[1] = wv[Instr_OR] || wv[Instr_ORI];
+    t_alu_mode[0] = wv[Instr_AND] || wv[Instr_ANDI];
+    wb_alu_mode = t_alu_mode;
 
-    wb_addsub_mode = (
-        wv[Instr_SLT] || wv[Instr_SLTI],
-        wv[Instr_SLTU] || wv[Instr_SLTIU],
-        wv[Instr_SUB] || wv[Instr_SUBW],
-        wv[Instr_ADD] || wv[Instr_ADDI] || wv[Instr_ADDW] || wv[Instr_ADDIW] || wv[Instr_AUIPC],
-        i_rv32.read());
+    sc_uint<5> t_addsub_mode;
+    t_addsub_mode[4] = wv[Instr_SLT] || wv[Instr_SLTI];
+    t_addsub_mode[3] = wv[Instr_SLTU] || wv[Instr_SLTIU];
+    t_addsub_mode[2] = wv[Instr_SUB] || wv[Instr_SUBW];
+    t_addsub_mode[1] = wv[Instr_ADD] || wv[Instr_ADDI] || wv[Instr_ADDW] || wv[Instr_ADDIW] || wv[Instr_AUIPC];
+    t_addsub_mode[0] = i_rv32.read();
+    wb_addsub_mode = t_addsub_mode;
 
-    wb_shifter_mode = (
-        wv[Instr_SRA] || wv[Instr_SRAI] || wv[Instr_SRAW] || wv[Instr_SRAW] || wv[Instr_SRAIW],
-        wv[Instr_SRL] || wv[Instr_SRLI] || wv[Instr_SRLW] || wv[Instr_SRLIW],
-        wv[Instr_SLL] || wv[Instr_SLLI] || wv[Instr_SLLW] || wv[Instr_SLLIW],
-        i_rv32.read());
+    sc_uint<4> t_shifter_mode;
+    t_shifter_mode[3] = wv[Instr_SRA] || wv[Instr_SRAI] || wv[Instr_SRAW] || wv[Instr_SRAW] || wv[Instr_SRAIW];
+    t_shifter_mode[2] = wv[Instr_SRL] || wv[Instr_SRLI] || wv[Instr_SRLW] || wv[Instr_SRLIW];
+    t_shifter_mode[1] = wv[Instr_SLL] || wv[Instr_SLLI] || wv[Instr_SLLW] || wv[Instr_SLLIW];
+    t_shifter_mode[0] = i_rv32.read();
+    wb_shifter_mode = t_shifter_mode;
 
     o_trap_ready = r.valid;
 
@@ -1088,6 +1096,11 @@ void InstrExecute::comb() {
     o_csr_waddr = r.csr_waddr;
     o_csr_wdata = r.csr_wdata;
     o_ex_npc = vb_prog_npc;
+
+    // Debug rtl only:!!
+    for (int i = 0; i < Reg_Total; i++) {
+        tag_expected[i] = r.tagcnt_rd.read()(2*i+1, 2*i).to_int();
+    }
 
 #else
     w_multi_ena = v_multi_ena;
@@ -1117,13 +1130,11 @@ void InstrExecute::comb() {
 
     o_memop_valid = r.memop_valid;
     o_memop_sign_ext = r.memop_sign_ext;
-    o_memop_load = r.memop_load;
-    o_memop_store = r.memop_store;
+    o_memop_type = r.memop_type;
     o_memop_size = r.memop_size;
     o_memop_addr = r.memop_addr;
     o_memop_wdata = r.memop_wdata;
     o_memop_waddr = r.memop_waddr;
-    o_memop_wtag = r.memop_wtag;
     
 #ifdef UPDT2
     o_valid = r.valid;

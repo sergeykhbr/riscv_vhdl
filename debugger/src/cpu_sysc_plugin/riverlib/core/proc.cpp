@@ -223,13 +223,11 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->o_fpu_valid(w.e.fpu_valid);
     exec0->o_memop_valid(w.e.memop_valid);
     exec0->o_memop_sign_ext(w.e.memop_sign_ext);
-    exec0->o_memop_load(w.e.memop_load);
-    exec0->o_memop_store(w.e.memop_store);
+    exec0->o_memop_type(w.e.memop_type);
     exec0->o_memop_size(w.e.memop_size);
     exec0->o_memop_addr(w.e.memop_addr);
     exec0->o_memop_wdata(w.e.memop_wdata);
     exec0->o_memop_waddr(w.e.memop_waddr);
-    exec0->o_memop_wtag(w.e.memop_wtag);
     exec0->i_memop_ready(w.m.memop_ready);
     exec0->o_trap_ready(w.e.trap_ready);
     exec0->o_valid(w.e.valid);
@@ -250,16 +248,14 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     mem0->i_nrst(i_nrst);
     mem0->i_e_pc(w.e.pc);
     mem0->i_e_instr(w.e.instr);
-    mem0->i_e_rtag(w.e.reg_wtag);
+    mem0->i_e_wtag(w.e.reg_wtag);
     mem0->i_e_flushd(w.e.flushd);
     mem0->o_flushd(w.m.flushd);
     mem0->i_memop_valid(w.e.memop_valid);
     mem0->i_memop_waddr(w.e.memop_waddr);
-    mem0->i_memop_wtag(w.e.memop_wtag);
     mem0->i_memop_wdata(w.e.memop_wdata);
     mem0->i_memop_sign_ext(w.e.memop_sign_ext);
-    mem0->i_memop_load(w.e.memop_load);
-    mem0->i_memop_store(w.e.memop_store);
+    mem0->i_memop_type(w.e.memop_type);
     mem0->i_memop_size(w.e.memop_size);
     mem0->i_memop_addr(w.e.memop_addr);
     mem0->o_memop_ready(w.m.memop_ready);
@@ -304,6 +300,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     iregs0->i_wena(w_reg_wena);
     iregs0->i_wtag(wb_reg_wtag);
     iregs0->i_wdata(wb_reg_wdata);
+    iregs0->i_inorder(w_reg_inorder);
     iregs0->i_dport_addr(dbg.reg_addr);
     iregs0->i_dport_ena(dbg.ireg_ena);
     iregs0->i_dport_write(dbg.ireg_write);
@@ -413,8 +410,8 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
         trace0->i_e_wena(w.e.reg_wena);
         trace0->i_e_waddr(w.e.reg_waddr);
         trace0->i_e_wdata(w.e.reg_wdata);
-        trace0->i_e_memop_store(w.e.memop_store);
-        trace0->i_e_memop_load(w.e.memop_load);
+        trace0->i_e_memop_valid(w.e.memop_valid);
+        trace0->i_e_memop_type(w.e.memop_type);
         trace0->i_e_memop_addr(w.e.memop_addr);
         trace0->i_e_memop_wdata(w.e.memop_wdata);
         trace0->i_m_wena(w.w.wena);
@@ -461,11 +458,13 @@ void Processor::comb() {
         wb_reg_waddr = w.e.reg_waddr;
         wb_reg_wdata = w.e.reg_wdata;
         wb_reg_wtag = w.e.reg_wtag;
+        w_reg_inorder = 0;      // Executor can overwrite memory loading before it was loaded
     } else {
         w_reg_wena = w.w.wena;
         wb_reg_waddr = w.w.waddr;
         wb_reg_wdata = w.w.wdata;
         wb_reg_wtag = w.w.wtag;
+        w_reg_inorder = 1;      // Cannot write loaded from memory value if it was overwritten
     }
 
     w_flush_pipeline = w.e.flushi.read() || w.e.ex_breakpoint.read()

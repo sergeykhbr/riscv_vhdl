@@ -32,6 +32,7 @@ RegIntBank::RegIntBank(sc_module_name name_, bool async_reset, bool fpu_ena) :
     i_wena("i_wena"),
     i_wtag("i_wtag"),
     i_wdata("i_wdata"),
+    i_inorder("i_inorder"),
     i_dport_addr("i_dport_addr"),
     i_dport_ena("i_dport_ena"),
     i_dport_write("i_dport_write"),
@@ -50,6 +51,7 @@ RegIntBank::RegIntBank(sc_module_name name_, bool async_reset, bool fpu_ena) :
     sensitive << i_wtag;
     sensitive << i_wdata;
     sensitive << i_waddr;
+    sensitive << i_inorder;
     sensitive << i_dport_ena;
     sensitive << i_dport_write;
     sensitive << i_dport_addr;
@@ -67,6 +69,9 @@ void RegIntBank::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_waddr, i_waddr.name());
         sc_trace(o_vcd, i_wdata, i_wdata.name());
         sc_trace(o_vcd, i_wtag, i_wtag.name());
+        sc_trace(o_vcd, i_inorder, i_inorder.name());
+        sc_trace(o_vcd, i_radr1, i_radr1.name());
+        sc_trace(o_vcd, i_radr2, i_radr2.name());
         sc_trace(o_vcd, o_rdata1, o_rdata1.name());
         sc_trace(o_vcd, o_rdata2, o_rdata2.name());
         sc_trace(o_vcd, o_rtag1, o_rtag1.name());
@@ -84,20 +89,25 @@ void RegIntBank::comb() {
     int int_waddr = i_waddr.read()(REG_MSB(), 0).to_int();
     int int_radr1 = i_radr1.read()(REG_MSB(), 0).to_int();
     int int_radr2 = i_radr2.read()(REG_MSB(), 0).to_int();
+    bool v_inordered;
 
     v = r;
+
+    v_inordered = 0;
+
+    if ((r.reg[int_waddr].tag + 1) == i_wtag.read()) {
+        v_inordered = 1;
+    }
 
     /** Debug port has higher priority. Collision must be controlled by SW */
     if (i_dport_ena.read() && i_dport_write.read()) {
         if (i_dport_addr.read().or_reduce() == 1) {
             v.reg[int_daddr].val = i_dport_wdata;
         }
-    } else if (i_wena.read() == 1 && i_waddr.read().or_reduce() == 1) {
-        if (i_wtag.read() == r.reg[int_waddr].tag) {
-            v.reg[int_waddr].val = i_wdata;
-            v.reg[int_waddr].tag = i_wtag;
-            v.reg[int_waddr].tag = r.reg[int_waddr].tag + 1;
-        }
+    } else if (i_wena.read() == 1 && i_waddr.read().or_reduce() == 1
+        && (!i_inorder.read() || v_inordered)) {
+        v.reg[int_waddr].val = i_wdata;
+        v.reg[int_waddr].tag = i_wtag;
     }
     v.update = !r.update.read();
 

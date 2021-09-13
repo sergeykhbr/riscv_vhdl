@@ -36,8 +36,8 @@ SC_MODULE(Tracer) {
     sc_in<bool> i_e_wena;
     sc_in<sc_uint<6>> i_e_waddr;
     sc_in<sc_uint<RISCV_ARCH>> i_e_wdata;
-    sc_in<bool> i_e_memop_store;
-    sc_in<bool> i_e_memop_load;
+    sc_in<bool> i_e_memop_valid;
+    sc_in<bool> i_e_memop_type;
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_memop_addr;
     sc_in<sc_uint<RISCV_ARCH>> i_e_memop_wdata;
     sc_in<bool> i_m_wena;

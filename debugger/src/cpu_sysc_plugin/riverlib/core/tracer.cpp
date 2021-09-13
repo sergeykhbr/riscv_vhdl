@@ -44,8 +44,8 @@ Tracer::Tracer(sc_module_name name_, bool async_reset, const char *trace_file)
     i_e_wena("i_e_wena"),
     i_e_waddr("i_e_waddr"),
     i_e_wdata("i_e_wdata"),
-    i_e_memop_store("i_e_memop_store"),
-    i_e_memop_load("i_e_memop_load"),
+    i_e_memop_valid("i_e_memop_valid"),
+    i_e_memop_type("i_e_memop_type"),
     i_e_memop_addr("i_e_memop_addr"),
     i_e_memop_wdata("i_e_memop_wdata"),
     i_m_wena("i_m_wena"),
@@ -67,8 +67,8 @@ Tracer::Tracer(sc_module_name name_, bool async_reset, const char *trace_file)
     sensitive << i_e_wena;
     sensitive << i_e_waddr;
     sensitive << i_e_wdata;
-    sensitive << i_e_memop_store;
-    sensitive << i_e_memop_load;
+    sensitive << i_e_memop_valid;
+    sensitive << i_e_memop_type;
     sensitive << i_e_memop_addr;
     sensitive << i_e_memop_wdata;
     sensitive << i_m_wena;
@@ -546,8 +546,8 @@ void Tracer::registers() {
         p->pc = i_e_pc.read();
         p->instr = i_e_instr.read().to_uint();
         p->memop_addr = i_e_memop_addr.read();
-        p->memop_load = i_e_memop_load.read();
-        p->memop_store = i_e_memop_store.read();
+        p->memop_load = i_e_memop_valid & !i_e_memop_type;
+        p->memop_store = i_e_memop_valid & i_e_memop_type;
         p->entry_valid = 1;
     }
 
