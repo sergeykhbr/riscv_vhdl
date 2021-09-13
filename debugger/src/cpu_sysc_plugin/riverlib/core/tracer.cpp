@@ -42,7 +42,6 @@ Tracer::Tracer(sc_module_name name_, bool async_reset, const char *trace_file)
     i_e_instr("i_e_instr"),
     i_e_multi_ready("i_e_multi_ready"),
     i_e_wena("i_e_wena"),
-    i_e_whazard("i_e_whazard"),
     i_e_waddr("i_e_waddr"),
     i_e_wdata("i_e_wdata"),
     i_e_memop_store("i_e_memop_store"),
@@ -66,7 +65,6 @@ Tracer::Tracer(sc_module_name name_, bool async_reset, const char *trace_file)
     sensitive << i_e_instr;
     sensitive << i_e_multi_ready;
     sensitive << i_e_wena;
-    sensitive << i_e_whazard;
     sensitive << i_e_waddr;
     sensitive << i_e_wdata;
     sensitive << i_e_memop_store;
@@ -550,13 +548,12 @@ void Tracer::registers() {
         p->memop_addr = i_e_memop_addr.read();
         p->memop_load = i_e_memop_load.read();
         p->memop_store = i_e_memop_store.read();
-        p->entry_valid = !p->whazard;
+        p->entry_valid = 1;
     }
 
     // 1 clock delay
     trace_tbl_[tr_wcnt_].waddr = i_e_waddr.read().to_uint();
     trace_tbl_[tr_wcnt_].wres = i_e_wdata.read();
-    trace_tbl_[tr_wcnt_].whazard = i_e_whazard.read();
     if (i_e_multi_ready.read() == 1) {
         tr_total_++;
         if (++tr_wcnt_ >=  TRACE_TBL_SZ) {
@@ -564,10 +561,9 @@ void Tracer::registers() {
         }
     }
 
-    if (!i_e_wena.read() && i_m_wena.read() && trace_tbl_[tr_rcnt_].whazard) {
+    if (!i_e_wena.read() && i_m_wena.read()) {
         TraceStepType *p = &trace_tbl_[tr_rcnt_];
         p->entry_valid = 1;
-        p->whazard = 0;
         p->wres = i_m_wdata.read();
     }
 

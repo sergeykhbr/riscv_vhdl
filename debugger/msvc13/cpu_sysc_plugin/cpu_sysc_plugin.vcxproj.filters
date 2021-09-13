@@ -171,6 +171,12 @@
     <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\l2cache\l2_dst.cpp">
       <Filter>riverlib\l2cache</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\alu_logic.cpp">
+      <Filter>riverlib\core\arith</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\int_addsub.cpp">
+      <Filter>riverlib\core\arith</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\api_types.h">
@@ -360,6 +366,12 @@
     </ClInclude>
     <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\l2cache\l2_dst.h">
       <Filter>riverlib\l2cache</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\alu_logic.h">
+      <Filter>riverlib\core\arith</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\cpu_sysc_plugin\riverlib\core\arith\int_addsub.h">
+      <Filter>riverlib\core\arith</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

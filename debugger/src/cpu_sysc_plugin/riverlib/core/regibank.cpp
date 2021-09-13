@@ -25,18 +25,13 @@ RegIntBank::RegIntBank(sc_module_name name_, bool async_reset, bool fpu_ena) :
     i_radr1("i_radr1"),
     o_rdata1("o_rdata1"),
     o_rtag1("o_rtag1"),
-    o_rhazard1("o_rhazard1"),
     i_radr2("i_radr2"),
     o_rdata2("o_rdata2"),
     o_rtag2("o_rtag2"),
-    o_rhazard2("o_rhazard2"),
     i_waddr("i_waddr"),
     i_wena("i_wena"),
-    i_whazard("i_whazard"),
     i_wtag("i_wtag"),
-    i_rtag("i_rtag"),
     i_wdata("i_wdata"),
-    o_wtag("o_wtag"),
     i_dport_addr("i_dport_addr"),
     i_dport_ena("i_dport_ena"),
     i_dport_write("i_dport_write"),
@@ -52,9 +47,7 @@ RegIntBank::RegIntBank(sc_module_name name_, bool async_reset, bool fpu_ena) :
     sensitive << i_radr1;
     sensitive << i_radr2;
     sensitive << i_wena;
-    sensitive << i_whazard;
     sensitive << i_wtag;
-    sensitive << i_rtag;
     sensitive << i_wdata;
     sensitive << i_waddr;
     sensitive << i_dport_ena;
@@ -74,12 +67,10 @@ void RegIntBank::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_waddr, i_waddr.name());
         sc_trace(o_vcd, i_wdata, i_wdata.name());
         sc_trace(o_vcd, i_wtag, i_wtag.name());
-        sc_trace(o_vcd, i_rtag, i_rtag.name());
         sc_trace(o_vcd, o_rdata1, o_rdata1.name());
         sc_trace(o_vcd, o_rdata2, o_rdata2.name());
         sc_trace(o_vcd, o_rtag1, o_rtag1.name());
         sc_trace(o_vcd, o_rtag2, o_rtag2.name());
-        sc_trace(o_vcd, o_wtag, o_wtag.name());
         sc_trace(o_vcd, o_dport_rdata, o_dport_rdata.name());
 
         std::string pn(name());
@@ -100,39 +91,30 @@ void RegIntBank::comb() {
     if (i_dport_ena.read() && i_dport_write.read()) {
         if (i_dport_addr.read().or_reduce() == 1) {
             v.reg[int_daddr].val = i_dport_wdata;
-            v.reg[int_waddr].hazard = 0;
         }
     } else if (i_wena.read() == 1 && i_waddr.read().or_reduce() == 1) {
         if (i_wtag.read() == r.reg[int_waddr].tag) {
-            v.reg[int_waddr].hazard = i_whazard;
             v.reg[int_waddr].val = i_wdata;
-            v.reg[int_waddr].rtag = i_rtag;
+            v.reg[int_waddr].tag = i_wtag;
             v.reg[int_waddr].tag = r.reg[int_waddr].tag + 1;
         }
     }
     v.update = !r.update.read();
 
     if (!async_reset_ && !i_nrst.read()) {   
-        v.reg[0].hazard = 0;
         v.reg[0].val = 0;
         v.reg[0].tag = 0;
-        v.reg[0].rtag = 0;
         for (int i = 1; i < REGS_TOTAL; i++) {
-            v.reg[i].hazard = 0;
             v.reg[i].val = 0xfeedface;
             v.reg[i].tag = 0;
-            v.reg[i].rtag = 0;
         }
         v.update = 0;
     }
 
     o_rdata1 = r.reg[int_radr1].val;
-    o_rtag1 = r.reg[int_radr1].rtag;
-    o_rhazard1 = r.reg[int_radr1].hazard;
+    o_rtag1 = r.reg[int_radr1].tag;
     o_rdata2 = r.reg[int_radr2].val;
-    o_rtag2 = r.reg[int_radr2].rtag;
-    o_rhazard2 = r.reg[int_radr2].hazard;
-    o_wtag = r.reg[int_waddr].tag;
+    o_rtag2 = r.reg[int_radr2].tag;
     o_dport_rdata = r.reg[int_daddr].val;
     o_ra = r.reg[Reg_ra].val;
     o_sp = r.reg[Reg_sp].val;
@@ -140,11 +122,9 @@ void RegIntBank::comb() {
 
 void RegIntBank::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
-        r.reg[0].hazard = 0;
         r.reg[0].val = 0;
         r.reg[0].tag = 0;
         for (int i = 1; i < REGS_TOTAL; i++) {
-            r.reg[i].hazard = 0;
             r.reg[i].val = 0xfeedface;
             r.reg[i].tag = 0;
         }

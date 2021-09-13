@@ -143,12 +143,10 @@ private:
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> npc;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> ex_npc;
 
-        sc_signal<bool> wena;
-        sc_signal<sc_uint<6>> waddr;
-        sc_signal<sc_uint<2>> rtag;
-        sc_signal<sc_uint<RISCV_ARCH>> wdata;
-        sc_signal<sc_uint<4>> wtag;
-        sc_signal<bool> whazard;
+        sc_signal<bool> reg_wena;
+        sc_signal<sc_uint<6>> reg_waddr;
+        sc_signal<sc_uint<2>> reg_wtag;
+        sc_signal<sc_uint<RISCV_ARCH>> reg_wdata;
         sc_signal<bool> mret;
         sc_signal<bool> uret;
         sc_signal<bool> csr_wena;
@@ -194,18 +192,14 @@ private:
         sc_signal<bool> wena;
         sc_signal<sc_uint<6>> waddr;
         sc_signal<sc_uint<RISCV_ARCH>> wdata;
-        sc_signal<sc_uint<4>> wtag;
-        sc_signal<sc_uint<2>> rtag;
+        sc_signal<sc_uint<2>> wtag;
     };
 
     struct IntRegsType {
         sc_signal<sc_uint<RISCV_ARCH>> rdata1;
         sc_signal<sc_uint<2>> rtag1;
-        sc_signal<bool> rhazard1;
         sc_signal<sc_uint<RISCV_ARCH>> rdata2;
         sc_signal<sc_uint<2>> rtag2;
-        sc_signal<bool> rhazard2;
-        sc_signal<sc_uint<4>> wtag;
         sc_signal<sc_uint<RISCV_ARCH>> dport_rdata;
         sc_signal<sc_uint<RISCV_ARCH>> ra;      // Return address
         sc_signal<sc_uint<RISCV_ARCH>> sp;      // Stack pointer
@@ -277,11 +271,9 @@ private:
 
     sc_signal<bool> w_writeback_ready;
     sc_signal<bool> w_reg_wena;
-    sc_signal<bool> w_reg_whazard;
     sc_signal<sc_uint<6>> wb_reg_waddr;
     sc_signal<sc_uint<RISCV_ARCH>> wb_reg_wdata;
-    sc_signal<sc_uint<4>> wb_reg_wtag;
-    sc_signal<sc_uint<2>> wb_reg_rtag;
+    sc_signal<sc_uint<2>> wb_reg_wtag;
 
     bool fpu_ena_;
     bool tracer_ena_;

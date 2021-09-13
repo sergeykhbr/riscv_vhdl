@@ -45,8 +45,7 @@ SC_MODULE(MemAccess) {
     sc_out<bool> o_wb_wena;                         // Write enable signal
     sc_out<sc_uint<6>> o_wb_waddr;                  // Output register address (0 = x0 = no write)
     sc_out<sc_uint<RISCV_ARCH>> o_wb_wdata;         // Register value
-    sc_out<sc_uint<4>> o_wb_wtag;
-    sc_out<sc_uint<2>> o_wb_rtag;
+    sc_out<sc_uint<2>> o_wb_wtag;
     sc_in<bool> i_wb_ready;
 
     // Memory interface:
@@ -90,10 +89,9 @@ private:
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> memop_res_pc;
         sc_signal<sc_uint<32>> memop_res_instr;
         sc_signal<sc_uint<6>> memop_res_addr;
-        sc_signal<sc_uint<2>> memop_res_rtag;
+        sc_signal<sc_uint<2>> memop_res_wtag;
         sc_signal<sc_uint<RISCV_ARCH>> memop_res_data;
         sc_signal<bool> memop_res_wena;
-        sc_signal<sc_uint<4>> memop_wtag;
 
         sc_signal<sc_uint<RISCV_ARCH>> hold_rdata;
     } v, r;
@@ -109,16 +107,14 @@ private:
         iv.memop_res_pc = 0;
         iv.memop_res_instr = 0;
         iv.memop_res_addr = 0;
-        iv.memop_res_rtag = 0;
+        iv.memop_res_wtag = 0;
         iv.memop_res_data = 0;
         iv.memop_res_wena = 0;
-        iv.memop_wtag = 0;
         iv.hold_rdata = 0;
     }
 
     static const int QUEUE_WIDTH = 1   // i_e_flushd
-                                 + 2   // i_e_rtag
-                                 + 4   // wtag
+                                 + 2   // wtag
                                  + 64  // wdata width
                                  + 8   // wstrb 
                                  + RISCV_ARCH

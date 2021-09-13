@@ -62,17 +62,12 @@ SC_MODULE(InstrExecute) {
 
     sc_in<sc_uint<RISCV_ARCH>> i_rdata1;        // Integer/Float register value 1
     sc_in<sc_uint<2>> i_rtag1;
-    sc_in<bool> i_rhazard1;
     sc_in<sc_uint<RISCV_ARCH>> i_rdata2;        // Integer/Float register value 2
     sc_in<sc_uint<2>> i_rtag2;
-    sc_in<bool> i_rhazard2;
-    sc_in<sc_uint<4>> i_wtag;
-    sc_out<bool> o_wena;
-    sc_out<sc_uint<6>> o_waddr;                 // Address to store result of the instruction (0=do not store)
-    sc_out<sc_uint<2>> o_rtag;
-    sc_out<bool> o_whazard;
-    sc_out<sc_uint<RISCV_ARCH>> o_wdata;        // Value to store
-    sc_out<sc_uint<4>> o_wtag;
+    sc_out<bool> o_reg_wena;
+    sc_out<sc_uint<6>> o_reg_waddr;             // Address to store result of the instruction (0=do not store)
+    sc_out<sc_uint<2>> o_reg_wtag;
+    sc_out<sc_uint<RISCV_ARCH>> o_reg_wdata;    // Value to store
     sc_out<bool> o_d_ready;                     // Hold pipeline while 'writeback' not done or multi-clock instruction.
     sc_out<bool> o_csr_wena;                    // Write new CSR value
     sc_in<sc_uint<RISCV_ARCH>> i_csr_rdata;     // CSR current value

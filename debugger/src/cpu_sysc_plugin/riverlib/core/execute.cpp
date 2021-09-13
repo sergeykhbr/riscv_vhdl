@@ -51,17 +51,12 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     i_dport_npc("i_dport_npc"),
     i_rdata1("i_rdata1"),
     i_rtag1("i_rtag1"),
-    i_rhazard1("i_rhazard1"),
     i_rdata2("i_rdata2"),
     i_rtag2("i_rtag2"),
-    i_rhazard2("i_rhazard2"),
-    i_wtag("i_wtag"),
-    o_wena("o_wena"),
-    o_waddr("o_waddr"),
-    o_rtag("o_rtag"),
-    o_whazard("o_whazard"),
-    o_wdata("o_wdata"),
-    o_wtag("o_wtag"),
+    o_reg_wena("o_reg_wena"),
+    o_reg_waddr("o_reg_waddr"),
+    o_reg_wtag("o_reg_wtag"),
+    o_reg_wdata("o_reg_wdata"),
     o_d_ready("o_d_ready"),
     o_csr_wena("o_csr_wena"),
     i_csr_rdata("i_csr_rdata"),
@@ -142,11 +137,8 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << i_dport_npc;
     sensitive << i_rdata1;
     sensitive << i_rtag1;
-    sensitive << i_rhazard1;
     sensitive << i_rdata2;
     sensitive << i_rtag2;
-    sensitive << i_rhazard2;
-    sensitive << i_wtag;
     sensitive << i_csr_rdata;
     sensitive << i_mepc;
     sensitive << i_uepc;
@@ -258,7 +250,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sh0->i_mode(wb_shifter_mode);
     sh0->i_a1(wb_shifter_a1);
     sh0->i_a2(wb_shifter_a2);
-    div0->o_res(wb_select.res[Res_Shifter]);
+    sh0->o_res(wb_select.res[Res_Shifter]);
 
     if (fpu_ena_) {
         fpu0 = new FpuTop("fpu0", async_reset);
@@ -302,6 +294,8 @@ InstrExecute::~InstrExecute() {
 
 void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
+        sc_trace(o_vcd, i_nrst, i_nrst.name());
+        sc_trace(o_vcd, i_clk, i_clk.name());
         sc_trace(o_vcd, i_d_valid, i_d_valid.name());
         sc_trace(o_vcd, i_d_pc, i_d_pc.name());
         sc_trace(o_vcd, i_d_instr, i_d_instr.name());
@@ -314,15 +308,12 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_instr_executable, i_instr_executable.name());
         sc_trace(o_vcd, i_rdata1, i_rdata1.name());
         sc_trace(o_vcd, i_rtag1, i_rtag1.name());
-        sc_trace(o_vcd, i_rhazard1, i_rhazard1.name());
         sc_trace(o_vcd, i_rdata2, i_rdata2.name());
         sc_trace(o_vcd, i_rtag2, i_rtag2.name());
-        sc_trace(o_vcd, i_rhazard2, i_rhazard2.name());
-        sc_trace(o_vcd, o_wena, o_wena.name());
-        sc_trace(o_vcd, o_whazard, o_whazard.name());
-        sc_trace(o_vcd, o_waddr, o_waddr.name());
-        sc_trace(o_vcd, o_rtag, o_rtag.name());
-        sc_trace(o_vcd, o_wdata, o_wdata.name());
+        sc_trace(o_vcd, o_reg_wena, o_reg_wena.name());
+        sc_trace(o_vcd, o_reg_waddr, o_reg_waddr.name());
+        sc_trace(o_vcd, o_reg_wtag, o_reg_wtag.name());
+        sc_trace(o_vcd, o_reg_wdata, o_reg_wdata.name());
         sc_trace(o_vcd, o_d_ready, o_d_ready.name());
         sc_trace(o_vcd, o_csr_wena, o_csr_wena.name());
         sc_trace(o_vcd, i_csr_rdata, i_csr_rdata.name());
@@ -1087,13 +1078,11 @@ void InstrExecute::comb() {
     o_ex_breakpoint = 0;//wv[Instr_EBREAK].to_bool() & r.valid;
     o_ex_ecall = 0;//wv[Instr_ECALL].to_bool() & r.valid;
 
-    o_wena = r.reg_write;
-    o_whazard = w_test_hazard1 || w_test_hazard2;
-    o_waddr = r.reg_waddr;
-    o_rtag = r.reg_wtag;    // remove me duplcate o_wtag
-    o_wdata = vb_res;
-    o_wtag = 0;
-    o_d_ready = !v_d_ready;
+    o_reg_wena = r.reg_write;
+    o_reg_waddr = r.reg_waddr;
+    o_reg_wtag = r.reg_wtag;    // remove me duplcate o_wtag
+    o_reg_wdata = vb_res;
+    o_d_ready = v_d_ready;
 
     o_csr_wena = r.csr_write;
     o_csr_waddr = r.csr_waddr;
@@ -1137,6 +1126,7 @@ void InstrExecute::comb() {
     o_memop_wtag = r.memop_wtag;
     
 #ifdef UPDT2
+    o_valid = r.valid;
     o_pc = r.pc;
     o_npc = r.npc;
     o_instr = r.instr;
