@@ -35,14 +35,18 @@ SC_MODULE(DbgPort) {
     sc_in<bool> i_dport_resp_ready;                     // ready to accepd response
     sc_out<bool> o_dport_resp_valid;                    // Response is valid
     sc_out<sc_uint<RISCV_ARCH>> o_dport_rdata;          // Response value
-    // CPU debugging signals:
-    sc_out<sc_uint<12>> o_csr_addr;                     // Address of the sub-region register
+    // CSR bus master interface:
+    sc_out<bool> o_csr_req_valid;                       // Region 0: Access to CSR bank is enabled.
+    sc_in<bool> i_csr_req_ready;
+    sc_out<sc_uint<CsrReq_Total>> o_csr_req_type;        // Region 0: CSR operation read/modify/write
+    sc_out<sc_uint<12>> o_csr_req_addr;                 // Address of the sub-region register
+    sc_out<sc_uint<RISCV_ARCH>> o_csr_req_data;         // Write data
+    sc_in<bool> i_csr_resp_valid;
+    sc_out<bool> o_csr_resp_ready;
+    sc_in<sc_uint<RISCV_ARCH>> i_csr_resp_data;         // Region 0: CSR read value
+
     sc_out<sc_uint<6>> o_reg_addr;
     sc_out<sc_uint<RISCV_ARCH>> o_core_wdata;           // Write data
-    sc_out<bool> o_csr_ena;                             // Region 0: Access to CSR bank is enabled.
-    sc_out<bool> o_csr_write;                           // Region 0: CSR write enable
-    sc_in<bool> i_csr_valid;
-    sc_in<sc_uint<RISCV_ARCH>> i_csr_rdata;             // Region 0: CSR read value
     sc_out<bool> o_ireg_ena;                            // Region 1: Access to integer register bank is enabled
     sc_out<bool> o_ireg_write;                          // Region 1: Integer registers bank write pulse
     sc_in<sc_uint<RISCV_ARCH>> i_ireg_rdata;            // Region 1: Integer register read value
@@ -81,6 +85,7 @@ private:
 
         sc_signal<sc_uint<RISCV_ARCH>> rdata;
         sc_signal<sc_uint<CFG_LOG2_STACK_TRACE_ADDR>> stack_trace_cnt;              // Stack trace buffer counter
+        sc_signal<bool> req_accepted;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
@@ -91,6 +96,7 @@ private:
         iv.dstate = idle;
         iv.rdata = 0;
         iv.stack_trace_cnt = 0;
+        iv.req_accepted = 0;
     }
 
     sc_signal<sc_uint<CFG_LOG2_STACK_TRACE_ADDR>> wb_stack_raddr;

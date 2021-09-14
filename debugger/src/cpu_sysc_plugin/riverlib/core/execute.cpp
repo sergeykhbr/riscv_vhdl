@@ -149,6 +149,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << i_trap_pc;
     sensitive << i_flushd_end;
     sensitive << r.state;
+    sensitive << r.csrstate;
     sensitive << r.pc;
     sensitive << r.npc;
     sensitive << r.instr;
@@ -358,6 +359,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, wb_select.ena[Res_FPU], pn + ".w_arith_ena(7)");
         sc_trace(o_vcd, wb_select.res[Res_FPU], pn + ".wb_arith_res(7)");
         sc_trace(o_vcd, r.state, pn + ".r_state");
+        sc_trace(o_vcd, r.csrstate, pn + ".r_csrstate");
         sc_trace(o_vcd, r.hold_fencei, pn + ".r_hold_fencei");
         sc_trace(o_vcd, r.tagcnt_rd, pn + ".r_tagcnt_rd");
         sc_trace(o_vcd, r.tagcnt_wr, pn + ".r_tagcnt_wr");

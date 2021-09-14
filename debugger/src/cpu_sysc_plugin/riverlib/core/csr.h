@@ -83,12 +83,6 @@ SC_MODULE(CsrRegs) {
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mpu_region_mask;
     sc_out<sc_uint<CFG_MPU_FL_TOTAL>> o_mpu_region_flags;  // {ena, cachable, r, w, x}
 
-    sc_in<bool> i_dport_ena;                  // Debug port request is enabled
-    sc_in<bool> i_dport_write;                // Debug port Write enable
-    sc_in<sc_uint<12>> i_dport_addr;          // Debug port CSR address
-    sc_in<sc_uint<RISCV_ARCH>> i_dport_wdata; // Debug port CSR writing value
-    sc_out<bool> o_dport_valid;               // Debug read data is valid
-    sc_out<sc_uint<RISCV_ARCH>> o_dport_rdata;// Debug port CSR read value
     sc_out<bool> o_halt;
 
     void comb();
@@ -101,7 +95,15 @@ SC_MODULE(CsrRegs) {
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
 private:
+    static const int State_Idle = 0;
+    static const int State_Process = 1;
+    static const int State_Response = 2;
+
     struct RegistersType {
+        sc_signal<sc_uint<2>> state;
+        sc_signal<sc_uint<CsrReq_Total>> req_type;
+        sc_signal<sc_uint<12>> req_addr;
+        sc_signal<sc_uint<RISCV_ARCH>> req_data;
         sc_signal<sc_uint<RISCV_ARCH>> mtvec;
         sc_signal<sc_uint<RISCV_ARCH>> mscratch;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mstackovr;
@@ -158,6 +160,10 @@ private:
     } v, r;
 
     void R_RESET(RegistersType &iv) {
+        iv.state = State_Idle;
+        iv.req_type = 0;
+        iv.req_addr = 0;
+        iv.req_data = 0;
         iv.mtvec = 0;
         iv.mscratch = 0;
         iv.mstackovr = 0;

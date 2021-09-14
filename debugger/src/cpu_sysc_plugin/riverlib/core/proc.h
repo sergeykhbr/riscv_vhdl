@@ -29,6 +29,7 @@
 #include "br_predic.h"
 #include "dbg_port.h"
 #include "tracer.h"
+#include "ic_csr_m2_s1.h"
 #include <fstream>
 
 namespace debugger {
@@ -216,8 +217,6 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> resp_data; // Responded CSR data
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mepc;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> uepc;
-        sc_signal<bool> dport_valid;
-        sc_signal<sc_uint<RISCV_ARCH>> dport_rdata;
         sc_signal<bool> trap_valid;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> trap_pc;
         sc_signal<bool> progbuf_ena;                // execute instruction from progbuf
@@ -232,11 +231,13 @@ private:
     } csr;
 
     struct DebugType {
-        sc_signal<sc_uint<12>> csr_addr;           // Address of the sub-region register
+        sc_signal<bool> csr_req_valid;
+        sc_signal<sc_uint<CsrReq_Total>> csr_req_type;
+        sc_signal<sc_uint<12>> csr_req_addr;           // Address of the sub-region register
+        sc_signal<sc_uint<RISCV_ARCH>> csr_req_data;
+        sc_signal<bool> csr_resp_ready;
         sc_signal<sc_uint<6>> reg_addr;
         sc_signal<sc_uint<RISCV_ARCH>> core_wdata;  // Write data
-        sc_signal<bool> csr_ena;                    // Region 0: Access to CSR bank is enabled.
-        sc_signal<bool> csr_write;                  // Region 0: CSR write enable
         sc_signal<bool> ireg_ena;                   // Region 1: Access to integer register bank is enabled
         sc_signal<bool> ireg_write;                 // Region 1: Integer registers bank write pulse
     } dbg;
@@ -254,6 +255,21 @@ private:
         WriteBackType w;                        // Write back registers value
     } w;
 
+    // csr bridge to executor unit
+    sc_signal<bool> iccsr_m0_req_ready;
+    sc_signal<bool> iccsr_m0_resp_valid;
+    sc_signal<sc_uint<RISCV_ARCH>> iccsr_m0_resp_data;
+    // csr bridge to debug unit
+    sc_signal<bool> iccsr_m1_req_ready;
+    sc_signal<bool> iccsr_m1_resp_valid;
+    sc_signal<sc_uint<RISCV_ARCH>> iccsr_m1_resp_data;
+    // csr bridge to CSR module
+    sc_signal<bool> iccsr_s0_req_valid;
+    sc_signal<sc_uint<CsrReq_Total>> iccsr_s0_req_type;
+    sc_signal<sc_uint<12>> iccsr_s0_req_addr;
+    sc_signal<sc_uint<RISCV_ARCH>> iccsr_s0_req_data;
+    sc_signal<bool> iccsr_s0_resp_ready;
+
     sc_signal<bool> w_fetch_pipeline_hold;
     sc_signal<bool> w_any_pipeline_hold;
     sc_signal<bool> w_flush_pipeline;
@@ -265,6 +281,7 @@ private:
 
     BranchPredictor *predic0;
     RegIntBank *iregs0;
+    ic_csr_m2_s1 *iccsr0;
     CsrRegs *csr0;
     Tracer *trace0;
 

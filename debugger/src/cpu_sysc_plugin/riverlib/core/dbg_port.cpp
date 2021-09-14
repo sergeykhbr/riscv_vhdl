@@ -31,13 +31,16 @@ DbgPort::DbgPort(sc_module_name name_, bool async_reset) :
     i_dport_resp_ready("i_dport_resp_ready"),
     o_dport_resp_valid("o_dport_resp_valid"),
     o_dport_rdata("o_dport_rdata"),
-    o_csr_addr("o_csr_addr"),
+    o_csr_req_valid("o_csr_req_valid"),
+    i_csr_req_ready("i_csr_req_ready"),
+    o_csr_req_type("o_csr_req_type"),
+    o_csr_req_addr("o_csr_req_addr"),
+    o_csr_req_data("o_csr_req_data"),
+    i_csr_resp_valid("i_csr_resp_valid"),
+    o_csr_resp_ready("o_csr_resp_ready"),
+    i_csr_resp_data("i_csr_resp_data"),
     o_reg_addr("o_reg_addr"),
     o_core_wdata("o_core_wdata"),
-    o_csr_ena("o_csr_ena"),
-    o_csr_write("o_csr_write"),
-    i_csr_valid("i_csr_valid"),
-    i_csr_rdata("i_csr_rdata"),
     o_ireg_ena("o_ireg_ena"),
     o_ireg_write("o_ireg_write"),
     i_ireg_rdata("i_ireg_rdata"),
@@ -55,8 +58,9 @@ DbgPort::DbgPort(sc_module_name name_, bool async_reset) :
     sensitive << i_dport_wdata;
     sensitive << i_dport_resp_ready;
     sensitive << i_ireg_rdata;
-    sensitive << i_csr_valid;
-    sensitive << i_csr_rdata;
+    sensitive << i_csr_req_ready;
+    sensitive << i_csr_resp_valid;
+    sensitive << i_csr_resp_data;
     sensitive << i_pc;
     sensitive << i_npc;
     sensitive << i_e_call;
@@ -67,6 +71,7 @@ DbgPort::DbgPort(sc_module_name name_, bool async_reset) :
     sensitive << r.dport_rdata;
     sensitive << r.dstate;
     sensitive << r.rdata;
+    sensitive << r.req_accepted;
     sensitive << wb_stack_rdata;
 
     SC_METHOD(registers);
@@ -100,13 +105,16 @@ void DbgPort::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_dport_resp_ready, i_dport_resp_ready.name());
         sc_trace(o_vcd, o_dport_resp_valid, o_dport_resp_valid.name());
         sc_trace(o_vcd, o_dport_rdata, o_dport_rdata.name());
-        sc_trace(o_vcd, o_csr_addr, o_csr_addr.name());
+        sc_trace(o_vcd, o_csr_req_valid, o_csr_req_valid.name());
+        sc_trace(o_vcd, i_csr_req_ready, i_csr_req_ready.name());
+        sc_trace(o_vcd, o_csr_req_type, o_csr_req_type.name());
+        sc_trace(o_vcd, o_csr_req_addr, o_csr_req_addr.name());
+        sc_trace(o_vcd, o_csr_req_data, o_csr_req_data.name());
+        sc_trace(o_vcd, i_csr_resp_valid, i_csr_resp_valid.name());
+        sc_trace(o_vcd, o_csr_resp_ready, o_csr_resp_ready.name());
+        sc_trace(o_vcd, i_csr_resp_data, i_csr_resp_data.name());
         sc_trace(o_vcd, o_reg_addr, o_reg_addr.name());
         sc_trace(o_vcd, o_core_wdata, o_core_wdata.name());
-        sc_trace(o_vcd, o_csr_ena, o_csr_ena.name());
-        sc_trace(o_vcd, o_csr_write, o_csr_write.name());
-        sc_trace(o_vcd, i_csr_valid, i_csr_valid.name());
-        sc_trace(o_vcd, i_csr_rdata, i_csr_rdata.name());
         sc_trace(o_vcd, o_ireg_ena, o_ireg_ena.name());
         sc_trace(o_vcd, o_ireg_write, o_ireg_write.name());
         sc_trace(o_vcd, i_ireg_rdata, i_ireg_rdata.name());
@@ -121,12 +129,14 @@ void DbgPort::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void DbgPort::comb() {
-    sc_uint<12> wb_o_csr_addr;
+    bool v_csr_req_valid;
+    bool v_csr_resp_ready;
+    sc_uint<CsrReq_Total> vb_csr_req_type;
+    sc_uint<12> vb_csr_req_addr;
+    sc_uint<RISCV_ARCH> vb_csr_req_data;
     sc_uint<6> wb_o_reg_addr;
     sc_uint<RISCV_ARCH> wb_o_core_wdata;
     sc_uint<12> wb_idx;
-    bool w_o_csr_ena;
-    bool w_o_csr_write;
     bool w_o_ireg_ena;
     bool w_o_ireg_write;
     bool v_req_ready;
@@ -135,12 +145,14 @@ void DbgPort::comb() {
 
     v = r;
 
-    wb_o_csr_addr = 0;
+    v_csr_req_valid = 0;
+    v_csr_resp_ready = 0;
+    vb_csr_req_type = 0;
+    vb_csr_req_addr = 0;
+    vb_csr_req_data = 0;
     wb_o_reg_addr = 0;
     wb_o_core_wdata = 0;
     wb_idx = i_dport_addr.read()(11, 0);
-    w_o_csr_ena = 0;
-    w_o_csr_write = 0;
     w_o_ireg_ena = 0;
     w_o_ireg_write = 0;
     wb_stack_raddr = 0;
@@ -167,6 +179,7 @@ void DbgPort::comb() {
     case idle:
         v_req_ready = 1;
         vrdata = 0;
+        v.req_accepted = 0;
         if (i_dport_req_valid.read() == 1) {
             v.dport_write = i_dport_write;
             v.dport_addr = i_dport_addr;
@@ -190,14 +203,17 @@ void DbgPort::comb() {
         }
         break;
     case csr_region:
-        w_o_csr_ena = 1;
-        wb_o_csr_addr = r.dport_addr.read()(11,0);
-        if (r.dport_write == 1) {
-             w_o_csr_write   = 1;
-             wb_o_core_wdata = r.dport_wdata;
+        v_csr_req_valid = !r.req_accepted;
+        v_csr_resp_ready = r.req_accepted;
+        if (!r.req_accepted && i_csr_req_ready) {
+            v.req_accepted = 1;
         }
-        if (i_csr_valid.read() == 1) {
-            vrdata = i_csr_rdata.read();
+        vb_csr_req_type[CsrReq_Read] = !r.dport_write;
+        vb_csr_req_type[CsrReq_Write] = r.dport_write;
+        vb_csr_req_addr = r.dport_addr.read()(11,0);
+        vb_csr_req_data = r.dport_wdata;
+        if (r.req_accepted.read() && i_csr_resp_valid.read() == 1) {
+            vrdata = i_csr_resp_data.read();
             v.dstate = wait_to_accept;
         }
         break;
@@ -249,11 +265,14 @@ void DbgPort::comb() {
         R_RESET(v);
     }
 
-    o_csr_addr = wb_o_csr_addr;
+    o_csr_req_valid = v_csr_req_valid;
+    o_csr_req_type = vb_csr_req_type;
+    o_csr_req_addr = vb_csr_req_addr;
+    o_csr_req_data = vb_csr_req_data;
+    o_csr_resp_ready = v_csr_resp_ready;
+
     o_reg_addr = wb_o_reg_addr;
     o_core_wdata = wb_o_core_wdata;
-    o_csr_ena = w_o_csr_ena;
-    o_csr_write = w_o_csr_write;
     o_ireg_ena = w_o_ireg_ena;
     o_ireg_write = w_o_ireg_write;
 
