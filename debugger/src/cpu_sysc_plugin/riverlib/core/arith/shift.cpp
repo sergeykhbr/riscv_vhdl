@@ -42,6 +42,15 @@ Shifter::Shifter(sc_module_name name_, bool async_reset)
 };
 
 void Shifter::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+    if (o_vcd) {
+        sc_trace(o_vcd, i_a1, i_a1.name());
+        sc_trace(o_vcd, i_a2, i_a2.name());
+        sc_trace(o_vcd, i_mode, i_mode.name());
+        sc_trace(o_vcd, o_res, o_res.name());
+
+        std::string pn(name());
+        sc_trace(o_vcd, r.res, pn + ".r_res");
+    }
 }
 
 void Shifter::comb() {

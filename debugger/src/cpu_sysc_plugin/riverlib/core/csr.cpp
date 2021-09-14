@@ -25,10 +25,14 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     i_mret("i_mret"),
     i_uret("i_uret"),
     i_sp("i_sp"),
-    i_addr("i_addr"),
-    i_wena("i_wena"),
-    i_wdata("i_wdata"),
-    o_rdata("o_rdata"),
+    i_req_valid("i_req_valid"),
+    o_req_ready("o_req_ready"),
+    i_req_type("i_req_type"),
+    i_req_addr("i_req_addr"),
+    i_req_data("i_req_data"),
+    o_resp_valid("o_resp_valid"),
+    i_resp_ready("i_resp_ready"),
+    o_resp_data("o_resp_data"),
     o_mepc("o_mepc"),
     o_uepc("o_uepc"),
     i_trap_ready("i_trap_ready"),
@@ -87,9 +91,11 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << i_mret;
     sensitive << i_uret;
     sensitive << i_sp;
-    sensitive << i_addr;
-    sensitive << i_wena;
-    sensitive << i_wdata;
+    sensitive << i_req_valid;
+    sensitive << i_req_type;
+    sensitive << i_req_addr;
+    sensitive << i_req_data;
+    sensitive << i_resp_ready;
     sensitive << i_trap_ready;
     sensitive << i_e_pc;
     sensitive << i_e_npc;
@@ -173,10 +179,14 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_mret, i_mret.name());
         sc_trace(o_vcd, i_uret, i_uret.name());
         sc_trace(o_vcd, i_sp, i_sp.name());
-        sc_trace(o_vcd, i_addr, i_addr.name());
-        sc_trace(o_vcd, i_wena, i_wena.name());
-        sc_trace(o_vcd, i_wdata, i_wdata.name());
-        sc_trace(o_vcd, o_rdata, o_rdata.name());
+        sc_trace(o_vcd, i_req_valid, i_req_valid.name());
+        sc_trace(o_vcd, o_req_ready, o_req_ready.name());
+        sc_trace(o_vcd, i_req_type, i_req_type.name());
+        sc_trace(o_vcd, i_req_addr, i_req_addr.name());
+        sc_trace(o_vcd, i_req_data, i_req_data.name());
+        sc_trace(o_vcd, o_resp_valid, o_resp_valid.name());
+        sc_trace(o_vcd, i_resp_ready, i_resp_ready.name());
+        sc_trace(o_vcd, o_resp_data, o_resp_data.name());
         sc_trace(o_vcd, i_trap_ready, i_trap_ready.name()),
         sc_trace(o_vcd, i_e_pc, i_e_pc.name());
         sc_trace(o_vcd, i_e_npc, i_e_npc.name());

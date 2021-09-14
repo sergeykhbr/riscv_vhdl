@@ -518,6 +518,7 @@ void Tracer::task_disassembler(uint32_t instr) {
 
 void Tracer::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
+        sc_trace(o_vcd, i_dbg_executed_cnt, i_dbg_executed_cnt.name());
         sc_trace(o_vcd, i_e_valid, i_e_valid.name());
         sc_trace(o_vcd, i_m_wena, i_m_wena.name());
 
@@ -529,93 +530,109 @@ void Tracer::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void Tracer::registers() {
-    char msg[256];
-    int tsz;
+    TraceStepType *p_e_wr = &trace_tbl_[tr_wcnt_];
+
+    if (i_e_wena.read() == 1 && (i_e_memop_valid.read() == 0 || i_e_memop_type.read() == 1)) {
+        // Direct register writting if it is not a Load operation
+        RegActionType *pr = &p_e_wr->regaction[p_e_wr->regactioncnt++];
+        pr->waddr = i_e_waddr.read();
+        pr->wres = i_e_wdata.read();
+    }
+
+    if (i_e_memop_valid.read() == 1) {
+        MemopActionType *pm = &p_e_wr->memaction[p_e_wr->memactioncnt++];
+        pm->type = i_e_memop_type.read();
+        pm->memaddr = i_e_memop_addr.read();
+        pm->data = i_e_memop_wdata.read();
+        pm->regaddr = i_e_waddr.read();
+        pm->complete = i_e_memop_type.read();   // 0=load(need wait result);1=store
+    }
+
+    if (i_m_wena.read()) {
+        // Update current rd memory action (memory operations are strictly ordered)
+        for (int i = 0; i < trace_tbl_[tr_rcnt_].memactioncnt; i++) {
+            if (!trace_tbl_[tr_rcnt_].memaction[i].complete) {
+                trace_tbl_[tr_rcnt_].memaction[i].complete = 1;
+                trace_tbl_[tr_rcnt_].memaction[i].data = i_m_wdata.read();
+            }
+        }
+    }
 
 
     if (i_e_valid.read() == 1) {
-        TraceStepType *p = &trace_tbl_[tr_wcnt_];
-        if (i_e_multi_ready.read() == 0) {
-            tr_total_++;
-            if (++tr_wcnt_ >=  TRACE_TBL_SZ) {
-                tr_wcnt_ = 0;
+        p_e_wr->exec_cnt = i_dbg_executed_cnt.read() + 1;
+        p_e_wr->pc = i_e_pc.read();
+        p_e_wr->instr = i_e_instr.read().to_uint();
+
+        tr_wcnt_ = (tr_wcnt_ + 1) % TRACE_TBL_SZ;
+        // Clear next element:
+        memset(&trace_tbl_[tr_wcnt_], 0, sizeof(trace_tbl_[tr_wcnt_]));
+    }
+
+
+    // check instruction data completness
+    bool entry_valid;
+    while (tr_rcnt_ != tr_wcnt_) {
+        entry_valid = true;
+        for (int i = 0; i < trace_tbl_[tr_rcnt_].memactioncnt; i++) {
+            if (!trace_tbl_[tr_rcnt_].memaction[i].complete) {
+                entry_valid = false;
+                break;
             }
         }
-
-        p->exec_cnt = i_dbg_executed_cnt.read();
-        p->pc = i_e_pc.read();
-        p->instr = i_e_instr.read().to_uint();
-        p->memop_addr = i_e_memop_addr.read();
-        p->memop_load = i_e_memop_valid & !i_e_memop_type;
-        p->memop_store = i_e_memop_valid & i_e_memop_type;
-        p->entry_valid = 1;
-    }
-
-    // 1 clock delay
-    trace_tbl_[tr_wcnt_].waddr = i_e_waddr.read().to_uint();
-    trace_tbl_[tr_wcnt_].wres = i_e_wdata.read();
-    if (i_e_multi_ready.read() == 1) {
-        tr_total_++;
-        if (++tr_wcnt_ >=  TRACE_TBL_SZ) {
-            tr_wcnt_ = 0;
+        if (!entry_valid) {
+            break;
         }
+        trace_output(&trace_tbl_[tr_rcnt_]);
+        tr_rcnt_ = (tr_rcnt_ + 1) %  TRACE_TBL_SZ;
     }
+}
 
-    if (!i_e_wena.read() && i_m_wena.read()) {
-        TraceStepType *p = &trace_tbl_[tr_rcnt_];
-        p->entry_valid = 1;
-        p->wres = i_m_wdata.read();
-    }
+void Tracer::trace_output(TraceStepType *tr) {
+    char msg[256];
+    int tsz;
 
-    while (trace_tbl_[tr_rcnt_].entry_valid) {
-        TraceStepType *p = &trace_tbl_[tr_rcnt_];
-        p->entry_valid = 0;
-        tr_total_--;
-        if (++tr_rcnt_ >=  TRACE_TBL_SZ) {
-            tr_rcnt_ = 0;
-        }
+    task_disassembler(tr->instr);
+    tsz = RISCV_sprintf(msg, sizeof(msg),
+        "%9" RV_PRI64 "d: %08" RV_PRI64 "x: %s \n",
+            tr->exec_cnt,
+            tr->pc,
+            disasm);
+    fwrite(msg, 1, tsz, fl_);
 
-        task_disassembler(p->instr);
-        tsz = RISCV_sprintf(msg, sizeof(msg),
-            "%9" RV_PRI64 "d: %08" RV_PRI64 "x: %s \n",
-                p->exec_cnt,
-                p->pc,
-                disasm);
-        fwrite(msg, 1, tsz, fl_);
-
-        if (p->memop_load) {
+    for (int i = 0; i < tr->memactioncnt; i++) {
+        MemopActionType *pm = &tr->memaction[i];
+        if (pm->type == 0) {
             tsz = RISCV_sprintf(msg, sizeof(msg),
                 "%20s [%08" RV_PRI64 "x] => %016" RV_PRI64 "x\n",
                     "",
-                    p->memop_addr,
-                    p->wres);
+                    pm->memaddr,
+                    pm->data);
             fwrite(msg, 1, tsz, fl_);
             tsz = RISCV_sprintf(msg, sizeof(msg),
                 "%20s %10s <= %016" RV_PRI64 "x\n",
                     "",
-                    rname[p->waddr],
-                    p->wres);
+                    rname[pm->regaddr],
+                    pm->data);
             fwrite(msg, 1, tsz, fl_);
         } else {
-            if (p->waddr != 0) {
-                tsz = RISCV_sprintf(msg, sizeof(msg),
-                    "%20s %10s <= %016" RV_PRI64 "x\n",
-                        "",
-                        rname[p->waddr],
-                        p->wres);
-                fwrite(msg, 1, tsz, fl_);
-            }
-
-            if (p->memop_store) {
-                tsz = RISCV_sprintf(msg, sizeof(msg),
-                    "%20s [%08" RV_PRI64 "x] <= %016" RV_PRI64 "x\n",
-                        "",
-                        p->memop_addr,
-                        p->wres);
-                fwrite(msg, 1, tsz, fl_);
-            }
+            tsz = RISCV_sprintf(msg, sizeof(msg),
+                "%20s [%08" RV_PRI64 "x] <= %016" RV_PRI64 "x\n",
+                    "",
+                    pm->memaddr,
+                    pm->data);
+            fwrite(msg, 1, tsz, fl_);
         }
+    }
 
+    for (int i = 0; i < tr->regactioncnt; i++) {
+        RegActionType *pr = &tr->regaction[i];
+            tsz = RISCV_sprintf(msg, sizeof(msg),
+                "%20s %10s <= %016" RV_PRI64 "x\n",
+                    "",
+                    rname[pr->waddr],
+                    pr->wres);
+            fwrite(msg, 1, tsz, fl_);
     }
 }
 

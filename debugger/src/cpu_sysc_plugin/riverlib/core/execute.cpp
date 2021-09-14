@@ -58,10 +58,14 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     o_reg_wtag("o_reg_wtag"),
     o_reg_wdata("o_reg_wdata"),
     o_d_ready("o_d_ready"),
-    o_csr_wena("o_csr_wena"),
-    i_csr_rdata("i_csr_rdata"),
-    o_csr_waddr("o_csr_waddr"),
-    o_csr_wdata("o_csr_wdata"),
+    o_csr_req_valid("o_csr_req_valid"),
+    i_csr_req_ready("i_csr_req_ready"),
+    o_csr_req_type("o_csr_req_type"),
+    o_csr_req_addr("o_csr_req_addr"),
+    o_csr_req_data("o_csr_req_data"),
+    i_csr_resp_valid("i_csr_resp_valid"),
+    o_csr_resp_ready("o_csr_resp_ready"),
+    i_csr_resp_data("i_csr_resp_data"),
     i_mepc("i_mepc"),
     i_uepc("i_uepc"),
     i_trap_valid("i_trap_valid"),
@@ -86,7 +90,6 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     o_memop_size("o_memop_size"),
     o_memop_addr("o_memop_addr"),
     o_memop_wdata("o_memop_wdata"),
-    o_memop_waddr("o_memop_waddr"),
     i_memop_ready("i_memop_ready"),
     o_trap_ready("o_trap_ready"),
     o_valid("o_valid"),
@@ -137,7 +140,9 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << i_rtag1;
     sensitive << i_rdata2;
     sensitive << i_rtag2;
-    sensitive << i_csr_rdata;
+    sensitive << i_csr_req_ready;
+    sensitive << i_csr_resp_valid;
+    sensitive << i_csr_resp_data;
     sensitive << i_mepc;
     sensitive << i_uepc;
     sensitive << i_trap_valid;
@@ -154,10 +159,10 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << r.select;
     sensitive << r.reg_waddr;
     sensitive << r.reg_wtag;
-    sensitive << r.csr_write;
-    sensitive << r.csr_waddr;
-    sensitive << r.csr_wdata;
-    sensitive << r.memop_waddr;
+    sensitive << r.csr_req_type;
+    sensitive << r.csr_req_addr;
+    sensitive << r.csr_req_data;
+    sensitive << r.csr_resp_data;
     sensitive << r.memop_valid;
     sensitive << r.memop_type;
     sensitive << r.memop_addr;
@@ -165,6 +170,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
 
     sensitive << r.res_reg2;
     sensitive << r.res_npc;
+    sensitive << r.res_ra;
     sensitive << r.res_csr;
 
     sensitive << r.reg_write;
@@ -315,10 +321,14 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_reg_wtag, o_reg_wtag.name());
         sc_trace(o_vcd, o_reg_wdata, o_reg_wdata.name());
         sc_trace(o_vcd, o_d_ready, o_d_ready.name());
-        sc_trace(o_vcd, o_csr_wena, o_csr_wena.name());
-        sc_trace(o_vcd, i_csr_rdata, i_csr_rdata.name());
-        sc_trace(o_vcd, o_csr_waddr, o_csr_waddr.name());
-        sc_trace(o_vcd, o_csr_wdata, o_csr_wdata.name());
+        sc_trace(o_vcd, o_csr_req_valid, o_csr_req_valid.name());
+        sc_trace(o_vcd, i_csr_req_ready, i_csr_req_ready.name());
+        sc_trace(o_vcd, o_csr_req_type, o_csr_req_type.name());
+        sc_trace(o_vcd, o_csr_req_addr, o_csr_req_addr.name());
+        sc_trace(o_vcd, o_csr_req_data, o_csr_req_data.name());
+        sc_trace(o_vcd, i_csr_resp_valid, i_csr_resp_valid.name());
+        sc_trace(o_vcd, o_csr_resp_ready, o_csr_resp_ready.name());
+        sc_trace(o_vcd, i_csr_resp_data, i_csr_resp_data.name());
         sc_trace(o_vcd, i_trap_valid, i_trap_valid.name());
         sc_trace(o_vcd, i_trap_pc, i_trap_pc.name());
         sc_trace(o_vcd, o_ex_npc, o_ex_npc.name());
@@ -327,7 +337,6 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_memop_size, o_memop_size.name());
         sc_trace(o_vcd, o_memop_addr, o_memop_addr.name());
         sc_trace(o_vcd, o_memop_wdata, o_memop_wdata.name());
-        sc_trace(o_vcd, o_memop_waddr, o_memop_waddr.name());
 
         sc_trace(o_vcd, i_memop_ready, i_memop_ready.name());
         sc_trace(o_vcd, o_trap_ready, o_trap_ready.name());
@@ -348,8 +357,8 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, wb_select.res[Res_IDiv], pn + ".wb_arith_res(6)");
         sc_trace(o_vcd, wb_select.ena[Res_FPU], pn + ".w_arith_ena(7)");
         sc_trace(o_vcd, wb_select.res[Res_FPU], pn + ".wb_arith_res(7)");
+        sc_trace(o_vcd, r.state, pn + ".r_state");
         sc_trace(o_vcd, r.hold_fencei, pn + ".r_hold_fencei");
-        sc_trace(o_vcd, r.memop_waddr, pn + ".r_memop_waddr");
         sc_trace(o_vcd, r.tagcnt_rd, pn + ".r_tagcnt_rd");
         sc_trace(o_vcd, r.tagcnt_wr, pn + ".r_tagcnt_wr");
         sc_trace(o_vcd, r.select, pn + ".r_select");
@@ -372,6 +381,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
     alu0->generateVCD(i_vcd, o_vcd);
     addsub0->generateVCD(i_vcd, o_vcd);
+    sh0->generateVCD(i_vcd, o_vcd);
     mul0->generateVCD(i_vcd, o_vcd);
     div0->generateVCD(i_vcd, o_vcd);
     if (fpu_ena_) {
@@ -385,7 +395,8 @@ void InstrExecute::comb() {
     bool v_fenced;
     bool v_mret;
     bool v_uret;
-    bool v_csr_wena;
+    bool v_csr_req_valid;
+    bool v_csr_resp_ready;
     sc_uint<RISCV_ARCH> vb_csr_wdata;
     sc_uint<RISCV_ARCH> vb_res;
     sc_uint<CFG_CPU_ADDR_BITS> vb_prog_npc;
@@ -439,7 +450,8 @@ void InstrExecute::comb() {
     v = r;
 
     v_d_ready = 0;
-    v_csr_wena = 0;
+    v_csr_req_valid = 0;
+    v_csr_resp_ready = 0;
     vb_csr_wdata = 0;
     vb_res = 0;
     vb_off = 0;
@@ -454,7 +466,6 @@ void InstrExecute::comb() {
 #ifdef UPDT2
     v.reg_write = 0;
     v.flushd = 0;
-    v.csr_write = 0;
 #endif
     vb_rdata1 = 0;
     vb_rdata2 = 0;
@@ -731,7 +742,8 @@ void InstrExecute::comb() {
 
 #ifdef UPDT2
     vb_select[Res_Reg2] = i_memop_store || wv[Instr_LUI];
-    vb_select[Res_Npc] = v_pc_branch || wv[Instr_JAL] || wv[Instr_JALR]
+    vb_select[Res_Npc] = 0;
+    vb_select[Res_Ra] = v_pc_branch || wv[Instr_JAL] || wv[Instr_JALR]
                         || wv[Instr_MRET] || wv[Instr_URET]
                         || i_trap_valid;
     vb_select[Res_Csr] = wv[Instr_CSRRC] || wv[Instr_CSRRCI] || wv[Instr_CSRRS]
@@ -773,12 +785,34 @@ void InstrExecute::comb() {
 
     wb_select.res[Res_Zero] = 0;
     wb_select.res[Res_Reg2] = r.res_reg2;
+    wb_select.res[Res_Csr] = r.res_csr;
+    wb_select.res[Res_Npc] = r.res_npc;
+    wb_select.res[Res_Ra] = r.res_ra;
+
+    vb_csr_wdata = 0;
+    if (wv[Instr_CSRRC]) {
+        vb_csr_wdata = r.csr_resp_data.read() & ~vb_rdata1;
+    } else if (wv[Instr_CSRRCI]) {
+        vb_csr_wdata(RISCV_ARCH-1, 5) = r.csr_resp_data.read()(RISCV_ARCH-1, 5);
+        vb_csr_wdata(4, 0) = r.csr_resp_data.read()(4, 0) & ~i_d_radr1.read()(4, 0);  // zero-extending 5 to 64-bits
+    } else if (wv[Instr_CSRRS]) {
+        vb_csr_wdata = r.csr_resp_data.read() | vb_rdata1;
+    } else if (wv[Instr_CSRRSI]) {
+        vb_csr_wdata(RISCV_ARCH-1, 5) = r.csr_resp_data.read()(RISCV_ARCH-1, 5);
+        vb_csr_wdata(4, 0) = r.csr_resp_data.read()(4, 0) | i_d_radr1.read()(4, 0);  // zero-extending 5 to 64-bits
+    } else if (wv[Instr_CSRRW]) {
+        vb_csr_wdata = vb_rdata1;
+    } else if (wv[Instr_CSRRWI]) {
+        vb_csr_wdata(4, 0) = i_d_radr1.read()(4, 0);  // zero-extending 5 to 64-bits
+    }
 
     // Select result:
     if (r.select.read()[Res_Reg2]) {
         vb_res = wb_select.res[Res_Reg2];
     } else if (r.select.read()[Res_Npc]) {
         vb_res = wb_select.res[Res_Npc];
+    } else if (r.select.read()[Res_Ra]) {
+        vb_res = wb_select.res[Res_Ra];
     } else if (r.select.read()[Res_Csr]) {
         vb_res = wb_select.res[Res_Csr];
     } else if (r.select.read()[Res_Alu]) {
@@ -897,8 +931,11 @@ void InstrExecute::comb() {
                     v.state = State_WaitMulti;
                 } else if (v_memop_ena && !i_memop_ready.read()) {
                     v.state = State_WaitMemAcces;
-                } else if (v_csr_wena) {
+                } else if (vb_select[Res_Csr] == 1) {
                     v.state = State_Csr;
+                    v.csrstate = CsrState_ReqRead;
+                    v.csr_req_addr = i_d_csr_addr;
+                    v.csr_req_data = 0;
                 } else if (v_fencei) {
                     v.state = State_Flushing_I;
                 } else {
@@ -918,9 +955,38 @@ void InstrExecute::comb() {
         }
         break;
     case State_Csr:
-        // Extra clock cycle to update CSR
-        v.state = State_Idle;
-        v_o_valid = 1;
+        // Request throught CSR bus
+        switch (r.csrstate.read()) {
+        case CsrState_ReqRead:
+            v_csr_req_valid = 1;
+            if (i_csr_req_ready.read() == 1) {
+                v.csrstate = CsrState_RespRead;
+            }
+            break;
+        case CsrState_RespRead:
+            v_csr_resp_ready = 1;
+            if (i_csr_resp_valid.read() == 1) {
+                v.csr_resp_data = i_csr_resp_data.read();
+                v.state = CsrState_ReqModify;
+                // TODO: check access right exception
+                vb_csr_wdata;
+            }
+            break;
+        case CsrState_ReqModify:
+            v_csr_req_valid = 1;
+            if (i_csr_req_ready.read() == 1) {
+                v.csrstate = CsrState_RespModify;
+            }
+            break;
+        case CsrState_RespModify:
+            v_csr_resp_ready = 1;
+            if (i_csr_resp_valid.read() == 1) {
+                v.state = State_Idle;
+                v_o_valid = 1;
+            }
+            break;
+        default:;
+        }
         break;
     case State_WaitMulti:
         // Wait end of multiclock instructions
@@ -958,25 +1024,19 @@ void InstrExecute::comb() {
         v.ret = v_ret;
         v.res_reg2 = vb_rdata2;
         v.res_npc = vb_npc;
-        v.res_csr = i_csr_rdata;
+        v.res_ra = vb_npc_incr;
 
         wb_select.ena[Res_IMul] = vb_select[Res_IMul];
         wb_select.ena[Res_IDiv] = vb_select[Res_IDiv];
         wb_select.ena[Res_FPU] = vb_select[Res_FPU];
         v.select = vb_select;
 
-        if (i_d_waddr.read().or_reduce()) {
-            v.reg_write = 1;
+        if (i_d_waddr.read().or_reduce() && !i_memop_store.read()) {
+            v.reg_write = !i_memop_load.read(); // should be written by memaccess, but tag must be updated
             v.tagcnt_wr = vb_tagcnt_wr;
             v.tagcnt_rd = vb_tagcnt_rd;
             v.reg_waddr = i_d_waddr;
             v.reg_wtag = t_tagcnt_wr;
-        }
-
-        if (v_csr_wena) {
-            v.csr_write = 1;
-            v.csr_waddr = i_d_csr_addr;
-            v.csr_wdata = vb_csr_wdata;
         }
 
         if (v_memop_ena) {
@@ -985,7 +1045,7 @@ void InstrExecute::comb() {
             v.memop_sign_ext = i_memop_sign_ext;
             v.memop_size = i_memop_size;
             v.memop_addr = vb_memop_addr;
-            v.memop_wdata = vb_res;
+            v.memop_wdata = vb_rdata2;
         }
     }
     v.valid = v_o_valid;
@@ -1076,6 +1136,10 @@ void InstrExecute::comb() {
     t_shifter_mode[0] = i_rv32.read();
     wb_shifter_mode = t_shifter_mode;
 
+    wb_shifter_a1 = vb_rdata1;
+    wb_shifter_a2 = vb_rdata2(5, 0);
+
+
     o_trap_ready = r.valid;
 
     o_ex_instr_load_fault = 0;//i_instr_load_fault.read() & r.valid;
@@ -1092,9 +1156,10 @@ void InstrExecute::comb() {
     o_reg_wdata = vb_res;
     o_d_ready = v_d_ready;
 
-    o_csr_wena = r.csr_write;
-    o_csr_waddr = r.csr_waddr;
-    o_csr_wdata = r.csr_wdata;
+    o_csr_req_valid = v_csr_req_valid;
+    o_csr_req_addr = r.csr_req_addr;
+    o_csr_req_data = r.csr_resp_data;
+    o_csr_resp_ready = v_csr_resp_ready;
     o_ex_npc = vb_prog_npc;
 
     // Debug rtl only:!!
@@ -1134,7 +1199,6 @@ void InstrExecute::comb() {
     o_memop_size = r.memop_size;
     o_memop_addr = r.memop_addr;
     o_memop_wdata = r.memop_wdata;
-    o_memop_waddr = r.memop_waddr;
     
 #ifdef UPDT2
     o_valid = r.valid;

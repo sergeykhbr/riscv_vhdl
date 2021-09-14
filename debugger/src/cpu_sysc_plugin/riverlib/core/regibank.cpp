@@ -79,8 +79,10 @@ void RegIntBank::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_dport_rdata, o_dport_rdata.name());
 
         std::string pn(name());
-        sc_trace(o_vcd, r.reg[8].val, pn + ".r4");
-        sc_trace(o_vcd, r.reg[8].tag, pn + ".r4_tag");
+        sc_trace(o_vcd, r.reg[Reg_s0].val, pn + ".s0");
+        sc_trace(o_vcd, r.reg[Reg_s0].tag, pn + ".s0_tag");
+        sc_trace(o_vcd, r.reg[Reg_a5].val, pn + ".a5");
+        sc_trace(o_vcd, r.reg[Reg_a5].tag, pn + ".a5_tag");
     }
 }
 
@@ -94,20 +96,22 @@ void RegIntBank::comb() {
     v = r;
 
     v_inordered = 0;
+    sc_uint<2> next_tag;
 
-    if ((r.reg[int_waddr].tag + 1) == i_wtag.read()) {
+    next_tag = r.reg[int_waddr].tag + 1;
+    if (next_tag == i_wtag.read()) {
         v_inordered = 1;
     }
 
-    /** Debug port has higher priority. Collision must be controlled by SW */
-    if (i_dport_ena.read() && i_dport_write.read()) {
-        if (i_dport_addr.read().or_reduce() == 1) {
-            v.reg[int_daddr].val = i_dport_wdata;
-        }
-    } else if (i_wena.read() == 1 && i_waddr.read().or_reduce() == 1
+    /** Debug port has lower priority to avoid system hangup due the tags error */
+    if (i_wena.read() == 1 && i_waddr.read().or_reduce() == 1
         && (!i_inorder.read() || v_inordered)) {
         v.reg[int_waddr].val = i_wdata;
         v.reg[int_waddr].tag = i_wtag;
+    } else if (i_dport_ena.read() && i_dport_write.read()) {
+        if (i_dport_addr.read().or_reduce() == 1) {
+            v.reg[int_daddr].val = i_dport_wdata;
+        }
     }
     v.update = !r.update.read();
 

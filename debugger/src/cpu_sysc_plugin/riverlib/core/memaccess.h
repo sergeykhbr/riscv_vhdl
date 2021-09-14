@@ -28,12 +28,12 @@ SC_MODULE(MemAccess) {
     sc_in<bool> i_nrst;
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_pc;       // Execution stage instruction pointer
     sc_in<sc_uint<32>> i_e_instr;                   // Execution stage instruction value
-    sc_in<sc_uint<2>> i_e_wtag;                     // Register tag for load operations
     sc_in<bool> i_e_flushd;
     sc_out<bool> o_flushd;
 
+    sc_in<sc_uint<6>> i_reg_waddr;                  // Register address to be written (0=no writing)
+    sc_in<sc_uint<2>> i_reg_wtag;                   // Register tag for writeback operation
     sc_in<bool> i_memop_valid;                      // Memory request is valid
-    sc_in<sc_uint<6>> i_memop_waddr;                // Register address to be written (0=no writing)
     sc_in<sc_uint<RISCV_ARCH>> i_memop_wdata;       // Register value to be written
     sc_in<bool> i_memop_sign_ext;                   // Load data with sign extending (if less than 8 Bytes)
     sc_in<bool> i_memop_type;                       // 1=store;0=Load data from memory and write to i_res_addr

@@ -286,6 +286,13 @@ enum EInstuctionsType {
 
 static const int Instr_FPU_Total = Instr_FSUB_D - Instr_FADD_D + 1;
 
+
+// Request type: [0]-read csr; [1]-write csr; [2]-change mode
+static const int CsrReq_Read        = 0;
+static const int CsrReq_Write       = 1;
+static const int CsrReq_ChangeMode  = 2;
+static const int CsrReq_Total       = 3;
+
 }  // namespace debugger
 
 #endif  // __DEBUGGER_RIVER_CFG_H__

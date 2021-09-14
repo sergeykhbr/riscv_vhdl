@@ -54,21 +54,34 @@ SC_MODULE(Tracer) {
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
-    void task_disassembler(uint32_t instr);
+    static const int TRACE_TBL_SZ = 64;
+
+    struct MemopActionType {
+        bool type;      // 0=load;1=store
+        uint64_t memaddr;
+        uint64_t data;
+        uint32_t regaddr;   // writeback address
+        bool complete;
+    };
+
+    struct RegActionType {
+        uint32_t waddr;
+        uint64_t wres;
+    };
 
     struct TraceStepType {
-        bool entry_valid;
         uint64_t exec_cnt;
         uint64_t pc;
         uint32_t instr;
-        uint32_t waddr;
-        uint64_t wres;
-        bool memop_load;
-        bool memop_store;
-        uint64_t memop_addr;
+        int regactioncnt;
+        int memactioncnt;
+        RegActionType regaction[TRACE_TBL_SZ];
+        MemopActionType memaction[TRACE_TBL_SZ];
     };
 
-    static const int TRACE_TBL_SZ = 64;
+    void trace_output(TraceStepType *tr);
+    void task_disassembler(uint32_t instr);
+
     TraceStepType trace_tbl_[TRACE_TBL_SZ];
     int tr_wcnt_;
     int tr_rcnt_;

@@ -69,10 +69,16 @@ SC_MODULE(InstrExecute) {
     sc_out<sc_uint<2>> o_reg_wtag;
     sc_out<sc_uint<RISCV_ARCH>> o_reg_wdata;    // Value to store
     sc_out<bool> o_d_ready;                     // Hold pipeline while 'writeback' not done or multi-clock instruction.
-    sc_out<bool> o_csr_wena;                    // Write new CSR value
-    sc_in<sc_uint<RISCV_ARCH>> i_csr_rdata;     // CSR current value
-    sc_out<sc_uint<12>> o_csr_waddr;            // updating CSR value
-    sc_out<sc_uint<RISCV_ARCH>> o_csr_wdata;    // CSR new value
+
+    sc_out<bool> o_csr_req_valid;               // Access to CSR request
+    sc_in<bool> i_csr_req_ready;                // CSR module is ready to accept request
+    sc_out<sc_uint<CsrReq_Total>> o_csr_req_type;// Request type: [0]-read csr; [1]-write csr; [2]-change mode
+    sc_out<sc_uint<12>> o_csr_req_addr;         // Requested CSR address
+    sc_out<sc_uint<RISCV_ARCH>> o_csr_req_data; // CSR new value
+    sc_in<bool> i_csr_resp_valid;               // CSR module Response is valid
+    sc_out<bool> o_csr_resp_ready;              // Executor is ready to accept response
+    sc_in<sc_uint<RISCV_ARCH>> i_csr_resp_data; // Responded CSR data
+
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_mepc;   // next instruction in a case of MRET
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_uepc;
     sc_in<bool> i_trap_valid;                   // async trap event
@@ -100,7 +106,6 @@ SC_MODULE(InstrExecute) {
     sc_out<sc_uint<2>> o_memop_size;            // 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_memop_addr;// Memory access address
     sc_out<sc_uint<RISCV_ARCH>> o_memop_wdata;
-    sc_out<sc_uint<6>> o_memop_waddr;
     sc_in<bool> i_memop_ready;
 
     sc_out<bool> o_trap_ready;                  // trap branch request accepted
@@ -139,6 +144,7 @@ private:
         Res_Zero,
         Res_Reg2,
         Res_Npc,
+        Res_Ra,     // return address
         Res_Csr,
         Res_Alu,
         Res_AddSub,
@@ -150,11 +156,17 @@ private:
     };
 
     static const unsigned State_Idle = 0;
-    static const unsigned State_WaitMemAcces = 2;
-    static const unsigned State_WaitMulti = 3;
-    static const unsigned State_Flushing_I = 4;
+    static const unsigned State_WaitMemAcces = 1;
+    static const unsigned State_WaitMulti = 2;
+    static const unsigned State_Flushing_I = 3;
+    static const unsigned State_WaitAtomicRead = 4;
     static const unsigned State_Csr = 5;
-    static const unsigned State_WaitAtomicRead = 6;
+
+    static const unsigned CsrState_Idle = 0;
+    static const unsigned CsrState_ReqRead = 1;
+    static const unsigned CsrState_RespRead = 2;
+    static const unsigned CsrState_ReqModify = 3;
+    static const unsigned CsrState_RespModify = 4;
 
     struct multi_arith_type {
         sc_signal<sc_uint<RISCV_ARCH>> arr[Multi_Total];
@@ -168,6 +180,7 @@ private:
 
     struct RegistersType {
         sc_signal<sc_uint<3>> state;
+        sc_signal<sc_uint<2>> csrstate;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> npc;
         sc_signal<sc_uint<6>> hold_radr1;
@@ -181,12 +194,12 @@ private:
         sc_signal<sc_uint<6>> reg_waddr;
         sc_signal<sc_uint<2>> reg_wtag;
 
-        sc_signal<bool> csr_write;
-        sc_signal<sc_uint<12>> csr_waddr;
-        sc_signal<sc_uint<RISCV_ARCH>> csr_wdata;
+        sc_signal<sc_uint<CsrReq_Total>> csr_req_type;
+        sc_signal<sc_uint<12>> csr_req_addr;
+        sc_signal<sc_uint<RISCV_ARCH>> csr_req_data;
+        sc_signal<sc_uint<RISCV_ARCH>> csr_resp_data;
 
         sc_signal<bool> memop_valid;
-        sc_signal<sc_uint<6>> memop_waddr;
         sc_signal<bool> memop_type;     // 0=store/1=load
         bool memop_sign_ext;
         sc_uint<2> memop_size;
@@ -195,6 +208,7 @@ private:
 
         sc_signal<sc_uint<RISCV_ARCH>> res_reg2;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> res_npc;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> res_ra;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> res_csr;
 
         sc_signal<bool> reg_write;
@@ -208,6 +222,7 @@ private:
 
     void R_RESET(RegistersType &iv) {
         iv.state = State_Idle;
+        iv.csrstate = CsrState_Idle;
         iv.pc = 0;
         iv.npc = CFG_NMI_RESET_VECTOR;
         iv.hold_radr1 = 0;
@@ -218,9 +233,10 @@ private:
         iv.select = 0;
         iv.reg_waddr = 0;
         iv.reg_wtag = 0;
-        iv.csr_write = 0;
-        iv.csr_wdata = 0;
-        iv.memop_waddr = 0;
+        iv.csr_req_type = 0;
+        iv.csr_req_addr = 0;
+        iv.csr_req_data = 0;
+        iv.csr_resp_data = 0;
         iv.memop_valid = 0;
         iv.memop_type = 0;
         iv.memop_sign_ext = 0;
@@ -230,6 +246,7 @@ private:
 
         iv.res_reg2 = 0;
         iv.res_npc = 0;
+        iv.res_ra = 0;
         iv.res_csr = 0;
 
         iv.reg_write = 0;

@@ -149,9 +149,11 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> reg_wdata;
         sc_signal<bool> mret;
         sc_signal<bool> uret;
-        sc_signal<bool> csr_wena;
-        sc_signal<sc_uint<12>> csr_addr;
-        sc_signal<sc_uint<RISCV_ARCH>> csr_wdata;
+        sc_signal<bool> csr_req_valid;               // Access to CSR request
+        sc_signal<sc_uint<CsrReq_Total>> csr_req_type;// Request type: [0]-read csr; [1]-write csr; [2]-change mode
+        sc_signal<sc_uint<12>> csr_req_addr;         // Requested CSR address
+        sc_signal<sc_uint<RISCV_ARCH>> csr_req_data; // CSR new value
+        sc_signal<bool> csr_resp_ready;              // Executor is ready to accept response
         sc_signal<bool> ex_instr_load_fault;
         sc_signal<bool> ex_instr_not_executable;
         sc_signal<bool> ex_illegal_instr;
@@ -172,7 +174,6 @@ private:
         sc_signal<sc_uint<2>> memop_size;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> memop_addr;
         sc_signal<sc_uint<RISCV_ARCH>> memop_wdata;
-        sc_signal<sc_uint<6>> memop_waddr;
         sc_signal<bool> d_ready;           // Hold pipeline from Execution stage
         sc_signal<bool> flushd;
         sc_signal<bool> flushi;
@@ -210,7 +211,9 @@ private:
     } freg;
 
     struct CsrType {
-        sc_signal<sc_uint<RISCV_ARCH>> rdata;
+        sc_signal<bool> req_ready;                // CSR module is ready to accept request
+        sc_signal<bool> resp_valid;               // CSR module Response is valid
+        sc_signal<sc_uint<RISCV_ARCH>> resp_data; // Responded CSR data
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mepc;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> uepc;
         sc_signal<bool> dport_valid;

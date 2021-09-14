@@ -29,10 +29,14 @@ SC_MODULE(CsrRegs) {
     sc_in<bool> i_mret;                     // mret instruction signals mode switching
     sc_in<bool> i_uret;                     // uret instruction signals mode switching
     sc_in<sc_uint<RISCV_ARCH>> i_sp;        // Stack Pointer for border control
-    sc_in<sc_uint<12>> i_addr;              // CSR address, if xret=1 switch mode accordingly
-    sc_in<bool> i_wena;                     // Write enable
-    sc_in<sc_uint<RISCV_ARCH>> i_wdata;     // CSR writing value
-    sc_out<sc_uint<RISCV_ARCH>> o_rdata;    // CSR read value
+    sc_in<bool> i_req_valid;                    // Access to CSR request
+    sc_out<bool> o_req_ready;                   // CSR module is ready to accept request
+    sc_in<sc_uint<CsrReq_Total>> i_req_type;    // Request type: [0]-read csr; [1]-write csr; [2]-change mode
+    sc_in<sc_uint<12>> i_req_addr;              // Requested CSR address
+    sc_in<sc_uint<RISCV_ARCH>> i_req_data;      // CSR new value
+    sc_out<bool> o_resp_valid;                  // CSR module Response is valid
+    sc_in<bool> i_resp_ready;                   // Executor is ready to accept response
+    sc_out<sc_uint<RISCV_ARCH>> o_resp_data;    // Responded CSR data
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mepc;
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_uepc;
     sc_in<bool> i_trap_ready;               // trap branch request was accepted
