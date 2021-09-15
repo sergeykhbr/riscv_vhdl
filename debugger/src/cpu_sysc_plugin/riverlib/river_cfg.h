@@ -292,18 +292,20 @@ static const int CFG_MEMACCESS_QUEUE_DEPTH = 2;
 // slots in the fifo Executor => Memaccess.
 static const int CFG_REG_TAG_WITH          = 3;
 
-
 // Request type: [0]-read csr; [1]-write csr; [2]-change mode
 static const int CsrReq_ReadBit        = 0;
 static const int CsrReq_WriteBit       = 1;
 static const int CsrReq_ChangeModeBit  = 2;
-static const int CsrReq_ExceptionBit   = 3;
+static const int CsrReq_PcBit          = 3;     // get instruction pointer
 static const int CsrReq_TotalBits      = 4;
 
 static const int CsrReq_ReadCmd        = 1 << CsrReq_ReadBit;
 static const int CsrReq_WriteCmd       = 1 << CsrReq_WriteBit;
 static const int CsrReq_ChaneModeCmd   = 1 << CsrReq_ChangeModeBit;
-static const int CsrReq_ExceptionCmd   = 1 << CsrReq_ExceptionBit;
+static const int CsrReq_PcCmd          = 1 << CsrReq_PcBit;
+
+static const int CsrReq_PcCmd_UnsupInstruction = 0x001;
+static const int CsrReq_PcCmd_EnvCall          = 0x002;
 
 }  // namespace debugger
 

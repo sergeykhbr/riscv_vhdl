@@ -31,7 +31,6 @@ IntDiv::IntDiv(sc_module_name name_, bool async_reset)
     i_a2("i_a2"),
     o_res("o_res"),
     o_valid("o_valid"),
-    o_busy("o_busy"),
     stage0("stage0"),
     stage1("stage1") {
     async_reset_ = async_reset;
@@ -220,7 +219,6 @@ void IntDiv::comb() {
 
     o_res = r.result;
     o_valid = r.ena.read()[9];
-    o_busy = r.busy;
 }
 
 void IntDiv::registers() {

@@ -33,7 +33,6 @@ FpuTop::FpuTop(sc_module_name name_, bool async_reset) : sc_module(name_),
     o_ex_underflow("o_ex_underflow"),
     o_ex_inexact("o_ex_inexact"),
     o_valid("o_valid"),
-    o_busy("o_busy"),
     fadd_d0("fadd_d0", async_reset),
     fdiv_d0("fdiv_d0", async_reset),
     fmul_d0("fmul_d0", async_reset),
@@ -167,7 +166,6 @@ void FpuTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_ivec, i_ivec.name());
         sc_trace(o_vcd, o_res, o_res.name());
         sc_trace(o_vcd, o_valid, o_valid.name());
-        sc_trace(o_vcd, o_busy, o_busy.name());
 
         std::string pn(name());
         sc_trace(o_vcd, r.result, pn + ".r_result");
@@ -291,7 +289,6 @@ void FpuTop::comb() {
     o_ex_underflow = r.ex_underflow;
     o_ex_inexact = r.ex_inexact;
     o_valid = r.ready;
-    o_busy = r.busy;
 }
 
 void FpuTop::registers() {

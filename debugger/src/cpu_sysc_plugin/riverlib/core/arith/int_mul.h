@@ -36,7 +36,6 @@ SC_MODULE(IntMul) {
     sc_in<sc_uint<RISCV_ARCH>> i_a2;        // Operand 2
     sc_out<sc_uint<RISCV_ARCH>> o_res;      // Result
     sc_out<bool> o_valid;                   // Result is valid
-    sc_out<bool> o_busy;                    // Multiclock instruction under processing
 
     void comb();
     void registers();

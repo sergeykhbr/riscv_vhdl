@@ -129,12 +129,6 @@ SC_MODULE(InstrExecute) {
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
 private:
-    enum EMultiCycleInstruction {
-        Multi_MUL,
-        Multi_DIV,
-        Multi_FPU,
-        Multi_Total
-    };
 
     enum EResTypes {
         Res_Zero,
@@ -162,10 +156,6 @@ private:
     static const unsigned CsrState_Idle = 0;
     static const unsigned CsrState_Req = 1;
     static const unsigned CsrState_Resp = 2;
-
-    struct multi_arith_type {
-        sc_signal<sc_uint<RISCV_ARCH>> arr[Multi_Total];
-    };
 
     struct select_type {
         sc_signal<bool> ena[Res_Total];
@@ -272,7 +262,6 @@ private:
     sc_signal<bool> w_arith_ena[Multi_Total];
     sc_signal<bool> w_arith_valid[Multi_Total];
 #endif
-    sc_signal<bool> w_arith_busy[Multi_Total];
     sc_signal<bool> w_arith_residual_high;
     sc_signal<bool> w_mul_hsu;
     sc_signal<sc_bv<Instr_FPU_Total>> wb_fpu_vec;

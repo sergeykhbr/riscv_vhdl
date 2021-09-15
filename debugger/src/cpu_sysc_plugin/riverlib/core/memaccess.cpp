@@ -61,16 +61,16 @@ MemAccess::MemAccess(sc_module_name name_, bool async_reset)
     sensitive << i_reg_waddr;
     sensitive << i_reg_wtag;
     sensitive << i_memop_valid;
+    sensitive << i_memop_wdata;
     sensitive << i_memop_sign_ext;
     sensitive << i_memop_type;
     sensitive << i_memop_size;
     sensitive << i_memop_addr;
-    sensitive << i_memop_wdata;
+    sensitive << i_wb_ready;
     sensitive << i_mem_req_ready;
     sensitive << i_mem_data_valid;
     sensitive << i_mem_data_addr;
     sensitive << i_mem_data;
-    sensitive << i_wb_ready;
     sensitive << queue_data_o;
     sensitive << queue_nempty;
     sensitive << queue_full;
@@ -258,7 +258,7 @@ void MemAccess::comb() {
                     i_memop_wdata, i_reg_waddr, i_e_instr, i_e_pc,
                     i_memop_size, i_memop_sign_ext, i_memop_type,
                     i_memop_addr);
-    queue_we = i_memop_valid | i_e_flushd;
+    queue_we = (i_memop_valid | i_e_flushd) & !queue_full.read();
 
     // Split Queue outputs:
     v_flushd = queue_data_o.read()[2*CFG_CPU_ADDR_BITS+RISCV_ARCH+8+64+42+CFG_REG_TAG_WITH];

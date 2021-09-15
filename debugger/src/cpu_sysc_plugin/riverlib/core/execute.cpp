@@ -234,7 +234,6 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     mul0->i_a2(wb_rdata2);
     mul0->o_res(wb_select.res[Res_IMul]);
     mul0->o_valid(wb_select.valid[Res_IMul]);
-    mul0->o_busy(w_arith_busy[Multi_MUL]);
 
     div0 = new IntDiv("div0", async_reset);
     div0->i_clk(i_clk);
@@ -247,7 +246,6 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     div0->i_a2(wb_rdata2);
     div0->o_res(wb_select.res[Res_IDiv]);
     div0->o_valid(wb_select.valid[Res_IDiv]);
-    div0->o_busy(w_arith_busy[Multi_DIV]);
 
     sh0 = new Shifter("sh0", async_reset);
     sh0->i_clk(i_clk);
@@ -272,11 +270,9 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
         fpu0->o_ex_underflow(o_ex_fpu_underflow);
         fpu0->o_ex_inexact(o_ex_fpu_inexact);
         fpu0->o_valid(wb_select.valid[Res_FPU]);
-        fpu0->o_busy(w_arith_busy[Multi_FPU]);
     } else {
         wb_select.res[Res_FPU] = 0;
         wb_select.valid[Res_FPU] = 0;
-        w_arith_busy[Multi_FPU] = 0;
         o_fpu_valid = 0;
         o_ex_fpu_invalidop = 0;
         o_ex_fpu_divbyzero = 0;
@@ -332,6 +328,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_csr_resp_data, i_csr_resp_data.name());
         sc_trace(o_vcd, i_trap_valid, i_trap_valid.name());
         sc_trace(o_vcd, i_trap_pc, i_trap_pc.name());
+        sc_trace(o_vcd, i_flushd_end, i_flushd_end.name());
         sc_trace(o_vcd, o_ex_npc, o_ex_npc.name());
         sc_trace(o_vcd, o_memop_valid, o_memop_valid.name());
         sc_trace(o_vcd, o_memop_type, o_memop_type.name());
@@ -367,6 +364,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.reg_waddr, pn + ".r_reg_waddr");
         sc_trace(o_vcd, r.reg_wtag, pn + ".r_reg_wtag");
         sc_trace(o_vcd, r.hold_rdata1, pn + ".r_hold_rdata1");
+        sc_trace(o_vcd, r.flushd, pn + ".r_flushd");
 #if!defined(UPDT2)
         sc_trace(o_vcd, w_next_ready, pn + ".w_next_ready");
 #endif
@@ -451,6 +449,8 @@ void InstrExecute::comb() {
     bool v_memop_ena;
     bool v_reg_ena;
     sc_uint<6> vb_reg_waddr;
+    bool v_csr_cmdpc_ena;
+    sc_uint<12> vb_csr_cmdpc_addr;
 
     v = r;
 
@@ -478,6 +478,8 @@ void InstrExecute::comb() {
     for (int i = 0; i < Res_Total; i++) {
         wb_select.ena[i] = 0;
     }
+    v_csr_cmdpc_ena = 0;
+    vb_csr_cmdpc_addr = 0;
 
     vb_i_rdata1 = i_rdata1;
     vb_i_rdata2 = i_rdata2;
@@ -726,6 +728,13 @@ void InstrExecute::comb() {
         vb_prog_npc = vb_npc_incr;
     }
 
+    v_csr_cmdpc_ena = i_unsup_exception.read() || wv[Instr_ECALL];
+    if (i_unsup_exception.read()) {
+        vb_csr_cmdpc_addr = CsrReq_PcCmd_UnsupInstruction;
+    } else if (wv[Instr_ECALL]) {
+        vb_csr_cmdpc_addr = CsrReq_PcCmd_EnvCall;
+    }
+
     if (i_trap_valid.read()) {
         vb_npc = i_trap_pc.read();
     } else {
@@ -921,14 +930,14 @@ void InstrExecute::comb() {
             && i_d_progbuf_ena.read() == 0) {
             v_latch_input = 1;
             if (w_test_hazard1 == 0 && w_test_hazard2 == 0) {
-                if (i_unsup_exception.read()) {
+                if (v_csr_cmdpc_ena) {
                     v.state = State_Csr;
                     v.csrstate = CsrState_Req;
-                    v.csr_req_type = CsrReq_ExceptionCmd;
-                    v.csr_req_addr = EXCEPTION_InstrIllegal;
+                    v.csr_req_type = CsrReq_PcCmd;
+                    v.csr_req_addr = vb_csr_cmdpc_addr;
                     v.csr_req_data = 0;
                     v.csr_req_pc = 1;
-                } if (vb_select[Res_IMul] || vb_select[Res_IDiv] || vb_select[Res_FPU]) {
+                } else if (vb_select[Res_IMul] || vb_select[Res_IDiv] || vb_select[Res_FPU]) {
                     v.state = State_WaitMulti;
                 } else if (i_memop_load.read() || i_memop_store.read()) {
                     v_memop_ena = 1;
@@ -944,6 +953,8 @@ void InstrExecute::comb() {
                         v.state = State_WaitFlushingAccept;
                     } else if (v_fence_i) {
                         v.state = State_Flushing_I;     // Flushing D no need to wait ending
+                    } else {
+                        v_o_valid = 1;
                     }
                 } else if (vb_select[Res_Csr] == 1) {
                     v.state = State_Csr;
@@ -1019,10 +1030,12 @@ void InstrExecute::comb() {
         break;
     case State_WaitMulti:
         // Wait end of multiclock instructions
-        if (wb_select.valid[Multi_MUL]
-          | wb_select.valid[Multi_DIV]
-          | wb_select.valid[Multi_FPU]) {
+        if (wb_select.valid[Res_IMul]
+          | wb_select.valid[Res_IDiv]
+          | wb_select.valid[Res_FPU]) {
             v.state = State_Idle;
+            v_reg_ena = r.hold_waddr.read().or_reduce();
+            vb_reg_waddr = r.hold_waddr;
             v_o_valid = 1;
         }
         break;

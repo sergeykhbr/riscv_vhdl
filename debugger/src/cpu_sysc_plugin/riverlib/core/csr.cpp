@@ -278,6 +278,9 @@ void CsrRegs::comb() {
     v_csr_wena = 0;
     v_csr_changemode = 0;
     w_exception_xret = 0;
+    w_trap_valid = 0;
+    w_trap_irq = 0;
+    wb_trap_code = 0;
 
     switch (r.state.read()) {
     case State_Idle:
@@ -287,7 +290,7 @@ void CsrRegs::comb() {
             v.req_type = i_req_type;
             v.req_addr = i_req_addr;
             v.req_data = i_req_data;
-            if (i_req_type.read()[CsrReq_ExceptionBit]) {
+            if (i_req_type.read()[CsrReq_PcBit]) {
                 v.state = State_Exception;
             } else {
                 v.state = State_Process;
@@ -296,10 +299,27 @@ void CsrRegs::comb() {
         break;
     case State_Exception:
         v.state = State_Response;
-        v.req_data = CFG_NMI_INSTR_ILLEGAL_ADDR;
-        v.trap_code = EXCEPTION_InstrIllegal;
-        v.mbadaddr = i_e_pc;
-        v.trap_irq = 0;
+        switch (r.req_addr.read()) {
+        case CsrReq_PcCmd_UnsupInstruction:
+            w_trap_valid = 1;
+            wb_mbadaddr = i_e_pc;
+            wb_trap_code = EXCEPTION_InstrIllegal;
+            v.req_data = CFG_NMI_INSTR_ILLEGAL_ADDR;
+            break;
+        case CsrReq_PcCmd_EnvCall:
+            w_trap_valid = 1;
+            wb_mbadaddr = i_e_pc;
+            if (r.mode.read() == PRV_M) {
+                wb_trap_code = EXCEPTION_CallFromMmode;
+                v.req_data = CFG_NMI_CALL_FROM_MMODE_ADDR;
+            } else {
+                wb_trap_code = EXCEPTION_CallFromUmode;
+                v.req_data = CFG_NMI_CALL_FROM_UMODE_ADDR;
+            }
+            break;
+        default:
+            v.req_data = r.mtvec.read()(CFG_CPU_ADDR_BITS-1, 0);
+        }
         break;
     case State_Process:
         v.state = State_Response;
@@ -660,6 +680,7 @@ void CsrRegs::comb() {
         v.ex_fpu_inexact = i_ex_fpu_inexact.read();
     }
 
+#if 0
     w_trap_valid = 0;
     w_trap_irq = 0;
     wb_trap_code = 0;
@@ -787,6 +808,29 @@ void CsrRegs::comb() {
         default:;
         }
     }
+#endif
+    // Behaviour on EBREAK instruction defined by 'i_break_mode':
+    //     0 = halt;
+    //     1 = generate trap
+    if (w_trap_valid && (r.break_mode.read() || !i_ex_breakpoint.read())) {
+        v.mie = 0;
+        v.mpp = r.mode;
+        v.mepc = i_e_npc.read();
+        v.mbadaddr = wb_mbadaddr;
+        v.trap_code = wb_trap_code;
+        v.trap_irq = w_trap_irq;
+        v.mode = PRV_M;
+        switch (r.mode.read()) {
+        case PRV_U:
+            v.mpie = r.uie;
+            break;
+        case PRV_M:
+            v.mpie = r.mie;
+            break;
+        default:;
+        }
+    }
+
 
     if (r.halt.read() == 0 || i_e_next_ready.read() == 1) {
         v.cycle_cnt = r.cycle_cnt.read() + 1;

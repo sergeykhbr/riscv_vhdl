@@ -32,8 +32,7 @@ IntMul::IntMul(sc_module_name name_, bool async_reset) : sc_module(name_),
     i_a1("i_a1"),
     i_a2("i_a2"),
     o_res("o_res"),
-    o_valid("o_valid"),
-    o_busy("o_busy") {
+    o_valid("o_valid") {
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
@@ -77,7 +76,6 @@ void IntMul::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_hsu, i_hsu.name());
         sc_trace(o_vcd, o_res, o_res.name());
         sc_trace(o_vcd, o_valid, o_valid.name());
-        sc_trace(o_vcd, o_busy, o_busy.name());
 
         std::string pn(name());
         sc_trace(o_vcd, r.ena, pn + ".r_ena");
@@ -246,7 +244,6 @@ void IntMul::comb() {
 
     o_res = wb_res;
     o_valid = r.ena.read()[3];
-    o_busy = r.busy;
 }
 
 void IntMul::registers() {

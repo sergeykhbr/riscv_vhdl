@@ -41,7 +41,6 @@ SC_MODULE(FpuTop) {
     sc_out<bool> o_ex_underflow;   // Exception: underflow
     sc_out<bool> o_ex_inexact;     // Exception: inexact
     sc_out<bool> o_valid;          // Result is valid
-    sc_out<bool> o_busy;           // Multiclock instruction under processing
 
     void comb();
     void registers();
