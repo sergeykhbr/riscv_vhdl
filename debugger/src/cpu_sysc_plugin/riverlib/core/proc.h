@@ -146,12 +146,10 @@ private:
 
         sc_signal<bool> reg_wena;
         sc_signal<sc_uint<6>> reg_waddr;
-        sc_signal<sc_uint<2>> reg_wtag;
+        sc_signal<sc_uint<CFG_REG_TAG_WITH>> reg_wtag;
         sc_signal<sc_uint<RISCV_ARCH>> reg_wdata;
-        sc_signal<bool> mret;
-        sc_signal<bool> uret;
         sc_signal<bool> csr_req_valid;               // Access to CSR request
-        sc_signal<sc_uint<CsrReq_Total>> csr_req_type;// Request type: [0]-read csr; [1]-write csr; [2]-change mode
+        sc_signal<sc_uint<CsrReq_TotalBits>> csr_req_type;// Request type: [0]-read csr; [1]-write csr; [2]-change mode
         sc_signal<sc_uint<12>> csr_req_addr;         // Requested CSR address
         sc_signal<sc_uint<RISCV_ARCH>> csr_req_data; // CSR new value
         sc_signal<bool> csr_resp_ready;              // Executor is ready to accept response
@@ -192,14 +190,14 @@ private:
         sc_signal<bool> wena;
         sc_signal<sc_uint<6>> waddr;
         sc_signal<sc_uint<RISCV_ARCH>> wdata;
-        sc_signal<sc_uint<2>> wtag;
+        sc_signal<sc_uint<CFG_REG_TAG_WITH>> wtag;
     };
 
     struct IntRegsType {
         sc_signal<sc_uint<RISCV_ARCH>> rdata1;
-        sc_signal<sc_uint<2>> rtag1;
+        sc_signal<sc_uint<CFG_REG_TAG_WITH>> rtag1;
         sc_signal<sc_uint<RISCV_ARCH>> rdata2;
-        sc_signal<sc_uint<2>> rtag2;
+        sc_signal<sc_uint<CFG_REG_TAG_WITH>> rtag2;
         sc_signal<sc_uint<RISCV_ARCH>> dport_rdata;
         sc_signal<sc_uint<RISCV_ARCH>> ra;      // Return address
         sc_signal<sc_uint<RISCV_ARCH>> sp;      // Stack pointer
@@ -215,8 +213,6 @@ private:
         sc_signal<bool> req_ready;                // CSR module is ready to accept request
         sc_signal<bool> resp_valid;               // CSR module Response is valid
         sc_signal<sc_uint<RISCV_ARCH>> resp_data; // Responded CSR data
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mepc;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> uepc;
         sc_signal<bool> trap_valid;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> trap_pc;
         sc_signal<bool> progbuf_ena;                // execute instruction from progbuf
@@ -232,7 +228,7 @@ private:
 
     struct DebugType {
         sc_signal<bool> csr_req_valid;
-        sc_signal<sc_uint<CsrReq_Total>> csr_req_type;
+        sc_signal<sc_uint<CsrReq_TotalBits>> csr_req_type;
         sc_signal<sc_uint<12>> csr_req_addr;           // Address of the sub-region register
         sc_signal<sc_uint<RISCV_ARCH>> csr_req_data;
         sc_signal<bool> csr_resp_ready;
@@ -265,7 +261,7 @@ private:
     sc_signal<sc_uint<RISCV_ARCH>> iccsr_m1_resp_data;
     // csr bridge to CSR module
     sc_signal<bool> iccsr_s0_req_valid;
-    sc_signal<sc_uint<CsrReq_Total>> iccsr_s0_req_type;
+    sc_signal<sc_uint<CsrReq_TotalBits>> iccsr_s0_req_type;
     sc_signal<sc_uint<12>> iccsr_s0_req_addr;
     sc_signal<sc_uint<RISCV_ARCH>> iccsr_s0_req_data;
     sc_signal<bool> iccsr_s0_resp_ready;
@@ -291,8 +287,9 @@ private:
     sc_signal<bool> w_reg_wena;
     sc_signal<sc_uint<6>> wb_reg_waddr;
     sc_signal<sc_uint<RISCV_ARCH>> wb_reg_wdata;
-    sc_signal<sc_uint<2>> wb_reg_wtag;
+    sc_signal<sc_uint<CFG_REG_TAG_WITH>> wb_reg_wtag;
     sc_signal<bool> w_reg_inorder;
+    sc_signal<bool> w_reg_ignored;
 
     bool fpu_ena_;
     bool tracer_ena_;

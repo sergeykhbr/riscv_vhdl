@@ -33,6 +33,7 @@ RegIntBank::RegIntBank(sc_module_name name_, bool async_reset, bool fpu_ena) :
     i_wtag("i_wtag"),
     i_wdata("i_wdata"),
     i_inorder("i_inorder"),
+    o_ignored("o_ignored"),
     i_dport_addr("i_dport_addr"),
     i_dport_ena("i_dport_ena"),
     i_dport_write("i_dport_write"),
@@ -70,6 +71,7 @@ void RegIntBank::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_wdata, i_wdata.name());
         sc_trace(o_vcd, i_wtag, i_wtag.name());
         sc_trace(o_vcd, i_inorder, i_inorder.name());
+        sc_trace(o_vcd, o_ignored, o_ignored.name());
         sc_trace(o_vcd, i_radr1, i_radr1.name());
         sc_trace(o_vcd, i_radr2, i_radr2.name());
         sc_trace(o_vcd, o_rdata1, o_rdata1.name());
@@ -96,7 +98,7 @@ void RegIntBank::comb() {
     v = r;
 
     v_inordered = 0;
-    sc_uint<2> next_tag;
+    sc_uint<CFG_REG_TAG_WITH> next_tag;
 
     next_tag = r.reg[int_waddr].tag + 1;
     if (next_tag == i_wtag.read()) {
@@ -124,6 +126,8 @@ void RegIntBank::comb() {
         }
         v.update = 0;
     }
+
+    o_ignored = i_wena && i_waddr.read().or_reduce() && i_inorder && !v_inordered;
 
     o_rdata1 = r.reg[int_radr1].val;
     o_rtag1 = r.reg[int_radr1].tag;

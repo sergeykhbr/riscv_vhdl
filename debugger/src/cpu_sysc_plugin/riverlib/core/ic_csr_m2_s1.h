@@ -29,7 +29,7 @@ SC_MODULE(ic_csr_m2_s1) {
     // master[0]
     sc_in<bool> i_m0_req_valid;
     sc_out<bool> o_m0_req_ready;
-    sc_in<sc_uint<CsrReq_Total>> i_m0_req_type;
+    sc_in<sc_uint<CsrReq_TotalBits>> i_m0_req_type;
     sc_in<sc_uint<12>> i_m0_req_addr;
     sc_in<sc_uint<RISCV_ARCH>> i_m0_req_data;
     sc_out<bool> o_m0_resp_valid;
@@ -38,7 +38,7 @@ SC_MODULE(ic_csr_m2_s1) {
     // master[1]
     sc_in<bool> i_m1_req_valid;
     sc_out<bool> o_m1_req_ready;
-    sc_in<sc_uint<CsrReq_Total>> i_m1_req_type;
+    sc_in<sc_uint<CsrReq_TotalBits>> i_m1_req_type;
     sc_in<sc_uint<12>> i_m1_req_addr;
     sc_in<sc_uint<RISCV_ARCH>> i_m1_req_data;
     sc_out<bool> o_m1_resp_valid;
@@ -47,7 +47,7 @@ SC_MODULE(ic_csr_m2_s1) {
     // slave[0]
     sc_out<bool> o_s0_req_valid;
     sc_in<bool> i_s0_req_ready;
-    sc_out<sc_uint<CsrReq_Total>> o_s0_req_type;
+    sc_out<sc_uint<CsrReq_TotalBits>> o_s0_req_type;
     sc_out<sc_uint<12>> o_s0_req_addr;
     sc_out<sc_uint<RISCV_ARCH>> o_s0_req_data;
     sc_in<bool> i_s0_resp_valid;
@@ -66,11 +66,13 @@ SC_MODULE(ic_csr_m2_s1) {
 private:
     struct RegistersType {
         sc_signal<sc_uint<1>> midx;
+        sc_signal<bool> acquired;
     } v, r;
 
 
     void R_RESET(RegistersType &iv) {
         iv.midx = 0;
+        iv.acquired = 0;
     }
 
     bool async_reset_;

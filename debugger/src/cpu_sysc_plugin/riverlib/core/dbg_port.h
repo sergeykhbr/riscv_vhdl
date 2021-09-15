@@ -38,7 +38,7 @@ SC_MODULE(DbgPort) {
     // CSR bus master interface:
     sc_out<bool> o_csr_req_valid;                       // Region 0: Access to CSR bank is enabled.
     sc_in<bool> i_csr_req_ready;
-    sc_out<sc_uint<CsrReq_Total>> o_csr_req_type;        // Region 0: CSR operation read/modify/write
+    sc_out<sc_uint<CsrReq_TotalBits>> o_csr_req_type;   // Region 0: CSR operation read/modify/write
     sc_out<sc_uint<12>> o_csr_req_addr;                 // Address of the sub-region register
     sc_out<sc_uint<RISCV_ARCH>> o_csr_req_data;         // Write data
     sc_in<bool> i_csr_resp_valid;

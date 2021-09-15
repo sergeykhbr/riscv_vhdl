@@ -61,26 +61,24 @@ SC_MODULE(InstrExecute) {
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_dport_npc; // Debug port npc value to write
 
     sc_in<sc_uint<RISCV_ARCH>> i_rdata1;        // Integer/Float register value 1
-    sc_in<sc_uint<2>> i_rtag1;
+    sc_in<sc_uint<CFG_REG_TAG_WITH>> i_rtag1;
     sc_in<sc_uint<RISCV_ARCH>> i_rdata2;        // Integer/Float register value 2
-    sc_in<sc_uint<2>> i_rtag2;
+    sc_in<sc_uint<CFG_REG_TAG_WITH>> i_rtag2;
     sc_out<bool> o_reg_wena;
     sc_out<sc_uint<6>> o_reg_waddr;             // Address to store result of the instruction (0=do not store)
-    sc_out<sc_uint<2>> o_reg_wtag;
+    sc_out<sc_uint<CFG_REG_TAG_WITH>> o_reg_wtag;
     sc_out<sc_uint<RISCV_ARCH>> o_reg_wdata;    // Value to store
     sc_out<bool> o_d_ready;                     // Hold pipeline while 'writeback' not done or multi-clock instruction.
 
     sc_out<bool> o_csr_req_valid;               // Access to CSR request
     sc_in<bool> i_csr_req_ready;                // CSR module is ready to accept request
-    sc_out<sc_uint<CsrReq_Total>> o_csr_req_type;// Request type: [0]-read csr; [1]-write csr; [2]-change mode
+    sc_out<sc_uint<CsrReq_TotalBits>> o_csr_req_type;// Request type: [0]-read csr; [1]-write csr; [2]-change mode
     sc_out<sc_uint<12>> o_csr_req_addr;         // Requested CSR address
     sc_out<sc_uint<RISCV_ARCH>> o_csr_req_data; // CSR new value
     sc_in<bool> i_csr_resp_valid;               // CSR module Response is valid
     sc_out<bool> o_csr_resp_ready;              // Executor is ready to accept response
     sc_in<sc_uint<RISCV_ARCH>> i_csr_resp_data; // Responded CSR data
 
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_mepc;   // next instruction in a case of MRET
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_uepc;
     sc_in<bool> i_trap_valid;                   // async trap event
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_trap_pc;   // jump to address
 
@@ -104,7 +102,7 @@ SC_MODULE(InstrExecute) {
     sc_out<bool> o_memop_sign_ext;              // Load data with sign extending
     sc_out<bool> o_memop_type;                  // 1=store/0=Load data instruction
     sc_out<sc_uint<2>> o_memop_size;            // 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_memop_addr;// Memory access address
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_memop_memaddr;// Memory access address
     sc_out<sc_uint<RISCV_ARCH>> o_memop_wdata;
     sc_in<bool> i_memop_ready;
 
@@ -118,8 +116,6 @@ SC_MODULE(InstrExecute) {
     sc_out<bool> o_flushi;
     sc_out<bool> o_call;                        // CALL pseudo instruction detected
     sc_out<bool> o_ret;                         // RET pseudoinstruction detected
-    sc_out<bool> o_mret;                        // MRET instruction
-    sc_out<bool> o_uret;                        // URET instruction
     sc_out<bool> o_multi_ready;
 
     void comb();
@@ -158,15 +154,14 @@ private:
     static const unsigned State_Idle = 0;
     static const unsigned State_WaitMemAcces = 1;
     static const unsigned State_WaitMulti = 2;
-    static const unsigned State_Flushing_I = 3;
-    static const unsigned State_WaitAtomicRead = 4;
-    static const unsigned State_Csr = 5;
+    static const unsigned State_WaitFlushingAccept = 3;     // memaccess should accept flushing request
+    static const unsigned State_Flushing_I = 4;
+    static const unsigned State_WaitAtomicRead = 5;
+    static const unsigned State_Csr = 6;
 
     static const unsigned CsrState_Idle = 0;
-    static const unsigned CsrState_ReqRead = 1;
-    static const unsigned CsrState_RespRead = 2;
-    static const unsigned CsrState_ReqModify = 3;
-    static const unsigned CsrState_RespModify = 4;
+    static const unsigned CsrState_Req = 1;
+    static const unsigned CsrState_Resp = 2;
 
     struct multi_arith_type {
         sc_signal<sc_uint<RISCV_ARCH>> arr[Multi_Total];
@@ -180,30 +175,34 @@ private:
 
     struct RegistersType {
         sc_signal<sc_uint<3>> state;
-        sc_signal<sc_uint<2>> csrstate;
+        sc_signal<sc_uint<3>> csrstate;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> npc;
         sc_signal<sc_uint<6>> hold_radr1;
         sc_signal<sc_uint<6>> hold_radr2;
+        sc_signal<sc_uint<6>> hold_waddr;
+        sc_signal<sc_uint<RISCV_ARCH>> hold_rdata1;
+        sc_signal<sc_bv<Instr_Total>> hold_ivec;
 
         sc_signal<sc_uint<32>> instr;
-        sc_signal<sc_biguint<2*REGS_TOTAL>> tagcnt_rd;      // 2-bits tag per register (expected)
-        sc_signal<sc_biguint<2*REGS_TOTAL>> tagcnt_wr;      // 2-bits tag per register (written)
+        sc_signal<sc_biguint<CFG_REG_TAG_WITH*REGS_TOTAL>> tagcnt_rd;      // N-bits tag per register (expected)
+        sc_signal<sc_biguint<CFG_REG_TAG_WITH*REGS_TOTAL>> tagcnt_wr;      // N-bits tag per register (written)
 
         sc_signal<sc_uint<Res_Total>> select;
         sc_signal<sc_uint<6>> reg_waddr;
-        sc_signal<sc_uint<2>> reg_wtag;
+        sc_signal<sc_uint<CFG_REG_TAG_WITH>> reg_wtag;
 
-        sc_signal<sc_uint<CsrReq_Total>> csr_req_type;
+        sc_signal<bool> csr_req_rmw;                    // csr read-modify-write request
+        sc_signal<bool> csr_req_pc;                     // csr request instruction pointer
+        sc_signal<sc_uint<CsrReq_TotalBits>> csr_req_type;
         sc_signal<sc_uint<12>> csr_req_addr;
         sc_signal<sc_uint<RISCV_ARCH>> csr_req_data;
-        sc_signal<sc_uint<RISCV_ARCH>> csr_resp_data;
 
         sc_signal<bool> memop_valid;
         sc_signal<bool> memop_type;     // 0=store/1=load
         bool memop_sign_ext;
         sc_uint<2> memop_size;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> memop_addr;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> memop_memaddr;
         sc_signal<sc_uint<RISCV_ARCH>> memop_wdata;
 
         sc_signal<sc_uint<RISCV_ARCH>> res_reg2;
@@ -216,6 +215,7 @@ private:
         sc_signal<bool> call;
         sc_signal<bool> ret;
         sc_signal<bool> flushd;
+        sc_signal<bool> flushi;
         sc_signal<bool> hold_fencei;
         sc_signal<sc_uint<32>> progbuf_npc;
     } v, r;
@@ -227,21 +227,25 @@ private:
         iv.npc = CFG_NMI_RESET_VECTOR;
         iv.hold_radr1 = 0;
         iv.hold_radr2 = 0;
+        iv.hold_waddr = 0;
+        iv.hold_rdata1 = 0;
+        iv.hold_ivec = 0;
         iv.instr = 0;
-        iv.tagcnt_rd = ~0x3;
+        iv.tagcnt_rd = ~((1 << CFG_REG_TAG_WITH) - 1);
         iv.tagcnt_wr = 0;
         iv.select = 0;
         iv.reg_waddr = 0;
         iv.reg_wtag = 0;
+        iv.csr_req_rmw = 0;
+        iv.csr_req_pc = 0;
         iv.csr_req_type = 0;
         iv.csr_req_addr = 0;
         iv.csr_req_data = 0;
-        iv.csr_resp_data = 0;
         iv.memop_valid = 0;
         iv.memop_type = 0;
         iv.memop_sign_ext = 0;
         iv.memop_size = 0;
-        iv.memop_addr = 0;
+        iv.memop_memaddr = 0;
         iv.memop_wdata = 0;
 
         iv.res_reg2 = 0;
@@ -254,6 +258,7 @@ private:
         iv.call = 0;
         iv.ret = 0;
         iv.flushd = 0;
+        iv.flushi = 0;
         iv.hold_fencei = 0;
         iv.progbuf_npc = 0;
     }
@@ -298,7 +303,7 @@ private:
     sc_signal<sc_uint<RISCV_ARCH>> wb_sra;
     sc_signal<sc_uint<RISCV_ARCH>> wb_sraw;
 
-    sc_uint<2> tag_expected[Reg_Total];
+    sc_uint<CFG_REG_TAG_WITH> tag_expected[Reg_Total];
 
     AluLogic *alu0;
     IntAddSub *addsub0;

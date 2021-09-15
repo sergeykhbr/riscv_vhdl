@@ -26,19 +26,15 @@ namespace debugger {
 SC_MODULE(CsrRegs) {
     sc_in<bool> i_clk;                      // Clock signal
     sc_in<bool> i_nrst;                     // Reset (active low)
-    sc_in<bool> i_mret;                     // mret instruction signals mode switching
-    sc_in<bool> i_uret;                     // uret instruction signals mode switching
     sc_in<sc_uint<RISCV_ARCH>> i_sp;        // Stack Pointer for border control
     sc_in<bool> i_req_valid;                    // Access to CSR request
     sc_out<bool> o_req_ready;                   // CSR module is ready to accept request
-    sc_in<sc_uint<CsrReq_Total>> i_req_type;    // Request type: [0]-read csr; [1]-write csr; [2]-change mode
+    sc_in<sc_uint<CsrReq_TotalBits>> i_req_type;// Request type: [0]-read csr; [1]-write csr; [2]-change mode
     sc_in<sc_uint<12>> i_req_addr;              // Requested CSR address
     sc_in<sc_uint<RISCV_ARCH>> i_req_data;      // CSR new value
     sc_out<bool> o_resp_valid;                  // CSR module Response is valid
     sc_in<bool> i_resp_ready;                   // Executor is ready to accept response
     sc_out<sc_uint<RISCV_ARCH>> o_resp_data;    // Responded CSR data
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mepc;
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_uepc;
     sc_in<bool> i_trap_ready;               // trap branch request was accepted
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_pc;
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_npc;
@@ -98,10 +94,11 @@ private:
     static const int State_Idle = 0;
     static const int State_Process = 1;
     static const int State_Response = 2;
+    static const int State_Exception = 3;
 
     struct RegistersType {
         sc_signal<sc_uint<2>> state;
-        sc_signal<sc_uint<CsrReq_Total>> req_type;
+        sc_signal<sc_uint<CsrReq_TotalBits>> req_type;
         sc_signal<sc_uint<12>> req_addr;
         sc_signal<sc_uint<RISCV_ARCH>> req_data;
         sc_signal<sc_uint<RISCV_ARCH>> mtvec;

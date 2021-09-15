@@ -138,6 +138,7 @@ void MemAccess::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_wb_wdata, o_wb_wdata.name());
         sc_trace(o_vcd, o_wb_wtag, o_wb_wtag.name());
         sc_trace(o_vcd, i_wb_ready, i_wb_ready.name());
+        sc_trace(o_vcd, o_flushd, o_flushd.name());
 
         std::string pn(name());
         sc_trace(o_vcd, r.state, pn + ".state");
@@ -164,7 +165,7 @@ void MemAccess::comb() {
     sc_uint<64> vb_mem_rdata;
     bool v_queue_re;
     bool v_flushd;
-    sc_uint<2> vb_res_wtag;
+    sc_uint<CFG_REG_TAG_WITH> vb_res_wtag;
     sc_uint<64> vb_mem_wdata;
     sc_uint<8> vb_mem_wstrb;
     sc_uint<64> vb_mem_resp_shifted;
@@ -178,7 +179,7 @@ void MemAccess::comb() {
     bool v_o_wena;
     sc_uint<6> vb_o_waddr;
     sc_uint<RISCV_ARCH> vb_o_wdata;
-    sc_uint<2> vb_o_wtag;
+    sc_uint<CFG_REG_TAG_WITH> vb_o_wtag;
 
     v = r;
 
@@ -260,8 +261,8 @@ void MemAccess::comb() {
     queue_we = i_memop_valid | i_e_flushd;
 
     // Split Queue outputs:
-    v_flushd = queue_data_o.read()[2*CFG_CPU_ADDR_BITS+RISCV_ARCH+8+64+44];
-    vb_res_wtag = queue_data_o.read()(2*CFG_CPU_ADDR_BITS+RISCV_ARCH+8+64+43,
+    v_flushd = queue_data_o.read()[2*CFG_CPU_ADDR_BITS+RISCV_ARCH+8+64+42+CFG_REG_TAG_WITH];
+    vb_res_wtag = queue_data_o.read()(2*CFG_CPU_ADDR_BITS+RISCV_ARCH+8+64+42+CFG_REG_TAG_WITH-1,
                                       2*CFG_CPU_ADDR_BITS+RISCV_ARCH+8+64+42);
     vb_mem_wdata = queue_data_o.read()(2*CFG_CPU_ADDR_BITS+RISCV_ARCH+8+64+42-1,
                                       2*CFG_CPU_ADDR_BITS+RISCV_ARCH+8+42);

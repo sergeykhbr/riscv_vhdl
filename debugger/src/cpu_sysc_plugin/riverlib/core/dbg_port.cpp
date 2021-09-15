@@ -131,7 +131,7 @@ void DbgPort::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 void DbgPort::comb() {
     bool v_csr_req_valid;
     bool v_csr_resp_ready;
-    sc_uint<CsrReq_Total> vb_csr_req_type;
+    sc_uint<CsrReq_TotalBits> vb_csr_req_type;
     sc_uint<12> vb_csr_req_addr;
     sc_uint<RISCV_ARCH> vb_csr_req_data;
     sc_uint<6> wb_o_reg_addr;
@@ -208,8 +208,11 @@ void DbgPort::comb() {
         if (!r.req_accepted && i_csr_req_ready) {
             v.req_accepted = 1;
         }
-        vb_csr_req_type[CsrReq_Read] = !r.dport_write;
-        vb_csr_req_type[CsrReq_Write] = r.dport_write;
+        if (r.dport_write) {
+            vb_csr_req_type = CsrReq_WriteCmd;
+        } else {
+            vb_csr_req_type = CsrReq_ReadCmd;
+        }
         vb_csr_req_addr = r.dport_addr.read()(11,0);
         vb_csr_req_data = r.dport_wdata;
         if (r.req_accepted.read() && i_csr_resp_valid.read() == 1) {

@@ -48,9 +48,11 @@ Tracer::Tracer(sc_module_name name_, bool async_reset, const char *trace_file)
     i_e_memop_type("i_e_memop_type"),
     i_e_memop_addr("i_e_memop_addr"),
     i_e_memop_wdata("i_e_memop_wdata"),
+    i_m_memop_ready("i_m_memop_ready"),
     i_m_wena("i_m_wena"),
     i_m_waddr("i_m_waddr"),
-    i_m_wdata("i_m_wdata") {
+    i_m_wdata("i_m_wdata"),
+    i_reg_ignored("i_reg_ignored") {
     async_reset_ = async_reset;
     fl_ = 0;
     if (strlen(trace_file)) {
@@ -71,9 +73,11 @@ Tracer::Tracer(sc_module_name name_, bool async_reset, const char *trace_file)
     sensitive << i_e_memop_type;
     sensitive << i_e_memop_addr;
     sensitive << i_e_memop_wdata;
+    sensitive << i_m_memop_ready;
     sensitive << i_m_wena;
     sensitive << i_m_waddr;
     sensitive << i_m_wdata;
+    sensitive << i_reg_ignored;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -532,14 +536,7 @@ void Tracer::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 void Tracer::registers() {
     TraceStepType *p_e_wr = &trace_tbl_[tr_wcnt_];
 
-    if (i_e_wena.read() == 1 && (i_e_memop_valid.read() == 0 || i_e_memop_type.read() == 1)) {
-        // Direct register writting if it is not a Load operation
-        RegActionType *pr = &p_e_wr->regaction[p_e_wr->regactioncnt++];
-        pr->waddr = i_e_waddr.read();
-        pr->wres = i_e_wdata.read();
-    }
-
-    if (i_e_memop_valid.read() == 1) {
+    if (i_e_memop_valid.read() == 1 && i_m_memop_ready.read() == 1) {
         MemopActionType *pm = &p_e_wr->memaction[p_e_wr->memactioncnt++];
         pm->type = i_e_memop_type.read();
         pm->memaddr = i_e_memop_addr.read();
@@ -548,17 +545,22 @@ void Tracer::registers() {
         pm->complete = i_e_memop_type.read();   // 0=load(need wait result);1=store
     }
 
-    if (i_m_wena.read()) {
+    if (i_e_wena.read() == 1) {
+        // Direct register writting if it is not a Load operation
+        RegActionType *pr = &p_e_wr->regaction[p_e_wr->regactioncnt++];
+        pr->waddr = i_e_waddr.read();
+        pr->wres = i_e_wdata.read();
+    } else if (i_m_wena.read()) {
         // Update current rd memory action (memory operations are strictly ordered)
         for (int i = 0; i < trace_tbl_[tr_rcnt_].memactioncnt; i++) {
             if (!trace_tbl_[tr_rcnt_].memaction[i].complete) {
                 trace_tbl_[tr_rcnt_].memaction[i].complete = 1;
+                trace_tbl_[tr_rcnt_].memaction[i].ignored = i_reg_ignored.read();;
                 trace_tbl_[tr_rcnt_].memaction[i].data = i_m_wdata.read();
             }
         }
     }
-
-
+   
     if (i_e_valid.read() == 1) {
         p_e_wr->exec_cnt = i_dbg_executed_cnt.read() + 1;
         p_e_wr->pc = i_e_pc.read();
@@ -602,6 +604,9 @@ void Tracer::trace_output(TraceStepType *tr) {
 
     for (int i = 0; i < tr->memactioncnt; i++) {
         MemopActionType *pm = &tr->memaction[i];
+        if (pm->ignored) {
+            continue;
+        }
         if (pm->type == 0) {
             tsz = RISCV_sprintf(msg, sizeof(msg),
                 "%20s [%08" RV_PRI64 "x] => %016" RV_PRI64 "x\n",

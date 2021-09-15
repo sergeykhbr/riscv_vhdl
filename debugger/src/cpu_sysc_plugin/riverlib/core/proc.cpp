@@ -206,8 +206,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->i_csr_resp_valid(iccsr_m0_resp_valid);
     exec0->o_csr_resp_ready(w.e.csr_resp_ready);
     exec0->i_csr_resp_data(iccsr_m0_resp_data);
-    exec0->i_mepc(csr.mepc);
-    exec0->i_uepc(csr.uepc);
     exec0->i_trap_valid(csr.trap_valid);
     exec0->i_trap_pc(csr.trap_pc);
     exec0->o_ex_npc(w.e.ex_npc);
@@ -228,7 +226,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->o_memop_sign_ext(w.e.memop_sign_ext);
     exec0->o_memop_type(w.e.memop_type);
     exec0->o_memop_size(w.e.memop_size);
-    exec0->o_memop_addr(w.e.memop_addr);
+    exec0->o_memop_memaddr(w.e.memop_addr);
     exec0->o_memop_wdata(w.e.memop_wdata);
     exec0->i_memop_ready(w.m.memop_ready);
     exec0->o_trap_ready(w.e.trap_ready);
@@ -241,8 +239,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->o_flushi(w.e.flushi);
     exec0->o_call(w.e.call);
     exec0->o_ret(w.e.ret);
-    exec0->o_mret(w.e.mret);
-    exec0->o_uret(w.e.uret);
     exec0->o_multi_ready(w.e.multi_ready);
 
     mem0 = new MemAccess("mem0", async_reset);
@@ -303,6 +299,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     iregs0->i_wtag(wb_reg_wtag);
     iregs0->i_wdata(wb_reg_wdata);
     iregs0->i_inorder(w_reg_inorder);
+    iregs0->o_ignored(w_reg_ignored);
     iregs0->i_dport_addr(dbg.reg_addr);
     iregs0->i_dport_ena(dbg.ireg_ena);
     iregs0->i_dport_write(dbg.ireg_write);
@@ -342,8 +339,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     csr0 = new CsrRegs("csr0", hartid, async_reset);
     csr0->i_clk(i_clk);
     csr0->i_nrst(i_nrst);
-    csr0->i_mret(w.e.mret);
-    csr0->i_uret(w.e.uret);
     csr0->i_sp(ireg.sp);
     csr0->i_req_valid(iccsr_s0_req_valid);
     csr0->o_req_ready(csr.req_ready);
@@ -353,8 +348,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     csr0->o_resp_valid(csr.resp_valid);
     csr0->i_resp_ready(iccsr_s0_resp_ready);
     csr0->o_resp_data(csr.resp_data);
-    csr0->o_mepc(csr.mepc);
-    csr0->o_uepc(csr.uepc);
     csr0->i_trap_ready(w.e.trap_ready);
     csr0->i_e_pc(w.e.pc);
     csr0->i_e_npc(w.e.npc);
@@ -444,9 +437,11 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
         trace0->i_e_memop_type(w.e.memop_type);
         trace0->i_e_memop_addr(w.e.memop_addr);
         trace0->i_e_memop_wdata(w.e.memop_wdata);
+        trace0->i_m_memop_ready(w.m.memop_ready);
         trace0->i_m_wena(w.w.wena);
         trace0->i_m_waddr(w.w.waddr);
         trace0->i_m_wdata(w.w.wdata);
+        trace0->i_reg_ignored(w_reg_ignored);
     }
 };
 
@@ -462,6 +457,7 @@ Processor::~Processor() {
     }
     delete csr0;
     delete dbg0;
+    delete iccsr0;
 }
 
 void Processor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
@@ -473,6 +469,7 @@ void Processor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     fetch0->generateVCD(i_vcd, o_vcd);
     mem0->generateVCD(i_vcd, o_vcd);
     iregs0->generateVCD(i_vcd, o_vcd);
+    iccsr0->generateVCD(i_vcd, o_vcd);
     if (trace0) {
         trace0->generateVCD(i_vcd, o_vcd);
     }

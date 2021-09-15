@@ -24,21 +24,22 @@
 namespace debugger {
 
 SC_MODULE(RegIntBank) {
-    sc_in<bool> i_clk;                      // Clock
-    sc_in<bool> i_nrst;                     // Reset. Active LOW
-    sc_in<sc_uint<6>> i_radr1;              // Port 1 read address
-    sc_out<sc_uint<RISCV_ARCH>> o_rdata1;   // Port 1 read value
-    sc_out<sc_uint<2>> o_rtag1;             // Port 1 read tag value
+    sc_in<bool> i_clk;                          // Clock
+    sc_in<bool> i_nrst;                         // Reset. Active LOW
+    sc_in<sc_uint<6>> i_radr1;                  // Port 1 read address
+    sc_out<sc_uint<RISCV_ARCH>> o_rdata1;       // Port 1 read value
+    sc_out<sc_uint<CFG_REG_TAG_WITH>> o_rtag1;  // Port 1 read tag value
 
-    sc_in<sc_uint<6>> i_radr2;              // Port 2 read address
-    sc_out<sc_uint<RISCV_ARCH>> o_rdata2;   // Port 2 read value
-    sc_out<sc_uint<2>> o_rtag2;             // Port 2 read tag value
+    sc_in<sc_uint<6>> i_radr2;                  // Port 2 read address
+    sc_out<sc_uint<RISCV_ARCH>> o_rdata2;       // Port 2 read value
+    sc_out<sc_uint<CFG_REG_TAG_WITH>> o_rtag2;  // Port 2 read tag value
 
-    sc_in<sc_uint<6>> i_waddr;              // Writing value
-    sc_in<bool> i_wena;                     // Writing is enabled
-    sc_in<sc_uint<2>> i_wtag;               // Writing register tag
-    sc_in<sc_uint<RISCV_ARCH>> i_wdata;     // Writing value
-    sc_in<bool> i_inorder;                  // Writing only if tag sequenced
+    sc_in<sc_uint<6>> i_waddr;                  // Writing value
+    sc_in<bool> i_wena;                         // Writing is enabled
+    sc_in<sc_uint<CFG_REG_TAG_WITH>> i_wtag;    // Writing register tag
+    sc_in<sc_uint<RISCV_ARCH>> i_wdata;         // Writing value
+    sc_in<bool> i_inorder;                      // Writing only if tag sequenced
+    sc_out<bool> o_ignored;                     // Sequenced writing is ignored because it was overwritten by executor (need for tracer)
 
     sc_in<sc_uint<6>> i_dport_addr;             // Debug port address
     sc_in<bool> i_dport_ena;                    // Debug port is enabled
@@ -65,7 +66,7 @@ private:
 
     struct reg_score_type {
         sc_uint<RISCV_ARCH> val;
-        sc_uint<2> tag;
+        sc_uint<CFG_REG_TAG_WITH> tag;
     };
 
     struct RegistersType {

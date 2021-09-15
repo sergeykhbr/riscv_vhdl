@@ -66,8 +66,6 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     i_csr_resp_valid("i_csr_resp_valid"),
     o_csr_resp_ready("o_csr_resp_ready"),
     i_csr_resp_data("i_csr_resp_data"),
-    i_mepc("i_mepc"),
-    i_uepc("i_uepc"),
     i_trap_valid("i_trap_valid"),
     i_trap_pc("i_trap_pc"),
     o_ex_npc("o_ex_npc"),
@@ -88,7 +86,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     o_memop_sign_ext("o_memop_sign_ext"),
     o_memop_type("o_memop_type"),
     o_memop_size("o_memop_size"),
-    o_memop_addr("o_memop_addr"),
+    o_memop_memaddr("o_memop_memaddr"),
     o_memop_wdata("o_memop_wdata"),
     i_memop_ready("i_memop_ready"),
     o_trap_ready("o_trap_ready"),
@@ -101,8 +99,6 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     o_flushi("o_flushi"),
     o_call("o_call"),
     o_ret("o_ret"),
-    o_mret("o_mret"),
-    o_uret("o_uret"),
     o_multi_ready("o_multi_ready") {
     async_reset_ = async_reset;
     fpu_ena_ = fpu_ena;
@@ -143,8 +139,6 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << i_csr_req_ready;
     sensitive << i_csr_resp_valid;
     sensitive << i_csr_resp_data;
-    sensitive << i_mepc;
-    sensitive << i_uepc;
     sensitive << i_trap_valid;
     sensitive << i_trap_pc;
     sensitive << i_flushd_end;
@@ -155,18 +149,22 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << r.instr;
     sensitive << r.hold_radr1;
     sensitive << r.hold_radr2;
+    sensitive << r.hold_waddr;
+    sensitive << r.hold_rdata1;
+    sensitive << r.hold_ivec;
     sensitive << r.tagcnt_rd;
     sensitive << r.tagcnt_wr;
     sensitive << r.select;
     sensitive << r.reg_waddr;
     sensitive << r.reg_wtag;
+    sensitive << r.csr_req_rmw;
+    sensitive << r.csr_req_pc;
     sensitive << r.csr_req_type;
     sensitive << r.csr_req_addr;
     sensitive << r.csr_req_data;
-    sensitive << r.csr_resp_data;
     sensitive << r.memop_valid;
     sensitive << r.memop_type;
-    sensitive << r.memop_addr;
+    sensitive << r.memop_memaddr;
     sensitive << r.memop_wdata;
 
     sensitive << r.res_reg2;
@@ -174,6 +172,8 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << r.res_ra;
     sensitive << r.res_csr;
 
+    sensitive << r.flushi;
+    sensitive << r.flushd;
     sensitive << r.reg_write;
     sensitive << r.valid;
     sensitive << r.call;
@@ -336,9 +336,11 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_memop_valid, o_memop_valid.name());
         sc_trace(o_vcd, o_memop_type, o_memop_type.name());
         sc_trace(o_vcd, o_memop_size, o_memop_size.name());
-        sc_trace(o_vcd, o_memop_addr, o_memop_addr.name());
+        sc_trace(o_vcd, o_memop_memaddr, o_memop_memaddr.name());
         sc_trace(o_vcd, o_memop_wdata, o_memop_wdata.name());
 
+        sc_trace(o_vcd, o_flushd, o_flushd.name());
+        sc_trace(o_vcd, o_flushi, o_flushi.name());
         sc_trace(o_vcd, i_memop_ready, i_memop_ready.name());
         sc_trace(o_vcd, o_trap_ready, o_trap_ready.name());
         sc_trace(o_vcd, o_valid, o_valid.name());
@@ -347,8 +349,6 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_instr, o_instr.name());
         sc_trace(o_vcd, o_call, o_call.name());
         sc_trace(o_vcd, o_ret, o_ret.name());
-        sc_trace(o_vcd, o_mret, o_mret.name());
-        sc_trace(o_vcd, o_uret, o_uret.name());
         sc_trace(o_vcd, o_ex_instr_not_executable, o_ex_instr_not_executable.name());
 
         std::string pn(name());
@@ -366,6 +366,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.select, pn + ".r_select");
         sc_trace(o_vcd, r.reg_waddr, pn + ".r_reg_waddr");
         sc_trace(o_vcd, r.reg_wtag, pn + ".r_reg_wtag");
+        sc_trace(o_vcd, r.hold_rdata1, pn + ".r_hold_rdata1");
 #if!defined(UPDT2)
         sc_trace(o_vcd, w_next_ready, pn + ".w_next_ready");
 #endif
@@ -379,6 +380,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, w_test_hazard2, pn + ".w_test_hazard2");
         sc_trace(o_vcd, tag_expected[0xA], pn + ".tag_expected0x0A");
         sc_trace(o_vcd, tag_expected[0xb], pn + ".tag_expected0x0B");
+        sc_trace(o_vcd, tag_expected[0xf], pn + ".tag_expected0x0F");
         sc_trace(o_vcd, wb_select.res[Res_AddSub], pn + ".t_res_AddSub");
     }
     alu0->generateVCD(i_vcd, o_vcd);
@@ -392,9 +394,8 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void InstrExecute::comb() {
-    bool v_fence;
-    bool v_fencei;
-    bool v_fenced;
+    bool v_fence_d;
+    bool v_fence_i;
     bool v_mret;
     bool v_uret;
     bool v_csr_req_valid;
@@ -412,7 +413,7 @@ void InstrExecute::comb() {
     sc_uint<RISCV_ARCH> vb_and64;
     sc_uint<RISCV_ARCH> vb_or64;
     sc_uint<RISCV_ARCH> vb_xor64;
-    sc_uint<CFG_CPU_ADDR_BITS> vb_memop_addr;
+    sc_uint<CFG_CPU_ADDR_BITS> vb_memop_memaddr;
     sc_bv<Instr_Total> wv;
     int opcode_len;
     bool v_call;
@@ -443,11 +444,13 @@ void InstrExecute::comb() {
     bool v_next_normal;
     bool v_next_progbuf;
     sc_uint<Res_Total> vb_select;
-    sc_biguint<2*REGS_TOTAL> vb_tagcnt_wr;
-    sc_biguint<2*REGS_TOTAL> vb_tagcnt_rd;
+    sc_biguint<CFG_REG_TAG_WITH*REGS_TOTAL> vb_tagcnt_wr;
+    sc_biguint<CFG_REG_TAG_WITH*REGS_TOTAL> vb_tagcnt_rd;
     bool v_d_ready;
     bool v_latch_input;
     bool v_memop_ena;
+    bool v_reg_ena;
+    sc_uint<6> vb_reg_waddr;
 
     v = r;
 
@@ -457,17 +460,17 @@ void InstrExecute::comb() {
     vb_csr_wdata = 0;
     vb_res = 0;
     vb_off = 0;
-    vb_memop_addr = 0;
+    vb_memop_memaddr = 0;
     wv = i_ivec.read();
     v_call = 0;
     v_ret = 0;
-    v.memop_valid = 0;
     v.valid = 0;
     v.call = 0;
     v.ret = 0;
 #ifdef UPDT2
     v.reg_write = 0;
     v.flushd = 0;
+    v.flushi = 0;
 #endif
     vb_rdata1 = 0;
     vb_rdata2 = 0;
@@ -516,23 +519,17 @@ void InstrExecute::comb() {
     vb_tagcnt_wr = r.tagcnt_wr;
     vb_tagcnt_rd = r.tagcnt_rd;
 
-    int t_d_waddr = i_d_waddr.read().to_int();
-    int t_tagcnt_wr = r.tagcnt_wr.read()(2*t_d_waddr+1,
-                                         2*t_d_waddr).to_int();
-
-    vb_tagcnt_wr(2*t_d_waddr+1, 2*t_d_waddr) = t_tagcnt_wr + 1;
-    vb_tagcnt_wr(1, 0) = 0;
-    vb_tagcnt_rd(2*t_d_waddr+1, 2*t_d_waddr) = t_tagcnt_wr;
-    vb_tagcnt_rd(1, 0) = 0;
-
     int t_d_radr1 = i_d_radr1.read().to_int();
     int t_d_radr2 = i_d_radr2.read().to_int();
+
     w_test_hazard1 = 0;
-    if (r.tagcnt_rd.read()(2*t_d_radr1+1, 2*t_d_radr1) != i_rtag1.read()) {
+    if (r.tagcnt_rd.read()(CFG_REG_TAG_WITH * t_d_radr1 + (CFG_REG_TAG_WITH - 1),
+                           CFG_REG_TAG_WITH * t_d_radr1) != i_rtag1.read()) {
         w_test_hazard1 = v_check_tag1;
     }
     w_test_hazard2 = 0;
-    if (r.tagcnt_rd.read()(2*t_d_radr2+1, 2*t_d_radr2) != i_rtag2.read()) {
+    if (r.tagcnt_rd.read()(CFG_REG_TAG_WITH * t_d_radr2 + (CFG_REG_TAG_WITH - 1),
+                           CFG_REG_TAG_WITH * t_d_radr2) != i_rtag2.read()) {
         w_test_hazard2 = v_check_tag2;
     }
 
@@ -565,11 +562,8 @@ void InstrExecute::comb() {
 
     wb_fpu_vec = wv.range(Instr_FSUB_D, Instr_FADD_D);  // directly connected i_ivec
 #ifdef UPDT2
-    v_fence = wv[Instr_FENCE].to_bool();
-    v_fencei = wv[Instr_FENCE_I].to_bool();
-    v_fenced = v_fence | v_fencei;
-    v_mret = wv[Instr_MRET].to_bool();
-    v_uret = wv[Instr_URET].to_bool();
+    v_fence_d = wv[Instr_FENCE].to_bool();
+    v_fence_i = wv[Instr_FENCE_I].to_bool();
 #else
     w_multi_busy = w_arith_busy[Multi_MUL] | w_arith_busy[Multi_DIV]
                   | w_arith_busy[Multi_FPU];
@@ -649,28 +643,28 @@ void InstrExecute::comb() {
 #endif
 
     if (i_memop_load) {
-        vb_memop_addr =
+        vb_memop_memaddr =
             vb_rdata1(CFG_CPU_ADDR_BITS-1, 0) + vb_rdata2(CFG_CPU_ADDR_BITS-1, 0);
     } else if (i_memop_store) {
-        vb_memop_addr = 
+        vb_memop_memaddr = 
             vb_rdata1(CFG_CPU_ADDR_BITS-1, 0) + vb_off(CFG_CPU_ADDR_BITS-1, 0);
     } else if ((wv[Instr_FENCE] || wv[Instr_FENCE_I]) == 1) {
-        vb_memop_addr = ~0ull;
+        vb_memop_memaddr = ~0ull;
     } else if (wv[Instr_EBREAK] == 1) {
-        vb_memop_addr = i_d_pc.read();
+        vb_memop_memaddr = i_d_pc.read();
     }
 
     w_exception_store = 0;
     w_exception_load = 0;
 
-    if ((wv[Instr_LD] && vb_memop_addr(2, 0) != 0)
-        || ((wv[Instr_LW] || wv[Instr_LWU]) && vb_memop_addr(1, 0) != 0)
-        || ((wv[Instr_LH] || wv[Instr_LHU]) && vb_memop_addr[0] != 0)) {
+    if ((wv[Instr_LD] && vb_memop_memaddr(2, 0) != 0)
+        || ((wv[Instr_LW] || wv[Instr_LWU]) && vb_memop_memaddr(1, 0) != 0)
+        || ((wv[Instr_LH] || wv[Instr_LHU]) && vb_memop_memaddr[0] != 0)) {
         w_exception_load = 1;
     }
-    if ((wv[Instr_SD] && vb_memop_addr(2, 0) != 0)
-        || (wv[Instr_SW] && vb_memop_addr(1, 0) != 0)
-        || (wv[Instr_SH] && vb_memop_addr[0] != 0)) {
+    if ((wv[Instr_SD] && vb_memop_memaddr(2, 0) != 0)
+        || (wv[Instr_SW] && vb_memop_memaddr(1, 0) != 0)
+        || (wv[Instr_SH] && vb_memop_memaddr[0] != 0)) {
         w_exception_store = 1;
     }
 
@@ -728,10 +722,6 @@ void InstrExecute::comb() {
     } else if (wv[Instr_JALR].to_bool()) {
         vb_prog_npc = vb_rdata1(CFG_CPU_ADDR_BITS-1, 0) + vb_rdata2(CFG_CPU_ADDR_BITS-1, 0);
         vb_prog_npc[0] = 0;
-    } else if (wv[Instr_MRET].to_bool()) {
-        vb_prog_npc = i_mepc;
-    } else if (wv[Instr_URET].to_bool()) {
-        vb_prog_npc = i_uepc;
     } else {
         vb_prog_npc = vb_npc_incr;
     }
@@ -792,20 +782,20 @@ void InstrExecute::comb() {
     wb_select.res[Res_Ra] = r.res_ra;
 
     vb_csr_wdata = 0;
-    if (wv[Instr_CSRRC]) {
-        vb_csr_wdata = r.csr_resp_data.read() & ~vb_rdata1;
-    } else if (wv[Instr_CSRRCI]) {
-        vb_csr_wdata(RISCV_ARCH-1, 5) = r.csr_resp_data.read()(RISCV_ARCH-1, 5);
-        vb_csr_wdata(4, 0) = r.csr_resp_data.read()(4, 0) & ~i_d_radr1.read()(4, 0);  // zero-extending 5 to 64-bits
-    } else if (wv[Instr_CSRRS]) {
-        vb_csr_wdata = r.csr_resp_data.read() | vb_rdata1;
-    } else if (wv[Instr_CSRRSI]) {
-        vb_csr_wdata(RISCV_ARCH-1, 5) = r.csr_resp_data.read()(RISCV_ARCH-1, 5);
-        vb_csr_wdata(4, 0) = r.csr_resp_data.read()(4, 0) | i_d_radr1.read()(4, 0);  // zero-extending 5 to 64-bits
-    } else if (wv[Instr_CSRRW]) {
-        vb_csr_wdata = vb_rdata1;
-    } else if (wv[Instr_CSRRWI]) {
-        vb_csr_wdata(4, 0) = i_d_radr1.read()(4, 0);  // zero-extending 5 to 64-bits
+    if (r.hold_ivec.read()[Instr_CSRRC]) {
+        vb_csr_wdata = i_csr_resp_data.read() & ~r.hold_rdata1.read();
+    } else if (r.hold_ivec.read()[Instr_CSRRCI]) {
+        vb_csr_wdata(RISCV_ARCH-1, 5) = i_csr_resp_data.read()(RISCV_ARCH-1, 5);
+        vb_csr_wdata(4, 0) = i_csr_resp_data.read()(4, 0) & ~r.hold_radr1.read()(4, 0);  // zero-extending 5 to 64-bits
+    } else if (r.hold_ivec.read()[Instr_CSRRS]) {
+        vb_csr_wdata = i_csr_resp_data.read() | r.hold_rdata1.read();
+    } else if (r.hold_ivec.read()[Instr_CSRRSI]) {
+        vb_csr_wdata(RISCV_ARCH-1, 5) = i_csr_resp_data.read()(RISCV_ARCH-1, 5);
+        vb_csr_wdata(4, 0) = i_csr_resp_data.read()(4, 0) | r.hold_radr1.read()(4, 0);  // zero-extending 5 to 64-bits
+    } else if (r.hold_ivec.read()[Instr_CSRRW]) {
+        vb_csr_wdata = r.hold_rdata1.read();
+    } else if (r.hold_ivec.read()[Instr_CSRRWI]) {
+        vb_csr_wdata(4, 0) = r.hold_radr1.read()(4, 0);  // zero-extending 5 to 64-bits
     }
 
     // Select result:
@@ -921,7 +911,9 @@ void InstrExecute::comb() {
 #ifdef UPDT2
     v_latch_input = 0;
     v_o_valid = 0;
-    v_memop_ena = i_memop_load.read() || i_memop_store.read() || v_fenced;
+    v_reg_ena = 0;
+    vb_reg_waddr = 0;
+    v_memop_ena = 0;
     switch (r.state.read()) {
     case State_Idle:
         v_d_ready = 1;
@@ -929,19 +921,52 @@ void InstrExecute::comb() {
             && i_d_progbuf_ena.read() == 0) {
             v_latch_input = 1;
             if (w_test_hazard1 == 0 && w_test_hazard2 == 0) {
-                if (vb_select[Res_IMul] || vb_select[Res_IDiv] || vb_select[Res_FPU]) {
+                if (i_unsup_exception.read()) {
+                    v.state = State_Csr;
+                    v.csrstate = CsrState_Req;
+                    v.csr_req_type = CsrReq_ExceptionCmd;
+                    v.csr_req_addr = EXCEPTION_InstrIllegal;
+                    v.csr_req_data = 0;
+                    v.csr_req_pc = 1;
+                } if (vb_select[Res_IMul] || vb_select[Res_IDiv] || vb_select[Res_FPU]) {
                     v.state = State_WaitMulti;
-                } else if (v_memop_ena && !i_memop_ready.read()) {
-                    v.state = State_WaitMemAcces;
+                } else if (i_memop_load.read() || i_memop_store.read()) {
+                    v_memop_ena = 1;
+                    vb_reg_waddr = i_d_waddr;       // write back register address
+                    if (!i_memop_ready.read()) {
+                        // Wait cycles until FIFO to memoryaccess becomes available
+                        v.state = State_WaitMemAcces;
+                    } else {
+                        v_o_valid = 1;
+                    }
+                } else if (v_fence_i || v_fence_d) {
+                    if (!i_memop_ready.read()) {
+                        v.state = State_WaitFlushingAccept;
+                    } else if (v_fence_i) {
+                        v.state = State_Flushing_I;     // Flushing D no need to wait ending
+                    }
                 } else if (vb_select[Res_Csr] == 1) {
                     v.state = State_Csr;
-                    v.csrstate = CsrState_ReqRead;
+                    v.csrstate = CsrState_Req;
+                    v.csr_req_type = CsrReq_ReadCmd;
                     v.csr_req_addr = i_d_csr_addr;
                     v.csr_req_data = 0;
-                } else if (v_fencei) {
-                    v.state = State_Flushing_I;
+                    v.csr_req_rmw = 1;  // read/modify/write
+                } else if (wv[Instr_MRET] || wv[Instr_URET]) {
+                    v.state = State_Csr;
+                    v.csrstate = CsrState_Req;
+                    v.csr_req_type = (CsrReq_ReadCmd | CsrReq_ChaneModeCmd);
+                    if (wv[Instr_MRET]) {
+                        v.csr_req_addr = CSR_mepc;
+                    } else {
+                        v.csr_req_addr = CSR_uepc;
+                    }
+                    v.csr_req_data = 0;
+                    v.csr_req_pc = 1;
                 } else {
                     v_o_valid = 1;
+                    v_reg_ena = i_d_waddr.read().or_reduce() && !i_memop_load.read(); // should be written by memaccess, but tag must be updated
+                    vb_reg_waddr = i_d_waddr;
                 }
             } else {
                 v_latch_input = 0;
@@ -959,32 +984,34 @@ void InstrExecute::comb() {
     case State_Csr:
         // Request throught CSR bus
         switch (r.csrstate.read()) {
-        case CsrState_ReqRead:
+        case CsrState_Req:
             v_csr_req_valid = 1;
             if (i_csr_req_ready.read() == 1) {
-                v.csrstate = CsrState_RespRead;
+                v.csrstate = CsrState_Resp;
             }
             break;
-        case CsrState_RespRead:
+        case CsrState_Resp:
             v_csr_resp_ready = 1;
             if (i_csr_resp_valid.read() == 1) {
-                v.csr_resp_data = i_csr_resp_data.read();
-                v.state = CsrState_ReqModify;
+                if (r.csr_req_pc.read()) {
+                    v.npc = i_csr_resp_data;
+                    v.state = State_Idle;
+                    v_o_valid = 1;
+                } else if (r.csr_req_rmw.read()) {
+                    v.csrstate = CsrState_Req;
+                    v.csr_req_type = CsrReq_WriteCmd;
+                    v.csr_req_data = vb_csr_wdata;
+                    v.csr_req_rmw = 0;
+
+                    // Store result int cpu register on next clock
+                    v.res_csr = i_csr_resp_data.read();
+                    v_reg_ena = r.hold_waddr.read().or_reduce();
+                    vb_reg_waddr = r.hold_waddr;
+                } else {
+                    v.state = State_Idle;
+                    v_o_valid = 1;
+                }
                 // TODO: check access right exception
-                vb_csr_wdata;
-            }
-            break;
-        case CsrState_ReqModify:
-            v_csr_req_valid = 1;
-            if (i_csr_req_ready.read() == 1) {
-                v.csrstate = CsrState_RespModify;
-            }
-            break;
-        case CsrState_RespModify:
-            v_csr_resp_ready = 1;
-            if (i_csr_resp_valid.read() == 1) {
-                v.state = State_Idle;
-                v_o_valid = 1;
             }
             break;
         default:;
@@ -999,6 +1026,18 @@ void InstrExecute::comb() {
             v_o_valid = 1;
         }
         break;
+    case State_WaitFlushingAccept:
+        // Fifo exec => memacess is full
+        if (i_memop_ready.read()) {
+            if (r.hold_ivec.read()[Instr_FENCE] == 1) {
+                // no need to wait ending of D-flashing
+                v.state = State_Idle;
+                v_o_valid = 1;
+            } else {
+                v.state = State_Flushing_I;
+            }
+        }
+        break;
     case State_Flushing_I:
         // Flushing DataCache could take much more time than flushing I
         // so that we should wait D-cache finish before requesting new
@@ -1011,6 +1050,17 @@ void InstrExecute::comb() {
     default:;
     }
 
+    // Next tags:
+    int t_waddr = vb_reg_waddr.to_int();
+    int t_tagcnt_wr = r.tagcnt_wr.read()(CFG_REG_TAG_WITH*t_waddr + (CFG_REG_TAG_WITH - 1),
+                                         CFG_REG_TAG_WITH*t_waddr).to_int();
+
+    vb_tagcnt_wr(CFG_REG_TAG_WITH*t_waddr+(CFG_REG_TAG_WITH-1), CFG_REG_TAG_WITH*t_waddr) = t_tagcnt_wr + 1;
+    vb_tagcnt_wr(CFG_REG_TAG_WITH - 1, 0) = 0;
+    vb_tagcnt_rd(CFG_REG_TAG_WITH*t_waddr+(CFG_REG_TAG_WITH-1), CFG_REG_TAG_WITH*t_waddr) = t_tagcnt_wr;
+    vb_tagcnt_rd(CFG_REG_TAG_WITH - 1, 0) = 0;
+
+    // Latch decoder's data into internal registers:
     if (v_latch_input) {
         if (i_dbg_progbuf_ena.read() == 0) {
             v.pc = i_d_pc;
@@ -1020,8 +1070,12 @@ void InstrExecute::comb() {
         }
         v.hold_radr1 = i_d_radr1;
         v.hold_radr2 = i_d_radr2;
+        v.hold_waddr = i_d_waddr;
+        v.hold_rdata1 = vb_rdata1;
+        v.hold_ivec = i_ivec;
         v.instr = i_d_instr;
-        v.flushd = v_fenced;
+        v.flushd = v_fence_d;
+        v.flushi = v_fence_i;
         v.call = v_call;
         v.ret = v_ret;
         v.res_reg2 = vb_rdata2;
@@ -1032,24 +1086,31 @@ void InstrExecute::comb() {
         wb_select.ena[Res_IDiv] = vb_select[Res_IDiv];
         wb_select.ena[Res_FPU] = vb_select[Res_FPU];
         v.select = vb_select;
-
-        if (i_d_waddr.read().or_reduce() && !i_memop_store.read()) {
-            v.reg_write = !i_memop_load.read(); // should be written by memaccess, but tag must be updated
+    }
+    if (v_reg_ena) {
+        v.reg_write = 1;
+        v.tagcnt_wr = vb_tagcnt_wr;
+        v.tagcnt_rd = vb_tagcnt_rd;
+        v.reg_waddr = vb_reg_waddr;
+        v.reg_wtag = t_tagcnt_wr;
+    }
+    if (v_memop_ena) {
+        v.memop_valid = 1;
+        v.memop_type = i_memop_store;
+        v.memop_sign_ext = i_memop_sign_ext;
+        v.memop_size = i_memop_size;
+        v.memop_memaddr = vb_memop_memaddr;
+        v.memop_wdata = vb_rdata2;
+        if (i_memop_load.read() == 1) {
             v.tagcnt_wr = vb_tagcnt_wr;
             v.tagcnt_rd = vb_tagcnt_rd;
-            v.reg_waddr = i_d_waddr;
+            v.reg_waddr = vb_reg_waddr;
             v.reg_wtag = t_tagcnt_wr;
         }
-
-        if (v_memop_ena) {
-            v.memop_valid = 1;
-            v.memop_type = i_memop_store;
-            v.memop_sign_ext = i_memop_sign_ext;
-            v.memop_size = i_memop_size;
-            v.memop_addr = vb_memop_addr;
-            v.memop_wdata = vb_rdata2;
-        }
+    } else if (i_memop_ready.read()) {
+        v.memop_valid = 0;
     }
+
     v.valid = v_o_valid;
 #else
 
@@ -1154,19 +1215,20 @@ void InstrExecute::comb() {
 
     o_reg_wena = r.reg_write;
     o_reg_waddr = r.reg_waddr;
-    o_reg_wtag = r.reg_wtag;    // remove me duplcate o_wtag
+    o_reg_wtag = r.reg_wtag;
     o_reg_wdata = vb_res;
     o_d_ready = v_d_ready;
 
     o_csr_req_valid = v_csr_req_valid;
+    o_csr_req_type = r.csr_req_type;
     o_csr_req_addr = r.csr_req_addr;
-    o_csr_req_data = r.csr_resp_data;
+    o_csr_req_data = r.csr_req_data;
     o_csr_resp_ready = v_csr_resp_ready;
     o_ex_npc = vb_prog_npc;
 
     // Debug rtl only:!!
     for (int i = 0; i < Reg_Total; i++) {
-        tag_expected[i] = r.tagcnt_rd.read()(2*i+1, 2*i).to_int();
+        tag_expected[i] = r.tagcnt_rd.read()(CFG_REG_TAG_WITH*i+(CFG_REG_TAG_WITH-1), CFG_REG_TAG_WITH*i).to_int();
     }
 
 #else
@@ -1199,7 +1261,7 @@ void InstrExecute::comb() {
     o_memop_sign_ext = r.memop_sign_ext;
     o_memop_type = r.memop_type;
     o_memop_size = r.memop_size;
-    o_memop_addr = r.memop_addr;
+    o_memop_memaddr = r.memop_memaddr;
     o_memop_wdata = r.memop_wdata;
     
 #ifdef UPDT2
@@ -1208,6 +1270,7 @@ void InstrExecute::comb() {
     o_npc = r.npc;
     o_instr = r.instr;
     o_flushd = r.flushd;    // must be post in a memory queue to avoid to early flushing
+    o_flushi = r.flushi;
     o_call = r.call;
     o_ret = r.ret;
 #else

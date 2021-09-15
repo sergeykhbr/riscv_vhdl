@@ -22,8 +22,6 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     : sc_module(name_),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
-    i_mret("i_mret"),
-    i_uret("i_uret"),
     i_sp("i_sp"),
     i_req_valid("i_req_valid"),
     o_req_ready("o_req_ready"),
@@ -33,8 +31,6 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     o_resp_valid("o_resp_valid"),
     i_resp_ready("i_resp_ready"),
     o_resp_data("o_resp_data"),
-    o_mepc("o_mepc"),
-    o_uepc("o_uepc"),
     i_trap_ready("i_trap_ready"),
     i_e_pc("i_e_pc"),
     i_e_npc("i_e_npc"),
@@ -82,8 +78,6 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
 
     SC_METHOD(comb);
     sensitive << i_nrst;
-    sensitive << i_mret;
-    sensitive << i_uret;
     sensitive << i_sp;
     sensitive << i_req_valid;
     sensitive << i_req_type;
@@ -170,8 +164,6 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
 
 void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_mret, i_mret.name());
-        sc_trace(o_vcd, i_uret, i_uret.name());
         sc_trace(o_vcd, i_sp, i_sp.name());
         sc_trace(o_vcd, i_req_valid, i_req_valid.name());
         sc_trace(o_vcd, o_req_ready, o_req_ready.name());
@@ -258,6 +250,7 @@ void CsrRegs::comb() {
     bool w_mstackund;
     bool v_csr_rena;
     bool v_csr_wena;
+    bool v_csr_changemode;
     sc_uint<RISCV_ARCH> vb_rdata;
     bool v_cur_halt;
     bool v_req_halt;
@@ -283,6 +276,8 @@ void CsrRegs::comb() {
     v_resp_valid = 0;
     v_csr_rena = 0;
     v_csr_wena = 0;
+    v_csr_changemode = 0;
+    w_exception_xret = 0;
 
     switch (r.state.read()) {
     case State_Idle:
@@ -292,12 +287,25 @@ void CsrRegs::comb() {
             v.req_type = i_req_type;
             v.req_addr = i_req_addr;
             v.req_data = i_req_data;
+            if (i_req_type.read()[CsrReq_ExceptionBit]) {
+                v.state = State_Exception;
+            } else {
+                v.state = State_Process;
+            }
         }
+        break;
+    case State_Exception:
+        v.state = State_Response;
+        v.req_data = CFG_NMI_INSTR_ILLEGAL_ADDR;
+        v.trap_code = EXCEPTION_InstrIllegal;
+        v.mbadaddr = i_e_pc;
+        v.trap_irq = 0;
         break;
     case State_Process:
         v.state = State_Response;
-        v_csr_rena = r.req_type.read()[CsrReq_Read];
-        v_csr_wena = r.req_type.read()[CsrReq_Write];
+        v_csr_rena = r.req_type.read()[CsrReq_ReadBit];
+        v_csr_wena = r.req_type.read()[CsrReq_WriteBit];
+        v_csr_changemode = r.req_type.read()[CsrReq_ChangeModeBit];
 
         switch (r.req_addr.read()) {
         case CSR_fflags:
@@ -398,6 +406,25 @@ void CsrRegs::comb() {
             if (v_csr_wena) {
                 v.uepc = r.req_data.read()(CFG_CPU_ADDR_BITS-1, 0);
             }
+            if (v_csr_changemode) {
+                if (r.mode.read() == PRV_U) {
+                    // Switch to previous mode
+                    v.mie = r.mpie;
+                    v.mpie = 1;
+                    v.mode = r.mpp;
+                    v.mpp = PRV_U;
+                } else {
+                    //w_exception_xret = 1;
+                    v.mie = 0;
+                    v.mpp = r.mode;
+                    v.mepc = i_e_npc.read();
+                    v.mbadaddr = i_e_pc.read();
+                    v.trap_code = EXCEPTION_InstrIllegal;
+                    v.trap_irq = 0;
+                    v.mode = PRV_M;
+                    v.mpie = r.uie; // expecting user mode is set
+                }
+            }
             break;
         case CSR_mstatus:// - Machine mode status register
             vb_rdata[0] = r.uie;
@@ -437,6 +464,25 @@ void CsrRegs::comb() {
             vb_rdata = r.mepc;
             if (v_csr_wena) {
                 v.mepc = r.req_data.read()(CFG_CPU_ADDR_BITS-1, 0);
+            }
+            if (v_csr_changemode) {
+                if (r.mode.read() == PRV_M) {
+                    // Switch to previous mode
+                    v.mie = r.mpie;
+                    v.mpie = 1;
+                    v.mode = r.mpp;
+                    v.mpp = PRV_U;
+                } else {
+                    //w_exception_xret = 1;
+                    v.mie = 0;
+                    v.mpp = r.mode;
+                    v.mepc = i_e_npc.read();
+                    v.mbadaddr = i_e_pc.read();
+                    v.trap_code = EXCEPTION_InstrIllegal;
+                    v.trap_irq = 0;
+                    v.mode = PRV_M;
+                    v.mpie = r.mie;
+                }
             }
             break;
         case CSR_mcause:// - Machine trap cause
@@ -596,12 +642,6 @@ void CsrRegs::comb() {
         v.ext_irq = w_ext_irq;
     }
 
-    w_exception_xret = 0;
-    if ((i_mret.read() && r.mode.read() != PRV_M)
-        || (i_uret.read() && r.mode.read() != PRV_U)) {
-        w_exception_xret = 1;
-    }
-
     w_mstackovr = 0;
     if (i_sp.read()(CFG_CPU_ADDR_BITS-1, 0) < r.mstackovr.read()) {
         w_mstackovr = 1;
@@ -725,14 +765,6 @@ void CsrRegs::comb() {
     }
 
 
-    if (!w_exception_xret && (i_mret.read() || i_uret.read())) {
-        // Switch to previous mode
-        v.mie = r.mpie;
-        v.mpie = 1;
-        v.mode = r.mpp;
-        v.mpp = PRV_U;
-    }
-
     // Behaviour on EBREAK instruction defined by 'i_break_mode':
     //     0 = halt;
     //     1 = generate trap
@@ -845,8 +877,6 @@ void CsrRegs::comb() {
     o_trap_pc = wb_trap_pc;
     o_dbg_pc_write = v_dbg_pc_write;
     o_dbg_pc = vb_dbg_pc;
-    o_mepc = r.mepc;
-    o_uepc = r.uepc;
     o_mpu_region_we = r.mpu_we;
     o_mpu_region_idx = r.mpu_idx;
     o_mpu_region_addr = r.mpu_addr;
