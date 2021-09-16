@@ -121,6 +121,7 @@ private:
         sc_signal<sc_uint<2>> memop_size;
         sc_signal<bool> rv32;                       // 32-bits instruction
         sc_signal<bool> compressed;                 // C-extension
+        sc_signal<bool> amo;                        // A-extension
         sc_signal<bool> f64;                        // D-extension (FPU)
         sc_signal<bool> unsigned_op;                // Unsigned operands
         sc_signal<sc_bv<ISA_Total>> isa_type;

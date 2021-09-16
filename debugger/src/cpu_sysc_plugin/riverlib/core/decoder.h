@@ -30,6 +30,7 @@ const uint8_t OPCODE_AUIPC  = 0x05; // 00101: AUIPC
 const uint8_t OPCODE_ADDIW  = 0x06; // 00110: ADDIW, SLLIW, SRAIW, SRLIW
 const uint8_t OPCODE_SB     = 0x08; // 01000: SB, SH, SW, SD
 const uint8_t OPCODE_FPU_SD = 0x09; // 01001: FSD
+const uint8_t OPCODE_AMO    = 0x0B; // 01011: Atomic opcode (AMO)
 const uint8_t OPCODE_ADD    = 0x0C; // 01100: ADD, AND, OR, SLT, SLTU, SLL, SRA, SRL, SUB, XOR, DIV, DIVU, MUL, REM, REMU
 const uint8_t OPCODE_LUI    = 0x0D; // 01101: LUI
 const uint8_t OPCODE_ADDW   = 0x0E; // 01110: ADDW, SLLW, SRAW, SRLW, SUBW, DIVW, DIVUW, MULW, REMW, REMUW
@@ -87,6 +88,7 @@ SC_MODULE(InstrDecoder) {
     sc_out<sc_uint<2>> o_memop_size;            // Memory transaction size
     sc_out<bool> o_rv32;                        // 32-bits instruction
     sc_out<bool> o_compressed;                  // C-type instruction
+    sc_out<bool> o_amo;                         // A-type instruction
     sc_out<bool> o_f64;                         // 64-bits FPU (D-extension)
     sc_out<bool> o_unsigned_op;                 // Unsigned operands
     sc_out<sc_bv<ISA_Total>> o_isa_type;        // Instruction format accordingly with ISA
@@ -120,6 +122,7 @@ private:
         sc_signal<bool> rv32;
         sc_signal<bool> f64;
         sc_signal<bool> compressed;
+        sc_signal<bool> amo;
         sc_signal<bool> instr_load_fault;
         sc_signal<bool> instr_executable;
 
@@ -146,6 +149,7 @@ private:
         iv.rv32 = 0;
         iv.f64 = 0;
         iv.compressed = 0;
+        iv.amo = 0;
         iv.instr_load_fault = 0;
         iv.instr_executable = 0;
         iv.instr_unimplemented = 0;

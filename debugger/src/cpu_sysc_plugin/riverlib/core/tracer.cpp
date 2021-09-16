@@ -320,6 +320,53 @@ void Tracer::task_disassembler(uint32_t instr) {
             default: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error");
             }
             break;
+        case 0x0B:
+            if (op2 == 2) {
+                switch ((instr >> 27) & 0x1F) {
+                case 0x0: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "amoadd.w"); break;
+                case 0x1: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "amoswap.w"); break;
+                case 0x2:
+                    if (((instr >> 20) & 0x1f) == 0) {
+                        RISCV_sprintf(disasm, sizeof(disasm), "%10s", "lr.w");
+                    } else {
+                        RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error");
+                    }
+                    break;
+                case 0x3: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "sc.w"); break;
+                case 0x4: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "amoxor.w"); break;
+                case 0x8: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "amoor.w"); break;
+                case 0xc: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "amoand.w"); break;
+                case 0x10: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "amomin.w"); break;
+                case 0x14: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "amomax.w"); break;
+                case 0x18: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "amominu.w"); break;
+                case 0x1c: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "amomaxu.w"); break;
+                default: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error");
+                }
+            } else if (op2 == 3) {
+                switch ((instr >> 27) & 0x1F) {
+                case 0x0: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "amoadd.d"); break;
+                case 0x1: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "amoswap.d"); break;
+                case 0x2:
+                    if (((instr >> 20) & 0x1f) == 0) {
+                        RISCV_sprintf(disasm, sizeof(disasm), "%10s", "lr.d");
+                    } else {
+                        RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error.d");
+                    }
+                    break;
+                case 0x3: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "sc.d"); break;
+                case 0x4: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "amoxor.d"); break;
+                case 0x8: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "amoor.d"); break;
+                case 0xc: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "amoand.d"); break;
+                case 0x10: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "amomin.d"); break;
+                case 0x14: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "amomax.d"); break;
+                case 0x18: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "amominu.d"); break;
+                case 0x1c: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "amomaxu.d"); break;
+                default: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error");
+                }
+            } else {
+                RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error");
+            }
+        break;
         case 0x0C:
             switch (op2) {
             case 0:

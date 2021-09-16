@@ -302,13 +302,13 @@ void CsrRegs::comb() {
         switch (r.req_addr.read()) {
         case CsrReq_PcCmd_UnsupInstruction:
             w_trap_valid = 1;
-            wb_mbadaddr = i_e_pc;
+            wb_mbadaddr = r.req_data;
             wb_trap_code = EXCEPTION_InstrIllegal;
             v.req_data = CFG_NMI_INSTR_ILLEGAL_ADDR;
             break;
         case CsrReq_PcCmd_EnvCall:
             w_trap_valid = 1;
-            wb_mbadaddr = i_e_pc;
+            wb_mbadaddr = r.req_data;
             if (r.mode.read() == PRV_M) {
                 wb_trap_code = EXCEPTION_CallFromMmode;
                 v.req_data = CFG_NMI_CALL_FROM_MMODE_ADDR;

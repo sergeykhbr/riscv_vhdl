@@ -50,6 +50,7 @@ SC_MODULE(InstrExecute) {
     sc_in<bool> i_unsigned_op;                  // Unsigned operands
     sc_in<bool> i_rv32;                         // 32-bits instruction
     sc_in<bool> i_compressed;                   // C-extension (2-bytes length)
+    sc_in<bool> i_amo;                          // A-extension (atomic)
     sc_in<bool> i_f64;                          // D-extension (FPU)
     sc_in<sc_bv<ISA_Total>> i_isa_type;         // Type of the instruction's structure (ISA spec.)
     sc_in<sc_bv<Instr_Total>> i_ivec;           // One pulse per supported instruction.
@@ -150,12 +151,17 @@ private:
     static const unsigned State_WaitMulti = 2;
     static const unsigned State_WaitFlushingAccept = 3;     // memaccess should accept flushing request
     static const unsigned State_Flushing_I = 4;
-    static const unsigned State_WaitAtomicRead = 5;
+    static const unsigned State_Amo = 5;
     static const unsigned State_Csr = 6;
 
     static const unsigned CsrState_Idle = 0;
     static const unsigned CsrState_Req = 1;
     static const unsigned CsrState_Resp = 2;
+
+    static const unsigned AmoState_WaitMemAccess = 0;
+    static const unsigned AmoState_Read = 1;
+    static const unsigned AmoState_Modify = 2;
+    static const unsigned AmoState_Write = 3;
 
     struct select_type {
         sc_signal<bool> ena[Res_Total];
@@ -165,7 +171,8 @@ private:
 
     struct RegistersType {
         sc_signal<sc_uint<3>> state;
-        sc_signal<sc_uint<3>> csrstate;
+        sc_signal<sc_uint<2>> csrstate;
+        sc_signal<sc_uint<2>> amostate;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> npc;
         sc_signal<sc_uint<6>> hold_radr1;
@@ -213,6 +220,7 @@ private:
     void R_RESET(RegistersType &iv) {
         iv.state = State_Idle;
         iv.csrstate = CsrState_Idle;
+        iv.amostate = AmoState_WaitMemAccess;
         iv.pc = 0;
         iv.npc = CFG_NMI_RESET_VECTOR;
         iv.hold_radr1 = 0;

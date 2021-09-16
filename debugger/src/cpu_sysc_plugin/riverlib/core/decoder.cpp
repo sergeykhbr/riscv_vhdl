@@ -45,6 +45,7 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset,
     o_memop_size("o_memop_size"),
     o_rv32("o_rv32"),
     o_compressed("o_compressed"),
+    o_amo("o_amo"),
     o_f64("o_f64"),
     o_unsigned_op("o_unsigned_op"),
     o_isa_type("o_isa_type"),
@@ -78,6 +79,7 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset,
     sensitive << r.rv32;
     sensitive << r.f64;
     sensitive << r.compressed;
+    sensitive << r.amo;
     sensitive << r.instr_load_fault;
     sensitive << r.instr_executable;
     sensitive << r.instr_unimplemented;
@@ -106,6 +108,7 @@ void InstrDecoder::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_instr_vec, o_instr_vec.name());
         sc_trace(o_vcd, o_exception, o_exception.name());
         sc_trace(o_vcd, o_compressed, o_compressed.name());
+        sc_trace(o_vcd, o_amo, o_amo.name());
         sc_trace(o_vcd, o_instr_load_fault, o_instr_load_fault.name());
         sc_trace(o_vcd, o_radr1, o_radr1.name());
         sc_trace(o_vcd, o_radr2, o_radr2.name());
@@ -121,6 +124,7 @@ void InstrDecoder::comb() {
     bool w_o_valid;
     bool w_error = false;
     bool w_compressed = false;
+    bool w_amo = false;
     sc_uint<32> wb_instr = i_f_instr.read();
     sc_uint<32> wb_instr_out;
     sc_uint<5> wb_opcode1;
@@ -504,6 +508,116 @@ void InstrDecoder::comb() {
         wb_opcode1 = wb_instr(6, 2);
         wb_opcode2 = wb_instr(14, 12);
         switch (wb_opcode1) {
+        case OPCODE_AMO:
+            w_amo = 1;
+            wb_isa_type[ISA_R_type] = 1;
+            vb_radr1 = (0, wb_instr.range(19, 15));
+            vb_radr2 = (0, wb_instr.range(24, 20));
+            vb_waddr = wb_instr(11, 7);
+            switch (wb_instr(31, 27)) {
+            case 0x0:
+                if (wb_opcode2 == 2) {
+                    wb_dec[Instr_AMOADD_W] = 1;
+                } else if (wb_opcode2 == 3) {
+                    wb_dec[Instr_AMOADD_D] = 1;
+                } else {
+                    w_error = true;
+                }
+                break;
+            case 0x1:
+                if (wb_opcode2 == 2) {
+                    wb_dec[Instr_AMOSWAP_W] = 1;
+                } else if (wb_opcode2 == 3) {
+                    wb_dec[Instr_AMOSWAP_D] = 1;
+                } else {
+                    w_error = true;
+                }
+                break;
+            case 0x2:
+                if (wb_opcode2 == 2 && !wb_instr(24, 20).or_reduce()) {
+                    wb_dec[Instr_LR_W] = 1;
+                } else if (wb_opcode2 == 3 && !wb_instr(24, 20).or_reduce()) {
+                    wb_dec[Instr_LR_D] = 1;
+                } else {
+                    w_error = true;
+                }
+                break;
+            case 0x3:
+                if (wb_opcode2 == 2) {
+                    wb_dec[Instr_SC_W] = 1;
+                } else if (wb_opcode2 == 3) {
+                    wb_dec[Instr_SC_D] = 1;
+                } else {
+                    w_error = true;
+                }
+                break;
+            case 0x4:
+                if (wb_opcode2 == 2) {
+                    wb_dec[Instr_AMOXOR_W] = 1;
+                } else if (wb_opcode2 == 3) {
+                    wb_dec[Instr_AMOXOR_D] = 1;
+                } else {
+                    w_error = true;
+                }
+                break;
+            case 0x8:
+                if (wb_opcode2 == 2) {
+                    wb_dec[Instr_AMOOR_W] = 1;
+                } else if (wb_opcode2 == 3) {
+                    wb_dec[Instr_AMOOR_D] = 1;
+                } else {
+                    w_error = true;
+                }
+                break;
+            case 0xC:
+                if (wb_opcode2 == 2) {
+                    wb_dec[Instr_AMOAND_W] = 1;
+                } else if (wb_opcode2 == 3) {
+                    wb_dec[Instr_AMOAND_D] = 1;
+                } else {
+                    w_error = true;
+                }
+                break;
+            case 0x10:
+                if (wb_opcode2 == 2) {
+                    wb_dec[Instr_AMOMIN_W] = 1;
+                } else if (wb_opcode2 == 3) {
+                    wb_dec[Instr_AMOMIN_D] = 1;
+                } else {
+                    w_error = true;
+                }
+                break;
+            case 0x14:
+                if (wb_opcode2 == 2) {
+                    wb_dec[Instr_AMOMAX_W] = 1;
+                } else if (wb_opcode2 == 3) {
+                    wb_dec[Instr_AMOMAX_D] = 1;
+                } else {
+                    w_error = true;
+                }
+                break;
+            case 0x18:
+                if (wb_opcode2 == 2) {
+                    wb_dec[Instr_AMOMINU_W] = 1;
+                } else if (wb_opcode2 == 3) {
+                    wb_dec[Instr_AMOMINU_D] = 1;
+                } else {
+                    w_error = true;
+                }
+                break;
+            case 0x1C:
+                if (wb_opcode2 == 2) {
+                    wb_dec[Instr_AMOMAXU_W] = 1;
+                } else if (wb_opcode2 == 3) {
+                    wb_dec[Instr_AMOMAXU_D] = 1;
+                } else {
+                    w_error = true;
+                }
+                break;
+            default:
+                w_error = true;
+            }
+            break;
         case OPCODE_ADD:
             wb_isa_type[ISA_R_type] = 1;
             vb_radr1 = (0, wb_instr.range(19, 15));
@@ -1047,6 +1161,7 @@ void InstrDecoder::comb() {
         v.pc = i_f_pc;
         v.instr = i_f_instr.read();
         v.compressed = w_compressed;
+        v.amo = w_amo;
         v.instr_load_fault = i_instr_load_fault.read();
         v.instr_executable = i_instr_executable.read();
         v.progbuf_ena = i_progbuf_ena.read();;
@@ -1054,19 +1169,40 @@ void InstrDecoder::comb() {
         v.isa_type = wb_isa_type;
         v.instr_vec = wb_dec;
         v.memop_store = (wb_dec[Instr_SD] | wb_dec[Instr_SW] 
-                | wb_dec[Instr_SH] | wb_dec[Instr_SB]).to_bool()
-                | wb_dec[Instr_FSD].to_bool();
+                | wb_dec[Instr_SH] | wb_dec[Instr_SB]
+                | wb_dec[Instr_FSD]
+                | wb_dec[Instr_SC_W] | wb_dec[Instr_SC_D]).to_bool();
         v.memop_load = (wb_dec[Instr_LD] | wb_dec[Instr_LW] 
                 | wb_dec[Instr_LH] | wb_dec[Instr_LB]
                 | wb_dec[Instr_LWU] | wb_dec[Instr_LHU] 
-                | wb_dec[Instr_LBU]).to_bool()
-                | wb_dec[Instr_FLD].to_bool();
+                | wb_dec[Instr_LBU]
+                | wb_dec[Instr_FLD]
+                | wb_dec[Instr_AMOADD_W] | wb_dec[Instr_AMOXOR_W] | wb_dec[Instr_AMOOR_W]
+                | wb_dec[Instr_AMOAND_W] | wb_dec[Instr_AMOMIN_W] | wb_dec[Instr_AMOMAX_W]
+                | wb_dec[Instr_AMOMINU_W] | wb_dec[Instr_AMOMAXU_W] | wb_dec[Instr_AMOSWAP_W]
+                | wb_dec[Instr_LR_W]
+                | wb_dec[Instr_AMOADD_D] | wb_dec[Instr_AMOXOR_D] | wb_dec[Instr_AMOOR_D]
+                | wb_dec[Instr_AMOAND_D] | wb_dec[Instr_AMOMIN_D] | wb_dec[Instr_AMOMAX_D]
+                | wb_dec[Instr_AMOMINU_D] | wb_dec[Instr_AMOMAXU_D] | wb_dec[Instr_AMOSWAP_D]
+                | wb_dec[Instr_LR_D]).to_bool();
         v.memop_sign_ext = (wb_dec[Instr_LD] | wb_dec[Instr_LW]
-                | wb_dec[Instr_LH] | wb_dec[Instr_LB]).to_bool();
+                | wb_dec[Instr_LH] | wb_dec[Instr_LB]
+                | wb_dec[Instr_AMOADD_W] | wb_dec[Instr_AMOXOR_W] | wb_dec[Instr_AMOOR_W]
+                | wb_dec[Instr_AMOAND_W] | wb_dec[Instr_AMOMIN_W] | wb_dec[Instr_AMOMAX_W]
+                | wb_dec[Instr_AMOMINU_W] | wb_dec[Instr_AMOMAXU_W] | wb_dec[Instr_AMOSWAP_W]
+                | wb_dec[Instr_LR_W]).to_bool();
         if (wb_dec[Instr_LD] || wb_dec[Instr_SD] ||
-            wb_dec[Instr_FLD] || wb_dec[Instr_FSD]) {
+            wb_dec[Instr_FLD] || wb_dec[Instr_FSD] ||
+            wb_dec[Instr_AMOADD_D] || wb_dec[Instr_AMOXOR_D] || wb_dec[Instr_AMOOR_D] ||
+            wb_dec[Instr_AMOAND_D] || wb_dec[Instr_AMOMIN_D] || wb_dec[Instr_AMOMAX_D] ||
+            wb_dec[Instr_AMOMINU_D] || wb_dec[Instr_AMOMAXU_D] || wb_dec[Instr_AMOSWAP_D] ||
+            wb_dec[Instr_LR_D] || wb_dec[Instr_SC_D]) {
             v.memop_size = MEMOP_8B;
-        } else if (wb_dec[Instr_LW] || wb_dec[Instr_LWU] || wb_dec[Instr_SW]) {
+        } else if (wb_dec[Instr_LW] || wb_dec[Instr_LWU] || wb_dec[Instr_SW] ||
+            wb_dec[Instr_AMOADD_W] || wb_dec[Instr_AMOXOR_W] || wb_dec[Instr_AMOOR_W] ||
+            wb_dec[Instr_AMOAND_W] || wb_dec[Instr_AMOMIN_W] || wb_dec[Instr_AMOMAX_W] ||
+            wb_dec[Instr_AMOMINU_W] || wb_dec[Instr_AMOMAXU_W] || wb_dec[Instr_AMOSWAP_W] ||
+            wb_dec[Instr_LR_W] || wb_dec[Instr_SC_W]) {
             v.memop_size = MEMOP_4B;
         } else if (wb_dec[Instr_LH] || wb_dec[Instr_LHU] || wb_dec[Instr_SH]) {
             v.memop_size = MEMOP_2B;
@@ -1075,16 +1211,21 @@ void InstrDecoder::comb() {
         }
         v.unsigned_op = (wb_dec[Instr_DIVU] | wb_dec[Instr_REMU] |
                 wb_dec[Instr_DIVUW] | wb_dec[Instr_REMUW] |
-                wb_dec[Instr_MULHU]).to_bool() |
-                wb_dec[Instr_FCVT_WU_D].to_bool() |
-                wb_dec[Instr_FCVT_LU_D].to_bool();
+                wb_dec[Instr_MULHU] |
+                wb_dec[Instr_FCVT_WU_D] | wb_dec[Instr_FCVT_LU_D] |
+                wb_dec[Instr_AMOMINU_W] | wb_dec[Instr_AMOMAXU_W] |
+                wb_dec[Instr_AMOMINU_D] | wb_dec[Instr_AMOMAXU_D]).to_bool();
 
         v.rv32 = (wb_dec[Instr_ADDW] | wb_dec[Instr_ADDIW] 
             | wb_dec[Instr_SLLW] | wb_dec[Instr_SLLIW] | wb_dec[Instr_SRAW]
             | wb_dec[Instr_SRAIW]
             | wb_dec[Instr_SRLW] | wb_dec[Instr_SRLIW] | wb_dec[Instr_SUBW] 
             | wb_dec[Instr_DIVW] | wb_dec[Instr_DIVUW] | wb_dec[Instr_MULW]
-            | wb_dec[Instr_REMW] | wb_dec[Instr_REMUW]).to_bool();
+            | wb_dec[Instr_REMW] | wb_dec[Instr_REMUW]
+            | wb_dec[Instr_AMOADD_W]| wb_dec[Instr_AMOXOR_W] | wb_dec[Instr_AMOOR_W]
+            | wb_dec[Instr_AMOAND_W] | wb_dec[Instr_AMOMIN_W]| wb_dec[Instr_AMOMAX_W]
+            | wb_dec[Instr_AMOMINU_W] | wb_dec[Instr_AMOMAXU_W]| wb_dec[Instr_AMOSWAP_W]
+            | wb_dec[Instr_LR_W] | wb_dec[Instr_SC_W]).to_bool();
 
         v.f64 = (wb_dec[Instr_FADD_D] | wb_dec[Instr_FSUB_D]
             | wb_dec[Instr_FMUL_D] | wb_dec[Instr_FDIV_D]
@@ -1125,6 +1266,7 @@ void InstrDecoder::comb() {
     o_rv32 = r.rv32;
     o_f64 = r.f64;
     o_compressed = r.compressed;
+    o_amo = r.amo;
     o_isa_type = r.isa_type;
     o_instr_vec = r.instr_vec;
     o_exception = r.instr_unimplemented;

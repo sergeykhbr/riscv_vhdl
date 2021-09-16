@@ -152,6 +152,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     dec0->o_unsigned_op(w.d.unsigned_op);
     dec0->o_rv32(w.d.rv32);
     dec0->o_compressed(w.d.compressed);
+    dec0->o_amo(w.d.amo);
     dec0->o_f64(w.d.f64);
     dec0->o_isa_type(w.d.isa_type);
     dec0->o_instr_vec(w.d.instr_vec);
@@ -181,6 +182,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->i_unsigned_op(w.d.unsigned_op);
     exec0->i_rv32(w.d.rv32);
     exec0->i_compressed(w.d.compressed);
+    exec0->i_amo(w.d.amo);
     exec0->i_f64(w.d.f64);
     exec0->i_isa_type(w.d.isa_type);
     exec0->i_ivec(w.d.instr_vec);
