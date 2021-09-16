@@ -154,6 +154,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << r.hold_radr2;
     sensitive << r.hold_waddr;
     sensitive << r.hold_rdata1;
+    sensitive << r.hold_rdata2;
     sensitive << r.hold_ivec;
     sensitive << r.tagcnt_rd;
     sensitive << r.tagcnt_wr;
@@ -170,7 +171,6 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << r.memop_memaddr;
     sensitive << r.memop_wdata;
 
-    sensitive << r.res_reg2;
     sensitive << r.res_npc;
     sensitive << r.res_ra;
     sensitive << r.res_csr;
@@ -416,6 +416,11 @@ void InstrExecute::comb() {
     sc_uint<RISCV_ARCH> vb_or64;
     sc_uint<RISCV_ARCH> vb_xor64;
     sc_uint<CFG_CPU_ADDR_BITS> vb_memop_memaddr;
+    sc_uint<RISCV_ARCH> vb_memop_wdata;
+    sc_uint<2> vb_memop_size;
+    bool v_memop_sign_ext;
+    bool v_memop_store;
+    bool v_memop_load;
     sc_bv<Instr_Total> wv;
     int opcode_len;
     bool v_call;
@@ -465,6 +470,11 @@ void InstrExecute::comb() {
     vb_res = 0;
     vb_off = 0;
     vb_memop_memaddr = 0;
+    vb_memop_wdata = 0;
+    vb_memop_size = 0;
+    v_memop_sign_ext = 0;
+    v_memop_store = 0;
+    v_memop_load = 0;
     wv = i_ivec.read();
     v_call = 0;
     v_ret = 0;
@@ -649,7 +659,11 @@ void InstrExecute::comb() {
     w_arith_ena[Multi_FPU] = v_next_fpu_ready;
 #endif
 
-    if (i_memop_load) {
+    if (i_amo.read() && r.state.read() != State_Amo) {
+        vb_memop_memaddr = vb_rdata1(CFG_CPU_ADDR_BITS-1, 0);
+    } else if (r.state.read() == State_Amo) {
+        vb_memop_memaddr = r.hold_rdata1.read()(CFG_CPU_ADDR_BITS-1, 0);
+    } else if (i_memop_load) {
         vb_memop_memaddr =
             vb_rdata1(CFG_CPU_ADDR_BITS-1, 0) + vb_rdata2(CFG_CPU_ADDR_BITS-1, 0);
     } else if (i_memop_store) {
@@ -783,7 +797,7 @@ void InstrExecute::comb() {
     }
 
     wb_select.res[Res_Zero] = 0;
-    wb_select.res[Res_Reg2] = r.res_reg2;
+    wb_select.res[Res_Reg2] = r.hold_rdata2;
     wb_select.res[Res_Csr] = r.res_csr;
     wb_select.res[Res_Npc] = r.res_npc;
     wb_select.res[Res_Ra] = r.res_ra;
@@ -945,6 +959,11 @@ void InstrExecute::comb() {
                     v.state = State_WaitMulti;
                 } else if (i_amo.read()) {
                     v_memop_ena = 1;
+                    vb_memop_size = i_memop_size;
+                    v_memop_sign_ext = i_memop_sign_ext;
+                    v_memop_store = i_memop_store;
+                    v_memop_load = i_memop_load;
+                    vb_memop_wdata = vb_rdata2;
                     vb_reg_waddr = i_d_waddr;       // write back register address
                     v.state = State_Amo;
                     if (!i_memop_ready.read()) {
@@ -954,6 +973,11 @@ void InstrExecute::comb() {
                     }
                 } else if (i_memop_load.read() || i_memop_store.read()) {
                     v_memop_ena = 1;
+                    vb_memop_size = i_memop_size;
+                    v_memop_sign_ext = i_memop_sign_ext;
+                    v_memop_store = i_memop_store;
+                    v_memop_load = i_memop_load;
+                    vb_memop_wdata = vb_rdata2;
                     vb_reg_waddr = i_d_waddr;       // write back register address
                     if (!i_memop_ready.read()) {
                         // Wait cycles until FIFO to memoryaccess becomes available
@@ -1047,7 +1071,6 @@ void InstrExecute::comb() {
         case AmoState_WaitMemAccess:
             if (i_memop_ready.read()) {
                 v.amostate = AmoState_Read;
-                v_o_valid = 1;
             }
             break;
         case AmoState_Read:
@@ -1120,13 +1143,13 @@ void InstrExecute::comb() {
         v.hold_radr2 = i_d_radr2;
         v.hold_waddr = i_d_waddr;
         v.hold_rdata1 = vb_rdata1;
+        v.hold_rdata2 = vb_rdata2;
         v.hold_ivec = i_ivec;
         v.instr = i_d_instr;
         v.flushd = v_fence_d;
         v.flushi = v_fence_i;
         v.call = v_call;
         v.ret = v_ret;
-        v.res_reg2 = vb_rdata2;
         v.res_npc = vb_npc;
         v.res_ra = vb_npc_incr;
 
@@ -1144,12 +1167,12 @@ void InstrExecute::comb() {
     }
     if (v_memop_ena) {
         v.memop_valid = 1;
-        v.memop_type = i_memop_store;
-        v.memop_sign_ext = i_memop_sign_ext;
-        v.memop_size = i_memop_size;
+        v.memop_type = v_memop_store;
+        v.memop_sign_ext = v_memop_sign_ext;
+        v.memop_size = vb_memop_size;
         v.memop_memaddr = vb_memop_memaddr;
-        v.memop_wdata = vb_rdata2;
-        if (i_memop_load.read() == 1) {
+        v.memop_wdata = vb_memop_wdata;
+        if (v_memop_load == 1) {
             v.tagcnt_wr = vb_tagcnt_wr;
             v.tagcnt_rd = vb_tagcnt_rd;
             v.reg_waddr = vb_reg_waddr;

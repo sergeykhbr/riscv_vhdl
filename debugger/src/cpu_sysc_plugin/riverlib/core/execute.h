@@ -179,6 +179,7 @@ private:
         sc_signal<sc_uint<6>> hold_radr2;
         sc_signal<sc_uint<6>> hold_waddr;
         sc_signal<sc_uint<RISCV_ARCH>> hold_rdata1;
+        sc_signal<sc_uint<RISCV_ARCH>> hold_rdata2;
         sc_signal<sc_bv<Instr_Total>> hold_ivec;
 
         sc_signal<sc_uint<32>> instr;
@@ -202,7 +203,6 @@ private:
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> memop_memaddr;
         sc_signal<sc_uint<RISCV_ARCH>> memop_wdata;
 
-        sc_signal<sc_uint<RISCV_ARCH>> res_reg2;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> res_npc;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> res_ra;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> res_csr;
@@ -227,6 +227,7 @@ private:
         iv.hold_radr2 = 0;
         iv.hold_waddr = 0;
         iv.hold_rdata1 = 0;
+        iv.hold_rdata2 = 0;
         iv.hold_ivec = 0;
         iv.instr = 0;
         iv.tagcnt_rd = ~((1 << CFG_REG_TAG_WITH) - 1);
@@ -246,7 +247,6 @@ private:
         iv.memop_memaddr = 0;
         iv.memop_wdata = 0;
 
-        iv.res_reg2 = 0;
         iv.res_npc = 0;
         iv.res_ra = 0;
         iv.res_csr = 0;
