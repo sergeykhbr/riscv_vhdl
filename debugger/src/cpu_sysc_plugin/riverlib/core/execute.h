@@ -169,6 +169,33 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> res[Res_Total];
     };
 
+    struct input_mux_type {
+        sc_uint<6> radr1;
+        sc_uint<6> radr2;
+        sc_uint<6> waddr;
+        sc_uint<RISCV_ARCH> imm;
+        sc_uint<RISCV_ARCH> rdata1;
+        sc_uint<CFG_REG_TAG_WITH> rtag1;
+        sc_uint<RISCV_ARCH> rdata2;
+        sc_uint<CFG_REG_TAG_WITH> rtag2;
+        sc_uint<CFG_CPU_ADDR_BITS> pc;
+        sc_uint<32> instr;
+        bool memop_store;
+        bool memop_load;
+        bool memop_sign_ext;
+        sc_uint<2> memop_size;
+        bool unsigned_op;
+        bool rv32;
+        bool compressed;
+        bool amo;
+        bool f64;
+        sc_bv<Instr_Total> ivec;
+        sc_bv<ISA_Total> isa_type;
+        bool unsup_exception;
+        bool instr_load_fault;
+        bool instr_executable;
+    };
+
     struct RegistersType {
         sc_signal<sc_uint<3>> state;
         sc_signal<sc_uint<2>> csrstate;

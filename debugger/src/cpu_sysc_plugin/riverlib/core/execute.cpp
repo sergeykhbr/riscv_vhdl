@@ -432,8 +432,6 @@ void InstrExecute::comb() {
     bool v_lt;      // less signed
     bool v_ltu;     // less unsigned
     bool v_neq;     // not equal
-    sc_uint<RISCV_ARCH> vb_i_rdata1;
-    sc_uint<RISCV_ARCH> vb_i_rdata2;
     sc_uint<RISCV_ARCH> vb_rdata1;
     sc_uint<RISCV_ARCH> vb_rdata2;
     bool v_check_tag1;
@@ -460,6 +458,7 @@ void InstrExecute::comb() {
     sc_uint<6> vb_reg_waddr;
     bool v_csr_cmdpc_ena;
     sc_uint<12> vb_csr_cmdpc_addr;
+    input_mux_type mux;
 
     v = r;
 
@@ -496,37 +495,87 @@ void InstrExecute::comb() {
     vb_csr_cmdpc_addr = 0;
     vb_csr_wdata = 0;
 
-    vb_i_rdata1 = i_rdata1;
-    vb_i_rdata2 = i_rdata2;
+    if (r.state.read() == State_Idle) {
+        mux.radr1 = i_d_radr1;
+        mux.radr2 = i_d_radr2;
+        mux.waddr = i_d_waddr;
+        mux.imm = i_d_imm;
+        mux.rdata1 = i_rdata1;
+        mux.rtag1 = i_rtag1;
+        mux.rdata2 = i_rdata2;
+        mux.rtag2 = i_rtag2;
+        mux.pc = i_d_pc;
+        mux.instr = i_d_instr;
+        mux.memop_store = i_memop_store;
+        mux.memop_load = i_memop_load;
+        mux.memop_sign_ext = i_memop_sign_ext;
+        mux.memop_size = i_memop_size;
+        mux.unsigned_op = i_unsigned_op;
+        mux.rv32 = i_rv32;
+        mux.compressed = i_compressed;
+        mux.amo = i_amo;
+        mux.f64 = i_f64;
+        mux.ivec = i_ivec;
+        mux.isa_type = i_isa_type;
+        mux.unsup_exception = i_unsup_exception;
+        mux.instr_load_fault = i_instr_load_fault;
+        mux.instr_executable = i_instr_executable;
+    } else {
+        mux.radr1 = r.hold_radr1;
+        mux.radr2 = r.hold_radr2;
+        mux.waddr = r.hold_waddr;
+        mux.imm = 0;
+        mux.rdata1 = i_rdata1;
+        mux.rtag1 = i_rtag1;
+        mux.rdata2 = i_rdata2;
+        mux.rtag2 = i_rtag2;
+        mux.pc = r.pc;
+        mux.instr = r.instr;
+        mux.memop_store = i_memop_store;
+        mux.memop_load = i_memop_load;
+        mux.memop_sign_ext = i_memop_sign_ext;
+        mux.memop_size = i_memop_size;
+        mux.unsigned_op = i_unsigned_op;
+        mux.rv32 = i_rv32;
+        mux.compressed = i_compressed;
+        mux.amo = i_amo;
+        mux.f64 = i_f64;
+        mux.ivec = r.hold_ivec;
+        mux.isa_type = i_isa_type;
+        mux.unsup_exception = i_unsup_exception;
+        mux.instr_load_fault = i_instr_load_fault;
+        mux.instr_executable = i_instr_executable;
+    }
+
     v_check_tag1 = 0;
     v_check_tag2 = 0;
 
-    if (i_isa_type.read()[ISA_R_type]) {
-        vb_rdata1 = vb_i_rdata1;
-        vb_rdata2 = vb_i_rdata2;
+    if (mux.isa_type[ISA_R_type]) {
+        vb_rdata1 = mux.rdata1;
+        vb_rdata2 = mux.rdata2;
         v_check_tag1 = 1;
         v_check_tag2 = 1;
-    } else if (i_isa_type.read()[ISA_I_type]) {
-        vb_rdata1 = vb_i_rdata1;
-        vb_rdata2 = i_d_imm;
+    } else if (mux.isa_type[ISA_I_type]) {
+        vb_rdata1 = mux.rdata1;
+        vb_rdata2 = mux.imm;
         v_check_tag1 = 1;
-    } else if (i_isa_type.read()[ISA_SB_type]) {
-        vb_rdata1 = vb_i_rdata1;
-        vb_rdata2 = vb_i_rdata2;
-        vb_off = i_d_imm;
+    } else if (mux.isa_type[ISA_SB_type]) {
+        vb_rdata1 = mux.rdata1;
+        vb_rdata2 = mux.rdata2;
+        vb_off = mux.imm;
         v_check_tag1 = 1;
         v_check_tag2 = 1;
-    } else if (i_isa_type.read()[ISA_UJ_type]) {
-        vb_rdata1 = i_d_pc;
-        vb_off = i_d_imm;
+    } else if (mux.isa_type[ISA_UJ_type]) {
+        vb_rdata1 = mux.pc;
+        vb_off = mux.imm;
         v_check_tag1 = 1;
-    } else if (i_isa_type.read()[ISA_U_type]) {
-        vb_rdata1 = i_d_pc;
-        vb_rdata2 = i_d_imm;
-    } else if (i_isa_type.read()[ISA_S_type]) {
-        vb_rdata1 = vb_i_rdata1;
-        vb_rdata2 = vb_i_rdata2;
-        vb_off = i_d_imm;
+    } else if (mux.isa_type[ISA_U_type]) {
+        vb_rdata1 = mux.pc;
+        vb_rdata2 = mux.imm;
+    } else if (mux.isa_type[ISA_S_type]) {
+        vb_rdata1 = mux.rdata1;
+        vb_rdata2 = mux.rdata2;
+        vb_off = mux.imm;
         v_check_tag1 = 1;
         v_check_tag2 = 1;
     }
@@ -536,17 +585,17 @@ void InstrExecute::comb() {
     vb_tagcnt_wr = r.tagcnt_wr;
     vb_tagcnt_rd = r.tagcnt_rd;
 
-    int t_d_radr1 = i_d_radr1.read().to_int();
-    int t_d_radr2 = i_d_radr2.read().to_int();
+    int t_radr1 = mux.radr1.to_int();
+    int t_radr2 = mux.radr2.to_int();
 
     w_test_hazard1 = 0;
-    if (r.tagcnt_rd.read()(CFG_REG_TAG_WITH * t_d_radr1 + (CFG_REG_TAG_WITH - 1),
-                           CFG_REG_TAG_WITH * t_d_radr1) != i_rtag1.read()) {
+    if (r.tagcnt_rd.read()(CFG_REG_TAG_WITH * t_radr1 + (CFG_REG_TAG_WITH - 1),
+                           CFG_REG_TAG_WITH * t_radr1) != mux.rtag1) {
         w_test_hazard1 = v_check_tag1;
     }
     w_test_hazard2 = 0;
-    if (r.tagcnt_rd.read()(CFG_REG_TAG_WITH * t_d_radr2 + (CFG_REG_TAG_WITH - 1),
-                           CFG_REG_TAG_WITH * t_d_radr2) != i_rtag2.read()) {
+    if (r.tagcnt_rd.read()(CFG_REG_TAG_WITH * t_radr2 + (CFG_REG_TAG_WITH - 1),
+                           CFG_REG_TAG_WITH * t_radr2) != mux.rtag2) {
         w_test_hazard2 = v_check_tag2;
     }
 
@@ -659,20 +708,20 @@ void InstrExecute::comb() {
     w_arith_ena[Multi_FPU] = v_next_fpu_ready;
 #endif
 
-    if (i_amo.read() && r.state.read() != State_Amo) {
+    if (mux.amo && r.state.read() != State_Amo) {
         vb_memop_memaddr = vb_rdata1(CFG_CPU_ADDR_BITS-1, 0);
     } else if (r.state.read() == State_Amo) {
         vb_memop_memaddr = r.hold_rdata1.read()(CFG_CPU_ADDR_BITS-1, 0);
-    } else if (i_memop_load) {
+    } else if (mux.memop_load) {
         vb_memop_memaddr =
             vb_rdata1(CFG_CPU_ADDR_BITS-1, 0) + vb_rdata2(CFG_CPU_ADDR_BITS-1, 0);
-    } else if (i_memop_store) {
+    } else if (mux.memop_store) {
         vb_memop_memaddr = 
             vb_rdata1(CFG_CPU_ADDR_BITS-1, 0) + vb_off(CFG_CPU_ADDR_BITS-1, 0);
     } else if ((wv[Instr_FENCE] || wv[Instr_FENCE_I]) == 1) {
         vb_memop_memaddr = ~0ull;
     } else if (wv[Instr_EBREAK] == 1) {
-        vb_memop_memaddr = i_d_pc.read();
+        vb_memop_memaddr = mux.pc;
     }
 
     w_exception_store = 0;
@@ -731,13 +780,13 @@ void InstrExecute::comb() {
 #endif
 
     opcode_len = 4;
-    if (i_compressed.read()) {
+    if (mux.compressed) {
         opcode_len = 2;
     }
-    vb_npc_incr = i_d_pc.read() + opcode_len;
+    vb_npc_incr = mux.pc + opcode_len;
 
     if (v_pc_branch) {
-        vb_prog_npc = i_d_pc.read() + vb_off(CFG_CPU_ADDR_BITS-1, 0);
+        vb_prog_npc = mux.pc + vb_off(CFG_CPU_ADDR_BITS-1, 0);
     } else if (wv[Instr_JAL].to_bool()) {
         vb_prog_npc = vb_rdata1(CFG_CPU_ADDR_BITS-1, 0) + vb_off(CFG_CPU_ADDR_BITS-1, 0);
     } else if (wv[Instr_JALR].to_bool()) {
@@ -754,7 +803,7 @@ void InstrExecute::comb() {
     }
 
 #ifdef UPDT2
-    vb_select[Res_Reg2] = i_memop_store || wv[Instr_LUI];
+    vb_select[Res_Reg2] = mux.memop_store || wv[Instr_LUI];
     vb_select[Res_Npc] = 0;
     vb_select[Res_Ra] = v_pc_branch || wv[Instr_JAL] || wv[Instr_JALR]
                         || wv[Instr_MRET] || wv[Instr_URET]
@@ -783,16 +832,16 @@ void InstrExecute::comb() {
                             || wv[Instr_REM] || wv[Instr_REMU]
                             || wv[Instr_REMW] || wv[Instr_REMUW];
     if (fpu_ena_) {
-        vb_select[Res_FPU] = i_f64.read() && !(wv[Instr_FSD] | wv[Instr_FLD]).to_bool();
+        vb_select[Res_FPU] = mux.f64 && !(wv[Instr_FSD] | wv[Instr_FLD]).to_bool();
     }
     vb_select[Res_Zero] = !vb_select(Res_Total-1, Res_Zero+1).or_reduce();  // load memory, fence
 
 
-    if ((wv[Instr_JAL] || wv[Instr_JALR]) && i_d_waddr.read() == Reg_ra) {
+    if ((wv[Instr_JAL] || wv[Instr_JALR]) && mux.waddr == Reg_ra) {
         v_call = 1;
     }
     if (wv[Instr_JALR] && vb_rdata2 == 0 
-        && i_d_waddr.read() != Reg_ra && i_d_radr1.read() == Reg_ra) {
+        && mux.waddr != Reg_ra && mux.radr1 == Reg_ra) {
         v_ret = 1;
     }
 
@@ -802,13 +851,13 @@ void InstrExecute::comb() {
     wb_select.res[Res_Npc] = r.res_npc;
     wb_select.res[Res_Ra] = r.res_ra;
 
-    v_csr_cmdpc_ena = i_unsup_exception.read() || wv[Instr_ECALL];
-    if (i_unsup_exception.read()) {
+    v_csr_cmdpc_ena = mux.unsup_exception || wv[Instr_ECALL];
+    if (mux.unsup_exception) {
         vb_csr_cmdpc_addr = CsrReq_PcCmd_UnsupInstruction;
-        vb_csr_wdata = i_d_pc;
+        vb_csr_wdata = mux.pc;
     } else if (wv[Instr_ECALL]) {
         vb_csr_cmdpc_addr = CsrReq_PcCmd_EnvCall;
-        vb_csr_wdata = i_d_pc;
+        vb_csr_wdata = mux.pc;
     } else if (r.hold_ivec.read()[Instr_CSRRC]) {
         vb_csr_wdata = i_csr_resp_data.read() & ~r.hold_rdata1.read();
     } else if (r.hold_ivec.read()[Instr_CSRRCI]) {
@@ -944,7 +993,7 @@ void InstrExecute::comb() {
     switch (r.state.read()) {
     case State_Idle:
         v_d_ready = 1;
-        if (i_d_pc.read() == r.npc.read() && i_dbg_progbuf_ena.read() == 0
+        if (mux.pc == r.npc.read() && i_dbg_progbuf_ena.read() == 0
             && i_d_progbuf_ena.read() == 0) {
             v_latch_input = 1;
             if (w_test_hazard1 == 0 && w_test_hazard2 == 0) {
@@ -957,28 +1006,28 @@ void InstrExecute::comb() {
                     v.csr_req_pc = 1;
                 } else if (vb_select[Res_IMul] || vb_select[Res_IDiv] || vb_select[Res_FPU]) {
                     v.state = State_WaitMulti;
-                } else if (i_amo.read()) {
+                } else if (mux.amo) {
                     v_memop_ena = 1;
-                    vb_memop_size = i_memop_size;
-                    v_memop_sign_ext = i_memop_sign_ext;
-                    v_memop_store = i_memop_store;
-                    v_memop_load = i_memop_load;
+                    vb_memop_size = mux.memop_size;
+                    v_memop_sign_ext = mux.memop_sign_ext;
+                    v_memop_store = mux.memop_store;
+                    v_memop_load = mux.memop_load;
                     vb_memop_wdata = vb_rdata2;
-                    vb_reg_waddr = i_d_waddr;       // write back register address
+                    vb_reg_waddr = mux.waddr;       // write back register address
                     v.state = State_Amo;
                     if (!i_memop_ready.read()) {
                         v.amostate = AmoState_WaitMemAccess;
                     } else {
                         v.amostate = AmoState_Read;
                     }
-                } else if (i_memop_load.read() || i_memop_store.read()) {
+                } else if (mux.memop_load || mux.memop_store) {
                     v_memop_ena = 1;
-                    vb_memop_size = i_memop_size;
-                    v_memop_sign_ext = i_memop_sign_ext;
-                    v_memop_store = i_memop_store;
-                    v_memop_load = i_memop_load;
+                    vb_memop_size = mux.memop_size;
+                    v_memop_sign_ext = mux.memop_sign_ext;
+                    v_memop_store = mux.memop_store;
+                    v_memop_load = mux.memop_load;
                     vb_memop_wdata = vb_rdata2;
-                    vb_reg_waddr = i_d_waddr;       // write back register address
+                    vb_reg_waddr = mux.waddr;       // write back register address
                     if (!i_memop_ready.read()) {
                         // Wait cycles until FIFO to memoryaccess becomes available
                         v.state = State_WaitMemAcces;
@@ -1013,8 +1062,8 @@ void InstrExecute::comb() {
                     v.csr_req_pc = 1;
                 } else {
                     v_o_valid = 1;
-                    v_reg_ena = i_d_waddr.read().or_reduce() && !i_memop_load.read(); // should be written by memaccess, but tag must be updated
-                    vb_reg_waddr = i_d_waddr;
+                    v_reg_ena = mux.waddr.or_reduce() && !mux.memop_load; // should be written by memaccess, but tag must be updated
+                    vb_reg_waddr = mux.waddr;
                 }
             } else {
                 v_latch_input = 0;
@@ -1134,18 +1183,18 @@ void InstrExecute::comb() {
     // Latch decoder's data into internal registers:
     if (v_latch_input) {
         if (i_dbg_progbuf_ena.read() == 0) {
-            v.pc = i_d_pc;
+            v.pc = mux.pc;
             v.npc = vb_npc;
         } else {
             v.progbuf_npc = vb_npc_incr;
         }
-        v.hold_radr1 = i_d_radr1;
-        v.hold_radr2 = i_d_radr2;
-        v.hold_waddr = i_d_waddr;
+        v.hold_radr1 = mux.radr1;
+        v.hold_radr2 = mux.radr2;
+        v.hold_waddr = mux.waddr;
         v.hold_rdata1 = vb_rdata1;
         v.hold_rdata2 = vb_rdata2;
-        v.hold_ivec = i_ivec;
-        v.instr = i_d_instr;
+        v.hold_ivec = mux.ivec;
+        v.instr = mux.instr;
         v.flushd = v_fence_d;
         v.flushi = v_fence_i;
         v.call = v_call;
@@ -1260,14 +1309,14 @@ void InstrExecute::comb() {
     t_addsub_mode[3] = wv[Instr_SLTU] || wv[Instr_SLTIU];
     t_addsub_mode[2] = wv[Instr_SUB] || wv[Instr_SUBW];
     t_addsub_mode[1] = wv[Instr_ADD] || wv[Instr_ADDI] || wv[Instr_ADDW] || wv[Instr_ADDIW] || wv[Instr_AUIPC];
-    t_addsub_mode[0] = i_rv32.read();
+    t_addsub_mode[0] = mux.rv32;
     wb_addsub_mode = t_addsub_mode;
 
     sc_uint<4> t_shifter_mode;
     t_shifter_mode[3] = wv[Instr_SRA] || wv[Instr_SRAI] || wv[Instr_SRAW] || wv[Instr_SRAW] || wv[Instr_SRAIW];
     t_shifter_mode[2] = wv[Instr_SRL] || wv[Instr_SRLI] || wv[Instr_SRLW] || wv[Instr_SRLIW];
     t_shifter_mode[1] = wv[Instr_SLL] || wv[Instr_SLLI] || wv[Instr_SLLW] || wv[Instr_SLLIW];
-    t_shifter_mode[0] = i_rv32.read();
+    t_shifter_mode[0] = mux.rv32;
     wb_shifter_mode = t_shifter_mode;
 
     wb_shifter_a1 = vb_rdata1;
