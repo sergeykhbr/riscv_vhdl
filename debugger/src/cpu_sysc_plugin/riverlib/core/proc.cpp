@@ -195,6 +195,8 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->i_rtag1(ireg.rtag1);
     exec0->i_rdata2(ireg.rdata2);
     exec0->i_rtag2(ireg.rtag2);
+    exec0->o_radr1(w.e.radr1);
+    exec0->o_radr2(w.e.radr2);
     exec0->o_reg_wena(w.e.reg_wena);
     exec0->o_reg_waddr(w.e.reg_waddr);
     exec0->o_reg_wtag(w.e.reg_wtag);
@@ -290,10 +292,10 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     iregs0 = new RegIntBank("iregs0", async_reset, fpu_ena);
     iregs0->i_clk(i_clk);
     iregs0->i_nrst(i_nrst);
-    iregs0->i_radr1(w.d.radr1);
+    iregs0->i_radr1(w.e.radr1);
     iregs0->o_rdata1(ireg.rdata1);
     iregs0->o_rtag1(ireg.rtag1);
-    iregs0->i_radr2(w.d.radr2);
+    iregs0->i_radr2(w.e.radr2);
     iregs0->o_rdata2(ireg.rdata2);
     iregs0->o_rtag2(ireg.rtag2);
     iregs0->i_waddr(wb_reg_waddr);

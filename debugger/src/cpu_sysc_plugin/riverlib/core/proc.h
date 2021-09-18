@@ -145,6 +145,8 @@ private:
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> npc;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> ex_npc;
 
+        sc_signal<sc_uint<6>> radr1;
+        sc_signal<sc_uint<6>> radr2;
         sc_signal<bool> reg_wena;
         sc_signal<sc_uint<6>> reg_waddr;
         sc_signal<sc_uint<CFG_REG_TAG_WITH>> reg_wtag;

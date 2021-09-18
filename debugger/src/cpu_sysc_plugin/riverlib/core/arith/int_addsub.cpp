@@ -91,19 +91,55 @@ void IntAddSub::comb() {
         vb_rdata2 = i_a2;
     }
 
+    vb_res = 0;
     vb_add = vb_rdata1 + vb_rdata2;
     vb_sub = vb_rdata1 - vb_rdata2;
-    if (i_mode.read()[1]) {
+    if (i_mode.read()[2]) {
         vb_res = vb_add;
-    } else if (i_mode.read()[2]) {
-        vb_res = vb_sub;
     } else if (i_mode.read()[3]) {
-        vb_res = 0;
-        if (vb_rdata1 < vb_rdata2) {
-            vb_res = 1;
-        }
+        vb_res = vb_sub;
     } else if (i_mode.read()[4]) {
-        vb_res = vb_sub[63];
+        if (i_mode.read()[1]) {
+            // unsigned less
+            if (vb_rdata1 < vb_rdata2) {
+                vb_res[0] = 1;
+            }
+        } else {
+            // signed less
+            vb_res[0] = vb_sub[63];
+        }
+    } else if (i_mode.read()[5]) {
+        if (i_mode.read()[1]) {
+            // unsigned min
+            if (vb_rdata1 < vb_rdata2) {
+                vb_res = vb_rdata1;
+            } else {
+                vb_res = vb_rdata2;
+            }
+        } else {
+            // signed min
+            if (vb_sub[63]) {
+                vb_res = vb_rdata1;
+            } else {
+                vb_res = vb_rdata2;
+            }
+        }
+    } else if (i_mode.read()[6]) {
+        if (i_mode.read()[1]) {
+            // unsigned max
+            if (vb_rdata1 < vb_rdata2) {
+                vb_res = vb_rdata2;
+            } else {
+                vb_res = vb_rdata1;
+            }
+        } else {
+            // signed max
+            if (vb_sub[63]) {
+                vb_res = vb_rdata2;
+            } else {
+                vb_res = vb_rdata1;
+            }
+        }
     }
     if (i_mode.read()[0]) {
         if (vb_res[31]) {

@@ -54,6 +54,8 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     i_rtag1("i_rtag1"),
     i_rdata2("i_rdata2"),
     i_rtag2("i_rtag2"),
+    o_radr1("o_radr1"),
+    o_radr2("o_radr2"),
     o_reg_wena("o_reg_wena"),
     o_reg_waddr("o_reg_waddr"),
     o_reg_wtag("o_reg_wtag"),
@@ -155,7 +157,9 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << r.hold_waddr;
     sensitive << r.hold_rdata1;
     sensitive << r.hold_rdata2;
-    sensitive << r.hold_ivec;
+    sensitive << r.ivec;
+    sensitive << r.isa_type;
+    sensitive << r.imm;
     sensitive << r.tagcnt_rd;
     sensitive << r.tagcnt_wr;
     sensitive << r.select;
@@ -167,10 +171,17 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << r.csr_req_addr;
     sensitive << r.csr_req_data;
     sensitive << r.memop_valid;
-    sensitive << r.memop_type;
+    sensitive << r.memop_store;
+    sensitive << r.memop_load;
+    sensitive << r.memop_sign_ext;
+    sensitive << r.memop_size;
     sensitive << r.memop_memaddr;
     sensitive << r.memop_wdata;
 
+    sensitive << r.unsigned_op;
+    sensitive << r.rv32;
+    sensitive << r.compressed;
+    sensitive << r.f64;
     sensitive << r.res_npc;
     sensitive << r.res_ra;
     sensitive << r.res_csr;
@@ -316,6 +327,8 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_rtag1, i_rtag1.name());
         sc_trace(o_vcd, i_rdata2, i_rdata2.name());
         sc_trace(o_vcd, i_rtag2, i_rtag2.name());
+        sc_trace(o_vcd, o_radr1, o_radr1.name());
+        sc_trace(o_vcd, o_radr2, o_radr2.name());
         sc_trace(o_vcd, o_reg_wena, o_reg_wena.name());
         sc_trace(o_vcd, o_reg_waddr, o_reg_waddr.name());
         sc_trace(o_vcd, o_reg_wtag, o_reg_wtag.name());
@@ -368,6 +381,8 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.reg_waddr, pn + ".r_reg_waddr");
         sc_trace(o_vcd, r.reg_wtag, pn + ".r_reg_wtag");
         sc_trace(o_vcd, r.hold_rdata1, pn + ".r_hold_rdata1");
+        sc_trace(o_vcd, r.hold_radr1, pn + ".r_hold_radr1");
+        sc_trace(o_vcd, r.hold_radr2, pn + ".r_hold_radr2");
         sc_trace(o_vcd, r.flushd, pn + ".r_flushd");
 #if!defined(UPDT2)
         sc_trace(o_vcd, w_next_ready, pn + ".w_next_ready");
@@ -382,6 +397,9 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, w_test_hazard2, pn + ".w_test_hazard2");
         sc_trace(o_vcd, tag_expected[0xA], pn + ".tag_expected0x0A");
         sc_trace(o_vcd, tag_expected[0xb], pn + ".tag_expected0x0B");
+        sc_trace(o_vcd, tag_expected[0xc], pn + ".tag_expected0x0C");
+        sc_trace(o_vcd, tag_expected[0xd], pn + ".tag_expected0x0D");
+        sc_trace(o_vcd, tag_expected[0xe], pn + ".tag_expected0x0E");
         sc_trace(o_vcd, tag_expected[0xf], pn + ".tag_expected0x0F");
         sc_trace(o_vcd, wb_select.res[Res_AddSub], pn + ".t_res_AddSub");
     }
@@ -416,11 +434,9 @@ void InstrExecute::comb() {
     sc_uint<RISCV_ARCH> vb_or64;
     sc_uint<RISCV_ARCH> vb_xor64;
     sc_uint<CFG_CPU_ADDR_BITS> vb_memop_memaddr;
+    sc_uint<CFG_CPU_ADDR_BITS> vb_memop_memaddr_load;
+    sc_uint<CFG_CPU_ADDR_BITS> vb_memop_memaddr_store;
     sc_uint<RISCV_ARCH> vb_memop_wdata;
-    sc_uint<2> vb_memop_size;
-    bool v_memop_sign_ext;
-    bool v_memop_store;
-    bool v_memop_load;
     sc_bv<Instr_Total> wv;
     int opcode_len;
     bool v_call;
@@ -470,11 +486,6 @@ void InstrExecute::comb() {
     vb_off = 0;
     vb_memop_memaddr = 0;
     vb_memop_wdata = 0;
-    vb_memop_size = 0;
-    v_memop_sign_ext = 0;
-    v_memop_store = 0;
-    v_memop_load = 0;
-    wv = i_ivec.read();
     v_call = 0;
     v_ret = 0;
     v.valid = 0;
@@ -500,10 +511,6 @@ void InstrExecute::comb() {
         mux.radr2 = i_d_radr2;
         mux.waddr = i_d_waddr;
         mux.imm = i_d_imm;
-        mux.rdata1 = i_rdata1;
-        mux.rtag1 = i_rtag1;
-        mux.rdata2 = i_rdata2;
-        mux.rtag2 = i_rtag2;
         mux.pc = i_d_pc;
         mux.instr = i_d_instr;
         mux.memop_store = i_memop_store;
@@ -513,7 +520,6 @@ void InstrExecute::comb() {
         mux.unsigned_op = i_unsigned_op;
         mux.rv32 = i_rv32;
         mux.compressed = i_compressed;
-        mux.amo = i_amo;
         mux.f64 = i_f64;
         mux.ivec = i_ivec;
         mux.isa_type = i_isa_type;
@@ -524,44 +530,40 @@ void InstrExecute::comb() {
         mux.radr1 = r.hold_radr1;
         mux.radr2 = r.hold_radr2;
         mux.waddr = r.hold_waddr;
-        mux.imm = 0;
-        mux.rdata1 = i_rdata1;
-        mux.rtag1 = i_rtag1;
-        mux.rdata2 = i_rdata2;
-        mux.rtag2 = i_rtag2;
+        mux.imm = r.imm;
         mux.pc = r.pc;
         mux.instr = r.instr;
-        mux.memop_store = i_memop_store;
-        mux.memop_load = i_memop_load;
-        mux.memop_sign_ext = i_memop_sign_ext;
-        mux.memop_size = i_memop_size;
-        mux.unsigned_op = i_unsigned_op;
-        mux.rv32 = i_rv32;
-        mux.compressed = i_compressed;
-        mux.amo = i_amo;
-        mux.f64 = i_f64;
-        mux.ivec = r.hold_ivec;
-        mux.isa_type = i_isa_type;
+        mux.memop_store = r.memop_store;
+        mux.memop_load = r.memop_load;
+        mux.memop_sign_ext = r.memop_sign_ext;
+        mux.memop_size = r.memop_size;
+        mux.unsigned_op = r.unsigned_op;
+        mux.rv32 = r.rv32;
+        mux.compressed = r.compressed;
+        mux.f64 = r.f64;
+        mux.ivec = r.ivec;
+        mux.isa_type = r.isa_type;
         mux.unsup_exception = i_unsup_exception;
         mux.instr_load_fault = i_instr_load_fault;
         mux.instr_executable = i_instr_executable;
     }
+    wv = mux.ivec;
 
     v_check_tag1 = 0;
     v_check_tag2 = 0;
 
     if (mux.isa_type[ISA_R_type]) {
-        vb_rdata1 = mux.rdata1;
-        vb_rdata2 = mux.rdata2;
+        vb_rdata1 = i_rdata1;
+        vb_rdata2 = i_rdata2;
         v_check_tag1 = 1;
         v_check_tag2 = 1;
     } else if (mux.isa_type[ISA_I_type]) {
-        vb_rdata1 = mux.rdata1;
+        vb_rdata1 = i_rdata1;
         vb_rdata2 = mux.imm;
         v_check_tag1 = 1;
     } else if (mux.isa_type[ISA_SB_type]) {
-        vb_rdata1 = mux.rdata1;
-        vb_rdata2 = mux.rdata2;
+        vb_rdata1 = i_rdata1;
+        vb_rdata2 = i_rdata2;
         vb_off = mux.imm;
         v_check_tag1 = 1;
         v_check_tag2 = 1;
@@ -573,14 +575,24 @@ void InstrExecute::comb() {
         vb_rdata1 = mux.pc;
         vb_rdata2 = mux.imm;
     } else if (mux.isa_type[ISA_S_type]) {
-        vb_rdata1 = mux.rdata1;
-        vb_rdata2 = mux.rdata2;
+        vb_rdata1 = i_rdata1;
+        vb_rdata2 = i_rdata2;
         vb_off = mux.imm;
         v_check_tag1 = 1;
         v_check_tag2 = 1;
     }
 
-#ifdef UPDT2
+    vb_memop_memaddr_load = vb_rdata1(CFG_CPU_ADDR_BITS-1, 0)
+                          + vb_rdata2(CFG_CPU_ADDR_BITS-1, 0);
+    vb_memop_memaddr_store = vb_rdata1(CFG_CPU_ADDR_BITS-1, 0)
+                           + vb_off(CFG_CPU_ADDR_BITS-1, 0);
+    if (mux.memop_load) {
+        vb_memop_memaddr = vb_memop_memaddr_load;
+    } else {
+        vb_memop_memaddr = vb_memop_memaddr_store;
+    }
+
+
     // Check that registers tags are equal to expeted ones
     vb_tagcnt_wr = r.tagcnt_wr;
     vb_tagcnt_rd = r.tagcnt_rd;
@@ -590,12 +602,12 @@ void InstrExecute::comb() {
 
     w_test_hazard1 = 0;
     if (r.tagcnt_rd.read()(CFG_REG_TAG_WITH * t_radr1 + (CFG_REG_TAG_WITH - 1),
-                           CFG_REG_TAG_WITH * t_radr1) != mux.rtag1) {
+                           CFG_REG_TAG_WITH * t_radr1) != i_rtag1.read()) {
         w_test_hazard1 = v_check_tag1;
     }
     w_test_hazard2 = 0;
     if (r.tagcnt_rd.read()(CFG_REG_TAG_WITH * t_radr2 + (CFG_REG_TAG_WITH - 1),
-                           CFG_REG_TAG_WITH * t_radr2) != mux.rtag2) {
+                           CFG_REG_TAG_WITH * t_radr2) != i_rtag2.read()) {
         w_test_hazard2 = v_check_tag2;
     }
 
@@ -624,105 +636,15 @@ void InstrExecute::comb() {
         || (wv[Instr_BNE].to_bool() & v_neq)) {
         v_pc_branch = 1;
     }
-#endif
 
     wb_fpu_vec = wv.range(Instr_FSUB_D, Instr_FADD_D);  // directly connected i_ivec
-#ifdef UPDT2
     v_fence_d = wv[Instr_FENCE].to_bool();
     v_fence_i = wv[Instr_FENCE_I].to_bool();
-#else
-    w_multi_busy = w_arith_busy[Multi_MUL] | w_arith_busy[Multi_DIV]
-                  | w_arith_busy[Multi_FPU];
-
-    w_multi_ready = w_arith_valid[Multi_MUL] | w_arith_valid[Multi_DIV]
-                  | w_arith_valid[Multi_FPU];
-
-
-    /** Hold signals:
-            1. hazard
-            2. memaccess not ready to accept next memop operation (or flush request)
-            3. multi instruction
-            4. Flushing $D on flush.i instruction
-     */
-    w_hold_hazard = i_rhazard1.read() || i_rhazard2.read();
-
-    w_hold_memop = (i_memop_load.read() || i_memop_store.read()
-                    || wv[Instr_FENCE] || wv[Instr_FENCE_I])
-                && !i_memop_ready.read();
-
-    w_hold_multi = w_multi_busy | w_multi_ready;
-
-    v_hold_exec = w_hold_hazard || w_hold_memop || w_hold_multi
-                || r.hold_fencei.read();
-
-    v_next_normal = 0;
-    if (i_d_pc.read() == r.npc.read() && i_dbg_progbuf_ena.read() == 0
-        && i_d_progbuf_ena.read() == 0) {
-        v_next_normal = 1;
-    }
-
-    v_next_progbuf = 0;
-    if (i_d_pc.read() == r.progbuf_npc.read() && i_dbg_progbuf_ena.read() == 1
-        && i_d_progbuf_ena.read() == 1) {
-        v_next_progbuf = 1;
-    }
-
-    w_next_ready = 0;
-    if (i_d_valid.read() == 1 && (v_next_normal|v_next_progbuf) == 1
-        && v_hold_exec == 0) {
-        w_next_ready = 1;
-    }
-
-    v_fence = wv[Instr_FENCE].to_bool() & w_next_ready;
-    v_fencei = wv[Instr_FENCE_I].to_bool() & w_next_ready;
-    v_fenced = v_fence | v_fencei;
-    v_mret = wv[Instr_MRET].to_bool() & w_next_ready;
-    v_uret = wv[Instr_URET].to_bool() & w_next_ready;
-
-    v_next_mul_ready = (wv[Instr_MUL] || wv[Instr_MULW]
-                     || wv[Instr_MULH]|| wv[Instr_MULHSU]
-                     || wv[Instr_MULHU]) && w_next_ready;
-    v_next_div_ready = (wv[Instr_DIV] || wv[Instr_DIVU]
-                            || wv[Instr_DIVW] || wv[Instr_DIVUW]
-                            || wv[Instr_REM] || wv[Instr_REMU]
-                            || wv[Instr_REMW] || wv[Instr_REMUW]) && w_next_ready;
-    v_next_fpu_ready = 0;
-    if (fpu_ena_) {
-        if (i_f64.read() && !(wv[Instr_FSD] | wv[Instr_FLD]).to_bool()) {
-            v_next_fpu_ready = w_next_ready;
-        }
-    }
-#endif
-
     w_arith_residual_high = (wv[Instr_REM] || wv[Instr_REMU]
                           || wv[Instr_REMW] || wv[Instr_REMUW]
                           || wv[Instr_MULH] || wv[Instr_MULHSU] || wv[Instr_MULHU]);
 
     w_mul_hsu = wv[Instr_MULHSU].to_bool();
-
-#if!defined(UPDT2)
-    v_multi_ena = v_next_mul_ready || v_next_div_ready || v_next_fpu_ready;
-
-    w_arith_ena[Multi_MUL] = v_next_mul_ready;
-    w_arith_ena[Multi_DIV] = v_next_div_ready;
-    w_arith_ena[Multi_FPU] = v_next_fpu_ready;
-#endif
-
-    if (mux.amo && r.state.read() != State_Amo) {
-        vb_memop_memaddr = vb_rdata1(CFG_CPU_ADDR_BITS-1, 0);
-    } else if (r.state.read() == State_Amo) {
-        vb_memop_memaddr = r.hold_rdata1.read()(CFG_CPU_ADDR_BITS-1, 0);
-    } else if (mux.memop_load) {
-        vb_memop_memaddr =
-            vb_rdata1(CFG_CPU_ADDR_BITS-1, 0) + vb_rdata2(CFG_CPU_ADDR_BITS-1, 0);
-    } else if (mux.memop_store) {
-        vb_memop_memaddr = 
-            vb_rdata1(CFG_CPU_ADDR_BITS-1, 0) + vb_off(CFG_CPU_ADDR_BITS-1, 0);
-    } else if ((wv[Instr_FENCE] || wv[Instr_FENCE_I]) == 1) {
-        vb_memop_memaddr = ~0ull;
-    } else if (wv[Instr_EBREAK] == 1) {
-        vb_memop_memaddr = mux.pc;
-    }
 
     w_exception_store = 0;
     w_exception_load = 0;
@@ -738,46 +660,6 @@ void InstrExecute::comb() {
         w_exception_store = 1;
     }
 
-
-#if!defined (UPDT2)
-    // parallel ALU:
-    vb_sum64 = vb_rdata1 + vb_rdata2;
-    vb_sum32(31, 0) = vb_rdata1(31, 0) + vb_rdata2(31, 0);
-    if (vb_sum32[31]) {
-        vb_sum32(63, 32) = ~0;
-    }
-    vb_sub64 = vb_rdata1 - vb_rdata2;
-    vb_sub32(31, 0) = vb_rdata1(31, 0) - vb_rdata2(31, 0);
-    if (vb_sub32[31]) {
-        vb_sub32(63, 32) = ~0;
-    }
-    vb_and64 = vb_rdata1 & vb_rdata2;
-    vb_or64 = vb_rdata1 | vb_rdata2;
-    vb_xor64 = vb_rdata1 ^ vb_rdata2;
-
-    wb_shifter_a1 = vb_rdata1;
-    wb_shifter_a2 = vb_rdata2(5, 0);
-
-    v_ltu = 0;
-    v_geu = 0;
-    if (vb_rdata1 < vb_rdata2) {
-        v_ltu = 1;
-    }
-    if (vb_rdata1 >= vb_rdata2) {
-        v_geu = 1;
-    }
-
-    // Relative Branch on some condition:
-    v_pc_branch = 0;
-    if ((wv[Instr_BEQ].to_bool() & (vb_sub64 == 0))
-        || (wv[Instr_BGE].to_bool() & (vb_sub64[63] == 0))
-        || (wv[Instr_BGEU].to_bool() & (v_geu))
-        || (wv[Instr_BLT].to_bool() & (vb_sub64[63] == 1))
-        || (wv[Instr_BLTU].to_bool() & (v_ltu))
-        || (wv[Instr_BNE].to_bool() & (vb_sub64 != 0))) {
-        v_pc_branch = 1;
-    }
-#endif
 
     opcode_len = 4;
     if (mux.compressed) {
@@ -802,6 +684,7 @@ void InstrExecute::comb() {
         vb_npc = vb_prog_npc;
     }
 
+
 #ifdef UPDT2
     vb_select[Res_Reg2] = mux.memop_store || wv[Instr_LUI];
     vb_select[Res_Npc] = 0;
@@ -812,12 +695,21 @@ void InstrExecute::comb() {
                         || wv[Instr_CSRRSI] || wv[Instr_CSRRW] || wv[Instr_CSRRWI];
     vb_select[Res_Alu] = wv[Instr_AND] || wv[Instr_ANDI]
                       || wv[Instr_OR] || wv[Instr_ORI]
-                      || wv[Instr_XOR] || wv[Instr_XORI];
+                      || wv[Instr_XOR] || wv[Instr_XORI]
+                      || wv[Instr_AMOOR_D] || wv[Instr_AMOOR_W]
+                      || wv[Instr_AMOAND_D] || wv[Instr_AMOAND_W]
+                      || wv[Instr_AMOXOR_D] || wv[Instr_AMOXOR_W];
     vb_select[Res_AddSub] = wv[Instr_ADD] || wv[Instr_ADDI] || wv[Instr_AUIPC]
                          || wv[Instr_ADDW] || wv[Instr_ADDIW]
                          || wv[Instr_SUB] || wv[Instr_SUBW]
                          || wv[Instr_SLT] || wv[Instr_SLTI]
-                         || wv[Instr_SLTU] || wv[Instr_SLTIU];
+                         || wv[Instr_SLTU] || wv[Instr_SLTIU]
+                         || wv[Instr_AMOADD_D] || wv[Instr_AMOADD_W]
+                         || wv[Instr_AMOMIN_D] || wv[Instr_AMOMIN_W]
+                         || wv[Instr_AMOMAX_D] || wv[Instr_AMOMAX_W]
+                         || wv[Instr_AMOMINU_D] || wv[Instr_AMOMINU_W]
+                         || wv[Instr_AMOMAXU_D] || wv[Instr_AMOMAXU_W]
+                         || wv[Instr_AMOSWAP_D] || wv[Instr_AMOSWAP_W];
     vb_select[Res_Shifter] = wv[Instr_SLL] || wv[Instr_SLLI]
                           || wv[Instr_SLLW] || wv[Instr_SLLIW]
                           || wv[Instr_SRL] || wv[Instr_SRLI]
@@ -858,19 +750,19 @@ void InstrExecute::comb() {
     } else if (wv[Instr_ECALL]) {
         vb_csr_cmdpc_addr = CsrReq_PcCmd_EnvCall;
         vb_csr_wdata = mux.pc;
-    } else if (r.hold_ivec.read()[Instr_CSRRC]) {
+    } else if (r.ivec.read()[Instr_CSRRC]) {
         vb_csr_wdata = i_csr_resp_data.read() & ~r.hold_rdata1.read();
-    } else if (r.hold_ivec.read()[Instr_CSRRCI]) {
+    } else if (r.ivec.read()[Instr_CSRRCI]) {
         vb_csr_wdata(RISCV_ARCH-1, 5) = i_csr_resp_data.read()(RISCV_ARCH-1, 5);
         vb_csr_wdata(4, 0) = i_csr_resp_data.read()(4, 0) & ~r.hold_radr1.read()(4, 0);  // zero-extending 5 to 64-bits
-    } else if (r.hold_ivec.read()[Instr_CSRRS]) {
+    } else if (r.ivec.read()[Instr_CSRRS]) {
         vb_csr_wdata = i_csr_resp_data.read() | r.hold_rdata1.read();
-    } else if (r.hold_ivec.read()[Instr_CSRRSI]) {
+    } else if (r.ivec.read()[Instr_CSRRSI]) {
         vb_csr_wdata(RISCV_ARCH-1, 5) = i_csr_resp_data.read()(RISCV_ARCH-1, 5);
         vb_csr_wdata(4, 0) = i_csr_resp_data.read()(4, 0) | r.hold_radr1.read()(4, 0);  // zero-extending 5 to 64-bits
-    } else if (r.hold_ivec.read()[Instr_CSRRW]) {
+    } else if (r.ivec.read()[Instr_CSRRW]) {
         vb_csr_wdata = r.hold_rdata1.read();
-    } else if (r.hold_ivec.read()[Instr_CSRRWI]) {
+    } else if (r.ivec.read()[Instr_CSRRWI]) {
         vb_csr_wdata(4, 0) = r.hold_radr1.read()(4, 0);  // zero-extending 5 to 64-bits
     }
 
@@ -993,7 +885,7 @@ void InstrExecute::comb() {
     switch (r.state.read()) {
     case State_Idle:
         v_d_ready = 1;
-        if (mux.pc == r.npc.read() && i_dbg_progbuf_ena.read() == 0
+        if (i_d_pc == r.npc.read() && i_dbg_progbuf_ena.read() == 0
             && i_d_progbuf_ena.read() == 0) {
             v_latch_input = 1;
             if (w_test_hazard1 == 0 && w_test_hazard2 == 0) {
@@ -1006,28 +898,21 @@ void InstrExecute::comb() {
                     v.csr_req_pc = 1;
                 } else if (vb_select[Res_IMul] || vb_select[Res_IDiv] || vb_select[Res_FPU]) {
                     v.state = State_WaitMulti;
-                } else if (mux.amo) {
+                } else if (i_amo.read() == 1) {
                     v_memop_ena = 1;
-                    vb_memop_size = mux.memop_size;
-                    v_memop_sign_ext = mux.memop_sign_ext;
-                    v_memop_store = mux.memop_store;
-                    v_memop_load = mux.memop_load;
+                    vb_memop_memaddr = vb_rdata1(CFG_CPU_ADDR_BITS-1, 0);
                     vb_memop_wdata = vb_rdata2;
-                    vb_reg_waddr = mux.waddr;       // write back register address
+                    vb_reg_waddr = i_d_waddr;       // write back register address
                     v.state = State_Amo;
                     if (!i_memop_ready.read()) {
                         v.amostate = AmoState_WaitMemAccess;
                     } else {
                         v.amostate = AmoState_Read;
                     }
-                } else if (mux.memop_load || mux.memop_store) {
+                } else if (i_memop_load || i_memop_store) {
                     v_memop_ena = 1;
-                    vb_memop_size = mux.memop_size;
-                    v_memop_sign_ext = mux.memop_sign_ext;
-                    v_memop_store = mux.memop_store;
-                    v_memop_load = mux.memop_load;
                     vb_memop_wdata = vb_rdata2;
-                    vb_reg_waddr = mux.waddr;       // write back register address
+                    vb_reg_waddr = i_d_waddr;       // write back register address
                     if (!i_memop_ready.read()) {
                         // Wait cycles until FIFO to memoryaccess becomes available
                         v.state = State_WaitMemAcces;
@@ -1035,10 +920,11 @@ void InstrExecute::comb() {
                         v_o_valid = 1;
                     }
                 } else if (v_fence_i || v_fence_d) {
+                    vb_memop_memaddr = ~0ull;
                     if (!i_memop_ready.read()) {
                         v.state = State_WaitFlushingAccept;
                     } else if (v_fence_i) {
-                        v.state = State_Flushing_I;     // Flushing D no need to wait ending
+                        v.state = State_Flushing_I;     // Flushing I need to wait ending of flashing D
                     } else {
                         v_o_valid = 1;
                     }
@@ -1062,8 +948,8 @@ void InstrExecute::comb() {
                     v.csr_req_pc = 1;
                 } else {
                     v_o_valid = 1;
-                    v_reg_ena = mux.waddr.or_reduce() && !mux.memop_load; // should be written by memaccess, but tag must be updated
-                    vb_reg_waddr = mux.waddr;
+                    v_reg_ena = i_d_waddr.read().or_reduce() && !i_memop_load; // should be written by memaccess, but tag must be updated
+                    vb_reg_waddr = i_d_waddr;
                 }
             } else {
                 v_latch_input = 0;
@@ -1073,6 +959,7 @@ void InstrExecute::comb() {
         break;
     case State_WaitMemAcces:
         // Fifo exec => memacess is full
+        vb_memop_memaddr = r.memop_memaddr;
         if (i_memop_ready.read()) {
             v.state = State_Idle;
             v_o_valid = 1;
@@ -1118,19 +1005,36 @@ void InstrExecute::comb() {
     case State_Amo:
         switch (r.amostate.read()) {
         case AmoState_WaitMemAccess:
+            // No need to make memop_valid active
             if (i_memop_ready.read()) {
                 v.amostate = AmoState_Read;
             }
             break;
         case AmoState_Read:
             v.amostate = AmoState_Modify;
+            if (wv[Instr_AMOSWAP_D] || wv[Instr_AMOSWAP_W]) {
+                v.hold_radr1 = 0;
+            } else {
+                v.hold_radr1 = r.hold_waddr;
+            }
             break;
         case AmoState_Modify:
-            v.amostate = AmoState_Write;
+            if (w_test_hazard1 == 0 && w_test_hazard2 == 0) {
+                // Need to wait 1 clock output on addsub/alu output
+                v.amostate = AmoState_Write;
+            }
             break;
         case AmoState_Write:
-            v.state = State_Idle;
-            v_o_valid = 1;
+            v_memop_ena = 1;
+            mux.memop_load = 0;
+            mux.memop_store = 1;
+            vb_memop_memaddr = r.memop_memaddr;
+            vb_memop_wdata = vb_res;
+            if (i_memop_ready.read()) {
+                v.state = State_Idle;
+                v.amostate = AmoState_WaitMemAccess;
+                v_o_valid = 1;
+            }
             break;
         default:;
         }
@@ -1141,15 +1045,16 @@ void InstrExecute::comb() {
           | wb_select.valid[Res_IDiv]
           | wb_select.valid[Res_FPU]) {
             v.state = State_Idle;
-            v_reg_ena = r.hold_waddr.read().or_reduce();
-            vb_reg_waddr = r.hold_waddr;
+            v_reg_ena = mux.waddr.or_reduce();
+            vb_reg_waddr = mux.waddr;
             v_o_valid = 1;
         }
         break;
     case State_WaitFlushingAccept:
         // Fifo exec => memacess is full
+        vb_memop_memaddr = ~0ull;
         if (i_memop_ready.read()) {
-            if (r.hold_ivec.read()[Instr_FENCE] == 1) {
+            if (mux.ivec[Instr_FENCE] == 1) {
                 // no need to wait ending of D-flashing
                 v.state = State_Idle;
                 v_o_valid = 1;
@@ -1183,18 +1088,24 @@ void InstrExecute::comb() {
     // Latch decoder's data into internal registers:
     if (v_latch_input) {
         if (i_dbg_progbuf_ena.read() == 0) {
-            v.pc = mux.pc;
+            v.pc = i_d_pc;
             v.npc = vb_npc;
         } else {
             v.progbuf_npc = vb_npc_incr;
         }
-        v.hold_radr1 = mux.radr1;
-        v.hold_radr2 = mux.radr2;
-        v.hold_waddr = mux.waddr;
+        v.hold_radr1 = i_d_radr1;
+        v.hold_radr2 = i_d_radr2;
+        v.hold_waddr = i_d_waddr;
         v.hold_rdata1 = vb_rdata1;
         v.hold_rdata2 = vb_rdata2;
-        v.hold_ivec = mux.ivec;
-        v.instr = mux.instr;
+        v.imm = i_d_imm;
+        v.ivec = i_ivec;
+        v.isa_type = i_isa_type;
+        v.unsigned_op = i_unsigned_op;
+        v.rv32 = i_rv32;
+        v.compressed = i_compressed;
+        v.f64 = i_f64;
+        v.instr = i_d_instr;
         v.flushd = v_fence_d;
         v.flushi = v_fence_i;
         v.call = v_call;
@@ -1216,12 +1127,13 @@ void InstrExecute::comb() {
     }
     if (v_memop_ena) {
         v.memop_valid = 1;
-        v.memop_type = v_memop_store;
-        v.memop_sign_ext = v_memop_sign_ext;
-        v.memop_size = vb_memop_size;
+        v.memop_store = mux.memop_store;
+        v.memop_load = mux.memop_load;
+        v.memop_sign_ext = mux.memop_sign_ext;
+        v.memop_size = mux.memop_size;
         v.memop_memaddr = vb_memop_memaddr;
         v.memop_wdata = vb_memop_wdata;
-        if (v_memop_load == 1) {
+        if (mux.memop_load == 1) {
             v.tagcnt_wr = vb_tagcnt_wr;
             v.tagcnt_rd = vb_tagcnt_rd;
             v.reg_waddr = vb_reg_waddr;
@@ -1299,16 +1211,30 @@ void InstrExecute::comb() {
 
 #ifdef UPDT2
     sc_uint<3> t_alu_mode;
-    t_alu_mode[2] = wv[Instr_XOR] || wv[Instr_XORI];
-    t_alu_mode[1] = wv[Instr_OR] || wv[Instr_ORI];
-    t_alu_mode[0] = wv[Instr_AND] || wv[Instr_ANDI];
+    t_alu_mode[2] = wv[Instr_XOR] || wv[Instr_XORI]
+                 || wv[Instr_AMOXOR_D] || wv[Instr_AMOXOR_W];
+    t_alu_mode[1] = wv[Instr_OR] || wv[Instr_ORI]
+                 || wv[Instr_AMOOR_D] || wv[Instr_AMOOR_W];
+    t_alu_mode[0] = wv[Instr_AND] || wv[Instr_ANDI]
+                 || wv[Instr_AMOAND_D] || wv[Instr_AMOAND_W];
     wb_alu_mode = t_alu_mode;
 
-    sc_uint<5> t_addsub_mode;
-    t_addsub_mode[4] = wv[Instr_SLT] || wv[Instr_SLTI];
-    t_addsub_mode[3] = wv[Instr_SLTU] || wv[Instr_SLTIU];
-    t_addsub_mode[2] = wv[Instr_SUB] || wv[Instr_SUBW];
-    t_addsub_mode[1] = wv[Instr_ADD] || wv[Instr_ADDI] || wv[Instr_ADDW] || wv[Instr_ADDIW] || wv[Instr_AUIPC];
+    sc_uint<7> t_addsub_mode;
+    t_addsub_mode[6] = wv[Instr_AMOMAX_D] || wv[Instr_AMOMAX_W]
+                    || wv[Instr_AMOMAXU_D] || wv[Instr_AMOMAXU_W];
+    t_addsub_mode[5] = wv[Instr_AMOMIN_D] || wv[Instr_AMOMIN_W]
+                    || wv[Instr_AMOMINU_D] || wv[Instr_AMOMINU_W];
+    t_addsub_mode[4] = wv[Instr_SLT] || wv[Instr_SLTI]
+                    || wv[Instr_SLTU] || wv[Instr_SLTIU];
+    t_addsub_mode[3] = wv[Instr_SUB] || wv[Instr_SUBW];
+    t_addsub_mode[2] = wv[Instr_ADD] || wv[Instr_ADDI]
+                    || wv[Instr_ADDW] || wv[Instr_ADDIW]
+                    || wv[Instr_AUIPC]
+                    || wv[Instr_AMOADD_D] || wv[Instr_AMOADD_W]
+                    || wv[Instr_AMOSWAP_D] || wv[Instr_AMOSWAP_W];
+    t_addsub_mode[1] = wv[Instr_SLTU] || wv[Instr_SLTIU]
+                    || wv[Instr_AMOMINU_D] || wv[Instr_AMOMINU_W]
+                    || wv[Instr_AMOMAXU_D] || wv[Instr_AMOMAXU_W];   // unsigned
     t_addsub_mode[0] = mux.rv32;
     wb_addsub_mode = t_addsub_mode;
 
@@ -1332,6 +1258,9 @@ void InstrExecute::comb() {
     o_ex_unalign_load = 0;//w_exception_load & r.valid;
     o_ex_breakpoint = 0;//wv[Instr_EBREAK].to_bool() & r.valid;
     o_ex_ecall = 0;//wv[Instr_ECALL].to_bool() & r.valid;
+
+    o_radr1 = mux.radr1;
+    o_radr2 = mux.radr2;
 
     o_reg_wena = r.reg_write;
     o_reg_waddr = r.reg_waddr;
@@ -1379,7 +1308,7 @@ void InstrExecute::comb() {
 
     o_memop_valid = r.memop_valid;
     o_memop_sign_ext = r.memop_sign_ext;
-    o_memop_type = r.memop_type;
+    o_memop_type = r.memop_store;
     o_memop_size = r.memop_size;
     o_memop_memaddr = r.memop_memaddr;
     o_memop_wdata = r.memop_wdata;

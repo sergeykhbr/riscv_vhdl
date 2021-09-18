@@ -65,6 +65,8 @@ SC_MODULE(InstrExecute) {
     sc_in<sc_uint<CFG_REG_TAG_WITH>> i_rtag1;
     sc_in<sc_uint<RISCV_ARCH>> i_rdata2;        // Integer/Float register value 2
     sc_in<sc_uint<CFG_REG_TAG_WITH>> i_rtag2;
+    sc_out<sc_uint<6>> o_radr1;
+    sc_out<sc_uint<6>> o_radr2;
     sc_out<bool> o_reg_wena;
     sc_out<sc_uint<6>> o_reg_waddr;             // Address to store result of the instruction (0=do not store)
     sc_out<sc_uint<CFG_REG_TAG_WITH>> o_reg_wtag;
@@ -174,10 +176,6 @@ private:
         sc_uint<6> radr2;
         sc_uint<6> waddr;
         sc_uint<RISCV_ARCH> imm;
-        sc_uint<RISCV_ARCH> rdata1;
-        sc_uint<CFG_REG_TAG_WITH> rtag1;
-        sc_uint<RISCV_ARCH> rdata2;
-        sc_uint<CFG_REG_TAG_WITH> rtag2;
         sc_uint<CFG_CPU_ADDR_BITS> pc;
         sc_uint<32> instr;
         bool memop_store;
@@ -187,7 +185,6 @@ private:
         bool unsigned_op;
         bool rv32;
         bool compressed;
-        bool amo;
         bool f64;
         sc_bv<Instr_Total> ivec;
         sc_bv<ISA_Total> isa_type;
@@ -207,7 +204,9 @@ private:
         sc_signal<sc_uint<6>> hold_waddr;
         sc_signal<sc_uint<RISCV_ARCH>> hold_rdata1;
         sc_signal<sc_uint<RISCV_ARCH>> hold_rdata2;
-        sc_signal<sc_bv<Instr_Total>> hold_ivec;
+        sc_signal<sc_bv<Instr_Total>> ivec;
+        sc_signal<sc_bv<ISA_Total>> isa_type;
+        sc_signal<sc_uint<RISCV_ARCH>> imm;
 
         sc_signal<sc_uint<32>> instr;
         sc_signal<sc_biguint<CFG_REG_TAG_WITH*REGS_TOTAL>> tagcnt_rd;      // N-bits tag per register (expected)
@@ -224,11 +223,17 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> csr_req_data;
 
         sc_signal<bool> memop_valid;
-        sc_signal<bool> memop_type;     // 0=store/1=load
-        bool memop_sign_ext;
-        sc_uint<2> memop_size;
+        sc_signal<bool> memop_store;
+        sc_signal<bool> memop_load;
+        sc_signal<bool> memop_sign_ext;
+        sc_signal<sc_uint<2>> memop_size;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> memop_memaddr;
         sc_signal<sc_uint<RISCV_ARCH>> memop_wdata;
+
+        sc_signal<bool> unsigned_op;
+        sc_signal<bool> rv32;
+        sc_signal<bool> compressed;
+        sc_signal<bool> f64;
 
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> res_npc;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> res_ra;
@@ -255,7 +260,9 @@ private:
         iv.hold_waddr = 0;
         iv.hold_rdata1 = 0;
         iv.hold_rdata2 = 0;
-        iv.hold_ivec = 0;
+        iv.ivec = 0;
+        iv.isa_type = 0;
+        iv.imm = 0;
         iv.instr = 0;
         iv.tagcnt_rd = ~((1 << CFG_REG_TAG_WITH) - 1);
         iv.tagcnt_wr = 0;
@@ -268,11 +275,17 @@ private:
         iv.csr_req_addr = 0;
         iv.csr_req_data = 0;
         iv.memop_valid = 0;
-        iv.memop_type = 0;
+        iv.memop_store = 0;
+        iv.memop_load = 0;
         iv.memop_sign_ext = 0;
         iv.memop_size = 0;
         iv.memop_memaddr = 0;
         iv.memop_wdata = 0;
+
+        iv.unsigned_op = 0;
+        iv.rv32 = 0;
+        iv.compressed = 0;
+        iv.f64 = 0;
 
         iv.res_npc = 0;
         iv.res_ra = 0;
@@ -290,7 +303,7 @@ private:
 
     select_type wb_select;
     sc_signal<sc_uint<3>> wb_alu_mode;
-    sc_signal<sc_uint<5>> wb_addsub_mode;
+    sc_signal<sc_uint<7>> wb_addsub_mode;
     sc_signal<sc_uint<4>> wb_shifter_mode;
 #ifdef UPDT2
 #else

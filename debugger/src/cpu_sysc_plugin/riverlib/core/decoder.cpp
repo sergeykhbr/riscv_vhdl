@@ -124,7 +124,6 @@ void InstrDecoder::comb() {
     bool w_o_valid;
     bool w_error = false;
     bool w_compressed = false;
-    bool w_amo = false;
     sc_uint<32> wb_instr = i_f_instr.read();
     sc_uint<32> wb_instr_out;
     sc_uint<5> wb_opcode1;
@@ -509,7 +508,6 @@ void InstrDecoder::comb() {
         wb_opcode2 = wb_instr(14, 12);
         switch (wb_opcode1) {
         case OPCODE_AMO:
-            w_amo = 1;
             wb_isa_type[ISA_R_type] = 1;
             vb_radr1 = (0, wb_instr.range(19, 15));
             vb_radr2 = (0, wb_instr.range(24, 20));
@@ -1161,7 +1159,12 @@ void InstrDecoder::comb() {
         v.pc = i_f_pc;
         v.instr = i_f_instr.read();
         v.compressed = w_compressed;
-        v.amo = w_amo;
+        v.amo = (wb_dec[Instr_AMOADD_W] | wb_dec[Instr_AMOXOR_W] | wb_dec[Instr_AMOOR_W]
+                | wb_dec[Instr_AMOAND_W] | wb_dec[Instr_AMOMIN_W] | wb_dec[Instr_AMOMAX_W]
+                | wb_dec[Instr_AMOMINU_W] | wb_dec[Instr_AMOMAXU_W] | wb_dec[Instr_AMOSWAP_W]
+                | wb_dec[Instr_AMOADD_D] | wb_dec[Instr_AMOXOR_D] | wb_dec[Instr_AMOOR_D]
+                | wb_dec[Instr_AMOAND_D] | wb_dec[Instr_AMOMIN_D] | wb_dec[Instr_AMOMAX_D]
+                | wb_dec[Instr_AMOMINU_D] | wb_dec[Instr_AMOMAXU_D] | wb_dec[Instr_AMOSWAP_D]).to_bool();
         v.instr_load_fault = i_instr_load_fault.read();
         v.instr_executable = i_instr_executable.read();
         v.progbuf_ena = i_progbuf_ena.read();;

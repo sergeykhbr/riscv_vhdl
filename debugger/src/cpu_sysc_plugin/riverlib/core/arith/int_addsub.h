@@ -26,7 +26,7 @@ namespace debugger {
 SC_MODULE(IntAddSub) {
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;
-    sc_in<sc_uint<5>> i_mode;               // [0]0=rv64;1=rv32[1]Add[2]Sub[3]lessu[4]lesss 
+    sc_in<sc_uint<7>> i_mode;               // [0]0=rv64;1=rv32;[1]0=sign;1=unsign[2]Add[3]Sub[4]less[5]min[6]max
     sc_in<sc_uint<RISCV_ARCH>> i_a1;        // Operand 1
     sc_in<sc_uint<RISCV_ARCH>> i_a2;        // Operand 2
     sc_out<sc_uint<RISCV_ARCH>> o_res;      // Result
