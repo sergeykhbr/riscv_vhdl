@@ -103,7 +103,7 @@ SC_MODULE(InstrExecute) {
 
     sc_out<bool> o_memop_valid;                 // Request to memory is valid
     sc_out<bool> o_memop_sign_ext;              // Load data with sign extending
-    sc_out<bool> o_memop_type;                  // 1=store/0=Load data instruction
+    sc_out<sc_uint<MemopType_Total>> o_memop_type;  // [0]: 1=store/0=Load data
     sc_out<sc_uint<2>> o_memop_size;            // 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_memop_memaddr;// Memory access address
     sc_out<sc_uint<RISCV_ARCH>> o_memop_wdata;
@@ -178,6 +178,7 @@ private:
         sc_uint<RISCV_ARCH> imm;
         sc_uint<CFG_CPU_ADDR_BITS> pc;
         sc_uint<32> instr;
+        sc_uint<MemopType_Total> memop_type;
         bool memop_store;
         bool memop_load;
         bool memop_sign_ext;
@@ -223,6 +224,7 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> csr_req_data;
 
         sc_signal<bool> memop_valid;
+        sc_signal<sc_uint<MemopType_Total>> memop_type;
         sc_signal<bool> memop_store;
         sc_signal<bool> memop_load;
         sc_signal<bool> memop_sign_ext;
@@ -275,6 +277,7 @@ private:
         iv.csr_req_addr = 0;
         iv.csr_req_data = 0;
         iv.memop_valid = 0;
+        iv.memop_type = 0;
         iv.memop_store = 0;
         iv.memop_load = 0;
         iv.memop_sign_ext = 0;

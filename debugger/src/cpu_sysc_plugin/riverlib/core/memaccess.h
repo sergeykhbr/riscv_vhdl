@@ -36,7 +36,7 @@ SC_MODULE(MemAccess) {
     sc_in<bool> i_memop_valid;                      // Memory request is valid
     sc_in<sc_uint<RISCV_ARCH>> i_memop_wdata;       // Register value to be written
     sc_in<bool> i_memop_sign_ext;                   // Load data with sign extending (if less than 8 Bytes)
-    sc_in<bool> i_memop_type;                       // 1=store;0=Load data from memory and write to i_res_addr
+    sc_in<sc_uint<MemopType_Total>> i_memop_type;   // [0] 1=store;0=Load data from memory and write to i_res_addr
     sc_in<sc_uint<2>> i_memop_size;                 // Encoded memory transaction size in bytes: 0=1B; 1=2B; 2=4B; 3=8B
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_memop_addr;    // Memory access address
     sc_out<bool> o_memop_ready;                     // Ready to accept memop request
@@ -50,8 +50,8 @@ SC_MODULE(MemAccess) {
     // Memory interface:
     sc_in<bool> i_mem_req_ready;                    // Data cache is ready to accept read/write request
     sc_out<bool> o_mem_valid;                       // Memory request is valid
-    sc_out<bool> o_mem_write;                       // Memory write request
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mem_addr;     // Data path requested address
+    sc_out<sc_uint<MemopType_Total>> o_mem_type;    // Memory operation type
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mem_addr;  // Data path requested address
     sc_out<sc_uint<64>> o_mem_wdata;                // Data path requested data (write transaction)
     sc_out<sc_uint<8>> o_mem_wstrb;                 // 8-bytes aligned strobs
     sc_out<sc_uint<2>> o_mem_size;                  // 1,2,4 or 8-bytes operation for uncached access
@@ -78,7 +78,7 @@ private:
 
     struct RegistersType {
         sc_signal<sc_uint<2>> state;
-        sc_signal<bool> memop_w;
+        sc_signal<sc_uint<MemopType_Total>> memop_type;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> memop_addr;
         sc_signal<sc_uint<64>> memop_wdata;
         sc_signal<sc_uint<8>> memop_wstrb;
@@ -97,7 +97,7 @@ private:
 
     void R_RESET(RegistersType &iv) {
         iv.state = State_Idle;
-        iv.memop_w = 0;
+        iv.memop_type = 0;
         iv.memop_addr = 0;
         iv.memop_wdata = 0;
         iv.memop_wstrb = 0;
@@ -122,7 +122,7 @@ private:
                                  + CFG_CPU_ADDR_BITS
                                  + 2
                                  + 1
-                                 + 1
+                                 + MemopType_Total
                                  + CFG_CPU_ADDR_BITS;
 
     Queue<CFG_MEMACCESS_QUEUE_DEPTH, QUEUE_WIDTH> *queue0;

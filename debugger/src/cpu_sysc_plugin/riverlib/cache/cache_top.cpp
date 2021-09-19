@@ -32,7 +32,7 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset, bool coherence_ena) :
     o_resp_ctrl_executable("o_resp_ctrl_executable"),
     i_resp_ctrl_ready("i_resp_ctrl_ready"),
     i_req_data_valid("i_req_data_valid"),
-    i_req_data_write("i_req_data_write"),
+    i_req_data_type("i_req_data_type"),
     i_req_data_addr("i_req_data_addr"),
     i_req_data_wdata("i_req_data_wdata"),
     i_req_data_wstrb("i_req_data_wstrb"),
@@ -136,7 +136,7 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset, bool coherence_ena) :
     d0->i_clk(i_clk);
     d0->i_nrst(i_nrst);
     d0->i_req_valid(i_req_data_valid);
-    d0->i_req_write(i_req_data_write);
+    d0->i_req_type(i_req_data_type);
     d0->i_req_addr(i_req_data_addr);
     d0->i_req_wdata(i_req_data_wdata);
     d0->i_req_wstrb(i_req_data_wstrb);
@@ -210,7 +210,7 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset, bool coherence_ena) :
 void CacheTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
         sc_trace(o_vcd, i_req_data_valid, i_req_data_valid.name());
-        sc_trace(o_vcd, i_req_data_write, i_req_data_write.name());
+        sc_trace(o_vcd, i_req_data_type, i_req_data_type.name());
         sc_trace(o_vcd, i_req_data_addr, i_req_data_addr.name());
         sc_trace(o_vcd, i_req_data_wdata, i_req_data_wdata.name());
         sc_trace(o_vcd, i_req_data_wstrb, i_req_data_wstrb.name());

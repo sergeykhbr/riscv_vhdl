@@ -74,7 +74,8 @@ static const int DCACHE_SIZE_BYTES =
 static const int TAG_FL_VALID       = 0;    // always 0
 static const int DTAG_FL_DIRTY      = 1;
 static const int DTAG_FL_SHARED     = 2;
-static const int DTAG_FL_TOTAL      = 3;
+static const int DTAG_FL_RESERVED   = 3;
+static const int DTAG_FL_TOTAL      = 4;
 
 
 /**
@@ -328,6 +329,12 @@ static const int CsrReq_PcCmd          = 1 << CsrReq_PcBit;
 
 static const int CsrReq_PcCmd_UnsupInstruction = 0x001;
 static const int CsrReq_PcCmd_EnvCall          = 0x002;
+
+static const int MemopType_Store     = 0;    // 0=load; 1=store
+static const int MemopType_Locked    = 1;    // AMO instructions
+static const int MemopType_Reserve   = 2;    // LS load with reserve
+static const int MemopType_Release   = 3;    // SC store with release
+static const int MemopType_Total     = 4;
 
 }  // namespace debugger
 

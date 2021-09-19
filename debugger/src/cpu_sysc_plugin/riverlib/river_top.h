@@ -90,7 +90,7 @@ SC_MODULE(RiverTop) {
     // Data path:
     sc_signal<bool> w_req_data_ready;
     sc_signal<bool> w_req_data_valid;
-    sc_signal<bool> w_req_data_write;
+    sc_signal<sc_uint<MemopType_Total>> wb_req_data_type;
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_req_data_addr;
     sc_signal<sc_uint<64>> wb_req_data_wdata;
     sc_signal<sc_uint<8>> wb_req_data_wstrb;

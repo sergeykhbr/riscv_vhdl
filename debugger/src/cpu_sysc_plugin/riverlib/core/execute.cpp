@@ -171,6 +171,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << r.csr_req_addr;
     sensitive << r.csr_req_data;
     sensitive << r.memop_valid;
+    sensitive << r.memop_type;
     sensitive << r.memop_store;
     sensitive << r.memop_load;
     sensitive << r.memop_sign_ext;
@@ -513,6 +514,12 @@ void InstrExecute::comb() {
         mux.imm = i_d_imm;
         mux.pc = i_d_pc;
         mux.instr = i_d_instr;
+        mux.memop_type[MemopType_Store] = i_memop_store;
+        mux.memop_type[MemopType_Locked] = i_amo;
+        mux.memop_type[MemopType_Reserve] =
+                (i_ivec.read()[Instr_LR_D] | i_ivec.read()[Instr_LR_W]).to_bool();
+        mux.memop_type[MemopType_Release] =
+                (i_ivec.read()[Instr_SC_D] | i_ivec.read()[Instr_SC_W]).to_bool();
         mux.memop_store = i_memop_store;
         mux.memop_load = i_memop_load;
         mux.memop_sign_ext = i_memop_sign_ext;
@@ -533,6 +540,7 @@ void InstrExecute::comb() {
         mux.imm = r.imm;
         mux.pc = r.pc;
         mux.instr = r.instr;
+        mux.memop_type = r.memop_type;
         mux.memop_store = r.memop_store;
         mux.memop_load = r.memop_load;
         mux.memop_sign_ext = r.memop_sign_ext;
@@ -586,7 +594,7 @@ void InstrExecute::comb() {
                           + vb_rdata2(CFG_CPU_ADDR_BITS-1, 0);
     vb_memop_memaddr_store = vb_rdata1(CFG_CPU_ADDR_BITS-1, 0)
                            + vb_off(CFG_CPU_ADDR_BITS-1, 0);
-    if (mux.memop_load) {
+    if (mux.memop_type[MemopType_Store] == 0) {
         vb_memop_memaddr = vb_memop_memaddr_load;
     } else {
         vb_memop_memaddr = vb_memop_memaddr_store;
@@ -1020,14 +1028,14 @@ void InstrExecute::comb() {
             break;
         case AmoState_Modify:
             if (w_test_hazard1 == 0 && w_test_hazard2 == 0) {
-                // Need to wait 1 clock output on addsub/alu output
+                // Need to wait 1 clock to latch addsub/alu output
                 v.amostate = AmoState_Write;
+                mux.memop_type[MemopType_Store] = 1;    // no need to do this in rtl, just assign to v.memop_type[0]
+                v.memop_type = mux.memop_type; 
             }
             break;
         case AmoState_Write:
             v_memop_ena = 1;
-            mux.memop_load = 0;
-            mux.memop_store = 1;
             vb_memop_memaddr = r.memop_memaddr;
             vb_memop_wdata = vb_res;
             if (i_memop_ready.read()) {
@@ -1106,7 +1114,7 @@ void InstrExecute::comb() {
         v.compressed = i_compressed;
         v.f64 = i_f64;
         v.instr = i_d_instr;
-        v.flushd = v_fence_d;
+        v.flushd = v_fence_i || v_fence_d;
         v.flushi = v_fence_i;
         v.call = v_call;
         v.ret = v_ret;
@@ -1127,13 +1135,14 @@ void InstrExecute::comb() {
     }
     if (v_memop_ena) {
         v.memop_valid = 1;
+        v.memop_type = mux.memop_type;
         v.memop_store = mux.memop_store;
         v.memop_load = mux.memop_load;
         v.memop_sign_ext = mux.memop_sign_ext;
         v.memop_size = mux.memop_size;
         v.memop_memaddr = vb_memop_memaddr;
         v.memop_wdata = vb_memop_wdata;
-        if (mux.memop_load == 1) {
+        if (mux.memop_type[MemopType_Store] == 0 || mux.memop_type[MemopType_Release]) {
             v.tagcnt_wr = vb_tagcnt_wr;
             v.tagcnt_rd = vb_tagcnt_rd;
             v.reg_waddr = vb_reg_waddr;
@@ -1308,7 +1317,7 @@ void InstrExecute::comb() {
 
     o_memop_valid = r.memop_valid;
     o_memop_sign_ext = r.memop_sign_ext;
-    o_memop_type = r.memop_store;
+    o_memop_type = r.memop_type;
     o_memop_size = r.memop_size;
     o_memop_memaddr = r.memop_memaddr;
     o_memop_wdata = r.memop_wdata;

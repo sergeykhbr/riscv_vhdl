@@ -41,8 +41,8 @@ SC_MODULE(CacheTop) {
     sc_in<bool> i_resp_ctrl_ready;                      // CPU Core is ready to accept ICache response
     // Data path:
     sc_in<bool> i_req_data_valid;                       // Data path request from CPU Core is valid
-    sc_in<bool> i_req_data_write;                       // Data write memopy operation flag
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_req_data_addr;     // Memory operation address
+    sc_in<sc_uint<MemopType_Total>> i_req_data_type;    // Data write memopy operation flag
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_req_data_addr;  // Memory operation address
     sc_in<sc_uint<64>> i_req_data_wdata;                // Memory operation write value
     sc_in<sc_uint<8>> i_req_data_wstrb;                 // 8-bytes aligned strob
     sc_in<sc_uint<2>> i_req_data_size;

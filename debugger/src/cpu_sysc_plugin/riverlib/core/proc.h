@@ -50,8 +50,8 @@ SC_MODULE(Processor) {
     // Data path:
     sc_in<bool> i_req_data_ready;                       // DCache is ready to accept request
     sc_out<bool> o_req_data_valid;                      // Request to DCache is valid
-    sc_out<bool> o_req_data_write;                      // Read/Write transaction
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_req_data_addr;    // Requesting address to DCache
+    sc_out<sc_uint<MemopType_Total>> o_req_data_type;   // Read/Write transaction plus additional flags
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_req_data_addr; // Requesting address to DCache
     sc_out<sc_uint<64>> o_req_data_wdata;               // Writing value
     sc_out<sc_uint<8>> o_req_data_wstrb;                // 8-bytes aligned strobs
     sc_out<sc_uint<2>> o_req_data_size;                                     // memory operation 1,2,4 or 8 bytes
@@ -172,7 +172,7 @@ private:
 
         sc_signal<bool> memop_valid;
         sc_signal<bool> memop_sign_ext;
-        sc_signal<bool> memop_type;
+        sc_signal<sc_uint<MemopType_Total>> memop_type;
         sc_signal<sc_uint<2>> memop_size;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> memop_addr;
         sc_signal<sc_uint<RISCV_ARCH>> memop_wdata;

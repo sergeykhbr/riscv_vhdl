@@ -30,7 +30,7 @@ SC_MODULE(DCacheLru) {
     sc_in<bool> i_nrst;
     // Control path:
     sc_in<bool> i_req_valid;
-    sc_in<bool> i_req_write;
+    sc_in<sc_uint<MemopType_Total>> i_req_type;
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_req_addr;
     sc_in<sc_uint<64>> i_req_wdata;
     sc_in<sc_uint<8>> i_req_wstrb;
@@ -122,7 +122,7 @@ SC_MODULE(DCacheLru) {
 
 
     struct RegistersType {
-        sc_signal<bool> req_write;
+        sc_signal<sc_uint<MemopType_Total>> req_type;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_addr;
         sc_signal<sc_uint<64>> req_wdata;
         sc_signal<sc_uint<8>> req_wstrb;
@@ -154,7 +154,7 @@ SC_MODULE(DCacheLru) {
     } v, r;
 
     void R_RESET(RegistersType &iv) {
-        iv.req_write = 0;
+        iv.req_type = 0;
         iv.req_addr = 0;
         iv.req_wdata = 0;
         iv.req_wstrb = 0;

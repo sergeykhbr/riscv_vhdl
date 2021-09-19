@@ -23,7 +23,7 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset, bool coherence_ena)
     i_clk("i_clk"),
     i_nrst("i_nrst"),
     i_req_valid("i_req_valid"),
-    i_req_write("i_req_write"),
+    i_req_type("i_req_type"),
     i_req_addr("i_req_addr"),
     i_req_wdata("i_req_wdata"),
     i_req_wstrb("i_req_wstrb"),
@@ -93,7 +93,7 @@ DCacheLru::DCacheLru(sc_module_name name_, bool async_reset, bool coherence_ena)
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_req_valid;
-    sensitive << i_req_write;
+    sensitive << i_req_type;
     sensitive << i_req_addr;
     sensitive << i_req_wdata;
     sensitive << i_req_wstrb;
@@ -154,7 +154,7 @@ void DCacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
         sc_trace(o_vcd, i_nrst, i_nrst.name());
         sc_trace(o_vcd, i_req_valid, i_req_valid.name());
-        sc_trace(o_vcd, i_req_write, i_req_write.name());
+        sc_trace(o_vcd, i_req_type, i_req_type.name());
         sc_trace(o_vcd, i_req_addr, i_req_addr.name());
         sc_trace(o_vcd, i_req_wdata, i_req_wdata.name());
         sc_trace(o_vcd, i_req_wstrb, i_req_wstrb.name());
@@ -187,6 +187,7 @@ void DCacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.state, pn + ".r_state");
         sc_trace(o_vcd, r.req_addr, pn + ".r_req_addr");
         sc_trace(o_vcd, r.req_wstrb, pn + ".r_req_wstrb");
+        sc_trace(o_vcd, r.req_type, pn + ".r_req_type");
         sc_trace(o_vcd, line_addr_i, pn + ".linei_addr_i");
         sc_trace(o_vcd, line_wstrb_i, pn + ".linei_wstrb_i");
         sc_trace(o_vcd, line_raddr_o, pn + ".line_raddr_o");
@@ -334,26 +335,47 @@ void DCacheLru::comb() {
             // Hit
             v_resp_valid = 1;
             if (i_resp_ready.read() == 1) {
-                if (r.req_write.read() == 1) {
+                if (r.req_type.read()[MemopType_Store] == 1) {
                     // Modify tagged mem output with request and write back
                     v_line_cs_write = 1;
                     v_line_wflags[TAG_FL_VALID] = 1;
                     v_line_wflags[DTAG_FL_DIRTY] = 1;
-                    v.req_write = 0;
+                    v_line_wflags[DTAG_FL_RESERVED] = 0;
+                    sc_uint<MemopType_Total> t_req_type = r.req_type;
+                    t_req_type[MemopType_Store] = 0;
+                    v.req_type = t_req_type;        // clear MemopType_Store bit
                     vb_line_wstrb = vb_line_rdata_o_wstrb;
                     vb_line_wdata = vb_line_rdata_o_modified;
-                    if (coherence_ena_ && line_rflags_o.read()[DTAG_FL_SHARED] == 1) {
-                        // Make line: 'shared' -> 'unique' using write request
-                        v.write_share = 1;
-                        v.state = State_TranslateAddress;
-                    } else {
-                        if (v_req_same_line == 1) {
-                            // Write address is the same as the next requested, so use it to write
-                            // value and update state machine
-                            v_ready_next = 1;
-                        }
+                    if (r.req_type.read()[MemopType_Release] == 1
+                        && line_rflags_o.read()[DTAG_FL_RESERVED] == 0) {
+                        // ignore writing if cacheline wasn't reserved before:
+                        v_line_cs_write = 0;
+                        vb_line_wstrb = 0;
+                        vb_resp_data = 1;       // return error
                         v.state = State_Idle;
+                    } else {
+                        if (coherence_ena_ && line_rflags_o.read()[DTAG_FL_SHARED] == 1) {
+                            // Make line: 'shared' -> 'unique' using write request
+                            v.write_share = 1;
+                            v.state = State_TranslateAddress;
+                        } else {
+                            if (v_req_same_line == 1) {
+                                // Write address is the same as the next requested, so use it to write
+                                // value and update state machine
+                                v_ready_next = 1;
+                            }
+                            v.state = State_Idle;
+                        }
                     }
+                } else if (r.req_type.read()[MemopType_Store] == 0
+                    && r.req_type.read()[MemopType_Reserve] == 1) {
+                    // Load with reserve
+                    v_line_cs_write = 1;
+                    v_line_wflags = line_rflags_o.read();
+                    v_line_wflags[DTAG_FL_RESERVED] = 1;
+                    vb_line_wdata = vb_cached_data;
+                    vb_line_wstrb = ~0;      // flags will be modified only if wstrb != 0
+                    v.state = State_Idle;
                 } else {
                     v_ready_next = 1;
                     v.state = State_Idle;
@@ -361,17 +383,23 @@ void DCacheLru::comb() {
             }
         } else {
             // Miss
-            v.state = State_TranslateAddress;
+            if (r.req_type.read()[MemopType_Store] == 1
+                    && r.req_type.read()[MemopType_Release] == 1) {
+                vb_resp_data = 1;       // return error. Cannot store into unreserved cache line
+                v.state = State_Idle;
+            } else {
+                v.state = State_TranslateAddress;
+            }
         }
         break;
     case State_TranslateAddress:
-        if (r.req_write.read() == 1
+        if (r.req_type.read()[MemopType_Store] == 1
             && i_mpu_flags.read()[CFG_MPU_FL_WR] == 0) {
             v.mpu_er_store = 1;
             t_cache_line_i = 0;
             v.cache_line_i = ~t_cache_line_i;
             v.state = State_CheckResp;
-        } else if (r.req_write.read() == 0
+        } else if (r.req_type.read()[MemopType_Store] == 0
                     && i_mpu_flags.read()[CFG_MPU_FL_RD] == 0) {
             v.mpu_er_load = 1;
             t_cache_line_i = 0;
@@ -397,7 +425,7 @@ void DCacheLru::comb() {
                     // 2. Read -> Modify -> Save cache
                     v.mem_addr = r.req_addr.read()(CFG_CPU_ADDR_BITS-1,
                                 CFG_DLOG2_BYTES_PER_LINE) << CFG_DLOG2_BYTES_PER_LINE;
-                    if (r.req_write.read() == 1) {
+                    if (r.req_type.read()[MemopType_Store] == 1) {
                         v.req_mem_type = ReadMakeUnique();
                     } else {
                         v.req_mem_type = ReadShared();
@@ -411,7 +439,7 @@ void DCacheLru::comb() {
                 v.mem_addr = r.req_addr.read();
                 v.mem_wstrb = (0, r.req_wstrb.read());
                 v.req_mem_size = i_req_size.read();
-                if (r.req_write.read() == 1) {
+                if (r.req_type.read()[MemopType_Store] == 1) {
                     v.req_mem_type = WriteNoSnoop();
                 } else {
                     v.req_mem_type = ReadNoSnoop();
@@ -430,7 +458,7 @@ void DCacheLru::comb() {
             if (r.write_flush.read() == 1 ||
                 r.write_first.read() == 1 ||
                 r.write_share.read() == 1 ||
-                (r.req_write.read() == 1 &&
+                (r.req_type.read()[MemopType_Store] == 1 &&
                     r.req_mem_type.read()[REQ_MEM_TYPE_CACHED] == 0)) {
                 v.state = State_WriteBus;
             } else {
@@ -465,8 +493,8 @@ void DCacheLru::comb() {
             // uncached read only (write goes to WriteBus) or cached load-modify fault
             v_resp_valid = 1;
             vb_resp_data = vb_uncached_data;
-            v_resp_er_store_fault = r.load_fault && r.req_write;
-            v_resp_er_load_fault = r.load_fault && !r.req_write;
+            v_resp_er_store_fault = r.load_fault && r.req_type.read()[MemopType_Store];
+            v_resp_er_load_fault = r.load_fault && !r.req_type.read()[MemopType_Store];
             if (i_resp_ready.read() == 1) {
                 v.state = State_Idle;
             }
@@ -475,12 +503,16 @@ void DCacheLru::comb() {
             v_line_cs_write = 1;
             v_line_wflags[TAG_FL_VALID] = 1;
             v_line_wflags[DTAG_FL_SHARED] = 1;
+            v_line_wflags[DTAG_FL_RESERVED] = r.req_type.read()[MemopType_Reserve];
             vb_line_wstrb = ~0ul;  // write full line
-            if (r.req_write.read() == 1) {
+            if (r.req_type.read()[MemopType_Store] == 1) {
                 // Modify tagged mem output with request before write
-                v.req_write = 0;
+                sc_uint<MemopType_Total> t_req_type = r.req_type;
+                t_req_type[MemopType_Store] = 0;
+                v.req_type = t_req_type;        // clear MemopType_Store bit
                 v_line_wflags[DTAG_FL_DIRTY] = 1;
                 v_line_wflags[DTAG_FL_SHARED] = 0;
+                v_line_wflags[DTAG_FL_RESERVED] = 0;
                 vb_line_wdata = vb_cache_line_i_modified;
                 v_resp_valid = 1;
                 v.state = State_Idle;
@@ -504,7 +536,7 @@ void DCacheLru::comb() {
                             << CFG_DLOG2_BYTES_PER_LINE;
                 v.req_mem_valid = 1;
                 v.write_first = 0;
-                if (r.req_write.read() == 1) {
+                if (r.req_type.read()[MemopType_Store] == 1) {
                     // read request: read-modify-save cache line
                     v.req_mem_type = ReadMakeUnique();
                 } else {
@@ -596,6 +628,7 @@ void DCacheLru::comb() {
             v_line_wflags = line_rflags_o;
             v_line_wflags[DTAG_FL_DIRTY] = 0;
             v_line_wflags[DTAG_FL_SHARED] = 1;
+            v_line_wflags[DTAG_FL_RESERVED] = 0;
         }
         // restore state
         v.snoop_restore_wait_resp = 0;
@@ -644,7 +677,7 @@ void DCacheLru::comb() {
                 v.req_wstrb = i_req_wstrb.read();
                 v.req_size = (0, i_req_size.read());
                 v.req_wdata = i_req_wdata.read();
-                v.req_write = i_req_write.read();
+                v.req_type = i_req_type.read();
                 v.state = State_CheckHit;
             }
         }

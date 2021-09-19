@@ -572,6 +572,7 @@ void Tracer::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_dbg_executed_cnt, i_dbg_executed_cnt.name());
         sc_trace(o_vcd, i_e_valid, i_e_valid.name());
         sc_trace(o_vcd, i_m_wena, i_m_wena.name());
+        sc_trace(o_vcd, i_reg_ignored, i_reg_ignored.name());
 
         std::string pn(name());
         sc_trace(o_vcd, tr_wcnt_, pn + ".tr_wcnt_");
@@ -583,31 +584,6 @@ void Tracer::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 void Tracer::registers() {
     TraceStepType *p_e_wr = &trace_tbl_[tr_wcnt_];
 
-    if (i_e_memop_valid.read() == 1 && i_m_memop_ready.read() == 1) {
-        MemopActionType *pm = &p_e_wr->memaction[p_e_wr->memactioncnt++];
-        pm->type = i_e_memop_type.read();
-        pm->memaddr = i_e_memop_addr.read();
-        pm->data = i_e_memop_wdata.read();
-        pm->regaddr = i_e_waddr.read();
-        pm->complete = i_e_memop_type.read();   // 0=load(need wait result);1=store
-    }
-
-    if (i_e_wena.read() == 1) {
-        // Direct register writting if it is not a Load operation
-        RegActionType *pr = &p_e_wr->regaction[p_e_wr->regactioncnt++];
-        pr->waddr = i_e_waddr.read();
-        pr->wres = i_e_wdata.read();
-    } else if (i_m_wena.read()) {
-        // Update current rd memory action (memory operations are strictly ordered)
-        for (int i = 0; i < trace_tbl_[tr_rcnt_].memactioncnt; i++) {
-            if (!trace_tbl_[tr_rcnt_].memaction[i].complete) {
-                trace_tbl_[tr_rcnt_].memaction[i].complete = 1;
-                trace_tbl_[tr_rcnt_].memaction[i].ignored = i_reg_ignored.read();;
-                trace_tbl_[tr_rcnt_].memaction[i].data = i_m_wdata.read();
-            }
-        }
-    }
-   
     if (i_e_valid.read() == 1) {
         p_e_wr->exec_cnt = i_dbg_executed_cnt.read() + 1;
         p_e_wr->pc = i_e_pc.read();
@@ -618,6 +594,51 @@ void Tracer::registers() {
         memset(&trace_tbl_[tr_wcnt_], 0, sizeof(trace_tbl_[tr_wcnt_]));
     }
 
+    if (i_e_memop_valid.read() == 1 && i_m_memop_ready.read() == 1) {
+        MemopActionType *pm = &p_e_wr->memaction[p_e_wr->memactioncnt++];
+        pm->store = i_e_memop_type.read()[MemopType_Store];
+        pm->memaddr = i_e_memop_addr.read();
+        pm->data = i_e_memop_wdata.read();
+        pm->regaddr = i_e_waddr.read();
+        if (i_e_waddr.read().or_reduce() == 0 ||
+            (i_e_memop_type.read()[MemopType_Store] == 1 && i_e_memop_type.read()[MemopType_Release] == 0)) {
+            pm->complete = 1;
+        }
+        pm->sc_release = i_e_memop_type.read()[MemopType_Release];
+    }
+
+    if (i_e_wena.read() == 1) {
+        // Direct register writting if it is not a Load operation
+        RegActionType *pr = &p_e_wr->regaction[p_e_wr->regactioncnt++];
+        pr->waddr = i_e_waddr.read();
+        pr->wres = i_e_wdata.read();
+    } else if (i_m_wena.read()) {
+        // Update current rd memory action (memory operations are strictly ordered)
+        for (int i = 0; i < trace_tbl_[tr_rcnt_].memactioncnt; i++) {
+            TraceStepType *p = &trace_tbl_[tr_rcnt_];
+            MemopActionType *pm = &p->memaction[i];
+            if (!pm->complete) {
+                pm->complete = 1;
+                pm->ignored = i_reg_ignored.read();
+                if (pm->sc_release) {
+                    if (i_m_wdata.read() == 1) {
+                        pm->ignored = 1;
+                    }
+                    // do not re-write stored value by returning error status
+                } else {
+                    pm->data = i_m_wdata.read();
+                }
+
+                if (!i_reg_ignored.read()) {
+                    RegActionType *pr = &p->regaction[p->regactioncnt++];
+                    pr->waddr = i_m_waddr.read();
+                    pr->wres = i_m_wdata.read();
+                }
+                break;
+            }
+        }
+    }
+   
 
     // check instruction data completness
     bool entry_valid;
@@ -654,19 +675,19 @@ void Tracer::trace_output(TraceStepType *tr) {
         if (pm->ignored) {
             continue;
         }
-        if (pm->type == 0) {
+        if (pm->store == 0) {
             tsz = RISCV_sprintf(msg, sizeof(msg),
                 "%20s [%08" RV_PRI64 "x] => %016" RV_PRI64 "x\n",
                     "",
                     pm->memaddr,
                     pm->data);
             fwrite(msg, 1, tsz, fl_);
-            tsz = RISCV_sprintf(msg, sizeof(msg),
+            /*tsz = RISCV_sprintf(msg, sizeof(msg),
                 "%20s %10s <= %016" RV_PRI64 "x\n",
                     "",
                     rname[pm->regaddr],
                     pm->data);
-            fwrite(msg, 1, tsz, fl_);
+            fwrite(msg, 1, tsz, fl_);*/
         } else {
             tsz = RISCV_sprintf(msg, sizeof(msg),
                 "%20s [%08" RV_PRI64 "x] <= %016" RV_PRI64 "x\n",
