@@ -40,7 +40,6 @@ Tracer::Tracer(sc_module_name name_, bool async_reset, const char *trace_file)
     i_e_valid("i_e_valid"),
     i_e_pc("i_e_pc"),
     i_e_instr("i_e_instr"),
-    i_e_multi_ready("i_e_multi_ready"),
     i_e_wena("i_e_wena"),
     i_e_waddr("i_e_waddr"),
     i_e_wdata("i_e_wdata"),
@@ -65,7 +64,6 @@ Tracer::Tracer(sc_module_name name_, bool async_reset, const char *trace_file)
     sensitive << i_e_valid;
     sensitive << i_e_pc;
     sensitive << i_e_instr;
-    sensitive << i_e_multi_ready;
     sensitive << i_e_wena;
     sensitive << i_e_waddr;
     sensitive << i_e_wdata;

@@ -35,35 +35,17 @@ SC_MODULE(CsrRegs) {
     sc_out<bool> o_resp_valid;                  // CSR module Response is valid
     sc_in<bool> i_resp_ready;                   // Executor is ready to accept response
     sc_out<sc_uint<RISCV_ARCH>> o_resp_data;    // Responded CSR data
-    sc_in<bool> i_trap_ready;               // trap branch request was accepted
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_pc;
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_npc;
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_ex_npc;
+    //sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_ex_npc;
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_ex_data_addr;  // Data path: address must be equal to the latest request address
     sc_in<bool> i_ex_data_load_fault;       // Data path: Bus response with SLVERR or DECERR on read
     sc_in<bool> i_ex_data_store_fault;      // Data path: Bus response with SLVERR or DECERR on write
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_ex_data_store_fault_addr;  // Write data miss access
-    sc_in<bool> i_ex_instr_load_fault;
-    sc_in<bool> i_ex_instr_not_executable;
-    sc_in<bool> i_ex_illegal_instr;
-    sc_in<bool> i_ex_unalign_store;
-    sc_in<bool> i_ex_unalign_load;
-    sc_in<bool> i_ex_mpu_store;
-    sc_in<bool> i_ex_mpu_load;
-    sc_in<bool> i_ex_breakpoint;
-    sc_in<bool> i_ex_ecall;
-    sc_in<bool> i_ex_fpu_invalidop;         // FPU Exception: invalid operation
-    sc_in<bool> i_ex_fpu_divbyzero;         // FPU Exception: divide by zero
-    sc_in<bool> i_ex_fpu_overflow;          // FPU Exception: overflow
-    sc_in<bool> i_ex_fpu_underflow;         // FPU Exception: underflow
-    sc_in<bool> i_ex_fpu_inexact;           // FPU Exception: inexact
-    sc_in<bool> i_fpu_valid;                // FPU output is valid
     sc_in<bool> i_irq_external;
-    sc_in<bool> i_e_next_ready;
+    //sc_in<bool> i_e_next_ready;
     sc_in<bool> i_e_valid;
     sc_out<sc_uint<64>> o_executed_cnt;     // Number of executed instructions
-    sc_out<bool> o_trap_valid;              // Trap pulse
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_trap_pc;
     sc_out<bool> o_dbg_pc_write;            // Modify pc via debug interface
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_dbg_pc;    // Writing value into pc register
 

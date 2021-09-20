@@ -82,6 +82,9 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     sensitive << w.e.reg_waddr;
     sensitive << w.e.reg_wtag;
     sensitive << w.e.reg_wdata;
+    sensitive << w.e.flushi;
+    sensitive << w.e.flushi_addr;
+    sensitive << w.e.halted;
     sensitive << w.w.wena;
     sensitive << w.w.waddr;
     sensitive << w.w.wdata;
@@ -189,6 +192,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->i_unsup_exception(w.d.exception);
     exec0->i_instr_load_fault(w.d.instr_load_fault);
     exec0->i_instr_executable(w.d.instr_executable);
+    exec0->i_halt(csr.halt);
     exec0->i_dport_npc_write(csr.dbg_pc_write);
     exec0->i_dport_npc(csr.dbg_pc);
     exec0->i_rdata1(ireg.rdata1);
@@ -210,22 +214,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->i_csr_resp_valid(iccsr_m0_resp_valid);
     exec0->o_csr_resp_ready(w.e.csr_resp_ready);
     exec0->i_csr_resp_data(iccsr_m0_resp_data);
-    exec0->i_trap_valid(csr.trap_valid);
-    exec0->i_trap_pc(csr.trap_pc);
-    exec0->o_ex_npc(w.e.ex_npc);
-    exec0->o_ex_instr_load_fault(w.e.ex_instr_load_fault);
-    exec0->o_ex_instr_not_executable(w.e.ex_instr_not_executable);
-    exec0->o_ex_illegal_instr(w.e.ex_illegal_instr);
-    exec0->o_ex_unalign_store(w.e.ex_unalign_store);
-    exec0->o_ex_unalign_load(w.e.ex_unalign_load);
-    exec0->o_ex_breakpoint(w.e.ex_breakpoint);
-    exec0->o_ex_ecall(w.e.ex_ecall);
-    exec0->o_ex_fpu_invalidop(w.e.ex_fpu_invalidop);
-    exec0->o_ex_fpu_divbyzero(w.e.ex_fpu_divbyzero);
-    exec0->o_ex_fpu_overflow(w.e.ex_fpu_overflow);
-    exec0->o_ex_fpu_underflow(w.e.ex_fpu_underflow);
-    exec0->o_ex_fpu_inexact(w.e.ex_fpu_inexact);
-    exec0->o_fpu_valid(w.e.fpu_valid);
     exec0->o_memop_valid(w.e.memop_valid);
     exec0->o_memop_sign_ext(w.e.memop_sign_ext);
     exec0->o_memop_type(w.e.memop_type);
@@ -233,7 +221,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->o_memop_memaddr(w.e.memop_addr);
     exec0->o_memop_wdata(w.e.memop_wdata);
     exec0->i_memop_ready(w.m.memop_ready);
-    exec0->o_trap_ready(w.e.trap_ready);
     exec0->o_valid(w.e.valid);
     exec0->o_pc(w.e.pc);
     exec0->o_npc(w.e.npc);
@@ -241,9 +228,10 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->i_flushd_end(i_data_flush_end);
     exec0->o_flushd(w.e.flushd);
     exec0->o_flushi(w.e.flushi);
+    exec0->o_flushi_addr(w.e.flushi_addr);
     exec0->o_call(w.e.call);
     exec0->o_ret(w.e.ret);
-    exec0->o_multi_ready(w.e.multi_ready);
+    exec0->o_halted(w.e.halted);
 
     mem0 = new MemAccess("mem0", async_reset);
     mem0->i_clk(i_clk);
@@ -352,15 +340,15 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     csr0->o_resp_valid(csr.resp_valid);
     csr0->i_resp_ready(iccsr_s0_resp_ready);
     csr0->o_resp_data(csr.resp_data);
-    csr0->i_trap_ready(w.e.trap_ready);
+    //csr0->i_trap_ready(w.e.trap_ready);
     csr0->i_e_pc(w.e.pc);
     csr0->i_e_npc(w.e.npc);
-    csr0->i_ex_npc(w.e.ex_npc);
+    //csr0->i_ex_npc(w.e.ex_npc);
     csr0->i_ex_data_addr(i_resp_data_addr);
     csr0->i_ex_data_load_fault(i_resp_data_load_fault);
     csr0->i_ex_data_store_fault(i_resp_data_store_fault);
     csr0->i_ex_data_store_fault_addr(i_resp_data_store_fault_addr);
-    csr0->i_ex_instr_load_fault(w.e.ex_instr_load_fault);
+    /*csr0->i_ex_instr_load_fault(w.e.ex_instr_load_fault);
     csr0->i_ex_instr_not_executable(w.e.ex_instr_not_executable);
     csr0->i_ex_illegal_instr(w.e.ex_illegal_instr);
     csr0->i_ex_unalign_store(w.e.ex_unalign_store);
@@ -374,13 +362,13 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     csr0->i_ex_fpu_overflow(w.e.ex_fpu_overflow);
     csr0->i_ex_fpu_underflow(w.e.ex_fpu_underflow);
     csr0->i_ex_fpu_inexact(w.e.ex_fpu_inexact);
-    csr0->i_fpu_valid(w.e.fpu_valid);
+    csr0->i_fpu_valid(w.e.fpu_valid);*/
     csr0->i_irq_external(i_ext_irq);
-    csr0->i_e_next_ready(w.e.trap_ready);
+    //csr0->i_e_next_ready(w.e.trap_ready);
     csr0->i_e_valid(w.e.valid);
     csr0->o_executed_cnt(csr.executed_cnt);
-    csr0->o_trap_valid(csr.trap_valid);
-    csr0->o_trap_pc(csr.trap_pc);
+    //csr0->o_trap_valid(csr.trap_valid);
+    //csr0->o_trap_pc(csr.trap_pc);
     csr0->o_dbg_pc_write(csr.dbg_pc_write);
     csr0->o_dbg_pc(csr.dbg_pc);
     csr0->o_progbuf_ena(csr.progbuf_ena);
@@ -433,7 +421,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
         trace0->i_e_valid(w.e.valid);
         trace0->i_e_pc(w.e.pc);
         trace0->i_e_instr(w.e.instr);
-        trace0->i_e_multi_ready(w.e.multi_ready);
         trace0->i_e_wena(w.e.reg_wena);
         trace0->i_e_waddr(w.e.reg_waddr);
         trace0->i_e_wdata(w.e.reg_wdata);
@@ -498,14 +485,13 @@ void Processor::comb() {
         w_reg_inorder = 1;      // Cannot write loaded from memory value if it was overwritten
     }
 
-    w_flush_pipeline = w.e.flushi.read() || w.e.ex_breakpoint.read()
-                      || csr.flushi_ena.read();
+    w_flush_pipeline = w.e.flushi.read() || csr.flushi_ena.read();
     o_flush_valid = w_flush_pipeline;
     if (w.e.flushi.read() == 1) {
-        o_flush_address = ~0ull;
-    } else if (w.e.ex_breakpoint.read()) {
-        o_flush_address = w.e.npc;
+        // fencei or ebreak instructions
+        o_flush_address = w.e.flushi_addr;
     } else {
+        // request through debug interface to clear cache
         o_flush_address = csr.flushi_addr;
     }
     o_data_flush_address = ~0ull;
@@ -513,7 +499,7 @@ void Processor::comb() {
 
     o_req_ctrl_valid = w.f.imem_req_valid;
     o_req_ctrl_addr = w.f.imem_req_addr;
-    o_halted = csr.halt;
+    o_halted = w.e.halted;
 }
 
 }  // namespace debugger

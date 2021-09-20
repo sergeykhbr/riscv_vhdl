@@ -32,7 +32,6 @@ SC_MODULE(Tracer) {
     sc_in<bool> i_e_valid;
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_pc;
     sc_in<sc_uint<32>> i_e_instr;
-    sc_in<bool> i_e_multi_ready;
     sc_in<bool> i_e_wena;
     sc_in<sc_uint<6>> i_e_waddr;
     sc_in<sc_uint<RISCV_ARCH>> i_e_wdata;

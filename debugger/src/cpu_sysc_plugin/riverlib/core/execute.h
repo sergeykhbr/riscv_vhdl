@@ -58,6 +58,7 @@ SC_MODULE(InstrExecute) {
     sc_in<bool> i_instr_load_fault;             // fault instruction's address
     sc_in<bool> i_instr_executable;             // MPU flag
 
+    sc_in<bool> i_halt;
     sc_in<bool> i_dport_npc_write;              // Write npc value from debug port
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_dport_npc; // Debug port npc value to write
 
@@ -82,25 +83,6 @@ SC_MODULE(InstrExecute) {
     sc_out<bool> o_csr_resp_ready;              // Executor is ready to accept response
     sc_in<sc_uint<RISCV_ARCH>> i_csr_resp_data; // Responded CSR data
 
-    sc_in<bool> i_trap_valid;                   // async trap event
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_trap_pc;   // jump to address
-
-    // exceptions:
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_ex_npc;   // npc on before trap
-    sc_out<bool> o_ex_instr_load_fault;         // fault instruction's address
-    sc_out<bool> o_ex_instr_not_executable;     // MPU prohibit this instruction
-    sc_out<bool> o_ex_illegal_instr;
-    sc_out<bool> o_ex_unalign_store;
-    sc_out<bool> o_ex_unalign_load;
-    sc_out<bool> o_ex_breakpoint;
-    sc_out<bool> o_ex_ecall;
-    sc_out<bool> o_ex_fpu_invalidop;            // FPU Exception: invalid operation
-    sc_out<bool> o_ex_fpu_divbyzero;            // FPU Exception: divide by zero
-    sc_out<bool> o_ex_fpu_overflow;             // FPU Exception: overflow
-    sc_out<bool> o_ex_fpu_underflow;            // FPU Exception: underflow
-    sc_out<bool> o_ex_fpu_inexact;              // FPU Exception: inexact
-    sc_out<bool> o_fpu_valid;                   // FPU output is valid
-
     sc_out<bool> o_memop_valid;                 // Request to memory is valid
     sc_out<bool> o_memop_sign_ext;              // Load data with sign extending
     sc_out<sc_uint<MemopType_Total>> o_memop_type;  // [0]: 1=store/0=Load data
@@ -109,7 +91,6 @@ SC_MODULE(InstrExecute) {
     sc_out<sc_uint<RISCV_ARCH>> o_memop_wdata;
     sc_in<bool> i_memop_ready;
 
-    sc_out<bool> o_trap_ready;                  // trap branch request accepted
     sc_out<bool> o_valid;                       // Output is valid
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_pc;    // Valid instruction pointer
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_npc;   // Next instruction pointer. Next decoded pc must match to this value or will be ignored.
@@ -117,9 +98,10 @@ SC_MODULE(InstrExecute) {
     sc_in<bool> i_flushd_end;
     sc_out<bool> o_flushd;
     sc_out<bool> o_flushi;
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_flushi_addr;
     sc_out<bool> o_call;                        // CALL pseudo instruction detected
     sc_out<bool> o_ret;                         // RET pseudoinstruction detected
-    sc_out<bool> o_multi_ready;
+    sc_out<bool> o_halted;
 
     void comb();
     void registers();
@@ -155,6 +137,7 @@ private:
     static const unsigned State_Flushing_I = 4;
     static const unsigned State_Amo = 5;
     static const unsigned State_Csr = 6;
+    static const unsigned State_Halted = 7;
 
     static const unsigned CsrState_Idle = 0;
     static const unsigned CsrState_Req = 1;
@@ -179,8 +162,6 @@ private:
         sc_uint<CFG_CPU_ADDR_BITS> pc;
         sc_uint<32> instr;
         sc_uint<MemopType_Total> memop_type;
-        bool memop_store;
-        bool memop_load;
         bool memop_sign_ext;
         sc_uint<2> memop_size;
         bool unsigned_op;
@@ -189,9 +170,6 @@ private:
         bool f64;
         sc_bv<Instr_Total> ivec;
         sc_bv<ISA_Total> isa_type;
-        bool unsup_exception;
-        bool instr_load_fault;
-        bool instr_executable;
     };
 
     struct RegistersType {
@@ -200,11 +178,11 @@ private:
         sc_signal<sc_uint<2>> amostate;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> npc;
-        sc_signal<sc_uint<6>> hold_radr1;
-        sc_signal<sc_uint<6>> hold_radr2;
-        sc_signal<sc_uint<6>> hold_waddr;
-        sc_signal<sc_uint<RISCV_ARCH>> hold_rdata1;
-        sc_signal<sc_uint<RISCV_ARCH>> hold_rdata2;
+        sc_signal<sc_uint<6>> radr1;
+        sc_signal<sc_uint<6>> radr2;
+        sc_signal<sc_uint<6>> waddr;
+        sc_signal<sc_uint<RISCV_ARCH>> rdata1;
+        sc_signal<sc_uint<RISCV_ARCH>> rdata2;
         sc_signal<sc_bv<Instr_Total>> ivec;
         sc_signal<sc_bv<ISA_Total>> isa_type;
         sc_signal<sc_uint<RISCV_ARCH>> imm;
@@ -213,7 +191,7 @@ private:
         sc_signal<sc_biguint<CFG_REG_TAG_WITH*REGS_TOTAL>> tagcnt_rd;      // N-bits tag per register (expected)
         sc_signal<sc_biguint<CFG_REG_TAG_WITH*REGS_TOTAL>> tagcnt_wr;      // N-bits tag per register (written)
 
-        sc_signal<sc_uint<Res_Total>> select;
+        sc_signal<bool> reg_write;
         sc_signal<sc_uint<6>> reg_waddr;
         sc_signal<sc_uint<CFG_REG_TAG_WITH>> reg_wtag;
 
@@ -225,8 +203,6 @@ private:
 
         sc_signal<bool> memop_valid;
         sc_signal<sc_uint<MemopType_Total>> memop_type;
-        sc_signal<bool> memop_store;
-        sc_signal<bool> memop_load;
         sc_signal<bool> memop_sign_ext;
         sc_signal<sc_uint<2>> memop_size;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> memop_memaddr;
@@ -240,14 +216,13 @@ private:
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> res_npc;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> res_ra;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> res_csr;
-
-        sc_signal<bool> reg_write;
+        sc_signal<sc_uint<Res_Total>> select;
         sc_signal<bool> valid;
         sc_signal<bool> call;
         sc_signal<bool> ret;
         sc_signal<bool> flushd;
         sc_signal<bool> flushi;
-        sc_signal<bool> hold_fencei;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> flushi_addr;
         sc_signal<sc_uint<32>> progbuf_npc;
     } v, r;
 
@@ -257,18 +232,18 @@ private:
         iv.amostate = AmoState_WaitMemAccess;
         iv.pc = 0;
         iv.npc = CFG_NMI_RESET_VECTOR;
-        iv.hold_radr1 = 0;
-        iv.hold_radr2 = 0;
-        iv.hold_waddr = 0;
-        iv.hold_rdata1 = 0;
-        iv.hold_rdata2 = 0;
+        iv.radr1 = 0;
+        iv.radr2 = 0;
+        iv.waddr = 0;
+        iv.rdata1 = 0;
+        iv.rdata2 = 0;
         iv.ivec = 0;
         iv.isa_type = 0;
         iv.imm = 0;
         iv.instr = 0;
         iv.tagcnt_rd = ~((1 << CFG_REG_TAG_WITH) - 1);
         iv.tagcnt_wr = 0;
-        iv.select = 0;
+        iv.reg_write = 0;
         iv.reg_waddr = 0;
         iv.reg_wtag = 0;
         iv.csr_req_rmw = 0;
@@ -278,8 +253,6 @@ private:
         iv.csr_req_data = 0;
         iv.memop_valid = 0;
         iv.memop_type = 0;
-        iv.memop_store = 0;
-        iv.memop_load = 0;
         iv.memop_sign_ext = 0;
         iv.memop_size = 0;
         iv.memop_memaddr = 0;
@@ -293,14 +266,14 @@ private:
         iv.res_npc = 0;
         iv.res_ra = 0;
         iv.res_csr = 0;
+        iv.select = 0;
 
-        iv.reg_write = 0;
         iv.valid = 0;
         iv.call = 0;
         iv.ret = 0;
         iv.flushd = 0;
         iv.flushi = 0;
-        iv.hold_fencei = 0;
+        iv.flushi_addr = 0;
         iv.progbuf_npc = 0;
     }
 
@@ -308,40 +281,25 @@ private:
     sc_signal<sc_uint<3>> wb_alu_mode;
     sc_signal<sc_uint<7>> wb_addsub_mode;
     sc_signal<sc_uint<4>> wb_shifter_mode;
-#ifdef UPDT2
-#else
-    sc_signal<bool> w_arith_ena[Multi_Total];
-    sc_signal<bool> w_arith_valid[Multi_Total];
-#endif
     sc_signal<bool> w_arith_residual_high;
     sc_signal<bool> w_mul_hsu;
     sc_signal<sc_bv<Instr_FPU_Total>> wb_fpu_vec;
+    sc_signal<bool> w_ex_fpu_invalidop;            // FPU Exception: invalid operation
+    sc_signal<bool> w_ex_fpu_divbyzero;            // FPU Exception: divide by zero
+    sc_signal<bool> w_ex_fpu_overflow;             // FPU Exception: overflow
+    sc_signal<bool> w_ex_fpu_underflow;            // FPU Exception: underflow
+    sc_signal<bool> w_ex_fpu_inexact;              // FPU Exception: inexact
     bool w_exception_store;
     bool w_exception_load;
-#if!defined(UPDT2)
-    bool w_next_ready;
-#endif
-    bool w_multi_ena;
-    bool w_multi_ready;
-    bool w_multi_busy;
-    bool w_hold_multi;
-    bool w_hold_hazard;
-    bool w_hold_memop;
 
-    bool w_test_hazard1;
-    bool w_test_hazard2;
+    bool w_hazard1;
+    bool w_hazard2;
 
     sc_signal<sc_uint<RISCV_ARCH>> wb_rdata1;
     sc_signal<sc_uint<RISCV_ARCH>> wb_rdata2;
 
     sc_signal<sc_uint<RISCV_ARCH>> wb_shifter_a1;      // Shifters operand 1
     sc_signal<sc_uint<6>> wb_shifter_a2;               // Shifters operand 2
-    sc_signal<sc_uint<RISCV_ARCH>> wb_sll;
-    sc_signal<sc_uint<RISCV_ARCH>> wb_sllw;
-    sc_signal<sc_uint<RISCV_ARCH>> wb_srl;
-    sc_signal<sc_uint<RISCV_ARCH>> wb_srlw;
-    sc_signal<sc_uint<RISCV_ARCH>> wb_sra;
-    sc_signal<sc_uint<RISCV_ARCH>> wb_sraw;
 
     sc_uint<CFG_REG_TAG_WITH> tag_expected[Reg_Total];
 

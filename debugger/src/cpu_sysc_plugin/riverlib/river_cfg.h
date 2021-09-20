@@ -327,8 +327,13 @@ static const int CsrReq_WriteCmd       = 1 << CsrReq_WriteBit;
 static const int CsrReq_ChaneModeCmd   = 1 << CsrReq_ChangeModeBit;
 static const int CsrReq_PcCmd          = 1 << CsrReq_PcBit;
 
-static const int CsrReq_PcCmd_UnsupInstruction = 0x001;
-static const int CsrReq_PcCmd_EnvCall          = 0x002;
+static const int CsrReq_Addr_UnsupInstruction       = 0x001;
+static const int CsrReq_Addr_InstrLoadFault         = 0x002;
+static const int CsrReq_Addr_InstrNotExecutable     = 0x003;
+static const int CsrReq_Addr_InstrUnalignedLoad     = 0x004;
+static const int CsrReq_Addr_InstrUnalignedStore    = 0x005;
+static const int CsrReq_Addr_ECall                  = 0x006;
+static const int CsrReq_Addr_EBreak                 = 0x007;
 
 static const int MemopType_Store     = 0;    // 0=load; 1=store
 static const int MemopType_Locked    = 1;    // AMO instructions

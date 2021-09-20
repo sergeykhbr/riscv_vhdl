@@ -138,12 +138,10 @@ private:
     };
 
     struct ExecuteType {
-        sc_signal<bool> trap_ready;
         sc_signal<bool> valid;
         sc_signal<sc_uint<32>> instr;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> npc;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> ex_npc;
 
         sc_signal<sc_uint<6>> radr1;
         sc_signal<sc_uint<6>> radr2;
@@ -156,19 +154,6 @@ private:
         sc_signal<sc_uint<12>> csr_req_addr;         // Requested CSR address
         sc_signal<sc_uint<RISCV_ARCH>> csr_req_data; // CSR new value
         sc_signal<bool> csr_resp_ready;              // Executor is ready to accept response
-        sc_signal<bool> ex_instr_load_fault;
-        sc_signal<bool> ex_instr_not_executable;
-        sc_signal<bool> ex_illegal_instr;
-        sc_signal<bool> ex_unalign_load;
-        sc_signal<bool> ex_unalign_store;
-        sc_signal<bool> ex_breakpoint;
-        sc_signal<bool> ex_ecall;
-        sc_signal<bool> ex_fpu_invalidop;            // FPU Exception: invalid operation
-        sc_signal<bool> ex_fpu_divbyzero;            // FPU Exception: divide by zero
-        sc_signal<bool> ex_fpu_overflow;             // FPU Exception: overflow
-        sc_signal<bool> ex_fpu_underflow;            // FPU Exception: underflow
-        sc_signal<bool> ex_fpu_inexact;              // FPU Exception: inexact
-        sc_signal<bool> fpu_valid;
 
         sc_signal<bool> memop_valid;
         sc_signal<bool> memop_sign_ext;
@@ -179,9 +164,10 @@ private:
         sc_signal<bool> d_ready;           // Hold pipeline from Execution stage
         sc_signal<bool> flushd;
         sc_signal<bool> flushi;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> flushi_addr;
         sc_signal<bool> call;                       // pseudo-instruction CALL
         sc_signal<bool> ret;                        // pseudo-instruction RET
-        sc_signal<bool> multi_ready;
+        sc_signal<bool> halted;
     };
 
     struct MemoryType {
@@ -216,8 +202,6 @@ private:
         sc_signal<bool> req_ready;                // CSR module is ready to accept request
         sc_signal<bool> resp_valid;               // CSR module Response is valid
         sc_signal<sc_uint<RISCV_ARCH>> resp_data; // Responded CSR data
-        sc_signal<bool> trap_valid;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> trap_pc;
         sc_signal<bool> progbuf_ena;                // execute instruction from progbuf
         sc_signal<sc_uint<32>> progbuf_pc;          // progbuf instruction counter
         sc_signal<sc_uint<32>> progbuf_data;        // progbuf instruction to execute
