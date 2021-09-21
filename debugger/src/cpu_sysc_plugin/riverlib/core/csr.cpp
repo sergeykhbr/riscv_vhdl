@@ -313,7 +313,17 @@ void CsrRegs::comb() {
         v.state = State_Response;
         v_csr_rena = r.req_type.read()[CsrReq_ReadBit];
         v_csr_wena = r.req_type.read()[CsrReq_WriteBit];
+        break;
+    case State_Response:
+        v_resp_valid = 1;
+        if (i_resp_ready) {
+            v.state = State_Idle;
+        }
+        break;
+    default:;
+    }
 
+    if (v_csr_rena) {
         switch (r.req_addr.read()) {
         case CSR_fflags:
             vb_rdata[0] = r.ex_fpu_inexact;
@@ -321,15 +331,6 @@ void CsrRegs::comb() {
             vb_rdata[2] = r.ex_fpu_overflow;
             vb_rdata[3] = r.ex_fpu_divbyzero;
             vb_rdata[4] = r.ex_fpu_invalidop;
-            if (CFG_HW_FPU_ENABLE) {
-                if (v_csr_wena) {
-                    v.ex_fpu_inexact = r.req_data.read()[0];
-                    v.ex_fpu_underflow = r.req_data.read()[1];
-                    v.ex_fpu_overflow = r.req_data.read()[2];
-                    v.ex_fpu_divbyzero = r.req_data.read()[3];
-                    v.ex_fpu_invalidop = r.req_data.read()[4];
-                }
-            }
             break;
         case CSR_frm:
             if (CFG_HW_FPU_ENABLE) {
@@ -344,13 +345,6 @@ void CsrRegs::comb() {
             vb_rdata[4] = r.ex_fpu_invalidop;
             if (CFG_HW_FPU_ENABLE) {
                 vb_rdata(7, 5) = 0x4;  // Round mode: round to Nearest (RMM)
-                if (v_csr_wena) {
-                    v.ex_fpu_inexact = r.req_data.read()[0];
-                    v.ex_fpu_underflow = r.req_data.read()[1];
-                    v.ex_fpu_overflow = r.req_data.read()[2];
-                    v.ex_fpu_divbyzero = r.req_data.read()[3];
-                    v.ex_fpu_invalidop = r.req_data.read()[4];
-                }
             }
             break; 
         case CSR_misa:
@@ -388,7 +382,7 @@ void CsrRegs::comb() {
              * 24 Y Reserved
              * 25 Z Reserve
              */
-            //vb_rdata['A' - 'A'] = 1;
+            vb_rdata['A' - 'A'] = 1;
             vb_rdata['I' - 'A'] = 1;
             vb_rdata['M' - 'A'] = 1;
             vb_rdata['U' - 'A'] = 1;
@@ -410,9 +404,6 @@ void CsrRegs::comb() {
             break;
         case CSR_uepc:// - User mode program counter
             vb_rdata = r.uepc;
-            if (v_csr_wena) {
-                v.uepc = r.req_data.read()(CFG_CPU_ADDR_BITS-1, 0);
-            }
             break;
         case CSR_mstatus:// - Machine mode status register
             vb_rdata[0] = r.uie;
@@ -423,12 +414,6 @@ void CsrRegs::comb() {
                 vb_rdata(14, 13) = 0x1;   // FS field: Initial state
             }
             vb_rdata(33, 32) = 0x2;       // UXL: User mode supported 64-bits
-            if (v_csr_wena) {
-                v.uie = r.req_data.read()[0];
-                v.mie = r.req_data.read()[3];
-                v.mpie = r.req_data.read()[7];
-                v.mpp = r.req_data.read()(12, 11);
-            }
             break;
         case CSR_medeleg:// - Machine exception delegation
             break;
@@ -438,21 +423,12 @@ void CsrRegs::comb() {
             break;
         case CSR_mtvec:
             vb_rdata = r.mtvec;
-            if (v_csr_wena) {
-                v.mtvec = r.req_data.read();
-            }
             break;
         case CSR_mscratch:// - Machine scratch register
             vb_rdata = r.mscratch;
-            if (v_csr_wena) {
-                v.mscratch = r.req_data.read();
-            }
             break;
         case CSR_mepc:// - Machine program counter
             vb_rdata = r.mepc;
-            if (v_csr_wena) {
-                v.mepc = r.req_data.read()(CFG_CPU_ADDR_BITS-1, 0);
-            }
             break;
         case CSR_mcause:// - Machine trap cause
             vb_rdata = 0;
@@ -475,95 +451,35 @@ void CsrRegs::comb() {
             break;
         case CSR_mstackovr:// - Machine Stack Overflow
             vb_rdata = r.mstackovr;
-            if (v_csr_wena) {
-                v.mstackovr = r.req_data.read()(CFG_CPU_ADDR_BITS-1, 0);
-                v.mstackovr_ena = r.req_data.read()(CFG_CPU_ADDR_BITS-1, 0).or_reduce();
-            }
             break;
         case CSR_mstackund:// - Machine Stack Underflow
             vb_rdata = r.mstackund;
-            if (v_csr_wena) {
-                v.mstackund = r.req_data.read()(CFG_CPU_ADDR_BITS-1, 0);
-                v.mstackund_ena = r.req_data.read()(CFG_CPU_ADDR_BITS-1, 0).or_reduce();
-            }
             break;
         case CSR_mpu_addr:  // [WO] MPU address
-            if (v_csr_wena) {
-                v.mpu_addr = r.req_data.read()(CFG_CPU_ADDR_BITS-1, 0);
-            }
             break;
         case CSR_mpu_mask:  // [WO] MPU mask
-            if (v_csr_wena) {
-                v.mpu_mask = r.req_data.read()(CFG_CPU_ADDR_BITS-1, 0);
-            }
             break;
         case CSR_mpu_ctrl:  // [WO] MPU flags and write ena
             vb_rdata = CFG_MPU_TBL_SIZE << 8;
-            if (v_csr_wena) {
-                v.mpu_idx = r.req_data.read()(8+CFG_MPU_TBL_WIDTH-1, 8);
-                v.mpu_flags = r.req_data.read()(CFG_MPU_FL_TOTAL-1, 0);
-                v.mpu_we = 1;
-            }
             break;
         case CSR_runcontrol:
-            if (v_csr_wena) {
-                v_req_halt = r.req_data.read()[31];
-                v_req_resume = r.req_data.read()[30];
-                if (r.req_data.read()[27] == 1) {
-                    if (r.halt.read() == 1) {
-                        v_req_progbuf = 1;
-                    } else {
-                        v.progbuf_err = PROGBUF_ERR_HALT_RESUME;
-                    }
-                }
-            }
             break;
         case CSR_insperstep:
             vb_rdata = r.ins_per_step;
-            if (v_csr_wena == 1) {
-                v.ins_per_step = r.req_data.read();
-                if (r.req_data.read().or_reduce() == 0) {
-                    v.ins_per_step = 1;  // cannot be zero
-                }
-                if (r.halt.read() == 1) {
-                    v.stepping_mode_cnt = r.req_data.read();
-                }
-            }
             break;
         case CSR_progbuf:
-            if (v_csr_wena == 1) {
-                int tidx = r.req_data.read()(35,32);
-                sc_biguint<CFG_PROGBUF_REG_TOTAL*32> t2 = r.progbuf_data;
-                t2(32*tidx+31, 32*tidx) = r.req_data.read()(31,0);
-                v.progbuf_data = t2;
-            }
             break;
         case CSR_abstractcs:
             vb_rdata(28,24) = CFG_PROGBUF_REG_TOTAL;
             vb_rdata[12] = r.progbuf_ena;       // busy
             vb_rdata(10,8) = r.progbuf_err;
             vb_rdata(3,0) = CFG_DATA_REG_TOTAL;
-            if (v_csr_wena) {
-                v_clear_progbuferr = r.req_data.read()[8];   // W1C err=1
-            }
-            break;
-        case CSR_flushi:
-            if (v_csr_wena) {
-                v.flushi_ena = 1;
-                v.flushi_addr = r.req_data.read()(CFG_CPU_ADDR_BITS-1, 0);
-            }
             break;
         case CSR_dcsr:
             vb_rdata(31,28) = 4;          // xdebugver: 4=External debug supported
             vb_rdata(8,6) = r.halt_cause;    // cause:
             vb_rdata[2] = r.stepping_mode;   // step:
             vb_rdata(1,0) = 3;            // prv: privilege in debug mode: 3=machine
-            if (v_csr_wena == 1) {
-                v.stepping_mode = r.req_data.read()[2];
-                if (r.req_data.read()[2] == 1) {
-                    v.stepping_mode_cnt = r.ins_per_step;  // default =1
-                }
-            }
             break;
         case CSR_dpc:
             // Upon entry into debug mode DPC must contains:
@@ -579,24 +495,106 @@ void CsrRegs::comb() {
             } else {
                 vb_rdata(CFG_CPU_ADDR_BITS-1, 0) = i_e_npc.read();
             }
-            if (v_csr_wena == 1) {
-                v_dbg_pc_write = 1;
-                vb_dbg_pc = r.req_data.read();
-            }
             break;
         default:;
         }
         v.req_data = vb_rdata;
-        break;
-    case State_Response:
-        v_resp_valid = 1;
-        if (i_resp_ready) {
-            v.state = State_Idle;
-        }
-        break;
-    default:;
     }
-
+    if (v_csr_wena) {
+        switch (r.req_addr.read()) {
+        case CSR_uepc:// - User mode program counter
+            v.uepc = r.req_data.read()(CFG_CPU_ADDR_BITS-1, 0);
+            break;
+        case CSR_mstatus:// - Machine mode status register
+            v.uie = r.req_data.read()[0];
+            v.mie = r.req_data.read()[3];
+            v.mpie = r.req_data.read()[7];
+            v.mpp = r.req_data.read()(12, 11);
+            break;
+        case CSR_medeleg:// - Machine exception delegation
+            break;
+        case CSR_mideleg:// - Machine interrupt delegation
+            break;
+        case CSR_mie:// - Machine interrupt enable bit
+            break;
+        case CSR_mtvec:
+            v.mtvec = r.req_data.read();
+            break;
+        case CSR_mscratch:// - Machine scratch register
+            v.mscratch = r.req_data.read();
+            break;
+        case CSR_mepc:// - Machine program counter
+            v.mepc = r.req_data.read()(CFG_CPU_ADDR_BITS-1, 0);
+            break;
+        case CSR_mip:// - Machine interrupt pending
+            break;
+        case CSR_mstackovr:// - Machine Stack Overflow
+            v.mstackovr = r.req_data.read()(CFG_CPU_ADDR_BITS-1, 0);
+            v.mstackovr_ena = r.req_data.read()(CFG_CPU_ADDR_BITS-1, 0).or_reduce();
+            break;
+        case CSR_mstackund:// - Machine Stack Underflow
+            v.mstackund = r.req_data.read()(CFG_CPU_ADDR_BITS-1, 0);
+            v.mstackund_ena = r.req_data.read()(CFG_CPU_ADDR_BITS-1, 0).or_reduce();
+            break;
+        case CSR_mpu_addr:  // [WO] MPU address
+            v.mpu_addr = r.req_data.read()(CFG_CPU_ADDR_BITS-1, 0);
+            break;
+        case CSR_mpu_mask:  // [WO] MPU mask
+            v.mpu_mask = r.req_data.read()(CFG_CPU_ADDR_BITS-1, 0);
+            break;
+        case CSR_mpu_ctrl:  // [WO] MPU flags and write ena
+            v.mpu_idx = r.req_data.read()(8+CFG_MPU_TBL_WIDTH-1, 8);
+            v.mpu_flags = r.req_data.read()(CFG_MPU_FL_TOTAL-1, 0);
+            v.mpu_we = 1;
+            break;
+        case CSR_runcontrol:
+            v_req_halt = r.req_data.read()[31];
+            v_req_resume = r.req_data.read()[30];
+            if (r.req_data.read()[27] == 1) {
+                if (r.halt.read() == 1) {
+                    v_req_progbuf = 1;
+                } else {
+                    v.progbuf_err = PROGBUF_ERR_HALT_RESUME;
+                }
+            }
+            break;
+        case CSR_insperstep:
+            v.ins_per_step = r.req_data.read();
+            if (r.req_data.read().or_reduce() == 0) {
+                v.ins_per_step = 1;  // cannot be zero
+            }
+            if (r.halt.read() == 1) {
+                v.stepping_mode_cnt = r.req_data.read();
+            }
+            break;
+        case CSR_progbuf:
+            if (v_csr_wena == 1) {
+                int tidx = r.req_data.read()(35,32);
+                sc_biguint<CFG_PROGBUF_REG_TOTAL*32> t2 = r.progbuf_data;
+                t2(32*tidx+31, 32*tidx) = r.req_data.read()(31,0);
+                v.progbuf_data = t2;
+            }
+            break;
+        case CSR_abstractcs:
+            v_clear_progbuferr = r.req_data.read()[8];   // W1C err=1
+            break;
+        case CSR_flushi:
+            v.flushi_ena = 1;
+            v.flushi_addr = r.req_data.read()(CFG_CPU_ADDR_BITS-1, 0);
+            break;
+        case CSR_dcsr:
+            v.stepping_mode = r.req_data.read()[2];
+            if (r.req_data.read()[2] == 1) {
+                v.stepping_mode_cnt = r.ins_per_step;  // default =1
+            }
+            break;
+        case CSR_dpc:
+            v_dbg_pc_write = 1;
+            vb_dbg_pc = r.req_data.read();
+            break;
+        default:;
+        }
+    }
 
     if (r.mpu_we.read() == 1) {
         v.mpu_we = 0;
