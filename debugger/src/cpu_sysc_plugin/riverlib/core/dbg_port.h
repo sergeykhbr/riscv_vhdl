@@ -44,6 +44,7 @@ SC_MODULE(DbgPort) {
     sc_in<bool> i_csr_resp_valid;
     sc_out<bool> o_csr_resp_ready;
     sc_in<sc_uint<RISCV_ARCH>> i_csr_resp_data;         // Region 0: CSR read value
+    sc_in<bool> i_csr_resp_exception;                   // Exception on CSR access
 
     sc_out<sc_uint<6>> o_reg_addr;
     sc_out<sc_uint<RISCV_ARCH>> o_core_wdata;           // Write data

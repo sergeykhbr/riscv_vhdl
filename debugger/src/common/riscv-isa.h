@@ -615,6 +615,10 @@ enum ESignals {
     SIGNAL_Total
 };
 
+static const int EXCEPTION_CallFromXMode    = EXCEPTION_CallFromUmode;
+static const int INTERRUPT_XSoftware        = INTERRUPT_USoftware;
+static const int INTERRUPT_XTimer           = INTERRUPT_UTimer;
+static const int INTERRUPT_XExternal        = INTERRUPT_UExternal;
 
 }  // namespace debugger
 

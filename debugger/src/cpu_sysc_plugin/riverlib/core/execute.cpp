@@ -48,6 +48,14 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     i_unsup_exception("i_unsup_exception"),
     i_instr_load_fault("i_instr_load_fault"),
     i_instr_executable("i_instr_executable"),
+    i_mem_ex_load_fault("i_mem_ex_load_fault"),
+    i_mem_ex_store_fault("i_mem_ex_store_fault"),
+    i_mem_ex_mpu_store("i_mem_ex_mpu_store"),
+    i_mem_ex_mpu_load("i_mem_ex_mpu_load"),
+    i_mem_ex_addr("i_mem_ex_addr"),
+    i_irq_software("i_irq_software"),
+    i_irq_timer("i_irq_timer"),
+    i_irq_external("i_irq_external"),
     i_halt("i_halt"),
     i_dport_npc_write("i_dport_npc_write"),
     i_dport_npc("i_dport_npc"),
@@ -70,6 +78,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     i_csr_resp_valid("i_csr_resp_valid"),
     o_csr_resp_ready("o_csr_resp_ready"),
     i_csr_resp_data("i_csr_resp_data"),
+    i_csr_resp_exception("i_csr_resp_exception"),
     o_memop_valid("o_memop_valid"),
     o_memop_sign_ext("o_memop_sign_ext"),
     o_memop_type("o_memop_type"),
@@ -119,6 +128,14 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << i_unsup_exception;
     sensitive << i_instr_load_fault;
     sensitive << i_instr_executable;
+    sensitive << i_mem_ex_load_fault;
+    sensitive << i_mem_ex_store_fault;
+    sensitive << i_mem_ex_mpu_store;
+    sensitive << i_mem_ex_mpu_load;
+    sensitive << i_mem_ex_addr;
+    sensitive << i_irq_software;
+    sensitive << i_irq_timer;
+    sensitive << i_irq_external;
     sensitive << i_halt;
     sensitive << i_dport_npc_write;
     sensitive << i_dport_npc;
@@ -129,6 +146,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << i_csr_req_ready;
     sensitive << i_csr_resp_valid;
     sensitive << i_csr_resp_data;
+    sensitive << i_csr_resp_exception;
     sensitive << i_flushd_end;
     sensitive << r.state;
     sensitive << r.csrstate;
@@ -296,6 +314,14 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_unsup_exception, i_unsup_exception.name());
         sc_trace(o_vcd, i_instr_load_fault, i_instr_load_fault.name());
         sc_trace(o_vcd, i_instr_executable, i_instr_executable.name());
+        sc_trace(o_vcd, i_mem_ex_load_fault, i_mem_ex_load_fault.name());
+        sc_trace(o_vcd, i_mem_ex_store_fault, i_mem_ex_store_fault.name());
+        sc_trace(o_vcd, i_mem_ex_mpu_store, i_mem_ex_mpu_store.name());
+        sc_trace(o_vcd, i_mem_ex_mpu_load, i_mem_ex_mpu_load.name());
+        sc_trace(o_vcd, i_mem_ex_addr, i_mem_ex_addr.name());
+        sc_trace(o_vcd, i_irq_software, i_irq_software.name());
+        sc_trace(o_vcd, i_irq_timer, i_irq_timer.name());
+        sc_trace(o_vcd, i_irq_external, i_irq_external.name());
         sc_trace(o_vcd, i_halt, i_halt.name());
         sc_trace(o_vcd, i_rdata1, i_rdata1.name());
         sc_trace(o_vcd, i_rtag1, i_rtag1.name());
@@ -316,6 +342,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_csr_resp_valid, i_csr_resp_valid.name());
         sc_trace(o_vcd, o_csr_resp_ready, o_csr_resp_ready.name());
         sc_trace(o_vcd, i_csr_resp_data, i_csr_resp_data.name());
+        sc_trace(o_vcd, i_csr_resp_exception, i_csr_resp_exception.name());
         sc_trace(o_vcd, i_flushd_end, i_flushd_end.name());
         sc_trace(o_vcd, o_memop_valid, o_memop_valid.name());
         sc_trace(o_vcd, o_memop_type, o_memop_type.name());
@@ -412,6 +439,9 @@ void InstrExecute::comb() {
     bool v_memop_ena;
     bool v_reg_ena;
     sc_uint<6> vb_reg_waddr;
+    bool v_instr_misaligned;
+    bool v_store_misaligned;
+    bool v_load_misaligned;
     bool v_csr_cmd_ena;
     sc_uint<12> vb_csr_cmd_addr;
     sc_uint<CsrReq_TotalBits> vb_csr_cmd_type;
@@ -442,6 +472,9 @@ void InstrExecute::comb() {
     for (int i = 0; i < Res_Total; i++) {
         wb_select.ena[i] = 0;
     }
+    v_instr_misaligned = 0;
+    v_store_misaligned = 0;
+    v_load_misaligned = 0;
     v_csr_cmd_ena = 0;
     vb_csr_cmd_addr = 0;
     vb_csr_cmd_type = 0;
@@ -589,18 +622,16 @@ void InstrExecute::comb() {
 
     w_mul_hsu = wv[Instr_MULHSU].to_bool();
 
-    w_exception_store = 0;
-    w_exception_load = 0;
-
+    v_instr_misaligned = mux.pc[0];
     if ((wv[Instr_LD] && vb_memop_memaddr_load(2, 0) != 0)
         || ((wv[Instr_LW] || wv[Instr_LWU]) && vb_memop_memaddr_load(1, 0) != 0)
         || ((wv[Instr_LH] || wv[Instr_LHU]) && vb_memop_memaddr_load[0] != 0)) {
-        w_exception_load = 1;
+        v_load_misaligned = 1;
     }
     if ((wv[Instr_SD] && vb_memop_memaddr_store(2, 0) != 0)
         || (wv[Instr_SW] && vb_memop_memaddr_store(1, 0) != 0)
         || (wv[Instr_SH] && vb_memop_memaddr_store[0] != 0)) {
-        w_exception_store = 1;
+        v_store_misaligned = 1;
     }
 
 
@@ -671,40 +702,62 @@ void InstrExecute::comb() {
         v_ret = 1;
     }
 
-
-    v_csr_cmd_ena = i_unsup_exception || i_instr_load_fault || !i_instr_executable.read()
-                || w_exception_load || w_exception_store
+    v_csr_cmd_ena = i_unsup_exception
+                || i_instr_load_fault || i_mem_ex_load_fault || i_mem_ex_store_fault
+                || i_mem_ex_mpu_store || i_mem_ex_mpu_load || !i_instr_executable.read()
+                || v_instr_misaligned || v_load_misaligned || v_store_misaligned
+                || i_irq_software || i_irq_timer || i_irq_external
                 || wv[Instr_EBREAK] || wv[Instr_ECALL]
                 || wv[Instr_MRET] || wv[Instr_URET]
                 || wv[Instr_CSRRC] || wv[Instr_CSRRCI] || wv[Instr_CSRRS]
                 || wv[Instr_CSRRSI] || wv[Instr_CSRRW] || wv[Instr_CSRRWI];
-    if (i_unsup_exception) {
+    if (v_instr_misaligned == 1) {
         vb_csr_cmd_type = CsrReq_PcCmd;
-        vb_csr_cmd_addr = CsrReq_Addr_UnsupInstruction;
+        vb_csr_cmd_addr = EXCEPTION_InstrMisalign;          // Instruction address misaligned
         vb_csr_cmd_wdata = mux.pc;
-    } else if (i_instr_load_fault) {
+    } else if (i_instr_load_fault == 1 || i_instr_executable == 0) {
         vb_csr_cmd_type = CsrReq_PcCmd;
-        vb_csr_cmd_addr = CsrReq_Addr_InstrLoadFault;
+        vb_csr_cmd_addr = EXCEPTION_InstrFault;             // Instruction access fault
         vb_csr_cmd_wdata = mux.pc;
-    } else if (i_instr_executable == 0) {
+    } else if (i_unsup_exception) {
         vb_csr_cmd_type = CsrReq_PcCmd;
-        vb_csr_cmd_addr = CsrReq_Addr_InstrNotExecutable;
-        vb_csr_cmd_wdata = mux.pc;
-    } else if (w_exception_load == 1) {
-        vb_csr_cmd_type = CsrReq_PcCmd;
-        vb_csr_cmd_addr = CsrReq_Addr_InstrUnalignedLoad;
-        vb_csr_cmd_wdata = mux.pc;
-    } else if (w_exception_store == 1) {
-        vb_csr_cmd_type = CsrReq_PcCmd;
-        vb_csr_cmd_addr = CsrReq_Addr_InstrUnalignedStore;
-        vb_csr_cmd_wdata = mux.pc;
-    } else if (wv[Instr_ECALL]) {
-        vb_csr_cmd_type = CsrReq_PcCmd;
-        vb_csr_cmd_addr = CsrReq_Addr_ECall;
+        vb_csr_cmd_addr = EXCEPTION_InstrIllegal;           // Illegal instruction
         vb_csr_cmd_wdata = mux.pc;
     } else if (wv[Instr_EBREAK]) {
         vb_csr_cmd_type = CsrReq_PcCmd;
-        vb_csr_cmd_addr = CsrReq_Addr_EBreak;
+        vb_csr_cmd_addr = EXCEPTION_Breakpoint;
+        vb_csr_cmd_wdata = mux.pc;
+    } else if (v_load_misaligned == 1) {
+        vb_csr_cmd_type = CsrReq_PcCmd;
+        vb_csr_cmd_addr = EXCEPTION_LoadMisalign;           // Load address misaligned
+        vb_csr_cmd_wdata = mux.pc;
+    } else if (i_mem_ex_load_fault || i_mem_ex_mpu_load) {
+        vb_csr_cmd_type = CsrReq_PcCmd;
+        vb_csr_cmd_addr = EXCEPTION_LoadFault;              // Load access fault
+        vb_csr_cmd_wdata = i_mem_ex_addr;
+    } else if (v_store_misaligned == 1) {
+        vb_csr_cmd_type = CsrReq_PcCmd;
+        vb_csr_cmd_addr = EXCEPTION_StoreMisalign;          // Store/AMO address misaligned
+        vb_csr_cmd_wdata = mux.pc;
+    } else if (i_mem_ex_store_fault || i_mem_ex_mpu_store) {
+        vb_csr_cmd_type = CsrReq_PcCmd;
+        vb_csr_cmd_addr = EXCEPTION_StoreFault;             // Store/AMO access fault
+        vb_csr_cmd_wdata = i_mem_ex_addr;
+    } else if (wv[Instr_ECALL]) {
+        vb_csr_cmd_type = CsrReq_PcCmd;
+        vb_csr_cmd_addr = EXCEPTION_CallFromXMode;          // Environment call
+        vb_csr_cmd_wdata = mux.pc;
+    } else if (i_irq_software) {
+        vb_csr_cmd_type = CsrReq_PcCmd;
+        vb_csr_cmd_addr = INTERRUPT_XSoftware;              // Software interrupt request
+        vb_csr_cmd_wdata = mux.pc;
+    } else if (i_irq_timer) {
+        vb_csr_cmd_type = CsrReq_PcCmd;
+        vb_csr_cmd_addr = INTERRUPT_XTimer;                 // Timer interrupt request
+        vb_csr_cmd_wdata = mux.pc;
+    } else if (i_irq_external) {
+        vb_csr_cmd_type = CsrReq_PcCmd;
+        vb_csr_cmd_addr = INTERRUPT_XExternal;              // PLIC interrupt request
         vb_csr_cmd_wdata = mux.pc;
     } else if (wv[Instr_MRET]) {
         vb_csr_cmd_type = (CsrReq_PcCmd | CsrReq_ChaneModeCmd);

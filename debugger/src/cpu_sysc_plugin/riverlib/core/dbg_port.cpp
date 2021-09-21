@@ -39,6 +39,7 @@ DbgPort::DbgPort(sc_module_name name_, bool async_reset) :
     i_csr_resp_valid("i_csr_resp_valid"),
     o_csr_resp_ready("o_csr_resp_ready"),
     i_csr_resp_data("i_csr_resp_data"),
+    i_csr_resp_exception("i_csr_resp_exception"),
     o_reg_addr("o_reg_addr"),
     o_core_wdata("o_core_wdata"),
     o_ireg_ena("o_ireg_ena"),
@@ -61,6 +62,7 @@ DbgPort::DbgPort(sc_module_name name_, bool async_reset) :
     sensitive << i_csr_req_ready;
     sensitive << i_csr_resp_valid;
     sensitive << i_csr_resp_data;
+    sensitive << i_csr_resp_exception;
     sensitive << i_pc;
     sensitive << i_npc;
     sensitive << i_e_call;
@@ -113,6 +115,7 @@ void DbgPort::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_csr_resp_valid, i_csr_resp_valid.name());
         sc_trace(o_vcd, o_csr_resp_ready, o_csr_resp_ready.name());
         sc_trace(o_vcd, i_csr_resp_data, i_csr_resp_data.name());
+        sc_trace(o_vcd, i_csr_resp_exception, i_csr_resp_exception.name());
         sc_trace(o_vcd, o_reg_addr, o_reg_addr.name());
         sc_trace(o_vcd, o_core_wdata, o_core_wdata.name());
         sc_trace(o_vcd, o_ireg_ena, o_ireg_ena.name());

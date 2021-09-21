@@ -31,13 +31,13 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     o_resp_valid("o_resp_valid"),
     i_resp_ready("i_resp_ready"),
     o_resp_data("o_resp_data"),
+    o_resp_exception("o_resp_exception"),
     i_e_pc("i_e_pc"),
     i_e_npc("i_e_npc"),
-    i_ex_data_addr("i_ex_data_addr"),
-    i_ex_data_load_fault("i_ex_data_load_fault"),
-    i_ex_data_store_fault("i_ex_data_store_fault"),
-    i_ex_data_store_fault_addr("i_ex_data_store_fault_addr"),
     i_irq_external("i_irq_external"),
+    o_irq_software("o_irq_software"),
+    o_irq_timer("o_irq_timer"),
+    o_irq_external("o_irq_external"),
     i_e_valid("i_e_valid"),
     o_executed_cnt("o_executed_cnt"),
     o_dbg_pc_write("o_dbg_pc_write"),
@@ -66,10 +66,6 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << i_resp_ready;
     sensitive << i_e_pc;
     sensitive << i_e_npc;
-    sensitive << i_ex_data_addr;
-    sensitive << i_ex_data_load_fault;
-    sensitive << i_ex_data_store_fault;
-    sensitive << i_ex_data_store_fault_addr;
     sensitive << i_irq_external;
     sensitive << i_e_valid;
     sensitive << r.state;
@@ -135,13 +131,13 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_resp_valid, o_resp_valid.name());
         sc_trace(o_vcd, i_resp_ready, i_resp_ready.name());
         sc_trace(o_vcd, o_resp_data, o_resp_data.name());
+        sc_trace(o_vcd, o_resp_exception, o_resp_exception.name());
         sc_trace(o_vcd, i_e_pc, i_e_pc.name());
         sc_trace(o_vcd, i_e_npc, i_e_npc.name());
-        sc_trace(o_vcd, i_ex_data_addr, i_ex_data_addr.name());
-        sc_trace(o_vcd, i_ex_data_load_fault, i_ex_data_load_fault.name());
-        sc_trace(o_vcd, i_ex_data_store_fault, i_ex_data_store_fault.name());
-        sc_trace(o_vcd, i_ex_data_store_fault_addr, i_ex_data_store_fault_addr.name());
         sc_trace(o_vcd, i_irq_external, i_irq_external.name());
+        sc_trace(o_vcd, o_irq_software, o_irq_software.name());
+        sc_trace(o_vcd, o_irq_timer, o_irq_timer.name());
+        sc_trace(o_vcd, o_irq_external, o_irq_external.name());
         sc_trace(o_vcd, o_executed_cnt, o_executed_cnt.name());
         sc_trace(o_vcd, o_dbg_pc_write, o_dbg_pc_write.name());
         sc_trace(o_vcd, o_dbg_pc, o_dbg_pc.name());
@@ -245,7 +241,7 @@ void CsrRegs::comb() {
     case State_Exception:
         v.state = State_Response;
         switch (r.req_addr.read()) {
-        case CsrReq_Addr_UnsupInstruction:
+        case EXCEPTION_InstrIllegal:
             w_trap_valid = 1;
             wb_mbadaddr = r.req_data;
             wb_trap_code = EXCEPTION_InstrIllegal;
@@ -254,7 +250,7 @@ void CsrRegs::comb() {
                 v.progbuf_err = PROGBUF_ERR_EXCEPTION;
             }
             break;
-        case CsrReq_Addr_ECall:
+        case EXCEPTION_CallFromXMode:
             w_trap_valid = 1;
             wb_mbadaddr = r.req_data;
             if (r.mode.read() == PRV_M) {
@@ -869,6 +865,11 @@ void CsrRegs::comb() {
     o_req_ready = v_req_ready;
     o_resp_valid = v_resp_valid;
     o_resp_data = r.req_data;
+    o_resp_exception = 0;
+
+    o_irq_software = 0;
+    o_irq_timer = 0;
+    o_irq_external = 0;
 
     o_executed_cnt = r.executed_cnt;
     o_dbg_pc_write = v_dbg_pc_write;

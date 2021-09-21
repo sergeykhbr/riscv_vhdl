@@ -42,7 +42,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     i_resp_data_valid("i_resp_data_valid"),
     i_resp_data_addr("i_resp_data_addr"),
     i_resp_data_data("i_resp_data_data"),
-    i_resp_data_store_fault_addr("i_resp_data_store_fault_addr"),
+    i_resp_data_fault_addr("i_resp_data_fault_addr"),
     i_resp_data_load_fault("i_resp_data_load_fault"),
     i_resp_data_store_fault("i_resp_data_store_fault"),
     i_resp_data_er_mpu_load("i_resp_data_er_mpu_load"),
@@ -192,6 +192,14 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->i_unsup_exception(w.d.exception);
     exec0->i_instr_load_fault(w.d.instr_load_fault);
     exec0->i_instr_executable(w.d.instr_executable);
+    exec0->i_mem_ex_load_fault(i_resp_data_load_fault);
+    exec0->i_mem_ex_store_fault(i_resp_data_store_fault);
+    exec0->i_mem_ex_mpu_store(i_resp_data_er_mpu_store);
+    exec0->i_mem_ex_mpu_load(i_resp_data_er_mpu_load);
+    exec0->i_mem_ex_addr(i_resp_data_fault_addr);
+    exec0->i_irq_software(csr.irq_software);
+    exec0->i_irq_timer(csr.irq_timer);
+    exec0->i_irq_external(csr.irq_external);
     exec0->i_halt(csr.halt);
     exec0->i_dport_npc_write(csr.dbg_pc_write);
     exec0->i_dport_npc(csr.dbg_pc);
@@ -214,6 +222,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->i_csr_resp_valid(iccsr_m0_resp_valid);
     exec0->o_csr_resp_ready(w.e.csr_resp_ready);
     exec0->i_csr_resp_data(iccsr_m0_resp_data);
+    exec0->i_csr_resp_exception(iccsr_m0_resp_exception);
     exec0->o_memop_valid(w.e.memop_valid);
     exec0->o_memop_sign_ext(w.e.memop_sign_ext);
     exec0->o_memop_type(w.e.memop_type);
@@ -311,6 +320,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     iccsr0->o_m0_resp_valid(iccsr_m0_resp_valid);
     iccsr0->i_m0_resp_ready(w.e.csr_resp_ready);
     iccsr0->o_m0_resp_data(iccsr_m0_resp_data);
+    iccsr0->o_m0_resp_exception(iccsr_m0_resp_exception);
     iccsr0->i_m1_req_valid(dbg.csr_req_valid);
     iccsr0->o_m1_req_ready(iccsr_m1_req_ready);
     iccsr0->i_m1_req_type(dbg.csr_req_type);
@@ -319,6 +329,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     iccsr0->o_m1_resp_valid(iccsr_m1_resp_valid);
     iccsr0->i_m1_resp_ready(dbg.csr_resp_ready);
     iccsr0->o_m1_resp_data(iccsr_m1_resp_data);
+    iccsr0->o_m1_resp_exception(iccsr_m1_resp_exception);
     iccsr0->o_s0_req_valid(iccsr_s0_req_valid);
     iccsr0->i_s0_req_ready(csr.req_ready);
     iccsr0->o_s0_req_type(iccsr_s0_req_type);
@@ -327,6 +338,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     iccsr0->i_s0_resp_valid(csr.resp_valid);
     iccsr0->o_s0_resp_ready(iccsr_s0_resp_ready);
     iccsr0->i_s0_resp_data(csr.resp_data);
+    iccsr0->i_s0_resp_exception(csr.resp_exception);
 
     csr0 = new CsrRegs("csr0", hartid, async_reset);
     csr0->i_clk(i_clk);
@@ -340,35 +352,15 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     csr0->o_resp_valid(csr.resp_valid);
     csr0->i_resp_ready(iccsr_s0_resp_ready);
     csr0->o_resp_data(csr.resp_data);
-    //csr0->i_trap_ready(w.e.trap_ready);
+    csr0->o_resp_exception(csr.resp_exception);
     csr0->i_e_pc(w.e.pc);
     csr0->i_e_npc(w.e.npc);
-    //csr0->i_ex_npc(w.e.ex_npc);
-    csr0->i_ex_data_addr(i_resp_data_addr);
-    csr0->i_ex_data_load_fault(i_resp_data_load_fault);
-    csr0->i_ex_data_store_fault(i_resp_data_store_fault);
-    csr0->i_ex_data_store_fault_addr(i_resp_data_store_fault_addr);
-    /*csr0->i_ex_instr_load_fault(w.e.ex_instr_load_fault);
-    csr0->i_ex_instr_not_executable(w.e.ex_instr_not_executable);
-    csr0->i_ex_illegal_instr(w.e.ex_illegal_instr);
-    csr0->i_ex_unalign_store(w.e.ex_unalign_store);
-    csr0->i_ex_unalign_load(w.e.ex_unalign_load);
-    csr0->i_ex_mpu_store(i_resp_data_er_mpu_store);
-    csr0->i_ex_mpu_load(i_resp_data_er_mpu_load);
-    csr0->i_ex_breakpoint(w.e.ex_breakpoint);
-    csr0->i_ex_ecall(w.e.ex_ecall);
-    csr0->i_ex_fpu_invalidop(w.e.ex_fpu_invalidop);
-    csr0->i_ex_fpu_divbyzero(w.e.ex_fpu_divbyzero);
-    csr0->i_ex_fpu_overflow(w.e.ex_fpu_overflow);
-    csr0->i_ex_fpu_underflow(w.e.ex_fpu_underflow);
-    csr0->i_ex_fpu_inexact(w.e.ex_fpu_inexact);
-    csr0->i_fpu_valid(w.e.fpu_valid);*/
     csr0->i_irq_external(i_ext_irq);
-    //csr0->i_e_next_ready(w.e.trap_ready);
+    csr0->o_irq_software(csr.irq_software);
+    csr0->o_irq_timer(csr.irq_timer);
+    csr0->o_irq_external(csr.irq_external);
     csr0->i_e_valid(w.e.valid);
     csr0->o_executed_cnt(csr.executed_cnt);
-    //csr0->o_trap_valid(csr.trap_valid);
-    //csr0->o_trap_pc(csr.trap_pc);
     csr0->o_dbg_pc_write(csr.dbg_pc_write);
     csr0->o_dbg_pc(csr.dbg_pc);
     csr0->o_progbuf_ena(csr.progbuf_ena);
@@ -402,6 +394,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     dbg0->i_csr_resp_valid(iccsr_m1_resp_valid);
     dbg0->o_csr_resp_ready(dbg.csr_resp_ready);
     dbg0->i_csr_resp_data(iccsr_m1_resp_data);
+    dbg0->i_csr_resp_exception(iccsr_m1_resp_exception);
     dbg0->o_reg_addr(dbg.reg_addr);
     dbg0->o_core_wdata(dbg.core_wdata);
     dbg0->o_ireg_ena(dbg.ireg_ena);

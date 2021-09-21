@@ -58,7 +58,7 @@ SC_MODULE(Processor) {
     sc_in<bool> i_resp_data_valid;                      // DCache response is valid
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_resp_data_addr;    // DCache response address must be equal to the latest request address
     sc_in<sc_uint<64>> i_resp_data_data;                // Read value
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_resp_data_store_fault_addr;  // write-error address (B-channel)
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_resp_data_fault_addr;  // write-error address (B-channel)
     sc_in<bool> i_resp_data_load_fault;                 // Bus response with SLVERR or DECERR on read
     sc_in<bool> i_resp_data_store_fault;                // Bus response with SLVERR or DECERR on write
     sc_in<bool> i_resp_data_er_mpu_load;
@@ -199,9 +199,10 @@ private:
     } freg;
 
     struct CsrType {
-        sc_signal<bool> req_ready;                // CSR module is ready to accept request
-        sc_signal<bool> resp_valid;               // CSR module Response is valid
-        sc_signal<sc_uint<RISCV_ARCH>> resp_data; // Responded CSR data
+        sc_signal<bool> req_ready;                  // CSR module is ready to accept request
+        sc_signal<bool> resp_valid;                 // CSR module Response is valid
+        sc_signal<sc_uint<RISCV_ARCH>> resp_data;   // Responded CSR data
+        sc_signal<bool> resp_exception;             // Exception of CSR access
         sc_signal<bool> progbuf_ena;                // execute instruction from progbuf
         sc_signal<sc_uint<32>> progbuf_pc;          // progbuf instruction counter
         sc_signal<sc_uint<32>> progbuf_data;        // progbuf instruction to execute
@@ -211,6 +212,9 @@ private:
         sc_signal<bool> dbg_pc_write;               // modify npc value strob
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> dbg_pc;
         sc_signal<bool> halt;                       // Halt signal is equal to hold pipeline
+        sc_signal<bool> irq_software;
+        sc_signal<bool> irq_timer;
+        sc_signal<bool> irq_external;
     } csr;
 
     struct DebugType {
@@ -242,16 +246,19 @@ private:
     sc_signal<bool> iccsr_m0_req_ready;
     sc_signal<bool> iccsr_m0_resp_valid;
     sc_signal<sc_uint<RISCV_ARCH>> iccsr_m0_resp_data;
+    sc_signal<bool> iccsr_m0_resp_exception;
     // csr bridge to debug unit
     sc_signal<bool> iccsr_m1_req_ready;
     sc_signal<bool> iccsr_m1_resp_valid;
     sc_signal<sc_uint<RISCV_ARCH>> iccsr_m1_resp_data;
+    sc_signal<bool> iccsr_m1_resp_exception;
     // csr bridge to CSR module
     sc_signal<bool> iccsr_s0_req_valid;
     sc_signal<sc_uint<CsrReq_TotalBits>> iccsr_s0_req_type;
     sc_signal<sc_uint<12>> iccsr_s0_req_addr;
     sc_signal<sc_uint<RISCV_ARCH>> iccsr_s0_req_data;
     sc_signal<bool> iccsr_s0_resp_ready;
+    sc_signal<bool> iccsr_s0_resp_exception;
 
     sc_signal<bool> w_fetch_pipeline_hold;
     sc_signal<bool> w_any_pipeline_hold;

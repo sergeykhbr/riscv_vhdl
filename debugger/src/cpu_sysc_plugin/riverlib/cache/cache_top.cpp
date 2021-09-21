@@ -41,7 +41,7 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset, bool coherence_ena) :
     o_resp_data_valid("o_resp_data_valid"),
     o_resp_data_addr("o_resp_data_addr"),
     o_resp_data_data("o_resp_data_data"),
-    o_resp_data_store_fault_addr("o_resp_data_store_fault_addr"),
+    o_resp_data_fault_addr("o_resp_data_fault_addr"),
     o_resp_data_load_fault("o_resp_data_load_fault"),
     o_resp_data_store_fault("o_resp_data_store_fault"),
     o_resp_data_er_mpu_load("o_resp_data_er_mpu_load"),
@@ -145,7 +145,7 @@ CacheTop::CacheTop(sc_module_name name_, bool async_reset, bool coherence_ena) :
     d0->o_resp_valid(o_resp_data_valid);
     d0->o_resp_addr(o_resp_data_addr);
     d0->o_resp_data(o_resp_data_data);
-    d0->o_resp_er_addr(o_resp_data_store_fault_addr);
+    d0->o_resp_er_addr(o_resp_data_fault_addr);
     d0->o_resp_er_load_fault(o_resp_data_load_fault);
     d0->o_resp_er_store_fault(o_resp_data_store_fault);
     d0->o_resp_er_mpu_load(o_resp_data_er_mpu_load);

@@ -55,10 +55,18 @@ SC_MODULE(InstrExecute) {
     sc_in<sc_bv<ISA_Total>> i_isa_type;         // Type of the instruction's structure (ISA spec.)
     sc_in<sc_bv<Instr_Total>> i_ivec;           // One pulse per supported instruction.
     sc_in<bool> i_unsup_exception;              // Unsupported instruction exception
-    sc_in<bool> i_instr_load_fault;             // fault instruction's address
-    sc_in<bool> i_instr_executable;             // MPU flag
+    sc_in<bool> i_instr_load_fault;             // fault instruction's address. Bus returned ERR on read transaction
+    sc_in<bool> i_instr_executable;             // MPU flag 'executable' not set for this memory region
+    sc_in<bool> i_mem_ex_load_fault;                    // Memoryaccess: Bus response with SLVERR or DECERR on read data
+    sc_in<bool> i_mem_ex_store_fault;                   // Memoryaccess: Bus response with SLVERR or DECERR on write data
+    sc_in<bool> i_mem_ex_mpu_store;                     // Memoryaccess: MPU access error on storing data
+    sc_in<bool> i_mem_ex_mpu_load;                      // Memoryaccess: MPU access error on load data
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_mem_ex_addr;    // Memoryaccess: exception address
 
-    sc_in<bool> i_halt;
+    sc_in<bool> i_irq_software;                 // software interrupt request from CSR register xSIP
+    sc_in<bool> i_irq_timer;                    // interrupt request from wallclock timer
+    sc_in<bool> i_irq_external;                 // interrupt request from PLIC
+    sc_in<bool> i_halt;                         // halt request from debug unit
     sc_in<bool> i_dport_npc_write;              // Write npc value from debug port
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_dport_npc; // Debug port npc value to write
 
@@ -82,6 +90,7 @@ SC_MODULE(InstrExecute) {
     sc_in<bool> i_csr_resp_valid;               // CSR module Response is valid
     sc_out<bool> o_csr_resp_ready;              // Executor is ready to accept response
     sc_in<sc_uint<RISCV_ARCH>> i_csr_resp_data; // Responded CSR data
+    sc_in<bool> i_csr_resp_exception;           // Raise exception on CSR access
 
     sc_out<bool> o_memop_valid;                 // Request to memory is valid
     sc_out<bool> o_memop_sign_ext;              // Load data with sign extending
@@ -289,8 +298,6 @@ private:
     sc_signal<bool> w_ex_fpu_overflow;             // FPU Exception: overflow
     sc_signal<bool> w_ex_fpu_underflow;            // FPU Exception: underflow
     sc_signal<bool> w_ex_fpu_inexact;              // FPU Exception: inexact
-    bool w_exception_store;
-    bool w_exception_load;
 
     bool w_hazard1;
     bool w_hazard2;

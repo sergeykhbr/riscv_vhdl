@@ -32,6 +32,7 @@ ic_csr_m2_s1::ic_csr_m2_s1(sc_module_name name_, bool async_reset) : sc_module(n
     o_m0_resp_valid("o_m0_resp_valid"),
     i_m0_resp_ready("i_m0_resp_ready"),
     o_m0_resp_data("o_m0_resp_data"),
+    o_m0_resp_exception("o_m0_resp_exception"),
     // master[1]
     i_m1_req_valid("i_m1_req_valid"),
     o_m1_req_ready("o_m1_req_ready"),
@@ -41,6 +42,7 @@ ic_csr_m2_s1::ic_csr_m2_s1(sc_module_name name_, bool async_reset) : sc_module(n
     o_m1_resp_valid("o_m1_resp_valid"),
     i_m1_resp_ready("i_m1_resp_ready"),
     o_m1_resp_data("o_m1_resp_data"),
+    o_m1_resp_exception("o_m1_resp_exception"),
     // slave[0]
     o_s0_req_valid("o_s0_req_valid"),
     i_s0_req_ready("i_s0_req_ready"),
@@ -49,7 +51,8 @@ ic_csr_m2_s1::ic_csr_m2_s1(sc_module_name name_, bool async_reset) : sc_module(n
     o_s0_req_data("o_s0_req_data"),
     i_s0_resp_valid("i_s0_resp_valid"),
     o_s0_resp_ready("o_s0_resp_ready"),
-    i_s0_resp_data("i_s0_resp_data") {
+    i_s0_resp_data("i_s0_resp_data"),
+    i_s0_resp_exception("i_s0_resp_exception") {
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
@@ -66,6 +69,7 @@ ic_csr_m2_s1::ic_csr_m2_s1(sc_module_name name_, bool async_reset) : sc_module(n
     sensitive << i_s0_req_ready;
     sensitive << i_s0_resp_valid;
     sensitive << i_s0_resp_data;
+    sensitive << i_s0_resp_exception;
     sensitive << r.midx;
     sensitive << r.acquired;
 
@@ -100,6 +104,7 @@ void ic_csr_m2_s1::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_s0_resp_valid, i_s0_resp_valid.name());
         sc_trace(o_vcd, o_s0_resp_ready, o_s0_resp_ready.name());
         sc_trace(o_vcd, i_s0_resp_data, i_s0_resp_data.name());
+        sc_trace(o_vcd, i_s0_resp_exception, i_s0_resp_exception.name());
 
         std::string pn(name());
         sc_trace(o_vcd, r.midx, pn + ".r_midx");
@@ -118,9 +123,11 @@ void ic_csr_m2_s1::comb() {
         o_m0_resp_valid = i_s0_resp_valid;
         o_s0_resp_ready = i_m0_resp_ready;
         o_m0_resp_data = i_s0_resp_data;
+        o_m0_resp_exception = i_s0_resp_exception;
         o_m1_req_ready = 0;
         o_m1_resp_valid = 0;
         o_m1_resp_data = 0;
+        o_m1_resp_exception = 0;
     } else {
         o_s0_req_valid = i_m1_req_valid;
         o_m1_req_ready = i_s0_req_ready;
@@ -130,9 +137,11 @@ void ic_csr_m2_s1::comb() {
         o_m1_resp_valid = i_s0_resp_valid;
         o_s0_resp_ready = i_m1_resp_ready;
         o_m1_resp_data = i_s0_resp_data;
+        o_m1_resp_exception = i_s0_resp_exception;
         o_m0_req_ready = 0;
         o_m0_resp_valid = 0;
         o_m0_resp_data = 0;
+        o_m0_resp_exception = 0;
     }
 
     if (!r.acquired && (i_m0_req_valid || i_m1_req_valid)) {

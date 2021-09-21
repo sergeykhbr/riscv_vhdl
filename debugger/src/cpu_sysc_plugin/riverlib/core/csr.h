@@ -35,15 +35,13 @@ SC_MODULE(CsrRegs) {
     sc_out<bool> o_resp_valid;                  // CSR module Response is valid
     sc_in<bool> i_resp_ready;                   // Executor is ready to accept response
     sc_out<sc_uint<RISCV_ARCH>> o_resp_data;    // Responded CSR data
+    sc_out<bool> o_resp_exception;              // exception on CSR access
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_pc;
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_npc;
-    //sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_ex_npc;
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_ex_data_addr;  // Data path: address must be equal to the latest request address
-    sc_in<bool> i_ex_data_load_fault;       // Data path: Bus response with SLVERR or DECERR on read
-    sc_in<bool> i_ex_data_store_fault;      // Data path: Bus response with SLVERR or DECERR on write
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_ex_data_store_fault_addr;  // Write data miss access
     sc_in<bool> i_irq_external;
-    //sc_in<bool> i_e_next_ready;
+    sc_out<bool> o_irq_software;                // software interrupt pending bit
+    sc_out<bool> o_irq_timer;                   // timer interrupt pending bit
+    sc_out<bool> o_irq_external;                // external interrupt pending bit
     sc_in<bool> i_e_valid;
     sc_out<sc_uint<64>> o_executed_cnt;     // Number of executed instructions
     sc_out<bool> o_dbg_pc_write;            // Modify pc via debug interface

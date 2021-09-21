@@ -35,6 +35,7 @@ SC_MODULE(ic_csr_m2_s1) {
     sc_out<bool> o_m0_resp_valid;
     sc_in<bool> i_m0_resp_ready;
     sc_out<sc_uint<RISCV_ARCH>> o_m0_resp_data;
+    sc_out<bool> o_m0_resp_exception;
     // master[1]
     sc_in<bool> i_m1_req_valid;
     sc_out<bool> o_m1_req_ready;
@@ -44,6 +45,7 @@ SC_MODULE(ic_csr_m2_s1) {
     sc_out<bool> o_m1_resp_valid;
     sc_in<bool> i_m1_resp_ready;
     sc_out<sc_uint<RISCV_ARCH>> o_m1_resp_data;
+    sc_out<bool> o_m1_resp_exception;
     // slave[0]
     sc_out<bool> o_s0_req_valid;
     sc_in<bool> i_s0_req_ready;
@@ -53,6 +55,7 @@ SC_MODULE(ic_csr_m2_s1) {
     sc_in<bool> i_s0_resp_valid;
     sc_out<bool> o_s0_resp_ready;
     sc_in<sc_uint<RISCV_ARCH>> i_s0_resp_data;
+    sc_in<bool> i_s0_resp_exception;
 
     void comb();
     void registers();

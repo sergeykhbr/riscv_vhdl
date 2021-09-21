@@ -50,7 +50,7 @@ SC_MODULE(CacheTop) {
     sc_out<bool> o_resp_data_valid;                     // DCache response is ready
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_resp_data_addr;   // DCache response address
     sc_out<sc_uint<64>> o_resp_data_data;               // DCache response read data
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_resp_data_store_fault_addr;   // AXI B-channel error
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_resp_data_fault_addr;   // AXI B-channel error
     sc_out<bool> o_resp_data_load_fault;                // Bus response ERRSLV or ERRDEC on read
     sc_out<bool> o_resp_data_store_fault;               // Bus response ERRSLV or ERRDEC on write
     sc_out<bool> o_resp_data_er_mpu_load;
