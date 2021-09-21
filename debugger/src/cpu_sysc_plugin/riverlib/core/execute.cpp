@@ -712,59 +712,59 @@ void InstrExecute::comb() {
                 || wv[Instr_CSRRC] || wv[Instr_CSRRCI] || wv[Instr_CSRRS]
                 || wv[Instr_CSRRSI] || wv[Instr_CSRRW] || wv[Instr_CSRRWI];
     if (v_instr_misaligned == 1) {
-        vb_csr_cmd_type = CsrReq_PcCmd;
+        vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_InstrMisalign;          // Instruction address misaligned
         vb_csr_cmd_wdata = mux.pc;
     } else if (i_instr_load_fault == 1 || i_instr_executable == 0) {
-        vb_csr_cmd_type = CsrReq_PcCmd;
+        vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_InstrFault;             // Instruction access fault
         vb_csr_cmd_wdata = mux.pc;
     } else if (i_unsup_exception) {
-        vb_csr_cmd_type = CsrReq_PcCmd;
+        vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_InstrIllegal;           // Illegal instruction
         vb_csr_cmd_wdata = mux.pc;
     } else if (wv[Instr_EBREAK]) {
-        vb_csr_cmd_type = CsrReq_PcCmd;
+        vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_Breakpoint;
         vb_csr_cmd_wdata = mux.pc;
     } else if (v_load_misaligned == 1) {
-        vb_csr_cmd_type = CsrReq_PcCmd;
+        vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_LoadMisalign;           // Load address misaligned
         vb_csr_cmd_wdata = mux.pc;
     } else if (i_mem_ex_load_fault || i_mem_ex_mpu_load) {
-        vb_csr_cmd_type = CsrReq_PcCmd;
+        vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_LoadFault;              // Load access fault
         vb_csr_cmd_wdata = i_mem_ex_addr;
     } else if (v_store_misaligned == 1) {
-        vb_csr_cmd_type = CsrReq_PcCmd;
+        vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_StoreMisalign;          // Store/AMO address misaligned
         vb_csr_cmd_wdata = mux.pc;
     } else if (i_mem_ex_store_fault || i_mem_ex_mpu_store) {
-        vb_csr_cmd_type = CsrReq_PcCmd;
+        vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_StoreFault;             // Store/AMO access fault
         vb_csr_cmd_wdata = i_mem_ex_addr;
     } else if (wv[Instr_ECALL]) {
-        vb_csr_cmd_type = CsrReq_PcCmd;
+        vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_CallFromXMode;          // Environment call
         vb_csr_cmd_wdata = mux.pc;
     } else if (i_irq_software) {
-        vb_csr_cmd_type = CsrReq_PcCmd;
+        vb_csr_cmd_type = CsrReq_InterruptCmd;
         vb_csr_cmd_addr = INTERRUPT_XSoftware;              // Software interrupt request
         vb_csr_cmd_wdata = mux.pc;
     } else if (i_irq_timer) {
-        vb_csr_cmd_type = CsrReq_PcCmd;
+        vb_csr_cmd_type = CsrReq_InterruptCmd;
         vb_csr_cmd_addr = INTERRUPT_XTimer;                 // Timer interrupt request
         vb_csr_cmd_wdata = mux.pc;
     } else if (i_irq_external) {
-        vb_csr_cmd_type = CsrReq_PcCmd;
+        vb_csr_cmd_type = CsrReq_InterruptCmd;
         vb_csr_cmd_addr = INTERRUPT_XExternal;              // PLIC interrupt request
         vb_csr_cmd_wdata = mux.pc;
     } else if (wv[Instr_MRET]) {
-        vb_csr_cmd_type = (CsrReq_PcCmd | CsrReq_ChaneModeCmd);
+        vb_csr_cmd_type = (CsrReq_ReadCmd | CsrReq_TrapReturnCmd);
         vb_csr_cmd_addr = CSR_mepc;
         vb_csr_cmd_wdata = mux.pc;
     } else if (wv[Instr_URET]) {
-        vb_csr_cmd_type = (CsrReq_PcCmd | CsrReq_ChaneModeCmd);
+        vb_csr_cmd_type = (CsrReq_ReadCmd | CsrReq_TrapReturnCmd);
         vb_csr_cmd_addr = CSR_uepc;
         vb_csr_cmd_wdata = mux.pc;
     } else if (wv[Instr_CSRRC]) {
@@ -850,8 +850,11 @@ void InstrExecute::comb() {
                     v.csr_req_type = vb_csr_cmd_type;
                     v.csr_req_addr = vb_csr_cmd_addr;
                     v.csr_req_data = vb_csr_cmd_wdata;
-                    v.csr_req_rmw = vb_csr_cmd_type[CsrReq_ReadBit];  // read/modify/write
-                    v.csr_req_pc = vb_csr_cmd_type[CsrReq_PcBit];
+                    v.csr_req_rmw = vb_csr_cmd_type[CsrReq_ReadBit]
+                                  & !vb_csr_cmd_type[CsrReq_TrapReturnBit];  // read/modify/write
+                    v.csr_req_pc = vb_csr_cmd_type[CsrReq_ExceptionBit]
+                                 | vb_csr_cmd_type[CsrReq_InterruptBit]
+                                 | vb_csr_cmd_type[CsrReq_TrapReturnBit];
                 } else if (vb_select[Res_IMul] || vb_select[Res_IDiv] || vb_select[Res_FPU]) {
                     v.state = State_WaitMulti;
                 } else if (i_amo.read() == 1) {

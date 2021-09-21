@@ -99,7 +99,7 @@ ETransStatus IrqController::b_transport(Axi4TransactionType *trans) {
                 t1 = regs_.irq_pending;
                 regs_.irq_pending &= ~trans->wpayload.b32[i];
                 if (t1 && !regs_.irq_pending) {
-                    icpu_->lowerSignal(INTERRUPT_MExternal);
+                    icpu_->lowerSignal(SIGNAL_XExternal);
                 }
                 RISCV_info("Set irq_clear = %08x", trans->wpayload.b32[i]);
                 break;
@@ -149,7 +149,7 @@ ETransStatus IrqController::b_transport(Axi4TransactionType *trans) {
                 regs_.irq_lock = trans->wpayload.b32[i];
                 RISCV_info("Set irq_ena = %08x", trans->wpayload.b32[i]);
                 if (regs_.irq_lock == 0 && regs_.irq_pending) {
-                    icpu_->lowerSignal(INTERRUPT_MExternal);
+                    icpu_->lowerSignal(SIGNAL_XExternal);
                 }
                 break;
             case 11:
@@ -237,7 +237,7 @@ void IrqController::stepCallback(uint64_t t) {
         return;
     }
     if (~regs_.irq_mask & regs_.irq_pending) {
-        icpu_->raiseSignal(INTERRUPT_MExternal);   // PLIC interrupt (external)
+        icpu_->raiseSignal(SIGNAL_XExternal);   // PLIC interrupt (external)
         RISCV_debug("Raise interrupt", NULL);
     }
 }

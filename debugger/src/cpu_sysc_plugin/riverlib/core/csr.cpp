@@ -18,6 +18,45 @@
 
 namespace debugger {
 
+/** (SignalIdx, 2'mode) */
+static const uint64_t NMI_TABLE_ADDR[4*EXCEPTIONS_Total] = {
+    // Exceptions:
+    // User mode                    SuperUser mode                   Hypervisor mode               Machine Mode
+    CFG_NMI_INSTR_UNALIGNED_ADDR,  CFG_NMI_INSTR_UNALIGNED_ADDR,  CFG_NMI_INSTR_UNALIGNED_ADDR,  CFG_NMI_INSTR_UNALIGNED_ADDR,
+    CFG_NMI_INSTR_FAULT_ADDR,      CFG_NMI_INSTR_FAULT_ADDR,      CFG_NMI_INSTR_FAULT_ADDR,      CFG_NMI_INSTR_FAULT_ADDR,
+    CFG_NMI_INSTR_ILLEGAL_ADDR,    CFG_NMI_INSTR_ILLEGAL_ADDR,    CFG_NMI_INSTR_ILLEGAL_ADDR,    CFG_NMI_INSTR_ILLEGAL_ADDR,
+    CFG_NMI_BREAKPOINT_ADDR,       CFG_NMI_BREAKPOINT_ADDR,       CFG_NMI_BREAKPOINT_ADDR,       CFG_NMI_BREAKPOINT_ADDR,
+    CFG_NMI_LOAD_UNALIGNED_ADDR,   CFG_NMI_LOAD_UNALIGNED_ADDR,   CFG_NMI_LOAD_UNALIGNED_ADDR,   CFG_NMI_LOAD_UNALIGNED_ADDR,
+    CFG_NMI_LOAD_FAULT_ADDR,       CFG_NMI_LOAD_FAULT_ADDR,       CFG_NMI_LOAD_FAULT_ADDR,       CFG_NMI_LOAD_FAULT_ADDR,
+    CFG_NMI_STORE_UNALIGNED_ADDR,  CFG_NMI_STORE_UNALIGNED_ADDR,  CFG_NMI_STORE_UNALIGNED_ADDR,  CFG_NMI_STORE_UNALIGNED_ADDR,
+    CFG_NMI_STORE_FAULT_ADDR,      CFG_NMI_STORE_FAULT_ADDR,      CFG_NMI_STORE_FAULT_ADDR,      CFG_NMI_STORE_FAULT_ADDR,
+    CFG_NMI_CALL_FROM_UMODE_ADDR,  CFG_NMI_CALL_FROM_SMODE_ADDR,  CFG_NMI_CALL_FROM_HMODE_ADDR,  CFG_NMI_CALL_FROM_UMODE_ADDR,
+    CFG_NMI_INSTR_PAGE_FAULT_ADDR, CFG_NMI_INSTR_PAGE_FAULT_ADDR, CFG_NMI_INSTR_PAGE_FAULT_ADDR, CFG_NMI_INSTR_PAGE_FAULT_ADDR,
+    CFG_NMI_LOAD_PAGE_FAULT_ADDR,  CFG_NMI_LOAD_PAGE_FAULT_ADDR,  CFG_NMI_LOAD_PAGE_FAULT_ADDR,  CFG_NMI_LOAD_PAGE_FAULT_ADDR,
+    CFG_NMI_14_ADDR,               CFG_NMI_14_ADDR,               CFG_NMI_14_ADDR,               CFG_NMI_14_ADDR,
+    CFG_NMI_STORE_PAGE_FAULT_ADDR, CFG_NMI_STORE_PAGE_FAULT_ADDR, CFG_NMI_STORE_PAGE_FAULT_ADDR, CFG_NMI_STORE_PAGE_FAULT_ADDR,
+    CFG_NMI_STACK_OVERFLOW_ADDR,   CFG_NMI_STACK_OVERFLOW_ADDR,   CFG_NMI_STACK_OVERFLOW_ADDR,   CFG_NMI_STACK_OVERFLOW_ADDR,
+    CFG_NMI_STACK_UNDERFLOW_ADDR,  CFG_NMI_STACK_UNDERFLOW_ADDR,  CFG_NMI_STACK_UNDERFLOW_ADDR,  CFG_NMI_STACK_UNDERFLOW_ADDR
+};
+
+static const uint64_t NMI_CAUSE_IDX[4*EXCEPTIONS_Total] = {
+    EXCEPTION_InstrMisalign,    EXCEPTION_InstrMisalign,    EXCEPTION_InstrMisalign,    EXCEPTION_InstrMisalign,
+    EXCEPTION_InstrFault,       EXCEPTION_InstrFault,       EXCEPTION_InstrFault,       EXCEPTION_InstrFault,
+    EXCEPTION_InstrIllegal,     EXCEPTION_InstrIllegal,     EXCEPTION_InstrIllegal,     EXCEPTION_InstrIllegal,
+    EXCEPTION_Breakpoint,       EXCEPTION_Breakpoint,       EXCEPTION_Breakpoint,       EXCEPTION_Breakpoint,
+    EXCEPTION_LoadMisalign,     EXCEPTION_LoadMisalign,     EXCEPTION_LoadMisalign,     EXCEPTION_LoadMisalign,
+    EXCEPTION_LoadFault,        EXCEPTION_LoadFault,        EXCEPTION_LoadFault,        EXCEPTION_LoadFault,
+    EXCEPTION_StoreMisalign,    EXCEPTION_StoreMisalign,    EXCEPTION_StoreMisalign,    EXCEPTION_StoreMisalign,
+    EXCEPTION_StoreFault,       EXCEPTION_StoreFault,       EXCEPTION_StoreFault,       EXCEPTION_StoreFault,
+    EXCEPTION_CallFromUmode,    EXCEPTION_CallFromSmode,    EXCEPTION_CallFromHmode,    EXCEPTION_CallFromMmode,
+    EXCEPTION_InstrPageFault,   EXCEPTION_InstrPageFault,   EXCEPTION_InstrPageFault,   EXCEPTION_InstrPageFault,
+    EXCEPTION_LoadPageFault,    EXCEPTION_LoadPageFault,    EXCEPTION_LoadPageFault,    EXCEPTION_LoadPageFault,
+    EXCEPTION_rsrv14,           EXCEPTION_rsrv14,           EXCEPTION_rsrv14,           EXCEPTION_rsrv14,
+    EXCEPTION_StorePageFault,   EXCEPTION_StorePageFault,   EXCEPTION_StorePageFault,   EXCEPTION_StorePageFault,
+    EXCEPTION_StackOverflow,    EXCEPTION_StackOverflow,    EXCEPTION_StackOverflow,    EXCEPTION_StackOverflow,
+    EXCEPTION_StackUnderflow,   EXCEPTION_StackUnderflow,   EXCEPTION_StackUnderflow,   EXCEPTION_StackUnderflow,
+};
+
 CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     : sc_module(name_),
     i_clk("i_clk"),
@@ -69,9 +108,9 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << i_irq_external;
     sensitive << i_e_valid;
     sensitive << r.state;
-    sensitive << r.req_type;
-    sensitive << r.req_addr;
-    sensitive << r.req_data;
+    sensitive << r.cmd_type;
+    sensitive << r.cmd_addr;
+    sensitive << r.cmd_data;
     sensitive << r.mtvec;
     sensitive << r.mscratch;
     sensitive << r.mstackovr;
@@ -189,7 +228,7 @@ void CsrRegs::comb() {
     bool w_mstackund;
     bool v_csr_rena;
     bool v_csr_wena;
-    bool v_csr_changemode;
+    bool v_csr_xret;
     sc_uint<RISCV_ARCH> vb_rdata;
     bool v_cur_halt;
     bool v_req_halt;
@@ -215,104 +254,69 @@ void CsrRegs::comb() {
     v_resp_valid = 0;
     v_csr_rena = 0;
     v_csr_wena = 0;
-    v_csr_changemode = 0;
+    v_csr_xret = 0;
     w_exception_xret = 0;
     w_trap_valid = 0;
     w_trap_irq = 0;
     wb_trap_code = 0;
 
-    v_csr_changemode = r.req_type.read()[CsrReq_ChangeModeBit];
 
     switch (r.state.read()) {
     case State_Idle:
         v_req_ready = 1;
         if (i_req_valid) {
-            v.state = State_Process;
-            v.req_type = i_req_type;
-            v.req_addr = i_req_addr;
-            v.req_data = i_req_data;
-            if (i_req_type.read()[CsrReq_PcBit]) {
+            v.cmd_type = i_req_type;
+            v.cmd_addr = i_req_addr;
+            v.cmd_data = i_req_data;
+            if (i_req_type.read()[CsrReq_ExceptionBit]) {
                 v.state = State_Exception;
+            } else if (i_req_type.read()[CsrReq_InterruptBit]) {
+                v.state = State_Interrupt;
+            } else if (i_req_type.read()[CsrReq_TrapReturnCmd]) {
+                v.state = State_TrapReturn;
             } else {
-                v.state = State_Process;
+                v.state = State_RW;
             }
         }
         break;
     case State_Exception:
         v.state = State_Response;
-        switch (r.req_addr.read()) {
-        case EXCEPTION_InstrIllegal:
-            w_trap_valid = 1;
-            wb_mbadaddr = r.req_data;
-            wb_trap_code = EXCEPTION_InstrIllegal;
-            v.req_data = CFG_NMI_INSTR_ILLEGAL_ADDR;
-            if (r.progbuf_ena.read() == 1) {
-                v.progbuf_err = PROGBUF_ERR_EXCEPTION;
-            }
-            break;
-        case EXCEPTION_CallFromXMode:
-            w_trap_valid = 1;
-            wb_mbadaddr = r.req_data;
-            if (r.mode.read() == PRV_M) {
-                wb_trap_code = EXCEPTION_CallFromMmode;
-                v.req_data = CFG_NMI_CALL_FROM_MMODE_ADDR;
-            } else {
-                wb_trap_code = EXCEPTION_CallFromUmode;
-                v.req_data = CFG_NMI_CALL_FROM_UMODE_ADDR;
-            }
-            break;
-        case CSR_mepc:
-            v.req_data = r.mepc;
-            if (v_csr_changemode) {
-                if (r.mode.read() == PRV_M) {
-                    // Switch to previous mode
-                    v.mie = r.mpie;
-                    v.mpie = 1;
-                    v.mode = r.mpp;
-                    v.mpp = PRV_U;
-                } else {
-                    //w_exception_xret = 1;
-                    v.mie = 0;
-                    v.mpp = r.mode;
-                    v.mepc = i_e_npc.read();
-                    v.mbadaddr = i_e_pc.read();
-                    v.trap_code = EXCEPTION_InstrIllegal;
-                    v.trap_irq = 0;
-                    v.mode = PRV_M;
-                    v.mpie = r.mie;
-                }
-            }
-            break;
-        case CSR_uepc:
-            v.req_data = r.uepc;
-            if (v_csr_changemode) {
-                if (r.mode.read() == PRV_U) {
-                    // Switch to previous mode
-                    v.mie = r.mpie;
-                    v.mpie = 1;
-                    v.mode = r.mpp;
-                    v.mpp = PRV_U;
-                } else {
-                    //w_exception_xret = 1;
-                    v.mie = 0;
-                    v.mpp = r.mode;
-                    v.mepc = i_e_npc.read();
-                    v.mbadaddr = i_e_pc.read();
-                    v.trap_code = EXCEPTION_InstrIllegal;
-                    v.trap_irq = 0;
-                    v.mode = PRV_M;
-                    v.mpie = r.uie; // expecting user mode is set
-                }
-            }
-            break;
-        default:
-            v.req_data = r.mtvec.read()(CFG_CPU_ADDR_BITS-1, 0);
+        w_trap_valid = 1;
+        wb_mbadaddr = r.cmd_data;
+        wb_trap_code = NMI_CAUSE_IDX[4*r.cmd_addr.read() + r.mode.read().to_int()];
+        w_trap_irq = 0;
+        if (r.progbuf_ena.read() == 1) {
+            v.progbuf_err = PROGBUF_ERR_EXCEPTION;
+        }
+        v.cmd_data = NMI_TABLE_ADDR[4*r.cmd_addr.read() + r.mode.read().to_int()];
+        break;
+    case State_Interrupt:
+        v.state = State_Response;
+        w_trap_valid = 1;
+        wb_mbadaddr = r.cmd_data;
+        wb_trap_code = 4*r.cmd_addr.read() + r.mode.read().to_int();
+        w_trap_irq = 1;
+        v.cmd_data = r.mtvec;
+        break;
+    case State_TrapReturn:
+        v.state = State_Response;
+        v_csr_xret = 1;
+        if (r.cmd_addr.read() == CSR_mepc) {
+            v.cmd_data = r.mepc;
+        } else if (r.cmd_addr.read() == CSR_hepc) {
+            v.cmd_data = 0;
+        } else if (r.cmd_addr.read() == CSR_sepc) {
+            v.cmd_data = 0;
+        } else if (r.cmd_addr.read() == CSR_uepc) {
+            v.cmd_data = r.uepc;
+        } else {
+            v.cmd_data = 0;
         }
         break;
-    case State_Process:
+    case State_RW:
         v.state = State_Response;
-        v_csr_rena = r.req_type.read()[CsrReq_ReadBit];
-        v_csr_wena = r.req_type.read()[CsrReq_WriteBit];
+        v_csr_rena = r.cmd_type.read()[CsrReq_ReadBit];
+        v_csr_wena = r.cmd_type.read()[CsrReq_WriteBit];
         break;
     case State_Response:
         v_resp_valid = 1;
@@ -323,8 +327,53 @@ void CsrRegs::comb() {
     default:;
     }
 
+    if (v_csr_xret) {
+        if (r.mode.read() == PRV_M && r.cmd_addr.read() == CSR_mepc) {
+            v.mie = r.mpie;
+            v.mpie = 1;
+            v.mode = r.mpp;
+            v.mpp = PRV_U;
+        } else if (r.mode.read() == PRV_M && r.cmd_addr.read() == CSR_uepc) {
+            v.mie = r.mpie;
+            v.mpie = 1;
+            v.mode = r.mpp;
+            v.mpp = PRV_U;
+        } else {
+            wb_mbadaddr = i_e_pc.read();
+            wb_trap_code = EXCEPTION_InstrIllegal;
+            w_trap_irq = 0;
+            if (r.progbuf_ena.read() == 1) {
+                v.progbuf_err = PROGBUF_ERR_EXCEPTION;
+            }
+            v.cmd_data = NMI_TABLE_ADDR[4*EXCEPTION_InstrIllegal];
+        }
+    }
+
+    // Behaviour on EBREAK instruction defined by 'i_break_mode':
+    //     0 = halt;
+    //     1 = generate trap
+    if (w_trap_valid) {// && (r.break_mode.read() || !i_ex_breakpoint.read())) {
+        v.mie = 0;
+        v.mpp = r.mode;
+        v.mepc = i_e_npc.read();
+        v.mbadaddr = wb_mbadaddr;
+        v.trap_code = wb_trap_code;
+        v.trap_irq = w_trap_irq;
+        v.mode = PRV_M;
+        switch (r.mode.read()) {
+        case PRV_U:
+            v.mpie = r.uie;
+            break;
+        case PRV_M:
+            v.mpie = r.mie;
+            break;
+        default:;
+        }
+    }
+
+
     if (v_csr_rena) {
-        switch (r.req_addr.read()) {
+        switch (r.cmd_addr.read()) {
         case CSR_fflags:
             vb_rdata[0] = r.ex_fpu_inexact;
             vb_rdata[1] = r.ex_fpu_underflow;
@@ -498,18 +547,18 @@ void CsrRegs::comb() {
             break;
         default:;
         }
-        v.req_data = vb_rdata;
+        v.cmd_data = vb_rdata;
     }
     if (v_csr_wena) {
-        switch (r.req_addr.read()) {
+        switch (r.cmd_addr.read()) {
         case CSR_uepc:// - User mode program counter
-            v.uepc = r.req_data.read()(CFG_CPU_ADDR_BITS-1, 0);
+            v.uepc = r.cmd_data.read()(CFG_CPU_ADDR_BITS-1, 0);
             break;
         case CSR_mstatus:// - Machine mode status register
-            v.uie = r.req_data.read()[0];
-            v.mie = r.req_data.read()[3];
-            v.mpie = r.req_data.read()[7];
-            v.mpp = r.req_data.read()(12, 11);
+            v.uie = r.cmd_data.read()[0];
+            v.mie = r.cmd_data.read()[3];
+            v.mpie = r.cmd_data.read()[7];
+            v.mpp = r.cmd_data.read()(12, 11);
             break;
         case CSR_medeleg:// - Machine exception delegation
             break;
@@ -518,39 +567,39 @@ void CsrRegs::comb() {
         case CSR_mie:// - Machine interrupt enable bit
             break;
         case CSR_mtvec:
-            v.mtvec = r.req_data.read();
+            v.mtvec = r.cmd_data.read();
             break;
         case CSR_mscratch:// - Machine scratch register
-            v.mscratch = r.req_data.read();
+            v.mscratch = r.cmd_data.read();
             break;
         case CSR_mepc:// - Machine program counter
-            v.mepc = r.req_data.read()(CFG_CPU_ADDR_BITS-1, 0);
+            v.mepc = r.cmd_data.read()(CFG_CPU_ADDR_BITS-1, 0);
             break;
         case CSR_mip:// - Machine interrupt pending
             break;
         case CSR_mstackovr:// - Machine Stack Overflow
-            v.mstackovr = r.req_data.read()(CFG_CPU_ADDR_BITS-1, 0);
-            v.mstackovr_ena = r.req_data.read()(CFG_CPU_ADDR_BITS-1, 0).or_reduce();
+            v.mstackovr = r.cmd_data.read()(CFG_CPU_ADDR_BITS-1, 0);
+            v.mstackovr_ena = r.cmd_data.read()(CFG_CPU_ADDR_BITS-1, 0).or_reduce();
             break;
         case CSR_mstackund:// - Machine Stack Underflow
-            v.mstackund = r.req_data.read()(CFG_CPU_ADDR_BITS-1, 0);
-            v.mstackund_ena = r.req_data.read()(CFG_CPU_ADDR_BITS-1, 0).or_reduce();
+            v.mstackund = r.cmd_data.read()(CFG_CPU_ADDR_BITS-1, 0);
+            v.mstackund_ena = r.cmd_data.read()(CFG_CPU_ADDR_BITS-1, 0).or_reduce();
             break;
         case CSR_mpu_addr:  // [WO] MPU address
-            v.mpu_addr = r.req_data.read()(CFG_CPU_ADDR_BITS-1, 0);
+            v.mpu_addr = r.cmd_data.read()(CFG_CPU_ADDR_BITS-1, 0);
             break;
         case CSR_mpu_mask:  // [WO] MPU mask
-            v.mpu_mask = r.req_data.read()(CFG_CPU_ADDR_BITS-1, 0);
+            v.mpu_mask = r.cmd_data.read()(CFG_CPU_ADDR_BITS-1, 0);
             break;
         case CSR_mpu_ctrl:  // [WO] MPU flags and write ena
-            v.mpu_idx = r.req_data.read()(8+CFG_MPU_TBL_WIDTH-1, 8);
-            v.mpu_flags = r.req_data.read()(CFG_MPU_FL_TOTAL-1, 0);
+            v.mpu_idx = r.cmd_data.read()(8+CFG_MPU_TBL_WIDTH-1, 8);
+            v.mpu_flags = r.cmd_data.read()(CFG_MPU_FL_TOTAL-1, 0);
             v.mpu_we = 1;
             break;
         case CSR_runcontrol:
-            v_req_halt = r.req_data.read()[31];
-            v_req_resume = r.req_data.read()[30];
-            if (r.req_data.read()[27] == 1) {
+            v_req_halt = r.cmd_data.read()[31];
+            v_req_resume = r.cmd_data.read()[30];
+            if (r.cmd_data.read()[27] == 1) {
                 if (r.halt.read() == 1) {
                     v_req_progbuf = 1;
                 } else {
@@ -559,38 +608,38 @@ void CsrRegs::comb() {
             }
             break;
         case CSR_insperstep:
-            v.ins_per_step = r.req_data.read();
-            if (r.req_data.read().or_reduce() == 0) {
+            v.ins_per_step = r.cmd_data.read();
+            if (r.cmd_data.read().or_reduce() == 0) {
                 v.ins_per_step = 1;  // cannot be zero
             }
             if (r.halt.read() == 1) {
-                v.stepping_mode_cnt = r.req_data.read();
+                v.stepping_mode_cnt = r.cmd_data.read();
             }
             break;
         case CSR_progbuf:
             if (v_csr_wena == 1) {
-                int tidx = r.req_data.read()(35,32);
+                int tidx = r.cmd_data.read()(35,32);
                 sc_biguint<CFG_PROGBUF_REG_TOTAL*32> t2 = r.progbuf_data;
-                t2(32*tidx+31, 32*tidx) = r.req_data.read()(31,0);
+                t2(32*tidx+31, 32*tidx) = r.cmd_data.read()(31,0);
                 v.progbuf_data = t2;
             }
             break;
         case CSR_abstractcs:
-            v_clear_progbuferr = r.req_data.read()[8];   // W1C err=1
+            v_clear_progbuferr = r.cmd_data.read()[8];   // W1C err=1
             break;
         case CSR_flushi:
             v.flushi_ena = 1;
-            v.flushi_addr = r.req_data.read()(CFG_CPU_ADDR_BITS-1, 0);
+            v.flushi_addr = r.cmd_data.read()(CFG_CPU_ADDR_BITS-1, 0);
             break;
         case CSR_dcsr:
-            v.stepping_mode = r.req_data.read()[2];
-            if (r.req_data.read()[2] == 1) {
+            v.stepping_mode = r.cmd_data.read()[2];
+            if (r.cmd_data.read()[2] == 1) {
                 v.stepping_mode_cnt = r.ins_per_step;  // default =1
             }
             break;
         case CSR_dpc:
             v_dbg_pc_write = 1;
-            vb_dbg_pc = r.req_data.read();
+            vb_dbg_pc = r.cmd_data.read();
             break;
         default:;
         }
@@ -756,27 +805,6 @@ void CsrRegs::comb() {
         }
     }
 #endif
-    // Behaviour on EBREAK instruction defined by 'i_break_mode':
-    //     0 = halt;
-    //     1 = generate trap
-    if (w_trap_valid) {// && (r.break_mode.read() || !i_ex_breakpoint.read())) {
-        v.mie = 0;
-        v.mpp = r.mode;
-        v.mepc = i_e_npc.read();
-        v.mbadaddr = wb_mbadaddr;
-        v.trap_code = wb_trap_code;
-        v.trap_irq = w_trap_irq;
-        v.mode = PRV_M;
-        switch (r.mode.read()) {
-        case PRV_U:
-            v.mpie = r.uie;
-            break;
-        case PRV_M:
-            v.mpie = r.mie;
-            break;
-        default:;
-        }
-    }
 
 
     if (r.halt.read() == 0) {
@@ -862,7 +890,7 @@ void CsrRegs::comb() {
 
     o_req_ready = v_req_ready;
     o_resp_valid = v_resp_valid;
-    o_resp_data = r.req_data;
+    o_resp_data = r.cmd_data;
     o_resp_exception = 0;
 
     o_irq_software = 0;

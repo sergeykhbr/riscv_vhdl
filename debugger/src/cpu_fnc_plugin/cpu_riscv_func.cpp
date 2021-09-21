@@ -120,7 +120,7 @@ void CpuRiver_Functional::handleTrap() {
 
     mstatus.value = portCSR_.read(CSR_mstatus).val;
     mcause.value =  portCSR_.read(CSR_mcause).val;
-    uint64_t exception_mask = (1ull << INTERRUPT_USoftware) - 1;
+    uint64_t exception_mask = (1ull << SIGNAL_XSoftware) - 1;
     if ((interrupt_pending_[0] & exception_mask) == 0 && 
         mstatus.bits.MIE == 0 && cur_prv_level == PRV_M) {
         return;
@@ -257,7 +257,7 @@ void CpuRiver_Functional::traceOutput() {
 }
 
 void CpuRiver_Functional::raiseSignal(int idx) {
-    if (idx < INTERRUPT_USoftware) {
+    if (idx < EXCEPTIONS_Total) {
         // Exception:
         csr_mcause_type cause;
         cause.value     = 0;
@@ -272,7 +272,7 @@ void CpuRiver_Functional::raiseSignal(int idx) {
         csr_mcause_type cause;
         cause.value     = 0;
         cause.bits.irq  = 1;
-        cause.bits.code = idx - INTERRUPT_USoftware;
+        cause.bits.code = idx - EXCEPTIONS_Total;
         portCSR_.write(CSR_mcause, cause.value);
         interrupt_pending_[idx >> 6] |= 1LL << (idx & 0x3F);
     } else if (idx == SIGNAL_HardReset) {

@@ -160,9 +160,10 @@ static const uint64_t CFG_NMI_CALL_FROM_HMODE_ADDR  = 0x0058;
 static const uint64_t CFG_NMI_CALL_FROM_MMODE_ADDR  = 0x0060;
 static const uint64_t CFG_NMI_INSTR_PAGE_FAULT_ADDR = 0x0068;
 static const uint64_t CFG_NMI_LOAD_PAGE_FAULT_ADDR  = 0x0070;
-static const uint64_t CFG_NMI_STORE_PAGE_FAULT_ADDR = 0x0078;
-static const uint64_t CFG_NMI_STACK_OVERFLOW_ADDR   = 0x0080;
-static const uint64_t CFG_NMI_STACK_UNDERFLOW_ADDR  = 0x0088;
+static const uint64_t CFG_NMI_14_ADDR               = 0x0078;
+static const uint64_t CFG_NMI_STORE_PAGE_FAULT_ADDR = 0x0080;
+static const uint64_t CFG_NMI_STACK_OVERFLOW_ADDR   = 0x0088;
+static const uint64_t CFG_NMI_STACK_UNDERFLOW_ADDR  = 0x0090;
 
 /** Debug interface configuration: */
 static const int CFG_DPORT_ADDR_BITS        = 16;
@@ -318,14 +319,16 @@ static const int CFG_REG_TAG_WITH          = 3;
 // Request type: [0]-read csr; [1]-write csr; [2]-change mode
 static const int CsrReq_ReadBit        = 0;
 static const int CsrReq_WriteBit       = 1;
-static const int CsrReq_ChangeModeBit  = 2;
-static const int CsrReq_PcBit          = 3;     // get instruction pointer
-static const int CsrReq_TotalBits      = 4;
+static const int CsrReq_TrapReturnBit  = 2;
+static const int CsrReq_ExceptionBit   = 3;     // get instruction pointer
+static const int CsrReq_InterruptBit   = 4;     // get instruction pointer
+static const int CsrReq_TotalBits      = 5;
 
 static const int CsrReq_ReadCmd        = 1 << CsrReq_ReadBit;
 static const int CsrReq_WriteCmd       = 1 << CsrReq_WriteBit;
-static const int CsrReq_ChaneModeCmd   = 1 << CsrReq_ChangeModeBit;
-static const int CsrReq_PcCmd          = 1 << CsrReq_PcBit;
+static const int CsrReq_TrapReturnCmd  = 1 << CsrReq_TrapReturnBit;
+static const int CsrReq_ExceptionCmd   = 1 << CsrReq_ExceptionBit;
+static const int CsrReq_InterruptCmd   = 1 << CsrReq_InterruptBit;
 
 static const int MemopType_Store     = 0;    // 0=load; 1=store
 static const int MemopType_Locked    = 1;    // AMO instructions

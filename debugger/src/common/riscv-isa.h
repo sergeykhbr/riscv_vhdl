@@ -546,9 +546,7 @@ static const uint64_t PRV_H       = 2;
 static const uint64_t PRV_M       = 3;
 /// @}
 
-
-/** Exceptions */
-enum ESignals {
+enum EExceptions {
     // Instruction address misaligned
     EXCEPTION_InstrMisalign,
     // Instruction access fault
@@ -585,40 +583,26 @@ enum ESignals {
     EXCEPTION_StackOverflow,
     // Stack underflow
     EXCEPTION_StackUnderflow,
+    EXCEPTIONS_Total
+};
 
-    // User software interrupt
-    INTERRUPT_USoftware,
-    // Superuser software interrupt
-    INTERRUPT_SSoftware,
-    // Hypervisor software interrupt
-    INTERRUPT_HSoftware,
-    // Machine software interrupt
-    INTERRUPT_MSoftware,
-    // User timer interrupt
-    INTERRUPT_UTimer,
-    // Superuser timer interrupt
-    INTERRUPT_STimer,
-    // Hypervisor timer interrupt
-    INTERRUPT_HTimer,
-    // Machine timer interrupt
-    INTERRUPT_MTimer,
-    // User external interrupt
-    INTERRUPT_UExternal,
-    // Superuser external interrupt
-    INTERRUPT_SExternal,
-    // Hypervisor external interrupt
-    INTERRUPT_HExternal,
-    // Machine external interrupt (from PLIC)
-    INTERRUPT_MExternal,
-
+enum EInterrupts {
+    INTERRUPT_XSoftware,
+    INTERRUPT_XTimer,
+    INTERRUPT_XExternal,
+    INTERRUPT_Total
+};
+/** Exceptions */
+enum ESignals {
+    SIGNAL_Exception = 0,
+    SIGNAL_XSoftware = EXCEPTIONS_Total + INTERRUPT_XSoftware,
+    SIGNAL_XTimer = EXCEPTIONS_Total + INTERRUPT_XTimer,
+    SIGNAL_XExternal = EXCEPTIONS_Total + INTERRUPT_XExternal,
     SIGNAL_HardReset,
     SIGNAL_Total
 };
 
 static const int EXCEPTION_CallFromXMode    = EXCEPTION_CallFromUmode;
-static const int INTERRUPT_XSoftware        = INTERRUPT_USoftware;
-static const int INTERRUPT_XTimer           = INTERRUPT_UTimer;
-static const int INTERRUPT_XExternal        = INTERRUPT_UExternal;
 
 }  // namespace debugger
 

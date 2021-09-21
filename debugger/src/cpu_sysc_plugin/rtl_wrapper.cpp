@@ -385,7 +385,7 @@ void RtlWrapper::raiseSignal(int idx) {
     case SIGNAL_HardReset:
         request_reset = true;
         break;
-    case INTERRUPT_MExternal:
+    case SIGNAL_XExternal:
         async_interrupt = true;
         break;
     default:;
@@ -394,7 +394,7 @@ void RtlWrapper::raiseSignal(int idx) {
 
 void RtlWrapper::lowerSignal(int idx) {
     switch (idx) {
-    case INTERRUPT_MExternal:
+    case SIGNAL_XExternal:
         async_interrupt = false;
         break;
     default:;

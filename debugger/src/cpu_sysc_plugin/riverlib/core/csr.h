@@ -72,15 +72,17 @@ SC_MODULE(CsrRegs) {
 
 private:
     static const int State_Idle = 0;
-    static const int State_Process = 1;
-    static const int State_Response = 2;
-    static const int State_Exception = 3;
+    static const int State_RW = 1;
+    static const int State_Exception = 2;
+    static const int State_Interrupt = 3;
+    static const int State_TrapReturn = 4;
+    static const int State_Response = 5;
 
     struct RegistersType {
-        sc_signal<sc_uint<2>> state;
-        sc_signal<sc_uint<CsrReq_TotalBits>> req_type;
-        sc_signal<sc_uint<12>> req_addr;
-        sc_signal<sc_uint<RISCV_ARCH>> req_data;
+        sc_signal<sc_uint<3>> state;
+        sc_signal<sc_uint<CsrReq_TotalBits>> cmd_type;
+        sc_signal<sc_uint<12>> cmd_addr;
+        sc_signal<sc_uint<RISCV_ARCH>> cmd_data;
         sc_signal<sc_uint<RISCV_ARCH>> mtvec;
         sc_signal<sc_uint<RISCV_ARCH>> mscratch;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mstackovr;
@@ -138,9 +140,9 @@ private:
 
     void R_RESET(RegistersType &iv) {
         iv.state = State_Idle;
-        iv.req_type = 0;
-        iv.req_addr = 0;
-        iv.req_data = 0;
+        iv.cmd_type = 0;
+        iv.cmd_addr = 0;
+        iv.cmd_data = 0;
         iv.mtvec = 0;
         iv.mscratch = 0;
         iv.mstackovr = 0;
