@@ -92,6 +92,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     sensitive << w.f.imem_req_valid;
     sensitive << w.f.imem_req_addr;
     sensitive << w.f.valid;
+    sensitive << w.m.flushd;
     sensitive << csr.executed_cnt;
     sensitive << dbg.reg_addr;
     sensitive << csr.halt;

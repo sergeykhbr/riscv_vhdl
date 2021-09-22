@@ -250,7 +250,7 @@ private:
         iv.isa_type = 0;
         iv.imm = 0;
         iv.instr = 0;
-        iv.tagcnt_rd = ~((1 << CFG_REG_TAG_WITH) - 1);
+        iv.tagcnt_rd = 0;
         iv.tagcnt_wr = 0;
         iv.reg_write = 0;
         iv.reg_waddr = 0;

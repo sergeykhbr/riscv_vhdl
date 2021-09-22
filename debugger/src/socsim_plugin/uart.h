@@ -150,6 +150,13 @@ class UART : public RegMemBankGeneric,
      public:
         DWORD_TYPE(IService *parent, const char *name, uint64_t addr) :
                     MappedReg32Type(parent, name, addr) {}
+        virtual uint32_t aboutToRead(uint32_t cur_val) override {
+            return cur_val;
+        }
+        virtual uint32_t aboutToWrite(uint32_t new_val) override {
+            bool st = true;
+            return MappedReg32Type::aboutToWrite(new_val);
+        }
     };
 
     class DATA_TYPE : public MappedReg32Type {

@@ -30,7 +30,7 @@ static const uint64_t NMI_TABLE_ADDR[4*EXCEPTIONS_Total] = {
     CFG_NMI_LOAD_FAULT_ADDR,       CFG_NMI_LOAD_FAULT_ADDR,       CFG_NMI_LOAD_FAULT_ADDR,       CFG_NMI_LOAD_FAULT_ADDR,
     CFG_NMI_STORE_UNALIGNED_ADDR,  CFG_NMI_STORE_UNALIGNED_ADDR,  CFG_NMI_STORE_UNALIGNED_ADDR,  CFG_NMI_STORE_UNALIGNED_ADDR,
     CFG_NMI_STORE_FAULT_ADDR,      CFG_NMI_STORE_FAULT_ADDR,      CFG_NMI_STORE_FAULT_ADDR,      CFG_NMI_STORE_FAULT_ADDR,
-    CFG_NMI_CALL_FROM_UMODE_ADDR,  CFG_NMI_CALL_FROM_SMODE_ADDR,  CFG_NMI_CALL_FROM_HMODE_ADDR,  CFG_NMI_CALL_FROM_UMODE_ADDR,
+    CFG_NMI_CALL_FROM_UMODE_ADDR,  CFG_NMI_CALL_FROM_SMODE_ADDR,  CFG_NMI_CALL_FROM_HMODE_ADDR,  CFG_NMI_CALL_FROM_MMODE_ADDR,
     CFG_NMI_INSTR_PAGE_FAULT_ADDR, CFG_NMI_INSTR_PAGE_FAULT_ADDR, CFG_NMI_INSTR_PAGE_FAULT_ADDR, CFG_NMI_INSTR_PAGE_FAULT_ADDR,
     CFG_NMI_LOAD_PAGE_FAULT_ADDR,  CFG_NMI_LOAD_PAGE_FAULT_ADDR,  CFG_NMI_LOAD_PAGE_FAULT_ADDR,  CFG_NMI_LOAD_PAGE_FAULT_ADDR,
     CFG_NMI_14_ADDR,               CFG_NMI_14_ADDR,               CFG_NMI_14_ADDR,               CFG_NMI_14_ADDR,
@@ -228,7 +228,7 @@ void CsrRegs::comb() {
     bool w_mstackund;
     bool v_csr_rena;
     bool v_csr_wena;
-    bool v_csr_xret;
+    bool v_csr_trapreturn;
     sc_uint<RISCV_ARCH> vb_rdata;
     bool v_cur_halt;
     bool v_req_halt;
@@ -254,7 +254,7 @@ void CsrRegs::comb() {
     v_resp_valid = 0;
     v_csr_rena = 0;
     v_csr_wena = 0;
-    v_csr_xret = 0;
+    v_csr_trapreturn = 0;
     w_exception_xret = 0;
     w_trap_valid = 0;
     w_trap_irq = 0;
@@ -272,7 +272,7 @@ void CsrRegs::comb() {
                 v.state = State_Exception;
             } else if (i_req_type.read()[CsrReq_InterruptBit]) {
                 v.state = State_Interrupt;
-            } else if (i_req_type.read()[CsrReq_TrapReturnCmd]) {
+            } else if (i_req_type.read()[CsrReq_TrapReturnBit]) {
                 v.state = State_TrapReturn;
             } else {
                 v.state = State_RW;
@@ -300,7 +300,7 @@ void CsrRegs::comb() {
         break;
     case State_TrapReturn:
         v.state = State_Response;
-        v_csr_xret = 1;
+        v_csr_trapreturn = 1;
         if (r.cmd_addr.read() == CSR_mepc) {
             v.cmd_data = r.mepc;
         } else if (r.cmd_addr.read() == CSR_hepc) {
@@ -327,15 +327,15 @@ void CsrRegs::comb() {
     default:;
     }
 
-    if (v_csr_xret) {
+    if (v_csr_trapreturn) {
         if (r.mode.read() == PRV_M && r.cmd_addr.read() == CSR_mepc) {
             v.mie = r.mpie;
             v.mpie = 1;
             v.mode = r.mpp;
             v.mpp = PRV_U;
-        } else if (r.mode.read() == PRV_M && r.cmd_addr.read() == CSR_uepc) {
+        } else if (r.mode.read() == PRV_U && r.cmd_addr.read() == CSR_uepc) {
             v.mie = r.mpie;
-            v.mpie = 1;
+            v.mpie = 0;     // Interrupts in a user mode actually not supported
             v.mode = r.mpp;
             v.mpp = PRV_U;
         } else {

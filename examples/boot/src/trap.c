@@ -101,3 +101,22 @@ void env_ucall_c(long long test_id) {
     }
     while (1) {}
 }
+
+void env_mcall_c(long long test_id) {
+    if (test_id != 0) {
+        int mbadaddr;
+        print_uart("TEST_FAILED\r\n", 13);
+        print_uart("a0=", 3);
+        print_uart_hex(test_id);
+        print_uart("\r\n", 2);
+
+        asm("csrr %0, mbadaddr" : "=r" (mbadaddr));
+        print_uart("mbadaddr=", 9);
+        print_uart_hex(mbadaddr);
+        print_uart("\r\n", 2);
+    } else {
+        print_uart("TEST_PASSED\r\n", 13);
+    }
+    while (1) {}
+}
+

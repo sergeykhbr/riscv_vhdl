@@ -258,7 +258,7 @@ void RiverAmba::comb() {
 
     case state_ar:
         vmsto.ar_valid = 1;
-        vmsto.ar_bits.addr = r.req_addr;
+        vmsto.ar_bits.addr = r.req_addr.read() & ~0x7;
         vmsto.ar_bits.cache = r.req_cached;
         vmsto.ar_bits.size = r.req_size;
         vmsto.ar_bits.prot = r.req_prot;
@@ -279,7 +279,7 @@ void RiverAmba::comb() {
 
     case state_aw:
         vmsto.aw_valid = 1;
-        vmsto.aw_bits.addr = r.req_addr;
+        vmsto.aw_bits.addr = r.req_addr.read() & ~0x7;
         vmsto.aw_bits.cache = r.req_cached;
         vmsto.aw_bits.size = r.req_size;
         vmsto.aw_bits.prot = r.req_prot;

@@ -25,6 +25,7 @@
   .globl exception_handler_c
   .globl interrupt_handler_c
   .globl env_ucall_c
+  .globl env_mcall_c
 
 trap_table:
 # 8-bytes per exception entry
@@ -53,7 +54,7 @@ trap_table:
   nop
   j exception_entry   # Call from H-mode
   nop
-  j exception_entry   # Call from M-mode
+  j env_mcall         # Call from M-mode
   nop
   j exception_entry   # Instruction Page Fault
   nop
@@ -215,6 +216,12 @@ env_ucall:
   li  sp, SRAM_BASE_ADDR+SRAM_SIZE_BYTES
   addi sp, sp,-264
   jal env_ucall_c
+  ## never reach here
+
+env_mcall:
+  li  sp, SRAM_BASE_ADDR+SRAM_SIZE_BYTES
+  addi sp, sp,-264
+  jal env_mcall_c
   ## never reach here
 
 exception_entry:
