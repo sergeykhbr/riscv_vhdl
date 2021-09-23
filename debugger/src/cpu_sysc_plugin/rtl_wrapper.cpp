@@ -300,7 +300,9 @@ void RtlWrapper::sys_bus_proc() {
         strob = static_cast<uint8_t>(wb_wstrb.read());
         offset = mask2offset(strob);
         trans.addr = r.req_addr.read();
-        trans.addr += offset;
+        if (offset) {
+            trans.addr += (1 << offset);
+        }
         trans.xsize = mask2size(strob >> offset);
         trans.wstrb = (1 << trans.xsize) - 1;
         trans.wpayload.b64[0] = wb_wdata.read();
