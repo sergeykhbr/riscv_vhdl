@@ -37,6 +37,7 @@ SC_MODULE(Tracer) {
     sc_in<sc_uint<RISCV_ARCH>> i_e_wdata;
     sc_in<bool> i_e_memop_valid;
     sc_in<sc_uint<MemopType_Total>> i_e_memop_type;
+    sc_in<sc_uint<2>> i_e_memop_size;
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_memop_addr;
     sc_in<sc_uint<RISCV_ARCH>> i_e_memop_wdata;
     sc_in<bool> i_m_memop_ready;
@@ -59,6 +60,7 @@ SC_MODULE(Tracer) {
 
     struct MemopActionType {
         bool store;      // 0=load;1=store
+        int size;
         uint64_t memaddr;
         uint64_t data;
         uint32_t regaddr;   // writeback address

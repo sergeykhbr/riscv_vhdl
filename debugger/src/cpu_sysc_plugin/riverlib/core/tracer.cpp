@@ -45,6 +45,7 @@ Tracer::Tracer(sc_module_name name_, bool async_reset, const char *trace_file)
     i_e_wdata("i_e_wdata"),
     i_e_memop_valid("i_e_memop_valid"),
     i_e_memop_type("i_e_memop_type"),
+    i_e_memop_size("i_e_memop_size"),
     i_e_memop_addr("i_e_memop_addr"),
     i_e_memop_wdata("i_e_memop_wdata"),
     i_m_memop_ready("i_m_memop_ready"),
@@ -69,6 +70,7 @@ Tracer::Tracer(sc_module_name name_, bool async_reset, const char *trace_file)
     sensitive << i_e_wdata;
     sensitive << i_e_memop_valid;
     sensitive << i_e_memop_type;
+    sensitive << i_e_memop_size;
     sensitive << i_e_memop_addr;
     sensitive << i_e_memop_wdata;
     sensitive << i_m_memop_ready;
@@ -596,6 +598,7 @@ void Tracer::registers() {
         MemopActionType *pm = &p_e_wr->memaction[p_e_wr->memactioncnt++];
         pm->store = i_e_memop_type.read()[MemopType_Store];
         pm->memaddr = i_e_memop_addr.read();
+        pm->size = i_e_memop_size.read().to_int();
         pm->data = i_e_memop_wdata.read();
         pm->regaddr = i_e_waddr.read();
         if (i_e_waddr.read().or_reduce() == 0 ||
@@ -680,18 +683,13 @@ void Tracer::trace_output(TraceStepType *tr) {
                     pm->memaddr,
                     pm->data);
             fwrite(msg, 1, tsz, fl_);
-            /*tsz = RISCV_sprintf(msg, sizeof(msg),
-                "%20s %10s <= %016" RV_PRI64 "x\n",
-                    "",
-                    rname[pm->regaddr],
-                    pm->data);
-            fwrite(msg, 1, tsz, fl_);*/
         } else {
+            uint64_t msk[4] = {0xFFull, 0xFFFFull, 0xFFFFFFFFull, ~0ull};
             tsz = RISCV_sprintf(msg, sizeof(msg),
                 "%20s [%08" RV_PRI64 "x] <= %016" RV_PRI64 "x\n",
                     "",
                     pm->memaddr,
-                    pm->data);
+                    pm->data & msk[pm->size]);
             fwrite(msg, 1, tsz, fl_);
         }
     }

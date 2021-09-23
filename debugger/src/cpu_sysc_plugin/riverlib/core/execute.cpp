@@ -839,7 +839,9 @@ void InstrExecute::comb() {
     switch (r.state.read()) {
     case State_Idle:
         v_d_ready = 1;
-        if (i_halt) {
+        if (r.memop_valid && !i_memop_ready) {
+            v_d_ready = 0;
+        } else if (i_halt) {
             v.state = State_Halted;
         } else if (v_d_valid == 1) {
             v_latch_input = 1;
