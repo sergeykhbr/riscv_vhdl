@@ -280,6 +280,7 @@ void RtlWrapper::sys_bus_proc() {
     w_r_error = 0;
     w_w_error = 0;
 
+    uint64_t toff;
     switch (r.state.read()) {
     case State_Read:
         trans.action = MemAction_Read;
@@ -290,7 +291,8 @@ void RtlWrapper::sys_bus_proc() {
         resp = ibus_->b_transport(&trans);
 
         w_resp_valid = 1;
-        wb_resp_data = trans.rpayload.b64[0];
+        toff = r.req_addr.read()(CFG_LOG2_BUS_DATA_BYTES - 1, 0);
+        wb_resp_data = (trans.rpayload.b64[0]) << (8*toff);
         if (resp == TRANS_ERROR) {
             w_r_error = 1;
         }
@@ -299,13 +301,13 @@ void RtlWrapper::sys_bus_proc() {
         trans.action = MemAction_Write;
         strob = static_cast<uint8_t>(wb_wstrb.read());
         offset = mask2offset(strob);
-        trans.addr = r.req_addr.read();
+        trans.addr = r.req_addr.read() & ~((1 << CFG_LOG2_BUS_DATA_BYTES) - 1);
         if (offset) {
-            trans.addr += (1 << offset);
+            trans.addr += offset;
         }
         trans.xsize = mask2size(strob >> offset);
         trans.wstrb = (1 << trans.xsize) - 1;
-        trans.wpayload.b64[0] = wb_wdata.read();
+        trans.wpayload.b64[0] = wb_wdata.read() >> (8*offset);
         resp = ibus_->b_transport(&trans);
 
         w_resp_valid = 1;

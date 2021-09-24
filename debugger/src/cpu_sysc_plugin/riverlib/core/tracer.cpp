@@ -662,6 +662,7 @@ void Tracer::registers() {
 void Tracer::trace_output(TraceStepType *tr) {
     char msg[256];
     int tsz;
+    uint64_t msk[4] = {0xFFull, 0xFFFFull, 0xFFFFFFFFull, ~0ull};
 
     task_disassembler(tr->instr);
     tsz = RISCV_sprintf(msg, sizeof(msg),
@@ -681,10 +682,9 @@ void Tracer::trace_output(TraceStepType *tr) {
                 "%20s [%08" RV_PRI64 "x] => %016" RV_PRI64 "x\n",
                     "",
                     pm->memaddr,
-                    pm->data);
+                    pm->data & msk[pm->size]);
             fwrite(msg, 1, tsz, fl_);
         } else {
-            uint64_t msk[4] = {0xFFull, 0xFFFFull, 0xFFFFFFFFull, ~0ull};
             tsz = RISCV_sprintf(msg, sizeof(msg),
                 "%20s [%08" RV_PRI64 "x] <= %016" RV_PRI64 "x\n",
                     "",

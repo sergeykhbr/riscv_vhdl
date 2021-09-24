@@ -87,27 +87,41 @@ void RegMemBankGeneric::hapTriggered(EHapType type,
 ETransStatus RegMemBankGeneric::b_transport(Axi4TransactionType *trans) {
     IMemoryOperation *imem;
     uint64_t t_addr = trans->addr;      // orignal address
+    Axi4TransactionType tr;
 
-    trans->addr -= getBaseAddress();    // offset relative registers bank
-    imem = imaphash_[trans->addr];
-    if (imem != 0) {
-        ETransStatus ret = imem->b_transport(trans);
-        trans->addr = t_addr;           // restore address;
-        return ret;
-    }
-    
-    // Stubs:
-    uint64_t off = trans->addr;
-    if (trans->action == MemAction_Read) {
-        trans->rpayload.b64[0] = 0;
-        memcpy(trans->rpayload.b8, &stubmem[off], trans->xsize);
-        RISCV_info("Read stub  [%08" RV_PRI64 "x] => 0x%" RV_PRI64 "x",
-                    t_addr, trans->rpayload.b64[0]);
-    } else {
-        memcpy(&stubmem[off], trans->wpayload.b8, trans->xsize);
-        uint64_t msk = (0x1ull << 8*trans->xsize) - 1;
-        RISCV_info("Write stub [%08" RV_PRI64 "x] <= 0x%" RV_PRI64 "x",
-                    t_addr, trans->wpayload.b64[0] & msk);
+    uint64_t off = trans->addr - getBaseAddress();    // offset relative registers bank
+    uint64_t off0 = off;
+    size_t tsz = trans->xsize;
+    uint32_t wstrb = trans->wstrb;
+    while (tsz > 0) {
+        imem = imaphash_[off];
+        if (imem != 0) {
+            tr = *trans;
+            tr.addr = off;
+            tr.xsize = imem->getLength();
+            tr.wstrb = wstrb;
+            if (trans->action == MemAction_Read) {
+                imem->b_transport(&tr);
+                memcpy(&trans->rpayload.b8[off - off0], tr.rpayload.b8, imem->getLength());
+            } else if (wstrb & ((1 << imem->getLength()) - 1)) {
+                imem->b_transport(&tr);
+                wstrb >>= imem->getLength();
+            }
+            tsz -= imem->getLength();
+            off += imem->getLength();
+        } else {
+            // Stubs:
+            if (trans->action == MemAction_Read) {
+                trans->rpayload.b8[off - off0] = stubmem[off];
+            } else {
+                if (wstrb & 0x1) {
+                    stubmem[off] = trans->wpayload.b8[off - off0];
+                }
+                wstrb >>= 1;
+            }
+            tsz -= 1;
+            off += 1;
+        }
     }
     trans->addr = t_addr;           // restore address;
     return TRANS_OK;
