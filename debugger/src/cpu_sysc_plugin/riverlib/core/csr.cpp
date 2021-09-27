@@ -125,7 +125,9 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << r.mpp;
     sensitive << r.mepc;
     sensitive << r.uepc;
-    sensitive << r.ext_irq;
+    sensitive << r.meip;
+    sensitive << r.mtip;
+    sensitive << r.msip;
     sensitive << r.ex_fpu_invalidop;
     sensitive << r.ex_fpu_divbyzero;
     sensitive << r.ex_fpu_overflow;
@@ -193,7 +195,9 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.mie, pn + ".r_mie");
         sc_trace(o_vcd, r.mepc, pn + ".r_mepc");
         sc_trace(o_vcd, r.mbadaddr, pn + ".r_mbadaddr");
-        sc_trace(o_vcd, r.ext_irq, pn + ".r_ext_irq");
+        sc_trace(o_vcd, r.meip, pn + ".r_meip");
+        sc_trace(o_vcd, r.mtip, pn + ".r_mtip");
+        sc_trace(o_vcd, r.msip, pn + ".r_msip");
         sc_trace(o_vcd, r.trap_code, pn + ".r_trap_code");
         sc_trace(o_vcd, r.hold_data_load_fault, pn + ".r_hold_data_load_fault");
         sc_trace(o_vcd, r.break_mode, pn + ".r_break_mode");
@@ -260,6 +264,7 @@ void CsrRegs::comb() {
     w_trap_irq = 0;
     wb_trap_code = 0;
 
+    v.meip = i_irq_external;
 
     switch (r.state.read()) {
     case State_Idle:
@@ -355,7 +360,7 @@ void CsrRegs::comb() {
     if (w_trap_valid) {// && (r.break_mode.read() || !i_ex_breakpoint.read())) {
         v.mie = 0;
         v.mpp = r.mode;
-        v.mepc = i_e_npc.read();
+        v.mepc = i_e_pc.read();     // current latched instruction not executed overwritten by exception/interrupt
         v.mbadaddr = wb_mbadaddr;
         v.trap_code = wb_trap_code;
         v.trap_irq = w_trap_irq;
@@ -653,10 +658,7 @@ void CsrRegs::comb() {
     if ((r.mode.read() != PRV_M) || r.mie.read()) {
         w_ie = 1;
     }
-    w_ext_irq = i_irq_external.read() && w_ie;
-    //if (i_trap_ready.read()) {
-    //    v.ext_irq = w_ext_irq;
-    //}
+    w_ext_irq = r.meip.read() && w_ie;
 
     w_mstackovr = 0;
     if (i_sp.read()(CFG_CPU_ADDR_BITS-1, 0) < r.mstackovr.read()) {
@@ -895,7 +897,7 @@ void CsrRegs::comb() {
 
     o_irq_software = 0;
     o_irq_timer = 0;
-    o_irq_external = 0;
+    o_irq_external = w_ext_irq;
 
     o_executed_cnt = r.executed_cnt;
     o_dbg_pc_write = v_dbg_pc_write;

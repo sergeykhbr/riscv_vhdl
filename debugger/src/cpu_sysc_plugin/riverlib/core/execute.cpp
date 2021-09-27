@@ -183,6 +183,11 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << r.rv32;
     sensitive << r.compressed;
     sensitive << r.f64;
+    sensitive << r.mem_ex_load_fault;
+    sensitive << r.mem_ex_store_fault;
+    sensitive << r.mem_ex_mpu_store;
+    sensitive << r.mem_ex_mpu_load;
+    sensitive << r.mem_ex_addr;
     sensitive << r.res_npc;
     sensitive << r.res_ra;
     sensitive << r.res_csr;
@@ -370,6 +375,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, wb_select.res[Res_FPU], pn + ".wb_arith_res(7)");
         sc_trace(o_vcd, r.state, pn + ".r_state");
         sc_trace(o_vcd, r.csrstate, pn + ".r_csrstate");
+        sc_trace(o_vcd, r.csr_req_type, pn + ".r_csr_req_type");
         sc_trace(o_vcd, r.amostate, pn + ".r_amostate");
         sc_trace(o_vcd, r.tagcnt_rd, pn + ".r_tagcnt_rd");
         sc_trace(o_vcd, r.tagcnt_wr, pn + ".r_tagcnt_wr");
@@ -633,6 +639,23 @@ void InstrExecute::comb() {
         || (wv[Instr_SH] && vb_memop_memaddr_store[0] != 0)) {
         v_store_misaligned = 1;
     }
+    if (i_mem_ex_load_fault.read() == 1) {
+        v.mem_ex_load_fault = 1;
+        v.mem_ex_addr = i_mem_ex_addr;
+    }
+    if (i_mem_ex_store_fault.read() == 1) {
+        v.mem_ex_store_fault = 1;
+        v.mem_ex_addr = i_mem_ex_addr;
+    }
+    if (i_mem_ex_mpu_store.read() == 1) {
+        v.mem_ex_mpu_store = 1;
+        v.mem_ex_addr = i_mem_ex_addr;
+    }
+    if (i_mem_ex_mpu_load.read() == 1) {
+        v.mem_ex_mpu_load = 1;
+        v.mem_ex_addr = i_mem_ex_addr;
+    }
+
 
 
     opcode_len = 4;
@@ -703,8 +726,8 @@ void InstrExecute::comb() {
     }
 
     v_csr_cmd_ena = i_unsup_exception
-                || i_instr_load_fault || i_mem_ex_load_fault || i_mem_ex_store_fault
-                || i_mem_ex_mpu_store || i_mem_ex_mpu_load || !i_instr_executable.read()
+                || i_instr_load_fault || r.mem_ex_load_fault || r.mem_ex_store_fault
+                || r.mem_ex_mpu_store || r.mem_ex_mpu_load || !i_instr_executable.read()
                 || v_instr_misaligned || v_load_misaligned || v_store_misaligned
                 || i_irq_software || i_irq_timer || i_irq_external
                 || wv[Instr_EBREAK] || wv[Instr_ECALL]
@@ -731,18 +754,18 @@ void InstrExecute::comb() {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_LoadMisalign;           // Load address misaligned
         vb_csr_cmd_wdata = mux.pc;
-    } else if (i_mem_ex_load_fault || i_mem_ex_mpu_load) {
+    } else if (r.mem_ex_load_fault || r.mem_ex_mpu_load) {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_LoadFault;              // Load access fault
-        vb_csr_cmd_wdata = i_mem_ex_addr;
+        vb_csr_cmd_wdata = r.mem_ex_addr;
     } else if (v_store_misaligned == 1) {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_StoreMisalign;          // Store/AMO address misaligned
         vb_csr_cmd_wdata = mux.pc;
-    } else if (i_mem_ex_store_fault || i_mem_ex_mpu_store) {
+    } else if (r.mem_ex_store_fault || r.mem_ex_mpu_store) {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_StoreFault;             // Store/AMO access fault
-        vb_csr_cmd_wdata = i_mem_ex_addr;
+        vb_csr_cmd_wdata = r.mem_ex_addr;
     } else if (wv[Instr_ECALL]) {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_CallFromXMode;          // Environment call
@@ -857,6 +880,10 @@ void InstrExecute::comb() {
                     v.csr_req_pc = vb_csr_cmd_type[CsrReq_ExceptionBit]
                                  | vb_csr_cmd_type[CsrReq_InterruptBit]
                                  | vb_csr_cmd_type[CsrReq_TrapReturnBit];
+                    v.mem_ex_load_fault = 0;
+                    v.mem_ex_store_fault = 0;
+                    v.mem_ex_mpu_store = 0;
+                    v.mem_ex_mpu_load = 0;
                 } else if (vb_select[Res_IMul] || vb_select[Res_IDiv] || vb_select[Res_FPU]) {
                     v.state = State_WaitMulti;
                 } else if (i_amo.read() == 1) {
@@ -921,7 +948,12 @@ void InstrExecute::comb() {
                     v.csr_req_pc = 0;
                     v.npc = i_csr_resp_data;
                     v.state = State_Idle;
-                    v.valid = 1;
+                    if (r.csr_req_type.read()[CsrReq_ExceptionBit]
+                        || r.csr_req_type.read()[CsrReq_InterruptBit]) {
+                        // current instruction not executed
+                    } else {
+                        v.valid = 1;
+                    }
                 } else if (r.csr_req_rmw.read()) {
                     v.csrstate = CsrState_Req;
                     v.csr_req_type = CsrReq_WriteCmd;

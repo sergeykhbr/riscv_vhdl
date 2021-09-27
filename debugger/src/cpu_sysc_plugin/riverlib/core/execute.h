@@ -222,6 +222,12 @@ private:
         sc_signal<bool> compressed;
         sc_signal<bool> f64;
 
+        sc_signal<bool> mem_ex_load_fault;
+        sc_signal<bool> mem_ex_store_fault;
+        sc_signal<bool> mem_ex_mpu_store;
+        sc_signal<bool> mem_ex_mpu_load;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mem_ex_addr;
+
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> res_npc;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> res_ra;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> res_csr;
@@ -271,6 +277,12 @@ private:
         iv.rv32 = 0;
         iv.compressed = 0;
         iv.f64 = 0;
+
+        iv.mem_ex_load_fault = 0;
+        iv.mem_ex_store_fault = 0;
+        iv.mem_ex_mpu_store = 0;
+        iv.mem_ex_mpu_load = 0;
+        iv.mem_ex_addr = 0;
 
         iv.res_npc = 0;
         iv.res_ra = 0;

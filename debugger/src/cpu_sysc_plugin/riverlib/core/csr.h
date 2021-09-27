@@ -97,13 +97,16 @@ private:
         sc_signal<sc_uint<2>> mpp;              // Previous mode
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mepc;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> uepc;
-        sc_signal<bool> ext_irq;
 
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mpu_addr;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mpu_mask;
         sc_signal<sc_uint<CFG_MPU_TBL_WIDTH>> mpu_idx;
         sc_signal<sc_uint<CFG_MPU_FL_TOTAL>> mpu_flags;
         sc_signal<bool> mpu_we;
+
+        sc_signal<bool> meip;       // machine external interrupt pending
+        sc_signal<bool> mtip;       // machine timer interrupt pending
+        sc_signal<bool> msip;       // machine software interrupt pending
 
         sc_signal<bool> ex_fpu_invalidop;         // FPU Exception: invalid operation
         sc_signal<bool> ex_fpu_divbyzero;         // FPU Exception: divide by zero
@@ -157,12 +160,14 @@ private:
         iv.mpp = 0;
         iv.mepc = 0;
         iv.uepc = 0;
-        iv.ext_irq = 0;
         iv.mpu_addr = 0;
         iv.mpu_mask = 0;
         iv.mpu_idx = 0;
         iv.mpu_flags = 0;
         iv.mpu_we = 0;
+        iv.meip = 0;
+        iv.mtip = 0;
+        iv.msip = 0;
         iv.ex_fpu_invalidop = 0;
         iv.ex_fpu_divbyzero = 0;
         iv.ex_fpu_overflow = 0;
