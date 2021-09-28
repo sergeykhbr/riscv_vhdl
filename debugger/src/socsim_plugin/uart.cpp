@@ -219,7 +219,7 @@ uint32_t UART::STATUS_TYPE::aboutToRead(uint32_t cur_val) {
     }
 
     if (p->getTxTotal() == 0) {
-        t.b.tx_fifo_empty = 0;//1;
+        t.b.tx_fifo_empty = 1;
         t.b.tx_fifo_full = 0;
     } else if (p->getTxTotal() == FIFOSZ) {
         t.b.tx_fifo_empty = 0;
@@ -234,6 +234,15 @@ uint32_t UART::SCALER_TYPE::aboutToWrite(uint32_t new_val) {
     UART *p = static_cast<UART *>(parent_);
     p->setScaler(static_cast<uint32_t>(new_val));
     return new_val;    
+}
+
+uint32_t UART::FWCPUID_TYPE::aboutToWrite(uint32_t new_val) {
+    if (new_val == 0 || getValue().val == 0) {
+        // Not-zero value can be written only in cleared register
+        return new_val;
+    } else {
+        return 0;
+    }
 }
 
 uint32_t UART::DATA_TYPE::aboutToRead(uint32_t cur_val) {

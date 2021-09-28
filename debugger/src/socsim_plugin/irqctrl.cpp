@@ -21,7 +21,7 @@ IrqPort::IrqPort(IService *parent, const char *portname, int idx) {
 
 void IrqPort::raiseLine() {
     level_ = true;
-    static_cast<IrqController *>(parent_)->requestInterrupt(idx_);
+    static_cast<IrqController *>(parent_)->setPendingBit(idx_);
 }
 
 void IrqPort::setLevel(bool level) {
@@ -32,11 +32,21 @@ void IrqPort::setLevel(bool level) {
     }
 }
 
-IrqController::IrqController(const char *name)  : IService(name) {
-    registerInterface(static_cast<IMemoryOperation *>(this));
+IrqController::IrqController(const char *name) : RegMemBankGeneric(name),
+    irq_mask(static_cast<IService *>(this), "irq_mask", 0x00),
+    irq_pending(static_cast<IService *>(this), "irq_pending", 0x04),
+    irq_clear(static_cast<IService *>(this), "irq_clear", 0x08),
+    irq_raise(static_cast<IService *>(this), "irq_raise", 0x0c),
+    isr_table_l(static_cast<IService *>(this), "isr_table_l", 0x10),
+    isr_table_m(static_cast<IService *>(this), "isr_table_m", 0x14),
+    dbg_cause_l(static_cast<IService *>(this), "dbg_cause_l", 0x18),
+    dbg_cause_m(static_cast<IService *>(this), "dbg_cause_m", 0x1c),
+    dbg_epc_l(static_cast<IService *>(this), "dbg_epc_l", 0x20),
+    dbg_epc_m(static_cast<IService *>(this), "dbg_epc_m", 0x24),
+    irq_lock(static_cast<IService *>(this), "irq_lock", 0x28),
+    irq_cause(static_cast<IService *>(this), "irq_cause", 0x2c) {
     registerInterface(static_cast<IClockListener *>(this));
     registerAttribute("CPU", &cpu_);
-    registerAttribute("CSR_MIPI", &mipi_);
     registerAttribute("IrqTotal", &irqTotal_);
 
     char portname[256];
@@ -45,19 +55,22 @@ IrqController::IrqController(const char *name)  : IService(name) {
         irqlines_[i] = new IrqPort(this, portname, i);
     }
 
-    mipi_.make_uint64(0x783);
     cpu_.make_string("");
     irqTotal_.make_uint64(4);
 
-    memset(&regs_, 0, sizeof(regs_));
-    regs_.irq_mask = 0x1e;
-    regs_.irq_lock = 1;
+    irq_mask.setValue(0x1e);
+    irq_lock.setValue(1);
+    //memset(&regs_, 0, sizeof(regs_));
+    //regs_.irq_mask = 0x1e;
+    //regs_.irq_lock = 1;
 }
 
 IrqController::~IrqController() {
 }
 
 void IrqController::postinitService() {
+    RegMemBankGeneric::postinitService();
+
     iclk_ = static_cast<IClock *>(
         RISCV_get_service_iface(cpu_.to_string(), IFACE_CLOCK));
     if (!iclk_) {
@@ -75,7 +88,7 @@ void IrqController::postinitService() {
     iclk_->registerStepCallback(static_cast<IClockListener *>(this), t + 1);
 }
 
-ETransStatus IrqController::b_transport(Axi4TransactionType *trans) {
+/*ETransStatus IrqController::b_transport(Axi4TransactionType *trans) {
     uint64_t mask = (length_.to_uint64() - 1);
     uint64_t off = ((trans->addr - getBaseAddress()) & mask) / 4;
     uint32_t t1;
@@ -230,21 +243,46 @@ ETransStatus IrqController::b_transport(Axi4TransactionType *trans) {
     }
     return TRANS_OK;
 }
-
+*/
 void IrqController::stepCallback(uint64_t t) {
     iclk_->registerStepCallback(static_cast<IClockListener *>(this), t + 1);
-    if (regs_.irq_lock == 1) {
+    if (irq_lock.getValue().val == 1) {
         return;
     }
-    if (~regs_.irq_mask & regs_.irq_pending) {
+    if (~irq_mask.getValue().val & irq_pending.getValue().val) {
         icpu_->raiseSignal(SIGNAL_XExternal);   // PLIC interrupt (external)
         RISCV_debug("Raise interrupt", NULL);
     }
 }
 
-void IrqController::requestInterrupt(int idx) {
-    regs_.irq_pending |= (0x1 << idx);
+void IrqController::setPendingBit(int idx) {
+    Reg32Type t = irq_pending.getValue();
+    t.val |= (0x1 << idx);
+    irq_pending.setValue(t.val);
     RISCV_info("request Interrupt %d", idx);
+}
+
+void IrqController::clearPendingBit(int idx) {
+    Reg32Type t = irq_pending.getValue();
+    uint32_t prev = t.val;
+    t.val &= ~(1ul << idx);
+    irq_pending.setValue(t.val);
+    if (prev && !t.val) {
+        icpu_->lowerSignal(SIGNAL_XExternal);
+    }
+}
+
+uint32_t IrqController::IRQ_CLEAR_TYPE::aboutToWrite(uint32_t nxt_val) {
+    IrqController *p = static_cast<IrqController *>(parent_);
+    int i = 0;
+    while (nxt_val) {
+        if (nxt_val & 0x1) {
+            p->clearPendingBit(i);
+        }
+        i++;
+        nxt_val >>= 1;
+    }
+    return nxt_val;
 }
 
 }  // namespace debugger

@@ -5,8 +5,7 @@
  * @brief      Interrupt controller functional model.
  */
 
-#ifndef __DEBUGGER_SOCSIM_PLUGIN_IRQCTRL_H__
-#define __DEBUGGER_SOCSIM_PLUGIN_IRQCTRL_H__
+#pragma once
 
 #include <iclass.h>
 #include <iservice.h>
@@ -14,7 +13,8 @@
 #include "coreservices/imemop.h"
 #include "coreservices/iwire.h"
 #include "coreservices/icpugen.h"
-
+#include "generic/mapreg.h"
+#include "generic/rmembank_gen1.h"
 namespace debugger {
 
 class IrqPort : public IWire {
@@ -33,8 +33,7 @@ class IrqPort : public IWire {
     bool level_;
 };
 
-class IrqController : public IService, 
-                      public IMemoryOperation,
+class IrqController : public RegMemBankGeneric,
                       public IClockListener {
  public:
     IrqController(const char *name);
@@ -43,17 +42,36 @@ class IrqController : public IService,
     /** IService interface */
     virtual void postinitService();
 
-    /** IMemoryOperation */
-    virtual ETransStatus b_transport(Axi4TransactionType *payload);
-
     /** IClockListener interface */
     virtual void stepCallback(uint64_t t);
 
     /** Controller specific methods visible for ports */
-    void requestInterrupt(int idx);
+    void setPendingBit(int idx);
+    void clearPendingBit(int idx);
 
  private:
-    AttributeType mipi_;
+    class IRQ_PENDING_TYPE : public MappedReg32Type {
+     public:
+        IRQ_PENDING_TYPE(IService *parent, const char *name, uint64_t addr) :
+                    MappedReg32Type(parent, name, addr) {
+        }
+
+     protected:
+        virtual uint32_t aboutToWrite(uint32_t nxt_val) override {
+            return getValue().val;      // read only
+        }
+    };
+
+    class IRQ_CLEAR_TYPE : public MappedReg32Type {
+     public:
+        IRQ_CLEAR_TYPE(IService *parent, const char *name, uint64_t addr) :
+                    MappedReg32Type(parent, name, addr) {
+        }
+
+     protected:
+        virtual uint32_t aboutToWrite(uint32_t nxt_val) override;
+    };
+
     AttributeType irqTotal_;
     AttributeType cpu_;
     ICpuGeneric *icpu_;
@@ -61,21 +79,20 @@ class IrqController : public IService,
     static const int IRQ_MAX = 32;
     IrqPort *irqlines_[IRQ_MAX];
 
-    struct irqctrl_map {
-        uint32_t irq_mask;      // 0x00: [RW] 1=disable; 0=enable
-        uint32_t irq_pending;   // 0x04: [RW]
-        uint32_t irq_clear;     // 0x08: [WO]
-        uint32_t irq_rise;      // 0x0c: [WO]
-        uint64_t isr_table;     // 0x10: [RW]
-        uint64_t dbg_cause;     // 0x18: [RW]
-        uint64_t dbg_epc;       // 0x20: [RW]
-        uint32_t irq_lock;      // 0x28: [RW]
-        uint32_t irq_cause_idx; // 0x2c: [RW]
-    } regs_;
+    MappedReg32Type irq_mask;       // 0x00: [RW] 1=disable; 0=enable
+    IRQ_PENDING_TYPE irq_pending;   // 0x04: [RO]
+    IRQ_CLEAR_TYPE irq_clear;       // 0x08: [WO]
+    MappedReg32Type irq_raise;      // 0x0c: [WO]
+    MappedReg32Type isr_table_l;    // 0x10: [RW]
+    MappedReg32Type isr_table_m;    // 0x14: [RW]
+    MappedReg32Type dbg_cause_l;    // 0x18: [RW]
+    MappedReg32Type dbg_cause_m;    // 0x1c: [RW]
+    MappedReg32Type dbg_epc_l;      // 0x20: [RW]
+    MappedReg32Type dbg_epc_m;      // 0x24: [RW]
+    MappedReg32Type irq_lock;       // 0x28: [RW]
+    MappedReg32Type irq_cause;      // 0x2c: [RW]
 };
 
 DECLARE_CLASS(IrqController)
 
 }  // namespace debugger
-
-#endif  // __DEBUGGER_SOCSIM_PLUGIN_IRQCTRL_H__

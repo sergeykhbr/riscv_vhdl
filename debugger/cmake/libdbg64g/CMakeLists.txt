@@ -3,18 +3,18 @@ project(libdbg64g DESCRIPTION "libdbg64g shared library")
 
 set(src_top "${CMAKE_CURRENT_SOURCE_DIR}/../../src")
 
+set(CMAKE_BUILD_TYPE Debug)
+
 if(UNIX)
 	set(LIBRARY_OUTPUT_PATH "../../linuxbuild/bin")
 else()
 	add_definitions(-D_UNICODE)
 	add_definitions(-DUNICODE)
-	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE "./../winbuild/bin")
-	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG "./../winbuild/bin")
+	set(LIBRARY_OUTPUT_PATH "../winbuild/bin")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 endif()
 
-set(CMAKE_BUILD_TYPE Debug)
 
 include_directories(
     ${src_top}/common
@@ -34,7 +34,7 @@ file(GLOB_RECURSE libdbg64g_src
     ${src_top}/common/*.h
     ${src_top}/libdbg64g/*.cpp
     ${src_top}/libdbg64g/*.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/exportdef.map
+    ${CMAKE_CURRENT_SOURCE_DIR}/exportmap.def
 )
 
 if(UNIX)

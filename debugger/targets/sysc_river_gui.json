@@ -158,7 +158,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'bootrom0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../examples/boot/linuxbuild/bin/bootimage.hex'],
+                ['InitFile','../../../examples/bootrom_tests/linuxbuild/bin/bootrom_tests.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x0],
                 ['Length',32768]
@@ -216,8 +216,20 @@
                 ['BaseAddress',0x80002000],
                 ['Length',4096],
                 ['CPU','core0'],
-                ['IrqTotal',4],
-                ['CSR_MIPI',0x783]
+                ['IrqTotal',3],
+                ['MapList',[['irqctrl0','irq_mask'],
+                            ['irqctrl0','irq_pending'],
+                            ['irqctrl0','irq_clear'],
+                            ['irqctrl0','irq_raise'],
+                            ['irqctrl0','isr_table_l'],
+                            ['irqctrl0','isr_table_m'],
+                            ['irqctrl0','dbg_cause_l'],
+                            ['irqctrl0','dbg_cause_m'],
+                            ['irqctrl0','dbg_epc_l'],
+                            ['irqctrl0','dbg_epc_m'],
+                            ['irqctrl0','irq_lock'],
+                            ['irqctrl0','irq_cause'],
+                           ]]
                 ]}]},
     {'Class':'DSUClass','Instances':[
           {'Name':'dsu0','Attr':[

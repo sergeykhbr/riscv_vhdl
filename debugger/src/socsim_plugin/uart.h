@@ -146,17 +146,11 @@ class UART : public RegMemBankGeneric,
         virtual uint32_t aboutToWrite(uint32_t new_val) override;
     };
 
-    class DWORD_TYPE : public MappedReg32Type {
+    class FWCPUID_TYPE : public MappedReg32Type {
      public:
-        DWORD_TYPE(IService *parent, const char *name, uint64_t addr) :
+        FWCPUID_TYPE(IService *parent, const char *name, uint64_t addr) :
                     MappedReg32Type(parent, name, addr) {}
-        virtual uint32_t aboutToRead(uint32_t cur_val) override {
-            return cur_val;
-        }
-        virtual uint32_t aboutToWrite(uint32_t new_val) override {
-            bool st = true;
-            return MappedReg32Type::aboutToWrite(new_val);
-        }
+        virtual uint32_t aboutToWrite(uint32_t new_val) override;
     };
 
     class DATA_TYPE : public MappedReg32Type {
@@ -195,7 +189,7 @@ class UART : public RegMemBankGeneric,
 
     STATUS_TYPE status_;
     SCALER_TYPE scaler_;
-    DWORD_TYPE fwcpuid_;
+    FWCPUID_TYPE fwcpuid_;
     DATA_TYPE data_;
     int t_cb_cnt_;
 };
