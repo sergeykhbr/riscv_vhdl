@@ -6,8 +6,9 @@
  */
 
 #include "SymbolBrowserControl.h"
+#if!defined(CMAKE_ENABLED)
 #include "moc_SymbolBrowserControl.h"
-
+#endif
 #include <memory>
 #include <string.h>
 #include <QtWidgets/QBoxLayout>

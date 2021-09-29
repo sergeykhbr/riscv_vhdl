@@ -14,8 +14,7 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_COMMON_DEBUG_GRETH_H__
-#define __DEBUGGER_COMMON_DEBUG_GRETH_H__
+#pragma once
 
 #include <iclass.h>
 #include <iservice.h>
@@ -64,16 +63,16 @@ struct UdpEdclCommonType {
 };
 #pragma pack()
 
-class Greth : public IService,
-              public IThread,
-              public IMemoryOperation,
-              public IAxi4NbResponse {
+class GrethGeneric : public IService,
+                     public IThread,
+                     public IMemoryOperation,
+                     public IAxi4NbResponse {
  public:
-    explicit Greth(const char *name);
-    virtual ~Greth();
+    explicit GrethGeneric(const char *name);
+    virtual ~GrethGeneric();
 
     /** IService interface */
-    virtual void postinitService();
+    virtual void postinitService() override;
 
     /** IMemoryOperation */
     virtual ETransStatus b_transport(Axi4TransactionType *trans);
@@ -111,8 +110,5 @@ class Greth : public IService,
     greth_map regs_;
 };
 
-DECLARE_CLASS(Greth)
-
 }  // namespace debugger
 
-#endif  // __DEBUGGER_COMMON_DEBUG_GRETH_H__

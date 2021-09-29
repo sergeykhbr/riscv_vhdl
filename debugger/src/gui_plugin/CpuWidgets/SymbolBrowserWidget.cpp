@@ -8,8 +8,9 @@
 #include "SymbolBrowserArea.h"
 #include "SymbolBrowserControl.h"
 #include "SymbolBrowserWidget.h"
+#if!defined(CMAKE_ENABLED)
 #include "moc_SymbolBrowserWidget.h"
-
+#endif
 #include <memory>
 
 namespace debugger {

@@ -1,0 +1,90 @@
+cmake_minimum_required(VERSION 3.4.0)
+project(gui_plugin DESCRIPTION "gui_plugin shared library")
+
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_AUTOUIC ON)
+
+add_definitions(-DCMAKE_ENABLED)
+
+if("${CMAKE_SIZEOF_VOID_P}" STREQUAL "4")
+    set(Qt5_DIR "$ENV{QT_PATH}//lib//cmake//Qt5")
+else()
+    set(Qt5_DIR "$ENV{QT_PATH64}//lib//cmake//Qt5")
+endif()
+
+set(src_top "${CMAKE_CURRENT_SOURCE_DIR}/../../src")
+#set(CMAKE_BUILD_TYPE Debug)
+
+if(UNIX)
+	set(LIBRARY_OUTPUT_PATH "../../linuxbuild/bin/plugins")
+else()
+	add_definitions(-D_UNICODE)
+	add_definitions(-DUNICODE)
+	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+endif()
+
+
+include_directories(
+    ${src_top}/common
+    ${src_top}/gui_plugin
+)
+
+
+file(GLOB_RECURSE gui_plugin_src
+    LIST_DIRECTORIES false
+    ${src_top}/common/*.cpp
+    ${src_top}/common/*.h
+    ${src_top}/gui_plugin/*.cpp
+    ${src_top}/gui_plugin/*.h
+    ${src_top}/gui_plugin/*.qrc
+    ${CMAKE_CURRENT_SOURCE_DIR}/exportmap.def
+)
+
+
+if(UNIX)
+else()
+    foreach(_source IN ITEMS ${gui_plugin_src})
+        get_filename_component(_source_path "${_source}" PATH)
+        # form proper filter name from the path to source file:
+        string(REPLACE "${CMAKE_SOURCE_DIR}" "" _group_path "${_source_path}")
+        string(REPLACE "/" "\\" _group_path "${_group_path}")
+        string(REPLACE "cmake\\gui_plugin" "" _group_path "${_group_path}")
+        string(REPLACE "..\\..\\" "" _group_path "${_group_path}")
+ 
+        source_group("${_group_path}" FILES "${_source}")
+    endforeach()
+endif()
+
+
+find_package(Qt5 COMPONENTS Widgets Network REQUIRED)
+
+if(UNIX)
+    set_target_properties(gui_plugin PROPERTIES PREFIX "")
+
+    add_custom_command(TARGET gui_plugin  
+	        POST_BUILD
+	        COMMAND /bin/bash ./deploy_qt.sh 
+	        )
+
+else()
+    link_directories(BEFORE "${RUNTIME_OUTPUT_DIRECTORY}")
+    add_library(gui_plugin SHARED
+        ${gui_plugin_src}
+    )
+
+    set_target_properties(gui_plugin PROPERTIES RUNTIME_OUTPUT_DIRECTORY "../winbuild/bin/plugins")
+    set_target_properties(gui_plugin PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE "../winbuild/bin/plugins")
+    set_target_properties(gui_plugin PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG "../winbuild/bin/plugins")
+
+    target_include_directories(gui_plugin PUBLIC "${RUNTIME_OUTPUT_DIRECTORY}")
+    target_link_libraries(gui_plugin libdbg64g Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Network)	
+    add_custom_command(TARGET gui_plugin 
+	        POST_BUILD
+	        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/post_build_event.bat "\"$(SolutionDir)winbuild/bin\""
+	        )
+
+endif()
+
+ 

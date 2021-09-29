@@ -1,7 +1,8 @@
 
 #include "MdiAreaWidget.h"
+#if!defined(CMAKE_ENABLED)
 #include "moc_MdiAreaWidget.h"
-
+#endif
 namespace debugger {
 
 MdiAreaWidget::MdiAreaWidget(AttributeType &cfg, QWidget *parent)

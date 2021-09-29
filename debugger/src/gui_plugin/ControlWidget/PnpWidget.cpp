@@ -15,7 +15,9 @@
  */
 
 #include "PnpWidget.h"
+#if!defined(CMAKE_ENABLED)
 #include "moc_PnpWidget.h"
+#endif
 
 #include <QtGui/QPainter>
 #include <QtWidgets/QScrollBar>

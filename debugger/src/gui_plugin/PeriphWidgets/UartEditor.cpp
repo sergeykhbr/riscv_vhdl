@@ -1,6 +1,7 @@
 #include "UartEditor.h"
+#if!defined(CMAKE_ENABLED)
 #include "moc_UartEditor.h"
-
+#endif
 #include <QtWidgets/QScrollBar>
 #include <memory>
 

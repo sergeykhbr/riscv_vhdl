@@ -6,8 +6,9 @@
  */
 
 #include "LedArea.h"
+#if!defined(CMAKE_ENABLED)
 #include "moc_LedArea.h"
-
+#endif
 #include <QtGui/QPainter>
 
 namespace debugger {

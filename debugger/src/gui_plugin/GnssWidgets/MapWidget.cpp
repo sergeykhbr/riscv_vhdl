@@ -1,5 +1,7 @@
 #include "MapWidget.h"
+#if!defined(CMAKE_ENABLED)
 #include "moc_MapWidget.h"
+#endif
 #include <math.h>
 
 namespace debugger {

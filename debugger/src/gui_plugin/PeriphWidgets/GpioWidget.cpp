@@ -1,8 +1,9 @@
 #include "LedArea.h"
 #include "DipArea.h"
 #include "GpioWidget.h"
+#if!defined(CMAKE_ENABLED)
 #include "moc_GpioWidget.h"
-
+#endif
 #include <QtCore/QDate>
 #include <QtGui/QPainter>
 #include <QtWidgets/QScrollBar>

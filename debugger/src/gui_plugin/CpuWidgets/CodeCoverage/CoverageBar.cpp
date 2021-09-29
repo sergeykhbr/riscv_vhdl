@@ -5,7 +5,9 @@
  */
 
 #include "CoverageBar.h"
+#if!defined(CMAKE_ENABLED)
 #include "moc_CoverageBar.h"
+#endif
 #include <memory>
 
 namespace debugger {

@@ -1,0 +1,3 @@
+LIBRARY cpu_arm_plugin
+EXPORTS
+	plugin_init

@@ -1,6 +1,7 @@
 #include "UartWidget.h"
+#if!defined(CMAKE_ENABLED)
 #include "moc_UartWidget.h"
-
+#endif
 #include <QtWidgets/QHBoxLayout>
 #include <memory>
 

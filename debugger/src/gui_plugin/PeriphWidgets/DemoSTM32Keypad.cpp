@@ -15,8 +15,9 @@
  */
 
 #include "DemoSTM32Keypad.h"
+#if!defined(CMAKE_ENABLED)
 #include "moc_DemoSTM32Keypad.h"
-
+#endif
 #include <memory>
 #include <string.h>
 

@@ -7,8 +7,9 @@
 
 #include "coreservices/ielfreader.h"
 #include "StackTraceArea.h"
+#if!defined(CMAKE_ENABLED)
 #include "moc_StackTraceArea.h"
-
+#endif
 #include <memory>
 #include <string.h>
 #include <QtWidgets/QBoxLayout>

@@ -97,7 +97,7 @@ ETransStatus RegMemBankGeneric::b_transport(Axi4TransactionType *trans) {
         imem = imaphash_[off];
         if (imem != 0) {
             tr.addr = off;
-            tr.xsize = imem->getLength();
+            tr.xsize = static_cast<uint32_t>(imem->getLength());
             if (trans->action == MemAction_Read) {
                 imem->b_transport(&tr);
                 memcpy(&trans->rpayload.b8[off - off0], tr.rpayload.b8, imem->getLength());

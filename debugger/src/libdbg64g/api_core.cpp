@@ -22,6 +22,7 @@
 #include "services/debug/edcl.h"
 #include "services/debug/cpumonitor.h"
 #include "services/debug/codecov_generic.h"
+#include "services/debug/greth.h"
 #include "services/elfloader/elfreader.h"
 #include "services/exec/cmdexec.h"
 #include "services/mem/memlut.h"
@@ -82,6 +83,8 @@ extern "C" int RISCV_init() {
     REGISTER_CLASS_IDX(DpiClient, 14);
     REGISTER_CLASS_IDX(CpuMonitor, 15);
     REGISTER_CLASS_IDX(GenericCodeCoverage, 16);
+    REGISTER_CLASS_IDX(Greth, 17)
+
 
     pcore_->load_plugins();
     return 0;

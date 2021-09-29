@@ -7,8 +7,9 @@
 
 #include "coreservices/isrccode.h"
 #include "SymbolBrowserArea.h"
+#if!defined(CMAKE_ENABLED)
 #include "moc_SymbolBrowserArea.h"
-
+#endif
 #include <memory>
 #include <string.h>
 #include <QtWidgets/QBoxLayout>

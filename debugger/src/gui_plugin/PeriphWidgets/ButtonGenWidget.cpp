@@ -15,8 +15,9 @@
  */
 
 #include "ButtonGenWidget.h"
+#if!defined(CMAKE_ENABLED)
 #include "moc_ButtonGenWidget.h"
-
+#endif
 #include <memory>
 #include <string.h>
 #include <QtWidgets/QBoxLayout>

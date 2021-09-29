@@ -1,6 +1,7 @@
 #include "StreetMapObject.h"
+#if!defined(CMAKE_ENABLED)
 #include "moc_StreetMapObject.h"
-
+#endif
 #include <QtWidgets/QtWidgets>
 #include <QtCore/QDateTime>
 #include <QtNetwork/QtNetwork>

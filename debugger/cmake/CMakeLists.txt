@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.4.0)
 project(riscvdebugger)
 
 
-set(CMAKE_BUILD_TYPE Debug)
+#set(CMAKE_BUILD_TYPE Debug)
 
 if(UNIX)
 	set(EXECUTABLE_OUTPUT_PATH "linuxbuild/bin")
@@ -11,14 +11,17 @@ if(UNIX)
 else()
 	add_definitions(-D_UNICODE)
 	add_definitions(-DUNICODE)
-	set(CMAKE_INSTALL_PREFIX ".")
-	set(EXECUTABLE_OUTPUT_PATH "./winbuild/bin")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 endif()
 
 add_subdirectory(libdbg64g)
-
+add_subdirectory(simple_plugin)
+add_subdirectory(socsim_plugin)
+add_subdirectory(cpu_sysc_plugin)
+add_subdirectory(cpu_arm_plugin)
+add_subdirectory(cpu_fnc_plugin)
+add_subdirectory(gui_plugin)
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/common
@@ -38,7 +41,7 @@ add_executable(
 
 
 if(UNIX)
-    target_link_libraries(riscvdebugger libdbg64g pthread rt dl)
+    target_link_libraries(riscvdebugger pthread rt dl libdbg64g)
 else()
 
     foreach(_source IN ITEMS ${_riscvdebugger_src})
@@ -46,15 +49,19 @@ else()
         # form proper filter name from the path to source file:
         string(REPLACE "${CMAKE_SOURCE_DIR}" "" _group_path "${_source_path}")
         string(REPLACE "/" "\\" _group_path "${_group_path}")
-        string(REPLACE "..\\simulator_src\\" "" _group_path "${_group_path}")
+        string(REPLACE "..\\" "" _group_path "${_group_path}")
  
         source_group("${_group_path}" FILES "${_source}")
     endforeach()
 
 
-    set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT riscvdebugger)
+    set_target_properties(riscvdebugger PROPERTIES RUNTIME_OUTPUT_DIRECTORY "winbuild/bin")
+    set_target_properties(riscvdebugger PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE "winbuild/bin")
+    set_target_properties(riscvdebugger PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG "winbuild/bin")
+    set_target_properties(riscvdebugger PROPERTIES VS_STARTUP_PROJECT riscvdebugger)
     set_target_properties(riscvdebugger PROPERTIES
-       VS_DEBUGGER_COMMAND_ARGUMENTS "-c ${CMAKE_CURRENT_SOURCE_DIR}/../targets/sysc_river_gui.json")
+                                        VS_DEBUGGER_COMMAND_ARGUMENTS 
+                                        "-c ${CMAKE_CURRENT_SOURCE_DIR}/../targets/sysc_river_gui.json")
     target_link_libraries(riscvdebugger libdbg64g)
 endif()
   

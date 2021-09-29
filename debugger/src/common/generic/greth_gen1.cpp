@@ -15,14 +15,12 @@
  */
 
 #include <api_core.h>
-#include "greth.h"
+#include "greth_gen1.h"
 
 namespace debugger {
 
 /** Class registration in the Core */
-REGISTER_CLASS(Greth)
-
-Greth::Greth(const char *name)
+GrethGeneric::GrethGeneric(const char *name)
     : IService(name) {
     registerInterface(static_cast<IThread *>(this));
     registerInterface(static_cast<IMemoryOperation *>(this));
@@ -37,11 +35,12 @@ Greth::Greth(const char *name)
     seq_cnt_ = 35;
     RISCV_event_create(&event_tap_, "UART_event_tap");
 }
-Greth::~Greth() {
+
+GrethGeneric::~GrethGeneric() {
     RISCV_event_close(&event_tap_);
 }
 
-void Greth::postinitService() {
+void GrethGeneric::postinitService() {
     ibus_ = static_cast<IMemoryOperation *>(
        RISCV_get_service_iface(bus_.to_string(), IFACE_MEMORY_OPERATION));
 
@@ -78,7 +77,7 @@ void Greth::postinitService() {
     }
 }
 
-void Greth::busyLoop() {
+void GrethGeneric::busyLoop() {
     int bytes;
     uint8_t *tbuf;
     uint32_t bytes_to_read;
@@ -143,16 +142,16 @@ void Greth::busyLoop() {
     }
 }
 
-void Greth::nb_response(Axi4TransactionType *trans) {
+void GrethGeneric::nb_response(Axi4TransactionType *trans) {
     RISCV_event_set(&event_tap_);
 }
 
-ETransStatus Greth::b_transport(Axi4TransactionType *trans) {
+ETransStatus GrethGeneric::b_transport(Axi4TransactionType *trans) {
     RISCV_error("ETH Slave registers not implemented", NULL);
     return TRANS_OK;
 }
 
-void Greth::sendNAK(UdpEdclCommonType *req) {
+void GrethGeneric::sendNAK(UdpEdclCommonType *req) {
     req->control.response.nak = 1;
     req->control.response.seqidx = seq_cnt_;
     req->control.response.len = 0;
@@ -162,11 +161,11 @@ void Greth::sendNAK(UdpEdclCommonType *req) {
     itransport_->sendData(txbuf_, sizeof(UdpEdclCommonType));
 }
 
-uint32_t Greth::read32(uint8_t *buf) {
+uint32_t GrethGeneric::read32(uint8_t *buf) {
     return (buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | (buf[3] << 0);
 }
 
-void Greth::write32(uint8_t *buf, uint32_t v) {
+void GrethGeneric::write32(uint8_t *buf, uint32_t v) {
     buf[0] = static_cast<char>((v >> 24) & 0xFF);
     buf[1] = static_cast<char>((v >> 16) & 0xFF);
     buf[2] = static_cast<char>((v >> 8) & 0xFF);

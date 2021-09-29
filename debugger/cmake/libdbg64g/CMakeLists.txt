@@ -3,14 +3,13 @@ project(libdbg64g DESCRIPTION "libdbg64g shared library")
 
 set(src_top "${CMAKE_CURRENT_SOURCE_DIR}/../../src")
 
-set(CMAKE_BUILD_TYPE Debug)
+#set(CMAKE_BUILD_TYPE Debug)
 
 if(UNIX)
 	set(LIBRARY_OUTPUT_PATH "../../linuxbuild/bin")
 else()
 	add_definitions(-D_UNICODE)
 	add_definitions(-DUNICODE)
-	set(LIBRARY_OUTPUT_PATH "../winbuild/bin")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 endif()
@@ -48,6 +47,7 @@ else()
         string(REPLACE "${CMAKE_SOURCE_DIR}" "" _group_path "${_source_path}")
         string(REPLACE "/" "\\" _group_path "${_group_path}")
         string(REPLACE "cmake\\libdbg64g" "" _group_path "${_group_path}")
+        string(REPLACE "..\\..\\" "" _group_path "${_group_path}")
  
         source_group("${_group_path}" FILES "${_source}")
     endforeach()
@@ -59,9 +59,12 @@ add_library(libdbg64g SHARED
 )
 
 if(UNIX)
-	set_target_properties(libdbg64g PROPERTIES PREFIX "")
+    set_target_properties(libdbg64g PROPERTIES PREFIX "")
 else()
+    set_target_properties(libdbg64g PROPERTIES RUNTIME_OUTPUT_DIRECTORY "../winbuild/bin")
+    set_target_properties(libdbg64g PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE "../winbuild/bin")
+    set_target_properties(libdbg64g PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG "../winbuild/bin")
 
-	target_link_libraries(libdbg64g ws2_32)	
+    target_link_libraries(libdbg64g ws2_32)	
 endif()
   

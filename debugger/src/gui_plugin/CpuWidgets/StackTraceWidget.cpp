@@ -7,8 +7,9 @@
 
 #include "StackTraceArea.h"
 #include "StackTraceWidget.h"
+#if!defined(CMAKE_ENABLED)
 #include "moc_StackTraceWidget.h"
-
+#endif
 #include <memory>
 
 namespace debugger {

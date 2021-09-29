@@ -6,8 +6,9 @@
  */
 
 #include "DipArea.h"
+#if!defined(CMAKE_ENABLED)
 #include "moc_DipArea.h"
-
+#endif
 #include <QtGui/QPainter>
 
 namespace debugger {

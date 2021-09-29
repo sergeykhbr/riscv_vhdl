@@ -7,7 +7,9 @@
 
 #include <math.h>
 #include "PlotWidget.h"
+#if!defined(CMAKE_ENABLED)
 #include "moc_PlotWidget.h"
+#endif
 
 namespace debugger {
 

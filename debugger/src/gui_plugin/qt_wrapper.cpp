@@ -16,7 +16,9 @@
 
 #include "api_core.h"
 #include "qt_wrapper.h"
+#if!defined(CMAKE_ENABLED)
 #include "moc_qt_wrapper.h"
+#endif
 #include <string>
 #include <QtWidgets/QApplication>
 

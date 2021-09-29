@@ -6,8 +6,9 @@
  */
 
 #include "MemControl.h"
+#if!defined(CMAKE_ENABLED)
 #include "moc_MemControl.h"
-
+#endif
 #include <memory>
 #include <string.h>
 #include <QtWidgets/QBoxLayout>
