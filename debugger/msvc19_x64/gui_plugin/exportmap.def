@@ -1,3 +1,0 @@
-LIBRARY gui_plugin
-EXPORTS
-	plugin_init

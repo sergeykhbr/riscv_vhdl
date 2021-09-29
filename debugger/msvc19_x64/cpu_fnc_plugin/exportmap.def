@@ -1,3 +1,0 @@
-LIBRARY cpu_fnc_plugin
-EXPORTS
-	plugin_init
