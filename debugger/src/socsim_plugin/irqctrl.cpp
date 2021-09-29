@@ -57,12 +57,6 @@ IrqController::IrqController(const char *name) : RegMemBankGeneric(name),
 
     cpu_.make_string("");
     irqTotal_.make_uint64(4);
-
-    irq_mask.setValue(0x1e);
-    irq_lock.setValue(1);
-    //memset(&regs_, 0, sizeof(regs_));
-    //regs_.irq_mask = 0x1e;
-    //regs_.irq_lock = 1;
 }
 
 IrqController::~IrqController() {

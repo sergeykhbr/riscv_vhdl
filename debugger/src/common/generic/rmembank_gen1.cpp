@@ -100,13 +100,14 @@ ETransStatus RegMemBankGeneric::b_transport(Axi4TransactionType *trans) {
             tr.xsize = static_cast<uint32_t>(imem->getLength());
             if (trans->action == MemAction_Read) {
                 imem->b_transport(&tr);
-                memcpy(&trans->rpayload.b8[off - off0], tr.rpayload.b8, imem->getLength());
+                memcpy(&trans->rpayload.b8[off - off0], tr.rpayload.b8,
+                    static_cast<size_t>(imem->getLength()));
             } else if (tr.wstrb & ((1 << imem->getLength()) - 1)) {
                 imem->b_transport(&tr);
             }
             tr.wstrb >>= imem->getLength();
             tr.wpayload.b64[0] >>= 8*imem->getLength();
-            tsz -= imem->getLength();
+            tsz -= static_cast<size_t>(imem->getLength());
             off += imem->getLength();
         } else {
             // Stubs:

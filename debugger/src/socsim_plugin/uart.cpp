@@ -219,7 +219,7 @@ uint32_t UART::STATUS_TYPE::aboutToRead(uint32_t cur_val) {
     }
 
     if (p->getTxTotal() == 0) {
-        t.b.tx_fifo_empty = 1;
+        t.b.tx_fifo_empty = 0;//1;  // TEMPORARY comment this!!!! to debug bootrom_tests
         t.b.tx_fifo_full = 0;
     } else if (p->getTxTotal() == FIFOSZ) {
         t.b.tx_fifo_empty = 0;

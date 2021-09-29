@@ -50,6 +50,15 @@ class IrqController : public RegMemBankGeneric,
     void clearPendingBit(int idx);
 
  private:
+    class IRQ_MASK_TYPE : public MappedReg32Type {
+     public:
+        IRQ_MASK_TYPE(IService *parent, const char *name, uint64_t addr) :
+                    MappedReg32Type(parent, name, addr) {
+            hard_reset_value_ = 0x1e;
+            value_.val = hard_reset_value_;
+        }
+    };
+
     class IRQ_PENDING_TYPE : public MappedReg32Type {
      public:
         IRQ_PENDING_TYPE(IService *parent, const char *name, uint64_t addr) :
@@ -72,6 +81,15 @@ class IrqController : public RegMemBankGeneric,
         virtual uint32_t aboutToWrite(uint32_t nxt_val) override;
     };
 
+    class IRQ_LOCK_TYPE : public MappedReg32Type {
+     public:
+        IRQ_LOCK_TYPE(IService *parent, const char *name, uint64_t addr) :
+                    MappedReg32Type(parent, name, addr) {
+            hard_reset_value_ = 0x1;
+            value_.val = hard_reset_value_;
+        }
+    };
+
     AttributeType irqTotal_;
     AttributeType cpu_;
     ICpuGeneric *icpu_;
@@ -79,7 +97,7 @@ class IrqController : public RegMemBankGeneric,
     static const int IRQ_MAX = 32;
     IrqPort *irqlines_[IRQ_MAX];
 
-    MappedReg32Type irq_mask;       // 0x00: [RW] 1=disable; 0=enable
+    IRQ_MASK_TYPE irq_mask;         // 0x00: [RW] 1=disable; 0=enable
     IRQ_PENDING_TYPE irq_pending;   // 0x04: [RO]
     IRQ_CLEAR_TYPE irq_clear;       // 0x08: [WO]
     MappedReg32Type irq_raise;      // 0x0c: [WO]
@@ -89,7 +107,7 @@ class IrqController : public RegMemBankGeneric,
     MappedReg32Type dbg_cause_m;    // 0x1c: [RW]
     MappedReg32Type dbg_epc_l;      // 0x20: [RW]
     MappedReg32Type dbg_epc_m;      // 0x24: [RW]
-    MappedReg32Type irq_lock;       // 0x28: [RW]
+    IRQ_LOCK_TYPE irq_lock;         // 0x28: [RW]
     MappedReg32Type irq_cause;      // 0x2c: [RW]
 };
 
