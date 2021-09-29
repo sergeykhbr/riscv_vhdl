@@ -97,7 +97,6 @@
     <ClCompile Include="..\..\src\common\debug\dmi_regs.cpp" />
     <ClCompile Include="..\..\src\common\debug\dsu.cpp" />
     <ClCompile Include="..\..\src\common\debug\dsu_regs.cpp" />
-    <ClCompile Include="..\..\src\common\debug\greth.cpp" />
     <ClCompile Include="..\..\src\common\generic\mapreg.cpp" />
     <ClCompile Include="..\..\src\common\generic\mem_generic.cpp" />
     <ClCompile Include="..\..\src\common\generic\rmembank_gen1.cpp" />
@@ -124,7 +123,6 @@
     <ClInclude Include="..\..\src\common\debug\dsu.h" />
     <ClInclude Include="..\..\src\common\debug\dsumap.h" />
     <ClInclude Include="..\..\src\common\debug\dsu_regs.h" />
-    <ClInclude Include="..\..\src\common\debug\greth.h" />
     <ClInclude Include="..\..\src\common\generic\mapreg.h" />
     <ClInclude Include="..\..\src\common\generic\mem_generic.h" />
     <ClInclude Include="..\..\src\common\generic\rmembank_gen1.h" />

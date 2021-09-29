@@ -37,7 +37,7 @@ class FADD_D : public RiscvInstruction {
         src1.val = RF[u.bits.rs1];
         src2.val = RF[u.bits.rs2];
         dest.f64 = src1.f64 + src2.f64;
-        RF[u.bits.rd] = dest.val;
+        icpu_->setReg(RegFpu_Offset + u.bits.rd, dest.val);
         return 4;
     }
 };
@@ -56,7 +56,7 @@ class FCVT_D_L: public RiscvInstruction {
         u.value = payload->buf32[0];
         src1.val = R[u.bits.rs1];
         dest.f64 = static_cast<double>(src1.ival);
-        RF[u.bits.rd] = dest.val;
+        icpu_->setReg(RegFpu_Offset + u.bits.rd, dest.val);
         return 4;
     }
 };
@@ -75,7 +75,7 @@ class FCVT_D_LU: public RiscvInstruction {
         u.value = payload->buf32[0];
         src1.val = R[u.bits.rs1];
         dest.f64 = static_cast<double>(src1.val);
-        RF[u.bits.rd] = dest.val;
+        icpu_->setReg(RegFpu_Offset + u.bits.rd, dest.val);
         return 4;
     }
 };
@@ -94,7 +94,7 @@ class FCVT_D_W: public RiscvInstruction {
         u.value = payload->buf32[0];
         src1.val = R[u.bits.rs1];
         dest.f64 = static_cast<double>(static_cast<int>(src1.buf32[0]));
-        RF[u.bits.rd] = dest.val;
+        icpu_->setReg(RegFpu_Offset + u.bits.rd, dest.val);
         return 4;
     }
 };
@@ -113,7 +113,7 @@ class FCVT_D_WU: public RiscvInstruction {
         u.value = payload->buf32[0];
         src1.val = R[u.bits.rs1];
         dest.f64 = static_cast<double>(src1.buf32[0]);
-        RF[u.bits.rd] = dest.val;
+        icpu_->setReg(RegFpu_Offset + u.bits.rd, dest.val);
         return 4;
     }
 };
@@ -132,7 +132,7 @@ class FCVT_L_D: public RiscvInstruction {
         u.value = payload->buf32[0];
         src1.val = RF[u.bits.rs1];
         dest.ival = static_cast<int64_t>(src1.f64);
-        R[u.bits.rd] = dest.val;
+        icpu_->setReg(u.bits.rd, dest.val);
         return 4;
     }
 };
@@ -151,7 +151,7 @@ class FCVT_LU_D : public RiscvInstruction {
         u.value = payload->buf32[0];
         src1.val = RF[u.bits.rs1];
         dest.val = static_cast<uint64_t>(src1.f64);
-        R[u.bits.rd] = dest.val;
+        icpu_->setReg(u.bits.rd, dest.val);
         return 4;
     }
 };
@@ -170,7 +170,7 @@ class FCVT_W_D : public RiscvInstruction {
         u.value = payload->buf32[0];
         src1.val = RF[u.bits.rs1];
         dest.ival = static_cast<int32_t>(src1.f64);
-        R[u.bits.rd] = dest.val;
+        icpu_->setReg(u.bits.rd, dest.val);
         return 4;
     }
 };
@@ -189,7 +189,7 @@ class FCVT_WU_D : public RiscvInstruction {
         u.value = payload->buf32[0];
         src1.val = RF[u.bits.rs1];
         dest.val = static_cast<uint32_t>(src1.f64);
-        R[u.bits.rd] = dest.val;
+        icpu_->setReg(u.bits.rd, dest.val);
         return 4;
     }
 };
@@ -215,7 +215,7 @@ class FDIV_D : public RiscvInstruction {
             fcsr.bits.DZ = 1;
             icpu_->writeCSR(CSR_fcsr, fcsr.value);
         }
-        RF[u.bits.rd] = dest.val;
+        icpu_->setReg(RegFpu_Offset + u.bits.rd, dest.val);
         return 4;
     }
 };
@@ -244,7 +244,7 @@ class FEQ_D : public RiscvInstruction {
         } else {
             eq = src1.val == src2.val ? 1ull: 0;
         }
-        R[u.bits.rd] = eq;
+        icpu_->setReg(u.bits.rd, eq);
         return 4;
     }
 };
@@ -278,7 +278,7 @@ public:
             }
         }
         dst.val = trans.rpayload.b64[0];
-        RF[u.bits.rd] = dst.val;
+        icpu_->setReg(RegFpu_Offset + u.bits.rd, dst.val);
         return 4;
     }
 };
@@ -307,7 +307,7 @@ class FLE_D : public RiscvInstruction {
         } else {
             le = src1.f64 <= src2.f64 ? 1ull: 0;
         }
-        R[u.bits.rd] = le;
+        icpu_->setReg(u.bits.rd, le);
         return 4;
     }
 };
@@ -336,7 +336,7 @@ class FLT_D : public RiscvInstruction {
         } else {
             le = src1.f64 < src2.f64 ? 1ull: 0;
         }
-        R[u.bits.rd] = le;
+        icpu_->setReg(u.bits.rd, le);
         return 4;
     }
 };
@@ -356,7 +356,7 @@ class FMAX_D : public RiscvInstruction {
         src1.val = RF[u.bits.rs1];
         src2.val = RF[u.bits.rs2];
         dest.f64 = src1.f64 > src2.f64 ? src1.f64: src2.f64;
-        RF[u.bits.rd] = dest.val;
+        icpu_->setReg(RegFpu_Offset + u.bits.rd, dest.val);
         return 4;
     }
 };
@@ -376,7 +376,7 @@ class FMIN_D : public RiscvInstruction {
         src1.val = RF[u.bits.rs1];
         src2.val = RF[u.bits.rs2];
         dest.f64 = src1.f64 < src2.f64 ? src1.f64: src2.f64;
-        RF[u.bits.rd] = dest.val;
+        icpu_->setReg(RegFpu_Offset + u.bits.rd, dest.val);
         return 4;
     }
 };
@@ -394,7 +394,7 @@ class FMOV_D_X : public RiscvInstruction {
         Reg64Type src1;
         u.value = payload->buf32[0];
         src1.val = R[u.bits.rs1];
-        RF[u.bits.rd] = src1.val;
+        icpu_->setReg(RegFpu_Offset + u.bits.rd, src1.val);
         return 4;
     }
 };
@@ -412,7 +412,7 @@ class FMOV_X_D : public RiscvInstruction {
         Reg64Type src1;
         u.value = payload->buf32[0];
         src1.val = RF[u.bits.rs1];
-        R[u.bits.rd] = src1.val;
+        icpu_->setReg(u.bits.rd, src1.val);
         return 4;
     }
 };
@@ -432,7 +432,7 @@ class FMUL_D : public RiscvInstruction {
         src1.val = RF[u.bits.rs1];
         src2.val = RF[u.bits.rs2];
         dest.f64 = src1.f64 * src2.f64;
-        RF[u.bits.rd] = dest.val;
+        icpu_->setReg(RegFpu_Offset + u.bits.rd, dest.val);
         return 4;
     }
 };
@@ -484,7 +484,7 @@ class FSUB_D : public RiscvInstruction {
         src1.val = RF[u.bits.rs1];
         src2.val = RF[u.bits.rs2];
         dest.f64 = src1.f64 - src2.f64;
-        RF[u.bits.rd] = dest.val;
+        icpu_->setReg(RegFpu_Offset + u.bits.rd, dest.val);
         return 4;
     }
 };

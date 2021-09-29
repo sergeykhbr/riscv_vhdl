@@ -28,7 +28,7 @@ enum ESymbInfo {
 };
 
 const char *const *RN = IREGS_NAMES;
-const char *const *RF = FREGS_NAMES;
+const char *const *RF = &IREGS_NAMES[RegFpu_Offset];
 
 int opcode_0x00(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);

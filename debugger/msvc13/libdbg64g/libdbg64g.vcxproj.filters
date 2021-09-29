@@ -197,6 +197,12 @@
     <ClCompile Include="..\..\src\libdbg64g\services\debug\codecov_generic.cpp">
       <Filter>Source Files\services\debug</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\common\generic\greth_gen1.cpp">
+      <Filter>Source Files\common\generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libdbg64g\services\debug\greth.cpp">
+      <Filter>Source Files\services\debug</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\common\attribute.h">
@@ -461,6 +467,12 @@
       <Filter>Source Files\services\debug</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\libdbg64g\services\debug\codecov_generic.h">
+      <Filter>Source Files\services\debug</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\generic\greth_gen1.h">
+      <Filter>Source Files\common\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libdbg64g\services\debug\greth.h">
       <Filter>Source Files\services\debug</Filter>
     </ClInclude>
   </ItemGroup>

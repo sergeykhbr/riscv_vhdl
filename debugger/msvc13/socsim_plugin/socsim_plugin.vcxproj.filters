@@ -32,9 +32,6 @@
     <ClCompile Include="..\..\src\common\debug\dsu.cpp">
       <Filter>debug</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\common\debug\greth.cpp">
-      <Filter>debug</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\socsim_plugin\hardreset.cpp" />
     <ClCompile Include="..\..\src\socsim_plugin\fpu_func.cpp" />
     <ClCompile Include="..\..\src\common\generic\mapreg.cpp">
@@ -88,9 +85,6 @@
     <ClInclude Include="..\..\src\socsim_plugin\fsev2.h" />
     <ClInclude Include="..\..\src\socsim_plugin\uartmst.h" />
     <ClInclude Include="..\..\src\common\debug\dsu.h">
-      <Filter>debug</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\common\debug\greth.h">
       <Filter>debug</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\socsim_plugin\hardreset.h" />

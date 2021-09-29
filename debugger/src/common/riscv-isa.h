@@ -292,14 +292,16 @@ static const char *const IREGS_NAMES[] = {
     "t3",       // [28]
     "t4",       // [29]
     "t5",       // [30]
-    "t6"        // [31]
-};
-
-const char *const FREGS_NAMES[] = {
-  "ft0", "ft1", "ft2",  "ft3",  "ft4", "ft5", "ft6",  "ft7",
-  "fs0", "fs1", "fa0",  "fa1",  "fa2", "fa3", "fa4",  "fa5",
-  "fa6", "fa7", "fs2",  "fs3",  "fs4", "fs5", "fs6",  "fs7",
-  "fs8", "fs9", "fs10", "fs11", "ft8", "ft9", "ft10", "ft11"
+    "t6",       // [31]
+    "x32", "x33", "x34", "x35", "x36", "x37", "x38", "x39",
+    "x40", "x41", "x42", "x43", "x44", "x45", "x46", "x47",
+    "x48", "x49", "x50", "x51", "x52", "x53", "x54", "x55",
+    "x56", "x57", "x58", "x59", "x60", "x61", "x62", "x63",
+    // RegFpu_Offset
+    "ft0", "ft1", "ft2",  "ft3",  "ft4", "ft5", "ft6",  "ft7",
+    "fs0", "fs1", "fa0",  "fa1",  "fa2", "fa3", "fa4",  "fa5",
+    "fa6", "fa7", "fs2",  "fs3",  "fs4", "fs5", "fs6",  "fs7",
+    "fs8", "fs9", "fs10", "fs11", "ft8", "ft9", "ft10", "ft11"
 };
 
 static const ECpuRegMapping RISCV_DEBUG_REG_MAP[] = {
@@ -408,6 +410,8 @@ enum ERegNames {
     Reg_t6,       // [31]
     Reg_Total
 };
+
+static const int RegFpu_Offset = 64;
 
 enum ERegFpuNames {
     Reg_f0,     // ft0 temporary register

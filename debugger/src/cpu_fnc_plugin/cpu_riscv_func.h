@@ -50,7 +50,7 @@ class CpuRiver_Functional : public CpuGeneric,
     virtual void raiseSoftwareIrq() {}
     virtual void setReg(int idx, uint64_t val) override {
         if (idx) {
-            CpuGeneric:: setReg(idx, val);
+            CpuGeneric::setReg(idx, val);
         }
     }
     virtual uint64_t getIrqAddress(int idx) { return readCSR(CSR_mtvec); }
