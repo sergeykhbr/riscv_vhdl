@@ -145,14 +145,14 @@
                 ['HartID',0],
                 ['AsyncReset',false],
                 ['FpuEnable',true, 'Enable Hardware FPU module'],
-                ['TracerEnable',false, 'Enable Verification Trace collector module'],
+                ['TracerEnable',true, 'Enable Verification Trace collector module'],
                 ['L2CacheEnable',false, 'Enable coherent L2-cache model'],
                 ['CoherenceEnable',true, 'Enable addtional states in D-cache and RiverAmba to support coherence'],
                 ['Bus','axi0'],
                 ['CmdExecutor','cmdexec0']
                 ['Tap','edcltap']
                 ['InVcdFile','','None empty string enables generation of stimulus VCD file'],
-                ['OutVcdFile','','None empty string enables VCD file with reference signals'],
+                ['OutVcdFile','e:/Projects/o_river','None empty string enables VCD file with reference signals'],
                 ['FreqHz',1000000]
                 ]}]},
     {'Class':'MemorySimClass','Instances':[

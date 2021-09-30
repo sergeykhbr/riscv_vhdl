@@ -182,7 +182,7 @@
                 ['FreqHz',12000000],
                 ['VectorTable',0x100,'Hardcoded in CSR mtvec value: interrupts vector table address'],
                 ['ResetVector',0x0000,'Initial intruction pointer value (config parameter)'],
-                ['GenerateTraceFile','','Specify file name to enable tracer'],
+                ['GenerateTraceFile','trace_river_func.log','Specify file name to enable tracer'],
                 ['CacheBaseAddress',0x10000000],
                 ['CacheAddressMask',0x7ffff],
                 ['ResetState','Halted', 'CPU state after reset signal is raised: Halted or OFF'],
@@ -200,10 +200,10 @@
                                    'CFG_NMI_CALL_FROM_MMODE_ADDR',  0x0060,
                                    'NOT_USED_INSTR_PAGE_FAULT',     0x0068,
                                    'NOT_USED_LOAD_PAGE_FAULT',      0x0070,
-                                   'NOT_USED_RSRV14',               0x0000,
-                                   'NOT_USED_STORE_PAGE_FAULT',     0x0078,
-                                   'CFG_NMI_STACK_OVERFLOW_ADDR',   0x0080,
-                                   'CFG_NMI_STACK_UNDERFLOW_ADDR',  0x0088
+                                   'NOT_USED_RSRV14',               0x0078,
+                                   'NOT_USED_STORE_PAGE_FAULT',     0x0080,
+                                   'CFG_NMI_STACK_OVERFLOW_ADDR',   0x0088,
+                                   'CFG_NMI_STACK_UNDERFLOW_ADDR',  0x0090
                                   ]],
                 ]}]},
     {'Class':'ICacheFunctionalClass','Instances':[

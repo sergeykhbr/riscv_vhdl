@@ -78,7 +78,8 @@ class RtlWrapper : public sc_module,
         sc_signal<bool> w_error;
     } r, v;
 
-    sc_event bus_event_;
+    sc_event bus_req_event_;
+    sc_event bus_resp_event_;
     sc_signal<bool> w_resp_valid;
     sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_wdata;
     sc_signal<sc_uint<BUS_DATA_BYTES>> wb_wstrb;

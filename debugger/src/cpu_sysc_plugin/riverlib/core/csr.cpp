@@ -18,43 +18,26 @@
 
 namespace debugger {
 
-/** (SignalIdx, 2'mode) */
-static const uint64_t NMI_TABLE_ADDR[4*EXCEPTIONS_Total] = {
+static const uint64_t NMI_TABLE_ADDR[EXCEPTIONS_Total] = {
     // Exceptions:
-    // User mode                    SuperUser mode                   Hypervisor mode               Machine Mode
-    CFG_NMI_INSTR_UNALIGNED_ADDR,  CFG_NMI_INSTR_UNALIGNED_ADDR,  CFG_NMI_INSTR_UNALIGNED_ADDR,  CFG_NMI_INSTR_UNALIGNED_ADDR,
-    CFG_NMI_INSTR_FAULT_ADDR,      CFG_NMI_INSTR_FAULT_ADDR,      CFG_NMI_INSTR_FAULT_ADDR,      CFG_NMI_INSTR_FAULT_ADDR,
-    CFG_NMI_INSTR_ILLEGAL_ADDR,    CFG_NMI_INSTR_ILLEGAL_ADDR,    CFG_NMI_INSTR_ILLEGAL_ADDR,    CFG_NMI_INSTR_ILLEGAL_ADDR,
-    CFG_NMI_BREAKPOINT_ADDR,       CFG_NMI_BREAKPOINT_ADDR,       CFG_NMI_BREAKPOINT_ADDR,       CFG_NMI_BREAKPOINT_ADDR,
-    CFG_NMI_LOAD_UNALIGNED_ADDR,   CFG_NMI_LOAD_UNALIGNED_ADDR,   CFG_NMI_LOAD_UNALIGNED_ADDR,   CFG_NMI_LOAD_UNALIGNED_ADDR,
-    CFG_NMI_LOAD_FAULT_ADDR,       CFG_NMI_LOAD_FAULT_ADDR,       CFG_NMI_LOAD_FAULT_ADDR,       CFG_NMI_LOAD_FAULT_ADDR,
-    CFG_NMI_STORE_UNALIGNED_ADDR,  CFG_NMI_STORE_UNALIGNED_ADDR,  CFG_NMI_STORE_UNALIGNED_ADDR,  CFG_NMI_STORE_UNALIGNED_ADDR,
-    CFG_NMI_STORE_FAULT_ADDR,      CFG_NMI_STORE_FAULT_ADDR,      CFG_NMI_STORE_FAULT_ADDR,      CFG_NMI_STORE_FAULT_ADDR,
-    CFG_NMI_CALL_FROM_UMODE_ADDR,  CFG_NMI_CALL_FROM_SMODE_ADDR,  CFG_NMI_CALL_FROM_HMODE_ADDR,  CFG_NMI_CALL_FROM_MMODE_ADDR,
-    CFG_NMI_INSTR_PAGE_FAULT_ADDR, CFG_NMI_INSTR_PAGE_FAULT_ADDR, CFG_NMI_INSTR_PAGE_FAULT_ADDR, CFG_NMI_INSTR_PAGE_FAULT_ADDR,
-    CFG_NMI_LOAD_PAGE_FAULT_ADDR,  CFG_NMI_LOAD_PAGE_FAULT_ADDR,  CFG_NMI_LOAD_PAGE_FAULT_ADDR,  CFG_NMI_LOAD_PAGE_FAULT_ADDR,
-    CFG_NMI_14_ADDR,               CFG_NMI_14_ADDR,               CFG_NMI_14_ADDR,               CFG_NMI_14_ADDR,
-    CFG_NMI_STORE_PAGE_FAULT_ADDR, CFG_NMI_STORE_PAGE_FAULT_ADDR, CFG_NMI_STORE_PAGE_FAULT_ADDR, CFG_NMI_STORE_PAGE_FAULT_ADDR,
-    CFG_NMI_STACK_OVERFLOW_ADDR,   CFG_NMI_STACK_OVERFLOW_ADDR,   CFG_NMI_STACK_OVERFLOW_ADDR,   CFG_NMI_STACK_OVERFLOW_ADDR,
-    CFG_NMI_STACK_UNDERFLOW_ADDR,  CFG_NMI_STACK_UNDERFLOW_ADDR,  CFG_NMI_STACK_UNDERFLOW_ADDR,  CFG_NMI_STACK_UNDERFLOW_ADDR
-};
-
-static const uint64_t NMI_CAUSE_IDX[4*EXCEPTIONS_Total] = {
-    EXCEPTION_InstrMisalign,    EXCEPTION_InstrMisalign,    EXCEPTION_InstrMisalign,    EXCEPTION_InstrMisalign,
-    EXCEPTION_InstrFault,       EXCEPTION_InstrFault,       EXCEPTION_InstrFault,       EXCEPTION_InstrFault,
-    EXCEPTION_InstrIllegal,     EXCEPTION_InstrIllegal,     EXCEPTION_InstrIllegal,     EXCEPTION_InstrIllegal,
-    EXCEPTION_Breakpoint,       EXCEPTION_Breakpoint,       EXCEPTION_Breakpoint,       EXCEPTION_Breakpoint,
-    EXCEPTION_LoadMisalign,     EXCEPTION_LoadMisalign,     EXCEPTION_LoadMisalign,     EXCEPTION_LoadMisalign,
-    EXCEPTION_LoadFault,        EXCEPTION_LoadFault,        EXCEPTION_LoadFault,        EXCEPTION_LoadFault,
-    EXCEPTION_StoreMisalign,    EXCEPTION_StoreMisalign,    EXCEPTION_StoreMisalign,    EXCEPTION_StoreMisalign,
-    EXCEPTION_StoreFault,       EXCEPTION_StoreFault,       EXCEPTION_StoreFault,       EXCEPTION_StoreFault,
-    EXCEPTION_CallFromUmode,    EXCEPTION_CallFromSmode,    EXCEPTION_CallFromHmode,    EXCEPTION_CallFromMmode,
-    EXCEPTION_InstrPageFault,   EXCEPTION_InstrPageFault,   EXCEPTION_InstrPageFault,   EXCEPTION_InstrPageFault,
-    EXCEPTION_LoadPageFault,    EXCEPTION_LoadPageFault,    EXCEPTION_LoadPageFault,    EXCEPTION_LoadPageFault,
-    EXCEPTION_rsrv14,           EXCEPTION_rsrv14,           EXCEPTION_rsrv14,           EXCEPTION_rsrv14,
-    EXCEPTION_StorePageFault,   EXCEPTION_StorePageFault,   EXCEPTION_StorePageFault,   EXCEPTION_StorePageFault,
-    EXCEPTION_StackOverflow,    EXCEPTION_StackOverflow,    EXCEPTION_StackOverflow,    EXCEPTION_StackOverflow,
-    EXCEPTION_StackUnderflow,   EXCEPTION_StackUnderflow,   EXCEPTION_StackUnderflow,   EXCEPTION_StackUnderflow,
+    CFG_NMI_INSTR_UNALIGNED_ADDR,
+    CFG_NMI_INSTR_FAULT_ADDR,
+    CFG_NMI_INSTR_ILLEGAL_ADDR,
+    CFG_NMI_BREAKPOINT_ADDR,
+    CFG_NMI_LOAD_UNALIGNED_ADDR,
+    CFG_NMI_LOAD_FAULT_ADDR,
+    CFG_NMI_STORE_UNALIGNED_ADDR,
+    CFG_NMI_STORE_FAULT_ADDR,
+    CFG_NMI_CALL_FROM_UMODE_ADDR,
+    CFG_NMI_CALL_FROM_SMODE_ADDR,
+    CFG_NMI_CALL_FROM_HMODE_ADDR,
+    CFG_NMI_CALL_FROM_MMODE_ADDR,
+    CFG_NMI_INSTR_PAGE_FAULT_ADDR,
+    CFG_NMI_LOAD_PAGE_FAULT_ADDR,
+    CFG_NMI_14_ADDR,
+    CFG_NMI_STORE_PAGE_FAULT_ADDR,
+    CFG_NMI_STACK_OVERFLOW_ADDR,
+    CFG_NMI_STACK_UNDERFLOW_ADDR
 };
 
 CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
@@ -286,12 +269,20 @@ void CsrRegs::comb() {
         v.state = State_Response;
         w_trap_valid = 1;
         wb_mbadaddr = r.cmd_data;
-        wb_trap_code = NMI_CAUSE_IDX[4*r.cmd_addr.read() + r.mode.read().to_int()];
+        wb_trap_code = r.cmd_addr.read();
+        v.cmd_data = NMI_TABLE_ADDR[r.cmd_addr.read()];
+        if (r.cmd_addr.read() == EXCEPTION_CallFromUmode) {
+            wb_trap_code = r.cmd_addr.read() + r.mode.read().to_uint();
+            v.cmd_data = NMI_TABLE_ADDR[r.cmd_addr.read() + r.mode.read().to_uint()];
+        }
+        //else if (r.cmd_addr.read() == EXCEPTION_Breakpoint
+        //    && r.break_mode.read() == 0) {
+        //    v.cmd_data = i_e_pc;
+        //}
         w_trap_irq = 0;
         if (r.progbuf_ena.read() == 1) {
             v.progbuf_err = PROGBUF_ERR_EXCEPTION;
         }
-        v.cmd_data = NMI_TABLE_ADDR[4*r.cmd_addr.read() + r.mode.read().to_int()];
         break;
     case State_Interrupt:
         v.state = State_Response;
@@ -348,7 +339,7 @@ void CsrRegs::comb() {
             if (r.progbuf_ena.read() == 1) {
                 v.progbuf_err = PROGBUF_ERR_EXCEPTION;
             }
-            v.cmd_data = NMI_TABLE_ADDR[4*EXCEPTION_InstrIllegal];
+            v.cmd_data = NMI_TABLE_ADDR[EXCEPTION_InstrIllegal];
         }
     }
 
@@ -679,27 +670,6 @@ void CsrRegs::comb() {
         v.ex_fpu_inexact = i_ex_fpu_inexact.read();
     }
 
-    w_trap_valid = 0;
-    w_trap_irq = 0;
-    wb_trap_code = 0;
-    v.break_event = 0;
-    wb_trap_pc = r.mtvec.read()(CFG_CPU_ADDR_BITS-1, 0);
-    wb_mbadaddr = i_e_npc.read();
-
-    if (i_ex_instr_load_fault.read() == 1) {
-        w_trap_valid = 1;
-        wb_trap_pc = CFG_NMI_INSTR_FAULT_ADDR;
-        wb_trap_code = EXCEPTION_InstrFault;
-        // illegal address instruction can generate any other exceptions
-        v.hold_data_load_fault = 0;
-        v.hold_data_store_fault = 0;
-    } else if (i_ex_illegal_instr.read() == 1 || w_exception_xret == 1) {
-        w_trap_valid = 1;
-        wb_trap_pc = CFG_NMI_INSTR_ILLEGAL_ADDR;
-        wb_trap_code = EXCEPTION_InstrIllegal;
-        // illegal instruction can generate any other exceptions
-        v.hold_data_load_fault = 0;
-        v.hold_data_store_fault = 0;
     } else if (i_ex_breakpoint.read() == 1) {
         v.break_event = 1;
         w_trap_valid = 1;

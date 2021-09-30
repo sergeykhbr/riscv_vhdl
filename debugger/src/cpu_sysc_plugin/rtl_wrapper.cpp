@@ -92,7 +92,7 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     sensitive << o_clk.posedge_event();
 
     SC_METHOD(sys_bus_proc);
-    sensitive << bus_event_;
+    sensitive << bus_req_event_;
 }
 
 RtlWrapper::~RtlWrapper() {
@@ -256,7 +256,7 @@ void RtlWrapper::comb() {
 }
 
 void RtlWrapper::registers() {
-    bus_event_.notify(1, SC_NS);
+    bus_req_event_.notify(1, SC_NS);
     r = v;
 }
 
