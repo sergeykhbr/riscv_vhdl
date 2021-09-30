@@ -54,6 +54,8 @@ SC_MODULE(InstrExecute) {
     sc_in<bool> i_f64;                          // D-extension (FPU)
     sc_in<sc_bv<ISA_Total>> i_isa_type;         // Type of the instruction's structure (ISA spec.)
     sc_in<sc_bv<Instr_Total>> i_ivec;           // One pulse per supported instruction.
+    sc_in<bool> i_stack_overflow;               // exception stack overflow
+    sc_in<bool> i_stack_underflow;               // exception stack overflow
     sc_in<bool> i_unsup_exception;              // Unsupported instruction exception
     sc_in<bool> i_instr_load_fault;             // fault instruction's address. Bus returned ERR on read transaction
     sc_in<bool> i_instr_executable;             // MPU flag 'executable' not set for this memory region
@@ -222,6 +224,8 @@ private:
         sc_signal<bool> compressed;
         sc_signal<bool> f64;
 
+        sc_signal<bool> stack_overflow;
+        sc_signal<bool> stack_underflow;
         sc_signal<bool> mem_ex_load_fault;
         sc_signal<bool> mem_ex_store_fault;
         sc_signal<bool> mem_ex_mpu_store;
@@ -278,6 +282,8 @@ private:
         iv.compressed = 0;
         iv.f64 = 0;
 
+        iv.stack_overflow = 0;
+        iv.stack_underflow = 0;
         iv.mem_ex_load_fault = 0;
         iv.mem_ex_store_fault = 0;
         iv.mem_ex_mpu_store = 0;

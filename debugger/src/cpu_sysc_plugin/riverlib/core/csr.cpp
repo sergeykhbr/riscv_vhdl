@@ -120,8 +120,6 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << r.uie;
     sensitive << r.mie;
     sensitive << r.mpie;
-    sensitive << r.mstackovr_ena;
-    sensitive << r.mstackund_ena;
     sensitive << r.mpp;
     sensitive << r.mepc;
     sensitive << r.uepc;
@@ -584,11 +582,9 @@ void CsrRegs::comb() {
             break;
         case CSR_mstackovr:// - Machine Stack Overflow
             v.mstackovr = r.cmd_data.read()(CFG_CPU_ADDR_BITS-1, 0);
-            v.mstackovr_ena = r.cmd_data.read()(CFG_CPU_ADDR_BITS-1, 0).or_reduce();
             break;
         case CSR_mstackund:// - Machine Stack Underflow
             v.mstackund = r.cmd_data.read()(CFG_CPU_ADDR_BITS-1, 0);
-            v.mstackund_ena = r.cmd_data.read()(CFG_CPU_ADDR_BITS-1, 0).or_reduce();
             break;
         case CSR_mpu_addr:  // [WO] MPU address
             v.mpu_addr = r.cmd_data.read()(CFG_CPU_ADDR_BITS-1, 0);
@@ -661,13 +657,17 @@ void CsrRegs::comb() {
     w_ext_irq = r.meip.read() && w_ie;
 
     w_mstackovr = 0;
-    if (i_sp.read()(CFG_CPU_ADDR_BITS-1, 0) < r.mstackovr.read()) {
+    if (r.mstackovr.read().or_reduce() && 
+        (i_sp.read()(CFG_CPU_ADDR_BITS-1, 0) < r.mstackovr.read())) {
         w_mstackovr = 1;
+        v.mstackovr = 0;
     }
 
     w_mstackund = 0;
-    if (i_sp.read()(CFG_CPU_ADDR_BITS-1, 0) > r.mstackund.read()) {
+    if (r.mstackund.read().or_reduce() &&
+        (i_sp.read()(CFG_CPU_ADDR_BITS-1, 0) > r.mstackund.read())) {
         w_mstackund = 1;
+        v.mstackund = 0;
     }
 
 #if 0
@@ -898,6 +898,8 @@ void CsrRegs::comb() {
     o_irq_software = 0;
     o_irq_timer = 0;
     o_irq_external = w_ext_irq;
+    o_stack_overflow = w_mstackovr;
+    o_stack_underflow = w_mstackund;
 
     o_executed_cnt = r.executed_cnt;
     o_dbg_pc_write = v_dbg_pc_write;

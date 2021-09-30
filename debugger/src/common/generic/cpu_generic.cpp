@@ -295,8 +295,14 @@ void CpuGeneric::fetchILine() {
         trans_.wstrb = 0;
         if (dma_memop(&trans_) == TRANS_ERROR) {
             exceptionLoadInstruction(&trans_);
+            uint64_t t_pc = fetchingAddress();
+            handleTrap();
+            setPC(getNPC());
+            t_pc = fetchingAddress();
+            fetchILine();
+        } else {
+            cacheline_[0].val = trans_.rpayload.b64[0];
         }
-        cacheline_[0].val = trans_.rpayload.b64[0];
     }
 }
 

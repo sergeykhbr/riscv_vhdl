@@ -58,6 +58,8 @@ trap_table:
   nop
   j exception_entry   # Load Page Fault
   nop
+  j exception_entry   # NMI14_Reserved
+  nop
   j exception_entry   # Store Page Fault
   nop
   j exception_entry   # Stack Overflow

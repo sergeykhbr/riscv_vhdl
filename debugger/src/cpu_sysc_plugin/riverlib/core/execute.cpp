@@ -45,6 +45,8 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     i_f64("i_f64"),
     i_isa_type("i_isa_type"),
     i_ivec("i_ivec"),
+    i_stack_overflow("i_stack_overflow"),
+    i_stack_underflow("i_stack_underflow"),
     i_unsup_exception("i_unsup_exception"),
     i_instr_load_fault("i_instr_load_fault"),
     i_instr_executable("i_instr_executable"),
@@ -125,6 +127,8 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << i_f64;
     sensitive << i_isa_type;
     sensitive << i_ivec;
+    sensitive << i_stack_overflow;
+    sensitive << i_stack_underflow;
     sensitive << i_unsup_exception;
     sensitive << i_instr_load_fault;
     sensitive << i_instr_executable;
@@ -183,6 +187,8 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << r.rv32;
     sensitive << r.compressed;
     sensitive << r.f64;
+    sensitive << r.stack_overflow;
+    sensitive << r.stack_underflow;
     sensitive << r.mem_ex_load_fault;
     sensitive << r.mem_ex_store_fault;
     sensitive << r.mem_ex_mpu_store;
@@ -316,6 +322,8 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_d_csr_addr, i_d_csr_addr.name());
         sc_trace(o_vcd, i_wb_waddr, i_wb_waddr.name());
         sc_trace(o_vcd, i_f64, i_f64.name());
+        sc_trace(o_vcd, i_stack_overflow, i_stack_overflow.name());
+        sc_trace(o_vcd, i_stack_underflow, i_stack_underflow.name());
         sc_trace(o_vcd, i_unsup_exception, i_unsup_exception.name());
         sc_trace(o_vcd, i_instr_load_fault, i_instr_load_fault.name());
         sc_trace(o_vcd, i_instr_executable, i_instr_executable.name());
@@ -469,8 +477,6 @@ void InstrExecute::comb() {
     v.call = 0;
     v.ret = 0;
     v.reg_write = 0;
-    v.flushd = 0;
-    v.flushi = 0;
     v.flushi_addr = 0;
     vb_rdata1 = 0;
     vb_rdata2 = 0;
@@ -639,6 +645,12 @@ void InstrExecute::comb() {
         || (wv[Instr_SH] && vb_memop_memaddr_store[0] != 0)) {
         v_store_misaligned = 1;
     }
+    if (i_stack_overflow.read() == 1) {
+        v.stack_overflow = 1;
+    }
+    if (i_stack_underflow.read() == 1) {
+        v.stack_underflow = 1;
+    }
     if (i_mem_ex_load_fault.read() == 1) {
         v.mem_ex_load_fault = 1;
         v.mem_ex_addr = i_mem_ex_addr;
@@ -728,6 +740,7 @@ void InstrExecute::comb() {
     v_csr_cmd_ena = i_unsup_exception
                 || i_instr_load_fault || r.mem_ex_load_fault || r.mem_ex_store_fault
                 || r.mem_ex_mpu_store || r.mem_ex_mpu_load || !i_instr_executable.read()
+                || r.stack_overflow || r.stack_underflow
                 || v_instr_misaligned || v_load_misaligned || v_store_misaligned
                 || i_irq_software || i_irq_timer || i_irq_external
                 || wv[Instr_EBREAK] || wv[Instr_ECALL]
@@ -766,6 +779,14 @@ void InstrExecute::comb() {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_StoreFault;             // Store/AMO access fault
         vb_csr_cmd_wdata = r.mem_ex_addr;
+    } else if (r.stack_overflow) {
+        vb_csr_cmd_type = CsrReq_ExceptionCmd;
+        vb_csr_cmd_addr = EXCEPTION_StackOverflow;          // Stack overflow
+        vb_csr_cmd_wdata = mux.pc;
+    } else if (r.stack_underflow) {
+        vb_csr_cmd_type = CsrReq_ExceptionCmd;
+        vb_csr_cmd_addr = EXCEPTION_StackUnderflow;         // Stack Underflow
+        vb_csr_cmd_wdata = mux.pc;
     } else if (wv[Instr_ECALL]) {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_CallFromXMode;          // Environment call
@@ -884,6 +905,8 @@ void InstrExecute::comb() {
                     v.mem_ex_store_fault = 0;
                     v.mem_ex_mpu_store = 0;
                     v.mem_ex_mpu_load = 0;
+                    v.stack_overflow = 0;
+                    v.stack_underflow = 0;
                 } else if (vb_select[Res_IMul] || vb_select[Res_IDiv] || vb_select[Res_FPU]) {
                     v.state = State_WaitMulti;
                 } else if (i_amo.read() == 1) {
@@ -1026,6 +1049,8 @@ void InstrExecute::comb() {
         // Fifo exec => memacess is full
         vb_memop_memaddr = ~0ull;
         if (i_memop_ready.read()) {
+            v.flushd = 0;
+            v.flushi = 0;
             if (mux.ivec[Instr_FENCE] == 1) {
                 // no need to wait ending of D-flashing
                 v.state = State_Idle;
@@ -1039,6 +1064,8 @@ void InstrExecute::comb() {
         // Flushing DataCache could take much more time than flushing I
         // so that we should wait D-cache finish before requesting new
         // instruction to avoid reading obsolete data.
+        v.flushd = 0;
+        v.flushi = 0;
         if (i_flushd_end.read() == 1) {
             v.state = State_Idle;
             v.valid = 1;

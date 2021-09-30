@@ -215,6 +215,8 @@ private:
         sc_signal<bool> irq_software;
         sc_signal<bool> irq_timer;
         sc_signal<bool> irq_external;
+        sc_signal<bool> stack_overflow;
+        sc_signal<bool> stack_underflow;
     } csr;
 
     struct DebugType {

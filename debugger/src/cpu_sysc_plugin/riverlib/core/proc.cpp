@@ -190,6 +190,8 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->i_f64(w.d.f64);
     exec0->i_isa_type(w.d.isa_type);
     exec0->i_ivec(w.d.instr_vec);
+    exec0->i_stack_overflow(csr.stack_overflow);
+    exec0->i_stack_underflow(csr.stack_underflow);
     exec0->i_unsup_exception(w.d.exception);
     exec0->i_instr_load_fault(w.d.instr_load_fault);
     exec0->i_instr_executable(w.d.instr_executable);
@@ -360,6 +362,8 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     csr0->o_irq_software(csr.irq_software);
     csr0->o_irq_timer(csr.irq_timer);
     csr0->o_irq_external(csr.irq_external);
+    csr0->o_stack_overflow(csr.stack_overflow);
+    csr0->o_stack_underflow(csr.stack_underflow);
     csr0->i_e_valid(w.e.valid);
     csr0->o_executed_cnt(csr.executed_cnt);
     csr0->o_dbg_pc_write(csr.dbg_pc_write);

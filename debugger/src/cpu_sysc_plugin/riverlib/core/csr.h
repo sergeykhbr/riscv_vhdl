@@ -42,6 +42,8 @@ SC_MODULE(CsrRegs) {
     sc_out<bool> o_irq_software;                // software interrupt pending bit
     sc_out<bool> o_irq_timer;                   // timer interrupt pending bit
     sc_out<bool> o_irq_external;                // external interrupt pending bit
+    sc_out<bool> o_stack_overflow;              // stack overflow exception
+    sc_out<bool> o_stack_underflow;             // stack underflow exception
     sc_in<bool> i_e_valid;
     sc_out<sc_uint<64>> o_executed_cnt;     // Number of executed instructions
     sc_out<bool> o_dbg_pc_write;            // Modify pc via debug interface
@@ -92,8 +94,6 @@ private:
         sc_signal<bool> uie;                    // User level interrupts ena for current priv. mode
         sc_signal<bool> mie;                    // Machine level interrupts ena for current priv. mode
         sc_signal<bool> mpie;                   // Previous MIE value
-        sc_signal<bool> mstackovr_ena;          // Stack Overflow control Enabled
-        sc_signal<bool> mstackund_ena;          // Stack Underflow control Enabled
         sc_signal<sc_uint<2>> mpp;              // Previous mode
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mepc;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> uepc;
@@ -155,8 +155,6 @@ private:
         iv.uie = 0;
         iv.mie = 0;
         iv.mpie = 0;
-        iv.mstackovr_ena = 0;
-        iv.mstackund_ena = 0;
         iv.mpp = 0;
         iv.mepc = 0;
         iv.uepc = 0;
