@@ -245,6 +245,7 @@ void CsrRegs::comb() {
     w_trap_irq = 0;
     wb_trap_code = 0;
 
+    v.mpu_we = 0;
     v.meip = i_irq_external;
 
     switch (r.state.read()) {
@@ -637,9 +638,6 @@ void CsrRegs::comb() {
         }
     }
 
-    if (r.mpu_we.read() == 1) {
-        v.mpu_we = 0;
-    }
 
     w_ie = 0;
     if ((r.mode.read() != PRV_M) || r.mie.read()) {
@@ -670,7 +668,7 @@ void CsrRegs::comb() {
         v.ex_fpu_inexact = i_ex_fpu_inexact.read();
     }
 
-    } else if (i_ex_breakpoint.read() == 1) {
+    if (i_ex_breakpoint.read() == 1) {
         v.break_event = 1;
         w_trap_valid = 1;
         wb_trap_code = EXCEPTION_Breakpoint;
@@ -679,103 +677,8 @@ void CsrRegs::comb() {
         } else {
             wb_trap_pc = CFG_NMI_BREAKPOINT_ADDR;
         }
-    } else if (i_ex_unalign_load.read() == 1) {
-        w_trap_valid = 1;
-        wb_trap_pc = CFG_NMI_LOAD_UNALIGNED_ADDR;
-        wb_trap_code = EXCEPTION_LoadMisalign;
-    } else if (i_ex_data_load_fault.read() == 1 ||
-                r.hold_data_load_fault.read() == 1) {
-        w_trap_valid = 1;
-        v.hold_data_load_fault = 0;
-        if (i_trap_ready.read() == 0) {
-            v.hold_data_load_fault = 1;
-        }
-        wb_trap_pc = CFG_NMI_LOAD_FAULT_ADDR;
-        if (i_ex_data_load_fault.read() == 1) {
-            wb_mbadaddr = i_ex_data_addr.read();    // miss-access read
-            v.hold_mbadaddr = i_ex_data_addr.read();
-        } else {
-            wb_mbadaddr = r.hold_mbadaddr;
-        }
-        wb_trap_code = EXCEPTION_LoadFault;
-    } else if (i_ex_unalign_store.read() == 1) {
-        w_trap_valid = 1;
-        wb_trap_pc = CFG_NMI_STORE_UNALIGNED_ADDR;
-        wb_trap_code = EXCEPTION_StoreMisalign;
-    } else if (i_ex_data_store_fault.read() == 1
-             || r.hold_data_store_fault.read() == 1) {
-        w_trap_valid = 1;
-        v.hold_data_store_fault = 0;
-        if (i_trap_ready.read() == 0) {
-            v.hold_data_store_fault = 1;
-        }
-        wb_trap_pc = CFG_NMI_STORE_FAULT_ADDR;
-        if (i_ex_data_store_fault.read() == 1) {
-            wb_mbadaddr = i_ex_data_store_fault_addr.read();  // miss-access write
-            v.hold_mbadaddr = i_ex_data_store_fault_addr.read();
-        } else {
-            wb_mbadaddr = r.hold_mbadaddr;
-        }
-        wb_trap_code = EXCEPTION_StoreFault;
-    } else if (i_ex_ecall.read() == 1) {
-        w_trap_valid = 1;
-        if (r.mode.read() == PRV_M) {
-            wb_trap_pc = CFG_NMI_CALL_FROM_MMODE_ADDR;
-            wb_trap_code = EXCEPTION_CallFromMmode;
-        } else {
-            wb_trap_pc = CFG_NMI_CALL_FROM_UMODE_ADDR;
-            wb_trap_code = EXCEPTION_CallFromUmode;
-        }
-    } else if (i_ex_instr_not_executable.read() == 1) {
-        w_trap_valid = 1;
-        wb_trap_pc = CFG_NMI_INSTR_PAGE_FAULT_ADDR;
-        wb_trap_code = EXCEPTION_InstrPageFault;
-    } else if (r.mstackovr_ena.read() == 1 && w_mstackovr == 1) {
-        w_trap_valid = 1;
-        wb_trap_pc = CFG_NMI_STACK_OVERFLOW_ADDR;
-        wb_trap_code = EXCEPTION_StackOverflow;
-        if (i_trap_ready.read() == 1) {
-            v.mstackovr = 0;
-            v.mstackovr_ena = 0;
-        }
-    } else if (r.mstackund_ena.read() == 1 && w_mstackund == 1) {
-        w_trap_valid = 1;
-        wb_trap_pc = CFG_NMI_STACK_UNDERFLOW_ADDR;
-        wb_trap_code = EXCEPTION_StackUnderflow;
-        if (i_trap_ready.read() == 1) {
-            v.mstackund = 0;
-            v.mstackund_ena = 0;
-        }
-    } else if (w_ext_irq == 1 && r.ext_irq.read() == 0) {
-        w_trap_valid = 1;
-        wb_trap_pc = r.mtvec.read()(CFG_CPU_ADDR_BITS-1, 0);
-        wb_trap_code = 0xB;
-        w_trap_irq = 1;
     }
 
-
-    // Behaviour on EBREAK instruction defined by 'i_break_mode':
-    //     0 = halt;
-    //     1 = generate trap
-    if (w_trap_valid && i_trap_ready.read() &&
-        (r.break_mode.read() || !i_ex_breakpoint.read())) {
-        v.mie = 0;
-        v.mpp = r.mode;
-        v.mepc = i_ex_npc.read();
-        v.mbadaddr = wb_mbadaddr;
-        v.trap_code = wb_trap_code;
-        v.trap_irq = w_trap_irq;
-        v.mode = PRV_M;
-        switch (r.mode.read()) {
-        case PRV_U:
-            v.mpie = r.uie;
-            break;
-        case PRV_M:
-            v.mpie = r.mie;
-            break;
-        default:;
-        }
-    }
 #endif
 
 

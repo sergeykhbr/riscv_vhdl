@@ -173,6 +173,8 @@ private:
     struct MemoryType {
         sc_signal<bool> memop_ready;
         sc_signal<bool> flushd;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
+        sc_signal<bool> valid;
     };
 
     struct WriteBackType {

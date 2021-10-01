@@ -48,6 +48,9 @@ Tracer::Tracer(sc_module_name name_, bool async_reset, const char *trace_file)
     i_e_memop_size("i_e_memop_size"),
     i_e_memop_addr("i_e_memop_addr"),
     i_e_memop_wdata("i_e_memop_wdata"),
+    i_e_flushd("i_e_flushd"),
+    i_m_pc("i_m_pc"),
+    i_m_valid("i_m_valid"),
     i_m_memop_ready("i_m_memop_ready"),
     i_m_wena("i_m_wena"),
     i_m_waddr("i_m_waddr"),
@@ -73,6 +76,9 @@ Tracer::Tracer(sc_module_name name_, bool async_reset, const char *trace_file)
     sensitive << i_e_memop_size;
     sensitive << i_e_memop_addr;
     sensitive << i_e_memop_wdata;
+    sensitive << i_e_flushd;
+    sensitive << i_m_pc;
+    sensitive << i_m_valid;
     sensitive << i_m_memop_ready;
     sensitive << i_m_wena;
     sensitive << i_m_waddr;
@@ -85,6 +91,7 @@ Tracer::Tracer(sc_module_name name_, bool async_reset, const char *trace_file)
     tr_total_ = 0;
     tr_wcnt_ = 0;
     tr_rcnt_ = 0;
+    tr_opened_ = 0;
     memset(&trace_tbl_, 0, sizeof(trace_tbl_));
 };
 
@@ -578,10 +585,81 @@ void Tracer::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, tr_wcnt_, pn + ".tr_wcnt_");
         sc_trace(o_vcd, tr_rcnt_, pn + ".tr_rcnt_");
         sc_trace(o_vcd, tr_total_, pn + ".tr_total_");
+        sc_trace(o_vcd, tr_opened_, pn + ".tr_opened_");
     }
 }
 
+bool Tracer::isExecValid() {
+    if (i_e_valid.read() == 0) {
+        return false;
+    }
+    if (i_e_memop_valid.read() == 1 && i_m_memop_ready.read() == 0) {
+        return false;
+    }
+    if (i_e_flushd.read() == 1 && i_m_memop_ready.read() == 0) {
+        return false;
+    }
+    return true;
+}
+
+bool Tracer::isMemOperation() {
+    if (i_e_memop_valid.read() || i_e_flushd.read()) {
+        return true;
+    }
+    return false;
+}
+
+void Tracer::openTraceInstruciton() {
+    memset(&trace_tbl_[tr_wcnt_], 0, sizeof(trace_tbl_[tr_wcnt_]));
+
+    trace_tbl_[tr_wcnt_].exec_cnt = i_dbg_executed_cnt.read() + 1;
+    trace_tbl_[tr_wcnt_].pc = i_e_pc.read();
+    trace_tbl_[tr_wcnt_].instr = i_e_instr.read().to_uint();
+    tr_wcnt_ = (tr_wcnt_ + 1) % TRACE_TBL_SZ;
+    tr_opened_++;
+}
+
+void Tracer::closeFirstTraceInstruciton() {
+    int tcnt = (tr_wcnt_ - tr_opened_) % TRACE_TBL_SZ;
+    trace_tbl_[tcnt].completed = true;
+    while (tr_opened_ && trace_tbl_[tcnt].completed) {
+        tr_opened_--;
+        tcnt = (tr_wcnt_ - tr_opened_) % TRACE_TBL_SZ;
+    }
+}
+
+void Tracer::closeLastTraceInstruciton() {
+    int tcnt = (tr_wcnt_ - 1) % TRACE_TBL_SZ;
+    trace_tbl_[tcnt].completed = true;
+}
+
+void Tracer::regFirstTrace(uint64_t pc, uint32_t regaddr, uint64_t regdata) {
+}
+
+void Tracer::regLastTrace(uint64_t pc, uint32_t regaddr, uint64_t regdata) {
+}
+
 void Tracer::registers() {
+#if 0
+    if (isExecValid()) {
+        openTraceInstruciton();
+    }
+
+    if (i_e_wena.read() == 1) {
+        regLastTrace(i_e_pc.read().to_uint64(),
+                     i_e_waddr.read().to_uint(),
+                     i_e_wdata.read().to_uint64());
+    }
+
+    if (isExecValid() && !isMemOperation()) {
+        closeLastTraceInstruciton();
+    }
+
+    if (i_m_valid.read()) {
+        closeFirstTraceInstruciton();
+    }
+#endif
+
     TraceStepType *p_e_wr = &trace_tbl_[tr_wcnt_];
 
     if (i_e_valid.read() == 1) {

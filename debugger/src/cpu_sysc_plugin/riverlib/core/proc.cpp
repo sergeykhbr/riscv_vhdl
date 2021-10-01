@@ -277,6 +277,8 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     mem0->i_mem_data_addr(i_resp_data_addr);
     mem0->i_mem_data(i_resp_data_data);
     mem0->o_mem_resp_ready(o_resp_data_ready);
+    mem0->o_pc(w.m.pc);
+    mem0->o_valid(w.m.valid);
 
     predic0 = new BranchPredictor("predic0", async_reset);
     predic0->i_clk(i_clk);
@@ -427,6 +429,8 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
         trace0->i_e_memop_size(w.e.memop_size);
         trace0->i_e_memop_addr(w.e.memop_addr);
         trace0->i_e_memop_wdata(w.e.memop_wdata);
+        trace0->i_m_pc(w.m.pc);
+        trace0->i_m_valid(w.m.valid);
         trace0->i_m_memop_ready(w.m.memop_ready);
         trace0->i_m_wena(w.w.wena);
         trace0->i_m_waddr(w.w.waddr);

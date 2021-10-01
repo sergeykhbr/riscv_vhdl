@@ -50,7 +50,9 @@ MemAccess::MemAccess(sc_module_name name_, bool async_reset)
     i_mem_data_valid("i_mem_data_valid"),
     i_mem_data_addr("i_mem_data_addr"),
     i_mem_data("i_mem_data"),
-    o_mem_resp_ready("o_mem_resp_ready") {
+    o_mem_resp_ready("o_mem_resp_ready"),
+    o_pc("o_pc"),
+    o_valid("o_valid") {
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
@@ -88,6 +90,8 @@ MemAccess::MemAccess(sc_module_name name_, bool async_reset)
     sensitive << r.memop_res_data;
     sensitive << r.memop_res_wena;
     sensitive << r.hold_rdata;
+    sensitive << r.pc;
+    sensitive << r.valid;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -139,6 +143,8 @@ void MemAccess::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_wb_wtag, o_wb_wtag.name());
         sc_trace(o_vcd, i_wb_ready, i_wb_ready.name());
         sc_trace(o_vcd, o_flushd, o_flushd.name());
+        sc_trace(o_vcd, o_pc, o_pc.name());
+        sc_trace(o_vcd, o_valid, o_valid.name());
 
         std::string pn(name());
         sc_trace(o_vcd, r.state, pn + ".state");
@@ -180,6 +186,7 @@ void MemAccess::comb() {
     sc_uint<6> vb_o_waddr;
     sc_uint<RISCV_ARCH> vb_o_wdata;
     sc_uint<CFG_REG_TAG_WITH> vb_o_wtag;
+    bool v_valid;
 
     v = r;
 
@@ -197,6 +204,8 @@ void MemAccess::comb() {
     vb_o_waddr = 0;
     vb_o_wdata = 0;
     vb_o_wtag = 0;
+    v.valid = 0;    // valid on next clock
+    v_valid = 0;    // delayed valid on this clock
 
     switch (i_memop_size.read()) {
     case 0:
@@ -350,6 +359,7 @@ void MemAccess::comb() {
     case State_Idle:
         v_queue_re = 1;
         if (queue_nempty.read() == 1) {
+            v.pc = vb_e_pc;
             v_mem_valid = !v_flushd;
             v.memop_res_pc = vb_e_pc;
             v.memop_res_instr = vb_e_instr;
@@ -367,6 +377,7 @@ void MemAccess::comb() {
 
             if (v_flushd == 1) {
                 // do nothing
+                v.valid = 1;
             } else if (i_mem_req_ready.read() == 1) {
                 v.state = State_WaitResponse;
             } else {
@@ -402,6 +413,8 @@ void MemAccess::comb() {
                 v.state = State_Hold;
                 v.hold_rdata = vb_mem_rdata;
             } else if (queue_nempty.read() == 1) {
+                v_valid = 1;
+                v.pc = vb_e_pc;
                 v_mem_valid = !v_flushd;
                 v.memop_res_pc = vb_e_pc;
                 v.memop_res_instr = vb_e_instr;
@@ -419,6 +432,7 @@ void MemAccess::comb() {
 
                 if (v_flushd == 1) {
                     v.state = State_Idle;
+                    v.valid = 1;
                 } else if (i_mem_req_ready.read() == 1) {
                     v.state = State_WaitResponse;
                 } else {
@@ -426,6 +440,7 @@ void MemAccess::comb() {
                 }
             } else {
                 v.state = State_Idle;
+                v_valid = 1;
             }
         }
         break;
@@ -435,8 +450,10 @@ void MemAccess::comb() {
         vb_o_wdata = r.hold_rdata.read();
         vb_o_wtag = r.memop_res_wtag.read();
         if (i_wb_ready.read() == 1) {
+            v_valid = 1;
             v_queue_re = 1;
             if (queue_nempty.read() == 1) {
+                v.pc = vb_e_pc;
                 v_mem_valid = !v_flushd;
                 v.memop_res_pc = vb_e_pc;
                 v.memop_res_instr = vb_e_instr;
@@ -454,6 +471,7 @@ void MemAccess::comb() {
 
                 if (v_flushd == 1) {
                     v.state = State_Idle;
+                    v.valid = 1;
                 } else if (i_mem_req_ready.read() == 1) {
                     v.state = State_WaitResponse;
                 } else {
@@ -495,6 +513,9 @@ void MemAccess::comb() {
     o_wb_waddr = vb_o_waddr;
     o_wb_wdata = vb_o_wdata;
     o_wb_wtag = vb_o_wtag;
+
+    o_pc = r.pc;
+    o_valid = r.valid.read() || v_valid;
 }
 
 void MemAccess::registers() {

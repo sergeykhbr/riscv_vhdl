@@ -59,6 +59,8 @@ SC_MODULE(MemAccess) {
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_mem_data_addr; // Data path memory response address
     sc_in<sc_uint<64>> i_mem_data;                  // Data path memory response value
     sc_out<bool> o_mem_resp_ready;                  // Pipeline is ready to accept memory operation response
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_pc;        // executed memory/flush request only
+    sc_out<bool> o_valid;                           // memory/flush operation completed
 
     void comb();
     void registers();
@@ -93,6 +95,8 @@ private:
         sc_signal<bool> memop_res_wena;
 
         sc_signal<sc_uint<RISCV_ARCH>> hold_rdata;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
+        sc_signal<bool> valid;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
@@ -110,6 +114,8 @@ private:
         iv.memop_res_data = 0;
         iv.memop_res_wena = 0;
         iv.hold_rdata = 0;
+        iv.pc = 0;
+        iv.valid = 0;
     }
 
     static const int QUEUE_WIDTH = 1   // i_e_flushd

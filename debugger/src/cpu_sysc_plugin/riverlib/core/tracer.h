@@ -40,6 +40,9 @@ SC_MODULE(Tracer) {
     sc_in<sc_uint<2>> i_e_memop_size;
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_memop_addr;
     sc_in<sc_uint<RISCV_ARCH>> i_e_memop_wdata;
+    sc_in<bool> i_e_flushd;
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_m_pc;        // executed memory/flush request only
+    sc_in<bool> i_m_valid;                           // memory/flush operation completed
     sc_in<bool> i_m_memop_ready;
     sc_in<bool> i_m_wena;
     sc_in<sc_uint<6>> i_m_waddr;
@@ -54,6 +57,16 @@ SC_MODULE(Tracer) {
     Tracer(sc_module_name name_, bool async_reset, const char *trace_file);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
+
+ private:
+    bool isExecValid();
+    bool isMemOperation();
+
+    void openTraceInstruciton();
+    void regLastTrace(uint64_t pc, uint32_t regaddr, uint64_t regdata);     // trace from exec
+    void regFirstTrace(uint64_t pc, uint32_t regaddr, uint64_t regdata);    // trace from memaccess
+    void closeFirstTraceInstruciton();
+    void closeLastTraceInstruciton();
 
  private:
     static const int TRACE_TBL_SZ = 64;
@@ -82,6 +95,7 @@ SC_MODULE(Tracer) {
         int memactioncnt;
         RegActionType regaction[TRACE_TBL_SZ];
         MemopActionType memaction[TRACE_TBL_SZ];
+        bool completed;
     };
 
     void trace_output(TraceStepType *tr);
@@ -91,6 +105,7 @@ SC_MODULE(Tracer) {
     int tr_wcnt_;
     int tr_rcnt_;
     int tr_total_;
+    int tr_opened_;
 
     FILE *fl_;
     char disasm[1024];
