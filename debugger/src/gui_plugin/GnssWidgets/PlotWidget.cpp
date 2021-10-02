@@ -264,7 +264,7 @@ void PlotWidget::renderInfoPanel(QPainter &p) {
     QSize infoNameSize;
     QString name;
     QString fullString;
-    fullString.sprintf("idx: %d\n", selectedEpoch);
+    fullString.asprintf("idx: %d\n", selectedEpoch);
 
     // Find the longest 'name : value' string among lines:
     int NAME_WIDTH_MAX = rectPlot.width() / 2;
@@ -273,7 +273,7 @@ void PlotWidget::renderInfoPanel(QPainter &p) {
         if (!pLine->getAxisValue(1, selectedEpoch, bufName, sizeof(bufName))) {
             continue;
         }
-        name.sprintf("%s: %s\n", pLine->getName(), bufName);
+        name.asprintf("%s: %s\n", pLine->getName(), bufName);
         fullString += name;
     }
     infoNameSize = p.fontMetrics().size(Qt::TextDontClip, fullString);

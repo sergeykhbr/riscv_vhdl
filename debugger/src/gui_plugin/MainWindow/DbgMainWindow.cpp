@@ -52,7 +52,8 @@ DbgMainWindow::DbgMainWindow(IGui *igui) : QMainWindow() {
 #ifdef GITHUB_SCREENSHOT_SIZE
     resize(QSize(872, 600));
 #else
-    resize(QDesktopWidget().availableGeometry(this).size() * 0.7);
+    QScreen* screen = QGuiApplication::primaryScreen();
+    resize(screen->availableGeometry().size() * 0.7);
 #endif
 
     listConsoleListeners_.make_list(0);
@@ -326,7 +327,7 @@ void DbgMainWindow::slotSimulationTime(double t) {
     realMSecPrev_ = cur_sec;
     simSecPrev_ = t;
 
-    simTime.sprintf("Simulation Time: %.1f seconds. Slowdown: %.1f",
+    simTime.asprintf("Simulation Time: %.1f seconds. Slowdown: %.1f",
                     t, slowdown);
     statusBar()->showMessage(simTime);
     requestedCmd_ &= ~0x2;
@@ -347,8 +348,8 @@ void DbgMainWindow::createMdiWindow() {
     dock->setWidget(consoleWidget);
 
 #ifdef GITHUB_SCREENSHOT_SIZE
-    double desired_h = 
-        QDesktopWidget().availableGeometry(this).size().height() * 0.07;
+    QScreen* screen = QGuiApplication::primaryScreen();
+    double desired_h = screen->availableGeometry().size().height() * 0.07;
     consoleWidget->setFixedHeight(desired_h);
 #endif
 }
@@ -499,7 +500,7 @@ void DbgMainWindow::slotUpdateByTimer() {
 
 void DbgMainWindow::slotActionAbout() {
     QString build;
-    build.sprintf("Version: 1.0\nBuild:     %s\n", __DATE__);
+    build.asprintf("Version: 1.0\nBuild:     %s\n", __DATE__);
     build += tr("Author: Sergey Khabarov\n");
     build += tr("git:    http://github.com/sergeykhbr/riscv_vhdl\n");
     build += tr("e-mail: sergeykhbr@gmail.com\n\n\n"

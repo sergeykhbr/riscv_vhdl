@@ -31,7 +31,7 @@ StackTraceArea::StackTraceArea(IGui *gui, QWidget *parent)
     setFont(font);
     setContentsMargins(QMargins(0, 0, 0, 0));
     QFontMetrics fm(font);
-    setMinimumWidth(50 + fm.width(tr(
+    setMinimumWidth(50 + fm.horizontalAdvance(tr(
     "0x0001040 (some_symbol_name+0x40)  0x0001040 (some_symbol_name+0x40)")));
     lineHeight_ = fm.height() + 4;
     hideLineIdx_ = 0;
@@ -54,9 +54,9 @@ StackTraceArea::StackTraceArea(IGui *gui, QWidget *parent)
     setHorizontalHeaderLabels(
         QString("call;at address").split(";"));
     setColumnWidth(COL_at_addr,
-        10 + fm.width(tr("0x0001040 (some_symbol_name+0x40)")));
+        10 + fm.horizontalAdvance(tr("0x0001040 (some_symbol_name+0x40)")));
     setColumnWidth(COL_call_addr,
-        10 + fm.width(tr("0x0001040 (some_symbol_name+0x40)")));
+        10 + fm.horizontalAdvance(tr("0x0001040 (some_symbol_name+0x40)")));
 
     connect(this, SIGNAL(signalHandleResponse()),
             this, SLOT(slotHandleResponse()));

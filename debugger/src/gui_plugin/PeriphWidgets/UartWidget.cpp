@@ -11,9 +11,9 @@ UartWidget::UartWidget(IGui *igui, QWidget *parent)
     : QWidget(parent) {
 
     QHBoxLayout *layout = new QHBoxLayout;
+    layout->setContentsMargins(0, 0, 0, 0);
     editor_ = new UartEditor(igui, this);
     layout->addWidget(editor_);
-    layout->setMargin(0);
     setLayout(layout);
 }
 

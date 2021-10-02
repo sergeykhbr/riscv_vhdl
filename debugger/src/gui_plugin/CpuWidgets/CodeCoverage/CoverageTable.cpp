@@ -31,7 +31,7 @@ CoverageTable::CoverageTable(QWidget *parent) : QTableWidget(parent) {
     setFont(font);
     setContentsMargins(QMargins(0, 0, 0, 0));
     QFontMetrics fm(font);
-    setMinimumWidth(50 + fm.width(tr(
+    setMinimumWidth(50 + fm.horizontalAdvance(tr(
     "   0x112233  0x112233   very_long_symbol_name + 00h")));
     lineHeight_ = fm.height() + 4;
     visibleLinesTotal_ = 0;
@@ -63,9 +63,9 @@ CoverageTable::CoverageTable(QWidget *parent) : QTableWidget(parent) {
 
     setHorizontalHeaderLabels(
         QString("Start Addr.;End Addr.;Information").split(";"));
-    setColumnWidth(0, 10 + fm.width(tr(" Start Addr. ")));
-    setColumnWidth(1, 10 + fm.width(tr(" End Addr.   ")));
-    setColumnWidth(2, 10 + fm.width(tr("very_long+symbol_name + 00h")));
+    setColumnWidth(0, 10 + fm.horizontalAdvance(tr(" Start Addr. ")));
+    setColumnWidth(1, 10 + fm.horizontalAdvance(tr(" End Addr.   ")));
+    setColumnWidth(2, 10 + fm.horizontalAdvance(tr("very_long+symbol_name + 00h")));
 }
 
 void CoverageTable::slotDatailedInfoUpdate() {
@@ -126,17 +126,17 @@ void CoverageTable::outLine(int idx, AttributeType &line) {
 
     pw = item(idx, COL_address);
     pw->setText(QString("%1").arg(addr, 6, 16, QChar('0')));
-    pw->setTextColor(QColor(txtclr));
-    pw->setBackgroundColor(bkgclr);
+    pw->foreground().setColor(QColor(txtclr));
+    pw->background().setColor(bkgclr);
 
     pw = item(idx, COL_size);
-    pw->setTextColor(txtclr);
-    pw->setBackgroundColor(bkgclr);
+    pw->foreground().setColor(txtclr);
+    pw->background().setColor(bkgclr);
     pw->setText(QString("%1").arg(addr+sz-1, 6, 16, QChar('0')));
 
     pw = item(idx, COL_info);
-    pw->setTextColor(txtclr);
-    pw->setBackgroundColor(bkgclr);
+    pw->foreground().setColor(txtclr);
+    pw->background().setColor(bkgclr);
     pw->setText(QString(line[3].to_string()));
 }
 

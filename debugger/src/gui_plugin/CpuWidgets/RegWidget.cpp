@@ -53,7 +53,7 @@ RegWidget::RegWidget(const char *name, int bytes, QWidget *parent)
     QString text(tstr);
     setText(text);
     setMaxLength(19);
-    setFixedWidth(fm.width(text) + 8);
+    setFixedWidth(fm.horizontalAdvance(text) + 8);
     setFixedHeight(fm.height() + 2);
 
     setMinimumWidth(width() + 16);

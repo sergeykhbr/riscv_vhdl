@@ -125,7 +125,7 @@ void PnpWidget::slotUpdate() {
 
     RISCV_sprintf(tstr, sizeof(tstr), "HW_ID: 0x%08x", pnp_.hwid);
     getLabel(WHW_ID)->setText(QString(tstr));
-    w += 2 * fm.width(QString(tstr));
+    w += 2 * fm.horizontalAdvance(QString(tstr));
 
     RISCV_sprintf(tstr, sizeof(tstr), "FW_ID: 0x%08x", pnp_.fwid);
     getLabel(WFW_ID)->setText(QString(tstr));

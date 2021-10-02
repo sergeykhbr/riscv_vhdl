@@ -37,7 +37,7 @@ AsmArea::AsmArea(IGui *gui, QWidget *parent, uint64_t fixaddr)
     setFont(font);
     setContentsMargins(QMargins(0, 0, 0, 0));
     QFontMetrics fm(font);
-    setMinimumWidth(50 + fm.width(tr(
+    setMinimumWidth(50 + fm.horizontalAdvance(tr(
     "   :0011223344556677  11223344 1: addw    r0,r1,0xaabbccdd  ; commment")));
     lineHeight_ = fm.height() + 4;
     visibleLinesTotal_ = 0;
@@ -75,17 +75,17 @@ AsmArea::AsmArea(IGui *gui, QWidget *parent, uint64_t fixaddr)
             item(i, n)->setFlags(fl);
         }
         setRowHeight(i, lineHeight_);
-        item(i, 0)->setBackgroundColor(Qt::lightGray);
+        item(i, 0)->background().setColor(Qt::lightGray);
         item(i, 0)->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
     }
 
     setHorizontalHeaderLabels(
         QString("addr/line;code;label;mnemonic;comment").split(";"));
-    setColumnWidth(0, 10 + fm.width(tr("   :0011223344556677")));
-    setColumnWidth(1, 10 + fm.width(tr("00112233")));
-    setColumnWidth(2, 10 + fm.width(tr("0")));
-    setColumnWidth(3, 10 + fm.width(tr("addw    r1,r2,0x112233445566")));
-    setColumnWidth(4, 10 + fm.width(tr("some very long long comment+offset")));
+    setColumnWidth(0, 10 + fm.horizontalAdvance(tr("   :0011223344556677")));
+    setColumnWidth(1, 10 + fm.horizontalAdvance(tr("00112233")));
+    setColumnWidth(2, 10 + fm.horizontalAdvance(tr("0")));
+    setColumnWidth(3, 10 + fm.horizontalAdvance(tr("addw    r1,r2,0x112233445566")));
+    setColumnWidth(4, 10 + fm.horizontalAdvance(tr("some very long long comment+offset")));
 
     connect(this, SIGNAL(signalNpcChanged()),
             this, SLOT(slotNpcChanged()));
@@ -128,18 +128,18 @@ void AsmArea::resizeEvent(QResizeEvent *ev) {
 }
 
 void AsmArea::wheelEvent(QWheelEvent * ev) {
-    int dlt = ev->delta();
+    QPoint dlt = ev->angleDelta();
     int scroll_pos = verticalScrollBar()->value();
     int scroll_min = verticalScrollBar()->minimum();
     int scroll_max = verticalScrollBar()->maximum();
-    if (dlt >= 0 && scroll_pos > scroll_min) {
+    if (dlt.y() >= 0 && scroll_pos > scroll_min) {
         verticalScrollBar()->setValue(--scroll_pos);
-    } else if (dlt < 0 && scroll_pos < scroll_max) {
+    } else if (dlt.y() < 0 && scroll_pos < scroll_max) {
         verticalScrollBar()->setValue(++scroll_pos);
     } else {
         char tstr[128];
         unsigned sz = 4 * static_cast<unsigned>(visibleLinesTotal_ / 2);
-        if (dlt >= 0) {
+        if (dlt.y() >= 0) {
             RISCV_sprintf(tstr, sizeof(tstr), "disas 0x%" RV_PRI64 "x %d",
                         startAddr_ - sz, sz);
         } else {
@@ -317,7 +317,7 @@ void AsmArea::adjustRowCount() {
                 item(i, n)->setFlags(fl);
             }
             setRowHeight(i, lineHeight_);
-            item(i, 0)->setBackgroundColor(Qt::lightGray);
+            item(i, 0)->background().setColor(Qt::lightGray);
             item(i, 0)->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
         }
     } 
@@ -339,15 +339,15 @@ void AsmArea::outSymbolLine(int idx, AttributeType &line) {
 
     pw = item(idx, COL_addrline);
     pw->setText(QString("<%1>").arg(addr, 16, 16, QChar('0')));
-    pw->setTextColor(QColor(Qt::darkBlue));
+    pw->foreground().setColor(QColor(Qt::darkBlue));
 
     pw = item(idx, COL_code);
-    pw->setBackgroundColor(Qt::lightGray);
+    pw->background().setColor(Qt::lightGray);
     pw->setText(tr(""));
 
     pw = item(idx, COL_label);
     pw->setText(QString(line[ASM_code].to_string()));
-    pw->setTextColor(QColor(Qt::darkBlue));
+    pw->foreground().setColor(QColor(Qt::darkBlue));
 
     item(idx, COL_mnemonic)->setText(tr(""));
     item(idx, COL_comment)->setText(tr(""));
@@ -362,23 +362,23 @@ void AsmArea::outAsmLine(int idx, AttributeType &line) {
 
     pw = item(idx, COL_addrline);
     pw->setText(QString("%1").arg(addr, 16, 16, QChar('0')));
-    pw->setTextColor(QColor(Qt::black));
-    pw->setBackgroundColor(Qt::lightGray);
+    pw->foreground().setColor(QColor(Qt::black));
+    pw->background().setColor(Qt::lightGray);
 
     pw = item(idx, COL_code);
     uint32_t instr = line[ASM_code].to_uint32();
     if (line[ASM_breakpoint].to_bool()) {
-        pw->setBackgroundColor(Qt::red);
-        pw->setTextColor(Qt::white);
-    } else if (pw->backgroundColor() != Qt::lightGray) {
-        pw->setBackgroundColor(Qt::lightGray);
-        pw->setTextColor(Qt::black);
+        pw->background().setColor(Qt::red);
+        pw->foreground().setColor(Qt::white);
+    } else if (pw->background().color() != Qt::lightGray) {
+        pw->background().setColor(Qt::lightGray);
+        pw->foreground().setColor(Qt::black);
     }
     int codesz = line[ASM_codesize].to_int();
     pw->setText(QString("%1").arg(instr, 2*codesz, 16, QChar('0')));
 
     pw = item(idx, COL_label);
-    pw->setTextColor(Qt::black);
+    pw->foreground().setColor(Qt::black);
     pw->setText(QString(line[ASM_label].to_string()));
 
     pw = item(idx, COL_mnemonic);

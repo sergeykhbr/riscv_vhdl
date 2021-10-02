@@ -21,7 +21,7 @@
 
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QMenu>
-#include <QtWidgets/QAction>
+#include <QtGui/QAction>
 #include "MdiAreaWidget.h"
 
 namespace debugger {

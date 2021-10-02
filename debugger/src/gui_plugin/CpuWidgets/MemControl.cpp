@@ -42,7 +42,7 @@ MemControl::MemControl(QWidget *parent, uint64_t addr, uint64_t sz)
 
     editAddr_ = new QLineEdit(this);
     editAddr_->setText(QString("%1").arg(addr, 16, 16, QChar('0')));
-    editAddr_->setFixedWidth(8 + fm.width(editAddr_->text()));
+    editAddr_->setFixedWidth(8 + fm.horizontalAdvance(editAddr_->text()));
     editAddr_->setPalette(paletteDefault_);
     gridLayout->addWidget(editAddr_, 0, 1, Qt::AlignLeft);
 
@@ -51,7 +51,7 @@ MemControl::MemControl(QWidget *parent, uint64_t addr, uint64_t sz)
 
     editBytes_ = new QLineEdit(this);
     editBytes_->setText(QString("%1").arg(sz, 0, 10));
-    editBytes_->setFixedWidth(8 + fm.width("000000"));
+    editBytes_->setFixedWidth(8 + fm.horizontalAdvance("000000"));
     editBytes_->setPalette(paletteDefault_);
     gridLayout->addWidget(editBytes_, 0, 3, Qt::AlignLeft);
 

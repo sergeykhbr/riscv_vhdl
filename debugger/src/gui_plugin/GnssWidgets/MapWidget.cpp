@@ -1,3 +1,5 @@
+#include <QRandomGenerator>
+#include <QtGui/QPainterPath>
 #include "MapWidget.h"
 #if!defined(CMAKE_ENABLED)
 #include "moc_MapWidget.h"
@@ -68,9 +70,10 @@ MapWidget::MapWidget(IGui *igui, QWidget *parent)
     }
 
     QDateTime sd = QDateTime::currentDateTime();
-    qsrand(sd.toTime_t());
+    QRandomGenerator rndgen;
+    rndgen.seed(sd.toMSecsSinceEpoch());
     int pos_init_idx =
-        qrand() % static_cast<int>(sizeof(defaultPos)/sizeof(QPointF));
+        rndgen.generate() % static_cast<int>(sizeof(defaultPos)/sizeof(QPointF));
 
 #if 0
     pos_init_idx = 0;
@@ -279,7 +282,7 @@ void MapWidget::renderTrack(int trkIdx, QPainter &p) {
     }
     
     QString strPosition;
-    strPosition.sprintf("GPS LMS: Lat %.4f; Lon %.4f", lat, lon);
+    strPosition.asprintf("GPS LMS: Lat %.4f; Lon %.4f", lat, lon);
     int h = p.fontMetrics().size(Qt::TextSingleLine, strPosition).height();
 
     QRect rect = QRect(QPoint(0, trkIdx * (h + 5)),

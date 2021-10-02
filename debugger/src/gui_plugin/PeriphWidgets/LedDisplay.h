@@ -21,7 +21,7 @@
 #include "igui.h"
 
 #include <QtWidgets/QWidget>
-#include <QtWidgets/QAction>
+#include <QtGui/QAction>
 #include <QtGui/QPixmap>
 #include <QtGui/QPainter>
 

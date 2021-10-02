@@ -39,7 +39,7 @@ SymbolBrowserControl::SymbolBrowserControl(QWidget *parent)
 
     editFilter_ = new QLineEdit(this);
     editFilter_->setText(tr("*"));
-    editFilter_->setFixedWidth(fm.width(tr("*some_test_func*")));
+    editFilter_->setFixedWidth(fm.horizontalAdvance(tr("*some_test_func*")));
     editFilter_->setPalette(paletteDefault_);
     gridLayout->addWidget(editFilter_, 0, 1, Qt::AlignLeft);
     gridLayout->setColumnStretch(1, 10);

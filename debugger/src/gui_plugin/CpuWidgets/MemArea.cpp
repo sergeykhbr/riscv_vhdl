@@ -34,7 +34,7 @@ MemArea::MemArea(IGui *gui, QWidget *parent, uint64_t addr, uint64_t sz)
     font.setFixedPitch(true);
     setFont(font);
     QFontMetrics fm(font);
-    setMinimumWidth(20 + fm.width(tr("[0011223344556677]: 11 22 33 44 55 66 77 88 ")));
+    setMinimumWidth(20 + fm.horizontalAdvance(tr("[0011223344556677]: 11 22 33 44 55 66 77 88 ")));
 
     ensureCursorVisible();
 

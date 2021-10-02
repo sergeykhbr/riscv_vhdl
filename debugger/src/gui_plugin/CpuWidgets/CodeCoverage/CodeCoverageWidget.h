@@ -13,7 +13,7 @@
 #include <QtWidgets/QMdiArea>
 #include <QtWidgets/QMdiSubWindow>
 #include <QtWidgets/QGridLayout>
-#include <QtWidgets/QAction>
+#include <QtGui/QAction>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QLabel>
 #include <QtCore/QEvent>

@@ -8,13 +8,12 @@ set(CMAKE_AUTOUIC ON)
 add_definitions(-DCMAKE_ENABLED)
 
 if("${CMAKE_SIZEOF_VOID_P}" STREQUAL "4")
-    set(Qt5_DIR "$ENV{QT_PATH}//lib//cmake//Qt5")
+    set(CMAKE_PREFIX_PATH "$ENV{QT_PATH}//")
 else()
-    set(Qt5_DIR "$ENV{QT_PATH64}//lib//cmake//Qt5")
+    set(CMAKE_PREFIX_PATH "$ENV{QT_PATH64}//")
 endif()
 
 set(src_top "${CMAKE_CURRENT_SOURCE_DIR}/../../src")
-#set(CMAKE_BUILD_TYPE Debug)
 
 if(UNIX)
 	set(LIBRARY_OUTPUT_PATH "../../linuxbuild/bin/plugins")
@@ -58,7 +57,7 @@ else()
 endif()
 
 
-find_package(Qt5 COMPONENTS Widgets Network REQUIRED)
+find_package(Qt6 COMPONENTS Widgets Network REQUIRED)
 
 if(UNIX)
     set_target_properties(gui_plugin PROPERTIES PREFIX "")
@@ -79,7 +78,7 @@ else()
     set_target_properties(gui_plugin PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG "../winbuild/bin/plugins")
 
     target_include_directories(gui_plugin PUBLIC "${RUNTIME_OUTPUT_DIRECTORY}")
-    target_link_libraries(gui_plugin libdbg64g Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Network)	
+    target_link_libraries(gui_plugin libdbg64g Qt::Core Qt::Gui Qt::Widgets Qt::Network)	
     add_custom_command(TARGET gui_plugin 
 	        POST_BUILD
 	        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/post_build_event.bat "\"$(SolutionDir)winbuild/bin\""

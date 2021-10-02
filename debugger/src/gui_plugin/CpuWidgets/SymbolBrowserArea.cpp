@@ -31,7 +31,7 @@ SymbolBrowserArea::SymbolBrowserArea(IGui *gui, QWidget *parent)
     setFont(font);
     setContentsMargins(QMargins(0, 0, 0, 0));
     QFontMetrics fm(font);
-    setMinimumWidth(50 + fm.width(tr(
+    setMinimumWidth(50 + fm.horizontalAdvance(tr(
     "some_test_function  (void ())       P:aabbccdd--aabbffff")));
     lineHeight_ = fm.height() + 4;
     hideLineIdx_ = 0;
@@ -52,9 +52,9 @@ SymbolBrowserArea::SymbolBrowserArea(IGui *gui, QWidget *parent)
 
     setHorizontalHeaderLabels(
         QString("symbol;type;address").split(";"));
-    setColumnWidth(COL_symbol, 10 + fm.width(tr("some_test_function ")));
-    setColumnWidth(COL_type, 10 + fm.width(tr("(void ())      ")));
-    setColumnWidth(COL_address, 10 + fm.width(tr("P:0x00001000--0x00001040")));
+    setColumnWidth(COL_symbol, 10 + fm.horizontalAdvance(tr("some_test_function ")));
+    setColumnWidth(COL_type, 10 + fm.horizontalAdvance(tr("(void ())      ")));
+    setColumnWidth(COL_address, 10 + fm.horizontalAdvance(tr("P:0x00001000--0x00001040")));
 
     connect(this, SIGNAL(cellDoubleClicked(int, int)),
             this, SLOT(slotCellDoubleClicked(int, int)));
@@ -145,7 +145,7 @@ void SymbolBrowserArea::slotHandleResponse() {
 void SymbolBrowserArea::slotFilterChanged(const QString &flt) {
     AttributeType tcmd;
     QByteArray flt_buf;
-    flt_buf.append("symb " + flt);
+    flt_buf.append(QString("symb " + flt).toLatin1());
     tcmd.make_string(flt_buf.data());
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this),
                            tcmd.to_string(), &symbolList_, true);

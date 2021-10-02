@@ -14,7 +14,7 @@
 #include <QtWidgets/QMdiArea>
 #include <QtWidgets/QMdiSubWindow>
 #include <QtWidgets/QGridLayout>
-#include <QtWidgets/QAction>
+#include <QtGui/QAction>
 #include <QtCore/QEvent>
 
 namespace debugger {

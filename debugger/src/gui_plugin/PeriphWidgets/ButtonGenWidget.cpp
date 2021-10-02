@@ -22,7 +22,7 @@
 #include <string.h>
 #include <QtWidgets/QBoxLayout>
 #include <QtWidgets/QLabel>
-#include <QtWidgets/QAction>
+#include <QtGui/QAction>
 #include <QtGui/QPainter>
 
 namespace debugger {
