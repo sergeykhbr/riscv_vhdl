@@ -1,11 +1,11 @@
-mkdir $(ELF_DIR)/qtlib
-mkdir $(ELF_DIR)/qtlib/platforms
-cp $(QT_PATH)/plugins/platforms/libqlinuxfb.so $(ELF_DIR)/qtlib/platforms/
-cp $(QT_PATH)/plugins/platforms/libqminimal.so $(ELF_DIR)/qtlib/platforms/
-cp $(QT_LIB_PATH)/libicudata.* $(ELF_DIR)/qtlib
-cp $(QT_LIB_PATH)/libicui18n.* $(ELF_DIR)/qtlib
-cp $(QT_LIB_PATH)/libicuuc.* $(ELF_DIR)/qtlib
-cp $(QT_LIB_PATH)/libQt5Core.* $(ELF_DIR)/qtlib
-cp $(QT_LIB_PATH)/libQt5Gui.* $(ELF_DIR)/qtlib
-cp $(QT_LIB_PATH)/libQt5Widgets.* $(ELF_DIR)/qtlib
-cp $(QT_LIB_PATH)/libQt5Network.* $(ELF_DIR)/qtlib
+mkdir $1/../qtlib
+mkdir $1/../qtlib/platforms
+cp $(QT_PATH64)/plugins/platforms/libqlinuxfb.so $1/../qtlib/platforms/
+cp $(QT_PATH64)/plugins/platforms/libqminimal.so $1/../qtlib/platforms/
+cp $(QT_PATH64)/lib/libicudata.* $1/../qtlib
+cp $(QT_PATH64)/lib/libicui18n.* $1/../qtlib
+cp $(QT_PATH64)/lib/libicuuc.* $1/../qtlib
+cp $(QT_PATH64)/lib/libQt5Core.* $1/../qtlib
+cp $(QT_PATH64)/lib/libQt5Gui.* $1/../qtlib
+cp $(QT_PATH64)/lib/libQt5Widgets.* $1/../qtlib
+cp $(QT_PATH64)/lib/libQt5Network.* $1/../qtlib

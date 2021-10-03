@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include <QRandomGenerator>
+#include <QtCore/QRandomGenerator>
 #include <QtGui/QPainterPath>
 #include "MapWidget.h"
 #include <math.h>

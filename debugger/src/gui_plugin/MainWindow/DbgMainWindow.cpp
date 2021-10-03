@@ -31,6 +31,7 @@
 #include "GnssWidgets/PlotWidget.h"
 #include <QtWidgets/QtWidgets>
 #include <QtCore/QDate>
+#include <QtGui/QScreen>
 
 #ifdef WIN32
 //#define GITHUB_SCREENSHOT_SIZE

@@ -22,10 +22,12 @@ else()
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 endif()
 
-
+# It is neccessary to include QtGui to workaroung error in moc_ file
 include_directories(
     ${src_top}/common
     ${src_top}/gui_plugin
+    ${CMAKE_PREFIX_PATH}include
+    ${CMAKE_PREFIX_PATH}include/QtGui
 )
 
 
@@ -41,6 +43,7 @@ file(GLOB_RECURSE gui_plugin_src
 
 
 if(UNIX)
+    add_compile_options(-std=c++17)
 else()
     foreach(_source IN ITEMS ${gui_plugin_src})
         get_filename_component(_source_path "${_source}" PATH)
@@ -54,23 +57,20 @@ else()
     endforeach()
 endif()
 
-
 find_package(Qt6 COMPONENTS Widgets Network REQUIRED)
+
+add_library(gui_plugin SHARED
+    ${gui_plugin_src}
+)
 
 if(UNIX)
     set_target_properties(gui_plugin PROPERTIES PREFIX "")
-
     add_custom_command(TARGET gui_plugin  
 	        POST_BUILD
-	        COMMAND /bin/bash ./post_build_event.sh 
+	        COMMAND /bin/bash ${CMAKE_CURRENT_SOURCE_DIR}/post_build_event.sh "${LIBRARY_OUTPUT_PATH}"
 	        )
 
 else()
-    link_directories(BEFORE "${RUNTIME_OUTPUT_DIRECTORY}")
-    add_library(gui_plugin SHARED
-        ${gui_plugin_src}
-    )
-
     set_target_properties(gui_plugin PROPERTIES RUNTIME_OUTPUT_DIRECTORY "../winbuild/bin/plugins")
     set_target_properties(gui_plugin PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE "../winbuild/bin/plugins")
     set_target_properties(gui_plugin PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG "../winbuild/bin/plugins")

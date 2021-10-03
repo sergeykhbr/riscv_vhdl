@@ -23,7 +23,6 @@
 #include "coreservices/irawlistener.h"
 #include "coreservices/icmdexec.h"
 
-#include <QtWidgets/QWidget>
 #include <QtWidgets/QPlainTextEdit>
 #include <QtGui/qevent.h>
 
