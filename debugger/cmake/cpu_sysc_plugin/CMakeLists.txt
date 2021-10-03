@@ -10,7 +10,7 @@ set(src_top "${CMAKE_CURRENT_SOURCE_DIR}/../../src")
 #set(CMAKE_BUILD_TYPE Debug)
 
 if(UNIX)
-	set(LIBRARY_OUTPUT_PATH "../../linuxbuild/bin/plugins")
+	set(LIBRARY_OUTPUT_PATH "../linuxbuild/bin/plugins")
 else()
 	add_definitions(-D_UNICODE)
 	add_definitions(-DUNICODE)

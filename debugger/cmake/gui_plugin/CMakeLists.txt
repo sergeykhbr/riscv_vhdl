@@ -14,7 +14,7 @@ endif()
 set(src_top "${CMAKE_CURRENT_SOURCE_DIR}/../../src")
 
 if(UNIX)
-	set(LIBRARY_OUTPUT_PATH "../../linuxbuild/bin/plugins")
+	set(LIBRARY_OUTPUT_PATH "../linuxbuild/bin/plugins")
 else()
 	add_definitions(-D_UNICODE)
 	add_definitions(-DUNICODE)
@@ -62,7 +62,7 @@ if(UNIX)
 
     add_custom_command(TARGET gui_plugin  
 	        POST_BUILD
-	        COMMAND /bin/bash ./deploy_qt.sh 
+	        COMMAND /bin/bash ./post_build_event.sh 
 	        )
 
 else()

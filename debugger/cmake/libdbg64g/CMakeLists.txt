@@ -6,7 +6,7 @@ set(src_top "${CMAKE_CURRENT_SOURCE_DIR}/../../src")
 #set(CMAKE_BUILD_TYPE Debug)
 
 if(UNIX)
-	set(LIBRARY_OUTPUT_PATH "../../linuxbuild/bin")
+	set(LIBRARY_OUTPUT_PATH "../linuxbuild/bin")
 else()
 	add_definitions(-D_UNICODE)
 	add_definitions(-DUNICODE)
@@ -60,6 +60,7 @@ add_library(libdbg64g SHARED
 
 if(UNIX)
     set_target_properties(libdbg64g PROPERTIES PREFIX "")
+    target_link_libraries(libdbg64g pthread dl rt)	
 else()
     set_target_properties(libdbg64g PROPERTIES RUNTIME_OUTPUT_DIRECTORY "../winbuild/bin")
     set_target_properties(libdbg64g PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE "../winbuild/bin")
