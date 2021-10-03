@@ -8,9 +8,6 @@
 #include "MemArea.h"
 #include "MemControl.h"
 #include "MemViewWidget.h"
-#if!defined(CMAKE_ENABLED)
-#include "moc_MemViewWidget.h"
-#endif
 #include <memory>
 
 namespace debugger {

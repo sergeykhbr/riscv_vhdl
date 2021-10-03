@@ -158,7 +158,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'bootrom0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../examples/bootrom_tests/linuxbuild/bin/bootrom_tests.hex'],
+                ['InitFile','${REPO_PATH}/../examples/bootrom_tests/linuxbuild/bin/bootrom_tests.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x0],
                 ['Length',32768]
@@ -166,7 +166,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'fwimage0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../examples/zephyr/gcc711/zephyr.hex'],
+                ['InitFile','${REPO_PATH}/../examples/zephyr/gcc711/zephyr.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x00100000],
                 ['Length',0x40000]
@@ -182,7 +182,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'sram0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../examples/riscv-tests/makefiles/bin/riscv-tests.hex'],
+                ['InitFile','${REPO_PATH}/../examples/riscv-tests/makefiles/bin/riscv-tests.hex'],
                 ['ReadOnly',false],
                 ['BaseAddress',0x10000000],
                 ['Length',0x80000]

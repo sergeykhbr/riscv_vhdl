@@ -877,12 +877,30 @@ int json_file_readall(const char *filename, char **pout) {
     fsz = ftell(f);
     fseek(f, 0, SEEK_SET);
 
-    (*pout) = new char[fsz + 1];
-    memset((*pout), 0, fsz + 1);
+    (*pout) = new char[fsz];
+    memset((*pout), 0, fsz);
 
     textcnt = 0;
+    char *psub1;
     while (json_file_readline(f, (*pout), textcnt) != EOF) {
-        char *psub1 = strstr(&(*pout)[ret], "#include");
+        psub1 = strstr(&(*pout)[ret], "${REPO_PATH}");
+        if (psub1 != 0) {
+            int fsznew = fsz + strlen(REPO_PATH);
+            char *pnew = new char[fsznew];
+            size_t foundpos = psub1 - (*pout);
+            memset(pnew, 0, fsznew);
+            memcpy(pnew, *pout, foundpos);
+            strcpy(&pnew[foundpos], REPO_PATH);
+            memcpy(&pnew[foundpos + strlen(REPO_PATH)],
+                   &(*pout)[foundpos + strlen("${REPO_PATH}")],
+                   fsz - (foundpos + strlen("${REPO_PATH}")));
+
+            fsz = fsznew;
+            delete [] (*pout);
+            (*pout) = pnew;
+            textcnt += strlen(REPO_PATH) - strlen("${REPO_PATH}");
+        }
+        psub1 = strstr(&(*pout)[ret], "#include");
         if (psub1 != 0) {
             char fname[4096];
             char *pf = fname;
@@ -901,8 +919,8 @@ int json_file_readall(const char *filename, char **pout) {
             incsz = json_file_readall(fname, &incdata);
             if (incsz) {
                 // realloc buffer:
-                char *t1 = new char [fsz + incsz + 1];
-                memset(t1, 0, fsz + incsz + 1);
+                char *t1 = new char [fsz + incsz];
+                memset(t1, 0, fsz + incsz);
                 memcpy(t1, (*pout), ret);
                 memcpy(&t1[ret], incdata, incsz);
                 delete [] incdata;

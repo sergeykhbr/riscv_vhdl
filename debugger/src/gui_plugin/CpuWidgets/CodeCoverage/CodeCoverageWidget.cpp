@@ -5,9 +5,6 @@
  */
 
 #include "CodeCoverageWidget.h"
-#if!defined(CMAKE_ENABLED)
-#include "moc_CodeCoverageWidget.h"
-#endif
 #include "CoverageBar.h"
 #include "CoverageTable.h"
 #include <memory>

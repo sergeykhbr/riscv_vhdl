@@ -15,9 +15,6 @@
  */
 
 #include "LedDisplay.h"
-#if!defined(CMAKE_ENABLED)
-#include "moc_LedDisplay.h"
-#endif
 #include <memory>
 #include <string.h>
 #include <QtCore/QFile>

@@ -8,9 +8,6 @@
 #include "AsmArea.h"
 #include "AsmControl.h"
 #include "AsmViewWidget.h"
-#if!defined(CMAKE_ENABLED)
-#include "moc_AsmViewWidget.h"
-#endif
 #include <memory>
 
 namespace debugger {

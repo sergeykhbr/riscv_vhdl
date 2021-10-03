@@ -6,9 +6,6 @@
  */
 
 #include "AsmArea.h"
-#if!defined(CMAKE_ENABLED)
-#include "moc_AsmArea.h"
-#endif
 #include <memory>
 #include <string.h>
 #include <QtWidgets/QBoxLayout>

@@ -17,9 +17,6 @@
 #include "LedDisplay.h"
 #include "DemoSTM32Keypad.h"
 #include "DemoM4Widget.h"
-#if!defined(CMAKE_ENABLED)
-#include "moc_DemoM4Widget.h"
-#endif
 #include <memory>
 
 namespace debugger {

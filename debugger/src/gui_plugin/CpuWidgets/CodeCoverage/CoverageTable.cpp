@@ -6,9 +6,6 @@
  */
 
 #include "CoverageTable.h"
-#if!defined(CMAKE_ENABLED)
-#include "moc_CoverageTable.h"
-#endif
 #include <memory>
 #include <string.h>
 #include <QtWidgets/QBoxLayout>

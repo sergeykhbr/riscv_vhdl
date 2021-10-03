@@ -15,9 +15,6 @@
  */
 
 #include "RegWidget.h"
-#if!defined(CMAKE_ENABLED)
-#include "moc_RegWidget.h"
-#endif
 #include <memory>
 #include <string.h>
 #include <QtWidgets/QBoxLayout>

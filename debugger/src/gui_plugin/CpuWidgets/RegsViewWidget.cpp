@@ -17,9 +17,6 @@
 #include "RegSetView.h"
 #include "RegsControl.h"
 #include "RegsViewWidget.h"
-#if!defined(CMAKE_ENABLED)
-#include "moc_RegsViewWidget.h"
-#endif
 #include <QtWidgets/QLabel>
 
 #include <memory>

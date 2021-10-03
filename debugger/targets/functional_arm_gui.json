@@ -3,7 +3,7 @@
     'SimEnable':true,
     'GUI':true,
     'InitCommands':[
-                    'loadelf ./../../../examples/dhrystone21/makefiles/binarm/dhrystone21.elf',
+                    'loadelf ${REPO_PATH}/../examples/dhrystone21/makefiles/binarm/dhrystone21.elf',
                    ],
     'Description':'This configuration instantiates functional RISC-V model'
   },
@@ -162,7 +162,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'bootrom0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../examples/bootarm/makefiles/bin/bootimage.hex'],
+                ['InitFile','${REPO_PATH}/../examples/bootarm/makefiles/bin/bootimage.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x0],
                 ['Length',8192]
@@ -170,7 +170,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'fwimage0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../examples/dhrystone21/makefiles/binarm/dhrystone21.hex'],
+                ['InitFile','${REPO_PATH}/../examples/dhrystone21/makefiles/binarm/dhrystone21.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x00100000],
                 ['Length',0x40000]
@@ -178,7 +178,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'sram0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','../../../examples/dhrystone21/makefiles/binarm/dhrystone21.hex'],
+                ['InitFile','${REPO_PATH}/../examples/dhrystone21/makefiles/binarm/dhrystone21.hex'],
                 ['ReadOnly',false],
                 ['BaseAddress',0x10000000],
                 ['Length',0x80000]

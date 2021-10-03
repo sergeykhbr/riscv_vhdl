@@ -15,9 +15,6 @@
  */
 
 #include "DbgMainWindow.h"
-#if!defined(CMAKE_ENABLED)
-#include "moc_DbgMainWindow.h"
-#endif
 #include "debug/dsumap.h"
 #include "ControlWidget/PnpWidget.h"
 #include "CpuWidgets/RegsViewWidget.h"

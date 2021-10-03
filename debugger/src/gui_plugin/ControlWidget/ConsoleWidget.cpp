@@ -15,9 +15,6 @@
  */
 
 #include "ConsoleWidget.h"
-#if!defined(CMAKE_ENABLED)
-#include "moc_ConsoleWidget.h"
-#endif
 #include <QtCore/QDate>
 #include <QtGui/QPainter>
 #include <QtWidgets/QScrollBar>

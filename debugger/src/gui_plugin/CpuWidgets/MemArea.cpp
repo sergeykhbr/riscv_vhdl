@@ -6,9 +6,6 @@
  */
 
 #include "MemArea.h"
-#if!defined(CMAKE_ENABLED)
-#include "moc_MemArea.h"
-#endif
 #include <memory>
 #include <string.h>
 #include <QtWidgets/QBoxLayout>

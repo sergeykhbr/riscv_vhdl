@@ -1,8 +1,7 @@
 cmake_minimum_required(VERSION 3.4.0)
 project(riscvdebugger)
 
-
-#set(CMAKE_BUILD_TYPE Debug)
+add_definitions(-DREPO_PATH="${CMAKE_CURRENT_SOURCE_DIR}/..")
 
 if(UNIX)
 	set(EXECUTABLE_OUTPUT_PATH "linuxbuild/bin")
@@ -66,6 +65,6 @@ else()
     set_target_properties(riscvdebugger PROPERTIES
                                         VS_DEBUGGER_COMMAND_ARGUMENTS 
                                         "-c ${CMAKE_CURRENT_SOURCE_DIR}/../targets/functional_sim_gui.json")
-    target_link_libraries(riscvdebugger libdbg64g simple_plugin socsim_plugin cpu_sysc_plugin cpu_arm_plugin cpu_fnc_plugin gui_plugin)
+    target_link_libraries(riscvdebugger libdbg64g)
 endif()
   

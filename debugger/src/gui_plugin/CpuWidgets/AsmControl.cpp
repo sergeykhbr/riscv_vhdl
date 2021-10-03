@@ -6,10 +6,6 @@
  */
 
 #include "AsmControl.h"
-#if!defined(CMAKE_ENABLED)
-#include "moc_AsmControl.h"
-#endif
-
 #include <memory>
 #include <string.h>
 #include <QtWidgets/QBoxLayout>

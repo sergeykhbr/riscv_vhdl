@@ -5,8 +5,6 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-add_definitions(-DCMAKE_ENABLED)
-
 if("${CMAKE_SIZEOF_VOID_P}" STREQUAL "4")
     set(CMAKE_PREFIX_PATH "$ENV{QT_PATH}//")
 else()
