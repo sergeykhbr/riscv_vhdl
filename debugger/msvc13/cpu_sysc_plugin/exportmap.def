@@ -1,3 +1,0 @@
-LIBRARY cpu_sysc_plugin
-EXPORTS
-	plugin_init

@@ -1,3 +1,0 @@
-LIBRARY simple_plugin
-EXPORTS
-	plugin_init

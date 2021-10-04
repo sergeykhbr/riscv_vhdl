@@ -1,13 +1,11 @@
 cmake_minimum_required(VERSION 3.4.0)
 project(cpu_sysc_plugin DESCRIPTION "cpu_sysc_plugin shared library")
 
-if (NOT DEFINED ENV{SYSTEMC_PATH})
-    message(FATAL_ERROR "Define variable SYSTEMC_PATH with the proper path to SystemC code")
+if (NOT DEFINED ENV{SYSTEMC_SRC} OR NOT DEFINED ENV{SYSTEMC_LIB})
+    message(FATAL_ERROR "Variables SYSTEMC_SRC and SYSTEMC_LIB not defined.")
 endif()
 
 set(src_top "${CMAKE_CURRENT_SOURCE_DIR}/../../src")
-
-#set(CMAKE_BUILD_TYPE Debug)
 
 if(UNIX)
 	set(LIBRARY_OUTPUT_PATH "../linuxbuild/bin/plugins")
@@ -20,7 +18,7 @@ endif()
 
 
 include_directories(
-    $ENV{SYSTEMC_PATH}/src
+    $ENV{SYSTEMC_SRC}
     ${src_top}/common
 )
 
@@ -51,15 +49,11 @@ endif()
 
 if (MSVC)
     add_compile_options(/vmg /wd"4244" /wd"4996")
-  if(CMAKE_CL_64)
-    link_directories(BEFORE "$ENV{SYSTEMC_PATH}/msvc19/src")
-  else()
-    link_directories(BEFORE "$ENV{SYSTEMC_PATH}/msvc19/src")
-  endif()
 else()
     #add_compile_options(-Wall -Wextra -pedantic -Werror)
 endif()
 
+link_directories(BEFORE "$ENV{SYSTEMC_LIB}")
 
 add_library(cpu_sysc_plugin SHARED
     ${cpu_sysc_plugin_src}

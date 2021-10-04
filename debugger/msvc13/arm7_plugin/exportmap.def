@@ -1,3 +1,0 @@
-LIBRARY arm7_plugin
-EXPORTS
-	plugin_init
