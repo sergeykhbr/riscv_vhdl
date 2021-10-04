@@ -23,6 +23,7 @@ INCL_PATH=\
 SRC_PATH =\
 	$(TOP_DIR)src \
 	$(TOP_DIR)src/common \
+	$(TOP_DIR)src/common/debug \
 	$(TOP_DIR)src/common/generic \
 	$(TOP_DIR)src/libdbg64g \
 	$(TOP_DIR)src/libdbg64g/services/comport \
@@ -50,6 +51,8 @@ SOURCES = \
 	rmemsim \
 	serial_dbglink \
 	codecov_generic \
+	greth_gen1 \
+	greth \
 	cpumonitor \
 	udp_dbglink \
 	edcl \

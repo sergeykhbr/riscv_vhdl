@@ -206,7 +206,6 @@ void CsrRegs::comb() {
     bool v_dbg_pc_write;
     sc_uint<CFG_CPU_ADDR_BITS> vb_dbg_pc;
     bool w_trap_irq;
-    bool w_exception_xret;
     sc_uint<5> wb_trap_code;
     sc_uint<CFG_CPU_ADDR_BITS> wb_mbadaddr;
     bool w_mstackovr;
@@ -240,7 +239,6 @@ void CsrRegs::comb() {
     v_csr_rena = 0;
     v_csr_wena = 0;
     v_csr_trapreturn = 0;
-    w_exception_xret = 0;
     w_trap_valid = 0;
     w_trap_irq = 0;
     wb_trap_code = 0;

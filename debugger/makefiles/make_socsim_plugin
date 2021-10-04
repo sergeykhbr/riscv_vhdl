@@ -42,7 +42,6 @@ SOURCES = \
 	dsu_regs \
 	dmi_regs \
 	dsu \
-	greth \
 	gptimers \
 	fsev2 \
 	rfctrl \

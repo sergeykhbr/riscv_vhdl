@@ -470,7 +470,7 @@ void Processor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void Processor::comb() {
-    w_fetch_pipeline_hold = !w.e.d_ready | csr.halt;
+    w_fetch_pipeline_hold = !w.e.d_ready || csr.halt;
     w_any_pipeline_hold = w.f.pipeline_hold | !w.e.d_ready | csr.halt;
 
     w_writeback_ready = !w.e.reg_wena.read();
