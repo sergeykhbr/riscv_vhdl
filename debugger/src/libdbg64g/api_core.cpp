@@ -870,6 +870,11 @@ int json_file_readall(const char *filename, char **pout) {
     int incsz;
     int fsz;
     int ret = 0;
+#ifdef REPO_PATH
+    const char* repo_path = REPO_PATH;
+#else
+    const char *repo_path = ".";
+#endif
     if (!f) {
         return 0;
     }
@@ -885,20 +890,20 @@ int json_file_readall(const char *filename, char **pout) {
     while (json_file_readline(f, (*pout), textcnt) != EOF) {
         psub1 = strstr(&(*pout)[ret], "${REPO_PATH}");
         if (psub1 != 0) {
-            int fsznew = fsz + strlen(REPO_PATH);
+            int fsznew = fsz + strlen(repo_path);
             char *pnew = new char[fsznew];
             size_t foundpos = psub1 - (*pout);
             memset(pnew, 0, fsznew);
             memcpy(pnew, *pout, foundpos);
-            strcpy(&pnew[foundpos], REPO_PATH);
-            memcpy(&pnew[foundpos + strlen(REPO_PATH)],
+            strcpy(&pnew[foundpos], repo_path);
+            memcpy(&pnew[foundpos + strlen(repo_path)],
                    &(*pout)[foundpos + strlen("${REPO_PATH}")],
                    fsz - (foundpos + strlen("${REPO_PATH}")));
 
             fsz = fsznew;
             delete [] (*pout);
             (*pout) = pnew;
-            textcnt += strlen(REPO_PATH) - strlen("${REPO_PATH}");
+            textcnt += strlen(repo_path) - strlen("${REPO_PATH}");
         }
         psub1 = strstr(&(*pout)[ret], "#include");
         if (psub1 != 0) {

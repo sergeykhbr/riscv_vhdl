@@ -37,9 +37,12 @@ $(info "       make")
 $(info "       make install")
 $(info "    3. export SYSTEMC_PATH=/home/user/systemc-2.3.1a/build")
 endif
-
-SYSTEMC_SRC = $(SYSTEMC_PATH)/include
-SYSTEMC_LIB = $(SYSTEMC_PATH)/lib-linux64
+ifeq ($(SYSTEMC_SRC), )
+   SYSTEMC_SRC = $(SYSTEMC_PATH)/include
+endif
+ifeq ($(SYSTEMC_LIB), )
+    SYSTEMC_LIB = $(SYSTEMC_PATH)/lib-linux64
+endif
 
 
 #-----------------------------------------------------------------------------

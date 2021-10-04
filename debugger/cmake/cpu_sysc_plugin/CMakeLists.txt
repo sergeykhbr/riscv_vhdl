@@ -50,7 +50,7 @@ endif()
 if (MSVC)
     add_compile_options(/vmg /wd"4244" /wd"4996")
 else()
-    #add_compile_options(-Wall -Wextra -pedantic -Werror)
+#    add_compile_options(-Wl,-Bstatic -lsystemc -Wl,-Bdynamic)
 endif()
 
 link_directories(BEFORE "$ENV{SYSTEMC_LIB}")
@@ -70,5 +70,5 @@ else()
       MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
-target_link_libraries(cpu_sysc_plugin libdbg64g SystemC)
+target_link_libraries(cpu_sysc_plugin libdbg64g systemc)
   
