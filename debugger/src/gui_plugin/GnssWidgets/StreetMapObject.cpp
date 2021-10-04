@@ -24,13 +24,6 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-/** This hash function must be placed into global namespace,
- *  otherwise QHash<QPoint, QPixmap> will generate errors
- */
-static uint qHash(const QPoint& p) {
-    return p.x() * 17 ^ p.y();
-}
-
 namespace debugger {
 
 // tile size in pixels

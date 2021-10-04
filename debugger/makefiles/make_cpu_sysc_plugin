@@ -62,15 +62,18 @@ SOURCES = \
 	dcache_lru \
 	mpu \
 	cache_top \
+	alu_logic \
 	divstage64 \
-	int_mul \
+	int_addsub \
 	int_div \
+	int_mul \
 	shift \
 	br_predic \
 	csr \
 	decoder \
 	execute \
 	fetch \
+	ic_csr_m2_s1 \
 	memaccess \
 	proc \
 	regibank \
