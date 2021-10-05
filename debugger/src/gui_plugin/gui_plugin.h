@@ -14,8 +14,7 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_GUI_PLUGIN_H__
-#define __DEBUGGER_GUI_PLUGIN_H__
+#pragma once
 
 #include "iclass.h"
 #include "iservice.h"
@@ -88,5 +87,3 @@ private:
 DECLARE_CLASS(GuiPlugin)
 
 }  // namespace debugger
-
-#endif  // __DEBUGGER_GUI_PLUGIN_H__
