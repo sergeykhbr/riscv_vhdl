@@ -429,6 +429,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
         trace0->i_e_memop_size(w.e.memop_size);
         trace0->i_e_memop_addr(w.e.memop_addr);
         trace0->i_e_memop_wdata(w.e.memop_wdata);
+        trace0->i_e_flushd(w.e.flushd);
         trace0->i_m_pc(w.m.pc);
         trace0->i_m_valid(w.m.valid);
         trace0->i_m_memop_ready(w.m.memop_ready);

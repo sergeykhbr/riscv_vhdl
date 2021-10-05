@@ -66,5 +66,6 @@ else()
                                         VS_DEBUGGER_COMMAND_ARGUMENTS 
                                         "-c ${CMAKE_CURRENT_SOURCE_DIR}/../targets/functional_sim_gui.json")
     target_link_libraries(riscvdebugger libdbg64g)
+    add_dependencies(riscvdebugger libdbg64g simple_plugin socsim_plugin cpu_sysc_plugin cpu_arm_plugin cpu_fnc_plugin gui_plugin)
 endif()
   
