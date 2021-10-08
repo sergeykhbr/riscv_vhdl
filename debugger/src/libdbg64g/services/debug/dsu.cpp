@@ -16,7 +16,6 @@
 
 #include <api_core.h>
 #include "dsu.h"
-#include "dsumap.h"
 
 namespace debugger {
 
@@ -25,6 +24,7 @@ DSU::DSU(const char *name) :
     DsuRegisters(static_cast<IService *>(this)) {
     registerInterface(static_cast<IMemoryOperation *>(this));
     registerInterface(static_cast<IDsuGeneric *>(this));
+    registerInterface(static_cast<IDebug *>(this));
     registerAttribute("CPU", &cpu_);
     icpulist_.make_list(0);
     RISCV_event_create(&nb_event_, "DSU_event_nb");
@@ -52,7 +52,7 @@ void DSU::postinitService() {
     }
 
     // Set default context
-    setCpuContext(0);
+    hartSelect(0);
 }
 
 void DSU::nb_response_debug_port(DebugPortTransactionType *trans) {
@@ -60,7 +60,7 @@ void DSU::nb_response_debug_port(DebugPortTransactionType *trans) {
 }
 
 void DSU::nb_debug_write(unsigned hartid, uint16_t addr, uint64_t wdata) {
-    if (hartid >= getCpuTotal()) {
+    if (static_cast<int>(hartid) >= hartTotal()) {
         RISCV_error("Debug Access index out of range %d", hartid);
         return;
     }
@@ -83,7 +83,7 @@ void DSU::incrementWrAccess(int mst_id) {
     bus_util_.getp()[2*mst_id].val++;
 }
 
-void DSU::softReset(bool val) {
+void DSU::setResetPin(bool val) {
     IResetListener *irst;
     for (unsigned i = 0; i < cpu_.size(); i++) {
         irst = static_cast<IResetListener *>(
@@ -98,26 +98,60 @@ void DSU::softReset(bool val) {
     }
 }
 
-void DSU::setCpuContext(unsigned n) {
-    if (n >= icpulist_.size()) {
+void DSU::hartSelect(int hartidx) {
+    if (hartidx >= static_cast<int>(icpulist_.size())) {
         hartsel_ = icpulist_.size();
-        RISCV_error("Context index out of range %d", n);
+        RISCV_error("Context index out of range %d", hartidx);
         return;
     }
-    ICpuGeneric *pcpu = static_cast<ICpuGeneric *>(icpulist_[n].to_iface());
-    hartsel_ = n;
+    ICpuGeneric *pcpu = static_cast<ICpuGeneric *>(icpulist_[hartidx].to_iface());
+    hartsel_ = hartidx;
     dport_region_.setCpu(pcpu);
 }
 
-bool DSU::isCpuHalted(unsigned idx) {
-    if (idx >= icpulist_.size()) {
+bool DSU::isHalted(int hartidx) {
+    if (hartidx >= static_cast<int>(icpulist_.size())) {
         return false;
     }
-    ICpuGeneric *pcpu = static_cast<ICpuGeneric *>(icpulist_[idx].to_iface());
+    ICpuGeneric *pcpu = static_cast<ICpuGeneric *>(icpulist_[hartidx].to_iface());
     if (!pcpu) {
         return false;
     }
     return pcpu->isHalt();
+}
+
+void DSU::reqResume(int hartidx) {
+    DMCONTROL_TYPE::ValueType t;
+    t.val = dmcontrol_.getValue().val;
+    t.bits.hartsello = hartidx;
+    t.bits.hartselhi = hartidx >> 10;
+    t.bits.resumereq = 1;
+
+    // ! TODO thread safe
+    Axi4TransactionType tr;
+    tr.action = MemAction_Write;
+    tr.addr = dmcontrol_.getBaseAddress();
+    tr.xsize = static_cast<uint32_t>(dmcontrol_.getLength());
+    tr.wstrb = (1ul << tr.xsize) - 1;
+    tr.wpayload.b64[0] = t.val;
+    dmcontrol_.b_transport(&tr);
+}
+
+void DSU::reqHalt(int hartidx) {
+    DMCONTROL_TYPE::ValueType t;
+    t.val = dmcontrol_.getValue().val;
+    t.bits.hartsello = hartidx;
+    t.bits.hartselhi = hartidx >> 10;
+    t.bits.haltreq = 1;
+
+    // ! TODO thread safe
+    Axi4TransactionType tr;
+    tr.action = MemAction_Write;
+    tr.addr = dmcontrol_.getBaseAddress();
+    tr.xsize = static_cast<uint32_t>(dmcontrol_.getLength());
+    tr.wstrb = (1ul << tr.xsize) - 1;
+    tr.wpayload.b64[0] = t.val;
+    dmcontrol_.b_transport(&tr);
 }
 
 }  // namespace debugger

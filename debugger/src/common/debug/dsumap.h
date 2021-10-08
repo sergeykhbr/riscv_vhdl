@@ -14,8 +14,7 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_SRC_COMMON_DEBUG_DSUMAP_H__
-#define __DEBUGGER_SRC_COMMON_DEBUG_DSUMAP_H__
+#pragma once
 
 #include <inttypes.h>
 
@@ -126,4 +125,3 @@ struct ECpuRegMapping {
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_SRC_COMMON_DEBUG_DSUMAP_H__

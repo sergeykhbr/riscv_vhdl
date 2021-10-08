@@ -39,6 +39,9 @@ BusGeneric::BusGeneric(const char *name) : IService(name),
 BusGeneric::~BusGeneric() {
     RISCV_mutex_destroy(&mutexBAccess_);
     RISCV_mutex_destroy(&mutexNBAccess_);
+    if (imaphash_) {
+        delete [] imaphash_;
+    }
 }
 
 void BusGeneric::postinitService() {

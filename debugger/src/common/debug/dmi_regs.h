@@ -17,14 +17,27 @@
 #pragma once
 
 #include <iservice.h>
+#include "coreservices/idebug.h"
 #include "generic/mapreg.h"
 
 namespace debugger {
 
-class DMCONTROL_TYPE : public MappedReg64Type {
+class DebugRegisterType : public MappedReg64Type {
+ public:
+    DebugRegisterType(IService* parent, const char* name, uint64_t addr) :
+        MappedReg64Type(parent, name, addr), idbg_(0) {}
+
+ protected:
+    IDebug* getpIDebug();
+
+ protected:
+    IDebug* idbg_;
+};
+
+class DMCONTROL_TYPE : public DebugRegisterType {
  public:
     DMCONTROL_TYPE(IService *parent, const char *name, uint64_t addr) :
-                MappedReg64Type(parent, name, addr) {}
+        DebugRegisterType(parent, name, addr) {}
 
     union ValueType {
         uint64_t val;
@@ -47,10 +60,10 @@ class DMCONTROL_TYPE : public MappedReg64Type {
     virtual uint64_t aboutToRead(uint64_t cur_val) override;
 };
 
-class DMSTATUS_TYPE : public MappedReg64Type {
+class DMSTATUS_TYPE : public DebugRegisterType {
  public:
     DMSTATUS_TYPE(IService *parent, const char *name, uint64_t addr) :
-                MappedReg64Type(parent, name, addr) {}
+        DebugRegisterType(parent, name, addr) {}
 
     union ValueType {
         uint64_t val;
@@ -79,10 +92,10 @@ class DMSTATUS_TYPE : public MappedReg64Type {
     virtual uint64_t aboutToRead(uint64_t cur_val) override;
 };
 
-class HALTSUM_TYPE : public MappedReg64Type {
+class HALTSUM_TYPE : public DebugRegisterType {
  public:
     HALTSUM_TYPE(IService *parent, const char *name, uint64_t addr) :
-                MappedReg64Type(parent, name, addr) {}
+        DebugRegisterType(parent, name, addr) {}
  protected:
     virtual uint64_t aboutToRead(uint64_t cur_val) override;
 };

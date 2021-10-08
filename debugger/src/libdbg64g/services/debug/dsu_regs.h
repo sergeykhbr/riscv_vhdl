@@ -21,7 +21,7 @@
 #include "generic/mapreg.h"
 #include "generic/rmembank_gen1.h"
 #include "coreservices/icpugen.h"
-#include "dmi_regs.h"
+#include "debug/dmi_regs.h"
 
 namespace debugger {
 
