@@ -49,7 +49,7 @@ endif
 .SILENT:
   TEA = 2>&1 | tee _$@-comp.err
 
-all: base cpu_sysc_plugin gui_plugin appdbg64g
+all: base gui_plugin appdbg64g
 	$(RM) $(ELF_DIR)/config.json
 	$(ECHO) "    All done.\n"
 

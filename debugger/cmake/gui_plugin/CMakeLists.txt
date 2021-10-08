@@ -5,11 +5,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-if("${CMAKE_SIZEOF_VOID_P}" STREQUAL "4")
-    set(CMAKE_PREFIX_PATH "$ENV{QT_PATH}//")
-else()
-    set(CMAKE_PREFIX_PATH "$ENV{QT_PATH64}//")
-endif()
+set(CMAKE_PREFIX_PATH "$ENV{QT_PATH}//")
 
 set(src_top "${CMAKE_CURRENT_SOURCE_DIR}/../../src")
 
@@ -64,7 +60,6 @@ add_library(gui_plugin SHARED
 )
 
 if(UNIX)
-    set_target_properties(gui_plugin PROPERTIES PREFIX "")
     add_custom_command(TARGET gui_plugin  
 	        POST_BUILD
 	        COMMAND /bin/bash ${CMAKE_CURRENT_SOURCE_DIR}/post_build_event.sh "${LIBRARY_OUTPUT_PATH}"
@@ -75,7 +70,6 @@ else()
     set_target_properties(gui_plugin PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE "../winbuild/bin/plugins")
     set_target_properties(gui_plugin PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG "../winbuild/bin/plugins")
 
-    target_include_directories(gui_plugin PUBLIC "${RUNTIME_OUTPUT_DIRECTORY}")
     target_link_libraries(gui_plugin libdbg64g Qt::Core Qt::Gui Qt::Widgets Qt::Network)	
     add_custom_command(TARGET gui_plugin 
 	        POST_BUILD

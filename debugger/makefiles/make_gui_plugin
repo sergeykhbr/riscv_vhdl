@@ -35,6 +35,7 @@ INCL_PATH= \
 
 # source files directories list:
 SRC_PATH =\
+	./workaroung_gui_plugin \
 	$(TOP_DIR)src/common \
 	$(TOP_DIR)src/gui_plugin \
 	$(TOP_DIR)src/gui_plugin/MainWindow \
@@ -86,7 +87,8 @@ SOURCES = \
 	PnpWidget \
 	CodeCoverageWidget \
 	CoverageBar \
-	CoverageTable
+	CoverageTable \
+	moc_compilation
 
 LIBS = \
 	m \
@@ -108,6 +110,7 @@ deploy:
 	$(MKDIR) $(ELF_DIR)/qtlib/platforms
 	cp $(QT_PATH)/plugins/platforms/libqlinuxfb.so $(ELF_DIR)/qtlib/platforms/
 	cp $(QT_PATH)/plugins/platforms/libqminimal.so $(ELF_DIR)/qtlib/platforms/
+	cp $(QT_PATH)/plugins/platforms/libqxcb.so $(ELF_DIR)/qtlib/platforms/
 	cp $(QT_LIB_PATH)/libicudata.* $(ELF_DIR)/qtlib
 	cp $(QT_LIB_PATH)/libicui18n.* $(ELF_DIR)/qtlib
 	cp $(QT_LIB_PATH)/libicuuc.* $(ELF_DIR)/qtlib
@@ -115,6 +118,7 @@ deploy:
 	cp $(QT_LIB_PATH)/libQt6Gui.* $(ELF_DIR)/qtlib
 	cp $(QT_LIB_PATH)/libQt6Widgets.* $(ELF_DIR)/qtlib
 	cp $(QT_LIB_PATH)/libQt6Network.* $(ELF_DIR)/qtlib
+	cp $(QT_LIB_PATH)/libQt6DBus.* $(ELF_DIR)/qtlib
 
 $(EXECUTABLE): prebuild $(OBJ_FILES)
 	echo $(CPP) $(LDFLAGS) $(OBJ_FILES) -o $@
