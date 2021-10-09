@@ -44,13 +44,17 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     OutVcdFile_.make_string("");
     RISCV_event_create(&config_done_, "riscv_sysc_config_done");
     RISCV_register_hap(static_cast<IHap *>(this));
-
-    //createSystemC();
 }
 
 CpuRiscV_RTL::~CpuRiscV_RTL() {
     deleteSystemC();
     RISCV_event_close(&config_done_);
+}
+
+void CpuRiscV_RTL::initService(const AttributeType *args) {
+    IService::initService(args);
+
+    createSystemC();
 }
 
 void CpuRiscV_RTL::postinitService() {
@@ -78,7 +82,6 @@ void CpuRiscV_RTL::postinitService() {
         return;
     }
 
-    createSystemC();
 
     if (InVcdFile_.size()) {
         i_vcd_ = sc_create_vcd_trace_file(InVcdFile_.to_string());

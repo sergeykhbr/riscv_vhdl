@@ -181,7 +181,6 @@ class UART : public RegMemBankGeneric,
     static const int FIFOSZ = 15;
     char tx_fifo_[FIFOSZ];
     int tx_wcnt_;
-    int tx_rcnt_;
     int tx_total_;
 
     mutex_def mutexListeners_;

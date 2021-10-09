@@ -58,8 +58,9 @@ class CpuRiscV_RTL : public IService,
     virtual ~CpuRiscV_RTL();
 
     /** IService interface */
-    virtual void postinitService();
-    virtual void predeleteService();
+    virtual void initService(const AttributeType *args) override;
+    virtual void postinitService() override;
+    virtual void predeleteService() override ;
 
     /** IClock */
     virtual uint64_t getStepCounter() {

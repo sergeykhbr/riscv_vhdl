@@ -23,6 +23,8 @@
 
 namespace debugger {
 
+extern bool dbg_e_valid;
+
 RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     o_clk("clk", 10, SC_NS),
     o_nrst("o_nrst"),
@@ -145,7 +147,11 @@ void RtlWrapper::comb() {
     vb_wdata = 0;
     vb_wstrb = 0;
 
-    v.clk_cnt = r.clk_cnt.read() + 1;
+    if (dbg_e_valid) {
+        v.clk_cnt = r.clk_cnt.read() + 1;
+    } else {
+        v.clk_cnt = r.clk_cnt.read();
+    }
     v.interrupt = w_interrupt;
     v.halted = i_halted.read();
 

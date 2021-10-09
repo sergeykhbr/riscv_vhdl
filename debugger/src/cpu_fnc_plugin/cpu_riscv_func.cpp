@@ -125,7 +125,7 @@ void CpuRiver_Functional::handleTrap() {
         mstatus.bits.MIE == 0 && cur_prv_level == PRV_M) {
         return;
     }
-    if (mcause.value == EXCEPTION_Breakpoint) {
+    if (mcause.bits.irq == 0 && mcause.value == EXCEPTION_Breakpoint) {
         DsuMapType::udbg_type::debug_region_type::breakpoint_control_reg t1;
         t1.val = br_control_.getValue().val;
         if (t1.bits.trap_on_break == 0) {
@@ -272,7 +272,7 @@ void CpuRiver_Functional::raiseSignal(int idx) {
         csr_mcause_type cause;
         cause.value     = 0;
         cause.bits.irq  = 1;
-        cause.bits.code = idx - EXCEPTIONS_Total;
+        cause.bits.code = idx - EXCEPTIONS_Total + PRV_M;
         portCSR_.write(CSR_mcause, cause.value);
         interrupt_pending_[idx >> 6] |= 1LL << (idx & 0x3F);
     } else if (idx == SIGNAL_HardReset) {

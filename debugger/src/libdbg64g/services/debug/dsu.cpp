@@ -16,6 +16,7 @@
 
 #include <api_core.h>
 #include "dsu.h"
+#include <generic-isa.h>
 
 namespace debugger {
 
@@ -39,6 +40,7 @@ void DSU::postinitService() {
 
     ICpuGeneric *icpu;
     for (unsigned i = 0; i < cpu_.size(); i++) {
+        const char *t = cpu_[i].to_string();
         icpu = static_cast<ICpuGeneric *>(
             RISCV_get_service_iface(cpu_[i].to_string(), IFACE_CPU_GENERIC));
         if (!icpu) {
@@ -127,14 +129,9 @@ void DSU::reqResume(int hartidx) {
     t.bits.hartselhi = hartidx >> 10;
     t.bits.resumereq = 1;
 
-    // ! TODO thread safe
-    Axi4TransactionType tr;
-    tr.action = MemAction_Write;
-    tr.addr = dmcontrol_.getBaseAddress();
-    tr.xsize = static_cast<uint32_t>(dmcontrol_.getLength());
-    tr.wstrb = (1ul << tr.xsize) - 1;
-    tr.wpayload.b64[0] = t.val;
-    dmcontrol_.b_transport(&tr);
+    nb_debug_write(static_cast<uint32_t>(hartidx),
+                    CSR_runcontrol,
+                    t.val);
 }
 
 void DSU::reqHalt(int hartidx) {
@@ -144,14 +141,9 @@ void DSU::reqHalt(int hartidx) {
     t.bits.hartselhi = hartidx >> 10;
     t.bits.haltreq = 1;
 
-    // ! TODO thread safe
-    Axi4TransactionType tr;
-    tr.action = MemAction_Write;
-    tr.addr = dmcontrol_.getBaseAddress();
-    tr.xsize = static_cast<uint32_t>(dmcontrol_.getLength());
-    tr.wstrb = (1ul << tr.xsize) - 1;
-    tr.wpayload.b64[0] = t.val;
-    dmcontrol_.b_transport(&tr);
+   nb_debug_write(static_cast<uint32_t>(hartidx),
+                  CSR_runcontrol,
+                  t.val);
 }
 
 }  // namespace debugger

@@ -40,7 +40,6 @@ UART::UART(const char *name) : RegMemBankGeneric(name),
 
     tx_total_ = 0;
     tx_wcnt_ = 0;
-    tx_rcnt_ = 0;
     t_cb_cnt_ = 0;
 }
 
@@ -151,12 +150,14 @@ void UART::closePort() {
 
 void UART::stepCallback(uint64_t t) {
     if (tx_total_) {
-        tx_rcnt_ = (tx_rcnt_ + 1) % FIFOSZ;
         tx_total_--;
+    }
 
-        if (tx_total_ == 0 && status_.getTyped().b.tx_irq_ena) {
-            iwire_->raiseLine();
-        }
+    if (tx_total_ == 0 && status_.getTyped().b.tx_irq_ena) {
+        iwire_->raiseLine();
+    } else {
+        iclk_->moveStepCallback(static_cast<IClockListener *>(this),
+                                t + 2*scaler_.getValue().val);
     }
 }
 
@@ -174,19 +175,14 @@ void UART::putByte(char v) {
     }
     RISCV_mutex_unlock(&mutexListeners_);
 
-    if (status_.getTyped().b.tx_irq_ena) {
-        iwire_->raiseLine();
+    if (tx_total_ < FIFOSZ) {
+        tx_fifo_[tx_wcnt_] = v;
+        tx_wcnt_ = (tx_wcnt_ + 1) % FIFOSZ;
+        tx_total_++;
     }
 
-    //if (tx_total_ < FIFOSZ) {
-    //    tx_fifo_[tx_wcnt_] = v;
-    //    tx_wcnt_ = (tx_wcnt_ + 1) % FIFOSZ;
-    //    tx_total_++;
-    //}
-
-    //iclk_->moveStepCallback(static_cast<IClockListener *>(this),
-    //                        t + 10*2*scaler_.getValue().val);
-
+    iclk_->moveStepCallback(static_cast<IClockListener *>(this),
+                            t + 2*scaler_.getValue().val);
 }
 
 char UART::getByte() {
@@ -219,7 +215,7 @@ uint32_t UART::STATUS_TYPE::aboutToRead(uint32_t cur_val) {
     }
 
     if (p->getTxTotal() == 0) {
-        t.b.tx_fifo_empty = 0;//1;  // TEMPORARY comment this!!!! to debug bootrom_tests
+        t.b.tx_fifo_empty = 1;
         t.b.tx_fifo_full = 0;
     } else if (p->getTxTotal() == FIFOSZ) {
         t.b.tx_fifo_empty = 0;

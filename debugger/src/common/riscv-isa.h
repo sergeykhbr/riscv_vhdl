@@ -599,9 +599,9 @@ enum EInterrupts {
 /** Exceptions */
 enum ESignals {
     SIGNAL_Exception = 0,
-    SIGNAL_XSoftware = EXCEPTIONS_Total + INTERRUPT_XSoftware,
-    SIGNAL_XTimer = EXCEPTIONS_Total + INTERRUPT_XTimer,
-    SIGNAL_XExternal = EXCEPTIONS_Total + INTERRUPT_XExternal,
+    SIGNAL_XSoftware = EXCEPTIONS_Total + 4*INTERRUPT_XSoftware,
+    SIGNAL_XTimer = EXCEPTIONS_Total + 4*INTERRUPT_XTimer,
+    SIGNAL_XExternal = EXCEPTIONS_Total + 4*INTERRUPT_XExternal,
     SIGNAL_HardReset,
     SIGNAL_Total
 };

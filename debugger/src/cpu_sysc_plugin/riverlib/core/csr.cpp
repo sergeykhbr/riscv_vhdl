@@ -18,6 +18,8 @@
 
 namespace debugger {
 
+bool dbg_e_valid = 0;
+
 static const uint64_t NMI_TABLE_ADDR[EXCEPTIONS_Total] = {
     // Exceptions:
     CFG_NMI_INSTR_UNALIGNED_ADDR,
@@ -224,6 +226,8 @@ void CsrRegs::comb() {
 
     v = r;
 
+    dbg_e_valid = i_e_valid.read();     // used in RtlWrapper to count executed instructions
+
     vb_rdata = 0;
     v_dbg_pc_write = 0;
     vb_dbg_pc = 0;
@@ -287,7 +291,7 @@ void CsrRegs::comb() {
         v.state = State_Response;
         w_trap_valid = 1;
         wb_mbadaddr = r.cmd_data;
-        wb_trap_code = 4*r.cmd_addr.read() + r.mode.read().to_int();
+        wb_trap_code = 4*r.cmd_addr.read() + PRV_M;//r.mode.read().to_int();
         w_trap_irq = 1;
         v.cmd_data = r.mtvec;
         break;
