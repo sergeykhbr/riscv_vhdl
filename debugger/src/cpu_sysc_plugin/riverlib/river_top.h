@@ -51,8 +51,12 @@ SC_MODULE(RiverTop) {
     sc_out<sc_biguint<L1CACHE_LINE_BITS>> o_resp_snoop_data;
     sc_out<sc_uint<DTAG_FL_TOTAL>> o_resp_snoop_flags;
     /** Interrupt line from external interrupts controller (PLIC). */
+    sc_in<bool> i_tmr_irq;
     sc_in<bool> i_ext_irq;
     // Debug interface
+    sc_in<bool> i_haltreq;                              // DMI: halt request from debug unit
+    sc_in<bool> i_resumereq;                            // DMI: resume request from debug unit
+    sc_in<bool> i_step;                                 // DMI: resume with step
     sc_in<bool> i_dport_req_valid;                      // Debug access from DSU is valid
     sc_in<bool> i_dport_write;                          // Write command flag
     sc_in<sc_uint<CFG_DPORT_ADDR_BITS>> i_dport_addr;   // dport address

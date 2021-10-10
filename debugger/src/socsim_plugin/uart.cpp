@@ -17,6 +17,8 @@
 #include "api_core.h"
 #include "uart.h"
 
+#define FAST_UART_SIM
+
 namespace debugger {
 
 UART::UART(const char *name) : RegMemBankGeneric(name),
@@ -94,7 +96,12 @@ void UART::predeleteService() {
     }
 }
 
-void UART::setScaler(uint32_t scaler) {
+uint32_t UART::getScaler() {
+#ifdef FAST_UART_SIM
+    return 100;
+#else
+    return 2*scaler_.getValue().val;
+#endif
 }
 
 int UART::writeData(const char *buf, int sz) {
@@ -157,7 +164,7 @@ void UART::stepCallback(uint64_t t) {
         iwire_->raiseLine();
     } else {
         iclk_->moveStepCallback(static_cast<IClockListener *>(this),
-                                t + 2*scaler_.getValue().val);
+                                t + getScaler());
     }
 }
 
@@ -182,7 +189,7 @@ void UART::putByte(char v) {
     }
 
     iclk_->moveStepCallback(static_cast<IClockListener *>(this),
-                            t + 2*scaler_.getValue().val);
+                            t + getScaler());
 }
 
 char UART::getByte() {
@@ -228,7 +235,6 @@ uint32_t UART::STATUS_TYPE::aboutToRead(uint32_t cur_val) {
 }
 uint32_t UART::SCALER_TYPE::aboutToWrite(uint32_t new_val) {
     UART *p = static_cast<UART *>(parent_);
-    p->setScaler(static_cast<uint32_t>(new_val));
     return new_val;    
 }
 

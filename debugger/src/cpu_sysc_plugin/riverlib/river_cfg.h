@@ -320,15 +320,21 @@ static const int CFG_REG_TAG_WITH          = 3;
 static const int CsrReq_ReadBit        = 0;
 static const int CsrReq_WriteBit       = 1;
 static const int CsrReq_TrapReturnBit  = 2;
-static const int CsrReq_ExceptionBit   = 3;     // get instruction pointer
-static const int CsrReq_InterruptBit   = 4;     // get instruction pointer
-static const int CsrReq_TotalBits      = 5;
+static const int CsrReq_ExceptionBit   = 3;     // return instruction pointer
+static const int CsrReq_InterruptBit   = 4;     // return instruction pointer
+static const int CsrReq_BreakpointBit  = 5;
+static const int CsrReq_HaltBit        = 6;
+static const int CsrReq_ResumeBit      = 7;
+static const int CsrReq_TotalBits      = 8;
 
 static const int CsrReq_ReadCmd        = 1 << CsrReq_ReadBit;
 static const int CsrReq_WriteCmd       = 1 << CsrReq_WriteBit;
 static const int CsrReq_TrapReturnCmd  = 1 << CsrReq_TrapReturnBit;
 static const int CsrReq_ExceptionCmd   = 1 << CsrReq_ExceptionBit;
 static const int CsrReq_InterruptCmd   = 1 << CsrReq_InterruptBit;
+static const int CsrReq_BreakpointCmd  = 1 << CsrReq_BreakpointBit;
+static const int CsrReq_HaltCmd        = 1 << CsrReq_HaltBit;
+static const int CsrReq_ResumeCmd      = 1 << CsrReq_ResumeBit;
 
 static const int MemopType_Store     = 0;    // 0=load; 1=store
 static const int MemopType_Locked    = 1;    // AMO instructions

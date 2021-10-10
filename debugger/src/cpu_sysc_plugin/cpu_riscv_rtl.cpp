@@ -149,7 +149,7 @@ void CpuRiscV_RTL::createSystemC() {
     wrapper_->o_nrst(w_nrst);
     wrapper_->o_msti(msti);
     wrapper_->i_msto(msto);
-    wrapper_->o_interrupt(w_interrupt);
+    wrapper_->o_interrupt(w_plic_irq);
     wrapper_->o_dport_req_valid(w_dport_req_valid);
     wrapper_->o_dport_write(w_dport_write);
     wrapper_->o_dport_addr(wb_dport_addr);
@@ -199,7 +199,11 @@ void CpuRiscV_RTL::createSystemC() {
     core_->i_nrst(w_nrst);
     core_->i_msti(corei0);
     core_->o_msto(coreo0);
-    core_->i_ext_irq(w_interrupt);
+    core_->i_tmr_irq(w_tmr_irq);
+    core_->i_ext_irq(w_plic_irq);
+    core_->i_haltreq(w_dmi_haltreq);
+    core_->i_resumereq(w_dmi_resumereq);
+    core_->i_step(w_dmi_step);
     core_->i_dport_req_valid(w_dport_req_valid);
     core_->i_dport_write(w_dport_write);
     core_->i_dport_addr(wb_dport_addr);

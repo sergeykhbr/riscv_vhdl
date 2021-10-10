@@ -41,7 +41,6 @@ SC_MODULE(InstrExecute) {
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_d_pc;      // Instruction pointer on decoded instruction
     sc_in<sc_uint<32>> i_d_instr;               // Decoded instruction value
     sc_in<bool> i_d_progbuf_ena;                // instruction from progbuf passed decoder
-    sc_in<bool> i_dbg_progbuf_ena;              // progbuf mode enabled
     sc_in<sc_uint<6>> i_wb_waddr;               // write back address
     sc_in<bool> i_memop_store;                  // Store to memory operation
     sc_in<bool> i_memop_load;                   // Load from memoru operation
@@ -68,9 +67,10 @@ SC_MODULE(InstrExecute) {
     sc_in<bool> i_irq_software;                 // software interrupt request from CSR register xSIP
     sc_in<bool> i_irq_timer;                    // interrupt request from wallclock timer
     sc_in<bool> i_irq_external;                 // interrupt request from PLIC
-    sc_in<bool> i_halt;                         // halt request from debug unit
-    sc_in<bool> i_dport_npc_write;              // Write npc value from debug port
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_dport_npc; // Debug port npc value to write
+    sc_in<bool> i_haltreq;                      // halt request from debug unit
+    sc_in<bool> i_resumereq;                    // resume request from debug unit
+    sc_in<bool> i_step;                         // resume with step
+    sc_in<bool> i_dbg_progbuf_ena;              // progbuf mode enabled
 
     sc_in<sc_uint<RISCV_ARCH>> i_rdata1;        // Integer/Float register value 1
     sc_in<sc_uint<CFG_REG_TAG_WITH>> i_rtag1;
@@ -207,7 +207,6 @@ private:
         sc_signal<sc_uint<CFG_REG_TAG_WITH>> reg_wtag;
 
         sc_signal<bool> csr_req_rmw;                    // csr read-modify-write request
-        sc_signal<bool> csr_req_pc;                     // csr request instruction pointer
         sc_signal<sc_uint<CsrReq_TotalBits>> csr_req_type;
         sc_signal<sc_uint<12>> csr_req_addr;
         sc_signal<sc_uint<RISCV_ARCH>> csr_req_data;
@@ -243,6 +242,7 @@ private:
         sc_signal<bool> flushi;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> flushi_addr;
         sc_signal<sc_uint<32>> progbuf_npc;
+        sc_signal<bool> stepdone;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
@@ -266,7 +266,6 @@ private:
         iv.reg_waddr = 0;
         iv.reg_wtag = 0;
         iv.csr_req_rmw = 0;
-        iv.csr_req_pc = 0;
         iv.csr_req_type = 0;
         iv.csr_req_addr = 0;
         iv.csr_req_data = 0;
@@ -302,6 +301,7 @@ private:
         iv.flushi = 0;
         iv.flushi_addr = 0;
         iv.progbuf_npc = 0;
+        iv.stepdone = 0;
     }
 
     select_type wb_select;

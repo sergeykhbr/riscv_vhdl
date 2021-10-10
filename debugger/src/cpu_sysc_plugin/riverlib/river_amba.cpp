@@ -102,7 +102,11 @@ RiverAmba::RiverAmba(sc_module_name name_, uint32_t hartid, bool async_reset,
     river0->o_resp_snoop_valid(resp_snoop_valid_o);
     river0->o_resp_snoop_data(resp_snoop_data_o);
     river0->o_resp_snoop_flags(resp_snoop_flags_o);
+    river0->i_tmr_irq(i_tmr_irq);
     river0->i_ext_irq(i_ext_irq);
+    river0->i_haltreq(i_haltreq);
+    river0->i_resumereq(i_resumereq);
+    river0->i_step(i_step);
     river0->i_dport_req_valid(i_dport_req_valid);
     river0->i_dport_write(i_dport_write);
     river0->i_dport_addr(i_dport_addr);

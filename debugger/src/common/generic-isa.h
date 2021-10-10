@@ -96,8 +96,8 @@ static const uint16_t CSR_hepc           = 0x241;
 static const uint16_t CSR_mepc           = 0x341;
 /** Machine trap cause */
 static const uint16_t CSR_mcause         = 0x342;
-/** Machine bad address. */
-static const uint16_t CSR_mbadaddr       = 0x343;
+/** Machine bad address or instruction. */
+static const uint16_t CSR_mtval          = 0x343;
 /** Machine interrupt pending */
 static const uint16_t CSR_mip            = 0x344;
 /** Stack overflow (non-standard CSR). */

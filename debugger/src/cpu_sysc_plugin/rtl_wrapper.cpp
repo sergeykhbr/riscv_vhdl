@@ -147,11 +147,11 @@ void RtlWrapper::comb() {
     vb_wdata = 0;
     vb_wstrb = 0;
 
-    if (dbg_e_valid) {
+//    if (dbg_e_valid) {
         v.clk_cnt = r.clk_cnt.read() + 1;
-    } else {
-        v.clk_cnt = r.clk_cnt.read();
-    }
+//    } else {
+//        v.clk_cnt = r.clk_cnt.read();
+//    }
     v.interrupt = w_interrupt;
     v.halted = i_halted.read();
 

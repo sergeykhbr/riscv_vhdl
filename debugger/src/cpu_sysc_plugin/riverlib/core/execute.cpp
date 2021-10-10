@@ -32,7 +32,6 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     i_d_pc("i_d_pc"),
     i_d_instr("i_d_instr"),
     i_d_progbuf_ena("i_d_progbuf_ena"),
-    i_dbg_progbuf_ena("i_dbg_progbuf_ena"),
     i_wb_waddr("i_wb_waddr"),
     i_memop_store("i_memop_store"),
     i_memop_load("i_memop_load"),
@@ -58,9 +57,10 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     i_irq_software("i_irq_software"),
     i_irq_timer("i_irq_timer"),
     i_irq_external("i_irq_external"),
-    i_halt("i_halt"),
-    i_dport_npc_write("i_dport_npc_write"),
-    i_dport_npc("i_dport_npc"),
+    i_haltreq("i_haltreq"),
+    i_resumereq("i_resumereq"),
+    i_step("i_step"),
+    i_dbg_progbuf_ena("i_dbg_progbuf_ena"),
     i_rdata1("i_rdata1"),
     i_rtag1("i_rtag1"),
     i_rdata2("i_rdata2"),
@@ -140,9 +140,9 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << i_irq_software;
     sensitive << i_irq_timer;
     sensitive << i_irq_external;
-    sensitive << i_halt;
-    sensitive << i_dport_npc_write;
-    sensitive << i_dport_npc;
+    sensitive << i_haltreq;
+    sensitive << i_resumereq;
+    sensitive << i_step;
     sensitive << i_rdata1;
     sensitive << i_rtag1;
     sensitive << i_rdata2;
@@ -172,7 +172,6 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << r.reg_waddr;
     sensitive << r.reg_wtag;
     sensitive << r.csr_req_rmw;
-    sensitive << r.csr_req_pc;
     sensitive << r.csr_req_type;
     sensitive << r.csr_req_addr;
     sensitive << r.csr_req_data;
@@ -205,6 +204,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << r.valid;
     sensitive << r.call;
     sensitive << r.ret;
+    sensitive << r.stepdone;
     for (int i = 0; i < Res_Total; i++) {
         sensitive << wb_select.ena[i];
         sensitive << wb_select.valid[i];
@@ -335,7 +335,9 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_irq_software, i_irq_software.name());
         sc_trace(o_vcd, i_irq_timer, i_irq_timer.name());
         sc_trace(o_vcd, i_irq_external, i_irq_external.name());
-        sc_trace(o_vcd, i_halt, i_halt.name());
+        sc_trace(o_vcd, i_haltreq, i_haltreq.name());
+        sc_trace(o_vcd, i_resumereq, i_resumereq.name());
+        sc_trace(o_vcd, i_step, i_step.name());
         sc_trace(o_vcd, i_rdata1, i_rdata1.name());
         sc_trace(o_vcd, i_rtag1, i_rtag1.name());
         sc_trace(o_vcd, i_rdata2, i_rdata2.name());
@@ -394,6 +396,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.radr1, pn + ".r_radr1");
         sc_trace(o_vcd, r.radr2, pn + ".r_radr2");
         sc_trace(o_vcd, r.flushd, pn + ".r_flushd");
+        sc_trace(o_vcd, r.stepdone, pn + ".r_stepdone");
         sc_trace(o_vcd, w_hazard1, pn + ".w_hazard1");
         sc_trace(o_vcd, w_hazard2, pn + ".w_hazard2");
         sc_trace(o_vcd, tag_expected[0xA], pn + ".tag_expected0x0A");
@@ -737,7 +740,7 @@ void InstrExecute::comb() {
         v_ret = 1;
     }
 
-    v_csr_cmd_ena = i_unsup_exception
+    v_csr_cmd_ena = i_haltreq || (i_step && r.stepdone) || i_unsup_exception
                 || i_instr_load_fault || r.mem_ex_load_fault || r.mem_ex_store_fault
                 || r.mem_ex_mpu_store || r.mem_ex_mpu_load || !i_instr_executable.read()
                 || r.stack_overflow || r.stack_underflow
@@ -747,26 +750,30 @@ void InstrExecute::comb() {
                 || wv[Instr_MRET] || wv[Instr_URET]
                 || wv[Instr_CSRRC] || wv[Instr_CSRRCI] || wv[Instr_CSRRS]
                 || wv[Instr_CSRRSI] || wv[Instr_CSRRW] || wv[Instr_CSRRWI];
-    if (v_instr_misaligned == 1) {
+    if (i_haltreq == 1) {
+        vb_csr_cmd_type = CsrReq_HaltCmd;
+        vb_csr_cmd_addr = HALT_CAUSE_HALTREQ;
+    } else if (i_step == 1 && r.stepdone == 1) {
+        vb_csr_cmd_type = CsrReq_HaltCmd;
+        vb_csr_cmd_addr = HALT_CAUSE_STEP;
+    } else if (v_instr_misaligned == 1) {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_InstrMisalign;          // Instruction address misaligned
         vb_csr_cmd_wdata = mux.pc;
     } else if (i_instr_load_fault == 1 || i_instr_executable == 0) {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_InstrFault;             // Instruction access fault
-        vb_csr_cmd_wdata = mux.pc;
     } else if (i_unsup_exception) {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_InstrIllegal;           // Illegal instruction
-        vb_csr_cmd_wdata = mux.pc;
+        vb_csr_cmd_wdata = mux.instr;
     } else if (wv[Instr_EBREAK]) {
-        vb_csr_cmd_type = CsrReq_ExceptionCmd;
+        vb_csr_cmd_type = CsrReq_BreakpointCmd;
         vb_csr_cmd_addr = EXCEPTION_Breakpoint;
-        vb_csr_cmd_wdata = mux.pc;
     } else if (v_load_misaligned == 1) {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_LoadMisalign;           // Load address misaligned
-        vb_csr_cmd_wdata = mux.pc;
+        vb_csr_cmd_wdata = vb_memop_memaddr_load;
     } else if (r.mem_ex_load_fault || r.mem_ex_mpu_load) {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_LoadFault;              // Load access fault
@@ -774,7 +781,7 @@ void InstrExecute::comb() {
     } else if (v_store_misaligned == 1) {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_StoreMisalign;          // Store/AMO address misaligned
-        vb_csr_cmd_wdata = mux.pc;
+        vb_csr_cmd_wdata = vb_memop_memaddr_store;
     } else if (r.mem_ex_store_fault || r.mem_ex_mpu_store) {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_StoreFault;             // Store/AMO access fault
@@ -782,35 +789,27 @@ void InstrExecute::comb() {
     } else if (r.stack_overflow) {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_StackOverflow;          // Stack overflow
-        vb_csr_cmd_wdata = mux.pc;
     } else if (r.stack_underflow) {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_StackUnderflow;         // Stack Underflow
-        vb_csr_cmd_wdata = mux.pc;
     } else if (wv[Instr_ECALL]) {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_CallFromXMode;          // Environment call
-        vb_csr_cmd_wdata = mux.pc;
     } else if (i_irq_software) {
         vb_csr_cmd_type = CsrReq_InterruptCmd;
         vb_csr_cmd_addr = INTERRUPT_XSoftware;              // Software interrupt request
-        vb_csr_cmd_wdata = mux.pc;
     } else if (i_irq_timer) {
         vb_csr_cmd_type = CsrReq_InterruptCmd;
         vb_csr_cmd_addr = INTERRUPT_XTimer;                 // Timer interrupt request
-        vb_csr_cmd_wdata = mux.pc;
     } else if (i_irq_external) {
         vb_csr_cmd_type = CsrReq_InterruptCmd;
         vb_csr_cmd_addr = INTERRUPT_XExternal;              // PLIC interrupt request
-        vb_csr_cmd_wdata = mux.pc;
     } else if (wv[Instr_MRET]) {
-        vb_csr_cmd_type = (CsrReq_ReadCmd | CsrReq_TrapReturnCmd);
+        vb_csr_cmd_type = CsrReq_TrapReturnCmd;
         vb_csr_cmd_addr = CSR_mepc;
-        vb_csr_cmd_wdata = mux.pc;
     } else if (wv[Instr_URET]) {
-        vb_csr_cmd_type = (CsrReq_ReadCmd | CsrReq_TrapReturnCmd);
+        vb_csr_cmd_type = CsrReq_TrapReturnCmd;
         vb_csr_cmd_addr = CSR_uepc;
-        vb_csr_cmd_wdata = mux.pc;
     } else if (wv[Instr_CSRRC]) {
         vb_csr_cmd_type = CsrReq_ReadCmd;
         vb_csr_cmd_addr = i_d_csr_addr;
@@ -882,69 +881,61 @@ void InstrExecute::comb() {
 
     switch (r.state.read()) {
     case State_Idle:
-        v_d_ready = 1;
         if (r.memop_valid && !i_memop_ready) {
-            v_d_ready = 0;
-        } else if (i_halt) {
-            v.state = State_Halted;
-        } else if (v_d_valid == 1) {
+            // Do nothing, previous memaccess request wasn't accepted. queue is full.
+        } else if (v_d_valid == 1 && w_hazard1 == 0 && w_hazard2 == 0) {
+            v_d_ready = 1;
             v_latch_input = 1;
-            if (w_hazard1 == 0 && w_hazard2 == 0) {
-                if (v_csr_cmd_ena) {
-                    v.state = State_Csr;
-                    v.csrstate = CsrState_Req;
-                    v.csr_req_type = vb_csr_cmd_type;
-                    v.csr_req_addr = vb_csr_cmd_addr;
-                    v.csr_req_data = vb_csr_cmd_wdata;
-                    v.csr_req_rmw = vb_csr_cmd_type[CsrReq_ReadBit]
-                                  & !vb_csr_cmd_type[CsrReq_TrapReturnBit];  // read/modify/write
-                    v.csr_req_pc = vb_csr_cmd_type[CsrReq_ExceptionBit]
-                                 | vb_csr_cmd_type[CsrReq_InterruptBit]
-                                 | vb_csr_cmd_type[CsrReq_TrapReturnBit];
-                    v.mem_ex_load_fault = 0;
-                    v.mem_ex_store_fault = 0;
-                    v.mem_ex_mpu_store = 0;
-                    v.mem_ex_mpu_load = 0;
-                    v.stack_overflow = 0;
-                    v.stack_underflow = 0;
-                } else if (vb_select[Res_IMul] || vb_select[Res_IDiv] || vb_select[Res_FPU]) {
-                    v.state = State_WaitMulti;
-                } else if (i_amo.read() == 1) {
-                    v_memop_ena = 1;
-                    vb_memop_memaddr = vb_rdata1(CFG_CPU_ADDR_BITS-1, 0);
-                    vb_memop_wdata = vb_rdata2;
-                    v.state = State_Amo;
-                    if (!i_memop_ready.read()) {
-                        v.amostate = AmoState_WaitMemAccess;
-                    } else {
-                        v.amostate = AmoState_Read;
-                    }
-                } else if (i_memop_load || i_memop_store) {
-                    v_memop_ena = 1;
-                    vb_memop_wdata = vb_rdata2;
-                    if (!i_memop_ready.read()) {
-                        // Wait cycles until FIFO to memoryaccess becomes available
-                        v.state = State_WaitMemAcces;
-                    } else {
-                        v.valid = 1;
-                    }
-                } else if (v_fence_i || v_fence_d) {
-                    vb_memop_memaddr = ~0ull;
-                    if (!i_memop_ready.read()) {
-                        v.state = State_WaitFlushingAccept;
-                    } else if (v_fence_i) {
-                        v.state = State_Flushing_I;     // Flushing I need to wait ending of flashing D
-                    } else {
-                        v.valid = 1;
-                    }
+            v.stepdone = i_step;
+            if (v_csr_cmd_ena) {
+                v.state = State_Csr;
+                v.csrstate = CsrState_Req;
+                v.csr_req_type = vb_csr_cmd_type;
+                v.csr_req_addr = vb_csr_cmd_addr;
+                v.csr_req_data = vb_csr_cmd_wdata;
+                v.csr_req_rmw = vb_csr_cmd_type[CsrReq_ReadBit];  // read/modify/write
+                v.mem_ex_load_fault = 0;
+                v.mem_ex_store_fault = 0;
+                v.mem_ex_mpu_store = 0;
+                v.mem_ex_mpu_load = 0;
+                v.stack_overflow = 0;
+                v.stack_underflow = 0;
+            } else if (vb_select[Res_IMul] || vb_select[Res_IDiv] || vb_select[Res_FPU]) {
+                v.state = State_WaitMulti;
+            } else if (i_amo.read() == 1) {
+                v_memop_ena = 1;
+                vb_memop_memaddr = vb_rdata1(CFG_CPU_ADDR_BITS-1, 0);
+                vb_memop_wdata = vb_rdata2;
+                v.state = State_Amo;
+                if (!i_memop_ready.read()) {
+                    v.amostate = AmoState_WaitMemAccess;
+                } else {
+                    v.amostate = AmoState_Read;
+                }
+            } else if (i_memop_load || i_memop_store) {
+                v_memop_ena = 1;
+                vb_memop_wdata = vb_rdata2;
+                if (!i_memop_ready.read()) {
+                    // Wait cycles until FIFO to memoryaccess becomes available
+                    v.state = State_WaitMemAcces;
                 } else {
                     v.valid = 1;
-                    v_reg_ena = i_d_waddr.read().or_reduce() && !i_memop_load; // should be written by memaccess, but tag must be updated
+                }
+            } else if (v_fence_i || v_fence_d) {
+                vb_memop_memaddr = ~0ull;
+                if (!i_memop_ready.read()) {
+                    v.state = State_WaitFlushingAccept;
+                } else if (v_fence_i) {
+                    v.state = State_Flushing_I;     // Flushing I need to wait ending of flashing D
+                } else {
+                    v.valid = 1;
                 }
             } else {
-                v_latch_input = 0;
-                v_d_ready = 0;
+                v.valid = 1;
+                v_reg_ena = i_d_waddr.read().or_reduce() && !i_memop_load; // should be written by memaccess, but tag must be updated
             }
+        } else {
+            v_d_ready = 1;
         }
         break;
     case State_WaitMemAcces:
@@ -967,16 +958,27 @@ void InstrExecute::comb() {
         case CsrState_Resp:
             v_csr_resp_ready = 1;
             if (i_csr_resp_valid.read() == 1) {
-                if (r.csr_req_pc.read()) {
-                    v.csr_req_pc = 0;
+                if (i_csr_resp_exception == 1) {
+                    // Invalid access rights
+                    v.csrstate = CsrState_Req;
+                    v.csr_req_type = CsrReq_ExceptionCmd;
+                    v.csr_req_addr = EXCEPTION_InstrIllegal;
+                    v.csr_req_data = mux.instr;
+                    v.csr_req_rmw = 0;
+                } else if (r.csr_req_type.read()[CsrReq_BreakpointBit]
+                    || r.csr_req_type.read()[CsrReq_HaltBit]) {
+                    v.valid = 0;
+                    v.state = State_Halted;
+                } else if (r.csr_req_type.read()[CsrReq_ExceptionBit]
+                         | r.csr_req_type.read()[CsrReq_InterruptBit]
+                         | r.csr_req_type.read()[CsrReq_ResumeBit]) {
+                    v.valid = 0;                // No valid strob should be generated
                     v.npc = i_csr_resp_data;
                     v.state = State_Idle;
-                    if (r.csr_req_type.read()[CsrReq_ExceptionBit]
-                        || r.csr_req_type.read()[CsrReq_InterruptBit]) {
-                        // current instruction not executed
-                    } else {
-                        v.valid = 1;
-                    }
+                } else if (r.csr_req_type.read()[CsrReq_TrapReturnBit]) {
+                    v.valid = 1;
+                    v.npc = i_csr_resp_data;
+                    v.state = State_Idle;
                 } else if (r.csr_req_rmw.read()) {
                     v.csrstate = CsrState_Req;
                     v.csr_req_type = CsrReq_WriteCmd;
@@ -991,7 +993,6 @@ void InstrExecute::comb() {
                     v.state = State_Idle;
                     v.valid = 1;
                 }
-                // TODO: check access right exception
             }
             break;
         default:;
@@ -1072,8 +1073,13 @@ void InstrExecute::comb() {
         }
         break;
     case State_Halted:
-        if (i_halt.read() == 0) {
-            v.state = State_Idle;
+        v.stepdone = 0;
+        if (i_resumereq.read() == 1) {
+            v.state = State_Csr;
+            v.csrstate = CsrState_Req;
+            v.csr_req_type = CsrReq_ResumeCmd;
+            v.csr_req_addr = 0;
+            v.csr_req_data = 0;
         }
         break;
     default:;
@@ -1156,10 +1162,6 @@ void InstrExecute::comb() {
         }
     } else if (i_memop_ready.read()) {
         v.memop_valid = 0;
-    }
-
-    if (i_dport_npc_write.read()) {
-        v.npc = i_dport_npc.read();
     }
 
 

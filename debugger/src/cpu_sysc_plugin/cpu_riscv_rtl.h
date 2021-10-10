@@ -130,8 +130,12 @@ class CpuRiscV_RTL : public IService,
     sc_signal<axi4_l1_out_type> acpo;
 
     /** Interrupt line from external interrupts controller. */
-    sc_signal<bool> w_interrupt;
+    sc_signal<bool> w_tmr_irq;
+    sc_signal<bool> w_plic_irq;
     // Debug interface
+    sc_signal<bool> w_dmi_haltreq;
+    sc_signal<bool> w_dmi_resumereq;
+    sc_signal<bool> w_dmi_step;
     sc_signal<bool> w_dport_req_valid;
     sc_signal<bool> w_dport_write;
     sc_signal<sc_uint<CFG_DPORT_ADDR_BITS>> wb_dport_addr;

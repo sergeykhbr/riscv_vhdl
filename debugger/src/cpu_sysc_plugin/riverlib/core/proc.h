@@ -65,6 +65,7 @@ SC_MODULE(Processor) {
     sc_in<bool> i_resp_data_er_mpu_store;
     sc_out<bool> o_resp_data_ready;                     // Core is ready to accept response from DCache
     // External interrupt pin
+    sc_in<bool> i_tmr_irq;                              // timer interrupt
     sc_in<bool> i_ext_irq;                              // PLIC interrupt accordingly with spec
     // MPU interface
     sc_out<bool> o_mpu_region_we;
@@ -73,6 +74,9 @@ SC_MODULE(Processor) {
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mpu_region_mask;
     sc_out<sc_uint<CFG_MPU_FL_TOTAL>> o_mpu_region_flags;  // {ena, cachable, r, w, x}
     // Debug interface
+    sc_in<bool> i_haltreq;                              // DMI: halt request from debug unit
+    sc_in<bool> i_resumereq;                            // DMI: resume request from debug unit
+    sc_in<bool> i_step;                                 // DMI: resume with step
     sc_in<bool> i_dport_req_valid;                      // Debug access from DSU is valid
     sc_in<bool> i_dport_write;                          // Write command flag
     sc_in<sc_uint<CFG_DPORT_ADDR_BITS>> i_dport_addr;   // dport address
@@ -211,9 +215,6 @@ private:
         sc_signal<bool> flushi_ena;                 // clear specified addr in ICache without execution of fence.i
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> flushi_addr;
         sc_signal<sc_uint<64>> executed_cnt;        // Number of executed instruction
-        sc_signal<bool> dbg_pc_write;               // modify npc value strob
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> dbg_pc;
-        sc_signal<bool> halt;                       // Halt signal is equal to hold pipeline
         sc_signal<bool> irq_software;
         sc_signal<bool> irq_timer;
         sc_signal<bool> irq_external;

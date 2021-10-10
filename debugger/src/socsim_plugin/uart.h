@@ -91,7 +91,7 @@ class UART : public RegMemBankGeneric,
     virtual void stepCallback(uint64_t t);
 
     /** Common methods */
-    void setScaler(uint32_t scaler);
+    uint32_t getScaler();
     int getFifoSize() { return fifoSize_.to_int(); }
     int getRxTotal() { return rx_total_; }
     int getTxTotal() { return tx_total_; }

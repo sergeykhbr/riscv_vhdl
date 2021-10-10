@@ -81,12 +81,16 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     proc0->i_resp_data_er_mpu_load(w_resp_data_er_mpu_load);
     proc0->i_resp_data_er_mpu_store(w_resp_data_er_mpu_store);
     proc0->o_resp_data_ready(w_resp_data_ready);
+    proc0->i_tmr_irq(i_tmr_irq);
     proc0->i_ext_irq(i_ext_irq);
     proc0->o_mpu_region_we(w_mpu_region_we);
     proc0->o_mpu_region_idx(wb_mpu_region_idx);
     proc0->o_mpu_region_addr(wb_mpu_region_addr);
     proc0->o_mpu_region_mask(wb_mpu_region_mask);
     proc0->o_mpu_region_flags(wb_mpu_region_flags);
+    proc0->i_haltreq(i_haltreq);
+    proc0->i_resumereq(i_resumereq);
+    proc0->i_step(i_step);
     proc0->i_dport_req_valid(i_dport_req_valid);
     proc0->i_dport_write(i_dport_write);
     proc0->i_dport_addr(i_dport_addr);

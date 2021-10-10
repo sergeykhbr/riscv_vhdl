@@ -36,8 +36,10 @@ SC_MODULE(CsrRegs) {
     sc_in<bool> i_resp_ready;                   // Executor is ready to accept response
     sc_out<sc_uint<RISCV_ARCH>> o_resp_data;    // Responded CSR data
     sc_out<bool> o_resp_exception;              // exception on CSR access
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_pc;
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_npc;
+    sc_in<bool> i_e_halted;
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_pc;   // current latched instruction pointer in executor
+    sc_in<sc_uint<32>> i_e_instr;               // current latched opcode in executor
+    sc_in<bool> i_irq_timer;
     sc_in<bool> i_irq_external;
     sc_out<bool> o_irq_software;                // software interrupt pending bit
     sc_out<bool> o_irq_timer;                   // timer interrupt pending bit
@@ -46,8 +48,6 @@ SC_MODULE(CsrRegs) {
     sc_out<bool> o_stack_underflow;             // stack underflow exception
     sc_in<bool> i_e_valid;
     sc_out<sc_uint<64>> o_executed_cnt;     // Number of executed instructions
-    sc_out<bool> o_dbg_pc_write;            // Modify pc via debug interface
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_dbg_pc;    // Writing value into pc register
 
     sc_out<bool> o_progbuf_ena;               // Execution from prog buffer
     sc_out<sc_uint<32>> o_progbuf_pc;         // prog buffer instruction counter
@@ -61,7 +61,6 @@ SC_MODULE(CsrRegs) {
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mpu_region_mask;
     sc_out<sc_uint<CFG_MPU_FL_TOTAL>> o_mpu_region_flags;  // {ena, cachable, r, w, x}
 
-    sc_out<bool> o_halt;
 
     void comb();
     void registers();
@@ -76,37 +75,58 @@ private:
     static const int State_Idle = 0;
     static const int State_RW = 1;
     static const int State_Exception = 2;
-    static const int State_Interrupt = 3;
-    static const int State_TrapReturn = 4;
-    static const int State_Response = 5;
+    static const int State_Breakpoint = 3;
+    static const int State_Interrupt = 4;
+    static const int State_TrapReturn = 5;
+    static const int State_Halt = 6;
+    static const int State_Resume = 7;
+    static const int State_Response = 8;
 
     struct RegistersType {
         sc_signal<sc_uint<3>> state;
         sc_signal<sc_uint<CsrReq_TotalBits>> cmd_type;
         sc_signal<sc_uint<12>> cmd_addr;
         sc_signal<sc_uint<RISCV_ARCH>> cmd_data;
+        sc_signal<bool> cmd_exception;          // exception on CSR access
         sc_signal<sc_uint<RISCV_ARCH>> mtvec;
+        sc_signal<sc_uint<2>> mtvec_mode;
+        sc_signal<sc_uint<RISCV_ARCH>> mtval;
         sc_signal<sc_uint<RISCV_ARCH>> mscratch;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mstackovr;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mstackund;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mbadaddr;
-        sc_signal<sc_uint<2>> mode;
-        sc_signal<bool> uie;                    // User level interrupts ena for current priv. mode
-        sc_signal<bool> mie;                    // Machine level interrupts ena for current priv. mode
-        sc_signal<bool> mpie;                   // Previous MIE value
-        sc_signal<sc_uint<2>> mpp;              // Previous mode
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mepc;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> uepc;
-
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mpu_addr;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mpu_mask;
         sc_signal<sc_uint<CFG_MPU_TBL_WIDTH>> mpu_idx;
         sc_signal<sc_uint<CFG_MPU_FL_TOTAL>> mpu_flags;
         sc_signal<bool> mpu_we;
-
-        sc_signal<bool> meip;       // machine external interrupt pending
-        sc_signal<bool> mtip;       // machine timer interrupt pending
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mepc;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> uepc;
+        // mstatus bits:
+        sc_signal<sc_uint<2>> mode;
+        sc_signal<bool> uie;                    // User level interrupts ena for current priv. mode
+        sc_signal<bool> mie;                    // Machine level interrupts ena for current priv. mode
+        sc_signal<bool> mpie;                   // Previous MIE value
+        sc_signal<sc_uint<2>> mpp;              // Previous mode
+        // mie bits:
+        sc_signal<bool> usie;       // User software interrupt enable
+        sc_signal<bool> ssie;       // Supervisor software interrupt enable
+        sc_signal<bool> msie;       // machine software interrupt enable
+        sc_signal<bool> utie;       // User timer interrupt enable
+        sc_signal<bool> stie;       // Supervisor timer interrupt enable
+        sc_signal<bool> mtie;       // Machine timer interrupt enable
+        sc_signal<bool> ueie;       // User external interrupt enable
+        sc_signal<bool> seie;       // Supervisor external interrupt enable
+        sc_signal<bool> meie;       // Machine external interrupt enable
+        // mip bits:
+        sc_signal<bool> usip;       // user software interrupt pending
+        sc_signal<bool> ssip;       // supervisor software interrupt pending
         sc_signal<bool> msip;       // machine software interrupt pending
+        sc_signal<bool> utip;       // user timer interrupt pending
+        sc_signal<bool> stip;       // supervisor timer interrupt pending
+        sc_signal<bool> mtip;       // machine timer interrupt pending
+        sc_signal<bool> ueip;       // user external interrupt pending
+        sc_signal<bool> seip;       // supervisor external interrupt pending
+        sc_signal<bool> meip;       // machine external interrupt pending
 
         sc_signal<bool> ex_fpu_invalidop;         // FPU Exception: invalid operation
         sc_signal<bool> ex_fpu_divbyzero;         // FPU Exception: divide by zero
@@ -114,19 +134,14 @@ private:
         sc_signal<bool> ex_fpu_underflow;         // FPU Exception: underflow
         sc_signal<bool> ex_fpu_inexact;           // FPU Exception: inexact
         sc_signal<bool> trap_irq;
-        sc_signal<sc_uint<5>> trap_code;
+        sc_signal<sc_uint<5>> trap_cause;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> trap_addr;
-        sc_signal<bool> break_event;            // 1 clock pulse
-        sc_signal<bool> hold_data_store_fault;
-        sc_signal<bool> hold_data_load_fault;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> hold_mbadaddr;
 
         sc_signal<sc_uint<64>> timer;                       // Timer in clocks.
         sc_signal<sc_uint<64>> cycle_cnt;                   // Cycle in clocks.
         sc_signal<sc_uint<64>> executed_cnt;                // Number of valid executed instructions
 
-        sc_signal<bool> break_mode;               // Behaviour on EBREAK instruction: 0 = halt; 1 = generate trap
-        sc_signal<bool> halt;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> dpc;
         sc_signal<sc_uint<3>> halt_cause;      // 1=ebreak instruction; 2=breakpoint exception; 3=haltreq; 4=step
         sc_signal<bool> progbuf_ena;
         sc_signal<sc_biguint<CFG_PROGBUF_REG_TOTAL*32>> progbuf_data;
@@ -146,11 +161,13 @@ private:
         iv.cmd_type = 0;
         iv.cmd_addr = 0;
         iv.cmd_data = 0;
+        iv.cmd_exception = 0;
         iv.mtvec = 0;
+        iv.mtvec_mode = 0;
+        iv.mtval = 0;
         iv.mscratch = 0;
         iv.mstackovr = 0;
         iv.mstackund = 0;
-        iv.mbadaddr = 0;
         iv.mode = PRV_M;
         iv.uie = 0;
         iv.mie = 0;
@@ -163,26 +180,37 @@ private:
         iv.mpu_idx = 0;
         iv.mpu_flags = 0;
         iv.mpu_we = 0;
-        iv.meip = 0;
-        iv.mtip = 0;
+        iv.usie = 0;
+        iv.ssie = 0;
+        iv.msie = 0;
+        iv.utie = 0;
+        iv.stie = 0;
+        iv.mtie = 0;
+        iv.ueie = 0;
+        iv.seie = 0;
+        iv.meie = 0;
+
+        iv.usip = 0;
+        iv.ssip = 0;
         iv.msip = 0;
+        iv.utip = 0;
+        iv.stip = 0;
+        iv.mtip = 0;
+        iv.ueip = 0;
+        iv.seip = 0;
+        iv.meip = 0;
         iv.ex_fpu_invalidop = 0;
         iv.ex_fpu_divbyzero = 0;
         iv.ex_fpu_overflow = 0;
         iv.ex_fpu_underflow = 0;
         iv.ex_fpu_inexact = 0;
         iv.trap_irq = 0;
-        iv.trap_code = 0;
+        iv.trap_cause = 0;
         iv.trap_addr = 0;
-        iv.break_event = 0;
-        iv.hold_data_store_fault = 0;
-        iv.hold_data_load_fault = 0;
-        iv.hold_mbadaddr = 0;
         iv.timer = 0;
         iv.cycle_cnt = 0;
         iv.executed_cnt = 0;
-        iv.break_mode = 0;
-        iv.halt = 0;
+        iv.dpc = 0;
         iv.halt_cause = 0;
         iv.progbuf_ena = 0;
         iv.progbuf_data = 0;

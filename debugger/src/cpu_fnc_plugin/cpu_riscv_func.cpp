@@ -291,17 +291,17 @@ void CpuRiver_Functional::lowerSignal(int idx) {
 }
 
 void CpuRiver_Functional::exceptionLoadInstruction(Axi4TransactionType *tr) {
-    portCSR_.write(CSR_mbadaddr, tr->addr);
+    portCSR_.write(CSR_mtval, tr->addr);
     raiseSignal(EXCEPTION_InstrFault);
 }
 
 void CpuRiver_Functional::exceptionLoadData(Axi4TransactionType *tr) {
-    portCSR_.write(CSR_mbadaddr, tr->addr);
+    portCSR_.write(CSR_mtval, tr->addr);
     raiseSignal(EXCEPTION_LoadFault);
 }
 
 void CpuRiver_Functional::exceptionStoreData(Axi4TransactionType *tr) {
-    portCSR_.write(CSR_mbadaddr, tr->addr);
+    portCSR_.write(CSR_mtval, tr->addr);
     raiseSignal(EXCEPTION_StoreFault);
 }
 

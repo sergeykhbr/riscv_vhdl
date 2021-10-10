@@ -576,6 +576,8 @@ void Tracer::task_disassembler(uint32_t instr) {
 
 void Tracer::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
+        sc_trace(o_vcd, i_clk, i_clk.name());
+        sc_trace(o_vcd, i_nrst, i_nrst.name());
         sc_trace(o_vcd, i_dbg_executed_cnt, i_dbg_executed_cnt.name());
         sc_trace(o_vcd, i_e_valid, i_e_valid.name());
         sc_trace(o_vcd, i_m_wena, i_m_wena.name());
