@@ -83,7 +83,7 @@ private:
     static const int State_Response = 8;
 
     struct RegistersType {
-        sc_signal<sc_uint<3>> state;
+        sc_signal<sc_uint<4>> state;
         sc_signal<sc_uint<CsrReq_TotalBits>> cmd_type;
         sc_signal<sc_uint<12>> cmd_addr;
         sc_signal<sc_uint<RISCV_ARCH>> cmd_data;

@@ -386,6 +386,8 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.state, pn + ".r_state");
         sc_trace(o_vcd, r.csrstate, pn + ".r_csrstate");
         sc_trace(o_vcd, r.csr_req_type, pn + ".r_csr_req_type");
+        sc_trace(o_vcd, r.csr_req_addr, pn + ".r_csr_req_addr");
+        sc_trace(o_vcd, r.csr_req_data, pn + ".r_csr_req_data");
         sc_trace(o_vcd, r.amostate, pn + ".r_amostate");
         sc_trace(o_vcd, r.tagcnt_rd, pn + ".r_tagcnt_rd");
         sc_trace(o_vcd, r.tagcnt_wr, pn + ".r_tagcnt_wr");
