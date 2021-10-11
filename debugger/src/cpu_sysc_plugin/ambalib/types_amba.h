@@ -14,8 +14,7 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_SRC_CPU_SYSC_PLUGIN_AMBALIB_TYPES_AMBA_H__
-#define __DEBUGGER_SRC_CPU_SYSC_PLUGIN_AMBALIB_TYPES_AMBA_H__
+ #pragma once
 
 #include <systemc.h>
 #include <string>
@@ -334,4 +333,3 @@ static const axi4_master_in_type axi4_master_in_none;
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_SRC_CPU_SYSC_PLUGIN_AMBALIB_TYPES_AMBA_H__

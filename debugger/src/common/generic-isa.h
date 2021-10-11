@@ -113,7 +113,7 @@ static const uint16_t CSR_mpu_ctrl       = 0x354;
 /** Halt/resume requests handling */
 static const uint16_t CSR_runcontrol     = 0x355;
 /** Instruction per single step */
-static const uint16_t CSR_insperstep     = 0x356;
+//static const uint16_t CSR_insperstep     = 0x356;
 /** Write value into progbuf */
 static const uint16_t CSR_progbuf        = 0x357;
 /** Abstract commmand control status (ABSTRACTCS) */

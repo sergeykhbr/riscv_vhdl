@@ -27,7 +27,7 @@ CpuGeneric::CpuGeneric(const char *name)
     dbgnpc_(this, "npc", DSUREG(csr[CSR_dpc])),
     dcsr_(this, "dcsr", DSUREG(csr[CSR_dcsr])),
     status_(this, "status", DSUREG(csr[CSR_runcontrol])),
-    insperstep_(this, "insperstep", DSUREG(csr[CSR_insperstep])),
+    //insperstep_(this, "insperstep", DSUREG(csr[CSR_insperstep])),
     clock_cnt_(this, "clock_cnt", DSUREG(csr[CSR_cycle])),
     executed_cnt_(this, "executed_cnt", DSUREG(csr[CSR_insret])),
     stackTraceCnt_(this, "stack_trace_cnt", DSUREG(ureg.v.stack_trace_cnt)),
@@ -457,8 +457,8 @@ void CpuGeneric::go() {
         return;
     }
     if (dcsr_.isSteppingMode()) {
-        dcsr_.clearSteppingMode();
-        hw_stepping_break_ = step_cnt_ + insperstep_.getValue().val;
+        //dcsr_.clearSteppingMode();
+        hw_stepping_break_ = step_cnt_ + 1;//insperstep_.getValue().val;
         estate_ = CORE_Stepping;
     } else {
         estate_ = CORE_Normal;

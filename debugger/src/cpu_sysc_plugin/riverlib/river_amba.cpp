@@ -64,7 +64,10 @@ RiverAmba::RiverAmba(sc_module_name name_, uint32_t hartid, bool async_reset,
     i_nrst("i_nrst"),
     i_msti("i_msti"),
     o_msto("o_msto"),
+    i_tmr_irq("i_tmr_irq"),
     i_ext_irq("i_ext_irq"),
+    i_haltreq("i_haltreq"),
+    i_resumereq("i_resumereq"),
     i_dport_req_valid("i_dport_req_valid"),
     i_dport_write("i_dport_write"),
     i_dport_addr("i_dport_addr"),
@@ -106,7 +109,6 @@ RiverAmba::RiverAmba(sc_module_name name_, uint32_t hartid, bool async_reset,
     river0->i_ext_irq(i_ext_irq);
     river0->i_haltreq(i_haltreq);
     river0->i_resumereq(i_resumereq);
-    river0->i_step(i_step);
     river0->i_dport_req_valid(i_dport_req_valid);
     river0->i_dport_write(i_dport_write);
     river0->i_dport_addr(i_dport_addr);

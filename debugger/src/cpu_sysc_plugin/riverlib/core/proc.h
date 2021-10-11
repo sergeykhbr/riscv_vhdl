@@ -76,7 +76,6 @@ SC_MODULE(Processor) {
     // Debug interface
     sc_in<bool> i_haltreq;                              // DMI: halt request from debug unit
     sc_in<bool> i_resumereq;                            // DMI: resume request from debug unit
-    sc_in<bool> i_step;                                 // DMI: resume with step
     sc_in<bool> i_dport_req_valid;                      // Debug access from DSU is valid
     sc_in<bool> i_dport_write;                          // Write command flag
     sc_in<sc_uint<CFG_DPORT_ADDR_BITS>> i_dport_addr;   // dport address
@@ -220,6 +219,7 @@ private:
         sc_signal<bool> irq_external;
         sc_signal<bool> stack_overflow;
         sc_signal<bool> stack_underflow;
+        sc_signal<bool> step;
     } csr;
 
     struct DebugType {

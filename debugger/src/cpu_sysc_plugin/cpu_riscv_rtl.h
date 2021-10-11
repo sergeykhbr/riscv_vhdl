@@ -45,6 +45,7 @@
 #include "ambalib/types_amba.h"
 #include "riverlib/river_amba.h"
 #include "riverlib/l2cache/l2_top.h"
+#include "riverlib/debug/dmidebug.h"
 #include <systemc.h>
 
 namespace debugger {
@@ -135,7 +136,6 @@ class CpuRiscV_RTL : public IService,
     // Debug interface
     sc_signal<bool> w_dmi_haltreq;
     sc_signal<bool> w_dmi_resumereq;
-    sc_signal<bool> w_dmi_step;
     sc_signal<bool> w_dport_req_valid;
     sc_signal<bool> w_dport_write;
     sc_signal<sc_uint<CFG_DPORT_ADDR_BITS>> wb_dport_addr;
@@ -155,10 +155,12 @@ class CpuRiscV_RTL : public IService,
     RtlWrapper *wrapper_;
     L1SerDes *l1serdes_;
     L2Top *l2cache_;
+    DmiDebug *dmi_;
 
     CmdBrRiscv *pcmd_br_;
     CmdRegRiscv *pcmd_reg_;
     CmdRegsRiscv *pcmd_regs_;
+    ICommand *pcmd_halt_;
     CmdCsr *pcmd_csr_;
 };
 

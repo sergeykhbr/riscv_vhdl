@@ -57,7 +57,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     o_mpu_region_flags("o_mpu_region_flags"),
     i_haltreq("i_haltreq"),
     i_resumereq("i_resumereq"),
-    i_step("i_step"),
     i_dport_req_valid("i_dport_req_valid"),
     i_dport_write("i_dport_write"),
     i_dport_addr("i_dport_addr"),
@@ -207,7 +206,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->i_irq_external(csr.irq_external);
     exec0->i_haltreq(i_haltreq);
     exec0->i_resumereq(i_resumereq);
-    exec0->i_step(i_step);
+    exec0->i_step(csr.step);
     exec0->i_dbg_progbuf_ena(csr.progbuf_ena);
     exec0->i_rdata1(ireg.rdata1);
     exec0->i_rtag1(ireg.rtag1);
@@ -373,6 +372,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     csr0->o_stack_underflow(csr.stack_underflow);
     csr0->i_e_valid(w.e.valid);
     csr0->o_executed_cnt(csr.executed_cnt);
+    csr0->o_step(csr.step);
     csr0->o_progbuf_ena(csr.progbuf_ena);
     csr0->o_progbuf_pc(csr.progbuf_pc);
     csr0->o_progbuf_data(csr.progbuf_data);

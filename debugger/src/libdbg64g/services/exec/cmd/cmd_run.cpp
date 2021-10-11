@@ -67,7 +67,7 @@ void CmdRun::exec(AttributeType *args, AttributeType *res) {
     CrGenericDebugControlType dcs;
     uint64_t addr_runcontrol = DSUREGBASE(csr[CSR_runcontrol]);
     uint64_t addr_dcsr = DSUREGBASE(csr[CSR_dcsr]);
-    uint64_t addr_step_cnt = DSUREGBASE(csr[CSR_insperstep]);
+    //uint64_t addr_step_cnt = DSUREGBASE(csr[CSR_insperstep]);
     uint64_t steps_skipped = 0;
 
     isrc_->getBreakpointList(&brList_);
@@ -82,7 +82,7 @@ void CmdRun::exec(AttributeType *args, AttributeType *res) {
         Reg64Type step_cnt;
         step_cnt.val = (*args)[1].to_uint64() - steps_skipped;
         if (step_cnt.val)  {
-            tap_->write(addr_step_cnt, 8, step_cnt.buf);
+            //tap_->write(addr_step_cnt, 8, step_cnt.buf);
 
             dcs.val = 0;                // disable step mode
             dcs.bits.step = 1;
@@ -94,7 +94,6 @@ void CmdRun::exec(AttributeType *args, AttributeType *res) {
             tap_->write(addr_runcontrol, 8, runctrl.u8);
         }
     } else {
-        // No need to reset 'step' field in dcs to resume
         runctrl.val = 0;
         runctrl.bits.req_resume = 1;
         tap_->write(addr_runcontrol, 8, runctrl.u8);
@@ -123,9 +122,9 @@ uint64_t CmdRun::checkSwBreakpoint() {
         br_addr.val = br[BrkList_address].to_uint64();
         if (br_addr.val == dpc.val) {
             // Make step while no breakpoints loaded
-            uint64_t addr_step_cnt = DSUREGBASE(csr[CSR_insperstep]);
-            steps.val = 1;
-            tap_->write(addr_step_cnt, 8, steps.buf);
+            //uint64_t addr_step_cnt = DSUREGBASE(csr[CSR_insperstep]);
+            //steps.val = 1;
+            //tap_->write(addr_step_cnt, 8, steps.buf);
 
             // Enable stepping
             dcsr.val = 0;

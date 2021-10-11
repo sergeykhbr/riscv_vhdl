@@ -970,7 +970,13 @@ void InstrExecute::comb() {
                 } else if (r.csr_req_type.read()[CsrReq_BreakpointBit]
                     || r.csr_req_type.read()[CsrReq_HaltBit]) {
                     v.valid = 0;
-                    v.state = State_Halted;
+                    if (i_csr_resp_data.read()[0] == 1) {
+                        // ebreakm is set, Entering into Debug Mode
+                        v.state = State_Halted;
+                    } else {
+                        v.npc = i_csr_resp_data;
+                        v.state = State_Idle;
+                    }
                 } else if (r.csr_req_type.read()[CsrReq_ExceptionBit]
                          | r.csr_req_type.read()[CsrReq_InterruptBit]
                          | r.csr_req_type.read()[CsrReq_ResumeBit]) {

@@ -16,6 +16,7 @@
 
 #include "api_core.h"
 #include "cpu_riscv_rtl.h"
+#include "riverlib/debug/cmd/cmd_dmi_halt.h"
 
 namespace debugger {
 
@@ -83,6 +84,7 @@ void CpuRiscV_RTL::postinitService() {
     }
 
 
+
     if (InVcdFile_.size()) {
         i_vcd_ = sc_create_vcd_trace_file(InVcdFile_.to_string());
         i_vcd_->set_time_unit(1, SC_PS);
@@ -100,6 +102,7 @@ void CpuRiscV_RTL::postinitService() {
     wrapper_->setBus(ibus_);
     wrapper_->setClockHz(freqHz_.to_int());
     wrapper_->generateVCD(i_vcd_, o_vcd_);
+    dmi_->generateVCD(i_vcd_, o_vcd_);
     if (l2cache_) {
         l2cache_->generateVCD(i_vcd_, o_vcd_);
     }
@@ -120,6 +123,9 @@ void CpuRiscV_RTL::postinitService() {
     pcmd_regs_ = new CmdRegsRiscv(itap_);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_regs_));
 
+    pcmd_halt_ = new CmdDmiHalt(itap_);
+    icmdexec_->registerCommand(pcmd_halt_);
+
     if (!run()) {
         RISCV_error("Can't create thread.", NULL);
         return;
@@ -131,10 +137,12 @@ void CpuRiscV_RTL::predeleteService() {
     icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_csr_));
     icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_reg_));
     icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_regs_));
+    icmdexec_->unregisterCommand(pcmd_halt_);
     delete pcmd_br_;
     delete pcmd_csr_;
     delete pcmd_reg_;
     delete pcmd_regs_;
+    delete pcmd_halt_;
 }
 
 void CpuRiscV_RTL::createSystemC() {
@@ -159,6 +167,15 @@ void CpuRiscV_RTL::createSystemC() {
     wrapper_->i_dport_resp_valid(w_dport_resp_valid);
     wrapper_->i_dport_rdata(wb_dport_rdata);
     wrapper_->i_halted(w_halted);
+
+    dmi_ = new DmiDebug(static_cast<IService *>(this), "dmidbg");
+    registerPortInterface("dmi", static_cast<IMemoryOperation *>(dmi_));
+    dmi_->i_clk(wrapper_->o_clk);
+    dmi_->i_nrst(w_nrst);
+    dmi_->o_haltreq(w_dmi_haltreq);
+    dmi_->o_resumereq(w_dmi_resumereq);
+    dmi_->i_halted(w_halted);
+
 
     if (l2CacheEnable_.to_bool()) {
         l2cache_ = new L2Top("l2top", asyncReset_.to_bool());
@@ -203,7 +220,6 @@ void CpuRiscV_RTL::createSystemC() {
     core_->i_ext_irq(w_plic_irq);
     core_->i_haltreq(w_dmi_haltreq);
     core_->i_resumereq(w_dmi_resumereq);
-    core_->i_step(w_dmi_step);
     core_->i_dport_req_valid(w_dport_req_valid);
     core_->i_dport_write(w_dport_write);
     core_->i_dport_addr(wb_dport_addr);
@@ -230,6 +246,7 @@ void CpuRiscV_RTL::createSystemC() {
 
 void CpuRiscV_RTL::deleteSystemC() {
     delete wrapper_;
+    delete dmi_;
     delete core_;
     if (l1serdes_) {
         delete l1serdes_;

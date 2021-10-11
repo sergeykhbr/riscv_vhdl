@@ -42,7 +42,10 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     o_resp_snoop_valid("o_resp_snoop_valid"),
     o_resp_snoop_data("o_resp_snoop_data"),
     o_resp_snoop_flags("o_resp_snoop_flags"),
+    i_tmr_irq("i_tmr_irq"),
     i_ext_irq("i_ext_irq"),
+    i_haltreq("i_haltreq"),
+    i_resumereq("i_resumereq"),
     i_dport_req_valid("i_dport_req_valid"),
     i_dport_write("i_dport_write"),
     i_dport_addr("i_dport_addr"),
@@ -90,7 +93,6 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     proc0->o_mpu_region_flags(wb_mpu_region_flags);
     proc0->i_haltreq(i_haltreq);
     proc0->i_resumereq(i_resumereq);
-    proc0->i_step(i_step);
     proc0->i_dport_req_valid(i_dport_req_valid);
     proc0->i_dport_write(i_dport_write);
     proc0->i_dport_addr(i_dport_addr);

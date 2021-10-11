@@ -49,6 +49,7 @@ SC_MODULE(CsrRegs) {
     sc_in<bool> i_e_valid;
     sc_out<sc_uint<64>> o_executed_cnt;     // Number of executed instructions
 
+    sc_out<bool> o_step;                        // Stepping enabled
     sc_out<bool> o_progbuf_ena;               // Execution from prog buffer
     sc_out<sc_uint<32>> o_progbuf_pc;         // prog buffer instruction counter
     sc_out<sc_uint<32>> o_progbuf_data;       // prog buffer instruction opcode
@@ -149,7 +150,11 @@ private:
         sc_signal<sc_uint<5>> progbuf_data_pc;
         sc_signal<sc_uint<5>> progbuf_data_npc;
         sc_signal<sc_uint<3>> progbuf_err;         // 1=busy;2=cmd not supported;3=exception;4=halt/resume;5=bus error
-        sc_signal<bool> stepping_mode;
+        sc_signal<bool> dcsr_ebreakm;               // Enter or not into Debug Mode on EBREAK instruction
+        sc_signal<bool> dcsr_stopcount;
+        sc_signal<bool> dcsr_stoptimer;
+        sc_signal<bool> dcsr_step;
+        sc_signal<bool> dcsr_stepie;                     // interrupt 0=dis;1=ena during stepping
         sc_signal<sc_uint<RISCV_ARCH>> stepping_mode_cnt;
         sc_signal<sc_uint<RISCV_ARCH>> ins_per_step; // Number of steps before halt in stepping mode
         sc_signal<bool> flushi_ena;
@@ -218,7 +223,11 @@ private:
         iv.progbuf_data_pc = 0;
         iv.progbuf_data_npc = 0;
         iv.progbuf_err = PROGBUF_ERR_NONE;
-        iv.stepping_mode = 0;
+        iv.dcsr_ebreakm = 0;
+        iv.dcsr_stopcount = 0;
+        iv.dcsr_stoptimer = 0;
+        iv.dcsr_step = 0;
+        iv.dcsr_stepie = 0;
         iv.stepping_mode_cnt = 0;
         iv.ins_per_step = 1;
         iv.flushi_ena = 0;
