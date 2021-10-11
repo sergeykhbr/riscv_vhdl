@@ -119,12 +119,28 @@ void CpuRiver_Functional::handleTrap() {
     }
 
     mstatus.value = portCSR_.read(CSR_mstatus).val;
-    mcause.value =  portCSR_.read(CSR_mcause).val;
     uint64_t exception_mask = (1ull << SIGNAL_XSoftware) - 1;
     if ((interrupt_pending_[0] & exception_mask) == 0 && 
         mstatus.bits.MIE == 0 && cur_prv_level == PRV_M) {
         return;
     }
+
+    int pendidx = -1;
+    for (int i = 0; i < 8*sizeof(interrupt_pending_); i++) {
+        if (interrupt_pending_[i >> 6] & (1ull << (i & 0x3f))) {
+            pendidx = i;
+            break;
+        }
+    }
+    mcause.value     = 0;
+    if (pendidx >= EXCEPTIONS_Total) {
+        mcause.bits.irq  = 1;
+        mcause.bits.code = pendidx - EXCEPTIONS_Total + PRV_M;
+    } else {
+        mcause.bits.code = pendidx;
+    }
+    portCSR_.write(CSR_mcause, mcause.value);
+
     if (mcause.bits.irq == 0 && mcause.value == EXCEPTION_Breakpoint) {
         DsuMapType::udbg_type::debug_region_type::breakpoint_control_reg t1;
         t1.val = br_control_.getValue().val;
@@ -157,7 +173,7 @@ void CpuRiver_Functional::handleTrap() {
         // Software interrupt handled after instruction was executed
         setNPC(portCSR_.read(CSR_mtvec).val);
     }
-    interrupt_pending_[0] = 0;
+    interrupt_pending_[pendidx >> 6] &= ~(1ull << (pendidx & 0x3F));
 }
 
 void CpuRiver_Functional::reset(IFace *isource) {
@@ -259,21 +275,8 @@ void CpuRiver_Functional::traceOutput() {
 void CpuRiver_Functional::raiseSignal(int idx) {
     if (idx < EXCEPTIONS_Total) {
         // Exception:
-        csr_mcause_type cause;
-        cause.value     = 0;
-        cause.bits.irq  = 0;
-        cause.bits.code = idx;
-        if ((interrupt_pending_[0] & (1ull << EXCEPTION_InstrFault)) == 0) {
-            // Wrong instruction address can generate others exceptions, ignore them
-            portCSR_.write(CSR_mcause, cause.value);
-            interrupt_pending_[idx >> 6] |= 1LL << (idx & 0x3F);
-        }
+        interrupt_pending_[idx >> 6] |= 1LL << (idx & 0x3F);
     } else if (idx < SIGNAL_HardReset) {
-        csr_mcause_type cause;
-        cause.value     = 0;
-        cause.bits.irq  = 1;
-        cause.bits.code = idx - EXCEPTIONS_Total + PRV_M;
-        portCSR_.write(CSR_mcause, cause.value);
         interrupt_pending_[idx >> 6] |= 1LL << (idx & 0x3F);
     } else if (idx == SIGNAL_HardReset) {
     } else {

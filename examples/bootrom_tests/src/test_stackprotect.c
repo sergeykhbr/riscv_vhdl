@@ -51,6 +51,8 @@ void test_stackprotect(void) {
     pnp->fwdbg1 = 0;
     pnp->fwdbg2 = 0;
 
+    uint64_t t1 = 0x00000008;
+
     // Read current value of the Stack Ponter
     asm("mv %0, sp" : "=r" (sp));
 
@@ -58,7 +60,9 @@ void test_stackprotect(void) {
     sp -= 16*sizeof(uint64_t);         // stack overflow limit
     asm("csrw 0x350, %0": : "r"(sp));
 
+    asm("csrc mstatus, %0" : :"r"(t1));  // clear mie
     recursive_call();
+    asm("csrs mstatus, %0" : :"r"(t1));  // enable mie
 
     /** Check result:
           If the StackOverflow exception was called then fwdbg2 must be
@@ -74,7 +78,10 @@ void test_stackprotect(void) {
 
     // Test Stack Underflow exception
     pnp->fwdbg2 = 0;
+
+    asm("csrc mstatus, %0" : :"r"(t1));  // clear mie
     recursive_ret();
+    asm("csrs mstatus, %0" : :"r"(t1));  // enable mie
 
     printf_uart("%s", "stack_und. . . .");
     if (pnp->fwdbg2) {

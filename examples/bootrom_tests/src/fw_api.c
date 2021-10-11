@@ -25,6 +25,13 @@ int fw_get_cpuid() {
     return ret;
 }
 
+// external interrupts
+void fw_disable_interrupts() {
+    uint64_t t1 = 0x00000008;
+    asm("csrc mstatus, %0" : :"r"(t1));  // clear mie
+}
+
+
 void fw_register_isr_handler(int idx, IRQ_HANDLER f) {
     irqctrl_map *p_irqctrl = (irqctrl_map *)ADDR_BUS0_XSLV_IRQCTRL;
     IRQ_HANDLER *tbl;

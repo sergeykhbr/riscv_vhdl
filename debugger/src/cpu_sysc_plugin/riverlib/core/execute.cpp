@@ -765,6 +765,7 @@ void InstrExecute::comb() {
     } else if (i_instr_load_fault == 1 || i_instr_executable == 0) {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_InstrFault;             // Instruction access fault
+        vb_csr_cmd_wdata = mux.pc;
     } else if (i_unsup_exception) {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_InstrIllegal;           // Illegal instruction

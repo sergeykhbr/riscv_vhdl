@@ -40,6 +40,7 @@ void *fw_get_ram_data(const char *name);
 typedef void (*IRQ_HANDLER)(void);
 
 int fw_get_cpuid();
+void fw_disable_interrupts();
 void fw_register_isr_handler(int idx, IRQ_HANDLER f);
 void fw_enable_isr(int idx);
 void fw_disable_isr(int idx);
