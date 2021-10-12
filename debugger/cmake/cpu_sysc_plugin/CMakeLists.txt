@@ -20,6 +20,7 @@ endif()
 include_directories(
     $ENV{SYSTEMC_SRC}
     ${src_top}/common
+    ${src_top}/cpu_sysc_plugin
 )
 
 

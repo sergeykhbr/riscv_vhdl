@@ -23,8 +23,7 @@
  *             of clock counter to generate callbacks.
  */
 
-#ifndef __DEBUGGER_CPU_RISCV_RTL_H__
-#define __DEBUGGER_CPU_RISCV_RTL_H__
+#pragma once
 
 #include "iclass.h"
 #include "iservice.h"
@@ -45,7 +44,7 @@
 #include "ambalib/types_amba.h"
 #include "riverlib/river_amba.h"
 #include "riverlib/l2cache/l2_top.h"
-#include "riverlib/debug/dmidebug.h"
+#include "dmi/dmidebug.h"
 #include <systemc.h>
 
 namespace debugger {
@@ -160,7 +159,7 @@ class CpuRiscV_RTL : public IService,
     CmdBrRiscv *pcmd_br_;
     CmdRegRiscv *pcmd_reg_;
     CmdRegsRiscv *pcmd_regs_;
-    ICommand *pcmd_halt_;
+    ICommand *pcmd_runctrl_;
     CmdCsr *pcmd_csr_;
 };
 
@@ -168,4 +167,3 @@ DECLARE_CLASS(CpuRiscV_RTL)
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_CPU_RISCV_RTL_H__

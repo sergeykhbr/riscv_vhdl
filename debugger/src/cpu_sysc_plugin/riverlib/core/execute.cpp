@@ -375,6 +375,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_instr, o_instr.name());
         sc_trace(o_vcd, o_call, o_call.name());
         sc_trace(o_vcd, o_ret, o_ret.name());
+        sc_trace(o_vcd, o_halted, o_halted.name());
 
         std::string pn(name());
         sc_trace(o_vcd, wb_select.ena[Res_IMul], pn + ".w_arith_ena(5)");
@@ -968,11 +969,13 @@ void InstrExecute::comb() {
                     v.csr_req_addr = EXCEPTION_InstrIllegal;
                     v.csr_req_data = mux.instr;
                     v.csr_req_rmw = 0;
-                } else if (r.csr_req_type.read()[CsrReq_BreakpointBit]
-                    || r.csr_req_type.read()[CsrReq_HaltBit]) {
+                } else if (r.csr_req_type.read()[CsrReq_HaltBit]) {
+                    v.valid = 0;
+                    v.state = State_Halted;
+                } else if (r.csr_req_type.read()[CsrReq_BreakpointBit]) {
                     v.valid = 0;
                     if (i_csr_resp_data.read()[0] == 1) {
-                        // ebreakm is set, Entering into Debug Mode
+                        // ebreakm is set
                         v.state = State_Halted;
                     } else {
                         v.npc = i_csr_resp_data;

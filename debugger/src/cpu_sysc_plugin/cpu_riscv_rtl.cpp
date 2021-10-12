@@ -16,7 +16,7 @@
 
 #include "api_core.h"
 #include "cpu_riscv_rtl.h"
-#include "riverlib/debug/cmd/cmd_dmi_halt.h"
+#include "generic/dmi/cmd_dmi_runcontrol.h"
 
 namespace debugger {
 
@@ -123,8 +123,10 @@ void CpuRiscV_RTL::postinitService() {
     pcmd_regs_ = new CmdRegsRiscv(itap_);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_regs_));
 
-    pcmd_halt_ = new CmdDmiHalt(itap_);
-    icmdexec_->registerCommand(pcmd_halt_);
+    pcmd_runctrl_ = new CmdDmiRunControl(static_cast<IService *>(this),
+                                         DMI_BASE_ADDRESS,  // todo: change on attribute
+                                         itap_);
+    icmdexec_->registerCommand(pcmd_runctrl_);
 
     if (!run()) {
         RISCV_error("Can't create thread.", NULL);
@@ -137,12 +139,12 @@ void CpuRiscV_RTL::predeleteService() {
     icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_csr_));
     icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_reg_));
     icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_regs_));
-    icmdexec_->unregisterCommand(pcmd_halt_);
+    icmdexec_->unregisterCommand(pcmd_runctrl_);
     delete pcmd_br_;
     delete pcmd_csr_;
     delete pcmd_reg_;
     delete pcmd_regs_;
-    delete pcmd_halt_;
+    delete pcmd_runctrl_;
 }
 
 void CpuRiscV_RTL::createSystemC() {

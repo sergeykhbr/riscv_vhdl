@@ -318,8 +318,8 @@ void CsrRegs::comb() {
         break;
     case State_Halt:
         v.state = State_Response;
-        v.halt_cause = r.cmd_addr.read()(2, 0);
-        v.dpc = r.cmd_data;
+        v.halt_cause = r.cmd_addr.read()(2, 0); // Halt Request or Step done
+        v.dpc = i_e_pc.read();
         break;
     case State_Resume:
         v.state = State_Response;

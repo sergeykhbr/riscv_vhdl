@@ -158,7 +158,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'bootrom0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','${REPO_PATH}/../examples/bootrom_tests/linuxbuild/bin/bootrom_tests.hex'],
+                ['InitFile','${REPO_PATH}/../examples/boot/linuxbuild/bin/bootimage.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x0],
                 ['Length',32768]
@@ -287,7 +287,7 @@
                 ['UseHash',false],
                 ['MapList',['bootrom0','fwimage0','sram0','gpio0',
                         'uart0','irqctrl0','gnss0','gptmr0','spiflash0',
-                        'pnp0','dsu0','greth0','rfctrl0','fsegps0']]
+                        'pnp0','dsu0','greth0','rfctrl0','fsegps0',['core0','dmi']]]
                 ]}]},
     {'Class':'HardResetClass','Instances':[
           {'Name':'reset0','Attr':[
