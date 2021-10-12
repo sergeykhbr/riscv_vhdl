@@ -250,7 +250,7 @@ private:
         iv.csrstate = CsrState_Idle;
         iv.amostate = AmoState_WaitMemAccess;
         iv.pc = 0;
-        iv.npc = CFG_NMI_RESET_VECTOR;
+        iv.npc = CFG_RESET_VECTOR;
         iv.radr1 = 0;
         iv.radr2 = 0;
         iv.waddr = 0;

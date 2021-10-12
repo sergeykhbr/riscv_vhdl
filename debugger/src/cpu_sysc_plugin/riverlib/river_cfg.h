@@ -145,25 +145,7 @@ static const uint8_t MEMOP_1B = 0;
 /** Non-maskable interrupts (exceptions) table.
     It can be freely changed to optimize memory consumption/performance
  */
-static const uint64_t CFG_NMI_RESET_VECTOR          = 0x0000;
-static const uint64_t CFG_NMI_INSTR_UNALIGNED_ADDR  = 0x0008;
-static const uint64_t CFG_NMI_INSTR_FAULT_ADDR      = 0x0010;
-static const uint64_t CFG_NMI_INSTR_ILLEGAL_ADDR    = 0x0018;
-static const uint64_t CFG_NMI_BREAKPOINT_ADDR       = 0x0020;
-static const uint64_t CFG_NMI_LOAD_UNALIGNED_ADDR   = 0x0028;
-static const uint64_t CFG_NMI_LOAD_FAULT_ADDR       = 0x0030;
-static const uint64_t CFG_NMI_STORE_UNALIGNED_ADDR  = 0x0038;
-static const uint64_t CFG_NMI_STORE_FAULT_ADDR      = 0x0040;
-static const uint64_t CFG_NMI_CALL_FROM_UMODE_ADDR  = 0x0048;
-static const uint64_t CFG_NMI_CALL_FROM_SMODE_ADDR  = 0x0050;
-static const uint64_t CFG_NMI_CALL_FROM_HMODE_ADDR  = 0x0058;
-static const uint64_t CFG_NMI_CALL_FROM_MMODE_ADDR  = 0x0060;
-static const uint64_t CFG_NMI_INSTR_PAGE_FAULT_ADDR = 0x0068;
-static const uint64_t CFG_NMI_LOAD_PAGE_FAULT_ADDR  = 0x0070;
-static const uint64_t CFG_NMI_14_ADDR               = 0x0078;
-static const uint64_t CFG_NMI_STORE_PAGE_FAULT_ADDR = 0x0080;
-static const uint64_t CFG_NMI_STACK_OVERFLOW_ADDR   = 0x0088;
-static const uint64_t CFG_NMI_STACK_UNDERFLOW_ADDR  = 0x0090;
+static const uint64_t CFG_RESET_VECTOR      = 0x0000;
 
 /** Debug interface configuration: */
 static const int CFG_DPORT_ADDR_BITS        = 16;

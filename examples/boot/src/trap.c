@@ -44,9 +44,38 @@ int get_mepc() {
     return ret;
 }
 
-void exception_handler_c() {
+
+void env_call(long long test_id) {
+    if (test_id != 0) {
+        int mbadaddr;
+        print_uart("TEST_FAILED\r\n", 13);
+        print_uart("a0=", 3);
+        print_uart_hex(test_id);
+        print_uart("\r\n", 2);
+
+        asm("csrr %0, mbadaddr" : "=r" (mbadaddr));
+        print_uart("mbadaddr=", 9);
+        print_uart_hex(mbadaddr);
+        print_uart("\r\n", 2);
+    } else {
+        print_uart("TEST_PASSED\r\n", 13);
+    }
+    while (1) {}
+}
+
+void exception_handler_c(long long arg) {
+    int mcause = get_mcause();
+
+    switch (mcause) {
+    case 8:  // user env. call
+    case 9:  // supervisor env. call
+        env_call(arg);
+        return;
+    default:;
+    }
+
     print_uart("mcause:", 7);
-    print_uart_hex(get_mcause());
+    print_uart_hex(mcause);
     print_uart(",mepc:", 6);
     print_uart_hex(get_mepc());
     print_uart("\r\n", 2);
@@ -90,33 +119,4 @@ long interrupt_handler_c(long cause, long epc, long long regs[32]) {
     return epc;
 }
 
-void env_ucall_c(long long test_id) {
-    if (test_id != 0) {
-        print_uart("TEST_FAILED\r\n", 13);
-        print_uart("a0=", 3);
-        print_uart_hex(test_id);
-        print_uart("\r\n", 2);
-    } else {
-        print_uart("TEST_PASSED\r\n", 13);
-    }
-    while (1) {}
-}
-
-void env_mcall_c(long long test_id) {
-    if (test_id != 0) {
-        int mbadaddr;
-        print_uart("TEST_FAILED\r\n", 13);
-        print_uart("a0=", 3);
-        print_uart_hex(test_id);
-        print_uart("\r\n", 2);
-
-        asm("csrr %0, mbadaddr" : "=r" (mbadaddr));
-        print_uart("mbadaddr=", 9);
-        print_uart_hex(mbadaddr);
-        print_uart("\r\n", 2);
-    } else {
-        print_uart("TEST_PASSED\r\n", 13);
-    }
-    while (1) {}
-}
 

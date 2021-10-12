@@ -24,53 +24,28 @@
   .globl _start
   .globl exception_handler_c
   .globl interrupt_handler_c
-  .globl env_ucall_c
-  .globl env_mcall_c
-
-trap_table:
-# 8-bytes per exception entry
-trap_table:
-  j _start            # 
-  nop
-  j exception_entry   # Instruction Misaligned
-  nop
-  j exception_entry   # Instruction Load Fault
-  nop
-  j exception_entry   # Instruction Illegal
-  nop
-  j exception_entry   # Breakpoint
-  nop
-  j exception_entry   # Load Misaligned
-  nop
-  j exception_entry   # Load Fault
-  nop
-  j exception_entry   # Store Misaligned
-  nop
-  j exception_entry   # Store Fault
-  nop
-  j env_ucall         # Call from U-mode
-  nop
-  j exception_entry   # Call from S-mode
-  nop
-  j exception_entry   # Call from H-mode
-  nop
-  j env_mcall         # Call from M-mode
-  nop
-  j exception_entry   # Instruction Page Fault
-  nop
-  j exception_entry   # Load Page Fault
-  nop
-  j exception_entry   # Store Page Fault
-  nop
-  j exception_entry   # Stack Overflow
-  nop
-  j exception_entry   # Stack Underflow
-  nop
-
-bad_trap:
-  j bad_trap
 
 _start:
+  j reset_vector
+trap_table:
+  j trap_entry
+/* if mtvec is configured as a vectorized interrupt handlers */
+  j bad_irq  # 1 Supervisor software interrupt
+  j bad_irq  # 2 Reserved
+  j bad_irq  # 3 Machine software interrupt
+  j bad_irq  # 4 User timer interrupt
+  j bad_irq  # 5 Supervisor timer interrupt
+  j bad_irq  # 6 Reserved
+  j bad_irq  # 7 Machine timer interrupt
+  j bad_irq  # 8 User external interrupt
+  j bad_irq  # 9 Supervisor external interrupt
+  j bad_irq  # 10 Reserved
+  j bad_irq  # 11 Machine external interrupt
+
+bad_irq:
+   j bad_irq
+
+reset_vector:
   li  x1, 0
   li  x2, 0
   li  x3, 0
@@ -116,8 +91,7 @@ _start:
   #li t0, MSTATUS_XS;   
   #csrs mstatus, t0    # enable accelerator
 
-  ##! init mtvec register (see https://github.com/riscv/riscv-test-env/blob/master/p/riscv_test.h)
-  la t0, interrupt_entry
+  la t0, trap_table
   csrw mtvec, t0
   li t0, 0x00000800
   csrs mie, t0       # Enable External irq (ftom PLIC) for M mode
@@ -212,30 +186,13 @@ sp_init_coreall:
   ##! which the ERET instruction was executed.
   mret
 
-env_ucall:
-  li  sp, SRAM_BASE_ADDR+SRAM_SIZE_BYTES
-  addi sp, sp,-264
-  jal env_ucall_c
-  ## never reach here
-
-env_mcall:
-  li  sp, SRAM_BASE_ADDR+SRAM_SIZE_BYTES
-  addi sp, sp,-264
-  jal env_mcall_c
-  ## never reach here
-
-exception_entry:
-  fence
-  _save_context(tp)
-  jal exception_handler_c
-  _restore_context(tp)
-  mret
+trap_entry:
+  ## was it an interrupt or an exception?
+  csrw mscratch, t5;
+  csrr t5, mcause;
+  bgez t5, handle_exception;
 
 interrupt_entry:
-  ##! module CSRFile rises io_fatc signal that is cause of the 'ptw.invalidate'.
-  fence
-  csrw mscratch, a0;
-
   _save_context(tp)
 
   ## @brief Call function :
@@ -256,8 +213,17 @@ interrupt_entry:
 
   # tp-offset in the context array is used to save mepc value. An it may be
   # modified by isr handler during preemtive task switching.
-  ld a1,COOP_REG_TP(tp)
-  csrw mepc,a1
+  ld t5,COOP_REG_TP(tp)
+  csrw mepc,t5
   _restore_context(tp)
+  csrr t5,mscratch
+  mret
+
+
+handle_exception:
+  _save_context(tp)
+  jal exception_handler_c
+  _restore_context(tp)
+  csrr t5, mscratch;
   mret
 

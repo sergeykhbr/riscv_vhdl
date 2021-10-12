@@ -37,7 +37,11 @@ class DIV : public RiscvInstruction {
         int64_t rs1 = static_cast<int64_t>(R[u.bits.rs1]);
         int64_t rs2 = static_cast<int64_t>(R[u.bits.rs2]);
         if (rs2) {
-            res = rs1 / rs2;
+            if (rs1 == 0x8000000000000000ll && rs2 == 0xffffffffffffffffll) {
+                res = 0;
+            } else {
+                res = rs1 / rs2;
+            }
         } else {
             res = -1;
         }

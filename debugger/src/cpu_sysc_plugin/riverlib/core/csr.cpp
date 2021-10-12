@@ -20,28 +20,6 @@ namespace debugger {
 
 bool dbg_e_valid = 0;
 
-static const uint64_t NMI_TABLE_ADDR[EXCEPTIONS_Total] = {
-    // Exceptions:
-    CFG_NMI_INSTR_UNALIGNED_ADDR,
-    CFG_NMI_INSTR_FAULT_ADDR,
-    CFG_NMI_INSTR_ILLEGAL_ADDR,
-    CFG_NMI_BREAKPOINT_ADDR,
-    CFG_NMI_LOAD_UNALIGNED_ADDR,
-    CFG_NMI_LOAD_FAULT_ADDR,
-    CFG_NMI_STORE_UNALIGNED_ADDR,
-    CFG_NMI_STORE_FAULT_ADDR,
-    CFG_NMI_CALL_FROM_UMODE_ADDR,
-    CFG_NMI_CALL_FROM_SMODE_ADDR,
-    CFG_NMI_CALL_FROM_HMODE_ADDR,
-    CFG_NMI_CALL_FROM_MMODE_ADDR,
-    CFG_NMI_INSTR_PAGE_FAULT_ADDR,
-    CFG_NMI_LOAD_PAGE_FAULT_ADDR,
-    CFG_NMI_14_ADDR,
-    CFG_NMI_STORE_PAGE_FAULT_ADDR,
-    CFG_NMI_STACK_OVERFLOW_ADDR,
-    CFG_NMI_STACK_UNDERFLOW_ADDR
-};
-
 CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     : sc_module(name_),
     i_clk("i_clk"),
@@ -289,13 +267,12 @@ void CsrRegs::comb() {
         w_trap_valid = 1;
         vb_mtval = r.cmd_data;
         wb_trap_cause = r.cmd_addr.read()(4, 0);
-        v.cmd_data = NMI_TABLE_ADDR[r.cmd_addr.read()];
+        v.cmd_data = r.mtvec.read() & ~0x3ull;
         if (r.progbuf_ena.read() == 1) {
             v.progbuf_err = PROGBUF_ERR_EXCEPTION;
         }
         if (r.cmd_addr.read() == EXCEPTION_CallFromUmode) {
             wb_trap_cause = r.cmd_addr.read() + r.mode.read().to_uint();
-            v.cmd_data = NMI_TABLE_ADDR[r.cmd_addr.read() + r.mode.read().to_uint()];
         }
         break;
     case State_Breakpoint:  // software breakpoint
@@ -313,7 +290,7 @@ void CsrRegs::comb() {
             w_trap_valid = 1;
             wb_trap_cause = r.cmd_addr.read()(4, 0);
             vb_mtval = i_e_pc;
-            v.cmd_data = NMI_TABLE_ADDR[r.cmd_addr.read()];   // Jump to exception handler
+            v.cmd_data = r.mtvec.read() & ~0x3ull;   // Jump to exception handler
         }
         break;
     case State_Halt:
@@ -332,9 +309,9 @@ void CsrRegs::comb() {
         v_trap_irq = 1;
         if (r.mtvec_mode.read() == 1) {
             // vectorized
-            v.cmd_data = r.mtvec.read() + 4*wb_trap_cause;
+            v.cmd_data = (r.mtvec.read() & ~0x3ull) + 4*wb_trap_cause;
         } else {
-            v.cmd_data = r.mtvec;
+            v.cmd_data = r.mtvec.read() & ~0x3ull;
         }
         break;
     case State_TrapReturn:

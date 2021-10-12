@@ -29,8 +29,6 @@ CpuRiver_Functional::CpuRiver_Functional(const char *name) :
     registerAttribute("ImplementationID", &implementationid_);
     registerAttribute("HartID", &hartid_);
     registerAttribute("ListExtISA", &listExtISA_);
-    registerAttribute("VectorTable", &vectorTable_);
-    registerAttribute("ExceptionTable", &exceptionTable_);
 
     mmuReservatedAddr_ = 0;
     mmuReservedAddrWatchdog_ = 0;
@@ -164,14 +162,14 @@ void CpuRiver_Functional::handleTrap() {
 
     int xepc = static_cast<int>((cur_prv_level << 8) + 0x41);
     portCSR_.write(xepc, getNPC());
-    if (interrupt_pending_[0] & exception_mask) {
-        // Exception: ['cfg_nmi_name', address, ....]
-        int entry_idx = 2*static_cast<int>(mcause.value) + 1;
-        uint64_t trap = exceptionTable_[entry_idx].to_uint64();
-        setNPC(trap);
+
+    uint64_t mtvec = portCSR_.read(CSR_mtvec).val;
+    uint64_t mtvecmode = mtvec & 0x3;
+    mtvec &= ~0x3ull;
+    if (mtvecmode == 0x1 && mcause.bits.irq) {
+        setNPC(mtvec + 4 * mcause.bits.code);
     } else {
-        // Software interrupt handled after instruction was executed
-        setNPC(portCSR_.read(CSR_mtvec).val);
+        setNPC(mtvec);
     }
     interrupt_pending_[pendidx >> 6] &= ~(1ull << (pendidx & 0x3F));
 }
@@ -183,7 +181,7 @@ void CpuRiver_Functional::reset(IFace *isource) {
     portCSR_.write(CSR_mvendorid, vendorid_.to_uint64());
     portCSR_.write(CSR_mimplementationid, implementationid_.to_uint64());
     portCSR_.write(CSR_mhartid, hartid_.to_uint64());
-    portCSR_.write(CSR_mtvec, vectorTable_.to_uint64());
+    portCSR_.write(CSR_mtvec, 0);
 
     cur_prv_level = PRV_M;           // Current privilege level
     mmuReservedAddrWatchdog_ = 0;
