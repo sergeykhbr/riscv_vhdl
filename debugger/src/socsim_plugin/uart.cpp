@@ -234,7 +234,7 @@ uint32_t UART::STATUS_TYPE::aboutToRead(uint32_t cur_val) {
     return t.v;
 }
 uint32_t UART::SCALER_TYPE::aboutToWrite(uint32_t new_val) {
-    UART *p = static_cast<UART *>(parent_);
+//    UART *p = static_cast<UART *>(parent_);
     return new_val;    
 }
 

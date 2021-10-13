@@ -49,13 +49,16 @@ SOURCES = \
 	memlut \
 	memsim \
 	rmemsim \
-	serial_dbglink \
+	dmi_regs \
 	codecov_generic \
+	cpumonitor \
+	dsu \
+	dsu_regs \
+	edcl \
 	greth_gen1 \
 	greth \
-	cpumonitor \
+	serial_dbglink \
 	udp_dbglink \
-	edcl \
 	elfreader \
 	cmd_busutil \
 	cmd_cpi \

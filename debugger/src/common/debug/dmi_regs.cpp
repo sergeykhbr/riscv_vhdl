@@ -26,22 +26,23 @@ IDebug *DebugRegisterType::getpIDebug() {
     return idbg_;
 }
 
-uint64_t DMCONTROL_TYPE::aboutToWrite(uint64_t new_val) {
+uint32_t DMCONTROL_TYPE::aboutToWrite(uint32_t new_val) {
     IDebug *p = getpIDebug();
     if (!p) {
         return new_val;
     }
     ValueType tnew;
     ValueType tprv;
-    DMCONTROL_TYPE::ValueType runcotnrol;
+    //DMCONTROL_TYPE::ValueType runcotnrol;
     tprv.val = value_.val;
     tnew.val = new_val;
-    int hartid = static_cast<int>(
-        (tnew.bits.hartselhi << 10) | tnew.bits.hartsello);
+    //int hartid = static_cast<int>(
+    //    (tnew.bits.hartselhi << 10) | tnew.bits.hartsello);
 
     if (tnew.bits.ndmreset != tprv.bits.ndmreset) {
         p->setResetPin(tnew.bits.ndmreset);
     }
+#if 0
     runcotnrol.val = 0;
     if (tnew.bits.haltreq) {
         runcotnrol.bits.haltreq = 1;
@@ -56,10 +57,11 @@ uint64_t DMCONTROL_TYPE::aboutToWrite(uint64_t new_val) {
         //                 CSR_runcontrol,
         //                 runcotnrol.val);
     }
+#endif
     return new_val;
 }
 
-uint64_t DMCONTROL_TYPE::aboutToRead(uint64_t cur_val) {
+uint32_t DMCONTROL_TYPE::aboutToRead(uint32_t cur_val) {
     IDebug *p = getpIDebug();
     if (!p) {
         return cur_val;
@@ -71,7 +73,7 @@ uint64_t DMCONTROL_TYPE::aboutToRead(uint64_t cur_val) {
     return t.val;
 }
 
-uint64_t DMSTATUS_TYPE::aboutToRead(uint64_t cur_val) {
+uint32_t DMSTATUS_TYPE::aboutToRead(uint32_t cur_val) {
     IDebug *p = getpIDebug();
     if (!p) {
         return cur_val;
@@ -89,15 +91,15 @@ uint64_t DMSTATUS_TYPE::aboutToRead(uint64_t cur_val) {
     return t.val;
 }
 
-uint64_t HALTSUM_TYPE::aboutToRead(uint64_t cur_val) {
+uint32_t HALTSUM_TYPE::aboutToRead(uint32_t cur_val) {
     IDebug *p = getpIDebug();
     if (!p) {
         return cur_val;
     }
-    uint64_t ret = 0;
+    uint32_t ret = 0;
     for (int i = 0; i < p->hartTotal(); i++) {
         if (p->isHalted(i)) {
-            ret |= 1ull << i;
+            ret |= 1ul << i;
         }
     }
     return ret;

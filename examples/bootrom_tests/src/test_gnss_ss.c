@@ -41,7 +41,7 @@ void test_gnss_ss(uint64_t bar) {
 
     // engine access
     pnp->fwdbg1 = 0;
-    gnss->tmr.rw_MsLength = 400;
+    gnss->tmr.rw_MsLength = 2000;
     while (pnp->fwdbg1 != WAS_GNSS_ISR_MARKER) {}
     fw_disable_isr(CFG_IRQ_GNSS_SS);
 

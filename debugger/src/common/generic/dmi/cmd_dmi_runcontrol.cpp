@@ -69,21 +69,30 @@ void CmdDmiRunControl::exec(AttributeType *args, AttributeType *res) {
 
     DCSR_TYPE::ValueType dcsr;
     DMCONTROL_TYPE::ValueType dmcontrol;
+    ABSTRACTCS_TYPE::ValueType abstractcs;
     dmcontrol.val = 0;
     if (par1.is_equal("halt") || par1.is_equal("stop") || par1.is_equal("break")) {
         dmcontrol.bits.haltreq = 1;
-        tap_->write(dmibaseaddr_ + 4*0x10, 8, dmcontrol.u8);
+        tap_->write(dmibaseaddr_ + 4*0x10, 4, dmcontrol.u8);
     } else if (par1.is_equal("go") || par1.is_equal("run") || par1.is_equal("c")) {
         dmcontrol.bits.resumereq = 1;
-        tap_->write(dmibaseaddr_ + 4*0x10, 8, dmcontrol.u8);
+        tap_->write(dmibaseaddr_ + 4*0x10, 4, dmcontrol.u8);
     } else if (par1.is_equal("step")) {
+        // enabe stepping = 1
         dcsr.val = 0;
         dcsr.bits.ebreakm = 1;
         dcsr.bits.step = 1;
-        // TODO: write step in dcsr using abstract command
-
+        // transfer dcsr,arg0
+        tap_->write(dmibaseaddr_ + 4*0x04, 4, dmcontrol.u8);    // arg0 = [data1,data0]
+        abstractcs.val = 0;
+        abstractcs.bits.transfer = 1;
+        abstractcs.bits.aarsize = 2;
+        abstractcs.bits.regno = 0x7b0;//CSR_dcsr;
+        tap_->write(dmibaseaddr_ + 4*0x17, 4, dmcontrol.u8);    // arg0 = [data1,data0]
+        // resume with step enabled
+        dmcontrol.val = 0;
         dmcontrol.bits.resumereq = 1;
-        tap_->write(dmibaseaddr_ + 4*0x10, 8, dmcontrol.u8);
+        tap_->write(dmibaseaddr_ + 4*0x10, 4, dmcontrol.u8);
     }
 }
 

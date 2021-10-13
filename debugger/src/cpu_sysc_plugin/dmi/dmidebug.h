@@ -86,6 +86,8 @@ class DmiDebug : public sc_module,
 
         sc_signal<bool> haltreq;
         sc_signal<bool> resumereq;
+        sc_signal<sc_uint<32>> data0;
+        sc_signal<sc_uint<32>> data1;
     } r, v;
 
     sc_event bus_req_event_;
@@ -126,6 +128,21 @@ class DmiDebug : public sc_module,
 
  private:
     IFace *iparent_;    // pointer on parent module object (used for logging)
+
+    void R_RESET(RegistersType &iv) {
+        iv.regidx = 0;
+        iv.wdata = 0;
+        iv.regwr = 0;
+        iv.regrd = 0;
+
+        iv.haltreq = 0;
+        iv.resumereq = 0;
+        iv.data0 = 0;
+        iv.data1 = 0;
+    }
+
+    bool async_reset_;
+
 };
 
 }  // namespace debugger

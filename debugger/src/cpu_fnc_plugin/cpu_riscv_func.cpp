@@ -124,9 +124,9 @@ void CpuRiver_Functional::handleTrap() {
     }
 
     int pendidx = -1;
-    for (int i = 0; i < 8*sizeof(interrupt_pending_); i++) {
+    for (size_t i = 0; i < 8*sizeof(interrupt_pending_); i++) {
         if (interrupt_pending_[i >> 6] & (1ull << (i & 0x3f))) {
-            pendidx = i;
+            pendidx = static_cast<int>(i);
             break;
         }
     }

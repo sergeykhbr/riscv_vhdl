@@ -22,10 +22,10 @@
 
 namespace debugger {
 
-class DebugRegisterType : public MappedReg64Type {
+class DebugRegisterType : public MappedReg32Type {
  public:
     DebugRegisterType(IService* parent, const char* name, uint64_t addr) :
-        MappedReg64Type(parent, name, addr), idbg_(0) {}
+        MappedReg32Type(parent, name, addr), idbg_(0) {}
 
  protected:
     IDebug* getpIDebug();
@@ -40,24 +40,23 @@ class DMCONTROL_TYPE : public DebugRegisterType {
         DebugRegisterType(parent, name, addr) {}
 
     union ValueType {
-        uint64_t val;
-        uint8_t u8[8];
+        uint32_t val;
+        uint8_t u8[4];
         struct {
-            uint64_t dmactive : 1;          // [0] 1=module functioning normally
-            uint64_t ndmreset : 1;          // [1] 1=system reset
-            uint64_t rsrv5_2 : 4;           // [5:2]
-            uint64_t hartselhi : 10;        // [15:6]
-            uint64_t hartsello : 10;        // [25:16]
-            uint64_t rsrv29_26  : 4;        // [29:26]
-            uint64_t resumereq : 1;         // [30]
-            uint64_t haltreq : 1;           // [31]
-            uint64_t rsv      : 32;
+            uint32_t dmactive : 1;          // [0] 1=module functioning normally
+            uint32_t ndmreset : 1;          // [1] 1=system reset
+            uint32_t rsrv5_2 : 4;           // [5:2]
+            uint32_t hartselhi : 10;        // [15:6]
+            uint32_t hartsello : 10;        // [25:16]
+            uint32_t rsrv29_26  : 4;        // [29:26]
+            uint32_t resumereq : 1;         // [30]
+            uint32_t haltreq : 1;           // [31]
         } bits;
     };
 
  protected:
-    virtual uint64_t aboutToWrite(uint64_t new_val) override;
-    virtual uint64_t aboutToRead(uint64_t cur_val) override;
+    virtual uint32_t aboutToWrite(uint32_t new_val) override;
+    virtual uint32_t aboutToRead(uint32_t cur_val) override;
 };
 
 class DMSTATUS_TYPE : public DebugRegisterType {
@@ -66,30 +65,30 @@ class DMSTATUS_TYPE : public DebugRegisterType {
         DebugRegisterType(parent, name, addr) {}
 
     union ValueType {
-        uint64_t val;
-        uint8_t u8[8];
+        uint32_t val;
+        uint8_t u8[4];
         struct {
-            uint64_t version : 4;           // [3:0] 2=version 0.13
-            uint64_t rsrv6_4 : 3;           // [6:4]
-            uint64_t authenticated : 1;     // [7]
-            uint64_t anyhalted : 1;         // [8]
-            uint64_t allhalted : 1;         // [9]
-            uint64_t anyrunning : 1;        // [10]
-            uint64_t allrunning : 1;        // [11]
-            uint64_t anyunavail : 1;        // [12]
-            uint64_t allunavail : 1;        // [13]
-            uint64_t anynonexistent: 1;     // [14]
-            uint64_t allnonexistent: 1;     // [15]
-            uint64_t anyresumeack: 1;       // [16]
-            uint64_t allresumeack: 1;       // [17]
-            uint64_t rsrv21_18  : 4;        // [21:18]
-            uint64_t impebreak : 1;         // [22]
-            uint64_t rsv      : 41;         // [63:23]
+            uint32_t version : 4;           // [3:0] 2=version 0.13
+            uint32_t rsrv6_4 : 3;           // [6:4]
+            uint32_t authenticated : 1;     // [7]
+            uint32_t anyhalted : 1;         // [8]
+            uint32_t allhalted : 1;         // [9]
+            uint32_t anyrunning : 1;        // [10]
+            uint32_t allrunning : 1;        // [11]
+            uint32_t anyunavail : 1;        // [12]
+            uint32_t allunavail : 1;        // [13]
+            uint32_t anynonexistent: 1;     // [14]
+            uint32_t allnonexistent: 1;     // [15]
+            uint32_t anyresumeack: 1;       // [16]
+            uint32_t allresumeack: 1;       // [17]
+            uint32_t rsrv21_18  : 4;        // [21:18]
+            uint32_t impebreak : 1;         // [22]
+            uint32_t rsv      : 9;          // [31:23]
         } bits;
     };
 
  protected:
-    virtual uint64_t aboutToRead(uint64_t cur_val) override;
+    virtual uint32_t aboutToRead(uint32_t cur_val) override;
 };
 
 class HALTSUM_TYPE : public DebugRegisterType {
@@ -97,7 +96,7 @@ class HALTSUM_TYPE : public DebugRegisterType {
     HALTSUM_TYPE(IService *parent, const char *name, uint64_t addr) :
         DebugRegisterType(parent, name, addr) {}
  protected:
-    virtual uint64_t aboutToRead(uint64_t cur_val) override;
+    virtual uint32_t aboutToRead(uint32_t cur_val) override;
 };
 
 
@@ -107,23 +106,43 @@ class DCSR_TYPE : public DebugRegisterType {
         DebugRegisterType(parent, name, addr) {}
 
     union ValueType {
-        uint64_t val;
+        uint32_t val;
+        uint8_t u8[4];
+        struct bits_type {
+            uint32_t prv : 2;       // [1:0] 
+            uint32_t step : 1;      // [2]
+            uint32_t rsv5_3 : 3;    // [5:3]
+            uint32_t cause : 3;     // [8:6]
+            uint32_t stoptime : 1;  // [9]
+            uint32_t stopcount : 1; // [10]
+            uint32_t rsv11 : 1;     // [11]
+            uint32_t ebreaku : 1;   // [12]
+            uint32_t ebreaks : 1;   // [13]
+            uint32_t ebreakh : 1;   // [14]
+            uint32_t ebreakm : 1;   // [15]
+            uint32_t rsv27_16 : 12; // [27:16]
+            uint32_t xdebugver : 4; // [31:28] 0=no external debug support; 4=exists as in spec 0.13
+        } bits;
+    };
+};
+
+class ABSTRACTCS_TYPE : public DebugRegisterType {
+ public:
+    ABSTRACTCS_TYPE(IService *parent, const char *name, uint64_t addr) :
+        DebugRegisterType(parent, name, addr) {}
+
+    union ValueType {
+        uint32_t val;
         uint8_t u8[8];
         struct bits_type {
-            uint64_t prv : 2;       // [1:0] 
-            uint64_t step : 1;      // [2]
-            uint64_t rsv5_3 : 3;    // [5:3]
-            uint64_t cause : 3;     // [8:6]
-            uint64_t stoptime : 1;  // [9]
-            uint64_t stopcount : 1; // [10]
-            uint64_t rsv11 : 1;     // [11]
-            uint64_t ebreaku : 1;   // [12]
-            uint64_t ebreaks : 1;   // [13]
-            uint64_t ebreakh : 1;   // [14]
-            uint64_t ebreakm : 1;   // [15]
-            uint64_t rsv27_16 : 12; // [27:16]
-            uint64_t xdebugver : 4; // [31:28] 0=no external debug support; 4=exists as in spec 0.13
-            uint64_t rsv : 32;      // [63:32]
+            uint32_t regno : 16;    // [15:0] 0=copy data from regiter into arg0; 1=copy arg0 to register
+            uint32_t write : 1;     // [16]
+            uint32_t transfer : 1;  // [17] 0=don;t do operation specified by write; 1=do operation specified by write
+            uint32_t postexec : 1;  // [18] 0=no effect; 1=execute prog from buffer after trnsfer
+            uint32_t aarpostincrement : 1;   // [19] 0=no effect; 1=increment regno
+            uint32_t aarsize : 3;   // [22:20] 2=32 bits; 3=64 bits; 4=128 bits access
+            uint32_t rsv23 : 1;     // [23]
+            uint32_t cmdtype : 8;   // [31:24] 0=Access regsiter
         } bits;
     };
 };

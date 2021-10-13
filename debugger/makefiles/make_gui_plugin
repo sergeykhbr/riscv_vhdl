@@ -119,6 +119,8 @@ deploy:
 	cp $(QT_LIB_PATH)/libQt6Widgets.* $(ELF_DIR)/qtlib
 	cp $(QT_LIB_PATH)/libQt6Network.* $(ELF_DIR)/qtlib
 	cp $(QT_LIB_PATH)/libQt6DBus.* $(ELF_DIR)/qtlib
+	cp $(QT_LIB_PATH)/libQt6XcbQpa.* $(ELF_DIR)/qtlib
+	cp $(QT_LIB_PATH)/libQt6OpenGL.* $(ELF_DIR)/qtlib
 
 $(EXECUTABLE): prebuild $(OBJ_FILES)
 	echo $(CPP) $(LDFLAGS) $(OBJ_FILES) -o $@

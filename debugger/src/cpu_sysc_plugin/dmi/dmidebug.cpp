@@ -39,6 +39,8 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name) : sc_module(name),
     sensitive << r.regrd;
     sensitive << r.haltreq;
     sensitive << r.resumereq;
+    sensitive << r.data0;
+    sensitive << r.data1;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -139,6 +141,21 @@ void DmiDebug::comb() {
 
 
     switch (r.regidx.read()) {
+    case 0x04:  // arg0[31:0]
+        if (r.regwr) {
+            v.data0 = r.wdata;
+        }
+        break;
+    case 0x05:  // arg0[63:32]
+        if (r.regwr) {
+            v.data1 = r.wdata;
+        }
+        break;
+    case 0x17:  // command
+        if (r.regwr) {
+            
+        }
+        break;
     case 0x10:  // dmcontrol
         if (r.regwr) {
             v.haltreq = r.wdata.read()[31] && !i_halted.read();
@@ -149,9 +166,7 @@ void DmiDebug::comb() {
     }
 
     if (!i_nrst) {
-        v.regidx = 0;
-        v.regwr = 0;
-        v.regrd = 0;
+        R_RESET(v);
     }
 
     o_haltreq = r.haltreq;

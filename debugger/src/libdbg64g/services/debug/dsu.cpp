@@ -40,7 +40,6 @@ void DSU::postinitService() {
 
     ICpuGeneric *icpu;
     for (unsigned i = 0; i < cpu_.size(); i++) {
-        const char *t = cpu_[i].to_string();
         icpu = static_cast<ICpuGeneric *>(
             RISCV_get_service_iface(cpu_[i].to_string(), IFACE_CPU_GENERIC));
         if (!icpu) {
