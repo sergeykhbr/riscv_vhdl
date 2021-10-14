@@ -853,19 +853,19 @@ int FpuFunctional::FADD_D(int addEna, int subEna, int cmpEna, int moreEna,
         mantLess = mantB;
     } else if (expDif == 0) {
         preShift = expDif;
-        if (mantA > mantB) {
-            flMore = !signA;
-            flEqual = 0;
-            flLess = signA;
+        if (mantA == mantB) {
+            flMore = (!signA) & (signA ^ signB);
+            flEqual = !(signA ^ signB);
+            flLess = signA & (signA ^ signB);
 
             signOpMore = signA;
             expMore = A.f64bits.exp;
             mantMore = mantA;
             mantLess = mantB;
-        } else if (mantA == mantB) {
-            flMore = 0;
-            flEqual = 1;
-            flLess = 0;
+        } else if (mantA > mantB) {
+            flMore = !signA;
+            flEqual = 0;
+            flLess = signA;
 
             signOpMore = signA;
             expMore = A.f64bits.exp;

@@ -96,8 +96,6 @@ reset_vector:
   ##! init mtvec register (see https://github.com/riscv/riscv-test-env/blob/master/p/riscv_test.h)
   la t0, trap_table
   csrw mtvec, t0
-  li t0, 0x00000800
-  csrs mie, t0       # Enable External irq (ftom PLIC) for M mode
 
 #if 0
   ##! see https://github.com/riscv/riscv-tests/benchmarks/common

@@ -349,11 +349,11 @@ void printf_uart(const char *fmt, ... ) {
     vprintfmt_lib((f_putch)putchar, 0, fmt, arg);
     va_end(arg);
 
-    if (uart->status & UART_STATUS_TX_EMPTY) {
-        if (buf_total(pdata)) {
-            uart->data = buf_get(pdata);
-        }
+    while (!(uart->status & UART_STATUS_TX_FULL) && buf_total(pdata)){
+        uart->data = buf_get(pdata);
     }
     // free UART lock
     uart->fwcpuid = 0;
+
+    // TODO: Enable mstatus.meie interrupts from PLIC !!! (was disabled)
 }

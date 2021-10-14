@@ -48,6 +48,9 @@ int main() {
     pnp->fwid = 0x20190516;
 
     gpio->direction = 0xf;
+    // !! All interrupts from PLIC are disabled (not enabled in crt.S anymore)!!!
+    //li t0, 0x00000800
+    //csrs mie, t0       # Enable External irq (ftom PLIC) for M mode
     p_irq->irq_lock = 1;
     fw_malloc_init();
     

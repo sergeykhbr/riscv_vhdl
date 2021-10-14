@@ -182,6 +182,8 @@ void UART::putByte(char v) {
     }
     RISCV_mutex_unlock(&mutexListeners_);
 
+#if 0
+    // temporary disabled it but physically correct. Implement big enough UART buffer to compare with simulation
     if (tx_total_ < FIFOSZ) {
         tx_fifo_[tx_wcnt_] = v;
         tx_wcnt_ = (tx_wcnt_ + 1) % FIFOSZ;
@@ -190,6 +192,7 @@ void UART::putByte(char v) {
 
     iclk_->moveStepCallback(static_cast<IClockListener *>(this),
                             t + getScaler());
+#endif
 }
 
 char UART::getByte() {
