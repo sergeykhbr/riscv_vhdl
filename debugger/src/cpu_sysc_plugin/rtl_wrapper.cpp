@@ -31,14 +31,14 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     o_msti("o_msti"),
     i_msto("i_msto"),
     o_interrupt("o_interrupt"),
-    o_dport_req_valid("o_dport_req_valid"),
-    o_dport_write("o_dport_write"),
-    o_dport_addr("o_dport_addr"),
-    o_dport_wdata("o_dport_wdata"),
-    i_dport_req_ready("i_dport_req_ready"),
-    o_dport_resp_ready("o_dport_resp_ready"),
-    i_dport_resp_valid("i_dport_resp_valid"),
-    i_dport_rdata("i_dport_rdata"),
+    //o_dport_req_valid("o_dport_req_valid"),
+    //o_dport_write("o_dport_write"),
+    //o_dport_addr("o_dport_addr"),
+    //o_dport_wdata("o_dport_wdata"),
+    //i_dport_req_ready("i_dport_req_ready"),
+    //o_dport_resp_ready("o_dport_resp_ready"),
+    //i_dport_resp_valid("i_dport_resp_valid"),
+    //i_dport_rdata("i_dport_rdata"),
     i_halted("i_halted") {
     iparent_ = parent;
     clockCycles_ = 1000000; // 1 MHz when default resolution = 1 ps
@@ -250,12 +250,12 @@ void RtlWrapper::comb() {
 
     o_interrupt = r.interrupt;
 
-    o_dport_req_valid = w_dport_req_valid;
-    o_dport_write = w_dport_write;
-    o_dport_resp_ready = w_dport_resp_ready;
-    o_dport_write = w_dport_write;
-    o_dport_addr = wb_dport_addr;
-    o_dport_wdata = wb_dport_wdata;
+    //o_dport_req_valid = w_dport_req_valid;
+    //o_dport_write = w_dport_write;
+    //o_dport_resp_ready = w_dport_resp_ready;
+    //o_dport_write = w_dport_write;
+    //o_dport_addr = wb_dport_addr;
+    //o_dport_wdata = wb_dport_wdata;
 
     if (!r.nrst.read()[1]) {
     }
@@ -335,8 +335,8 @@ void RtlWrapper::sys_bus_proc() {
         wb_dport_wdata = dport_.trans->wdata;
     }
     dport_.idx_missmatch = 0;
-    if (i_dport_resp_valid.read()) {
-        dport_.trans->rdata = i_dport_rdata.read().to_uint64();
+    if (0) {//i_dport_resp_valid.read()) {
+        dport_.trans->rdata = 0;//i_dport_rdata.read().to_uint64();
         dport_.trans_idx_down++;
         if (dport_.trans_idx_down != dport_.trans_idx_up) {
             dport_.idx_missmatch = 1;

@@ -160,14 +160,14 @@ void CpuRiscV_RTL::createSystemC() {
     wrapper_->o_msti(msti);
     wrapper_->i_msto(msto);
     wrapper_->o_interrupt(w_plic_irq);
-    wrapper_->o_dport_req_valid(w_dport_req_valid);
-    wrapper_->o_dport_write(w_dport_write);
-    wrapper_->o_dport_addr(wb_dport_addr);
-    wrapper_->o_dport_wdata(wb_dport_wdata);
-    wrapper_->i_dport_req_ready(w_dport_req_ready);
-    wrapper_->o_dport_resp_ready(w_dport_resp_ready);
-    wrapper_->i_dport_resp_valid(w_dport_resp_valid);
-    wrapper_->i_dport_rdata(wb_dport_rdata);
+//    wrapper_->o_dport_req_valid(w_dport_req_valid);
+//    wrapper_->o_dport_write(w_dport_write);
+//    wrapper_->o_dport_addr(wb_dport_addr);
+//    wrapper_->o_dport_wdata(wb_dport_wdata);
+//    wrapper_->i_dport_req_ready(w_dport_req_ready);
+//    wrapper_->o_dport_resp_ready(w_dport_resp_ready);
+//    wrapper_->i_dport_resp_valid(w_dport_resp_valid);
+//    wrapper_->i_dport_rdata(wb_dport_rdata);
     wrapper_->i_halted(w_halted);
 
     dmi_ = new DmiDebug(static_cast<IService *>(this), "dmidbg");
@@ -177,6 +177,14 @@ void CpuRiscV_RTL::createSystemC() {
     dmi_->o_haltreq(w_dmi_haltreq);
     dmi_->o_resumereq(w_dmi_resumereq);
     dmi_->i_halted(w_halted);
+    dmi_->o_dport_req_valid(w_dport_req_valid);
+    dmi_->o_dport_write(w_dport_write);
+    dmi_->o_dport_addr(wb_dport_addr);
+    dmi_->o_dport_wdata(wb_dport_wdata);
+    dmi_->i_dport_req_ready(w_dport_req_ready);
+    dmi_->o_dport_resp_ready(w_dport_resp_ready);
+    dmi_->i_dport_resp_valid(w_dport_resp_valid);
+    dmi_->i_dport_rdata(wb_dport_rdata);
 
 
     if (l2CacheEnable_.to_bool()) {

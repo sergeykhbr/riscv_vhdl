@@ -43,7 +43,7 @@ CmdDmiRunControl::CmdDmiRunControl(IFace *parent, uint64_t dmibaseaddr, ITap *ta
 
 int CmdDmiRunControl::isValid(AttributeType *args) {
     AttributeType &name = (*args)[0u];
-    if (!name.is_equal("core0")) {
+    if (!cmdName_.is_equal((*args)[0u].to_string())) {
         return CMD_INVALID;
     }
     if (args->size() < 2) {
@@ -57,9 +57,9 @@ int CmdDmiRunControl::isValid(AttributeType *args) {
         && !par1.is_equal("run")
         && !par1.is_equal("c")
         && !par1.is_equal("step")) {
-        return CMD_INVALID;
+        return CMD_WRONG_ARGS;
     }
-    return CMD_VALID;
+    return CMD_WRONG_ARGS;
 }
 
 void CmdDmiRunControl::exec(AttributeType *args, AttributeType *res) {

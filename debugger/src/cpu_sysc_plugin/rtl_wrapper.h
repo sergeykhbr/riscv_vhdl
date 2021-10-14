@@ -43,14 +43,14 @@ class RtlWrapper : public sc_module,
     /** Interrupt line from external interrupts controller. */
     sc_out<bool> o_interrupt;
     // Debug interface
-    sc_out<bool> o_dport_req_valid;                      // Debug access from DSU is valid
-    sc_out<bool> o_dport_write;                          // Write value
-    sc_out<sc_uint<CFG_DPORT_ADDR_BITS>> o_dport_addr;   // Register index
-    sc_out<sc_uint<RISCV_ARCH>> o_dport_wdata;           // Write value
-    sc_in<bool> i_dport_req_ready;                       // Response is ready
-    sc_out<bool> o_dport_resp_ready;                     // ready to accepd response
-    sc_in<bool> i_dport_resp_valid;                      // Response is valid
-    sc_in<sc_uint<RISCV_ARCH>> i_dport_rdata;            // Response value
+    //sc_out<bool> o_dport_req_valid;                      // Debug access from DSU is valid
+    //sc_out<bool> o_dport_write;                          // Write value
+    //sc_out<sc_uint<CFG_DPORT_ADDR_BITS>> o_dport_addr;   // Register index
+    //sc_out<sc_uint<RISCV_ARCH>> o_dport_wdata;           // Write value
+    //sc_in<bool> i_dport_req_ready;                       // Response is ready
+    //sc_out<bool> o_dport_resp_ready;                     // ready to accepd response
+    //sc_in<bool> i_dport_resp_valid;                      // Response is valid
+    //sc_in<sc_uint<RISCV_ARCH>> i_dport_rdata;            // Response value
     sc_in<bool> i_halted;
 
     enum EState {

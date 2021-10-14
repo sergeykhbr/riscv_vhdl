@@ -71,6 +71,16 @@ class DmiDebug : public sc_module,
     sc_out<bool> o_haltreq;
     sc_out<bool> o_resumereq;
     sc_in<bool> i_halted;
+    // Debug interface
+    sc_out<bool> o_dport_req_valid;                      // Debug access from DSU is valid
+    sc_out<bool> o_dport_write;                          // Write value
+    sc_out<sc_uint<CFG_DPORT_ADDR_BITS>> o_dport_addr;   // Register index
+    sc_out<sc_uint<RISCV_ARCH>> o_dport_wdata;           // Write value
+    sc_in<bool> i_dport_req_ready;                       // Response is ready
+    sc_out<bool> o_dport_resp_ready;                     // ready to accepd response
+    sc_in<bool> i_dport_resp_valid;                      // Response is valid
+    sc_in<sc_uint<RISCV_ARCH>> i_dport_rdata;            // Response value
+
 
     DmiRegBankType bank_;
 
@@ -78,16 +88,31 @@ class DmiDebug : public sc_module,
     static const uint8_t BANK_REG_WRITE = 1 << 1;
     uint8_t bankaccess_[sizeof(DmiRegBankType::DmiRegsType) / sizeof(uint32_t)];
 
+    static const unsigned STATE_IDLE = 0;
+    static const unsigned STATE_REQUEST = 1;
+    static const unsigned STATE_RESPONSE = 2;
+
     struct RegistersType {
         sc_signal<sc_uint<7>> regidx;
         sc_signal<sc_uint<32>> wdata;
         sc_signal<bool> regwr;
         sc_signal<bool> regrd;
 
+        sc_signal<sc_uint<3>> state;
+
         sc_signal<bool> haltreq;
         sc_signal<bool> resumereq;
+        sc_signal<bool> transfer;
+        sc_signal<bool> write;
         sc_signal<sc_uint<32>> data0;
         sc_signal<sc_uint<32>> data1;
+
+        sc_signal<bool> dport_req_valid;
+        sc_signal<bool> dport_write;
+        sc_signal<sc_uint<CFG_DPORT_ADDR_BITS>> dport_addr;
+        sc_signal<sc_uint<RISCV_ARCH>> dport_wdata;
+        sc_signal<sc_uint<2>> dport_wstrb;
+        sc_signal<bool> dport_resp_ready;
     } r, v;
 
     sc_event bus_req_event_;
@@ -134,11 +159,20 @@ class DmiDebug : public sc_module,
         iv.wdata = 0;
         iv.regwr = 0;
         iv.regrd = 0;
+        iv.state = STATE_IDLE;
 
         iv.haltreq = 0;
         iv.resumereq = 0;
+        iv.transfer = 0;
+        iv.write = 0;
         iv.data0 = 0;
         iv.data1 = 0;
+        iv.dport_req_valid = 0;
+        iv.dport_write = 0;
+        iv.dport_addr = 0;
+        iv.dport_wdata = 0;
+        iv.dport_wstrb = 0;
+        iv.dport_resp_ready = 0;
     }
 
     bool async_reset_;

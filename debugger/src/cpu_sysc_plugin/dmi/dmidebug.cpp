@@ -24,7 +24,15 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name) : sc_module(name),
     i_nrst("i_nrst"),
     o_haltreq("o_haltreq"),
     o_resumereq("o_resumereq"),
-    i_halted("i_halted") {
+    i_halted("i_halted"),
+    o_dport_req_valid("o_dport_req_valid"),
+    o_dport_write("o_dport_write"),
+    o_dport_addr("o_dport_addr"),
+    o_dport_wdata("o_dport_wdata"),
+    i_dport_req_ready("i_dport_req_ready"),
+    o_dport_resp_ready("o_dport_resp_ready"),
+    i_dport_resp_valid("i_dport_resp_valid"),
+    i_dport_rdata("i_dport_rdata") {
     iparent_ = parent;
     setBaseAddress(DMI_BASE_ADDRESS);
     setLength(4096);
@@ -33,14 +41,26 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name) : sc_module(name),
     sensitive << bus_req_event_;
     sensitive << i_nrst;
     sensitive << i_halted;
+    sensitive << i_dport_req_ready;
+    sensitive << i_dport_resp_valid;
+    sensitive << i_dport_rdata;
     sensitive << r.regidx;
     sensitive << r.wdata;
     sensitive << r.regwr;
     sensitive << r.regrd;
+    sensitive << r.state;
     sensitive << r.haltreq;
     sensitive << r.resumereq;
+    sensitive << r.transfer;
+    sensitive << r.write;
     sensitive << r.data0;
     sensitive << r.data1;
+    sensitive << r.dport_req_valid;
+    sensitive << r.dport_write;
+    sensitive << r.dport_addr;
+    sensitive << r.dport_wdata;
+    sensitive << r.dport_wstrb;
+    sensitive << r.dport_resp_ready;
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -59,8 +79,17 @@ void DmiDebug::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_haltreq, o_haltreq.name());
         sc_trace(o_vcd, o_resumereq, o_resumereq.name());
         sc_trace(o_vcd, i_halted, i_halted.name());
+        sc_trace(o_vcd, o_dport_req_valid, o_dport_req_valid.name());
+        sc_trace(o_vcd, o_dport_write, o_dport_write.name());
+        sc_trace(o_vcd, o_dport_addr, o_dport_addr.name());
+        sc_trace(o_vcd, o_dport_wdata, o_dport_wdata.name());
+        sc_trace(o_vcd, i_dport_req_ready, i_dport_req_ready.name());
+        sc_trace(o_vcd, o_dport_resp_ready, o_dport_resp_ready.name());
+        sc_trace(o_vcd, i_dport_resp_valid, i_dport_resp_valid.name());
+        sc_trace(o_vcd, i_dport_rdata, i_dport_rdata.name());
 
         std::string pn(name());
+        sc_trace(o_vcd, r.state, pn + ".r_state");
         sc_trace(o_vcd, r.regidx, pn + ".r_regidx");
         sc_trace(o_vcd, r.wdata, pn + ".r_wdata");
         sc_trace(o_vcd, r.regwr, pn + ".r_regwr");
@@ -153,7 +182,15 @@ void DmiDebug::comb() {
         break;
     case 0x17:  // command
         if (r.regwr) {
-            
+            v.state = STATE_REQUEST;
+            v.dport_req_valid = 1;
+            v.transfer = r.wdata.read()[17];
+            v.write = r.wdata.read()[16];
+            v.dport_write = r.wdata.read()[17] & r.wdata.read()[16];
+            v.dport_addr = r.wdata.read()(11, 0);
+            v.dport_wdata = (r.data1, r.data0);
+            v.dport_wstrb = (r.wdata.read()[21] & r.wdata.read()[20],
+                             r.wdata.read()[21]);
         }
         break;
     case 0x10:  // dmcontrol
@@ -165,12 +202,51 @@ void DmiDebug::comb() {
     default:;
     }
 
+    switch (r.state.read()) {
+    case STATE_REQUEST:
+        if (i_dport_req_ready.read()) {
+            v.state = STATE_RESPONSE;
+            v.dport_req_valid = 0;
+            v.dport_resp_ready = 1;
+        }
+        break;
+    case STATE_RESPONSE:
+        if (i_dport_resp_valid.read()) {
+            v.state = STATE_IDLE;
+            v.dport_resp_ready = 0;
+            if (r.transfer && !r.write) {
+                if (r.dport_wstrb.read()[1]) {
+                    v.data1 = i_dport_rdata.read()(63, 32);
+                }
+                if (r.dport_wstrb.read()[0]) {
+                    v.data0 = i_dport_rdata.read()(31, 0);
+                }
+            }
+        }
+        break;
+    default:;
+        v.dport_req_valid = 0;
+        v.dport_resp_ready = 0;
+        v.transfer = 0;
+        v.write = 0;
+    }
+
     if (!i_nrst) {
         R_RESET(v);
     }
 
+    // Copy data to Bank Avaialble on Bus:
+    bank_.r.data[0] = r.data0.read();
+    bank_.r.data[1] = r.data1.read();
+
     o_haltreq = r.haltreq;
     o_resumereq = r.resumereq;
+
+    o_dport_req_valid = r.dport_req_valid;
+    o_dport_write = r.dport_write;
+    o_dport_addr = r.dport_addr;
+    o_dport_wdata = r.dport_wdata;
+    o_dport_resp_ready = r.dport_resp_ready;
 }
 
 void DmiDebug::registers() {
