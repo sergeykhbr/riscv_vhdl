@@ -276,6 +276,8 @@
                 ['BaseAddress',0x80080000],
                 ['Length',0x20000],
                 ['CPU',['core0']],
+                ['CmdExecutor','cmdexec0'],
+                ['Tap','edcltap'],
                 ['MapList',[['dsu0','dport_region'],
                             ['dsu0','dmcontrol'],
                             ['dsu0','dmstatus'],

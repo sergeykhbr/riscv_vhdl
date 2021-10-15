@@ -81,18 +81,48 @@ class DmiDebug : public sc_module,
     sc_in<bool> i_dport_resp_valid;                      // Response is valid
     sc_in<sc_uint<RISCV_ARCH>> i_dport_rdata;            // Response value
 
+    void comb();
+    void registers();
 
-    DmiRegBankType bank_;
+    SC_HAS_PROCESS(DmiDebug);
 
-    static const uint8_t BANK_REG_READ = 1 << 0;
-    static const uint8_t BANK_REG_WRITE = 1 << 1;
-    uint8_t bankaccess_[sizeof(DmiRegBankType::DmiRegsType) / sizeof(uint32_t)];
+    DmiDebug(IFace *parent, sc_module_name name);
+    virtual ~DmiDebug();
+
+    /** IMemoryOperation */
+    virtual ETransStatus b_transport(Axi4TransactionType *trans);
+
+    void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
+
+ private:
+    IFace *getInterface(const char *name) { return iparent_; }
+
+    void readreg(uint64_t idx);
+    void writereg(uint64_t idx, uint32_t w32);
+
+ private:
+    IFace *iparent_;    // pointer on parent module object (used for logging)
+
+    bool tap_request_valid;
+    uint32_t tap_request_addr;
+    bool tap_request_write;
+    uint32_t tap_request_wdata;
+    uint32_t tap_response_rdata;
+    event_def event_tap_resp_valid_;
 
     static const unsigned STATE_IDLE = 0;
-    static const unsigned STATE_REQUEST = 1;
-    static const unsigned STATE_RESPONSE = 2;
+    static const unsigned STATE_DMI_ACCESS = 1;
+    static const unsigned STATE_CPU_REQUEST = 2;
+    static const unsigned STATE_CPU_RESPONSE = 3;
 
     struct RegistersType {
+        sc_signal<bool> tap_request_valid;
+        sc_signal<sc_uint<7>> tap_request_addr;
+        sc_signal<bool> tap_request_write;
+        sc_signal<sc_uint<32>> tap_request_wdata;
+        sc_signal<bool> tap_response_valid;
+        sc_signal<sc_uint<32>> tap_response_rdata;
+
         sc_signal<sc_uint<7>> regidx;
         sc_signal<sc_uint<32>> wdata;
         sc_signal<bool> regwr;
@@ -131,30 +161,14 @@ class DmiDebug : public sc_module,
     sc_signal<sc_uint<RISCV_ARCH>> wb_dport_wdata;
 
 
-    void comb();
-    void registers();
-
-    SC_HAS_PROCESS(DmiDebug);
-
-    DmiDebug(IFace *parent, sc_module_name name);
-    virtual ~DmiDebug();
-
-    /** IMemoryOperation */
-    virtual ETransStatus b_transport(Axi4TransactionType *trans);
-
- public:
-    void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
-
- private:
-    IFace *getInterface(const char *name) { return iparent_; }
-
-    void readreg(uint64_t idx, uint8_t *buf);
-    void writereg(uint64_t idx, uint8_t *buf);
-
- private:
-    IFace *iparent_;    // pointer on parent module object (used for logging)
-
     void R_RESET(RegistersType &iv) {
+        iv.tap_request_valid = 0;
+        iv.tap_request_addr = 0;
+        iv.tap_request_write = 0;
+        iv.tap_request_wdata = 0;
+        iv.tap_response_valid = 0;
+        iv.tap_response_rdata = 0;
+
         iv.regidx = 0;
         iv.wdata = 0;
         iv.regwr = 0;

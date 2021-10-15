@@ -60,7 +60,7 @@ DbgMainWindow::DbgMainWindow(IGui *igui) : QMainWindow() {
     cmdRun_.make_string("c");
     cmdHalt_.make_string("halt");
     cmdStep_.make_string("c 1");
-    cmdSteps_.make_string("reg steps");
+    cmdSteps_.make_string("core0 reg steps");
  
     createActions();
     createMenus();

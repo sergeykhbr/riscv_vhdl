@@ -265,6 +265,11 @@ class AttributeType : public IAttribute {
         (*this)[size()-1] = (*item);
     }
 
+    AttributeType & new_list_item() {
+        realloc_list(size()+1);
+        return (*this)[size()-1];
+    }
+
     void insert_to_list(unsigned idx, const AttributeType *item);
 
     void remove_from_list(unsigned idx);

@@ -30,6 +30,7 @@
 #include "coreservices/idsugen.h"
 #include "coreservices/iwire.h"
 #include "coreservices/idebug.h"
+#include "coreservices/icmdexec.h"
 #include "debug/dsumap.h"
 #include "dsu_regs.h"
 
@@ -46,6 +47,7 @@ class DSU : public RegMemBankGeneric,
 
     /** IService interface */
     virtual void postinitService() override;
+    virtual void predeleteService() override;
 
     /** IDsuGeneric */
     virtual void incrementRdAccess(int mst_id);
@@ -66,8 +68,14 @@ class DSU : public RegMemBankGeneric,
     void nb_debug_write(unsigned hartid, uint16_t addr, uint64_t wdata);
 
  private:
+    AttributeType cmdexec_;
+    AttributeType tap_;
     AttributeType cpu_;
     AttributeType icpulist_;
+    AttributeType icmdlist_;
+
+    ICmdExecutor *iexec_;
+    ITap *itap_;
 
     unsigned hartsel_;
     ICpuGeneric *icpu_context_;     // current cpu context

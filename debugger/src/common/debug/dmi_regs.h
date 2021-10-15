@@ -126,9 +126,9 @@ class DCSR_TYPE : public DebugRegisterType {
     };
 };
 
-class ABSTRACTCS_TYPE : public DebugRegisterType {
+class COMMAND_TYPE : public DebugRegisterType {
  public:
-    ABSTRACTCS_TYPE(IService *parent, const char *name, uint64_t addr) :
+    COMMAND_TYPE(IService *parent, const char *name, uint64_t addr) :
         DebugRegisterType(parent, name, addr) {}
 
     union ValueType {

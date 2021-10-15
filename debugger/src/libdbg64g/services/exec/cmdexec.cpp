@@ -20,18 +20,13 @@
 #include "cmd/cmd_loadh86.h"
 #include "cmd/cmd_loadsrec.h"
 #include "cmd/cmd_log.h"
-#include "cmd/cmd_isrunning.h"
 #include "cmd/cmd_read.h"
 #include "cmd/cmd_write.h"
-#include "cmd/cmd_run.h"
-#include "cmd/cmd_halt.h"
 #include "cmd/cmd_exit.h"
 #include "cmd/cmd_memdump.h"
 #include "cmd/cmd_cpi.h"
-#include "cmd/cmd_status.h"
 #include "cmd/cmd_reset.h"
 #include "cmd/cmd_disas.h"
-#include "cmd/cmd_busutil.h"
 #include "cmd/cmd_symb.h"
 #include "cmd/cmd_stack.h"
 #include "cmd/cmd_loadbin.h"
@@ -69,14 +64,11 @@ void CmdExecutor::postinitService() {
             (RISCV_get_service_iface(tap_.to_string(), IFACE_TAP));
 
     // Core commands registration:
-    registerCommand(new CmdBusUtil(itap_));
     registerCommand(new CmdCpi(itap_));
     registerCommand(new CmdCpuContext(itap_));
     registerCommand(new CmdDisas(itap_));
     registerCommand(new CmdElf2Raw(itap_));
     registerCommand(new CmdExit(itap_));
-    registerCommand(new CmdHalt(itap_));
-    registerCommand(new CmdIsRunning(itap_));
     registerCommand(new CmdLoadBin(itap_));
     registerCommand(new CmdLoadElf(itap_));
     registerCommand(new CmdLoadH86(itap_));
@@ -84,10 +76,8 @@ void CmdExecutor::postinitService() {
     registerCommand(new CmdLog(itap_));
     registerCommand(new CmdMemDump(itap_));
     registerCommand(new CmdRead(itap_));
-    registerCommand(new CmdRun(itap_));
     registerCommand(new CmdReset(itap_));
     registerCommand(new CmdStack(itap_));
-    registerCommand(new CmdStatus(itap_));
     registerCommand(new CmdSymb(itap_));
     registerCommand(new CmdWrite(itap_));
 }

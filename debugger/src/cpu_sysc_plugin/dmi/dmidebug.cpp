@@ -44,6 +44,12 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name) : sc_module(name),
     sensitive << i_dport_req_ready;
     sensitive << i_dport_resp_valid;
     sensitive << i_dport_rdata;
+    sensitive << r.tap_request_valid;
+    sensitive << r.tap_request_addr;
+    sensitive << r.tap_request_write;
+    sensitive << r.tap_request_wdata;
+    sensitive << r.tap_response_valid;
+    sensitive << r.tap_response_rdata;
     sensitive << r.regidx;
     sensitive << r.wdata;
     sensitive << r.regwr;
@@ -65,11 +71,17 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name) : sc_module(name),
     SC_METHOD(registers);
     sensitive << i_clk.pos();
 
-    memset(&bank_, 0, sizeof(bank_));
-    memset(&bankaccess_, 0, sizeof(bankaccess_));
+    tap_request_valid = 0;
+    tap_request_addr = 0;
+    tap_request_write = 0;
+    tap_request_wdata = 0;
+    char tstr[256];
+    RISCV_sprintf(tstr, sizeof(tstr), "%s_event_tap_resp_valid_", name);
+    RISCV_event_create(&event_tap_resp_valid_, tstr);
 }
 
 DmiDebug::~DmiDebug() {
+    RISCV_event_close(&event_tap_resp_valid_);
 }
 
 void DmiDebug::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
@@ -89,6 +101,12 @@ void DmiDebug::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_dport_rdata, i_dport_rdata.name());
 
         std::string pn(name());
+        sc_trace(o_vcd, r.tap_request_valid, pn + ".r_tap_request_valid");
+        sc_trace(o_vcd, r.tap_request_addr, pn + ".r_tap_request_addr");
+        sc_trace(o_vcd, r.tap_request_wdata, pn + ".r_tap_request_wdata");
+        sc_trace(o_vcd, r.tap_request_write, pn + ".r_tap_request_write");
+        sc_trace(o_vcd, r.tap_response_valid, pn + ".r_tap_response_valid");
+        sc_trace(o_vcd, r.tap_response_rdata, pn + ".r_tap_response_rdata");
         sc_trace(o_vcd, r.state, pn + ".r_state");
         sc_trace(o_vcd, r.regidx, pn + ".r_regidx");
         sc_trace(o_vcd, r.wdata, pn + ".r_wdata");
@@ -100,66 +118,48 @@ void DmiDebug::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
 ETransStatus DmiDebug::b_transport(Axi4TransactionType *trans) {
     uint64_t off = trans->addr - getBaseAddress();
-    if ((off + trans->xsize) > sizeof(bank_)) {
+    if ((off + trans->xsize) > sizeof(DmiRegBankType)) {
         return TRANS_ERROR;
     }
 
+    // Only 4-bytes requests:
     if (trans->action == MemAction_Read) {
-        readreg(off >> 2, trans->rpayload.b8);
-        if (trans->xsize == 8) {
-            readreg((off + 1) >> 2, &trans->rpayload.b8[4]);
-        }
+        readreg(off >> 2);
     } else {
         if (trans->wstrb & 0x00FF) {
-            writereg(off >> 2, trans->wpayload.b8);
-        }
-        if (trans->wstrb & 0xFF00) {
-            writereg((off + 4) >> 2, &trans->wpayload.b8[4]);
+            writereg(off >> 2, trans->wpayload.b32[0]);
+        } else if (trans->wstrb & 0xFF00) {
+            writereg((off + 4) >> 2, trans->wpayload.b32[1]);
         }
     }
+    RISCV_event_clear(&event_tap_resp_valid_);
+    RISCV_event_wait(&event_tap_resp_valid_);
+    trans->rpayload.b32[0] = tap_response_rdata;
     return TRANS_OK;
 }
 
-void DmiDebug::readreg(uint64_t idx, uint8_t *buf) {
-    memcpy(buf, &bank_.b32[idx], sizeof(uint32_t));
-    bankaccess_[idx] |= BANK_REG_READ;
+void DmiDebug::readreg(uint64_t idx) {
+    tap_request_addr = idx;
+    tap_request_write = 0;
+    tap_request_valid = 1;
 }
 
-void DmiDebug::writereg(uint64_t idx, uint8_t *buf) {
-    memcpy(&bank_.b32[idx], buf, sizeof(uint32_t));
-    bankaccess_[idx] |= BANK_REG_WRITE;
+void DmiDebug::writereg(uint64_t idx, uint32_t w32) {
+    tap_request_addr = idx;
+    tap_request_wdata = w32;
+    tap_request_write = 1;
+    tap_request_valid = 1;
 }
 
 
 void DmiDebug::comb() {
-    sc_uint<7> vb_regidx;
-    sc_uint<32> vb_wdata;
-    bool v_regwr;
-    bool v_regrd;
-
     v = r;
+    sc_uint<32> vb_tap_response_rdata;
+    bool v_tap_response_valid;
 
-    vb_regidx = 0;
-    vb_wdata = 0;
-    v_regwr = 0;
-    v_regrd = 0;
+    vb_tap_response_rdata = 0;
+    v_tap_response_valid = 0;
 
-    for (uint64_t i = 0; i < sizeof(bankaccess_); i++) {
-        if (bankaccess_[i] & BANK_REG_READ) {
-            vb_regidx = i;
-            v_regrd = 1;
-            break;
-        } else if (bankaccess_[i] & BANK_REG_WRITE) {
-            vb_regidx = i;
-            v_regwr = 1;
-            vb_wdata = bank_.b32[i];
-            break;
-        }
-    }
-    v.regidx = vb_regidx;
-    v.wdata = vb_wdata;
-    v.regwr = v_regwr;
-    v.regrd = v_regrd;
 
     if (r.haltreq && i_halted.read()) {
         v.haltreq = 0;
@@ -169,48 +169,67 @@ void DmiDebug::comb() {
     }
 
 
-    switch (r.regidx.read()) {
-    case 0x04:  // arg0[31:0]
-        if (r.regwr) {
-            v.data0 = r.wdata;
-        }
-        break;
-    case 0x05:  // arg0[63:32]
-        if (r.regwr) {
-            v.data1 = r.wdata;
-        }
-        break;
-    case 0x17:  // command
-        if (r.regwr) {
-            v.state = STATE_REQUEST;
-            v.dport_req_valid = 1;
-            v.transfer = r.wdata.read()[17];
-            v.write = r.wdata.read()[16];
-            v.dport_write = r.wdata.read()[17] & r.wdata.read()[16];
-            v.dport_addr = r.wdata.read()(11, 0);
-            v.dport_wdata = (r.data1, r.data0);
-            v.dport_wstrb = (r.wdata.read()[21] & r.wdata.read()[20],
-                             r.wdata.read()[21]);
-        }
-        break;
-    case 0x10:  // dmcontrol
-        if (r.regwr) {
-            v.haltreq = r.wdata.read()[31] && !i_halted.read();
-            v.resumereq = r.wdata.read()[30] && i_halted.read();
-        }
-        break;
-    default:;
-    }
-
     switch (r.state.read()) {
-    case STATE_REQUEST:
+    case STATE_IDLE:
+        v.dport_req_valid = 0;
+        v.dport_resp_ready = 0;
+        v.transfer = 0;
+        v.write = 0;
+        if (r.tap_request_valid.read()) {
+            v.tap_request_valid = 0;
+            v.state = STATE_DMI_ACCESS;
+            v.regidx = r.tap_request_addr;
+            v.wdata = r.tap_request_wdata;
+            v.regwr = r.tap_request_write;
+            v.regrd = !r.tap_request_write;
+        }
+        break;
+    case STATE_DMI_ACCESS:
+        v_tap_response_valid = 1;
+        v.state = STATE_IDLE;
+        switch (r.regidx.read()) {
+        case 0x04:  // arg0[31:0]
+            vb_tap_response_rdata = r.data0;
+            if (r.regwr) {
+                v.data0 = r.wdata;
+            }
+            break;
+        case 0x05:  // arg0[63:32]
+            vb_tap_response_rdata = r.data1;
+            if (r.regwr) {
+                v.data1 = r.wdata;
+            }
+            break;
+        case 0x17:  // command
+            if (r.regwr) {
+                v.state = STATE_CPU_REQUEST;
+                v.dport_req_valid = 1;
+                v.transfer = r.wdata.read()[17];
+                v.write = r.wdata.read()[16];
+                v.dport_write = r.wdata.read()[17] & r.wdata.read()[16];
+                v.dport_addr = r.wdata.read()(15, 0);
+                v.dport_wdata = (r.data1, r.data0);
+                v.dport_wstrb = (r.wdata.read()[21] & r.wdata.read()[20],
+                                 r.wdata.read()[21]);
+            }
+            break;
+        case 0x10:  // dmcontrol
+            if (r.regwr) {
+                v.haltreq = r.wdata.read()[31] && !i_halted.read();
+                v.resumereq = r.wdata.read()[30] && i_halted.read();
+            }
+            break;
+        default:;
+        }
+        break;
+    case STATE_CPU_REQUEST:
         if (i_dport_req_ready.read()) {
-            v.state = STATE_RESPONSE;
+            v.state = STATE_CPU_RESPONSE;
             v.dport_req_valid = 0;
             v.dport_resp_ready = 1;
         }
         break;
-    case STATE_RESPONSE:
+    case STATE_CPU_RESPONSE:
         if (i_dport_resp_valid.read()) {
             v.state = STATE_IDLE;
             v.dport_resp_ready = 0;
@@ -225,19 +244,15 @@ void DmiDebug::comb() {
         }
         break;
     default:;
-        v.dport_req_valid = 0;
-        v.dport_resp_ready = 0;
-        v.transfer = 0;
-        v.write = 0;
     }
+
+    v.tap_response_rdata = vb_tap_response_rdata;
+    v.tap_response_valid = v_tap_response_valid;
+
 
     if (!i_nrst) {
         R_RESET(v);
     }
-
-    // Copy data to Bank Avaialble on Bus:
-    bank_.r.data[0] = r.data0.read();
-    bank_.r.data[1] = r.data1.read();
 
     o_haltreq = r.haltreq;
     o_resumereq = r.resumereq;
@@ -252,19 +267,19 @@ void DmiDebug::comb() {
 void DmiDebug::registers() {
     r = v;
 
-    if (r.regrd.read()) {
-        bankaccess_[r.regidx.read().to_int()] &= ~BANK_REG_READ;
-        bus_req_event_.notify(1, SC_NS);
-    } else if (r.regwr.read()) {
-        bankaccess_[r.regidx.read().to_int()] &= ~BANK_REG_WRITE;
-        bus_req_event_.notify(1, SC_NS);
-    } else {
-        for (uint64_t i = 0; i < sizeof(bankaccess_); i++) {
-            if (bankaccess_[i]) {
-                bus_req_event_.notify(1, SC_NS);
-                break;
-            }
-        }
+    if (tap_request_valid && r.state.read() == STATE_IDLE) {
+        tap_request_valid = 0;
+        r.tap_request_valid = 1;
+        r.tap_request_addr = tap_request_addr;
+        r.tap_request_wdata = tap_request_wdata;
+        r.tap_request_write = tap_request_write;
+        r.tap_response_valid = 0;
+        r.tap_response_rdata = 0;
+    }
+
+    if (r.tap_response_valid) {
+        tap_response_rdata = r.tap_response_rdata.read();
+        RISCV_event_set(&event_tap_resp_valid_);
     }
 }
 

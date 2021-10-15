@@ -17,6 +17,11 @@
 #include <api_core.h>
 #include "dsu.h"
 #include <generic-isa.h>
+#include "cmd_dsu_busutil.h"
+#include "cmd_dsu_isrunning.h"
+#include "cmd_dsu_run.h"
+#include "cmd_dsu_halt.h"
+#include "cmd_dsu_status.h"
 
 namespace debugger {
 
@@ -27,7 +32,10 @@ DSU::DSU(const char *name) :
     registerInterface(static_cast<IDsuGeneric *>(this));
     registerInterface(static_cast<IDebug *>(this));
     registerAttribute("CPU", &cpu_);
+    registerAttribute("CmdExecutor", &cmdexec_);
+    registerAttribute("Tap", &tap_);
     icpulist_.make_list(0);
+    icmdlist_.make_list(0);;
     RISCV_event_create(&nb_event_, "DSU_event_nb");
 }
 
@@ -37,6 +45,28 @@ DSU::~DSU() {
 
 void DSU::postinitService() {
     RegMemBankGeneric::postinitService();
+
+    itap_ = static_cast<ITap *>
+            (RISCV_get_service_iface(tap_.to_string(), IFACE_TAP));
+    if (!itap_) {
+        RISCV_error("Can't find ITap interface %s", tap_.to_string());
+    }
+
+    iexec_ = static_cast<ICmdExecutor *>(
+        RISCV_get_service_iface(cmdexec_.to_string(), IFACE_CMD_EXECUTOR));
+    if (!iexec_) {
+        RISCV_error("Can't find ICmdExecutor interface %s", cmdexec_.to_string());
+    } else {
+        int cnt = 0;
+        icmdlist_.new_list_item().make_iface(new CmdDsuStatus(itap_));
+        icmdlist_.new_list_item().make_iface(new CmdDsuBusUtil(itap_));
+        icmdlist_.new_list_item().make_iface(new CmdDsuIsRunning(itap_));
+        icmdlist_.new_list_item().make_iface(new CmdDsuStatus(itap_));
+        icmdlist_.new_list_item().make_iface(new CmdDsuRun(itap_));
+        for (unsigned i = 0; i < icmdlist_.size(); i++) {
+            iexec_->registerCommand(static_cast<ICommand *>(icmdlist_[i].to_iface()));
+        }
+    }
 
     ICpuGeneric *icpu;
     for (unsigned i = 0; i < cpu_.size(); i++) {
@@ -54,6 +84,12 @@ void DSU::postinitService() {
 
     // Set default context
     hartSelect(0);
+}
+
+void DSU::predeleteService() {
+    for (unsigned i = 0; i < icmdlist_.size(); i++) {
+        iexec_->unregisterCommand(static_cast<ICommand *>(icmdlist_[i].to_iface()));
+    }
 }
 
 void DSU::nb_response_debug_port(DebugPortTransactionType *trans) {

@@ -14,18 +14,16 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_CMD_ISRUNNING_H__
-#define __DEBUGGER_CMD_ISRUNNING_H__
+#pragma once
 
 #include "api_core.h"
-#include "coreservices/itap.h"
 #include "coreservices/icommand.h"
 
 namespace debugger {
 
-class CmdIsRunning : public ICommand  {
+class CmdDsuHalt : public ICommand  {
  public:
-    explicit CmdIsRunning(ITap *tap);
+    explicit CmdDsuHalt(ITap *tap);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);
@@ -34,4 +32,3 @@ class CmdIsRunning : public ICommand  {
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_CMD_ISRUNNING_H__

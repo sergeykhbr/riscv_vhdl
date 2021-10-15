@@ -92,6 +92,8 @@ AsmArea::AsmArea(IGui *gui, QWidget *parent, uint64_t fixaddr)
             this, SLOT(slotCellDoubleClicked(int, int)));
 
     RISCV_mutex_init(&mutexAsmGaurd_);
+
+    reqNpc_.make_string("core0 reg npc");
 }
 
 AsmArea::~AsmArea() {
@@ -156,11 +158,11 @@ void AsmArea::slotUpdateByTimer() {
     }
     waitRegNpc_ = true;
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this),
-                            "reg npc", &respNpc_, true);
+                            reqNpc_.to_string(), &respNpc_, true);
 }
 
 void AsmArea::handleResponse(const char *cmd) {
-    if (strcmp(cmd, "reg npc") == 0) {
+    if (reqNpc_.is_equal(cmd) == 0) {
         waitRegNpc_ = false;
         if (!respNpc_.is_nil()) {
             npc_ = respNpc_.to_uint64();

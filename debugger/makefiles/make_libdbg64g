@@ -29,6 +29,8 @@ SRC_PATH =\
 	$(TOP_DIR)src/libdbg64g/services/comport \
 	$(TOP_DIR)src/libdbg64g/services/console \
 	$(TOP_DIR)src/libdbg64g/services/debug \
+	$(TOP_DIR)src/libdbg64g/services/debug/dsu \
+	$(TOP_DIR)src/libdbg64g/services/debug/dmi \
 	$(TOP_DIR)src/libdbg64g/services/elfloader \
 	$(TOP_DIR)src/libdbg64g/services/exec \
 	$(TOP_DIR)src/libdbg64g/services/exec/cmd \
@@ -60,14 +62,16 @@ SOURCES = \
 	serial_dbglink \
 	udp_dbglink \
 	elfreader \
-	cmd_busutil \
+	cmd_dsu_busutil \
+	cmd_dsu_halt \
+	cmd_dsu_isrunning \
+	cmd_dsu_run \
+	cmd_dsu_status \
 	cmd_cpi \
 	cmd_cpucontext \
 	cmd_disas \
 	cmd_elf2raw \
 	cmd_exit \
-	cmd_halt \
-	cmd_isrunning \
 	cmd_loadbin \
 	cmd_loadelf \
 	cmd_loadsrec \
@@ -76,9 +80,7 @@ SOURCES = \
 	cmd_memdump \
 	cmd_read \
 	cmd_reset \
-	cmd_run \
 	cmd_stack \
-	cmd_status \
 	cmd_symb \
 	cmd_write \
 	cmdexec \

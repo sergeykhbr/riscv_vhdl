@@ -18,12 +18,12 @@
  *             utilization characteristic.
  */
 
-#include "cmd_busutil.h"
+#include "cmd_dsu_busutil.h"
 #include <riscv-isa.h>
 
 namespace debugger {
 
-CmdBusUtil::CmdBusUtil(ITap *tap) : ICommand ("busutil", tap) {
+CmdDsuBusUtil::CmdDsuBusUtil(ITap *tap) : ICommand ("busutil", tap) {
 
     briefDescr_.make_string("Read per master bus utilization in percentage "
                             "of time");
@@ -49,7 +49,7 @@ CmdBusUtil::CmdBusUtil(ITap *tap) : ICommand ("busutil", tap) {
     mst_total_ = 0;
 }
 
-int CmdBusUtil::isValid(AttributeType *args) {
+int CmdDsuBusUtil::isValid(AttributeType *args) {
     if (!(*args)[0u].is_equal(cmdName_.to_string())) {
         return CMD_INVALID;
     }
@@ -59,7 +59,7 @@ int CmdBusUtil::isValid(AttributeType *args) {
     return CMD_WRONG_ARGS;
 }
 
-void CmdBusUtil::exec(AttributeType *args, AttributeType *res) {
+void CmdDsuBusUtil::exec(AttributeType *args, AttributeType *res) {
     uint64_t addr;
     Reg64Type rd;
     res->make_nil();

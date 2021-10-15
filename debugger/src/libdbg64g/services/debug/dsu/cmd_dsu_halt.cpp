@@ -14,13 +14,13 @@
  *  limitations under the License.
  */
 
-#include "cmd_halt.h"
+#include "cmd_dsu_halt.h"
 #include "debug/dsumap.h"
 #include <generic-isa.h>
 
 namespace debugger {
 
-CmdHalt::CmdHalt(ITap *tap) : ICommand ("halt", tap) {
+CmdDsuHalt::CmdDsuHalt(ITap *tap) : ICommand ("halt", tap) {
 
     briefDescr_.make_string("Stop simulation");
     detailedDescr_.make_string(
@@ -33,7 +33,7 @@ CmdHalt::CmdHalt(ITap *tap) : ICommand ("halt", tap) {
 }
 
 
-int CmdHalt::isValid(AttributeType *args) {
+int CmdDsuHalt::isValid(AttributeType *args) {
     AttributeType &name = (*args)[0u];
     if (!cmdName_.is_equal(name.to_string())
         && !name.is_equal("break")
@@ -47,7 +47,7 @@ int CmdHalt::isValid(AttributeType *args) {
     return CMD_VALID;
 }
 
-void CmdHalt::exec(AttributeType *args, AttributeType *res) {
+void CmdDsuHalt::exec(AttributeType *args, AttributeType *res) {
     res->attr_free();
     res->make_nil();
     CrGenericRuncontrolType runctrl;

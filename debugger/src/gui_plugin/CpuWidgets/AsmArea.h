@@ -78,6 +78,7 @@ class AsmArea : public QTableWidget,
     AttributeType cmdReadMem_;
     AttributeType asmLines_;
     AttributeType asmLinesOut_;
+    AttributeType reqNpc_;
     AttributeType respNpc_;
     AttributeType respReadMem_;
     AttributeType respBr_;

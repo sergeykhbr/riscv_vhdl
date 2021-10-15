@@ -14,14 +14,14 @@
  *  limitations under the License.
  */
 
-#include "cmd_status.h"
+#include "cmd_dsu_status.h"
 #include "debug/dsumap.h"
 
 namespace debugger {
 
-CmdStatus::CmdStatus(ITap *tap) : ICommand ("status", tap) {
+CmdDsuStatus::CmdDsuStatus(ITap *tap) : ICommand ("status", tap) {
 
-    briefDescr_.make_string("Read target's status register");
+    briefDescr_.make_string("Read target's status register throught the DSU registers");
     detailedDescr_.make_string(
         "Description:\n"
         "    Read Harts halt summary register as a uint64_t value.\n"
@@ -31,7 +31,7 @@ CmdStatus::CmdStatus(ITap *tap) : ICommand ("status", tap) {
         "    status\n");
 }
 
-int CmdStatus::isValid(AttributeType *args) {
+int CmdDsuStatus::isValid(AttributeType *args) {
     if (!cmdName_.is_equal((*args)[0u].to_string())) {
         return CMD_INVALID;
     }
@@ -41,7 +41,7 @@ int CmdStatus::isValid(AttributeType *args) {
     return CMD_WRONG_ARGS;
 }
 
-void CmdStatus::exec(AttributeType *args, AttributeType *res) {
+void CmdDsuStatus::exec(AttributeType *args, AttributeType *res) {
     res->attr_free();
     res->make_nil();
 

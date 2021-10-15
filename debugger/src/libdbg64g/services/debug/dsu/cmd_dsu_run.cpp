@@ -17,13 +17,13 @@
 #include <generic-isa.h>
 #include <ihap.h>
 #include <iservice.h>
-#include "cmd_run.h"
+#include "cmd_dsu_run.h"
 #include "debug/dsumap.h"
 #include "debug/dmi_regs.h"
 
 namespace debugger {
 
-CmdRun::CmdRun(ITap *tap) : ICommand ("run", tap) {
+CmdDsuRun::CmdDsuRun(ITap *tap) : ICommand ("run", tap) {
 
     briefDescr_.make_string("Run simulation for a specify number of steps\"");
     detailedDescr_.make_string(
@@ -47,7 +47,7 @@ CmdRun::CmdRun(ITap *tap) : ICommand ("run", tap) {
 }
 
 
-int CmdRun::isValid(AttributeType *args) {
+int CmdDsuRun::isValid(AttributeType *args) {
     AttributeType &name = (*args)[0u];
     if (!cmdName_.is_equal(name.to_string())
         && !name.is_equal("c")
@@ -60,7 +60,7 @@ int CmdRun::isValid(AttributeType *args) {
     return CMD_WRONG_ARGS;
 }
 
-void CmdRun::exec(AttributeType *args, AttributeType *res) {
+void CmdDsuRun::exec(AttributeType *args, AttributeType *res) {
     res->attr_free();
     res->make_nil();
     CrGenericRuncontrolType runctrl;
@@ -102,7 +102,7 @@ void CmdRun::exec(AttributeType *args, AttributeType *res) {
     RISCV_trigger_hap(HAP_Resume, 0, "Resume command processed");
 }
 
-uint64_t CmdRun::checkSwBreakpoint() {
+uint64_t CmdDsuRun::checkSwBreakpoint() {
     uint64_t addr_dpc = DSUREGBASE(csr[CSR_dpc]);
     uint64_t addr_dcsr = DSUREGBASE(csr[CSR_dcsr]);
     uint64_t addr_runcontrol = DSUREGBASE(csr[CSR_runcontrol]);
@@ -147,7 +147,7 @@ uint64_t CmdRun::checkSwBreakpoint() {
     return steps.val;
 }
 
-void CmdRun::writeBreakpoints() {
+void CmdDsuRun::writeBreakpoints() {
     uint64_t br_addr;
     uint64_t br_flags;
     uint32_t br_oplen;

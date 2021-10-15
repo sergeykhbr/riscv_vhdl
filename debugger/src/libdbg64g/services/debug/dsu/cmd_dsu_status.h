@@ -14,8 +14,7 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_CMD_STATUS_H__
-#define __DEBUGGER_CMD_STATUS_H__
+#pragma once
 
 #include "api_core.h"
 #include "coreservices/itap.h"
@@ -23,9 +22,9 @@
 
 namespace debugger {
 
-class CmdStatus : public ICommand  {
+class CmdDsuStatus : public ICommand  {
  public:
-    explicit CmdStatus(ITap *tap);
+    explicit CmdDsuStatus(ITap *tap);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);
@@ -33,5 +32,3 @@ class CmdStatus : public ICommand  {
 };
 
 }  // namespace debugger
-
-#endif  // __DEBUGGER_CMD_STATUS_H__

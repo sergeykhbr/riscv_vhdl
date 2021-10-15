@@ -23,7 +23,7 @@
 #include "services/debug/cpumonitor.h"
 #include "services/debug/codecov_generic.h"
 #include "services/debug/greth.h"
-#include "services/debug/dsu.h"
+#include "services/debug/dsu/dsu.h"
 #include "services/elfloader/elfreader.h"
 #include "services/exec/cmdexec.h"
 #include "services/mem/memlut.h"

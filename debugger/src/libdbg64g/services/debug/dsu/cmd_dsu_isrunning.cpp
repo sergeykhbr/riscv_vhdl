@@ -14,12 +14,12 @@
  *  limitations under the License.
  */
 
-#include "cmd_isrunning.h"
+#include "cmd_dsu_isrunning.h"
 #include "debug/dsumap.h"
 
 namespace debugger {
 
-CmdIsRunning::CmdIsRunning(ITap *tap) : ICommand ("isrunning", tap) {
+CmdDsuIsRunning::CmdDsuIsRunning(ITap *tap) : ICommand ("isrunning", tap) {
 
     briefDescr_.make_string("Check target's status");
     detailedDescr_.make_string(
@@ -29,7 +29,7 @@ CmdIsRunning::CmdIsRunning(ITap *tap) : ICommand ("isrunning", tap) {
         "    isrunning\n");
 }
 
-int CmdIsRunning::isValid(AttributeType *args) {
+int CmdDsuIsRunning::isValid(AttributeType *args) {
     if (!cmdName_.is_equal((*args)[0u].to_string())) {
         return CMD_INVALID;
     }
@@ -39,7 +39,7 @@ int CmdIsRunning::isValid(AttributeType *args) {
     return CMD_VALID;
 }
 
-void CmdIsRunning::exec(AttributeType *args, AttributeType *res) {
+void CmdDsuIsRunning::exec(AttributeType *args, AttributeType *res) {
     res->make_boolean(false);
 
     Reg64Type t1;
