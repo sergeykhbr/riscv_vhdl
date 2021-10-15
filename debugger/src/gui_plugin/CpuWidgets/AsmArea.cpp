@@ -162,7 +162,7 @@ void AsmArea::slotUpdateByTimer() {
 }
 
 void AsmArea::handleResponse(const char *cmd) {
-    if (reqNpc_.is_equal(cmd) == 0) {
+    if (reqNpc_.is_equal(cmd)) {
         waitRegNpc_ = false;
         if (!respNpc_.is_nil()) {
             npc_ = respNpc_.to_uint64();

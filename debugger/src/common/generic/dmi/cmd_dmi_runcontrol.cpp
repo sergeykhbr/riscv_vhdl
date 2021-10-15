@@ -61,10 +61,7 @@ int CmdDmiRunControl::isValid(AttributeType *args) {
         && !par1.is_equal("c")
         && !par1.is_equal("step")
         && !par1.is_equal("reg")
-        && !par1.is_equal("regs")) {
-        return CMD_WRONG_ARGS;
-    }
-    if (!par1.is_equal("reg") && args->size() != 3) {
+        && !(par1.is_equal("regs") && args->size() == 3)) {
         return CMD_WRONG_ARGS;
     }
     return CMD_VALID;
@@ -95,14 +92,17 @@ void CmdDmiRunControl::exec(AttributeType *args, AttributeType *res) {
         dmcontrol.bits.resumereq = 1;
         tap_->write(dmibaseaddr_ + 4*0x10, 4, dmcontrol.u8);
     } else if (par1.is_equal("step")) {
-        // enabe stepping = 1
+        // enable stepping = 1
         dcsr.val = 0;
+        dcsr.bits.stoptime = 1;
+        dcsr.bits.stopcount = 1;
         dcsr.bits.ebreakm = 1;
         dcsr.bits.step = 1;
-        tap_->write(dmibaseaddr_ + 4*0x04, 4, dcsr.u8);    // arg0 = [data1,data0]
+        tap_->write(dmibaseaddr_ + 4*0x04, 4, dcsr.u8);    // arg0[31:0] = data0
         // transfer dcsr,arg0
         command.val = 0;
         command.bits.transfer = 1;
+        command.bits.write = 1;
         command.bits.aarsize = 2;
         command.bits.regno = 0x7b0;//CSR_dcsr;
         tap_->write(dmibaseaddr_ + 4*0x17, 4, command.u8);    // arg0 = [data1,data0]
@@ -110,6 +110,28 @@ void CmdDmiRunControl::exec(AttributeType *args, AttributeType *res) {
         dmcontrol.val = 0;
         dmcontrol.bits.resumereq = 1;
         tap_->write(dmibaseaddr_ + 4*0x10, 4, dmcontrol.u8);
+        // Wait until resume request accepted and CPU halted afterward:
+        bool stepped = false;
+        while (!stepped) {
+            tap_->read(dmibaseaddr_ + 0x11*0x4, 4, reg.buf);    // dmstatus
+            if (reg.bits.b17 && reg.bits.b9) {          // allresumeack && allhalted
+                stepped = true;
+            }
+        }
+        // Restore stepping disabled
+        dcsr.val = 0;
+        dcsr.bits.stoptime = 1;
+        dcsr.bits.stopcount = 1;
+        dcsr.bits.ebreakm = 1;
+        dcsr.bits.step = 0;
+        tap_->write(dmibaseaddr_ + 4*0x04, 4, dcsr.u8);    // arg0[31:0] = data0
+        // transfer dcsr,arg0
+        command.val = 0;
+        command.bits.transfer = 1;
+        command.bits.write = 1;
+        command.bits.aarsize = 2;
+        command.bits.regno = 0x7b0;//CSR_dcsr;
+        tap_->write(dmibaseaddr_ + 4*0x17, 4, command.u8);    // arg0[31:0] = data0
     } else if (par1.is_equal("reg")) {
         AttributeType &regname = (*args)[2];
         if (regname.is_equal("npc")) {

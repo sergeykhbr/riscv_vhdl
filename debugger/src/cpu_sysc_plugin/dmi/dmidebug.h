@@ -132,6 +132,7 @@ class DmiDebug : public sc_module,
 
         sc_signal<bool> haltreq;
         sc_signal<bool> resumereq;
+        sc_signal<bool> resumeack;
         sc_signal<bool> transfer;
         sc_signal<bool> write;
         sc_signal<sc_uint<32>> data0;
@@ -177,6 +178,7 @@ class DmiDebug : public sc_module,
 
         iv.haltreq = 0;
         iv.resumereq = 0;
+        iv.resumeack = 0;
         iv.transfer = 0;
         iv.write = 0;
         iv.data0 = 0;

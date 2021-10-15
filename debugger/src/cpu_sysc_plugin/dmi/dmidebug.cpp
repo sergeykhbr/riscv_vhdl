@@ -57,6 +57,7 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name) : sc_module(name),
     sensitive << r.state;
     sensitive << r.haltreq;
     sensitive << r.resumereq;
+    sensitive << r.resumeack;
     sensitive << r.transfer;
     sensitive << r.write;
     sensitive << r.data0;
@@ -112,6 +113,7 @@ void DmiDebug::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.wdata, pn + ".r_wdata");
         sc_trace(o_vcd, r.regwr, pn + ".r_regwr");
         sc_trace(o_vcd, r.regrd, pn + ".r_regrd");
+        sc_trace(o_vcd, r.resumeack, pn + ".r_resumeack");
         sc_trace(o_vcd, r.haltreq, pn + ".r_haltreq");
     }
 }
@@ -166,6 +168,7 @@ void DmiDebug::comb() {
     }
     if (r.resumereq && !i_halted.read()) {
         v.resumereq = 0;
+        v.resumeack = 1;
     }
 
 
@@ -217,7 +220,24 @@ void DmiDebug::comb() {
             if (r.regwr) {
                 v.haltreq = r.wdata.read()[31] && !i_halted.read();
                 v.resumereq = r.wdata.read()[30] && i_halted.read();
+                if (r.wdata.read()[30] && i_halted.read()) {
+                    v.resumeack = 0;
+                }
             }
+            break;
+        case 0x11:  // dmstatus
+            vb_tap_response_rdata[17] = r.resumeack;                 // allresumeack
+            vb_tap_response_rdata[16] = r.resumeack;                 // anyresumeack
+            vb_tap_response_rdata[15] = 0;//not i_dporto(hsel).available; -- allnonexistent
+            vb_tap_response_rdata[14] = 0;//not i_dporto(hsel).available; -- anynonexistent
+            vb_tap_response_rdata[13] = 0;//not i_dporto(hsel).available; -- allunavail
+            vb_tap_response_rdata[12] = 0;//not i_dporto(hsel).available; -- anyunavail
+            vb_tap_response_rdata[11] = !i_halted;//not i_dporto(hsel).halted and i_dporto(hsel).available; -- allrunning:
+            vb_tap_response_rdata[10] = !i_halted;//not i_dporto(hsel).halted and i_dporto(hsel).available; -- anyrunning:
+            vb_tap_response_rdata[9] = i_halted;//i_dporto(hsel).halted and i_dporto(hsel).available;      -- allhalted:
+            vb_tap_response_rdata[8] = i_halted;//i_dporto(hsel).halted and i_dporto(hsel).available;      // anyhalted:
+            vb_tap_response_rdata[7] = 1;                   // authenticated:
+            vb_tap_response_rdata(3, 0) = 0x2;              // version: dbg spec v0.13
             break;
         default:;
         }
