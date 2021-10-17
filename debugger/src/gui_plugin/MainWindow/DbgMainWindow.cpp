@@ -325,7 +325,7 @@ void DbgMainWindow::slotSimulationTime(double t) {
     realMSecPrev_ = cur_sec;
     simSecPrev_ = t;
 
-    simTime.asprintf("Simulation Time: %.1f seconds. Slowdown: %.1f",
+    simTime = QString::asprintf("Simulation Time: %.1f seconds. Slowdown: %.1f",
                     t, slowdown);
     statusBar()->showMessage(simTime);
     requestedCmd_ &= ~0x2;
@@ -498,7 +498,7 @@ void DbgMainWindow::slotUpdateByTimer() {
 
 void DbgMainWindow::slotActionAbout() {
     QString build;
-    build.asprintf("Version: 1.0\nBuild:     %s\n", __DATE__);
+    build = QString::asprintf("Version: 1.0\nBuild:     %s\n", __DATE__);
     build += tr("Author: Sergey Khabarov\n");
     build += tr("git:    http://github.com/sergeykhbr/riscv_vhdl\n");
     build += tr("e-mail: sergeykhbr@gmail.com\n\n\n"

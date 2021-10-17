@@ -75,8 +75,7 @@ void CodeCoverageWidget::slotUpdateByTimer() {
     if (requested_) {
         return;
     }
-    QString total;
-    total.asprintf("%.2f %%", coverage_);
+    QString total = QString::asprintf("%.2f %%", coverage_);
     lblCoverage_->setText(total);
 
     requested_ = true;

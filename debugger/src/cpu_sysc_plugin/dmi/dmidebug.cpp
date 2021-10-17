@@ -44,6 +44,10 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name) : sc_module(name),
     sensitive << i_dport_req_ready;
     sensitive << i_dport_resp_valid;
     sensitive << i_dport_rdata;
+    sensitive << w_trst;
+    sensitive << w_tck;
+    sensitive << w_tms;
+    sensitive << w_tdi;
     sensitive << r.tap_request_valid;
     sensitive << r.tap_request_addr;
     sensitive << r.tap_request_write;
@@ -72,6 +76,18 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name) : sc_module(name),
     SC_METHOD(registers);
     sensitive << i_clk.pos();
 
+    tap_ = new JtagTap("tap");
+    tap_->i_nrst(i_nrst);
+    tap_->i_trst(w_trst);
+    tap_->i_tck(w_tck);
+    tap_->i_tms(w_tms);
+    tap_->i_tdi(w_tdi);
+    tap_->o_tdo(w_tdo);
+    tap_->i_dmi_rdata(wb_dmi_rdata);
+    tap_->i_dmi_busy(w_dmi_busy);
+    tap_->o_dmi_hardreset(w_dmi_hardreset);
+
+    trst_ = 0;
     tap_request_valid = 0;
     tap_request_addr = 0;
     tap_request_write = 0;
@@ -79,13 +95,18 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name) : sc_module(name),
     char tstr[256];
     RISCV_sprintf(tstr, sizeof(tstr), "%s_event_tap_resp_valid_", name);
     RISCV_event_create(&event_tap_resp_valid_, tstr);
+    RISCV_sprintf(tstr, sizeof(tstr), "%s_event_dtm_ready", name);
+    RISCV_event_create(&event_dtm_ready_, tstr);
 }
 
 DmiDebug::~DmiDebug() {
+    delete tap_;
     RISCV_event_close(&event_tap_resp_valid_);
+    RISCV_event_close(&event_dtm_ready_);
 }
 
 void DmiDebug::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+    tap_->generateVCD(i_vcd, o_vcd);
     if (i_vcd) {
     }
     if (o_vcd) {
@@ -102,6 +123,9 @@ void DmiDebug::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_dport_rdata, i_dport_rdata.name());
 
         std::string pn(name());
+        sc_trace(o_vcd, w_tck, pn + ".tck");
+        sc_trace(o_vcd, w_tms, pn + ".tms");
+        sc_trace(o_vcd, w_tdi, pn + ".tdi");
         sc_trace(o_vcd, r.tap_request_valid, pn + ".r_tap_request_valid");
         sc_trace(o_vcd, r.tap_request_addr, pn + ".r_tap_request_addr");
         sc_trace(o_vcd, r.tap_request_wdata, pn + ".r_tap_request_wdata");
@@ -151,6 +175,28 @@ void DmiDebug::writereg(uint64_t idx, uint32_t w32) {
     tap_request_wdata = w32;
     tap_request_write = 1;
     tap_request_valid = 1;
+}
+
+void DmiDebug::resetTAP() {
+    trst_ = 1;
+    dtm_scaler_cnt_ = 0;
+    RISCV_event_clear(&event_dtm_ready_);
+    RISCV_event_wait(&event_dtm_ready_);
+    trst_ = 0;
+}
+
+void DmiDebug::setPins(char tck, char tms, char tdi) {
+    tck_ = tck;
+    tms_ = tms;
+    tdi_ = tdi;
+    dtm_scaler_cnt_ = 0;
+
+    RISCV_event_clear(&event_dtm_ready_);
+    RISCV_event_wait(&event_dtm_ready_);
+}
+
+bool DmiDebug::getTDO() {
+    return w_tdo.read();
 }
 
 
@@ -300,6 +346,16 @@ void DmiDebug::registers() {
     if (r.tap_response_valid) {
         tap_response_rdata = r.tap_response_rdata.read();
         RISCV_event_set(&event_tap_resp_valid_);
+    }
+
+    w_trst = trst_;
+    w_tck = tck_;
+    w_tms = tms_;
+    w_tdi = tdi_;
+    if (dtm_scaler_cnt_ < 3) {
+        if (++dtm_scaler_cnt_ == 3) {
+            RISCV_event_set(&event_dtm_ready_);
+        }
     }
 }
 

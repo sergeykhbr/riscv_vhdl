@@ -1,1 +1,3 @@
 .svn
+openocd_gdb_cfg/*.log
+

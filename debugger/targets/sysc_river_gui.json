@@ -75,6 +75,19 @@
                                    'Indicators':[],
                                   }]
           ]}]},
+    {'Class':'TcpServerClass','Instances':[
+          {'Name':'jtagbb','Attr':[
+                ['LogLevel',4],
+                ['Enable',true],
+                ['Timeout',500],
+                ['BlockingMode',true],
+                ['HostIP',''],
+                ['Type','openocd'],
+                ['HostPort',9824],
+                ['ListenDefaultOutput',false, 'Re-direct console output into TCP'],
+                ['PlatformConfig',{}],
+                ['JtagTap',['core0','tap'], 'Jtag DTM systemc module implementation']
+          ]}]},
     {'Class':'ComPortServiceClass','Instances':[
           {'Name':'port1','Attr':[
                 ['LogLevel',2],

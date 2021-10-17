@@ -14,8 +14,7 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_TCPSERVER_H__
-#define __DEBUGGER_TCPSERVER_H__
+#pragma once
 
 #include <iclass.h>
 #include <iservice.h>
@@ -30,7 +29,7 @@ class TcpServer : public IService,
     explicit TcpServer(const char *name);
 
     /** IService interface */
-    virtual void postinitService();
+    virtual void postinitService() override;
 
  protected:
     /** IThread interface */
@@ -51,6 +50,7 @@ class TcpServer : public IService,
     AttributeType platformConfig_;
     AttributeType type_;
     AttributeType listenDefaultOutput_;
+    AttributeType jtagtap_;
 
     struct sockaddr_in sockaddr_ipv4_;
     socket_def hsock_;
@@ -60,5 +60,3 @@ class TcpServer : public IService,
 DECLARE_CLASS(TcpServer)
 
 }  // namespace debugger
-
-#endif  // __DEBUGGER_TCPSERVER_H__

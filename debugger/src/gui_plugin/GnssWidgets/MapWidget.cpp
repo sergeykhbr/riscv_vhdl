@@ -294,8 +294,7 @@ void MapWidget::renderTrack(int trkIdx, QPainter &p) {
         p.drawLine(xy0.x(), xy0.y() + 2, xy0.x(), xy0.y() - 2);
     }
     
-    QString strPosition;
-    strPosition.asprintf("GPS LMS: Lat %.4f; Lon %.4f", lat, lon);
+    QString strPosition = QString::asprintf("GPS LMS: Lat %.4f; Lon %.4f", lat, lon);
     int h = p.fontMetrics().size(Qt::TextSingleLine, strPosition).height();
 
     QRect rect = QRect(QPoint(0, trkIdx * (h + 5)),

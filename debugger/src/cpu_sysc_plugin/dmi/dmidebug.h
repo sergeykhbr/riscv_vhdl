@@ -20,7 +20,9 @@
 #include "iservice.h"
 #include "coreservices/imemop.h"
 #include "coreservices/ireset.h"
+#include "coreservices/ijtagtap.h"
 #include "riverlib/river_cfg.h"
+#include "jtagtap.h"
 #include <systemc.h>
 
 namespace debugger {
@@ -63,7 +65,8 @@ union DmiRegBankType {
 };
 
 class DmiDebug : public sc_module,
-                 public IMemoryOperation {
+                 public IMemoryOperation,
+                 public IJtagTap {
 
  public:
     sc_in<bool> i_clk;
@@ -92,6 +95,12 @@ class DmiDebug : public sc_module,
     /** IMemoryOperation */
     virtual ETransStatus b_transport(Axi4TransactionType *trans);
 
+    /** IJtagTap */
+    virtual void resetTAP();
+    virtual void setPins(char tck, char tms, char tdi);
+    virtual bool getTDO();
+
+
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
@@ -103,12 +112,21 @@ class DmiDebug : public sc_module,
  private:
     IFace *iparent_;    // pointer on parent module object (used for logging)
 
+    JtagTap *tap_;
+
     bool tap_request_valid;
     uint32_t tap_request_addr;
     bool tap_request_write;
     uint32_t tap_request_wdata;
     uint32_t tap_response_rdata;
     event_def event_tap_resp_valid_;
+    event_def event_dtm_ready_;
+
+    char trst_;
+    char tck_;
+    char tms_;
+    char tdi_;
+    int dtm_scaler_cnt_;
 
     static const unsigned STATE_IDLE = 0;
     static const unsigned STATE_DMI_ACCESS = 1;
@@ -145,6 +163,15 @@ class DmiDebug : public sc_module,
         sc_signal<sc_uint<2>> dport_wstrb;
         sc_signal<bool> dport_resp_ready;
     } r, v;
+
+    sc_signal<bool> w_trst;
+    sc_signal<bool> w_tck;
+    sc_signal<bool> w_tms;
+    sc_signal<bool> w_tdi;
+    sc_signal<bool> w_tdo;
+    sc_signal<sc_uint<32>> wb_dmi_rdata;
+    sc_signal<bool> w_dmi_busy;
+    sc_signal<bool> w_dmi_hardreset;
 
     sc_event bus_req_event_;
     sc_event bus_resp_event_;
@@ -192,7 +219,6 @@ class DmiDebug : public sc_module,
     }
 
     bool async_reset_;
-
 };
 
 }  // namespace debugger

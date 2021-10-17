@@ -90,6 +90,7 @@ SOURCES = \
 	autocompleter \
 	dpiclient \
 	tcpclient \
+	tcpjtagbb \
 	tcpcmd_gen \
 	jsoncmd \
 	gdbcmd \

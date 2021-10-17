@@ -29,6 +29,7 @@
 #include "services/mem/memlut.h"
 #include "services/mem/memsim.h"
 #include "services/mem/rmemsim.h"
+#include "services/remote/tcpjtagbb.h"
 #include "services/remote/tcpclient.h"
 #include "services/remote/tcpserver.h"
 #include "services/remote/dpiclient.h"
@@ -86,6 +87,7 @@ extern "C" int RISCV_init() {
     REGISTER_CLASS_IDX(GenericCodeCoverage, 16);
     REGISTER_CLASS_IDX(Greth, 17)
     REGISTER_CLASS_IDX(DSU, 18);
+    REGISTER_CLASS_IDX(TcpJtagBitBangClient, 19);
 
     pcore_->load_plugins();
     return 0;

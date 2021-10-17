@@ -28,6 +28,7 @@ TcpServer::TcpServer(const char *name) : IService(name) {
     registerAttribute("PlatformConfig", &platformConfig_);
     registerAttribute("Type", &type_);
     registerAttribute("ListenDefaultOutput", &listenDefaultOutput_);
+    registerAttribute("JtagTap", &jtagtap_);
 }
 
 void TcpServer::postinitService() {
@@ -74,26 +75,40 @@ void TcpServer::busyLoop() {
             setRcvTimeout(client_sock, timeout_.to_int());
             RISCV_sprintf(tname, sizeof(tname), "client%d", idx++);
 
-            icls = static_cast<IClass *>(RISCV_get_class("TcpClientClass"));
-            isrv = icls->createService(".", tname);
             AttributeType lst, item;
             lst.make_list(0);
             item.make_list(2);
-            item[0u].make_string("LogLevel");
-            item[1].make_int64(logLevel_.to_int());
-            lst.add_to_list(&item);
-            item[0u].make_string("Enable");
-            item[1].make_boolean(true);
-            lst.add_to_list(&item);
-            item[0u].make_string("PlatformConfig");
-            item[1].clone(&platformConfig_);
-            lst.add_to_list(&item);
-            item[0u].make_string("Type");
-            item[1].clone(&type_);
-            lst.add_to_list(&item);
-            item[0u].make_string("ListenDefaultOutput");
-            item[1].clone(&listenDefaultOutput_);
-            lst.add_to_list(&item);
+            if (type_.is_equal("openocd")) {
+                icls = static_cast<IClass *>(RISCV_get_class("TcpJtagBitBangClientClass"));
+                isrv = icls->createService(".", tname);
+                item[0u].make_string("LogLevel");
+                item[1].make_int64(logLevel_.to_int());
+                lst.add_to_list(&item);
+                item[0u].make_string("Enable");
+                item[1].make_boolean(true);
+                lst.add_to_list(&item);
+                item[0u].make_string("JtagTap");
+                item[1].clone(&jtagtap_);
+                lst.add_to_list(&item);
+            } else {
+                icls = static_cast<IClass *>(RISCV_get_class("TcpClientClass"));
+                isrv = icls->createService(".", tname);
+                item[0u].make_string("LogLevel");
+                item[1].make_int64(logLevel_.to_int());
+                lst.add_to_list(&item);
+                item[0u].make_string("Enable");
+                item[1].make_boolean(true);
+                lst.add_to_list(&item);
+                item[0u].make_string("PlatformConfig");
+                item[1].clone(&platformConfig_);
+                lst.add_to_list(&item);
+                item[0u].make_string("Type");
+                item[1].clone(&type_);
+                lst.add_to_list(&item);
+                item[0u].make_string("ListenDefaultOutput");
+                item[1].clone(&listenDefaultOutput_);
+                lst.add_to_list(&item);
+            }
 
             isrv->initService(&lst);
             IThread *ithrd =
