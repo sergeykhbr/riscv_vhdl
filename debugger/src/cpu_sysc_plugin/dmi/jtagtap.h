@@ -30,9 +30,16 @@ SC_MODULE(JtagTap) {
     sc_in<bool> i_tms;
     sc_in<bool> i_tdi;
     sc_out<bool> o_tdo;
-    sc_in<sc_uint<32>> i_dmi_rdata;
+    sc_out<bool> o_dmi_req_valid;
+    sc_out<bool> o_dmi_req_write;
+    sc_out<sc_uint<7>> o_dmi_req_addr;
+    sc_out<sc_uint<32>> o_dmi_req_data;
+    sc_in<sc_uint<32>> i_dmi_resp_data;
     sc_in<bool> i_dmi_busy;
+    sc_in<bool> i_dmi_error;
+    sc_out<bool> o_dmi_reset;
     sc_out<bool> o_dmi_hardreset;
+    sc_out<bool> o_trst;
 
     void comb();
     void registers();
@@ -91,7 +98,7 @@ SC_MODULE(JtagTap) {
     };
 
     static const int idcode = 0x10e31913;
-    static const int abits = 6;
+    static const int abits = 7;
     static const int drlen = abits + 32 + 2;
     static const int irlen = 5;
 
@@ -99,10 +106,6 @@ SC_MODULE(JtagTap) {
     static const uint64_t DTMCONTROL_IDLE           = 12;
     static const uint64_t DTMCONTROL_DMIRESET       = 16;
     static const uint64_t DTMCONTROL_DMIHARDRESET   = 17;
-
-    static const uint64_t DMI_OP                    = 3;
-    static const uint64_t DMI_DATA                  = (0xffffffffull<<2);
-    static const uint64_t DMI_ADDRESS               = ((1ull<<(abits+34)) - (1ull<<34));
 
     static const uint64_t DMISTAT_SUCCESS           = 0;
     static const uint64_t DMISTAT_RESERVED          = 1;
@@ -123,12 +126,12 @@ SC_MODULE(JtagTap) {
         sc_signal<sc_uint<7>> dr_length;
         sc_signal<sc_uint<drlen>> dr;
         sc_signal<bool> bypass;
-        sc_signal<sc_uint<2>> dmistat;
         sc_uint<32> datacnt;
     } r, v;
 
     struct NRegistersType {
         sc_signal<sc_uint<irlen>> ir;
+        sc_signal<sc_uint<abits>> dmi_addr;
     } nr, nv;
 
 
@@ -139,11 +142,11 @@ SC_MODULE(JtagTap) {
         iv.tms = 0;
         iv.dr_length = 0;
         iv.dr = idcode;
-        iv.dmistat = DMISTAT_SUCCESS;
         iv.datacnt = 0;
     }
     void NR_RESET(NRegistersType &iv) {
         iv.ir = IR_IDCODE;
+        iv.dmi_addr = 0;
     }
 };
 

@@ -23,9 +23,12 @@
 #include "coreservices/ijtagtap.h"
 #include "riverlib/river_cfg.h"
 #include "jtagtap.h"
+#include "jtagcdc.h"
 #include <systemc.h>
 
 namespace debugger {
+
+static const int CFG_LOG2_CPU_MAX = 1;
 
 union DmiRegBankType {
     struct DmiRegsType {
@@ -89,7 +92,7 @@ class DmiDebug : public sc_module,
 
     SC_HAS_PROCESS(DmiDebug);
 
-    DmiDebug(IFace *parent, sc_module_name name);
+    DmiDebug(IFace *parent, sc_module_name name, bool async_reset);
     virtual ~DmiDebug();
 
     /** IMemoryOperation */
@@ -113,12 +116,13 @@ class DmiDebug : public sc_module,
     IFace *iparent_;    // pointer on parent module object (used for logging)
 
     JtagTap *tap_;
+    JtagCDC *cdc_;
 
-    bool tap_request_valid;
-    uint32_t tap_request_addr;
-    bool tap_request_write;
-    uint32_t tap_request_wdata;
-    uint32_t tap_response_rdata;
+    bool bus_req_valid_;
+    uint32_t bus_req_addr_;
+    bool bus_req_write_;
+    uint32_t bus_req_wdata_;
+    uint32_t bus_resp_data_;
     event_def event_tap_resp_valid_;
     event_def event_dtm_ready_;
 
@@ -133,45 +137,31 @@ class DmiDebug : public sc_module,
     static const unsigned STATE_CPU_REQUEST = 2;
     static const unsigned STATE_CPU_RESPONSE = 3;
 
-    struct RegistersType {
-        sc_signal<bool> tap_request_valid;
-        sc_signal<sc_uint<7>> tap_request_addr;
-        sc_signal<bool> tap_request_write;
-        sc_signal<sc_uint<32>> tap_request_wdata;
-        sc_signal<bool> tap_response_valid;
-        sc_signal<sc_uint<32>> tap_response_rdata;
 
-        sc_signal<sc_uint<7>> regidx;
-        sc_signal<sc_uint<32>> wdata;
-        sc_signal<bool> regwr;
-        sc_signal<bool> regrd;
+    sc_signal<bool> w_i_trst;
+    sc_signal<bool> w_i_tck;
+    sc_signal<bool> w_i_tms;
+    sc_signal<bool> w_i_tdi;
+    sc_signal<bool> w_o_tdo;
+    sc_signal<bool> w_tap_dmi_req_valid;
+    sc_signal<bool> w_tap_dmi_req_write;
+    sc_signal<sc_uint<7>> wb_tap_dmi_req_addr;
+    sc_signal<sc_uint<32>> wb_tap_dmi_req_data;
+    sc_signal<bool> w_tap_dmi_reset;
+    sc_signal<bool> w_tap_dmi_hardreset;
+    sc_signal<bool> w_tap_trst;
 
-        sc_signal<sc_uint<3>> state;
-
-        sc_signal<bool> haltreq;
-        sc_signal<bool> resumereq;
-        sc_signal<bool> resumeack;
-        sc_signal<bool> transfer;
-        sc_signal<bool> write;
-        sc_signal<sc_uint<32>> data0;
-        sc_signal<sc_uint<32>> data1;
-
-        sc_signal<bool> dport_req_valid;
-        sc_signal<bool> dport_write;
-        sc_signal<sc_uint<CFG_DPORT_ADDR_BITS>> dport_addr;
-        sc_signal<sc_uint<RISCV_ARCH>> dport_wdata;
-        sc_signal<sc_uint<2>> dport_wstrb;
-        sc_signal<bool> dport_resp_ready;
-    } r, v;
-
-    sc_signal<bool> w_trst;
-    sc_signal<bool> w_tck;
-    sc_signal<bool> w_tms;
-    sc_signal<bool> w_tdi;
-    sc_signal<bool> w_tdo;
-    sc_signal<sc_uint<32>> wb_dmi_rdata;
-    sc_signal<bool> w_dmi_busy;
-    sc_signal<bool> w_dmi_hardreset;
+    sc_signal<bool> w_cdc_dmi_req_valid;
+    sc_signal<bool> w_cdc_dmi_req_ready;
+    sc_signal<bool> w_cdc_dmi_req_write;
+    sc_signal<sc_uint<7>> wb_cdc_dmi_req_addr;
+    sc_signal<sc_uint<32>> wb_cdc_dmi_req_data;
+    sc_signal<bool> w_cdc_dmi_reset;
+    sc_signal<bool> w_cdc_dmi_hardreset;
+    
+    sc_signal<sc_uint<32>> wb_jtag_dmi_resp_data;
+    sc_signal<bool> w_jtag_dmi_busy;
+    sc_signal<bool> w_jtag_dmi_error;
 
     sc_event bus_req_event_;
     sc_event bus_resp_event_;
@@ -188,14 +178,50 @@ class DmiDebug : public sc_module,
     sc_signal<sc_uint<CFG_DPORT_ADDR_BITS>> wb_dport_addr;
     sc_signal<sc_uint<RISCV_ARCH>> wb_dport_wdata;
 
+    struct RegistersType {
+        sc_signal<bool> bus_jtag;       // source of the DMI request
+
+        sc_signal<bool> bus_req_valid;
+        sc_signal<sc_uint<7>> bus_req_addr;
+        sc_signal<bool> bus_req_write;
+        sc_signal<sc_uint<32>> bus_req_wdata;
+        sc_signal<bool> bus_resp_valid;
+        sc_signal<sc_uint<32>> bus_resp_data;
+        sc_signal<sc_uint<32>> jtag_resp_data;
+
+        sc_signal<sc_uint<7>> regidx;
+        sc_signal<sc_uint<32>> wdata;
+        sc_signal<bool> regwr;
+        sc_signal<bool> regrd;
+
+        sc_signal<sc_uint<3>> state;
+
+        sc_signal<bool> haltreq;
+        sc_signal<bool> resumereq;
+        sc_signal<bool> resumeack;
+        sc_signal<bool> dmactive;
+        sc_signal<sc_uint<CFG_LOG2_CPU_MAX>> hartsel;
+        sc_signal<bool> transfer;
+        sc_signal<bool> write;
+        sc_signal<sc_uint<32>> data0;
+        sc_signal<sc_uint<32>> data1;
+
+        sc_signal<bool> dport_req_valid;
+        sc_signal<bool> dport_write;
+        sc_signal<sc_uint<CFG_DPORT_ADDR_BITS>> dport_addr;
+        sc_signal<sc_uint<RISCV_ARCH>> dport_wdata;
+        sc_signal<sc_uint<2>> dport_wstrb;
+        sc_signal<bool> dport_resp_ready;
+    } r, v;
 
     void R_RESET(RegistersType &iv) {
-        iv.tap_request_valid = 0;
-        iv.tap_request_addr = 0;
-        iv.tap_request_write = 0;
-        iv.tap_request_wdata = 0;
-        iv.tap_response_valid = 0;
-        iv.tap_response_rdata = 0;
+        iv.bus_jtag = 0;
+        iv.bus_req_valid = 0;
+        iv.bus_req_addr = 0;
+        iv.bus_req_write = 0;
+        iv.bus_req_wdata = 0;
+        iv.bus_resp_valid = 0;
+        iv.bus_resp_data = 0;
 
         iv.regidx = 0;
         iv.wdata = 0;
@@ -206,6 +232,8 @@ class DmiDebug : public sc_module,
         iv.haltreq = 0;
         iv.resumereq = 0;
         iv.resumeack = 0;
+        iv.dmactive = 0;
+        iv.hartsel = 0;
         iv.transfer = 0;
         iv.write = 0;
         iv.data0 = 0;

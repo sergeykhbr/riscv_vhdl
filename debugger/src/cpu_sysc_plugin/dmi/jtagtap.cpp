@@ -25,31 +25,43 @@ JtagTap::JtagTap(sc_module_name name) : sc_module(name),
     i_tms("i_tms"),
     i_tdi("i_tdi"),
     o_tdo("o_tdo"),
-    i_dmi_rdata("i_dmi_rdata"),
+    o_dmi_req_valid("o_dmi_req_valid"),
+    o_dmi_req_write("o_dmi_req_write"),
+    o_dmi_req_addr("o_dmi_req_addr"),
+    o_dmi_req_data("o_dmi_req_data"),
+    i_dmi_resp_data("i_dmi_resp_data"),
     i_dmi_busy("i_dmi_busy"),
-    o_dmi_hardreset("o_dmi_hardreset") {
+    i_dmi_error("i_dmi_error"),
+    o_dmi_reset("o_dmi_reset"),
+    o_dmi_hardreset("o_dmi_hardreset"),
+    o_trst("o_trst") {
 
     SC_METHOD(comb);
     sensitive << i_trst;
     sensitive << i_tck;
     sensitive << i_tms;
     sensitive << i_tdi;
-    sensitive << i_dmi_rdata;
+    sensitive << i_dmi_resp_data;
     sensitive << i_dmi_busy;
+    sensitive << i_dmi_error;
     sensitive << r.state;
     sensitive << r.tck;
     sensitive << r.tms;
     sensitive << r.tdi;
     sensitive << r.dr_length;
     sensitive << r.dr;
+    sensitive << nr.ir;
+    sensitive << nr.dmi_addr;
 
     SC_METHOD(registers);
     sensitive << i_tck.pos();
     sensitive << i_trst;
+    sensitive << i_nrst;
 
     SC_METHOD(nregisters);
     sensitive << i_tck.neg();
     sensitive << i_trst;
+    sensitive << i_nrst;
 }
 
 void JtagTap::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
@@ -74,13 +86,34 @@ void JtagTap::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
 void JtagTap::comb() {
     sc_uint<drlen> vb_dr;
+    sc_uint<2> vb_stat;
+    bool v_dmi_req_valid;
+    bool v_dmi_req_write;
+    sc_uint<32> vb_dmi_req_data;
+    sc_uint<abits> vb_dmi_req_addr;
+    bool v_dmi_reset;
+    bool v_dmi_hardreset;
 
     v = r;
     nv = nr;
     vb_dr = r.dr;
+    v_dmi_req_valid = 0;
+    v_dmi_req_write = 0;
+    vb_dmi_req_data = 0;
+    vb_dmi_req_addr = 0;
+    v_dmi_reset = 0;
+    v_dmi_hardreset = 0;
 
     int t = r.dr_length.read().to_int();
     unsigned t_ir = nr.ir.read();
+
+    if (i_dmi_busy.read()) {
+        vb_stat = DMISTAT_BUSY;
+    } else if (i_dmi_error.read()) {
+        vb_stat = DMISTAT_FAILED;
+    } else {
+        vb_stat = DMISTAT_SUCCESS;
+    }
 
     switch (r.state.read()) {
     case CAPTURE_DR:
@@ -91,10 +124,12 @@ void JtagTap::comb() {
             vb_dr(31, 0) = 0;
             vb_dr(3, 0) = 0x1;      // version
             vb_dr(9, 4) = abits;    // the size of the address
-            vb_dr(11, 10) = r.dmistat;
+            vb_dr(11, 10) = vb_stat;
             v.dr_length = 32;
         } else if (nr.ir.read() == IR_DBUS) {
-            vb_dr = i_dmi_rdata;        // Result of previous DMI transaction
+            vb_dr(1, 0) = vb_stat;
+            vb_dr(33, 2) = i_dmi_resp_data;
+            vb_dr(34 + abits - 1, 34) = nr.dmi_addr;
             v.dr_length = abits + 34;
         } else if (nr.ir.read() == IR_BYPASS) {
             vb_dr[0] = r.bypass;
@@ -113,40 +148,17 @@ void JtagTap::comb() {
         break;
     case UPDATE_DR:
         if (nr.ir.read() == IR_DTMCONTROL) {
-            if (r.dr.read()[DTMCONTROL_DMIRESET] == 1) {
-                v.dmistat = DMISTAT_SUCCESS;
-            } if (r.dr.read()[DTMCONTROL_DMIHARDRESET]) {
-                //reset();
-            }
+            v_dmi_reset = r.dr.read()[DTMCONTROL_DMIRESET];
+            v_dmi_hardreset = r.dr.read()[DTMCONTROL_DMIHARDRESET];
         } else if (nr.ir.read() == IR_BYPASS) {
             v.bypass = r.dr.read()[0];
         } else if (nr.ir.read() == IR_DBUS) {
-            /*unsigned op = get_field(dr, DMI_OP);
-            uint32_t data = get_field(dr, DMI_DATA);
-            unsigned address = get_field(dr, DMI_ADDRESS);
+            v_dmi_req_valid = r.dr.read()(1, 0).or_reduce();
+            v_dmi_req_write = r.dr.read()[1];
+            vb_dmi_req_data = r.dr.read()(33, 2);
+            vb_dmi_req_addr = r.dr.read()(34 + abits - 1, 34);
 
-            dmi = dr;
-
-            bool success = true;
-            if (op == DMI_OP_READ) {
-              uint32_t value;
-              if (dm->dmi_read(address, &value)) {
-                dmi = set_field(dmi, DMI_DATA, value);
-              } else {
-                success = false;
-              }
-            } else if (op == DMI_OP_WRITE) {
-              success = dm->dmi_write(address, data);
-            }
-
-            if (success) {
-              dmi = set_field(dmi, DMI_OP, DMI_OP_STATUS_SUCCESS);
-            } else {
-              dmi = set_field(dmi, DMI_OP, DMI_OP_STATUS_FAILED);
-            }
-            D(fprintf(stderr, "dmi=0x%lx\n", dmi));
-
-            rti_remaining = required_rti_cycles;*/
+            nv.dmi_addr = r.dr.read()(34 + abits - 1, 34);
         }
         break;
     case CAPTURE_IR:
@@ -166,6 +178,13 @@ void JtagTap::comb() {
     v.state = next[r.state.read()][i_tms.read()];
 
     o_tdo = r.dr.read()[0];
+    o_dmi_req_valid = v_dmi_req_valid;
+    o_dmi_req_write = v_dmi_req_write;
+    o_dmi_req_data = vb_dmi_req_data;
+    o_dmi_req_addr = vb_dmi_req_addr;
+    o_dmi_reset = v_dmi_reset;
+    o_dmi_hardreset = v_dmi_hardreset;
+    o_trst = i_trst;
 }
 
 void JtagTap::registers() {

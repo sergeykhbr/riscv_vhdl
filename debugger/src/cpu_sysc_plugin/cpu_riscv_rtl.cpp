@@ -170,7 +170,9 @@ void CpuRiscV_RTL::createSystemC() {
 //    wrapper_->i_dport_rdata(wb_dport_rdata);
     wrapper_->i_halted(w_halted);
 
-    dmi_ = new DmiDebug(static_cast<IService *>(this), "dmidbg");
+    dmi_ = new DmiDebug(static_cast<IService *>(this),
+                        "dmidbg",
+                        asyncReset_.to_bool());
     registerPortInterface("dmi", static_cast<IMemoryOperation *>(dmi_));
     registerPortInterface("tap", static_cast<IJtagTap *>(dmi_));
     dmi_->i_clk(wrapper_->o_clk);

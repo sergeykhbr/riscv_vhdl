@@ -19,7 +19,8 @@
 
 namespace debugger {
 
-DmiDebug::DmiDebug(IFace *parent, sc_module_name name) : sc_module(name),
+DmiDebug::DmiDebug(IFace *parent, sc_module_name name, bool async_reset)
+    : sc_module(name),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
     o_haltreq("o_haltreq"),
@@ -34,6 +35,7 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name) : sc_module(name),
     i_dport_resp_valid("i_dport_resp_valid"),
     i_dport_rdata("i_dport_rdata") {
     iparent_ = parent;
+    async_reset_ = async_reset;
     setBaseAddress(DMI_BASE_ADDRESS);
     setLength(4096);
 
@@ -44,16 +46,24 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name) : sc_module(name),
     sensitive << i_dport_req_ready;
     sensitive << i_dport_resp_valid;
     sensitive << i_dport_rdata;
-    sensitive << w_trst;
-    sensitive << w_tck;
-    sensitive << w_tms;
-    sensitive << w_tdi;
-    sensitive << r.tap_request_valid;
-    sensitive << r.tap_request_addr;
-    sensitive << r.tap_request_write;
-    sensitive << r.tap_request_wdata;
-    sensitive << r.tap_response_valid;
-    sensitive << r.tap_response_rdata;
+    sensitive << w_i_trst;
+    sensitive << w_i_tck;
+    sensitive << w_i_tms;
+    sensitive << w_i_tdi;
+    sensitive << w_cdc_dmi_req_valid;
+    sensitive << w_cdc_dmi_req_write;
+    sensitive << wb_cdc_dmi_req_addr;
+    sensitive << wb_cdc_dmi_req_data;
+    sensitive << w_cdc_dmi_reset;
+    sensitive << w_cdc_dmi_hardreset;
+
+    sensitive << r.bus_req_valid;
+    sensitive << r.bus_req_addr;
+    sensitive << r.bus_req_write;
+    sensitive << r.bus_req_wdata;
+    sensitive << r.bus_resp_valid;
+    sensitive << r.bus_resp_data;
+    sensitive << r.jtag_resp_data;
     sensitive << r.regidx;
     sensitive << r.wdata;
     sensitive << r.regwr;
@@ -62,6 +72,8 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name) : sc_module(name),
     sensitive << r.haltreq;
     sensitive << r.resumereq;
     sensitive << r.resumeack;
+    sensitive << r.dmactive;
+    sensitive << r.hartsel;
     sensitive << r.transfer;
     sensitive << r.write;
     sensitive << r.data0;
@@ -78,20 +90,44 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name) : sc_module(name),
 
     tap_ = new JtagTap("tap");
     tap_->i_nrst(i_nrst);
-    tap_->i_trst(w_trst);
-    tap_->i_tck(w_tck);
-    tap_->i_tms(w_tms);
-    tap_->i_tdi(w_tdi);
-    tap_->o_tdo(w_tdo);
-    tap_->i_dmi_rdata(wb_dmi_rdata);
-    tap_->i_dmi_busy(w_dmi_busy);
-    tap_->o_dmi_hardreset(w_dmi_hardreset);
+    tap_->i_trst(w_i_trst);
+    tap_->i_tck(w_i_tck);
+    tap_->i_tms(w_i_tms);
+    tap_->i_tdi(w_i_tdi);
+    tap_->o_tdo(w_o_tdo);
+    tap_->o_dmi_req_valid(w_tap_dmi_req_valid);
+    tap_->o_dmi_req_write(w_tap_dmi_req_write);
+    tap_->o_dmi_req_addr(wb_tap_dmi_req_addr);
+    tap_->o_dmi_req_data(wb_tap_dmi_req_data);
+    tap_->i_dmi_resp_data(wb_jtag_dmi_resp_data);
+    tap_->i_dmi_busy(w_jtag_dmi_busy);
+    tap_->i_dmi_error(w_jtag_dmi_error);
+    tap_->o_dmi_reset(w_tap_dmi_reset);
+    tap_->o_dmi_hardreset(w_tap_dmi_hardreset);
+    tap_->o_trst(w_tap_trst);
+
+    cdc_ = new JtagCDC("cdc", async_reset);
+    cdc_->i_nrst(i_nrst);
+    cdc_->i_clk(i_clk);
+    cdc_->i_dmi_req_valid(w_tap_dmi_req_valid);
+    cdc_->i_dmi_req_write(w_tap_dmi_req_write);
+    cdc_->i_dmi_req_addr(wb_tap_dmi_req_addr);
+    cdc_->i_dmi_req_data(wb_tap_dmi_req_data);
+    cdc_->i_dmi_reset(w_tap_dmi_reset);
+    cdc_->i_dmi_hardreset(w_tap_dmi_hardreset);
+    cdc_->o_dmi_req_valid(w_cdc_dmi_req_valid);
+    cdc_->i_dmi_req_ready(w_cdc_dmi_req_ready);
+    cdc_->o_dmi_req_write(w_cdc_dmi_req_write);
+    cdc_->o_dmi_req_addr(wb_cdc_dmi_req_addr);
+    cdc_->o_dmi_req_data(wb_cdc_dmi_req_data);
+    cdc_->o_dmi_reset(w_cdc_dmi_reset);
+    cdc_->o_dmi_hardreset(w_cdc_dmi_hardreset);
 
     trst_ = 0;
-    tap_request_valid = 0;
-    tap_request_addr = 0;
-    tap_request_write = 0;
-    tap_request_wdata = 0;
+    bus_req_valid_ = 0;
+    bus_req_addr_ = 0;
+    bus_req_write_ = 0;
+    bus_req_wdata_ = 0;
     char tstr[256];
     RISCV_sprintf(tstr, sizeof(tstr), "%s_event_tap_resp_valid_", name);
     RISCV_event_create(&event_tap_resp_valid_, tstr);
@@ -107,6 +143,7 @@ DmiDebug::~DmiDebug() {
 
 void DmiDebug::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     tap_->generateVCD(i_vcd, o_vcd);
+    cdc_->generateVCD(i_vcd, o_vcd);
     if (i_vcd) {
     }
     if (o_vcd) {
@@ -123,15 +160,21 @@ void DmiDebug::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_dport_rdata, i_dport_rdata.name());
 
         std::string pn(name());
-        sc_trace(o_vcd, w_tck, pn + ".tck");
-        sc_trace(o_vcd, w_tms, pn + ".tms");
-        sc_trace(o_vcd, w_tdi, pn + ".tdi");
-        sc_trace(o_vcd, r.tap_request_valid, pn + ".r_tap_request_valid");
-        sc_trace(o_vcd, r.tap_request_addr, pn + ".r_tap_request_addr");
-        sc_trace(o_vcd, r.tap_request_wdata, pn + ".r_tap_request_wdata");
-        sc_trace(o_vcd, r.tap_request_write, pn + ".r_tap_request_write");
-        sc_trace(o_vcd, r.tap_response_valid, pn + ".r_tap_response_valid");
-        sc_trace(o_vcd, r.tap_response_rdata, pn + ".r_tap_response_rdata");
+        sc_trace(o_vcd, w_i_tck, pn + ".i_tck");
+        sc_trace(o_vcd, w_i_tms, pn + ".i_tms");
+        sc_trace(o_vcd, w_i_tdi, pn + ".i_tdi");
+        sc_trace(o_vcd, w_cdc_dmi_req_valid, pn + ".w_cdc_dmi_req_valid");
+        sc_trace(o_vcd, w_cdc_dmi_req_write, pn + ".w_cdc_dmi_req_write");
+        sc_trace(o_vcd, wb_cdc_dmi_req_addr, pn + ".wb_cdc_dmi_req_addr");
+        sc_trace(o_vcd, wb_cdc_dmi_req_data, pn + ".wb_cdc_dmi_req_data");
+        sc_trace(o_vcd, r.bus_jtag, pn + ".r_bus_jtag");
+        sc_trace(o_vcd, r.bus_req_valid, pn + ".r_bus_req_valid");
+        sc_trace(o_vcd, r.bus_req_addr, pn + ".r_bus_req_addr");
+        sc_trace(o_vcd, r.bus_req_wdata, pn + ".r_bus_req_wdata");
+        sc_trace(o_vcd, r.bus_req_write, pn + ".r_bus_req_write");
+        sc_trace(o_vcd, r.bus_resp_valid, pn + ".r_bus_resp_valid");
+        sc_trace(o_vcd, r.bus_resp_data, pn + ".r_bus_resp_data");
+        sc_trace(o_vcd, r.jtag_resp_data, pn + ".r_jtag_resp_data");
         sc_trace(o_vcd, r.state, pn + ".r_state");
         sc_trace(o_vcd, r.regidx, pn + ".r_regidx");
         sc_trace(o_vcd, r.wdata, pn + ".r_wdata");
@@ -139,6 +182,8 @@ void DmiDebug::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.regrd, pn + ".r_regrd");
         sc_trace(o_vcd, r.resumeack, pn + ".r_resumeack");
         sc_trace(o_vcd, r.haltreq, pn + ".r_haltreq");
+        sc_trace(o_vcd, r.dmactive, pn + ".r_dmactive");
+        sc_trace(o_vcd, r.hartsel, pn + ".r_hartsel");
     }
 }
 
@@ -160,21 +205,21 @@ ETransStatus DmiDebug::b_transport(Axi4TransactionType *trans) {
     }
     RISCV_event_clear(&event_tap_resp_valid_);
     RISCV_event_wait(&event_tap_resp_valid_);
-    trans->rpayload.b32[0] = tap_response_rdata;
+    trans->rpayload.b32[0] = bus_resp_data_;
     return TRANS_OK;
 }
 
 void DmiDebug::readreg(uint64_t idx) {
-    tap_request_addr = idx;
-    tap_request_write = 0;
-    tap_request_valid = 1;
+    bus_req_addr_ = idx;
+    bus_req_write_ = 0;
+    bus_req_valid_ = 1;
 }
 
 void DmiDebug::writereg(uint64_t idx, uint32_t w32) {
-    tap_request_addr = idx;
-    tap_request_wdata = w32;
-    tap_request_write = 1;
-    tap_request_valid = 1;
+    bus_req_addr_ = idx;
+    bus_req_wdata_ = w32;
+    bus_req_write_ = 1;
+    bus_req_valid_ = 1;
 }
 
 void DmiDebug::resetTAP() {
@@ -196,18 +241,18 @@ void DmiDebug::setPins(char tck, char tms, char tdi) {
 }
 
 bool DmiDebug::getTDO() {
-    return w_tdo.read();
+    return w_o_tdo.read();
 }
 
 
 void DmiDebug::comb() {
     v = r;
-    sc_uint<32> vb_tap_response_rdata;
-    bool v_tap_response_valid;
+    sc_uint<32> vb_resp_data;
+    bool v_resp_valid;
 
-    vb_tap_response_rdata = 0;
-    v_tap_response_valid = 0;
-
+    vb_resp_data = 0;
+    v_resp_valid = 0;
+    w_cdc_dmi_req_ready = 0;
 
     if (r.haltreq && i_halted.read()) {
         v.haltreq = 0;
@@ -224,27 +269,36 @@ void DmiDebug::comb() {
         v.dport_resp_ready = 0;
         v.transfer = 0;
         v.write = 0;
-        if (r.tap_request_valid.read()) {
-            v.tap_request_valid = 0;
+        if (w_cdc_dmi_req_valid) {
+            w_cdc_dmi_req_ready = 1;
+            v.bus_jtag = 1;
             v.state = STATE_DMI_ACCESS;
-            v.regidx = r.tap_request_addr;
-            v.wdata = r.tap_request_wdata;
-            v.regwr = r.tap_request_write;
-            v.regrd = !r.tap_request_write;
+            v.regidx = (0, wb_cdc_dmi_req_addr);    /// !!!!!!!!!!!
+            v.wdata = wb_cdc_dmi_req_data;
+            v.regwr = w_cdc_dmi_req_write;
+            v.regrd = !w_cdc_dmi_req_write;
+        } else if (r.bus_req_valid.read()) {
+            v.bus_jtag = 0;
+            v.bus_req_valid = 0;
+            v.state = STATE_DMI_ACCESS;
+            v.regidx = r.bus_req_addr;
+            v.wdata = r.bus_req_wdata;
+            v.regwr = r.bus_req_write;
+            v.regrd = !r.bus_req_write;
         }
         break;
     case STATE_DMI_ACCESS:
-        v_tap_response_valid = 1;
+        v_resp_valid = 1;
         v.state = STATE_IDLE;
         switch (r.regidx.read()) {
         case 0x04:  // arg0[31:0]
-            vb_tap_response_rdata = r.data0;
+            vb_resp_data = r.data0;
             if (r.regwr) {
                 v.data0 = r.wdata;
             }
             break;
         case 0x05:  // arg0[63:32]
-            vb_tap_response_rdata = r.data1;
+            vb_resp_data = r.data1;
             if (r.regwr) {
                 v.data1 = r.wdata;
             }
@@ -263,27 +317,31 @@ void DmiDebug::comb() {
             }
             break;
         case 0x10:  // dmcontrol
+            vb_resp_data[0] = r.dmactive;
+            //vb_resp_data(25, 16) = (0, r.hartsel);      // hartsello
             if (r.regwr) {
                 v.haltreq = r.wdata.read()[31] && !i_halted.read();
                 v.resumereq = r.wdata.read()[30] && i_halted.read();
                 if (r.wdata.read()[30] && i_halted.read()) {
                     v.resumeack = 0;
                 }
+                v.dmactive = r.wdata.read()[0];
+                v.hartsel = r.wdata.read()(16 + CFG_LOG2_CPU_MAX - 1, 16);
             }
             break;
         case 0x11:  // dmstatus
-            vb_tap_response_rdata[17] = r.resumeack;                 // allresumeack
-            vb_tap_response_rdata[16] = r.resumeack;                 // anyresumeack
-            vb_tap_response_rdata[15] = 0;//not i_dporto(hsel).available; -- allnonexistent
-            vb_tap_response_rdata[14] = 0;//not i_dporto(hsel).available; -- anynonexistent
-            vb_tap_response_rdata[13] = 0;//not i_dporto(hsel).available; -- allunavail
-            vb_tap_response_rdata[12] = 0;//not i_dporto(hsel).available; -- anyunavail
-            vb_tap_response_rdata[11] = !i_halted;//not i_dporto(hsel).halted and i_dporto(hsel).available; -- allrunning:
-            vb_tap_response_rdata[10] = !i_halted;//not i_dporto(hsel).halted and i_dporto(hsel).available; -- anyrunning:
-            vb_tap_response_rdata[9] = i_halted;//i_dporto(hsel).halted and i_dporto(hsel).available;      -- allhalted:
-            vb_tap_response_rdata[8] = i_halted;//i_dporto(hsel).halted and i_dporto(hsel).available;      // anyhalted:
-            vb_tap_response_rdata[7] = 1;                   // authenticated:
-            vb_tap_response_rdata(3, 0) = 0x2;              // version: dbg spec v0.13
+            vb_resp_data[17] = r.resumeack;                 // allresumeack
+            vb_resp_data[16] = r.resumeack;                 // anyresumeack
+            vb_resp_data[15] = 0;//not i_dporto(hsel).available; -- allnonexistent
+            vb_resp_data[14] = 0;//not i_dporto(hsel).available; -- anynonexistent
+            vb_resp_data[13] = 0;//not i_dporto(hsel).available; -- allunavail
+            vb_resp_data[12] = 0;//not i_dporto(hsel).available; -- anyunavail
+            vb_resp_data[11] = !i_halted;//not i_dporto(hsel).halted and i_dporto(hsel).available; -- allrunning:
+            vb_resp_data[10] = !i_halted;//not i_dporto(hsel).halted and i_dporto(hsel).available; -- anyrunning:
+            vb_resp_data[9] = i_halted;//i_dporto(hsel).halted and i_dporto(hsel).available;      -- allhalted:
+            vb_resp_data[8] = i_halted;//i_dporto(hsel).halted and i_dporto(hsel).available;      // anyhalted:
+            vb_resp_data[7] = 1;                   // authenticated:
+            vb_resp_data(3, 0) = 0x2;              // version: dbg spec v0.13
             break;
         default:;
         }
@@ -312,8 +370,14 @@ void DmiDebug::comb() {
     default:;
     }
 
-    v.tap_response_rdata = vb_tap_response_rdata;
-    v.tap_response_valid = v_tap_response_valid;
+    if (v_resp_valid) {
+        if (!r.bus_jtag) {
+            v.bus_resp_data = vb_resp_data;
+        } else {
+            v.jtag_resp_data = vb_resp_data;
+        }
+    }
+    v.bus_resp_valid = v_resp_valid && !r.bus_jtag;
 
 
     if (!i_nrst) {
@@ -328,30 +392,34 @@ void DmiDebug::comb() {
     o_dport_addr = r.dport_addr;
     o_dport_wdata = r.dport_wdata;
     o_dport_resp_ready = r.dport_resp_ready;
+
+    wb_jtag_dmi_resp_data = r.jtag_resp_data;
+    w_jtag_dmi_busy = 0;
+    w_jtag_dmi_error = 0;
 }
 
 void DmiDebug::registers() {
     r = v;
 
-    if (tap_request_valid && r.state.read() == STATE_IDLE) {
-        tap_request_valid = 0;
-        r.tap_request_valid = 1;
-        r.tap_request_addr = tap_request_addr;
-        r.tap_request_wdata = tap_request_wdata;
-        r.tap_request_write = tap_request_write;
-        r.tap_response_valid = 0;
-        r.tap_response_rdata = 0;
+    if (bus_req_valid_ && r.state.read() == STATE_IDLE) {
+        bus_req_valid_ = 0;
+        r.bus_req_valid = 1;
+        r.bus_req_addr = bus_req_addr_;
+        r.bus_req_wdata = bus_req_wdata_;
+        r.bus_req_write = bus_req_write_;
+        r.bus_resp_valid = 0;
+        r.bus_resp_data = 0;
     }
 
-    if (r.tap_response_valid) {
-        tap_response_rdata = r.tap_response_rdata.read();
+    if (r.bus_resp_valid) {
+        bus_resp_data_ = r.bus_resp_data.read();
         RISCV_event_set(&event_tap_resp_valid_);
     }
 
-    w_trst = trst_;
-    w_tck = tck_;
-    w_tms = tms_;
-    w_tdi = tdi_;
+    w_i_trst = trst_;
+    w_i_tck = tck_;
+    w_i_tms = tms_;
+    w_i_tdi = tdi_;
     if (dtm_scaler_cnt_ < 3) {
         if (++dtm_scaler_cnt_ == 3) {
             RISCV_event_set(&event_dtm_ready_);
