@@ -22,6 +22,12 @@
 
 namespace debugger {
 
+/**
+*  2**Number of CPU slots in the clusters. Some of them could be unavailable
+*/
+static const int CFG_LOG2_CPU_MAX   = 1;
+static const int CFG_CPU_MAX        = 1 << CFG_LOG2_CPU_MAX;
+
 static const uint64_t CFG_VENDOR_ID         = 0x000000F1;
 static const uint64_t CFG_IMPLEMENTATION_ID = 0x20191123;
 static const bool CFG_HW_FPU_ENABLE         = true;

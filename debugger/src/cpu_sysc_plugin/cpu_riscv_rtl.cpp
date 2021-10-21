@@ -150,6 +150,8 @@ void CpuRiscV_RTL::predeleteService() {
 void CpuRiscV_RTL::createSystemC() {
     sc_set_default_time_unit(1, SC_NS);
 
+    wb_available = 0x1; // only 1 core available
+
     /** Create all objects, then initilize SystemC context: */
     wrapper_ = new RtlWrapper(static_cast<IService *>(this), "wrapper");
     registerInterface(static_cast<ICpuGeneric *>(wrapper_));
@@ -160,15 +162,10 @@ void CpuRiscV_RTL::createSystemC() {
     wrapper_->o_msti(msti);
     wrapper_->i_msto(msto);
     wrapper_->o_interrupt(w_plic_irq);
-//    wrapper_->o_dport_req_valid(w_dport_req_valid);
-//    wrapper_->o_dport_write(w_dport_write);
-//    wrapper_->o_dport_addr(wb_dport_addr);
-//    wrapper_->o_dport_wdata(wb_dport_wdata);
-//    wrapper_->i_dport_req_ready(w_dport_req_ready);
-//    wrapper_->o_dport_resp_ready(w_dport_resp_ready);
-//    wrapper_->i_dport_resp_valid(w_dport_resp_valid);
-//    wrapper_->i_dport_rdata(wb_dport_rdata);
-    wrapper_->i_halted(w_halted);
+    wrapper_->i_hartreset(w_hartreset);
+    wrapper_->i_ndmreset(w_ndmreset);
+    wrapper_->i_halted0(w_halted0);
+    wrapper_->o_halted(wb_halted);
 
     dmi_ = new DmiDebug(static_cast<IService *>(this),
                         "dmidbg",
@@ -177,9 +174,14 @@ void CpuRiscV_RTL::createSystemC() {
     registerPortInterface("tap", static_cast<IJtagTap *>(dmi_));
     dmi_->i_clk(wrapper_->o_clk);
     dmi_->i_nrst(w_nrst);
-    dmi_->o_haltreq(w_dmi_haltreq);
-    dmi_->o_resumereq(w_dmi_resumereq);
-    dmi_->i_halted(w_halted);
+    dmi_->i_halted(wb_halted);
+    dmi_->i_available(wb_available);
+    dmi_->o_hartsel(wb_hartsel);
+    dmi_->o_haltreq(w_haltreq);
+    dmi_->o_resumereq(w_resumereq);
+    dmi_->o_resethaltreq(w_resethaltreq);       // Halt after reset
+    dmi_->o_hartreset(w_hartreset);             // reselet only selected core
+    dmi_->o_ndmreset(w_ndmreset);               // reset whole system
     dmi_->o_dport_req_valid(w_dport_req_valid);
     dmi_->o_dport_write(w_dport_write);
     dmi_->o_dport_addr(wb_dport_addr);
@@ -231,8 +233,8 @@ void CpuRiscV_RTL::createSystemC() {
     core_->o_msto(coreo0);
     core_->i_tmr_irq(w_tmr_irq);
     core_->i_ext_irq(w_plic_irq);
-    core_->i_haltreq(w_dmi_haltreq);
-    core_->i_resumereq(w_dmi_resumereq);
+    core_->i_haltreq(w_haltreq);
+    core_->i_resumereq(w_resumereq);
     core_->i_dport_req_valid(w_dport_req_valid);
     core_->i_dport_write(w_dport_write);
     core_->i_dport_addr(wb_dport_addr);
@@ -241,7 +243,7 @@ void CpuRiscV_RTL::createSystemC() {
     core_->i_dport_resp_ready(w_dport_resp_ready);
     core_->o_dport_resp_valid(w_dport_resp_valid);
     core_->o_dport_rdata(wb_dport_rdata);
-    core_->o_halted(w_halted);
+    core_->o_halted(w_halted0);
 
 #ifdef DBG_ICACHE_LRU_TB
     ICacheLru_tb *tb = new ICacheLru_tb("tb");

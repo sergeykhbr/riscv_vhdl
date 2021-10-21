@@ -31,15 +31,10 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     o_msti("o_msti"),
     i_msto("i_msto"),
     o_interrupt("o_interrupt"),
-    //o_dport_req_valid("o_dport_req_valid"),
-    //o_dport_write("o_dport_write"),
-    //o_dport_addr("o_dport_addr"),
-    //o_dport_wdata("o_dport_wdata"),
-    //i_dport_req_ready("i_dport_req_ready"),
-    //o_dport_resp_ready("o_dport_resp_ready"),
-    //i_dport_resp_valid("i_dport_resp_valid"),
-    //i_dport_rdata("i_dport_rdata"),
-    i_halted("i_halted") {
+    i_hartreset("i_hartreset"),
+    i_ndmreset("i_ndmreset"),
+    i_halted0("i_halted0"),
+    o_halted("o_halted") {
     iparent_ = parent;
     clockCycles_ = 1000000; // 1 MHz when default resolution = 1 ps
 
@@ -65,9 +60,10 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
 
     SC_METHOD(comb);
     sensitive << w_interrupt;
-    sensitive << i_halted;
     sensitive << i_msto;
-    sensitive << i_halted;
+    sensitive << i_hartreset;
+    sensitive << i_ndmreset;
+    sensitive << i_halted0;
     sensitive << r.clk_cnt;
     sensitive << r.req_addr;
     sensitive << r.req_len;
@@ -147,13 +143,9 @@ void RtlWrapper::comb() {
     vb_wdata = 0;
     vb_wstrb = 0;
 
-//    if (dbg_e_valid) {
-        v.clk_cnt = r.clk_cnt.read() + 1;
-//    } else {
-//        v.clk_cnt = r.clk_cnt.read();
-//    }
+    v.clk_cnt = r.clk_cnt.read() + 1;
     v.interrupt = w_interrupt;
-    v.halted = i_halted.read();
+    v.halted = (0, i_halted0.read());
 
     v.nrst = (r.nrst.read() << 1) | 1;
     switch (r.state.read()) {
@@ -230,7 +222,9 @@ void RtlWrapper::comb() {
     wb_wdata = vb_wdata;
     wb_wstrb = vb_wstrb;
 
-    o_nrst = r.nrst.read()[1].to_bool();
+    o_nrst = r.nrst.read()[1].to_bool() 
+            && !i_hartreset.read()
+            && !i_ndmreset.read();
 
     vmsti.aw_ready = w_req_mem_ready;
     vmsti.w_ready = v_w_ready;
@@ -249,13 +243,7 @@ void RtlWrapper::comb() {
     o_msti = vmsti;     // to trigger event;
 
     o_interrupt = r.interrupt;
-
-    //o_dport_req_valid = w_dport_req_valid;
-    //o_dport_write = w_dport_write;
-    //o_dport_resp_ready = w_dport_resp_ready;
-    //o_dport_write = w_dport_write;
-    //o_dport_addr = wb_dport_addr;
-    //o_dport_wdata = wb_dport_wdata;
+    o_halted = r.halted;
 
     if (!r.nrst.read()[1]) {
     }
@@ -387,7 +375,7 @@ void RtlWrapper::registerStepCallback(IClockListener *cb, uint64_t t) {
 }
 
 bool RtlWrapper::isHalt() {
-    return i_halted.read();
+    return i_halted0.read();
 }
 
 void RtlWrapper::raiseSignal(int idx) {

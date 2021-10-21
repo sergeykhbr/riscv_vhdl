@@ -592,7 +592,7 @@ void CsrRegs::comb() {
             v.progbuf_data = t2;
         }
         break;
-    case CSR_abstractcs:
+    /*case CSR_abstractcs:
         vb_rdata(28,24) = CFG_PROGBUF_REG_TOTAL;
         vb_rdata[12] = r.progbuf_ena;       // busy
         vb_rdata(10,8) = r.progbuf_err;
@@ -603,7 +603,7 @@ void CsrRegs::comb() {
                 v.progbuf_err = PROGBUF_ERR_NONE;
             }
         }
-        break;
+        break;*/
     case CSR_flushi:
         if (v_csr_wena) {
             v.flushi_ena = 1;

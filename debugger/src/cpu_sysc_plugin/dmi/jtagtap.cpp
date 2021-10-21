@@ -33,8 +33,7 @@ JtagTap::JtagTap(sc_module_name name) : sc_module(name),
     i_dmi_busy("i_dmi_busy"),
     i_dmi_error("i_dmi_error"),
     o_dmi_reset("o_dmi_reset"),
-    o_dmi_hardreset("o_dmi_hardreset"),
-    o_trst("o_trst") {
+    o_dmi_hardreset("o_dmi_hardreset") {
 
     SC_METHOD(comb);
     sensitive << i_trst;
@@ -104,8 +103,6 @@ void JtagTap::comb() {
     v_dmi_reset = 0;
     v_dmi_hardreset = 0;
 
-    int t = r.dr_length.read().to_int();
-    unsigned t_ir = nr.ir.read();
 
     if (i_dmi_busy.read()) {
         vb_stat = DMISTAT_BUSY;
@@ -184,7 +181,6 @@ void JtagTap::comb() {
     o_dmi_req_addr = vb_dmi_req_addr;
     o_dmi_reset = v_dmi_reset;
     o_dmi_hardreset = v_dmi_hardreset;
-    o_trst = i_trst;
 }
 
 void JtagTap::registers() {

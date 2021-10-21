@@ -42,16 +42,10 @@ class RtlWrapper : public sc_module,
     sc_in<axi4_master_out_type> i_msto;
     /** Interrupt line from external interrupts controller. */
     sc_out<bool> o_interrupt;
-    // Debug interface
-    //sc_out<bool> o_dport_req_valid;                      // Debug access from DSU is valid
-    //sc_out<bool> o_dport_write;                          // Write value
-    //sc_out<sc_uint<CFG_DPORT_ADDR_BITS>> o_dport_addr;   // Register index
-    //sc_out<sc_uint<RISCV_ARCH>> o_dport_wdata;           // Write value
-    //sc_in<bool> i_dport_req_ready;                       // Response is ready
-    //sc_out<bool> o_dport_resp_ready;                     // ready to accepd response
-    //sc_in<bool> i_dport_resp_valid;                      // Response is valid
-    //sc_in<sc_uint<RISCV_ARCH>> i_dport_rdata;            // Response value
-    sc_in<bool> i_halted;
+    sc_in<bool> i_hartreset;
+    sc_in<bool> i_ndmreset;
+    sc_in<bool> i_halted0;
+    sc_out<sc_uint<CFG_CPU_MAX>> o_halted;
 
     enum EState {
         State_Idle,
@@ -73,7 +67,7 @@ class RtlWrapper : public sc_module,
         sc_signal<sc_bv<5>> nrst;
         sc_signal<bool> interrupt;
         sc_signal<sc_uint<3>> state;
-        sc_signal<bool> halted;
+        sc_signal<sc_uint<CFG_CPU_MAX>> halted;
         sc_signal<bool> r_error;
         sc_signal<bool> w_error;
     } r, v;

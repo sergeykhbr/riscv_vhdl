@@ -116,8 +116,6 @@ static const uint16_t CSR_runcontrol     = 0x355;
 //static const uint16_t CSR_insperstep     = 0x356;
 /** Write value into progbuf */
 static const uint16_t CSR_progbuf        = 0x357;
-/** Abstract commmand control status (ABSTRACTCS) */
-static const uint16_t CSR_abstractcs     = 0x358;
 /** Flush specified address in I-cache module without execution of fence.i */
 static const uint16_t CSR_flushi         = 0x359;
 // Software reset.

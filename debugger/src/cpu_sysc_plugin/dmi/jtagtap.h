@@ -25,7 +25,7 @@ SC_MODULE(JtagTap) {
 
  public:
     sc_in<bool> i_nrst;
-    sc_in<bool> i_trst;
+    sc_in<bool> i_trst; // Must be open-train, pullup
     sc_in<bool> i_tck;
     sc_in<bool> i_tms;
     sc_in<bool> i_tdi;
@@ -39,7 +39,6 @@ SC_MODULE(JtagTap) {
     sc_in<bool> i_dmi_error;
     sc_out<bool> o_dmi_reset;
     sc_out<bool> o_dmi_hardreset;
-    sc_out<bool> o_trst;
 
     void comb();
     void registers();

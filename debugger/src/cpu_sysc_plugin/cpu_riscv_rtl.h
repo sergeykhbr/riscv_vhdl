@@ -133,8 +133,9 @@ class CpuRiscV_RTL : public IService,
     sc_signal<bool> w_tmr_irq;
     sc_signal<bool> w_plic_irq;
     // Debug interface
-    sc_signal<bool> w_dmi_haltreq;
-    sc_signal<bool> w_dmi_resumereq;
+    sc_signal<bool> w_haltreq;
+    sc_signal<bool> w_resumereq;
+    sc_signal<bool> w_resethaltreq;
     sc_signal<bool> w_dport_req_valid;
     sc_signal<bool> w_dport_write;
     sc_signal<sc_uint<CFG_DPORT_ADDR_BITS>> wb_dport_addr;
@@ -143,7 +144,12 @@ class CpuRiscV_RTL : public IService,
     sc_signal<bool> w_dport_resp_ready;
     sc_signal<bool> w_dport_resp_valid;
     sc_signal<sc_uint<RISCV_ARCH>> wb_dport_rdata;
-    sc_signal<bool> w_halted;
+    sc_signal<bool> w_halted0;
+    sc_signal<bool> w_hartreset;
+    sc_signal<bool> w_ndmreset;
+    sc_signal<sc_uint<CFG_CPU_MAX>> wb_halted;
+    sc_signal<sc_uint<CFG_CPU_MAX>> wb_available;
+    sc_signal<sc_uint<CFG_LOG2_CPU_MAX>> wb_hartsel;
 
     sc_signal<axi4_master_in_type> msti;
     sc_signal<axi4_master_out_type> msto;

@@ -28,45 +28,6 @@
 
 namespace debugger {
 
-static const int CFG_LOG2_CPU_MAX = 1;
-
-union DmiRegBankType {
-    struct DmiRegsType {
-        uint32_t rsrv_00_03[4];     //
-        uint32_t data[12];          // 0x04 Abstract Data
-        uint32_t dmcontrol;         // 0x10 Debug Module Control
-        uint32_t dmstatus;          // 0x11 Debug Module Status
-        uint32_t hartinfo;          // 0x12 Hart Info
-        uint32_t haltsum1;          // 0x13 Halt Summary 1
-        uint32_t hawindowsel;       // 0x14 Hart Array Window Select
-        uint32_t hawindow;          // 0x15 Hart Array Window
-        uint32_t abstractcs;        // 0x16 Abstract Control and Status
-        uint32_t command;           // 0x17 Abstract Command
-        uint32_t abstractauto;      // 0x18 Abstract Command Autoexec
-        uint32_t confstrptr[4];     // 0x19-0x1c Configuration String Pointers 1-3
-        uint32_t nextdm;            // 0x1d Next Debug Module
-        uint32_t rsrv_1e_1f[2];
-        uint32_t progbuf[16];       // 0x20-0x2f Program buffer 0-15
-        uint32_t authdata;          // 0x30 Authentication Data
-        uint32_t rsrv_31_33[3];
-        uint32_t haltsum2;          // 0x34 Halt summary 2
-        uint32_t haltsum3;          // 0x35 Halt summary 3
-        uint32_t rsrv_36;
-        uint32_t sbaddress3;        // 0x37 System Bus Address [127:96]
-        uint32_t sbcs;              // 0x38 System Bus Access Control and Status
-        uint32_t sbaddress0;        // 0x39 System Bus Address [31:0]
-        uint32_t sbaddress1;        // 0x3a System Bus Address [63:32]
-        uint32_t sbaddress2;        // 0x3b System Bus Address [95:64]
-        uint32_t sbdata0;           // 0x3a System Bus Data [31:0]
-        uint32_t sbdata1;           // 0x3a System Bus Data [63:32]
-        uint32_t sbdata2;           // 0x3a System Bus Data [95:64]
-        uint32_t sbdata3;           // 0x3a System Bus Data [127:96]
-        uint32_t haltsum0;          // 0x40 Halt Summary 0
-    } r;
-    uint32_t b8[sizeof(DmiRegsType)];
-    uint32_t b32[sizeof(DmiRegsType) / sizeof(uint32_t)];
-};
-
 class DmiDebug : public sc_module,
                  public IMemoryOperation,
                  public IJtagTap {
@@ -74,18 +35,22 @@ class DmiDebug : public sc_module,
  public:
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;
+    sc_in<sc_uint<CFG_CPU_MAX>> i_halted;               // Halted cores
+    sc_in<sc_uint<CFG_CPU_MAX>> i_available;            // Existing and available cores
+    sc_out<sc_uint<CFG_LOG2_CPU_MAX>> o_hartsel;        // Selected hart index
     sc_out<bool> o_haltreq;
     sc_out<bool> o_resumereq;
-    sc_in<bool> i_halted;
-    // Debug interface
-    sc_out<bool> o_dport_req_valid;                      // Debug access from DSU is valid
-    sc_out<bool> o_dport_write;                          // Write value
-    sc_out<sc_uint<CFG_DPORT_ADDR_BITS>> o_dport_addr;   // Register index
-    sc_out<sc_uint<RISCV_ARCH>> o_dport_wdata;           // Write value
-    sc_in<bool> i_dport_req_ready;                       // Response is ready
-    sc_out<bool> o_dport_resp_ready;                     // ready to accepd response
-    sc_in<bool> i_dport_resp_valid;                      // Response is valid
-    sc_in<sc_uint<RISCV_ARCH>> i_dport_rdata;            // Response value
+    sc_out<bool> o_resethaltreq;                        // Halt core after reset request.
+    sc_out<bool> o_hartreset;                           // Reset currently selected hart
+    sc_out<bool> o_ndmreset;                            // whole system reset including all cores
+    sc_out<bool> o_dport_req_valid;                     // Debug access from DSU is valid
+    sc_out<bool> o_dport_write;                         // Write value
+    sc_out<sc_uint<CFG_DPORT_ADDR_BITS>> o_dport_addr;  // Register index
+    sc_out<sc_uint<RISCV_ARCH>> o_dport_wdata;          // Write value
+    sc_in<bool> i_dport_req_ready;                      // Response is ready
+    sc_out<bool> o_dport_resp_ready;                    // ready to accepd response
+    sc_in<bool> i_dport_resp_valid;                     // Response is valid
+    sc_in<sc_uint<RISCV_ARCH>> i_dport_rdata;           // Response value
 
     void comb();
     void registers();
@@ -132,10 +97,21 @@ class DmiDebug : public sc_module,
     char tdi_;
     int dtm_scaler_cnt_;
 
-    static const unsigned STATE_IDLE = 0;
-    static const unsigned STATE_DMI_ACCESS = 1;
-    static const unsigned STATE_CPU_REQUEST = 2;
-    static const unsigned STATE_CPU_RESPONSE = 3;
+    static const unsigned DM_STATE_IDLE = 0;
+    static const unsigned DM_STATE_ACCESS = 1;
+
+    static const unsigned CMD_STATE_IDLE    = 0;
+    static const unsigned CMD_STATE_INIT    = 1;
+    static const unsigned CMD_STATE_REQUEST = 2;
+    static const unsigned CMD_STATE_RESPONSE = 3;
+
+    static const unsigned CMDERR_NONE = 0;
+    static const unsigned CMDERR_BUSY = 1;
+    static const unsigned CMDERR_NOTSUPPROTED = 2;
+    static const unsigned CMDERR_EXCEPTION = 3;
+    static const unsigned CMDERR_WRONGSTATE = 4;
+    static const unsigned CMDERR_BUSERROR = 5;
+    static const unsigned CMDERR_OTHERS = 7;
 
 
     sc_signal<bool> w_i_trst;
@@ -149,7 +125,6 @@ class DmiDebug : public sc_module,
     sc_signal<sc_uint<32>> wb_tap_dmi_req_data;
     sc_signal<bool> w_tap_dmi_reset;
     sc_signal<bool> w_tap_dmi_hardreset;
-    sc_signal<bool> w_tap_trst;
 
     sc_signal<bool> w_cdc_dmi_req_valid;
     sc_signal<bool> w_cdc_dmi_req_ready;
@@ -194,17 +169,28 @@ class DmiDebug : public sc_module,
         sc_signal<bool> regwr;
         sc_signal<bool> regrd;
 
-        sc_signal<sc_uint<3>> state;
+        sc_signal<sc_uint<3>> dmstate;
+        sc_signal<sc_uint<3>> cmdstate;
+        sc_signal<sc_uint<3>> sbastate;
 
         sc_signal<bool> haltreq;
         sc_signal<bool> resumereq;
         sc_signal<bool> resumeack;
+        sc_signal<bool> hartreset;
+        sc_signal<bool> resethaltreq;   // halt on reset
+        sc_signal<bool> ndmreset;
         sc_signal<bool> dmactive;
         sc_signal<sc_uint<CFG_LOG2_CPU_MAX>> hartsel;
         sc_signal<bool> transfer;
         sc_signal<bool> write;
+        sc_signal<bool> postexec;
+        sc_signal<sc_uint<32>> command;
+        sc_signal<sc_uint<CFG_DATA_REG_TOTAL>> autoexecdata;
+        sc_signal<sc_uint<CFG_PROGBUF_REG_TOTAL>> autoexecprogbuf;
+        sc_signal<sc_uint<3>> cmderr;
         sc_signal<sc_uint<32>> data0;
         sc_signal<sc_uint<32>> data1;
+        sc_signal<sc_biguint<CFG_PROGBUF_REG_TOTAL*32>> progbuf_data;
 
         sc_signal<bool> dport_req_valid;
         sc_signal<bool> dport_write;
@@ -227,17 +213,28 @@ class DmiDebug : public sc_module,
         iv.wdata = 0;
         iv.regwr = 0;
         iv.regrd = 0;
-        iv.state = STATE_IDLE;
+        iv.dmstate = DM_STATE_IDLE;
+        iv.cmdstate = CMD_STATE_IDLE;
+        iv.sbastate = 0;
 
         iv.haltreq = 0;
         iv.resumereq = 0;
         iv.resumeack = 0;
+        iv.hartreset = 0;
+        iv.resethaltreq = 0;
+        iv.ndmreset = 0;
         iv.dmactive = 0;
         iv.hartsel = 0;
         iv.transfer = 0;
         iv.write = 0;
+        iv.postexec = 0;
+        iv.command = 0;
+        iv.autoexecdata = 0;
+        iv.autoexecprogbuf = 0;
+        iv.cmderr = 0;
         iv.data0 = 0;
         iv.data1 = 0;
+        iv.progbuf_data = 0;
         iv.dport_req_valid = 0;
         iv.dport_write = 0;
         iv.dport_addr = 0;
@@ -245,6 +242,44 @@ class DmiDebug : public sc_module,
         iv.dport_wstrb = 0;
         iv.dport_resp_ready = 0;
     }
+
+
+union DmiRegBankType {
+    struct DmiRegsType {
+        uint32_t rsrv_00_03[4];     //
+        uint32_t data[12];          // 0x04 Abstract Data
+        uint32_t dmcontrol;         // 0x10 Debug Module Control
+        uint32_t dmstatus;          // 0x11 Debug Module Status
+        uint32_t hartinfo;          // 0x12 Hart Info
+        uint32_t haltsum1;          // 0x13 Halt Summary 1
+        uint32_t hawindowsel;       // 0x14 Hart Array Window Select
+        uint32_t hawindow;          // 0x15 Hart Array Window
+        uint32_t abstractcs;        // 0x16 Abstract Control and Status
+        uint32_t command;           // 0x17 Abstract Command
+        uint32_t abstractauto;      // 0x18 Abstract Command Autoexec
+        uint32_t confstrptr[4];     // 0x19-0x1c Configuration String Pointers 1-3
+        uint32_t nextdm;            // 0x1d Next Debug Module
+        uint32_t rsrv_1e_1f[2];
+        uint32_t progbuf[16];       // 0x20-0x2f Program buffer 0-15
+        uint32_t authdata;          // 0x30 Authentication Data
+        uint32_t rsrv_31_33[3];
+        uint32_t haltsum2;          // 0x34 Halt summary 2
+        uint32_t haltsum3;          // 0x35 Halt summary 3
+        uint32_t rsrv_36;
+        uint32_t sbaddress3;        // 0x37 System Bus Address [127:96]
+        uint32_t sbcs;              // 0x38 System Bus Access Control and Status
+        uint32_t sbaddress0;        // 0x39 System Bus Address [31:0]
+        uint32_t sbaddress1;        // 0x3a System Bus Address [63:32]
+        uint32_t sbaddress2;        // 0x3b System Bus Address [95:64]
+        uint32_t sbdata0;           // 0x3a System Bus Data [31:0]
+        uint32_t sbdata1;           // 0x3a System Bus Data [63:32]
+        uint32_t sbdata2;           // 0x3a System Bus Data [95:64]
+        uint32_t sbdata3;           // 0x3a System Bus Data [127:96]
+        uint32_t haltsum0;          // 0x40 Halt Summary 0
+    } r;
+    uint32_t b8[sizeof(DmiRegsType)];
+    uint32_t b32[sizeof(DmiRegsType) / sizeof(uint32_t)];
+};
 
     bool async_reset_;
 };
