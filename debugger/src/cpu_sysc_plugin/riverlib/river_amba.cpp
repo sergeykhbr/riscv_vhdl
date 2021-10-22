@@ -69,13 +69,16 @@ RiverAmba::RiverAmba(sc_module_name name_, uint32_t hartid, bool async_reset,
     i_haltreq("i_haltreq"),
     i_resumereq("i_resumereq"),
     i_dport_req_valid("i_dport_req_valid"),
-    i_dport_write("i_dport_write"),
+    i_dport_type("i_dport_type"),
     i_dport_addr("i_dport_addr"),
     i_dport_wdata("i_dport_wdata"),
+    i_dport_size("i_dport_size"),
     o_dport_req_ready("o_dport_req_ready"),
     i_dport_resp_ready("i_dport_resp_ready"),
     o_dport_resp_valid("o_dport_resp_valid"),
+    o_dport_resp_error("o_dport_resp_error"),
     o_dport_rdata("o_dport_rdata"),
+    i_progbuf("i_progbuf"),
     o_halted("o_halted") {
     async_reset_ = async_reset;
     coherence_ena_ = coherence_ena;
@@ -110,13 +113,16 @@ RiverAmba::RiverAmba(sc_module_name name_, uint32_t hartid, bool async_reset,
     river0->i_haltreq(i_haltreq);
     river0->i_resumereq(i_resumereq);
     river0->i_dport_req_valid(i_dport_req_valid);
-    river0->i_dport_write(i_dport_write);
+    river0->i_dport_type(i_dport_type);
     river0->i_dport_addr(i_dport_addr);
     river0->i_dport_wdata(i_dport_wdata);
+    river0->i_dport_size(i_dport_size);
     river0->o_dport_req_ready(o_dport_req_ready);
     river0->i_dport_resp_ready(i_dport_resp_ready);
     river0->o_dport_resp_valid(o_dport_resp_valid);
+    river0->o_dport_resp_error(o_dport_resp_error);
     river0->o_dport_rdata(o_dport_rdata);
+    river0->i_progbuf(i_progbuf);
     river0->o_halted(o_halted);
 
     SC_METHOD(comb);

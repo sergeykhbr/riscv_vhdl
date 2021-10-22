@@ -35,6 +35,7 @@ class DmiDebug : public sc_module,
  public:
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;
+    sc_out<bool> o_ndmreset;                            // whole system reset including all cores
     sc_in<sc_uint<CFG_CPU_MAX>> i_halted;               // Halted cores
     sc_in<sc_uint<CFG_CPU_MAX>> i_available;            // Existing and available cores
     sc_out<sc_uint<CFG_LOG2_CPU_MAX>> o_hartsel;        // Selected hart index
@@ -42,15 +43,17 @@ class DmiDebug : public sc_module,
     sc_out<bool> o_resumereq;
     sc_out<bool> o_resethaltreq;                        // Halt core after reset request.
     sc_out<bool> o_hartreset;                           // Reset currently selected hart
-    sc_out<bool> o_ndmreset;                            // whole system reset including all cores
     sc_out<bool> o_dport_req_valid;                     // Debug access from DSU is valid
-    sc_out<bool> o_dport_write;                         // Write value
-    sc_out<sc_uint<CFG_DPORT_ADDR_BITS>> o_dport_addr;  // Register index
+    sc_out<sc_uint<DPortReq_Total>> o_dport_req_type;   // Debug access types
+    sc_out<sc_uint<CFG_BUS_ADDR_WIDTH>> o_dport_addr;   // Register index
     sc_out<sc_uint<RISCV_ARCH>> o_dport_wdata;          // Write value
+    sc_out<sc_uint<3>> o_dport_size;                    // 0=1B;1=2B;2=4B;3=8B;4=128B
     sc_in<bool> i_dport_req_ready;                      // Response is ready
     sc_out<bool> o_dport_resp_ready;                    // ready to accepd response
     sc_in<bool> i_dport_resp_valid;                     // Response is valid
-    sc_in<sc_uint<RISCV_ARCH>> i_dport_rdata;           // Response value
+    sc_in<bool> i_dport_resp_error;                     // Something goes wrong
+    sc_in<sc_uint<RISCV_ARCH>> i_dport_rdata;           // Response value or error code
+    sc_out<sc_biguint<CFG_PROGBUF_REG_TOTAL*32>> o_progbuf;
 
     void comb();
     void registers();
@@ -104,6 +107,7 @@ class DmiDebug : public sc_module,
     static const unsigned CMD_STATE_INIT    = 1;
     static const unsigned CMD_STATE_REQUEST = 2;
     static const unsigned CMD_STATE_RESPONSE = 3;
+    static const unsigned CMD_STATE_WAIT_HALTED = 4;
 
     static const unsigned CMDERR_NONE = 0;
     static const unsigned CMDERR_BUSY = 1;
@@ -113,6 +117,9 @@ class DmiDebug : public sc_module,
     static const unsigned CMDERR_BUSERROR = 5;
     static const unsigned CMDERR_OTHERS = 7;
 
+    static const int CmdPostexecBit = 18;
+    static const int CmdTransferBit = 17;
+    static const int CmdWriteBit = 16;
 
     sc_signal<bool> w_i_trst;
     sc_signal<bool> w_i_tck;
@@ -181,22 +188,28 @@ class DmiDebug : public sc_module,
         sc_signal<bool> ndmreset;
         sc_signal<bool> dmactive;
         sc_signal<sc_uint<CFG_LOG2_CPU_MAX>> hartsel;
-        sc_signal<bool> transfer;
-        sc_signal<bool> write;
+        sc_signal<bool> cmd_regaccess;
+        sc_signal<bool> cmd_fastaccess;
+        sc_signal<bool> cmd_memaccess;
+        sc_signal<bool> cmd_progexec;
+        sc_signal<bool> cmd_read;
         sc_signal<bool> postexec;
+        sc_signal<bool> aamvirtual;
         sc_signal<sc_uint<32>> command;
         sc_signal<sc_uint<CFG_DATA_REG_TOTAL>> autoexecdata;
         sc_signal<sc_uint<CFG_PROGBUF_REG_TOTAL>> autoexecprogbuf;
         sc_signal<sc_uint<3>> cmderr;
         sc_signal<sc_uint<32>> data0;
         sc_signal<sc_uint<32>> data1;
+        sc_signal<sc_uint<32>> data2;
+        sc_signal<sc_uint<32>> data3;
         sc_signal<sc_biguint<CFG_PROGBUF_REG_TOTAL*32>> progbuf_data;
 
         sc_signal<bool> dport_req_valid;
         sc_signal<bool> dport_write;
-        sc_signal<sc_uint<CFG_DPORT_ADDR_BITS>> dport_addr;
+        sc_signal<sc_uint<CFG_BUS_ADDR_WIDTH>> dport_addr;
         sc_signal<sc_uint<RISCV_ARCH>> dport_wdata;
-        sc_signal<sc_uint<2>> dport_wstrb;
+        sc_signal<sc_uint<3>> dport_size;
         sc_signal<bool> dport_resp_ready;
     } r, v;
 
@@ -225,21 +238,27 @@ class DmiDebug : public sc_module,
         iv.ndmreset = 0;
         iv.dmactive = 0;
         iv.hartsel = 0;
-        iv.transfer = 0;
-        iv.write = 0;
+        iv.cmd_regaccess = 0;
+        iv.cmd_fastaccess = 0;
+        iv.cmd_memaccess = 0;
+        iv.cmd_progexec = 0;
+        iv.cmd_read = 0;
         iv.postexec = 0;
+        iv.aamvirtual = 0;
         iv.command = 0;
         iv.autoexecdata = 0;
         iv.autoexecprogbuf = 0;
         iv.cmderr = 0;
         iv.data0 = 0;
         iv.data1 = 0;
+        iv.data2 = 0;
+        iv.data3 = 0;
         iv.progbuf_data = 0;
         iv.dport_req_valid = 0;
         iv.dport_write = 0;
         iv.dport_addr = 0;
         iv.dport_wdata = 0;
-        iv.dport_wstrb = 0;
+        iv.dport_size = 0;
         iv.dport_resp_ready = 0;
     }
 

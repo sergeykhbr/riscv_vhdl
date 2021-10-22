@@ -58,13 +58,16 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     i_haltreq("i_haltreq"),
     i_resumereq("i_resumereq"),
     i_dport_req_valid("i_dport_req_valid"),
-    i_dport_write("i_dport_write"),
+    i_dport_type("i_dport_type"),
     i_dport_addr("i_dport_addr"),
     i_dport_wdata("i_dport_wdata"),
+    i_dport_size("i_dport_size"),
     o_dport_req_ready("o_dport_req_ready"),
     i_dport_resp_ready("i_dport_resp_ready"),
     o_dport_resp_valid("o_dport_resp_valid"),
+    o_dport_resp_error("o_dport_resp_error"),
     o_dport_rdata("o_dport_rdata"),
+    i_progbuf("i_progbuf"),
     o_halted("o_halted"),
     o_flush_address("o_flush_address"),
     o_flush_valid("o_flush_valid"),
@@ -388,13 +391,16 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     dbg0->i_clk(i_clk);
     dbg0->i_nrst(i_nrst);
     dbg0->i_dport_req_valid(i_dport_req_valid);
-    dbg0->i_dport_write(i_dport_write);
+    dbg0->i_dport_type(i_dport_type);
     dbg0->i_dport_addr(i_dport_addr);
     dbg0->i_dport_wdata(i_dport_wdata);
+    dbg0->i_dport_size(i_dport_size);
     dbg0->o_dport_req_ready(o_dport_req_ready);
     dbg0->i_dport_resp_ready(i_dport_resp_ready);
     dbg0->o_dport_resp_valid(o_dport_resp_valid);
+    dbg0->o_dport_resp_error(o_dport_resp_error);
     dbg0->o_dport_rdata(o_dport_rdata);
+    dbg0->i_progbuf(i_progbuf);
     dbg0->o_csr_req_valid(dbg.csr_req_valid);
     dbg0->i_csr_req_ready(iccsr_m1_req_ready);
     dbg0->o_csr_req_type(dbg.csr_req_type);

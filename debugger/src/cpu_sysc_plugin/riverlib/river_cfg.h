@@ -25,8 +25,10 @@ namespace debugger {
 /**
 *  2**Number of CPU slots in the clusters. Some of them could be unavailable
 */
-static const int CFG_LOG2_CPU_MAX   = 1;
+static const int CFG_LOG2_CPU_MAX   = 2;
 static const int CFG_CPU_MAX        = 1 << CFG_LOG2_CPU_MAX;
+static const int CFG_TOTAL_CPU_MAX  = CFG_CPU_MAX;
+
 
 static const uint64_t CFG_VENDOR_ID         = 0x000000F1;
 static const uint64_t CFG_IMPLEMENTATION_ID = 0x20191123;
@@ -158,10 +160,18 @@ static const int CFG_DPORT_ADDR_BITS        = 16;
 // Valid size 0..16
 static const int CFG_PROGBUF_REG_TOTAL      = 16;
 // Must be at least 2 to support RV64I
-static const int CFG_DATA_REG_TOTAL         = 2;
+static const int CFG_DATA_REG_TOTAL         = 4;
 /** Number of elements each 2*CFG_ADDR_WIDTH in stack trace buffer: */
 static const int CFG_LOG2_STACK_TRACE_ADDR  = 5;
 static const int STACK_TRACE_BUF_SIZE       = 1 << CFG_LOG2_STACK_TRACE_ADDR;
+
+// Dport request types:
+static const int DPortReq_Write         = 0;
+static const int DPortReq_RegAccess     = 1;
+static const int DPortReq_MemAccess     = 2;
+static const int DPortReq_MemVirtual    = 3;
+static const int DPortReq_Progexec      = 4;
+static const int DPortReq_Total         = 5;
 
 enum EIsaType {
     ISA_R_type,

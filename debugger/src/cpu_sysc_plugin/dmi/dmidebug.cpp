@@ -23,6 +23,7 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name, bool async_reset)
     : sc_module(name),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
+    o_ndmreset("o_ndmreset"),
     i_halted("i_halted"),
     i_available("i_available"),
     o_hartsel("o_hartsel"),
@@ -30,15 +31,17 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name, bool async_reset)
     o_resumereq("o_resumereq"),
     o_resethaltreq("o_resethaltreq"),
     o_hartreset("o_hartreset"),
-    o_ndmreset("o_ndmreset"),
     o_dport_req_valid("o_dport_req_valid"),
-    o_dport_write("o_dport_write"),
+    o_dport_req_type("o_dport_req_type"),
     o_dport_addr("o_dport_addr"),
     o_dport_wdata("o_dport_wdata"),
+    o_dport_size("o_dport_size"),
     i_dport_req_ready("i_dport_req_ready"),
     o_dport_resp_ready("o_dport_resp_ready"),
     i_dport_resp_valid("i_dport_resp_valid"),
-    i_dport_rdata("i_dport_rdata") {
+    i_dport_resp_error("i_dport_resp_error"),
+    i_dport_rdata("i_dport_rdata"),
+    o_progbuf("o_progbuf") {
     iparent_ = parent;
     async_reset_ = async_reset;
     setBaseAddress(DMI_BASE_ADDRESS);
@@ -85,21 +88,27 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name, bool async_reset)
     sensitive << r.ndmreset;
     sensitive << r.dmactive;
     sensitive << r.hartsel;
-    sensitive << r.transfer;
-    sensitive << r.write;
+    sensitive << r.cmd_regaccess;
+    sensitive << r.cmd_fastaccess;
+    sensitive << r.cmd_memaccess;
+    sensitive << r.cmd_progexec;
+    sensitive << r.cmd_read;
     sensitive << r.postexec;
+    sensitive << r.aamvirtual;
     sensitive << r.command;
     sensitive << r.autoexecdata;
     sensitive << r.autoexecprogbuf;
     sensitive << r.cmderr;
     sensitive << r.data0;
     sensitive << r.data1;
+    sensitive << r.data2;
+    sensitive << r.data3;
     sensitive << r.progbuf_data;
     sensitive << r.dport_req_valid;
     sensitive << r.dport_write;
     sensitive << r.dport_addr;
     sensitive << r.dport_wdata;
-    sensitive << r.dport_wstrb;
+    sensitive << r.dport_size;
     sensitive << r.dport_resp_ready;
 
     SC_METHOD(registers);
@@ -167,7 +176,7 @@ void DmiDebug::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_resumereq, o_resumereq.name());
         sc_trace(o_vcd, i_halted, i_halted.name());
         sc_trace(o_vcd, o_dport_req_valid, o_dport_req_valid.name());
-        sc_trace(o_vcd, o_dport_write, o_dport_write.name());
+        sc_trace(o_vcd, o_dport_req_type, o_dport_req_type.name());
         sc_trace(o_vcd, o_dport_addr, o_dport_addr.name());
         sc_trace(o_vcd, o_dport_wdata, o_dport_wdata.name());
         sc_trace(o_vcd, i_dport_req_ready, i_dport_req_ready.name());
@@ -206,6 +215,12 @@ void DmiDebug::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.dmactive, pn + ".r_dmactive");
         sc_trace(o_vcd, r.hartsel, pn + ".r_hartsel");
         sc_trace(o_vcd, r.postexec, pn + ".r_postexec");
+        sc_trace(o_vcd, r.aamvirtual, pn + ".r_aamvirtual");
+        sc_trace(o_vcd, r.cmd_regaccess, pn + ".r_cmd_regaccess");
+        sc_trace(o_vcd, r.cmd_fastaccess, pn + ".r_cmd_fastaccess");
+        sc_trace(o_vcd, r.cmd_memaccess, pn + ".r_cmd_memaccess");
+        sc_trace(o_vcd, r.cmd_progexec, pn + ".r_cmd_progexec");
+        sc_trace(o_vcd, r.cmd_read, pn + ".r_cmd_read");
         sc_trace(o_vcd, r.autoexecdata, pn + ".r_autoexecdata");
         sc_trace(o_vcd, r.autoexecprogbuf, pn + ".r_autoexecprogbuf");
         sc_trace(o_vcd, r.cmderr, pn + ".r_cmderr");
@@ -272,6 +287,7 @@ bool DmiDebug::getTDO() {
 
 void DmiDebug::comb() {
     v = r;
+    sc_uint<DPortReq_Total> vb_req_type;
     sc_uint<32> vb_resp_data;
     sc_uint<CFG_LOG2_CPU_MAX> vb_hartselnext;
     bool v_resp_valid;
@@ -316,7 +332,7 @@ void DmiDebug::comb() {
     case DM_STATE_ACCESS:
         v_resp_valid = 1;
         v.dmstate = DM_STATE_IDLE;
-        if (r.regidx.read() == 0x04) {  // arg0[31:0]
+        if (r.regidx.read() == 0x04) {                                  // arg0[31:0]
             vb_resp_data = r.data0;
             if (r.regwr) {
                 v.data0 = r.wdata;
@@ -325,7 +341,7 @@ void DmiDebug::comb() {
                 && r.cmderr.read() == CMDERR_NONE) {
                 v.cmdstate = CMD_STATE_INIT;
             }
-        } else if (r.regidx.read() == 0x05) {  // arg0[63:32]
+        } else if (r.regidx.read() == 0x05) {                           // arg0[63:32]
             vb_resp_data = r.data1;
             if (r.regwr) {
                 v.data1 = r.wdata;
@@ -334,7 +350,25 @@ void DmiDebug::comb() {
                 && r.cmderr.read() == CMDERR_NONE) {
                 v.cmdstate = CMD_STATE_INIT;
             }
-        } else if (r.regidx.read() == 0x10) {  // dmcontrol
+        } else if (r.regidx.read() == 0x06) {                           // arg1[31:0]
+            vb_resp_data = r.data2;
+            if (r.regwr) {
+                v.data2 = r.wdata;
+            }
+            if (r.autoexecdata.read()[2]
+                && r.cmderr.read() == CMDERR_NONE) {
+                v.cmdstate = CMD_STATE_INIT;
+            }
+        } else if (r.regidx.read() == 0x07) {                           // arg1[63:32]
+            vb_resp_data = r.data3;
+            if (r.regwr) {
+                v.data3 = r.wdata;
+            }
+            if (r.autoexecdata.read()[3]
+                && r.cmderr.read() == CMDERR_NONE) {
+                v.cmdstate = CMD_STATE_INIT;
+            }
+        } else if (r.regidx.read() == 0x10) {                           // dmcontrol
             vb_resp_data[29] = r.hartreset;                             // reset selected core
             vb_resp_data[26] = 0;                                       // hasel: single selected hart only
             vb_resp_data(16 + CFG_LOG2_CPU_MAX - 1, 16) = r.hartsel;    // hartsello
@@ -425,17 +459,63 @@ void DmiDebug::comb() {
 
     // Abstract Command executor state machine:
     switch (r.cmdstate.read()) {
+    case CMD_STATE_IDLE:
+        v.postexec = 0;
+        v.aamvirtual = 0;
+        v.cmd_regaccess = 0;
+        v.cmd_fastaccess = 0;
+        v.cmd_memaccess = 0;
+        v.cmd_progexec = 0;
+        v.cmd_read = 0;
+        v.dport_req_valid = 0;
+        v.dport_resp_ready = 0;
+        break;
     case CMD_STATE_INIT:
-        v.cmdstate = CMD_STATE_REQUEST;
-        v.cmderr = CMDERR_BUSY;
-        v.dport_req_valid = 1;
-        v.transfer = r.command.read()[17];
-        v.write = r.command.read()[16];
-        v.dport_write = r.command.read()[17] & r.command.read()[16];
-        v.dport_addr = r.command.read()(15, 0);
-        v.dport_wdata = (r.data1, r.data0);
-        v.dport_wstrb = (r.command.read()[21] & r.command.read()[20],
-                            r.command.read()[21]);
+        if (r.command.read()(31, 24) == 0x0) {
+            // Register access command
+            v.postexec = r.command.read()[CmdPostexecBit];
+            if (r.command.read()[CmdTransferBit]) {             // transfer
+                v.cmdstate = CMD_STATE_REQUEST;
+                v.cmderr = CMDERR_BUSY;
+                v.cmd_regaccess = 1;
+                v.cmd_read = !r.command.read()[CmdWriteBit];
+
+                v.dport_req_valid = 1;
+                v.dport_write = r.command.read()[CmdWriteBit];
+                v.dport_addr = (0, r.command.read()(15, 0));
+                v.dport_wdata = (r.data1, r.data0);
+                v.dport_size = r.command.read()(22, 20);
+            } else if (r.command.read()[CmdPostexecBit]) {      // no transfer only buffer execution
+                v.cmdstate = CMD_STATE_REQUEST;
+                v.cmderr = CMDERR_BUSY;
+
+                v.dport_req_valid = 1;
+                v.cmd_progexec = 1;
+            }
+        } else if (r.command.read()(31, 24) == 0x1) {
+            // Fast access command
+            if (i_halted.read()[hsel]) {
+                v.cmderr = CMDERR_WRONGSTATE;
+            } else {
+                v.haltreq = 1;
+                v.cmd_fastaccess = 1;
+                v.cmdstate = CMD_STATE_WAIT_HALTED;
+                v.cmderr = CMDERR_BUSY;
+            }
+        } else if (r.command.read()(31, 24) == 0x2) {
+            // Memory access command
+            v.cmdstate = CMD_STATE_REQUEST;
+            v.cmderr = CMDERR_BUSY;
+            v.cmd_memaccess = 1;
+            v.cmd_read = !r.command.read()[CmdWriteBit];
+            v.aamvirtual = r.command.read()[23];
+
+            v.dport_req_valid = 1;
+            v.dport_write = r.command.read()[CmdWriteBit];
+            v.dport_addr = (r.data3, r.data2);
+            v.dport_wdata = (r.data1, r.data0);
+            v.dport_size = r.command.read()(22, 20);
+        }
         break;
     case CMD_STATE_REQUEST:
         if (i_dport_req_ready.read()) {
@@ -446,22 +526,80 @@ void DmiDebug::comb() {
         break;
     case CMD_STATE_RESPONSE:
         if (i_dport_resp_valid.read()) {
-            v.cmderr = CMDERR_NONE;         // TODO check errors
-            v.cmdstate = CMD_STATE_IDLE;
             v.dport_resp_ready = 0;
-            if (r.transfer && !r.write) {
-                if (r.dport_wstrb.read()[1]) {
-                    v.data1 = i_dport_rdata.read()(63, 32);
-                }
-                if (r.dport_wstrb.read()[0]) {
+            if (r.cmd_read) {
+                switch (r.command.read()(22,20)) {          // aamsize/aarsize
+                case 0:
+                    v.data0 = (0, i_dport_rdata.read()(7, 0));
+                    v.data1 = 0;
+                    break;
+                case 1:
+                    v.data0 = (0, i_dport_rdata.read()(15, 0));
+                    v.data1 = 0;
+                    break;
+                case 2:
                     v.data0 = i_dport_rdata.read()(31, 0);
+                    v.data1 = 0;
+                    break;
+                case 3:
+                    v.data0 = i_dport_rdata.read()(31, 0);
+                    v.data1 = i_dport_rdata.read()(63, 32);
+                    break;
+                default:;
                 }
+            }
+            if (r.command.read()[19]) {                         // postincrement
+                sc_uint<32> t1 = r.command;
+                if (r.command.read()(31, 24) == 0) {
+                    // Register access command:
+                    t1(15, 0) = t1(15, 0) + 1;
+                } else if (r.command.read()(31, 24) == 2) {
+                    // Memory access command
+                    switch (r.command.read()(22,20)) {          // aamsize
+                    case 0:
+                        t1(15, 0) = t1(15, 0) + 1;
+                        break;
+                    case 1:
+                        t1(15, 0) = t1(15, 0) + 2;
+                        break;
+                    case 2:
+                        t1(15, 0) = t1(15, 0) + 4;
+                        break;
+                    case 3:
+                        t1(15, 0) = t1(15, 0) + 8;
+                        break;
+                    default:;
+                    }
+                }
+                v.command = t1;
+            }
+            if (r.postexec.read()) {
+                v.postexec = 0;
+                v.dport_req_valid = 1;
+                v.cmd_progexec = 1;
+                v.cmdstate = CMD_STATE_REQUEST;
+            } else {
+                v.cmderr = CMDERR_NONE;
+                v.cmdstate = CMD_STATE_IDLE;
+                if (i_dport_resp_error.read()) {
+                    v.cmderr = CMDERR_EXCEPTION;         // TODO check errors
+                }
+            }
+            if (r.cmd_fastaccess) {
+                // fast command continued even if progbuf execution failed (@see spec)
+                v.resumereq = 1;
             }
         }
         break;
-    default:
-        v.dport_req_valid = 0;
-        v.dport_resp_ready = 0;
+    case CMD_STATE_WAIT_HALTED:
+        if (i_halted.read()[hsel]) {
+            v.cmdstate = CMD_STATE_REQUEST;
+
+            v.dport_req_valid = 1;
+            v.cmd_progexec = 1;
+        }
+        break;
+    default:;
     }
 
     if (v_resp_valid) {
@@ -473,23 +611,31 @@ void DmiDebug::comb() {
     }
     v.bus_resp_valid = v_resp_valid && !r.bus_jtag;
 
+    vb_req_type[DPortReq_Write] = r.dport_write;
+    vb_req_type[DPortReq_RegAccess] = r.cmd_regaccess;
+    vb_req_type[DPortReq_MemAccess] = r.cmd_memaccess;
+    vb_req_type[DPortReq_MemVirtual] = r.aamvirtual;
+    vb_req_type[DPortReq_Progexec] = r.cmd_progexec;
+
 
     if (!i_nrst) {
         R_RESET(v);
     }
 
+    o_ndmreset = r.ndmreset;
     o_hartsel = r.hartsel;
     o_haltreq = r.haltreq;
     o_resumereq = r.resumereq;
     o_resethaltreq = r.resethaltreq;
     o_hartreset = r.hartreset;
-    o_ndmreset = r.ndmreset;
 
     o_dport_req_valid = r.dport_req_valid;
-    o_dport_write = r.dport_write;
+    o_dport_req_type = vb_req_type;
     o_dport_addr = r.dport_addr;
     o_dport_wdata = r.dport_wdata;
+    o_dport_size = r.dport_size;
     o_dport_resp_ready = r.dport_resp_ready;
+    o_progbuf = r.progbuf_data;
 
     wb_jtag_dmi_resp_data = r.jtag_resp_data;
     w_jtag_dmi_busy = 0;//r.dmstate.read().or_reduce();

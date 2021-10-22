@@ -25,8 +25,6 @@
 
 namespace debugger {
 
-const int CFG_TOTAL_CPU_MAX = 4;
-
 /** CPU output: L1 cache inerface */
 class axi4_l1_in_type {
  public:

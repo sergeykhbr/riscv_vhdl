@@ -28,13 +28,16 @@ SC_MODULE(DbgPort) {
     sc_in<bool> i_nrst;                                 // Reset. Active LOW.
     // "RIVER" Debug interface
     sc_in<bool> i_dport_req_valid;                      // Debug access from DSU is valid
-    sc_in<bool> i_dport_write;                          // Write command flag
-    sc_in<sc_uint<CFG_DPORT_ADDR_BITS>> i_dport_addr;   // dport address
+    sc_in<sc_uint<DPortReq_Total>> i_dport_type;        // Debug access type
+    sc_in<sc_uint<CFG_BUS_ADDR_WIDTH>> i_dport_addr;    // Debug address (register or memory)
     sc_in<sc_uint<RISCV_ARCH>> i_dport_wdata;           // Write value
+    sc_in<sc_uint<3>> i_dport_size;                     // reg/mem access size:0=1B;...,4=128B;
     sc_out<bool> o_dport_req_ready;
     sc_in<bool> i_dport_resp_ready;                     // ready to accepd response
     sc_out<bool> o_dport_resp_valid;                    // Response is valid
+    sc_out<bool> o_dport_resp_error;                    // Something wrong during command execution
     sc_out<sc_uint<RISCV_ARCH>> o_dport_rdata;          // Response value
+    sc_in<sc_biguint<32*CFG_PROGBUF_REG_TOTAL>> i_progbuf;  // progam buffer
     // CSR bus master interface:
     sc_out<bool> o_csr_req_valid;                       // Region 0: Access to CSR bank is enabled.
     sc_in<bool> i_csr_req_ready;
@@ -79,7 +82,7 @@ private:
 
     struct RegistersType {
         sc_signal<bool> dport_write;
-        sc_signal<sc_uint<CFG_DPORT_ADDR_BITS>> dport_addr;
+        sc_signal<sc_uint<CFG_BUS_ADDR_WIDTH>> dport_addr;
         sc_signal<sc_uint<RISCV_ARCH>> dport_wdata;
         sc_signal<sc_uint<RISCV_ARCH>> dport_rdata;
         sc_signal<sc_uint<3>> dstate;

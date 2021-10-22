@@ -174,6 +174,7 @@ void CpuRiscV_RTL::createSystemC() {
     registerPortInterface("tap", static_cast<IJtagTap *>(dmi_));
     dmi_->i_clk(wrapper_->o_clk);
     dmi_->i_nrst(w_nrst);
+    dmi_->o_ndmreset(w_ndmreset);               // reset whole system
     dmi_->i_halted(wb_halted);
     dmi_->i_available(wb_available);
     dmi_->o_hartsel(wb_hartsel);
@@ -181,15 +182,17 @@ void CpuRiscV_RTL::createSystemC() {
     dmi_->o_resumereq(w_resumereq);
     dmi_->o_resethaltreq(w_resethaltreq);       // Halt after reset
     dmi_->o_hartreset(w_hartreset);             // reselet only selected core
-    dmi_->o_ndmreset(w_ndmreset);               // reset whole system
     dmi_->o_dport_req_valid(w_dport_req_valid);
-    dmi_->o_dport_write(w_dport_write);
+    dmi_->o_dport_req_type(wb_dport_type);
     dmi_->o_dport_addr(wb_dport_addr);
     dmi_->o_dport_wdata(wb_dport_wdata);
+    dmi_->o_dport_size(wb_dport_size);
     dmi_->i_dport_req_ready(w_dport_req_ready);
     dmi_->o_dport_resp_ready(w_dport_resp_ready);
     dmi_->i_dport_resp_valid(w_dport_resp_valid);
+    dmi_->i_dport_resp_error(w_dport_resp_error);
     dmi_->i_dport_rdata(wb_dport_rdata);
+    dmi_->o_progbuf(wb_progbuf);
 
 
     if (l2CacheEnable_.to_bool()) {
@@ -236,13 +239,16 @@ void CpuRiscV_RTL::createSystemC() {
     core_->i_haltreq(w_haltreq);
     core_->i_resumereq(w_resumereq);
     core_->i_dport_req_valid(w_dport_req_valid);
-    core_->i_dport_write(w_dport_write);
+    core_->i_dport_type(wb_dport_type);
     core_->i_dport_addr(wb_dport_addr);
     core_->i_dport_wdata(wb_dport_wdata);
+    core_->i_dport_size(wb_dport_size);
     core_->o_dport_req_ready(w_dport_req_ready);
     core_->i_dport_resp_ready(w_dport_resp_ready);
     core_->o_dport_resp_valid(w_dport_resp_valid);
+    core_->o_dport_resp_error(w_dport_resp_error);
     core_->o_dport_rdata(wb_dport_rdata);
+    core_->i_progbuf(wb_progbuf);
     core_->o_halted(w_halted0);
 
 #ifdef DBG_ICACHE_LRU_TB
