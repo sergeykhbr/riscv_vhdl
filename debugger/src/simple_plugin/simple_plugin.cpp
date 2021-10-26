@@ -27,7 +27,7 @@ namespace debugger {
 
 class CmdDemo : public ICommand  {
  public:
-    CmdDemo(ITap *tap) : ICommand ("democmd", tap) {
+    CmdDemo(uint64_t dmibar, ITap *tap) : ICommand ("democmd", dmibar, tap) {
 
         briefDescr_.make_string("Example of custom command implementation");
         detailedDescr_.make_string(
@@ -85,7 +85,7 @@ class SimplePlugin : public IService,
         iserv = static_cast<IService *>(execlist[0u].to_iface());
         exec_ = static_cast<ICmdExecutor *>(
             iserv->getInterface(IFACE_CMD_EXECUTOR));
-        pcmd_ = new CmdDemo(itap);
+        pcmd_ = new CmdDemo(0, itap);
         exec_->registerCommand(pcmd_);
     }
     virtual void predeleteService() {

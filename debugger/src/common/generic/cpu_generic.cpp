@@ -26,7 +26,7 @@ CpuGeneric::CpuGeneric(const char *name)
     portRegs_(this, "regs", DSUREG(ureg.v.iregs[0]), 0x1000),    // 4096 bytes region of DSU
     dbgnpc_(this, "npc", DSUREG(csr[CSR_dpc])),
     dcsr_(this, "dcsr", DSUREG(csr[CSR_dcsr])),
-    status_(this, "status", DSUREG(csr[CSR_runcontrol])),
+    //status_(this, "status", DSUREG(csr[CSR_runcontrol])),
     //insperstep_(this, "insperstep", DSUREG(csr[CSR_insperstep])),
     clock_cnt_(this, "clock_cnt", DSUREG(csr[CSR_cycle])),
     executed_cnt_(this, "executed_cnt", DSUREG(csr[CSR_insret])),
@@ -521,7 +521,7 @@ void CpuGeneric::reset(IFace *isource) {
     portRegs_.reset();
     setPC(getResetAddress());
     setNPC(getResetAddress());
-    status_.reset(isource);
+    //status_.reset(isource);
     stackTraceCnt_.reset(isource);
     interrupt_pending_[0] = 0;
     interrupt_pending_[1] = 0;

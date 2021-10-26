@@ -122,9 +122,9 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     fetch0->i_mem_executable(i_resp_ctrl_executable);
     fetch0->o_mem_resp_ready(o_resp_ctrl_ready);
     fetch0->i_flush_pipeline(w_flush_pipeline);
-    fetch0->i_progbuf_ena(csr.progbuf_ena);
-    fetch0->i_progbuf_pc(csr.progbuf_pc);
-    fetch0->i_progbuf_data(csr.progbuf_data);
+    fetch0->i_progbuf_ena(dbg.progbuf_ena);
+    fetch0->i_progbuf_pc(dbg.progbuf_pc);
+    fetch0->i_progbuf_instr(dbg.progbuf_instr);
     fetch0->i_predict_npc(bp.npc);
     fetch0->o_mem_req_fire(w.f.req_fire);
     fetch0->o_instr_load_fault(w.f.instr_load_fault);
@@ -150,7 +150,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     dec0->o_imm(w.d.imm);
     dec0->i_e_ready(w.e.d_ready);
     dec0->i_flush_pipeline(w_flush_pipeline);
-    dec0->i_progbuf_ena(csr.progbuf_ena);
+    dec0->i_progbuf_ena(dbg.progbuf_ena);
     dec0->o_valid(w.d.instr_valid);
     dec0->o_pc(w.d.pc);
     dec0->o_instr(w.d.instr);
@@ -210,7 +210,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->i_haltreq(i_haltreq);
     exec0->i_resumereq(i_resumereq);
     exec0->i_step(csr.step);
-    exec0->i_dbg_progbuf_ena(csr.progbuf_ena);
+    exec0->i_dbg_progbuf_ena(dbg.progbuf_ena);
     exec0->i_rdata1(ireg.rdata1);
     exec0->i_rtag1(ireg.rtag1);
     exec0->i_rdata2(ireg.rdata2);
@@ -376,9 +376,9 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     csr0->i_e_valid(w.e.valid);
     csr0->o_executed_cnt(csr.executed_cnt);
     csr0->o_step(csr.step);
-    csr0->o_progbuf_ena(csr.progbuf_ena);
-    csr0->o_progbuf_pc(csr.progbuf_pc);
-    csr0->o_progbuf_data(csr.progbuf_data);
+    csr0->i_dbg_progbuf_ena(dbg.progbuf_ena);
+    csr0->o_progbuf_end(csr.progbuf_end);
+    csr0->o_progbuf_error(csr.progbuf_error);
     csr0->o_flushi_ena(csr.flushi_ena);
     csr0->o_flushi_addr(csr.flushi_addr);
     csr0->o_mpu_region_we(o_mpu_region_we);
@@ -400,7 +400,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     dbg0->o_dport_resp_valid(o_dport_resp_valid);
     dbg0->o_dport_resp_error(o_dport_resp_error);
     dbg0->o_dport_rdata(o_dport_rdata);
-    dbg0->i_progbuf(i_progbuf);
     dbg0->o_csr_req_valid(dbg.csr_req_valid);
     dbg0->i_csr_req_ready(iccsr_m1_req_ready);
     dbg0->o_csr_req_type(dbg.csr_req_type);
@@ -410,13 +409,19 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     dbg0->o_csr_resp_ready(dbg.csr_resp_ready);
     dbg0->i_csr_resp_data(iccsr_m1_resp_data);
     dbg0->i_csr_resp_exception(iccsr_m1_resp_exception);
+    dbg0->i_progbuf(i_progbuf);
+    dbg0->o_progbuf_ena(dbg.progbuf_ena);
+    dbg0->o_progbuf_pc(dbg.progbuf_pc);
+    dbg0->o_progbuf_instr(dbg.progbuf_instr);
+    dbg0->i_csr_progbuf_end(csr.progbuf_end);
+    dbg0->i_csr_progbuf_error(csr.progbuf_error);
     dbg0->o_reg_addr(dbg.reg_addr);
     dbg0->o_core_wdata(dbg.core_wdata);
     dbg0->o_ireg_ena(dbg.ireg_ena);
     dbg0->o_ireg_write(dbg.ireg_write);
     dbg0->i_ireg_rdata(ireg.dport_rdata);
-    dbg0->i_pc(w.e.pc);
-    dbg0->i_npc(w.e.npc);
+    dbg0->i_e_pc(w.e.pc);
+    dbg0->i_e_npc(w.e.npc);
     dbg0->i_e_call(w.e.call);
     dbg0->i_e_ret(w.e.ret);
 

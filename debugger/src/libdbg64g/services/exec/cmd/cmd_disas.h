@@ -27,7 +27,7 @@ namespace debugger {
 
 class CmdDisas : public ICommand  {
  public:
-    explicit CmdDisas(ITap *tap);
+    explicit CmdDisas(uint64_t dmibar, ITap *tap);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);

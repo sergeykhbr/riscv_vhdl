@@ -19,7 +19,8 @@
 
 namespace debugger {
 
-CmdDsuIsRunning::CmdDsuIsRunning(ITap *tap) : ICommand ("isrunning", tap) {
+CmdDsuIsRunning::CmdDsuIsRunning(uint64_t dmibar, ITap *tap)
+    : ICommand ("isrunning", dmibar, tap) {
 
     briefDescr_.make_string("Check target's status");
     detailedDescr_.make_string(

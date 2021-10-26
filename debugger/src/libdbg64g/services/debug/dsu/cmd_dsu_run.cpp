@@ -23,7 +23,8 @@
 
 namespace debugger {
 
-CmdDsuRun::CmdDsuRun(ITap *tap) : ICommand ("run", tap) {
+CmdDsuRun::CmdDsuRun(uint64_t dmibar, ITap *tap)
+    : ICommand ("run", dmibar, tap) {
 
     briefDescr_.make_string("Run simulation for a specify number of steps\"");
     detailedDescr_.make_string(
@@ -65,7 +66,7 @@ void CmdDsuRun::exec(AttributeType *args, AttributeType *res) {
     res->make_nil();
     CrGenericRuncontrolType runctrl;
     CrGenericDebugControlType dcs;
-    uint64_t addr_runcontrol = DSUREGBASE(csr[CSR_runcontrol]);
+    uint64_t addr_runcontrol = -1;//DSUREGBASE(csr[CSR_runcontrol]);
     uint64_t addr_dcsr = DSUREGBASE(csr[CSR_dcsr]);
     //uint64_t addr_step_cnt = DSUREGBASE(csr[CSR_insperstep]);
     uint64_t steps_skipped = 0;
@@ -105,7 +106,7 @@ void CmdDsuRun::exec(AttributeType *args, AttributeType *res) {
 uint64_t CmdDsuRun::checkSwBreakpoint() {
     uint64_t addr_dpc = DSUREGBASE(csr[CSR_dpc]);
     uint64_t addr_dcsr = DSUREGBASE(csr[CSR_dcsr]);
-    uint64_t addr_runcontrol = DSUREGBASE(csr[CSR_runcontrol]);
+    uint64_t addr_runcontrol = -1;//DSUREGBASE(csr[CSR_runcontrol]);
     uint64_t addr_dmstatus = DSUREGBASE(ulocal.v.dmstatus);
     Reg64Type br_addr;
     Reg64Type dpc;

@@ -41,7 +41,8 @@ class ISensor : public IFace {
 
 class SensorCmdType : public ICommand {
  public:
-    SensorCmdType(IService *parent, const char *name) : ICommand(name, 0) {
+    SensorCmdType(IService *parent, uint64_t dmibar, const char *name)
+        : ICommand(name, dmibar, 0) {
         parent_ = parent;
         isen_ = static_cast<ISensor *>(parent->getInterface(IFACE_SENSOR));
         briefDescr_.make_string("Generic Sensor instance management command.");

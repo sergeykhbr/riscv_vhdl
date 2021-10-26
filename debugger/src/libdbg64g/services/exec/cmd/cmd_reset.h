@@ -25,7 +25,7 @@ namespace debugger {
 
 class CmdReset : public ICommand  {
  public:
-    explicit CmdReset(ITap *tap);
+    explicit CmdReset(uint64_t dmibar, ITap *tap);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);

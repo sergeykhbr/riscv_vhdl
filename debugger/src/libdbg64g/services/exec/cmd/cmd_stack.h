@@ -25,7 +25,7 @@ namespace debugger {
 
 class CmdStack : public ICommand  {
  public:
-    explicit CmdStack(ITap *tap);
+    explicit CmdStack(uint64_t dmibar, ITap *tap);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);

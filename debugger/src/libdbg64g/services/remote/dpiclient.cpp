@@ -26,7 +26,8 @@ enum EDpiResponseList {
 };
 
 
-CmdDpi::CmdDpi(IService *parent) : ICommand ("dpi", 0) {
+CmdDpi::CmdDpi(IService *parent, uint64_t dmibar)
+    : ICommand("dpi", dmibar, 0) {
     parent_ = parent;
     briefDescr_.make_string(
     "Access to RTL simulation via TCP and DPI interface");
@@ -81,7 +82,7 @@ void CmdDpi::exec(AttributeType *args, AttributeType *res) {
 
 
 DpiClient::DpiClient(const char *name) : IService(name),
-    cmd_(static_cast<IService *>(this)) {
+    cmd_(static_cast<IService *>(this), 0) {
     registerInterface(static_cast<IThread *>(this));
     registerInterface(static_cast<IDpi *>(this));
     registerInterface(static_cast<ITap *>(this));

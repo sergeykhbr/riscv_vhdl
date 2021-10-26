@@ -23,7 +23,7 @@ namespace debugger {
 
 class CmdBrRiscv : public CmdBrGeneric {
  public:
-    explicit CmdBrRiscv(ITap *tap);
+    explicit CmdBrRiscv(uint64_t dmibar, ITap *tap);
 
  protected:
     virtual void getSwBreakpointInstr(Reg64Type *instr, uint32_t *len);

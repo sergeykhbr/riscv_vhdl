@@ -272,7 +272,7 @@ class CpuGeneric : public IService,
     GenericReg64Bank portRegs_;
     GenericNPCType dbgnpc_;
     CsrDebugStatusType dcsr_;
-    GenericStatusType status_;
+    //GenericStatusType status_;
     //MappedReg64Type insperstep_;
     StepCounterType clock_cnt_;
     StepCounterType executed_cnt_;

@@ -19,7 +19,8 @@
 
 namespace debugger {
 
-CmdReset::CmdReset(ITap *tap) : ICommand ("reset", tap) {
+CmdReset::CmdReset(uint64_t dmibar, ITap *tap)
+    : ICommand("reset", dmibar, tap) {
 
     briefDescr_.make_string("Reset, Un-reset or Reboot target");
     detailedDescr_.make_string(

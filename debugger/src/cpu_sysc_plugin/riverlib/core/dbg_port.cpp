@@ -33,7 +33,6 @@ DbgPort::DbgPort(sc_module_name name_, bool async_reset) :
     o_dport_resp_valid("o_dport_resp_valid"),
     o_dport_resp_error("o_dport_resp_error"),
     o_dport_rdata("o_dport_rdata"),
-    i_progbuf("i_progbuf"),
     o_csr_req_valid("o_csr_req_valid"),
     i_csr_req_ready("i_csr_req_ready"),
     o_csr_req_type("o_csr_req_type"),
@@ -43,13 +42,19 @@ DbgPort::DbgPort(sc_module_name name_, bool async_reset) :
     o_csr_resp_ready("o_csr_resp_ready"),
     i_csr_resp_data("i_csr_resp_data"),
     i_csr_resp_exception("i_csr_resp_exception"),
+    i_progbuf("i_progbuf"),
+    o_progbuf_ena("o_progbuf_ena"),
+    o_progbuf_pc("o_progbuf_pc"),
+    o_progbuf_instr("o_progbuf_instr"),
+    i_csr_progbuf_end("i_csr_progbuf_end"),
+    i_csr_progbuf_error("i_csr_progbuf_error"),
     o_reg_addr("o_reg_addr"),
     o_core_wdata("o_core_wdata"),
     o_ireg_ena("o_ireg_ena"),
     o_ireg_write("o_ireg_write"),
     i_ireg_rdata("i_ireg_rdata"),
-    i_pc("i_pc"),
-    i_npc("i_npc"),
+    i_e_pc("i_e_pc"),
+    i_e_npc("i_e_npc"),
     i_e_call("i_e_call"),
     i_e_ret("i_e_ret") {
     async_reset_ = async_reset;
@@ -68,8 +73,10 @@ DbgPort::DbgPort(sc_module_name name_, bool async_reset) :
     sensitive << i_csr_resp_valid;
     sensitive << i_csr_resp_data;
     sensitive << i_csr_resp_exception;
-    sensitive << i_pc;
-    sensitive << i_npc;
+    sensitive << i_csr_progbuf_end;
+    sensitive << i_csr_progbuf_error;
+    sensitive << i_e_pc;
+    sensitive << i_e_npc;
     sensitive << i_e_call;
     sensitive << i_e_ret;
     sensitive << r.dport_write;
@@ -79,6 +86,9 @@ DbgPort::DbgPort(sc_module_name name_, bool async_reset) :
     sensitive << r.dstate;
     sensitive << r.rdata;
     sensitive << r.req_accepted;
+    sensitive << r.resp_error;
+    sensitive << r.progbuf_pc;
+    sensitive << r.progbuf_instr;
     sensitive << wb_stack_rdata;
 
     SC_METHOD(registers);
@@ -123,13 +133,15 @@ void DbgPort::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_csr_resp_ready, o_csr_resp_ready.name());
         sc_trace(o_vcd, i_csr_resp_data, i_csr_resp_data.name());
         sc_trace(o_vcd, i_csr_resp_exception, i_csr_resp_exception.name());
+        sc_trace(o_vcd, i_csr_progbuf_end, i_csr_progbuf_end.name());
+        sc_trace(o_vcd, i_csr_progbuf_error, i_csr_progbuf_error.name());
         sc_trace(o_vcd, o_reg_addr, o_reg_addr.name());
         sc_trace(o_vcd, o_core_wdata, o_core_wdata.name());
         sc_trace(o_vcd, o_ireg_ena, o_ireg_ena.name());
         sc_trace(o_vcd, o_ireg_write, o_ireg_write.name());
         sc_trace(o_vcd, i_ireg_rdata, i_ireg_rdata.name());
-        sc_trace(o_vcd, i_pc, i_pc.name());
-        sc_trace(o_vcd, i_npc, i_npc.name());
+        sc_trace(o_vcd, i_e_pc, i_e_pc.name());
+        sc_trace(o_vcd, i_e_npc, i_e_npc.name());
         sc_trace(o_vcd, i_e_call, i_e_call.name());
         sc_trace(o_vcd, i_e_ret, i_e_ret.name());
     }
@@ -151,6 +163,7 @@ void DbgPort::comb() {
     bool w_o_ireg_write;
     bool v_req_ready;
     bool v_resp_valid;
+    bool v_progbuf_ena;
     sc_uint<64> vrdata;
 
     v = r;
@@ -171,6 +184,7 @@ void DbgPort::comb() {
     wb_stack_wdata = 0;
     v_req_ready = 0;
     v_resp_valid = 0;
+    v_progbuf_ena = 0;
     vrdata = r.dport_rdata;
 
     if (CFG_LOG2_STACK_TRACE_ADDR != 0) {
@@ -178,7 +192,7 @@ void DbgPort::comb() {
             r.stack_trace_cnt.read() != (STACK_TRACE_BUF_SIZE - 1)) {
             w_stack_we = 1;
             wb_stack_waddr = r.stack_trace_cnt.read();
-            wb_stack_wdata = (i_npc, i_pc);
+            wb_stack_wdata = (i_e_npc, i_e_pc);
             v.stack_trace_cnt = r.stack_trace_cnt.read() + 1;
         } else if (i_e_ret.read() && r.stack_trace_cnt.read() != 0) {
             v.stack_trace_cnt = r.stack_trace_cnt.read() - 1;
@@ -190,23 +204,32 @@ void DbgPort::comb() {
         v_req_ready = 1;
         vrdata = 0;
         v.req_accepted = 0;
-        if (i_dport_req_valid.read() == 1 && i_dport_type.read()[DPortReq_RegAccess]) {
-            v.dport_write = i_dport_type.read()[DPortReq_Write];
-            v.dport_addr = i_dport_addr;
-            v.dport_wdata = i_dport_wdata;
-            if (i_dport_addr.read()(15, 12) == 0x0) {
-                v.dstate = csr_region;
-            } else if (i_dport_addr.read()(15, 12) == 0x1) {
-                v.dstate = reg_bank;
-            } else if (i_dport_addr.read()(15, 12) == 0xC) {
-                // non-standard extension
-                if (wb_idx == 64) {
-                    v.dstate = reg_stktr_cnt;
-                } else if ((wb_idx >= 128) && (wb_idx < (128 + 2 * STACK_TRACE_BUF_SIZE))) {
-                    v.dstate = reg_stktr_buf_adr;
+        v.resp_error = 0;
+        if (i_dport_req_valid.read() == 1) {
+            if (i_dport_type.read()[DPortReq_RegAccess]) {
+                v.dport_write = i_dport_type.read()[DPortReq_Write];
+                v.dport_addr = i_dport_addr;
+                v.dport_wdata = i_dport_wdata;
+                if (i_dport_addr.read()(15, 12) == 0x0) {
+                    v.dstate = csr_region;
+                } else if (i_dport_addr.read()(15, 12) == 0x1) {
+                    v.dstate = reg_bank;
+                } else if (i_dport_addr.read()(15, 12) == 0xC) {
+                    // non-standard extension
+                    if (wb_idx == 64) {
+                        v.dstate = reg_stktr_cnt;
+                    } else if ((wb_idx >= 128) && (wb_idx < (128 + 2 * STACK_TRACE_BUF_SIZE))) {
+                        v.dstate = reg_stktr_buf_adr;
+                    }
+                } else {
+                    v.dstate = wait_to_accept;
                 }
+            } else if (i_dport_type.read()[DPortReq_Progexec]) {
+                v.dstate = exec_progbuf;
             } else {
+                // Unsupported request
                 v.dstate = wait_to_accept;
+                v.resp_error = 1;
             }
         }
         break;
@@ -261,6 +284,13 @@ void DbgPort::comb() {
         }
         v.dstate = wait_to_accept;
         break;
+    case exec_progbuf:
+        v_progbuf_ena = 1;
+        if (i_csr_progbuf_end.read() == 1) {
+            v.resp_error = i_csr_progbuf_error;
+            v.dstate = wait_to_accept;
+        }
+        break;
     case wait_to_accept:
         v_resp_valid = 1;
         if (i_dport_resp_ready.read() == 1) {
@@ -271,6 +301,19 @@ void DbgPort::comb() {
     }
 
     v.dport_rdata = vrdata;
+
+    if (v_progbuf_ena == 1) {
+        // Total progbuf max = 512 bits = 64 B
+        v.progbuf_pc = (0, (i_e_npc.read()(5,1) << 1));
+    } else {
+        v.progbuf_pc = 0;
+    }
+    int t1 = i_e_npc.read()(5,1);
+    if (t1 == 0x1f) {
+        v.progbuf_instr = (0, i_progbuf.read()(16*t1 + 15, 16*t1).to_uint());
+    } else {
+        v.progbuf_instr = i_progbuf.read()(16*t1 + 31, 16*t1).to_uint();
+    }
 
     if (!async_reset_ && !i_nrst.read()) {
         R_RESET(v);
@@ -287,8 +330,13 @@ void DbgPort::comb() {
     o_ireg_ena = w_o_ireg_ena;
     o_ireg_write = w_o_ireg_write;
 
+    o_progbuf_ena = v_progbuf_ena;
+    o_progbuf_pc = r.progbuf_pc;
+    o_progbuf_instr = r.progbuf_instr;
+
     o_dport_req_ready  = v_req_ready;
     o_dport_resp_valid = v_resp_valid;
+    o_dport_resp_error = r.resp_error;
     o_dport_rdata      = r.dport_rdata;
 }
 

@@ -24,7 +24,7 @@ namespace debugger {
 
 class CmdRegsRiscv : public CmdRegsGeneric {
  public:
-    explicit CmdRegsRiscv(ITap *tap) : CmdRegsGeneric(tap) {}
+    explicit CmdRegsRiscv(uint64_t dmibar, ITap *tap) : CmdRegsGeneric(dmibar, tap) {}
 
  protected:
     virtual const ECpuRegMapping *getpMappedReg() {

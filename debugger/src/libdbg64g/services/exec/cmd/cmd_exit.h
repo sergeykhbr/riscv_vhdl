@@ -25,7 +25,7 @@ namespace debugger {
 
 class CmdExit : public ICommand  {
  public:
-    explicit CmdExit(ITap *tap);
+    explicit CmdExit(uint64_t dmibar, ITap *tap);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);

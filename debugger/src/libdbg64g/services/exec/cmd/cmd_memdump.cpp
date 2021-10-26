@@ -19,7 +19,8 @@
 
 namespace debugger {
 
-CmdMemDump::CmdMemDump(ITap *tap) : ICommand ("memdump", tap) {
+CmdMemDump::CmdMemDump(uint64_t dmibar, ITap *tap)
+    :ICommand ("memdump", dmibar, tap) {
 
     briefDescr_.make_string("Dump memory to file");
     detailedDescr_.make_string(

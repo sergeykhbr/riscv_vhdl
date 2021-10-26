@@ -229,9 +229,6 @@ void DmiDebug::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
 ETransStatus DmiDebug::b_transport(Axi4TransactionType *trans) {
     uint64_t off = trans->addr - getBaseAddress();
-    if ((off + trans->xsize) > sizeof(DmiRegBankType)) {
-        return TRANS_ERROR;
-    }
 
     // Only 4-bytes requests:
     if (trans->action == MemAction_Read) {

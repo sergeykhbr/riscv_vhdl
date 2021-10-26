@@ -211,9 +211,6 @@ private:
         sc_signal<bool> resp_valid;                 // CSR module Response is valid
         sc_signal<sc_uint<RISCV_ARCH>> resp_data;   // Responded CSR data
         sc_signal<bool> resp_exception;             // Exception of CSR access
-        sc_signal<bool> progbuf_ena;                // execute instruction from progbuf
-        sc_signal<sc_uint<32>> progbuf_pc;          // progbuf instruction counter
-        sc_signal<sc_uint<32>> progbuf_data;        // progbuf instruction to execute
         sc_signal<bool> flushi_ena;                 // clear specified addr in ICache without execution of fence.i
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> flushi_addr;
         sc_signal<sc_uint<64>> executed_cnt;        // Number of executed instruction
@@ -223,18 +220,23 @@ private:
         sc_signal<bool> stack_overflow;
         sc_signal<bool> stack_underflow;
         sc_signal<bool> step;
+        sc_signal<bool> progbuf_end;
+        sc_signal<bool> progbuf_error;
     } csr;
 
     struct DebugType {
         sc_signal<bool> csr_req_valid;
         sc_signal<sc_uint<CsrReq_TotalBits>> csr_req_type;
-        sc_signal<sc_uint<12>> csr_req_addr;           // Address of the sub-region register
+        sc_signal<sc_uint<12>> csr_req_addr;            // Address of the sub-region register
         sc_signal<sc_uint<RISCV_ARCH>> csr_req_data;
         sc_signal<bool> csr_resp_ready;
         sc_signal<sc_uint<6>> reg_addr;
-        sc_signal<sc_uint<RISCV_ARCH>> core_wdata;  // Write data
-        sc_signal<bool> ireg_ena;                   // Region 1: Access to integer register bank is enabled
-        sc_signal<bool> ireg_write;                 // Region 1: Integer registers bank write pulse
+        sc_signal<sc_uint<RISCV_ARCH>> core_wdata;      // Write data
+        sc_signal<bool> ireg_ena;                       // Region 1: Access to integer register bank is enabled
+        sc_signal<bool> ireg_write;                     // Region 1: Integer registers bank write pulse
+        sc_signal<bool> progbuf_ena;                    // execute instruction from progbuf
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> progbuf_pc;   // progbuf instruction counter
+        sc_signal<sc_uint<32>> progbuf_instr;           // progbuf instruction to execute
     } dbg;
 
     struct BranchPredictorType {

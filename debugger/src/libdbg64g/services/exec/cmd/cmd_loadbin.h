@@ -25,7 +25,7 @@ namespace debugger {
 
 class CmdLoadBin : public ICommand  {
  public:
-    explicit CmdLoadBin(ITap *tap);
+    explicit CmdLoadBin(uint64_t dmibar, ITap *tap);
 
     /** ICommand interface */
     virtual int isValid(AttributeType *args);

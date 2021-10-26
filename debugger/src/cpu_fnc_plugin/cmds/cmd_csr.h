@@ -24,7 +24,7 @@ namespace debugger {
 
 class CmdCsr : public ICommand  {
  public:
-    explicit CmdCsr(ITap *tap);
+    explicit CmdCsr(uint64_t dmibar, ITap *tap);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);

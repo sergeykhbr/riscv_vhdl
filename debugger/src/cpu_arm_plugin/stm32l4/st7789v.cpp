@@ -70,6 +70,7 @@ void ST7789V::postinitService() {
         return;
     }
     pcmd_ = new ST7789VCmdType(static_cast<IService *>(this),
+                               0, 
                                getObjName());
     iexec_->registerCommand(static_cast<ICommand *>(pcmd_));
 

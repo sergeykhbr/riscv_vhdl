@@ -263,7 +263,7 @@ class DmiDebug : public sc_module,
     }
 
 
-union DmiRegBankType {
+union g {
     struct DmiRegsType {
         uint32_t rsrv_00_03[4];     //
         uint32_t data[12];          // 0x04 Abstract Data

@@ -47,12 +47,12 @@ SC_MODULE(CsrRegs) {
     sc_out<bool> o_stack_overflow;              // stack overflow exception
     sc_out<bool> o_stack_underflow;             // stack underflow exception
     sc_in<bool> i_e_valid;
-    sc_out<sc_uint<64>> o_executed_cnt;     // Number of executed instructions
+    sc_out<sc_uint<64>> o_executed_cnt;         // Number of executed instructions
 
     sc_out<bool> o_step;                        // Stepping enabled
-    sc_out<bool> o_progbuf_ena;               // Execution from prog buffer
-    sc_out<sc_uint<32>> o_progbuf_pc;         // prog buffer instruction counter
-    sc_out<sc_uint<32>> o_progbuf_data;       // prog buffer instruction opcode
+    sc_in<bool> i_dbg_progbuf_ena;              // Executing progbuf is in progress
+    sc_out<bool> o_progbuf_end;                 // End of execution from prog buffer
+    sc_out<bool> o_progbuf_error;               // exception during progbuf execution
     sc_out<bool> o_flushi_ena;                // clear specified addr in ICache without execution of fence.i
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_flushi_addr; // ICache address to flush
 
@@ -144,12 +144,6 @@ private:
 
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> dpc;
         sc_signal<sc_uint<3>> halt_cause;      // 1=ebreak instruction; 2=breakpoint exception; 3=haltreq; 4=step
-        sc_signal<bool> progbuf_ena;
-        sc_signal<sc_biguint<CFG_PROGBUF_REG_TOTAL*32>> progbuf_data;
-        sc_signal<sc_uint<32>> progbuf_data_out;
-        sc_signal<sc_uint<5>> progbuf_data_pc;
-        sc_signal<sc_uint<5>> progbuf_data_npc;
-        sc_signal<sc_uint<3>> progbuf_err;         // 1=busy;2=cmd not supported;3=exception;4=halt/resume;5=bus error
         sc_signal<bool> dcsr_ebreakm;               // Enter or not into Debug Mode on EBREAK instruction
         sc_signal<bool> dcsr_stopcount;
         sc_signal<bool> dcsr_stoptimer;
@@ -217,12 +211,6 @@ private:
         iv.executed_cnt = 0;
         iv.dpc = 0;
         iv.halt_cause = 0;
-        iv.progbuf_ena = 0;
-        iv.progbuf_data = 0;
-        iv.progbuf_data_out = 0;
-        iv.progbuf_data_pc = 0;
-        iv.progbuf_data_npc = 0;
-        iv.progbuf_err = PROGBUF_ERR_NONE;
         iv.dcsr_ebreakm = 0;
         iv.dcsr_stopcount = 0;
         iv.dcsr_stoptimer = 0;

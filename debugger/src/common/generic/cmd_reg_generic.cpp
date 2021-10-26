@@ -19,7 +19,8 @@
 
 namespace debugger {
 
-CmdRegGeneric::CmdRegGeneric(ITap *tap) : ICommand ("reg", tap) {
+CmdRegGeneric::CmdRegGeneric(uint64_t dmibar, ITap *tap)
+    : ICommand ("reg", dmibar, tap) {
 
     briefDescr_.make_string("Read/write register value");
     detailedDescr_.make_string(

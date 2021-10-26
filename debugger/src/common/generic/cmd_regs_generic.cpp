@@ -18,7 +18,8 @@
 
 namespace debugger {
 
-CmdRegsGeneric::CmdRegsGeneric(ITap *tap) : ICommand ("regs", tap) {
+CmdRegsGeneric::CmdRegsGeneric(uint64_t dmibar, ITap *tap)
+    : ICommand ("regs", dmibar, tap) {
 
     briefDescr_.make_string("List of Core's registers values");
     detailedDescr_.make_string(

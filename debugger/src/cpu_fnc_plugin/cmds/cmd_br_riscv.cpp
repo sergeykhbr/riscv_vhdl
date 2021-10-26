@@ -18,7 +18,8 @@
 
 namespace debugger {
 
-CmdBrRiscv::CmdBrRiscv(ITap *tap) : CmdBrGeneric(tap) {
+CmdBrRiscv::CmdBrRiscv(uint64_t dmibar, ITap *tap)
+    : CmdBrGeneric(dmibar, tap) {
 }
 
 void CmdBrRiscv::getSwBreakpointInstr(Reg64Type *instr, uint32_t *len) {

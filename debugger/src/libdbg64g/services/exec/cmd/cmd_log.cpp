@@ -18,7 +18,8 @@
 
 namespace debugger {
 
-CmdLog::CmdLog(ITap *tap) : ICommand ("log", tap) {
+CmdLog::CmdLog(uint64_t dmibar, ITap *tap)
+    : ICommand("log", dmibar, tap) {
 
     briefDescr_.make_string("Enable log-file");
     detailedDescr_.make_string(

@@ -19,7 +19,7 @@
 
 namespace debugger {
 
-CmdDisas::CmdDisas(ITap *tap) : ICommand ("disas", tap) {
+CmdDisas::CmdDisas(uint64_t dmibar, ITap *tap) : ICommand ("disas", dmibar, tap) {
 
     briefDescr_.make_string("Disassemble block of data.");
     detailedDescr_.make_string(

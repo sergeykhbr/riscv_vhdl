@@ -20,8 +20,8 @@
 
 namespace debugger {
 
-CmdCpi::CmdCpi(ITap *tap) 
-    : ICommand ("cpi", tap) {
+CmdCpi::CmdCpi(uint64_t dmibar, ITap *tap) 
+    : ICommand ("cpi", dmibar, tap) {
 
     briefDescr_.make_string("Compute Clocks Per Instruction (CPI) rate");
     detailedDescr_.make_string(

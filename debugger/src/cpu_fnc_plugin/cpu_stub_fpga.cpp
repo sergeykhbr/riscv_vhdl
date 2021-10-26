@@ -41,16 +41,16 @@ void CpuStubRiscVFpga::postinitService() {
         return;
     }
 
-    pcmd_br_ = new CmdBrRiscv(itap_);
+    pcmd_br_ = new CmdBrRiscv(DMI_BASE_ADDRESS, itap_);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_br_));
 
-    pcmd_csr_ = new CmdCsr(itap_);
+    pcmd_csr_ = new CmdCsr(DMI_BASE_ADDRESS, itap_);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_csr_));
 
-    pcmd_reg_ = new CmdRegRiscv(itap_);
+    pcmd_reg_ = new CmdRegRiscv(DMI_BASE_ADDRESS, itap_);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_reg_));
 
-    pcmd_regs_ = new CmdRegsRiscv(itap_);
+    pcmd_regs_ = new CmdRegsRiscv(DMI_BASE_ADDRESS, itap_);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_regs_));
 }
 

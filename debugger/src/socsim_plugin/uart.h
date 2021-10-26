@@ -33,7 +33,8 @@ namespace debugger {
 
 class UartCmdType : public ICommand {
  public:
-    UartCmdType(IService *parent, const char *name) : ICommand(name, 0) {
+    UartCmdType(IService *parent, uint64_t dmibar, const char *name)
+        : ICommand(name, dmibar, 0) {
         parent_ = parent;
         iserial_ = static_cast<ISerial *>(parent->getInterface(IFACE_SERIAL));
         briefDescr_.make_string("Access to external Serial port from console.");

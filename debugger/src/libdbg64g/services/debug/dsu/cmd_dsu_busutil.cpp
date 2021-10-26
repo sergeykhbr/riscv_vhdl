@@ -23,7 +23,8 @@
 
 namespace debugger {
 
-CmdDsuBusUtil::CmdDsuBusUtil(ITap *tap) : ICommand ("busutil", tap) {
+CmdDsuBusUtil::CmdDsuBusUtil(uint64_t dmibar, ITap *tap)
+    : ICommand ("busutil", dmibar, tap) {
 
     briefDescr_.make_string("Read per master bus utilization in percentage "
                             "of time");

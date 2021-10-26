@@ -20,7 +20,8 @@
 
 namespace debugger {
 
-CmdLoadBin::CmdLoadBin(ITap *tap) : ICommand ("loadbin", tap) {
+CmdLoadBin::CmdLoadBin(uint64_t dmibar, ITap *tap)
+    : ICommand("loadbin", dmibar, tap) {
 
     briefDescr_.make_string("Load binary file");
     detailedDescr_.make_string(

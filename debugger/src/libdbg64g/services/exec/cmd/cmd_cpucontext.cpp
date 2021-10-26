@@ -21,8 +21,8 @@
 
 namespace debugger {
 
-CmdCpuContext::CmdCpuContext(ITap *tap) :
-    ICommand ("cpucontext", tap) {
+CmdCpuContext::CmdCpuContext(uint64_t dmibar, ITap *tap) :
+    ICommand ("cpucontext", dmibar, tap) {
     briefDescr_.make_string("Switch CPU context in multicore configuration.");
     detailedDescr_.make_string(
         "Description:\n"

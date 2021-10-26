@@ -24,7 +24,8 @@ namespace debugger {
 //char bindata[1 << 24] = {0};
 //char flgdata[1 << 24] = {0};
 
-CmdLoadH86::CmdLoadH86(ITap *tap) : ICommand ("loadh86", tap) {
+CmdLoadH86::CmdLoadH86(uint64_t dmibar, ITap *tap)
+    : ICommand("loadh86", dmibar, tap) {
 
     briefDescr_.make_string("Load Intel HEX file");
     detailedDescr_.make_string(

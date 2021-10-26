@@ -24,7 +24,7 @@ namespace debugger {
 
 class CmdDsuIsRunning : public ICommand  {
  public:
-    explicit CmdDsuIsRunning(ITap *tap);
+    explicit CmdDsuIsRunning(uint64_t dmibar, ITap *tap);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);

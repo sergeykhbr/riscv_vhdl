@@ -19,7 +19,8 @@
 
 namespace debugger {
 
-CmdDsuStatus::CmdDsuStatus(ITap *tap) : ICommand ("status", tap) {
+CmdDsuStatus::CmdDsuStatus(uint64_t dmibar, ITap *tap)
+    : ICommand("status", dmibar, tap) {
 
     briefDescr_.make_string("Read target's status register throught the DSU registers");
     detailedDescr_.make_string(

@@ -21,7 +21,8 @@
 
 namespace debugger {
 
-CmdStack::CmdStack(ITap *tap) : ICommand ("stack", tap) {
+CmdStack::CmdStack(uint64_t dmibar, ITap *tap)
+    : ICommand("stack", dmibar, tap) {
 
     briefDescr_.make_string("Read CPU Stack Trace buffer");
     detailedDescr_.make_string(

@@ -31,10 +31,9 @@ static const int CMD_INVALID    = 2;
 
 class ICommand : public IFace {
  public:
-    ICommand(const char *name, ITap *tap)
-        : IFace(IFACE_COMMAND) {
+    ICommand(const char *name, uint64_t dmibar, ITap *tap)
+        : IFace(IFACE_COMMAND), dmibar_(dmibar), tap_(tap) {
         cmdName_.make_string(name);
-        tap_ = tap;
     }
     virtual ~ICommand() {}
 
@@ -57,6 +56,7 @@ class ICommand : public IFace {
     AttributeType briefDescr_;
     AttributeType detailedDescr_;
     ITap *tap_;
+    uint64_t dmibar_; 
 };
 
 }  // namespace debugger

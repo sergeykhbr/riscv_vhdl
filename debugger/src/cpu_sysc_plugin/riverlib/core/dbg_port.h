@@ -37,7 +37,6 @@ SC_MODULE(DbgPort) {
     sc_out<bool> o_dport_resp_valid;                    // Response is valid
     sc_out<bool> o_dport_resp_error;                    // Something wrong during command execution
     sc_out<sc_uint<RISCV_ARCH>> o_dport_rdata;          // Response value
-    sc_in<sc_biguint<32*CFG_PROGBUF_REG_TOTAL>> i_progbuf;  // progam buffer
     // CSR bus master interface:
     sc_out<bool> o_csr_req_valid;                       // Region 0: Access to CSR bank is enabled.
     sc_in<bool> i_csr_req_ready;
@@ -49,13 +48,20 @@ SC_MODULE(DbgPort) {
     sc_in<sc_uint<RISCV_ARCH>> i_csr_resp_data;         // Region 0: CSR read value
     sc_in<bool> i_csr_resp_exception;                   // Exception on CSR access
 
+    sc_in<sc_biguint<32*CFG_PROGBUF_REG_TOTAL>> i_progbuf;  // progam buffer
+    sc_out<bool> o_progbuf_ena;                         // Execution from the progbuffer is in progress
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_progbuf_pc;    // prog buffer instruction counter
+    sc_out<sc_uint<32>> o_progbuf_instr;                // prog buffer instruction opcode
+    sc_in<bool> i_csr_progbuf_end;                      // End of execution from progbuf
+    sc_in<bool> i_csr_progbuf_error;                    // Exception is occured during progbuf execution
+
     sc_out<sc_uint<6>> o_reg_addr;
     sc_out<sc_uint<RISCV_ARCH>> o_core_wdata;           // Write data
     sc_out<bool> o_ireg_ena;                            // Region 1: Access to integer register bank is enabled
     sc_out<bool> o_ireg_write;                          // Region 1: Integer registers bank write pulse
     sc_in<sc_uint<RISCV_ARCH>> i_ireg_rdata;            // Region 1: Integer register read value
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_pc;             // Region 1: Instruction pointer
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_npc;            // Region 1: Next Instruction pointer
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_pc;           // Region 1: Instruction pointer
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_npc;          // Region 1: Next Instruction pointer
     sc_in<bool> i_e_call;                               // pseudo-instruction CALL
     sc_in<bool> i_e_ret;                                // pseudo-instruction RET
 
@@ -77,6 +83,7 @@ private:
         reg_stktr_cnt,
         reg_stktr_buf_adr,
         reg_stktr_buf_dat,
+        exec_progbuf,
         wait_to_accept
     };
 
@@ -90,6 +97,9 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> rdata;
         sc_signal<sc_uint<CFG_LOG2_STACK_TRACE_ADDR>> stack_trace_cnt;              // Stack trace buffer counter
         sc_signal<bool> req_accepted;
+        sc_signal<bool> resp_error;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> progbuf_pc;
+        sc_signal<sc_uint<32>> progbuf_instr;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
@@ -101,6 +111,9 @@ private:
         iv.rdata = 0;
         iv.stack_trace_cnt = 0;
         iv.req_accepted = 0;
+        iv.resp_error = 0;
+        iv.progbuf_pc = 0;
+        iv.progbuf_instr = 0;
     }
 
     sc_signal<sc_uint<CFG_LOG2_STACK_TRACE_ADDR>> wb_stack_raddr;

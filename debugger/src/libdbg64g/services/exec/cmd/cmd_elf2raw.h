@@ -25,7 +25,7 @@ namespace debugger {
 
 class CmdElf2Raw : public ICommand  {
  public:
-    explicit CmdElf2Raw(ITap *tap);
+    explicit CmdElf2Raw(uint64_t dmibar, ITap *tap);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);

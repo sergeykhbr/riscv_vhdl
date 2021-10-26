@@ -25,7 +25,7 @@ namespace debugger {
 
 class CmdRegsGeneric : public ICommand  {
  public:
-    CmdRegsGeneric(ITap *tap);
+    CmdRegsGeneric(uint64_t dmibar, ITap *tap);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);

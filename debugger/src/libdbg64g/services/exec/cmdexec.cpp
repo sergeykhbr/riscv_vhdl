@@ -64,7 +64,7 @@ void CmdExecutor::postinitService() {
             (RISCV_get_service_iface(tap_.to_string(), IFACE_TAP));
 
     // Core commands registration:
-    registerCommand(new CmdCpi(itap_));
+    /*registerCommand(new CmdCpi(itap_));
     registerCommand(new CmdCpuContext(itap_));
     registerCommand(new CmdDisas(itap_));
     registerCommand(new CmdElf2Raw(itap_));
@@ -79,7 +79,7 @@ void CmdExecutor::postinitService() {
     registerCommand(new CmdReset(itap_));
     registerCommand(new CmdStack(itap_));
     registerCommand(new CmdSymb(itap_));
-    registerCommand(new CmdWrite(itap_));
+    registerCommand(new CmdWrite(itap_));*/
 }
 
 void CmdExecutor::registerCommand(ICommand *icmd) {

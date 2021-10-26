@@ -21,7 +21,8 @@
 
 namespace debugger {
 
-CmdElf2Raw::CmdElf2Raw(ITap *tap) : ICommand ("elf2raw", tap) {
+CmdElf2Raw::CmdElf2Raw(uint64_t dmibar, ITap *tap)
+    : ICommand("elf2raw", dmibar, tap) {
 
     briefDescr_.make_string("Load ELF-file");
     detailedDescr_.make_string(

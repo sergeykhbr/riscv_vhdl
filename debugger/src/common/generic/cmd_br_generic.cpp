@@ -21,8 +21,8 @@
 
 namespace debugger {
 
-CmdBrGeneric::CmdBrGeneric(ITap *tap) :
-    ICommand ("br", tap),
+CmdBrGeneric::CmdBrGeneric(uint64_t dmibar, ITap *tap) :
+    ICommand ("br", dmibar, tap),
     IHap(HAP_Halt) {
 
     briefDescr_.make_string("Add or remove breakpoint.");
@@ -93,7 +93,8 @@ void CmdBrGeneric::exec(AttributeType *args, AttributeType *res) {
     }
 
     CrGenericRuncontrolType runctrl;
-    uint64_t addr_dmcontrol = DSUREGBASE(csr[CSR_runcontrol]);
+        
+    uint64_t addr_dmcontrol = -1;//DSUREGBASE(csr[CSR_runcontrol]);
     Reg64Type braddr;
     AttributeType &bpadr = (*args)[2];
     if (bpadr.is_integer()) {

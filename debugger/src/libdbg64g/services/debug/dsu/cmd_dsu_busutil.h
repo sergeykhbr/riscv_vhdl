@@ -29,7 +29,7 @@ namespace debugger {
 
 class CmdDsuBusUtil : public ICommand  {
  public:
-    explicit CmdDsuBusUtil(ITap *tap);
+    explicit CmdDsuBusUtil(uint64_t dmibar, ITap *tap);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);

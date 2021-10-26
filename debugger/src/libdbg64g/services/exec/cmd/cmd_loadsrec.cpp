@@ -86,7 +86,8 @@ void print_flash_usage() {
 }
 #endif
 
-CmdLoadSrec::CmdLoadSrec(ITap *tap) : ICommand ("loadsrec", tap) {
+CmdLoadSrec::CmdLoadSrec(uint64_t dmibar, ITap *tap)
+    : ICommand("loadsrec", dmibar, tap) {
 
     briefDescr_.make_string("Load SREC-file");
     detailedDescr_.make_string(

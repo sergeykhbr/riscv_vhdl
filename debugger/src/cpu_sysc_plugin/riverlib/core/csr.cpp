@@ -45,9 +45,9 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     i_e_valid("i_e_valid"),
     o_executed_cnt("o_executed_cnt"),
     o_step("o_step"),
-    o_progbuf_ena("o_progbuf_ena"),
-    o_progbuf_pc("o_progbuf_pc"),
-    o_progbuf_data("o_progbuf_data"),
+    i_dbg_progbuf_ena("i_dbg_progbuf_ena"),
+    o_progbuf_end("o_progbuf_end"),
+    o_progbuf_error("o_progbuf_error"),
     o_flushi_ena("o_flushi_ena"),
     o_flushi_addr("o_flushi_addr"),
     o_mpu_region_we("o_mpu_region_we"),
@@ -72,6 +72,7 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << i_irq_timer;
     sensitive << i_irq_external;
     sensitive << i_e_valid;
+    sensitive << i_dbg_progbuf_ena;
     sensitive << r.state;
     sensitive << r.cmd_type;
     sensitive << r.cmd_addr;
@@ -121,12 +122,6 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << r.executed_cnt;
     sensitive << r.dpc;
     sensitive << r.halt_cause;
-    sensitive << r.progbuf_ena;
-    sensitive << r.progbuf_data;
-    sensitive << r.progbuf_data_out;
-    sensitive << r.progbuf_data_pc;
-    sensitive << r.progbuf_data_npc;
-    sensitive << r.progbuf_err;
     sensitive << r.dcsr_ebreakm;
     sensitive << r.dcsr_stopcount;
     sensitive << r.dcsr_stoptimer;
@@ -157,14 +152,14 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_e_instr, i_e_instr.name());
         sc_trace(o_vcd, i_irq_timer, i_irq_timer.name());
         sc_trace(o_vcd, i_irq_external, i_irq_external.name());
+        sc_trace(o_vcd, i_dbg_progbuf_ena, i_dbg_progbuf_ena.name());
         sc_trace(o_vcd, o_irq_software, o_irq_software.name());
         sc_trace(o_vcd, o_irq_timer, o_irq_timer.name());
         sc_trace(o_vcd, o_irq_external, o_irq_external.name());
         sc_trace(o_vcd, o_executed_cnt, o_executed_cnt.name());
         sc_trace(o_vcd, o_step, o_step.name());
-        sc_trace(o_vcd, o_progbuf_ena, o_progbuf_ena.name());
-        sc_trace(o_vcd, o_progbuf_pc, o_progbuf_pc.name());
-        sc_trace(o_vcd, o_progbuf_data, o_progbuf_data.name());
+        sc_trace(o_vcd, o_progbuf_end, o_progbuf_end.name());
+        sc_trace(o_vcd, o_progbuf_error, o_progbuf_error.name());
         sc_trace(o_vcd, o_flushi_ena, o_flushi_ena.name());
         sc_trace(o_vcd, o_flushi_addr, o_flushi_addr.name());
 
@@ -181,12 +176,6 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.dpc, pn + ".r_dpc");
         sc_trace(o_vcd, r.dcsr_ebreakm, pn + ".r_dcsr_ebreakm");
         sc_trace(o_vcd, r.halt_cause, pn + ".r_halt_cause");
-        sc_trace(o_vcd, r.progbuf_ena, pn + ".r_progbuf_ena");
-        //sc_trace(o_vcd, r.progbuf_data, pn + ".r_progbuf_data");
-        sc_trace(o_vcd, r.progbuf_data_out, pn + ".r_progbuf_data_out");
-        sc_trace(o_vcd, r.progbuf_data_pc, pn + ".r_progbuf_data_pc");
-        sc_trace(o_vcd, r.progbuf_data_npc, pn + ".r_progbuf_data_npc");
-        sc_trace(o_vcd, r.progbuf_err, pn + ".r_progbuf_err");
         sc_trace(o_vcd, r.dcsr_step, pn + ".r_step");
         sc_trace(o_vcd, r.stepping_mode_cnt, pn + ".r_stepping_mode_cnt");
         sc_trace(o_vcd, r.ins_per_step, pn + ".r_ins_per_step");
@@ -214,6 +203,8 @@ void CsrRegs::comb() {
     bool v_req_progbuf;
     bool v_req_ready;
     bool v_resp_valid;
+    bool v_progbuf_end;
+    bool v_progbuf_err;
 
     v = r;
 
@@ -234,6 +225,8 @@ void CsrRegs::comb() {
     v_trap_irq = 0;
     wb_trap_cause = 0;
     vb_mtval = 0;
+    v_progbuf_end = 0;
+    v_progbuf_err = 0;
 
     v.mpu_we = 0;
 
@@ -268,8 +261,10 @@ void CsrRegs::comb() {
         vb_mtval = r.cmd_data;
         wb_trap_cause = r.cmd_addr.read()(4, 0);
         v.cmd_data = r.mtvec.read() & ~0x3ull;
-        if (r.progbuf_ena.read() == 1) {
-            v.progbuf_err = PROGBUF_ERR_EXCEPTION;
+        if (i_dbg_progbuf_ena.read() == 1) {
+            v_progbuf_err = 1;
+            v_progbuf_end = 1;
+            v.cmd_exception = 1;
         }
         if (r.cmd_addr.read() == EXCEPTION_CallFromUmode) {
             wb_trap_cause = r.cmd_addr.read() + r.mode.read().to_uint();
@@ -277,14 +272,13 @@ void CsrRegs::comb() {
         break;
     case State_Breakpoint:  // software breakpoint
         v.state = State_Response;
-        if (r.dcsr_ebreakm) {
-            if (r.progbuf_ena.read() == 1) {
-                // do not modify halt cause in debug mode
-                v.progbuf_ena = 0;
-            } else {
-                v.halt_cause = HALT_CAUSE_EBREAK;
-                v.dpc = r.cmd_data;
-            }
+        if (i_dbg_progbuf_ena.read() == 1) {
+            // do not modify halt cause in debug mode
+            v_progbuf_end = 1;
+            v.cmd_data = ~0ull;     // signal to executor to switch into Debug Mode and halt
+        } else if (r.dcsr_ebreakm) {
+            v.halt_cause = HALT_CAUSE_EBREAK;
+            v.dpc = r.cmd_data;
             v.cmd_data = ~0ull;     // signal to executor to switch into Debug Mode and halt
         } else {
             w_trap_valid = 1;
@@ -559,51 +553,6 @@ void CsrRegs::comb() {
             v.mpu_we = 1;
         }
         break;
-    case CSR_runcontrol:
-        if (v_csr_wena) {
-            v_req_halt = r.cmd_data.read()[31];
-            v_req_resume = r.cmd_data.read()[30];
-            if (r.cmd_data.read()[27] == 1) {
-                if (i_e_halted.read() == 1) {
-                    v_req_progbuf = 1;
-                } else {
-                    v.progbuf_err = PROGBUF_ERR_HALT_RESUME;
-                }
-            }
-        }
-        break;
-    /*case CSR_insperstep:
-        vb_rdata = r.ins_per_step;
-        if (v_csr_wena) {
-            v.ins_per_step = r.cmd_data.read();
-            if (r.cmd_data.read().or_reduce() == 0) {
-                v.ins_per_step = 1;  // cannot be zero
-            }
-            if (i_e_halted.read() == 1) {
-                v.stepping_mode_cnt = r.cmd_data.read();
-            }
-        }
-        break;*/
-    case CSR_progbuf:
-        if (v_csr_wena == 1) {
-            int tidx = r.cmd_data.read()(35,32);
-            sc_biguint<CFG_PROGBUF_REG_TOTAL*32> t2 = r.progbuf_data;
-            t2(32*tidx+31, 32*tidx) = r.cmd_data.read()(31,0);
-            v.progbuf_data = t2;
-        }
-        break;
-    /*case CSR_abstractcs:
-        vb_rdata(28,24) = CFG_PROGBUF_REG_TOTAL;
-        vb_rdata[12] = r.progbuf_ena;       // busy
-        vb_rdata(10,8) = r.progbuf_err;
-        vb_rdata(3,0) = CFG_DATA_REG_TOTAL;
-        if (v_csr_wena) {
-            if (r.cmd_data.read()[8] == 1) {    // W1C err=1
-                // clear prog buffer error
-                v.progbuf_err = PROGBUF_ERR_NONE;
-            }
-        }
-        break;*/
     case CSR_flushi:
         if (v_csr_wena) {
             v.flushi_ena = 1;
@@ -730,79 +679,12 @@ void CsrRegs::comb() {
         v.cycle_cnt = r.cycle_cnt.read() + 1;
     }
     if ((i_e_valid && !r.dcsr_stopcount)
-        || i_e_valid.read() && !(r.progbuf_ena && r.dcsr_stopcount)) {
+        || i_e_valid.read() && !(i_dbg_progbuf_ena && r.dcsr_stopcount)) {
         v.executed_cnt = r.executed_cnt.read() + 1;
     }
-    if (!((i_e_halted || r.progbuf_ena) && r.dcsr_stoptimer)) {
+    if (!((i_e_halted || i_dbg_progbuf_ena) && r.dcsr_stoptimer)) {
         v.timer = r.timer.read() + 1;
     }
-
-    /*if (i_e_valid.read()) {
-        if (r.progbuf_ena.read() == 1) {
-            int t1 = 16*r.progbuf_data_npc.read();
-            v.progbuf_data_out = r.progbuf_data.read()(t1 + 31, t1).to_uint();
-            v.progbuf_data_pc = r.progbuf_data_npc.read();
-            if (r.progbuf_data.read()(t1 + 1, t1) == 0x3) {
-                v.progbuf_data_npc = r.progbuf_data_npc.read() + 2;
-            } else {
-                v.progbuf_data_npc = r.progbuf_data_npc.read() + 1;
-            }
-            if (r.progbuf_data_pc.read()(4, 1).and_reduce() == 1) {  // use end of buffer as a watchdog
-                v.progbuf_ena = 0;
-                v.halt        = 1;
-            }
-        } else if (r.stepping_mode_cnt.read().or_reduce() == 1) {
-            v.stepping_mode_cnt = r.stepping_mode_cnt.read() - 1;
-            if (r.stepping_mode_cnt.read()(RISCV_ARCH-1, 1).or_reduce() == 0) {
-                v.halt = 1;
-                v_cur_halt = 1;
-                v.stepping_mode = 0;
-                v.halt_cause = HALT_CAUSE_STEP;
-            }
-        }
-    }
-
-    if (r.break_event.read() == 1) {
-        if (r.progbuf_ena.read() == 1) {
-            v.halt = 1;  // do not modify halt cause in debug mode
-            v.progbuf_ena = 0;
-        } else {
-            if (r.break_mode.read() == 0) {
-                v.halt = 1;
-                v.halt_cause = HALT_CAUSE_EBREAK;
-            }
-        }
-    } else if (v_req_halt == 1 && r.halt.read() == 0) {
-        if (r.progbuf_ena.read() == 0 && r.stepping_mode == 0) {
-            v.halt = 1;
-            v.halt_cause = HALT_CAUSE_HALTREQ;
-        }
-    } else if (v_req_progbuf == 1) {
-        v.progbuf_ena = 1;
-        v.progbuf_data_out = r.progbuf_data.read()(31,0).to_uint();
-        v.progbuf_data_pc = 0;
-        if (r.progbuf_data.read()(1,0).to_uint() == 0x3) {
-            v.progbuf_data_npc = 2;
-        } else {
-            v.progbuf_data_npc = 1;
-        }
-        v.halt = 0;
-    } else if (v_req_resume == 1 && r.halt.read() == 1) {
-        v.halt = 0;
-    }
-    */
-    
-    //else if (r.progbuf_ena.read() == 1) {
-    //    if (i_ex_data_load_fault.read() == 1
-    //        || i_ex_data_store_fault.read() == 1) {
-    //        v.progbuf_err = PROGBUF_ERR_EXCEPTION;
-    //    } else if (i_ex_unalign_store.read() == 1
-    //            || i_ex_unalign_load.read() == 1
-    //            || i_ex_mpu_store.read() == 1
-    //            || i_ex_mpu_load.read() == 1) {
-    //        v.progbuf_err = PROGBUF_ERR_BUS;
-    //    }
-    //}
 
     if (!async_reset_ && !i_nrst.read()) {
         R_RESET(v);
@@ -826,9 +708,8 @@ void CsrRegs::comb() {
     o_mpu_region_mask = r.mpu_mask;
     o_mpu_region_flags = r.mpu_flags;
     o_step = r.dcsr_step;
-    o_progbuf_ena = r.progbuf_ena;
-    o_progbuf_pc = r.progbuf_data_pc.read() << 1;
-    o_progbuf_data = r.progbuf_data_out;
+    o_progbuf_end = v_progbuf_end;
+    o_progbuf_error = v_progbuf_err;
     o_flushi_ena = r.flushi_ena;
     o_flushi_addr = r.flushi_addr;
 }

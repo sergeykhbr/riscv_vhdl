@@ -20,7 +20,8 @@
 
 namespace debugger {
 
-CmdDsuHalt::CmdDsuHalt(ITap *tap) : ICommand ("halt", tap) {
+CmdDsuHalt::CmdDsuHalt(uint64_t dmibar, ITap *tap)
+    : ICommand("halt", dmibar, tap) {
 
     briefDescr_.make_string("Stop simulation");
     detailedDescr_.make_string(
@@ -51,7 +52,7 @@ void CmdDsuHalt::exec(AttributeType *args, AttributeType *res) {
     res->attr_free();
     res->make_nil();
     CrGenericRuncontrolType runctrl;
-    uint64_t addr_dmcontrol = DSUREGBASE(csr[CSR_runcontrol]);
+    uint64_t addr_dmcontrol = -1;//DSUREGBASE(csr[CSR_runcontrol]);
     runctrl.val = 0;
     runctrl.bits.req_halt = 1;
     tap_->write(addr_dmcontrol, 8, runctrl.u8);

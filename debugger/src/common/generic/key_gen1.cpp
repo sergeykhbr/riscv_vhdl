@@ -21,8 +21,8 @@
 
 namespace debugger {
 
-KeyGeneric::KeyGeneric(IService *parent, const char *name)
-    : ICommand(name, 0) {
+KeyGeneric::KeyGeneric(IService *parent, uint64_t dmibar, const char *name)
+    : ICommand(name, dmibar, 0) {
     parent_ = parent;
     keyName_.make_string(name);
     pressed_ = false;

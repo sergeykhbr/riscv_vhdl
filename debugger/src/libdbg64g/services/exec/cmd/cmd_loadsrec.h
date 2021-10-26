@@ -25,7 +25,7 @@ namespace debugger {
 
 class CmdLoadSrec : public ICommand  {
  public:
-    explicit CmdLoadSrec(ITap *tap);
+    explicit CmdLoadSrec(uint64_t dmibar, ITap *tap);
 
     /** ICommand interface */
     virtual int isValid(AttributeType *args);

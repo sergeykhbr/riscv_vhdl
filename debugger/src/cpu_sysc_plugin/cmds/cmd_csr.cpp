@@ -19,7 +19,7 @@
 
 namespace debugger {
 
-CmdCsr::CmdCsr(ITap *tap) : ICommand ("csr", tap) {
+CmdCsr::CmdCsr(uint64_t dmibar, ITap *tap) : ICommand ("csr", dmibar, tap) {
 
     briefDescr_.make_string("Access to CSR registers");
     detailedDescr_.make_string(

@@ -28,7 +28,7 @@ namespace debugger {
 
 class CmdDpi : public ICommand  {
  public:
-    CmdDpi(IService *parent);
+    CmdDpi(IService *parent, uint64_t dmibar);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);

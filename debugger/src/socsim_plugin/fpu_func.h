@@ -26,7 +26,7 @@ namespace debugger {
 
 class FpuCmdType : public ICommand {
  public:
-    FpuCmdType(IService *parent, const char *name) : ICommand(name, 0) {
+    FpuCmdType(IService *parent, const char *name) : ICommand(name, 0, 0) {
         parent_ = parent;
         briefDescr_.make_string("Test environment for FPU model.");
         detailedDescr_.make_string(

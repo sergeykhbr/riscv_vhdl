@@ -20,7 +20,7 @@
 namespace debugger {
 
 STM32L4_GPIO::STM32L4_GPIO(const char *name) : RegMemBankGeneric(name),
-    ICommand(name, 0),
+    ICommand(name, 0, 0),
     MODER(this, "MODER", 0x00),
     OTYPER(this, "OTYPER", 0x04),
     OSPEEDR(this, "OSPEEDR", 0x08),

@@ -26,8 +26,8 @@ namespace debugger {
 
 class GenericDisplayCmdType : public ICommand {
  public:
-    GenericDisplayCmdType(IService *parent, const char *name)
-        : ICommand(name, 0) {
+    GenericDisplayCmdType(IService *parent, uint64_t dmibar, const char *name)
+        : ICommand(name, dmibar, 0) {
         parent_ = parent;
         briefDescr_.make_string("Display controller management command.");
         detailedDescr_.make_string(

@@ -63,7 +63,7 @@ void GenericCodeCoverage::postinitService() {
         return;
     }
 
-    pcmd_ = new CoverageCmdType(static_cast<IService *>(this));
+    pcmd_ = new CoverageCmdType(static_cast<IService *>(this), 0);
     iexec_->registerCommand(static_cast<ICommand *>(pcmd_));
 
     // Compute Total regions size

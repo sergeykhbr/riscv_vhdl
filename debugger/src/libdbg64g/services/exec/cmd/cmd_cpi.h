@@ -25,7 +25,7 @@ namespace debugger {
 
 class CmdCpi : public ICommand  {
  public:
-    explicit CmdCpi(ITap *tap);
+    explicit CmdCpi(uint64_t dmibar, ITap *tap);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);

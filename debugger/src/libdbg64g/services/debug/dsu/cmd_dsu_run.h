@@ -24,7 +24,7 @@ namespace debugger {
 
 class CmdDsuRun : public ICommand  {
  public:
-    explicit CmdDsuRun(ITap *tap);
+    explicit CmdDsuRun(uint64_t dmibar, ITap *tap);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);

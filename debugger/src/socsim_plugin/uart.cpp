@@ -85,7 +85,9 @@ void UART::postinitService() {
         RISCV_error("Can't get ICmdExecutor interface %s",
                     cmdexec_.to_string());
     } else {
-        pcmd_ = new UartCmdType(static_cast<IService *>(this), getObjName());
+        pcmd_ = new UartCmdType(static_cast<IService *>(this),
+                                0,
+                                getObjName());
         icmdexec_->registerCommand(pcmd_);
     }
 }

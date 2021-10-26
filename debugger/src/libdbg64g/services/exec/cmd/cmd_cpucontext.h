@@ -26,7 +26,7 @@ namespace debugger {
 
 class CmdCpuContext : public ICommand  {
  public:
-    explicit CmdCpuContext(ITap *tap);
+    explicit CmdCpuContext(uint64_t dmibar, ITap *tap);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);

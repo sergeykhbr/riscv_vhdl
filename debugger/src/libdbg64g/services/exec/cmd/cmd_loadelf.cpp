@@ -21,7 +21,8 @@
 
 namespace debugger {
 
-CmdLoadElf::CmdLoadElf(ITap *tap) : ICommand ("loadelf", tap) {
+CmdLoadElf::CmdLoadElf(uint64_t dmibar, ITap *tap)
+    : ICommand("loadelf", dmibar, tap) {
 
     briefDescr_.make_string("Load ELF-file");
     detailedDescr_.make_string(

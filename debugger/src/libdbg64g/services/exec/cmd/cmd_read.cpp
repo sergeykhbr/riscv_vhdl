@@ -18,7 +18,8 @@
 
 namespace debugger {
 
-CmdRead::CmdRead(ITap *tap) : ICommand ("read", tap) {
+CmdRead::CmdRead(uint64_t dmibar, ITap *tap)
+    : ICommand("read", dmibar, tap) {
 
     briefDescr_.make_string("Read memory");
     detailedDescr_.make_string(

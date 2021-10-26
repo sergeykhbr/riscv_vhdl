@@ -963,12 +963,17 @@ void InstrExecute::comb() {
             v_csr_resp_ready = 1;
             if (i_csr_resp_valid.read() == 1) {
                 if (i_csr_resp_exception == 1) {
-                    // Invalid access rights
-                    v.csrstate = CsrState_Req;
-                    v.csr_req_type = CsrReq_ExceptionCmd;
-                    v.csr_req_addr = EXCEPTION_InstrIllegal;
-                    v.csr_req_data = mux.instr;
-                    v.csr_req_rmw = 0;
+                    if (i_dbg_progbuf_ena.read() == 1) {
+                        v.valid = 0;
+                        v.state = State_Halted;
+                    } else {
+                        // Invalid access rights
+                        v.csrstate = CsrState_Req;
+                        v.csr_req_type = CsrReq_ExceptionCmd;
+                        v.csr_req_addr = EXCEPTION_InstrIllegal;
+                        v.csr_req_data = mux.instr;
+                        v.csr_req_rmw = 0;
+                    }
                 } else if (r.csr_req_type.read()[CsrReq_HaltBit]) {
                     v.valid = 0;
                     v.state = State_Halted;

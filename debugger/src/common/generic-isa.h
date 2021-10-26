@@ -111,11 +111,11 @@ static const uint16_t CSR_mpu_mask       = 0x353;
 /** MPU region control (non-standard CSR). */
 static const uint16_t CSR_mpu_ctrl       = 0x354;
 /** Halt/resume requests handling */
-static const uint16_t CSR_runcontrol     = 0x355;
+//static const uint16_t CSR_runcontrol     = 0x355;
 /** Instruction per single step */
 //static const uint16_t CSR_insperstep     = 0x356;
 /** Write value into progbuf */
-static const uint16_t CSR_progbuf        = 0x357;
+//static const uint16_t CSR_progbuf        = 0x357;
 /** Flush specified address in I-cache module without execution of fence.i */
 static const uint16_t CSR_flushi         = 0x359;
 // Software reset.

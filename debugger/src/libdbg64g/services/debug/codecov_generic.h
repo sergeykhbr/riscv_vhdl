@@ -26,7 +26,8 @@ namespace debugger {
 
 class CoverageCmdType : public ICommand {
  public:
-    CoverageCmdType(IService *parent) : ICommand("coverage", 0) {
+    CoverageCmdType(IService *parent, uint64_t dmibar)
+        : ICommand("coverage", dmibar,  0) {
         parent_ = parent;
         briefDescr_.make_string("Get code usage information.");
         detailedDescr_.make_string(

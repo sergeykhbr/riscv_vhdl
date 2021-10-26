@@ -23,14 +23,11 @@ namespace debugger {
 
 class CmdDmiRunControl : public ICommand  {
  public:
-    explicit CmdDmiRunControl(IFace *parent, uint64_t dmibaseaddr, ITap *tap);
+    explicit CmdDmiRunControl(IFace *parent, uint64_t dmibar, ITap *tap);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);
     virtual void exec(AttributeType *args, AttributeType *res);
-
- protected:
-    uint64_t dmibaseaddr_;
 };
 
 }  // namespace debugger

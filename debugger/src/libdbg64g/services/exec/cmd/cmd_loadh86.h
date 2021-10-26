@@ -25,7 +25,7 @@ namespace debugger {
 
 class CmdLoadH86 : public ICommand  {
  public:
-    explicit CmdLoadH86(ITap *tap);
+    explicit CmdLoadH86(uint64_t dmibar, ITap *tap);
 
     /** ICommand interface */
     virtual int isValid(AttributeType *args);

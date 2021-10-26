@@ -25,7 +25,7 @@ namespace debugger {
 
 class CmdSymb : public ICommand  {
  public:
-    explicit CmdSymb(ITap *tap);
+    explicit CmdSymb(uint64_t dmibar, ITap *tap);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);

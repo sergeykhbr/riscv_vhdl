@@ -29,7 +29,7 @@ namespace debugger {
 class CmdBrGeneric : public ICommand,
                      public IHap  {
  public:
-    explicit CmdBrGeneric(ITap *tap);
+    explicit CmdBrGeneric(uint64_t dmibar, ITap *tap);
     virtual ~CmdBrGeneric();
 
     /** ICommand */

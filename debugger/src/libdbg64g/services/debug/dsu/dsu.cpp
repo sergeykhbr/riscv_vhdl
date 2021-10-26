@@ -58,11 +58,11 @@ void DSU::postinitService() {
         RISCV_error("Can't find ICmdExecutor interface %s", cmdexec_.to_string());
     } else {
         int cnt = 0;
-        icmdlist_.new_list_item().make_iface(new CmdDsuStatus(itap_));
-        icmdlist_.new_list_item().make_iface(new CmdDsuBusUtil(itap_));
-        icmdlist_.new_list_item().make_iface(new CmdDsuIsRunning(itap_));
-        icmdlist_.new_list_item().make_iface(new CmdDsuStatus(itap_));
-        icmdlist_.new_list_item().make_iface(new CmdDsuRun(itap_));
+        icmdlist_.new_list_item().make_iface(new CmdDsuStatus(DSU_OFFSET, itap_));
+        icmdlist_.new_list_item().make_iface(new CmdDsuBusUtil(DSU_OFFSET, itap_));
+        icmdlist_.new_list_item().make_iface(new CmdDsuIsRunning(DSU_OFFSET, itap_));
+        icmdlist_.new_list_item().make_iface(new CmdDsuStatus(DSU_OFFSET, itap_));
+        icmdlist_.new_list_item().make_iface(new CmdDsuRun(DSU_OFFSET, itap_));
         for (unsigned i = 0; i < icmdlist_.size(); i++) {
             iexec_->registerCommand(static_cast<ICommand *>(icmdlist_[i].to_iface()));
         }
@@ -165,7 +165,7 @@ void DSU::reqResume(int hartidx) {
     t.bits.resumereq = 1;
 
     nb_debug_write(static_cast<uint32_t>(hartidx),
-                    CSR_runcontrol,
+                    -1,//CSR_runcontrol,
                     t.val);
 }
 
@@ -177,7 +177,7 @@ void DSU::reqHalt(int hartidx) {
     t.bits.haltreq = 1;
 
    nb_debug_write(static_cast<uint32_t>(hartidx),
-                  CSR_runcontrol,
+                  -1,//CSR_runcontrol,
                   t.val);
 }
 
