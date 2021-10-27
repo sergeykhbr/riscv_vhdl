@@ -18,6 +18,7 @@
 #include "cpu_riscv_func.h"
 #include "debug/dsumap.h"
 #include "generic/riscv_disasm.h"
+#include "generic/dmi/cmd_dmi_runcontrol.h"
 
 namespace debugger {
 
@@ -63,17 +64,23 @@ void CpuRiver_Functional::postinitService() {
 
     CpuGeneric::postinitService();
 
-    pcmd_br_ = new CmdBrRiscv(dmibar_.to_uint64(), itap_);
+    pcmd_br_ = new CmdBrRiscv(dmibar_.to_uint64(), 0);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_br_));
 
-    pcmd_csr_ = new CmdCsr(dmibar_.to_uint64(), itap_);
+    pcmd_csr_ = new CmdCsr(dmibar_.to_uint64(), 0);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_csr_));
 
-    pcmd_reg_ = new CmdRegRiscv(dmibar_.to_uint64(), itap_);
+    pcmd_reg_ = new CmdRegRiscv(dmibar_.to_uint64(), 0);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_reg_));
 
-    pcmd_regs_ = new CmdRegsRiscv(dmibar_.to_uint64(), itap_);
+    pcmd_regs_ = new CmdRegsRiscv(dmibar_.to_uint64(), 0);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_regs_));
+
+    pcmd_runctrl_ = new CmdDmiRunControl(static_cast<IService *>(this),
+                                         dmibar_.to_uint64(), 0);
+    pcmd_runctrl_->enableDMA(isysbus_, dmibar_.to_uint64());
+    icmdexec_->registerCommand(pcmd_runctrl_);
+
 }
 
 void CpuRiver_Functional::predeleteService() {

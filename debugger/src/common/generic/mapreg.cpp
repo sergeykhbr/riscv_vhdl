@@ -238,6 +238,33 @@ void GenericReg64Bank::setRegTotal(int len) {
 }
 
 
+ETransStatus GenericReg32Bank::b_transport(Axi4TransactionType *trans) {
+    int idx = static_cast<int>((trans->addr - getBaseAddress()) >> 2);
+    if (trans->action == MemAction_Read) {
+        trans->rpayload.b64[0] = read(idx).val;
+    } else {
+        write(idx, trans->wpayload.b32[0]);
+    }
+    return TRANS_OK;
+}
+
+void GenericReg32Bank::reset() {
+    memset(regs_, 0, length_.to_int());
+}
+
+void GenericReg32Bank::setRegTotal(int len) {
+    if (len * static_cast<int>(sizeof(Reg32Type)) == length_.to_int()) {
+        return;
+    }
+    if (regs_) {
+        delete [] regs_;
+    }
+    length_.make_int64(len * sizeof(Reg64Type));
+    regs_ = new Reg32Type[len];
+    reset();
+}
+
+
 ETransStatus GenericReg16Bank::b_transport(Axi4TransactionType *trans) {
     uint64_t off = trans->addr - getBaseAddress();
     int idx = static_cast<int>(off >> 1);

@@ -115,6 +115,7 @@ class CpuRiver_Functional : public CpuGeneric,
     CmdRegRiscv *pcmd_reg_;
     CmdRegsRiscv *pcmd_regs_;
     CmdCsr *pcmd_csr_;
+    ICommand *pcmd_runctrl_;
 
     uint64_t mmuReservatedAddr_;
     int mmuReservedAddrWatchdog_;   // not exceed 64 instructions between LR/SC

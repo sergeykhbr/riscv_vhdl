@@ -26,6 +26,10 @@ IDebug *DebugRegisterType::getpIDebug() {
     return idbg_;
 }
 
+uint32_t DMDATAx_TYPE::aboutToWrite(uint32_t new_val) {
+    return new_val;
+}
+
 uint32_t DMCONTROL_TYPE::aboutToWrite(uint32_t new_val) {
     IDebug *p = getpIDebug();
     if (!p) {
@@ -91,7 +95,7 @@ uint32_t DMSTATUS_TYPE::aboutToRead(uint32_t cur_val) {
     return t.val;
 }
 
-uint32_t HALTSUM_TYPE::aboutToRead(uint32_t cur_val) {
+uint32_t HALTSUM0_TYPE::aboutToRead(uint32_t cur_val) {
     IDebug *p = getpIDebug();
     if (!p) {
         return cur_val;
@@ -103,6 +107,10 @@ uint32_t HALTSUM_TYPE::aboutToRead(uint32_t cur_val) {
         }
     }
     return ret;
+}
+
+uint32_t COMMAND_TYPE::aboutToWrite(uint32_t nxt_val) {
+    return nxt_val;
 }
 
 }  // namespace debugger

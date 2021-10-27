@@ -19,38 +19,19 @@
 
 namespace debugger {
 
-DmiFunctional::DmiFunctional(IFace *parent) {
-    iparent_ = parent;
+DmiFunctional::DmiFunctional(const char *name)
+    : RegMemBankGeneric(name),
+    data0(this, "data0", 0, 0x04*sizeof(uint32_t)),
+    data1(this, "data1", 1, 0x05*sizeof(uint32_t)),
+    data2(this, "data2", 2, 0x06*sizeof(uint32_t)),
+    data3(this, "data3", 3, 0x07*sizeof(uint32_t)),
+    dmcontrol(this, "dmcontrol", 0x10*sizeof(uint32_t)),
+    command(this, "command", 0x17*sizeof(uint32_t)),
+    haltsum0(this, "haltsum0", 0x40*sizeof(uint32_t)) {
 }
 
 DmiFunctional::~DmiFunctional() {
 }
-
-
-ETransStatus DmiFunctional::b_transport(Axi4TransactionType *trans) {
-    uint64_t off = trans->addr - getBaseAddress();
-
-    // Only 4-bytes requests:
-    if (trans->action == MemAction_Read) {
-        readreg(off >> 2);
-    } else {
-        if (trans->wstrb & 0x00FF) {
-            writereg(off >> 2, trans->wpayload.b32[0]);
-        } else if (trans->wstrb & 0xFF00) {
-            writereg((off + 4) >> 2, trans->wpayload.b32[1]);
-        }
-    }
-    return TRANS_OK;
-}
-
-
-
-void DmiFunctional::readreg(uint64_t idx) {
-}
-
-void DmiFunctional::writereg(uint64_t idx, uint32_t w32) {
-}
-
 
 }  // namespace debugger
 

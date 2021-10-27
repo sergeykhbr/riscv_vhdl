@@ -18,29 +18,20 @@
 
 #include <api_core.h>
 #include <iservice.h>
-#include "coreservices/imemop.h"
 #include "coreservices/ireset.h"
+#include "generic/rmembank_gen1.h"
+#include "debug/dmi_regs.h"
 
 namespace debugger {
 
-class DmiFunctional : public IMemoryOperation {
+class DmiFunctional : public RegMemBankGeneric {
  public:
 
-    explicit DmiFunctional(IFace *parent);
+    explicit DmiFunctional(const char *name);
     virtual ~DmiFunctional();
 
-    /** IMemoryOperation */
-    virtual ETransStatus b_transport(Axi4TransactionType *trans);
 
  private:
-    IFace *getInterface(const char *name) { return iparent_; }
-
-    void readreg(uint64_t idx);
-    void writereg(uint64_t idx, uint32_t w32);
-
- private:
-    IFace *iparent_;    // pointer on parent module object (used for logging)
-
     static const unsigned DM_STATE_IDLE = 0;
     static const unsigned DM_STATE_ACCESS = 1;
 
@@ -95,7 +86,16 @@ class DmiFunctional : public IMemoryOperation {
         uint32_t b32[sizeof(DmiRegsType) / sizeof(uint32_t)];
     };
 
+    DMDATAx_TYPE data0;
+    DMDATAx_TYPE data1;
+    DMDATAx_TYPE data2;
+    DMDATAx_TYPE data3;
+    DMCONTROL_TYPE dmcontrol;   // 0x10
+    COMMAND_TYPE command;       // 0x17
+    HALTSUM0_TYPE haltsum0;     // 0x40
 };
+
+DECLARE_CLASS(DmiFunctional)
 
 }  // namespace debugger
 

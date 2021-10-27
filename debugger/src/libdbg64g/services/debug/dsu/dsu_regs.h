@@ -72,7 +72,7 @@ class DsuRegisters {
 
     DMCONTROL_TYPE dmcontrol_;
     DMSTATUS_TYPE dmstatus_;
-    HALTSUM_TYPE haltsum0_;
+    HALTSUM0_TYPE haltsum0_;
     GenericReg64Bank bus_util_;
 
     DebugPortTransactionType nb_trans_;

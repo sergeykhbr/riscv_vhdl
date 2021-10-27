@@ -42,17 +42,6 @@
                 }],
                 ['CmdExecutor','cmdexec0']
                 ]}]},
-    {'Class':'UdpServiceClass','Instances':[
-          {'Name':'udpboard','Attr':[
-                ['LogLevel',1],
-                ['Timeout',0x190],
-                ['SimTarget','udpedcl']]},
-          {'Name':'udpedcl','Attr':[
-                ['LogLevel',1],
-                ['Timeout',0x3e8],
-                ['HostIP','192.168.0.53'],
-                ['BoardIP','192.168.0.51'],
-                ['SimTarget','udpboard']]}]},
     {'Class':'TcpServerClass','Instances':[
           {'Name':'rpcserver','Attr':[
                 ['LogLevel',4],
@@ -120,7 +109,6 @@
                 ['LogLevel',4],
                 ['Bus','axi0'],
                 ['DmiBAR',0x00000000AF000000]
-                ['Tap','edcltap']
                 ]}]},
     {'Class':'SimplePluginClass','Instances':[
           {'Name':'example0','Attr':[

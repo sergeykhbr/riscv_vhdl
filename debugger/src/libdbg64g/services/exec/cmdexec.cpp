@@ -39,11 +39,8 @@ CmdExecutor::CmdExecutor(const char *name)
     : IService(name) {
     registerInterface(static_cast<ICmdExecutor *>(this));
     registerAttribute("Bus", &bus_);
-    registerAttribute("Tap", &tap_);
     registerAttribute("DmiBAR", &dmibar_);
 
-    //console_.make_list(0);
-    tap_.make_string("");
     cmds_.make_list(0);
 
     RISCV_mutex_init(&mutexExec_);
@@ -62,31 +59,28 @@ CmdExecutor::~CmdExecutor() {
 }
 
 void CmdExecutor::postinitService() {
-    itap_ = static_cast<ITap *>
-            (RISCV_get_service_iface(tap_.to_string(), IFACE_TAP));
-
     ibus_ = static_cast<IMemoryOperation *>
             (RISCV_get_service_iface(bus_.to_string(), IFACE_MEMORY_OPERATION));
 
     // Core commands registration:
-    ICommand *idisas = new CmdDisas(dmibar_.to_uint64(), itap_);
+    ICommand *idisas = new CmdDisas(dmibar_.to_uint64(), 0);
     idisas->enableDMA(ibus_, dmibar_.to_uint64());
-    registerCommand(new CmdCpi(dmibar_.to_uint64(), itap_));
-    registerCommand(new CmdCpuContext(dmibar_.to_uint64(), itap_));
+    registerCommand(new CmdCpi(dmibar_.to_uint64(), 0));
+    registerCommand(new CmdCpuContext(dmibar_.to_uint64(), 0));
     registerCommand(idisas);
-    registerCommand(new CmdElf2Raw(dmibar_.to_uint64(), itap_));
-    registerCommand(new CmdExit(dmibar_.to_uint64(), itap_));
-    registerCommand(new CmdLoadBin(dmibar_.to_uint64(), itap_));
-    registerCommand(new CmdLoadElf(dmibar_.to_uint64(), itap_));
-    registerCommand(new CmdLoadH86(dmibar_.to_uint64(), itap_));
-    registerCommand(new CmdLoadSrec(dmibar_.to_uint64(), itap_));
-    registerCommand(new CmdLog(dmibar_.to_uint64(), itap_));
-    registerCommand(new CmdMemDump(dmibar_.to_uint64(), itap_));
-    registerCommand(new CmdRead(dmibar_.to_uint64(), itap_));
-    registerCommand(new CmdReset(dmibar_.to_uint64(), itap_));
-    registerCommand(new CmdStack(dmibar_.to_uint64(), itap_));
-    registerCommand(new CmdSymb(dmibar_.to_uint64(), itap_));
-    registerCommand(new CmdWrite(dmibar_.to_uint64(), itap_));
+    registerCommand(new CmdElf2Raw(dmibar_.to_uint64(), 0));
+    registerCommand(new CmdExit(dmibar_.to_uint64(), 0));
+    registerCommand(new CmdLoadBin(dmibar_.to_uint64(), 0));
+    registerCommand(new CmdLoadElf(dmibar_.to_uint64(), 0));
+    registerCommand(new CmdLoadH86(dmibar_.to_uint64(), 0));
+    registerCommand(new CmdLoadSrec(dmibar_.to_uint64(), 0));
+    registerCommand(new CmdLog(dmibar_.to_uint64(), 0));
+    registerCommand(new CmdMemDump(dmibar_.to_uint64(), 0));
+    registerCommand(new CmdRead(dmibar_.to_uint64(), 0));
+    registerCommand(new CmdReset(dmibar_.to_uint64(), 0));
+    registerCommand(new CmdStack(dmibar_.to_uint64(), 0));
+    registerCommand(new CmdSymb(dmibar_.to_uint64(), 0));
+    registerCommand(new CmdWrite(dmibar_.to_uint64(), 0));
 }
 
 void CmdExecutor::registerCommand(ICommand *icmd) {

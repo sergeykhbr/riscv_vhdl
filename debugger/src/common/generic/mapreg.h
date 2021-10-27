@@ -230,6 +230,44 @@ class GenericReg64Bank : public IMemoryOperation {
     Reg64Type *regs_;
 };
 
+class GenericReg32Bank : public IMemoryOperation {
+ public:
+    GenericReg32Bank(IService *parent, const char *name,
+                    uint64_t addr, int len) {
+        parent_ = parent;
+        parent->registerPortInterface(name,
+                    static_cast<IMemoryOperation *>(this));
+        regs_ = 0;
+        bankName_.make_string(name);
+        baseAddress_.make_uint64(addr);
+        setRegTotal(len);
+    }
+    virtual ~GenericReg32Bank() {
+        if (regs_) {
+            delete [] regs_;
+        }
+    }
+
+    /** IMemoryOperation methods */
+    virtual ETransStatus b_transport(Axi4TransactionType *trans);
+
+    /** IResetListener interface */
+    virtual void reset();
+
+    /** General access methods: */
+    void setRegTotal(int len);
+    Reg32Type read(int idx) { return regs_[idx]; }
+    void write(int idx, Reg32Type val) { regs_[idx] = val; }
+    void write(int idx, uint32_t val) { regs_[idx].val = val; }
+    Reg32Type *getp() { return regs_; }
+    uint32_t *getpR32() { return &regs_[0].val; }
+
+ protected:
+    IService *parent_;
+    AttributeType bankName_;
+    Reg32Type *regs_;
+};
+
 class GenericReg16Bank : public IMemoryOperation {
  public:
     GenericReg16Bank(IService *parent, const char *name,

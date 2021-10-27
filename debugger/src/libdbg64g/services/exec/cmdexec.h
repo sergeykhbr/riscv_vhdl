@@ -54,12 +54,10 @@ class CmdExecutor : public IService,
     int getICommand(AttributeType *args, ICommand **pcmd);
 
  private:
-    AttributeType tap_;
     AttributeType bus_;
     AttributeType dmibar_;
     AttributeType cmds_;
 
-    ITap *itap_;
     IMemoryOperation *ibus_;
 
     mutex_def mutexExec_;

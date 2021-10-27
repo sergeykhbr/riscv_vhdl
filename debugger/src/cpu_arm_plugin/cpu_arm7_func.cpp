@@ -43,13 +43,13 @@ void CpuCortex_Functional::postinitService() {
 
     CpuGeneric::postinitService();
 
-    pcmd_br_ = new CmdBrArm(DSU_OFFSET, itap_);
+    pcmd_br_ = new CmdBrArm(DSU_OFFSET, 0);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_br_));
 
-    pcmd_reg_ = new CmdRegArm(DSU_OFFSET, itap_);
+    pcmd_reg_ = new CmdRegArm(DSU_OFFSET, 0);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_reg_));
 
-    pcmd_regs_ = new CmdRegsArm(DSU_OFFSET, itap_);
+    pcmd_regs_ = new CmdRegsArm(DSU_OFFSET, 0);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_regs_));
 
     if (defaultMode_.is_equal("Thumb")) {

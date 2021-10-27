@@ -34,6 +34,17 @@ class DebugRegisterType : public MappedReg32Type {
     IDebug* idbg_;
 };
 
+class DMDATAx_TYPE : public DebugRegisterType {
+ public:
+    DMDATAx_TYPE(IService *parent, const char *name, int idx, uint64_t addr) :
+        DebugRegisterType(parent, name, addr), idx_(idx) {}
+
+ protected:
+    virtual uint32_t aboutToWrite(uint32_t new_val) override;
+ private:
+    int idx_;
+};
+
 class DMCONTROL_TYPE : public DebugRegisterType {
  public:
     DMCONTROL_TYPE(IService *parent, const char *name, uint64_t addr) :
@@ -91,9 +102,9 @@ class DMSTATUS_TYPE : public DebugRegisterType {
     virtual uint32_t aboutToRead(uint32_t cur_val) override;
 };
 
-class HALTSUM_TYPE : public DebugRegisterType {
+class HALTSUM0_TYPE : public DebugRegisterType {
  public:
-    HALTSUM_TYPE(IService *parent, const char *name, uint64_t addr) :
+    HALTSUM0_TYPE(IService *parent, const char *name, uint64_t addr) :
         DebugRegisterType(parent, name, addr) {}
  protected:
     virtual uint32_t aboutToRead(uint32_t cur_val) override;
@@ -145,6 +156,8 @@ class COMMAND_TYPE : public DebugRegisterType {
             uint32_t cmdtype : 8;   // [31:24] 0=Access regsiter
         } bits;
     };
+
+    virtual uint32_t aboutToWrite(uint32_t nxt_val) override;
 };
 
 }  // namespace debugger

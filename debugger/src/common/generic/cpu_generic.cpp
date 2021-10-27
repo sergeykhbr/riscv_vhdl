@@ -48,7 +48,6 @@ CpuGeneric::CpuGeneric(const char *name)
     registerAttribute("SourceCode", &sourceCode_);
     registerAttribute("CmdExecutor", &cmdexec_);
     registerAttribute("DmiBAR", &dmibar_);
-    registerAttribute("Tap", &tap_);
     registerAttribute("StackTraceSize", &stackTraceSize_);
     registerAttribute("FreqHz", &freqHz_);
     registerAttribute("GenerateTraceFile", &generateTraceFile_);
@@ -153,13 +152,6 @@ void CpuGeneric::postinitService() {
     if (!icmdexec_) {
         RISCV_error("ICmdExecutor interface '%s' not found", 
                     cmdexec_.to_string());
-        return;
-    }
-
-    itap_ = static_cast<ITap *>(
-       RISCV_get_service_iface(tap_.to_string(), IFACE_TAP));
-    if (!itap_) {
-        RISCV_error("ITap interface '%s' not found", tap_.to_string());
         return;
     }
 

@@ -48,22 +48,6 @@
                 ['LogLevel',1],
                 ['Port','uartmst0'],
                 ['Timeout',500]]}]},
-    {'Class':'EdclServiceClass','Instances':[
-          {'Name':'edcltap','Attr':[
-                ['LogLevel',1],
-                ['Transport','udpedcl'],
-                ['seq_cnt',0]]}]},
-    {'Class':'UdpServiceClass','Instances':[
-          {'Name':'udpboard','Attr':[
-                ['LogLevel',1],
-                ['Timeout',0x190],
-                ['SimTarget','udpedcl']]},
-          {'Name':'udpedcl','Attr':[
-                ['LogLevel',1],
-                ['Timeout',0x3e8],
-                ['HostIP','192.168.0.53'],
-                ['BoardIP','192.168.0.51'],
-                ['SimTarget','udpboard']]}]},
     {'Class':'TcpServerClass','Instances':[
           {'Name':'rpcserver','Attr':[
                 ['LogLevel',4],
@@ -135,8 +119,7 @@
           {'Name':'cmdexec0','Attr':[
                 ['LogLevel',4],
                 ['Bus','axi0'],
-                ['DmiBAR',0x00000000AF000000],
-                ['Tap','edcltap']
+                ['DmiBAR',0x00000000AF000000]
                 ]}]},
     {'Class':'SimplePluginClass','Instances':[
           {'Name':'example0','Attr':[
@@ -145,17 +128,6 @@
     {'Class':'RiscvSourceServiceClass','Instances':[
           {'Name':'src0','Attr':[
                 ['LogLevel',4]]}]},
-    {'Class':'GrethClass','Instances':[
-          {'Name':'greth0','Attr':[
-                ['LogLevel',1],
-                ['BaseAddress',0x80040000],
-                ['Length',0x40000],
-                ['SysBusMasterID',2,'Hardcoded in VHDL'],
-                ['IP',0x55667788],
-                ['MAC',0xfeedface00],
-                ['Bus','axi0'],
-                ['Transport','udpboard']
-                ]}]},
     {'Class':'CpuMonitorClass','Instances':[
           {'Name':'cpumon0','Attr':[
                 ['ObjDescription','This object is polling DMI haltsum0 register and detects halted CPU.
@@ -177,7 +149,6 @@
                 ['DbgBus','dbgbus0'],
                 ['CmdExecutor','cmdexec0'],
                 ['DmiBAR',0x00000000AF000000,'Base address of the DMI module'],
-                ['Tap','edcltap'],
                 ['SysBusWidthBytes',8,'Split dma transactions from CPU'],
                 ['SourceCode','src0'],
                 ['ListExtISA',['I','M','A','C','D']],
@@ -196,6 +167,22 @@
                 ['CmdExecutor','cmdexec0'],
                 ['BaseAddress',0x0],
                 ['Length',65536]
+                ]}]},
+    {'Class':'DmiFunctionalClass','Instances':[
+          {'Name':'dmi0','Attr':[
+                ['LogLevel',4],
+                ['SysBus','axi0'],
+                ['BaseAddress',0x00000000AF000000],
+                ['Length',4096],
+                ['MapList',[['dmi0','data0'],
+                            ['dmi0','data1'],
+                            ['dmi0','data2'],
+                            ['dmi0','data3'],
+                            ['dmi0','dmcontrol'],
+                            ['dmi0','dmstatus'],
+                            ['dmi0','command'],
+                            ['dmi0','haltsum0'],
+                           ]]
                 ]}]},
     {'Class':'MemorySimClass','Instances':[
           {'Name':'bootrom0','Attr':[
@@ -273,21 +260,6 @@
                             ['irqctrl0','irq_cause'],
                            ]]
                 ]}]},
-    {'Class':'DSUClass','Instances':[
-          {'Name':'dsu0','Attr':[
-                ['LogLevel',1],
-                ['BaseAddress',0x80080000],
-                ['Length',0x20000],
-                ['CPU',['core0']],
-                ['CmdExecutor','cmdexec0'],
-                ['Tap','edcltap'],
-                ['MapList',[['dsu0','dport_region'],
-                            ['dsu0','dmcontrol'],
-                            ['dsu0','dmstatus'],
-                            ['dsu0','haltsum0'],
-                            ['dsu0','bus_util'],
-                           ]]
-                ]}]},
     {'Class':'GNSSStubClass','Instances':[
           {'Name':'gnss0','Attr':[
                 ['LogLevel',1],
@@ -342,18 +314,16 @@
                 ['UseHash',false],
                 ['MapList',['bootrom0','fwimage0','sram0','gpio0',
                         'uart0','irqctrl0','gnss0','gptmr0','spiflash0',
-                        'pnp0','dsu0','greth0','rfctrl0','fsegps0']]
+                        'pnp0','rfctrl0','fsegps0','dmi0']]
                 ]}]},
     {'Class':'BusGenericClass','Instances':[
           {'Name':'dbgbus0','Attr':[
                 ['LogLevel',3],
                 ['UseHash',false],
                 ['MapList',[['core0','npc'],
-                            ['core0','status'],
                             ['core0','csr'],
                             ['core0','regs'],
                             ['core0','dcsr'],
-                            ['core0','insperstep'],
                             ['core0','clock_cnt'],
                             ['core0','executed_cnt'],
                             ['core0','stack_trace_cnt'],

@@ -241,7 +241,6 @@ class CpuGeneric : public IService,
     AttributeType dbgBus_;
     AttributeType cmdexec_;
     AttributeType dmibar_;
-    AttributeType tap_;
     AttributeType sysBusWidthBytes_;
     AttributeType sourceCode_;
     AttributeType stackTraceSize_;
@@ -257,7 +256,6 @@ class CpuGeneric : public IService,
     ISourceCode *isrc_;
     ICoverageTracker *icovtracker_;
     ICmdExecutor *icmdexec_;
-    ITap *itap_;                // used to register CPU specific commands
     IMemoryOperation *isysbus_;
     IMemoryOperation *idbgbus_;
     GenericInstruction *instr_;
