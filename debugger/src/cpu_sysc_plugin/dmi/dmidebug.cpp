@@ -44,8 +44,6 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name, bool async_reset)
     o_progbuf("o_progbuf") {
     iparent_ = parent;
     async_reset_ = async_reset;
-    setBaseAddress(DMI_BASE_ADDRESS);
-    setLength(4096);
 
     SC_METHOD(comb);
     sensitive << bus_req_event_;
@@ -154,15 +152,12 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name, bool async_reset)
     bus_req_write_ = 0;
     bus_req_wdata_ = 0;
     char tstr[256];
-    RISCV_sprintf(tstr, sizeof(tstr), "%s_event_tap_resp_valid_", name);
-    RISCV_event_create(&event_tap_resp_valid_, tstr);
     RISCV_sprintf(tstr, sizeof(tstr), "%s_event_dtm_ready", name);
     RISCV_event_create(&event_dtm_ready_, tstr);
 }
 
 DmiDebug::~DmiDebug() {
     delete tap_;
-    RISCV_event_close(&event_tap_resp_valid_);
     RISCV_event_close(&event_dtm_ready_);
 }
 
@@ -228,6 +223,13 @@ void DmiDebug::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 ETransStatus DmiDebug::b_transport(Axi4TransactionType *trans) {
+    RISCV_error("%s", "Blocking access not supported. Use non-blocking instead");
+    return TRANS_ERROR;
+}
+
+ETransStatus DmiDebug::nb_transport(Axi4TransactionType *trans,
+                                    IAxi4NbResponse *cb) {
+
     uint64_t off = trans->addr - getBaseAddress();
 
     // Only 4-bytes requests:
@@ -240,11 +242,11 @@ ETransStatus DmiDebug::b_transport(Axi4TransactionType *trans) {
             writereg((off + 4) >> 2, trans->wpayload.b32[1]);
         }
     }
-    RISCV_event_clear(&event_tap_resp_valid_);
-    RISCV_event_wait(&event_tap_resp_valid_);
-    trans->rpayload.b32[0] = bus_resp_data_;
+    lasttrans_ = *trans;
+    lastcb_ = cb;
     return TRANS_OK;
 }
+
 
 void DmiDebug::readreg(uint64_t idx) {
     bus_req_addr_ = idx;
@@ -654,7 +656,9 @@ void DmiDebug::registers() {
 
     if (r.bus_resp_valid) {
         bus_resp_data_ = r.bus_resp_data.read();
-        RISCV_event_set(&event_tap_resp_valid_);
+        // We cannot get here without valid request no need additional checks
+        lasttrans_.rpayload.b32[0] = bus_resp_data_;
+        lastcb_->nb_response(&lasttrans_);
     }
 
     w_i_trst = trst_;

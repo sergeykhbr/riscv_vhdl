@@ -75,7 +75,7 @@ void CmdDmiRunControl::exec(AttributeType *args, AttributeType *res) {
 
     if (name.is_equal("status")) {
         // Read arg0
-        tap_->read(dmibar_+ 4*0x40, 4, reg.buf);    // haltsum0
+        dma_read(dmibar_+ 4*0x40, 4, reg.buf);    // haltsum0
         res->make_uint64(reg.val);
         return;
     }
@@ -86,10 +86,10 @@ void CmdDmiRunControl::exec(AttributeType *args, AttributeType *res) {
     dmcontrol.val = 0;
     if (par1.is_equal("halt") || par1.is_equal("stop") || par1.is_equal("break")) {
         dmcontrol.bits.haltreq = 1;
-        tap_->write(dmibar_ + 4*0x10, 4, dmcontrol.u8);
+        dma_write(dmibar_ + 4*0x10, 4, dmcontrol.u8);
     } else if (par1.is_equal("go") || par1.is_equal("run") || par1.is_equal("c")) {
         dmcontrol.bits.resumereq = 1;
-        tap_->write(dmibar_ + 4*0x10, 4, dmcontrol.u8);
+        dma_write(dmibar_ + 4*0x10, 4, dmcontrol.u8);
     } else if (par1.is_equal("step")) {
         // enable stepping = 1
         dcsr.val = 0;
@@ -97,23 +97,23 @@ void CmdDmiRunControl::exec(AttributeType *args, AttributeType *res) {
         dcsr.bits.stopcount = 1;
         dcsr.bits.ebreakm = 1;
         dcsr.bits.step = 1;
-        tap_->write(dmibar_ + 4*0x04, 4, dcsr.u8);    // arg0[31:0] = data0
+        dma_write(dmibar_ + 4*0x04, 4, dcsr.u8);            // arg0[31:0] = data0
         // transfer dcsr,arg0
         command.val = 0;
         command.bits.transfer = 1;
         command.bits.write = 1;
         command.bits.aarsize = 2;
         command.bits.regno = 0x7b0;//CSR_dcsr;
-        tap_->write(dmibar_ + 4*0x17, 4, command.u8);    // arg0 = [data1,data0]
+        dma_write(dmibar_ + 4*0x17, 4, command.u8);         // arg0 = [data1,data0]
         // resume with step enabled
         dmcontrol.val = 0;
         dmcontrol.bits.resumereq = 1;
-        tap_->write(dmibar_ + 4*0x10, 4, dmcontrol.u8);
+        dma_write(dmibar_ + 4*0x10, 4, dmcontrol.u8);
         // Wait until resume request accepted and CPU halted afterward:
         bool stepped = false;
         while (!stepped) {
-            tap_->read(dmibar_ + 0x11*0x4, 4, reg.buf);    // dmstatus
-            if (reg.bits.b17 && reg.bits.b9) {          // allresumeack && allhalted
+            dma_read(dmibar_ + 0x11*0x4, 4, reg.buf);       // dmstatus
+            if (reg.bits.b17 && reg.bits.b9) {              // allresumeack && allhalted
                 stepped = true;
             }
         }
@@ -123,14 +123,14 @@ void CmdDmiRunControl::exec(AttributeType *args, AttributeType *res) {
         dcsr.bits.stopcount = 1;
         dcsr.bits.ebreakm = 1;
         dcsr.bits.step = 0;
-        tap_->write(dmibar_ + 4*0x04, 4, dcsr.u8);    // arg0[31:0] = data0
+        dma_write(dmibar_ + 4*0x04, 4, dcsr.u8);            // arg0[31:0] = data0
         // transfer dcsr,arg0
         command.val = 0;
         command.bits.transfer = 1;
         command.bits.write = 1;
         command.bits.aarsize = 2;
         command.bits.regno = 0x7b0;//CSR_dcsr;
-        tap_->write(dmibar_ + 4*0x17, 4, command.u8);    // arg0[31:0] = data0
+        dma_write(dmibar_ + 4*0x17, 4, command.u8);         // arg0[31:0] = data0
     } else if (par1.is_equal("reg")) {
         AttributeType &regname = (*args)[2];
         if (regname.is_equal("npc")) {
@@ -139,20 +139,20 @@ void CmdDmiRunControl::exec(AttributeType *args, AttributeType *res) {
             command.bits.transfer = 1;
             command.bits.aarsize = 3;
             command.bits.regno = 0x7b1;//CSR_dpc;
-            tap_->write(dmibar_ + 4*0x17, 4, command.u8);    // arg0 = [data1,data0]
+            dma_write(dmibar_ + 4*0x17, 4, command.u8);     // arg0 = [data1,data0]
             // Read arg0
-            tap_->read(dmibar_ + 4*0x4, 4, reg.buf);    // [data1,data0]
-            tap_->read(dmibar_ + 4*0x5, 4, &reg.buf[4]);
+            dma_read(dmibar_ + 4*0x4, 4, reg.buf);          // [data1,data0]
+            dma_read(dmibar_ + 4*0x5, 4, &reg.buf[4]);
         } else if (regname.is_equal("steps")) {
             // transfer dpc,arg0
             command.val = 0;
             command.bits.transfer = 1;
             command.bits.aarsize = 3;
             command.bits.regno = 0xC02;//CSR_insret;
-            tap_->write(dmibar_ + 4*0x17, 4, command.u8);    // arg0 = [data1,data0]
+            dma_write(dmibar_ + 4*0x17, 4, command.u8);     // arg0 = [data1,data0]
             // Read arg0
-            tap_->read(dmibar_ + 4*0x4, 4, reg.buf);    // [data1,data0]
-            tap_->read(dmibar_ + 4*0x5, 4, &reg.buf[4]);
+            dma_read(dmibar_ + 4*0x4, 4, reg.buf);          // [data1,data0]
+            dma_read(dmibar_ + 4*0x5, 4, &reg.buf[4]);
         }
         res->make_uint64(reg.val);
     }

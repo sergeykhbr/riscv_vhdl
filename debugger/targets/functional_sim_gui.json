@@ -134,6 +134,8 @@
     {'Class':'CmdExecutorClass','Instances':[
           {'Name':'cmdexec0','Attr':[
                 ['LogLevel',4],
+                ['Bus','axi0'],
+                ['DmiBAR',0x00000000AF000000],
                 ['Tap','edcltap']
                 ]}]},
     {'Class':'SimplePluginClass','Instances':[
@@ -174,6 +176,7 @@
                 ['SysBus','axi0'],
                 ['DbgBus','dbgbus0'],
                 ['CmdExecutor','cmdexec0'],
+                ['DmiBAR',0x00000000AF000000,'Base address of the DMI module'],
                 ['Tap','edcltap'],
                 ['SysBusWidthBytes',8,'Split dma transactions from CPU'],
                 ['SourceCode','src0'],

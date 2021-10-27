@@ -31,6 +31,7 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     o_req_mem_strob("o_req_mem_strob"),
     o_req_mem_data("o_req_mem_data"),
     i_resp_mem_valid("i_resp_mem_valid"),
+    i_resp_mem_path("i_resp_mem_path"),
     i_resp_mem_data("i_resp_mem_data"),
     i_resp_mem_load_fault("i_resp_mem_load_fault"),
     i_resp_mem_store_fault("i_resp_mem_store_fault"),
@@ -211,37 +212,36 @@ void RiverTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
      *
      */
     if (i_vcd) {
-        sc_trace(i_vcd, i_clk, "i_clk");
-        sc_trace(i_vcd, i_nrst, "i_nrst");
-        sc_trace(i_vcd, i_req_mem_ready, "i_req_mem_ready");
-        sc_trace(i_vcd, i_resp_mem_valid, "i_resp_mem_valid");
-        sc_trace(i_vcd, i_resp_mem_data, "i_resp_mem_data");
-        sc_trace(i_vcd, i_resp_mem_load_fault, "i_resp_mem_load_fault");
-        sc_trace(i_vcd, i_resp_mem_store_fault, "i_resp_mem_store_fault");
-        sc_trace(i_vcd, i_tmr_irq, "i_tmr_irq");
-        sc_trace(i_vcd, i_ext_irq, "i_ext_irq");
-        sc_trace(i_vcd, i_haltreq, "i_haltreq");
-        sc_trace(i_vcd, i_resumereq, "i_resumereq");
-        sc_trace(i_vcd, i_dport_req_valid, "i_dport_req_valid");
-        sc_trace(i_vcd, i_dport_type, "i_dport_type");
-        sc_trace(i_vcd, i_dport_addr, "i_dport_addr");
-        sc_trace(i_vcd, i_dport_wdata, "i_dport_wdata");
-        sc_trace(i_vcd, i_dport_size, "i_dport_size");
-        sc_trace(i_vcd, i_dport_resp_ready, "i_dport_resp_ready");
-        sc_trace(i_vcd, i_progbuf, "i_progbuf");
+        sc_trace(i_vcd, i_clk, i_clk.name());
+        sc_trace(i_vcd, i_nrst, i_nrst.name());
+        sc_trace(i_vcd, i_req_mem_ready, i_req_mem_ready.name());
+        sc_trace(i_vcd, i_resp_mem_valid, i_resp_mem_valid.name());
+        sc_trace(i_vcd, i_resp_mem_data, i_resp_mem_data.name());
+        sc_trace(i_vcd, i_resp_mem_load_fault, i_resp_mem_load_fault.name());
+        sc_trace(i_vcd, i_resp_mem_store_fault, i_resp_mem_store_fault.name());
+        sc_trace(i_vcd, i_tmr_irq, i_tmr_irq.name());
+        sc_trace(i_vcd, i_ext_irq, i_ext_irq.name());
+        sc_trace(i_vcd, i_haltreq, i_haltreq.name());
+        sc_trace(i_vcd, i_resumereq, i_resumereq.name());
+        sc_trace(i_vcd, i_dport_req_valid, i_dport_req_valid.name());
+        sc_trace(i_vcd, i_dport_type, i_dport_type.name());
+        sc_trace(i_vcd, i_dport_addr, i_dport_addr.name());
+        sc_trace(i_vcd, i_dport_wdata, i_dport_wdata.name());
+        sc_trace(i_vcd, i_dport_size, i_dport_size.name());
+        sc_trace(i_vcd, i_dport_resp_ready, i_dport_resp_ready.name());
+        sc_trace(i_vcd, i_progbuf, i_progbuf.name());
     }
     if (o_vcd) {
-        sc_trace(o_vcd, o_req_mem_valid, "o_req_mem_valid");
-        sc_trace(o_vcd, o_req_mem_type, "o_req_mem_type");
-        sc_trace(o_vcd, o_req_mem_addr, "o_req_mem_addr");
-        sc_trace(o_vcd, o_req_mem_strob, "o_req_mem_strob");
-        sc_trace(o_vcd, o_req_mem_data, "o_req_mem_data");
-        sc_trace(o_vcd, o_halted, "o_halted");
-        sc_trace(o_vcd, o_dport_req_ready, "o_dport_req_ready");
-        sc_trace(o_vcd, o_dport_resp_valid, "o_dport_resp_valid");
-        sc_trace(o_vcd, o_dport_resp_error, "o_dport_resp_valid");
-        sc_trace(o_vcd, o_dport_rdata, "o_dport_rdata");
-        sc_trace(o_vcd, o_halted, "o_halted");
+        sc_trace(o_vcd, o_req_mem_valid, o_req_mem_valid.name());
+        sc_trace(o_vcd, o_req_mem_type, o_req_mem_type.name());
+        sc_trace(o_vcd, o_req_mem_addr, o_req_mem_addr.name());
+        sc_trace(o_vcd, o_req_mem_strob, o_req_mem_strob.name());
+        sc_trace(o_vcd, o_req_mem_data, o_req_mem_data.name());
+        sc_trace(o_vcd, o_halted, o_halted.name());
+        sc_trace(o_vcd, o_dport_req_ready, o_dport_req_ready.name());
+        sc_trace(o_vcd, o_dport_resp_valid, o_dport_resp_valid.name());
+        sc_trace(o_vcd, o_dport_resp_error, o_dport_resp_valid.name());
+        sc_trace(o_vcd, o_dport_rdata, o_dport_rdata.name());
     }
 
     proc0->generateVCD(i_vcd, o_vcd);

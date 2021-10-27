@@ -14,12 +14,13 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_COMMON_CORESERVICES_ICOMMAND_H__
-#define __DEBUGGER_COMMON_CORESERVICES_ICOMMAND_H__
+ #pragma once
 
+#include <api_types.h>
 #include <iface.h>
 #include <attribute.h>
 #include "coreservices/itap.h"
+#include "coreservices/imemop.h"
 
 namespace debugger {
 
@@ -32,15 +33,18 @@ static const int CMD_INVALID    = 2;
 class ICommand : public IFace {
  public:
     ICommand(const char *name, uint64_t dmibar, ITap *tap)
-        : IFace(IFACE_COMMAND), dmibar_(dmibar), tap_(tap) {
+        : IFace(IFACE_COMMAND), tap_(tap), ibus_(0), dmibar_(dmibar) {
         cmdName_.make_string(name);
     }
-    virtual ~ICommand() {}
 
     virtual const char *cmdName() { return cmdName_.to_string(); }
     virtual const char *briefDescr() { return briefDescr_.to_string(); }
     virtual const char *detailedDescr() { return detailedDescr_.to_string(); }
-
+    // Enabling access from command to bus transactions:
+    virtual void enableDMA(IMemoryOperation *ibus, uint64_t dmibar) {
+        ibus_ = ibus;
+        dmibar_ = dmibar;
+    }
     virtual int isValid(AttributeType *args) = 0;
     virtual void exec(AttributeType *args, AttributeType *res) = 0;
 
@@ -52,13 +56,108 @@ class ICommand : public IFace {
     }
 
  protected:
+    // Non-blocking access to the selected bus from the command execution thread
+    virtual ETransStatus dma_read(uint64_t addr, uint32_t sz, uint8_t *payload) {
+        ETransStatus ret = TRANS_ERROR;
+        if (!ibus_) {
+            return ret;
+        }
+        Axi4TransactionType tr;
+        tr.action = MemAction_Read;
+        tr.addr = addr;
+        uint32_t bytecnt = 0;
+        while (bytecnt < sz) {
+            if ((sz - bytecnt) > 8) {
+                tr.xsize = 8;
+            } else {
+                tr.xsize = sz - bytecnt;
+            }
+            nbobj_.clear();
+            ret = ibus_->nb_transport(&tr,
+                                      static_cast<IAxi4NbResponse *>(&nbobj_));
+            nbobj_.wait();
+            memcpy(payload, nbobj_.rpayload(), tr.xsize);
+            if (ret != TRANS_OK) {
+                break;
+            }
+            bytecnt += tr.xsize;
+            payload += tr.xsize;
+            tr.addr += tr.xsize;
+        }
+        return ret;
+    }
+    virtual ETransStatus dma_write(uint64_t addr, uint32_t sz, uint8_t *payload) {
+        ETransStatus ret = TRANS_ERROR;
+        if (!ibus_) {
+            return ret;
+        }
+        Axi4TransactionType tr;
+        tr.action = MemAction_Write;
+        tr.addr = addr;
+        uint32_t bytecnt = 0;
+        while (bytecnt < sz) {
+            if ((sz - bytecnt) > 8) {
+                tr.xsize = 8;
+            } else {
+                tr.xsize = sz - bytecnt;
+            }
+            tr.wstrb = (1u << tr.xsize) - 1;
+            memcpy(tr.wpayload.b8, payload, tr.xsize);
+            nbobj_.clear();
+            ret = ibus_->nb_transport(&tr,
+                                      static_cast<IAxi4NbResponse *>(&nbobj_));
+            nbobj_.wait();
+            if (ret != TRANS_OK) {
+                break;
+            }
+            bytecnt += tr.xsize;
+            payload += tr.xsize;
+            tr.addr += tr.xsize;
+        }
+        return ret;
+    }
+
+ protected:
     AttributeType cmdName_;
     AttributeType briefDescr_;
     AttributeType detailedDescr_;
     ITap *tap_;
+    IMemoryOperation *ibus_;
     uint64_t dmibar_; 
+
+    // We should use nb-access to provide access to SystemC or we will
+    // have deadlock on system bus access (from cpu and waiting response on DMI)
+    class NbLockObject : public IAxi4NbResponse {
+     public:
+        NbLockObject() : IAxi4NbResponse() {
+            AttributeType t1;
+            RISCV_generate_name(&t1);
+            RISCV_event_create(&event_nb_, t1.to_string());
+        }
+        virtual ~NbLockObject() {
+            RISCV_event_close(&event_nb_);
+        }
+
+        /** IAxi4NbResponse */    
+        virtual void nb_response(Axi4TransactionType *trans) {
+            resp_ = *trans;
+            RISCV_event_set(&event_nb_);
+        }
+
+        // Common methods
+        void clear() {
+            RISCV_event_clear(&event_nb_);
+        }
+        void wait() {
+            RISCV_event_wait(&event_nb_);
+        }
+        uint8_t *rpayload() {
+            return resp_.rpayload.b8;
+        }
+     private:
+        event_def event_nb_;
+        Axi4TransactionType resp_;
+    } nbobj_;
 };
 
 }  // namespace debugger
-
-#endif  // __DEBUGGER_COMMON_CORESERVICES_ICOMMAND_H__

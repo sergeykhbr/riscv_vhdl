@@ -33,7 +33,7 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     registerAttribute("CoherenceEnable", &coherenceEnable_);
     registerAttribute("Bus", &bus_);
     registerAttribute("CmdExecutor", &cmdexec_);
-    registerAttribute("Tap", &tap_);
+    registerAttribute("DmiBAR", &dmibar_);
     registerAttribute("FreqHz", &freqHz_);
     registerAttribute("InVcdFile", &InVcdFile_);
     registerAttribute("OutVcdFile", &OutVcdFile_);
@@ -76,14 +76,6 @@ void CpuRiscV_RTL::postinitService() {
         return;
     }
 
-    itap_ = static_cast<ITap *>(
-       RISCV_get_service_iface(tap_.to_string(), IFACE_TAP));
-    if (!itap_) {
-        RISCV_error("ITap interface '%s' not found", tap_.to_string());
-        return;
-    }
-
-
 
     if (InVcdFile_.size()) {
         i_vcd_ = sc_create_vcd_trace_file(InVcdFile_.to_string());
@@ -102,6 +94,8 @@ void CpuRiscV_RTL::postinitService() {
     wrapper_->setBus(ibus_);
     wrapper_->setClockHz(freqHz_.to_int());
     wrapper_->generateVCD(i_vcd_, o_vcd_);
+    dmi_->setBaseAddress(dmibar_.to_uint64());
+    dmi_->setLength(4096);
     dmi_->generateVCD(i_vcd_, o_vcd_);
     if (l2cache_) {
         l2cache_->generateVCD(i_vcd_, o_vcd_);
@@ -111,21 +105,21 @@ void CpuRiscV_RTL::postinitService() {
     }
     core_->generateVCD(i_vcd_, o_vcd_);
 
-    pcmd_br_ = new CmdBrRiscv(DMI_BASE_ADDRESS, itap_);
+    pcmd_br_ = new CmdBrRiscv(dmibar_.to_uint64(), 0);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_br_));
 
-    pcmd_csr_ = new CmdCsr(DMI_BASE_ADDRESS, itap_);
+    pcmd_csr_ = new CmdCsr(dmibar_.to_uint64(), 0);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_csr_));
 
-    pcmd_reg_ = new CmdRegRiscv(DMI_BASE_ADDRESS, itap_);
+    pcmd_reg_ = new CmdRegRiscv(dmibar_.to_uint64(), 0);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_reg_));
 
-    pcmd_regs_ = new CmdRegsRiscv(DMI_BASE_ADDRESS, itap_);
+    pcmd_regs_ = new CmdRegsRiscv(dmibar_.to_uint64(), 0);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_regs_));
 
     pcmd_runctrl_ = new CmdDmiRunControl(static_cast<IService *>(this),
-                                         DMI_BASE_ADDRESS,  // todo: change on attribute
-                                         itap_);
+                                         dmibar_.to_uint64(), 0);
+    pcmd_runctrl_->enableDMA(ibus_, dmibar_.to_uint64());
     icmdexec_->registerCommand(pcmd_runctrl_);
 
     if (!run()) {

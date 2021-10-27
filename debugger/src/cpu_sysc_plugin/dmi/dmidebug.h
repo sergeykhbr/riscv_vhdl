@@ -65,6 +65,8 @@ class DmiDebug : public sc_module,
 
     /** IMemoryOperation */
     virtual ETransStatus b_transport(Axi4TransactionType *trans);
+    virtual ETransStatus nb_transport(Axi4TransactionType *trans,
+                                      IAxi4NbResponse *cb) override ;
 
     /** IJtagTap */
     virtual void resetTAP();
@@ -86,12 +88,15 @@ class DmiDebug : public sc_module,
     JtagTap *tap_;
     JtagCDC *cdc_;
 
+    // Last processing transaction
+    Axi4TransactionType lasttrans_;
+    IAxi4NbResponse *lastcb_;
+
     bool bus_req_valid_;
     uint32_t bus_req_addr_;
     bool bus_req_write_;
     uint32_t bus_req_wdata_;
     uint32_t bus_resp_data_;
-    event_def event_tap_resp_valid_;
     event_def event_dtm_ready_;
 
     char trst_;
@@ -263,42 +268,42 @@ class DmiDebug : public sc_module,
     }
 
 
-union g {
-    struct DmiRegsType {
-        uint32_t rsrv_00_03[4];     //
-        uint32_t data[12];          // 0x04 Abstract Data
-        uint32_t dmcontrol;         // 0x10 Debug Module Control
-        uint32_t dmstatus;          // 0x11 Debug Module Status
-        uint32_t hartinfo;          // 0x12 Hart Info
-        uint32_t haltsum1;          // 0x13 Halt Summary 1
-        uint32_t hawindowsel;       // 0x14 Hart Array Window Select
-        uint32_t hawindow;          // 0x15 Hart Array Window
-        uint32_t abstractcs;        // 0x16 Abstract Control and Status
-        uint32_t command;           // 0x17 Abstract Command
-        uint32_t abstractauto;      // 0x18 Abstract Command Autoexec
-        uint32_t confstrptr[4];     // 0x19-0x1c Configuration String Pointers 1-3
-        uint32_t nextdm;            // 0x1d Next Debug Module
-        uint32_t rsrv_1e_1f[2];
-        uint32_t progbuf[16];       // 0x20-0x2f Program buffer 0-15
-        uint32_t authdata;          // 0x30 Authentication Data
-        uint32_t rsrv_31_33[3];
-        uint32_t haltsum2;          // 0x34 Halt summary 2
-        uint32_t haltsum3;          // 0x35 Halt summary 3
-        uint32_t rsrv_36;
-        uint32_t sbaddress3;        // 0x37 System Bus Address [127:96]
-        uint32_t sbcs;              // 0x38 System Bus Access Control and Status
-        uint32_t sbaddress0;        // 0x39 System Bus Address [31:0]
-        uint32_t sbaddress1;        // 0x3a System Bus Address [63:32]
-        uint32_t sbaddress2;        // 0x3b System Bus Address [95:64]
-        uint32_t sbdata0;           // 0x3a System Bus Data [31:0]
-        uint32_t sbdata1;           // 0x3a System Bus Data [63:32]
-        uint32_t sbdata2;           // 0x3a System Bus Data [95:64]
-        uint32_t sbdata3;           // 0x3a System Bus Data [127:96]
-        uint32_t haltsum0;          // 0x40 Halt Summary 0
-    } r;
-    uint32_t b8[sizeof(DmiRegsType)];
-    uint32_t b32[sizeof(DmiRegsType) / sizeof(uint32_t)];
-};
+    union g {
+        struct DmiRegsType {
+            uint32_t rsrv_00_03[4];     //
+            uint32_t data[12];          // 0x04 Abstract Data
+            uint32_t dmcontrol;         // 0x10 Debug Module Control
+            uint32_t dmstatus;          // 0x11 Debug Module Status
+            uint32_t hartinfo;          // 0x12 Hart Info
+            uint32_t haltsum1;          // 0x13 Halt Summary 1
+            uint32_t hawindowsel;       // 0x14 Hart Array Window Select
+            uint32_t hawindow;          // 0x15 Hart Array Window
+            uint32_t abstractcs;        // 0x16 Abstract Control and Status
+            uint32_t command;           // 0x17 Abstract Command
+            uint32_t abstractauto;      // 0x18 Abstract Command Autoexec
+            uint32_t confstrptr[4];     // 0x19-0x1c Configuration String Pointers 1-3
+            uint32_t nextdm;            // 0x1d Next Debug Module
+            uint32_t rsrv_1e_1f[2];
+            uint32_t progbuf[16];       // 0x20-0x2f Program buffer 0-15
+            uint32_t authdata;          // 0x30 Authentication Data
+            uint32_t rsrv_31_33[3];
+            uint32_t haltsum2;          // 0x34 Halt summary 2
+            uint32_t haltsum3;          // 0x35 Halt summary 3
+            uint32_t rsrv_36;
+            uint32_t sbaddress3;        // 0x37 System Bus Address [127:96]
+            uint32_t sbcs;              // 0x38 System Bus Access Control and Status
+            uint32_t sbaddress0;        // 0x39 System Bus Address [31:0]
+            uint32_t sbaddress1;        // 0x3a System Bus Address [63:32]
+            uint32_t sbaddress2;        // 0x3b System Bus Address [95:64]
+            uint32_t sbdata0;           // 0x3a System Bus Data [31:0]
+            uint32_t sbdata1;           // 0x3a System Bus Data [63:32]
+            uint32_t sbdata2;           // 0x3a System Bus Data [95:64]
+            uint32_t sbdata3;           // 0x3a System Bus Data [127:96]
+            uint32_t haltsum0;          // 0x40 Halt Summary 0
+        } r;
+        uint32_t b8[sizeof(DmiRegsType)];
+        uint32_t b32[sizeof(DmiRegsType) / sizeof(uint32_t)];
+    };
 
     bool async_reset_;
 };

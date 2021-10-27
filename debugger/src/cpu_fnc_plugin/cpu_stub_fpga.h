@@ -39,6 +39,7 @@ class CpuStubRiscVFpga : public IService {
 
  private:
     AttributeType cmdexec_;
+    AttributeType dmibar_;
     AttributeType tap_;
 
     ICmdExecutor *icmdexec_;

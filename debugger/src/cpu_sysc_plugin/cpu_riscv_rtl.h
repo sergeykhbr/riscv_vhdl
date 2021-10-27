@@ -104,14 +104,13 @@ class CpuRiscV_RTL : public IService,
     AttributeType coherenceEnable_;
     AttributeType bus_;
     AttributeType cmdexec_;
-    AttributeType tap_;
+    AttributeType dmibar_;
     AttributeType freqHz_;
     AttributeType InVcdFile_;
     AttributeType OutVcdFile_;
     event_def config_done_;
 
     ICmdExecutor *icmdexec_;
-    ITap *itap_;
     IMemoryOperation *ibus_;
 
     sc_signal<bool> w_clk;

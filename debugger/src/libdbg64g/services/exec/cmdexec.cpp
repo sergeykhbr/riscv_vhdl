@@ -38,7 +38,9 @@ namespace debugger {
 CmdExecutor::CmdExecutor(const char *name) 
     : IService(name) {
     registerInterface(static_cast<ICmdExecutor *>(this));
+    registerAttribute("Bus", &bus_);
     registerAttribute("Tap", &tap_);
+    registerAttribute("DmiBAR", &dmibar_);
 
     //console_.make_list(0);
     tap_.make_string("");
@@ -63,23 +65,28 @@ void CmdExecutor::postinitService() {
     itap_ = static_cast<ITap *>
             (RISCV_get_service_iface(tap_.to_string(), IFACE_TAP));
 
+    ibus_ = static_cast<IMemoryOperation *>
+            (RISCV_get_service_iface(bus_.to_string(), IFACE_MEMORY_OPERATION));
+
     // Core commands registration:
-    /*registerCommand(new CmdCpi(itap_));
-    registerCommand(new CmdCpuContext(itap_));
-    registerCommand(new CmdDisas(itap_));
-    registerCommand(new CmdElf2Raw(itap_));
-    registerCommand(new CmdExit(itap_));
-    registerCommand(new CmdLoadBin(itap_));
-    registerCommand(new CmdLoadElf(itap_));
-    registerCommand(new CmdLoadH86(itap_));
-    registerCommand(new CmdLoadSrec(itap_));
-    registerCommand(new CmdLog(itap_));
-    registerCommand(new CmdMemDump(itap_));
-    registerCommand(new CmdRead(itap_));
-    registerCommand(new CmdReset(itap_));
-    registerCommand(new CmdStack(itap_));
-    registerCommand(new CmdSymb(itap_));
-    registerCommand(new CmdWrite(itap_));*/
+    ICommand *idisas = new CmdDisas(dmibar_.to_uint64(), itap_);
+    idisas->enableDMA(ibus_, dmibar_.to_uint64());
+    registerCommand(new CmdCpi(dmibar_.to_uint64(), itap_));
+    registerCommand(new CmdCpuContext(dmibar_.to_uint64(), itap_));
+    registerCommand(idisas);
+    registerCommand(new CmdElf2Raw(dmibar_.to_uint64(), itap_));
+    registerCommand(new CmdExit(dmibar_.to_uint64(), itap_));
+    registerCommand(new CmdLoadBin(dmibar_.to_uint64(), itap_));
+    registerCommand(new CmdLoadElf(dmibar_.to_uint64(), itap_));
+    registerCommand(new CmdLoadH86(dmibar_.to_uint64(), itap_));
+    registerCommand(new CmdLoadSrec(dmibar_.to_uint64(), itap_));
+    registerCommand(new CmdLog(dmibar_.to_uint64(), itap_));
+    registerCommand(new CmdMemDump(dmibar_.to_uint64(), itap_));
+    registerCommand(new CmdRead(dmibar_.to_uint64(), itap_));
+    registerCommand(new CmdReset(dmibar_.to_uint64(), itap_));
+    registerCommand(new CmdStack(dmibar_.to_uint64(), itap_));
+    registerCommand(new CmdSymb(dmibar_.to_uint64(), itap_));
+    registerCommand(new CmdWrite(dmibar_.to_uint64(), itap_));
 }
 
 void CmdExecutor::registerCommand(ICommand *icmd) {

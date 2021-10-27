@@ -608,8 +608,6 @@ enum ESignals {
 
 static const int EXCEPTION_CallFromXMode    = EXCEPTION_CallFromUmode;
 
-static const uint64_t DMI_BASE_ADDRESS = 0x00000000AF000000ull;
-
 }  // namespace debugger
 
 #endif  // __DEBUGGER_RISCV_ISA_H__

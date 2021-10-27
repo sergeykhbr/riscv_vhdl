@@ -240,6 +240,7 @@ class CpuGeneric : public IService,
     AttributeType sysBus_;
     AttributeType dbgBus_;
     AttributeType cmdexec_;
+    AttributeType dmibar_;
     AttributeType tap_;
     AttributeType sysBusWidthBytes_;
     AttributeType sourceCode_;

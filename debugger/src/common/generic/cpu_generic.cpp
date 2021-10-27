@@ -26,8 +26,6 @@ CpuGeneric::CpuGeneric(const char *name)
     portRegs_(this, "regs", DSUREG(ureg.v.iregs[0]), 0x1000),    // 4096 bytes region of DSU
     dbgnpc_(this, "npc", DSUREG(csr[CSR_dpc])),
     dcsr_(this, "dcsr", DSUREG(csr[CSR_dcsr])),
-    //status_(this, "status", DSUREG(csr[CSR_runcontrol])),
-    //insperstep_(this, "insperstep", DSUREG(csr[CSR_insperstep])),
     clock_cnt_(this, "clock_cnt", DSUREG(csr[CSR_cycle])),
     executed_cnt_(this, "executed_cnt", DSUREG(csr[CSR_insret])),
     stackTraceCnt_(this, "stack_trace_cnt", DSUREG(ureg.v.stack_trace_cnt)),
@@ -49,6 +47,7 @@ CpuGeneric::CpuGeneric(const char *name)
     registerAttribute("SysBusWidthBytes", &sysBusWidthBytes_);
     registerAttribute("SourceCode", &sourceCode_);
     registerAttribute("CmdExecutor", &cmdexec_);
+    registerAttribute("DmiBAR", &dmibar_);
     registerAttribute("Tap", &tap_);
     registerAttribute("StackTraceSize", &stackTraceSize_);
     registerAttribute("FreqHz", &freqHz_);

@@ -22,6 +22,7 @@ namespace debugger {
 CpuStubRiscVFpga::CpuStubRiscVFpga(const char *name) :
     IService(name) {
     registerAttribute("CmdExecutor", &cmdexec_);
+    registerAttribute("DmiBAR", &dmibar_);
     registerAttribute("Tap", &tap_);
 }
 
@@ -41,16 +42,16 @@ void CpuStubRiscVFpga::postinitService() {
         return;
     }
 
-    pcmd_br_ = new CmdBrRiscv(DMI_BASE_ADDRESS, itap_);
+    pcmd_br_ = new CmdBrRiscv(dmibar_.to_uint64(), itap_);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_br_));
 
-    pcmd_csr_ = new CmdCsr(DMI_BASE_ADDRESS, itap_);
+    pcmd_csr_ = new CmdCsr(dmibar_.to_uint64(), itap_);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_csr_));
 
-    pcmd_reg_ = new CmdRegRiscv(DMI_BASE_ADDRESS, itap_);
+    pcmd_reg_ = new CmdRegRiscv(dmibar_.to_uint64(), itap_);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_reg_));
 
-    pcmd_regs_ = new CmdRegsRiscv(DMI_BASE_ADDRESS, itap_);
+    pcmd_regs_ = new CmdRegsRiscv(dmibar_.to_uint64(), itap_);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_regs_));
 }
 

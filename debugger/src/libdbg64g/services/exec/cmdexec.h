@@ -23,6 +23,7 @@
 #include "coreservices/itap.h"
 #include "coreservices/iautocomplete.h"
 #include "coreservices/icommand.h"
+#include "coreservices/imemop.h"
 #include <string>
 #include <stdarg.h>
 
@@ -35,7 +36,7 @@ class CmdExecutor : public IService,
     virtual ~CmdExecutor();
 
     /** IService interface */
-    virtual void postinitService();
+    virtual void postinitService() override;
 
     /** ICmdExecutor */
     virtual void registerCommand(ICommand *icmd);
@@ -54,9 +55,12 @@ class CmdExecutor : public IService,
 
  private:
     AttributeType tap_;
+    AttributeType bus_;
+    AttributeType dmibar_;
     AttributeType cmds_;
 
     ITap *itap_;
+    IMemoryOperation *ibus_;
 
     mutex_def mutexExec_;
 
