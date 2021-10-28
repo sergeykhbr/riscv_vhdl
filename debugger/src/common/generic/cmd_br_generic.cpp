@@ -92,7 +92,7 @@ void CmdBrGeneric::exec(AttributeType *args, AttributeType *res) {
         flags |= BreakFlag_HW;
     }
 
-    CrGenericRuncontrolType runctrl;
+    //CrGenericRuncontrolType runctrl;
         
     uint64_t addr_dmcontrol = -1;//DSUREGBASE(csr[CSR_runcontrol]);
     Reg64Type braddr;
@@ -113,9 +113,9 @@ void CmdBrGeneric::exec(AttributeType *args, AttributeType *res) {
     bool resume = false;
     RISCV_event_clear(&eventHalted_);
     if (!isHalted()) {
-        runctrl.val = 0;
-        runctrl.bits.req_halt = 1;
-        tap_->write(addr_dmcontrol, 8, runctrl.u8);
+        //runctrl.val = 0;
+        //runctrl.bits.req_halt = 1;
+        //tap_->write(addr_dmcontrol, 8, runctrl.u8);
         
         RISCV_event_wait(&eventHalted_);
         resume = true;
@@ -146,9 +146,9 @@ void CmdBrGeneric::exec(AttributeType *args, AttributeType *res) {
     if (resume) {
         RISCV_trigger_hap(HAP_Resume, 0, "Resume command received");
 
-        runctrl.val = 0;
-        runctrl.bits.req_resume = 1;
-        tap_->write(addr_dmcontrol, 8, runctrl.u8);
+        //runctrl.val = 0;
+        //runctrl.bits.req_resume = 1;
+        //tap_->write(addr_dmcontrol, 8, runctrl.u8);
     }
 }
 

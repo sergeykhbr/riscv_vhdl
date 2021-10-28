@@ -29,7 +29,6 @@
 #include "coreservices/icpugen.h"
 #include "coreservices/idsugen.h"
 #include "coreservices/iwire.h"
-#include "coreservices/idebug.h"
 #include "coreservices/icmdexec.h"
 #include "debug/dsumap.h"
 #include "dsu_regs.h"
@@ -39,8 +38,7 @@ namespace debugger {
 class DSU : public RegMemBankGeneric,
             public DsuRegisters,
             public IDsuGeneric,
-            public IDbgNbResponse,
-            public IDebug {
+            public IDbgNbResponse {
  public:
     explicit DSU(const char *name);
     virtual ~DSU();
@@ -55,15 +53,6 @@ class DSU : public RegMemBankGeneric,
 
     /** IDbgNbResponse */
     virtual void nb_response_debug_port(DebugPortTransactionType *trans);
-
-    /** IDebug */
-    virtual int hartTotal() { return icpulist_.size(); }
-    virtual void hartSelect(int hartidx);
-    virtual int getHartSelected() { return hartsel_; }
-    virtual void reqResume(int hartidx);
-    virtual void reqHalt(int hartidx);
-    virtual bool isHalted(int hartidx);
-    virtual void setResetPin(bool val);
 
     void nb_debug_write(unsigned hartid, uint16_t addr, uint64_t wdata);
 

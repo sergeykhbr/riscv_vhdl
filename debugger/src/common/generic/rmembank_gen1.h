@@ -32,7 +32,7 @@ class RegMemBankGeneric : public IService,
     virtual ~RegMemBankGeneric();
 
     /** IService interface */
-    virtual void postinitService();
+    virtual void postinitService() override;
 
     /** IMemoryOperation */
     virtual ETransStatus b_transport(Axi4TransactionType *trans);

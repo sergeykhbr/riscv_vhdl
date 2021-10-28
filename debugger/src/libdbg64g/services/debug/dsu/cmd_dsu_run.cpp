@@ -64,7 +64,7 @@ int CmdDsuRun::isValid(AttributeType *args) {
 void CmdDsuRun::exec(AttributeType *args, AttributeType *res) {
     res->attr_free();
     res->make_nil();
-    CrGenericRuncontrolType runctrl;
+    /*CrGenericRuncontrolType runctrl;
     CrGenericDebugControlType dcs;
     uint64_t addr_runcontrol = -1;//DSUREGBASE(csr[CSR_runcontrol]);
     uint64_t addr_dcsr = DSUREGBASE(csr[CSR_dcsr]);
@@ -98,7 +98,7 @@ void CmdDsuRun::exec(AttributeType *args, AttributeType *res) {
         runctrl.val = 0;
         runctrl.bits.req_resume = 1;
         tap_->write(addr_runcontrol, 8, runctrl.u8);
-    }
+    }*/
 
     RISCV_trigger_hap(HAP_Resume, 0, "Resume command processed");
 }
@@ -110,7 +110,7 @@ uint64_t CmdDsuRun::checkSwBreakpoint() {
     uint64_t addr_dmstatus = DSUREGBASE(ulocal.v.dmstatus);
     Reg64Type br_addr;
     Reg64Type dpc;
-    CrGenericRuncontrolType runctrl;
+    //CrGenericRuncontrolType runctrl;
     CrGenericDebugControlType dcsr;
     DMSTATUS_TYPE::ValueType dmstatus;
     Reg64Type steps;
@@ -134,9 +134,9 @@ uint64_t CmdDsuRun::checkSwBreakpoint() {
             tap_->write(addr_dcsr, 8, dcsr.u8);
 
             // resumereq to make step
-            runctrl.val = 0;
-            runctrl.bits.req_resume = 1;
-            tap_->write(addr_runcontrol, 8, runctrl.u8);
+//            runctrl.val = 0;
+//            runctrl.bits.req_resume = 1;
+//            tap_->write(addr_runcontrol, 8, runctrl.u8);
 
             // Wait while hart is running (for low speed simulation)
             do {

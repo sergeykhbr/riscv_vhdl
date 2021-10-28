@@ -24,6 +24,7 @@
 #include "coreservices/ithread.h"
 #include "coreservices/icpugen.h"
 #include "coreservices/icpufunctional.h"
+#include "coreservices/idport.h"
 #include "coreservices/imemop.h"
 #include "coreservices/iclock.h"
 #include "coreservices/ireset.h"
@@ -95,15 +96,6 @@ class CsrDebugStatusType : public MappedReg64Type {
     virtual uint64_t aboutToWrite(uint64_t new_val) override;
 };
 
-class GenericStatusType : public MappedReg64Type {
- public:
-    GenericStatusType(IService *parent, const char *name, uint64_t addr) :
-        MappedReg64Type(parent, name, addr, 10) {
-    }
- protected:
-    virtual uint64_t aboutToWrite(uint64_t new_val) override;
-};
-
 // Flush specified address in I$
 class CsrFlushiType : public MappedReg64Type {
  public:
@@ -146,6 +138,7 @@ class CpuGeneric : public IService,
                    public IThread,
                    public ICpuGeneric,
                    public ICpuFunctional,
+                   public IDPort,
                    public IClock,
                    public IPower,
                    public IResetListener,
@@ -158,7 +151,6 @@ class CpuGeneric : public IService,
     virtual void postinitService();
 
     /** ICpuGeneric interface */
-    virtual bool isHalt() { return estate_ == CORE_Halted; }
     virtual void raiseSignal(int idx) = 0;
     virtual void lowerSignal(int idx) = 0;
     virtual void nb_transport_debug_port(DebugPortTransactionType *trans,
@@ -181,12 +173,23 @@ class CpuGeneric : public IService,
     virtual void exceptionLoadData(Axi4TransactionType *tr) {}
     virtual void exceptionStoreData(Axi4TransactionType *tr) {}
     virtual bool isOn() { return estate_ != CORE_OFF; }
-    virtual void go();
     virtual void halt(EHaltCause cause, const char *descr);
     virtual void addHwBreakpoint(uint64_t addr);
     virtual void removeHwBreakpoint(uint64_t addr);
     virtual void flush(uint64_t addr);
     virtual void doNotCache(uint64_t addr) { do_not_cache_ = true; }
+
+    /** IDPort interface */
+    virtual bool resume();
+    virtual void halt() {
+        halt(HaltExternal, "External Halt request");
+    }
+    virtual bool isHalted() { return estate_ == CORE_Halted; }
+    virtual void writeCSR(uint32_t idx, uint64_t val) {}
+    virtual uint64_t readCSR(uint32_t idx) { return 0;}
+    virtual void setResetPin(bool val) {}
+
+
  protected:
     virtual uint64_t getResetAddress() { return resetVector_.to_uint64(); }
     virtual EEndianessType endianess() = 0;
@@ -271,8 +274,6 @@ class CpuGeneric : public IService,
     GenericReg64Bank portRegs_;
     GenericNPCType dbgnpc_;
     CsrDebugStatusType dcsr_;
-    //GenericStatusType status_;
-    //MappedReg64Type insperstep_;
     StepCounterType clock_cnt_;
     StepCounterType executed_cnt_;
     MappedReg64Type stackTraceCnt_;         // Hardware stack trace buffer

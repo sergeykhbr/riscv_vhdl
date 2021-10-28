@@ -30,7 +30,6 @@ DSU::DSU(const char *name) :
     DsuRegisters(static_cast<IService *>(this)) {
     registerInterface(static_cast<IMemoryOperation *>(this));
     registerInterface(static_cast<IDsuGeneric *>(this));
-    registerInterface(static_cast<IDebug *>(this));
     registerAttribute("CPU", &cpu_);
     registerAttribute("CmdExecutor", &cmdexec_);
     registerAttribute("Tap", &tap_);
@@ -83,7 +82,7 @@ void DSU::postinitService() {
     }
 
     // Set default context
-    hartSelect(0);
+    //hartSelect(0);
 }
 
 void DSU::predeleteService() {
@@ -97,10 +96,10 @@ void DSU::nb_response_debug_port(DebugPortTransactionType *trans) {
 }
 
 void DSU::nb_debug_write(unsigned hartid, uint16_t addr, uint64_t wdata) {
-    if (static_cast<int>(hartid) >= hartTotal()) {
+    /*if (static_cast<int>(hartid) >= hartTotal()) {
         RISCV_error("Debug Access index out of range %d", hartid);
         return;
-    }
+    }*/
     ICpuGeneric *icpu = static_cast<ICpuGeneric *>(icpulist_[hartid].to_iface());
     nb_trans_.addr = addr;
     nb_trans_.wdata = wdata;
@@ -120,7 +119,7 @@ void DSU::incrementWrAccess(int mst_id) {
     bus_util_.getp()[2*mst_id].val++;
 }
 
-void DSU::setResetPin(bool val) {
+/*void DSU::setResetPin(bool val) {
     IResetListener *irst;
     for (unsigned i = 0; i < cpu_.size(); i++) {
         irst = static_cast<IResetListener *>(
@@ -180,6 +179,6 @@ void DSU::reqHalt(int hartidx) {
                   -1,//CSR_runcontrol,
                   t.val);
 }
-
+*/
 }  // namespace debugger
 

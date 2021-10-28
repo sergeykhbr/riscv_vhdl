@@ -313,8 +313,8 @@ void CpuRiver_Functional::exceptionStoreData(Axi4TransactionType *tr) {
     raiseSignal(EXCEPTION_StoreFault);
 }
 
-uint64_t CpuRiver_Functional::readCSR(int idx) {
-    switch (idx) {
+uint64_t CpuRiver_Functional::readCSR(uint32_t regno) {
+    switch (regno) {
     case CSR_mcycle:
     case CSR_minsret:
     case CSR_cycle:
@@ -323,11 +323,11 @@ uint64_t CpuRiver_Functional::readCSR(int idx) {
         return step_cnt_;
     default:;
     }
-    return portCSR_.read(idx).val;
+    return portCSR_.read(regno).val;
 }
 
-void CpuRiver_Functional::writeCSR(int idx, uint64_t val) {
-    switch (idx) {
+void CpuRiver_Functional::writeCSR(uint32_t regno, uint64_t val) {
+    switch (regno) {
     // Read-Only registers
     case CSR_misa:
     case CSR_mvendorid:
@@ -343,7 +343,7 @@ void CpuRiver_Functional::writeCSR(int idx, uint64_t val) {
     case CSR_insret:
         break;
     default:
-        portCSR_.write(idx, val);
+        portCSR_.write(regno, val);
     }
 }
 

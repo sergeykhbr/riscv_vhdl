@@ -38,6 +38,7 @@ CpuGeneric::CpuGeneric(const char *name)
     registerInterface(static_cast<IClock *>(this));
     registerInterface(static_cast<ICpuGeneric *>(this));
     registerInterface(static_cast<ICpuFunctional *>(this));
+    registerInterface(static_cast<IDPort *>(this));
     registerInterface(static_cast<IPower *>(this));
     registerInterface(static_cast<IResetListener *>(this));
     registerInterface(static_cast<IHap *>(this));
@@ -442,10 +443,10 @@ ETransStatus CpuGeneric::dma_memop(Axi4TransactionType *tr) {
     return ret;
 }
 
-void CpuGeneric::go() {
+bool CpuGeneric::resume() {
     if (estate_ == CORE_OFF) {
         RISCV_error("CPU is turned-off", 0);
-        return;
+        return false;
     }
     if (dcsr_.isSteppingMode()) {
         //dcsr_.clearSteppingMode();
@@ -454,6 +455,7 @@ void CpuGeneric::go() {
     } else {
         estate_ = CORE_Normal;
     }
+    return true;
 }
 
 void CpuGeneric::halt(EHaltCause cause, const char *descr) {
@@ -608,18 +610,6 @@ uint64_t GenericNPCType::aboutToWrite(uint64_t new_val) {
 
 uint64_t CsrDebugStatusType::aboutToWrite(uint64_t new_val) {
     // todo: select enter Debug mode or not
-    return new_val;
-}
-
-uint64_t GenericStatusType::aboutToWrite(uint64_t new_val) {
-    CrGenericRuncontrolType runctrl;
-    CpuGeneric *pcpu = static_cast<CpuGeneric *>(parent_);
-    runctrl.val = new_val;
-    if (runctrl.bits.req_halt) {
-        pcpu->halt(HaltExternal, "halted from DSU");
-    } else if (runctrl.bits.req_resume) {
-        pcpu->go();
-    }
     return new_val;
 }
 

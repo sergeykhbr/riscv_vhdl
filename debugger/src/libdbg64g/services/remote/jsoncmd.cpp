@@ -69,7 +69,7 @@ int JsonCommands::processCommand(const char *cmdbuf, int bufsz) {
         if (requestAction.is_equal("IsON")) {
             resp.make_boolean(icpufunc_->isOn());
         } else if (requestAction.is_equal("IsHalt")) {
-            resp.make_boolean(icpugen_->isHalt());
+            //resp.make_boolean(icpugen_->isHalt());
         } else if (requestAction.is_equal("Steps")) {
             resp.make_uint64(iclk_->getStepCounter());
         } else if (requestAction.is_equal("TimeSec")) {

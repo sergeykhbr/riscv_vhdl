@@ -47,7 +47,6 @@ class ICpuGeneric : public IFace {
  public:
     ICpuGeneric() : IFace(IFACE_CPU_GENERIC) {}
 
-    virtual bool isHalt() = 0;
     virtual void raiseSignal(int idx) = 0;
     virtual void lowerSignal(int idx) = 0;
     virtual void nb_transport_debug_port(DebugPortTransactionType *trans,

@@ -29,20 +29,6 @@ static const uint64_t EXT_SIGN_12 = 0xFFFFFFFFFFFFF000LL;
 static const uint64_t EXT_SIGN_16 = 0xFFFFFFFFFFFF0000LL;
 static const uint64_t EXT_SIGN_32 = 0xFFFFFFFF00000000LL;
 
-// CSR Run Control register
-union CrGenericRuncontrolType {
-    uint64_t val;
-    uint8_t u8[8];
-    struct bits_type {
-        uint64_t rsrv17_0 :  18;        // [17:0]
-        uint64_t req_progbuf : 1;       // [18] Exec. program from progbuf request
-        uint64_t rsrv29_19 :  11;       // [29:19]
-        uint64_t req_resume : 1;        // [30] Exec. program from progbuf request
-        uint64_t req_halt : 1;          // [31] Exec. program from progbuf request
-        uint64_t rsvh : 32;             // [63:32]
-    } bits;
-};
-
 // CSR Debug Status/Control register
 union CrGenericDebugControlType {
     uint64_t val;

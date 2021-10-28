@@ -26,11 +26,81 @@ DmiFunctional::DmiFunctional(const char *name)
     data2(this, "data2", 2, 0x06*sizeof(uint32_t)),
     data3(this, "data3", 3, 0x07*sizeof(uint32_t)),
     dmcontrol(this, "dmcontrol", 0x10*sizeof(uint32_t)),
+    dmstatus(this, "dmstatus", 0x11*sizeof(uint32_t)),
+    abstractcs(this, "abstractcs", 0x16*sizeof(uint32_t)),
     command(this, "command", 0x17*sizeof(uint32_t)),
     haltsum0(this, "haltsum0", 0x40*sizeof(uint32_t)) {
+
+    registerInterface(static_cast<IDmi *>(this));
+
+    registerAttribute("CpuMax", &cpumax_);
+    registerAttribute("DataregTotal", &dataregTotal_);
+    registerAttribute("ProgbufTotal", &progbufTotal_);
+    registerAttribute("HartList", &hartlist_);
+
+    phartdata_ = 0;
 }
 
 DmiFunctional::~DmiFunctional() {
+    if (phartdata_) {
+        delete [] phartdata_;
+    }
+}
+
+void DmiFunctional::postinitService() {
+    RegMemBankGeneric::postinitService();
+    
+    phartdata_ = new HartDataType[cpumax_.to_int()];
+    memset(phartdata_, 0, cpumax_.to_int() * sizeof(HartDataType));
+
+    for (unsigned i = 0; i < hartlist_.size(); i++) {
+        AttributeType &hart = hartlist_[i];
+        phartdata_[i].idport = static_cast<IDPort *>(
+                RISCV_get_service_iface(hart.to_string(),
+                                        IFACE_DPORT));
+        if (!phartdata_[i].idport) {
+            RISCV_error("Can get interace IDPort from %s",
+                        hart.to_string());
+        }
+    }
+}
+
+void DmiFunctional::readTransfer(uint32_t regno, uint32_t size) {
+    uint32_t region = regno >> 12;
+    IDPort *idport = phartdata_[getHartSelected()].idport;
+    if (region == 0) {
+        uint64_t rdata = idport->readCSR(regno);
+        switch (size) {
+        case 0:
+            rdata &= 0xFFull;
+            data0.setValue(static_cast<uint32_t>(rdata));
+            break;
+        case 1:
+            rdata &= 0xFFFFull;
+            data0.setValue(static_cast<uint32_t>(rdata));
+            break;
+        case 2:
+            rdata &= 0xFFFFFFFFull;
+            data0.setValue(static_cast<uint32_t>(rdata));
+            break;
+        default:
+            data0.setValue(static_cast<uint32_t>(rdata));
+            data1.setValue(static_cast<uint32_t>(rdata >> 32));
+        }
+    }
+}
+
+void DmiFunctional::writeTransfer(uint32_t regno, uint32_t size) {
+    uint32_t region = regno >> 12;
+    IDPort *idport = phartdata_[getHartSelected()].idport;
+    if (region == 0) {
+        uint64_t arg0 = data1.getValue().val;
+        arg0 = (arg0 << 32) | data0.getValue().val;
+        if (size == 2) {
+            arg0 &= 0xFFFFFFFFull;
+        }
+        idport->writeCSR(regno, arg0);
+    }
 }
 
 }  // namespace debugger

@@ -19,19 +19,102 @@
 #include <api_core.h>
 #include <iservice.h>
 #include "coreservices/ireset.h"
+#include "coreservices/idmi.h"
+#include "coreservices/idport.h"
 #include "generic/rmembank_gen1.h"
 #include "debug/dmi_regs.h"
 
 namespace debugger {
 
-class DmiFunctional : public RegMemBankGeneric {
+class DmiFunctional : public RegMemBankGeneric,
+                      public IDmi {
  public:
 
     explicit DmiFunctional(const char *name);
     virtual ~DmiFunctional();
 
+    /** IService interface */
+    virtual void postinitService() override;
+
+    /** IDmi interface */
+    // Must be 2*n value
+    virtual int getCpuMax() { return cpumax_.to_uint32(); }
+    virtual int getRegTotal() { return dataregTotal_.to_uint32(); }
+    virtual int getProgbufTotal() { return progbufTotal_.to_uint32(); }
+    virtual uint32_t getHartSelected() {
+        return dmcontrol.hartsel();
+    }
+    // Returns resumeack on success
+    virtual void set_resumereq(uint32_t hartsel) {
+        if (phartdata_[hartsel].idport) {
+            phartdata_[hartsel].idport->resume();
+            phartdata_[hartsel].resumeack = 1;
+        }
+    }
+    virtual bool get_resumeack(uint32_t hartsel) {
+        return phartdata_[hartsel].resumeack;
+    }
+    virtual void set_haltreq(uint32_t hartsel) {
+        if (phartdata_[hartsel].idport) {
+            phartdata_[hartsel].idport->halt();
+        }
+    }
+    virtual void set_hartreset(uint32_t hartsel) {
+    }
+    virtual void clear_hartreset(uint32_t hartsel) {
+    }
+    // Halt on reset request
+    virtual void set_resethaltreq(uint32_t hartsel) {
+    }
+    virtual void clear_resethaltreq(uint32_t hartsel) {
+    }
+    // Full system reset
+    virtual void set_ndmreset() {
+    }
+    virtual void clear_ndmreset() {
+    }
+
+    virtual void set_cmderr(ECmdErrType cmderr) {
+        abstractcs.set_cmderr(cmderr);
+    }
+    virtual ECmdErrType get_cmderr() {
+        return static_cast<ECmdErrType>(abstractcs.get_cmderr());
+    }
+
+    virtual bool isHalted(uint32_t hartsel) {
+        if (phartdata_[hartsel].idport) {
+            return phartdata_[hartsel].idport->isHalted();
+        }
+        return false;
+    }
+    virtual bool isAvailable(uint32_t hartsel) {
+        if (phartdata_[hartsel].idport) {
+            return true;
+        }
+        return false;
+    }
+
+    virtual void readTransfer(uint32_t regno, uint32_t size);
+    virtual void writeTransfer(uint32_t regno, uint32_t size);
+
+    virtual bool isDataAutoexec(int idx) {
+        return false;
+    }
+
+    virtual void executeCommand() {}
+
 
  private:
+    AttributeType cpumax_;
+    AttributeType dataregTotal_;
+    AttributeType progbufTotal_;
+    AttributeType hartlist_;
+
+    struct HartDataType {
+        IDPort *idport; // if 0, hart is not available
+        bool resumeack;
+    } *phartdata_;
+
     static const unsigned DM_STATE_IDLE = 0;
     static const unsigned DM_STATE_ACCESS = 1;
 
@@ -40,14 +123,6 @@ class DmiFunctional : public RegMemBankGeneric {
     static const unsigned CMD_STATE_REQUEST = 2;
     static const unsigned CMD_STATE_RESPONSE = 3;
     static const unsigned CMD_STATE_WAIT_HALTED = 4;
-
-    static const unsigned CMDERR_NONE = 0;
-    static const unsigned CMDERR_BUSY = 1;
-    static const unsigned CMDERR_NOTSUPPROTED = 2;
-    static const unsigned CMDERR_EXCEPTION = 3;
-    static const unsigned CMDERR_WRONGSTATE = 4;
-    static const unsigned CMDERR_BUSERROR = 5;
-    static const unsigned CMDERR_OTHERS = 7;
 
     union g {
         struct DmiRegsType {
@@ -91,6 +166,8 @@ class DmiFunctional : public RegMemBankGeneric {
     DMDATAx_TYPE data2;
     DMDATAx_TYPE data3;
     DMCONTROL_TYPE dmcontrol;   // 0x10
+    DMSTATUS_TYPE dmstatus;     // 0x11;
+    ABSTRACTCS_TYPE abstractcs; // 0x16
     COMMAND_TYPE command;       // 0x17
     HALTSUM0_TYPE haltsum0;     // 0x40
 };

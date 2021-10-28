@@ -21,18 +21,17 @@
 
 namespace debugger {
 
-static const char *const IFACE_DEBUG = "IDebug";
+static const char *const IFACE_DPORT = "IDPort";
 
-class IDebug : public IFace {
+class IDPort : public IFace {
  public:
-    IDebug() : IFace(IFACE_DEBUG) {}
+    IDPort() : IFace(IFACE_DPORT) {}
 
-    virtual int hartTotal() = 0;
-    virtual void hartSelect(int hartidx) = 0;
-    virtual int getHartSelected() = 0;
-    virtual void reqResume(int hartidx) = 0;
-    virtual void reqHalt(int hartidx) = 0;
-    virtual bool isHalted(int hartidx) = 0;
+    virtual bool resume() = 0;
+    virtual void halt() = 0;
+    virtual bool isHalted() = 0;
+    virtual void writeCSR(uint32_t regno, uint64_t val) = 0;
+    virtual uint64_t readCSR(uint32_t regno) = 0;
     virtual void setResetPin(bool val) = 0;
 };
 

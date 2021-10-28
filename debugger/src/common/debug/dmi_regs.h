@@ -17,7 +17,7 @@
 #pragma once
 
 #include <iservice.h>
-#include "coreservices/idebug.h"
+#include "coreservices/idmi.h"
 #include "generic/mapreg.h"
 
 namespace debugger {
@@ -25,13 +25,13 @@ namespace debugger {
 class DebugRegisterType : public MappedReg32Type {
  public:
     DebugRegisterType(IService* parent, const char* name, uint64_t addr) :
-        MappedReg32Type(parent, name, addr), idbg_(0) {}
+        MappedReg32Type(parent, name, addr), idmi_(0) {}
 
  protected:
-    IDebug* getpIDebug();
+    IDmi* getpIDmi();
 
  protected:
-    IDebug* idbg_;
+    IDmi* idmi_;
 };
 
 class DMDATAx_TYPE : public DebugRegisterType {
@@ -56,18 +56,26 @@ class DMCONTROL_TYPE : public DebugRegisterType {
         struct {
             uint32_t dmactive : 1;          // [0] 1=module functioning normally
             uint32_t ndmreset : 1;          // [1] 1=system reset
-            uint32_t rsrv5_2 : 4;           // [5:2]
+            uint32_t clearresethaltreq : 1; // [2] clear halt on reset
+            uint32_t setresethaltreq : 1;   // [3] set halt on reset
+            uint32_t rsrv5_4 : 2;           // [5:4]
             uint32_t hartselhi : 10;        // [15:6]
             uint32_t hartsello : 10;        // [25:16]
-            uint32_t rsrv29_26  : 4;        // [29:26]
+            uint32_t rsrv28_26  : 3;        // [28:26]
+            uint32_t hartreset : 1;         // [29]
             uint32_t resumereq : 1;         // [30]
             uint32_t haltreq : 1;           // [31]
         } bits;
     };
 
+    uint32_t hartsel() {
+        ValueType v;
+        v.val = getValue().val;
+        return (v.bits.hartselhi << 10) | v.bits.hartsello;
+    }
+
  protected:
     virtual uint32_t aboutToWrite(uint32_t new_val) override;
-    virtual uint32_t aboutToRead(uint32_t cur_val) override;
 };
 
 class DMSTATUS_TYPE : public DebugRegisterType {
@@ -80,7 +88,9 @@ class DMSTATUS_TYPE : public DebugRegisterType {
         uint8_t u8[4];
         struct {
             uint32_t version : 4;           // [3:0] 2=version 0.13
-            uint32_t rsrv6_4 : 3;           // [6:4]
+            uint32_t rsrv4 : 1;             // [4]
+            uint32_t hasresethaltreq : 1;   // [5]  Halt on reset capability
+            uint32_t rsrv6 : 1;             // [6]
             uint32_t authenticated : 1;     // [7]
             uint32_t anyhalted : 1;         // [8]
             uint32_t allhalted : 1;         // [9]
@@ -99,6 +109,42 @@ class DMSTATUS_TYPE : public DebugRegisterType {
     };
 
  protected:
+    virtual uint32_t aboutToRead(uint32_t cur_val) override;
+};
+
+class ABSTRACTCS_TYPE : public DebugRegisterType {
+ public:
+    ABSTRACTCS_TYPE(IService *parent, const char *name, uint64_t addr) :
+        DebugRegisterType(parent, name, addr) {}
+
+    union ValueType {
+        uint32_t val;
+        uint8_t u8[4];
+        struct {
+            uint32_t datacount : 4;         // [3:0]
+            uint32_t rsrv7_4 : 4;           // [7:4]
+            uint32_t cmderr : 3;            // [10:8]
+            uint32_t rsrv11 : 1;            // [11]
+            uint32_t busy : 1;              // [12]
+            uint32_t rsrv23_13 : 11;        // [23:13]
+            uint32_t progbufsize : 4;       // [28:24]
+            uint32_t rsrv31_29 : 3;         // [31:29]
+        } bits;
+    };
+
+    void set_cmderr(uint32_t val) {
+        ValueType t;
+        t.val = getValue().val;
+        t.bits.cmderr = val;
+    }
+    uint32_t get_cmderr() {
+        ValueType t;
+        t.val = getValue().val;
+        return t.bits.cmderr;
+    }
+
+ protected:
+    virtual uint32_t aboutToWrite(uint32_t nxt_val) override;
     virtual uint32_t aboutToRead(uint32_t cur_val) override;
 };
 
@@ -156,6 +202,8 @@ class COMMAND_TYPE : public DebugRegisterType {
             uint32_t cmdtype : 8;   // [31:24] 0=Access regsiter
         } bits;
     };
+
+    void execute();
 
     virtual uint32_t aboutToWrite(uint32_t nxt_val) override;
 };

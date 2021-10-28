@@ -58,9 +58,11 @@ class CpuRiver_Functional : public CpuGeneric,
     virtual void exceptionLoadData(Axi4TransactionType *tr);
     virtual void exceptionStoreData(Axi4TransactionType *tr);
 
+    /** IDPort interface */
+    virtual uint64_t readCSR(uint32_t regno) override;
+    virtual void writeCSR(uint32_t regno, uint64_t val) override;
+
     /** ICpuRiscV interface */
-    virtual uint64_t readCSR(int idx) override;
-    virtual void writeCSR(int idx, uint64_t val) override;
     virtual void mmuAddrReserve(uint64_t addr) override {
         mmuReservatedAddr_ = addr;
         mmuReservedAddrWatchdog_ = 64;

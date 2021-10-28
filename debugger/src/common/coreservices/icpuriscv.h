@@ -32,9 +32,6 @@ class ICpuRiscV : public IFace {
 public:
     ICpuRiscV() : IFace(IFACE_CPU_RISCV) {}
 
-    virtual uint64_t readCSR(int idx) = 0;
-    virtual void writeCSR(int idx, uint64_t val) = 0;
-
     // atomic instruction LR/SC reservation
     virtual void mmuAddrReserve(uint64_t addr) = 0;
     virtual bool mmuAddrRelease(uint64_t addr) = 0;

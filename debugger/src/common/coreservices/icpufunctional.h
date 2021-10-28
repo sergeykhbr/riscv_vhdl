@@ -76,7 +76,6 @@ class ICpuFunctional : public IFace {
     virtual void exceptionLoadData(Axi4TransactionType *tr) = 0;
     virtual void exceptionStoreData(Axi4TransactionType *tr) = 0;
     virtual bool isOn() = 0;
-    virtual void go() = 0;
     virtual void halt(EHaltCause cause, const char *descr) = 0;
     virtual void addHwBreakpoint(uint64_t addr) = 0;
     virtual void removeHwBreakpoint(uint64_t addr) = 0;
