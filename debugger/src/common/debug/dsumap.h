@@ -20,7 +20,6 @@
 
 namespace debugger {
 
-const uint64_t REG_ADDR_ERROR = 0xFFFFFFFFFFFFFFFFull;
 const uint64_t DSU_OFFSET  = 0x80080000ull;
 
 struct DsuMapType {
@@ -116,12 +115,6 @@ struct DsuMapType {
 #define DSUREGBASE(x) (DSU_OFFSET + \
         (0xFFFFFFFFull & reinterpret_cast<uint64_t>(& \
         (reinterpret_cast<DsuMapType*>(0))->x)))
-
-struct ECpuRegMapping {
-    const char name[16];
-    int size;
-    uint64_t offset;
-};
 
 }  // namespace debugger
 

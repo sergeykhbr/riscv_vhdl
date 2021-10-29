@@ -22,8 +22,8 @@
 
 namespace debugger {
 
-RegWidget::RegWidget(const char *name, int bytes, QWidget *parent) 
-    : QLineEdit(parent) {
+RegWidget::RegWidget(const char *name, int bytes, QWidget *parent, int respidx) 
+    : QLineEdit(parent), respidx_(respidx) {
     value_ = 0;
 
     regName_.make_string(name);
@@ -61,13 +61,10 @@ RegWidget::RegWidget(const char *name, int bytes, QWidget *parent)
 }
 
 void RegWidget::slotHandleResponse(AttributeType *resp) {
-    if (!resp->is_dict()) {
+    if (!resp->is_list() || resp->size() <= respidx_) {
         return;
     }
-    if (!resp->has_key(regName_.to_string())) {
-        return;
-    }
-    outputValue((*resp)[regName_.to_string()]);
+    outputValue((*resp)[respidx_]);
 }
 
 void RegWidget::outputValue(AttributeType &val) {

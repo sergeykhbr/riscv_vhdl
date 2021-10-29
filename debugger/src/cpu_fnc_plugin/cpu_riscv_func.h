@@ -22,9 +22,6 @@
 #include "generic/cpu_generic.h"
 #include "generic/cmd_br_generic.h"
 #include "cmds/cmd_br_riscv.h"
-#include "cmds/cmd_reg_riscv.h"
-#include "cmds/cmd_regs_riscv.h"
-#include "cmds/cmd_csr.h"
 #include "coreservices/icpuriscv.h"
 
 namespace debugger {
@@ -111,13 +108,10 @@ class CpuRiver_Functional : public CpuGeneric,
     static const int INSTR_HASH_TABLE_SIZE = 1 << 6;
     AttributeType listInstr_[INSTR_HASH_TABLE_SIZE];
 
-    GenericReg64Bank portCSR_;
+    GenericReg64Bank portCSR_;      // Not mapped since moved to DMI, just a storage
 
     CmdBrRiscv *pcmd_br_;
-    CmdRegRiscv *pcmd_reg_;
-    CmdRegsRiscv *pcmd_regs_;
-    CmdCsr *pcmd_csr_;
-    ICommand *pcmd_runctrl_;
+    ICommand *pcmd_cpu_;
 
     uint64_t mmuReservatedAddr_;
     int mmuReservedAddrWatchdog_;   // not exceed 64 instructions between LR/SC

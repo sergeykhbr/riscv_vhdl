@@ -57,6 +57,9 @@ RegSetView::RegSetView(IGui *igui, QWidget *parent, int cpucontext)
         return;
     }
 
+    QString qstrReg = tr("core0 regs ");
+    int respidx = 0;
+
     for (unsigned row = 0; row < reglist.size(); row++) {
         const AttributeType &rowcfg = reglist[row];
         for (unsigned col = 0; col < rowcfg.size(); col++) {
@@ -64,9 +67,12 @@ RegSetView::RegSetView(IGui *igui, QWidget *parent, int cpucontext)
             if (regname.size() == 0) {
                 continue;
             }
-            addRegWidget(row, col, regwidth.to_int(), regname.to_string());
+            qstrReg += QString(regname.to_string()) + tr(" ");
+            addRegWidget(row, col, regwidth.to_int(), regname.to_string(), respidx++);
         }
     }
+    cmdReg_.make_string(qstrReg.toLatin1());
+
     gridLayout->setColumnStretch(2*reglist.size() + 1, 10);
     connect(this, SIGNAL(signalHandleResponse(AttributeType *)),
                   SLOT(slotHandleResponse(AttributeType *)));
@@ -84,7 +90,7 @@ void RegSetView::handleResponse(const char *cmd) {
         emit signalContextSwitchConfirmed();
         return;
     }
-    emit signalHandleResponse(&response_);
+    emit signalHandleResponse(&respReg_);
 }
 
 void RegSetView::slotHandleResponse(AttributeType *resp) {
@@ -103,7 +109,7 @@ void RegSetView::slotUpdateByTimer() {
         return;
     }
     igui_->registerCommand(static_cast<IGuiCmdHandler *>(this), 
-                           "regs", &response_, true);
+                           cmdReg_.to_string(), &respReg_, true);
     waitingResp_ = true;
 }
 
@@ -124,10 +130,11 @@ void RegSetView::slotContextSwitchConfirmed() {
 }
 
 void RegSetView::addRegWidget(int row, int col, int bytes,
-                                  const char *name) {
+                                  const char *name,
+                                  int respidx) {
     QLabel *label = new QLabel(this);
     QWidget *pnew;
-    pnew = new RegWidget(name, bytes, this);
+    pnew = new RegWidget(name, bytes, this, respidx);
     label->setText(tr(name));
     /*
     QSizePolicy labelSizePolicy(QSizePolicy::Preferred, 

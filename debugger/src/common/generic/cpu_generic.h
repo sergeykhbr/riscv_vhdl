@@ -33,6 +33,7 @@
 #include "coreservices/itap.h"
 #include "coreservices/icoveragetracker.h"
 #include "generic/mapreg.h"
+#include <generic-isa.h>
 #include <fstream>
 
 namespace debugger {
@@ -44,55 +45,6 @@ class GenericNPCType : public MappedReg64Type {
     }
  protected:
     virtual uint64_t aboutToRead(uint64_t cur_val) override;
-    virtual uint64_t aboutToWrite(uint64_t new_val) override;
-};
-
-class CsrDebugStatusType : public MappedReg64Type {
- public:
-    CsrDebugStatusType(IService *parent, const char *name, uint64_t addr)
-        : MappedReg64Type(parent, name, addr, 10) {
-    }
-
-    union ValueType {
-        uint64_t val;
-        struct bits_type {
-            uint64_t prv : 2;       // [1:0] 
-            uint64_t step : 1;      // [2]
-            uint64_t rsv5_3 : 3;    // [5:3]
-            uint64_t cause : 3;     // [8:6]
-            uint64_t stoptime : 1;  // [9]
-            uint64_t stopcount : 1; // [10]
-            uint64_t rsv11 : 1;     // [11]
-            uint64_t ebreaku : 1;   // [12]
-            uint64_t ebreaks : 1;   // [13]
-            uint64_t ebreakh : 1;   // [14]
-            uint64_t ebreakm : 1;   // [15]
-            uint64_t rsv27_16 : 12; // [27:16]
-            uint64_t xdebugver : 4; // [31:28] 0=no external debug support; 4=exists as in spec 0.13
-            uint64_t rsv : 32;      // [63:32]
-        } bits;
-    };
-
-    void setHaltCause(EHaltCause cause) {
-        ValueType t1;
-        t1.val = value_.val;
-        t1.bits.cause = cause;
-        value_.val = t1.val;
-    }
-
-    uint64_t isSteppingMode() {
-        ValueType t1;
-        t1.val = value_.val;
-        return t1.bits.step;
-    }
-
-    void clearSteppingMode() {
-        ValueType t1;
-        t1.val = value_.val;
-        t1.bits.step = 0;
-        value_.val = t1.val;
-    }
- protected:
     virtual uint64_t aboutToWrite(uint64_t new_val) override;
 };
 
@@ -173,7 +125,7 @@ class CpuGeneric : public IService,
     virtual void exceptionLoadData(Axi4TransactionType *tr) {}
     virtual void exceptionStoreData(Axi4TransactionType *tr) {}
     virtual bool isOn() { return estate_ != CORE_OFF; }
-    virtual void halt(EHaltCause cause, const char *descr);
+    virtual void halt(uint32_t cause, const char *descr);
     virtual void addHwBreakpoint(uint64_t addr);
     virtual void removeHwBreakpoint(uint64_t addr);
     virtual void flush(uint64_t addr);
@@ -182,11 +134,15 @@ class CpuGeneric : public IService,
     /** IDPort interface */
     virtual bool resume();
     virtual void halt() {
-        halt(HaltExternal, "External Halt request");
+        halt(HALT_CAUSE_HALTREQ, "External Halt request");
     }
     virtual bool isHalted() { return estate_ == CORE_Halted; }
-    virtual void writeCSR(uint32_t idx, uint64_t val) {}
     virtual uint64_t readCSR(uint32_t idx) { return 0;}
+    virtual void writeCSR(uint32_t idx, uint64_t val) {}
+    virtual uint64_t readGPR(uint32_t regno) { return R[regno]; }
+    virtual void writeGPR(uint32_t regno, uint64_t val) { R[regno] = val; }
+    virtual uint64_t readNonStandardReg(uint32_t regno) { return 0; }
+    virtual void writeNonStandardReg(uint32_t regno, uint64_t val) {}
     virtual void setResetPin(bool val) {}
 
 
@@ -201,6 +157,8 @@ class CpuGeneric : public IService,
     virtual void traceRegister(int idx, uint64_t v);
     virtual void traceMemop(uint64_t addr, int we, uint64_t v, uint32_t sz);
     virtual void traceOutput() {}
+    virtual void setHaltCause(uint32_t cause);
+    virtual bool isStepEnabled();
 
  public:
     /** IClock */
@@ -233,7 +191,6 @@ class CpuGeneric : public IService,
     virtual bool updateState();
     virtual uint64_t fetchingAddress() { return getPC(); }
     virtual void fetchILine();
-    virtual void updateDebugPort();
     virtual void updateQueue();
     virtual bool checkHwBreakpoint();
 
@@ -241,7 +198,6 @@ class CpuGeneric : public IService,
     AttributeType isEnable_;
     AttributeType freqHz_;
     AttributeType sysBus_;
-    AttributeType dbgBus_;
     AttributeType cmdexec_;
     AttributeType dmibar_;
     AttributeType sysBusWidthBytes_;
@@ -260,11 +216,20 @@ class CpuGeneric : public IService,
     ICoverageTracker *icovtracker_;
     ICmdExecutor *icmdexec_;
     IMemoryOperation *isysbus_;
-    IMemoryOperation *idbgbus_;
     GenericInstruction *instr_;
 
+    enum EContextTypes {
+        Ctx_Normal,
+        Ctx_ProgbufExec,
+        Ctx_Total
+    };
+
+    struct ContextRegistersType {
+        Reg64Type pc;
+        Reg64Type npc;
+    } ctxregs_[Ctx_Total];
+
     uint64_t step_cnt_;
-    uint64_t hw_stepping_break_;
     bool branch_;
     unsigned oplen_;
     uint64_t *R;                            // Pointer to register bank
@@ -272,8 +237,6 @@ class CpuGeneric : public IService,
     uint64_t *NPC_;
 
     GenericReg64Bank portRegs_;
-    GenericNPCType dbgnpc_;
-    CsrDebugStatusType dcsr_;
     StepCounterType clock_cnt_;
     StepCounterType executed_cnt_;
     MappedReg64Type stackTraceCnt_;         // Hardware stack trace buffer
@@ -283,10 +246,8 @@ class CpuGeneric : public IService,
     AddBreakpointType br_hw_add_;
     RemoveBreakpointType br_hw_remove_;
 
-    //Reg64Type pc_z_;
     uint64_t pc_z_;
     uint64_t interrupt_pending_[2];
-    bool sw_breakpoint_;
     bool hw_breakpoint_;
     uint64_t hw_break_addr_;    // Last hit breakpoint to skip it on next step
     bool do_not_cache_;         // Do not put instruction into ICache
@@ -298,7 +259,7 @@ class CpuGeneric : public IService,
         CORE_OFF,
         CORE_Halted,
         CORE_Normal,
-        CORE_Stepping
+        CORE_ProgbufExec
     } estate_;
 
     Axi4TransactionType trans_;

@@ -1330,11 +1330,6 @@ class FLE_D : public FpuInstruction {
         u.value = payload->buf32[0];
         src1.val = RF[u.bits.rs1];
         src2.val = RF[u.bits.rs2];
-#if 1
-    if (u.value == 0xa2f707d3) {
-        bool st = true;
-    }
-#endif
         AddSubCompare(0, 0, 1, 1, 0, 1, src1, src2, &dest, except);
         if (src1.f64bits.exp == 0x7FF || src2.f64bits.exp == 0x7FF) {
             /** Do not cause trap, only signal Invalid Operation */

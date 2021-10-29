@@ -23,9 +23,6 @@
 #include "generic/cpu_generic.h"
 #include "generic/cmd_br_generic.h"
 #include "cmds/cmd_br_riscv.h"
-#include "cmds/cmd_reg_riscv.h"
-#include "cmds/cmd_regs_riscv.h"
-#include "cmds/cmd_csr.h"
 
 namespace debugger {
 
@@ -34,8 +31,8 @@ class CpuStubRiscVFpga : public IService {
     explicit CpuStubRiscVFpga(const char *name);
 
     /** IService interface */
-    virtual void postinitService();
-    virtual void predeleteService();
+    virtual void postinitService() override;
+    virtual void predeleteService() override;
 
  private:
     AttributeType cmdexec_;
@@ -46,9 +43,6 @@ class CpuStubRiscVFpga : public IService {
     ITap *itap_;
 
     CmdBrRiscv *pcmd_br_;
-    CmdRegRiscv *pcmd_reg_;
-    CmdRegsRiscv *pcmd_regs_;
-    CmdCsr *pcmd_csr_;
 };
 
 DECLARE_CLASS(CpuStubRiscVFpga)

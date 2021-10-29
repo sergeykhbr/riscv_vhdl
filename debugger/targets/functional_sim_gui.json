@@ -146,7 +146,6 @@
                 ['ImplementationID',0x20190521],
                 ['SysBusMasterID',0,'Used to gather Bus statistic'],
                 ['SysBus','axi0'],
-                ['DbgBus','dbgbus0'],
                 ['CmdExecutor','cmdexec0'],
                 ['DmiBAR',0x00000000AF000000,'Base address of the DMI module'],
                 ['SysBusWidthBytes',8,'Split dma transactions from CPU'],
@@ -170,7 +169,7 @@
                 ]}]},
     {'Class':'DmiFunctionalClass','Instances':[
           {'Name':'dmi0','Attr':[
-                ['LogLevel',4],
+                ['LogLevel',3],
                 ['SysBus','axi0'],
                 ['BaseAddress',0x00000000AF000000],
                 ['Length',4096],
@@ -320,23 +319,6 @@
                 ['MapList',['bootrom0','fwimage0','sram0','gpio0',
                         'uart0','irqctrl0','gnss0','gptmr0','spiflash0',
                         'pnp0','rfctrl0','fsegps0','dmi0']]
-                ]}]},
-    {'Class':'BusGenericClass','Instances':[
-          {'Name':'dbgbus0','Attr':[
-                ['LogLevel',3],
-                ['UseHash',false],
-                ['MapList',[['core0','npc'],
-                            ['core0','csr'],
-                            ['core0','regs'],
-                            ['core0','dcsr'],
-                            ['core0','clock_cnt'],
-                            ['core0','executed_cnt'],
-                            ['core0','stack_trace_cnt'],
-                            ['core0','stack_trace_buf'],
-                            ['core0','br_hw_add'],
-                            ['core0','br_hw_remove'],
-                            ['core0','csr_flushi'],
-                           ]]
                 ]}]},
     {'Class':'HardResetClass','Instances':[
           {'Name':'reset0','Attr':[

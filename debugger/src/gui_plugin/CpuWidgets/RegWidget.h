@@ -27,7 +27,7 @@ namespace debugger {
 class RegWidget : public QLineEdit {
     Q_OBJECT
  public:
-    RegWidget(const char *name, int bytes, QWidget *parent);
+    RegWidget(const char *name, int bytes, QWidget *parent, int respidx);
 
  signals:
     void signalChanged(const char *cmd);
@@ -39,6 +39,7 @@ class RegWidget : public QLineEdit {
     virtual void outputValue(AttributeType &val);
 
  protected:
+    int respidx_;               // Value in the response list of "core0 regs r1 r1..." command
     AttributeType regName_;
     AttributeType cmdRead_;
     AttributeType cmdWrite_;

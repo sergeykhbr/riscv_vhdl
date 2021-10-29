@@ -20,7 +20,7 @@
 #include <inttypes.h>
 #include <iface.h>
 #include <api_types.h>
-#include "debug/dsumap.h"
+#include <generic-isa.h>
 
 namespace debugger {
 

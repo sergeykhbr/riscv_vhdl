@@ -16,7 +16,7 @@
 
 #include "api_core.h"
 #include "cpu_riscv_rtl.h"
-#include "generic/dmi/cmd_dmi_runcontrol.h"
+#include "generic/dmi/cmd_dmi_cpu.h"
 
 namespace debugger {
 
@@ -108,19 +108,9 @@ void CpuRiscV_RTL::postinitService() {
     pcmd_br_ = new CmdBrRiscv(dmibar_.to_uint64(), 0);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_br_));
 
-    pcmd_csr_ = new CmdCsr(dmibar_.to_uint64(), 0);
-    icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_csr_));
-
-    pcmd_reg_ = new CmdRegRiscv(dmibar_.to_uint64(), 0);
-    icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_reg_));
-
-    pcmd_regs_ = new CmdRegsRiscv(dmibar_.to_uint64(), 0);
-    icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_regs_));
-
-    pcmd_runctrl_ = new CmdDmiRunControl(static_cast<IService *>(this),
-                                         dmibar_.to_uint64(), 0);
-    pcmd_runctrl_->enableDMA(ibus_, dmibar_.to_uint64());
-    icmdexec_->registerCommand(pcmd_runctrl_);
+    pcmd_cpu_ = new CmdDmiCpuRiscV(static_cast<IService *>(this));
+    pcmd_cpu_->enableDMA(ibus_, dmibar_.to_uint64());
+    icmdexec_->registerCommand(pcmd_cpu_);
 
     if (!run()) {
         RISCV_error("Can't create thread.", NULL);
@@ -130,15 +120,9 @@ void CpuRiscV_RTL::postinitService() {
 
 void CpuRiscV_RTL::predeleteService() {
     icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_br_));
-    icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_csr_));
-    icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_reg_));
-    icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_regs_));
-    icmdexec_->unregisterCommand(pcmd_runctrl_);
+    icmdexec_->unregisterCommand(pcmd_cpu_);
     delete pcmd_br_;
-    delete pcmd_csr_;
-    delete pcmd_reg_;
-    delete pcmd_regs_;
-    delete pcmd_runctrl_;
+    delete pcmd_cpu_;
 }
 
 void CpuRiscV_RTL::createSystemC() {

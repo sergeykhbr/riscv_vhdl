@@ -18,14 +18,13 @@
 #include <generic-isa.h>
 #include "cpu_generic.h"
 #include "debug/dsumap.h"
+#include "debug/dmi_regs.h"
 
 namespace debugger {
 
 CpuGeneric::CpuGeneric(const char *name)  
     : IService(name), IHap(HAP_ConfigDone),
     portRegs_(this, "regs", DSUREG(ureg.v.iregs[0]), 0x1000),    // 4096 bytes region of DSU
-    dbgnpc_(this, "npc", DSUREG(csr[CSR_dpc])),
-    dcsr_(this, "dcsr", DSUREG(csr[CSR_dcsr])),
     clock_cnt_(this, "clock_cnt", DSUREG(csr[CSR_cycle])),
     executed_cnt_(this, "executed_cnt", DSUREG(csr[CSR_insret])),
     stackTraceCnt_(this, "stack_trace_cnt", DSUREG(ureg.v.stack_trace_cnt)),
@@ -44,7 +43,6 @@ CpuGeneric::CpuGeneric(const char *name)
     registerInterface(static_cast<IHap *>(this));
     registerAttribute("Enable", &isEnable_);
     registerAttribute("SysBus", &sysBus_);
-    registerAttribute("DbgBus", &dbgBus_);
     registerAttribute("SysBusWidthBytes", &sysBusWidthBytes_);
     registerAttribute("SourceCode", &sourceCode_);
     registerAttribute("CmdExecutor", &cmdexec_);
@@ -68,10 +66,8 @@ CpuGeneric::CpuGeneric(const char *name)
     estate_ = CORE_OFF;
     step_cnt_ = 0;
     pc_z_ = 0;
-    hw_stepping_break_ = 0;
     interrupt_pending_[0] = 0;
     interrupt_pending_[1] = 0;
-    sw_breakpoint_ = false;
     hw_breakpoint_ = false;
     hwBreakpoints_.make_list(0);
     do_not_cache_ = false;
@@ -90,8 +86,10 @@ CpuGeneric::CpuGeneric(const char *name)
     RISCV_set_default_clock(static_cast<IClock *>(this));
 
     R = portRegs_.getpR64();
-    PC_ = &R[33];       // as mapped in dsu by default
-    NPC_ = &R[34];       // as mapped in dsu by default
+
+    memset(ctxregs_, 0, sizeof(ctxregs_));
+    PC_ = &ctxregs_[Ctx_Normal].pc.val;
+    NPC_ = &ctxregs_[Ctx_Normal].npc.val;
 }
 
 CpuGeneric::~CpuGeneric() {
@@ -118,14 +116,6 @@ void CpuGeneric::postinitService() {
     if (!isysbus_) {
         RISCV_error("System Bus interface '%s' not found",
                     sysBus_.to_string());
-        return;
-    }
-
-    idbgbus_ = static_cast<IMemoryOperation *>(
-        RISCV_get_service_iface(dbgBus_.to_string(), IFACE_MEMORY_OPERATION));
-    if (!idbgbus_) {
-        RISCV_error("Debug Bus interface '%s' not found",
-                    dbgBus_.to_string());
         return;
     }
 
@@ -195,11 +185,6 @@ void CpuGeneric::busyLoop() {
 }
 
 void CpuGeneric::updatePipeline() {
-    if (dport_.valid) {
-        dport_.valid = 0;
-        updateDebugPort();
-    }
-
     if (!updateState()) {
         return;
     }
@@ -244,10 +229,9 @@ bool CpuGeneric::updateState() {
         updateQueue();
         upd = false;
         break;
-    case CORE_Stepping:
-        if (hw_stepping_break_ <= step_cnt_) {
-            halt(HaltStepping, "Stepping breakpoint");
-            upd = false;
+    case CORE_Normal:
+        if (isStepEnabled()) {
+            halt(HALT_CAUSE_STEP, "Stepping breakpoint");
         }
         break;
     default:;
@@ -448,17 +432,11 @@ bool CpuGeneric::resume() {
         RISCV_error("CPU is turned-off", 0);
         return false;
     }
-    if (dcsr_.isSteppingMode()) {
-        //dcsr_.clearSteppingMode();
-        hw_stepping_break_ = step_cnt_ + 1;//insperstep_.getValue().val;
-        estate_ = CORE_Stepping;
-    } else {
-        estate_ = CORE_Normal;
-    }
+    estate_ = CORE_Normal;
     return true;
 }
 
-void CpuGeneric::halt(EHaltCause cause, const char *descr) {
+void CpuGeneric::halt(uint32_t cause, const char *descr) {
     if (estate_ == CORE_OFF) {
         RISCV_error("CPU is turned-off", 0);
         return;
@@ -466,8 +444,14 @@ void CpuGeneric::halt(EHaltCause cause, const char *descr) {
     char strop[32];
     uint8_t tbyte;
     unsigned bytetot = oplen_;
-    if (cause != HaltDoNotChange) {
-        dcsr_.setHaltCause(cause);
+    if (cause == HALT_CAUSE_TRIGGER || cause == HALT_CAUSE_EBREAK) {
+        writeCSR(CSR_dpc, getPC());
+    } else {
+        writeCSR(CSR_dpc, getNPC());
+    }
+    if (estate_ != CORE_ProgbufExec) {
+        // Do not modify cause when executing from progbuf
+        setHaltCause(cause);
     }
 
     if (!bytetot) {
@@ -490,6 +474,19 @@ void CpuGeneric::halt(EHaltCause cause, const char *descr) {
                        getPC(), strop, descr);
     }
     estate_ = CORE_Halted;
+}
+
+void CpuGeneric::setHaltCause(uint32_t cause) {
+    DCSR_TYPE::ValueType dcsr;
+    dcsr.val = static_cast<uint32_t>(readCSR(CSR_dcsr));
+    dcsr.bits.cause = cause;
+    writeCSR(CSR_dcsr, dcsr.val);
+}
+
+bool CpuGeneric::isStepEnabled() {
+    DCSR_TYPE::ValueType dcsr;
+    dcsr.val = static_cast<uint32_t>(readCSR(CSR_dcsr));
+    return dcsr.bits.step;
 }
 
 void CpuGeneric::power(EPowerAction onoff) {
@@ -519,28 +516,7 @@ void CpuGeneric::reset(IFace *isource) {
     interrupt_pending_[0] = 0;
     interrupt_pending_[1] = 0;
     hw_breakpoint_ = false;
-    sw_breakpoint_ = false;
     do_not_cache_ = false;
-}
-
-void CpuGeneric::updateDebugPort() {
-    DebugPortTransactionType *trans = dport_.trans;
-    Axi4TransactionType tr;
-    tr.xsize = 8;
-    tr.source_idx = 0;
-    if (trans->write) {
-        tr.action = MemAction_Write;
-        tr.wpayload.b64[0] = trans->wdata;
-        tr.wstrb = 0xFF;
-    } else {
-        tr.action = MemAction_Read;
-        tr.rpayload.b64[0] = 0;
-    }
-    tr.addr = static_cast<uint64_t>(trans->addr) << 3;
-    idbgbus_->b_transport(&tr);
-
-    trans->rdata = tr.rpayload.b64[0];
-    dport_.cb->nb_response_debug_port(trans);
 }
 
 void CpuGeneric::nb_transport_debug_port(DebugPortTransactionType *trans,
@@ -590,27 +566,11 @@ bool CpuGeneric::checkHwBreakpoint() {
         if (pc == bradr) {
             hw_break_addr_ = pc;
             hw_breakpoint_ = true;
-            halt(HaltHwTrigger, "Hw breakpoint");
+            halt(HALT_CAUSE_TRIGGER, "Hw breakpoint");
             return true;
         }
     }
     return false;
-}
-
-uint64_t GenericNPCType::aboutToRead(uint64_t cur_val) {
-    CpuGeneric *pcpu = static_cast<CpuGeneric *>(parent_);
-    return pcpu->getNPC();
-}
-
-uint64_t GenericNPCType::aboutToWrite(uint64_t new_val) {
-    CpuGeneric *pcpu = static_cast<CpuGeneric *>(parent_);
-    pcpu->setNPC(new_val);
-    return new_val;
-}
-
-uint64_t CsrDebugStatusType::aboutToWrite(uint64_t new_val) {
-    // todo: select enter Debug mode or not
-    return new_val;
 }
 
 uint64_t CsrFlushiType::aboutToWrite(uint64_t new_val) {

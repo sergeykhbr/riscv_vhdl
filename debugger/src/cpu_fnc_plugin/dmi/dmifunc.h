@@ -105,10 +105,13 @@ class DmiFunctional : public RegMemBankGeneric,
 
 
  private:
+    AttributeType sysbus_;
     AttributeType cpumax_;
     AttributeType dataregTotal_;
     AttributeType progbufTotal_;
     AttributeType hartlist_;
+
+    IMemoryOperation *ibus_;
 
     struct HartDataType {
         IDPort *idport; // if 0, hart is not available

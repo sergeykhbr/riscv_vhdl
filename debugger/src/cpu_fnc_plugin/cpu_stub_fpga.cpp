@@ -44,26 +44,11 @@ void CpuStubRiscVFpga::postinitService() {
 
     pcmd_br_ = new CmdBrRiscv(dmibar_.to_uint64(), itap_);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_br_));
-
-    pcmd_csr_ = new CmdCsr(dmibar_.to_uint64(), itap_);
-    icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_csr_));
-
-    pcmd_reg_ = new CmdRegRiscv(dmibar_.to_uint64(), itap_);
-    icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_reg_));
-
-    pcmd_regs_ = new CmdRegsRiscv(dmibar_.to_uint64(), itap_);
-    icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_regs_));
 }
 
 void CpuStubRiscVFpga::predeleteService() {
     icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_br_));
-    icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_csr_));
-    icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_reg_));
-    icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_regs_));
     delete pcmd_br_;
-    delete pcmd_csr_;
-    delete pcmd_reg_;
-    delete pcmd_regs_;
 }
 
 }  // namespace debugger

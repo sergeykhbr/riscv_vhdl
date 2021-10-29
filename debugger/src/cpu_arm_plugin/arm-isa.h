@@ -19,18 +19,9 @@
 
 #include <inttypes.h>
 #include <api_types.h>
-#include "debug/dsumap.h"
+#include <generic-isa.h>
 
 namespace debugger {
-
-static const uint64_t EXT_SIGN_5  = 0xFFFFFFFFFFFFFFF0LL;
-static const uint64_t EXT_SIGN_6  = 0xFFFFFFFFFFFFFFE0LL;
-static const uint64_t EXT_SIGN_8  = 0xFFFFFFFFFFFFFF80LL;
-static const uint64_t EXT_SIGN_9  = 0xFFFFFFFFFFFFFF00LL;
-static const uint64_t EXT_SIGN_11 = 0xFFFFFFFFFFFFF800LL;
-static const uint64_t EXT_SIGN_12 = 0xFFFFFFFFFFFFF000LL;
-static const uint64_t EXT_SIGN_16 = 0xFFFFFFFFFFFF0000LL;
-static const uint64_t EXT_SIGN_32 = 0xFFFFFFFF00000000LL;
 
 /** opcodes:
     0000 = AND - Rd:= Op1 AND Op2
@@ -365,24 +356,24 @@ static const char *const IREGS_NAMES[] = {
 };
 
 static const ECpuRegMapping ARM_DEBUG_REG_MAP[] = {
-    {"r0",    4, DSU_OFFSET + DSUREG(ureg.v.iregs[0])},
-    {"r1",    4, DSU_OFFSET + DSUREG(ureg.v.iregs[1])},
-    {"r2",    4, DSU_OFFSET + DSUREG(ureg.v.iregs[2])},
-    {"r3",    4, DSU_OFFSET + DSUREG(ureg.v.iregs[3])},
-    {"r4",    4, DSU_OFFSET + DSUREG(ureg.v.iregs[4])},
-    {"r5",    4, DSU_OFFSET + DSUREG(ureg.v.iregs[5])},
-    {"r6",    4, DSU_OFFSET + DSUREG(ureg.v.iregs[6])},
-    {"r7",    4, DSU_OFFSET + DSUREG(ureg.v.iregs[7])},
-    {"r8",    4, DSU_OFFSET + DSUREG(ureg.v.iregs[8])},
-    {"r9",    4, DSU_OFFSET + DSUREG(ureg.v.iregs[9])},
-    {"r10",   4, DSU_OFFSET + DSUREG(ureg.v.iregs[10])},
-    {"r11",   4, DSU_OFFSET + DSUREG(ureg.v.iregs[11])},
-    {"fp",    4, DSU_OFFSET + DSUREG(ureg.v.iregs[12])},
-    {"sp",    4, DSU_OFFSET + DSUREG(ureg.v.iregs[13])},
-    {"lr",    4, DSU_OFFSET + DSUREG(ureg.v.iregs[14])},
-    {"cpsr",  4, DSU_OFFSET + DSUREG(ureg.v.iregs[16])},
-    {"npc",   4, DSU_OFFSET + DSUREG(csr[0x7b1])},
-    {"steps", 8, DSU_OFFSET + DSUREG(csr[0xC02])},
+    {"npc",   4, 0x7b1},
+    {"steps", 8, 0xC02},
+    {"r0",    4, 0x1000},
+    {"r1",    4, 0x1001},
+    {"r2",    4, 0x1002},
+    {"r3",    4, 0x1003},
+    {"r4",    4, 0x1004},
+    {"r5",    4, 0x1005},
+    {"r6",    4, 0x1006},
+    {"r7",    4, 0x1007},
+    {"r8",    4, 0x1008},
+    {"r9",    4, 0x1009},
+    {"r10",   4, 0x100A},
+    {"r11",   4, 0x100B},
+    {"fp",    4, 0x100C},
+    {"sp",    4, 0x100D},
+    {"lr",    4, 0x100E},
+    {"cpsr",  4, 0x100F},
     {"",      0, 0}
 };
 

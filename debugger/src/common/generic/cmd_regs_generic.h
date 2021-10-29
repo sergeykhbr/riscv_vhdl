@@ -19,7 +19,7 @@
 
 #include "api_core.h"
 #include "coreservices/icommand.h"
-#include "debug/dsumap.h"
+#include <generic-isa.h>
 
 namespace debugger {
 

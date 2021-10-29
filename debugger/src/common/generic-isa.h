@@ -96,12 +96,6 @@ static const uint16_t CSR_mpu_addr       = 0x352;
 static const uint16_t CSR_mpu_mask       = 0x353;
 /** MPU region control (non-standard CSR). */
 static const uint16_t CSR_mpu_ctrl       = 0x354;
-/** Halt/resume requests handling */
-//static const uint16_t CSR_runcontrol     = 0x355;
-/** Instruction per single step */
-//static const uint16_t CSR_insperstep     = 0x356;
-/** Write value into progbuf */
-//static const uint16_t CSR_progbuf        = 0x357;
 /** Flush specified address in I-cache module without execution of fence.i */
 static const uint16_t CSR_flushi         = 0x359;
 // Software reset.
@@ -149,6 +143,15 @@ static const uint64_t PROGBUF_ERR_EXCEPTION = 3;    // Exception occurs while ex
 static const uint64_t PROGBUF_ERR_HALT_RESUME = 4;  // Command cannot be executed because of wrong CPU state
 static const uint64_t PROGBUF_ERR_BUS = 5;          // Bus error occurs
 static const uint64_t PROGBUF_ERR_OTHER = 7;        // Other reason
+
+
+const uint32_t REG_ADDR_ERROR = 0xFFFFFFFFul;
+
+struct ECpuRegMapping {
+    const char name[16];
+    int size;
+    uint32_t offset;
+};
 
 }  // namespace debugger
 

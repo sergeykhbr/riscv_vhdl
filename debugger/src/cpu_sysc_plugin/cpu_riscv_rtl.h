@@ -36,9 +36,6 @@
 #include "coreservices/icmdexec.h"
 #include "coreservices/itap.h"
 #include "cmds/cmd_br_riscv.h"
-#include "cmds/cmd_reg_riscv.h"
-#include "cmds/cmd_regs_riscv.h"
-#include "cmds/cmd_csr.h"
 #include "rtl_wrapper.h"
 #include "l1serdes.h"
 #include "ambalib/types_amba.h"
@@ -165,10 +162,7 @@ class CpuRiscV_RTL : public IService,
     DmiDebug *dmi_;
 
     CmdBrRiscv *pcmd_br_;
-    CmdRegRiscv *pcmd_reg_;
-    CmdRegsRiscv *pcmd_regs_;
-    ICommand *pcmd_runctrl_;
-    CmdCsr *pcmd_csr_;
+    ICommand *pcmd_cpu_;
 };
 
 DECLARE_CLASS(CpuRiscV_RTL)

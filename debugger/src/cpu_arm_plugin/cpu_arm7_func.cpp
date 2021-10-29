@@ -17,6 +17,7 @@
 #include <api_core.h>
 #include "cpu_arm7_func.h"
 #include "srcproc/thumb_disasm.h"
+#include "debug/dmi_regs.h"
 
 namespace debugger {
 
@@ -43,13 +44,13 @@ void CpuCortex_Functional::postinitService() {
 
     CpuGeneric::postinitService();
 
-    pcmd_br_ = new CmdBrArm(DSU_OFFSET, 0);
+    pcmd_br_ = new CmdBrArm(dmibar_.to_uint64(), 0);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_br_));
 
-    pcmd_reg_ = new CmdRegArm(DSU_OFFSET, 0);
+    pcmd_reg_ = new CmdRegArm(dmibar_.to_uint64(), 0);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_reg_));
 
-    pcmd_regs_ = new CmdRegsArm(DSU_OFFSET, 0);
+    pcmd_regs_ = new CmdRegsArm(dmibar_.to_uint64(), 0);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_regs_));
 
     if (defaultMode_.is_equal("Thumb")) {
@@ -93,13 +94,12 @@ unsigned CpuCortex_Functional::addSupportedInstruction(
 void CpuCortex_Functional::handleTrap() {
     // Check software before checking I-bit
     if (interrupt_pending_[0] & (1ull << Interrupt_SoftwareIdx)) {
-        DsuMapType::udbg_type::debug_region_type::breakpoint_control_reg t1;
-        t1.val = br_control_.getValue().val;
-        if (t1.bits.trap_on_break == 0) {
-            sw_breakpoint_ = true;
+        DCSR_TYPE::ValueType dcsr;
+        dcsr.val = static_cast<uint32_t>(readCSR(CSR_dcsr));
+        if (dcsr.bits.ebreakm == 1) {
             interrupt_pending_[0] &= ~(1ull << Interrupt_SoftwareIdx);
             setNPC(getPC());
-            halt(HaltSwBreakpoint, "SWI Breakpoint");
+            halt(HALT_CAUSE_EBREAK, "SWI Breakpoint");
             return;
         }
     }

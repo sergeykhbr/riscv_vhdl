@@ -18,16 +18,38 @@
 
 #include "api_core.h"
 #include "coreservices/icommand.h"
+#include <generic-isa.h>
 
 namespace debugger {
 
-class CmdDmiRunControl : public ICommand  {
+class CmdDmiCpuGneric : public ICommand  {
  public:
-    explicit CmdDmiRunControl(IFace *parent, uint64_t dmibar, ITap *tap);
+    explicit CmdDmiCpuGneric(IFace *parent, uint64_t dmibar, ITap *tap);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);
     virtual void exec(AttributeType *args, AttributeType *res);
+
+ protected:
+    virtual const ECpuRegMapping *getpMappedReg() = 0;
+    virtual const uint32_t reg2addr(const char *name);
+
+ private:
+    void clearcmderr();
+    void resume();
+    void halt();
+    void waithalted();
+    void setStep(bool val);
+    void readreg(uint32_t regno, uint8_t *buf8);
+    void writereg(uint32_t regno, uint8_t *buf8);
+};
+
+class CmdDmiCpuRiscV : public CmdDmiCpuGneric {
+ public:
+    explicit CmdDmiCpuRiscV(IService *parent) : CmdDmiCpuGneric(parent, 0, 0) {}
+
+ protected:
+    virtual const ECpuRegMapping *getpMappedReg();
 };
 
 }  // namespace debugger

@@ -52,12 +52,13 @@ class RegSetView : public QWidget,
     void slotContextSwitchConfirmed();
 
  private:
-    void addRegWidget(int row, int col, int bytes, const char *name);
+    void addRegWidget(int row, int col, int bytes, const char *name, int respidx);
 
  private:
-    AttributeType cmdRegs_;
+    //AttributeType cmdRegs_;
     AttributeType listRegs_;
-    AttributeType response_;
+    AttributeType cmdReg_;
+    AttributeType respReg_;
     AttributeType responseRegChanged_;
     AttributeType responseCpuContext_;
     QGridLayout *gridLayout;
