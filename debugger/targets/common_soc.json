@@ -1,47 +1,3 @@
-{
-  'GlobalSettings':{
-    'SimEnable':true,
-    'GUI':true,
-    'InitCommands':[
-                   ],
-    'Description':'This configuration creates SystemC instance of CPU RIVER instead functional model'
-  },
-  'Services':[
-    {'Class':'GuiPluginClass','Instances':[
-                {'Name':'gui0','Attr':[
-                ['LogLevel',4],
-                ['WidgetsConfig',{
-                  'OpenViews':['UartQMdiSubWindow','AsmQMdiSubWindow'],
-                  'Serial':'port1',
-                  'AutoComplete':'autocmd0',
-                  'StepToSecHz':1000000.0,
-                  'PollingMs':250,
-                  'EventsLoopMs':10,
-                  'RegsViewWidget':{
-                     'RegisterSet':[
-                         {'RegList':[['ra', 's0',  'a0'],
-                                     ['sp', 's1',  'a1'],
-                                     ['gp', 's2',  'a2'],
-                                     ['tp', 's3',  'a3'],
-                                     [''  , 's4',  'a4'],
-                                     ['t0', 's5',  'a5'],
-                                     ['t1', 's6',  'a6'],
-                                     ['t2', 's7',  'a7'],
-                                     ['t3', 's8',  ''],
-                                     ['t4', 's9',  ''],
-                                     ['t5', 's10', ''],
-                                     ['t6', 's11', 'npc']],
-                          'RegWidthBytes':8},
-                         {'RegList':[],
-                          'RegWidthBytes':8}],
-                     'CpuContext':[
-                         {'CpuIndex':0,
-                          'RegisterSetIndex':0,
-                          'Description':'River 64-bits integer bank'}]
-                     },
-                }],
-                ['CmdExecutor','cmdexec0']
-                ]}]},
     {'Class':'TcpServerClass','Instances':[
           {'Name':'rpcserver','Attr':[
                 ['LogLevel',4],
@@ -52,25 +8,12 @@
                 ['Type','json'],
                 ['HostPort',8687],
                 ['ListenDefaultOutput',true, 'Re-direct console output into TCP'],
-                ['PlatformConfig',{'Name':'RiverSC',
+                ['PlatformConfig',{'Name':'River',
                                    'Display':'',
                                    'Keys':[],
                                    'Vars':[],
                                    'Indicators':[],
                                   }]
-          ]}]},
-    {'Class':'TcpServerClass','Instances':[
-          {'Name':'jtagbb','Attr':[
-                ['LogLevel',4],
-                ['Enable',true],
-                ['Timeout',500],
-                ['BlockingMode',true],
-                ['HostIP',''],
-                ['Type','openocd'],
-                ['HostPort',9824],
-                ['ListenDefaultOutput',false, 'Re-direct console output into TCP'],
-                ['PlatformConfig',{}],
-                ['JtagTap',['core0','tap'], 'Jtag DTM systemc module implementation']
           ]}]},
     {'Class':'ComPortServiceClass','Instances':[
           {'Name':'port1','Attr':[
@@ -101,7 +44,8 @@
                      'csr MCPUID',
                      'csr MTIME',
                      'read 0xfffff004 128',
-                     'loadelf helloworld'
+                     'loadelf helloworld',
+                     'loadelf e:/zephyr.elf nocode',
                      ]]
                 ]}]},
     {'Class':'CmdExecutorClass','Instances':[
@@ -114,9 +58,6 @@
           {'Name':'example0','Attr':[
                 ['LogLevel',4],
                 ['attr1','This is test attr value']]}]},
-    {'Class':'RiscvSourceServiceClass','Instances':[
-          {'Name':'src0','Attr':[
-                ['LogLevel',4]]}]},
     {'Class':'CpuMonitorClass','Instances':[
           {'Name':'cpumon0','Attr':[
                 ['ObjDescription','This object is polling DMI haltsum0 register and detects halted CPU.
@@ -126,38 +67,6 @@
                 ['PollingMs',100],
                 ['CmdExecutor','cmdexec0']
                 ]}]},
-    {'Class':'CpuRiscV_RTLClass','Instances':[
-          {'Name':'core0','Attr':[
-                ['LogLevel',4],
-                ['HartID',0],
-                ['AsyncReset',false],
-                ['FpuEnable',true, 'Enable Hardware FPU module'],
-                ['TracerEnable',false, 'Enable Verification Trace collector module'],
-                ['L2CacheEnable',false, 'Enable coherent L2-cache model'],
-                ['CoherenceEnable',true, 'Enable addtional states in D-cache and RiverAmba to support coherence'],
-                ['Bus','axi0'],
-                ['CmdExecutor','cmdexec0']
-                ['DmiBAR',0x00000000AF000000,'Base address of the DMI module'],
-                ['InVcdFile','','None empty string enables generation of stimulus VCD file'],
-                ['OutVcdFile','','None empty string enables VCD file with reference signals'],
-                ['FreqHz',1000000]
-                ]}]},
-    {'Class':'MemorySimClass','Instances':[
-          {'Name':'bootrom0','Attr':[
-                ['LogLevel',1],
-                ['InitFile','${REPO_PATH}/../examples/bootrom_tests/linuxbuild/bin/bootrom_tests.hex'],
-                ['ReadOnly',true],
-                ['BaseAddress',0x0],
-                ['Length',32768]
-                ]}]},
-    {'Class':'MemorySimClass','Instances':[
-          {'Name':'fwimage0','Attr':[
-                ['LogLevel',1],
-                ['InitFile','${REPO_PATH}/../examples/zephyr/gcc711/zephyr.hex'],
-                ['ReadOnly',true],
-                ['BaseAddress',0x00100000],
-                ['Length',0x40000]
-                ]}]},
     {'Class':'MemorySimClass','Instances':[
           {'Name':'spiflash0','Attr':[
                 ['LogLevel',1],
@@ -165,14 +74,6 @@
                 ['ReadOnly',false],
                 ['BaseAddress',0x00200000],
                 ['Length',0x40000]
-                ]}]},
-    {'Class':'MemorySimClass','Instances':[
-          {'Name':'sram0','Attr':[
-                ['LogLevel',1],
-                ['InitFile','${REPO_PATH}/../examples/riscv-tests/makefiles/bin/riscv-tests.hex'],
-                ['ReadOnly',false],
-                ['BaseAddress',0x10000000],
-                ['Length',0x80000]
                 ]}]},
     {'Class':'GPIOClass','Instances':[
           {'Name':'gpio0','Attr':[
@@ -203,7 +104,7 @@
                 ['BaseAddress',0x80002000],
                 ['Length',4096],
                 ['CPU','core0'],
-                ['IrqTotal',3],
+                ['IrqTotal',4],
                 ['MapList',[['irqctrl0','irq_mask'],
                             ['irqctrl0','irq_pending'],
                             ['irqctrl0','irq_clear'],
@@ -241,6 +142,11 @@
                 ['IrqControl',['irqctrl0','irq3']],
                 ['ClkSource','core0']
                 ]}]},
+    {'Class':'UartMstClass','Instances':[
+          {'Name':'uartmst0','Attr':[
+                ['LogLevel',1],
+                ['Bus','axi0']
+                ]}]},
     {'Class':'FseV2Class','Instances':[
           {'Name':'fsegps0','Attr':[
                 ['LogLevel',1],
@@ -255,14 +161,6 @@
                 ['Tech',0],
                 ['AdcDetector',0x00]
                 ]}]},
-    {'Class':'BusGenericClass','Instances':[
-          {'Name':'axi0','Attr':[
-                ['LogLevel',3],
-                ['UseHash',false],
-                ['MapList',['bootrom0','fwimage0','sram0','gpio0',
-                        'uart0','irqctrl0','gnss0','gptmr0','spiflash0',
-                        'pnp0','rfctrl0','fsegps0',['core0','dmi']]]
-                ]}]},
     {'Class':'HardResetClass','Instances':[
           {'Name':'reset0','Attr':[
                 ['ObjDescription','This device provides command (todo) to reset/power on-off system']
@@ -271,6 +169,4 @@
     {'Class':'BoardSimClass','Instances':[
           {'Name':'boardsim','Attr':[
                 ['LogLevel',1]
-                ]}]}
-  ]
-}
+                ]}]},

@@ -1,0 +1,69 @@
+{
+  'GlobalSettings':{
+    'SimEnable':true,
+    'GUI':true,
+    'InitCommands':[
+                    'loadelf ${REPO_PATH}/../examples/dhrystone21/makefiles/binarm/dhrystone21.elf',
+                   ],
+    'Description':'This configuration instantiates functional RISC-V model'
+  },
+  'Services':[
+
+#include "common_soc.json"
+#include "common_arm.json"
+
+    {'Class':'GuiPluginClass','Instances':[
+                {'Name':'gui0','Attr':[
+                ['LogLevel',4],
+                ['WidgetsConfig',{
+                  'OpenViews':['UartQMdiSubWindow','AsmQMdiSubWindow'],
+                  'Serial':'port1',
+                  'AutoComplete':'autocmd0',
+                  'StepToSecHz':1000000.0,
+                  'PollingMs':250,
+                  'EventsLoopMs':10,
+                  'RegsViewWidget':{
+                     'RegisterSet':[
+                         {'RegList':[['r0', 'r6',  'cpsr'],
+                                     ['r1', 'r7',  'fp'],
+                                     ['r2', 'r8',  'sp'],
+                                     ['r3', 'r9',  'lr'],
+                                     ['r4', 'r10', ''],
+                                     ['r7', 'r11', 'npc']],
+                           'RegWidthBytes':4}],
+                     'CpuContext':[
+                         {'CpuIndex':0,
+                          'RegisterSetIndex':0,
+                          'Description':'ARM v7 32-bits integer bank'}]
+                  }
+                }],
+                ['CmdExecutor','cmdexec0']
+                ]}]},
+    {'Class':'CpuCortex_FunctionalClass','Instances':[
+          {'Name':'core0','Attr':[
+                ['Enable',true],
+                ['LogLevel',3],
+                ['SysBusMasterID',0,'Used to gather Bus statistic'],
+                ['SysBus','axi0'],
+                ['DbgBus','dbgbus0'],
+                ['CmdExecutor','cmdexec0'],
+                ['Tap','edcltap'],
+                ['SysBusWidthBytes',4,'Split dma transactions from CPU'],
+                ['StackTraceSize',64,'Number of 16-bytes entries'],
+                ['ResetVector',0x0000],
+                ['FreqHz',1000000],
+                ['SysBusMasterID',0],
+                ['SourceCode','src0'],
+                ['GenerateTraceFile','arm_r5_trace.log', 'Empty field disabling tracer'],
+                ['DefaultMode','Arm'],
+                ]}]},
+    {'Class':'BusGenericClass','Instances':[
+          {'Name':'axi0','Attr':[
+                ['LogLevel',3],
+                ['UseHash',false],
+                ['MapList',['bootrom0','fwimage0','sram0','gpio0',
+                        'uart0','irqctrl0','gnss0','gptmr0',
+                        'pnp0','dsu0','greth0','rfctrl0','fsegps0']]
+                ]}]},
+  ]
+}

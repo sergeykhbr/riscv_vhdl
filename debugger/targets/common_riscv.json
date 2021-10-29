@@ -1,0 +1,64 @@
+    {'Class':'GuiPluginClass','Instances':[
+                {'Name':'gui0','Attr':[
+                ['LogLevel',4],
+                ['WidgetsConfig',{
+                  'OpenViews':['UartQMdiSubWindow','AsmQMdiSubWindow'],
+                  'Serial':'port1',
+                  'AutoComplete':'autocmd0',
+                  'StepToSecHz':12000000.0,
+                  'PollingMs':250,
+                  'EventsLoopMs':10,
+                  'RegsViewWidget':{
+                     'RegisterSet':[
+                         {'RegList':[['ra', 's0',  'a0'],
+                                     ['sp', 's1',  'a1'],
+                                     ['gp', 's2',  'a2'],
+                                     ['tp', 's3',  'a3'],
+                                     [''  , 's4',  'a4'],
+                                     ['t0', 's5',  'a5'],
+                                     ['t1', 's6',  'a6'],
+                                     ['t2', 's7',  'a7'],
+                                     ['t3', 's8',  ''],
+                                     ['t4', 's9',  ''],
+                                     ['t5', 's10', ''],
+                                     ['t6', 's11', 'npc']],
+                          'RegWidthBytes':8},
+                         {'RegList':[],
+                          'RegWidthBytes':8}],
+                     'CpuContext':[
+                         {'CpuIndex':0,
+                          'RegisterSetIndex':0,
+                          'Description':'River 64-bits integer bank'}]
+                     },
+                }],
+                ['CmdExecutor','cmdexec0']
+                ]}]},
+
+    {'Class':'RiscvSourceServiceClass','Instances':[
+          {'Name':'src0','Attr':[
+                ['LogLevel',4]]}]},
+
+    {'Class':'MemorySimClass','Instances':[
+          {'Name':'bootrom0','Attr':[
+                ['LogLevel',1],
+                ['InitFile','${REPO_PATH}/../examples/bootrom_tests/linuxbuild/bin/bootrom_tests.hex'],
+                ['ReadOnly',true],
+                ['BaseAddress',0x0],
+                ['Length',0x10000]
+                ]}]},
+    {'Class':'MemorySimClass','Instances':[
+          {'Name':'fwimage0','Attr':[
+                ['LogLevel',1],
+                ['InitFile','${REPO_PATH}/../examples/zephyr/gcc711/zephyr.hex'],
+                ['ReadOnly',true],
+                ['BaseAddress',0x00100000],
+                ['Length',0x40000]
+                ]}]},
+    {'Class':'MemorySimClass','Instances':[
+          {'Name':'sram0','Attr':[
+                ['LogLevel',1],
+                ['InitFile','${REPO_PATH}/../examples/riscv-tests/makefiles/bin/riscv-tests.hex'],
+                ['ReadOnly',false],
+                ['BaseAddress',0x10000000],
+                ['Length',0x80000]
+                ]}]},

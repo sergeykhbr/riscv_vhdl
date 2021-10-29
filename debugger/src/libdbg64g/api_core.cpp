@@ -866,6 +866,17 @@ int json_file_readline(FILE *f, char *buf, int &sz) {
     return c;
 }
 
+void make_path_relative_newname(const char *fullname, char *newname) {
+    AttributeType tnewname(newname);
+    size_t tsz = strlen(fullname);
+    while (tsz > 0 && fullname[tsz - 1] != '\\' && fullname[tsz - 1] != '/') {
+        tsz--;
+    }
+    memcpy(newname, fullname, tsz);
+    memcpy(&newname[tsz], tnewname.to_string(), tnewname.size());
+    newname[tsz + tnewname.size()] = '\0';
+}
+
 int json_file_readall(const char *filename, char **pout) {
     FILE *f = fopen(filename, "rb");
     char *incdata;
@@ -924,6 +935,7 @@ int json_file_readall(const char *filename, char **pout) {
                 *pf = '\0';
             }
             // todo:  read file
+            make_path_relative_newname(filename, fname);
             incsz = json_file_readall(fname, &incdata);
             if (incsz) {
                 // realloc buffer:
