@@ -105,10 +105,15 @@ ETransStatus RegMemBankGeneric::b_transport(Axi4TransactionType *trans) {
             } else if (tr.wstrb & ((1 << imem->getLength()) - 1)) {
                 imem->b_transport(&tr);
             }
-            tr.wstrb >>= imem->getLength();
-            tr.wpayload.b64[0] >>= 8*imem->getLength();
-            tsz -= static_cast<size_t>(imem->getLength());
-            off += imem->getLength();
+
+            if (tsz > imem->getLength()) {
+                tr.wstrb >>= imem->getLength();
+                tr.wpayload.b64[0] >>= 8*imem->getLength();
+                tsz -= static_cast<size_t>(imem->getLength());
+                off += imem->getLength();
+            } else {
+                tsz = 0;
+            }
         } else {
             // Stubs:
             if (trans->action == MemAction_Read) {

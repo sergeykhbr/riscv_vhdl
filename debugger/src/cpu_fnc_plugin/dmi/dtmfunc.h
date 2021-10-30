@@ -32,13 +32,21 @@ class DtmFunctional : public IService,
     explicit DtmFunctional(const char* name);
     virtual ~DtmFunctional();
 
-    /** IJtagTap */
+    /** IService interface */
+    void postinitService() override;
+
+    /** IJtagTap interface */
     virtual void resetTAP();
     virtual void setPins(char tck, char tms, char tdi);
     virtual bool getTDO();
 
 
  private:
+    AttributeType sysbus_;
+    AttributeType dmibar_;
+    AttributeType busid_;
+
+    IMemoryOperation *ibus_;
 
     char tck_;
     char tms_;
@@ -107,7 +115,7 @@ class DtmFunctional : public IService,
     int dr_length_;
 
     uint64_t dmi_addr_;
-    uint64_t dmi_resp_data_;
+    Axi4TransactionType trans_;
 };
 
 DECLARE_CLASS(DtmFunctional)

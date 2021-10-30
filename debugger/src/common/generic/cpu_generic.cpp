@@ -71,6 +71,8 @@ CpuGeneric::CpuGeneric(const char *name)
     hw_breakpoint_ = false;
     hwBreakpoints_.make_list(0);
     do_not_cache_ = false;
+    haltreq_ = false;
+    resumereq_ = false;
 
     dport_.valid = 0;
     trace_file_ = 0;
@@ -226,11 +228,21 @@ bool CpuGeneric::updateState() {
     switch (estate_) {
     case CORE_OFF:
     case CORE_Halted:
-        updateQueue();
-        upd = false;
+        if (resumereq_) {
+            resumereq_ = false;
+            resume();
+        } else {
+            updateQueue();
+            upd = false;
+        }
         break;
     case CORE_Normal:
-        if (isStepEnabled()) {
+        if (haltreq_) {
+            haltreq_ = false;
+            upd = false;
+            halt(HALT_CAUSE_HALTREQ, "External Halt request");
+        } else if (isStepEnabled()) {
+            upd = false;
             halt(HALT_CAUSE_STEP, "Stepping breakpoint");
         }
         break;
@@ -427,13 +439,11 @@ ETransStatus CpuGeneric::dma_memop(Axi4TransactionType *tr) {
     return ret;
 }
 
-bool CpuGeneric::resume() {
+void CpuGeneric::resume() {
     if (estate_ == CORE_OFF) {
         RISCV_error("CPU is turned-off", 0);
-        return false;
     }
     estate_ = CORE_Normal;
-    return true;
 }
 
 void CpuGeneric::halt(uint32_t cause, const char *descr) {

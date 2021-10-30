@@ -47,7 +47,7 @@ class DmiFunctional : public RegMemBankGeneric,
     // Returns resumeack on success
     virtual void set_resumereq(uint32_t hartsel) {
         if (phartdata_[hartsel].idport) {
-            phartdata_[hartsel].idport->resume();
+            phartdata_[hartsel].idport->resumereq();
             phartdata_[hartsel].resumeack = 1;
         }
     }
@@ -56,7 +56,7 @@ class DmiFunctional : public RegMemBankGeneric,
     }
     virtual void set_haltreq(uint32_t hartsel) {
         if (phartdata_[hartsel].idport) {
-            phartdata_[hartsel].idport->halt();
+            phartdata_[hartsel].idport->haltreq();
         }
     }
     virtual void set_hartreset(uint32_t hartsel) {
@@ -97,15 +97,22 @@ class DmiFunctional : public RegMemBankGeneric,
     virtual void readTransfer(uint32_t regno, uint32_t size);
     virtual void writeTransfer(uint32_t regno, uint32_t size);
 
-    virtual bool isDataAutoexec(int idx) {
-        return false;
+    virtual bool isAutoexecData(int idx) {
+        return abstractauto.isAutoexecData(idx);
     }
 
-    virtual void executeCommand() {}
+    virtual bool isAutoexecProgbuf(int idx) {
+        return abstractauto.isAutoexecProgbuf(idx);
+    }
+
+    virtual void executeCommand() {
+        command.execute();
+    }
 
 
  private:
     AttributeType sysbus_;
+    AttributeType busid_;
     AttributeType cpumax_;
     AttributeType dataregTotal_;
     AttributeType progbufTotal_;
@@ -164,15 +171,14 @@ class DmiFunctional : public RegMemBankGeneric,
         uint32_t b32[sizeof(DmiRegsType) / sizeof(uint32_t)];
     };
 
-    DMDATAx_TYPE data0;
-    DMDATAx_TYPE data1;
-    DMDATAx_TYPE data2;
-    DMDATAx_TYPE data3;
+    DATABUF_TYPE databuf;
     DMCONTROL_TYPE dmcontrol;   // 0x10
     DMSTATUS_TYPE dmstatus;     // 0x11;
     ABSTRACTCS_TYPE abstractcs; // 0x16
     COMMAND_TYPE command;       // 0x17
+    ABSTRACTAUTO_TYPE abstractauto; // 0x18
     HALTSUM0_TYPE haltsum0;     // 0x40
+    PROGBUF_TYPE progbuf;       // 0x20..0x2f
 };
 
 DECLARE_CLASS(DmiFunctional)

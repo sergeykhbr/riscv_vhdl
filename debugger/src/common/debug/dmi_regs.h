@@ -34,15 +34,35 @@ class DebugRegisterType : public MappedReg32Type {
     IDmi* idmi_;
 };
 
-class DMDATAx_TYPE : public DebugRegisterType {
+class DmiRegisterBankType : public GenericReg32Bank {
  public:
-    DMDATAx_TYPE(IService *parent, const char *name, int idx, uint64_t addr) :
-        DebugRegisterType(parent, name, addr), idx_(idx) {}
+    DmiRegisterBankType(IService* parent, const char* name, uint64_t addr, int len) :
+        GenericReg32Bank(parent, name, addr, len), idmi_(0) {}
 
  protected:
-    virtual uint32_t aboutToWrite(uint32_t new_val) override;
- private:
-    int idx_;
+    IDmi* getpIDmi();
+
+ protected:
+    IDmi* idmi_;
+};
+
+class DATABUF_TYPE : public DmiRegisterBankType {
+ public:
+    DATABUF_TYPE(IService *parent, const char *name, uint64_t addr) :
+        DmiRegisterBankType(parent, name, addr, 6) {}
+
+ protected:
+    virtual uint32_t read(int idx) override;
+    virtual void write(int idx, uint32_t val) override;
+};
+
+class PROGBUF_TYPE : public DmiRegisterBankType {
+ public:
+    PROGBUF_TYPE(IService *parent, const char *name, uint64_t addr) :
+        DmiRegisterBankType(parent, name, addr, 16) {}
+
+    virtual uint32_t read(int idx) override;
+    virtual void write(int idx, uint32_t val) override;
 };
 
 class DMCONTROL_TYPE : public DebugRegisterType {
@@ -136,6 +156,7 @@ class ABSTRACTCS_TYPE : public DebugRegisterType {
         ValueType t;
         t.val = getValue().val;
         t.bits.cmderr = val;
+        setValue(t.val);
     }
     uint32_t get_cmderr() {
         ValueType t;
@@ -147,6 +168,34 @@ class ABSTRACTCS_TYPE : public DebugRegisterType {
     virtual uint32_t aboutToWrite(uint32_t nxt_val) override;
     virtual uint32_t aboutToRead(uint32_t cur_val) override;
 };
+
+class ABSTRACTAUTO_TYPE : public DebugRegisterType {
+ public:
+    ABSTRACTAUTO_TYPE(IService *parent, const char *name, uint64_t addr) :
+        DebugRegisterType(parent, name, addr) {}
+
+    union ValueType {
+        uint32_t val;
+        uint8_t u8[4];
+        struct {
+            uint32_t autoexecdata : 12;     // [11:0]
+            uint32_t rsrv15_12 : 4;         // [15:12]
+            uint32_t autoexecprogbuf : 16;  // [31:16]
+        } bits;
+    };
+
+    virtual bool isAutoexecData(int idx) {
+        ValueType t;
+        t.val = getValue().val;
+        return (t.bits.autoexecdata >> idx) & 0x1;
+    }
+    virtual bool isAutoexecProgbuf(int idx) {
+        ValueType t;
+        t.val = getValue().val;
+        return (t.bits.autoexecprogbuf >> idx) & 0x1;
+    }
+};
+
 
 class HALTSUM0_TYPE : public DebugRegisterType {
  public:

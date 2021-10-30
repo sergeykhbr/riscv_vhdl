@@ -19,6 +19,7 @@
 #include "icache_func.h"
 #include "srcproc/srcproc.h"
 #include "dmi/dmifunc.h"
+#include "dmi/dtmfunc.h"
 
 namespace debugger {
 
@@ -28,6 +29,7 @@ extern "C" void plugin_init(void) {
     REGISTER_CLASS_IDX(CpuStubRiscVFpga, 3);
     REGISTER_CLASS_IDX(ICacheFunctional, 4);
     REGISTER_CLASS_IDX(DmiFunctional, 5);
+    REGISTER_CLASS_IDX(DtmFunctional, 6);
 }
 
 }  // namespace debugger

@@ -64,7 +64,8 @@ class IDmi : public IFace {
 
     virtual void readTransfer(uint32_t regno, uint32_t size) = 0;
     virtual void writeTransfer(uint32_t regno, uint32_t size) = 0;
-    virtual bool isDataAutoexec(int idx) = 0;
+    virtual bool isAutoexecData(int idx) = 0;
+    virtual bool isAutoexecProgbuf(int idx) = 0;
     virtual void executeCommand() = 0;
 };
 

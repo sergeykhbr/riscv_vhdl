@@ -33,9 +33,12 @@ CpuRiver_Functional::CpuRiver_Functional(const char *name) :
 
     mmuReservatedAddr_ = 0;
     mmuReservedAddrWatchdog_ = 0;
+
+    RISCV_mutex_init(&mutex_csr_);
 }
 
 CpuRiver_Functional::~CpuRiver_Functional() {
+    RISCV_mutex_destroy(&mutex_csr_);
 }
 
 void CpuRiver_Functional::postinitService() {
@@ -299,21 +302,26 @@ void CpuRiver_Functional::exceptionStoreData(Axi4TransactionType *tr) {
 }
 
 uint64_t CpuRiver_Functional::readCSR(uint32_t regno) {
+    uint64_t ret = 0;
     switch (regno) {
     case CSR_mcycle:
     case CSR_minsret:
     case CSR_cycle:
     case CSR_time:
     case CSR_insret:
-        return step_cnt_;
+        ret = step_cnt_;
+        break;
     case CSR_dpc:
         if (!isHalted()) {
-            portCSR_.write(regno, getNPC());
+            ret = getNPC();
         }
         break;
     default:;
     }
-    return portCSR_.read(regno).val;
+    RISCV_mutex_lock(&mutex_csr_);
+    ret = portCSR_.read(regno).val;
+    RISCV_mutex_unlock(&mutex_csr_);
+    return ret;
 }
 
 void CpuRiver_Functional::writeCSR(uint32_t regno, uint64_t val) {
@@ -333,7 +341,9 @@ void CpuRiver_Functional::writeCSR(uint32_t regno, uint64_t val) {
     case CSR_insret:
         break;
     default:
+        RISCV_mutex_lock(&mutex_csr_);
         portCSR_.write(regno, val);
+        RISCV_mutex_unlock(&mutex_csr_);
     }
 }
 

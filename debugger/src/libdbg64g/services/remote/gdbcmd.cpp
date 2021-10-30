@@ -545,7 +545,7 @@ void GdbCommands::handleBreakpoint() {
 }
 
 void GdbCommands::sendPacket(const char *data) {
-    int tsz = strlen(data);
+    int tsz = static_cast<int>(strlen(data));
     respcnt_ = 0;
     if (estate_ != State_NoAckMode) {
         respbuf_[respcnt_++] = '+';

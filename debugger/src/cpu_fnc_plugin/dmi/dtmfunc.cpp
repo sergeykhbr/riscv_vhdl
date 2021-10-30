@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2021 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,15 +21,37 @@ namespace debugger {
 
 DtmFunctional::DtmFunctional(const char * name)
     : IService(name) {
+    registerInterface(static_cast<IJtagTap *>(this));
+
+    registerAttribute("SysBus", &sysbus_);
+    registerAttribute("DmiBAR", &dmibar_);
+    registerAttribute("SysBusMasterID", &busid_);
 
     estate_ = RESET_TAP;
+    ir_ = IR_IDCODE;
     dr_ = 0;
+    dr_length_ = 0;
+    bypass_ = 0;
+    dmi_addr_ = 0;
+    memset(&trans_, 0, sizeof(trans_));
 }
 
 DtmFunctional::~DtmFunctional() {
 }
 
+void DtmFunctional::postinitService() {
+    ibus_ = static_cast<IMemoryOperation *>(
+        RISCV_get_service_iface(sysbus_.to_string(), IFACE_MEMORY_OPERATION));
+
+    if (!ibus_) {
+        RISCV_error("Cannot get IMemoryOperation interface at %s",
+                    sysbus_.to_string());
+    }
+}
+
 void DtmFunctional::resetTAP() {
+    estate_ = RESET_TAP;
+    ir_ = IR_IDCODE;
 }
 
 void DtmFunctional::setPins(char tck, char tms, char tdi) {
@@ -44,6 +66,13 @@ void DtmFunctional::setPins(char tck, char tms, char tdi) {
         tck_negedge = true;
     }
 
+    if (!tck_posedge) {
+        tck_ = tck;
+        tdi_ = tdi;
+        tms_ = tms;
+        return;
+    }
+
     switch (estate_) {
     case CAPTURE_DR:
         if (ir_ == IR_IDCODE) {
@@ -56,8 +85,8 @@ void DtmFunctional::setPins(char tck, char tms, char tdi) {
             dr_length_ = 32;
         } else if (ir_ == IR_DBUS) {
             dr_ = stat;
-            dr_ |= (dmi_resp_data_ << 2);
-            dr_ |= (dmi_addr_ << 34);
+            dr_ |= (trans_.rpayload.b64[0] << 2);
+            dr_ |= dmi_addr_ << 34;
             dr_length_ = abits + 34;
         } else if (ir_ == IR_BYPASS) {
             dr_ = bypass_;
@@ -66,7 +95,7 @@ void DtmFunctional::setPins(char tck, char tms, char tdi) {
         break;
     case SHIFT_DR:
         dr_ >>= 1;
-        dr_ |= (tdi << (dr_length_ - 1));
+        dr_ |= (static_cast<uint64_t>(tdi_) << (dr_length_ - 1));
         break;
     case UPDATE_DR:
         if (ir_ == IR_DTMCONTROL) {
@@ -75,12 +104,29 @@ void DtmFunctional::setPins(char tck, char tms, char tdi) {
         } else if (ir_ == IR_BYPASS) {
             bypass_ = dr_ & 0x1;
         } else if (ir_ == IR_DBUS) {
-            //v_dmi_req_valid = r.dr.read()(1, 0).or_reduce();
-            //v_dmi_req_write = r.dr.read()[1];
-            //vb_dmi_req_data = r.dr.read()(33, 2);
             dmi_addr_ = (dr_ >> 34) & ((1ull << abits) - 1);
+            trans_.rpayload.b64[0] = (dr_ >> 2) & 0xFFFFFFFFul;
+            if (dr_ & 0x3) {        // read | write
+                if ((dr_ >> 1) & 0x1) {
+                    trans_.action = MemAction_Write;
+                    RISCV_debug("DMI: [0x%02x] <= %08x",
+                                 dmi_addr_, trans_.rpayload.b32[0]);
+                } else {
+                    trans_.action = MemAction_Read;
+                }
+                trans_.source_idx = busid_.to_int();
+                trans_.addr = dmibar_.to_uint64() + (dmi_addr_ << 2);
+                trans_.xsize = 4;
+                trans_.wstrb = (1u << trans_.xsize) - 1;
+                trans_.wpayload.b64[0] = trans_.rpayload.b64[0];
+                ibus_->b_transport(&trans_);
 
-            //nv.dmi_addr = r.dr.read()(34 + abits - 1, 34);
+                if (trans_.action == MemAction_Read && dmi_addr_ != 0x11) {
+                    // Exclude polling DMI status from the debug output
+                    RISCV_debug("DMI: [0x%02x] => %08x",
+                                 dmi_addr_, trans_.rpayload.b32[0]);
+                }
+            }
         }
         break;
     case CAPTURE_IR:
@@ -90,16 +136,14 @@ void DtmFunctional::setPins(char tck, char tms, char tdi) {
         break;
     case SHIFT_IR:
         dr_ >>= 1;
-        dr_ |= (tdi << (irlen - 1));
+        dr_ |= (tdi_ << (irlen - 1));
         break;
     case UPDATE_IR:
         ir_ = dr_ & ((1ull << irlen) - 1);
         break;
     default:;
     }
-    if (tck_posedge) {
-        estate_ = next[estate_][tms];
-    }
+    estate_ = next[estate_][tms_];
 
     tck_ = tck;
     tdi_ = tdi;

@@ -904,7 +904,7 @@ int json_file_readall(const char *filename, char **pout) {
     while (json_file_readline(f, (*pout), textcnt) != EOF) {
         psub1 = strstr(&(*pout)[ret], "${REPO_PATH}");
         if (psub1 != 0) {
-            int fsznew = fsz + strlen(repo_path);
+            int fsznew = fsz + static_cast<int>(strlen(repo_path));
             char *pnew = new char[fsznew];
             size_t foundpos = psub1 - (*pout);
             memset(pnew, 0, fsznew);
@@ -917,7 +917,8 @@ int json_file_readall(const char *filename, char **pout) {
             fsz = fsznew;
             delete [] (*pout);
             (*pout) = pnew;
-            textcnt += strlen(repo_path) - strlen("${REPO_PATH}");
+            textcnt += static_cast<int>(
+                strlen(repo_path) - strlen("${REPO_PATH}"));
         }
         psub1 = strstr(&(*pout)[ret], "#include");
         if (psub1 != 0) {

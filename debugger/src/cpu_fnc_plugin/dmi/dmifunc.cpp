@@ -21,19 +21,19 @@ namespace debugger {
 
 DmiFunctional::DmiFunctional(const char *name)
     : RegMemBankGeneric(name),
-    data0(this, "data0", 0, 0x04*sizeof(uint32_t)),
-    data1(this, "data1", 1, 0x05*sizeof(uint32_t)),
-    data2(this, "data2", 2, 0x06*sizeof(uint32_t)),
-    data3(this, "data3", 3, 0x07*sizeof(uint32_t)),
+    databuf(this, "databuf", 0x04*sizeof(uint32_t)),
     dmcontrol(this, "dmcontrol", 0x10*sizeof(uint32_t)),
     dmstatus(this, "dmstatus", 0x11*sizeof(uint32_t)),
     abstractcs(this, "abstractcs", 0x16*sizeof(uint32_t)),
     command(this, "command", 0x17*sizeof(uint32_t)),
+    abstractauto(this, "abstractauto", 0x18*sizeof(uint32_t)),
+    progbuf(this, "progbuf", 0x20*sizeof(uint32_t)),
     haltsum0(this, "haltsum0", 0x40*sizeof(uint32_t)) {
 
     registerInterface(static_cast<IDmi *>(this));
 
     registerAttribute("SysBus", &sysbus_);
+    registerAttribute("SysBusMasterID", &busid_);
     registerAttribute("CpuMax", &cpumax_);
     registerAttribute("DataregTotal", &dataregTotal_);
     registerAttribute("ProgbufTotal", &progbufTotal_);
@@ -51,6 +51,10 @@ DmiFunctional::~DmiFunctional() {
 void DmiFunctional::postinitService() {
     RegMemBankGeneric::postinitService();
 
+    // Will be mapped with the changed size by hap trigger handler
+    databuf.setRegTotal(dataregTotal_.to_int());
+    progbuf.setRegTotal(progbufTotal_.to_int());
+
     ibus_ = static_cast<IMemoryOperation *>(
             RISCV_get_service_iface(sysbus_.to_string(),
                                     IFACE_MEMORY_OPERATION));
@@ -59,7 +63,7 @@ void DmiFunctional::postinitService() {
                     sysbus_.to_string());
     }
 
-    
+
     phartdata_ = new HartDataType[cpumax_.to_int()];
     memset(phartdata_, 0, cpumax_.to_int() * sizeof(HartDataType));
 
@@ -89,27 +93,27 @@ void DmiFunctional::readTransfer(uint32_t regno, uint32_t size) {
     switch (size) {
     case 0:
         rdata &= 0xFFull;
-        data0.setValue(static_cast<uint32_t>(rdata));
+        databuf.getp()[0].val = static_cast<uint32_t>(rdata);
         break;
     case 1:
         rdata &= 0xFFFFull;
-        data0.setValue(static_cast<uint32_t>(rdata));
+        databuf.getp()[0].val = static_cast<uint32_t>(rdata);
         break;
     case 2:
         rdata &= 0xFFFFFFFFull;
-        data0.setValue(static_cast<uint32_t>(rdata));
+        databuf.getp()[0].val = static_cast<uint32_t>(rdata);
         break;
     default:
-        data0.setValue(static_cast<uint32_t>(rdata));
-        data1.setValue(static_cast<uint32_t>(rdata >> 32));
+        databuf.getp()[0].val = static_cast<uint32_t>(rdata);
+        databuf.getp()[1].val = static_cast<uint32_t>(rdata >> 32);
     }
 }
 
 void DmiFunctional::writeTransfer(uint32_t regno, uint32_t size) {
     uint32_t region = regno >> 12;
     IDPort *idport = phartdata_[getHartSelected()].idport;
-    uint64_t arg0 = data1.getValue().val;
-    arg0 = (arg0 << 32) | data0.getValue().val;
+    uint64_t arg0 = databuf.getp()[1].val;
+    arg0 = (arg0 << 32) | databuf.getp()[0].val;
     if (size == 2) {
         arg0 &= 0xFFFFFFFFull;
     }

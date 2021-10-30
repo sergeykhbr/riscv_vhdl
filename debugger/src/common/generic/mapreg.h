@@ -218,9 +218,9 @@ class GenericReg64Bank : public IMemoryOperation {
 
     /** General access methods: */
     void setRegTotal(int len);
-    Reg64Type read(int idx) { return regs_[idx]; }
-    void write(int idx, Reg64Type val) { regs_[idx] = val; }
-    void write(int idx, uint64_t val) { regs_[idx].val = val; }
+    virtual Reg64Type read(int idx) { return regs_[idx]; }
+    virtual void write(int idx, Reg64Type val) { regs_[idx] = val; }
+    virtual void write(int idx, uint64_t val) { regs_[idx].val = val; }
     Reg64Type *getp() { return regs_; }
     uint64_t *getpR64() { return &regs_[0].val; }
 
@@ -256,9 +256,8 @@ class GenericReg32Bank : public IMemoryOperation {
 
     /** General access methods: */
     void setRegTotal(int len);
-    Reg32Type read(int idx) { return regs_[idx]; }
-    void write(int idx, Reg32Type val) { regs_[idx] = val; }
-    void write(int idx, uint32_t val) { regs_[idx].val = val; }
+    virtual uint32_t read(int idx) { return regs_[idx].val; }
+    virtual void write(int idx, uint32_t val) { regs_[idx].val = val; }
     Reg32Type *getp() { return regs_; }
     uint32_t *getpR32() { return &regs_[0].val; }
 
@@ -294,9 +293,9 @@ class GenericReg16Bank : public IMemoryOperation {
 
     /** General access methods: */
     void setRegTotal(int len);
-    Reg16Type read(int idx) { return regs_[idx]; }
-    void write(int idx, Reg16Type val) { regs_[idx] = val; }
-    void write(int idx, uint16_t val) { regs_[idx].word = val; }
+    virtual Reg16Type read(int idx) { return regs_[idx]; }
+    virtual void write(int idx, Reg16Type val) { regs_[idx] = val; }
+    virtual void write(int idx, uint16_t val) { regs_[idx].word = val; }
     Reg16Type *getp() { return regs_; }
     uint16_t *getpR16() { return &regs_[0].word; }
 

@@ -27,8 +27,8 @@ class IDPort : public IFace {
  public:
     IDPort() : IFace(IFACE_DPORT) {}
 
-    virtual bool resume() = 0;
-    virtual void halt() = 0;
+    virtual void resumereq() = 0;
+    virtual void haltreq() = 0;
     virtual bool isHalted() = 0;
     // Read/Write Control Status Registers
     virtual uint64_t readCSR(uint32_t regno) = 0;

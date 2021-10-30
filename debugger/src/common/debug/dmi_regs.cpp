@@ -26,14 +26,59 @@ IDmi *DebugRegisterType::getpIDmi() {
     return idmi_;
 }
 
-uint32_t DMDATAx_TYPE::aboutToWrite(uint32_t new_val) {
-    value_.val = new_val;
+IDmi *DmiRegisterBankType::getpIDmi() {
+    if (!idmi_) {
+        idmi_ = static_cast<IDmi *>(parent_->getInterface(IFACE_DMI));
+    }
+    return idmi_;
+}
+
+uint32_t DATABUF_TYPE::read(int idx) {
+    uint32_t ret = GenericReg32Bank::read(idx);
     IDmi *p = getpIDmi();
-    if (p && p->isDataAutoexec(idx_)) {
+    if (!p) {
+        return ret;
+    }
+    if (p->isAutoexecData(idx) && p->get_cmderr() == CMDERR_NONE) {
         p->executeCommand();
     }
-    return new_val;
+    return ret;
 }
+
+void DATABUF_TYPE::write(int idx, uint32_t val) {
+    GenericReg32Bank::write(idx, val);
+    IDmi *p = getpIDmi();
+    if (!p) {
+        return;
+    }
+    if (p->isAutoexecData(idx) && p->get_cmderr() == CMDERR_NONE) {
+        p->executeCommand();
+    }
+    return;
+}
+
+uint32_t PROGBUF_TYPE::read(int idx) {
+    uint32_t ret = GenericReg32Bank::read(idx);
+    IDmi *p = getpIDmi();
+    if (!p) {
+        return ret;
+    }
+    if (p->isAutoexecProgbuf(idx) && p->get_cmderr() == CMDERR_NONE) {
+        p->executeCommand();
+    }
+    return ret;
+}
+void PROGBUF_TYPE::write(int idx, uint32_t val) {
+    GenericReg32Bank::write(idx, val);
+    IDmi *p = getpIDmi();
+    if (!p) {
+        return;
+    }
+    if (p->isAutoexecProgbuf(idx) && p->get_cmderr() == CMDERR_NONE) {
+        p->executeCommand();
+    }
+}
+
 
 uint32_t DMCONTROL_TYPE::aboutToWrite(uint32_t new_val) {
     IDmi *p = getpIDmi();
@@ -42,7 +87,7 @@ uint32_t DMCONTROL_TYPE::aboutToWrite(uint32_t new_val) {
     }
     ValueType tnew;
     ValueType tprv;
-    tprv.val = value_.val;
+    tprv.val = getValue().val;
     tnew.val = new_val;
     uint32_t hartsel = (tnew.bits.hartselhi << 10) | tnew.bits.hartsello;
     hartsel &= (p->getCpuMax() - 1);

@@ -241,7 +241,7 @@ void GenericReg64Bank::setRegTotal(int len) {
 ETransStatus GenericReg32Bank::b_transport(Axi4TransactionType *trans) {
     int idx = static_cast<int>((trans->addr - getBaseAddress()) >> 2);
     if (trans->action == MemAction_Read) {
-        trans->rpayload.b64[0] = read(idx).val;
+        trans->rpayload.b64[0] = read(idx);
     } else {
         write(idx, trans->wpayload.b32[0]);
     }
@@ -259,7 +259,7 @@ void GenericReg32Bank::setRegTotal(int len) {
     if (regs_) {
         delete [] regs_;
     }
-    length_.make_int64(len * sizeof(Reg64Type));
+    length_.make_int64(len * sizeof(Reg32Type));
     regs_ = new Reg32Type[len];
     reset();
 }

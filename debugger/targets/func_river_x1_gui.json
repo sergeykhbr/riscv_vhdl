@@ -12,6 +12,19 @@
 #include "common_riscv.json"
 #include "common_soc.json"
 
+    {'Class':'TcpServerClass','Instances':[
+          {'Name':'jtagbb','Attr':[
+                ['LogLevel',4],
+                ['Enable',true],
+                ['Timeout',500],
+                ['BlockingMode',true],
+                ['HostIP',''],
+                ['Type','openocd'],
+                ['HostPort',9824],
+                ['ListenDefaultOutput',false, 'Re-direct console output into TCP'],
+                ['PlatformConfig',{}],
+                ['JtagTap','dtm0', 'Jtag DTM functional implementation']
+          ]}]},
     {'Class':'CpuRiver_FunctionalClass','Instances':[
           {'Name':'core0','Attr':[
                 ['Enable',true],
@@ -46,22 +59,29 @@
           {'Name':'dmi0','Attr':[
                 ['LogLevel',3],
                 ['SysBus','axi0'],
+                ['SysBusMasterID',3,'Used to gather Bus statistic'],
                 ['BaseAddress',0x00000000AF000000],
                 ['Length',4096],
                 ['CpuMax',4, 'Total available slots'],
-                ['DataregTotal',4, 'arg0 and arg1 64-bits data registers'],
-                ['ProgbufTotal',32, 'Maximal size 32x32-bits registers'],
+                ['DataregTotal',6, 'arg0 and arg1 64-bits data registers'],
+                ['ProgbufTotal',16, 'Maximal size 16x32-bits registers'],
                 ['HartList',['core0'], 'Connected cores, other slots will be seen as unavailable'],
-                ['MapList',[['dmi0','data0'],          
-                            ['dmi0','data1'],
-                            ['dmi0','data2'],
-                            ['dmi0','data3'],
+                ['MapList',[['dmi0','databuf'],          
                             ['dmi0','dmcontrol'],
                             ['dmi0','dmstatus'],
                             ['dmi0','abstractcs'],
                             ['dmi0','command'],
+                            ['dmi0','abstractauto'],
+                            ['dmi0','progbuf'],
                             ['dmi0','haltsum0'],
                            ]]
+                ]}]},
+    {'Class':'DtmFunctionalClass','Instances':[
+          {'Name':'dtm0','Attr':[
+                ['LogLevel',4],
+                ['SysBus','axi0'],
+                ['SysBusMasterID',3,'Used to gather Bus statistic'],
+                ['DmiBAR',0x00000000AF000000,'Base address of the DMI module'],
                 ]}]},
 
     {'Class':'BusGenericClass','Instances':[

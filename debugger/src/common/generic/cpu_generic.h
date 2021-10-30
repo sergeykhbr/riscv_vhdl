@@ -125,6 +125,7 @@ class CpuGeneric : public IService,
     virtual void exceptionLoadData(Axi4TransactionType *tr) {}
     virtual void exceptionStoreData(Axi4TransactionType *tr) {}
     virtual bool isOn() { return estate_ != CORE_OFF; }
+    virtual void resume();
     virtual void halt(uint32_t cause, const char *descr);
     virtual void addHwBreakpoint(uint64_t addr);
     virtual void removeHwBreakpoint(uint64_t addr);
@@ -132,10 +133,8 @@ class CpuGeneric : public IService,
     virtual void doNotCache(uint64_t addr) { do_not_cache_ = true; }
 
     /** IDPort interface */
-    virtual bool resume();
-    virtual void halt() {
-        halt(HALT_CAUSE_HALTREQ, "External Halt request");
-    }
+    virtual void resumereq() {resumereq_ = true; }
+    virtual void haltreq() { haltreq_ = true; }
     virtual bool isHalted() { return estate_ == CORE_Halted; }
     virtual uint64_t readCSR(uint32_t idx) { return 0;}
     virtual void writeCSR(uint32_t idx, uint64_t val) {}
@@ -230,6 +229,8 @@ class CpuGeneric : public IService,
     } ctxregs_[Ctx_Total];
 
     uint64_t step_cnt_;
+    volatile bool resumereq_;
+    volatile bool haltreq_;
     bool branch_;
     unsigned oplen_;
     uint64_t *R;                            // Pointer to register bank
