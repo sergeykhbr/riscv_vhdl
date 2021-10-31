@@ -142,6 +142,8 @@ private:
         sc_signal<sc_uint<64>> cycle_cnt;                   // Cycle in clocks.
         sc_signal<sc_uint<64>> executed_cnt;                // Number of valid executed instructions
 
+        sc_signal<sc_uint<RISCV_ARCH>> dscratch0;
+        sc_signal<sc_uint<RISCV_ARCH>> dscratch1;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> dpc;
         sc_signal<sc_uint<3>> halt_cause;      // 1=ebreak instruction; 2=breakpoint exception; 3=haltreq; 4=step
         sc_signal<bool> dcsr_ebreakm;               // Enter or not into Debug Mode on EBREAK instruction
@@ -209,6 +211,8 @@ private:
         iv.timer = 0;
         iv.cycle_cnt = 0;
         iv.executed_cnt = 0;
+        iv.dscratch0 = 0;
+        iv.dscratch1 = 0;
         iv.dpc = 0;
         iv.halt_cause = 0;
         iv.dcsr_ebreakm = 0;

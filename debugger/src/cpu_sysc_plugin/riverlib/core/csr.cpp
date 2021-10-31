@@ -120,6 +120,8 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << r.timer;
     sensitive << r.cycle_cnt;
     sensitive << r.executed_cnt;
+    sensitive << r.dscratch0;
+    sensitive << r.dscratch1;
     sensitive << r.dpc;
     sensitive << r.halt_cause;
     sensitive << r.dcsr_ebreakm;
@@ -593,6 +595,18 @@ void CsrRegs::comb() {
         }
         if (v_csr_wena) {
             v.dpc = r.cmd_data.read();
+        }
+        break;
+    case CSR_dscratch0:
+        vb_rdata = r.dscratch0;
+        if (v_csr_wena) {
+            v.dscratch0 = r.cmd_data.read();
+        }
+        break;
+    case CSR_dscratch1:
+        vb_rdata = r.dscratch1;
+        if (v_csr_wena) {
+            v.dscratch1 = r.cmd_data.read();
         }
         break;
     default:;

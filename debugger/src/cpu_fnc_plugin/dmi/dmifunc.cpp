@@ -24,10 +24,12 @@ DmiFunctional::DmiFunctional(const char *name)
     databuf(this, "databuf", 0x04*sizeof(uint32_t)),
     dmcontrol(this, "dmcontrol", 0x10*sizeof(uint32_t)),
     dmstatus(this, "dmstatus", 0x11*sizeof(uint32_t)),
+    hartinfo(this, "hartinfo", 0x12*sizeof(uint32_t)),
     abstractcs(this, "abstractcs", 0x16*sizeof(uint32_t)),
     command(this, "command", 0x17*sizeof(uint32_t)),
     abstractauto(this, "abstractauto", 0x18*sizeof(uint32_t)),
     progbuf(this, "progbuf", 0x20*sizeof(uint32_t)),
+    sbcs(this, "sbcs", 0x38*sizeof(uint32_t)),
     haltsum0(this, "haltsum0", 0x40*sizeof(uint32_t)) {
 
     registerInterface(static_cast<IDmi *>(this));

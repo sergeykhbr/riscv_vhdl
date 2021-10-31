@@ -92,6 +92,9 @@ uint32_t DMCONTROL_TYPE::aboutToWrite(uint32_t new_val) {
     uint32_t hartsel = (tnew.bits.hartselhi << 10) | tnew.bits.hartsello;
     hartsel &= (p->getCpuMax() - 1);
 
+    tnew.bits.ackhavereset = 0;
+    tnew.bits.hasel = 0;
+
     tnew.bits.hartsello = hartsel;
     tnew.bits.hartselhi = hartsel >> 10;
 
@@ -131,6 +134,23 @@ uint32_t DMCONTROL_TYPE::aboutToWrite(uint32_t new_val) {
     }
 
     return tnew.val;
+}
+
+uint32_t HARTINFO_TYPE::aboutToRead(uint32_t cur_val) {
+    IDmi *p = getpIDmi();
+    if (!p) {
+        return 0;
+    }
+    int hartsel = p->getHartSelected();
+    if (!p->isAvailable(hartsel)) {
+        // if currently hart not available must returns zero
+        return 0;
+    }
+    ValueType t;
+    t.val = 0;
+    t.bits.nscratch = 2;
+    // TODO: datareg shadow access CSR or Memory mapped
+    return t.val;
 }
 
 uint32_t DMSTATUS_TYPE::aboutToRead(uint32_t cur_val) {
@@ -234,6 +254,42 @@ uint32_t COMMAND_TYPE::aboutToWrite(uint32_t nxt_val) {
     setValue(nxt_val);
     execute();
     return nxt_val;
+}
+
+uint32_t SBCS_TYPE::aboutToRead(uint32_t cur_val) {
+    IDmi *p = getpIDmi();
+    if (!p) {
+        return 0;
+    }
+    ValueType t;
+    t.val = cur_val;
+    t.bits.sbaccess8 = 1;
+    t.bits.sbaccess16 = 1;
+    t.bits.sbaccess32 = 1;
+    t.bits.sbaccess64 = 1;
+    t.bits.sbaccess128 = 0;
+    t.bits.sbbusy = p->isSbaBusy();
+    t.bits.sbversion = 0x1;
+    return t.val;
+}
+
+uint32_t SBCS_TYPE::aboutToWrite(uint32_t nxt_val) {
+    ValueType t, tz;
+    tz.val = getValue().val;
+    t.val = nxt_val;
+    if (t.bits.sbbusyerror) {
+        // W1C implementation
+        t.bits.sbbusyerror = 0;
+    } else {
+        t.bits.sbbusyerror = tz.bits.sbbusyerror;
+    }
+    if (t.bits.sberror) {
+        // W1C implementation
+        t.bits.sberror = 0;
+    } else {
+        t.bits.sberror = tz.bits.sberror;
+    }
+    return t.val;
 }
 
 }  // namespace debugger

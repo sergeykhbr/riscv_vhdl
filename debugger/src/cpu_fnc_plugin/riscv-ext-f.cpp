@@ -1676,7 +1676,7 @@ void CpuRiver_Functional::addIsaExtensionD() {
     addSupportedInstruction(new FSD(this));
     addSupportedInstruction(new FSUB_D(this));
 
-    uint64_t isa = 0x8000000000000000LL;
+    uint64_t isa = portCSR_.read(CSR_misa).val;
     isa |= (1LL << ('D' - 'A'));
     portCSR_.write(CSR_misa, isa);
 }

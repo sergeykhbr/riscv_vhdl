@@ -368,7 +368,8 @@ void DmiDebug::comb() {
                 v.cmdstate = CMD_STATE_INIT;
             }
         } else if (r.regidx.read() == 0x10) {                           // dmcontrol
-            vb_resp_data[29] = r.hartreset;                             // reset selected core
+            vb_resp_data[29] = r.hartreset;                             // hartreset
+            vb_resp_data[28] = 0;                                       // ackhavereset
             vb_resp_data[26] = 0;                                       // hasel: single selected hart only
             vb_resp_data(16 + CFG_LOG2_CPU_MAX - 1, 16) = r.hartsel;    // hartsello
             vb_resp_data[1] = r.ndmreset;
@@ -400,6 +401,9 @@ void DmiDebug::comb() {
             }
         } else if (r.regidx.read() == 0x11) {  // dmstatus
             // Currently selected ONLY. We support only one selected at once 'hasel=0'
+            vb_resp_data[22] = 0;                               // impebreak
+            vb_resp_data[19] = 0;                               // allhavereset: selected hart reset but not acknowledged
+            vb_resp_data[18] = 0;                               // anyhavereset
             vb_resp_data[17] = r.resumeack;                     // allresumeack
             vb_resp_data[16] = r.resumeack;                     // anyresumeack
             vb_resp_data[15] = !i_available.read()[hsel];       // allnonexistent
@@ -414,6 +418,14 @@ void DmiDebug::comb() {
             vb_resp_data[5] = 1;                                // hasresethaltreq
             vb_resp_data(3, 0) = 0x2;                           // version: dbg spec v0.13
 
+        } else if (r.regidx.read() == 0x12) {                   // hartinfo
+            // Not available core should returns 0
+            if (i_available.read()[hsel]) {
+                vb_resp_data(13, 20) = 0x2;                     // nscratch
+                vb_resp_data[16] = 0;                           // dataaccess: 0=CSR shadowed;1=memory shadowed
+                vb_resp_data(15, 12) = 0x0;                     // datasize
+                vb_resp_data(11, 0) = 0x0;                      // dataaddr
+            }
         } else if (r.regidx.read() == 0x16) {                   // abstractcs
             vb_resp_data(28,24) = CFG_PROGBUF_REG_TOTAL;
             vb_resp_data[12] = r.cmdstate.read().or_reduce();   // busy

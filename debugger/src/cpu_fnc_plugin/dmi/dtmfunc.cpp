@@ -109,8 +109,15 @@ void DtmFunctional::setPins(char tck, char tms, char tdi) {
             if (dr_ & 0x3) {        // read | write
                 if ((dr_ >> 1) & 0x1) {
                     trans_.action = MemAction_Write;
-                    RISCV_debug("DMI: [0x%02x] <= %08x",
-                                 dmi_addr_, trans_.rpayload.b32[0]);
+                    if (dmi_addr_ == 0x10) {
+                        uint32_t selhart = (trans_.rpayload.b32[0] >> 6) & 0x3FF;
+                        selhart =  (selhart << 10) | ((trans_.rpayload.b32[0] >> 16) & 0x3FF);
+                        RISCV_debug("DMI: [0x%02x] <= %08x, Select hart 0x%x",
+                                     dmi_addr_, trans_.rpayload.b32[0], selhart);
+                    } else {
+                        RISCV_debug("DMI: [0x%02x] <= %08x",
+                                     dmi_addr_, trans_.rpayload.b32[0]);
+                    }
                 } else {
                     trans_.action = MemAction_Read;
                 }

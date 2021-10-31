@@ -67,6 +67,8 @@ class IDmi : public IFace {
     virtual bool isAutoexecData(int idx) = 0;
     virtual bool isAutoexecProgbuf(int idx) = 0;
     virtual void executeCommand() = 0;
+
+    virtual bool isSbaBusy() = 0;
 };
 
 }  // namespace debugger

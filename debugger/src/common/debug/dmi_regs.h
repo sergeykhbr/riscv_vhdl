@@ -81,7 +81,9 @@ class DMCONTROL_TYPE : public DebugRegisterType {
             uint32_t rsrv5_4 : 2;           // [5:4]
             uint32_t hartselhi : 10;        // [15:6]
             uint32_t hartsello : 10;        // [25:16]
-            uint32_t rsrv28_26  : 3;        // [28:26]
+            uint32_t hasel : 1;             // [26]
+            uint32_t rsrv27  : 1;           // [27]
+            uint32_t ackhavereset : 1;      // [28]
             uint32_t hartreset : 1;         // [29]
             uint32_t resumereq : 1;         // [30]
             uint32_t haltreq : 1;           // [31]
@@ -97,6 +99,29 @@ class DMCONTROL_TYPE : public DebugRegisterType {
  protected:
     virtual uint32_t aboutToWrite(uint32_t new_val) override;
 };
+
+class HARTINFO_TYPE : public DebugRegisterType {
+ public:
+    HARTINFO_TYPE(IService *parent, const char *name, uint64_t addr) :
+        DebugRegisterType(parent, name, addr) {}
+
+    union ValueType {
+        uint32_t val;
+        uint8_t u8[4];
+        struct {
+            uint32_t dataaddr : 12;         // [11:0] 
+            uint32_t datasize : 4;          // [15:12]
+            uint32_t dataaccess : 1;        // [16] 0=data regs shadows in CSR; 1=data regs shadowed in memory
+            uint32_t rsv19_17 : 3;          // [19:17]
+            uint32_t nscratch : 4;          // [23:20]  Number of dscratch registers available for the debugger 
+            uint32_t rsv31_24 : 8;          // [31:24]
+        } bits;
+    };
+
+ protected:
+    virtual uint32_t aboutToRead(uint32_t cur_val) override;
+};
+
 
 class DMSTATUS_TYPE : public DebugRegisterType {
  public:
@@ -147,7 +172,7 @@ class ABSTRACTCS_TYPE : public DebugRegisterType {
             uint32_t rsrv11 : 1;            // [11]
             uint32_t busy : 1;              // [12]
             uint32_t rsrv23_13 : 11;        // [23:13]
-            uint32_t progbufsize : 4;       // [28:24]
+            uint32_t progbufsize : 5;       // [28:24]
             uint32_t rsrv31_29 : 3;         // [31:29]
         } bits;
     };
@@ -254,6 +279,38 @@ class COMMAND_TYPE : public DebugRegisterType {
 
     void execute();
 
+    virtual uint32_t aboutToWrite(uint32_t nxt_val) override;
+};
+
+class SBCS_TYPE : public DebugRegisterType {
+ public:
+    SBCS_TYPE(IService *parent, const char *name, uint64_t addr) :
+        DebugRegisterType(parent, name, addr) {}
+
+    union ValueType {
+        uint32_t val;
+        uint8_t u8[4];
+        struct {
+            uint32_t sbaccess8 : 1;         // [0] 
+            uint32_t sbaccess16 : 1;        // [1] 
+            uint32_t sbaccess32 : 1;        // [2] 
+            uint32_t sbaccess64 : 1;        // [3] 
+            uint32_t sbaccess128 : 1;       // [4] 
+            uint32_t sbasize : 7;           // [11:5]
+            uint32_t sberror : 3;           // [14:12]
+            uint32_t sbreadondata : 1;      // [15]
+            uint32_t sbautoincrement : 1;   // [16]
+            uint32_t sbaccess : 3;          // [19:17]
+            uint32_t sbreadonaddr : 1;      // [20]
+            uint32_t sbbusy : 1;            // [21]
+            uint32_t sbbusyerror : 1;       // [22]
+            uint32_t rsv28_23 : 6;          // [28:23]
+            uint32_t sbversion : 3;         // [31:29]
+        } bits;
+    };
+
+ protected:
+    virtual uint32_t aboutToRead(uint32_t cur_val) override;
     virtual uint32_t aboutToWrite(uint32_t nxt_val) override;
 };
 

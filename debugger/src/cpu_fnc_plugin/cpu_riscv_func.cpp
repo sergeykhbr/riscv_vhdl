@@ -172,11 +172,13 @@ void CpuRiver_Functional::handleTrap() {
 void CpuRiver_Functional::reset(IFace *isource) {
     CpuGeneric::reset(isource);
     portRegs_.reset();
+    uint64_t misa = portCSR_.read(CSR_misa).val;
     portCSR_.reset();
     portCSR_.write(CSR_mvendorid, vendorid_.to_uint64());
     portCSR_.write(CSR_mimplementationid, implementationid_.to_uint64());
     portCSR_.write(CSR_mhartid, hartid_.to_uint64());
     portCSR_.write(CSR_mtvec, 0);
+    portCSR_.write(CSR_misa, misa);
 
     cur_prv_level = PRV_M;           // Current privilege level
     mmuReservedAddrWatchdog_ = 0;

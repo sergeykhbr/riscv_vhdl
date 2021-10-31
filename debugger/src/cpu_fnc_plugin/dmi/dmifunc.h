@@ -109,6 +109,8 @@ class DmiFunctional : public RegMemBankGeneric,
         command.execute();
     }
 
+    virtual bool isSbaBusy() { return false; }
+
 
  private:
     AttributeType sysbus_;
@@ -173,12 +175,14 @@ class DmiFunctional : public RegMemBankGeneric,
 
     DATABUF_TYPE databuf;
     DMCONTROL_TYPE dmcontrol;   // 0x10
-    DMSTATUS_TYPE dmstatus;     // 0x11;
+    DMSTATUS_TYPE dmstatus;     // 0x11
+    HARTINFO_TYPE hartinfo;     // 0x12
     ABSTRACTCS_TYPE abstractcs; // 0x16
     COMMAND_TYPE command;       // 0x17
     ABSTRACTAUTO_TYPE abstractauto; // 0x18
-    HALTSUM0_TYPE haltsum0;     // 0x40
     PROGBUF_TYPE progbuf;       // 0x20..0x2f
+    SBCS_TYPE sbcs;
+    HALTSUM0_TYPE haltsum0;     // 0x40
 };
 
 DECLARE_CLASS(DmiFunctional)

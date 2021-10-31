@@ -69,10 +69,12 @@
                 ['MapList',[['dmi0','databuf'],          
                             ['dmi0','dmcontrol'],
                             ['dmi0','dmstatus'],
+                            ['dmi0','hartinfo'],
                             ['dmi0','abstractcs'],
                             ['dmi0','command'],
                             ['dmi0','abstractauto'],
                             ['dmi0','progbuf'],
+                            ['dmi0','sbcs'],
                             ['dmi0','haltsum0'],
                            ]]
                 ]}]},
