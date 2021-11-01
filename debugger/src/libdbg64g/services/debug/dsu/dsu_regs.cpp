@@ -49,24 +49,8 @@ DsuRegisters::DPORT_REGION_BANK64::nb_transport(Axi4TransactionType *trans,
     nb_trans_.p_axi_trans = trans;
     nb_trans_.iaxi_cb = cb;
 
-    nb_trans_.dbg_trans.write = 0;
-    nb_trans_.dbg_trans.bytes = trans->xsize;
-    if (trans->action == MemAction_Write) {
-        nb_trans_.dbg_trans.write = 1;
-        nb_trans_.dbg_trans.wdata = trans->wpayload.b64[0];
-    }
-
     ETransStatus ret = TRANS_OK;
-    nb_trans_.dbg_trans.addr = static_cast<uint16_t>(off64 >> 3);
-    icpu_->nb_transport_debug_port(&nb_trans_.dbg_trans, this);
     return ret;
-}
-
-void DsuRegisters::DPORT_REGION_BANK64::nb_response_debug_port(
-                                        DebugPortTransactionType *trans) {
-    nb_trans_.p_axi_trans->response = MemResp_Valid;
-    nb_trans_.p_axi_trans->rpayload.b64[0] = trans->rdata;
-    nb_trans_.iaxi_cb->nb_response(nb_trans_.p_axi_trans);
 }
 
 }  // namespace debugger

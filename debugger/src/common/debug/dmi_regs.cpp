@@ -40,7 +40,7 @@ uint32_t DATABUF_TYPE::read(int idx) {
         return ret;
     }
     if (p->isAutoexecData(idx) && p->get_cmderr() == CMDERR_NONE) {
-        p->executeCommand();
+        p->executeProgbuf();
     }
     return ret;
 }
@@ -52,7 +52,7 @@ void DATABUF_TYPE::write(int idx, uint32_t val) {
         return;
     }
     if (p->isAutoexecData(idx) && p->get_cmderr() == CMDERR_NONE) {
-        p->executeCommand();
+        p->executeProgbuf();
     }
     return;
 }
@@ -64,7 +64,7 @@ uint32_t PROGBUF_TYPE::read(int idx) {
         return ret;
     }
     if (p->isAutoexecProgbuf(idx) && p->get_cmderr() == CMDERR_NONE) {
-        p->executeCommand();
+        p->executeProgbuf();
     }
     return ret;
 }
@@ -75,7 +75,7 @@ void PROGBUF_TYPE::write(int idx, uint32_t val) {
         return;
     }
     if (p->isAutoexecProgbuf(idx) && p->get_cmderr() == CMDERR_NONE) {
-        p->executeCommand();
+        p->executeProgbuf();
     }
 }
 
@@ -201,7 +201,7 @@ uint32_t ABSTRACTCS_TYPE::aboutToRead(uint32_t cur_val) {
     ValueType t;
     t.val = cur_val;
     t.bits.datacount = p->getRegTotal();
-    t.bits.busy = 0;    // let's suppose command executed immediate in functional model
+    t.bits.busy = p->isCommandBusy();
     t.bits.progbufsize = p->getProgbufTotal();
     return t.val;
 }
@@ -240,6 +240,7 @@ void COMMAND_TYPE::execute() {
             }
         } 
         if (t.bits.postexec) {
+            p->executeProgbuf();
         }
         if (t.bits.aarpostincrement) {
             t.bits.regno++;

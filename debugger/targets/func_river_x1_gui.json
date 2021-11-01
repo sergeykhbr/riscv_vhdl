@@ -45,6 +45,8 @@
                 ['GenerateTraceFile','trace_river_func.log','Specify file name to enable tracer'],
                 ['CacheBaseAddress',0x10000000],
                 ['CacheAddressMask',0x7ffff],
+                ['TriggersTotal',2],
+                ['McontrolMaskmax',63,'Possible value in range 0 to 63 (NAPOT mask see spec)'],
                 ['ResetState','Halted', 'CPU state after reset signal is raised: Halted or OFF'],
                 ]}]},
     {'Class':'ICacheFunctionalClass','Instances':[

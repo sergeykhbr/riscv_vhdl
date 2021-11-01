@@ -105,9 +105,8 @@ class DmiFunctional : public RegMemBankGeneric,
         return abstractauto.isAutoexecProgbuf(idx);
     }
 
-    virtual void executeCommand() {
-        command.execute();
-    }
+    virtual void executeProgbuf();
+    virtual bool isCommandBusy();
 
     virtual bool isSbaBusy() { return false; }
 

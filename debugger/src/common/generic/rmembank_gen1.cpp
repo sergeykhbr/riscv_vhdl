@@ -91,29 +91,29 @@ ETransStatus RegMemBankGeneric::b_transport(Axi4TransactionType *trans) {
 
     uint64_t off = trans->addr - getBaseAddress();    // offset relative registers bank
     uint64_t off0 = off;
-    size_t tsz = trans->xsize;
+    uint32_t tsz = trans->xsize;
     tr = *trans;
     while (tsz > 0) {
         imem = imaphash_[off];
         if (imem != 0) {
             tr.addr = off;
-            tr.xsize = static_cast<uint32_t>(imem->getLength());
+            tr.xsize = tsz;
+            if (static_cast<uint32_t>(imem->getLength()) < tsz) {
+                tr.xsize = static_cast<uint32_t>(imem->getLength());
+            }
             if (trans->action == MemAction_Read) {
                 imem->b_transport(&tr);
-                memcpy(&trans->rpayload.b8[off - off0], tr.rpayload.b8,
-                    static_cast<size_t>(imem->getLength()));
-            } else if (tr.wstrb & ((1 << imem->getLength()) - 1)) {
+                memcpy(&trans->rpayload.b8[off - off0],
+                       tr.rpayload.b8,
+                       tr.xsize);
+            } else if (tr.wstrb & ((1 << tr.xsize) - 1)) {
                 imem->b_transport(&tr);
+                tr.wstrb >>= tr.xsize;
+                tr.wpayload.b64[0] >>= 8*tr.xsize;
             }
 
-            if (tsz > imem->getLength()) {
-                tr.wstrb >>= imem->getLength();
-                tr.wpayload.b64[0] >>= 8*imem->getLength();
-                tsz -= static_cast<size_t>(imem->getLength());
-                off += imem->getLength();
-            } else {
-                tsz = 0;
-            }
+            tsz -= tr.xsize;
+            off += tr.xsize;
         } else {
             // Stubs:
             if (trans->action == MemAction_Read) {

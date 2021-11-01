@@ -23,8 +23,7 @@
 namespace debugger {
 
 CpuRiver_Functional::CpuRiver_Functional(const char *name) :
-    CpuGeneric(name),
-    portCSR_(this, "csr", 0, 1<<12) {
+    CpuGeneric(name) {
     registerInterface(static_cast<ICpuRiscV *>(this));
     registerAttribute("VendorID", &vendorid_);
     registerAttribute("ImplementationID", &implementationid_);
@@ -33,12 +32,9 @@ CpuRiver_Functional::CpuRiver_Functional(const char *name) :
 
     mmuReservatedAddr_ = 0;
     mmuReservedAddrWatchdog_ = 0;
-
-    RISCV_mutex_init(&mutex_csr_);
 }
 
 CpuRiver_Functional::~CpuRiver_Functional() {
-    RISCV_mutex_destroy(&mutex_csr_);
 }
 
 void CpuRiver_Functional::postinitService() {
@@ -133,9 +129,16 @@ void CpuRiver_Functional::handleTrap() {
     } else {
         mcause.bits.code = pendidx;
     }
-    portCSR_.write(CSR_mcause, mcause.value);
+    if (estate_ != CORE_ProgbufExec) {
+        portCSR_.write(CSR_mcause, mcause.value);
+    }
 
     if (mcause.bits.irq == 0 && mcause.value == EXCEPTION_Breakpoint) {
+        if (estate_ == CORE_ProgbufExec) {
+            exitProgbufExec();
+            return;
+        }
+
         DCSR_TYPE::ValueType dcsr;
         dcsr.val = static_cast<uint32_t>(readCSR(CSR_dcsr));
         if (dcsr.bits.ebreakm == 1) {
@@ -143,6 +146,9 @@ void CpuRiver_Functional::handleTrap() {
             setNPC(getPC());
             halt(HALT_CAUSE_EBREAK, "EBREAK Breakpoint");
             return;
+        } else {
+            // Call ebreak handler
+            setNPC(readCSR(CSR_mtvec));
         }
     }
 
@@ -268,10 +274,7 @@ void CpuRiver_Functional::traceOutput() {
 }
 
 void CpuRiver_Functional::raiseSignal(int idx) {
-    if (idx < EXCEPTIONS_Total) {
-        // Exception:
-        interrupt_pending_[idx >> 6] |= 1LL << (idx & 0x3F);
-    } else if (idx < SIGNAL_HardReset) {
+    if (idx < SIGNAL_HardReset) {
         interrupt_pending_[idx >> 6] |= 1LL << (idx & 0x3F);
     } else if (idx == SIGNAL_HardReset) {
     } else {
@@ -301,52 +304,6 @@ void CpuRiver_Functional::exceptionLoadData(Axi4TransactionType *tr) {
 void CpuRiver_Functional::exceptionStoreData(Axi4TransactionType *tr) {
     portCSR_.write(CSR_mtval, tr->addr);
     raiseSignal(EXCEPTION_StoreFault);
-}
-
-uint64_t CpuRiver_Functional::readCSR(uint32_t regno) {
-    uint64_t ret = 0;
-    switch (regno) {
-    case CSR_mcycle:
-    case CSR_minsret:
-    case CSR_cycle:
-    case CSR_time:
-    case CSR_insret:
-        ret = step_cnt_;
-        break;
-    case CSR_dpc:
-        if (!isHalted()) {
-            ret = getNPC();
-        }
-        break;
-    default:;
-    }
-    RISCV_mutex_lock(&mutex_csr_);
-    ret = portCSR_.read(regno).val;
-    RISCV_mutex_unlock(&mutex_csr_);
-    return ret;
-}
-
-void CpuRiver_Functional::writeCSR(uint32_t regno, uint64_t val) {
-    switch (regno) {
-    // Read-Only registers
-    case CSR_misa:
-    case CSR_mvendorid:
-    case CSR_marchid:
-    case CSR_mimplementationid:
-    case CSR_mhartid:
-        break;
-    // read only timers:
-    case CSR_mcycle:
-    case CSR_minsret:
-    case CSR_cycle:
-    case CSR_time:
-    case CSR_insret:
-        break;
-    default:
-        RISCV_mutex_lock(&mutex_csr_);
-        portCSR_.write(regno, val);
-        RISCV_mutex_unlock(&mutex_csr_);
-    }
 }
 
 }  // namespace debugger

@@ -81,12 +81,6 @@ class RtlWrapper : public sc_module,
     sc_signal<bool> w_r_error;
     sc_signal<bool> w_w_error;
 
-    sc_signal<bool> w_dport_req_valid;
-    sc_signal<bool> w_dport_write;
-    sc_signal<bool> w_dport_resp_ready;
-    sc_signal<sc_uint<CFG_DPORT_ADDR_BITS>> wb_dport_addr;
-    sc_signal<sc_uint<RISCV_ARCH>> wb_dport_wdata;
-
     sc_signal<bool> w_interrupt;
 
     Axi4TransactionType trans;
@@ -116,8 +110,6 @@ class RtlWrapper : public sc_module,
     virtual bool isHalt();
     virtual void raiseSignal(int idx);
     virtual void lowerSignal(int idx);
-    virtual void nb_transport_debug_port(DebugPortTransactionType *trans,
-                                        IDbgNbResponse *cb);
 
     /** ICpuRiscV interface */
     virtual uint64_t readCSR(int idx) { return 0;}
@@ -148,15 +140,6 @@ class RtlWrapper : public sc_module,
 
     sc_uint<32> t_trans_idx_up;
     sc_uint<32> t_trans_idx_down;
-
-    struct DebugPortType {
-        event_def valid;
-        DebugPortTransactionType *trans;
-        IDbgNbResponse *cb;
-        unsigned trans_idx_up;
-        unsigned trans_idx_down;
-        unsigned idx_missmatch;
-    } dport_;
 };
 
 }  // namespace debugger

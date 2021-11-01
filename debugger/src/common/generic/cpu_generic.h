@@ -38,54 +38,6 @@
 
 namespace debugger {
 
-class GenericNPCType : public MappedReg64Type {
- public:
-    GenericNPCType(IService *parent, const char *name, uint64_t addr) :
-        MappedReg64Type(parent, name, addr, 10) {
-    }
- protected:
-    virtual uint64_t aboutToRead(uint64_t cur_val) override;
-    virtual uint64_t aboutToWrite(uint64_t new_val) override;
-};
-
-// Flush specified address in I$
-class CsrFlushiType : public MappedReg64Type {
- public:
-    CsrFlushiType(IService *parent, const char *name, uint64_t addr)
-        : MappedReg64Type(parent, name, addr, 10) {
-    }
- protected:
-    virtual uint64_t aboutToWrite(uint64_t new_val) override;
-};
-
-class AddBreakpointType : public MappedReg64Type {
- public:
-    AddBreakpointType(IService *parent, const char *name, uint64_t addr)
-        : MappedReg64Type(parent, name, addr, 10) {
-    }
- protected:
-    virtual uint64_t aboutToWrite(uint64_t new_val) override;
-};
-
-class RemoveBreakpointType : public MappedReg64Type {
- public:
-    RemoveBreakpointType(IService *parent, const char *name, uint64_t addr)
-        : MappedReg64Type(parent, name, addr, 10) {
-    }
- protected:
-    virtual uint64_t aboutToWrite(uint64_t new_val) override;
-};
-
-class StepCounterType : public MappedReg64Type {
- public:
-    StepCounterType(IService *parent, const char *name, uint64_t addr)
-        : MappedReg64Type(parent, name, addr, 10) {
-    }
- protected:
-    virtual uint64_t aboutToRead(uint64_t cur_val) override;
-};
-
-
 class CpuGeneric : public IService,
                    public IThread,
                    public ICpuGeneric,
@@ -105,8 +57,6 @@ class CpuGeneric : public IService,
     /** ICpuGeneric interface */
     virtual void raiseSignal(int idx) = 0;
     virtual void lowerSignal(int idx) = 0;
-    virtual void nb_transport_debug_port(DebugPortTransactionType *trans,
-                                         IDbgNbResponse *cb);
 
     /** ICpuFunctional */
     virtual uint64_t *getpRegs() { return R; }
@@ -127,8 +77,6 @@ class CpuGeneric : public IService,
     virtual bool isOn() { return estate_ != CORE_OFF; }
     virtual void resume();
     virtual void halt(uint32_t cause, const char *descr);
-    virtual void addHwBreakpoint(uint64_t addr);
-    virtual void removeHwBreakpoint(uint64_t addr);
     virtual void flush(uint64_t addr);
     virtual void doNotCache(uint64_t addr) { do_not_cache_ = true; }
 
@@ -136,12 +84,14 @@ class CpuGeneric : public IService,
     virtual void resumereq() {resumereq_ = true; }
     virtual void haltreq() { haltreq_ = true; }
     virtual bool isHalted() { return estate_ == CORE_Halted; }
-    virtual uint64_t readCSR(uint32_t idx) { return 0;}
-    virtual void writeCSR(uint32_t idx, uint64_t val) {}
+    virtual uint64_t readCSR(uint32_t idx);
+    virtual void writeCSR(uint32_t idx, uint64_t val);
     virtual uint64_t readGPR(uint32_t regno) { return R[regno]; }
     virtual void writeGPR(uint32_t regno, uint64_t val) { R[regno] = val; }
     virtual uint64_t readNonStandardReg(uint32_t regno) { return 0; }
     virtual void writeNonStandardReg(uint32_t regno, uint64_t val) {}
+    virtual bool executeProgbuf(uint32_t *progbuf);
+    virtual bool isExecutingProgbuf() { return estate_ == CORE_ProgbufExec; }
     virtual void setResetPin(bool val) {}
 
 
@@ -158,6 +108,8 @@ class CpuGeneric : public IService,
     virtual void traceOutput() {}
     virtual void setHaltCause(uint32_t cause);
     virtual bool isStepEnabled();
+    virtual bool isTriggerICount();
+    virtual bool isTriggerInstruction();
 
  public:
     /** IClock */
@@ -191,7 +143,8 @@ class CpuGeneric : public IService,
     virtual uint64_t fetchingAddress() { return getPC(); }
     virtual void fetchILine();
     virtual void updateQueue();
-    virtual bool checkHwBreakpoint();
+    virtual void enterProgbufExec();
+    virtual void exitProgbufExec();
 
  protected:
     AttributeType isEnable_;
@@ -205,11 +158,12 @@ class CpuGeneric : public IService,
     AttributeType generateTraceFile_;
     AttributeType resetVector_;
     AttributeType sysBusMasterID_;
-    AttributeType hwBreakpoints_;
     AttributeType cacheBaseAddr_;
     AttributeType cacheAddrMask_;
     AttributeType coverageTracker_;
     AttributeType resetState_;
+    AttributeType triggersTotal_;
+    AttributeType mcontrolMaskmax_;
 
     ISourceCode *isrc_;
     ICoverageTracker *icovtracker_;
@@ -228,31 +182,43 @@ class CpuGeneric : public IService,
         Reg64Type npc;
     } ctxregs_[Ctx_Total];
 
+    enum ETriggerType {
+        TriggerType_NoTrigger = 0,
+        TriggerType_LegacySiFive = 1,
+        TriggerType_AddrDataMatch = 2,
+        TriggerType_InstrCountMatch = 3,
+        TriggerType_Inetrrupt = 4,
+        TriggerType_Exception = 5,
+        TriggerType_NotAvailable = 15,
+    };
+
+    struct TriggerStorageType {
+        TriggerData1Type data1;
+        uint64_t data2;
+        uint64_t extra;
+    } *ptriggers_;
+
     uint64_t step_cnt_;
     volatile bool resumereq_;
     volatile bool haltreq_;
+    volatile bool procbufexecreq_;
     bool branch_;
     unsigned oplen_;
     uint64_t *R;                            // Pointer to register bank
     uint64_t *PC_;
     uint64_t *NPC_;
+    uint32_t *progbuf_;
 
+    GenericReg64Bank portCSR_;      // Not mapped since moved to DMI, just a storage
     GenericReg64Bank portRegs_;
-    StepCounterType clock_cnt_;
-    StepCounterType executed_cnt_;
     MappedReg64Type stackTraceCnt_;         // Hardware stack trace buffer
     GenericReg64Bank stackTraceBuf_;        // [[from,to],*]
-    MappedReg64Type br_control_;            // Enable/disable Trap on break
-    CsrFlushiType csr_flushi_;        // Flush address from ICache
-    AddBreakpointType br_hw_add_;
-    RemoveBreakpointType br_hw_remove_;
-
+    
     uint64_t pc_z_;
     uint64_t interrupt_pending_[2];
-    bool hw_breakpoint_;
-    uint64_t hw_break_addr_;    // Last hit breakpoint to skip it on next step
     bool do_not_cache_;         // Do not put instruction into ICache
 
+    mutex_def mutex_csr_;
     event_def eventConfigDone_;
     ClockAsyncTQueueType queue_;
 
@@ -277,12 +243,6 @@ class CpuGeneric : public IService,
     uint64_t fetch_addr_;
     uint64_t cache_offset_;         // instruction pointer - CACHE_BASE_ADDR
     bool cachable_pc_;              // fetched_pc hit into cachable region
-
-    struct DebugPortType {
-        bool valid;
-        DebugPortTransactionType *trans;
-        IDbgNbResponse *cb;
-    } dport_;
 
     uint64_t cur_prv_level;
 

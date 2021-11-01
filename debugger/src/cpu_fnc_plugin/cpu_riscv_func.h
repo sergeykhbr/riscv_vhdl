@@ -55,10 +55,6 @@ class CpuRiver_Functional : public CpuGeneric,
     virtual void exceptionLoadData(Axi4TransactionType *tr);
     virtual void exceptionStoreData(Axi4TransactionType *tr);
 
-    /** IDPort interface */
-    virtual uint64_t readCSR(uint32_t regno) override;
-    virtual void writeCSR(uint32_t regno, uint64_t val) override;
-
     /** ICpuRiscV interface */
     virtual void mmuAddrReserve(uint64_t addr) override {
         mmuReservatedAddr_ = addr;
@@ -108,11 +104,8 @@ class CpuRiver_Functional : public CpuGeneric,
     static const int INSTR_HASH_TABLE_SIZE = 1 << 6;
     AttributeType listInstr_[INSTR_HASH_TABLE_SIZE];
 
-    GenericReg64Bank portCSR_;      // Not mapped since moved to DMI, just a storage
-
     CmdBrRiscv *pcmd_br_;
     ICommand *pcmd_cpu_;
-    mutex_def mutex_csr_;
 
     uint64_t mmuReservatedAddr_;
     int mmuReservedAddrWatchdog_;   // not exceed 64 instructions between LR/SC

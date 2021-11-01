@@ -91,15 +91,11 @@ void DSU::predeleteService() {
     }
 }
 
-void DSU::nb_response_debug_port(DebugPortTransactionType *trans) {
-    RISCV_event_set(&nb_event_);
-}
-
 void DSU::nb_debug_write(unsigned hartid, uint16_t addr, uint64_t wdata) {
     /*if (static_cast<int>(hartid) >= hartTotal()) {
         RISCV_error("Debug Access index out of range %d", hartid);
         return;
-    }*/
+    }
     ICpuGeneric *icpu = static_cast<ICpuGeneric *>(icpulist_[hartid].to_iface());
     nb_trans_.addr = addr;
     nb_trans_.wdata = wdata;
@@ -108,7 +104,7 @@ void DSU::nb_debug_write(unsigned hartid, uint16_t addr, uint64_t wdata) {
 
     RISCV_event_clear(&nb_event_);
     icpu->nb_transport_debug_port(&nb_trans_, static_cast<IDbgNbResponse *>(this));
-    RISCV_event_wait(&nb_event_);
+    RISCV_event_wait(&nb_event_);*/
 }
 
 void DSU::incrementRdAccess(int mst_id) {

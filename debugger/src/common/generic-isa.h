@@ -29,28 +29,6 @@ static const uint64_t EXT_SIGN_12 = 0xFFFFFFFFFFFFF000LL;
 static const uint64_t EXT_SIGN_16 = 0xFFFFFFFFFFFF0000LL;
 static const uint64_t EXT_SIGN_32 = 0xFFFFFFFF00000000LL;
 
-// CSR Debug Status/Control register
-union CrGenericDebugControlType {
-    uint64_t val;
-    uint8_t u8[8];
-    struct bits_type {
-        uint64_t prv : 2;       // [1:0] 
-        uint64_t step : 1;      // [2]
-        uint64_t rsv5_3 : 3;    // [5:3]
-        uint64_t cause : 3;     // [8:6]
-        uint64_t stoptime : 1;  // [9]
-        uint64_t stopcount : 1; // [10]
-        uint64_t rsv11 : 1;     // [11]
-        uint64_t ebreaku : 1;   // [12]
-        uint64_t ebreaks : 1;   // [13]
-        uint64_t ebreakh : 1;   // [14]
-        uint64_t ebreakm : 1;   // [15]
-        uint64_t rsv27_16 : 12; // [27:16]
-        uint64_t xdebugver : 4; // [31:28] 0=no external debug support; 4=exists as in spec 0.13
-        uint64_t rsv : 32;      // [63:32]
-    } bits;
-};
-
 /**
  * @name Use RISC-V CSR registers mapping for all platforms: ARM, Leon3, HC08 etc.
  */
@@ -100,6 +78,22 @@ static const uint16_t CSR_mpu_ctrl       = 0x354;
 static const uint16_t CSR_flushi         = 0x359;
 // Software reset.
 static const uint16_t CSR_mreset         = 0x782;
+// Trigger select
+static const uint16_t CSR_tselect        = 0x7a0;
+// Trigger data1
+static const uint16_t CSR_tdata1         = 0x7a1;
+// Trigger data2
+static const uint16_t CSR_tdata2         = 0x7a2;
+// Trigger extra (RV64)
+static const uint16_t CSR_textra         = 0x7a3;
+// Trigger info
+static const uint16_t CSR_tinfo          = 0x7a4;
+// Trigger control
+static const uint16_t CSR_tcontrol       = 0x7a5;
+// Machine context
+static const uint16_t CSR_mcontext       = 0x7a8;
+// Supervisor context
+static const uint16_t CSR_scontext       = 0x7aa;
 // Debug Control and status
 static const uint16_t CSR_dcsr           = 0x7b0;
 // Debug PC
@@ -151,6 +145,61 @@ struct ECpuRegMapping {
     const char name[16];
     int size;
     uint32_t offset;
+};
+
+// Trigger Data1
+union TriggerData1Type {
+    uint64_t val;
+    uint8_t u8[8];
+    struct bits_type {
+        uint64_t data : 59;     // [58:0]
+        uint64_t dmode : 1;     // [59]
+        uint64_t type : 4;      // [63:60]
+    } bitsdef;
+    struct bits_type2 {
+        uint64_t load : 1;      // [0]
+        uint64_t store : 1;     // [1]
+        uint64_t execute : 1;   // [2]
+        uint64_t u : 1;         // [3]
+        uint64_t s : 1;         // [4]
+        uint64_t rsr5 : 1;      // [5]
+        uint64_t m : 1;         // [6]
+        uint64_t match : 4;     // [10:7]
+        uint64_t chain : 1;     // [11]
+        uint64_t action : 4;    // [15:12]
+        uint64_t sizelo : 2;    // [17:16]
+        uint64_t timing : 1;    // [18]
+        uint64_t select : 1;    // [19]
+        uint64_t hit : 1;       // [20]
+        uint64_t sizehi : 2;    // [22:21]
+        uint64_t rsrv_23 : 30;  // [52:23]
+        uint64_t maskmax : 6;   // [58:53]
+        uint64_t dmode : 1;     // [59]
+        uint64_t type : 4;      // [63:60]
+    } mcontrol_bits;
+    struct bits_type3 {
+        uint64_t action : 6;    // [5:0]: 0=raise breakpoint exception; 1=Enter Debug Mode
+        uint64_t u : 1;         // [6]
+        uint64_t s : 1;         // [7]
+        uint64_t rsr5 : 1;      // [8]
+        uint64_t m : 1;         // [9]
+        uint64_t count : 14;    // [23:10]
+        uint64_t hit : 1;       // [24]
+        uint64_t rsrv57_10 : 34;// [58:25]
+        uint64_t dmode : 1;     // [59]
+        uint64_t type : 4;      // [63:60]
+    } icount_bits;
+    struct bits_type4 {         // the same for type4 and type5
+        uint64_t action : 6;    // [5:0]: 0=raise breakpoint exception; 1=Enter Debug Mode
+        uint64_t u : 1;         // [6]
+        uint64_t s : 1;         // [7]
+        uint64_t rsr5 : 1;      // [8]
+        uint64_t m : 1;         // [9]
+        uint64_t rsrv57_10 : 48;// [57:10]
+        uint64_t hit : 1;       // [58]
+        uint64_t dmode : 1;     // [59]
+        uint64_t type : 4;      // [63:60]
+    } itrigger_bits;
 };
 
 }  // namespace debugger

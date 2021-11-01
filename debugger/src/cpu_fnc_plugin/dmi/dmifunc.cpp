@@ -128,5 +128,22 @@ void DmiFunctional::writeTransfer(uint32_t regno, uint32_t size) {
     }
 }
 
+void DmiFunctional::executeProgbuf() {
+    IDPort *idport = phartdata_[getHartSelected()].idport;
+    if (idport->executeProgbuf(progbuf.getpR32())) {
+        // error
+        // TODO:
+    }
+}
+
+bool DmiFunctional::isCommandBusy() {
+    IDPort *idport = phartdata_[getHartSelected()].idport;
+    bool ret = false;
+    if (idport) {
+        ret = idport->isExecutingProgbuf();
+    }
+    return ret;
+}
+
 }  // namespace debugger
 

@@ -17,22 +17,16 @@
 #include <api_core.h>
 #include <generic-isa.h>
 #include "cpu_generic.h"
-#include "debug/dsumap.h"
 #include "debug/dmi_regs.h"
 
 namespace debugger {
 
 CpuGeneric::CpuGeneric(const char *name)  
     : IService(name), IHap(HAP_ConfigDone),
-    portRegs_(this, "regs", DSUREG(ureg.v.iregs[0]), 0x1000),    // 4096 bytes region of DSU
-    clock_cnt_(this, "clock_cnt", DSUREG(csr[CSR_cycle])),
-    executed_cnt_(this, "executed_cnt", DSUREG(csr[CSR_insret])),
-    stackTraceCnt_(this, "stack_trace_cnt", DSUREG(ureg.v.stack_trace_cnt)),
-    stackTraceBuf_(this, "stack_trace_buf", DSUREG(ureg.v.stack_trace_buf), 0),
-    br_control_(this, "br_control", DSUREG(udbg.v.br_ctrl)),
-    csr_flushi_(this, "csr_flushi", DSUREG(csr[CSR_flushi])),
-    br_hw_add_(this, "br_hw_add", DSUREG(udbg.v.add_breakpoint)),
-    br_hw_remove_(this, "br_hw_remove", DSUREG(udbg.v.remove_breakpoint)) {
+    portCSR_(this,  "csr",  0,     1<<12),
+    portRegs_(this, "regs", 1<<12, 0x1000),
+    stackTraceCnt_(this, "stack_trace_cnt", 0),
+    stackTraceBuf_(this, "stack_trace_buf", 0, 0) {
     registerInterface(static_cast<IThread *>(this));
     registerInterface(static_cast<IClock *>(this));
     registerInterface(static_cast<ICpuGeneric *>(this));
@@ -55,11 +49,14 @@ CpuGeneric::CpuGeneric(const char *name)
     registerAttribute("CacheBaseAddress", &cacheBaseAddr_);
     registerAttribute("CacheAddressMask", &cacheAddrMask_);
     registerAttribute("CoverageTracker", &coverageTracker_);
+    registerAttribute("TriggersTotal", &triggersTotal_);
+    registerAttribute("McontrolMaskmax", &mcontrolMaskmax_);
     registerAttribute("ResetState", &resetState_);
 
     char tstr[256];
     RISCV_sprintf(tstr, sizeof(tstr), "eventConfigDone_%s", name);
     RISCV_event_create(&eventConfigDone_, tstr);
+    RISCV_mutex_init(&mutex_csr_);
     RISCV_register_hap(static_cast<IHap *>(this));
 
     isysbus_ = 0;
@@ -68,13 +65,12 @@ CpuGeneric::CpuGeneric(const char *name)
     pc_z_ = 0;
     interrupt_pending_[0] = 0;
     interrupt_pending_[1] = 0;
-    hw_breakpoint_ = false;
-    hwBreakpoints_.make_list(0);
     do_not_cache_ = false;
     haltreq_ = false;
+    procbufexecreq_ = false;
     resumereq_ = false;
 
-    dport_.valid = 0;
+    ptriggers_ = 0;
     trace_file_ = 0;
     memset(&trace_data_, 0, sizeof(trace_data_));
     icache_ = 0;
@@ -97,8 +93,12 @@ CpuGeneric::CpuGeneric(const char *name)
 CpuGeneric::~CpuGeneric() {
     RISCV_set_default_clock(0);
     RISCV_event_close(&eventConfigDone_);
+    RISCV_mutex_destroy(&mutex_csr_);
     if (icache_) {
         delete [] icache_;
+    }
+    if (ptriggers_) {
+        delete [] ptriggers_;
     }
     if (trace_file_) {
         trace_file_->close();
@@ -150,6 +150,9 @@ void CpuGeneric::postinitService() {
 
     stackTraceBuf_.setRegTotal(2 * stackTraceSize_.to_int());
 
+    ptriggers_ = new TriggerStorageType[triggersTotal_.to_int()];
+    memset(ptriggers_, 0, triggersTotal_.to_int()*sizeof(TriggerStorageType));
+
     CACHE_BASE_ADDR_ = cacheBaseAddr_.to_uint64();
     CACHE_MASK_ = ~cacheAddrMask_.to_uint64();
     if (cacheAddrMask_.to_uint64()) {
@@ -195,7 +198,7 @@ void CpuGeneric::updatePipeline() {
     branch_ = false;
     oplen_ = 0;
 
-    if (!checkHwBreakpoint()) {
+    if (!isTriggerInstruction()) {
         fetchILine();
         instr_ = decodeInstruction(cacheline_);
 
@@ -228,12 +231,16 @@ bool CpuGeneric::updateState() {
     switch (estate_) {
     case CORE_OFF:
     case CORE_Halted:
-        if (resumereq_) {
+        upd = false;
+        if (procbufexecreq_) {
+            enterProgbufExec();
+            procbufexecreq_ = false;
+        } else if (resumereq_) {
             resumereq_ = false;
+            upd = true;
             resume();
         } else {
             updateQueue();
-            upd = false;
         }
         break;
     case CORE_Normal:
@@ -241,10 +248,15 @@ bool CpuGeneric::updateState() {
             haltreq_ = false;
             upd = false;
             halt(HALT_CAUSE_HALTREQ, "External Halt request");
+        } else if (isTriggerICount()) {
+            upd = false;
+            halt(HALT_CAUSE_TRIGGER, "Trigger icount hit");
         } else if (isStepEnabled()) {
             upd = false;
             halt(HALT_CAUSE_STEP, "Stepping breakpoint");
         }
+        break;
+    case CORE_ProgbufExec:
         break;
     default:;
     }
@@ -268,6 +280,14 @@ void CpuGeneric::fetchILine() {
     fetch_addr_ = fetchingAddress();
     cachable_pc_ = false;
     instr_ = 0;
+
+    if (estate_ == CORE_ProgbufExec) {
+        memcpy(cacheline_[0].buf,
+               &reinterpret_cast<uint8_t *>(progbuf_)[fetch_addr_],
+               sizeof(uint32_t));
+        return;
+    }
+
     if ((fetch_addr_ & CACHE_MASK_) == CACHE_BASE_ADDR_) {
         cachable_pc_ = true;
         cache_offset_ = fetch_addr_ - CACHE_BASE_ADDR_;
@@ -459,10 +479,6 @@ void CpuGeneric::halt(uint32_t cause, const char *descr) {
     } else {
         writeCSR(CSR_dpc, getNPC());
     }
-    if (estate_ != CORE_ProgbufExec) {
-        // Do not modify cause when executing from progbuf
-        setHaltCause(cause);
-    }
 
     if (!bytetot) {
         bytetot = 1;
@@ -499,6 +515,26 @@ bool CpuGeneric::isStepEnabled() {
     return dcsr.bits.step;
 }
 
+bool CpuGeneric::isTriggerICount() {
+    bool ret = false;
+    TriggerStorageType *pt;
+    for (unsigned i = 0; i < triggersTotal_.to_uint32(); i++) {
+        pt = &ptriggers_[i];
+        if (pt->data1.bitsdef.type == TriggerType_InstrCountMatch) {
+            if (pt->data1.icount_bits.count - 1 == 0) {
+                ret = true;
+            }
+            if ((pt->data1.icount_bits.count > 1) &&
+                (pt->data1.icount_bits.m || pt->data1.icount_bits.s
+                || pt->data1.icount_bits.u)) {
+                pt->data1.icount_bits.count--;
+            }
+            pt->data1.icount_bits.hit = 1;
+        }
+    }
+    return ret;
+}
+
 void CpuGeneric::power(EPowerAction onoff) {
     if (onoff == POWER_OFF && estate_ != CORE_OFF) {
         // Turn OFF:
@@ -522,89 +558,239 @@ void CpuGeneric::reset(IFace *isource) {
     setPC(getResetAddress());
     setNPC(getResetAddress());
     //status_.reset(isource);
+    if (ptriggers_) {
+        memset(ptriggers_,
+               0,
+               triggersTotal_.to_int()*sizeof(TriggerStorageType));
+    }
     stackTraceCnt_.reset(isource);
     interrupt_pending_[0] = 0;
     interrupt_pending_[1] = 0;
-    hw_breakpoint_ = false;
     do_not_cache_ = false;
 }
 
-void CpuGeneric::nb_transport_debug_port(DebugPortTransactionType *trans,
-                                         IDbgNbResponse *cb) {
-    dport_.trans = trans;
-    dport_.cb = cb;
-    dport_.valid = true;
-}
-
-void CpuGeneric::addHwBreakpoint(uint64_t addr) {
-    AttributeType item;
-    item.make_uint64(addr);
-    hwBreakpoints_.add_to_list(&item);
-    hwBreakpoints_.sort();
-    for (unsigned i = 0; i < hwBreakpoints_.size(); i++) {
-        RISCV_debug("Breakpoint[%d]: 0x%04" RV_PRI64 "x",
-                    i, hwBreakpoints_[i].to_uint64());
-    }
-    flush(addr);
-}
-
-void CpuGeneric::removeHwBreakpoint(uint64_t addr) {
-    for (unsigned i = 0; i < hwBreakpoints_.size(); i++) {
-        if (addr == hwBreakpoints_[i].to_uint64()) {
-            hwBreakpoints_.remove_from_list(i);
-            hwBreakpoints_.sort();
-            return;
-        }
-    }
-    flush(addr);
-}
-
-bool CpuGeneric::checkHwBreakpoint() {
+bool CpuGeneric::isTriggerInstruction() {
     uint64_t pc = getPC();
-    if (hw_breakpoint_ && pc == hw_break_addr_) {
-        hw_breakpoint_ = false;
-        return false;
-    }
-    hw_breakpoint_ = false;
 
-    for (unsigned i = 0; i < hwBreakpoints_.size(); i++) {
-        uint64_t bradr = hwBreakpoints_[i].to_uint64();
-        if (pc < bradr) {
-            // Sorted list
-            break;
+    TriggerData1Type::bits_type2 *pt;
+    bool fire = false;
+    uint64_t action = 0;
+    uint64_t mask;
+    int tcnt;
+    for (int i = 0; i < triggersTotal_.to_int(); i++) {
+        pt = &ptriggers_[i].data1.mcontrol_bits;
+        if (pt->type != TriggerType_AddrDataMatch) {
+            continue;
         }
-        if (pc == bradr) {
-            hw_break_addr_ = pc;
-            hw_breakpoint_ = true;
-            halt(HALT_CAUSE_TRIGGER, "Hw breakpoint");
-            return true;
+        if (!(pt->m | pt->s | pt->u)) {
+            // Trigger is disabled
+            continue;
+        }
+        if (!pt->execute) {
+            continue;
+        }
+
+        switch (pt->match) {
+        case 0:
+            if (pc == ptriggers_[i].data2) {
+                pt->hit = 1;
+            }
+            break;
+        case 1:
+            mask = 1;
+            tcnt = 0;
+            while ((tcnt < mcontrolMaskmax_.to_int())
+                && !(ptriggers_[i].data2 & mask)) {
+                mask <<= 1;
+                tcnt++;
+            }
+            mask = ~(mask - 1);
+            if ((pc & mask) == (ptriggers_[i].data2 & mask)) {
+                pt->hit = 1;
+            }
+            break;
+        case 2:
+            if (pc >= ptriggers_[i].data2) {
+                pt->hit = 1;
+            }
+            break;
+        case 3:
+            if (pc < ptriggers_[i].data2) {
+                pt->hit = 1;
+            }
+            break;
+        case 4:
+            mask = (pc & 0xFFFFFFFFull) & (ptriggers_[i].data2 >> 32);
+            if (mask == (ptriggers_[i].data2 & 0xFFFFFFFFull)) {
+                pt->hit = 1;
+            }
+            break;
+        case 5:
+            mask = (pc >> 32) & (ptriggers_[i].data2 >> 32);
+            if (mask == (ptriggers_[i].data2 & 0xFFFFFFFFull)) {
+                pt->hit = 1;
+            }
+            break;
+        default:;
+        }
+
+        // TODO bit 'chain'
+        if (pt->hit = 1) {
+            fire = true;
+            action = pt->action;
         }
     }
+
+    if (fire) {
+        if (action == 0) {
+            raiseSoftwareIrq();
+        } else if (action == 1) {
+            halt(HALT_CAUSE_TRIGGER, "Trigger instruction (hw breakpoint)");
+        } else {
+            RISCV_error("unsupported trigger action: %d",
+                        static_cast<int>(action));
+        }
+    }
+    return fire;
+}
+
+uint64_t CpuGeneric::readCSR(uint32_t regno) {
+    uint64_t ret = 0;
+    uint64_t trigidx;
+    bool rd_access = true;;
+    switch (regno) {
+    case CSR_mcycle:
+    case CSR_minsret:
+    case CSR_cycle:
+    case CSR_time:
+    case CSR_insret:
+        ret = step_cnt_;
+        rd_access = false;
+        break;
+    case CSR_dpc:
+        if (!isHalted()) {
+            ret = getNPC();
+            rd_access = false;
+        }
+        break;
+    case CSR_tdata1:
+        trigidx = readCSR(CSR_tselect);
+        ret = ptriggers_[trigidx].data1.val;
+        rd_access = false;
+        break;
+    case CSR_tdata2:
+        trigidx = readCSR(CSR_tselect);
+        ret = ptriggers_[trigidx].data2;
+        rd_access = false;
+        break;
+    case CSR_textra:
+        trigidx = readCSR(CSR_tselect);
+        ret = ptriggers_[trigidx].extra;
+        rd_access = false;
+        break;
+    case CSR_tinfo:
+        // RO: list of supported triggers
+        ret = (1ull << TriggerType_AddrDataMatch)
+            | (1ull << TriggerType_InstrCountMatch)
+            | (1ull << TriggerType_Inetrrupt)
+            | (1ull << TriggerType_Exception);
+        rd_access = false;
+        break;
+    default:;
+    }
+    if (rd_access) {
+        RISCV_mutex_lock(&mutex_csr_);
+        ret = portCSR_.read(regno).val;
+        RISCV_mutex_unlock(&mutex_csr_);
+    }
+    return ret;
+}
+
+void CpuGeneric::writeCSR(uint32_t regno, uint64_t val) {
+    bool wr_access = true;
+    uint64_t trigidx;
+    switch (regno) {
+    // Read-Only registers
+    case CSR_misa:
+    case CSR_mvendorid:
+    case CSR_marchid:
+    case CSR_mimplementationid:
+    case CSR_mhartid:
+        wr_access = false;
+        break;
+    // read only timers:
+    case CSR_mcycle:
+    case CSR_minsret:
+    case CSR_cycle:
+    case CSR_time:
+    case CSR_insret:
+        wr_access = false;
+        break;
+    case CSR_tselect:
+        if (val > triggersTotal_.to_uint64()) {
+            val = triggersTotal_.to_uint64();
+            RISCV_debug("Select trigger %d", static_cast<int>(val));
+        }
+        break;
+    case CSR_tdata1:
+        trigidx = readCSR(CSR_tselect);
+        TriggerData1Type tdata1;
+        tdata1.val = val;
+        if (tdata1.bitsdef.type == TriggerType_AddrDataMatch) {
+            // Preset value
+            tdata1.mcontrol_bits.maskmax = mcontrolMaskmax_.to_uint64();
+        }
+        ptriggers_[trigidx].data1.val = val;
+        RISCV_info("[tdata1] <= %016" RV_PRI64 "x, type=%d",
+            val, static_cast<uint32_t>(tdata1.bitsdef.type));
+        val = tdata1.val;
+        break;
+    case CSR_tdata2:
+        trigidx = readCSR(CSR_tselect);
+        ptriggers_[trigidx].data2 = val;
+        RISCV_info("[tdata2] <= %016" RV_PRI64 "x", val);
+        break;
+    case CSR_textra:
+        trigidx = readCSR(CSR_tselect);
+        ptriggers_[trigidx].extra = val;
+        RISCV_info("[textra] <= %016" RV_PRI64 "x", val);
+        break;
+    case CSR_flushi:
+        flush(val);
+        break;
+    default:;
+    }
+    if (wr_access) {
+        RISCV_mutex_lock(&mutex_csr_);
+        portCSR_.write(regno, val);
+        RISCV_mutex_unlock(&mutex_csr_);
+    }
+}
+
+bool CpuGeneric::executeProgbuf(uint32_t *progbuf) {
+    if (!isHalted()) {
+        return true;
+    }
+    progbuf_ = progbuf;
+    procbufexecreq_ = true;
     return false;
 }
 
-uint64_t CsrFlushiType::aboutToWrite(uint64_t new_val) {
-    CpuGeneric *pcpu = static_cast<CpuGeneric *>(parent_);
-    pcpu->flush(new_val);
-    return new_val;
+void CpuGeneric::enterProgbufExec() {
+    estate_ = CORE_ProgbufExec;
+    PC_ = &ctxregs_[Ctx_ProgbufExec].pc.val;
+    NPC_ = &ctxregs_[Ctx_ProgbufExec].npc.val;
+    *NPC_ = 0;
+    RISCV_info("%s", "Start executing progbuf");
 }
 
-uint64_t AddBreakpointType::aboutToWrite(uint64_t new_val) {
-    CpuGeneric *pcpu = static_cast<CpuGeneric *>(parent_);
-    pcpu->addHwBreakpoint(new_val);
-    return new_val;
+void CpuGeneric::exitProgbufExec() {
+    estate_ = CORE_Halted;
+    PC_ = &ctxregs_[Ctx_Normal].pc.val;
+    NPC_ = &ctxregs_[Ctx_Normal].npc.val;
+    RISCV_info("%s", "Ending executing progbuf");
 }
 
-uint64_t RemoveBreakpointType::aboutToWrite(uint64_t new_val) {
-    CpuGeneric *pcpu = static_cast<CpuGeneric *>(parent_);
-    pcpu->removeHwBreakpoint(new_val);
-    return new_val;
-}
-
-uint64_t StepCounterType::aboutToRead(uint64_t cur_val) {
-    CpuGeneric *pcpu = static_cast<CpuGeneric *>(parent_);
-    return pcpu->getStepCounter();
-}
 
 }  // namespace debugger
 

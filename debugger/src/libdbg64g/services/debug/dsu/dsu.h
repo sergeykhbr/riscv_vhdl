@@ -37,8 +37,7 @@ namespace debugger {
 
 class DSU : public RegMemBankGeneric,
             public DsuRegisters,
-            public IDsuGeneric,
-            public IDbgNbResponse {
+            public IDsuGeneric {
  public:
     explicit DSU(const char *name);
     virtual ~DSU();
@@ -50,9 +49,6 @@ class DSU : public RegMemBankGeneric,
     /** IDsuGeneric */
     virtual void incrementRdAccess(int mst_id);
     virtual void incrementWrAccess(int mst_id);
-
-    /** IDbgNbResponse */
-    virtual void nb_response_debug_port(DebugPortTransactionType *trans);
 
     void nb_debug_write(unsigned hartid, uint16_t addr, uint64_t wdata);
 

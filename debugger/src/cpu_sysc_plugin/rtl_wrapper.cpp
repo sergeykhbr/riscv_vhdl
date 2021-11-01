@@ -53,9 +53,6 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     r.state = State_Idle;
     v.clk_cnt = 0;
     r.clk_cnt = 0;
-    RISCV_event_create(&dport_.valid, "dport_valid");
-    dport_.trans_idx_up = 0;
-    dport_.trans_idx_down = 0;
     trans.source_idx = 0;//CFG_NASTI_MASTER_CACHED;
 
     SC_METHOD(comb);
@@ -80,11 +77,6 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     sensitive << wb_resp_data;
     sensitive << w_r_error;
     sensitive << w_w_error;
-    sensitive << w_dport_req_valid;
-    sensitive << w_dport_resp_ready;
-    sensitive << w_dport_write;
-    sensitive << wb_dport_addr;
-    sensitive << wb_dport_wdata;
 
     SC_METHOD(registers);
     sensitive << o_clk.posedge_event();
@@ -94,7 +86,6 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
 }
 
 RtlWrapper::~RtlWrapper() {
-    RISCV_event_close(&dport_.valid);
 }
 
 void RtlWrapper::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
@@ -311,30 +302,6 @@ void RtlWrapper::sys_bus_proc() {
         break;
     default:;
     }
-
-    // Debug port handling:
-    w_dport_req_valid = 0;
-    w_dport_resp_ready = 1;
-    if (RISCV_event_is_set(&dport_.valid)) {
-        RISCV_event_clear(&dport_.valid);
-        w_dport_req_valid = 1;
-        w_dport_write = dport_.trans->write;
-        wb_dport_addr = dport_.trans->addr;
-        wb_dport_wdata = dport_.trans->wdata;
-    }
-    dport_.idx_missmatch = 0;
-    if (0) {//i_dport_resp_valid.read()) {
-        dport_.trans->rdata = 0;//i_dport_rdata.read().to_uint64();
-        dport_.trans_idx_down++;
-        if (dport_.trans_idx_down != dport_.trans_idx_up) {
-            dport_.idx_missmatch = 1;
-            RISCV_error("error: sync. is lost: up=%d, down=%d",
-                         dport_.trans_idx_up, dport_.trans_idx_down);
-            dport_.trans_idx_down = dport_.trans_idx_up;
-        }
-        dport_.cb->nb_response_debug_port(dport_.trans);
-    }
-
 }
 
 uint64_t RtlWrapper::mask2offset(uint8_t mask) {
@@ -397,14 +364,6 @@ void RtlWrapper::lowerSignal(int idx) {
         break;
     default:;
     }
-}
-
-void RtlWrapper::nb_transport_debug_port(DebugPortTransactionType *trans,
-                                         IDbgNbResponse *cb) {
-    dport_.trans = trans;
-    dport_.cb = cb;
-    dport_.trans_idx_up++;
-    RISCV_event_set(&dport_.valid);
 }
 
 }  // namespace debugger

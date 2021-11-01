@@ -30,8 +30,7 @@ class DsuRegisters {
     explicit DsuRegisters(IService *parent);
 
  protected:
-    class DPORT_REGION_BANK64 : public GenericReg64Bank,
-                              public IDbgNbResponse {
+    class DPORT_REGION_BANK64 : public GenericReg64Bank {
      public:
         DPORT_REGION_BANK64(IService *parent, const char *name,
             uint64_t addr, int len) :
@@ -43,9 +42,6 @@ class DsuRegisters {
         virtual ETransStatus b_transport(Axi4TransactionType *trans) override;
         virtual ETransStatus nb_transport(Axi4TransactionType *trans,
                                   IAxi4NbResponse *cb) override;
-
-        /** IDbgNbResponse */
-        virtual void nb_response_debug_port(DebugPortTransactionType *trans);
 
         /** Switch CPU context methods: */
         void setCpu(ICpuGeneric *icpu) { icpu_ = icpu; }
@@ -64,7 +60,6 @@ class DsuRegisters {
         struct nb_trans_type {
             Axi4TransactionType *p_axi_trans;
             IAxi4NbResponse *iaxi_cb;
-            DebugPortTransactionType dbg_trans;
         } nb_trans_;
     };
 
@@ -74,8 +69,6 @@ class DsuRegisters {
     DMSTATUS_TYPE dmstatus_;
     HALTSUM0_TYPE haltsum0_;
     GenericReg64Bank bus_util_;
-
-    DebugPortTransactionType nb_trans_;
 };
 
 }  // namespace debugger

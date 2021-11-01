@@ -39,6 +39,8 @@ class IDPort : public IFace {
     // Read/Write Non-standard extension registers
     virtual uint64_t readNonStandardReg(uint32_t regno) = 0;
     virtual void writeNonStandardReg(uint32_t regno, uint64_t val) = 0;
+    virtual bool executeProgbuf(uint32_t *progbuf) = 0;
+    virtual bool isExecutingProgbuf() = 0;
     virtual void setResetPin(bool val) = 0;
 };
 

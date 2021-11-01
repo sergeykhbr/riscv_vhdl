@@ -111,7 +111,7 @@ uint64_t CmdDsuRun::checkSwBreakpoint() {
     Reg64Type br_addr;
     Reg64Type dpc;
     //CrGenericRuncontrolType runctrl;
-    CrGenericDebugControlType dcsr;
+    //CrGenericDebugControlType dcsr;
     DMSTATUS_TYPE::ValueType dmstatus;
     Reg64Type steps;
     steps.val = 0;
@@ -128,10 +128,10 @@ uint64_t CmdDsuRun::checkSwBreakpoint() {
             //tap_->write(addr_step_cnt, 8, steps.buf);
 
             // Enable stepping
-            dcsr.val = 0;
-            dcsr.bits.ebreakm = 1;
-            dcsr.bits.step = 1;
-            tap_->write(addr_dcsr, 8, dcsr.u8);
+//            dcsr.val = 0;
+//            dcsr.bits.ebreakm = 1;
+//            dcsr.bits.step = 1;
+//            tap_->write(addr_dcsr, 8, dcsr.u8);
 
             // resumereq to make step
 //            runctrl.val = 0;
