@@ -198,7 +198,8 @@ class DmiDebug : public sc_module,
         sc_signal<bool> cmd_memaccess;
         sc_signal<bool> cmd_progexec;
         sc_signal<bool> cmd_read;
-        sc_signal<bool> postexec;
+        sc_signal<bool> cmd_write;
+        sc_signal<bool> transfer;
         sc_signal<bool> aamvirtual;
         sc_signal<sc_uint<32>> command;
         sc_signal<sc_uint<CFG_DATA_REG_TOTAL>> autoexecdata;
@@ -211,7 +212,6 @@ class DmiDebug : public sc_module,
         sc_signal<sc_biguint<CFG_PROGBUF_REG_TOTAL*32>> progbuf_data;
 
         sc_signal<bool> dport_req_valid;
-        sc_signal<bool> dport_write;
         sc_signal<sc_uint<CFG_BUS_ADDR_WIDTH>> dport_addr;
         sc_signal<sc_uint<RISCV_ARCH>> dport_wdata;
         sc_signal<sc_uint<3>> dport_size;
@@ -247,8 +247,9 @@ class DmiDebug : public sc_module,
         iv.cmd_fastaccess = 0;
         iv.cmd_memaccess = 0;
         iv.cmd_progexec = 0;
+        iv.cmd_write = 0;
         iv.cmd_read = 0;
-        iv.postexec = 0;
+        iv.transfer = 0;
         iv.aamvirtual = 0;
         iv.command = 0;
         iv.autoexecdata = 0;
@@ -260,7 +261,6 @@ class DmiDebug : public sc_module,
         iv.data3 = 0;
         iv.progbuf_data = 0;
         iv.dport_req_valid = 0;
-        iv.dport_write = 0;
         iv.dport_addr = 0;
         iv.dport_wdata = 0;
         iv.dport_size = 0;

@@ -57,7 +57,7 @@ int main(int argc, char* argv[]) {
             } else if (strcmp(argv[i], "-p") == 0) {
                 i++;
                 tcp_port = atoi(argv[i]);
-            } else if (strcmp(argv[i], "-nogui") == 0) {
+            } else if (strcmp(argv[i], "--nogui") == 0) {
                 nogui = true;
             }
         }

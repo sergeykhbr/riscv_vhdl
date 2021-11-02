@@ -337,6 +337,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_irq_external, i_irq_external.name());
         sc_trace(o_vcd, i_haltreq, i_haltreq.name());
         sc_trace(o_vcd, i_resumereq, i_resumereq.name());
+        sc_trace(o_vcd, i_dbg_progbuf_ena, i_dbg_progbuf_ena.name());
         sc_trace(o_vcd, i_step, i_step.name());
         sc_trace(o_vcd, i_rdata1, i_rdata1.name());
         sc_trace(o_vcd, i_rtag1, i_rtag1.name());
@@ -873,14 +874,9 @@ void InstrExecute::comb() {
         vb_res = 0;
     }
 
-    if (i_dbg_progbuf_ena.read() == 0) {
-        if (i_d_pc == r.npc.read() && i_d_progbuf_ena.read() == 0) {
-            v_d_valid = 1;
-        }
-    } else {
-        if (i_d_pc == r.progbuf_npc.read() && i_d_progbuf_ena.read() == 1) {
-            v_d_valid = 1;
-        }
+    if (i_d_pc == r.npc.read()
+        && i_d_progbuf_ena.read() == i_dbg_progbuf_ena.read()) {
+        v_d_valid = 1;
     }
 
     switch (r.state.read()) {
@@ -1091,7 +1087,7 @@ void InstrExecute::comb() {
         break;
     case State_Halted:
         v.stepdone = 0;
-        if (i_resumereq.read() == 1) {
+        if (i_resumereq.read() == 1 || i_dbg_progbuf_ena.read() == 1) {
             v.state = State_Csr;
             v.csrstate = CsrState_Req;
             v.csr_req_type = CsrReq_ResumeCmd;
@@ -1112,19 +1108,10 @@ void InstrExecute::comb() {
     vb_tagcnt_rd(CFG_REG_TAG_WITH*t_waddr+(CFG_REG_TAG_WITH-1), CFG_REG_TAG_WITH*t_waddr) = t_tagcnt_wr;
     vb_tagcnt_rd(CFG_REG_TAG_WITH - 1, 0) = 0;
 
-    if (i_dbg_progbuf_ena.read() == 0) {
-        v.progbuf_npc = 0;
-    } else if (v_latch_input) {
-        // Execution from the prog. buffer
-        v.progbuf_npc = vb_npc_incr;
-    }
-
     // Latch decoder's data into internal registers:
     if (v_latch_input) {
-        if (i_dbg_progbuf_ena.read() == 0) {
-            v.pc = i_d_pc;
-            v.npc = vb_prog_npc;
-        }
+        v.pc = i_d_pc;
+        v.npc = vb_prog_npc;
         v.radr1 = i_d_radr1;
         v.radr2 = i_d_radr2;
         v.waddr = i_d_waddr;

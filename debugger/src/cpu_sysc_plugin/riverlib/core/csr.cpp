@@ -296,7 +296,11 @@ void CsrRegs::comb() {
         break;
     case State_Resume:
         v.state = State_Response;
-        v.cmd_data = r.dpc;
+        if (i_dbg_progbuf_ena.read() == 1) {
+            v.cmd_data = 0;
+        } else {
+            v.cmd_data = r.dpc;
+        }
         break;
     case State_Interrupt:
         v.state = State_Response;

@@ -144,6 +144,10 @@ void DbgPort::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_e_npc, i_e_npc.name());
         sc_trace(o_vcd, i_e_call, i_e_call.name());
         sc_trace(o_vcd, i_e_ret, i_e_ret.name());
+        sc_trace(o_vcd, i_progbuf, i_progbuf.name());
+        sc_trace(o_vcd, o_progbuf_ena, o_progbuf_ena.name());
+        sc_trace(o_vcd, o_progbuf_pc, o_progbuf_pc.name());
+        sc_trace(o_vcd, o_progbuf_instr, o_progbuf_instr.name());
     }
     if (CFG_LOG2_STACK_TRACE_ADDR != 0) {
         trbuf0->generateVCD(i_vcd, o_vcd);

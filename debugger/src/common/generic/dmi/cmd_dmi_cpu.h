@@ -39,6 +39,7 @@ class CmdDmiCpuGneric : public ICommand  {
     void resume();
     void halt();
     void waithalted();
+    void waitbusy();
     void setStep(bool val);
     void readreg(uint32_t regno, uint8_t *buf8);
     void writereg(uint32_t regno, uint8_t *buf8);

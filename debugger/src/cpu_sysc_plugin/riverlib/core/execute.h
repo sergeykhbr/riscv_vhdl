@@ -241,7 +241,6 @@ private:
         sc_signal<bool> flushd;
         sc_signal<bool> flushi;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> flushi_addr;
-        sc_signal<sc_uint<32>> progbuf_npc;
         sc_signal<bool> stepdone;
     } v, r;
 
@@ -300,7 +299,6 @@ private:
         iv.flushd = 0;
         iv.flushi = 0;
         iv.flushi_addr = 0;
-        iv.progbuf_npc = 0;
         iv.stepdone = 0;
     }
 

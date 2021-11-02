@@ -148,6 +148,7 @@ void CmdDmiCpuGneric::setStep(bool val) {
     command.bits.aarsize = 2;
     command.bits.regno = 0x7b0;//CSR_dcsr;
     dma_write(dmibar_ + 4*0x17, 4, command.u8);
+    waitbusy();
 }
 
 void CmdDmiCpuGneric::clearcmderr() {
@@ -191,6 +192,15 @@ void CmdDmiCpuGneric::waithalted() {
     }
 }
 
+void CmdDmiCpuGneric::waitbusy() {
+    ABSTRACTCS_TYPE::ValueType abstractcs;
+    bool busy = true;
+    while (busy) {
+        dma_read(dmibar_ + 0x16*0x4, 4, abstractcs.u8); //abstractcs
+        busy = abstractcs.bits.busy;
+    }
+}
+
 void CmdDmiCpuGneric::readreg(uint32_t regno, uint8_t *buf8) {
     COMMAND_TYPE::ValueType command;
     command.val = 0;
@@ -198,6 +208,7 @@ void CmdDmiCpuGneric::readreg(uint32_t regno, uint8_t *buf8) {
     command.bits.aarsize = 3;
     command.bits.regno = regno;
     dma_write(dmibar_ + 4*0x17, 4, command.u8);     // arg0 = [data1,data0]
+    waitbusy();
     // Read arg0
     dma_read(dmibar_ + 4*0x4, 4, buf8);          // [data1,data0]
     dma_read(dmibar_ + 4*0x5, 4, &buf8[4]);
@@ -214,6 +225,7 @@ void CmdDmiCpuGneric::writereg(uint32_t regno, uint8_t *buf8) {
     command.bits.aarsize = 3;
     command.bits.regno = regno;
     dma_write(dmibar_ + 4*0x17, 4, command.u8);     // arg0 = [data1,data0]
+    waitbusy();
 }
 
 const ECpuRegMapping *CmdDmiCpuRiscV::getpMappedReg() {
