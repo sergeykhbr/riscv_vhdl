@@ -105,8 +105,8 @@ void CmdDsuRun::exec(AttributeType *args, AttributeType *res) {
 
 uint64_t CmdDsuRun::checkSwBreakpoint() {
     uint64_t addr_dpc = DSUREGBASE(csr[CSR_dpc]);
-    uint64_t addr_dcsr = DSUREGBASE(csr[CSR_dcsr]);
-    uint64_t addr_runcontrol = -1;//DSUREGBASE(csr[CSR_runcontrol]);
+    //uint64_t addr_dcsr = DSUREGBASE(csr[CSR_dcsr]);
+    //uint64_t addr_runcontrol = -1;//DSUREGBASE(csr[CSR_runcontrol]);
     uint64_t addr_dmstatus = DSUREGBASE(ulocal.v.dmstatus);
     Reg64Type br_addr;
     Reg64Type dpc;

@@ -56,7 +56,6 @@ void DSU::postinitService() {
     if (!iexec_) {
         RISCV_error("Can't find ICmdExecutor interface %s", cmdexec_.to_string());
     } else {
-        int cnt = 0;
         icmdlist_.new_list_item().make_iface(new CmdDsuStatus(DSU_OFFSET, itap_));
         icmdlist_.new_list_item().make_iface(new CmdDsuBusUtil(DSU_OFFSET, itap_));
         icmdlist_.new_list_item().make_iface(new CmdDsuIsRunning(DSU_OFFSET, itap_));

@@ -52,20 +52,15 @@ $(EXECUTABLE): $(OBJ_FILES)
 	echo $(CPP) $(LDFLAGS) $(OBJ_FILES) -o $@
 	$(CPP) $(LDFLAGS) $(OBJ_FILES) -o $@ $(addprefix -l,$(LIBS))
 	# Generate starting scripts:
-	@echo $(ECHO_EOL) "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -c ../../targets/functional_sim_gui.json \"\$$@\"" > $(ELF_DIR)/_run_functional_sim.sh
-	@echo $(ECHO_EOL) "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -c ../../targets/sysc_river_gui.json \"\$$@\"" > $(ELF_DIR)/_run_systemc_sim.sh
-	@echo $(ECHO_EOL) "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -c ../../targets/fpga_gui.json \"\$$@\"" > $(ELF_DIR)/_run_fpga_gui.sh
-	@echo $(ECHO_EOL) "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\nexport QT_DEBUG_PLUGINS=0\ngdb --args ./appdbg64g.exe -c ../../targets/functional_sim_gui.json \"\$$@\"" > $(ELF_DIR)/_run_gdb.sh
-	@echo $(ECHO_EOL) "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -c ../../targets/stm32l4xx_gui.json \"\$$@\"" > $(ELF_DIR)/_run_stm32l4xx.sh
-	@echo $(ECHO_EOL) "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -c ../../targets/dpi_gui.json \"\$$@\"" > $(ELF_DIR)/_run_dpi.sh
+	@echo $(ECHO_EOL) "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -c ../../targets/func_river_x1_gui.json \"\$$@\"" > $(ELF_DIR)/_run_func_river_x1_gui.sh
+	@echo $(ECHO_EOL) "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\n./appdbg64g.exe -c ../../targets/sysc_river_x1_gui.json \"\$$@\"" > $(ELF_DIR)/_run_sysc_river_x1_gui.sh
+	@echo $(ECHO_EOL) "#!/bin/bash\nexport LD_LIBRARY_PATH=\$$(pwd):\$$(pwd)/qtlib\nexport QT_DEBUG_PLUGINS=0\ngdb --args ./appdbg64g.exe -c ../../targets/func_river_x1_gui.json \"\$$@\"" > $(ELF_DIR)/_run_gdb.sh
 	chmod +x $(ELF_DIR)/*.sh
 	$(ECHO) "\n  Debugger Test application has been built successfully."
 	$(ECHO) "  To start debugger use one of the prepared targets scripts:."
 	$(ECHO) "      cd ../linuxbuild/bin"
-	$(ECHO) "      ./_run_functional_sim.sh     - Start functional RIVER simulation"
-	$(ECHO) "      ./_run_systemc_sim.sh        - Start cycle-true RIVER SystemC simulation"
-	$(ECHO) "      ./_run_fpga_gui.sh           - Start with FPGA (COM3, 195.168.0.53)"
-	$(ECHO) "      ./_run_arm_sim.sh            - Start functional ARM simulation\n"
+	$(ECHO) "      ./_run_func_river_1x_gui.sh  - Start functional RIVER simulation"
+	$(ECHO) "      ./_run_sysc_river_1x_gui.sh  - Start cycle-true RIVER SystemC simulation"
 
 $(addprefix $(OBJ_DIR)/,%.o): %.cpp
 	echo $(CPP) $(CFLAGS) $(addprefix $(INCL_KEY),$(INCL_PATH)) $< -o $@

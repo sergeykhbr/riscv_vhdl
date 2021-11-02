@@ -94,7 +94,7 @@ void CmdBrGeneric::exec(AttributeType *args, AttributeType *res) {
 
     //CrGenericRuncontrolType runctrl;
         
-    uint64_t addr_dmcontrol = -1;//DSUREGBASE(csr[CSR_runcontrol]);
+    //uint64_t addr_dmcontrol = -1;//DSUREGBASE(csr[CSR_runcontrol]);
     Reg64Type braddr;
     AttributeType &bpadr = (*args)[2];
     if (bpadr.is_integer()) {

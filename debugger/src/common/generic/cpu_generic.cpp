@@ -635,7 +635,7 @@ bool CpuGeneric::isTriggerInstruction() {
         }
 
         // TODO bit 'chain'
-        if (pt->hit = 1) {
+        if (pt->hit == 1) {
             fire = true;
             action = pt->action;
         }

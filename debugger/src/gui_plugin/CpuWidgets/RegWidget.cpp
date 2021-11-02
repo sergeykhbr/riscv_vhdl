@@ -61,7 +61,8 @@ RegWidget::RegWidget(const char *name, int bytes, QWidget *parent, int respidx)
 }
 
 void RegWidget::slotHandleResponse(AttributeType *resp) {
-    if (!resp->is_list() || resp->size() <= respidx_) {
+    if (!resp->is_list() 
+        || resp->size() <= static_cast<uint32_t>(respidx_)) {
         return;
     }
     outputValue((*resp)[respidx_]);

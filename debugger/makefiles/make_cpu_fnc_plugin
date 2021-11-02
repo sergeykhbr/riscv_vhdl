@@ -22,8 +22,11 @@ INCL_PATH= \
 SRC_PATH =\
 	$(TOP_DIR)src/common \
 	$(TOP_DIR)src/common/generic \
+	$(TOP_DIR)src/common/generic/dmi \
+	$(TOP_DIR)src/common/debug \
 	$(TOP_DIR)src/cpu_fnc_plugin \
 	$(TOP_DIR)src/cpu_fnc_plugin/srcproc \
+	$(TOP_DIR)src/cpu_fnc_plugin/dmi \
 	$(TOP_DIR)src/cpu_fnc_plugin/cmds
 
 VPATH = $(SRC_PATH)
@@ -33,16 +36,19 @@ SOURCES = \
 	autobuffer \
 	async_tqueue \
 	cpu_generic \
+	dmi_regs \
+	cmd_dmi_cpu \
 	cmd_br_generic \
 	cmd_br_riscv \
 	cmd_reg_generic \
 	cmd_regs_generic \
-	cmd_csr \
 	mapreg \
 	riscv_disasm \
 	plugin_init \
 	cpu_riscv_func \
 	icache_func \
+	dmifunc \
+	dtmfunc \
 	cpu_stub_fpga \
 	riscv-rv64i-user \
 	riscv-rv64i-priv \

@@ -56,14 +56,10 @@ void DtmFunctional::resetTAP() {
 
 void DtmFunctional::setPins(char tck, char tms, char tdi) {
     bool tck_posedge = false;
-    bool tck_negedge = false;
     uint64_t stat = DMISTAT_SUCCESS;
 
     if (!tck_ && tck) {
         tck_posedge = true;
-    }
-    if (tck_ && !tck) {
-        tck_negedge = true;
     }
 
     if (!tck_posedge) {
@@ -150,7 +146,7 @@ void DtmFunctional::setPins(char tck, char tms, char tdi) {
         break;
     default:;
     }
-    estate_ = next[estate_][tms_];
+    estate_ = next[estate_][static_cast<int>(tms_)];
 
     tck_ = tck;
     tdi_ = tdi;
