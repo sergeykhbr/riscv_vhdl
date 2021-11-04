@@ -136,7 +136,8 @@ void CpuRiscV_RTL::createSystemC() {
     registerInterface(static_cast<ICpuRiscV *>(wrapper_));
     registerInterface(static_cast<IResetListener *>(wrapper_));
     w_clk = wrapper_->o_clk;
-    wrapper_->o_nrst(w_nrst);
+    wrapper_->o_sys_nrst(w_sys_nrst);
+    wrapper_->o_dmi_nrst(w_dmi_nrst);
     wrapper_->o_msti(msti);
     wrapper_->i_msto(msto);
     wrapper_->o_interrupt(w_plic_irq);
@@ -151,7 +152,7 @@ void CpuRiscV_RTL::createSystemC() {
     registerPortInterface("dmi", static_cast<IMemoryOperation *>(dmi_));
     registerPortInterface("tap", static_cast<IJtagTap *>(dmi_));
     dmi_->i_clk(wrapper_->o_clk);
-    dmi_->i_nrst(w_nrst);
+    dmi_->i_nrst(w_dmi_nrst);
     dmi_->o_ndmreset(w_ndmreset);               // reset whole system
     dmi_->i_halted(wb_halted);
     dmi_->i_available(wb_available);
@@ -176,7 +177,7 @@ void CpuRiscV_RTL::createSystemC() {
     if (l2CacheEnable_.to_bool()) {
         l2cache_ = new L2Top("l2top", asyncReset_.to_bool());
         l2cache_->i_clk(wrapper_->o_clk);
-        l2cache_->i_nrst(w_nrst);
+        l2cache_->i_nrst(w_sys_nrst);
         l2cache_->o_l1i0(corei0);
         l2cache_->i_l1o0(coreo0);
         l2cache_->o_l1i1(corei1);
@@ -194,7 +195,7 @@ void CpuRiscV_RTL::createSystemC() {
     } else {
         l1serdes_ = new L1SerDes("l1serdes0", asyncReset_.to_bool());
         l1serdes_->i_clk(wrapper_->o_clk);
-        l1serdes_->i_nrst(w_nrst);
+        l1serdes_->i_nrst(w_sys_nrst);
         l1serdes_->o_corei(corei0);
         l1serdes_->i_coreo(coreo0);
         l1serdes_->i_msti(msti);
@@ -209,7 +210,7 @@ void CpuRiscV_RTL::createSystemC() {
                                coherenceEnable_.to_bool(),
                                tracerEnable_.to_bool());
     core_->i_clk(wrapper_->o_clk);
-    core_->i_nrst(w_nrst);
+    core_->i_nrst(w_sys_nrst);
     core_->i_msti(corei0);
     core_->o_msto(coreo0);
     core_->i_tmr_irq(w_tmr_irq);

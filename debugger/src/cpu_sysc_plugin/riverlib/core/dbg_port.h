@@ -98,6 +98,7 @@ private:
         sc_signal<sc_uint<CFG_LOG2_STACK_TRACE_ADDR>> stack_trace_cnt;              // Stack trace buffer counter
         sc_signal<bool> req_accepted;
         sc_signal<bool> resp_error;
+        sc_signal<bool> progbuf_ena;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> progbuf_pc;
         sc_signal<sc_uint<32>> progbuf_instr;
     } v, r;
@@ -112,6 +113,7 @@ private:
         iv.stack_trace_cnt = 0;
         iv.req_accepted = 0;
         iv.resp_error = 0;
+        iv.progbuf_ena = 0;
         iv.progbuf_pc = 0;
         iv.progbuf_instr = 0;
     }

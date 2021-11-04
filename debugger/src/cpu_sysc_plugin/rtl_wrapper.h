@@ -36,7 +36,8 @@ class RtlWrapper : public sc_module,
                    public ICpuRiscV {
  public:
     sc_clock o_clk;
-    sc_out<bool> o_nrst;
+    sc_out<bool> o_sys_nrst;
+    sc_out<bool> o_dmi_nrst;
     // Timer:
     sc_out<axi4_master_in_type> o_msti;
     sc_in<axi4_master_out_type> i_msto;

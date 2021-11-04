@@ -70,13 +70,22 @@ void TcpJtagBitBangClient::busyLoop() {
         for (int i = 0; i < rxbytes; i++) {
             switch (rcvbuf[i]) {
             case 'B':
-                //RISCV_debug("%s", "*BLINK*\n");
+                RISCV_debug("%s", "Blink on");
                 break;
             case 'b':
-                //RISCV_debug("%s", "_______\n");
+                RISCV_debug("%s", "Blink off");
                 break;
             case 'r':
-                itap_->resetTAP();
+                itap_->resetTAP(0, 0);
+                break;
+            case 's':
+                itap_->resetTAP(0, 1);
+                break;
+            case 't':
+                itap_->resetTAP(1, 0);
+                break;
+            case 'u':
+                itap_->resetTAP(1, 1);
                 break;
             case '0':
                 itap_->setPins(0, 0, 0);
@@ -111,12 +120,6 @@ void TcpJtagBitBangClient::busyLoop() {
             default:
                 RISCV_error("Unsupported command '%c'\n", rcvbuf[i]);
             }
-
-            /*if (!in_rti && tap->state() == RUN_TEST_IDLE) {
-                entered_rti = true;
-                break;
-            }
-            in_rti = false;*/
         }
 
         if (tsz != 0) {

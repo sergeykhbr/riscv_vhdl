@@ -98,6 +98,7 @@ void InstrFetch::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
         std::string pn(name());
         sc_trace(o_vcd, r.wait_resp, pn + ".r_wait_resp");
+        sc_trace(o_vcd, r.resp_valid, pn + ".r_resp_valid");
     }
 }
 

@@ -49,7 +49,7 @@ void DtmFunctional::postinitService() {
     }
 }
 
-void DtmFunctional::resetTAP() {
+void DtmFunctional::resetTAP(char trst, char srst) {
     estate_ = RESET_TAP;
     ir_ = IR_IDCODE;
 }

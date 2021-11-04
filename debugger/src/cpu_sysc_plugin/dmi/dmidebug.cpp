@@ -113,7 +113,6 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name, bool async_reset)
     sensitive << i_clk.pos();
 
     tap_ = new JtagTap("tap");
-    tap_->i_nrst(i_nrst);
     tap_->i_trst(w_i_trst);
     tap_->i_tck(w_i_tck);
     tap_->i_tms(w_i_tms);
@@ -180,6 +179,7 @@ void DmiDebug::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_dport_rdata, i_dport_rdata.name());
 
         std::string pn(name());
+        sc_trace(o_vcd, w_i_trst, pn + ".i_trst");
         sc_trace(o_vcd, w_i_tck, pn + ".i_tck");
         sc_trace(o_vcd, w_i_tms, pn + ".i_tms");
         sc_trace(o_vcd, w_i_tdi, pn + ".i_tdi");
@@ -262,12 +262,11 @@ void DmiDebug::writereg(uint64_t idx, uint32_t w32) {
     bus_req_valid_ = 1;
 }
 
-void DmiDebug::resetTAP() {
-    trst_ = 1;
+void DmiDebug::resetTAP(char trst, char srst) {
+    trst_ = trst;
     dtm_scaler_cnt_ = 0;
     RISCV_event_clear(&event_dtm_ready_);
     RISCV_event_wait(&event_dtm_ready_);
-    trst_ = 0;
 }
 
 void DmiDebug::setPins(char tck, char tms, char tdi) {

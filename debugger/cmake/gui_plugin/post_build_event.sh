@@ -10,3 +10,5 @@ cp $QT_PATH64/lib/libQt6Gui.* $1/../qtlib
 cp $QT_PATH64/lib/libQt6Widgets.* $1/../qtlib
 cp $QT_PATH64/lib/libQt6Network.* $1/../qtlib
 cp $QT_PATH64/lib/libQt6DBus.* $1/../qtlib
+cp $QT_PATH64/lib/libQt6XcbQpa.* $1/../qtlib
+cp $QT_PATH64/lib/libQt6OpenGL.* $1/../qtlib

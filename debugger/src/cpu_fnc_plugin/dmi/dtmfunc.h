@@ -36,7 +36,7 @@ class DtmFunctional : public IService,
     void postinitService() override;
 
     /** IJtagTap interface */
-    virtual void resetTAP();
+    virtual void resetTAP(char trst, char srst);
     virtual void setPins(char tck, char tms, char tdi);
     virtual bool getTDO();
 

@@ -24,7 +24,6 @@ namespace debugger {
 SC_MODULE(JtagTap) {
 
  public:
-    sc_in<bool> i_nrst;
     sc_in<bool> i_trst; // Must be open-train, pullup
     sc_in<bool> i_tck;
     sc_in<bool> i_tms;

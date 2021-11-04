@@ -41,7 +41,7 @@ class IJtagTap : public IFace {
 
     virtual const char *getDetail() { return IJtagTap_detail; }
 
-    virtual void resetTAP() = 0;
+    virtual void resetTAP(char trst, char srst) = 0;
     virtual void setPins(char tck, char tms, char tdi) = 0;
     virtual bool getTDO() = 0;
 };

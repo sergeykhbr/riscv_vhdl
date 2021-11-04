@@ -886,7 +886,8 @@ void InstrExecute::comb() {
         } else if (v_d_valid == 1 && w_hazard1 == 0 && w_hazard2 == 0) {
             v_d_ready = 1;
             v_latch_input = 1;
-            v.stepdone = i_step;
+            // opencocd doesn't clear 'step' value in dcsr after step has been done
+            v.stepdone = i_step & !i_dbg_progbuf_ena;
             if (v_csr_cmd_ena) {
                 v.state = State_Csr;
                 v.csrstate = CsrState_Req;

@@ -69,7 +69,7 @@ class DmiDebug : public sc_module,
                                       IAxi4NbResponse *cb) override ;
 
     /** IJtagTap */
-    virtual void resetTAP();
+    virtual void resetTAP(char trst, char srst);
     virtual void setPins(char tck, char tms, char tdi);
     virtual bool getTDO();
 

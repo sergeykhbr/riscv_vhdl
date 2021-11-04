@@ -19,7 +19,6 @@
 namespace debugger {
 
 JtagTap::JtagTap(sc_module_name name) : sc_module(name),
-    i_nrst("i_nrst"),
     i_trst("i_trst"),
     i_tck("i_tck"),
     i_tms("i_tms"),
@@ -55,19 +54,16 @@ JtagTap::JtagTap(sc_module_name name) : sc_module(name),
     SC_METHOD(registers);
     sensitive << i_tck.pos();
     sensitive << i_trst;
-    sensitive << i_nrst;
 
     SC_METHOD(nregisters);
     sensitive << i_tck.neg();
     sensitive << i_trst;
-    sensitive << i_nrst;
 }
 
 void JtagTap::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (i_vcd) {
     }
     if (o_vcd) {
-        sc_trace(o_vcd, i_nrst, i_nrst.name());
         sc_trace(o_vcd, i_trst, i_trst.name());
         sc_trace(o_vcd, i_tck, i_tck.name());
         sc_trace(o_vcd, i_tms, i_tms.name());
@@ -135,11 +131,13 @@ void JtagTap::comb() {
         v.datacnt = 0;
         break;
     case SHIFT_DR:
-        vb_dr[r.dr_length.read().to_uint()-1] = i_tdi;
         if (r.dr_length.read() > 1) {
             // For the bypass dr_length = 1
+            vb_dr[r.dr_length.read().to_uint() - 1] = i_tdi;
             vb_dr(r.dr_length.read().to_uint() - 2, 0)
                 = r.dr.read()(r.dr_length.read().to_uint() - 1, 1);
+        } else {
+            vb_dr[0] = i_tdi;
         }
         v.datacnt = r.datacnt + 1;  // debug counter no need in rtl
         break;
@@ -184,7 +182,7 @@ void JtagTap::comb() {
 }
 
 void JtagTap::registers() {
-    if (!i_nrst.read()) {
+    if (i_trst.read()) {
         R_RESET(r);
     } else {
         r = v;
@@ -192,7 +190,7 @@ void JtagTap::registers() {
 }
 
 void JtagTap::nregisters() {
-    if (!i_nrst.read()) {
+    if (i_trst.read()) {
         NR_RESET(nr);
     } else {
         nr = nv;

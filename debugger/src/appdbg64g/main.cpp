@@ -47,6 +47,7 @@ int main(int argc, char* argv[]) {
     uint16_t tcp_port = 0;
     AttributeType databuf;
     bool nogui = false;
+    bool gui = false;
 
     // Parse arguments:
     if (argc > 1) {
@@ -59,6 +60,8 @@ int main(int argc, char* argv[]) {
                 tcp_port = atoi(argv[i]);
             } else if (strcmp(argv[i], "--nogui") == 0) {
                 nogui = true;
+            } else if (strcmp(argv[i], "--gui") == 0) {
+                gui = true;
             }
         }
     }
@@ -75,6 +78,8 @@ int main(int argc, char* argv[]) {
 	/** Disable GUI using application arguments list */
     if (nogui) {
         Config["GlobalSettings"]["GUI"].make_boolean(false);
+    } else if (gui) {
+        Config["GlobalSettings"]["GUI"].make_boolean(true);
     }
 
     /** Redefine TCP port value using application arguments list. It is useful

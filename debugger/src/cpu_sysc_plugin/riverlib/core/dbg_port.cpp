@@ -87,6 +87,7 @@ DbgPort::DbgPort(sc_module_name name_, bool async_reset) :
     sensitive << r.rdata;
     sensitive << r.req_accepted;
     sensitive << r.resp_error;
+    sensitive << r.progbuf_ena;
     sensitive << r.progbuf_pc;
     sensitive << r.progbuf_instr;
     sensitive << wb_stack_rdata;
@@ -306,6 +307,7 @@ void DbgPort::comb() {
 
     v.dport_rdata = vrdata;
 
+    v.progbuf_ena = v_progbuf_ena;
     if (v_progbuf_ena == 1) {
         // Total progbuf max = 512 bits = 64 B
         v.progbuf_pc = (0, (i_e_npc.read()(5,1) << 1));
@@ -334,7 +336,7 @@ void DbgPort::comb() {
     o_ireg_ena = w_o_ireg_ena;
     o_ireg_write = w_o_ireg_write;
 
-    o_progbuf_ena = v_progbuf_ena;
+    o_progbuf_ena = r.progbuf_ena;
     o_progbuf_pc = r.progbuf_pc;
     o_progbuf_instr = r.progbuf_instr;
 

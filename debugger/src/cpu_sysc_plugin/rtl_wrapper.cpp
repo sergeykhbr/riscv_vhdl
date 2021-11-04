@@ -27,7 +27,8 @@ extern bool dbg_e_valid;
 
 RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     o_clk("clk", 10, SC_NS),
-    o_nrst("o_nrst"),
+    o_sys_nrst("o_sys_nrst"),
+    o_dmi_nrst("o_dmi_nrst"),
     o_msti("o_msti"),
     i_msto("i_msto"),
     o_interrupt("o_interrupt"),
@@ -213,7 +214,8 @@ void RtlWrapper::comb() {
     wb_wdata = vb_wdata;
     wb_wstrb = vb_wstrb;
 
-    o_nrst = r.nrst.read()[1].to_bool() 
+    o_dmi_nrst = r.nrst.read()[1].to_bool();
+    o_sys_nrst = r.nrst.read()[1].to_bool() 
             && !i_hartreset.read()
             && !i_ndmreset.read();
 
