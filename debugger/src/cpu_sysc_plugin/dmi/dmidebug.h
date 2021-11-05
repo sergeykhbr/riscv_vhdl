@@ -125,6 +125,7 @@ class DmiDebug : public sc_module,
     static const int CmdPostexecBit = 18;
     static const int CmdTransferBit = 17;
     static const int CmdWriteBit = 16;
+    static const int CmdPostincrementBit = 19;
 
     sc_signal<bool> w_i_trst;
     sc_signal<bool> w_i_tck;
@@ -200,6 +201,7 @@ class DmiDebug : public sc_module,
         sc_signal<bool> cmd_read;
         sc_signal<bool> cmd_write;
         sc_signal<bool> transfer;
+        sc_signal<bool> postincrement;
         sc_signal<bool> aamvirtual;
         sc_signal<sc_uint<32>> command;
         sc_signal<sc_uint<CFG_DATA_REG_TOTAL>> autoexecdata;
@@ -250,6 +252,7 @@ class DmiDebug : public sc_module,
         iv.cmd_write = 0;
         iv.cmd_read = 0;
         iv.transfer = 0;
+        iv.postincrement = 0;
         iv.aamvirtual = 0;
         iv.command = 0;
         iv.autoexecdata = 0;

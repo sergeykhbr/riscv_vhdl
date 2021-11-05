@@ -93,6 +93,7 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name, bool async_reset)
     sensitive << r.cmd_read;
     sensitive << r.cmd_write;
     sensitive << r.transfer;
+    sensitive << r.postincrement;
     sensitive << r.aamvirtual;
     sensitive << r.command;
     sensitive << r.autoexecdata;
@@ -210,6 +211,7 @@ void DmiDebug::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.dmactive, pn + ".r_dmactive");
         sc_trace(o_vcd, r.hartsel, pn + ".r_hartsel");
         sc_trace(o_vcd, r.transfer, pn + ".r_transfer");
+        sc_trace(o_vcd, r.postincrement, pn + ".r_postincrement");
         sc_trace(o_vcd, r.aamvirtual, pn + ".r_aamvirtual");
         sc_trace(o_vcd, r.cmd_regaccess, pn + ".r_cmd_regaccess");
         sc_trace(o_vcd, r.cmd_fastaccess, pn + ".r_cmd_fastaccess");
@@ -494,6 +496,7 @@ void DmiDebug::comb() {
     case CMD_STATE_IDLE:
         v.transfer = 0;
         v.aamvirtual = 0;
+        v.postincrement = 0;
         v.cmd_regaccess = 0;
         v.cmd_fastaccess = 0;
         v.cmd_memaccess = 0;
@@ -504,6 +507,7 @@ void DmiDebug::comb() {
         v.dport_resp_ready = 0;
         break;
     case CMD_STATE_INIT:
+        v.postincrement = r.command.read()[CmdPostincrementBit];
         if (r.command.read()(31, 24) == 0x0) {
             // Register access command
             if (r.command.read()[CmdTransferBit]) {             // transfer
@@ -519,14 +523,18 @@ void DmiDebug::comb() {
                 v.dport_size = r.command.read()(22, 20);
             } else if (r.command.read()[CmdPostexecBit]) {      // no transfer only buffer execution
                 v.cmdstate = CMD_STATE_REQUEST;
-
+        
                 v.dport_req_valid = 1;
                 v.cmd_progexec = 1;
+            } else {
+                // Empty command: do nothing
+                v.cmdstate = CMD_STATE_IDLE;
             }
         } else if (r.command.read()(31, 24) == 0x1) {
             // Fast access command
             if (i_halted.read()[hsel]) {
                 v.cmderr = CMDERR_WRONGSTATE;
+                v.cmdstate = CMD_STATE_IDLE;
             } else {
                 v.haltreq = 1;
                 v.cmd_fastaccess = 1;
@@ -544,6 +552,9 @@ void DmiDebug::comb() {
             v.dport_addr = (r.data3, r.data2);
             v.dport_wdata = (r.data1, r.data0);
             v.dport_size = r.command.read()(22, 20);
+        } else {
+            // Unsupported command type:
+            v.cmdstate = CMD_STATE_IDLE;
         }
         break;
     case CMD_STATE_REQUEST:
@@ -577,7 +588,8 @@ void DmiDebug::comb() {
                 default:;
                 }
             }
-            if (r.command.read()[19]) {                         // postincrement
+            if (r.postincrement) {
+                v.postincrement = 0;
                 sc_uint<32> t1 = r.command;
                 if (r.command.read()(31, 24) == 0) {
                     // Register access command:
@@ -602,10 +614,14 @@ void DmiDebug::comb() {
                 }
                 v.command = t1;
             }
-            if (r.transfer.read() && r.command.read()[CmdPostexecBit]) {
+            if (r.transfer.read() && r.command.read()[CmdPostexecBit]
+                && !i_dport_resp_error.read()) {
                 v.transfer = 0;
                 v.dport_req_valid = 1;
                 v.cmd_progexec = 1;
+                v.cmd_regaccess = 0;
+                v.cmd_write = 0;
+                v.cmd_read = 0;
                 v.cmdstate = CMD_STATE_REQUEST;
             } else {
                 v.cmdstate = CMD_STATE_IDLE;

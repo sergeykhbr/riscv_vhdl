@@ -240,7 +240,7 @@ void RiverTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_halted, o_halted.name());
         sc_trace(o_vcd, o_dport_req_ready, o_dport_req_ready.name());
         sc_trace(o_vcd, o_dport_resp_valid, o_dport_resp_valid.name());
-        sc_trace(o_vcd, o_dport_resp_error, o_dport_resp_valid.name());
+        sc_trace(o_vcd, o_dport_resp_error, o_dport_resp_error.name());
         sc_trace(o_vcd, o_dport_rdata, o_dport_rdata.name());
     }
 
