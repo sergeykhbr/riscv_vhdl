@@ -195,12 +195,11 @@ class DmiDebug : public sc_module,
         sc_signal<bool> dmactive;
         sc_signal<sc_uint<CFG_LOG2_CPU_MAX>> hartsel;
         sc_signal<bool> cmd_regaccess;
-        sc_signal<bool> cmd_fastaccess;
+        sc_signal<bool> cmd_quickaccess;
         sc_signal<bool> cmd_memaccess;
         sc_signal<bool> cmd_progexec;
         sc_signal<bool> cmd_read;
         sc_signal<bool> cmd_write;
-        sc_signal<bool> transfer;
         sc_signal<bool> postincrement;
         sc_signal<bool> aamvirtual;
         sc_signal<sc_uint<32>> command;
@@ -246,12 +245,11 @@ class DmiDebug : public sc_module,
         iv.dmactive = 0;
         iv.hartsel = 0;
         iv.cmd_regaccess = 0;
-        iv.cmd_fastaccess = 0;
+        iv.cmd_quickaccess = 0;
         iv.cmd_memaccess = 0;
         iv.cmd_progexec = 0;
         iv.cmd_write = 0;
         iv.cmd_read = 0;
-        iv.transfer = 0;
         iv.postincrement = 0;
         iv.aamvirtual = 0;
         iv.command = 0;

@@ -55,13 +55,23 @@ SC_MODULE(DbgPort) {
     sc_in<bool> i_csr_progbuf_end;                      // End of execution from progbuf
     sc_in<bool> i_csr_progbuf_error;                    // Exception is occured during progbuf execution
 
-    sc_out<sc_uint<6>> o_reg_addr;
-    sc_out<sc_uint<RISCV_ARCH>> o_core_wdata;           // Write data
+    sc_out<sc_uint<6>> o_ireg_addr;
+    sc_out<sc_uint<RISCV_ARCH>> o_ireg_wdata;           // Write data
     sc_out<bool> o_ireg_ena;                            // Region 1: Access to integer register bank is enabled
     sc_out<bool> o_ireg_write;                          // Region 1: Integer registers bank write pulse
     sc_in<sc_uint<RISCV_ARCH>> i_ireg_rdata;            // Region 1: Integer register read value
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_pc;           // Region 1: Instruction pointer
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_npc;          // Region 1: Next Instruction pointer
+
+    sc_out<bool> o_mem_req_valid;                       // Type 2: request is valid
+    sc_in<bool> i_mem_req_ready;                        // Type 2: memory request was accepted
+    sc_out<bool> o_mem_req_write;                       // Type 2: is write
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mem_req_addr;  // Type 2: Debug memory request
+    sc_out<sc_uint<2>> o_mem_req_size;                  // Type 2: memory operation size: 0=1B; 1=2B; 2=4B; 3=8B
+    sc_out<sc_uint<RISCV_ARCH>> o_mem_req_wdata;        // Type 2: memory write data
+    sc_in<bool> i_mem_resp_valid;                       // Type 2: response is valid
+    sc_in<sc_uint<RISCV_ARCH>> i_mem_resp_rdata;        // Type 2: Memory response from memaccess module
+
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_pc;           // Instruction pointer
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_npc;          // Next Instruction pointer
     sc_in<bool> i_e_call;                               // pseudo-instruction CALL
     sc_in<bool> i_e_ret;                                // pseudo-instruction RET
 
@@ -84,6 +94,8 @@ private:
         reg_stktr_buf_adr,
         reg_stktr_buf_dat,
         exec_progbuf,
+        mem_request,
+        mem_response,
         wait_to_accept
     };
 
@@ -92,7 +104,8 @@ private:
         sc_signal<sc_uint<CFG_BUS_ADDR_WIDTH>> dport_addr;
         sc_signal<sc_uint<RISCV_ARCH>> dport_wdata;
         sc_signal<sc_uint<RISCV_ARCH>> dport_rdata;
-        sc_signal<sc_uint<3>> dstate;
+        sc_signal<sc_uint<2>> dport_size;
+        sc_signal<sc_uint<4>> dstate;
 
         sc_signal<sc_uint<RISCV_ARCH>> rdata;
         sc_signal<sc_uint<CFG_LOG2_STACK_TRACE_ADDR>> stack_trace_cnt;              // Stack trace buffer counter
@@ -108,6 +121,7 @@ private:
         iv.dport_addr = 0;
         iv.dport_wdata = 0;
         iv.dport_rdata = 0;
+        iv.dport_size = 0;
         iv.dstate = idle;
         iv.rdata = 0;
         iv.stack_trace_cnt = 0;

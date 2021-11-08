@@ -162,6 +162,7 @@ private:
         sc_signal<bool> csr_resp_ready;              // Executor is ready to accept response
 
         sc_signal<bool> memop_valid;
+        sc_signal<bool> memop_debug;
         sc_signal<bool> memop_sign_ext;
         sc_signal<sc_uint<MemopType_Total>> memop_type;
         sc_signal<sc_uint<2>> memop_size;
@@ -174,6 +175,7 @@ private:
         sc_signal<bool> call;                       // pseudo-instruction CALL
         sc_signal<bool> ret;                        // pseudo-instruction RET
         sc_signal<bool> halted;
+        sc_signal<bool> dbg_mem_req_ready;
     };
 
     struct MemoryType {
@@ -181,6 +183,7 @@ private:
         sc_signal<bool> flushd;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
         sc_signal<bool> valid;
+        sc_signal<bool> debug_valid;
     };
 
     struct WriteBackType {
@@ -230,10 +233,15 @@ private:
         sc_signal<sc_uint<12>> csr_req_addr;            // Address of the sub-region register
         sc_signal<sc_uint<RISCV_ARCH>> csr_req_data;
         sc_signal<bool> csr_resp_ready;
-        sc_signal<sc_uint<6>> reg_addr;
-        sc_signal<sc_uint<RISCV_ARCH>> core_wdata;      // Write data
+        sc_signal<sc_uint<6>> ireg_addr;
+        sc_signal<sc_uint<RISCV_ARCH>> ireg_wdata;      // Write data
         sc_signal<bool> ireg_ena;                       // Region 1: Access to integer register bank is enabled
         sc_signal<bool> ireg_write;                     // Region 1: Integer registers bank write pulse
+        sc_signal<bool> mem_req_valid;                       // Type 2: request is valid
+        sc_signal<bool> mem_req_write;                       // Type 2: is write
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mem_req_addr;  // Type 2: Debug memory request
+        sc_signal<sc_uint<2>> mem_req_size;                  // Type 2: memory operation size: 0=1B; 1=2B; 2=4B; 3=8B
+        sc_signal<sc_uint<RISCV_ARCH>> mem_req_wdata;        // Type 2: memory write data
         sc_signal<bool> progbuf_ena;                    // execute instruction from progbuf
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> progbuf_pc;   // progbuf instruction counter
         sc_signal<sc_uint<32>> progbuf_instr;           // progbuf instruction to execute

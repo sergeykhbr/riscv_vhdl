@@ -95,12 +95,20 @@ SC_MODULE(InstrExecute) {
     sc_in<bool> i_csr_resp_exception;           // Raise exception on CSR access
 
     sc_out<bool> o_memop_valid;                 // Request to memory is valid
+    sc_out<bool> o_memop_debug;                 // Debug Request shouldn't modify registers in write back stage
     sc_out<bool> o_memop_sign_ext;              // Load data with sign extending
     sc_out<sc_uint<MemopType_Total>> o_memop_type;  // [0]: 1=store/0=Load data
     sc_out<sc_uint<2>> o_memop_size;            // 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_memop_memaddr;// Memory access address
     sc_out<sc_uint<RISCV_ARCH>> o_memop_wdata;
     sc_in<bool> i_memop_ready;
+
+    sc_in<bool> i_dbg_mem_req_valid;            // Debug Request to memory is valid
+    sc_in<bool> i_dbg_mem_req_write;            // 0=read; 1=write
+    sc_in<sc_uint<2>> i_dbg_mem_req_size;       // 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_dbg_mem_req_addr;// Memory access address
+    sc_in<sc_uint<RISCV_ARCH>> i_dbg_mem_req_wdata;
+    sc_out<bool> o_dbg_mem_req_ready;           // Debug emmory request was accepted
 
     sc_out<bool> o_valid;                       // Output is valid
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_pc;    // Valid instruction pointer
@@ -149,6 +157,7 @@ private:
     static const unsigned State_Amo = 5;
     static const unsigned State_Csr = 6;
     static const unsigned State_Halted = 7;
+    static const unsigned State_DebugMemRequest = 8;
 
     static const unsigned CsrState_Idle = 0;
     static const unsigned CsrState_Req = 1;
@@ -184,7 +193,7 @@ private:
     };
 
     struct RegistersType {
-        sc_signal<sc_uint<3>> state;
+        sc_signal<sc_uint<4>> state;
         sc_signal<sc_uint<2>> csrstate;
         sc_signal<sc_uint<2>> amostate;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
@@ -212,6 +221,8 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> csr_req_data;
 
         sc_signal<bool> memop_valid;
+        sc_signal<bool> memop_debug;                    // request from dport
+        sc_signal<bool> memop_halted;                   // 0=return to Idle; 1=return to halt state
         sc_signal<sc_uint<MemopType_Total>> memop_type;
         sc_signal<bool> memop_sign_ext;
         sc_signal<sc_uint<2>> memop_size;
@@ -269,6 +280,8 @@ private:
         iv.csr_req_addr = 0;
         iv.csr_req_data = 0;
         iv.memop_valid = 0;
+        iv.memop_debug = 0;;
+        iv.memop_halted = 0;
         iv.memop_type = 0;
         iv.memop_sign_ext = 0;
         iv.memop_size = 0;

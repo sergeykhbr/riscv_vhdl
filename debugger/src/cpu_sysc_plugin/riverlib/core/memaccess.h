@@ -34,6 +34,7 @@ SC_MODULE(MemAccess) {
     sc_in<sc_uint<6>> i_reg_waddr;                  // Register address to be written (0=no writing)
     sc_in<sc_uint<CFG_REG_TAG_WITH>> i_reg_wtag;    // Register tag for writeback operation
     sc_in<bool> i_memop_valid;                      // Memory request is valid
+    sc_in<bool> i_memop_debug;                      // Memory debug request
     sc_in<sc_uint<RISCV_ARCH>> i_memop_wdata;       // Register value to be written
     sc_in<bool> i_memop_sign_ext;                   // Load data with sign extending (if less than 8 Bytes)
     sc_in<sc_uint<MemopType_Total>> i_memop_type;   // [0] 1=store;0=Load data from memory and write to i_res_addr
@@ -61,6 +62,7 @@ SC_MODULE(MemAccess) {
     sc_out<bool> o_mem_resp_ready;                  // Pipeline is ready to accept memory operation response
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_pc;        // executed memory/flush request only
     sc_out<bool> o_valid;                           // memory/flush operation completed
+    sc_out<bool> o_debug_valid;                     // Debug request processed, response is valid
 
     void comb();
     void registers();
@@ -86,6 +88,7 @@ private:
         sc_signal<sc_uint<8>> memop_wstrb;
         sc_signal<bool> memop_sign_ext;
         sc_signal<sc_uint<2>> memop_size;
+        sc_signal<bool> memop_debug;
 
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> memop_res_pc;
         sc_signal<sc_uint<32>> memop_res_instr;
@@ -107,6 +110,7 @@ private:
         iv.memop_wstrb = 0;
         iv.memop_sign_ext = 0;
         iv.memop_size = 0;
+        iv.memop_debug = 0;
         iv.memop_res_pc = 0;
         iv.memop_res_instr = 0;
         iv.memop_res_addr = 0;
@@ -118,7 +122,8 @@ private:
         iv.valid = 0;
     }
 
-    static const int QUEUE_WIDTH = 1   // i_e_flushd
+    static const int QUEUE_WIDTH = 1 // memop_debug
+                                 + 1   // i_e_flushd
                                  + CFG_REG_TAG_WITH   // wtag
                                  + 64  // wdata width
                                  + 8   // wstrb 

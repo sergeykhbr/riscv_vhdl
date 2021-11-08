@@ -87,12 +87,11 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name, bool async_reset)
     sensitive << r.dmactive;
     sensitive << r.hartsel;
     sensitive << r.cmd_regaccess;
-    sensitive << r.cmd_fastaccess;
+    sensitive << r.cmd_quickaccess;
     sensitive << r.cmd_memaccess;
     sensitive << r.cmd_progexec;
     sensitive << r.cmd_read;
     sensitive << r.cmd_write;
-    sensitive << r.transfer;
     sensitive << r.postincrement;
     sensitive << r.aamvirtual;
     sensitive << r.command;
@@ -210,11 +209,10 @@ void DmiDebug::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.ndmreset, pn + ".r_ndmreset");
         sc_trace(o_vcd, r.dmactive, pn + ".r_dmactive");
         sc_trace(o_vcd, r.hartsel, pn + ".r_hartsel");
-        sc_trace(o_vcd, r.transfer, pn + ".r_transfer");
         sc_trace(o_vcd, r.postincrement, pn + ".r_postincrement");
         sc_trace(o_vcd, r.aamvirtual, pn + ".r_aamvirtual");
         sc_trace(o_vcd, r.cmd_regaccess, pn + ".r_cmd_regaccess");
-        sc_trace(o_vcd, r.cmd_fastaccess, pn + ".r_cmd_fastaccess");
+        sc_trace(o_vcd, r.cmd_quickaccess, pn + ".r_cmd_quickaccess");
         sc_trace(o_vcd, r.cmd_memaccess, pn + ".r_cmd_memaccess");
         sc_trace(o_vcd, r.cmd_progexec, pn + ".r_cmd_progexec");
         sc_trace(o_vcd, r.cmd_read, pn + ".r_cmd_read");
@@ -494,11 +492,10 @@ void DmiDebug::comb() {
     // Abstract Command executor state machine:
     switch (r.cmdstate.read()) {
     case CMD_STATE_IDLE:
-        v.transfer = 0;
         v.aamvirtual = 0;
         v.postincrement = 0;
         v.cmd_regaccess = 0;
-        v.cmd_fastaccess = 0;
+        v.cmd_quickaccess = 0;
         v.cmd_memaccess = 0;
         v.cmd_progexec = 0;
         v.cmd_read = 0;
@@ -512,7 +509,6 @@ void DmiDebug::comb() {
             // Register access command
             if (r.command.read()[CmdTransferBit]) {             // transfer
                 v.cmdstate = CMD_STATE_REQUEST;
-                v.transfer = 1;
                 v.cmd_regaccess = 1;
                 v.cmd_read = !r.command.read()[CmdWriteBit];
                 v.cmd_write = r.command.read()[CmdWriteBit];
@@ -531,13 +527,13 @@ void DmiDebug::comb() {
                 v.cmdstate = CMD_STATE_IDLE;
             }
         } else if (r.command.read()(31, 24) == 0x1) {
-            // Fast access command
+            // Quick access command
             if (i_halted.read()[hsel]) {
                 v.cmderr = CMDERR_WRONGSTATE;
                 v.cmdstate = CMD_STATE_IDLE;
             } else {
                 v.haltreq = 1;
-                v.cmd_fastaccess = 1;
+                v.cmd_quickaccess = 1;
                 v.cmdstate = CMD_STATE_WAIT_HALTED;
             }
         } else if (r.command.read()(31, 24) == 0x2) {
@@ -614,9 +610,8 @@ void DmiDebug::comb() {
                 }
                 v.command = t1;
             }
-            if (r.transfer.read() && r.command.read()[CmdPostexecBit]
+            if (r.cmd_regaccess.read() && r.command.read()[CmdPostexecBit]
                 && !i_dport_resp_error.read()) {
-                v.transfer = 0;
                 v.dport_req_valid = 1;
                 v.cmd_progexec = 1;
                 v.cmd_regaccess = 0;
@@ -629,7 +624,7 @@ void DmiDebug::comb() {
                     v.cmderr = CMDERR_EXCEPTION;         // TODO check errors
                 }
             }
-            if (r.cmd_fastaccess) {
+            if (r.cmd_quickaccess) {
                 // fast command continued even if progbuf execution failed (@see spec)
                 v.resumereq = 1;
             }

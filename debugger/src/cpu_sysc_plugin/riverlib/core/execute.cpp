@@ -82,12 +82,19 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     i_csr_resp_data("i_csr_resp_data"),
     i_csr_resp_exception("i_csr_resp_exception"),
     o_memop_valid("o_memop_valid"),
+    o_memop_debug("o_memop_debug"),
     o_memop_sign_ext("o_memop_sign_ext"),
     o_memop_type("o_memop_type"),
     o_memop_size("o_memop_size"),
     o_memop_memaddr("o_memop_memaddr"),
     o_memop_wdata("o_memop_wdata"),
     i_memop_ready("i_memop_ready"),
+    i_dbg_mem_req_valid("i_dbg_mem_req_valid"),
+    i_dbg_mem_req_write("i_dbg_mem_req_write"),
+    i_dbg_mem_req_size("i_dbg_mem_req_size"),
+    i_dbg_mem_req_addr("i_dbg_mem_req_addr"),
+    i_dbg_mem_req_wdata("i_dbg_mem_req_wdata"),
+    o_dbg_mem_req_ready("o_dbg_mem_req_ready"),
     o_valid("o_valid"),
     o_pc("o_pc"),
     o_npc("o_npc"),
@@ -152,6 +159,11 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << i_csr_resp_data;
     sensitive << i_csr_resp_exception;
     sensitive << i_flushd_end;
+    sensitive << i_dbg_mem_req_valid;
+    sensitive << i_dbg_mem_req_write;
+    sensitive << i_dbg_mem_req_size;
+    sensitive << i_dbg_mem_req_addr;
+    sensitive << i_dbg_mem_req_wdata;
     sensitive << r.state;
     sensitive << r.csrstate;
     sensitive << r.amostate;
@@ -176,6 +188,8 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << r.csr_req_addr;
     sensitive << r.csr_req_data;
     sensitive << r.memop_valid;
+    sensitive << r.memop_debug;
+    sensitive << r.memop_halted;
     sensitive << r.memop_type;
     sensitive << r.memop_sign_ext;
     sensitive << r.memop_size;
@@ -361,6 +375,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_csr_resp_exception, i_csr_resp_exception.name());
         sc_trace(o_vcd, i_flushd_end, i_flushd_end.name());
         sc_trace(o_vcd, o_memop_valid, o_memop_valid.name());
+        sc_trace(o_vcd, o_memop_debug, o_memop_debug.name());
         sc_trace(o_vcd, o_memop_type, o_memop_type.name());
         sc_trace(o_vcd, o_memop_size, o_memop_size.name());
         sc_trace(o_vcd, o_memop_memaddr, o_memop_memaddr.name());
@@ -401,6 +416,8 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.radr2, pn + ".r_radr2");
         sc_trace(o_vcd, r.flushd, pn + ".r_flushd");
         sc_trace(o_vcd, r.stepdone, pn + ".r_stepdone");
+        sc_trace(o_vcd, r.memop_debug, pn + ".r_memop_debug");
+        sc_trace(o_vcd, r.memop_halted, pn + ".r_memop_halted");
         sc_trace(o_vcd, w_hazard1, pn + ".w_hazard1");
         sc_trace(o_vcd, w_hazard2, pn + ".w_hazard2");
         sc_trace(o_vcd, tag_expected[0xA], pn + ".tag_expected0x0A");
@@ -458,6 +475,7 @@ void InstrExecute::comb() {
     bool v_d_ready;
     bool v_latch_input;
     bool v_memop_ena;
+    bool v_memop_debug;
     bool v_reg_ena;
     sc_uint<6> vb_reg_waddr;
     bool v_instr_misaligned;
@@ -466,6 +484,7 @@ void InstrExecute::comb() {
     bool v_csr_cmd_ena;
     sc_uint<12> vb_csr_cmd_addr;
     sc_uint<CsrReq_TotalBits> vb_csr_cmd_type;
+    bool v_dbg_mem_req_ready;
     input_mux_type mux;
 
     v = r;
@@ -501,6 +520,8 @@ void InstrExecute::comb() {
     v_latch_input = 0;
     v_reg_ena = 0;
     v_memop_ena = 0;
+    v_memop_debug = 0;
+    v_dbg_mem_req_ready = 0;
 
     vb_reg_waddr = i_d_waddr;
 
@@ -888,7 +909,15 @@ void InstrExecute::comb() {
             v_latch_input = 1;
             // opencocd doesn't clear 'step' value in dcsr after step has been done
             v.stepdone = i_step & !i_dbg_progbuf_ena;
-            if (v_csr_cmd_ena) {
+            if (i_dbg_mem_req_valid.read()) {
+                sc_uint<MemopType_Total> t_type = 0;
+                v.state = State_DebugMemRequest;
+                v.memop_halted = 0;
+                v.memop_sign_ext = 0;
+                t_type[MemopType_Store] = i_dbg_mem_req_write;
+                v.memop_type = t_type;
+                v.memop_size = i_dbg_mem_req_size;
+            } else if (v_csr_cmd_ena) {
                 v.state = State_Csr;
                 v.csrstate = CsrState_Req;
                 v.csr_req_type = vb_csr_cmd_type;
@@ -1094,6 +1123,28 @@ void InstrExecute::comb() {
             v.csr_req_type = CsrReq_ResumeCmd;
             v.csr_req_addr = 0;
             v.csr_req_data = 0;
+        } else if (i_dbg_mem_req_valid.read()) {
+            v_dbg_mem_req_ready = 1;
+            sc_uint<MemopType_Total> t_type = 0;
+            v.state = State_DebugMemRequest;
+            v.memop_halted = 1;
+            v.memop_sign_ext = 0;
+            t_type[MemopType_Store] = i_dbg_mem_req_write;
+            v.memop_type = t_type;
+            v.memop_size = i_dbg_mem_req_size;
+        }
+        break;
+    case State_DebugMemRequest:
+        v_memop_ena = 1;
+        v_memop_debug = 1;
+        vb_memop_memaddr = i_dbg_mem_req_addr;
+        vb_memop_wdata = i_dbg_mem_req_wdata;
+        if (i_memop_ready.read()) {
+            if (r.memop_halted) {
+                v.state = State_Halted;
+            } else {
+                v.state = State_Idle;
+            }
         }
         break;
     default:;
@@ -1152,12 +1203,15 @@ void InstrExecute::comb() {
     }
     if (v_memop_ena) {
         v.memop_valid = 1;
+        v.memop_debug = v_memop_debug;
         v.memop_type = mux.memop_type;
         v.memop_sign_ext = mux.memop_sign_ext;
         v.memop_size = mux.memop_size;
         v.memop_memaddr = vb_memop_memaddr;
         v.memop_wdata = vb_memop_wdata;
-        if (mux.memop_type[MemopType_Store] == 0 || mux.memop_type[MemopType_Release]) {
+        if (v_memop_debug == 0 
+            && (mux.memop_type[MemopType_Store] == 0
+                || mux.memop_type[MemopType_Release])) {
             // Error code of the instruction SC (store with release) should
             // be written into register
             v.tagcnt_wr = vb_tagcnt_wr;
@@ -1167,8 +1221,8 @@ void InstrExecute::comb() {
         }
     } else if (i_memop_ready.read()) {
         v.memop_valid = 0;
+        v.memop_debug = 0;
     }
-
 
     if (!async_reset_ && !i_nrst.read()) {
         R_RESET(v);
@@ -1225,6 +1279,7 @@ void InstrExecute::comb() {
     o_d_ready = v_d_ready;
 
     o_memop_valid = r.memop_valid;
+    o_memop_debug = r.memop_debug;
     o_memop_sign_ext = r.memop_sign_ext;
     o_memop_type = r.memop_type;
     o_memop_size = r.memop_size;
@@ -1236,6 +1291,8 @@ void InstrExecute::comb() {
     o_csr_req_addr = r.csr_req_addr;
     o_csr_req_data = r.csr_req_data;
     o_csr_resp_ready = v_csr_resp_ready;
+
+    o_dbg_mem_req_ready = v_dbg_mem_req_ready;
 
     o_valid = r.valid;
     o_pc = r.pc;
