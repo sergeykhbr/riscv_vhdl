@@ -586,29 +586,32 @@ void DmiDebug::comb() {
             }
             if (r.postincrement) {
                 v.postincrement = 0;
-                sc_uint<32> t1 = r.command;
                 if (r.command.read()(31, 24) == 0) {
                     // Register access command:
+                    sc_uint<32> t1 = r.command;
                     t1(15, 0) = t1(15, 0) + 1;
+                    v.command = t1;
                 } else if (r.command.read()(31, 24) == 2) {
                     // Memory access command
+                    sc_uint<64> arg1 = (r.data3, r.data2);
                     switch (r.command.read()(22,20)) {          // aamsize
                     case 0:
-                        t1(15, 0) = t1(15, 0) + 1;
+                        arg1 = arg1 + 1;
                         break;
                     case 1:
-                        t1(15, 0) = t1(15, 0) + 2;
+                        arg1 = arg1 + 2;
                         break;
                     case 2:
-                        t1(15, 0) = t1(15, 0) + 4;
+                        arg1 = arg1 + 4;
                         break;
                     case 3:
-                        t1(15, 0) = t1(15, 0) + 8;
+                        arg1 = arg1 + 8;
                         break;
                     default:;
                     }
+                    v.data2 = arg1(31, 0);
+                    v.data3 = arg1(63, 32);
                 }
-                v.command = t1;
             }
             if (r.cmd_regaccess.read() && r.command.read()[CmdPostexecBit]
                 && !i_dport_resp_error.read()) {

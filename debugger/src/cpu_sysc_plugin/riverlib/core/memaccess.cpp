@@ -271,7 +271,9 @@ void MemAccess::comb() {
     }
 
     // Form Queue inputs:
-    queue_data_i = (i_memop_debug, i_e_flushd, i_reg_wtag, vb_memop_wdata, vb_memop_wstrb,
+    sc_uint<1> t_memop_debug = i_memop_debug;       // looks like bug in systemc, cannot handle bool properly
+    queue_data_i = (t_memop_debug, i_e_flushd, i_reg_wtag,
+                    vb_memop_wdata, vb_memop_wstrb,
                     i_memop_wdata, i_reg_waddr, i_e_instr, i_e_pc,
                     i_memop_size, i_memop_sign_ext, i_memop_type,
                     i_memop_addr);

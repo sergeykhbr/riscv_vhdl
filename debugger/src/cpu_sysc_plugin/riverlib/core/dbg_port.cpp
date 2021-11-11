@@ -330,9 +330,9 @@ void DbgPort::comb() {
         }
         break;
     case mem_response:
+        vrdata = i_mem_resp_rdata;
         if (i_mem_resp_valid.read()) {
             v.dstate = wait_to_accept;
-            v.dport_rdata = i_mem_resp_rdata;
             v.resp_error = 0;
         }
         break;
