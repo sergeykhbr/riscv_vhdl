@@ -481,7 +481,10 @@ void InstrExecute::comb() {
     bool v_instr_misaligned;
     bool v_store_misaligned;
     bool v_load_misaligned;
+    bool v_store_misaligned_debug;  // from the debug interface
+    bool v_load_misaligned_debug;
     bool v_csr_cmd_ena;
+    bool v_mem_ex;
     sc_uint<12> vb_csr_cmd_addr;
     sc_uint<CsrReq_TotalBits> vb_csr_cmd_type;
     bool v_dbg_mem_req_ready;
@@ -513,7 +516,10 @@ void InstrExecute::comb() {
     v_instr_misaligned = 0;
     v_store_misaligned = 0;
     v_load_misaligned = 0;
+    v_store_misaligned_debug = 0;
+    v_load_misaligned_debug = 0;
     v_csr_cmd_ena = 0;
+    v_mem_ex = 0;
     vb_csr_cmd_addr = 0;
     vb_csr_cmd_type = 0;
     vb_csr_cmd_wdata = 0;
@@ -673,6 +679,12 @@ void InstrExecute::comb() {
         || (wv[Instr_SH] && vb_memop_memaddr_store[0] != 0)) {
         v_store_misaligned = 1;
     }
+    if ((i_dbg_mem_req_size.read() == 3 && i_dbg_mem_req_addr.read()(2, 0) != 0)
+        || (i_dbg_mem_req_size.read() == 2 && i_dbg_mem_req_addr.read()(1, 0) != 0)
+        || (i_dbg_mem_req_size.read() == 1 && i_dbg_mem_req_addr.read()[0] != 0)) {
+        v_load_misaligned_debug = i_dbg_mem_req_valid.read() & !i_dbg_mem_req_write;
+        v_store_misaligned_debug = i_dbg_mem_req_valid.read() & i_dbg_mem_req_write;
+    }
     if (i_stack_overflow.read() == 1) {
         v.stack_overflow = 1;
     }
@@ -765,9 +777,10 @@ void InstrExecute::comb() {
         v_ret = 1;
     }
 
+    v_mem_ex = r.mem_ex_load_fault || r.mem_ex_store_fault
+            || r.mem_ex_mpu_store || r.mem_ex_mpu_load;
     v_csr_cmd_ena = i_haltreq || (i_step && r.stepdone) || i_unsup_exception
-                || i_instr_load_fault || r.mem_ex_load_fault || r.mem_ex_store_fault
-                || r.mem_ex_mpu_store || r.mem_ex_mpu_load || !i_instr_executable.read()
+                || i_instr_load_fault || v_mem_ex || !i_instr_executable.read()
                 || r.stack_overflow || r.stack_underflow
                 || v_instr_misaligned || v_load_misaligned || v_store_misaligned
                 || i_irq_software || i_irq_timer || i_irq_external
