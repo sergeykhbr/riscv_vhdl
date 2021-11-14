@@ -83,6 +83,8 @@ void RegIntBank::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         std::string pn(name());
         sc_trace(o_vcd, r.reg[Reg_s0].val, pn + ".s0");
         sc_trace(o_vcd, r.reg[Reg_s0].tag, pn + ".s0_tag");
+        sc_trace(o_vcd, r.reg[Reg_s1].val, pn + ".s1");
+        sc_trace(o_vcd, r.reg[Reg_s1].tag, pn + ".s1_tag");
         sc_trace(o_vcd, r.reg[Reg_a5].val, pn + ".a5");
         sc_trace(o_vcd, r.reg[Reg_a5].tag, pn + ".a5_tag");
     }

@@ -78,6 +78,8 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << r.cmd_addr;
     sensitive << r.cmd_data;
     sensitive << r.cmd_exception;
+    sensitive << r.progbuf_end;
+    sensitive << r.progbuf_err;
     sensitive << r.mtvec;
     sensitive << r.mtvec_mode;
     sensitive << r.mscratch;
@@ -205,8 +207,6 @@ void CsrRegs::comb() {
     bool v_req_progbuf;
     bool v_req_ready;
     bool v_resp_valid;
-    bool v_progbuf_end;
-    bool v_progbuf_err;
 
     v = r;
 
@@ -227,13 +227,13 @@ void CsrRegs::comb() {
     v_trap_irq = 0;
     wb_trap_cause = 0;
     vb_mtval = 0;
-    v_progbuf_end = 0;
-    v_progbuf_err = 0;
 
     v.mpu_we = 0;
 
     switch (r.state.read()) {
     case State_Idle:
+        v.progbuf_end = 0;
+        v.progbuf_err = 0;
         v_req_ready = 1;
         if (i_req_valid) {
             v.cmd_type = i_req_type;
@@ -264,8 +264,8 @@ void CsrRegs::comb() {
         wb_trap_cause = r.cmd_addr.read()(4, 0);
         v.cmd_data = r.mtvec.read() & ~0x3ull;
         if (i_dbg_progbuf_ena.read() == 1) {
-            v_progbuf_err = 1;
-            v_progbuf_end = 1;
+            v.progbuf_err = 1;
+            v.progbuf_end = 1;
             v.cmd_exception = 1;
         }
         if (r.cmd_addr.read() == EXCEPTION_CallFromUmode) {
@@ -276,7 +276,7 @@ void CsrRegs::comb() {
         v.state = State_Response;
         if (i_dbg_progbuf_ena.read() == 1) {
             // do not modify halt cause in debug mode
-            v_progbuf_end = 1;
+            v.progbuf_end = 1;
             v.cmd_data = ~0ull;     // signal to executor to switch into Debug Mode and halt
         } else if (r.dcsr_ebreakm) {
             v.halt_cause = HALT_CAUSE_EBREAK;
@@ -712,6 +712,8 @@ void CsrRegs::comb() {
     o_resp_valid = v_resp_valid;
     o_resp_data = r.cmd_data;
     o_resp_exception = r.cmd_exception;
+    o_progbuf_end = r.progbuf_end & i_resp_ready.read();
+    o_progbuf_error = r.progbuf_err & i_resp_ready.read();
 
     o_irq_software = v_sw_irq;
     o_irq_timer = v_tmr_irq;
@@ -726,8 +728,6 @@ void CsrRegs::comb() {
     o_mpu_region_mask = r.mpu_mask;
     o_mpu_region_flags = r.mpu_flags;
     o_step = r.dcsr_step;
-    o_progbuf_end = v_progbuf_end;
-    o_progbuf_error = v_progbuf_err;
     o_flushi_ena = r.flushi_ena;
     o_flushi_addr = r.flushi_addr;
 }

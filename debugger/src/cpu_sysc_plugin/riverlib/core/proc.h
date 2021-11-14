@@ -176,6 +176,7 @@ private:
         sc_signal<bool> ret;                        // pseudo-instruction RET
         sc_signal<bool> halted;
         sc_signal<bool> dbg_mem_req_ready;
+        sc_signal<bool> dbg_mem_req_error;
     };
 
     struct MemoryType {
@@ -281,6 +282,7 @@ private:
     sc_signal<bool> w_fetch_pipeline_hold;
     sc_signal<bool> w_any_pipeline_hold;
     sc_signal<bool> w_flush_pipeline;
+    sc_signal<bool> w_mem_resp_error;
 
     InstrFetch *fetch0;
     InstrDecoder *dec0;

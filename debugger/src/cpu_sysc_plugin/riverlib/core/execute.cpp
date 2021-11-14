@@ -49,6 +49,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     i_unsup_exception("i_unsup_exception"),
     i_instr_load_fault("i_instr_load_fault"),
     i_instr_executable("i_instr_executable"),
+    i_mem_ex_debug("i_mem_ex_debug"),
     i_mem_ex_load_fault("i_mem_ex_load_fault"),
     i_mem_ex_store_fault("i_mem_ex_store_fault"),
     i_mem_ex_mpu_store("i_mem_ex_mpu_store"),
@@ -95,6 +96,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     i_dbg_mem_req_addr("i_dbg_mem_req_addr"),
     i_dbg_mem_req_wdata("i_dbg_mem_req_wdata"),
     o_dbg_mem_req_ready("o_dbg_mem_req_ready"),
+    o_dbg_mem_req_error("o_dbg_mem_req_error"),
     o_valid("o_valid"),
     o_pc("o_pc"),
     o_npc("o_npc"),
@@ -139,6 +141,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << i_unsup_exception;
     sensitive << i_instr_load_fault;
     sensitive << i_instr_executable;
+    sensitive << i_mem_ex_debug;
     sensitive << i_mem_ex_load_fault;
     sensitive << i_mem_ex_store_fault;
     sensitive << i_mem_ex_mpu_store;
@@ -169,6 +172,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << r.amostate;
     sensitive << r.pc;
     sensitive << r.npc;
+    sensitive << r.dnpc;
     sensitive << r.instr;
     sensitive << r.radr1;
     sensitive << r.radr2;
@@ -178,8 +182,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << r.ivec;
     sensitive << r.isa_type;
     sensitive << r.imm;
-    sensitive << r.tagcnt_rd;
-    sensitive << r.tagcnt_wr;
+    sensitive << r.tagcnt;
     sensitive << r.select;
     sensitive << r.reg_waddr;
     sensitive << r.reg_wtag;
@@ -341,6 +344,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_unsup_exception, i_unsup_exception.name());
         sc_trace(o_vcd, i_instr_load_fault, i_instr_load_fault.name());
         sc_trace(o_vcd, i_instr_executable, i_instr_executable.name());
+        sc_trace(o_vcd, i_mem_ex_debug, i_mem_ex_debug.name());
         sc_trace(o_vcd, i_mem_ex_load_fault, i_mem_ex_load_fault.name());
         sc_trace(o_vcd, i_mem_ex_store_fault, i_mem_ex_store_fault.name());
         sc_trace(o_vcd, i_mem_ex_mpu_store, i_mem_ex_mpu_store.name());
@@ -406,8 +410,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.csr_req_addr, pn + ".r_csr_req_addr");
         sc_trace(o_vcd, r.csr_req_data, pn + ".r_csr_req_data");
         sc_trace(o_vcd, r.amostate, pn + ".r_amostate");
-        sc_trace(o_vcd, r.tagcnt_rd, pn + ".r_tagcnt_rd");
-        sc_trace(o_vcd, r.tagcnt_wr, pn + ".r_tagcnt_wr");
+        sc_trace(o_vcd, r.tagcnt, pn + ".r_tagcnt");
         sc_trace(o_vcd, r.select, pn + ".r_select");
         sc_trace(o_vcd, r.reg_waddr, pn + ".r_reg_waddr");
         sc_trace(o_vcd, r.reg_wtag, pn + ".r_reg_wtag");
@@ -418,8 +421,13 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.stepdone, pn + ".r_stepdone");
         sc_trace(o_vcd, r.memop_debug, pn + ".r_memop_debug");
         sc_trace(o_vcd, r.memop_halted, pn + ".r_memop_halted");
+        sc_trace(o_vcd, r.mem_ex_store_fault, pn + ".r_mem_ex_store_fault");
+        sc_trace(o_vcd, r.npc, pn + ".r_npc");
+        sc_trace(o_vcd, r.dnpc, pn + ".r_dnpc");
         sc_trace(o_vcd, w_hazard1, pn + ".w_hazard1");
         sc_trace(o_vcd, w_hazard2, pn + ".w_hazard2");
+        sc_trace(o_vcd, tag_expected[0x8], pn + ".tag_expected0x08");
+        sc_trace(o_vcd, tag_expected[0x9], pn + ".tag_expected0x09");
         sc_trace(o_vcd, tag_expected[0xA], pn + ".tag_expected0x0A");
         sc_trace(o_vcd, tag_expected[0xb], pn + ".tag_expected0x0B");
         sc_trace(o_vcd, tag_expected[0xc], pn + ".tag_expected0x0C");
@@ -427,6 +435,8 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, tag_expected[0xe], pn + ".tag_expected0x0E");
         sc_trace(o_vcd, tag_expected[0xf], pn + ".tag_expected0x0F");
         sc_trace(o_vcd, wb_select.res[Res_AddSub], pn + ".t_res_AddSub");
+        sc_trace(o_vcd, t_tagcnt_wr, pn + ".t_tagcnt_wr");
+        sc_trace(o_vcd, t_waddr, pn + ".t_waddr");
     }
     alu0->generateVCD(i_vcd, o_vcd);
     addsub0->generateVCD(i_vcd, o_vcd);
@@ -470,8 +480,8 @@ void InstrExecute::comb() {
     bool v_check_tag1;
     bool v_check_tag2;
     sc_uint<Res_Total> vb_select;
-    sc_biguint<CFG_REG_TAG_WITH*REGS_TOTAL> vb_tagcnt_wr;
-    sc_biguint<CFG_REG_TAG_WITH*REGS_TOTAL> vb_tagcnt_rd;
+    //sc_biguint<CFG_REG_TAG_WITH*REGS_TOTAL> vb_tagcnt_wr;
+    sc_biguint<CFG_REG_TAG_WITH*REGS_TOTAL> vb_tagcnt_next;
     bool v_d_ready;
     bool v_latch_input;
     bool v_memop_ena;
@@ -481,14 +491,15 @@ void InstrExecute::comb() {
     bool v_instr_misaligned;
     bool v_store_misaligned;
     bool v_load_misaligned;
-    bool v_store_misaligned_debug;  // from the debug interface
-    bool v_load_misaligned_debug;
+    bool v_debug_misaligned;  // from the debug interface
     bool v_csr_cmd_ena;
     bool v_mem_ex;
     sc_uint<12> vb_csr_cmd_addr;
     sc_uint<CsrReq_TotalBits> vb_csr_cmd_type;
     bool v_dbg_mem_req_ready;
+    bool v_dbg_mem_req_error;
     input_mux_type mux;
+    sc_uint<CFG_CPU_ADDR_BITS> vb_o_npc;
 
     v = r;
 
@@ -516,8 +527,7 @@ void InstrExecute::comb() {
     v_instr_misaligned = 0;
     v_store_misaligned = 0;
     v_load_misaligned = 0;
-    v_store_misaligned_debug = 0;
-    v_load_misaligned_debug = 0;
+    v_debug_misaligned = 0;
     v_csr_cmd_ena = 0;
     v_mem_ex = 0;
     vb_csr_cmd_addr = 0;
@@ -528,6 +538,7 @@ void InstrExecute::comb() {
     v_memop_ena = 0;
     v_memop_debug = 0;
     v_dbg_mem_req_ready = 0;
+    v_dbg_mem_req_error = 0;
 
     vb_reg_waddr = i_d_waddr;
 
@@ -616,20 +627,17 @@ void InstrExecute::comb() {
 
 
     // Check that registers tags are equal to expeted ones
-    vb_tagcnt_wr = r.tagcnt_wr;
-    vb_tagcnt_rd = r.tagcnt_rd;
-
     int t_radr1 = mux.radr1.to_int();
     int t_radr2 = mux.radr2.to_int();
 
     w_hazard1 = 0;
-    if (r.tagcnt_rd.read()(CFG_REG_TAG_WITH * t_radr1 + (CFG_REG_TAG_WITH - 1),
-                           CFG_REG_TAG_WITH * t_radr1) != i_rtag1.read()) {
+    if (r.tagcnt.read()(CFG_REG_TAG_WITH * t_radr1 + (CFG_REG_TAG_WITH - 1),
+                        CFG_REG_TAG_WITH * t_radr1) != i_rtag1.read()) {
         w_hazard1 = v_check_tag1;
     }
     w_hazard2 = 0;
-    if (r.tagcnt_rd.read()(CFG_REG_TAG_WITH * t_radr2 + (CFG_REG_TAG_WITH - 1),
-                           CFG_REG_TAG_WITH * t_radr2) != i_rtag2.read()) {
+    if (r.tagcnt.read()(CFG_REG_TAG_WITH * t_radr2 + (CFG_REG_TAG_WITH - 1),
+                        CFG_REG_TAG_WITH * t_radr2) != i_rtag2.read()) {
         w_hazard2 = v_check_tag2;
     }
 
@@ -682,8 +690,7 @@ void InstrExecute::comb() {
     if ((i_dbg_mem_req_size.read() == 3 && i_dbg_mem_req_addr.read()(2, 0) != 0)
         || (i_dbg_mem_req_size.read() == 2 && i_dbg_mem_req_addr.read()(1, 0) != 0)
         || (i_dbg_mem_req_size.read() == 1 && i_dbg_mem_req_addr.read()[0] != 0)) {
-        v_load_misaligned_debug = i_dbg_mem_req_valid.read() & !i_dbg_mem_req_write;
-        v_store_misaligned_debug = i_dbg_mem_req_valid.read() & i_dbg_mem_req_write;
+        v_debug_misaligned = 1;
     }
     if (i_stack_overflow.read() == 1) {
         v.stack_overflow = 1;
@@ -691,19 +698,19 @@ void InstrExecute::comb() {
     if (i_stack_underflow.read() == 1) {
         v.stack_underflow = 1;
     }
-    if (i_mem_ex_load_fault.read() == 1) {
+    if (i_mem_ex_load_fault.read() == 1 && i_mem_ex_debug.read() == 0) {
         v.mem_ex_load_fault = 1;
         v.mem_ex_addr = i_mem_ex_addr;
     }
-    if (i_mem_ex_store_fault.read() == 1) {
+    if (i_mem_ex_store_fault.read() == 1 && i_mem_ex_debug.read() == 0) {
         v.mem_ex_store_fault = 1;
         v.mem_ex_addr = i_mem_ex_addr;
     }
-    if (i_mem_ex_mpu_store.read() == 1) {
+    if (i_mem_ex_mpu_store.read() == 1 && i_mem_ex_debug.read() == 0) {
         v.mem_ex_mpu_store = 1;
         v.mem_ex_addr = i_mem_ex_addr;
     }
-    if (i_mem_ex_mpu_load.read() == 1) {
+    if (i_mem_ex_mpu_load.read() == 1 && i_mem_ex_debug.read() == 0) {
         v.mem_ex_mpu_load = 1;
         v.mem_ex_addr = i_mem_ex_addr;
     }
@@ -908,8 +915,10 @@ void InstrExecute::comb() {
         vb_res = 0;
     }
 
-    if (i_d_pc == r.npc.read()
-        && i_d_progbuf_ena.read() == i_dbg_progbuf_ena.read()) {
+    if ((i_d_pc == r.npc.read()
+        && i_d_progbuf_ena.read() == 0 && i_dbg_progbuf_ena.read() == 0)
+        || (i_d_pc == r.dnpc.read()
+        && i_d_progbuf_ena.read() == 1 && i_dbg_progbuf_ena.read() == 1)) {
         v_d_valid = 1;
     }
 
@@ -923,8 +932,14 @@ void InstrExecute::comb() {
             // opencocd doesn't clear 'step' value in dcsr after step has been done
             v.stepdone = i_step & !i_dbg_progbuf_ena;
             if (i_dbg_mem_req_valid.read()) {
+                v_dbg_mem_req_ready = 1;
+                v_dbg_mem_req_error = v_debug_misaligned;
                 sc_uint<MemopType_Total> t_type = 0;
-                v.state = State_DebugMemRequest;
+                if (v_debug_misaligned) {
+                    v.state = State_DebugMemError;
+                } else {
+                    v.state = State_DebugMemRequest;
+                }
                 v.memop_halted = 0;
                 v.memop_sign_ext = 0;
                 t_type[MemopType_Store] = i_dbg_mem_req_write;
@@ -1001,6 +1016,7 @@ void InstrExecute::comb() {
         case CsrState_Resp:
             v_csr_resp_ready = 1;
             if (i_csr_resp_valid.read() == 1) {
+                v.csrstate = CsrState_Idle;
                 if (i_csr_resp_exception == 1) {
                     if (i_dbg_progbuf_ena.read() == 1) {
                         v.valid = 0;
@@ -1022,19 +1038,25 @@ void InstrExecute::comb() {
                         // ebreakm is set
                         v.state = State_Halted;
                     } else {
-                        v.npc = i_csr_resp_data;
                         v.state = State_Idle;
+                        if (i_dbg_progbuf_ena.read() == 0) {
+                            v.npc = i_csr_resp_data;
+                        }
                     }
                 } else if (r.csr_req_type.read()[CsrReq_ExceptionBit]
                          | r.csr_req_type.read()[CsrReq_InterruptBit]
                          | r.csr_req_type.read()[CsrReq_ResumeBit]) {
                     v.valid = 0;                // No valid strob should be generated
-                    v.npc = i_csr_resp_data;
                     v.state = State_Idle;
+                    if (i_dbg_progbuf_ena.read() == 0) {
+                        v.npc = i_csr_resp_data;
+                    }
                 } else if (r.csr_req_type.read()[CsrReq_TrapReturnBit]) {
                     v.valid = 1;
-                    v.npc = i_csr_resp_data;
                     v.state = State_Idle;
+                    if (i_dbg_progbuf_ena.read() == 0) {
+                        v.npc = i_csr_resp_data;
+                    }
                 } else if (r.csr_req_rmw.read()) {
                     v.csrstate = CsrState_Req;
                     v.csr_req_type = CsrReq_WriteCmd;
@@ -1138,8 +1160,13 @@ void InstrExecute::comb() {
             v.csr_req_data = 0;
         } else if (i_dbg_mem_req_valid.read()) {
             v_dbg_mem_req_ready = 1;
+            v_dbg_mem_req_error = v_debug_misaligned;
             sc_uint<MemopType_Total> t_type = 0;
-            v.state = State_DebugMemRequest;
+            if (v_debug_misaligned) {
+                v.state = State_DebugMemError;
+            } else {
+                v.state = State_DebugMemRequest;
+            }
             v.memop_halted = 1;
             v.memop_sign_ext = 0;
             t_type[MemopType_Store] = i_dbg_mem_req_write;
@@ -1160,23 +1187,39 @@ void InstrExecute::comb() {
             }
         }
         break;
+    case State_DebugMemError:
+        if (r.memop_halted) {
+            v.state = State_Halted;
+        } else {
+            v.state = State_Idle;
+        }
+        break;
     default:;
     }
 
     // Next tags:
-    int t_waddr = vb_reg_waddr.to_int();
-    int t_tagcnt_wr = r.tagcnt_wr.read()(CFG_REG_TAG_WITH*t_waddr + (CFG_REG_TAG_WITH - 1),
-                                         CFG_REG_TAG_WITH*t_waddr).to_int();
+    t_waddr = vb_reg_waddr.to_int();
 
-    vb_tagcnt_wr(CFG_REG_TAG_WITH*t_waddr+(CFG_REG_TAG_WITH-1), CFG_REG_TAG_WITH*t_waddr) = t_tagcnt_wr + 1;
-    vb_tagcnt_wr(CFG_REG_TAG_WITH - 1, 0) = 0;
-    vb_tagcnt_rd(CFG_REG_TAG_WITH*t_waddr+(CFG_REG_TAG_WITH-1), CFG_REG_TAG_WITH*t_waddr) = t_tagcnt_wr;
-    vb_tagcnt_rd(CFG_REG_TAG_WITH - 1, 0) = 0;
+    t_tagcnt_wr = r.tagcnt.read()(CFG_REG_TAG_WITH*t_waddr + (CFG_REG_TAG_WITH - 1),
+                                         CFG_REG_TAG_WITH*t_waddr).to_int() + 1;
+
+    vb_tagcnt_next = r.tagcnt;
+    vb_tagcnt_next(CFG_REG_TAG_WITH*t_waddr+(CFG_REG_TAG_WITH-1), CFG_REG_TAG_WITH*t_waddr) = t_tagcnt_wr;
+    vb_tagcnt_next(CFG_REG_TAG_WITH - 1, 0) = 0;      // r0 always 0
+
+    if (i_dbg_progbuf_ena.read() == 0) {
+        v.dnpc = 0;
+    }
 
     // Latch decoder's data into internal registers:
     if (v_latch_input) {
-        v.pc = i_d_pc;
-        v.npc = vb_prog_npc;
+        if (i_dbg_progbuf_ena.read() == 1) {
+            v.dnpc = r.dnpc.read() + opcode_len;
+        } else {
+            v.dnpc = 0;
+            v.pc = i_d_pc;
+            v.npc = vb_prog_npc;        // Actually this value will be restored on resume request
+        }
         v.radr1 = i_d_radr1;
         v.radr2 = i_d_radr2;
         v.waddr = i_d_waddr;
@@ -1209,8 +1252,7 @@ void InstrExecute::comb() {
     }
     if (v_reg_ena) {
         v.reg_write = 1;
-        v.tagcnt_wr = vb_tagcnt_wr;
-        v.tagcnt_rd = vb_tagcnt_rd;
+        v.tagcnt = vb_tagcnt_next;
         v.reg_waddr = vb_reg_waddr;
         v.reg_wtag = t_tagcnt_wr;
     }
@@ -1227,8 +1269,7 @@ void InstrExecute::comb() {
                 || mux.memop_type[MemopType_Release])) {
             // Error code of the instruction SC (store with release) should
             // be written into register
-            v.tagcnt_wr = vb_tagcnt_wr;
-            v.tagcnt_rd = vb_tagcnt_rd;
+            v.tagcnt = vb_tagcnt_next;
             v.reg_waddr = vb_reg_waddr;
             v.reg_wtag = t_tagcnt_wr;
         }
@@ -1306,10 +1347,17 @@ void InstrExecute::comb() {
     o_csr_resp_ready = v_csr_resp_ready;
 
     o_dbg_mem_req_ready = v_dbg_mem_req_ready;
+    o_dbg_mem_req_error = v_dbg_mem_req_error;
+
+    if (i_dbg_progbuf_ena.read() == 1) {
+        vb_o_npc = r.dnpc;
+    } else {
+        vb_o_npc = r.npc;
+    }
 
     o_valid = r.valid;
     o_pc = r.pc;
-    o_npc = r.npc;
+    o_npc = vb_o_npc;
     o_instr = r.instr;
     o_flushd = r.flushd;    // must be post in a memory queue to avoid to early flushing
     o_flushi = r.flushi;
@@ -1320,7 +1368,7 @@ void InstrExecute::comb() {
 
     // Debug rtl only:!!
     for (int i = 0; i < Reg_Total; i++) {
-        tag_expected[i] = r.tagcnt_rd.read()(CFG_REG_TAG_WITH*i+(CFG_REG_TAG_WITH-1), CFG_REG_TAG_WITH*i).to_int();
+        tag_expected[i] = r.tagcnt.read()(CFG_REG_TAG_WITH*i+(CFG_REG_TAG_WITH-1), CFG_REG_TAG_WITH*i).to_int();
     }
 }
 

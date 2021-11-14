@@ -55,16 +55,20 @@ DbgPort::DbgPort(sc_module_name name_, bool async_reset) :
     i_ireg_rdata("i_ireg_rdata"),
     o_mem_req_valid("o_mem_req_valid"),
     i_mem_req_ready("i_mem_req_ready"),
+    i_mem_req_error("i_mem_req_error"),
     o_mem_req_write("o_mem_req_write"),
     o_mem_req_addr("o_mem_req_addr"),
     o_mem_req_size("o_mem_req_size"),
     o_mem_req_wdata("o_mem_req_wdata"),
     i_mem_resp_valid("i_mem_resp_valid"),
+    i_mem_resp_error("i_mem_resp_error"),
     i_mem_resp_rdata("i_mem_resp_rdata"),
     i_e_pc("i_e_pc"),
     i_e_npc("i_e_npc"),
     i_e_call("i_e_call"),
-    i_e_ret("i_e_ret") {
+    i_e_ret("i_e_ret"),
+    i_e_memop_valid("i_e_memop_valid"),
+    i_m_valid("i_m_valid") {
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
@@ -84,12 +88,16 @@ DbgPort::DbgPort(sc_module_name name_, bool async_reset) :
     sensitive << i_csr_progbuf_end;
     sensitive << i_csr_progbuf_error;
     sensitive << i_mem_req_ready;
+    sensitive << i_mem_req_error;
     sensitive << i_mem_resp_valid;
+    sensitive << i_mem_resp_error;
     sensitive << i_mem_resp_rdata;
     sensitive << i_e_pc;
     sensitive << i_e_npc;
     sensitive << i_e_call;
     sensitive << i_e_ret;
+    sensitive << i_e_memop_valid;
+    sensitive << i_m_valid;
     sensitive << r.dport_write;
     sensitive << r.dport_addr;
     sensitive << r.dport_wdata;
@@ -154,20 +162,27 @@ void DbgPort::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_ireg_rdata, i_ireg_rdata.name());
         sc_trace(o_vcd, o_mem_req_valid, o_mem_req_valid.name());
         sc_trace(o_vcd, i_mem_req_ready, i_mem_req_ready.name());
+        sc_trace(o_vcd, i_mem_req_error, i_mem_req_error.name());
         sc_trace(o_vcd, o_mem_req_write, o_mem_req_write.name());
         sc_trace(o_vcd, o_mem_req_addr, o_mem_req_addr.name());
         sc_trace(o_vcd, o_mem_req_size, o_mem_req_size.name());
         sc_trace(o_vcd, o_mem_req_wdata, o_mem_req_wdata.name());
         sc_trace(o_vcd, i_mem_resp_valid, i_mem_resp_valid.name());
+        sc_trace(o_vcd, i_mem_resp_error, i_mem_resp_error.name());
         sc_trace(o_vcd, i_mem_resp_rdata, i_mem_resp_rdata.name());
         sc_trace(o_vcd, i_e_pc, i_e_pc.name());
         sc_trace(o_vcd, i_e_npc, i_e_npc.name());
         sc_trace(o_vcd, i_e_call, i_e_call.name());
         sc_trace(o_vcd, i_e_ret, i_e_ret.name());
+        sc_trace(o_vcd, i_e_memop_valid, i_e_memop_valid.name());
+        sc_trace(o_vcd, i_m_valid, i_m_valid.name());
         sc_trace(o_vcd, i_progbuf, i_progbuf.name());
         sc_trace(o_vcd, o_progbuf_ena, o_progbuf_ena.name());
         sc_trace(o_vcd, o_progbuf_pc, o_progbuf_pc.name());
         sc_trace(o_vcd, o_progbuf_instr, o_progbuf_instr.name());
+
+        std::string pn(name());
+        sc_trace(o_vcd, r.dstate, pn + ".r_dstate");
     }
     if (CFG_LOG2_STACK_TRACE_ADDR != 0) {
         trbuf0->generateVCD(i_vcd, o_vcd);
@@ -188,7 +203,6 @@ void DbgPort::comb() {
     bool v_mem_req_valid;
     bool v_req_ready;
     bool v_resp_valid;
-    bool v_progbuf_ena;
     sc_uint<64> vrdata;
 
     v = r;
@@ -210,7 +224,6 @@ void DbgPort::comb() {
     wb_stack_wdata = 0;
     v_req_ready = 0;
     v_resp_valid = 0;
-    v_progbuf_ena = 0;
     vrdata = r.dport_rdata;
 
     if (CFG_LOG2_STACK_TRACE_ADDR != 0) {
@@ -231,6 +244,7 @@ void DbgPort::comb() {
         vrdata = 0;
         v.req_accepted = 0;
         v.resp_error = 0;
+        v.progbuf_ena = 0;
         if (i_dport_req_valid.read() == 1) {
             if (i_dport_type.read()[DPortReq_RegAccess]) {
                 v.dport_write = i_dport_type.read()[DPortReq_Write];
@@ -251,9 +265,9 @@ void DbgPort::comb() {
                     v.dstate = wait_to_accept;
                 }
             } else if (i_dport_type.read()[DPortReq_Progexec]) {
-                v.dstate = exec_progbuf;
+                v.dstate = exec_progbuf_start;
             } else if (i_dport_type.read()[DPortReq_MemAccess]) {
-                v.dstate = mem_request;
+                v.dstate = abstract_mem_request;
                 v.dport_write = i_dport_type.read()[DPortReq_Write];
                 v.dport_addr = i_dport_addr;
                 v.dport_wdata = i_dport_wdata;
@@ -316,24 +330,51 @@ void DbgPort::comb() {
         }
         v.dstate = wait_to_accept;
         break;
-    case exec_progbuf:
-        v_progbuf_ena = 1;
+    case exec_progbuf_start:
+        v.progbuf_ena = 1;
+        v.progbuf_pc = 0;
+        v.progbuf_instr = i_progbuf.read()(31, 0).to_uint();
+        v.dstate = exec_progbuf_next;
+        break;
+    case exec_progbuf_next:
         if (i_csr_progbuf_end.read() == 1) {
+            v.progbuf_ena = 0;
             v.resp_error = i_csr_progbuf_error;
             v.dstate = wait_to_accept;
+        } else if (i_e_memop_valid.read() == 1) {
+            v.dstate = exec_progbuf_waitmemop;
+        } else {
+            int t1 = i_e_npc.read()(5,1);
+            v.progbuf_pc = (0, (i_e_npc.read()(5,1) << 1));
+            if (t1 == 0x1f) {
+                v.progbuf_instr = (0, i_progbuf.read()(16*t1 + 15, 16*t1).to_uint());
+            } else {
+                v.progbuf_instr = i_progbuf.read()(16*t1 + 31, 16*t1).to_uint();
+            }
         }
         break;
-    case mem_request:
+    case exec_progbuf_waitmemop:
+        if (i_m_valid.read() == 1) {
+            v.dstate = exec_progbuf_next;
+        }
+        break;
+    case abstract_mem_request:
         v_mem_req_valid = 1;
         if (i_mem_req_ready.read() == 1) {
-            v.dstate = mem_response;
+            if (i_mem_req_error.read() == 1) {
+                v.dstate = wait_to_accept;
+                v.resp_error = 1;
+                vrdata = ~0ull;
+            } else {
+                v.dstate = abstract_mem_response;
+            }
         }
         break;
-    case mem_response:
+    case abstract_mem_response:
         vrdata = i_mem_resp_rdata;
         if (i_mem_resp_valid.read()) {
             v.dstate = wait_to_accept;
-            v.resp_error = 0;
+            v.resp_error = i_mem_resp_error;
         }
         break;
     case wait_to_accept:
@@ -346,20 +387,6 @@ void DbgPort::comb() {
     }
 
     v.dport_rdata = vrdata;
-
-    v.progbuf_ena = v_progbuf_ena;
-    if (v_progbuf_ena == 1) {
-        // Total progbuf max = 512 bits = 64 B
-        v.progbuf_pc = (0, (i_e_npc.read()(5,1) << 1));
-    } else {
-        v.progbuf_pc = 0;
-    }
-    int t1 = i_e_npc.read()(5,1);
-    if (t1 == 0x1f) {
-        v.progbuf_instr = (0, i_progbuf.read()(16*t1 + 15, 16*t1).to_uint());
-    } else {
-        v.progbuf_instr = i_progbuf.read()(16*t1 + 31, 16*t1).to_uint();
-    }
 
     if (!async_reset_ && !i_nrst.read()) {
         R_RESET(v);

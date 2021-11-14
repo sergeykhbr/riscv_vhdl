@@ -80,6 +80,10 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_resp_ctrl_valid;
+    sensitive << i_resp_data_load_fault;
+    sensitive << i_resp_data_store_fault;
+    sensitive << i_resp_data_er_mpu_store;
+    sensitive << i_resp_data_er_mpu_load;
     sensitive << w.f.pipeline_hold;
     sensitive << w.e.npc;
     sensitive << w.e.valid;
@@ -197,6 +201,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->i_unsup_exception(w.d.exception);
     exec0->i_instr_load_fault(w.d.instr_load_fault);
     exec0->i_instr_executable(w.d.instr_executable);
+    exec0->i_mem_ex_debug(w.m.debug_valid);
     exec0->i_mem_ex_load_fault(i_resp_data_load_fault);
     exec0->i_mem_ex_store_fault(i_resp_data_store_fault);
     exec0->i_mem_ex_mpu_store(i_resp_data_er_mpu_store);
@@ -243,6 +248,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->i_dbg_mem_req_addr(dbg.mem_req_addr);
     exec0->i_dbg_mem_req_wdata(dbg.mem_req_wdata);
     exec0->o_dbg_mem_req_ready(w.e.dbg_mem_req_ready);
+    exec0->o_dbg_mem_req_error(w.e.dbg_mem_req_error);
     exec0->o_valid(w.e.valid);
     exec0->o_pc(w.e.pc);
     exec0->o_npc(w.e.npc);
@@ -429,16 +435,20 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     dbg0->i_ireg_rdata(ireg.dport_rdata);
     dbg0->o_mem_req_valid(dbg.mem_req_valid);
     dbg0->i_mem_req_ready(w.e.dbg_mem_req_ready);
+    dbg0->i_mem_req_error(w.e.dbg_mem_req_error);
     dbg0->o_mem_req_write(dbg.mem_req_write);
     dbg0->o_mem_req_addr(dbg.mem_req_addr);
     dbg0->o_mem_req_size(dbg.mem_req_size);
     dbg0->o_mem_req_wdata(dbg.mem_req_wdata);
     dbg0->i_mem_resp_valid(w.m.debug_valid);
+    dbg0->i_mem_resp_error(w_mem_resp_error);
     dbg0->i_mem_resp_rdata(w.w.wdata);
     dbg0->i_e_pc(w.e.pc);
     dbg0->i_e_npc(w.e.npc);
     dbg0->i_e_call(w.e.call);
     dbg0->i_e_ret(w.e.ret);
+    dbg0->i_e_memop_valid(w.e.memop_valid);
+    dbg0->i_m_valid(w.m.valid);
 
     trace0 = 0;
     if (tracer_ena) {
@@ -501,6 +511,9 @@ void Processor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 void Processor::comb() {
     w_fetch_pipeline_hold = !w.e.d_ready;
     w_any_pipeline_hold = w.f.pipeline_hold | !w.e.d_ready;
+
+    w_mem_resp_error = i_resp_data_load_fault || i_resp_data_store_fault
+                    || i_resp_data_er_mpu_store || i_resp_data_er_mpu_load;
 
     w_writeback_ready = !w.e.reg_wena.read();
     if (w.e.reg_wena.read() == 1) {

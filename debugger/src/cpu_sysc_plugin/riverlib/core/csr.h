@@ -89,6 +89,8 @@ private:
         sc_signal<sc_uint<12>> cmd_addr;
         sc_signal<sc_uint<RISCV_ARCH>> cmd_data;
         sc_signal<bool> cmd_exception;          // exception on CSR access
+        sc_signal<bool> progbuf_end;
+        sc_signal<bool> progbuf_err;
         sc_signal<sc_uint<RISCV_ARCH>> mtvec;
         sc_signal<sc_uint<2>> mtvec_mode;
         sc_signal<sc_uint<RISCV_ARCH>> mtval;
@@ -163,6 +165,8 @@ private:
         iv.cmd_addr = 0;
         iv.cmd_data = 0;
         iv.cmd_exception = 0;
+        iv.progbuf_end = 0;
+        iv.progbuf_err = 0;
         iv.mtvec = 0;
         iv.mtvec_mode = 0;
         iv.mtval = 0;

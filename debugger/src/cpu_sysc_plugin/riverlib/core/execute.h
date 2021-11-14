@@ -58,6 +58,7 @@ SC_MODULE(InstrExecute) {
     sc_in<bool> i_unsup_exception;              // Unsupported instruction exception
     sc_in<bool> i_instr_load_fault;             // fault instruction's address. Bus returned ERR on read transaction
     sc_in<bool> i_instr_executable;             // MPU flag 'executable' not set for this memory region
+    sc_in<bool> i_mem_ex_debug;                         // Memoryaccess: Debug requested processed with error. Ignore it.
     sc_in<bool> i_mem_ex_load_fault;                    // Memoryaccess: Bus response with SLVERR or DECERR on read data
     sc_in<bool> i_mem_ex_store_fault;                   // Memoryaccess: Bus response with SLVERR or DECERR on write data
     sc_in<bool> i_mem_ex_mpu_store;                     // Memoryaccess: MPU access error on storing data
@@ -109,6 +110,7 @@ SC_MODULE(InstrExecute) {
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_dbg_mem_req_addr;// Memory access address
     sc_in<sc_uint<RISCV_ARCH>> i_dbg_mem_req_wdata;
     sc_out<bool> o_dbg_mem_req_ready;           // Debug emmory request was accepted
+    sc_out<bool> o_dbg_mem_req_error;           // Debug memory reques misaliged
 
     sc_out<bool> o_valid;                       // Output is valid
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_pc;    // Valid instruction pointer
@@ -158,6 +160,7 @@ private:
     static const unsigned State_Csr = 6;
     static const unsigned State_Halted = 7;
     static const unsigned State_DebugMemRequest = 8;
+    static const unsigned State_DebugMemError = 9;
 
     static const unsigned CsrState_Idle = 0;
     static const unsigned CsrState_Req = 1;
@@ -198,6 +201,7 @@ private:
         sc_signal<sc_uint<2>> amostate;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> npc;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> dnpc;
         sc_signal<sc_uint<6>> radr1;
         sc_signal<sc_uint<6>> radr2;
         sc_signal<sc_uint<6>> waddr;
@@ -208,8 +212,8 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> imm;
 
         sc_signal<sc_uint<32>> instr;
-        sc_signal<sc_biguint<CFG_REG_TAG_WITH*REGS_TOTAL>> tagcnt_rd;      // N-bits tag per register (expected)
-        sc_signal<sc_biguint<CFG_REG_TAG_WITH*REGS_TOTAL>> tagcnt_wr;      // N-bits tag per register (written)
+        sc_signal<sc_biguint<CFG_REG_TAG_WITH*REGS_TOTAL>> tagcnt;      // N-bits tag per register (expected)
+        //sc_signal<sc_biguint<CFG_REG_TAG_WITH*REGS_TOTAL>> tagcnt_wr;      // N-bits tag per register (written)
 
         sc_signal<bool> reg_write;
         sc_signal<sc_uint<6>> reg_waddr;
@@ -261,6 +265,7 @@ private:
         iv.amostate = AmoState_WaitMemAccess;
         iv.pc = 0;
         iv.npc = CFG_RESET_VECTOR;
+        iv.dnpc = 0;
         iv.radr1 = 0;
         iv.radr2 = 0;
         iv.waddr = 0;
@@ -270,8 +275,7 @@ private:
         iv.isa_type = 0;
         iv.imm = 0;
         iv.instr = 0;
-        iv.tagcnt_rd = 0;
-        iv.tagcnt_wr = 0;
+        iv.tagcnt = 0;
         iv.reg_write = 0;
         iv.reg_waddr = 0;
         iv.reg_wtag = 0;
@@ -330,6 +334,8 @@ private:
 
     bool w_hazard1;
     bool w_hazard2;
+    int t_waddr;
+    int t_tagcnt_wr;
 
     sc_signal<sc_uint<RISCV_ARCH>> wb_rdata1;
     sc_signal<sc_uint<RISCV_ARCH>> wb_rdata2;

@@ -63,17 +63,21 @@ SC_MODULE(DbgPort) {
 
     sc_out<bool> o_mem_req_valid;                       // Type 2: request is valid
     sc_in<bool> i_mem_req_ready;                        // Type 2: memory request was accepted
+    sc_in<bool> i_mem_req_error;                        // Type 2: memory request is invalid and cannot be processed
     sc_out<bool> o_mem_req_write;                       // Type 2: is write
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mem_req_addr;  // Type 2: Debug memory request
     sc_out<sc_uint<2>> o_mem_req_size;                  // Type 2: memory operation size: 0=1B; 1=2B; 2=4B; 3=8B
     sc_out<sc_uint<RISCV_ARCH>> o_mem_req_wdata;        // Type 2: memory write data
     sc_in<bool> i_mem_resp_valid;                       // Type 2: response is valid
+    sc_in<bool> i_mem_resp_error;                       // Type 2: response error (MPU or unmapped access)
     sc_in<sc_uint<RISCV_ARCH>> i_mem_resp_rdata;        // Type 2: Memory response from memaccess module
 
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_pc;           // Instruction pointer
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_npc;          // Next Instruction pointer
     sc_in<bool> i_e_call;                               // pseudo-instruction CALL
     sc_in<bool> i_e_ret;                                // pseudo-instruction RET
+    sc_in<bool> i_e_memop_valid;                        // Memory request from executor
+    sc_in<bool> i_m_valid;                              // Memory request processed
 
     void comb();
     void registers();
@@ -93,9 +97,11 @@ private:
         reg_stktr_cnt,
         reg_stktr_buf_adr,
         reg_stktr_buf_dat,
-        exec_progbuf,
-        mem_request,
-        mem_response,
+        exec_progbuf_start,
+        exec_progbuf_next,
+        exec_progbuf_waitmemop,
+        abstract_mem_request,
+        abstract_mem_response,
         wait_to_accept
     };
 

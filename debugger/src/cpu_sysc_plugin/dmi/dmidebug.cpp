@@ -613,8 +613,18 @@ void DmiDebug::comb() {
                     v.data3 = arg1(63, 32);
                 }
             }
-            if (r.cmd_regaccess.read() && r.command.read()[CmdPostexecBit]
-                && !i_dport_resp_error.read()) {
+            if (i_dport_resp_error.read()) {
+                v.cmdstate = CMD_STATE_IDLE;
+                if (r.cmd_memaccess) {
+                    // @spec The abstract command failed due to a bus error
+                    //       (e.g. alignment, access size, or timeout).
+                    v.cmderr = CMDERR_BUSERROR;
+                } else {
+                    // @spec  An exception occurred while executing the
+                    //        command (e.g. while executing the Program Buffer).
+                    v.cmderr = CMDERR_EXCEPTION;
+                }
+            } else if (r.cmd_regaccess.read() && r.command.read()[CmdPostexecBit]) {
                 v.dport_req_valid = 1;
                 v.cmd_progexec = 1;
                 v.cmd_regaccess = 0;
@@ -623,9 +633,6 @@ void DmiDebug::comb() {
                 v.cmdstate = CMD_STATE_REQUEST;
             } else {
                 v.cmdstate = CMD_STATE_IDLE;
-                if (i_dport_resp_error.read()) {
-                    v.cmderr = CMDERR_EXCEPTION;         // TODO check errors
-                }
             }
             if (r.cmd_quickaccess) {
                 // fast command continued even if progbuf execution failed (@see spec)
