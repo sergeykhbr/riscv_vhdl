@@ -42,8 +42,14 @@ void test_gnss_ss(uint64_t bar) {
     // engine access
     pnp->fwdbg1 = 0;
     gnss->tmr.rw_MsLength = 2000;
+
+    int t1 = 0x00000800;
+    asm("csrs mie, %0" : :"r"(t1));  // enable external irq from PLIC
+
     while (pnp->fwdbg1 != WAS_GNSS_ISR_MARKER) {}
     fw_disable_isr(CFG_IRQ_GNSS_SS);
+
+    asm("csrc mie, %0" : :"r"(t1));  // disable external irq from PLIC
 
     pnp->fwdbg1 = gnss->tmr.rw_tow;
 

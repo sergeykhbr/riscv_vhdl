@@ -123,17 +123,17 @@ void CoverageTable::outLine(int idx, AttributeType &line) {
 
     pw = item(idx, COL_address);
     pw->setText(QString("%1").arg(addr, 6, 16, QChar('0')));
-    pw->foreground().setColor(QColor(txtclr));
-    pw->background().setColor(bkgclr);
+    pw->setForeground(QColor(QColor(txtclr)));
+    pw->setBackground(QColor(bkgclr));
 
     pw = item(idx, COL_size);
-    pw->foreground().setColor(txtclr);
-    pw->background().setColor(bkgclr);
+    pw->setForeground(QColor(txtclr));
+    pw->setBackground(QColor(bkgclr));
     pw->setText(QString("%1").arg(addr+sz-1, 6, 16, QChar('0')));
 
     pw = item(idx, COL_info);
-    pw->foreground().setColor(txtclr);
-    pw->background().setColor(bkgclr);
+    pw->setForeground(QColor(txtclr));
+    pw->setBackground(QColor(bkgclr));
     pw->setText(QString(line[3].to_string()));
 }
 

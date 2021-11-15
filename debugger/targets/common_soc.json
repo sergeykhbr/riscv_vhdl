@@ -121,7 +121,7 @@
                 ]}]},
     {'Class':'GNSSStubClass','Instances':[
           {'Name':'gnss0','Attr':[
-                ['LogLevel',1],
+                ['LogLevel',3],
                 ['BaseAddress',0x80009000],
                 ['Length',4096],
                 ['IrqControl',['irqctrl0','irq4']],

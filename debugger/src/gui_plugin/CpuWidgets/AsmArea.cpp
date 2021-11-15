@@ -72,7 +72,7 @@ AsmArea::AsmArea(IGui *gui, QWidget *parent, uint64_t fixaddr)
             item(i, n)->setFlags(fl);
         }
         setRowHeight(i, lineHeight_);
-        item(i, 0)->background().setColor(Qt::lightGray);
+        item(i, 0)->setBackground(QColor(Qt::lightGray));
         item(i, 0)->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
     }
 
@@ -316,7 +316,7 @@ void AsmArea::adjustRowCount() {
                 item(i, n)->setFlags(fl);
             }
             setRowHeight(i, lineHeight_);
-            item(i, 0)->background().setColor(Qt::lightGray);
+            item(i, 0)->setBackground(QColor(Qt::lightGray));
             item(i, 0)->setTextAlignment(Qt::AlignRight | Qt::AlignVCenter);
         }
     } 
@@ -338,15 +338,15 @@ void AsmArea::outSymbolLine(int idx, AttributeType &line) {
 
     pw = item(idx, COL_addrline);
     pw->setText(QString("<%1>").arg(addr, 16, 16, QChar('0')));
-    pw->foreground().setColor(QColor(Qt::darkBlue));
+    pw->setForeground(QColor(QColor(Qt::darkBlue)));
 
     pw = item(idx, COL_code);
-    pw->background().setColor(Qt::lightGray);
+    pw->setBackground(QColor(Qt::lightGray));
     pw->setText(tr(""));
 
     pw = item(idx, COL_label);
     pw->setText(QString(line[ASM_code].to_string()));
-    pw->foreground().setColor(QColor(Qt::darkBlue));
+    pw->setForeground(QColor(QColor(Qt::darkBlue)));
 
     item(idx, COL_mnemonic)->setText(tr(""));
     item(idx, COL_comment)->setText(tr(""));
@@ -361,23 +361,23 @@ void AsmArea::outAsmLine(int idx, AttributeType &line) {
 
     pw = item(idx, COL_addrline);
     pw->setText(QString("%1").arg(addr, 16, 16, QChar('0')));
-    pw->foreground().setColor(QColor(Qt::black));
-    pw->background().setColor(Qt::lightGray);
+    pw->setForeground(QColor(QColor(Qt::black)));
+    pw->setBackground(QColor(Qt::lightGray));
 
     pw = item(idx, COL_code);
     uint32_t instr = line[ASM_code].to_uint32();
     if (line[ASM_breakpoint].to_bool()) {
-        pw->background().setColor(Qt::red);
-        pw->foreground().setColor(Qt::white);
+        pw->setBackground(QColor(Qt::red));
+        pw->setForeground(QColor(Qt::white));
     } else if (pw->background().color() != Qt::lightGray) {
-        pw->background().setColor(Qt::lightGray);
-        pw->foreground().setColor(Qt::black);
+        pw->setBackground(QColor(Qt::lightGray));
+        pw->setForeground(QColor(Qt::black));
     }
     int codesz = line[ASM_codesize].to_int();
     pw->setText(QString("%1").arg(instr, 2*codesz, 16, QChar('0')));
 
     pw = item(idx, COL_label);
-    pw->foreground().setColor(Qt::black);
+    pw->setForeground(QColor(Qt::black));
     pw->setText(QString(line[ASM_label].to_string()));
 
     pw = item(idx, COL_mnemonic);
