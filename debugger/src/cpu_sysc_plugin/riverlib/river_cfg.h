@@ -155,8 +155,6 @@ static const uint8_t MEMOP_1B = 0;
  */
 static const uint64_t CFG_RESET_VECTOR      = 0x0000;
 
-/** Debug interface configuration: */
-static const int CFG_DPORT_ADDR_BITS        = 16;
 // Valid size 0..16
 static const int CFG_PROGBUF_REG_TOTAL      = 16;
 // Must be at least 2 to support RV64I

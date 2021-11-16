@@ -45,7 +45,7 @@ class DmiDebug : public sc_module,
     sc_out<bool> o_hartreset;                           // Reset currently selected hart
     sc_out<bool> o_dport_req_valid;                     // Debug access from DSU is valid
     sc_out<sc_uint<DPortReq_Total>> o_dport_req_type;   // Debug access types
-    sc_out<sc_uint<CFG_BUS_ADDR_WIDTH>> o_dport_addr;   // Register index
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_dport_addr;    // Register index
     sc_out<sc_uint<RISCV_ARCH>> o_dport_wdata;          // Write value
     sc_out<sc_uint<3>> o_dport_size;                    // 0=1B;1=2B;2=4B;3=8B;4=128B
     sc_in<bool> i_dport_req_ready;                      // Response is ready
@@ -157,14 +157,6 @@ class DmiDebug : public sc_module,
     sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_wdata;
     sc_signal<sc_uint<BUS_DATA_BYTES>> wb_wstrb;
     sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_resp_data;
-    sc_signal<bool> w_r_error;
-    sc_signal<bool> w_w_error;
-
-    sc_signal<bool> w_dport_req_valid;
-    sc_signal<bool> w_dport_write;
-    sc_signal<bool> w_dport_resp_ready;
-    sc_signal<sc_uint<CFG_DPORT_ADDR_BITS>> wb_dport_addr;
-    sc_signal<sc_uint<RISCV_ARCH>> wb_dport_wdata;
 
     struct RegistersType {
         sc_signal<bool> bus_jtag;       // source of the DMI request
@@ -182,7 +174,7 @@ class DmiDebug : public sc_module,
         sc_signal<bool> regwr;
         sc_signal<bool> regrd;
 
-        sc_signal<sc_uint<3>> dmstate;
+        sc_signal<sc_uint<1>> dmstate;
         sc_signal<sc_uint<3>> cmdstate;
         sc_signal<sc_uint<3>> sbastate;
 
@@ -213,7 +205,7 @@ class DmiDebug : public sc_module,
         sc_signal<sc_biguint<CFG_PROGBUF_REG_TOTAL*32>> progbuf_data;
 
         sc_signal<bool> dport_req_valid;
-        sc_signal<sc_uint<CFG_BUS_ADDR_WIDTH>> dport_addr;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> dport_addr;
         sc_signal<sc_uint<RISCV_ARCH>> dport_wdata;
         sc_signal<sc_uint<3>> dport_size;
         sc_signal<bool> dport_resp_ready;

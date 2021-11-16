@@ -29,7 +29,7 @@ SC_MODULE(DbgPort) {
     // "RIVER" Debug interface
     sc_in<bool> i_dport_req_valid;                      // Debug access from DSU is valid
     sc_in<sc_uint<DPortReq_Total>> i_dport_type;        // Debug access type
-    sc_in<sc_uint<CFG_BUS_ADDR_WIDTH>> i_dport_addr;    // Debug address (register or memory)
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_dport_addr;     // Debug address (register or memory)
     sc_in<sc_uint<RISCV_ARCH>> i_dport_wdata;           // Write value
     sc_in<sc_uint<3>> i_dport_size;                     // reg/mem access size:0=1B;...,4=128B;
     sc_out<bool> o_dport_req_ready;
@@ -107,7 +107,7 @@ private:
 
     struct RegistersType {
         sc_signal<bool> dport_write;
-        sc_signal<sc_uint<CFG_BUS_ADDR_WIDTH>> dport_addr;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> dport_addr;
         sc_signal<sc_uint<RISCV_ARCH>> dport_wdata;
         sc_signal<sc_uint<RISCV_ARCH>> dport_rdata;
         sc_signal<sc_uint<2>> dport_size;
