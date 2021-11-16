@@ -161,6 +161,8 @@ static const int CFG_DPORT_ADDR_BITS        = 16;
 static const int CFG_PROGBUF_REG_TOTAL      = 16;
 // Must be at least 2 to support RV64I
 static const int CFG_DATA_REG_TOTAL         = 4;
+// Total number of dscratch registers
+static const int CFG_DSCRATCH_REG_TOTAL     = 2;
 /** Number of elements each 2*CFG_ADDR_WIDTH in stack trace buffer: */
 static const int CFG_LOG2_STACK_TRACE_ADDR  = 5;
 static const int STACK_TRACE_BUF_SIZE       = 1 << CFG_LOG2_STACK_TRACE_ADDR;

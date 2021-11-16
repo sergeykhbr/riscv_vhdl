@@ -435,7 +435,7 @@ void DmiDebug::comb() {
         } else if (r.regidx.read() == 0x12) {                   // hartinfo
             // Not available core should returns 0
             if (i_available.read()[hsel]) {
-                vb_resp_data(13, 20) = 0x2;                     // nscratch
+                vb_resp_data(23, 20) = 0x2;                     // nscratch number of dscratch registers
                 vb_resp_data[16] = 0;                           // dataaccess: 0=CSR shadowed;1=memory shadowed
                 vb_resp_data(15, 12) = 0x0;                     // datasize
                 vb_resp_data(11, 0) = 0x0;                      // dataaddr
@@ -446,7 +446,7 @@ void DmiDebug::comb() {
             vb_resp_data(10,8) = r.cmderr;
             vb_resp_data(3,0) = CFG_DATA_REG_TOTAL;
             if (r.regwr && r.wdata.read()(10,8).or_reduce()) {
-                v.cmderr = 0;
+                v.cmderr = CMDERR_NONE;
             }
         } else if (r.regidx.read() == 0x17) {                   // command
             if (r.regwr) {
