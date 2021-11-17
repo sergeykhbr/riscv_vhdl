@@ -310,7 +310,7 @@ static const int Instr_FPU_Total = Instr_FSUB_D - Instr_FADD_D + 1;
 static const int CFG_MEMACCESS_QUEUE_DEPTH = 2;
 // Register's tag used to detect reg hazard and it should be higher than available
 // slots in the fifo Executor => Memaccess.
-static const int CFG_REG_TAG_WITH          = 3;
+static const int CFG_REG_TAG_WIDTH          = 3;
 
 // Request type: [0]-read csr; [1]-write csr; [2]-change mode
 static const int CsrReq_ReadBit        = 0;

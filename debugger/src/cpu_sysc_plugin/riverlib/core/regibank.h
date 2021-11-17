@@ -28,15 +28,15 @@ SC_MODULE(RegIntBank) {
     sc_in<bool> i_nrst;                         // Reset. Active LOW
     sc_in<sc_uint<6>> i_radr1;                  // Port 1 read address
     sc_out<sc_uint<RISCV_ARCH>> o_rdata1;       // Port 1 read value
-    sc_out<sc_uint<CFG_REG_TAG_WITH>> o_rtag1;  // Port 1 read tag value
+    sc_out<sc_uint<CFG_REG_TAG_WIDTH>> o_rtag1;  // Port 1 read tag value
 
     sc_in<sc_uint<6>> i_radr2;                  // Port 2 read address
     sc_out<sc_uint<RISCV_ARCH>> o_rdata2;       // Port 2 read value
-    sc_out<sc_uint<CFG_REG_TAG_WITH>> o_rtag2;  // Port 2 read tag value
+    sc_out<sc_uint<CFG_REG_TAG_WIDTH>> o_rtag2;  // Port 2 read tag value
 
     sc_in<sc_uint<6>> i_waddr;                  // Writing value
     sc_in<bool> i_wena;                         // Writing is enabled
-    sc_in<sc_uint<CFG_REG_TAG_WITH>> i_wtag;    // Writing register tag
+    sc_in<sc_uint<CFG_REG_TAG_WIDTH>> i_wtag;    // Writing register tag
     sc_in<sc_uint<RISCV_ARCH>> i_wdata;         // Writing value
     sc_in<bool> i_inorder;                      // Writing only if tag sequenced
     sc_out<bool> o_ignored;                     // Sequenced writing is ignored because it was overwritten by executor (need for tracer)
@@ -55,18 +55,16 @@ SC_MODULE(RegIntBank) {
 
     SC_HAS_PROCESS(RegIntBank);
 
-    RegIntBank(sc_module_name name_, bool async_reset, bool fpu_ena);
+    RegIntBank(sc_module_name name_, bool async_reset);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
 private:
     friend struct Processor; // for debug purposes(remove it)s
 
-    int REG_MSB() { return 4 + fpu_ena_; }
-
     struct reg_score_type {
         sc_uint<RISCV_ARCH> val;
-        sc_uint<CFG_REG_TAG_WITH> tag;
+        sc_uint<CFG_REG_TAG_WIDTH> tag;
     };
 
     struct RegistersType {
@@ -75,7 +73,6 @@ private:
     } v, r;
 
     bool async_reset_;
-    bool fpu_ena_;
 };
 
 }  // namespace debugger

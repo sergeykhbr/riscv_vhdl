@@ -74,14 +74,14 @@ SC_MODULE(InstrExecute) {
     sc_in<bool> i_dbg_progbuf_ena;              // progbuf mode enabled
 
     sc_in<sc_uint<RISCV_ARCH>> i_rdata1;        // Integer/Float register value 1
-    sc_in<sc_uint<CFG_REG_TAG_WITH>> i_rtag1;
+    sc_in<sc_uint<CFG_REG_TAG_WIDTH>> i_rtag1;
     sc_in<sc_uint<RISCV_ARCH>> i_rdata2;        // Integer/Float register value 2
-    sc_in<sc_uint<CFG_REG_TAG_WITH>> i_rtag2;
+    sc_in<sc_uint<CFG_REG_TAG_WIDTH>> i_rtag2;
     sc_out<sc_uint<6>> o_radr1;
     sc_out<sc_uint<6>> o_radr2;
     sc_out<bool> o_reg_wena;
     sc_out<sc_uint<6>> o_reg_waddr;             // Address to store result of the instruction (0=do not store)
-    sc_out<sc_uint<CFG_REG_TAG_WITH>> o_reg_wtag;
+    sc_out<sc_uint<CFG_REG_TAG_WIDTH>> o_reg_wtag;
     sc_out<sc_uint<RISCV_ARCH>> o_reg_wdata;    // Value to store
     sc_out<bool> o_d_ready;                     // Hold pipeline while 'writeback' not done or multi-clock instruction.
 
@@ -212,11 +212,11 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> imm;
 
         sc_signal<sc_uint<32>> instr;
-        sc_signal<sc_biguint<CFG_REG_TAG_WITH*REGS_TOTAL>> tagcnt;      // N-bits tag per register (expected)
+        sc_signal<sc_biguint<CFG_REG_TAG_WIDTH*REGS_TOTAL>> tagcnt;      // N-bits tag per register (expected)
 
         sc_signal<bool> reg_write;
         sc_signal<sc_uint<6>> reg_waddr;
-        sc_signal<sc_uint<CFG_REG_TAG_WITH>> reg_wtag;
+        sc_signal<sc_uint<CFG_REG_TAG_WIDTH>> reg_wtag;
 
         sc_signal<bool> csr_req_rmw;                    // csr read-modify-write request
         sc_signal<sc_uint<CsrReq_TotalBits>> csr_req_type;
@@ -342,7 +342,7 @@ private:
     sc_signal<sc_uint<RISCV_ARCH>> wb_shifter_a1;      // Shifters operand 1
     sc_signal<sc_uint<6>> wb_shifter_a2;               // Shifters operand 2
 
-    sc_uint<CFG_REG_TAG_WITH> tag_expected[Reg_Total];
+    sc_uint<CFG_REG_TAG_WIDTH> tag_expected[Reg_Total];
 
     AluLogic *alu0;
     IntAddSub *addsub0;

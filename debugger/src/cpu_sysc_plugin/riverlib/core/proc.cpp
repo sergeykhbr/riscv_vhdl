@@ -309,7 +309,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     predic0->i_ra(ireg.ra);
     predic0->o_npc_predict(bp.npc);
 
-    iregs0 = new RegIntBank("iregs0", async_reset, fpu_ena);
+    iregs0 = new RegIntBank("iregs0", async_reset);
     iregs0->i_clk(i_clk);
     iregs0->i_nrst(i_nrst);
     iregs0->i_radr1(w.e.radr1);

@@ -179,7 +179,7 @@ void MemAccess::comb() {
     sc_uint<64> vb_mem_rdata;
     bool v_queue_re;
     bool v_flushd;
-    sc_uint<CFG_REG_TAG_WITH> vb_res_wtag;
+    sc_uint<CFG_REG_TAG_WIDTH> vb_res_wtag;
     sc_uint<64> vb_mem_wdata;
     sc_uint<8> vb_mem_wstrb;
     sc_uint<64> vb_mem_resp_shifted;
@@ -193,7 +193,7 @@ void MemAccess::comb() {
     bool v_o_wena;
     sc_uint<6> vb_o_waddr;
     sc_uint<RISCV_ARCH> vb_o_wdata;
-    sc_uint<CFG_REG_TAG_WITH> vb_o_wtag;
+    sc_uint<CFG_REG_TAG_WIDTH> vb_o_wtag;
     bool v_valid;
 
     v = r;
@@ -280,9 +280,9 @@ void MemAccess::comb() {
     queue_we = (i_memop_valid | i_e_flushd) & !queue_full.read();
 
     // Split Queue outputs:
-    v_mem_debug = queue_data_o.read()[2*CFG_CPU_ADDR_BITS+MemopType_Total+RISCV_ARCH+8+64+41+CFG_REG_TAG_WITH+1];
-    v_flushd = queue_data_o.read()[2*CFG_CPU_ADDR_BITS+MemopType_Total+RISCV_ARCH+8+64+41+CFG_REG_TAG_WITH];
-    vb_res_wtag = queue_data_o.read()(2*CFG_CPU_ADDR_BITS+MemopType_Total+RISCV_ARCH+8+64+41+CFG_REG_TAG_WITH-1,
+    v_mem_debug = queue_data_o.read()[2*CFG_CPU_ADDR_BITS+MemopType_Total+RISCV_ARCH+8+64+41+CFG_REG_TAG_WIDTH+1];
+    v_flushd = queue_data_o.read()[2*CFG_CPU_ADDR_BITS+MemopType_Total+RISCV_ARCH+8+64+41+CFG_REG_TAG_WIDTH];
+    vb_res_wtag = queue_data_o.read()(2*CFG_CPU_ADDR_BITS+MemopType_Total+RISCV_ARCH+8+64+41+CFG_REG_TAG_WIDTH-1,
                                       2*CFG_CPU_ADDR_BITS+MemopType_Total+RISCV_ARCH+8+64+41);
     vb_mem_wdata = queue_data_o.read()(2*CFG_CPU_ADDR_BITS+MemopType_Total+RISCV_ARCH+8+64+41-1,
                                       2*CFG_CPU_ADDR_BITS+MemopType_Total+RISCV_ARCH+8+41);

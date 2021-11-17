@@ -32,7 +32,7 @@ SC_MODULE(MemAccess) {
     sc_out<bool> o_flushd;
 
     sc_in<sc_uint<6>> i_reg_waddr;                  // Register address to be written (0=no writing)
-    sc_in<sc_uint<CFG_REG_TAG_WITH>> i_reg_wtag;    // Register tag for writeback operation
+    sc_in<sc_uint<CFG_REG_TAG_WIDTH>> i_reg_wtag;    // Register tag for writeback operation
     sc_in<bool> i_memop_valid;                      // Memory request is valid
     sc_in<bool> i_memop_debug;                      // Memory debug request
     sc_in<sc_uint<RISCV_ARCH>> i_memop_wdata;       // Register value to be written
@@ -45,7 +45,7 @@ SC_MODULE(MemAccess) {
     sc_out<bool> o_wb_wena;                         // Write enable signal
     sc_out<sc_uint<6>> o_wb_waddr;                  // Output register address (0 = x0 = no write)
     sc_out<sc_uint<RISCV_ARCH>> o_wb_wdata;         // Register value
-    sc_out<sc_uint<CFG_REG_TAG_WITH>> o_wb_wtag;
+    sc_out<sc_uint<CFG_REG_TAG_WIDTH>> o_wb_wtag;
     sc_in<bool> i_wb_ready;
 
     // Memory interface:
@@ -93,7 +93,7 @@ private:
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> memop_res_pc;
         sc_signal<sc_uint<32>> memop_res_instr;
         sc_signal<sc_uint<6>> memop_res_addr;
-        sc_signal<sc_uint<CFG_REG_TAG_WITH>> memop_res_wtag;
+        sc_signal<sc_uint<CFG_REG_TAG_WIDTH>> memop_res_wtag;
         sc_signal<sc_uint<RISCV_ARCH>> memop_res_data;
         sc_signal<bool> memop_res_wena;
 
@@ -124,7 +124,7 @@ private:
 
     static const int QUEUE_WIDTH = 1 // memop_debug
                                  + 1   // i_e_flushd
-                                 + CFG_REG_TAG_WITH   // wtag
+                                 + CFG_REG_TAG_WIDTH   // wtag
                                  + 64  // wdata width
                                  + 8   // wstrb 
                                  + RISCV_ARCH

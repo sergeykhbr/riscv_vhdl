@@ -18,7 +18,7 @@
 
 namespace debugger {
 
-RegIntBank::RegIntBank(sc_module_name name_, bool async_reset, bool fpu_ena) :
+RegIntBank::RegIntBank(sc_module_name name_, bool async_reset) :
     sc_module(name_),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
@@ -42,7 +42,6 @@ RegIntBank::RegIntBank(sc_module_name name_, bool async_reset, bool fpu_ena) :
     o_ra("o_ra"),
     o_sp("o_sp") {
     async_reset_ = async_reset;
-    fpu_ena_ = fpu_ena;
 
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -91,16 +90,16 @@ void RegIntBank::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void RegIntBank::comb() {
-    int int_daddr = i_dport_addr.read()(REG_MSB(), 0).to_int();
-    int int_waddr = i_waddr.read()(REG_MSB(), 0).to_int();
-    int int_radr1 = i_radr1.read()(REG_MSB(), 0).to_int();
-    int int_radr2 = i_radr2.read()(REG_MSB(), 0).to_int();
+    int int_daddr = i_dport_addr.read().to_int();
+    int int_waddr = i_waddr.read().to_int();
+    int int_radr1 = i_radr1.read().to_int();
+    int int_radr2 = i_radr2.read().to_int();
     bool v_inordered;
+    sc_uint<CFG_REG_TAG_WIDTH> next_tag;
 
     v = r;
 
     v_inordered = 0;
-    sc_uint<CFG_REG_TAG_WITH> next_tag;
 
     next_tag = r.reg[int_waddr].tag + 1;
     if (next_tag == i_wtag.read()) {

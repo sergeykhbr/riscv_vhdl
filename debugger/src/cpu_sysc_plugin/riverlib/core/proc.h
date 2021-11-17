@@ -153,7 +153,7 @@ private:
         sc_signal<sc_uint<6>> radr2;
         sc_signal<bool> reg_wena;
         sc_signal<sc_uint<6>> reg_waddr;
-        sc_signal<sc_uint<CFG_REG_TAG_WITH>> reg_wtag;
+        sc_signal<sc_uint<CFG_REG_TAG_WIDTH>> reg_wtag;
         sc_signal<sc_uint<RISCV_ARCH>> reg_wdata;
         sc_signal<bool> csr_req_valid;               // Access to CSR request
         sc_signal<sc_uint<CsrReq_TotalBits>> csr_req_type;// Request type: [0]-read csr; [1]-write csr; [2]-change mode
@@ -191,14 +191,14 @@ private:
         sc_signal<bool> wena;
         sc_signal<sc_uint<6>> waddr;
         sc_signal<sc_uint<RISCV_ARCH>> wdata;
-        sc_signal<sc_uint<CFG_REG_TAG_WITH>> wtag;
+        sc_signal<sc_uint<CFG_REG_TAG_WIDTH>> wtag;
     };
 
     struct IntRegsType {
         sc_signal<sc_uint<RISCV_ARCH>> rdata1;
-        sc_signal<sc_uint<CFG_REG_TAG_WITH>> rtag1;
+        sc_signal<sc_uint<CFG_REG_TAG_WIDTH>> rtag1;
         sc_signal<sc_uint<RISCV_ARCH>> rdata2;
-        sc_signal<sc_uint<CFG_REG_TAG_WITH>> rtag2;
+        sc_signal<sc_uint<CFG_REG_TAG_WIDTH>> rtag2;
         sc_signal<sc_uint<RISCV_ARCH>> dport_rdata;
         sc_signal<sc_uint<RISCV_ARCH>> ra;      // Return address
         sc_signal<sc_uint<RISCV_ARCH>> sp;      // Stack pointer
@@ -301,7 +301,7 @@ private:
     sc_signal<bool> w_reg_wena;
     sc_signal<sc_uint<6>> wb_reg_waddr;
     sc_signal<sc_uint<RISCV_ARCH>> wb_reg_wdata;
-    sc_signal<sc_uint<CFG_REG_TAG_WITH>> wb_reg_wtag;
+    sc_signal<sc_uint<CFG_REG_TAG_WIDTH>> wb_reg_wtag;
     sc_signal<bool> w_reg_inorder;
     sc_signal<bool> w_reg_ignored;
 

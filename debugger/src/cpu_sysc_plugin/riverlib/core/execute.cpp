@@ -480,7 +480,7 @@ void InstrExecute::comb() {
     bool v_check_tag1;
     bool v_check_tag2;
     sc_uint<Res_Total> vb_select;
-    sc_biguint<CFG_REG_TAG_WITH*REGS_TOTAL> vb_tagcnt_next;
+    sc_biguint<CFG_REG_TAG_WIDTH*REGS_TOTAL> vb_tagcnt_next;
     bool v_d_ready;
     bool v_latch_input;
     bool v_memop_ena;
@@ -630,13 +630,13 @@ void InstrExecute::comb() {
     int t_radr2 = mux.radr2.to_int();
 
     w_hazard1 = 0;
-    if (r.tagcnt.read()(CFG_REG_TAG_WITH * t_radr1 + (CFG_REG_TAG_WITH - 1),
-                        CFG_REG_TAG_WITH * t_radr1) != i_rtag1.read()) {
+    if (r.tagcnt.read()(CFG_REG_TAG_WIDTH * t_radr1 + (CFG_REG_TAG_WIDTH - 1),
+                        CFG_REG_TAG_WIDTH * t_radr1) != i_rtag1.read()) {
         w_hazard1 = v_check_tag1;
     }
     w_hazard2 = 0;
-    if (r.tagcnt.read()(CFG_REG_TAG_WITH * t_radr2 + (CFG_REG_TAG_WITH - 1),
-                        CFG_REG_TAG_WITH * t_radr2) != i_rtag2.read()) {
+    if (r.tagcnt.read()(CFG_REG_TAG_WIDTH * t_radr2 + (CFG_REG_TAG_WIDTH - 1),
+                        CFG_REG_TAG_WIDTH * t_radr2) != i_rtag2.read()) {
         w_hazard2 = v_check_tag2;
     }
 
@@ -1199,12 +1199,12 @@ void InstrExecute::comb() {
     // Next tags:
     t_waddr = vb_reg_waddr.to_int();
 
-    t_tagcnt_wr = r.tagcnt.read()(CFG_REG_TAG_WITH*t_waddr + (CFG_REG_TAG_WITH - 1),
-                                         CFG_REG_TAG_WITH*t_waddr).to_int() + 1;
+    t_tagcnt_wr = r.tagcnt.read()(CFG_REG_TAG_WIDTH*t_waddr + (CFG_REG_TAG_WIDTH - 1),
+                                         CFG_REG_TAG_WIDTH*t_waddr).to_int() + 1;
 
     vb_tagcnt_next = r.tagcnt;
-    vb_tagcnt_next(CFG_REG_TAG_WITH*t_waddr+(CFG_REG_TAG_WITH-1), CFG_REG_TAG_WITH*t_waddr) = t_tagcnt_wr;
-    vb_tagcnt_next(CFG_REG_TAG_WITH - 1, 0) = 0;      // r0 always 0
+    vb_tagcnt_next(CFG_REG_TAG_WIDTH*t_waddr+(CFG_REG_TAG_WIDTH-1), CFG_REG_TAG_WIDTH*t_waddr) = t_tagcnt_wr;
+    vb_tagcnt_next(CFG_REG_TAG_WIDTH - 1, 0) = 0;      // r0 always 0
 
     if (i_dbg_progbuf_ena.read() == 0) {
         v.dnpc = 0;
@@ -1367,7 +1367,7 @@ void InstrExecute::comb() {
 
     // Debug rtl only:!!
     for (int i = 0; i < Reg_Total; i++) {
-        tag_expected[i] = r.tagcnt.read()(CFG_REG_TAG_WITH*i+(CFG_REG_TAG_WITH-1), CFG_REG_TAG_WITH*i).to_int();
+        tag_expected[i] = r.tagcnt.read()(CFG_REG_TAG_WIDTH*i+(CFG_REG_TAG_WIDTH-1), CFG_REG_TAG_WIDTH*i).to_int();
     }
 }
 
