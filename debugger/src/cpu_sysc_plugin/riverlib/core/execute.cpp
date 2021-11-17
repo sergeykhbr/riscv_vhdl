@@ -223,9 +223,9 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << r.ret;
     sensitive << r.stepdone;
     for (int i = 0; i < Res_Total; i++) {
-        sensitive << wb_select.ena[i];
-        sensitive << wb_select.valid[i];
-        sensitive << wb_select.res[i];
+        sensitive << wb_select[i].ena;
+        sensitive << wb_select[i].valid;
+        sensitive << wb_select[i].res;
     }
     sensitive << wb_shifter_a1;
     sensitive << wb_shifter_a2;
@@ -246,7 +246,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     alu0->i_mode(wb_alu_mode);
     alu0->i_a1(wb_rdata1);
     alu0->i_a2(wb_rdata2);
-    alu0->o_res(wb_select.res[Res_Alu]);
+    alu0->o_res(wb_select[Res_Alu].res);
 
     addsub0 = new IntAddSub("addsub0", async_reset);
     addsub0->i_clk(i_clk);
@@ -254,32 +254,32 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     addsub0->i_mode(wb_addsub_mode);
     addsub0->i_a1(wb_rdata1);
     addsub0->i_a2(wb_rdata2);
-    addsub0->o_res(wb_select.res[Res_AddSub]);
+    addsub0->o_res(wb_select[Res_AddSub].res);
 
     mul0 = new IntMul("mul0", async_reset);
     mul0->i_clk(i_clk);
     mul0->i_nrst(i_nrst);
-    mul0->i_ena(wb_select.ena[Res_IMul]);
+    mul0->i_ena(wb_select[Res_IMul].ena);
     mul0->i_unsigned(i_unsigned_op);
     mul0->i_hsu(w_mul_hsu);
     mul0->i_high(w_arith_residual_high);
     mul0->i_rv32(i_rv32);
     mul0->i_a1(wb_rdata1);
     mul0->i_a2(wb_rdata2);
-    mul0->o_res(wb_select.res[Res_IMul]);
-    mul0->o_valid(wb_select.valid[Res_IMul]);
+    mul0->o_res(wb_select[Res_IMul].res);
+    mul0->o_valid(wb_select[Res_IMul].valid);
 
     div0 = new IntDiv("div0", async_reset);
     div0->i_clk(i_clk);
     div0->i_nrst(i_nrst);
-    div0->i_ena(wb_select.ena[Res_IDiv]);
+    div0->i_ena(wb_select[Res_IDiv].ena);
     div0->i_unsigned(i_unsigned_op);
     div0->i_residual(w_arith_residual_high);
     div0->i_rv32(i_rv32);
     div0->i_a1(wb_rdata1);
     div0->i_a2(wb_rdata2);
-    div0->o_res(wb_select.res[Res_IDiv]);
-    div0->o_valid(wb_select.valid[Res_IDiv]);
+    div0->o_res(wb_select[Res_IDiv].res);
+    div0->o_valid(wb_select[Res_IDiv].valid);
 
     sh0 = new Shifter("sh0", async_reset);
     sh0->i_clk(i_clk);
@@ -287,26 +287,26 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sh0->i_mode(wb_shifter_mode);
     sh0->i_a1(wb_shifter_a1);
     sh0->i_a2(wb_shifter_a2);
-    sh0->o_res(wb_select.res[Res_Shifter]);
+    sh0->o_res(wb_select[Res_Shifter].res);
 
     if (fpu_ena_) {
         fpu0 = new FpuTop("fpu0", async_reset);
         fpu0->i_clk(i_clk);
         fpu0->i_nrst(i_nrst);
-        fpu0->i_ena(wb_select.ena[Res_FPU]);
+        fpu0->i_ena(wb_select[Res_FPU].ena);
         fpu0->i_ivec(wb_fpu_vec);
         fpu0->i_a(wb_rdata1);
         fpu0->i_b(wb_rdata2);
-        fpu0->o_res(wb_select.res[Res_FPU]);
+        fpu0->o_res(wb_select[Res_FPU].res);
         fpu0->o_ex_invalidop(w_ex_fpu_invalidop);
         fpu0->o_ex_divbyzero(w_ex_fpu_divbyzero);
         fpu0->o_ex_overflow(w_ex_fpu_overflow);
         fpu0->o_ex_underflow(w_ex_fpu_underflow);
         fpu0->o_ex_inexact(w_ex_fpu_inexact);
-        fpu0->o_valid(wb_select.valid[Res_FPU]);
+        fpu0->o_valid(wb_select[Res_FPU].valid);
     } else {
-        wb_select.res[Res_FPU] = 0;
-        wb_select.valid[Res_FPU] = 0;
+        wb_select[Res_FPU].res = 0;
+        wb_select[Res_FPU].valid = 0;
         w_ex_fpu_invalidop = 0;
         w_ex_fpu_divbyzero = 0;
         w_ex_fpu_overflow = 0;
@@ -398,12 +398,12 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_halted, o_halted.name());
 
         std::string pn(name());
-        sc_trace(o_vcd, wb_select.ena[Res_IMul], pn + ".w_arith_ena(5)");
-        sc_trace(o_vcd, wb_select.res[Res_IMul], pn + ".wb_arith_res(5)");
-        sc_trace(o_vcd, wb_select.ena[Res_IDiv], pn + ".w_arith_ena(6)");
-        sc_trace(o_vcd, wb_select.res[Res_IDiv], pn + ".wb_arith_res(6)");
-        sc_trace(o_vcd, wb_select.ena[Res_FPU], pn + ".w_arith_ena(7)");
-        sc_trace(o_vcd, wb_select.res[Res_FPU], pn + ".wb_arith_res(7)");
+        sc_trace(o_vcd, wb_select[Res_IMul].ena, pn + ".w_arith_ena(5)");
+        sc_trace(o_vcd, wb_select[Res_IMul].res, pn + ".wb_arith_res(5)");
+        sc_trace(o_vcd, wb_select[Res_IDiv].ena, pn + ".w_arith_ena(6)");
+        sc_trace(o_vcd, wb_select[Res_IDiv].res, pn + ".wb_arith_res(6)");
+        sc_trace(o_vcd, wb_select[Res_FPU].ena, pn + ".w_arith_ena(7)");
+        sc_trace(o_vcd, wb_select[Res_FPU].res, pn + ".wb_arith_res(7)");
         sc_trace(o_vcd, r.state, pn + ".r_state");
         sc_trace(o_vcd, r.csrstate, pn + ".r_csrstate");
         sc_trace(o_vcd, r.csr_req_type, pn + ".r_csr_req_type");
@@ -434,7 +434,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, tag_expected[0xd], pn + ".tag_expected0x0D");
         sc_trace(o_vcd, tag_expected[0xe], pn + ".tag_expected0x0E");
         sc_trace(o_vcd, tag_expected[0xf], pn + ".tag_expected0x0F");
-        sc_trace(o_vcd, wb_select.res[Res_AddSub], pn + ".t_res_AddSub");
+        sc_trace(o_vcd, wb_select[Res_AddSub].res, pn + ".t_res_AddSub");
         sc_trace(o_vcd, t_tagcnt_wr, pn + ".t_tagcnt_wr");
         sc_trace(o_vcd, t_waddr, pn + ".t_waddr");
     }
@@ -480,7 +480,6 @@ void InstrExecute::comb() {
     bool v_check_tag1;
     bool v_check_tag2;
     sc_uint<Res_Total> vb_select;
-    //sc_biguint<CFG_REG_TAG_WITH*REGS_TOTAL> vb_tagcnt_wr;
     sc_biguint<CFG_REG_TAG_WITH*REGS_TOTAL> vb_tagcnt_next;
     bool v_d_ready;
     bool v_latch_input;
@@ -522,7 +521,7 @@ void InstrExecute::comb() {
     vb_rdata2 = 0;
     vb_select = 0;
     for (int i = 0; i < Res_Total; i++) {
-        wb_select.ena[i] = 0;
+        wb_select[i].ena = 0;
     }
     v_instr_misaligned = 0;
     v_store_misaligned = 0;
@@ -884,33 +883,33 @@ void InstrExecute::comb() {
         vb_csr_cmd_wdata(4, 0) = r.radr1.read()(4, 0);  // zero-extending 5 to 64-bits
     }
 
-    wb_select.res[Res_Zero] = 0;
-    wb_select.res[Res_Reg2] = r.rdata2;
-    wb_select.res[Res_Csr] = r.res_csr;
-    wb_select.res[Res_Npc] = r.res_npc;
-    wb_select.res[Res_Ra] = r.res_ra;
+    wb_select[Res_Zero].res = 0;
+    wb_select[Res_Reg2].res = r.rdata2;
+    wb_select[Res_Csr].res = r.res_csr;
+    wb_select[Res_Npc].res = r.res_npc;
+    wb_select[Res_Ra].res = r.res_ra;
 
     // Select result:
     if (r.select.read()[Res_Reg2]) {
-        vb_res = wb_select.res[Res_Reg2];
+        vb_res = wb_select[Res_Reg2].res;
     } else if (r.select.read()[Res_Npc]) {
-        vb_res = wb_select.res[Res_Npc];
+        vb_res = wb_select[Res_Npc].res;
     } else if (r.select.read()[Res_Ra]) {
-        vb_res = wb_select.res[Res_Ra];
+        vb_res = wb_select[Res_Ra].res;
     } else if (r.select.read()[Res_Csr]) {
-        vb_res = wb_select.res[Res_Csr];
+        vb_res = wb_select[Res_Csr].res;
     } else if (r.select.read()[Res_Alu]) {
-        vb_res = wb_select.res[Res_Alu];
+        vb_res = wb_select[Res_Alu].res;
     } else if (r.select.read()[Res_AddSub]) {
-        vb_res = wb_select.res[Res_AddSub];
+        vb_res = wb_select[Res_AddSub].res;
     } else if (r.select.read()[Res_Shifter]) {
-        vb_res = wb_select.res[Res_Shifter];
+        vb_res = wb_select[Res_Shifter].res;
     } else if (r.select.read()[Res_IMul]) {
-        vb_res = wb_select.res[Res_IMul];
+        vb_res = wb_select[Res_IMul].res;
     } else if (r.select.read()[Res_IDiv]) {
-        vb_res = wb_select.res[Res_IDiv];
+        vb_res = wb_select[Res_IDiv].res;
     } else if (r.select.read()[Res_FPU]) {
-        vb_res = wb_select.res[Res_FPU];
+        vb_res = wb_select[Res_FPU].res;
     } else {
         vb_res = 0;
     }
@@ -1115,9 +1114,9 @@ void InstrExecute::comb() {
         break;
     case State_WaitMulti:
         // Wait end of multiclock instructions
-        if (wb_select.valid[Res_IMul]
-          | wb_select.valid[Res_IDiv]
-          | wb_select.valid[Res_FPU]) {
+        if (wb_select[Res_IMul].valid
+          | wb_select[Res_IDiv].valid
+          | wb_select[Res_FPU].valid) {
             v.state = State_Idle;
             v_reg_ena = r.waddr.read().or_reduce();
             vb_reg_waddr = r.waddr;
@@ -1245,9 +1244,9 @@ void InstrExecute::comb() {
         v.res_npc = vb_prog_npc;
         v.res_ra = vb_npc_incr;
 
-        wb_select.ena[Res_IMul] = vb_select[Res_IMul];
-        wb_select.ena[Res_IDiv] = vb_select[Res_IDiv];
-        wb_select.ena[Res_FPU] = vb_select[Res_FPU];
+        wb_select[Res_IMul].ena = vb_select[Res_IMul];
+        wb_select[Res_IDiv].ena = vb_select[Res_IDiv];
+        wb_select[Res_FPU].ena = vb_select[Res_FPU];
         v.select = vb_select;
     }
     if (v_reg_ena) {

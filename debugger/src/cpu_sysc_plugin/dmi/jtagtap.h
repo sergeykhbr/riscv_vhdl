@@ -110,11 +110,6 @@ SC_MODULE(JtagTap) {
     static const uint64_t DMISTAT_FAILED            = 2;
     static const uint64_t DMISTAT_BUSY              = 3;
 
-    static const uint64_t DMI_OP_NOP	            = 0;
-    static const uint64_t DMI_OP_READ	            = 1;
-    static const uint64_t DMI_OP_WRITE	            = 2;
-    static const uint64_t DMI_OP_RESERVED	        = 3;
-
 
     struct RegistersType {
         sc_signal<sc_uint<4>> state;

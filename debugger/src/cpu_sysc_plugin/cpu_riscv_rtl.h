@@ -140,7 +140,7 @@ class CpuRiscV_RTL : public IService,
     sc_signal<bool> w_hartreset;
     sc_signal<bool> w_dport_req_valid;
     sc_signal<sc_uint<DPortReq_Total>> wb_dport_type;
-    sc_signal<sc_uint<CFG_BUS_ADDR_WIDTH>> wb_dport_addr;
+    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_dport_addr;
     sc_signal<sc_uint<RISCV_ARCH>> wb_dport_wdata;
     sc_signal<sc_uint<3>> wb_dport_size;
     sc_signal<bool> w_dport_req_ready;

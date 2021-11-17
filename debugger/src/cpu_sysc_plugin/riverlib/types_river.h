@@ -757,7 +757,7 @@ class axi4_domain_in_vector {
 
     inline bool operator == (const axi4_domain_in_vector &rhs) const {
         bool t;
-        for (int i = 0; i < CFG_TOTAL_CPU_MAX; i++) {
+        for (int i = 0; i < CFG_CPU_MAX; i++) {
             t = (rhs.arr[i].aw_ready == arr[i].aw_ready
                  && rhs.arr[i].w_ready == arr[i].w_ready
                  && rhs.arr[i].b_valid == arr[i].b_valid
@@ -785,7 +785,7 @@ class axi4_domain_in_vector {
     }
 
     inline axi4_domain_in_vector& operator = (const axi4_domain_in_vector &rhs) {
-        for (int i = 0; i < CFG_TOTAL_CPU_MAX; i++) {
+        for (int i = 0; i < CFG_CPU_MAX; i++) {
             arr[i].aw_ready = rhs.arr[i].aw_ready;
             arr[i].w_ready = rhs.arr[i].w_ready;
             arr[i].b_valid = rhs.arr[i].b_valid;
@@ -813,7 +813,7 @@ class axi4_domain_in_vector {
                                 const axi4_domain_in_vector &v,
                                 const std::string &NAME) {
         char N[4] = "(0)";
-        for (int i = 0; i < CFG_TOTAL_CPU_MAX; i++) {
+        for (int i = 0; i < CFG_CPU_MAX; i++) {
             N[1] = '0' + static_cast<char>(i);
             sc_trace(tf, v.arr[i].aw_ready, NAME + N + "_aw_ready");
             sc_trace(tf, v.arr[i].w_ready, NAME + N + "_w_ready");
@@ -840,7 +840,7 @@ class axi4_domain_in_vector {
     inline friend ostream &operator << (ostream &os,
                                         axi4_domain_in_vector const &v) {
         os << "(";
-        for (int i = 0; i < CFG_TOTAL_CPU_MAX; i++) {
+        for (int i = 0; i < CFG_CPU_MAX; i++) {
             os << "("
             << v.arr[i].aw_ready << ","
             << v.arr[i].w_ready << ","
@@ -867,7 +867,7 @@ class axi4_domain_in_vector {
     }
 
  public:
-    axi4_l1_in_type arr[CFG_TOTAL_CPU_MAX];
+    axi4_l1_in_type arr[CFG_CPU_MAX];
 };
 
 class axi4_domain_out_type {
@@ -876,7 +876,7 @@ class axi4_domain_out_type {
 
     inline bool operator == (const axi4_domain_out_type &rhs) const {
         bool t;
-        for (int i = 0; i < CFG_TOTAL_CPU_MAX; i++) {
+        for (int i = 0; i < CFG_CPU_MAX; i++) {
             t = (rhs.arr[i].aw_valid == arr[i].aw_valid
                 && rhs.arr[i].aw_bits.addr == arr[i].aw_bits.addr
                 && rhs.arr[i].aw_bits.len == arr[i].aw_bits.len
@@ -930,7 +930,7 @@ class axi4_domain_out_type {
     }
 
     inline axi4_domain_out_type& operator = (const axi4_domain_out_type &rhs) {
-        for (int i = 0; i < CFG_TOTAL_CPU_MAX; i++) {
+        for (int i = 0; i < CFG_CPU_MAX; i++) {
             arr[i].aw_valid = rhs.arr[i].aw_valid;
             arr[i].aw_bits.addr = rhs.arr[i].aw_bits.addr;
             arr[i].aw_bits.len = rhs.arr[i].aw_bits.len;
@@ -984,7 +984,7 @@ class axi4_domain_out_type {
                                 const axi4_domain_out_type &v,
                                 const std::string &NAME) {
         char N[4] = "(0)";
-        for (int i = 0; i < CFG_TOTAL_CPU_MAX; i++) {
+        for (int i = 0; i < CFG_CPU_MAX; i++) {
             N[1] = '0' + static_cast<char>(i);
             sc_trace(tf, v.arr[i].aw_valid, NAME + N + "_aw_valid");
             sc_trace(tf, v.arr[i].aw_bits.addr, NAME + N + "_aw_bits_addr");
@@ -1037,7 +1037,7 @@ class axi4_domain_out_type {
     inline friend ostream &operator << (ostream &os,
                                         axi4_domain_out_type const &v) {
         os << "(";
-        for (int i = 0; i < CFG_TOTAL_CPU_MAX; i++) {
+        for (int i = 0; i < CFG_CPU_MAX; i++) {
             os << "("
             << v.arr[i].aw_valid << ","
             << v.arr[i].aw_bits.addr << ","
@@ -1090,7 +1090,7 @@ class axi4_domain_out_type {
     }
 
  public:
-    axi4_l1_out_type arr[CFG_TOTAL_CPU_MAX];
+    axi4_l1_out_type arr[CFG_CPU_MAX];
 };
 
 static const axi4_l1_in_type axi4_l1_in_none;

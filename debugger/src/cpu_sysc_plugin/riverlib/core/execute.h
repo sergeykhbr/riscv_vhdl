@@ -172,9 +172,9 @@ private:
     static const unsigned AmoState_Write = 3;
 
     struct select_type {
-        sc_signal<bool> ena[Res_Total];
-        sc_signal<bool> valid[Res_Total];
-        sc_signal<sc_uint<RISCV_ARCH>> res[Res_Total];
+        sc_signal<bool> ena;
+        sc_signal<bool> valid;
+        sc_signal<sc_uint<RISCV_ARCH>> res;
     };
 
     struct input_mux_type {
@@ -213,7 +213,6 @@ private:
 
         sc_signal<sc_uint<32>> instr;
         sc_signal<sc_biguint<CFG_REG_TAG_WITH*REGS_TOTAL>> tagcnt;      // N-bits tag per register (expected)
-        //sc_signal<sc_biguint<CFG_REG_TAG_WITH*REGS_TOTAL>> tagcnt_wr;      // N-bits tag per register (written)
 
         sc_signal<bool> reg_write;
         sc_signal<sc_uint<6>> reg_waddr;
@@ -319,7 +318,7 @@ private:
         iv.stepdone = 0;
     }
 
-    select_type wb_select;
+    select_type wb_select[Res_Total];
     sc_signal<sc_uint<3>> wb_alu_mode;
     sc_signal<sc_uint<7>> wb_addsub_mode;
     sc_signal<sc_uint<4>> wb_shifter_mode;
