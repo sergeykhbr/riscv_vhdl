@@ -48,6 +48,11 @@ add_executable(
 
 if(UNIX)
     target_link_libraries(riscvdebugger pthread rt dl libdbg64g)
+
+    add_custom_command(TARGET riscvdebugger
+	        POST_BUILD
+	        COMMAND /bin/bash ${CMAKE_CURRENT_SOURCE_DIR}/post_build_event.sh "${CMAKE_CURRENT_BINARY_DIR}/linuxbuild/bin" "${CMAKE_CURRENT_SOURCE_DIR}"
+	        )
 else()
 
     foreach(_source IN ITEMS ${_riscvdebugger_src})
@@ -68,6 +73,11 @@ else()
     set_target_properties(riscvdebugger PROPERTIES
                                         VS_DEBUGGER_COMMAND_ARGUMENTS 
                                         "-c ${CMAKE_CURRENT_SOURCE_DIR}/../targets/func_river_x1_gui.json")
+    add_custom_command(TARGET riscvdebugger
+	        POST_BUILD
+	        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/post_build_event.bat "${CMAKE_CURRENT_BINARY_DIR}/winbuild/bin" "${CMAKE_CURRENT_SOURCE_DIR}"
+	        )
+
     target_link_libraries(riscvdebugger libdbg64g)
     add_dependencies(riscvdebugger libdbg64g simple_plugin socsim_plugin cpu_sysc_plugin cpu_arm_plugin cpu_fnc_plugin gui_plugin)
 endif()

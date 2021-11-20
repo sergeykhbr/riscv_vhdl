@@ -60,6 +60,7 @@ add_library(gui_plugin SHARED
 )
 
 if(UNIX)
+    target_link_libraries(gui_plugin libdbg64g Qt::Core Qt::Gui Qt::Widgets Qt::Network)	
     add_custom_command(TARGET gui_plugin  
 	        POST_BUILD
 	        COMMAND /bin/bash ${CMAKE_CURRENT_SOURCE_DIR}/post_build_event.sh "${LIBRARY_OUTPUT_PATH}"
