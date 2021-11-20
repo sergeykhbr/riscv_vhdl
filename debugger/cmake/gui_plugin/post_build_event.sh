@@ -2,6 +2,7 @@ mkdir -pv $1/../qtlib
 mkdir -pv $1/../qtlib/platforms
 cp $QT_PATH/plugins/platforms/libqlinuxfb.so $1/../qtlib/platforms/
 cp $QT_PATH/plugins/platforms/libqminimal.so $1/../qtlib/platforms/
+cp $QT_PATH/plugins/platforms/libqxcb.so $1/qtlib/platforms/
 cp $QT_PATH/lib/libicudata.* $1/../qtlib
 cp $QT_PATH/lib/libicui18n.* $1/../qtlib
 cp $QT_PATH/lib/libicuuc.* $1/../qtlib

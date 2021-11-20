@@ -1,20 +1,82 @@
 Universal Platform Simulator and Debugger.
 =====================
 
-Warning: Use MSVC2013 to run SystemC model. There's some problem with
-running systemc from plugin library in msvc2017 and 2019.
-
 This repository folder contains source code of the Unversal Platform Simulator
-with capability to debug real hardware (fpga/asic) using absolutely the
-same set of features.
+with the following capabilities:
+
+- Functional simulation of the RISC-V based system
+- SystemC simulation of the RISC-V based system
+- Mixed Hardware and software co-simulation
+- OpenOCD bitband interface
+- Python connection through the TCP interface
+- Windows and Linux portable using CMake files
 
 JSON-configuration files in sub-folder *./targets* defines the structure
-and capabilities of any platform:
+and capabilities of the running platform:
 
-- Processor and ISA architecture
-- Set of peripheries
-- Remote access and Python support
-- Enable/disable GUI implemented as the independent plugin based on Qt-libraries
+## Howto build:
+
+1. Install building toolchain
+   - Windows: download and install MS Visual Studio community version
+   - Linux:
+
+        $ sudo apt-get install build-essential
+
+2. Install cmake-gui
+   - Windows: download and install cmake-gui from "https://cmake.org/download/"
+   - Linux:
+
+        $ sudo apt-get install cmake-qt-gui
+
+   - Clean Ubuntu 20.04 version also required to install OpenGl drivers:
+
+        $ sudo apt-get install mesa-common-dev libxcb-xinerama0
+
+3. Install the latest Qt-Libraries (checked with 6.2) using online installer.
+4. Define environment variable QT_PATH accordingly with your installation path
+   - Windows: 
+
+![Env. variable Windows ](docs/doxygen/pics/howto_env_vars_win.png)
+
+   - Linux:
+
+        $ export QT_PATH=/home/user/Qt/6.2.0/gcc_64
+
+5. Optionally download and build SystemC library (see SystemC documentation).
+   Specify SYSTEMC_PATH in the same way as for Qt.
+
+6. Generate MSVC project for Windows or makefiles for Linux
+
+![Open cmake-gui](docs/doxygen/pics/howto_cmake_01.png)
+
+- Specify (1) folder containing debugger's cmake files
+- Specify (2) any diretory where you would like to have build project
+- Press button 3, 4 (or 4).
+- The very first configuration cmake will request additional target information:
+
+![Select target](docs/doxygen/pics/howto_cmake_02.png)
+
+7. Build and run generated project
+
+![Build done](docs/doxygen/pics/howto_cmake_03.png)
+
+In a case of successful project generation:
+    - Windows: Press the button "Open Project" then build and run debugger from Visual Studio
+    - Linux: Goto into the generated project folder and build makefiles:
+
+        $ cd ~/debugger
+        $ make
+
+![Building](docs/doxygen/pics/howto_cmake_04.png)
+
+To start debugger on Linux (the same on Windows with winbuild/bin):
+
+        $ cd linuxbuild/bin
+        $ ./_run_func_river_x1_gui.sh
+
+![Debugger started](docs/doxygen/pics/howto_success.png)
+
+That's all!
 
 ## Debugging Dual-Core River CPU SoC on FPGA ML605 board
 
