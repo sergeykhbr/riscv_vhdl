@@ -36,7 +36,7 @@ and capabilities of the running platform:
 4. Define environment variable QT_PATH accordingly with your installation path
    - Windows: 
 
-![Env. variable Windows ](docs/doxygen/pics/howto_env_vars_win.png)
+![Env. variable Windows ](../docs/doxygen/pics/howto_env_vars_win.png)
 
    - Linux:
 
@@ -47,18 +47,18 @@ and capabilities of the running platform:
 
 6. Generate MSVC project for Windows or makefiles for Linux
 
-![Open cmake-gui](docs/doxygen/pics/howto_cmake_01.png)
+![Open cmake-gui](../docs/doxygen/pics/howto_cmake_01.png)
 
 - Specify (1) folder containing debugger's cmake files
 - Specify (2) any diretory where you would like to have build project
 - Press button 3, 4 (or 4).
 - The very first configuration cmake will request additional target information:
 
-![Select target](docs/doxygen/pics/howto_cmake_02.png)
+![Select target](../docs/doxygen/pics/howto_cmake_02.png)
 
 7. Build and run generated project
 
-![Build done](docs/doxygen/pics/howto_cmake_03.png)
+![Build done](../docs/doxygen/pics/howto_cmake_03.png)
 
 In a case of successful project generation:
     - Windows: Press the button "Open Project" then build and run debugger from Visual Studio
@@ -67,14 +67,14 @@ In a case of successful project generation:
         $ cd ~/debugger
         $ make
 
-![Building](docs/doxygen/pics/howto_cmake_04.png)
+![Building](../docs/doxygen/pics/howto_cmake_04.png)
 
 To start debugger on Linux (the same on Windows with winbuild/bin):
 
         $ cd linuxbuild/bin
         $ ./_run_func_river_x1_gui.sh
 
-![Debugger started](docs/doxygen/pics/howto_success.png)
+![Debugger started](../docs/doxygen/pics/howto_success.png)
 
 That's all!
 
