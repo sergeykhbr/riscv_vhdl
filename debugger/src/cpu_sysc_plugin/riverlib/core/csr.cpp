@@ -173,6 +173,8 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.mie, pn + ".r_mie");
         sc_trace(o_vcd, r.mepc, pn + ".r_mepc");
         sc_trace(o_vcd, r.mtval, pn + ".r_mtval");
+        sc_trace(o_vcd, r.mtvec, pn + ".r_mtvec");
+        sc_trace(o_vcd, r.mtvec_mode, pn + ".r_mtvec_mode");
         sc_trace(o_vcd, r.meip, pn + ".r_meip");
         sc_trace(o_vcd, r.mtip, pn + ".r_mtip");
         sc_trace(o_vcd, r.msip, pn + ".r_msip");

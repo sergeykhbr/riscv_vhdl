@@ -44,11 +44,13 @@ LIB_NAMES =\
 
 VPATH = $(SRC_PATH)
 
-SOURCE_64UI = \
+SOURCE_64UA = \
 	amoadd_w amoxor_w amoor_w amoand_w amomin_w amomax_w \
 	amominu_w amomaxu_w amoswap_w \
 	amoadd_d amoxor_d amoor_d amoand_d amomin_d amomax_d \
-	amominu_d amomaxu_d amoswap_d lrsc\
+	amominu_d amomaxu_d amoswap_d lrsc
+
+SOURCE_64UI = \
 	add addi addiw addw \
 	and andi \
 	auipc \
@@ -74,7 +76,7 @@ SOURCE_64UM = \
 SOURCE_64UC = \
 	rvc
 
-SOURCES = $(SOURCE_64UI) $(SOURCE_64UC) $(SOURCE_64UM) \
+SOURCES = $(SOURCE_64UI) $(SOURCE_64UA) $(SOURCE_64UC) $(SOURCE_64UM) \
 	passfail
 
 

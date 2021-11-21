@@ -10,21 +10,9 @@ Satellite Navigation (GPS/GLONASS/Galileo) modules were stubbed in this
 repository and can be requested separately.
 
 
-## What is Rocket-chip and [RISC-V ISA](http://www.riscv.org)?
-
-RISC-V (pronounced "risk-five") is a new instruction set architecture (ISA)
-that was originally designed to support computer architecture research and
-education and is now set become a standard open architecture for industry
-implementations under the governance of the RISC-V Foundation. RISC-V was
-originally developed in the Computer Science Division of the EECS Department
-at the University of California, Berkeley.
-
-Parameterized generator of the Rocket-chip can be found here:
-[https://github.com/ucb-bar](https://github.com/ucb-bar)
-
 ## What is River CPU?
 
-It's my own implementation of RISC-V ISA used in a several projects including
+That's a VHDL RISC-V ISA implementation used in a several projects including
 the multi-sytem Satellite Navigation receiver. It is great for an 
 embedded applications with active usage of 64-bits computations (like DSP).  
 **River CPU** includes the following tools and features:
@@ -34,20 +22,18 @@ embedded applications with active usage of 64-bits computations (like DSP).
     - */debugger/cpu_sysc_plugin* - Precise SystemC RIVER CPU model.
     - */rtl/riverlib*      -  synthesisable VHDL model of a 64-bit processor compliant with the RISC-V architecture.
 2. Floating Point Unit (FPU)
-3. Dual-Core configuration
+3. Multi-Core configuration
 4. Advanced debugging features
     - Test Access Points (TAPs) via Ethernet, UART and JTAG in one system.
+    - Compatible with the Standard RISC-V debug specification.
     - System Bus tracer
     - Pipeline statistic (CPI, HW stacktrace) in a real-time on HW level.
     - Plug'n'Play information
-5. Integration with GUI from the very beginning.
 
 You can find several **demonstration videos**
 [here](https://github.com/sergeykhbr/riscv_vhdl/tree/master/debugger) of working with the 
 Dual-Core SoC on FPGA and with the emulated platforms.
 
-My goal is to develop open source fault-tolerant processor with the user-friendly
-framework.
 
 ## System-on-Chip structure
 

@@ -42,6 +42,7 @@
 #define COOP_REG_T4         232//(29*sizeof(uint64_t))
 /** Global pointer */
 #define COOP_REG_GP         240//(30*sizeof(uint64_t))
+#define COOP_REG_FRAME      248//(30*sizeof(uint64_t))
 
 #define _save_context(TO) \
   sd ra, COOP_REG_RA(TO); \

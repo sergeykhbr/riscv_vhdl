@@ -168,6 +168,7 @@ sp_init_core0:
   add sp, sp, t0
 sp_init_coreall:
   add tp, zero, sp            # tp = sp + 0 (mov)
+  csrw 0x7b3, sp          # save dedicated stack region into dscratch1 dregister
   ## Use tp register to save/restore registers context on task switching
   addi tp,tp,-256              # tp = tp - 256 = 0x1007ff00
   addi sp, sp,-264
@@ -193,7 +194,8 @@ trap_entry:
   bgez t5, handle_exception;
 
 interrupt_entry:
-  _save_context(tp)
+  add sp, sp, -COOP_REG_FRAME
+  _save_context(sp)
 
   ## @brief Call function :
   ##       long handle_trap(long cause, long epc, long long regs[32])
@@ -203,7 +205,6 @@ interrupt_entry:
   ## @return     a0 New instruction pointer offset
   csrr a0, mcause
   csrr a1, mepc
-  sd a1,COOP_REG_TP(tp)
   mv a2, sp
   # !!! Cannot reset external pending bits only via IrqController (page 28)
   li t0, 0x00000800
@@ -213,17 +214,17 @@ interrupt_entry:
 
   # tp-offset in the context array is used to save mepc value. An it may be
   # modified by isr handler during preemtive task switching.
-  ld t5,COOP_REG_TP(tp)
+  ld t5,COOP_REG_TP(sp)
   csrw mepc,t5
-  _restore_context(tp)
+  _restore_context(sp)
+  add sp, sp, COOP_REG_FRAME
   csrr t5,mscratch
   mret
 
 
 handle_exception:
-  _save_context(tp)
+  # All registers are invalid after riscv-tests finished!!
+  csrr sp, 0x7b3          # restore dedicated stack region from dscratch1 dregister
   jal exception_handler_c
-  _restore_context(tp)
-  csrr t5, mscratch;
   mret
 

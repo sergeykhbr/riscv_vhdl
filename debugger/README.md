@@ -34,6 +34,7 @@ and capabilities of the running platform:
 
 3. Install the latest Qt-Libraries (checked with 6.2) using online installer.
 4. Define environment variable QT_PATH accordingly with your installation path
+
    - Windows: 
 
 ![Env. variable Windows ](../docs/doxygen/pics/howto_env_vars_win.png)
@@ -61,8 +62,9 @@ and capabilities of the running platform:
 ![Build done](../docs/doxygen/pics/howto_cmake_03.png)
 
 In a case of successful project generation:
-    - Windows: Press the button "Open Project" then build and run debugger from Visual Studio
-    - Linux: Goto into the generated project folder and build makefiles:
+
+   - Windows: Press the button "Open Project" then build and run debugger from Visual Studio
+   - Linux: Goto into the generated project folder and build makefiles:
 
         $ cd ~/debugger
         $ make

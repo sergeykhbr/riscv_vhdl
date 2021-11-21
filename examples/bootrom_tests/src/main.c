@@ -108,7 +108,10 @@ int main() {
     led_set(0x1F);
 
     // TODO: implement test console
-    while (1) {}
+    while (1) {
+        // temporary put it here, while PLIC not fully ready
+        isr_uart1_tx();
+    }
 
     // NEVER REACH THIS POINT
 

@@ -156,11 +156,7 @@ void _init() {
 
     /** Check ADC detector that RF front-end is connected: */
     tech = (pnp->tech >> 24) & 0xff;
-    if (tech != 0xFF) {
-        print_uart("ADC clock not found. Enable DIP int_rf.\r\n", 41);
-        tech = (pnp->tech >> 24) & 0xff;
-        led_set(tech);
-    }
+    led_set(tech);
     led_set(0x04);
 }
 
