@@ -243,6 +243,7 @@ enum EInstuctionsType {
     Instr_MRET,
     Instr_FENCE,
     Instr_FENCE_I,
+    Instr_WFI,
     Instr_DIV,
     Instr_DIVU,
     Instr_DIVW,
@@ -321,7 +322,8 @@ static const int CsrReq_InterruptBit   = 4;     // return instruction pointer
 static const int CsrReq_BreakpointBit  = 5;
 static const int CsrReq_HaltBit        = 6;
 static const int CsrReq_ResumeBit      = 7;
-static const int CsrReq_TotalBits      = 8;
+static const int CsrReq_WfiBit         = 8;     // wait for interrupt
+static const int CsrReq_TotalBits      = 9;
 
 static const int CsrReq_ReadCmd        = 1 << CsrReq_ReadBit;
 static const int CsrReq_WriteCmd       = 1 << CsrReq_WriteBit;
@@ -331,6 +333,7 @@ static const int CsrReq_InterruptCmd   = 1 << CsrReq_InterruptBit;
 static const int CsrReq_BreakpointCmd  = 1 << CsrReq_BreakpointBit;
 static const int CsrReq_HaltCmd        = 1 << CsrReq_HaltBit;
 static const int CsrReq_ResumeCmd      = 1 << CsrReq_ResumeBit;
+static const int CsrReq_WfiCmd         = 1 << CsrReq_WfiBit;
 
 static const int MemopType_Store     = 0;    // 0=load; 1=store
 static const int MemopType_Locked    = 1;    // AMO instructions

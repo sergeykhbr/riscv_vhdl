@@ -161,6 +161,7 @@ private:
     static const unsigned State_Halted = 7;
     static const unsigned State_DebugMemRequest = 8;
     static const unsigned State_DebugMemError = 9;
+    static const unsigned State_Wfi = 15;
 
     static const unsigned CsrState_Idle = 0;
     static const unsigned CsrState_Req = 1;

@@ -981,6 +981,8 @@ void InstrDecoder::comb() {
                     wb_dec[Instr_URET] = 1;
                 } else if (wb_instr == 0x10200073) {
                     wb_dec[Instr_SRET] = 1;
+                } else if (wb_instr == 0x10500073) {
+                    wb_dec[Instr_WFI] = 1;
                 } else if (wb_instr == 0x20200073) {
                     wb_dec[Instr_HRET] = 1;
                 } else if (wb_instr == 0x30200073) {

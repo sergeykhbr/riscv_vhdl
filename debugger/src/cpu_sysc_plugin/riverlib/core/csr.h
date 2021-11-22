@@ -81,7 +81,8 @@ private:
     static const int State_TrapReturn = 5;
     static const int State_Halt = 6;
     static const int State_Resume = 7;
-    static const int State_Response = 8;
+    static const int State_Wfi = 8;
+    static const int State_Response = 9;
 
     struct RegistersType {
         sc_signal<sc_uint<4>> state;

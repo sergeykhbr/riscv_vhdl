@@ -254,6 +254,8 @@ void CsrRegs::comb() {
                 v.state = State_Interrupt;
             } else if (i_req_type.read()[CsrReq_TrapReturnBit]) {
                 v.state = State_TrapReturn;
+            } else if (i_req_type.read()[CsrReq_WfiBit]) {
+                v.state = State_Wfi;
             } else {
                 v.state = State_RW;
             }
@@ -335,6 +337,10 @@ void CsrRegs::comb() {
         v.state = State_Response;
         v_csr_rena = r.cmd_type.read()[CsrReq_ReadBit];
         v_csr_wena = r.cmd_type.read()[CsrReq_WriteBit];
+        break;
+    case State_Wfi:
+        v.state = State_Response;
+        v.cmd_data = 0;     // no error, valid for all mdoes
         break;
     case State_Response:
         v_resp_valid = 1;

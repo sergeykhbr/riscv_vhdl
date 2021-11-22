@@ -86,28 +86,11 @@ reset_vector:
   # Clear Previous mode (set U-mode), disable interrupt in U-mode
   li t0, 0x00001880   # MPP[12:11] = 0x0 MPIE[7]=0 (Previous to machine mode)
   csrc mstatus, t0    # run tests in user mode = 0, by clearing bits
-  #li t0, MSTATUS_FS;
-  #csrs mstatus, t0    # enable FPU
-  #li t0, MSTATUS_XS;   
-  #csrs mstatus, t0    # enable accelerator
 
   la t0, trap_table
   csrw mtvec, t0
   li t0, 0x00000800
   csrs mie, t0       # Enable External irq (ftom PLIC) for M mode
-
-#if 0
-  ##! see https://github.com/riscv/riscv-tests/benchmarks/common
-  csrr t0, mstatus
-  li t1, MSTATUS_XS
-  and t1, t0, t1
-  sw t1, have_vec, t2
-
-  ## if that didn't stick, we don't have a FPU, so don't initialize it
-  li t1, MSTATUS_FS
-  and t1, t0, t1
-  beqz t1, 1f
-#endif
 
 # intialization when HW FPU enabled
 #ifdef FPU_ENABLED
@@ -146,45 +129,40 @@ reset_vector:
   fmv.s.x f31,x0
 #endif
 
-  ##! initialize global pointer (no need in it)
-  lui gp, 0x10000
-
   ##! get core id
   csrr a0, mhartid            # a0 <= MHARTID value
 
 #define SRAM_BASE_ADDR  0x10000000
 #define SRAM_SIZE_BYTES (1<<19)
-#define STACK_CORE1_BYTES 4096
+#define STACK_PER_CORE_BYTES 4096
+#define CFG_CPU_MAX 4
 
+  #dedicated region to save cpu context on exception (not interrupt)
   li  sp, SRAM_BASE_ADDR+SRAM_SIZE_BYTES
-  li  a1, 1
-  beq a0, a1, sp_init_core1
-  li  a1, 0
-  beq a0, a1, sp_init_core0
-sp_init_core1:
-  j sp_init_coreall
-sp_init_core0:
-  li t0,-STACK_CORE1_BYTES
-  add sp, sp, t0
-sp_init_coreall:
-  add tp, zero, sp            # tp = sp + 0 (mov)
-  csrw 0x7b3, sp          # save dedicated stack region into dscratch1 dregister
-  ## Use tp register to save/restore registers context on task switching
-  addi tp,tp,-256              # tp = tp - 256 = 0x1007ff00
-  addi sp, sp,-264
+  addi sp,sp,-256
+  csrw 0x7b3, sp          # save dedicated stack region into dscratch1 register to run riscv-tests
+
+  # Initialze stack pointer for each cpu
+  li  a1, (CFG_CPU_MAX - 1)
+  sub a0, a1, a0                  # (CFG_CPU_MAX - 1 - hartid)
+  li  a1, STACK_PER_CORE_BYTES
+  mul a0, a0, a1
+  sub sp, sp, a0
 
   # copy image 64 KB
+  csrr a0, mhartid            # a0 <= MHARTID value
+  beqz a0, init0
+  wfi
+  j end_init0
+init0:
+  # HW Initialization is run only on Core[0]
   jal _init
+end_init0:
 
   ##! jump to entry point in SRAM = 0x10000000
   ##!     'meps' - Machine Exception Program Coutner
   li  t0, SRAM_BASE_ADDR
   csrw mepc, t0
-  ##! @see riscv-priv-spec-1.7.pdf. 3.2.1
-  ##! After handling a trap, the ERET instruction is used to return to the privilege level at which the
-  ##! trap occurred. In addition to manipulating the privilege stack as described in Section 3.1.5, ERET
-  ##! sets the pc to the value stored in the Xepc register, where X is the privilege mode (S, H, or M) in
-  ##! which the ERET instruction was executed.
   mret
 
 trap_entry:

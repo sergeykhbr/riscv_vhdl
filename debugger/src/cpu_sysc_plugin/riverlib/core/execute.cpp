@@ -790,6 +790,7 @@ void InstrExecute::comb() {
                 || r.stack_overflow || r.stack_underflow
                 || v_instr_misaligned || v_load_misaligned || v_store_misaligned
                 || i_irq_software || i_irq_timer || i_irq_external
+                || wv[Instr_WFI]
                 || wv[Instr_EBREAK] || wv[Instr_ECALL]
                 || wv[Instr_MRET] || wv[Instr_URET]
                 || wv[Instr_CSRRC] || wv[Instr_CSRRCI] || wv[Instr_CSRRS]
@@ -849,6 +850,9 @@ void InstrExecute::comb() {
     } else if (i_irq_external) {
         vb_csr_cmd_type = CsrReq_InterruptCmd;
         vb_csr_cmd_addr = INTERRUPT_XExternal;              // PLIC interrupt request
+    } else if (wv[Instr_WFI]) {
+        vb_csr_cmd_type = CsrReq_WfiCmd;
+        vb_csr_cmd_addr =  mux.instr(14,12);                // PRIV field
     } else if (wv[Instr_MRET]) {
         vb_csr_cmd_type = CsrReq_TrapReturnCmd;
         vb_csr_cmd_addr = CSR_mepc;
@@ -1050,6 +1054,18 @@ void InstrExecute::comb() {
                     if (i_dbg_progbuf_ena.read() == 0) {
                         v.npc = i_csr_resp_data;
                     }
+                } else if (r.csr_req_type.read()[CsrReq_WfiBit]) {
+                    if (i_csr_resp_data.read()[0]) {
+                        // Invalid WFI instruction in current mode
+                        v.csrstate = CsrState_Req;
+                        v.csr_req_type = CsrReq_ExceptionCmd;
+                        v.csr_req_addr = EXCEPTION_InstrIllegal;
+                        v.csr_req_data = mux.instr;
+                        v.csr_req_rmw = 0;
+                    } else {
+                        v.valid = 1;
+                        v.state = State_Wfi;
+                    }
                 } else if (r.csr_req_type.read()[CsrReq_TrapReturnBit]) {
                     v.valid = 1;
                     v.state = State_Idle;
@@ -1190,6 +1206,11 @@ void InstrExecute::comb() {
         if (r.memop_halted) {
             v.state = State_Halted;
         } else {
+            v.state = State_Idle;
+        }
+        break;
+    case State_Wfi:
+        if (i_haltreq || i_irq_external || i_irq_timer) {
             v.state = State_Idle;
         }
         break;
