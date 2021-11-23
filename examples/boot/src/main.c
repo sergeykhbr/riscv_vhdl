@@ -84,22 +84,7 @@ void copy_image() {
         }
     }
     // Write Firmware ID to avoid copy image after soft-reset.
-    pnp->fwid = 0x20191025;
-
-#if 0
-    /** Just to check access to DSU and read MCPUID via this slave device.
-     *  Verification is made on time diagram (ModelSim), no other purposes of 
-     *  these operations.
-     *        DSU base address = 0x80080000: 
-     *        CSR address: Addr[15:4] = 16 bytes alignment
-     *  3296 ns - reading (iClkCnt = 409)
-     *  3435 ns - writing (iClkCnt = 427)
-     */
-    uint64_t *arr_csrs = (uint64_t *)0x80080000;
-    uint64_t x1 = arr_csrs[CSR_MCPUID<<1]; 
-    pnp->fwdbg1 = x1;
-    arr_csrs[CSR_MCPUID<<1] = x1;
-#endif
+    pnp->fwid = 0x20211123;
 }
 
 /** This function will be used during video recording to show
@@ -126,17 +111,6 @@ void _init() {
     gpio_map *gpio = (gpio_map *)ADDR_BUS0_XSLV_GPIO;
     irqctrl_map *p_irq = (irqctrl_map *)ADDR_BUS0_XSLV_IRQCTRL;
   
-    if (fw_get_cpuid() != 0) {
-        // TODO: waiting event or something
-        while(1) {
-            // Just do something
-            uint64_t *sram = (uint64_t *)ADDR_BUS0_XSLV_SRAM;
-            uint64_t tdata = sram[16*1024];
-            sram[16*1024] = tdata;
-            tech = pnp->tech;
-        }
-    }
-
     // mask all interrupts in interrupt controller to avoid
     // unpredictable behaviour after elf-file reloading via debug port.
     p_irq->irq_mask = 0xFFFFFFFF;
@@ -154,7 +128,6 @@ void _init() {
     led_set(0x03);
     print_uart("OK\r\n", 4);
 
-    /** Check ADC detector that RF front-end is connected: */
     tech = (pnp->tech >> 24) & 0xff;
     led_set(tech);
     led_set(0x04);

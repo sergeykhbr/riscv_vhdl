@@ -4,7 +4,7 @@ CC=riscv64-unknown-elf-gcc
 CPP=riscv64-unknown-elf-gcc
 OBJDUMP=riscv64-unknown-elf-objdump
 
-FPU_ENABLED=0
+FPU_ENABLED=1
 
 CFLAGS= -c -g -static -std=gnu99 -O0 -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles
 ifeq ($(FPU_ENABLED), 1)

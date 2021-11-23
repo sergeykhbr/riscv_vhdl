@@ -46,6 +46,15 @@ and capabilities of the running platform:
 5. Optionally download and build SystemC library (see SystemC documentation).
    Specify SYSTEMC_PATH in the same way as for Qt.
 
+        $ tar -xvzf systemc-2.3.1a.tar.gz
+        $ cd systemc-2.3.1a
+        $ mkdir tmp
+        $ cd tmp
+        $ ./../configure --prefix=/home/user/systemc-2.3.1a/build
+        $ make
+        $ make install
+        $ export SYSTEMC_PATH=/home/user/systemc-2.3.1a/build")
+
 6. Generate MSVC project for Windows or makefiles for Linux
 
 ![Open cmake-gui](../docs/doxygen/pics/howto_cmake_01.png)
