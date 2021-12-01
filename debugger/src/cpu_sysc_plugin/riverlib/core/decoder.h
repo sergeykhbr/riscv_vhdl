@@ -14,8 +14,7 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_RIVERLIB_DECODER_H__
-#define __DEBUGGER_RIVERLIB_DECODER_H__
+#pragma once
 
 #include <systemc.h>
 #include "../river_cfg.h"
@@ -134,7 +133,7 @@ private:
 
     static const int DEC_SIZE = 1 << CFG_DEC_LOG2_SIZE;
 
-    RegistersType rin[DEC_SIZE];
+    RegistersType v[DEC_SIZE];
     RegistersType r[DEC_SIZE];
 
     int selidx;
@@ -169,5 +168,3 @@ private:
 };
 
 }  // namespace debugger
-
-#endif  // __DEBUGGER_RIVERLIB_DECODER_H__

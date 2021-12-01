@@ -125,8 +125,6 @@ void InstrDecoder::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 void InstrDecoder::comb() {
     bool w_error;
     bool w_compressed;
-    sc_uint<CFG_DEC_LOG2_SIZE> vb_bp_idx[DEC_SIZE];
-    sc_uint<DEC_SIZE> vb_bp_ena;
     sc_uint<32> wb_instr;
     sc_uint<32> wb_instr_out;
     sc_uint<5> wb_opcode1;
@@ -147,6 +145,8 @@ void InstrDecoder::comb() {
     bool v_f64;
     bool v_amo;
     sc_uint<CFG_CPU_ADDR_BITS> bp_next_pc[DEC_SIZE];
+    sc_uint<CFG_DEC_LOG2_SIZE> vb_bp_idx[DEC_SIZE];
+    sc_uint<DEC_SIZE> vb_bp_ena;
 
     selidx = 0;
     w_error = false;
@@ -155,7 +155,7 @@ void InstrDecoder::comb() {
     wb_dec = 0;
     wb_isa_type = 0;
     for (int i = 0; i < DEC_SIZE; i++) {
-        rin[i] = r[i];
+        v[i] = r[i];
     }
 
     vb_radr1 = 0;
@@ -1204,148 +1204,114 @@ void InstrDecoder::comb() {
     }  // compressed/!compressed
 
 
-    //if (i_f_valid.read() == 1) 
-    {
-        //v.pc = i_f_pc;
-        //v.instr = i_f_instr.read();
-        //v.compressed = w_compressed;
-        v_amo = (wb_dec[Instr_AMOADD_W] | wb_dec[Instr_AMOXOR_W] | wb_dec[Instr_AMOOR_W]
-                | wb_dec[Instr_AMOAND_W] | wb_dec[Instr_AMOMIN_W] | wb_dec[Instr_AMOMAX_W]
-                | wb_dec[Instr_AMOMINU_W] | wb_dec[Instr_AMOMAXU_W] | wb_dec[Instr_AMOSWAP_W]
-                | wb_dec[Instr_AMOADD_D] | wb_dec[Instr_AMOXOR_D] | wb_dec[Instr_AMOOR_D]
-                | wb_dec[Instr_AMOAND_D] | wb_dec[Instr_AMOMIN_D] | wb_dec[Instr_AMOMAX_D]
-                | wb_dec[Instr_AMOMINU_D] | wb_dec[Instr_AMOMAXU_D] | wb_dec[Instr_AMOSWAP_D]).to_bool();
-        //v.instr_load_fault = i_instr_load_fault.read();
-        //v.instr_executable = i_instr_executable.read();
-        //v.progbuf_ena = i_progbuf_ena.read();
-
-        //v.isa_type = wb_isa_type;
-        //v.instr_vec = wb_dec;
-        v_memop_store = (wb_dec[Instr_SD] | wb_dec[Instr_SW] 
-                | wb_dec[Instr_SH] | wb_dec[Instr_SB]
-                | wb_dec[Instr_FSD]
-                | wb_dec[Instr_SC_W] | wb_dec[Instr_SC_D]).to_bool();
-        v_memop_load = (wb_dec[Instr_LD] | wb_dec[Instr_LW] 
-                | wb_dec[Instr_LH] | wb_dec[Instr_LB]
-                | wb_dec[Instr_LWU] | wb_dec[Instr_LHU] 
-                | wb_dec[Instr_LBU]
-                | wb_dec[Instr_FLD]
-                | wb_dec[Instr_AMOADD_W] | wb_dec[Instr_AMOXOR_W] | wb_dec[Instr_AMOOR_W]
-                | wb_dec[Instr_AMOAND_W] | wb_dec[Instr_AMOMIN_W] | wb_dec[Instr_AMOMAX_W]
-                | wb_dec[Instr_AMOMINU_W] | wb_dec[Instr_AMOMAXU_W] | wb_dec[Instr_AMOSWAP_W]
-                | wb_dec[Instr_LR_W]
-                | wb_dec[Instr_AMOADD_D] | wb_dec[Instr_AMOXOR_D] | wb_dec[Instr_AMOOR_D]
-                | wb_dec[Instr_AMOAND_D] | wb_dec[Instr_AMOMIN_D] | wb_dec[Instr_AMOMAX_D]
-                | wb_dec[Instr_AMOMINU_D] | wb_dec[Instr_AMOMAXU_D] | wb_dec[Instr_AMOSWAP_D]
-                | wb_dec[Instr_LR_D]).to_bool();
-        v_memop_sign_ext = (wb_dec[Instr_LD] | wb_dec[Instr_LW]
-                | wb_dec[Instr_LH] | wb_dec[Instr_LB]
-                | wb_dec[Instr_AMOADD_W] | wb_dec[Instr_AMOXOR_W] | wb_dec[Instr_AMOOR_W]
-                | wb_dec[Instr_AMOAND_W] | wb_dec[Instr_AMOMIN_W] | wb_dec[Instr_AMOMAX_W]
-                | wb_dec[Instr_AMOMINU_W] | wb_dec[Instr_AMOMAXU_W] | wb_dec[Instr_AMOSWAP_W]
-                | wb_dec[Instr_LR_W]).to_bool();
-        if (wb_dec[Instr_LD] || wb_dec[Instr_SD] ||
-            wb_dec[Instr_FLD] || wb_dec[Instr_FSD] ||
-            wb_dec[Instr_AMOADD_D] || wb_dec[Instr_AMOXOR_D] || wb_dec[Instr_AMOOR_D] ||
-            wb_dec[Instr_AMOAND_D] || wb_dec[Instr_AMOMIN_D] || wb_dec[Instr_AMOMAX_D] ||
-            wb_dec[Instr_AMOMINU_D] || wb_dec[Instr_AMOMAXU_D] || wb_dec[Instr_AMOSWAP_D] ||
-            wb_dec[Instr_LR_D] || wb_dec[Instr_SC_D]) {
-            vb_memop_size = MEMOP_8B;
-        } else if (wb_dec[Instr_LW] || wb_dec[Instr_LWU] || wb_dec[Instr_SW] ||
-            wb_dec[Instr_AMOADD_W] || wb_dec[Instr_AMOXOR_W] || wb_dec[Instr_AMOOR_W] ||
-            wb_dec[Instr_AMOAND_W] || wb_dec[Instr_AMOMIN_W] || wb_dec[Instr_AMOMAX_W] ||
-            wb_dec[Instr_AMOMINU_W] || wb_dec[Instr_AMOMAXU_W] || wb_dec[Instr_AMOSWAP_W] ||
-            wb_dec[Instr_LR_W] || wb_dec[Instr_SC_W]) {
-            vb_memop_size = MEMOP_4B;
-        } else if (wb_dec[Instr_LH] || wb_dec[Instr_LHU] || wb_dec[Instr_SH]) {
-            vb_memop_size = MEMOP_2B;
-        } else {
-            vb_memop_size = MEMOP_1B;
-        }
-        v_unsigned_op = (wb_dec[Instr_DIVU] | wb_dec[Instr_REMU] |
-                wb_dec[Instr_DIVUW] | wb_dec[Instr_REMUW] |
-                wb_dec[Instr_MULHU] |
-                wb_dec[Instr_FCVT_WU_D] | wb_dec[Instr_FCVT_LU_D] |
-                wb_dec[Instr_AMOMINU_W] | wb_dec[Instr_AMOMAXU_W] |
-                wb_dec[Instr_AMOMINU_D] | wb_dec[Instr_AMOMAXU_D]).to_bool();
-
-        v_rv32 = (wb_dec[Instr_ADDW] | wb_dec[Instr_ADDIW] 
-            | wb_dec[Instr_SLLW] | wb_dec[Instr_SLLIW] | wb_dec[Instr_SRAW]
-            | wb_dec[Instr_SRAIW]
-            | wb_dec[Instr_SRLW] | wb_dec[Instr_SRLIW] | wb_dec[Instr_SUBW] 
-            | wb_dec[Instr_DIVW] | wb_dec[Instr_DIVUW] | wb_dec[Instr_MULW]
-            | wb_dec[Instr_REMW] | wb_dec[Instr_REMUW]
-            | wb_dec[Instr_AMOADD_W]| wb_dec[Instr_AMOXOR_W] | wb_dec[Instr_AMOOR_W]
-            | wb_dec[Instr_AMOAND_W] | wb_dec[Instr_AMOMIN_W]| wb_dec[Instr_AMOMAX_W]
-            | wb_dec[Instr_AMOMINU_W] | wb_dec[Instr_AMOMAXU_W]| wb_dec[Instr_AMOSWAP_W]
-            | wb_dec[Instr_LR_W] | wb_dec[Instr_SC_W]).to_bool();
-
-        v_f64 = (wb_dec[Instr_FADD_D] | wb_dec[Instr_FSUB_D]
-            | wb_dec[Instr_FMUL_D] | wb_dec[Instr_FDIV_D]
-            | wb_dec[Instr_FMIN_D] | wb_dec[Instr_FMAX_D]
-            | wb_dec[Instr_FLE_D] | wb_dec[Instr_FLT_D]
-            | wb_dec[Instr_FEQ_D] | wb_dec[Instr_FCVT_W_D]
-            | wb_dec[Instr_FCVT_WU_D] | wb_dec[Instr_FCVT_L_D]
-            | wb_dec[Instr_FCVT_LU_D] | wb_dec[Instr_FMOV_X_D]
-            | wb_dec[Instr_FCVT_D_W] | wb_dec[Instr_FCVT_D_WU]
-            | wb_dec[Instr_FCVT_D_L] | wb_dec[Instr_FCVT_D_LU]
-            | wb_dec[Instr_FMOV_D_X] | wb_dec[Instr_FLD]
-            | wb_dec[Instr_FSD]).to_bool();
-        
-        //v.instr_unimplemented = w_error;
-
-        //v.radr1 = vb_radr1;
-        //v.radr2 = vb_radr2;
-        //v.waddr = vb_waddr;
-        //v.csr_addr = vb_csr_addr;
-        //v.imm = vb_imm;
+    v_amo = (wb_dec[Instr_AMOADD_W] | wb_dec[Instr_AMOXOR_W] | wb_dec[Instr_AMOOR_W]
+            | wb_dec[Instr_AMOAND_W] | wb_dec[Instr_AMOMIN_W] | wb_dec[Instr_AMOMAX_W]
+            | wb_dec[Instr_AMOMINU_W] | wb_dec[Instr_AMOMAXU_W] | wb_dec[Instr_AMOSWAP_W]
+            | wb_dec[Instr_AMOADD_D] | wb_dec[Instr_AMOXOR_D] | wb_dec[Instr_AMOOR_D]
+            | wb_dec[Instr_AMOAND_D] | wb_dec[Instr_AMOMIN_D] | wb_dec[Instr_AMOMAX_D]
+            | wb_dec[Instr_AMOMINU_D] | wb_dec[Instr_AMOMAXU_D] | wb_dec[Instr_AMOSWAP_D]).to_bool();
+    v_memop_store = (wb_dec[Instr_SD] | wb_dec[Instr_SW] 
+            | wb_dec[Instr_SH] | wb_dec[Instr_SB]
+            | wb_dec[Instr_FSD]
+            | wb_dec[Instr_SC_W] | wb_dec[Instr_SC_D]).to_bool();
+    v_memop_load = (wb_dec[Instr_LD] | wb_dec[Instr_LW] 
+            | wb_dec[Instr_LH] | wb_dec[Instr_LB]
+            | wb_dec[Instr_LWU] | wb_dec[Instr_LHU] 
+            | wb_dec[Instr_LBU]
+            | wb_dec[Instr_FLD]
+            | wb_dec[Instr_AMOADD_W] | wb_dec[Instr_AMOXOR_W] | wb_dec[Instr_AMOOR_W]
+            | wb_dec[Instr_AMOAND_W] | wb_dec[Instr_AMOMIN_W] | wb_dec[Instr_AMOMAX_W]
+            | wb_dec[Instr_AMOMINU_W] | wb_dec[Instr_AMOMAXU_W] | wb_dec[Instr_AMOSWAP_W]
+            | wb_dec[Instr_LR_W]
+            | wb_dec[Instr_AMOADD_D] | wb_dec[Instr_AMOXOR_D] | wb_dec[Instr_AMOOR_D]
+            | wb_dec[Instr_AMOAND_D] | wb_dec[Instr_AMOMIN_D] | wb_dec[Instr_AMOMAX_D]
+            | wb_dec[Instr_AMOMINU_D] | wb_dec[Instr_AMOMAXU_D] | wb_dec[Instr_AMOSWAP_D]
+            | wb_dec[Instr_LR_D]).to_bool();
+    v_memop_sign_ext = (wb_dec[Instr_LD] | wb_dec[Instr_LW]
+            | wb_dec[Instr_LH] | wb_dec[Instr_LB]
+            | wb_dec[Instr_AMOADD_W] | wb_dec[Instr_AMOXOR_W] | wb_dec[Instr_AMOOR_W]
+            | wb_dec[Instr_AMOAND_W] | wb_dec[Instr_AMOMIN_W] | wb_dec[Instr_AMOMAX_W]
+            | wb_dec[Instr_AMOMINU_W] | wb_dec[Instr_AMOMAXU_W] | wb_dec[Instr_AMOSWAP_W]
+            | wb_dec[Instr_LR_W]).to_bool();
+    if (wb_dec[Instr_LD] || wb_dec[Instr_SD] ||
+        wb_dec[Instr_FLD] || wb_dec[Instr_FSD] ||
+        wb_dec[Instr_AMOADD_D] || wb_dec[Instr_AMOXOR_D] || wb_dec[Instr_AMOOR_D] ||
+        wb_dec[Instr_AMOAND_D] || wb_dec[Instr_AMOMIN_D] || wb_dec[Instr_AMOMAX_D] ||
+        wb_dec[Instr_AMOMINU_D] || wb_dec[Instr_AMOMAXU_D] || wb_dec[Instr_AMOSWAP_D] ||
+        wb_dec[Instr_LR_D] || wb_dec[Instr_SC_D]) {
+        vb_memop_size = MEMOP_8B;
+    } else if (wb_dec[Instr_LW] || wb_dec[Instr_LWU] || wb_dec[Instr_SW] ||
+        wb_dec[Instr_AMOADD_W] || wb_dec[Instr_AMOXOR_W] || wb_dec[Instr_AMOOR_W] ||
+        wb_dec[Instr_AMOAND_W] || wb_dec[Instr_AMOMIN_W] || wb_dec[Instr_AMOMAX_W] ||
+        wb_dec[Instr_AMOMINU_W] || wb_dec[Instr_AMOMAXU_W] || wb_dec[Instr_AMOSWAP_W] ||
+        wb_dec[Instr_LR_W] || wb_dec[Instr_SC_W]) {
+        vb_memop_size = MEMOP_4B;
+    } else if (wb_dec[Instr_LH] || wb_dec[Instr_LHU] || wb_dec[Instr_SH]) {
+        vb_memop_size = MEMOP_2B;
+    } else {
+        vb_memop_size = MEMOP_1B;
     }
+    v_unsigned_op = (wb_dec[Instr_DIVU] | wb_dec[Instr_REMU] |
+            wb_dec[Instr_DIVUW] | wb_dec[Instr_REMUW] |
+            wb_dec[Instr_MULHU] |
+            wb_dec[Instr_FCVT_WU_D] | wb_dec[Instr_FCVT_LU_D] |
+            wb_dec[Instr_AMOMINU_W] | wb_dec[Instr_AMOMAXU_W] |
+            wb_dec[Instr_AMOMINU_D] | wb_dec[Instr_AMOMAXU_D]).to_bool();
+
+    v_rv32 = (wb_dec[Instr_ADDW] | wb_dec[Instr_ADDIW] 
+        | wb_dec[Instr_SLLW] | wb_dec[Instr_SLLIW] | wb_dec[Instr_SRAW]
+        | wb_dec[Instr_SRAIW]
+        | wb_dec[Instr_SRLW] | wb_dec[Instr_SRLIW] | wb_dec[Instr_SUBW] 
+        | wb_dec[Instr_DIVW] | wb_dec[Instr_DIVUW] | wb_dec[Instr_MULW]
+        | wb_dec[Instr_REMW] | wb_dec[Instr_REMUW]
+        | wb_dec[Instr_AMOADD_W]| wb_dec[Instr_AMOXOR_W] | wb_dec[Instr_AMOOR_W]
+        | wb_dec[Instr_AMOAND_W] | wb_dec[Instr_AMOMIN_W]| wb_dec[Instr_AMOMAX_W]
+        | wb_dec[Instr_AMOMINU_W] | wb_dec[Instr_AMOMAXU_W]| wb_dec[Instr_AMOSWAP_W]
+        | wb_dec[Instr_LR_W] | wb_dec[Instr_SC_W]).to_bool();
+
+    v_f64 = (wb_dec[Instr_FADD_D] | wb_dec[Instr_FSUB_D]
+        | wb_dec[Instr_FMUL_D] | wb_dec[Instr_FDIV_D]
+        | wb_dec[Instr_FMIN_D] | wb_dec[Instr_FMAX_D]
+        | wb_dec[Instr_FLE_D] | wb_dec[Instr_FLT_D]
+        | wb_dec[Instr_FEQ_D] | wb_dec[Instr_FCVT_W_D]
+        | wb_dec[Instr_FCVT_WU_D] | wb_dec[Instr_FCVT_L_D]
+        | wb_dec[Instr_FCVT_LU_D] | wb_dec[Instr_FMOV_X_D]
+        | wb_dec[Instr_FCVT_D_W] | wb_dec[Instr_FCVT_D_WU]
+        | wb_dec[Instr_FCVT_D_L] | wb_dec[Instr_FCVT_D_LU]
+        | wb_dec[Instr_FMOV_D_X] | wb_dec[Instr_FLD]
+        | wb_dec[Instr_FSD]).to_bool();
+        
 
     for (int i = 0; i < DEC_SIZE; i++) {
         if (vb_bp_ena[i]) {
             if (vb_bp_idx[i].to_int() == 0) {
-                rin[i].pc = i_f_pc;
-                rin[i].isa_type = wb_isa_type;
-                rin[i].instr_vec = wb_dec;
-                rin[i].instr = i_f_instr;
-                rin[i].memop_store = v_memop_store;
-                rin[i].memop_load = v_memop_load;
-                rin[i].memop_sign_ext = v_memop_sign_ext;
-                rin[i].memop_size = vb_memop_size;
-                rin[i].unsigned_op = v_unsigned_op;
-                rin[i].rv32 = v_rv32;
-                rin[i].f64 = v_f64;
-                rin[i].compressed = w_compressed;
-                rin[i].amo = v_amo;
-                rin[i].instr_load_fault = i_instr_load_fault;
-                rin[i].instr_executable = i_instr_executable;
-                rin[i].instr_unimplemented = w_error;
-                rin[i].radr1 = vb_radr1;
-                rin[i].radr2 = vb_radr2;
-                rin[i].waddr = vb_waddr;
-                rin[i].csr_addr = vb_csr_addr;
-                rin[i].imm = vb_imm;
-                rin[i].progbuf_ena = i_progbuf_ena.read();
+                v[i].pc = i_f_pc;
+                v[i].isa_type = wb_isa_type;
+                v[i].instr_vec = wb_dec;
+                v[i].instr = i_f_instr;
+                v[i].memop_store = v_memop_store;
+                v[i].memop_load = v_memop_load;
+                v[i].memop_sign_ext = v_memop_sign_ext;
+                v[i].memop_size = vb_memop_size;
+                v[i].unsigned_op = v_unsigned_op;
+                v[i].rv32 = v_rv32;
+                v[i].f64 = v_f64;
+                v[i].compressed = w_compressed;
+                v[i].amo = v_amo;
+                v[i].instr_load_fault = i_instr_load_fault;
+                v[i].instr_executable = i_instr_executable;
+                v[i].instr_unimplemented = w_error;
+                v[i].radr1 = vb_radr1;
+                v[i].radr2 = vb_radr2;
+                v[i].waddr = vb_waddr;
+                v[i].csr_addr = vb_csr_addr;
+                v[i].imm = vb_imm;
+                v[i].progbuf_ena = i_progbuf_ena.read();
             } else {
-                rin[i] = r[vb_bp_idx[i].to_int()];
+                v[i] = r[vb_bp_idx[i].to_int()];
             }
         }
     }
-
-    /*if (r[0].pc != i_e_npc) {
-        if (i_e_npc == i_f_pc) {
-
-            if (vb_hit_idx != 0) {
-                rin[vb_hit_idx] = r[0];
-            } else {
-                for (int i = 1; i < DEC_SIZE; i++) {
-                    rin[i] = r[i-1];
-                }
-            }
-        } else if (vb_bp_idx != 0) {
-            rin[vb_bp_idx] = r[0];
-        }
-    }*/
 
     for (int i = 1; i < DEC_SIZE; i++) {
         if (i_e_npc == r[i].pc) {
@@ -1356,7 +1322,7 @@ void InstrDecoder::comb() {
 
     if ((!async_reset_ && !i_nrst.read()) || i_flush_pipeline.read() == 1) {
         for (int i = 0; i < DEC_SIZE; i++) {
-            R_RESET(rin[i]);
+            R_RESET(v[i]);
         }
     }
 
@@ -1392,7 +1358,7 @@ void InstrDecoder::registers() {
         }
     } else {
         for (int i = 0; i < DEC_SIZE; i++) {
-            r[i] = rin[i];
+            r[i] = v[i];
         }
     }
 }
