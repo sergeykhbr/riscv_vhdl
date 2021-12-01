@@ -72,7 +72,7 @@ SC_MODULE(InstrFetch) {
 
     void R_RESET(RegistersType &iv) {
         iv.wait_resp = 0;
-        iv.resp_address = 0;
+        iv.resp_address = ~0ull;
         iv.resp_data = 0;
         iv.resp_valid = 0;
         iv.instr_load_fault = 0;

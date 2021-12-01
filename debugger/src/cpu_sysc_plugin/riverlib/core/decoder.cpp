@@ -22,21 +22,19 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset,
     bool fpu_ena) : sc_module(name_),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
-    i_any_hold("i_any_hold"),
     i_f_valid("i_f_valid"),
     i_f_pc("i_f_pc"),
     i_f_instr("i_f_instr"),
     i_instr_load_fault("i_instr_load_fault"),
     i_instr_executable("i_instr_executable"),
+    i_e_npc("i_e_npc"),
     o_radr1("o_radr1"),
     o_radr2("o_radr2"),
     o_waddr("o_waddr"),
     o_csr_addr("o_csr_addr"),
     o_imm("o_imm"),
-    i_e_ready("i_e_ready"),
     i_flush_pipeline("i_flush_pipeline"),
     i_progbuf_ena("i_progbuf_ena"),
-    o_valid("o_valid"),
     o_pc("o_pc"),
     o_instr("o_instr"),
     o_memop_store("o_memop_store"),
@@ -59,36 +57,36 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset,
 
     SC_METHOD(comb);
     sensitive << i_nrst;
-    sensitive << i_any_hold;
     sensitive << i_f_valid;
     sensitive << i_f_pc;
     sensitive << i_f_instr;
     sensitive << i_instr_load_fault;
     sensitive << i_instr_executable;
-    sensitive << i_e_ready;
+    sensitive << i_e_npc;
     sensitive << i_flush_pipeline;
     sensitive << i_progbuf_ena;
-    sensitive << r.valid;
-    sensitive << r.pc;
-    sensitive << r.instr;
-    sensitive << r.memop_load;
-    sensitive << r.memop_store;
-    sensitive << r.memop_sign_ext;
-    sensitive << r.memop_size;
-    sensitive << r.unsigned_op;
-    sensitive << r.rv32;
-    sensitive << r.f64;
-    sensitive << r.compressed;
-    sensitive << r.amo;
-    sensitive << r.instr_load_fault;
-    sensitive << r.instr_executable;
-    sensitive << r.instr_unimplemented;
-    sensitive << r.radr1;
-    sensitive << r.radr2;
-    sensitive << r.waddr;
-    sensitive << r.csr_addr;
-    sensitive << r.imm;
-    sensitive << r.progbuf_ena;
+    for (int i = 0; i < DEC_SIZE; i++) {
+        sensitive << r[i].pc;
+        sensitive << r[i].instr;
+        sensitive << r[i].memop_load;
+        sensitive << r[i].memop_store;
+        sensitive << r[i].memop_sign_ext;
+        sensitive << r[i].memop_size;
+        sensitive << r[i].unsigned_op;
+        sensitive << r[i].rv32;
+        sensitive << r[i].f64;
+        sensitive << r[i].compressed;
+        sensitive << r[i].amo;
+        sensitive << r[i].instr_load_fault;
+        sensitive << r[i].instr_executable;
+        sensitive << r[i].instr_unimplemented;
+        sensitive << r[i].radr1;
+        sensitive << r[i].radr2;
+        sensitive << r[i].waddr;
+        sensitive << r[i].csr_addr;
+        sensitive << r[i].imm;
+        sensitive << r[i].progbuf_ena;
+    }
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -97,11 +95,10 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset,
 
 void InstrDecoder::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_any_hold, i_any_hold.name());
         sc_trace(o_vcd, i_f_valid, i_f_valid.name());
         sc_trace(o_vcd, i_f_pc, i_f_pc.name());
         sc_trace(o_vcd, i_f_instr, i_f_instr.name());
-        sc_trace(o_vcd, o_valid, o_valid.name());
+        sc_trace(o_vcd, i_e_npc, i_e_npc.name());
         sc_trace(o_vcd, o_pc, o_pc.name());
         sc_trace(o_vcd, o_instr, o_instr.name());
         sc_trace(o_vcd, o_isa_type, o_isa_type.name());
@@ -115,32 +112,85 @@ void InstrDecoder::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_waddr, o_waddr.name());
         sc_trace(o_vcd, o_csr_addr, o_csr_addr.name());
         sc_trace(o_vcd, o_imm, o_imm.name());
+
+        std::string pn(name());
+        sc_trace(o_vcd, selidx, pn + ".selidx");
+        sc_trace(o_vcd, r[0].pc, pn + ".r0_pc");
+        sc_trace(o_vcd, r[1].pc, pn + ".r1_pc");
+        sc_trace(o_vcd, r[2].pc, pn + ".r2_pc");
+        sc_trace(o_vcd, r[3].pc, pn + ".r3_pc");
     }
 }
 
 void InstrDecoder::comb() {
-    v = r;
-
-    bool w_o_valid;
-    bool w_error = false;
-    bool w_compressed = false;
-    sc_uint<32> wb_instr = i_f_instr.read();
+    bool w_error;
+    bool w_compressed;
+    sc_uint<CFG_DEC_LOG2_SIZE> vb_bp_idx[DEC_SIZE];
+    sc_uint<DEC_SIZE> vb_bp_ena;
+    sc_uint<32> wb_instr;
     sc_uint<32> wb_instr_out;
     sc_uint<5> wb_opcode1;
     sc_uint<3> wb_opcode2;
-    sc_bv<Instr_Total> wb_dec = 0;
-    sc_bv<ISA_Total> wb_isa_type = 0;
+    sc_bv<Instr_Total> wb_dec;
+    sc_bv<ISA_Total> wb_isa_type;
     sc_uint<6> vb_radr1;
     sc_uint<6> vb_radr2;
     sc_uint<6> vb_waddr;
     sc_uint<12> vb_csr_addr;
     sc_uint<RISCV_ARCH> vb_imm;
+    bool v_memop_store;
+    bool v_memop_load;
+    bool v_memop_sign_ext;
+    sc_uint<2> vb_memop_size;
+    bool v_unsigned_op;
+    bool v_rv32;
+    bool v_f64;
+    bool v_amo;
+    sc_uint<CFG_CPU_ADDR_BITS> bp_next_pc[DEC_SIZE];
+
+    selidx = 0;
+    w_error = false;
+    w_compressed = false;
+    wb_instr = i_f_instr.read();
+    wb_dec = 0;
+    wb_isa_type = 0;
+    for (int i = 0; i < DEC_SIZE; i++) {
+        rin[i] = r[i];
+    }
 
     vb_radr1 = 0;
     vb_radr2 = 0;
     vb_waddr = 0;
     vb_csr_addr = 0;
     vb_imm = 0;
+    v_memop_store = 0;
+    v_memop_load = 0;
+    v_memop_sign_ext = 0;
+    vb_memop_size = 0;
+    v_unsigned_op = 0;
+    v_rv32 = 0;
+    v_f64 = 0;
+    v_amo = 0;
+    bp_next_pc[0] = i_e_npc;
+    for (int i = 1; i < DEC_SIZE; i++) {
+        bp_next_pc[i] = i_e_npc.read() + 2*i;
+    }
+
+    vb_bp_ena = 0;
+    for (int i = 0; i < DEC_SIZE; i++) {
+        vb_bp_idx[i] = i;
+        if (i_f_pc == bp_next_pc[i]) {
+            vb_bp_ena[i] = 1;
+            vb_bp_idx[i] = 0;
+        } else {
+            for (int n = 0; n < DEC_SIZE; n++) {
+                if (r[n].pc == bp_next_pc[i]) {
+                    vb_bp_ena[i] = 1;
+                    vb_bp_idx[i] = n;
+                }
+            }
+        }
+    }
 
     if (wb_instr(1, 0) != 0x3) {
         w_compressed = 1;
@@ -1153,31 +1203,29 @@ void InstrDecoder::comb() {
         wb_instr_out = wb_instr;
     }  // compressed/!compressed
 
-    if (i_flush_pipeline.read() == 1 && i_progbuf_ena.read() == 0) {
-        v.pc = ~0ull;
-        v.valid = 0;
-    } else if (i_e_ready.read() == 1 && i_f_valid.read() == 1) {
-        v.valid = 1;
-        v.pc = i_f_pc;
-        v.instr = i_f_instr.read();
-        v.compressed = w_compressed;
-        v.amo = (wb_dec[Instr_AMOADD_W] | wb_dec[Instr_AMOXOR_W] | wb_dec[Instr_AMOOR_W]
+
+    //if (i_f_valid.read() == 1) 
+    {
+        //v.pc = i_f_pc;
+        //v.instr = i_f_instr.read();
+        //v.compressed = w_compressed;
+        v_amo = (wb_dec[Instr_AMOADD_W] | wb_dec[Instr_AMOXOR_W] | wb_dec[Instr_AMOOR_W]
                 | wb_dec[Instr_AMOAND_W] | wb_dec[Instr_AMOMIN_W] | wb_dec[Instr_AMOMAX_W]
                 | wb_dec[Instr_AMOMINU_W] | wb_dec[Instr_AMOMAXU_W] | wb_dec[Instr_AMOSWAP_W]
                 | wb_dec[Instr_AMOADD_D] | wb_dec[Instr_AMOXOR_D] | wb_dec[Instr_AMOOR_D]
                 | wb_dec[Instr_AMOAND_D] | wb_dec[Instr_AMOMIN_D] | wb_dec[Instr_AMOMAX_D]
                 | wb_dec[Instr_AMOMINU_D] | wb_dec[Instr_AMOMAXU_D] | wb_dec[Instr_AMOSWAP_D]).to_bool();
-        v.instr_load_fault = i_instr_load_fault.read();
-        v.instr_executable = i_instr_executable.read();
-        v.progbuf_ena = i_progbuf_ena.read();;
+        //v.instr_load_fault = i_instr_load_fault.read();
+        //v.instr_executable = i_instr_executable.read();
+        //v.progbuf_ena = i_progbuf_ena.read();
 
-        v.isa_type = wb_isa_type;
-        v.instr_vec = wb_dec;
-        v.memop_store = (wb_dec[Instr_SD] | wb_dec[Instr_SW] 
+        //v.isa_type = wb_isa_type;
+        //v.instr_vec = wb_dec;
+        v_memop_store = (wb_dec[Instr_SD] | wb_dec[Instr_SW] 
                 | wb_dec[Instr_SH] | wb_dec[Instr_SB]
                 | wb_dec[Instr_FSD]
                 | wb_dec[Instr_SC_W] | wb_dec[Instr_SC_D]).to_bool();
-        v.memop_load = (wb_dec[Instr_LD] | wb_dec[Instr_LW] 
+        v_memop_load = (wb_dec[Instr_LD] | wb_dec[Instr_LW] 
                 | wb_dec[Instr_LH] | wb_dec[Instr_LB]
                 | wb_dec[Instr_LWU] | wb_dec[Instr_LHU] 
                 | wb_dec[Instr_LBU]
@@ -1190,7 +1238,7 @@ void InstrDecoder::comb() {
                 | wb_dec[Instr_AMOAND_D] | wb_dec[Instr_AMOMIN_D] | wb_dec[Instr_AMOMAX_D]
                 | wb_dec[Instr_AMOMINU_D] | wb_dec[Instr_AMOMAXU_D] | wb_dec[Instr_AMOSWAP_D]
                 | wb_dec[Instr_LR_D]).to_bool();
-        v.memop_sign_ext = (wb_dec[Instr_LD] | wb_dec[Instr_LW]
+        v_memop_sign_ext = (wb_dec[Instr_LD] | wb_dec[Instr_LW]
                 | wb_dec[Instr_LH] | wb_dec[Instr_LB]
                 | wb_dec[Instr_AMOADD_W] | wb_dec[Instr_AMOXOR_W] | wb_dec[Instr_AMOOR_W]
                 | wb_dec[Instr_AMOAND_W] | wb_dec[Instr_AMOMIN_W] | wb_dec[Instr_AMOMAX_W]
@@ -1202,26 +1250,26 @@ void InstrDecoder::comb() {
             wb_dec[Instr_AMOAND_D] || wb_dec[Instr_AMOMIN_D] || wb_dec[Instr_AMOMAX_D] ||
             wb_dec[Instr_AMOMINU_D] || wb_dec[Instr_AMOMAXU_D] || wb_dec[Instr_AMOSWAP_D] ||
             wb_dec[Instr_LR_D] || wb_dec[Instr_SC_D]) {
-            v.memop_size = MEMOP_8B;
+            vb_memop_size = MEMOP_8B;
         } else if (wb_dec[Instr_LW] || wb_dec[Instr_LWU] || wb_dec[Instr_SW] ||
             wb_dec[Instr_AMOADD_W] || wb_dec[Instr_AMOXOR_W] || wb_dec[Instr_AMOOR_W] ||
             wb_dec[Instr_AMOAND_W] || wb_dec[Instr_AMOMIN_W] || wb_dec[Instr_AMOMAX_W] ||
             wb_dec[Instr_AMOMINU_W] || wb_dec[Instr_AMOMAXU_W] || wb_dec[Instr_AMOSWAP_W] ||
             wb_dec[Instr_LR_W] || wb_dec[Instr_SC_W]) {
-            v.memop_size = MEMOP_4B;
+            vb_memop_size = MEMOP_4B;
         } else if (wb_dec[Instr_LH] || wb_dec[Instr_LHU] || wb_dec[Instr_SH]) {
-            v.memop_size = MEMOP_2B;
+            vb_memop_size = MEMOP_2B;
         } else {
-            v.memop_size = MEMOP_1B;
+            vb_memop_size = MEMOP_1B;
         }
-        v.unsigned_op = (wb_dec[Instr_DIVU] | wb_dec[Instr_REMU] |
+        v_unsigned_op = (wb_dec[Instr_DIVU] | wb_dec[Instr_REMU] |
                 wb_dec[Instr_DIVUW] | wb_dec[Instr_REMUW] |
                 wb_dec[Instr_MULHU] |
                 wb_dec[Instr_FCVT_WU_D] | wb_dec[Instr_FCVT_LU_D] |
                 wb_dec[Instr_AMOMINU_W] | wb_dec[Instr_AMOMAXU_W] |
                 wb_dec[Instr_AMOMINU_D] | wb_dec[Instr_AMOMAXU_D]).to_bool();
 
-        v.rv32 = (wb_dec[Instr_ADDW] | wb_dec[Instr_ADDIW] 
+        v_rv32 = (wb_dec[Instr_ADDW] | wb_dec[Instr_ADDIW] 
             | wb_dec[Instr_SLLW] | wb_dec[Instr_SLLIW] | wb_dec[Instr_SRAW]
             | wb_dec[Instr_SRAIW]
             | wb_dec[Instr_SRLW] | wb_dec[Instr_SRLIW] | wb_dec[Instr_SUBW] 
@@ -1232,7 +1280,7 @@ void InstrDecoder::comb() {
             | wb_dec[Instr_AMOMINU_W] | wb_dec[Instr_AMOMAXU_W]| wb_dec[Instr_AMOSWAP_W]
             | wb_dec[Instr_LR_W] | wb_dec[Instr_SC_W]).to_bool();
 
-        v.f64 = (wb_dec[Instr_FADD_D] | wb_dec[Instr_FSUB_D]
+        v_f64 = (wb_dec[Instr_FADD_D] | wb_dec[Instr_FSUB_D]
             | wb_dec[Instr_FMUL_D] | wb_dec[Instr_FDIV_D]
             | wb_dec[Instr_FMIN_D] | wb_dec[Instr_FMAX_D]
             | wb_dec[Instr_FLE_D] | wb_dec[Instr_FLT_D]
@@ -1244,53 +1292,108 @@ void InstrDecoder::comb() {
             | wb_dec[Instr_FMOV_D_X] | wb_dec[Instr_FLD]
             | wb_dec[Instr_FSD]).to_bool();
         
-        v.instr_unimplemented = w_error;
+        //v.instr_unimplemented = w_error;
 
-        v.radr1 = vb_radr1;
-        v.radr2 = vb_radr2;
-        v.waddr = vb_waddr;
-        v.csr_addr = vb_csr_addr;
-        v.imm = vb_imm;
-    } else if (!i_any_hold.read()) {
-        v.valid = 0;
-    }
-    w_o_valid = r.valid.read();
-
-    if (!async_reset_ && !i_nrst.read()) {
-        R_RESET(v);
+        //v.radr1 = vb_radr1;
+        //v.radr2 = vb_radr2;
+        //v.waddr = vb_waddr;
+        //v.csr_addr = vb_csr_addr;
+        //v.imm = vb_imm;
     }
 
-    o_valid = w_o_valid;
-    o_pc = r.pc;
-    o_instr = r.instr;
-    o_memop_load = r.memop_load;
-    o_memop_store = r.memop_store;
-    o_memop_sign_ext = r.memop_sign_ext;
-    o_memop_size = r.memop_size;
-    o_unsigned_op = r.unsigned_op;
-    o_rv32 = r.rv32;
-    o_f64 = r.f64;
-    o_compressed = r.compressed;
-    o_amo = r.amo;
-    o_isa_type = r.isa_type;
-    o_instr_vec = r.instr_vec;
-    o_exception = r.instr_unimplemented;
-    o_instr_load_fault = r.instr_load_fault;
-    o_instr_executable = r.instr_executable;
+    for (int i = 0; i < DEC_SIZE; i++) {
+        if (vb_bp_ena[i]) {
+            if (vb_bp_idx[i].to_int() == 0) {
+                rin[i].pc = i_f_pc;
+                rin[i].isa_type = wb_isa_type;
+                rin[i].instr_vec = wb_dec;
+                rin[i].instr = i_f_instr;
+                rin[i].memop_store = v_memop_store;
+                rin[i].memop_load = v_memop_load;
+                rin[i].memop_sign_ext = v_memop_sign_ext;
+                rin[i].memop_size = vb_memop_size;
+                rin[i].unsigned_op = v_unsigned_op;
+                rin[i].rv32 = v_rv32;
+                rin[i].f64 = v_f64;
+                rin[i].compressed = w_compressed;
+                rin[i].amo = v_amo;
+                rin[i].instr_load_fault = i_instr_load_fault;
+                rin[i].instr_executable = i_instr_executable;
+                rin[i].instr_unimplemented = w_error;
+                rin[i].radr1 = vb_radr1;
+                rin[i].radr2 = vb_radr2;
+                rin[i].waddr = vb_waddr;
+                rin[i].csr_addr = vb_csr_addr;
+                rin[i].imm = vb_imm;
+                rin[i].progbuf_ena = i_progbuf_ena.read();
+            } else {
+                rin[i] = r[vb_bp_idx[i].to_int()];
+            }
+        }
+    }
 
-    o_radr1 = r.radr1;
-    o_radr2 = r.radr2;
-    o_waddr = r.waddr;
-    o_csr_addr = r.csr_addr;
-    o_imm = r.imm;
-    o_progbuf_ena = r.progbuf_ena;
+    /*if (r[0].pc != i_e_npc) {
+        if (i_e_npc == i_f_pc) {
+
+            if (vb_hit_idx != 0) {
+                rin[vb_hit_idx] = r[0];
+            } else {
+                for (int i = 1; i < DEC_SIZE; i++) {
+                    rin[i] = r[i-1];
+                }
+            }
+        } else if (vb_bp_idx != 0) {
+            rin[vb_bp_idx] = r[0];
+        }
+    }*/
+
+    for (int i = 1; i < DEC_SIZE; i++) {
+        if (i_e_npc == r[i].pc) {
+            selidx = i;
+        }
+    }
+
+
+    if ((!async_reset_ && !i_nrst.read()) || i_flush_pipeline.read() == 1) {
+        for (int i = 0; i < DEC_SIZE; i++) {
+            R_RESET(rin[i]);
+        }
+    }
+
+    o_pc = r[selidx].pc;
+    o_instr = r[selidx].instr;
+    o_memop_load = r[selidx].memop_load;
+    o_memop_store = r[selidx].memop_store;
+    o_memop_sign_ext = r[selidx].memop_sign_ext;
+    o_memop_size = r[selidx].memop_size;
+    o_unsigned_op = r[selidx].unsigned_op;
+    o_rv32 = r[selidx].rv32;
+    o_f64 = r[selidx].f64;
+    o_compressed = r[selidx].compressed;
+    o_amo = r[selidx].amo;
+    o_isa_type = r[selidx].isa_type;
+    o_instr_vec = r[selidx].instr_vec;
+    o_exception = r[selidx].instr_unimplemented;
+    o_instr_load_fault = r[selidx].instr_load_fault;
+    o_instr_executable = r[selidx].instr_executable;
+
+    o_radr1 = r[selidx].radr1;
+    o_radr2 = r[selidx].radr2;
+    o_waddr = r[selidx].waddr;
+    o_csr_addr = r[selidx].csr_addr;
+    o_imm = r[selidx].imm;
+    o_progbuf_ena = r[selidx].progbuf_ena;
 }
 
 void InstrDecoder::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
-        R_RESET(r);
+        for (int i = 0; i < DEC_SIZE; i++) {
+            R_RESET(r[i]);
+        }
     } else {
-        r = v;
+        for (int i = 0; i < DEC_SIZE; i++) {
+            r[i] = rin[i];
+        }
     }
 }
 

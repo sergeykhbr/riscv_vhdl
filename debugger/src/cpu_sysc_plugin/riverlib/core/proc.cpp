@@ -87,7 +87,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     sensitive << w.f.pipeline_hold;
     sensitive << w.e.npc;
     sensitive << w.e.valid;
-    sensitive << w.e.d_ready;
     sensitive << w.e.reg_wena;
     sensitive << w.e.reg_waddr;
     sensitive << w.e.reg_wtag;
@@ -107,7 +106,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     sensitive << csr.flushi_ena;
     sensitive << csr.flushi_addr;
     sensitive << w_fetch_pipeline_hold;
-    sensitive << w_any_pipeline_hold;
     sensitive << w_flush_pipeline;
 
     fetch0 = new InstrFetch("fetch0", async_reset);
@@ -139,21 +137,19 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     dec0 = new InstrDecoder("dec0", async_reset, fpu_ena);
     dec0->i_clk(i_clk);
     dec0->i_nrst(i_nrst);
-    dec0->i_any_hold(w_any_pipeline_hold);
     dec0->i_f_valid(w.f.valid);
     dec0->i_f_pc(w.f.pc);
     dec0->i_f_instr(w.f.instr);
     dec0->i_instr_load_fault(w.f.instr_load_fault);
     dec0->i_instr_executable(w.f.instr_executable);
+    dec0->i_e_npc(w.e.npc);
     dec0->o_radr1(w.d.radr1);
     dec0->o_radr2(w.d.radr2);
     dec0->o_waddr(w.d.waddr);
     dec0->o_csr_addr(w.d.csr_addr),
     dec0->o_imm(w.d.imm);
-    dec0->i_e_ready(w.e.d_ready);
     dec0->i_flush_pipeline(w_flush_pipeline);
     dec0->i_progbuf_ena(dbg.progbuf_ena);
-    dec0->o_valid(w.d.instr_valid);
     dec0->o_pc(w.d.pc);
     dec0->o_instr(w.d.instr);
     dec0->o_memop_store(w.d.memop_store);
@@ -175,7 +171,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0 = new InstrExecute("exec0", async_reset, fpu_ena);
     exec0->i_clk(i_clk);
     exec0->i_nrst(i_nrst);
-    exec0->i_d_valid(w.d.instr_valid);
     exec0->i_d_pc(w.d.pc);
     exec0->i_d_instr(w.d.instr);
     exec0->i_d_progbuf_ena(w.d.progbuf_ena);
@@ -224,7 +219,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->o_reg_waddr(w.e.reg_waddr);
     exec0->o_reg_wtag(w.e.reg_wtag);
     exec0->o_reg_wdata(w.e.reg_wdata);
-    exec0->o_d_ready(w.e.d_ready);
     exec0->o_csr_req_valid(w.e.csr_req_valid);
     exec0->i_csr_req_ready(iccsr_m0_req_ready);
     exec0->o_csr_req_type(w.e.csr_req_type);
@@ -509,8 +503,7 @@ void Processor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void Processor::comb() {
-    w_fetch_pipeline_hold = !w.e.d_ready;
-    w_any_pipeline_hold = w.f.pipeline_hold | !w.e.d_ready;
+    w_fetch_pipeline_hold = 0;
 
     w_mem_resp_error = i_resp_data_load_fault || i_resp_data_store_fault
                     || i_resp_data_er_mpu_store || i_resp_data_er_mpu_load;

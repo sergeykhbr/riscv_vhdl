@@ -39,6 +39,11 @@ static const int CFG_CPU_ADDR_BITS       = CFG_BUS_ADDR_WIDTH;
 static const int CFG_CPU_ID_BITS         = 1;
 static const int CFG_CPU_USER_BITS       = 1;
 
+/**
+ * Decoded instructions buffer size in Decoder
+ */
+static const int CFG_DEC_LOG2_SIZE = 2;
+
 /** 
  * ICacheLru config (16 KB by default)
  */

@@ -63,23 +63,21 @@ const uint8_t OPCODE_C_SDSP     = 0x1E;
 SC_MODULE(InstrDecoder) {
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;                         // Reset active low
-    sc_in<bool> i_any_hold;                     // Hold pipeline by any reason
     sc_in<bool> i_f_valid;                      // Fetch input valid
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_f_pc;      // Fetched pc
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_f_pc;   // Fetched pc
     sc_in<sc_uint<32>> i_f_instr;               // Fetched instruction value
     sc_in<bool> i_instr_load_fault;             // fault instruction's address
     sc_in<bool> i_instr_executable;             // MPU flag
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_npc;   // executor expected instr pointer
 
     sc_out<sc_uint<6>> o_radr1;                 // register bank address 1 (rs1)
     sc_out<sc_uint<6>> o_radr2;                 // register bank address 2 (rs2)
     sc_out<sc_uint<6>> o_waddr;                 // register bank output (rd)
     sc_out<sc_uint<12>> o_csr_addr;             // CSR bank output
     sc_out<sc_uint<RISCV_ARCH>> o_imm;          // immediate constant decoded from instruction
-    sc_in<bool> i_e_ready;                      // execute stage ready to accept next instruction
     sc_in<bool> i_flush_pipeline;               // reset pipeline and cache
     sc_in<bool> i_progbuf_ena;                  // executing from progbuf
 
-    sc_out<bool> o_valid;                       // Current output values are valid
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_pc;       // Current instruction pointer value
     sc_out<sc_uint<32>> o_instr;                // Current instruction value
     sc_out<bool> o_memop_store;                 // Store to memory operation
@@ -109,7 +107,6 @@ SC_MODULE(InstrDecoder) {
 
 private:
     struct RegistersType {
-        sc_signal<bool> valid;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
         sc_bv<ISA_Total> isa_type;
         sc_bv<Instr_Total> instr_vec;
@@ -133,10 +130,16 @@ private:
         sc_signal<sc_uint<12>> csr_addr;
         sc_signal<sc_uint<RISCV_ARCH>> imm;
         sc_signal<bool> progbuf_ena;
-    } v, r;
+    };
+
+    static const int DEC_SIZE = 1 << CFG_DEC_LOG2_SIZE;
+
+    RegistersType rin[DEC_SIZE];
+    RegistersType r[DEC_SIZE];
+
+    int selidx;
 
     void R_RESET(RegistersType &iv) {
-        iv.valid = false;
         iv.pc = ~0ull;
         iv.instr = ~0ull;
         iv.isa_type = 0;

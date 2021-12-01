@@ -23,7 +23,6 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     bool fpu_ena) : sc_module(name_),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
-    i_d_valid("i_d_valid"),
     i_d_radr1("i_d_radr1"),
     i_d_radr2("i_d_radr2"),
     i_d_waddr("i_d_waddr"),
@@ -72,7 +71,6 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     o_reg_waddr("o_reg_waddr"),
     o_reg_wtag("o_reg_wtag"),
     o_reg_wdata("o_reg_wdata"),
-    o_d_ready("o_d_ready"),
     o_csr_req_valid("o_csr_req_valid"),
     i_csr_req_ready("i_csr_req_ready"),
     o_csr_req_type("o_csr_req_type"),
@@ -113,7 +111,6 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
 
     SC_METHOD(comb);
     sensitive << i_nrst;
-    sensitive << i_d_valid;
     sensitive << i_d_radr1;
     sensitive << i_d_radr2;
     sensitive << i_d_waddr;
@@ -330,7 +327,6 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
         sc_trace(o_vcd, i_nrst, i_nrst.name());
         sc_trace(o_vcd, i_clk, i_clk.name());
-        sc_trace(o_vcd, i_d_valid, i_d_valid.name());
         sc_trace(o_vcd, i_d_pc, i_d_pc.name());
         sc_trace(o_vcd, i_d_instr, i_d_instr.name());
         sc_trace(o_vcd, i_d_radr1, i_d_radr1.name());
@@ -367,7 +363,6 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_reg_waddr, o_reg_waddr.name());
         sc_trace(o_vcd, o_reg_wtag, o_reg_wtag.name());
         sc_trace(o_vcd, o_reg_wdata, o_reg_wdata.name());
-        sc_trace(o_vcd, o_d_ready, o_d_ready.name());
         sc_trace(o_vcd, o_csr_req_valid, o_csr_req_valid.name());
         sc_trace(o_vcd, i_csr_req_ready, i_csr_req_ready.name());
         sc_trace(o_vcd, o_csr_req_type, o_csr_req_type.name());
@@ -481,7 +476,6 @@ void InstrExecute::comb() {
     bool v_check_tag2;
     sc_uint<Res_Total> vb_select;
     sc_biguint<CFG_REG_TAG_WIDTH*REGS_TOTAL> vb_tagcnt_next;
-    bool v_d_ready;
     bool v_latch_input;
     bool v_memop_ena;
     bool v_memop_debug;
@@ -503,7 +497,6 @@ void InstrExecute::comb() {
     v = r;
 
     v_d_valid = 0;
-    v_d_ready = 0;
     v_csr_req_valid = 0;
     v_csr_resp_ready = 0;
     vb_res = 0;
@@ -930,7 +923,6 @@ void InstrExecute::comb() {
         if (r.memop_valid && !i_memop_ready) {
             // Do nothing, previous memaccess request wasn't accepted. queue is full.
         } else if (v_d_valid == 1 && w_hazard1 == 0 && w_hazard2 == 0) {
-            v_d_ready = 1;
             v_latch_input = 1;
             // opencocd doesn't clear 'step' value in dcsr after step has been done
             v.stepdone = i_step & !i_dbg_progbuf_ena;
@@ -995,8 +987,6 @@ void InstrExecute::comb() {
                 v.valid = 1;
                 v_reg_ena = i_d_waddr.read().or_reduce() && !i_memop_load; // should be written by memaccess, but tag must be updated
             }
-        } else {
-            v_d_ready = 1;
         }
         break;
     case State_WaitMemAcces:
@@ -1350,7 +1340,6 @@ void InstrExecute::comb() {
     o_reg_waddr = r.reg_waddr;
     o_reg_wtag = r.reg_wtag;
     o_reg_wdata = vb_res;
-    o_d_ready = v_d_ready;
 
     o_memop_valid = r.memop_valid;
     o_memop_debug = r.memop_debug;

@@ -32,7 +32,6 @@ namespace debugger {
 SC_MODULE(InstrExecute) {
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;                         // Reset active LOW
-    sc_in<bool> i_d_valid;                      // Decoded instruction is valid
     sc_in<sc_uint<6>> i_d_radr1;
     sc_in<sc_uint<6>> i_d_radr2;
     sc_in<sc_uint<6>> i_d_waddr;
@@ -83,7 +82,6 @@ SC_MODULE(InstrExecute) {
     sc_out<sc_uint<6>> o_reg_waddr;             // Address to store result of the instruction (0=do not store)
     sc_out<sc_uint<CFG_REG_TAG_WIDTH>> o_reg_wtag;
     sc_out<sc_uint<RISCV_ARCH>> o_reg_wdata;    // Value to store
-    sc_out<bool> o_d_ready;                     // Hold pipeline while 'writeback' not done or multi-clock instruction.
 
     sc_out<bool> o_csr_req_valid;               // Access to CSR request
     sc_in<bool> i_csr_req_ready;                // CSR module is ready to accept request

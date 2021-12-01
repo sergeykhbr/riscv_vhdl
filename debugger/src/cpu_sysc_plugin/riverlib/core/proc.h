@@ -120,7 +120,6 @@ private:
     struct InstructionDecodeType {
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
         sc_signal<sc_uint<32>> instr;
-        sc_signal<bool> instr_valid;
         sc_signal<bool> memop_store;
         sc_signal<bool> memop_load;
         sc_signal<bool> memop_sign_ext;
@@ -168,7 +167,6 @@ private:
         sc_signal<sc_uint<2>> memop_size;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> memop_addr;
         sc_signal<sc_uint<RISCV_ARCH>> memop_wdata;
-        sc_signal<bool> d_ready;           // Hold pipeline from Execution stage
         sc_signal<bool> flushd;
         sc_signal<bool> flushi;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> flushi_addr;
@@ -280,7 +278,6 @@ private:
     sc_signal<bool> iccsr_s0_resp_exception;
 
     sc_signal<bool> w_fetch_pipeline_hold;
-    sc_signal<bool> w_any_pipeline_hold;
     sc_signal<bool> w_flush_pipeline;
     sc_signal<bool> w_mem_resp_error;
 
