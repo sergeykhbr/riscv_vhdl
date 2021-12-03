@@ -25,7 +25,9 @@ namespace debugger {
 SC_MODULE(InstrFetch) {
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;
-    sc_in<bool> i_pipeline_hold;
+    sc_in<bool> i_bp_valid;
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_bp_pc;
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_requested_pc;
     sc_in<bool> i_mem_req_ready;
     sc_out<bool> o_mem_addr_valid;
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mem_addr;
@@ -38,17 +40,14 @@ SC_MODULE(InstrFetch) {
 
     sc_in<bool> i_flush_pipeline;                   // reset pipeline and cache
     sc_in<bool> i_progbuf_ena;                      // executing from prog buffer
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_progbuf_pc;                // progbuf counter
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_progbuf_pc; // progbuf counter
     sc_in<sc_uint<32>> i_progbuf_instr;             // progbuf instruction
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_predict_npc;
 
-    sc_out<bool> o_mem_req_fire;                    // used by branch predictor to form new npc value
     sc_out<bool> o_instr_load_fault;
     sc_out<bool> o_instr_executable;
     sc_out<bool> o_valid;
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_pc;
     sc_out<sc_uint<32>> o_instr;
-    sc_out<bool> o_hold;                                // Hold due no response from icache yet
 
     void comb();
     void registers();
@@ -60,23 +59,38 @@ SC_MODULE(InstrFetch) {
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
-    struct RegistersType {
-        sc_signal<bool> wait_resp;
+    static const uint8_t Idle = 0;
+    static const uint8_t WaitReqAccept = 1;
+    static const uint8_t WaitResp = 2;
 
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> resp_address;
-        sc_signal<sc_uint<32>> resp_data;
-        sc_signal<bool> resp_valid;
+    struct RegistersType {
+        sc_signal<sc_uint<2>> state;
+        sc_signal<bool> req_valid;
+        sc_signal<bool> resp_ready;
+        sc_signal<bool> buf_valid;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_addr;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> requested_pc; // need for the branch predictor
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
+        sc_signal<sc_uint<32>> instr;
+        sc_signal<bool> valid;
         sc_signal<bool> instr_load_fault;
         sc_signal<bool> instr_executable;
+        sc_signal<bool> progbuf_ena;
     } v, r;
 
     void R_RESET(RegistersType &iv) {
-        iv.wait_resp = 0;
-        iv.resp_address = ~0ull;
-        iv.resp_data = 0;
-        iv.resp_valid = 0;
+        iv.state = Idle;
+        iv.req_valid = 0;
+        iv.resp_ready = 0;
+        iv.buf_valid = 0;
+        iv.req_addr = 0;
+        iv.requested_pc = 0;
+        iv.pc = ~0ull;
+        iv.instr = 0;
+        iv.valid = 0;
         iv.instr_load_fault = 0;
         iv.instr_executable = 0;
+        iv.progbuf_ena = 0;
     }
 
     bool async_reset_;

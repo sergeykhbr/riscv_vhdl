@@ -106,15 +106,14 @@ SC_MODULE(Processor) {
 
 private:
     struct FetchType {
-        sc_signal<bool> req_fire;
         sc_signal<bool> instr_load_fault;
         sc_signal<bool> instr_executable;
         sc_signal<bool> valid;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> requested_pc;  // requested but responded address
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
         sc_signal<sc_uint<32>> instr;
         sc_signal<bool> imem_req_valid;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> imem_req_addr;
-        sc_signal<bool> pipeline_hold;
     };
 
     struct InstructionDecodeType {
@@ -134,6 +133,7 @@ private:
         sc_signal<bool> exception;
         sc_signal<bool> instr_load_fault;
         sc_signal<bool> instr_executable;
+        sc_signal<sc_biguint<DEC_SIZE*CFG_CPU_ADDR_BITS>> decoded_pc;    // Predicted pc already in decoder
         sc_signal<sc_uint<6>> radr1;
         sc_signal<sc_uint<6>> radr2;
         sc_signal<sc_uint<6>> waddr;
@@ -247,7 +247,9 @@ private:
     } dbg;
 
     struct BranchPredictorType {
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> npc;
+        sc_signal<bool> f_valid;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> f_pc;
+        sc_signal<sc_biguint<DEC_SIZE*CFG_CPU_ADDR_BITS>> list_npc;  // predicted npc
     } bp;
 
     /** 5-stages CPU pipeline */
@@ -277,7 +279,6 @@ private:
     sc_signal<bool> iccsr_s0_resp_ready;
     sc_signal<bool> iccsr_s0_resp_exception;
 
-    sc_signal<bool> w_fetch_pipeline_hold;
     sc_signal<bool> w_flush_pipeline;
     sc_signal<bool> w_mem_resp_error;
 

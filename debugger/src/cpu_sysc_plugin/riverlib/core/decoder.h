@@ -69,6 +69,9 @@ SC_MODULE(InstrDecoder) {
     sc_in<bool> i_instr_executable;             // MPU flag
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_npc;   // executor expected instr pointer
 
+    sc_in<sc_biguint<DEC_SIZE*CFG_CPU_ADDR_BITS>> i_bp_npc;  // predicted npc
+    sc_out<sc_biguint<DEC_SIZE*CFG_CPU_ADDR_BITS>> o_decoded_pc;// already decoded instructions
+
     sc_out<sc_uint<6>> o_radr1;                 // register bank address 1 (rs1)
     sc_out<sc_uint<6>> o_radr2;                 // register bank address 2 (rs2)
     sc_out<sc_uint<6>> o_waddr;                 // register bank output (rd)
@@ -130,8 +133,6 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> imm;
         sc_signal<bool> progbuf_ena;
     };
-
-    static const int DEC_SIZE = 1 << CFG_DEC_LOG2_SIZE;
 
     RegistersType v[DEC_SIZE];
     RegistersType r[DEC_SIZE];

@@ -28,6 +28,8 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset,
     i_instr_load_fault("i_instr_load_fault"),
     i_instr_executable("i_instr_executable"),
     i_e_npc("i_e_npc"),
+    i_bp_npc("i_bp_npc"),
+    o_decoded_pc("o_decoded_pc"),
     o_radr1("o_radr1"),
     o_radr2("o_radr2"),
     o_waddr("o_waddr"),
@@ -63,6 +65,7 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset,
     sensitive << i_instr_load_fault;
     sensitive << i_instr_executable;
     sensitive << i_e_npc;
+    sensitive << i_bp_npc;
     sensitive << i_flush_pipeline;
     sensitive << i_progbuf_ena;
     for (int i = 0; i < DEC_SIZE; i++) {
@@ -99,6 +102,7 @@ void InstrDecoder::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_f_pc, i_f_pc.name());
         sc_trace(o_vcd, i_f_instr, i_f_instr.name());
         sc_trace(o_vcd, i_e_npc, i_e_npc.name());
+        sc_trace(o_vcd, i_bp_npc, i_bp_npc.name());
         sc_trace(o_vcd, o_pc, o_pc.name());
         sc_trace(o_vcd, o_instr, o_instr.name());
         sc_trace(o_vcd, o_isa_type, o_isa_type.name());
@@ -146,7 +150,8 @@ void InstrDecoder::comb() {
     bool v_amo;
     sc_uint<CFG_CPU_ADDR_BITS> bp_next_pc[DEC_SIZE];
     sc_uint<CFG_DEC_LOG2_SIZE> vb_bp_idx[DEC_SIZE];
-    sc_uint<DEC_SIZE> vb_bp_ena;
+    sc_uint<DEC_SIZE> vb_bp_hit;
+    sc_biguint<DEC_SIZE*CFG_CPU_ADDR_BITS> vb_decoded_pc;
 
     selidx = 0;
     w_error = false;
@@ -171,24 +176,23 @@ void InstrDecoder::comb() {
     v_rv32 = 0;
     v_f64 = 0;
     v_amo = 0;
-    bp_next_pc[0] = i_e_npc;
-    for (int i = 1; i < DEC_SIZE; i++) {
-        bp_next_pc[i] = i_e_npc.read() + 2*i;
+    for (int i = 0; i < DEC_SIZE; i++) {
+        bp_next_pc[i] = i_bp_npc.read()((i+1)*CFG_CPU_ADDR_BITS-1, i*CFG_CPU_ADDR_BITS);
+        vb_decoded_pc((i+1)*CFG_CPU_ADDR_BITS-1, i*CFG_CPU_ADDR_BITS) = r[i].pc;
     }
 
-    vb_bp_ena = 0;
+    vb_bp_hit = 0;
     for (int i = 0; i < DEC_SIZE; i++) {
         vb_bp_idx[i] = i;
-        if (i_f_pc == bp_next_pc[i]) {
-            vb_bp_ena[i] = 1;
-            vb_bp_idx[i] = 0;
-        } else {
-            for (int n = 0; n < DEC_SIZE; n++) {
-                if (r[n].pc == bp_next_pc[i]) {
-                    vb_bp_ena[i] = 1;
-                    vb_bp_idx[i] = n;
-                }
+        for (int n = 0; n < DEC_SIZE; n++) {
+            if (r[n].pc == bp_next_pc[i]) {
+                vb_bp_hit[i] = 1;
+                vb_bp_idx[i] = n;
             }
+        }
+        if (i_f_pc == bp_next_pc[i]) {
+            vb_bp_hit[i] = 1;
+            vb_bp_idx[i] = 0;
         }
     }
 
@@ -1283,7 +1287,7 @@ void InstrDecoder::comb() {
         
 
     for (int i = 0; i < DEC_SIZE; i++) {
-        if (vb_bp_ena[i]) {
+        if (vb_bp_hit[i]) {
             if (vb_bp_idx[i].to_int() == 0) {
                 v[i].pc = i_f_pc;
                 v[i].isa_type = wb_isa_type;
@@ -1325,6 +1329,8 @@ void InstrDecoder::comb() {
             R_RESET(v[i]);
         }
     }
+
+    o_decoded_pc = vb_decoded_pc;
 
     o_pc = r[selidx].pc;
     o_instr = r[selidx].instr;

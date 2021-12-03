@@ -25,13 +25,18 @@ namespace debugger {
 SC_MODULE(BranchPredictor) {
     sc_in<bool> i_clk;                  // CPU clock
     sc_in<bool> i_nrst;                 // Reset. Active LOW.
-    sc_in<bool> i_req_mem_fire;         // Memory request was accepted
     sc_in<bool> i_resp_mem_valid;       // Memory response from ICache is valid
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_resp_mem_addr; // Memory response address
-    sc_in<sc_uint<32>> i_resp_mem_data; // Memory response value
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_npc;         // Valid instruction value awaited by 'Executor'
-    sc_in<sc_uint<RISCV_ARCH>> i_ra;    // Return address register value
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_npc_predict;  // Predicted next instruction address
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_resp_mem_addr;          // Memory response address
+    sc_in<sc_uint<32>> i_resp_mem_data;                         // Memory response value
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_npc;                  // Valid instruction value awaited by 'Executor'
+    sc_in<sc_uint<RISCV_ARCH>> i_ra;                            // Return address register value
+    sc_out<bool> o_f_valid;                                     // Fetch request is valid
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_f_pc;                  // Fetching instruction pointer
+    sc_out<sc_biguint<DEC_SIZE*CFG_CPU_ADDR_BITS>> o_bp_npc;    // predicted npc
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_f_requested_pc;         // already requested but not fetched address
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_f_fetched_pc;           // already requested and fetched address
+    sc_in<sc_biguint<DEC_SIZE*CFG_CPU_ADDR_BITS>> i_d_decoded_pc;  // decoded instructions
+
 
     void comb();
     void registers();

@@ -84,7 +84,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     sensitive << i_resp_data_store_fault;
     sensitive << i_resp_data_er_mpu_store;
     sensitive << i_resp_data_er_mpu_load;
-    sensitive << w.f.pipeline_hold;
     sensitive << w.e.npc;
     sensitive << w.e.valid;
     sensitive << w.e.reg_wena;
@@ -105,13 +104,13 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     sensitive << csr.executed_cnt;
     sensitive << csr.flushi_ena;
     sensitive << csr.flushi_addr;
-    sensitive << w_fetch_pipeline_hold;
     sensitive << w_flush_pipeline;
 
     fetch0 = new InstrFetch("fetch0", async_reset);
     fetch0->i_clk(i_clk);
     fetch0->i_nrst(i_nrst);
-    fetch0->i_pipeline_hold(w_fetch_pipeline_hold);
+    fetch0->i_bp_valid(bp.f_valid);
+    fetch0->i_bp_pc(bp.f_pc);
     fetch0->i_mem_req_ready(i_req_ctrl_ready);
     fetch0->o_mem_addr_valid(w.f.imem_req_valid);
     fetch0->o_mem_addr(w.f.imem_req_addr);
@@ -125,14 +124,12 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     fetch0->i_progbuf_ena(dbg.progbuf_ena);
     fetch0->i_progbuf_pc(dbg.progbuf_pc);
     fetch0->i_progbuf_instr(dbg.progbuf_instr);
-    fetch0->i_predict_npc(bp.npc);
-    fetch0->o_mem_req_fire(w.f.req_fire);
     fetch0->o_instr_load_fault(w.f.instr_load_fault);
     fetch0->o_instr_executable(w.f.instr_executable);
     fetch0->o_valid(w.f.valid);
+    fetch0->o_requested_pc(w.f.requested_pc);
     fetch0->o_pc(w.f.pc);
     fetch0->o_instr(w.f.instr);
-    fetch0->o_hold(w.f.pipeline_hold);
 
     dec0 = new InstrDecoder("dec0", async_reset, fpu_ena);
     dec0->i_clk(i_clk);
@@ -143,6 +140,8 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     dec0->i_instr_load_fault(w.f.instr_load_fault);
     dec0->i_instr_executable(w.f.instr_executable);
     dec0->i_e_npc(w.e.npc);
+    dec0->i_bp_npc(bp.list_npc);
+    dec0->o_decoded_pc(w.d.decoded_pc);
     dec0->o_radr1(w.d.radr1);
     dec0->o_radr2(w.d.radr2);
     dec0->o_waddr(w.d.waddr);
@@ -295,13 +294,17 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     predic0 = new BranchPredictor("predic0", async_reset);
     predic0->i_clk(i_clk);
     predic0->i_nrst(i_nrst);
-    predic0->i_req_mem_fire(w.f.req_fire);
     predic0->i_resp_mem_valid(i_resp_ctrl_valid);
     predic0->i_resp_mem_addr(i_resp_ctrl_addr);
     predic0->i_resp_mem_data(i_resp_ctrl_data);
     predic0->i_e_npc(w.e.npc);
     predic0->i_ra(ireg.ra);
-    predic0->o_npc_predict(bp.npc);
+    predic0->o_f_valid(bp.f_valid);
+    predic0->o_f_pc(bp.f_pc);
+    predic0->o_bp_npc(bp.list_npc);
+    predic0->i_f_requested_pc(w.f.requested_pc);
+    predic0->i_f_fetched_pc(w.f.pc);
+    predic0->i_d_decoded_pc(w.d.decoded_pc);
 
     iregs0 = new RegIntBank("iregs0", async_reset);
     iregs0->i_clk(i_clk);
@@ -503,8 +506,6 @@ void Processor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void Processor::comb() {
-    w_fetch_pipeline_hold = 0;
-
     w_mem_resp_error = i_resp_data_load_fault || i_resp_data_store_fault
                     || i_resp_data_er_mpu_store || i_resp_data_er_mpu_load;
 
