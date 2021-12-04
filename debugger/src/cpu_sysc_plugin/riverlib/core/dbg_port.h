@@ -51,7 +51,7 @@ SC_MODULE(DbgPort) {
     sc_in<sc_biguint<32*CFG_PROGBUF_REG_TOTAL>> i_progbuf;  // progam buffer
     sc_out<bool> o_progbuf_ena;                         // Execution from the progbuffer is in progress
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_progbuf_pc;    // prog buffer instruction counter
-    sc_out<sc_uint<32>> o_progbuf_instr;                // prog buffer instruction opcode
+    sc_out<sc_uint<64>> o_progbuf_instr;                // prog buffer instruction opcode
     sc_in<bool> i_csr_progbuf_end;                      // End of execution from progbuf
     sc_in<bool> i_csr_progbuf_error;                    // Exception is occured during progbuf execution
 
@@ -119,7 +119,7 @@ private:
         sc_signal<bool> resp_error;
         sc_signal<bool> progbuf_ena;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> progbuf_pc;
-        sc_signal<sc_uint<32>> progbuf_instr;
+        sc_signal<sc_uint<64>> progbuf_instr;
     } v, r;
 
     void R_RESET(RegistersType &iv) {

@@ -333,7 +333,7 @@ void DbgPort::comb() {
     case exec_progbuf_start:
         v.progbuf_ena = 1;
         v.progbuf_pc = 0;
-        v.progbuf_instr = i_progbuf.read()(31, 0).to_uint();
+        v.progbuf_instr = i_progbuf.read()(63, 0).to_uint();
         v.dstate = exec_progbuf_next;
         break;
     case exec_progbuf_next:
@@ -345,11 +345,11 @@ void DbgPort::comb() {
             v.dstate = exec_progbuf_waitmemop;
         } else {
             int t1 = i_e_npc.read()(5,1);
-            v.progbuf_pc = (0, (i_e_npc.read()(5,1) << 1));
-            if (t1 == 0x1f) {
-                v.progbuf_instr = (0, i_progbuf.read()(16*t1 + 15, 16*t1).to_uint());
+            v.progbuf_pc = (0, (i_e_npc.read()(5,2) << 2));
+            if (t1 == 0xf) {
+                v.progbuf_instr = (0, i_progbuf.read()(32*t1 + 63, 32*t1).to_uint());
             } else {
-                v.progbuf_instr = i_progbuf.read()(16*t1 + 31, 16*t1).to_uint();
+                v.progbuf_instr = i_progbuf.read()(32*t1 + 3, 32*t1).to_uint();
             }
         }
         break;

@@ -158,7 +158,7 @@ void DecoderRv::comb() {
     v_amo = 0;
 
     if (wb_instr(1, 0) != 0x3) {
-        w_error = true;
+        w_compressed = true;
     } else {
         wb_opcode1 = wb_instr(6, 2);
         wb_opcode2 = wb_instr(14, 12);

@@ -35,7 +35,7 @@ SC_MODULE(CacheTop) {
     sc_out<bool> o_req_ctrl_ready;                      // Control request from CPU Core is accepted
     sc_out<bool> o_resp_ctrl_valid;                     // ICache response is valid and can be accepted
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_resp_ctrl_addr;   // ICache response address
-    sc_out<sc_uint<32>> o_resp_ctrl_data;               // ICache read data
+    sc_out<sc_uint<64>> o_resp_ctrl_data;               // ICache read data
     sc_out<bool> o_resp_ctrl_load_fault;                // Bus response ERRSLV or ERRDEC on read
     sc_out<bool> o_resp_ctrl_executable;                // MPU flag: executable
     sc_in<bool> i_resp_ctrl_ready;                      // CPU Core is ready to accept ICache response

@@ -160,8 +160,8 @@ void InstrFetch::comb() {
             v.buf_valid = 0;
             v.requested_pc = ~0ull;
             v.valid = 1;
-            v.pc = i_mem_data_addr.read();
-            v.instr = i_mem_data.read();
+            v.pc = i_mem_data_addr;
+            v.instr = i_mem_data;
             v.instr_load_fault = i_mem_load_fault.read();
             v.instr_executable = i_mem_executable.read();
             if (r.buf_valid) {
@@ -177,6 +177,7 @@ void InstrFetch::comb() {
                 v.state = WaitReqAccept;
                 v.req_valid = 1;
                 v.req_addr = i_bp_pc;
+                v.requested_pc = i_bp_pc;
             } else {
                 v.state = Idle;
             }

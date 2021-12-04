@@ -89,7 +89,7 @@ SC_MODULE(RiverTop) {
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_req_ctrl_addr;
     sc_signal<bool> w_resp_ctrl_valid;
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_resp_ctrl_addr;
-    sc_signal<sc_uint<32>> wb_resp_ctrl_data;
+    sc_signal<sc_uint<64>> wb_resp_ctrl_data;
     sc_signal<bool> w_resp_ctrl_load_fault;
     sc_signal<bool> w_resp_ctrl_executable;
     sc_signal<bool> w_resp_ctrl_ready;

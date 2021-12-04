@@ -34,7 +34,7 @@ SC_MODULE(ICacheLru) {
     sc_out<bool> o_req_ready;
     sc_out<bool> o_resp_valid;
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_resp_addr;
-    sc_out<sc_uint<32>> o_resp_data;
+    sc_out<sc_uint<64>> o_resp_data;
     sc_out<bool> o_resp_load_fault;
     sc_out<bool> o_resp_executable;
     sc_out<bool> o_resp_writable;
@@ -130,7 +130,7 @@ SC_MODULE(ICacheLru) {
     sc_signal<sc_uint<(1<<CFG_ILOG2_BYTES_PER_LINE)>> line_wstrb_i;
     sc_signal<sc_uint<ITAG_FL_TOTAL>> line_wflags_i;
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> line_raddr_o;
-    sc_signal<sc_biguint<ICACHE_LINE_BITS+16>> line_rdata_o;
+    sc_signal<sc_biguint<ICACHE_LINE_BITS+32>> line_rdata_o;
     sc_signal<sc_uint<ITAG_FL_TOTAL>> line_rflags_o;
     sc_signal<bool> line_hit_o;
     sc_signal<bool> line_hit_next_o;

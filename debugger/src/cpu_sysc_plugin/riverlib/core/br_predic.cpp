@@ -29,7 +29,6 @@ BranchPredictor::BranchPredictor(sc_module_name name_, bool async_reset) :
     i_ra("i_ra"),
     o_f_valid("o_f_valid"),
     o_f_pc("o_f_pc"),
-    o_bp_npc("o_bp_npc"), 
     i_f_requested_pc("i_f_requested_pc"),
     i_f_fetched_pc("i_f_fetched_pc"),
     i_d_decoded_pc("i_d_decoded_pc") {
@@ -67,7 +66,6 @@ void BranchPredictor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_ra, i_ra.name());
         sc_trace(o_vcd, o_f_valid, o_f_valid.name());
         sc_trace(o_vcd, o_f_pc, o_f_pc.name());
-        sc_trace(o_vcd, o_bp_npc, o_bp_npc.name());
         sc_trace(o_vcd, i_f_requested_pc, i_f_requested_pc.name());
         sc_trace(o_vcd, i_f_fetched_pc, i_f_fetched_pc.name());
         sc_trace(o_vcd, i_d_decoded_pc, i_d_decoded_pc.name());
@@ -98,7 +96,7 @@ void BranchPredictor::comb() {
     sc_uint<CFG_CPU_ADDR_BITS> vb_branch_addr;
     sc_uint<CFG_CPU_ADDR_BITS> vb_c_j_off;
     sc_uint<CFG_CPU_ADDR_BITS> vb_c_j_addr;
-    sc_biguint<DEC_SIZE*CFG_CPU_ADDR_BITS> vb_next_pc;
+    sc_biguint<CFG_DEC_DEPTH*CFG_CPU_ADDR_BITS> vb_next_pc;
 
     v = r;
 
@@ -241,21 +239,21 @@ void BranchPredictor::comb() {
 
     static const int PREDICT_SIZE = 4;
 
-    sc_uint<CFG_CPU_ADDR_BITS> t_d_addr[DEC_SIZE];
+    sc_uint<CFG_CPU_ADDR_BITS> t_d_addr[CFG_DEC_DEPTH];
     sc_uint<CFG_CPU_ADDR_BITS> vb_addr[PREDICT_SIZE];
     sc_uint<PREDICT_SIZE> vb_skip;
 
-    for (int i = 0; i < DEC_SIZE; i++) {
+    for (int i = 0; i < CFG_DEC_DEPTH; i++) {
         t_d_addr[i] = i_d_decoded_pc.read()((i+1)*CFG_CPU_ADDR_BITS-1, i*CFG_CPU_ADDR_BITS);
     }
 
     vb_skip = 0;
-    vb_addr[0] = i_e_npc.read();
+    vb_addr[0] = (i_e_npc.read() >> 2) << 2;
     for (int i = 1; i < PREDICT_SIZE; i++) {
-        vb_addr[i] = vb_addr[i-1] + 2;
+        vb_addr[i] = vb_addr[i-1] + 4;
     }
     for (int i = 0; i < PREDICT_SIZE; i++) {
-        for (int n = 0; n < DEC_SIZE; n++) {
+        for (int n = 0; n < CFG_DEC_DEPTH; n++) {
             if (vb_addr[i] == t_d_addr[n]) {
                 vb_skip[i] = 1;
             }
@@ -267,19 +265,19 @@ void BranchPredictor::comb() {
     }
 
     // Form output:
-    for (int i = 0; i < DEC_SIZE; i++) {
+    for (int i = 0; i < CFG_DEC_DEPTH; i++) {
         vb_next_pc((i+1)*CFG_CPU_ADDR_BITS-1, i*CFG_CPU_ADDR_BITS) = vb_addr[i];
     }
 
+    vb_npc = ~0ull;
     for (int i = PREDICT_SIZE-1; i >= 0; i--) {
         if (vb_skip[i] == 0) {
             vb_npc = vb_addr[i];
         }
     }
 
-    o_f_valid = 1;
+    o_f_valid = !vb_skip.and_reduce();
     o_f_pc = vb_npc;
-    o_bp_npc = vb_next_pc;
 }
 
 void BranchPredictor::registers() {

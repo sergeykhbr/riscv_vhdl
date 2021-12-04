@@ -155,9 +155,9 @@ void ICacheLru::comb() {
     sc_biguint<ICACHE_LINE_BITS> t_cache_line_i;
     bool v_req_ready;
     bool v_resp_valid;
-    sc_uint<32> vb_cached_data;
-    sc_uint<32> vb_uncached_data;
-    sc_uint<32> vb_resp_data;
+    sc_uint<64> vb_cached_data;
+    sc_uint<64> vb_uncached_data;
+    sc_uint<64> vb_resp_data;
     bool v_resp_er_load_fault;
     bool v_direct_access;
     bool v_invalidate;
@@ -167,7 +167,7 @@ void ICacheLru::comb() {
     sc_biguint<ICACHE_LINE_BITS> vb_line_wdata;
     sc_uint<ICACHE_BYTES_PER_LINE> vb_line_wstrb;
     sc_uint<ITAG_FL_TOTAL> v_line_wflags;
-    int sel_cached;
+    sc_uint<CFG_ILOG2_BYTES_PER_LINE-2> sel_cached;
     int sel_uncached;
     bool v_ready_next;
     sc_uint<CFG_CPU_ADDR_BITS> vb_addr_direct_next;
@@ -181,11 +181,13 @@ void ICacheLru::comb() {
     v_resp_er_load_fault = 0;
     v_direct_access = 0;
     v_invalidate = 0;
-    sel_cached = r.req_addr.read()(CFG_ILOG2_BYTES_PER_LINE-1, 1).to_int();
-    sel_uncached = r.req_addr.read()(2, 1).to_int();
+    sel_cached = r.req_addr.read()(CFG_ILOG2_BYTES_PER_LINE-1, 2).to_int();
+    sel_uncached = r.req_addr.read()(2, 2).to_int();
 
-    vb_cached_data = line_rdata_o.read()(16*sel_cached + 31, 16*sel_cached);
-    vb_uncached_data = r.cache_line_i.read()(16*sel_uncached + 31, 16*sel_uncached);
+    vb_cached_data = line_rdata_o.read()(32*sel_cached.to_int() + 63,
+                                         32*sel_cached.to_int());
+    vb_uncached_data = r.cache_line_i.read()(32*sel_uncached + 63,
+                                             32*sel_uncached);
 
 
     // flush request via debug interface

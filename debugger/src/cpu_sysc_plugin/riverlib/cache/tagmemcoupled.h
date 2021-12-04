@@ -14,8 +14,7 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_RIVERLIB_CACHE_TAGMEMCOUPLED_H__
-#define __DEBUGGER_RIVERLIB_CACHE_TAGMEMCOUPLED_H__
+#pragma once
 
 #include <systemc.h>
 #include "tagmemnway.h"
@@ -42,7 +41,7 @@ SC_MODULE(TagMemCoupled) {
     sc_in<sc_uint<(1<<lnbits)>> i_wstrb;
     sc_in<sc_uint<flbits>> i_wflags;
     sc_out<sc_uint<abus>> o_raddr;
-    sc_out<sc_biguint<8*(1<<lnbits)+16>> o_rdata;
+    sc_out<sc_biguint<8*(1<<lnbits)+32>> o_rdata;
     sc_out<sc_uint<flbits>> o_rflags;
     sc_out<bool> o_hit;
     sc_out<bool> o_hit_next;
@@ -189,7 +188,7 @@ void TagMemCoupled<abus, waybits, ibits, lnbits, flbits>::comb() {
     sc_uint<abus> vb_addr_tag_next;
     sc_uint<abus> vb_raddr_tag;
     sc_uint<abus> vb_o_raddr;
-    sc_biguint<8*(1<<lnbits)+16> vb_o_rdata;
+    sc_biguint<8*(1<<lnbits)+32> vb_o_rdata;
     bool v_o_hit;
     bool v_o_hit_next;
     sc_uint<flbits> vb_o_rflags;
@@ -203,11 +202,11 @@ void TagMemCoupled<abus, waybits, ibits, lnbits, flbits>::comb() {
     vb_index_next = vb_addr_next(ibits+lnbits-1, lnbits);
 
     v_use_overlay = 0;
-    if (i_addr.read()(lnbits-1, 1).and_reduce() == 1) {
+    if (i_addr.read()(lnbits-1, 2).and_reduce() == 1) {
         v_use_overlay = 1;
     }
     v_use_overlay_r = 0;
-    if (r_req_addr.read()(lnbits-1, 1).and_reduce() == 1) {
+    if (r_req_addr.read()(lnbits-1, 2).and_reduce() == 1) {
         v_use_overlay_r = 1;
     }
 
@@ -258,7 +257,7 @@ void TagMemCoupled<abus, waybits, ibits, lnbits, flbits>::comb() {
 
     // Form output:
     if (v_addr_sel_r == 0) {
-        vb_o_rdata = (lineo[ODD].rdata.read()(15, 0), lineo[EVEN].rdata);
+        vb_o_rdata = (lineo[ODD].rdata.read()(31, 0), lineo[EVEN].rdata);
         vb_raddr_tag = lineo[EVEN].raddr;
         vb_o_rflags = lineo[EVEN].rflags;
 
@@ -269,7 +268,7 @@ void TagMemCoupled<abus, waybits, ibits, lnbits, flbits>::comb() {
             v_o_hit_next = lineo[ODD].hit;
         }
     } else {
-        vb_o_rdata = (lineo[EVEN].rdata.read()(15, 0), lineo[ODD].rdata);
+        vb_o_rdata = (lineo[EVEN].rdata.read()(31, 0), lineo[ODD].rdata);
         vb_raddr_tag = lineo[ODD].raddr;
         vb_o_rflags = lineo[ODD].rflags;
 
@@ -329,4 +328,3 @@ generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd)  {
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_RIVERLIB_CACHE_TAGMEMCOUPLED_H__

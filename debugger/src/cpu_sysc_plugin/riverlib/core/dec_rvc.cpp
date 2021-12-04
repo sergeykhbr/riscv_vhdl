@@ -126,7 +126,7 @@ void DecoderRvc::comb() {
 
     v = r;
     w_error = false;
-    wb_instr = i_f_instr.read();
+    wb_instr = i_f_instr.read()(15,0);
     wb_dec = 0;
     wb_isa_type = 0;
     vb_radr1 = 0;
@@ -395,7 +395,7 @@ void DecoderRvc::comb() {
     v.pc = i_f_pc;
     v.isa_type = wb_isa_type;
     v.instr_vec = wb_dec;
-    v.instr = i_f_instr;
+    v.instr = i_f_instr.read()(15,0);
     v.memop_store = v_memop_store;
     v.memop_load = v_memop_load;
     v.memop_sign_ext = v_memop_sign_ext;

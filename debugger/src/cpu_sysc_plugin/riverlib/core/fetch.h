@@ -33,7 +33,7 @@ SC_MODULE(InstrFetch) {
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mem_addr;
     sc_in<bool> i_mem_data_valid;
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_mem_data_addr;
-    sc_in<sc_uint<32>> i_mem_data;
+    sc_in<sc_uint<64>> i_mem_data;
     sc_in<bool> i_mem_load_fault;
     sc_in<bool> i_mem_executable;
     sc_out<bool> o_mem_resp_ready;
@@ -41,13 +41,13 @@ SC_MODULE(InstrFetch) {
     sc_in<bool> i_flush_pipeline;                   // reset pipeline and cache
     sc_in<bool> i_progbuf_ena;                      // executing from prog buffer
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_progbuf_pc; // progbuf counter
-    sc_in<sc_uint<32>> i_progbuf_instr;             // progbuf instruction
+    sc_in<sc_uint<64>> i_progbuf_instr;             // progbuf instruction
 
     sc_out<bool> o_instr_load_fault;
     sc_out<bool> o_instr_executable;
     sc_out<bool> o_valid;
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_pc;
-    sc_out<sc_uint<32>> o_instr;
+    sc_out<sc_uint<64>> o_instr;
 
     void comb();
     void registers();
@@ -71,7 +71,7 @@ SC_MODULE(InstrFetch) {
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_addr;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> requested_pc; // need for the branch predictor
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
-        sc_signal<sc_uint<32>> instr;
+        sc_signal<sc_uint<64>> instr;
         sc_signal<bool> valid;
         sc_signal<bool> instr_load_fault;
         sc_signal<bool> instr_executable;
@@ -84,7 +84,7 @@ SC_MODULE(InstrFetch) {
         iv.resp_ready = 0;
         iv.buf_valid = 0;
         iv.req_addr = 0;
-        iv.requested_pc = 0;
+        iv.requested_pc = ~0ull;
         iv.pc = ~0ull;
         iv.instr = 0;
         iv.valid = 0;

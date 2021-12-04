@@ -43,7 +43,7 @@ SC_MODULE(Processor) {
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_req_ctrl_addr;    // Requesting address to ICache
     sc_in<bool> i_resp_ctrl_valid;                      // ICache response is valid
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_resp_ctrl_addr;    // Response address must be equal to the latest request address
-    sc_in<sc_uint<32>> i_resp_ctrl_data;                // Read value
+    sc_in<sc_uint<64>> i_resp_ctrl_data;                // Read value
     sc_in<bool> i_resp_ctrl_load_fault;
     sc_in<bool> i_resp_ctrl_executable;                 // MPU flag
     sc_out<bool> o_resp_ctrl_ready;                     // Core is ready to accept response from ICache
@@ -111,7 +111,7 @@ private:
         sc_signal<bool> valid;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> requested_pc;  // requested but responded address
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
-        sc_signal<sc_uint<32>> instr;
+        sc_signal<sc_uint<64>> instr;
         sc_signal<bool> imem_req_valid;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> imem_req_addr;
     };
@@ -133,7 +133,7 @@ private:
         sc_signal<bool> exception;
         sc_signal<bool> instr_load_fault;
         sc_signal<bool> instr_executable;
-        sc_signal<sc_biguint<DEC_SIZE*CFG_CPU_ADDR_BITS>> decoded_pc;    // Predicted pc already in decoder
+        sc_signal<sc_biguint<CFG_DEC_DEPTH*CFG_CPU_ADDR_BITS>> decoded_pc;    // Predicted pc already in decoder
         sc_signal<sc_uint<6>> radr1;
         sc_signal<sc_uint<6>> radr2;
         sc_signal<sc_uint<6>> waddr;
@@ -243,13 +243,12 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> mem_req_wdata;        // Type 2: memory write data
         sc_signal<bool> progbuf_ena;                    // execute instruction from progbuf
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> progbuf_pc;   // progbuf instruction counter
-        sc_signal<sc_uint<32>> progbuf_instr;           // progbuf instruction to execute
+        sc_signal<sc_uint<64>> progbuf_instr;           // progbuf instruction to execute
     } dbg;
 
     struct BranchPredictorType {
         sc_signal<bool> f_valid;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> f_pc;
-        sc_signal<sc_biguint<DEC_SIZE*CFG_CPU_ADDR_BITS>> list_npc;  // predicted npc
     } bp;
 
     /** 5-stages CPU pipeline */
