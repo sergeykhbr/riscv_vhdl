@@ -23,7 +23,6 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset,
     bool fpu_ena) : sc_module(name_),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
-    i_f_valid("i_f_valid"),
     i_f_pc("i_f_pc"),
     i_f_instr("i_f_instr"),
     i_instr_load_fault("i_instr_load_fault"),
@@ -67,7 +66,6 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset,
         rv[i]->i_nrst(i_nrst);
         rv[i]->i_flush_pipeline(i_flush_pipeline);
         rv[i]->i_progbuf_ena(i_progbuf_ena);
-        rv[i]->i_f_valid(i_f_valid);
         rv[i]->i_f_pc(wb_f_pc[i]);
         rv[i]->i_f_instr(wb_f_instr[i]);
         rv[i]->i_instr_load_fault(i_instr_load_fault);
@@ -103,7 +101,6 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset,
         rvc[i]->i_nrst(i_nrst);
         rvc[i]->i_flush_pipeline(i_flush_pipeline);
         rvc[i]->i_progbuf_ena(i_progbuf_ena);
-        rvc[i]->i_f_valid(i_f_valid);
         rvc[i]->i_f_pc(wb_f_pc[i]);
         rvc[i]->i_f_instr(wb_f_instr[i]);
         rvc[i]->i_instr_load_fault(i_instr_load_fault);
@@ -135,7 +132,6 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset,
 
     SC_METHOD(comb);
     sensitive << i_nrst;
-    sensitive << i_f_valid;
     sensitive << i_f_pc;
     sensitive << i_f_instr;
     sensitive << i_instr_load_fault;
@@ -180,7 +176,6 @@ InstrDecoder::~InstrDecoder() {
 
 void InstrDecoder::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_f_valid, i_f_valid.name());
         sc_trace(o_vcd, i_f_pc, i_f_pc.name());
         sc_trace(o_vcd, i_f_instr, i_f_instr.name());
         sc_trace(o_vcd, i_e_npc, i_e_npc.name());

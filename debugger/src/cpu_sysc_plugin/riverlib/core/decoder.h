@@ -26,7 +26,6 @@ namespace debugger {
 SC_MODULE(InstrDecoder) {
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;                         // Reset active low
-    sc_in<bool> i_f_valid;                      // Fetch input valid
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_f_pc;   // Fetched pc
     sc_in<sc_uint<64>> i_f_instr;               // Fetched instruction value
     sc_in<bool> i_instr_load_fault;             // fault instruction's address

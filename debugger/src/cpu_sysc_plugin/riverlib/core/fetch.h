@@ -45,7 +45,6 @@ SC_MODULE(InstrFetch) {
 
     sc_out<bool> o_instr_load_fault;
     sc_out<bool> o_instr_executable;
-    sc_out<bool> o_valid;
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_pc;
     sc_out<sc_uint<64>> o_instr;
 
@@ -72,7 +71,6 @@ SC_MODULE(InstrFetch) {
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> requested_pc; // need for the branch predictor
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
         sc_signal<sc_uint<64>> instr;
-        sc_signal<bool> valid;
         sc_signal<bool> instr_load_fault;
         sc_signal<bool> instr_executable;
         sc_signal<bool> progbuf_ena;
@@ -87,7 +85,6 @@ SC_MODULE(InstrFetch) {
         iv.requested_pc = ~0ull;
         iv.pc = ~0ull;
         iv.instr = 0;
-        iv.valid = 0;
         iv.instr_load_fault = 0;
         iv.instr_executable = 0;
         iv.progbuf_ena = 0;

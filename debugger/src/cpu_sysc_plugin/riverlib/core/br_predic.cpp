@@ -96,7 +96,6 @@ void BranchPredictor::comb() {
     sc_uint<CFG_CPU_ADDR_BITS> vb_branch_addr;
     sc_uint<CFG_CPU_ADDR_BITS> vb_c_j_off;
     sc_uint<CFG_CPU_ADDR_BITS> vb_c_j_addr;
-    sc_biguint<CFG_DEC_DEPTH*CFG_CPU_ADDR_BITS> vb_next_pc;
 
     v = r;
 
@@ -262,11 +261,6 @@ void BranchPredictor::comb() {
             || vb_addr[i] == i_f_fetched_pc.read()) {
             vb_skip[i] = 1;
         }
-    }
-
-    // Form output:
-    for (int i = 0; i < CFG_DEC_DEPTH; i++) {
-        vb_next_pc((i+1)*CFG_CPU_ADDR_BITS-1, i*CFG_CPU_ADDR_BITS) = vb_addr[i];
     }
 
     vb_npc = ~0ull;

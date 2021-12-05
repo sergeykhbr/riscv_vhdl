@@ -108,7 +108,6 @@ private:
     struct FetchType {
         sc_signal<bool> instr_load_fault;
         sc_signal<bool> instr_executable;
-        sc_signal<bool> valid;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> requested_pc;  // requested but responded address
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
         sc_signal<sc_uint<64>> instr;

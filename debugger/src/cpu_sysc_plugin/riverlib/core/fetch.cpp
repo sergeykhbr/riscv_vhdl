@@ -40,7 +40,6 @@ InstrFetch::InstrFetch(sc_module_name name_, bool async_reset) :
     i_progbuf_instr("i_progbuf_instr"),
     o_instr_load_fault("o_instr_load_fault"),
     o_instr_executable("o_instr_executable"),
-    o_valid("o_valid"),
     o_pc("o_pc"),
     o_instr("o_instr") {
     async_reset_ = async_reset;
@@ -67,7 +66,6 @@ InstrFetch::InstrFetch(sc_module_name name_, bool async_reset) :
     sensitive << r.requested_pc;
     sensitive << r.pc;
     sensitive << r.instr;
-    sensitive << r.valid;
     sensitive << r.instr_load_fault;
     sensitive << r.instr_executable;
     sensitive << r.progbuf_ena;
@@ -94,7 +92,6 @@ void InstrFetch::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_mem_addr_valid, o_mem_addr_valid.name());
         sc_trace(o_vcd, o_mem_addr, o_mem_addr.name());
         sc_trace(o_vcd, i_mem_req_ready, i_mem_req_ready.name());
-        sc_trace(o_vcd, o_valid, o_valid.name());
         sc_trace(o_vcd, o_requested_pc, o_requested_pc.name());
         sc_trace(o_vcd, o_pc, o_pc.name());
         sc_trace(o_vcd, o_instr, o_instr.name());
@@ -115,7 +112,6 @@ void InstrFetch::comb() {
     v = r;
 
     v_now_req_valid = 0;
-    v.valid = 0;
 
     switch (r.state.read()) {
     case Idle:
@@ -126,7 +122,6 @@ void InstrFetch::comb() {
         v.requested_pc = ~0ull;
         if (i_progbuf_ena.read()) {
             // Execution from buffer
-            v.valid = 1;
             v.progbuf_ena = 1;
             v.pc = i_progbuf_pc.read();
             v.instr = i_progbuf_instr;
@@ -159,7 +154,6 @@ void InstrFetch::comb() {
             v.resp_ready = 0;
             v.buf_valid = 0;
             v.requested_pc = ~0ull;
-            v.valid = 1;
             v.pc = i_mem_data_addr;
             v.instr = i_mem_data;
             v.instr_load_fault = i_mem_load_fault.read();
@@ -203,7 +197,6 @@ void InstrFetch::comb() {
     o_mem_resp_ready = r.resp_ready;
     o_instr_load_fault = r.instr_load_fault;
     o_instr_executable = r.instr_executable;
-    o_valid = r.valid;
     o_requested_pc = r.requested_pc;
     o_pc = r.pc;
     o_instr = r.instr;

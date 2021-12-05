@@ -99,7 +99,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     sensitive << w.w.wtag;
     sensitive << w.f.imem_req_valid;
     sensitive << w.f.imem_req_addr;
-    sensitive << w.f.valid;
     sensitive << w.m.flushd;
     sensitive << csr.executed_cnt;
     sensitive << csr.flushi_ena;
@@ -126,7 +125,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     fetch0->i_progbuf_instr(dbg.progbuf_instr);
     fetch0->o_instr_load_fault(w.f.instr_load_fault);
     fetch0->o_instr_executable(w.f.instr_executable);
-    fetch0->o_valid(w.f.valid);
     fetch0->o_requested_pc(w.f.requested_pc);
     fetch0->o_pc(w.f.pc);
     fetch0->o_instr(w.f.instr);
@@ -134,7 +132,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     dec0 = new InstrDecoder("dec0", async_reset, fpu_ena);
     dec0->i_clk(i_clk);
     dec0->i_nrst(i_nrst);
-    dec0->i_f_valid(w.f.valid);
     dec0->i_f_pc(w.f.pc);
     dec0->i_f_instr(w.f.instr);
     dec0->i_instr_load_fault(w.f.instr_load_fault);

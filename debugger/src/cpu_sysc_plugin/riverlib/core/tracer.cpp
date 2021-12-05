@@ -280,6 +280,21 @@ void Tracer::task_disassembler(uint32_t instr) {
             default: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error");
             }
             break;
+        case 0x01:
+            switch (op2) {
+            case 3: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "fld"); break;
+            default: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error");
+            }
+            break;
+        case 0x03:
+            if (op2 == 0x0) {
+                RISCV_sprintf(disasm, sizeof(disasm), "%10s", "fence");
+            } else if (op2 == 0x1) {
+                RISCV_sprintf(disasm, sizeof(disasm), "%10s", "fence.i");
+            } else {
+                RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error");
+            }
+            break;
         case 0x04:
             switch (op2) {
             case 0: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "addi"); break;
@@ -324,6 +339,12 @@ void Tracer::task_disassembler(uint32_t instr) {
             case 1: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "sh"); break;
             case 2: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "sw"); break;
             case 3: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "sd"); break;
+            default: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error");
+            }
+            break;
+        case 0x09:
+            switch (op2) {
+            case 3: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "fsd"); break;
             default: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error");
             }
             break;
@@ -510,6 +531,84 @@ void Tracer::task_disassembler(uint32_t instr) {
             default: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error");
             }
             break;
+        case 0x14:
+            switch ((instr >> 25) & 0x7f) {
+            case 0x01:
+                RISCV_sprintf(disasm, sizeof(disasm), "%10s", "fadd");
+                break;
+            case 0x05:
+                RISCV_sprintf(disasm, sizeof(disasm), "%10s", "fsub");
+                break;
+            case 0x09:
+                RISCV_sprintf(disasm, sizeof(disasm), "%10s", "fmul");
+                break;
+            case 0x0D:
+                RISCV_sprintf(disasm, sizeof(disasm), "%10s", "fdiv");
+                break;
+            case 0x15:
+                if (op2 == 0) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "fmin");
+                } else if (op2 == 1) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "fmax");
+                } else {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error");
+                }
+                break;
+            case 0x51:
+                if (op2 == 0) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "fle");
+                } else if (op2 == 1) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "flt");
+                } else if (op2 == 2) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "feq");
+                } else {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error");
+                }
+                break;
+            case 0x61:
+                if (((instr >> 20) & 0x1f) == 0) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "fcvt.w.d");
+                } else if (((instr >> 20) & 0x1f) == 1) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "fcvt.wu.d");
+                } else if (((instr >> 20) & 0x1f) == 2) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "fcvt.l.d");
+                } else if (((instr >> 20) & 0x1f) == 3) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "fcvt.lu.d");
+                } else {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error");
+                }
+                break;
+            case 0x69:
+                if (((instr >> 20) & 0x1f) == 0) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "fcvt.d.w");
+                } else if (((instr >> 20) & 0x1f) == 1) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "fcvt.d.wu");
+                } else if (((instr >> 20) & 0x1f) == 2) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "fcvt.d.l");
+                } else if (((instr >> 20) & 0x1f) == 3) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "fcvt.d.lu");
+                } else {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error");
+                }
+                break;
+            case 0x71:
+                if (((instr >> 20) & 0x1f) == 0 && op2 == 0) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "fmov.x.d");
+                } else {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error");
+                }
+                break;
+            case 0x79:
+                if (((instr >> 20) & 0x1f) == 0 && op2 == 0) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "fmov.d.x");
+                } else {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error");
+                }
+                break;
+            default:
+                RISCV_sprintf(disasm, sizeof(disasm), "%10s", "error");
+            }
+            break;
         case 0x18:
             switch (op2) {
             case 0: RISCV_sprintf(disasm, sizeof(disasm), "%10s", "beq"); break;
@@ -538,6 +637,8 @@ void Tracer::task_disassembler(uint32_t instr) {
                     RISCV_sprintf(disasm, sizeof(disasm), "%10s", "uret");
                 } else if (instr == 0x10200073) {
                     RISCV_sprintf(disasm, sizeof(disasm), "%10s", "sret");
+                } else if (instr == 0x10500073) {
+                    RISCV_sprintf(disasm, sizeof(disasm), "%10s", "wfi");
                 } else if (instr == 0x20200073) {
                     RISCV_sprintf(disasm, sizeof(disasm), "%10s", "hret");
                 } else if (instr == 0x30200073) {
@@ -591,76 +692,7 @@ void Tracer::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
 }
 
-bool Tracer::isExecValid() {
-    if (i_e_valid.read() == 0) {
-        return false;
-    }
-    if (i_e_memop_valid.read() == 1 && i_m_memop_ready.read() == 0) {
-        return false;
-    }
-    if (i_e_flushd.read() == 1 && i_m_memop_ready.read() == 0) {
-        return false;
-    }
-    return true;
-}
-
-bool Tracer::isMemOperation() {
-    if (i_e_memop_valid.read() || i_e_flushd.read()) {
-        return true;
-    }
-    return false;
-}
-
-void Tracer::openTraceInstruciton() {
-    memset(&trace_tbl_[tr_wcnt_], 0, sizeof(trace_tbl_[tr_wcnt_]));
-
-    trace_tbl_[tr_wcnt_].exec_cnt = i_dbg_executed_cnt.read() + 1;
-    trace_tbl_[tr_wcnt_].pc = i_e_pc.read();
-    trace_tbl_[tr_wcnt_].instr = i_e_instr.read().to_uint();
-    tr_wcnt_ = (tr_wcnt_ + 1) % TRACE_TBL_SZ;
-    tr_opened_++;
-}
-
-void Tracer::closeFirstTraceInstruciton() {
-    int tcnt = (tr_wcnt_ - tr_opened_) % TRACE_TBL_SZ;
-    trace_tbl_[tcnt].completed = true;
-    while (tr_opened_ && trace_tbl_[tcnt].completed) {
-        tr_opened_--;
-        tcnt = (tr_wcnt_ - tr_opened_) % TRACE_TBL_SZ;
-    }
-}
-
-void Tracer::closeLastTraceInstruciton() {
-    int tcnt = (tr_wcnt_ - 1) % TRACE_TBL_SZ;
-    trace_tbl_[tcnt].completed = true;
-}
-
-void Tracer::regFirstTrace(uint64_t pc, uint32_t regaddr, uint64_t regdata) {
-}
-
-void Tracer::regLastTrace(uint64_t pc, uint32_t regaddr, uint64_t regdata) {
-}
-
 void Tracer::registers() {
-#if 0
-    if (isExecValid()) {
-        openTraceInstruciton();
-    }
-
-    if (i_e_wena.read() == 1) {
-        regLastTrace(i_e_pc.read().to_uint64(),
-                     i_e_waddr.read().to_uint(),
-                     i_e_wdata.read().to_uint64());
-    }
-
-    if (isExecValid() && !isMemOperation()) {
-        closeLastTraceInstruciton();
-    }
-
-    if (i_m_valid.read()) {
-        closeFirstTraceInstruciton();
-    }
-#endif
 
     TraceStepType *p_e_wr = &trace_tbl_[tr_wcnt_];
 
@@ -681,6 +713,8 @@ void Tracer::registers() {
         pm->size = i_e_memop_size.read().to_int();
         pm->data = i_e_memop_wdata.read();
         pm->regaddr = i_e_waddr.read();
+        pm->ignored = 0;
+        pm->complete = 0;
         if (i_e_waddr.read().or_reduce() == 0 ||
             (i_e_memop_type.read()[MemopType_Store] == 1 && i_e_memop_type.read()[MemopType_Release] == 0)) {
             pm->complete = 1;

@@ -59,16 +59,6 @@ SC_MODULE(Tracer) {
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
-    bool isExecValid();
-    bool isMemOperation();
-
-    void openTraceInstruciton();
-    void regLastTrace(uint64_t pc, uint32_t regaddr, uint64_t regdata);     // trace from exec
-    void regFirstTrace(uint64_t pc, uint32_t regaddr, uint64_t regdata);    // trace from memaccess
-    void closeFirstTraceInstruciton();
-    void closeLastTraceInstruciton();
-
- private:
     static const int TRACE_TBL_SZ = 64;
 
     struct MemopActionType {

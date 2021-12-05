@@ -44,7 +44,6 @@ SC_MODULE(DecoderRv) {
     sc_in<bool> i_nrst;                         // Reset active low
     sc_in<bool> i_flush_pipeline;               // reset pipeline and cache
     sc_in<bool> i_progbuf_ena;                  // executing from progbuf
-    sc_in<bool> i_f_valid;                      // Fetch input valid
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_f_pc;   // Fetched pc
     sc_in<sc_uint<32>> i_f_instr;               // Fetched instruction value
     sc_in<bool> i_instr_load_fault;             // fault instruction's address

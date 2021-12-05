@@ -24,7 +24,6 @@ DecoderRvc::DecoderRvc(sc_module_name name_, bool async_reset
     i_nrst("i_nrst"),
     i_flush_pipeline("i_flush_pipeline"),
     i_progbuf_ena("i_progbuf_ena"),
-    i_f_valid("i_f_valid"),
     i_f_pc("i_f_pc"),
     i_f_instr("i_f_instr"),
     i_instr_load_fault("i_instr_load_fault"),
@@ -55,7 +54,6 @@ DecoderRvc::DecoderRvc(sc_module_name name_, bool async_reset
 
     SC_METHOD(comb);
     sensitive << i_nrst;
-    sensitive << i_f_valid;
     sensitive << i_f_pc;
     sensitive << i_f_instr;
     sensitive << i_instr_load_fault;
@@ -85,7 +83,6 @@ DecoderRvc::DecoderRvc(sc_module_name name_, bool async_reset
 
 void DecoderRvc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_f_valid, i_f_valid.name());
         sc_trace(o_vcd, i_f_pc, i_f_pc.name());
         sc_trace(o_vcd, i_f_instr, i_f_instr.name());
         sc_trace(o_vcd, o_pc, o_pc.name());
