@@ -87,6 +87,10 @@ BranchPredictor::~BranchPredictor() {
 }
 
 void BranchPredictor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+    btb->generateVCD(i_vcd, o_vcd);
+    for (int i = 0; i < 2; i++) {
+        predec[i]->generateVCD(i_vcd, o_vcd);
+    }
     if (o_vcd) {
         sc_trace(o_vcd, i_flush_pipeline, i_flush_pipeline.name());
         sc_trace(o_vcd, i_resp_mem_valid, i_resp_mem_valid.name());

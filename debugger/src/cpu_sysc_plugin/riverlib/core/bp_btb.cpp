@@ -72,7 +72,9 @@ void BpBTB::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
 void BpBTB::comb() {
     sc_biguint<CFG_BP_DEPTH*CFG_CPU_ADDR_BITS> vb_addr;
+    sc_uint<CFG_BP_DEPTH> vb_hit;
     sc_uint<CFG_CPU_ADDR_BITS> t_addr;
+    vb_hit = 0;
     dbg_hit = 0;
 
     for (int i = 0; i < CFG_BTB_SIZE; i++) {
@@ -85,8 +87,9 @@ void BpBTB::comb() {
         for (int n = CFG_BTB_SIZE-1; n >= 0; n--) {
             if (t_addr == r_btb[n].pc) {
                 vb_addr((i+1)*CFG_CPU_ADDR_BITS-1, i*CFG_CPU_ADDR_BITS) = r_btb[n].npc;
-                dbg_hit[n]= 1;
-            } else {
+                vb_hit[i] = 1;
+                dbg_hit[n] = 1;
+            } else if (vb_hit[i] == 0) {
                 vb_addr((i+1)*CFG_CPU_ADDR_BITS-1, i*CFG_CPU_ADDR_BITS) = t_addr + 4;
             }
         }
