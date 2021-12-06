@@ -44,6 +44,15 @@ static const int CFG_CPU_USER_BITS       = 1;
  */
 static const int CFG_DEC_DEPTH = 4;
 
+/**
+ *  Branch Predictor Branch Target Buffer (BTB) size
+ **/
+static const int CFG_BTB_SIZE = 8;
+/** Branch predictor depth. It is better when it is equal to the pipeline depth excluding fetcher.
+ * Let it be equal to the decoder's history depth
+ */
+static const int CFG_BP_DEPTH = 4;
+
 /** 
  * ICacheLru config (16 KB by default)
  */

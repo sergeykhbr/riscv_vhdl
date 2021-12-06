@@ -248,6 +248,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     exec0->o_flushi_addr(w.e.flushi_addr);
     exec0->o_call(w.e.call);
     exec0->o_ret(w.e.ret);
+    exec0->o_jmp(w.e.jmp);
     exec0->o_halted(w.e.halted);
 
     mem0 = new MemAccess("mem0", async_reset);
@@ -290,9 +291,12 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     predic0 = new BranchPredictor("predic0", async_reset);
     predic0->i_clk(i_clk);
     predic0->i_nrst(i_nrst);
+    predic0->i_flush_pipeline(w_flush_pipeline);
     predic0->i_resp_mem_valid(i_resp_ctrl_valid);
     predic0->i_resp_mem_addr(i_resp_ctrl_addr);
     predic0->i_resp_mem_data(i_resp_ctrl_data);
+    predic0->i_e_jmp(w.e.jmp);
+    predic0->i_e_pc(w.e.pc);
     predic0->i_e_npc(w.e.npc);
     predic0->i_ra(ireg.ra);
     predic0->o_f_valid(bp.f_valid);

@@ -119,7 +119,8 @@ SC_MODULE(InstrExecute) {
     sc_out<bool> o_flushi;
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_flushi_addr;
     sc_out<bool> o_call;                        // CALL pseudo instruction detected
-    sc_out<bool> o_ret;                         // RET pseudoinstruction detected
+    sc_out<bool> o_ret;                         // RET pseudoinstruction detected (hw stack tracing)
+    sc_out<bool> o_jmp;                         // Jump was executed
     sc_out<bool> o_halted;
 
     void comb();
@@ -251,6 +252,7 @@ private:
         sc_signal<bool> valid;
         sc_signal<bool> call;
         sc_signal<bool> ret;
+        sc_signal<bool> jmp;
         sc_signal<bool> flushd;
         sc_signal<bool> flushi;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> flushi_addr;
@@ -311,6 +313,7 @@ private:
         iv.valid = 0;
         iv.call = 0;
         iv.ret = 0;
+        iv.jmp = 0;
         iv.flushd = 0;
         iv.flushi = 0;
         iv.flushi_addr = 0;

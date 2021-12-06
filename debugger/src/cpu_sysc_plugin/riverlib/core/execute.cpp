@@ -105,6 +105,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     o_flushi_addr("o_flushi_addr"),
     o_call("o_call"),
     o_ret("o_ret"),
+    o_jmp("o_jmp"),
     o_halted("o_halted") {
     async_reset_ = async_reset;
     fpu_ena_ = fpu_ena;
@@ -218,6 +219,7 @@ InstrExecute::InstrExecute(sc_module_name name_, bool async_reset,
     sensitive << r.valid;
     sensitive << r.call;
     sensitive << r.ret;
+    sensitive << r.jmp;
     sensitive << r.stepdone;
     for (int i = 0; i < Res_Total; i++) {
         sensitive << wb_select[i].ena;
@@ -390,6 +392,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_instr, o_instr.name());
         sc_trace(o_vcd, o_call, o_call.name());
         sc_trace(o_vcd, o_ret, o_ret.name());
+        sc_trace(o_vcd, o_jmp, o_jmp.name());
         sc_trace(o_vcd, o_halted, o_halted.name());
 
         std::string pn(name());
@@ -1252,6 +1255,8 @@ void InstrExecute::comb() {
         }
         v.call = v_call;
         v.ret = v_ret;
+        v.jmp = v_pc_branch || wv[Instr_JAL] || wv[Instr_JALR]
+                        || wv[Instr_MRET] || wv[Instr_URET];
         v.res_npc = vb_prog_npc;
         v.res_ra = vb_npc_incr;
 
@@ -1373,6 +1378,7 @@ void InstrExecute::comb() {
     o_flushi_addr = r.flushi_addr;
     o_call = r.call;
     o_ret = r.ret;
+    o_jmp = r.jmp;
     o_halted = r.state.read() == State_Halted ? 1: 0;
 
     // Debug rtl only:!!

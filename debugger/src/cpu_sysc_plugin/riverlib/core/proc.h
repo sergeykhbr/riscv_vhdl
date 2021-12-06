@@ -26,7 +26,7 @@
 #include "execute.h"
 #include "regibank.h"
 #include "csr.h"
-#include "br_predic.h"
+#include "bp.h"
 #include "dbg_port.h"
 #include "tracer.h"
 #include "ic_csr_m2_s1.h"
@@ -171,6 +171,7 @@ private:
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> flushi_addr;
         sc_signal<bool> call;                       // pseudo-instruction CALL
         sc_signal<bool> ret;                        // pseudo-instruction RET
+        sc_signal<bool> jmp;                        // jump was executed
         sc_signal<bool> halted;
         sc_signal<bool> dbg_mem_req_ready;
         sc_signal<bool> dbg_mem_req_error;
