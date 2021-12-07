@@ -28,6 +28,7 @@ SC_MODULE(InstrFetch) {
     sc_in<bool> i_bp_valid;
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_bp_pc;
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_requested_pc;
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_fetching_pc;
     sc_in<bool> i_mem_req_ready;
     sc_out<bool> o_mem_addr_valid;
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mem_addr;
@@ -66,9 +67,8 @@ SC_MODULE(InstrFetch) {
         sc_signal<sc_uint<2>> state;
         sc_signal<bool> req_valid;
         sc_signal<bool> resp_ready;
-        sc_signal<bool> buf_valid;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_addr;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> requested_pc; // need for the branch predictor
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mem_resp_shadow;  // the same as memory response but internal
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
         sc_signal<sc_uint<64>> instr;
         sc_signal<bool> instr_load_fault;
@@ -80,9 +80,8 @@ SC_MODULE(InstrFetch) {
         iv.state = Idle;
         iv.req_valid = 0;
         iv.resp_ready = 0;
-        iv.buf_valid = 0;
-        iv.req_addr = 0;
-        iv.requested_pc = ~0ull;
+        iv.req_addr = ~0ull;
+        iv.mem_resp_shadow = ~0ull;
         iv.pc = ~0ull;
         iv.instr = 0;
         iv.instr_load_fault = 0;

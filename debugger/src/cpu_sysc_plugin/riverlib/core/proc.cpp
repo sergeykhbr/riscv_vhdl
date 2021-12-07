@@ -126,6 +126,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     fetch0->o_instr_load_fault(w.f.instr_load_fault);
     fetch0->o_instr_executable(w.f.instr_executable);
     fetch0->o_requested_pc(w.f.requested_pc);
+    fetch0->o_fetching_pc(w.f.fetching_pc);
     fetch0->o_pc(w.f.pc);
     fetch0->o_instr(w.f.instr);
 
@@ -302,6 +303,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     predic0->o_f_valid(bp.f_valid);
     predic0->o_f_pc(bp.f_pc);
     predic0->i_f_requested_pc(w.f.requested_pc);
+    predic0->i_f_fetching_pc(w.f.fetching_pc);
     predic0->i_f_fetched_pc(w.f.pc);
     predic0->i_d_decoded_pc(w.d.decoded_pc);
 

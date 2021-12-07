@@ -51,7 +51,7 @@ static const int CFG_BTB_SIZE = 8;
 /** Branch predictor depth. It is better when it is equal to the pipeline depth excluding fetcher.
  * Let it be equal to the decoder's history depth
  */
-static const int CFG_BP_DEPTH = 4;
+static const int CFG_BP_DEPTH = 5;
 
 /** 
  * ICacheLru config (16 KB by default)

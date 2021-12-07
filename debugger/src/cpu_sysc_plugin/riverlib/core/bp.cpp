@@ -34,6 +34,7 @@ BranchPredictor::BranchPredictor(sc_module_name name_, bool async_reset) :
     o_f_pc("o_f_pc"),
     i_f_requested_pc("i_f_requested_pc"),
     i_f_fetched_pc("i_f_fetched_pc"),
+    i_f_fetching_pc("i_f_fetching_pc"),
     i_d_decoded_pc("i_d_decoded_pc") {
 
     char tstr[256];
@@ -69,6 +70,7 @@ BranchPredictor::BranchPredictor(sc_module_name name_, bool async_reset) :
     sensitive << i_e_npc;
     sensitive << i_ra;
     sensitive << i_f_requested_pc;
+    sensitive << i_f_fetching_pc;
     sensitive << i_f_fetched_pc;
     sensitive << i_d_decoded_pc;
     sensitive << wb_npc;
@@ -103,6 +105,7 @@ void BranchPredictor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_f_valid, o_f_valid.name());
         sc_trace(o_vcd, o_f_pc, o_f_pc.name());
         sc_trace(o_vcd, i_f_requested_pc, i_f_requested_pc.name());
+        sc_trace(o_vcd, i_f_fetching_pc, i_f_fetching_pc.name());
         sc_trace(o_vcd, i_f_fetched_pc, i_f_fetched_pc.name());
         sc_trace(o_vcd, i_d_decoded_pc, i_d_decoded_pc.name());
 
@@ -137,6 +140,7 @@ void BranchPredictor::comb() {
             }
         }
         if (vb_addr[i] == i_f_requested_pc.read()
+            || vb_addr[i] == i_f_fetching_pc.read()
             || vb_addr[i] == i_f_fetched_pc.read()) {
             vb_skip[i] = 1;
         }

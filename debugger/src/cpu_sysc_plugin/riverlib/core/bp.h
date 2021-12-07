@@ -36,7 +36,8 @@ SC_MODULE(BranchPredictor) {
     sc_in<sc_uint<RISCV_ARCH>> i_ra;                            // Return address register value
     sc_out<bool> o_f_valid;                                     // Fetch request is valid
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_f_pc;                  // Fetching instruction pointer
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_f_requested_pc;         // already requested but not fetched address
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_f_requested_pc;         // already requested but not accepted address
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_f_fetching_pc;          // currently memory address
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_f_fetched_pc;           // already requested and fetched address
     sc_in<sc_biguint<CFG_DEC_DEPTH*CFG_CPU_ADDR_BITS>> i_d_decoded_pc;  // decoded instructions
 
