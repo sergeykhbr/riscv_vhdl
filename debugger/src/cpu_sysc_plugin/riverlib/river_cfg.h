@@ -40,11 +40,6 @@ static const int CFG_CPU_ID_BITS         = 1;
 static const int CFG_CPU_USER_BITS       = 1;
 
 /**
- * Decoded instructions history buffer size in Decoder
- */
-static const int CFG_DEC_DEPTH = 4;
-
-/**
  *  Branch Predictor Branch Target Buffer (BTB) size
  **/
 static const int CFG_BTB_SIZE = 8;
@@ -52,6 +47,11 @@ static const int CFG_BTB_SIZE = 8;
  * Let it be equal to the decoder's history depth
  */
 static const int CFG_BP_DEPTH = 5;
+
+/**
+ * Decoded instructions history buffer size in Decoder
+ */
+static const int CFG_DEC_DEPTH = CFG_BP_DEPTH - 3;  // requested, fetching, fetched
 
 /** 
  * ICacheLru config (16 KB by default)

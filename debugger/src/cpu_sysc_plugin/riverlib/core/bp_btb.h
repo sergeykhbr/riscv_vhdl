@@ -48,7 +48,6 @@ SC_MODULE(BpBTB) {
     };
     BtbEntryType r_btb[CFG_BTB_SIZE];
     BtbEntryType v_btb[CFG_BTB_SIZE];
-    sc_uint<CFG_BTB_SIZE> dbg_hit;
 
     void R_RESET(BtbEntryType &iv) {
         iv.pc = ~0ul;

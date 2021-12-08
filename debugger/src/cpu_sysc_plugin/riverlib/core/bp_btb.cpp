@@ -66,7 +66,6 @@ void BpBTB::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r_btb[2].npc, pn + ".btb2_npc");
         sc_trace(o_vcd, r_btb[3].pc, pn + ".btb3_pc");
         sc_trace(o_vcd, r_btb[3].npc, pn + ".btb3_npc");
-        sc_trace(o_vcd, dbg_hit, pn + ".dbg_hit");
     }
 }
 
@@ -74,8 +73,9 @@ void BpBTB::comb() {
     sc_biguint<CFG_BP_DEPTH*CFG_CPU_ADDR_BITS> vb_addr;
     sc_uint<CFG_BP_DEPTH> vb_hit;
     sc_uint<CFG_CPU_ADDR_BITS> t_addr;
+    sc_uint<CFG_BTB_SIZE> vb_pc_equal;
+    sc_uint<CFG_BTB_SIZE> vb_pc_nshift;
     vb_hit = 0;
-    dbg_hit = 0;
 
     for (int i = 0; i < CFG_BTB_SIZE; i++) {
         v_btb[i] = r_btb[i];
@@ -88,11 +88,21 @@ void BpBTB::comb() {
             if (t_addr == r_btb[n].pc) {
                 vb_addr((i+1)*CFG_CPU_ADDR_BITS-1, i*CFG_CPU_ADDR_BITS) = r_btb[n].npc;
                 vb_hit[i] = 1;
-                dbg_hit[n] = 1;
             } else if (vb_hit[i] == 0) {
                 vb_addr((i+1)*CFG_CPU_ADDR_BITS-1, i*CFG_CPU_ADDR_BITS) = t_addr + 4;
             }
         }
+    }
+
+    vb_pc_equal = 0;
+    for (int i = 0; i < CFG_BTB_SIZE; i++) {
+        if (r_btb[i].pc == i_we_pc) {
+            vb_pc_equal[i] = 1;
+        }
+    }
+    vb_pc_nshift = 0;
+    for (int i = 1; i < CFG_BTB_SIZE; i++) {
+        vb_pc_nshift[i] = vb_pc_equal[i-1] | vb_pc_nshift[i-1];
     }
 
     if (i_we 
@@ -101,7 +111,11 @@ void BpBTB::comb() {
         v_btb[0].pc = i_we_pc;
         v_btb[0].npc = i_we_npc;
         for (int i = 1; i < CFG_BTB_SIZE - 1; i++) {
-            v_btb[i] = r_btb[i - 1];
+            if (vb_pc_nshift[i] == 0) {
+                v_btb[i] = r_btb[i - 1];
+            } else {
+                v_btb[i] = r_btb[i];
+            }
         }
     }
 

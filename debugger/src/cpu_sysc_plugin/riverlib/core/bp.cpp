@@ -134,15 +134,15 @@ void BranchPredictor::comb() {
 
     // Check availablity of pc in pipeline
     for (int i = 0; i < CFG_BP_DEPTH; i++) {
-        for (int n = 0; n < CFG_DEC_DEPTH; n++) {
-            if (vb_addr[i] == t_d_addr[n]) {
-                vb_skip[i] = 1;
-            }
-        }
         if (vb_addr[i] == i_f_requested_pc.read()
             || vb_addr[i] == i_f_fetching_pc.read()
             || vb_addr[i] == i_f_fetched_pc.read()) {
             vb_skip[i] = 1;
+        }
+        for (int n = 0; n < CFG_DEC_DEPTH; n++) {
+            if (vb_addr[i] == t_d_addr[n]) {
+                vb_skip[i] = 1;
+            }
         }
     }
 

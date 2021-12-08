@@ -139,7 +139,7 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset,
     sensitive << i_e_npc;
     sensitive << i_flush_pipeline;
     sensitive << i_progbuf_ena;
-    for (int i = 0; i < 2*DEC_NUM * CFG_DEC_DEPTH; i++) {
+    for (int i = 0; i < DEC_BLOCK; i++) {
         sensitive << wd[i].pc;
         sensitive << wd[i].instr;
         sensitive << wd[i].memop_load;
@@ -160,6 +160,28 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset,
         sensitive << wd[i].csr_addr;
         sensitive << wd[i].imm;
         sensitive << wd[i].progbuf_ena;
+    }
+    for (int i = 0; i < FULL_DEC_DEPTH; i++) {
+        sensitive << r[i].pc;
+        sensitive << r[i].instr;
+        sensitive << r[i].memop_load;
+        sensitive << r[i].memop_store;
+        sensitive << r[i].memop_sign_ext;
+        sensitive << r[i].memop_size;
+        sensitive << r[i].unsigned_op;
+        sensitive << r[i].rv32;
+        sensitive << r[i].f64;
+        sensitive << r[i].compressed;
+        sensitive << r[i].amo;
+        sensitive << r[i].instr_load_fault;
+        sensitive << r[i].instr_executable;
+        sensitive << r[i].instr_unimplemented;
+        sensitive << r[i].radr1;
+        sensitive << r[i].radr2;
+        sensitive << r[i].waddr;
+        sensitive << r[i].csr_addr;
+        sensitive << r[i].imm;
+        sensitive << r[i].progbuf_ena;
     }
 
     SC_METHOD(registers);
@@ -206,9 +228,9 @@ void InstrDecoder::comb() {
     selidx = 0;
     shift_ena = 0;
 
-    for (int i = 0; i < 2*DEC_NUM * (CFG_DEC_DEPTH - 1); i++) {
+    for (int i = 0; i < FULL_DEC_DEPTH; i++) {
         v[i] = r[i];
-        wd[2*DEC_NUM + i] = r[i];
+        wd[DEC_BLOCK + i] = r[i];
     }
 
     if (i_f_pc.read() != wd[0].pc.read()) {
@@ -217,13 +239,16 @@ void InstrDecoder::comb() {
 
     // Shift decoder buffer when new instruction available
     if (shift_ena) {
-        for (int i = 0; i < 2*DEC_NUM*(CFG_DEC_DEPTH - 1); i++) {
+        for (int i = 0; i < DEC_BLOCK; i++) {
             v[i] = wd[i];
+        }
+        for (int i = DEC_BLOCK; i < FULL_DEC_DEPTH; i++) {
+            v[i] = r[i - DEC_BLOCK];
         }
     }
 
     // Select output decoder:
-    for (int i = 0; i < CFG_DEC_DEPTH*DEC_NUM; i++) {
+    for (int i = 0; i < (FULL_DEC_DEPTH + DEC_BLOCK)/2; i++) {
         if (i_e_npc == wd[2*i].pc) {
             if (wd[2*i].compressed == 0) {
                 selidx = 2*i;
@@ -241,11 +266,11 @@ void InstrDecoder::comb() {
 
     for (int i = 0; i < CFG_DEC_DEPTH; i++) {
         vb_decoded_pc((i+1)*CFG_CPU_ADDR_BITS - 1, i*CFG_CPU_ADDR_BITS)
-                = wd[i*2*DEC_NUM].pc;
+                = wd[i*DEC_BLOCK].pc;
     }
 
     if ((!async_reset_ && !i_nrst.read()) || i_flush_pipeline.read() == 1) {
-        for (int i = 0; i < 2*DEC_NUM*(CFG_DEC_DEPTH - 1); i++) {
+        for (int i = 0; i < FULL_DEC_DEPTH; i++) {
             R_RESET(v[i]);
         }
     }
@@ -279,11 +304,11 @@ void InstrDecoder::comb() {
 
 void InstrDecoder::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
-        for (int i = 0; i < 2*DEC_NUM*(CFG_DEC_DEPTH - 1); i++) {
+        for (int i = 0; i < FULL_DEC_DEPTH; i++) {
             R_RESET(r[i]);
         }
     } else {
-        for (int i = 0; i < 2*DEC_NUM*(CFG_DEC_DEPTH - 1); i++) {
+        for (int i = 0; i < FULL_DEC_DEPTH; i++) {
             r[i] = v[i];
         }
     }

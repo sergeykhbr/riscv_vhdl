@@ -72,6 +72,11 @@ SC_MODULE(InstrDecoder) {
 
 private:
     static const int DEC_NUM = 2;
+    static const int DEC_BLOCK = 2*DEC_NUM;     // 2 rv + 2 rvc
+    // shift registers depth to store previous decoded data
+    static const int FULL_DEC_DEPTH = DEC_BLOCK * (CFG_DEC_DEPTH - 1 + CFG_BP_DEPTH);
+
+
     DecoderRv *rv[DEC_NUM];
     DecoderRvc *rvc[DEC_NUM];
 
@@ -102,12 +107,12 @@ private:
     };
 
 
-    DecoderDataType wd[2*DEC_NUM * CFG_DEC_DEPTH];
+    DecoderDataType wd[FULL_DEC_DEPTH + DEC_BLOCK];
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_f_pc[DEC_NUM];
     sc_signal<sc_uint<32>> wb_f_instr[DEC_NUM];
 
-    DecoderDataType v[2*DEC_NUM * (CFG_DEC_DEPTH - 1)];
-    DecoderDataType r[2*DEC_NUM * (CFG_DEC_DEPTH - 1)];
+    DecoderDataType v[FULL_DEC_DEPTH];
+    DecoderDataType r[FULL_DEC_DEPTH];
     
 
     int selidx;
