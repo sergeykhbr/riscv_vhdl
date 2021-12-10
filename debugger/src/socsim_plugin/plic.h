@@ -34,74 +34,54 @@ class PLIC : public RegMemBankGeneric,
     ~PLIC();
 
     /** IService interface */
-    virtual void postinitService();
+    virtual void postinitService() override;
 
     /** IClockListener interface */
     virtual void stepCallback(uint64_t t);
 
     /** Controller specific methods visible for ports */
+    uint32_t claim();
+    void complete(uint32_t idx);
     void setPendingBit(int idx);
     void clearPendingBit(int idx);
+ private:
+    uint32_t getNextInterrupt() { return 0; }
 
  private:
-    class IRQ_MASK_TYPE : public MappedReg32Type {
-     public:
-        IRQ_MASK_TYPE(IService *parent, const char *name, uint64_t addr) :
-                    MappedReg32Type(parent, name, addr) {
-            hard_reset_value_ = 0x1e;
-            value_.val = hard_reset_value_;
-        }
-    };
 
-    class IRQ_PENDING_TYPE : public MappedReg32Type {
+    class PLIC_CLAIM_COMPLETE_TYPE : public MappedReg32Type {
      public:
-        IRQ_PENDING_TYPE(IService *parent, const char *name, uint64_t addr) :
-                    MappedReg32Type(parent, name, addr) {
-        }
-
-     protected:
-        virtual uint32_t aboutToWrite(uint32_t nxt_val) override {
-            return getValue().val;      // read only
-        }
-    };
-
-    class IRQ_CLEAR_TYPE : public MappedReg32Type {
-     public:
-        IRQ_CLEAR_TYPE(IService *parent, const char *name, uint64_t addr) :
+        PLIC_CLAIM_COMPLETE_TYPE(IService *parent, const char *name, uint64_t addr) :
                     MappedReg32Type(parent, name, addr) {
         }
 
      protected:
         virtual uint32_t aboutToWrite(uint32_t nxt_val) override;
+        virtual uint32_t aboutToRead(uint32_t prv_val) override;
     };
 
-    class IRQ_LOCK_TYPE : public MappedReg32Type {
-     public:
-        IRQ_LOCK_TYPE(IService *parent, const char *name, uint64_t addr) :
-                    MappedReg32Type(parent, name, addr) {
-            hard_reset_value_ = 0x1;
-            value_.val = hard_reset_value_;
-        }
-    };
+    static const int NOT_PROCESSING = 0;
 
-    AttributeType irqTotal_;
-    AttributeType cpu_;
-    ICpuGeneric *icpu_;
+    AttributeType clock_;
+
     IClock *iclk_;
-    static const int IRQ_MAX = 32;
 
-    IRQ_MASK_TYPE irq_mask;         // 0x00: [RW] 1=disable; 0=enable
-    IRQ_PENDING_TYPE irq_pending;   // 0x04: [RO]
-    IRQ_CLEAR_TYPE irq_clear;       // 0x08: [WO]
-    MappedReg32Type irq_raise;      // 0x0c: [WO]
-    MappedReg32Type isr_table_l;    // 0x10: [RW]
-    MappedReg32Type isr_table_m;    // 0x14: [RW]
-    MappedReg32Type dbg_cause_l;    // 0x18: [RW]
-    MappedReg32Type dbg_cause_m;    // 0x1c: [RW]
-    MappedReg32Type dbg_epc_l;      // 0x20: [RW]
-    MappedReg32Type dbg_epc_m;      // 0x24: [RW]
-    IRQ_LOCK_TYPE irq_lock;         // 0x28: [RW]
-    MappedReg32Type irq_cause;      // 0x2c: [RW]
+    GenericReg32Bank src_priority; // [000000..000FFC] doens't exists, 1..1023
+    GenericReg32Bank pending;      // [001000..00107C] 0..1023 1 bit per interrupt
+    GenericReg32Bank enable_ctx0;       // [002000..00207C] 0..1023 1 bit per interrupt for context 0
+    GenericReg32Bank enable_ctx1;       // [002080..0020FC] 0..1023 1 bit per interrupt for context 1
+    GenericReg32Bank enable_ctx2;       // [002100..00217C] 0..1023 1 bit per interrupt for context 2
+    GenericReg32Bank enable_ctx3;       // [002180..0021fC] 0..1023 1 bit per interrupt for context 0
+    MappedReg32Type priority_th0;           // [200000] priority threshold for context 0
+    PLIC_CLAIM_COMPLETE_TYPE claim_compl0;  // [200004] claim/complete for context 0
+    MappedReg32Type priority_th1;           // [201000] priority threshold for context 0
+    PLIC_CLAIM_COMPLETE_TYPE claim_compl1;  // [201004] claim/complete for context 0
+    MappedReg32Type priority_th2;           // [202000] priority threshold for context 0
+    PLIC_CLAIM_COMPLETE_TYPE claim_compl2;  // [202004] claim/complete for context 0
+    MappedReg32Type priority_th3;           // [203000] priority threshold for context 0
+    PLIC_CLAIM_COMPLETE_TYPE claim_compl3;  // [203004] claim/complete for context 0
+
+    int processing_;
 };
 
 DECLARE_CLASS(PLIC)
