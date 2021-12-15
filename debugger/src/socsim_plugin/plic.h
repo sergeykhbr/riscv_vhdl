@@ -21,6 +21,7 @@
 #include "coreservices/iclock.h"
 #include "coreservices/imemop.h"
 #include "coreservices/icpugen.h"
+#include "coreservices/iirq.h"
 #include "generic/mapreg.h"
 #include "generic/rmembank_gen1.h"
 
@@ -28,7 +29,8 @@ namespace debugger {
 
 
 class PLIC : public RegMemBankGeneric,
-             public IClockListener {
+             public IClockListener,
+             public IIrqController {
  public:
     explicit PLIC(const char *name);
     ~PLIC();
@@ -38,6 +40,9 @@ class PLIC : public RegMemBankGeneric,
 
     /** IClockListener interface */
     virtual void stepCallback(uint64_t t);
+
+    /** IIrqController */
+    virtual int requestInterrupt(IFace *isrc, int idx);
 
     /** Controller specific methods visible for ports */
     uint32_t claim();
@@ -63,23 +68,15 @@ class PLIC : public RegMemBankGeneric,
     static const int NOT_PROCESSING = 0;
 
     AttributeType clock_;
+    AttributeType contextList_;     // List of context names: [MCore0, MCore1, SCore1, MCore2, ...]
 
     IClock *iclk_;
 
-    GenericReg32Bank src_priority; // [000000..000FFC] doens't exists, 1..1023
-    GenericReg32Bank pending;      // [001000..00107C] 0..1023 1 bit per interrupt
-    GenericReg32Bank enable_ctx0;       // [002000..00207C] 0..1023 1 bit per interrupt for context 0
-    GenericReg32Bank enable_ctx1;       // [002080..0020FC] 0..1023 1 bit per interrupt for context 1
-    GenericReg32Bank enable_ctx2;       // [002100..00217C] 0..1023 1 bit per interrupt for context 2
-    GenericReg32Bank enable_ctx3;       // [002180..0021fC] 0..1023 1 bit per interrupt for context 0
-    MappedReg32Type priority_th0;           // [200000] priority threshold for context 0
-    PLIC_CLAIM_COMPLETE_TYPE claim_compl0;  // [200004] claim/complete for context 0
-    MappedReg32Type priority_th1;           // [201000] priority threshold for context 0
-    PLIC_CLAIM_COMPLETE_TYPE claim_compl1;  // [201004] claim/complete for context 0
-    MappedReg32Type priority_th2;           // [202000] priority threshold for context 0
-    PLIC_CLAIM_COMPLETE_TYPE claim_compl2;  // [202004] claim/complete for context 0
-    MappedReg32Type priority_th3;           // [203000] priority threshold for context 0
-    PLIC_CLAIM_COMPLETE_TYPE claim_compl3;  // [203004] claim/complete for context 0
+    GenericReg32Bank src_priority;          // [000000..000FFC] doens't exists, 1..1023
+    GenericReg32Bank pending;               // [001000..00107C] 0..1023 1 bit per interrupt
+    GenericReg32Bank **ctx_enable;          // [002000 + 0x80*n] 0..1023 1 bit per interrupt for context N
+    MappedReg32Type **ctx_priority_th;      // [200000 + 0x1000*N] priority threshold for context N
+    PLIC_CLAIM_COMPLETE_TYPE **ctx_claim;   // [200004 + 0x1000*N] claim/complete for context N
 
     int processing_;
 };
