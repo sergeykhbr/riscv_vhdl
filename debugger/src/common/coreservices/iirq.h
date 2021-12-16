@@ -27,7 +27,12 @@ class IIrqController : public IFace {
  public:
     IIrqController() : IFace(IFACE_IIRQ_CONTROLLER) {}
 
+    // Request from periphery to CPU
     virtual int requestInterrupt(IFace *isrc, int idx) = 0;
+
+    // Interrupt should be requested, enabled with proper 
+    // prioiry and enabled for context. Called by CPU.
+    virtual bool isPendingRequest(int ctxid) = 0;
 };
 
 }  // namespace debugger
