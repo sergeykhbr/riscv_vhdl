@@ -14,6 +14,8 @@ namespace debugger {
 PNP::PNP(const char *name)  : IService(name) {
     registerInterface(static_cast<IMemoryOperation *>(this));
     registerAttribute("Tech", &tech_);
+    registerAttribute("IrqController", &irqController_);
+    registerAttribute("IrqId", &irqId_);
     registerAttribute("AdcDetector", &adc_detector_);
 
     tech_.make_uint64(0);
@@ -77,18 +79,35 @@ void PNP::postinitService() {
     regs_.tech.bits.tech = static_cast<uint8_t>(tech_.to_uint64());
     regs_.tech.bits.adc_detect =
         static_cast<uint8_t>(adc_detector_.to_uint64());
+
+    iirq_ = static_cast<IIrqController *>(RISCV_get_service_iface(
+        irqController_.to_string(), IFACE_IIRQ_CONTROLLER));
+    if (!iirq_) {
+        RISCV_error("Interface IIrqController in %s not found",
+                    irqController_.to_string());
+    }
 }
 
 ETransStatus PNP::b_transport(Axi4TransactionType *trans) {
     uint64_t mask = (length_.to_uint64() - 1);
     uint64_t off = ((trans->addr - getBaseAddress()) & mask);
     uint8_t *mem_ = reinterpret_cast<uint8_t *>(&regs_);
+    PnpMapType *pmap = reinterpret_cast<PnpMapType *>(0);
     if (trans->action == MemAction_Write) {
         for (uint64_t i = 0; i < trans->xsize; i++) {
             if ((trans->wstrb & (1 << i)) == 0) {
                 continue;
             }
-            mem_[off + i] = trans->wpayload.b8[i];
+            if (((off + i) & ~0x3ull) == reinterpret_cast<uint64_t>(&pmap->hwid)) {
+                // Trigger interrupt on write access to RO register just to check PLIC
+                if (iirq_) {
+                    iirq_->requestInterrupt(static_cast<IService *>(this),
+                                            irqId_.to_int());
+                }
+                i += 3;
+            } else {
+                mem_[off + i] = trans->wpayload.b8[i];
+            }
         }
     } else {
         for (uint64_t i = 0; i < trans->xsize; i++) {

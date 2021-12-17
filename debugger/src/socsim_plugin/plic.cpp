@@ -46,28 +46,37 @@ PLIC::~PLIC() {
 }
 
 void PLIC::postinitService() {
+    AttributeType tmap;
     char tstr[1024];
     unsigned ctx_total = contextList_.size();
     if (ctx_total) {
+        tmap.make_list(2);  // to register Port Interface
+        tmap[0u].make_string(getObjName());
         ctx_enable = new PLIC_ENABLE_TYPE* [ctx_total];
         ctx_priority_th = new PLIC_CONTEXT_PRIOIRTY_TYPE* [ctx_total];
         ctx_claim = new PLIC_CLAIM_COMPLETE_TYPE* [ctx_total];
 
-        for (unsigned i = 0; i < contextList_.to_uint32(); i++) {
+        for (unsigned i = 0; i < contextList_.size(); i++) {
             RISCV_sprintf(tstr, sizeof(tstr), "%s::enable",
                 contextList_[i].to_string());
             ctx_enable[i] = new PLIC_ENABLE_TYPE(
                 static_cast<IService *>(this), tstr, 0x2000 + 0x80*i, i);
+            tmap[1].make_string(tstr);
+            listMap_.add_to_list(&tmap);
 
             RISCV_sprintf(tstr, sizeof(tstr), "%s::priority_th",
                 contextList_[i].to_string());
             ctx_priority_th[i] = new PLIC_CONTEXT_PRIOIRTY_TYPE(
                 static_cast<IService *>(this), tstr, 0x200000 + 0x1000*i, i);
+            tmap[1].make_string(tstr);
+            listMap_.add_to_list(&tmap);
 
             RISCV_sprintf(tstr, sizeof(tstr), "%s::claim",
                 contextList_[i].to_string());
             ctx_claim[i] = new PLIC_CLAIM_COMPLETE_TYPE(
                 static_cast<IService *>(this), tstr, 0x200004 + 0x1000*i, i);
+            tmap[1].make_string(tstr);
+            listMap_.add_to_list(&tmap);
         }
     }
 
@@ -104,7 +113,7 @@ bool PLIC::isEnabled(uint32_t irqidx) {
     // Ties between global interrupts of the same priority
     // are broken by the Interrupt ID; interrupts with the lowest ID have the 
     // highest effective priority.
-    if ((src_priority.getpR32()[irqidx] & 0x7) == 0) {
+    if (src_priority.getpR32()[irqidx] == 0) {
         return false;
     }
     return true;
@@ -121,7 +130,7 @@ bool PLIC::isUnmasked(uint32_t ctxid, uint32_t irqidx) {
     // Check priority masking for the context.
     // 0 = Enable all non-zero interrupts
     // 7 = Disable all interrupts
-    if ((src_priority.getpR32()[irqidx] & 0x7) <= 
+    if (src_priority.getpR32()[irqidx] <= 
         ctx_priority_th[ctxid]->getContextPrioiry()) {
         return false;
     }

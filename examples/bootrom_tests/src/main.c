@@ -20,6 +20,7 @@
 #include "fw_api.h"
 
 void allocate_exception_table(void);
+void test_plic(void);
 void test_fpu(void);
 void test_timer(void);
 void test_timer_multicycle_instructions(void);
@@ -68,6 +69,8 @@ int main() {
     printf_uart("FWID . . . . . .0x%08x\r\n", pnp->fwid);
 
     led_set(0x02);
+
+    test_plic();
 
     test_fpu();
 

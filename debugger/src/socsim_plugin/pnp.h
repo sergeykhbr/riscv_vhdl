@@ -11,6 +11,7 @@
 #include "iclass.h"
 #include "iservice.h"
 #include "coreservices/imemop.h"
+#include "coreservices/iirq.h"
 #include "debug/dsumap.h"
 #include "periphmap.h"
 
@@ -34,7 +35,11 @@ private:
                   unsigned vid, unsigned did);
 
     AttributeType tech_;
+    AttributeType irqController_;
+    AttributeType irqId_;
     AttributeType adc_detector_;
+
+    IIrqController *iirq_;
 
     PnpMapType regs_;
     union DescriptorTableType {

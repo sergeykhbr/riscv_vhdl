@@ -14,8 +14,7 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_SRC_COMMON_GENERIC_RMEMBANK_GEN1_H__
-#define __DEBUGGER_SRC_COMMON_GENERIC_RMEMBANK_GEN1_H__
+#pragma once
 
 #include "iclass.h"
 #include "iservice.h"
@@ -55,5 +54,3 @@ class RegMemBankGeneric : public IService,
 };
 
 }  // namespace debugger
-
-#endif  // __DEBUGGER_SRC_COMMON_GENERIC_RMEMBANK_GEN1_H__

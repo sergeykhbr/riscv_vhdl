@@ -27,8 +27,10 @@ CpuRiver_Functional::CpuRiver_Functional(const char *name) :
     registerInterface(static_cast<ICpuRiscV *>(this));
     registerAttribute("VendorID", &vendorid_);
     registerAttribute("ImplementationID", &implementationid_);
+    registerAttribute("ContextID", &contextid_);
     registerAttribute("HartID", &hartid_);
     registerAttribute("ListExtISA", &listExtISA_);
+    registerAttribute("PLIC", &plic_);
 
     mmuReservatedAddr_ = 0;
     mmuReservedAddrWatchdog_ = 0;
@@ -62,6 +64,13 @@ void CpuRiver_Functional::postinitService() {
     reset(0);
 
     CpuGeneric::postinitService();
+
+    iirq_ = static_cast<IIrqController *>(RISCV_get_service_iface(
+        plic_.to_string(), IFACE_IIRQ_CONTROLLER));
+    if (!iirq_) {
+        RISCV_error("Interface IIrqController in %s not found",
+                    plic_.to_string());
+    }
 
     pcmd_br_ = new CmdBrRiscv(dmibar_.to_uint64(), 0);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_br_));

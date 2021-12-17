@@ -54,6 +54,7 @@ SOURCES = crt \
 	test_stackprotect \
 	test_spiflash \
 	test_gnss_ss \
+	test_plic \
 	main
 
 OBJ_FILES = $(addsuffix .o,$(SOURCES))

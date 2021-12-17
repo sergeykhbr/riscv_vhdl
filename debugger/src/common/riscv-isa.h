@@ -483,7 +483,7 @@ union csr_mstatus_type {
 
 union csr_mcause_type {
     struct bits_type {
-        uint64_t code   : 63;   // 11 - Machine external interrupt
+        uint64_t code   : 63;   // 11 - Machine external interrupt; 9 - Supervisor external interrupt
         uint64_t irq    : 1;
     } bits;
     uint64_t value;

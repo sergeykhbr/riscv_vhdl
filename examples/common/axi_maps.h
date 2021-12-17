@@ -29,10 +29,12 @@
 #include "maps/map_ethmac.h"
 #include "maps/map_spiflash.h"
 #include "maps/map_fsev2.h"
+#include "maps/map_plic.h"
 
 #define ADDR_BUS0_XSLV_OTP          0x00010000
 #define ADDR_BUS0_XSLV_FWIMAGE      0x00100000
 #define ADDR_BUS0_XSLV_EXTFLASH     0x00200000
+#define ADDR_BUS0_XSLV_PLIC         0x0C000000
 #define ADDR_BUS0_XSLV_SRAM         0x10000000
 #define ADDR_BUS0_XSLV_GPIO         0x80000000
 #define ADDR_BUS0_XSLV_UART1        0x80001000

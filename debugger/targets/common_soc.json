@@ -75,6 +75,16 @@
                 ['BaseAddress',0x00200000],
                 ['Length',0x40000]
                 ]}]},
+    {'Class':'PLICClass','Instances':[
+          {'Name':'plic0','Attr':[
+                ['LogLevel',4],
+                ['BaseAddress',0x0C000000, 'FU740(unmatched) and FU540(unleashed) use this base address'],
+                ['Length',0x04000000, 'End of PLIC is 0x10000000'],
+                ['MapList',[['plic0','src_priority'],
+                            ['plic0','pending']
+                           ], 'Context bank will be added on Postinit stage']
+                ['ContextList',['HART0_M', 'HART0_S'], 'Use any convinient names']
+                ]}]},
     {'Class':'GPIOClass','Instances':[
           {'Name':'gpio0','Attr':[
                 ['LogLevel',3],
@@ -159,6 +169,8 @@
                 ['BaseAddress',0xfffff000],
                 ['Length',4096],
                 ['Tech',0],
+                ['IrqController','plic0'],
+                ['IrqId',70, 'The last interrupt index in FU740 is 69, use the next unused'],
                 ['AdcDetector',0x00]
                 ]}]},
     {'Class':'HardResetClass','Instances':[

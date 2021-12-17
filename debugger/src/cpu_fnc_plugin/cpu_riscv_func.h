@@ -23,6 +23,7 @@
 #include "generic/cmd_br_generic.h"
 #include "cmds/cmd_br_riscv.h"
 #include "coreservices/icpuriscv.h"
+#include "coreservices/iirq.h"
 
 namespace debugger {
 
@@ -99,10 +100,14 @@ class CpuRiver_Functional : public CpuGeneric,
     AttributeType vendorid_;
     AttributeType implementationid_;
     AttributeType hartid_;
+    AttributeType contextid_;   // [U,S,H,M], example [3,2,1,0] = M-Mode context 0; S-Mode context 2
     AttributeType listExtISA_;
+    AttributeType plic_;        // External interrupt controller
 
     static const int INSTR_HASH_TABLE_SIZE = 1 << 6;
     AttributeType listInstr_[INSTR_HASH_TABLE_SIZE];
+
+    IIrqController *iirq_;
 
     CmdBrRiscv *pcmd_br_;
     ICommand *pcmd_cpu_;

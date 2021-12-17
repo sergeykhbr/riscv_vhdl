@@ -66,6 +66,16 @@ class PLIC : public RegMemBankGeneric,
         unsigned contextid_;
     };
 
+    class PLIC_SRC_PRIORITY_TYPE : public GenericReg32Bank {
+     public:
+        PLIC_SRC_PRIORITY_TYPE(IService *parent, const char *name, uint64_t addr, int len)
+            : GenericReg32Bank(parent, name, addr, len) {}
+
+        virtual void write(int idx, uint32_t val) override {
+            GenericReg32Bank::write(idx, val & 0x7);
+        }
+    };
+
     class PLIC_CONTEXT_PRIOIRTY_TYPE : public MappedReg32Type {
      public:
         PLIC_CONTEXT_PRIOIRTY_TYPE(IService *parent, const char *name,
@@ -96,9 +106,9 @@ class PLIC : public RegMemBankGeneric,
     AttributeType contextList_;     // List of context names: [MCore0, MCore1, SCore1, MCore2, ...]
     AttributeType pendingList_;     // requested interrupt packed into attribute for better performance
 
-    GenericReg32Bank src_priority;          // [000000..000FFC] doens't exists, 1..1023
-    GenericReg32Bank pending;               // [001000..00107C] 0..1023 1 bit per interrupt
-    PLIC_ENABLE_TYPE **ctx_enable;          // [002000 + 0x80*n] 0..1023 1 bit per interrupt for context N
+    PLIC_SRC_PRIORITY_TYPE src_priority;            // [000000..000FFC] 0 doens't exists, 1..1023
+    GenericReg32Bank pending;                       // [001000..00107C] 0..1023 1 bit per interrupt
+    PLIC_ENABLE_TYPE **ctx_enable;                  // [002000 + 0x80*n] 0..1023 1 bit per interrupt for context N
     PLIC_CONTEXT_PRIOIRTY_TYPE **ctx_priority_th;   // [200000 + 0x1000*N] priority threshold for context N
     PLIC_CLAIM_COMPLETE_TYPE **ctx_claim;           // [200004 + 0x1000*N] claim/complete for context N
 };
