@@ -43,16 +43,21 @@ void fw_register_isr_handler(int idx, IRQ_HANDLER f) {
     tbl[idx] = f;
 }
 
-void fw_enable_isr(int idx) {
-    irqctrl_map *p_irq = (irqctrl_map *)ADDR_BUS0_XSLV_IRQCTRL;
-    uint32_t msk = p_irq->irq_mask;
-    msk &= ~(1ul << idx);
-    p_irq->irq_mask = msk;
+void fw_enable_isr(int irqidx) {
+    plic_map *p = (plic_map *)ADDR_BUS0_XSLV_PLIC;
+    int ctxid = 0;
+    p->src_prioirty[irqidx] = 0x1;    // 1=lowest prioirty; 0 = disabled
+#ifdef PLIC_MODE_ENABLED
+    p->src_mode[irqidx] = PLIC_MODE_RISING_EDGE;
+#endif
+    p->ctx_prio[ctxid].priority = 0;
+    p->ctx_ie[ctxid].irq_enable[irqidx/32] = 1ul << (irqidx & 0x1F);
 }
 
-void fw_disable_isr(int idx) {
-    irqctrl_map *p_irq = (irqctrl_map *)ADDR_BUS0_XSLV_IRQCTRL;
-    p_irq->irq_mask |= (1ul << idx);
+void fw_disable_isr(int irqidx) {
+    plic_map *p = (plic_map *)ADDR_BUS0_XSLV_PLIC;
+    int ctxid = 0;
+    p->src_prioirty[irqidx] = 0;    // 1=lowest prioirty; 0 = disabled
 }
 
 void led_set(int output) {

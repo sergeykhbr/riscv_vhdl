@@ -39,7 +39,7 @@ class PLIC : public RegMemBankGeneric,
 
     /** IIrqController */
     virtual int requestInterrupt(IFace *isrc, int idx);
-    virtual bool isPendingRequest(int ctxid);
+    virtual int getPendingRequest(int ctxid);
 
     /** Controller specific methods visible for ports */
     void enableInterrupt(uint32_t ctxid, int idx);

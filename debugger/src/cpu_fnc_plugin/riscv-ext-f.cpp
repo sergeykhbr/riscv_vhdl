@@ -1302,10 +1302,10 @@ public:
         trans.xsize = 8;
         if (trans.addr & 0x7) {
             trans.rpayload.b64[0] = 0;
-            icpu_->raiseSignal(EXCEPTION_LoadMisalign);
+            icpu_->generateException(EXCEPTION_LoadMisalign, icpu_->getPC());
         } else {
             if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
-                icpu_->exceptionLoadData(&trans);
+                icpu_->generateException(EXCEPTION_LoadFault, trans.addr);
             }
         }
         dst.val = trans.rpayload.b64[0];
@@ -1621,10 +1621,10 @@ public:
         trans.addr = R[u.bits.rs1] + off;
         trans.wpayload.b64[0] = RF[u.bits.rs2];
         if (trans.addr & 0x7) {
-            icpu_->raiseSignal(EXCEPTION_StoreMisalign);
+            icpu_->generateException(EXCEPTION_StoreMisalign, icpu_->getPC());
         } else {
             if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
-                icpu_->exceptionStoreData(&trans);
+                icpu_->generateException(EXCEPTION_StoreFault, trans.addr);
             }
         }
         return 4;

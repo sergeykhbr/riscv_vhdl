@@ -12,7 +12,7 @@
 #include "iservice.h"
 #include "coreservices/imemop.h"
 #include "coreservices/iclock.h"
-#include "coreservices/iwire.h"
+#include "coreservices/iirq.h"
 
 namespace debugger {
 
@@ -40,8 +40,10 @@ private:
 
 private:
     AttributeType irqctrl_;
+    AttributeType irqid_;
     AttributeType clksrc_;
-    IWire *iwire_;
+
+    IIrqController *iirq_;
     IClock *iclk_;
 
     typedef struct MiscType {

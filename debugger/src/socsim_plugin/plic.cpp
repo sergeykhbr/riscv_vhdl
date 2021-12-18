@@ -88,8 +88,11 @@ int PLIC::requestInterrupt(IFace *isrc, int idx) {
     return 0;
 }
 
-bool PLIC::isPendingRequest(int ctxid) {
-    bool ret = false;
+int PLIC::getPendingRequest(int ctxid) {
+    uint32_t prio = 0;
+    uint32_t irqidx = 0;
+
+    // Select the highest priority request;
     uint32_t tidx;
     for (unsigned i = 0; i < pendingList_.size(); i++) {
         tidx = pendingList_[i].to_uint32();
@@ -99,10 +102,37 @@ bool PLIC::isPendingRequest(int ctxid) {
         if (!isUnmasked(ctxid, tidx)) {
             continue;
         }
-        ret = true;
-        break;
+
+        if (src_priority.getpR32()[tidx] >= prio) {
+            prio = src_priority.getpR32()[i];
+            irqidx = pendingList_[0u].to_uint32();
+        }
     }
-    return ret;
+
+    if (irqidx != IRQ_REQUEST_NONE) {
+        // Lower interrupt index has higher priority
+        for (unsigned i = 0; i < pendingList_.size(); i++) {
+            tidx = pendingList_[i].to_uint32();
+
+            if (src_priority.getpR32()[i] != prio) {
+                continue;
+            }
+
+            if (!isEnabled(tidx)) {
+                continue;
+            }
+            if (!isUnmasked(ctxid, tidx)) {
+                continue;
+            }
+
+            // Check only the highest prio interrupts:
+            if (pendingList_[i].to_uint32() <  irqidx) {
+                irqidx = pendingList_[i].to_uint32();
+            }
+        }
+    }
+
+    return irqidx;
 }
 
 bool PLIC::isEnabled(uint32_t irqidx) {
@@ -175,47 +205,7 @@ void PLIC::disableInterrupt(uint32_t ctxid, int idx) {
 }
 
 uint32_t PLIC::claim(unsigned ctxid) {
-    uint32_t prio = 0;
-    uint32_t irqidx = 0;
-
-    // Select the highest priority request;
-    uint32_t tidx;
-    for (unsigned i = 0; i < pendingList_.size(); i++) {
-        tidx = pendingList_[i].to_uint32();
-        if (!isEnabled(tidx)) {
-            continue;
-        }
-        if (!isUnmasked(ctxid, tidx)) {
-            continue;
-        }
-
-        if (src_priority.getpR32()[tidx] >= prio) {
-            prio = src_priority.getpR32()[i];
-            irqidx = pendingList_[0u].to_uint32();
-        }
-    }
-
-    // Lower interrupt index has higher priority
-    for (unsigned i = 0; i < pendingList_.size(); i++) {
-        tidx = pendingList_[i].to_uint32();
-
-        if (src_priority.getpR32()[i] != prio) {
-            continue;
-        }
-
-        if (!isEnabled(tidx)) {
-            continue;
-        }
-        if (!isUnmasked(ctxid, tidx)) {
-            continue;
-        }
-
-        // Check only the highest prio interrupts:
-        if (pendingList_[i].to_uint32() <  irqidx) {
-            irqidx = pendingList_[i].to_uint32();
-        }
-    }
-
+    uint32_t irqidx = getPendingRequest(ctxid);
     clearPendingBit(irqidx);
     return irqidx;
 }

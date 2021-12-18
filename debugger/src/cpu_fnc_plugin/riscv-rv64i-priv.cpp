@@ -205,7 +205,7 @@ public:
 
     virtual int exec(Reg64Type *payload) {
         if (icpu_->getPrvLevel() != PRV_U) {
-            icpu_->raiseSignal(EXCEPTION_InstrIllegal);
+            icpu_->generateException(EXCEPTION_InstrIllegal, icpu_->getPC());
             return 4;
         }
         csr_mstatus_type mstatus;
@@ -239,7 +239,7 @@ public:
 
     virtual int exec(Reg64Type *payload) {
         if (icpu_->getPrvLevel() != PRV_S) {
-            icpu_->raiseSignal(EXCEPTION_InstrIllegal);
+            icpu_->generateException(EXCEPTION_InstrIllegal, icpu_->getPC());
             return 4;
         }
         csr_mstatus_type mstatus;
@@ -268,7 +268,7 @@ public:
 
     virtual int exec(Reg64Type *payload) {
         if (icpu_->getPrvLevel() != PRV_H) {
-            icpu_->raiseSignal(EXCEPTION_InstrIllegal);
+            icpu_->generateException(EXCEPTION_InstrIllegal, icpu_->getPC());
             return 4;
         }
         csr_mstatus_type mstatus;
@@ -297,7 +297,7 @@ public:
 
     virtual int exec(Reg64Type *payload) {
         if (icpu_->getPrvLevel() != PRV_M) {
-            icpu_->raiseSignal(EXCEPTION_InstrIllegal);
+            icpu_->generateException(EXCEPTION_InstrIllegal, icpu_->getPC());
             return 4;
         }
         csr_mstatus_type mstatus;
@@ -359,7 +359,7 @@ public:
         RiscvInstruction(icpu, "EBREAK", "00000000000100000000000001110011") {}
 
     virtual int exec(Reg64Type *payload) {
-        icpu_->raiseSignal(EXCEPTION_Breakpoint);
+        icpu_->generateException(EXCEPTION_Breakpoint, icpu_->getPC());
         icpu_->doNotCache(icpu_->getPC());
         return 4;
     }
@@ -381,10 +381,10 @@ public:
     virtual int exec(Reg64Type *payload) {
         switch (icpu_->getPrvLevel()) {
         case PRV_M:
-            icpu_->raiseSignal(EXCEPTION_CallFromMmode);
+            icpu_->generateException(EXCEPTION_CallFromMmode, icpu_->getPC());
             break;
         case PRV_U:
-            icpu_->raiseSignal(EXCEPTION_CallFromUmode);
+            icpu_->generateException(EXCEPTION_CallFromUmode, icpu_->getPC());
             break;
         default:;
         }

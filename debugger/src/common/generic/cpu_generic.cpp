@@ -29,7 +29,6 @@ CpuGeneric::CpuGeneric(const char *name)
     stackTraceBuf_(this, "stack_trace_buf", 0, 0) {
     registerInterface(static_cast<IThread *>(this));
     registerInterface(static_cast<IClock *>(this));
-    registerInterface(static_cast<ICpuGeneric *>(this));
     registerInterface(static_cast<ICpuFunctional *>(this));
     registerInterface(static_cast<IDPort *>(this));
     registerInterface(static_cast<IPower *>(this));
@@ -63,6 +62,7 @@ CpuGeneric::CpuGeneric(const char *name)
     estate_ = CORE_OFF;
     step_cnt_ = 0;
     pc_z_ = 0;
+    exceptions_ = 0;
     interrupt_pending_[0] = 0;
     interrupt_pending_[1] = 0;
     do_not_cache_ = false;
@@ -302,13 +302,29 @@ void CpuGeneric::fetchILine() {
         trans_.xsize = 4;
         trans_.wstrb = 0;
         if (dma_memop(&trans_) == TRANS_ERROR) {
-            exceptionLoadInstruction(&trans_);
+            generateExceptionLoadInstruction(trans_.addr);
             handleTrap();
             setPC(getNPC());
             fetchILine();
         } else {
             cacheline_[0].val = trans_.rpayload.b64[0];
         }
+    }
+}
+
+void CpuGeneric::handleTrap() {
+    checkStackProtection();
+    if (exceptions_) {
+        uint64_t t = exceptions_;
+        int e = 0;
+        while (!(t & 0x1)) {
+            t >>= 1;
+            e++;
+        }
+        exceptions_ &= ~(1ull << e);
+        handleException(e);
+    } else {
+        handleInterrupts();
     }
 }
 
@@ -475,9 +491,9 @@ void CpuGeneric::halt(uint32_t cause, const char *descr) {
     uint8_t tbyte;
     unsigned bytetot = oplen_;
     if (cause == HALT_CAUSE_TRIGGER || cause == HALT_CAUSE_EBREAK) {
-        writeCSR(CSR_dpc, getPC());
+        setBreakPC(getPC(), cause);
     } else {
-        writeCSR(CSR_dpc, getNPC());
+        setBreakPC(getNPC(), cause);
     }
 
     if (!bytetot) {
@@ -500,19 +516,6 @@ void CpuGeneric::halt(uint32_t cause, const char *descr) {
                        getPC(), strop, descr);
     }
     estate_ = CORE_Halted;
-}
-
-void CpuGeneric::setHaltCause(uint32_t cause) {
-    DCSR_TYPE::ValueType dcsr;
-    dcsr.val = static_cast<uint32_t>(readCSR(CSR_dcsr));
-    dcsr.bits.cause = cause;
-    writeCSR(CSR_dcsr, dcsr.val);
-}
-
-bool CpuGeneric::isStepEnabled() {
-    DCSR_TYPE::ValueType dcsr;
-    dcsr.val = static_cast<uint32_t>(readCSR(CSR_dcsr));
-    return dcsr.bits.step;
 }
 
 bool CpuGeneric::isTriggerICount() {
@@ -654,118 +657,6 @@ bool CpuGeneric::isTriggerInstruction() {
     return fire;
 }
 
-uint64_t CpuGeneric::readCSR(uint32_t regno) {
-    uint64_t ret = 0;
-    uint64_t trigidx;
-    bool rd_access = true;;
-    switch (regno) {
-    case CSR_mcycle:
-    case CSR_minsret:
-    case CSR_cycle:
-    case CSR_time:
-    case CSR_insret:
-        ret = step_cnt_;
-        rd_access = false;
-        break;
-    case CSR_dpc:
-        if (!isHalted()) {
-            ret = getNPC();
-            rd_access = false;
-        }
-        break;
-    case CSR_tdata1:
-        trigidx = readCSR(CSR_tselect);
-        ret = ptriggers_[trigidx].data1.val;
-        rd_access = false;
-        break;
-    case CSR_tdata2:
-        trigidx = readCSR(CSR_tselect);
-        ret = ptriggers_[trigidx].data2;
-        rd_access = false;
-        break;
-    case CSR_textra:
-        trigidx = readCSR(CSR_tselect);
-        ret = ptriggers_[trigidx].extra;
-        rd_access = false;
-        break;
-    case CSR_tinfo:
-        // RO: list of supported triggers
-        ret = (1ull << TriggerType_AddrDataMatch)
-            | (1ull << TriggerType_InstrCountMatch)
-            | (1ull << TriggerType_Inetrrupt)
-            | (1ull << TriggerType_Exception);
-        rd_access = false;
-        break;
-    default:;
-    }
-    if (rd_access) {
-        RISCV_mutex_lock(&mutex_csr_);
-        ret = portCSR_.read(regno).val;
-        RISCV_mutex_unlock(&mutex_csr_);
-    }
-    return ret;
-}
-
-void CpuGeneric::writeCSR(uint32_t regno, uint64_t val) {
-    bool wr_access = true;
-    uint64_t trigidx;
-    switch (regno) {
-    // Read-Only registers
-    case CSR_misa:
-    case CSR_mvendorid:
-    case CSR_marchid:
-    case CSR_mimplementationid:
-    case CSR_mhartid:
-        wr_access = false;
-        break;
-    // read only timers:
-    case CSR_mcycle:
-    case CSR_minsret:
-    case CSR_cycle:
-    case CSR_time:
-    case CSR_insret:
-        wr_access = false;
-        break;
-    case CSR_tselect:
-        if (val > triggersTotal_.to_uint64()) {
-            val = triggersTotal_.to_uint64();
-            RISCV_debug("Select trigger %d", static_cast<int>(val));
-        }
-        break;
-    case CSR_tdata1:
-        trigidx = readCSR(CSR_tselect);
-        TriggerData1Type tdata1;
-        tdata1.val = val;
-        if (tdata1.bitsdef.type == TriggerType_AddrDataMatch) {
-            // Preset value
-            tdata1.mcontrol_bits.maskmax = mcontrolMaskmax_.to_uint64();
-        }
-        ptriggers_[trigidx].data1.val = val;
-        RISCV_info("[tdata1] <= %016" RV_PRI64 "x, type=%d",
-            val, static_cast<uint32_t>(tdata1.bitsdef.type));
-        val = tdata1.val;
-        break;
-    case CSR_tdata2:
-        trigidx = readCSR(CSR_tselect);
-        ptriggers_[trigidx].data2 = val;
-        RISCV_info("[tdata2] <= %016" RV_PRI64 "x", val);
-        break;
-    case CSR_textra:
-        trigidx = readCSR(CSR_tselect);
-        ptriggers_[trigidx].extra = val;
-        RISCV_info("[textra] <= %016" RV_PRI64 "x", val);
-        break;
-    case CSR_flushi:
-        flush(val);
-        break;
-    default:;
-    }
-    if (wr_access) {
-        RISCV_mutex_lock(&mutex_csr_);
-        portCSR_.write(regno, val);
-        RISCV_mutex_unlock(&mutex_csr_);
-    }
-}
 
 bool CpuGeneric::executeProgbuf(uint32_t *progbuf) {
     if (!isHalted()) {

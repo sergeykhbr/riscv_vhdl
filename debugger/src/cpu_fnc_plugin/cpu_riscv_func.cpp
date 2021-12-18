@@ -66,7 +66,7 @@ void CpuRiver_Functional::postinitService() {
     CpuGeneric::postinitService();
 
     iirq_ = static_cast<IIrqController *>(RISCV_get_service_iface(
-        plic_.to_string(), IFACE_IIRQ_CONTROLLER));
+        plic_.to_string(), IFACE_IRQ_CONTROLLER));
     if (!iirq_) {
         RISCV_error("Interface IIrqController in %s not found",
                     plic_.to_string());
@@ -97,25 +97,104 @@ unsigned CpuRiver_Functional::addSupportedInstruction(
     return 0;
 }
 
-void CpuRiver_Functional::handleTrap() {
-    csr_mstatus_type mstatus;
-    csr_mcause_type mcause;
-
-    /** Check stack protection exceptions: */
+/** Check stack protection exceptions: */
+void CpuRiver_Functional::checkStackProtection() {
     uint64_t mstackovr = portCSR_.read(CSR_mstackovr).val;
     uint64_t mstackund = portCSR_.read(CSR_mstackund).val;
     uint64_t sp = portRegs_.read(Reg_sp).val;
     if (mstackovr != 0 && sp < mstackovr) {
-        raiseSignal(EXCEPTION_StackOverflow);
+        generateException(EXCEPTION_StackOverflow, getPC());
         portCSR_.write(CSR_mstackovr, 0);
     } else if (mstackund != 0 && sp > mstackund) {
-        raiseSignal(EXCEPTION_StackUnderflow);
+        generateException(EXCEPTION_StackUnderflow, getPC());
         portCSR_.write(CSR_mstackund, 0);
     }
+}
 
-    if ((interrupt_pending_[0] | interrupt_pending_[1]) == 0) {
+void CpuRiver_Functional::handleException(int e) {
+    if (e == EXCEPTION_Breakpoint && estate_ == CORE_ProgbufExec) {
+        exitProgbufExec();
         return;
     }
+
+    if (estate_ != CORE_ProgbufExec) {
+        csr_mcause_type mcause;
+        mcause.bits.irq = 0;
+        mcause.bits.code = e;
+        portCSR_.write(CSR_mcause, mcause.value);
+    }
+
+    DCSR_TYPE::ValueType dcsr;
+    dcsr.val = static_cast<uint32_t>(readCSR(CSR_dcsr));
+    if (e == EXCEPTION_Breakpoint && dcsr.bits.ebreakm == 1) {
+        setNPC(getPC());
+        halt(HALT_CAUSE_EBREAK, "EBREAK Breakpoint");
+        return;
+    }
+
+    switchContext(PRV_M);
+
+    uint64_t mtvec = readCSR(CSR_mtvec) & ~0x3ull;
+    setNPC(mtvec);
+}
+
+void CpuRiver_Functional::handleInterrupts() {
+    int ctx = 0;
+    csr_mstatus_type mstatus;
+    mstatus.value = readCSR(CSR_mstatus);
+    if (mstatus.bits.MIE == 0) {
+        return;
+    }
+
+    csr_mie_type mie;
+    mie.value = readCSR(CSR_mie);
+
+    // Check PLIC interrupt request
+    if (mie.bits.MEIE == 1) {
+        // external interrupt disabled
+        int irqidx = iirq_->getPendingRequest(ctx);
+        if (irqidx != IRQ_REQUEST_NONE) {
+            csr_mcause_type mcause;
+            mcause.bits.irq = 1;
+            mcause.bits.code = 11;
+            portCSR_.write(CSR_mcause, mcause.value);
+
+            switchContext(PRV_M);
+
+            uint64_t mtvec = readCSR(CSR_mtvec);
+            uint64_t mtvecmode = mtvec & 0x3;
+            mtvec &= ~0x3ull;
+            // Vector table only for interrupts (not for exceptions):
+            if (mtvecmode == 0x1) {
+                setNPC(mtvec + 4 * irqidx);
+            } else {
+                setNPC(mtvec);
+            }
+            return;
+        }
+    }
+}
+
+void CpuRiver_Functional::switchContext(uint32_t prvnxt) {
+    // All traps handle via machine mode while CSR mdelegate
+    // doesn't setup other.
+    // @todo delegating
+    csr_mstatus_type mstatus;
+    mstatus.value = readCSR(CSR_mstatus);
+    mstatus.bits.MPP = cur_prv_level;
+    mstatus.bits.MPIE = (mstatus.value >> cur_prv_level) & 0x1;
+    mstatus.bits.MIE = 0;
+    cur_prv_level = prvnxt;
+    writeCSR(CSR_mstatus, mstatus.value);
+
+    int xepc = static_cast<int>((cur_prv_level << 8) + 0x41);
+    writeCSR(xepc, getNPC());
+}
+
+/*void CpuRiver_Functional::handleTrap() {
+    csr_mstatus_type mstatus;
+    csr_mcause_type mcause;
+
 
     mstatus.value = portCSR_.read(CSR_mstatus).val;
     uint64_t exception_mask = (1ull << SIGNAL_XSoftware) - 1;
@@ -182,7 +261,7 @@ void CpuRiver_Functional::handleTrap() {
         setNPC(mtvec);
     }
     interrupt_pending_[pendidx >> 6] &= ~(1ull << (pendidx & 0x3F));
-}
+}*/
 
 void CpuRiver_Functional::reset(IFace *isource) {
     CpuGeneric::reset(isource);
@@ -229,7 +308,7 @@ GenericInstruction *CpuRiver_Functional::decodeInstruction(Reg64Type *cache) {
 }
 
 void CpuRiver_Functional::generateIllegalOpcode() {
-    raiseSignal(EXCEPTION_InstrIllegal);
+    generateException(EXCEPTION_InstrIllegal, getPC());
     RISCV_error("Illegal instruction at 0x%08" RV_PRI64 "x", getPC());
 }
 
@@ -282,7 +361,13 @@ void CpuRiver_Functional::traceOutput() {
     trace_file_->flush();
 }
 
-void CpuRiver_Functional::raiseSignal(int idx) {
+bool CpuRiver_Functional::isStepEnabled() {
+    DCSR_TYPE::ValueType dcsr;
+    dcsr.val = static_cast<uint32_t>(readCSR(CSR_dcsr));
+    return dcsr.bits.step;
+}
+
+/*void CpuRiver_Functional::raiseSignal(int idx) {
     if (idx < SIGNAL_HardReset) {
         interrupt_pending_[idx >> 6] |= 1LL << (idx & 0x3F);
     } else if (idx == SIGNAL_HardReset) {
@@ -298,22 +383,163 @@ void CpuRiver_Functional::lowerSignal(int idx) {
     } else {
         RISCV_error("Lower unsupported signal %d", idx);
     }
+}*/
+
+void CpuRiver_Functional::setBreakPC(uint64_t v, uint32_t cause) {
+    DCSR_TYPE::ValueType dcsr;
+    dcsr.val = static_cast<uint32_t>(readCSR(CSR_dcsr));
+    dcsr.bits.cause = cause;
+    writeCSR(CSR_dcsr, dcsr.val);
+    writeCSR(CSR_dpc, v);
 }
 
-void CpuRiver_Functional::exceptionLoadInstruction(Axi4TransactionType *tr) {
-    portCSR_.write(CSR_mtval, tr->addr);
-    raiseSignal(EXCEPTION_InstrFault);
+
+uint64_t CpuRiver_Functional::readRegDbg(uint32_t regno) {
+    uint64_t rdata = 0;
+    uint32_t region = regno >> 12;
+    if (region == 0) {
+        rdata = readCSR(regno);
+    } else if (region == 1) {
+        rdata = readGPR(regno & 0x3F);
+    } else if (region == 0xc) {
+        rdata = readNonStandardReg(regno & 0xFFF);
+    }
+    return rdata;
 }
 
-void CpuRiver_Functional::exceptionLoadData(Axi4TransactionType *tr) {
-    portCSR_.write(CSR_mtval, tr->addr);
-    raiseSignal(EXCEPTION_LoadFault);
+void CpuRiver_Functional::writeRegDbg(uint32_t regno, uint64_t val) {
+    uint32_t region = regno >> 12;
+    if (region == 0) {
+        writeCSR(regno, val);
+    } else if (region == 1) {
+        writeGPR(regno & 0x3F, val);
+    } else if (region == 0xc) {
+        writeNonStandardReg(regno & 0xFFF, val);
+    }
 }
 
-void CpuRiver_Functional::exceptionStoreData(Axi4TransactionType *tr) {
-    portCSR_.write(CSR_mtval, tr->addr);
-    raiseSignal(EXCEPTION_StoreFault);
+uint64_t CpuRiver_Functional::readCSR(uint32_t regno) {
+    uint64_t ret = 0;
+    uint64_t trigidx;
+    bool rd_access = true;;
+    switch (regno) {
+    case CSR_mcycle:
+    case CSR_minsret:
+    case CSR_cycle:
+    case CSR_time:
+    case CSR_insret:
+        ret = step_cnt_;
+        rd_access = false;
+        break;
+    case CSR_dpc:
+        if (!isHalted()) {
+            ret = getNPC();
+            rd_access = false;
+        }
+        break;
+    case CSR_tdata1:
+        trigidx = readCSR(CSR_tselect);
+        ret = ptriggers_[trigidx].data1.val;
+        rd_access = false;
+        break;
+    case CSR_tdata2:
+        trigidx = readCSR(CSR_tselect);
+        ret = ptriggers_[trigidx].data2;
+        rd_access = false;
+        break;
+    case CSR_textra:
+        trigidx = readCSR(CSR_tselect);
+        ret = ptriggers_[trigidx].extra;
+        rd_access = false;
+        break;
+    case CSR_tinfo:
+        // RO: list of supported triggers
+        ret = (1ull << TriggerType_AddrDataMatch)
+            | (1ull << TriggerType_InstrCountMatch)
+            | (1ull << TriggerType_Inetrrupt)
+            | (1ull << TriggerType_Exception);
+        rd_access = false;
+        break;
+    case CSR_mip:
+        {
+            csr_mip_type mip;
+            mip.value = 0;
+            mip.bits.MEIP = iirq_->getPendingRequest(0) != IRQ_REQUEST_NONE;
+            ret = mip.value;
+            rd_access = false;
+        }
+        break;
+    default:;
+    }
+    if (rd_access) {
+        RISCV_mutex_lock(&mutex_csr_);
+        ret = portCSR_.read(regno).val;
+        RISCV_mutex_unlock(&mutex_csr_);
+    }
+    return ret;
 }
+
+void CpuRiver_Functional::writeCSR(uint32_t regno, uint64_t val) {
+    bool wr_access = true;
+    uint64_t trigidx;
+    switch (regno) {
+    // Read-Only registers
+    case CSR_misa:
+    case CSR_mvendorid:
+    case CSR_marchid:
+    case CSR_mimplementationid:
+    case CSR_mhartid:
+        wr_access = false;
+        break;
+    // read only timers:
+    case CSR_mcycle:
+    case CSR_minsret:
+    case CSR_cycle:
+    case CSR_time:
+    case CSR_insret:
+        wr_access = false;
+        break;
+    case CSR_tselect:
+        if (val > triggersTotal_.to_uint64()) {
+            val = triggersTotal_.to_uint64();
+            RISCV_debug("Select trigger %d", static_cast<int>(val));
+        }
+        break;
+    case CSR_tdata1:
+        trigidx = readCSR(CSR_tselect);
+        TriggerData1Type tdata1;
+        tdata1.val = val;
+        if (tdata1.bitsdef.type == TriggerType_AddrDataMatch) {
+            // Preset value
+            tdata1.mcontrol_bits.maskmax = mcontrolMaskmax_.to_uint64();
+        }
+        ptriggers_[trigidx].data1.val = val;
+        RISCV_info("[tdata1] <= %016" RV_PRI64 "x, type=%d",
+            val, static_cast<uint32_t>(tdata1.bitsdef.type));
+        val = tdata1.val;
+        break;
+    case CSR_tdata2:
+        trigidx = readCSR(CSR_tselect);
+        ptriggers_[trigidx].data2 = val;
+        RISCV_info("[tdata2] <= %016" RV_PRI64 "x", val);
+        break;
+    case CSR_textra:
+        trigidx = readCSR(CSR_tselect);
+        ptriggers_[trigidx].extra = val;
+        RISCV_info("[textra] <= %016" RV_PRI64 "x", val);
+        break;
+    case CSR_flushi:
+        flush(val);
+        break;
+    default:;
+    }
+    if (wr_access) {
+        RISCV_mutex_lock(&mutex_csr_);
+        portCSR_.write(regno, val);
+        RISCV_mutex_unlock(&mutex_csr_);
+    }
+}
+
 
 }  // namespace debugger
 

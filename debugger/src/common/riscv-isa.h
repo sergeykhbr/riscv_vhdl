@@ -491,28 +491,36 @@ union csr_mcause_type {
 
 union csr_mie_type {
     struct bits_type {
-        uint64_t zero1  : 1;
-        uint64_t SSIE   : 1;    // super-visor software interrupt enable
-        uint64_t HSIE   : 1;    // hyper-visor software interrupt enable
-        uint64_t MSIE   : 1;    // machine mode software interrupt enable
-        uint64_t zero2  : 1;
-        uint64_t STIE   : 1;    // super-visor time interrupt enable
-        uint64_t HTIE   : 1;    // hyper-visor time interrupt enable
-        uint64_t MTIE   : 1;    // machine mode time interrupt enable
+        uint64_t USIE   : 1;    // [0] Use sw interrupt
+        uint64_t SSIE   : 1;    // [1] super-visor software interrupt enable
+        uint64_t HSIE   : 1;    // [2] hyper-visor software interrupt enable
+        uint64_t MSIE   : 1;    // [3] machine mode software interrupt enable
+        uint64_t UTIE   : 1;    // [4]
+        uint64_t STIE   : 1;    // [5] super-visor time interrupt enable
+        uint64_t HTIE   : 1;    // [6] hyper-visor time interrupt enable
+        uint64_t MTIE   : 1;    // [7] machine mode time interrupt enable
+        uint64_t UEIE   : 1;    // [8] User external interrupt enable
+        uint64_t SEIE   : 1;    // [9] supervisor external interrupt enable
+        uint64_t HEIE   : 1;    // [10] hypervisor external interrupt enable
+        uint64_t MEIE   : 1;    // [11] machine external interrupt enable
     } bits;
     uint64_t value;
 };
 
 union csr_mip_type {
     struct bits_type {
-        uint64_t zero1  : 1;
+        uint64_t USIP   : 1;
         uint64_t SSIP   : 1;    // super-visor software interrupt pending
         uint64_t HSIP   : 1;    // hyper-visor software interrupt pending
         uint64_t MSIP   : 1;    // machine mode software interrupt pending
-        uint64_t zero2  : 1;
+        uint64_t UTIP   : 1;
         uint64_t STIP   : 1;    // super-visor time interrupt pending
         uint64_t HTIP   : 1;    // hyper-visor time interrupt pending
         uint64_t MTIP   : 1;    // machine mode time interrupt pending
+        uint64_t UEIP   : 1;    // [8] User external interrupt pending
+        uint64_t SEIP   : 1;    // [9] supervisor external interrupt pending
+        uint64_t HEIP   : 1;    // [10] hypervisor external interrupt pending
+        uint64_t MEIP   : 1;    // [11] machine external interrupt pending
     } bits;
     uint64_t value;
 };

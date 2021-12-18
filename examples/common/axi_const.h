@@ -48,6 +48,9 @@ static const int AXI4_SYSTEM_CLOCK = 40000000;  /// 40 MHz
 #define MST_DID_EMPTY             0x7755
 #define SLV_DID_EMPTY             0x5577
 
+// Context indexes:
+#define CTX_CPU0_M_MODE   0
+
 // Masters IDs
 #define RISCV_CACHED_TILELINK     0x0500
 #define RISCV_UNCACHED_TILELINK   0x0501

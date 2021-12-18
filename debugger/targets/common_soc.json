@@ -134,7 +134,8 @@
                 ['LogLevel',3],
                 ['BaseAddress',0x80009000],
                 ['Length',4096],
-                ['IrqControl',['irqctrl0','irq4']],
+                ['IrqController','plic0'],
+                ['IrqId',4],
                 ['ClkSource','core0']
                 ]}]},
     {'Class':'RfControllerClass','Instances':[

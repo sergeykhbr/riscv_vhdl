@@ -40,11 +40,8 @@ class CpuRiver_Functional : public CpuGeneric,
     /** IResetListener interface */
     virtual void reset(IFace *isource);
 
-    /** ICpuGeneric interface */
-    virtual void raiseSignal(int idx);
-    virtual void lowerSignal(int idx);
-
     /** ICpuFunctional interface */
+    virtual void setBreakPC(uint64_t v, uint32_t cause) override;
     virtual void raiseSoftwareIrq() {}
     virtual void setReg(int idx, uint64_t val) override {
         if (idx) {
@@ -52,11 +49,25 @@ class CpuRiver_Functional : public CpuGeneric,
         }
     }
     virtual uint64_t getIrqAddress(int idx) { return readCSR(CSR_mtvec); }
-    virtual void exceptionLoadInstruction(Axi4TransactionType *tr);
-    virtual void exceptionLoadData(Axi4TransactionType *tr);
-    virtual void exceptionStoreData(Axi4TransactionType *tr);
+    virtual void generateException(int e, uint64_t arg) override {
+        writeCSR(CSR_mtval, arg);
+        CpuGeneric::generateException(e, arg);
+    }
+    virtual void generateExceptionLoadInstruction(uint64_t addr) override {
+        generateException(EXCEPTION_InstrFault, addr);
+    }
+
+    /** DPort interface */
+    virtual uint64_t readRegDbg(uint32_t regno) override;
+    virtual void writeRegDbg(uint32_t regno, uint64_t val) override;
 
     /** ICpuRiscV interface */
+    virtual uint64_t readCSR(uint32_t idx);
+    virtual void writeCSR(uint32_t idx, uint64_t val);
+    virtual uint64_t readGPR(uint32_t regno) { return R[regno]; }
+    virtual void writeGPR(uint32_t regno, uint64_t val) { R[regno] = val; }
+    virtual uint64_t readNonStandardReg(uint32_t regno) { return 0; }
+    virtual void writeNonStandardReg(uint32_t regno, uint64_t val) {}
     virtual void mmuAddrReserve(uint64_t addr) override {
         mmuReservatedAddr_ = addr;
         mmuReservedAddrWatchdog_ = 64;
@@ -75,11 +86,14 @@ class CpuRiver_Functional : public CpuGeneric,
     virtual EEndianessType endianess() { return LittleEndian; }
     virtual GenericInstruction *decodeInstruction(Reg64Type *cache);
     virtual void generateIllegalOpcode();
-    virtual void handleTrap();
+    virtual void handleException(int e);
+    virtual void handleInterrupts();
     /** Tack Registers changes during execution */
     virtual void trackContextStart();
     /** // Stop tracking and write trace file */
     virtual void traceOutput() override;
+    virtual bool isStepEnabled() override;
+    virtual void checkStackProtection() override;
 
     void addIsaUserRV64I();
     void addIsaPrivilegedRV64I();
@@ -95,6 +109,9 @@ class CpuRiver_Functional : public CpuGeneric,
         uint32_t t1 = val & 0x3;
         return 0x20 | ((val >> 13) << 2) | t1;
     }
+
+ private:
+    void switchContext(uint32_t prvnxt);
 
  private:
     AttributeType vendorid_;

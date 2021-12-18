@@ -35,6 +35,16 @@ void fatal_error() {
     while (1) {}
 }
 
+uint32_t plic_claim(int ctxid) {
+    plic_map *p = (plic_map *)ADDR_BUS0_XSLV_PLIC;
+    return p->ctx_prio[ctxid].claim_complete;
+}
+
+void plic_complete(int ctxid, int irqid) {
+    plic_map *p = (plic_map *)ADDR_BUS0_XSLV_PLIC;
+    p->ctx_prio[ctxid].claim_complete = irqid;
+}
+
 long interrupt_handler_c(long cause, long epc, long long regs[32]) {
     /**
      * Pending interrupt bit is cleared in the crt.S file by calling:
@@ -59,13 +69,14 @@ long interrupt_handler_c(long cause, long epc, long long regs[32]) {
     p_irqctrl->irq_lock = 0;
 
     if (mcause.bits.irq == 0x1 && mcause.bits.code == 11) {
-        for (int i = 0; i < CFG_IRQ_TOTAL; i++) {
-            if (pending & 0x1) {
-                p_irqctrl->irq_cause_idx = i;
-                isr_table[i]();
-            }
-            pending >>= 1;
+        plic_map *p = (plic_map *)ADDR_BUS0_XSLV_PLIC;
+        uint32_t irqid = plic_claim(CTX_CPU0_M_MODE);
+        if (isr_table[irqid]) {
+            isr_table[irqid]();
+        } else {
+            print_uart("err: no_handler\r\n", 17);
         }
+        plic_complete(CTX_CPU0_M_MODE, irqid);
     } else {
        print_uart("mcause:", 7);
        print_uart_hex(cause);

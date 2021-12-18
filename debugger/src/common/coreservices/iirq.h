@@ -21,18 +21,21 @@
 
 namespace debugger {
 
-static const char *const IFACE_IIRQ_CONTROLLER = "IIrqController";
+static const char *const IFACE_IRQ_CONTROLLER = "IIrqController";
+
+static const int IRQ_REQUEST_NONE = 0;
 
 class IIrqController : public IFace {
  public:
-    IIrqController() : IFace(IFACE_IIRQ_CONTROLLER) {}
+    IIrqController() : IFace(IFACE_IRQ_CONTROLLER) {}
 
     // Request from periphery to CPU
     virtual int requestInterrupt(IFace *isrc, int idx) = 0;
 
     // Interrupt should be requested, enabled with proper 
     // prioiry and enabled for context. Called by CPU.
-    virtual bool isPendingRequest(int ctxid) = 0;
+    // @ret IRQ_REQUEST_NONE if no requests
+    virtual int getPendingRequest(int ctxid) = 0;
 };
 
 }  // namespace debugger

@@ -91,7 +91,8 @@ class CpuCortex_Functional : public CpuGeneric,
     virtual EEndianessType endianess() { return LittleEndian; }
     virtual GenericInstruction *decodeInstruction(Reg64Type *cache);
     virtual void generateIllegalOpcode();
-    virtual void handleTrap();
+    virtual void handleException(int e) {}
+    virtual void handleInterrupts() {}
     virtual void trackContextEnd() override;
     virtual void traceOutput() override;
     

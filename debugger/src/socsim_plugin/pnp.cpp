@@ -81,7 +81,7 @@ void PNP::postinitService() {
         static_cast<uint8_t>(adc_detector_.to_uint64());
 
     iirq_ = static_cast<IIrqController *>(RISCV_get_service_iface(
-        irqController_.to_string(), IFACE_IIRQ_CONTROLLER));
+        irqController_.to_string(), IFACE_IRQ_CONTROLLER));
     if (!iirq_) {
         RISCV_error("Interface IIrqController in %s not found",
                     irqController_.to_string());

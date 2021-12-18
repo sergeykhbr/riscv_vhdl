@@ -32,6 +32,16 @@ class ICpuRiscV : public IFace {
 public:
     ICpuRiscV() : IFace(IFACE_CPU_RISCV) {}
 
+    // Read/Write Control Status Registers
+    virtual uint64_t readCSR(uint32_t regno) = 0;
+    virtual void writeCSR(uint32_t regno, uint64_t val) = 0;
+    // Read/Write General Purpose Registers + FPU registers
+    virtual uint64_t readGPR(uint32_t regno) = 0;
+    virtual void writeGPR(uint32_t regno, uint64_t val) = 0;
+    // Read/Write Non-standard extension registers
+    virtual uint64_t readNonStandardReg(uint32_t regno) = 0;
+    virtual void writeNonStandardReg(uint32_t regno, uint64_t val) = 0;
+
     // atomic instruction LR/SC reservation
     virtual void mmuAddrReserve(uint64_t addr) = 0;
     virtual bool mmuAddrRelease(uint64_t addr) = 0;

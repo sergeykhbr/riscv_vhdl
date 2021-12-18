@@ -13,7 +13,8 @@ namespace debugger {
 GNSSStub::GNSSStub(const char *name)  : IService(name) {
     registerInterface(static_cast<IMemoryOperation *>(this));
     registerInterface(static_cast<IClockListener *>(this));
-    registerAttribute("IrqControl", &irqctrl_);
+    registerAttribute("IrqController", &irqctrl_);
+    registerAttribute("IrqId", &irqid_);
     registerAttribute("ClkSource", &clksrc_);
 
     memset(&regs_, 0, sizeof(regs_));
@@ -34,12 +35,11 @@ void GNSSStub::postinitService() {
         RISCV_error("Can't find IClock interface %s", clksrc_.to_string());
     }
 
-    iwire_ = static_cast<IWire *>(
-        RISCV_get_service_port_iface(irqctrl_[0u].to_string(),
-                                     irqctrl_[1].to_string(),
-                                     IFACE_WIRE));
-    if (!iwire_) {
-        RISCV_error("Can't find IWire interface %s", irqctrl_[0u].to_string());
+    iirq_ = static_cast<IIrqController *>(
+        RISCV_get_service_iface(irqctrl_.to_string(),
+                                IFACE_IRQ_CONTROLLER));
+    if (!iirq_) {
+        RISCV_error("Can't find IIrqController interface %s", irqctrl_.to_string());
     }
 }
 
@@ -70,7 +70,7 @@ ETransStatus GNSSStub::b_transport(Axi4TransactionType *trans) {
 }
 
 void GNSSStub::stepCallback(uint64_t t) {
-    iwire_->raiseLine();
+    iirq_->requestInterrupt(static_cast<IService *>(this), irqid_.to_int());
     if (regs_.tmr.rw_MsLength) {
         regs_.tmr.rw_tow++;
         regs_.tmr.rw_tod++;

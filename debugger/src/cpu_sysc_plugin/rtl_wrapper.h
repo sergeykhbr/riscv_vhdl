@@ -113,8 +113,12 @@ class RtlWrapper : public sc_module,
     virtual void lowerSignal(int idx);
 
     /** ICpuRiscV interface */
-    virtual uint64_t readCSR(int idx) { return 0;}
-    void virtual writeCSR(int idx, uint64_t val) {}
+    virtual uint64_t readCSR(uint32_t regno) { return 0; }
+    virtual void writeCSR(uint32_t regno, uint64_t val) {}
+    virtual uint64_t readGPR(uint32_t regno) { return 0; }
+    virtual void writeGPR(uint32_t regno, uint64_t val) {}
+    virtual uint64_t readNonStandardReg(uint32_t regno) { return 0; }
+    virtual void writeNonStandardReg(uint32_t regno, uint64_t val) {}
     virtual void mmuAddrReserve(uint64_t addr) { }
     virtual bool mmuAddrRelease(uint64_t addr) { return true; }
 

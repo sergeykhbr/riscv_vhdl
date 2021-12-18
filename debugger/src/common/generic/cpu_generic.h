@@ -22,7 +22,6 @@
 #include <ihap.h>
 #include <async_tqueue.h>
 #include "coreservices/ithread.h"
-#include "coreservices/icpugen.h"
 #include "coreservices/icpufunctional.h"
 #include "coreservices/idport.h"
 #include "coreservices/imemop.h"
@@ -40,7 +39,6 @@ namespace debugger {
 
 class CpuGeneric : public IService,
                    public IThread,
-                   public ICpuGeneric,
                    public ICpuFunctional,
                    public IDPort,
                    public IClock,
@@ -54,10 +52,6 @@ class CpuGeneric : public IService,
     /** IService interface */
     virtual void postinitService();
 
-    /** ICpuGeneric interface */
-    virtual void raiseSignal(int idx) = 0;
-    virtual void lowerSignal(int idx) = 0;
-
     /** ICpuFunctional */
     virtual uint64_t *getpRegs() { return R; }
     virtual uint64_t getPC() { return *PC_; }
@@ -65,15 +59,15 @@ class CpuGeneric : public IService,
     virtual uint64_t getNPC() { return *NPC_; }
     virtual void setNPC(uint64_t v) { *NPC_ = v; }
     virtual void setReg(int idx, uint64_t val);
+    virtual void setBreakPC(uint64_t v, uint32_t cause) {}
     virtual void setBranch(uint64_t npc);
     virtual void pushStackTrace();
     virtual void popStackTrace();
     virtual uint64_t getPrvLevel() { return cur_prv_level; }
     virtual void setPrvLevel(uint64_t lvl) { cur_prv_level = lvl; }
     virtual ETransStatus dma_memop(Axi4TransactionType *tr);
-    virtual void exceptionLoadInstruction(Axi4TransactionType *tr) {}
-    virtual void exceptionLoadData(Axi4TransactionType *tr) {}
-    virtual void exceptionStoreData(Axi4TransactionType *tr) {}
+    virtual void generateException(int e, uint64_t arg) { exceptions_ |= 1ull << e; }
+    virtual void generateExceptionLoadInstruction(uint64_t addr) {}
     virtual bool isOn() { return estate_ != CORE_OFF; }
     virtual void resume();
     virtual void halt(uint32_t cause, const char *descr);
@@ -84,12 +78,8 @@ class CpuGeneric : public IService,
     virtual void resumereq() {resumereq_ = true; }
     virtual void haltreq() { haltreq_ = true; }
     virtual bool isHalted() { return estate_ == CORE_Halted; }
-    virtual uint64_t readCSR(uint32_t idx);
-    virtual void writeCSR(uint32_t idx, uint64_t val);
-    virtual uint64_t readGPR(uint32_t regno) { return R[regno]; }
-    virtual void writeGPR(uint32_t regno, uint64_t val) { R[regno] = val; }
-    virtual uint64_t readNonStandardReg(uint32_t regno) { return 0; }
-    virtual void writeNonStandardReg(uint32_t regno, uint64_t val) {}
+    virtual uint64_t readRegDbg(uint32_t regno) { return 0; }
+    virtual void writeRegDbg(uint32_t regno, uint64_t val) {}
     virtual bool executeProgbuf(uint32_t *progbuf);
     virtual bool isExecutingProgbuf() { return estate_ == CORE_ProgbufExec; }
     virtual void setResetPin(bool val) {}
@@ -100,14 +90,16 @@ class CpuGeneric : public IService,
     virtual EEndianessType endianess() = 0;
     virtual GenericInstruction *decodeInstruction(Reg64Type *cache) = 0;
     virtual void generateIllegalOpcode() = 0;
-    virtual void handleTrap() = 0;
+    virtual void checkStackProtection() {}
+    virtual void handleTrap();
+    virtual void handleException(int e) = 0;
+    virtual void handleInterrupts() = 0;
     virtual void trackContextStart();
     virtual void trackContextEnd();
     virtual void traceRegister(int idx, uint64_t v);
     virtual void traceMemop(uint64_t addr, int we, uint64_t v, uint32_t sz);
     virtual void traceOutput() {}
-    virtual void setHaltCause(uint32_t cause);
-    virtual bool isStepEnabled();
+    virtual bool isStepEnabled() { return false; }
     virtual bool isTriggerICount();
     virtual bool isTriggerInstruction();
 
@@ -215,6 +207,7 @@ class CpuGeneric : public IService,
     GenericReg64Bank stackTraceBuf_;        // [[from,to],*]
     
     uint64_t pc_z_;
+    uint64_t exceptions_;
     uint64_t interrupt_pending_[2];
     bool do_not_cache_;         // Do not put instruction into ICache
 

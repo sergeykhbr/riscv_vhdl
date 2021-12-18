@@ -91,17 +91,17 @@ unsigned CpuCortex_Functional::addSupportedInstruction(
     return 0;
 }
 
-void CpuCortex_Functional::handleTrap() {
+/*void CpuCortex_Functional::handleTrap() {
     // Check software before checking I-bit
     if (interrupt_pending_[0] & (1ull << Interrupt_SoftwareIdx)) {
-        DCSR_TYPE::ValueType dcsr;
-        dcsr.val = static_cast<uint32_t>(readCSR(CSR_dcsr));
-        if (dcsr.bits.ebreakm == 1) {
+        //DCSR_TYPE::ValueType dcsr;
+        //dcsr.val = static_cast<uint32_t>(readCSR(CSR_dcsr));
+        //if (dcsr.bits.ebreakm == 1) {
             interrupt_pending_[0] &= ~(1ull << Interrupt_SoftwareIdx);
             setNPC(getPC());
             halt(HALT_CAUSE_EBREAK, "SWI Breakpoint");
             return;
-        }
+        //}
     }
 
     if (getI() == 1) {
@@ -135,7 +135,7 @@ void CpuCortex_Functional::handleTrap() {
         interrupt_pending_[i] = 0;
     }
     interrupt_pending_[0] = 0;
-}
+}*/
 
 void CpuCortex_Functional::enterException(int idx) {
     // Save register into stack

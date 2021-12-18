@@ -82,16 +82,9 @@ void DmiFunctional::postinitService() {
 }
 
 void DmiFunctional::readTransfer(uint32_t regno, uint32_t size) {
-    uint32_t region = regno >> 12;
     IDPort *idport = phartdata_[getHartSelected()].idport;
     uint64_t rdata = 0;
-    if (region == 0) {
-        rdata = idport->readCSR(regno);
-    } else if (region == 1) {
-        rdata = idport->readGPR(regno & 0x3F);
-    } else if (region == 0xc) {
-        rdata = idport->readNonStandardReg(regno & 0xFFF);
-    }
+    rdata = idport->readRegDbg(regno);
     switch (size) {
     case 0:
         rdata &= 0xFFull;
@@ -112,20 +105,13 @@ void DmiFunctional::readTransfer(uint32_t regno, uint32_t size) {
 }
 
 void DmiFunctional::writeTransfer(uint32_t regno, uint32_t size) {
-    uint32_t region = regno >> 12;
     IDPort *idport = phartdata_[getHartSelected()].idport;
     uint64_t arg0 = databuf.getp()[1].val;
     arg0 = (arg0 << 32) | databuf.getp()[0].val;
     if (size == 2) {
         arg0 &= 0xFFFFFFFFull;
     }
-    if (region == 0) {
-        idport->writeCSR(regno, arg0);
-    } else if (region == 1) {
-        idport->writeGPR(regno & 0x3F, arg0);
-    } else if (region == 0xc) {
-        idport->writeNonStandardReg(regno & 0xFFF, arg0);
-    }
+    idport->writeRegDbg(regno, arg0);
 }
 
 void DmiFunctional::executeProgbuf() {
