@@ -40,10 +40,14 @@ void *fw_get_ram_data(const char *name);
 typedef void (*IRQ_HANDLER)(void);
 
 int fw_get_cpuid();
-void fw_disable_interrupts();
-void fw_register_isr_handler(int idx, IRQ_HANDLER f);
-void fw_enable_isr(int idx);
-void fw_disable_isr(int idx);
+// mstatus::mie bit controler
+void fw_enable_m_interrupts();
+void fw_disable_m_interrupts();
+// plic isr table entries
+void fw_enable_plic_irq(int ctxid, int idx);
+void fw_disable_plic_irq(int ctxid, int idx);
+
+void register_ext_interrupt_handler(int idx, IRQ_HANDLER f);
 
 void print_uart(const char *buf, int sz);
 void print_uart_hex(uint64_t val);

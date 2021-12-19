@@ -491,9 +491,9 @@ void CpuGeneric::halt(uint32_t cause, const char *descr) {
     uint8_t tbyte;
     unsigned bytetot = oplen_;
     if (cause == HALT_CAUSE_TRIGGER || cause == HALT_CAUSE_EBREAK) {
-        setBreakPC(getPC(), cause);
+        enterDebugMode(getPC(), cause);
     } else {
-        setBreakPC(getNPC(), cause);
+        enterDebugMode(getNPC(), cause);
     }
 
     if (!bytetot) {

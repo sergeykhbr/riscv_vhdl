@@ -25,7 +25,8 @@ STM32L4_SysTick::STM32L4_SysTick(const char *name) : IService(name),
     STK_VAL(this, "STK_VAL", 0x08),
     STK_CALIB(this, "STK_CALIB", 0x0C) {
     registerAttribute("CPU", &cpu_);
-    registerAttribute("IrqLine", &irqLine_);
+    registerAttribute("IrqController", &irqctrl_);
+    registerAttribute("IrqId", &irqid_);
 
     lastReloadTime_ = 0;
 }
@@ -44,10 +45,10 @@ void STM32L4_SysTick::postinitService() {
         return;
     }
 
-    icpu_ = static_cast<ICpuGeneric *>(
-        RISCV_get_service_iface(cpu_.to_string(), IFACE_CPU_GENERIC));
-    if (!icpu_) {
-        RISCV_error("Can't find ICpuRiscV interface %s", cpu_.to_string());
+    iirq_ = static_cast<IIrqController *>(
+        RISCV_get_service_iface(irqctrl_.to_string(), IFACE_IRQ_CONTROLLER));
+    if (!iirq_) {
+        RISCV_error("Can't find IIrqController interface %s", irqctrl_.to_string());
         return;
     }
 }
@@ -60,7 +61,8 @@ void STM32L4_SysTick::stepCallback(uint64_t t) {
     ctrl.b.COUNTFLAG = 1;
     STK_CTRL.setValue(ctrl.v);
     if (ctrl.b.TICKINT) {
-        icpu_->raiseSignal(irqLine_.to_int());
+        iirq_->requestInterrupt(static_cast<IService *>(this),
+                                irqid_.to_int());
     }
     if (ctrl.b.ENABLE) {
         iclk_->moveStepCallback(static_cast<IClockListener *>(this), t + dt);
@@ -91,11 +93,11 @@ void STM32L4_SysTick::disableCounter() {
 }
 
 void STM32L4_SysTick::enableInterrupt() {
-    RISCV_info("Enable Interrupt %d", irqLine_.to_int());
+    RISCV_info("Enable Interrupt %d", irqid_.to_int());
 }
 
 void STM32L4_SysTick::disableInterrupt() {
-    RISCV_info("Disable Interrupt %d", irqLine_.to_int());
+    RISCV_info("Disable Interrupt %d", irqid_.to_int());
 }
 
 

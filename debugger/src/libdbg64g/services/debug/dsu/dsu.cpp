@@ -66,7 +66,7 @@ void DSU::postinitService() {
         }
     }
 
-    ICpuGeneric *icpu;
+    /*ICpuGeneric *icpu;
     for (unsigned i = 0; i < cpu_.size(); i++) {
         icpu = static_cast<ICpuGeneric *>(
             RISCV_get_service_iface(cpu_[i].to_string(), IFACE_CPU_GENERIC));
@@ -78,7 +78,7 @@ void DSU::postinitService() {
             item.make_iface(icpu);
             icpulist_.add_to_list(&item);
         }
-    }
+    }*/
 
     // Set default context
     //hartSelect(0);

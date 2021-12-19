@@ -26,7 +26,6 @@
 #include <iservice.h>
 #include "coreservices/imemop.h"
 #include "coreservices/ireset.h"
-#include "coreservices/icpugen.h"
 #include "coreservices/idsugen.h"
 #include "coreservices/iwire.h"
 #include "coreservices/icmdexec.h"
@@ -63,7 +62,6 @@ class DSU : public RegMemBankGeneric,
     ITap *itap_;
 
     unsigned hartsel_;
-    ICpuGeneric *icpu_context_;     // current cpu context
     event_def nb_event_;
 };
 

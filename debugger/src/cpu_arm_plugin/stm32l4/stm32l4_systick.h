@@ -21,8 +21,7 @@
 #include "iservice.h"
 #include "coreservices/imemop.h"
 #include "coreservices/iclock.h"
-#include "coreservices/iwire.h"
-#include "coreservices/icpugen.h"
+#include "coreservices/iirq.h"
 #include "generic/mapreg.h"
 #include "generic/rmembank_gen1.h"
 
@@ -48,10 +47,11 @@ class STM32L4_SysTick : public IService,
 
  protected:
     AttributeType cpu_;
-    AttributeType irqLine_;
+    AttributeType irqctrl_;
+    AttributeType irqid_;
 
+    IIrqController *iirq_;
     IClock *iclk_;
-    ICpuGeneric *icpu_;
 
     class STK_CTRL_TYPE : public MappedReg32Type {
      public:

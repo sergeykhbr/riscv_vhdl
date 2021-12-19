@@ -18,7 +18,6 @@
 #include "gpio.h"
 #include "uart.h"
 #include "pnp.h"
-#include "irqctrl.h"
 #include "gnss_stub.h"
 #include "gptimers.h"
 #include "rfctrl.h"
@@ -36,7 +35,6 @@ extern "C" void plugin_init(void) {
     REGISTER_CLASS_IDX(GPIO, 3);
     REGISTER_CLASS_IDX(UART, 4);
     REGISTER_CLASS_IDX(PNP, 5);
-    REGISTER_CLASS_IDX(IrqController, 6);
     REGISTER_CLASS_IDX(GNSSStub, 7);
     REGISTER_CLASS_IDX(GPTimers, 9);
     REGISTER_CLASS_IDX(RfController, 10);

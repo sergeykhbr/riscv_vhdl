@@ -20,7 +20,6 @@
 #include <iservice.h>
 #include "generic/mapreg.h"
 #include "generic/rmembank_gen1.h"
-#include "coreservices/icpugen.h"
 #include "debug/dmi_regs.h"
 
 namespace debugger {
@@ -35,7 +34,6 @@ class DsuRegisters {
         DPORT_REGION_BANK64(IService *parent, const char *name,
             uint64_t addr, int len) :
             GenericReg64Bank(parent, name, addr, len) {
-                icpu_ = 0;
             }
 
         /** IMemoryOperation methods */
@@ -43,8 +41,6 @@ class DsuRegisters {
         virtual ETransStatus nb_transport(Axi4TransactionType *trans,
                                   IAxi4NbResponse *cb) override;
 
-        /** Switch CPU context methods: */
-        void setCpu(ICpuGeneric *icpu) { icpu_ = icpu; }
 
      protected:
         IFace *getInterface(const char *name) {
@@ -55,7 +51,6 @@ class DsuRegisters {
         }
 
      private:
-        ICpuGeneric *icpu_;
 
         struct nb_trans_type {
             Axi4TransactionType *p_axi_trans;

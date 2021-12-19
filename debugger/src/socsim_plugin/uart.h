@@ -21,7 +21,7 @@
 #include "iservice.h"
 #include "coreservices/imemop.h"
 #include "coreservices/iserial.h"
-#include "coreservices/iwire.h"
+#include "coreservices/iirq.h"
 #include "coreservices/irawlistener.h"
 #include "coreservices/iclock.h"
 #include "coreservices/icommand.h"
@@ -166,13 +166,15 @@ class UART : public RegMemBankGeneric,
  private:
     AttributeType fifoSize_;
     AttributeType irqctrl_;
+    AttributeType irqidrx_;
+    AttributeType irqidtx_;
     AttributeType clock_;
     AttributeType cmdexec_;
     AttributeType listeners_;  // non-registering attribute
 
-    IWire *iwire_;
     ICmdExecutor *icmdexec_;
     IClock *iclk_;
+    IIrqController *iirq_;
 
     char *rxfifo_;
     char *p_rx_wr_;

@@ -166,7 +166,7 @@ void CpuRiver_Functional::handleInterrupts() {
             mtvec &= ~0x3ull;
             // Vector table only for interrupts (not for exceptions):
             if (mtvecmode == 0x1) {
-                setNPC(mtvec + 4 * irqidx);
+                setNPC(mtvec + 4 * 11);
             } else {
                 setNPC(mtvec);
             }
@@ -385,7 +385,7 @@ void CpuRiver_Functional::lowerSignal(int idx) {
     }
 }*/
 
-void CpuRiver_Functional::setBreakPC(uint64_t v, uint32_t cause) {
+void CpuRiver_Functional::enterDebugMode(uint64_t v, uint32_t cause) {
     DCSR_TYPE::ValueType dcsr;
     dcsr.val = static_cast<uint32_t>(readCSR(CSR_dcsr));
     dcsr.bits.cause = cause;

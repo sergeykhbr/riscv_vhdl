@@ -55,7 +55,7 @@ void test_timer(void) {
     ptmr->timer[0].init_value = 0;
     ptmr->timer[0].control = 0;
 
-    fw_register_isr_handler(CFG_IRQ_GPTIMERS, isr_timer);
+    register_ext_interrupt_handler(CFG_IRQ_GPTIMERS, isr_timer);
 
     p = fw_malloc(sizeof(timer_data_type));    
     fw_register_ram_data(TEST_TIMER_NAME, p);
@@ -66,7 +66,7 @@ void test_timer(void) {
     ptmr->timer[0].init_value = SYS_HZ; // 1 s
     ptmr->timer[0].control = TIMER_CONTROL_ENA | TIMER_CONTROL_IRQ_ENA;
 
-    fw_enable_isr(CFG_IRQ_GPTIMERS);
+    fw_enable_plic_irq(CTX_CPU0_M_MODE, CFG_IRQ_GPTIMERS);
 }
 
 void test_timer_multicycle_instructions(void) {
@@ -79,12 +79,12 @@ void test_timer_multicycle_instructions(void) {
     ptmr->timer[0].init_value = 0;
     ptmr->timer[0].control = 0;
 
-    fw_register_isr_handler(CFG_IRQ_GPTIMERS, isr_timer_empty);
+    register_ext_interrupt_handler(CFG_IRQ_GPTIMERS, isr_timer_empty);
 
     ptmr->timer[0].init_value = 1000; 
     ptmr->timer[0].control = TIMER_CONTROL_ENA | TIMER_CONTROL_IRQ_ENA;
 
-    fw_enable_isr(CFG_IRQ_GPTIMERS);
+    fw_enable_plic_irq(CTX_CPU0_M_MODE, CFG_IRQ_GPTIMERS);
 //    while (ptmr->highcnt < endtime) {
     while (1) {
         a = a * 1.1;

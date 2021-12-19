@@ -48,7 +48,6 @@ SOURCES = crt \
 	test_mbist_ram \
 	test_pnp \
 	test_fpu \
-	test_timer \
 	test_missaccess \
 	test_mpu \
 	test_stackprotect \

@@ -26,26 +26,19 @@ int fw_get_cpuid() {
 }
 
 // external interrupts
-void fw_disable_interrupts() {
+void fw_enable_m_interrupts() {
+    uint64_t t1 = 0x00000008;
+    asm("csrs mstatus, %0" : :"r"(t1));  // set mie
+}
+
+void fw_disable_m_interrupts() {
     uint64_t t1 = 0x00000008;
     asm("csrc mstatus, %0" : :"r"(t1));  // clear mie
 }
 
 
-void fw_register_isr_handler(int idx, IRQ_HANDLER f) {
-    irqctrl_map *p_irqctrl = (irqctrl_map *)ADDR_BUS0_XSLV_IRQCTRL;
-    IRQ_HANDLER *tbl;
-    if (p_irqctrl->isr_table == 0) {
-        p_irqctrl->isr_table = 
-            (uint64_t)fw_malloc(CFG_IRQ_TOTAL * sizeof(IRQ_HANDLER));
-    }
-    tbl = (IRQ_HANDLER *)p_irqctrl->isr_table;
-    tbl[idx] = f;
-}
-
-void fw_enable_isr(int irqidx) {
+void fw_enable_plic_irq(int ctxid, int irqidx) {
     plic_map *p = (plic_map *)ADDR_BUS0_XSLV_PLIC;
-    int ctxid = 0;
     p->src_prioirty[irqidx] = 0x1;    // 1=lowest prioirty; 0 = disabled
 #ifdef PLIC_MODE_ENABLED
     p->src_mode[irqidx] = PLIC_MODE_RISING_EDGE;
@@ -54,9 +47,8 @@ void fw_enable_isr(int irqidx) {
     p->ctx_ie[ctxid].irq_enable[irqidx/32] = 1ul << (irqidx & 0x1F);
 }
 
-void fw_disable_isr(int irqidx) {
+void fw_disable_plic_irq(int ctxid, int irqidx) {
     plic_map *p = (plic_map *)ADDR_BUS0_XSLV_PLIC;
-    int ctxid = 0;
     p->src_prioirty[irqidx] = 0;    // 1=lowest prioirty; 0 = disabled
 }
 

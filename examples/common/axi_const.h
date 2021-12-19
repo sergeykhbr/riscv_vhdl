@@ -50,6 +50,7 @@ static const int AXI4_SYSTEM_CLOCK = 40000000;  /// 40 MHz
 
 // Context indexes:
 #define CTX_CPU0_M_MODE   0
+#define CTX_CPU0_S_MODE   1
 
 // Masters IDs
 #define RISCV_CACHED_TILELINK     0x0500

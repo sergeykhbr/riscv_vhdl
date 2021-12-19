@@ -29,7 +29,9 @@ UART::UART(const char *name) : RegMemBankGeneric(name),
     registerInterface(static_cast<ISerial *>(this));
     registerInterface(static_cast<IClockListener *>(this));
     registerAttribute("FifoSize", &fifoSize_);
-    registerAttribute("IrqControl", &irqctrl_);
+    registerAttribute("IrqController", &irqctrl_);
+    registerAttribute("IrqIdRx", &irqidrx_);
+    registerAttribute("IrqIdTx", &irqidtx_);
     registerAttribute("Clock", &clock_);
     registerAttribute("CmdExecutor", &cmdexec_);
 
@@ -62,12 +64,12 @@ void UART::postinitService() {
     p_rx_wr_ = rxfifo_;
     p_rx_rd_ = rxfifo_;
 
-    iwire_ = static_cast<IWire *>(
-        RISCV_get_service_port_iface(irqctrl_[0u].to_string(),
-                                     irqctrl_[1].to_string(),
-                                     IFACE_WIRE));
-    if (!iwire_) {
-        RISCV_error("Can't find IWire interface %s", irqctrl_[0u].to_string());
+    iirq_ = static_cast<IIrqController *>(
+        RISCV_get_service_iface(irqctrl_.to_string(),
+                                     IFACE_IRQ_CONTROLLER));
+    if (!iirq_) {
+        RISCV_error("Can't find IIrqController interface %s",
+                    irqctrl_.to_string());
     }
 
     iclk_ = static_cast<IClock *>(
@@ -122,7 +124,8 @@ int UART::writeData(const char *buf, int sz) {
     }
 
     if (status_.getTyped().b.rx_irq_ena) {
-        iwire_->raiseLine();
+        iirq_->requestInterrupt(static_cast<IService *>(this),
+                              irqidrx_.to_int());
     }
     return sz;
 }
@@ -163,7 +166,8 @@ void UART::stepCallback(uint64_t t) {
     }
 
     if (tx_total_ == 0 && status_.getTyped().b.tx_irq_ena) {
-        iwire_->raiseLine();
+        iirq_->requestInterrupt(static_cast<IService*>(this),
+                                irqidtx_.to_int());
     } else {
         iclk_->moveStepCallback(static_cast<IClockListener *>(this),
                                 t + getScaler());

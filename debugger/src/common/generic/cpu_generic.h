@@ -59,7 +59,7 @@ class CpuGeneric : public IService,
     virtual uint64_t getNPC() { return *NPC_; }
     virtual void setNPC(uint64_t v) { *NPC_ = v; }
     virtual void setReg(int idx, uint64_t val);
-    virtual void setBreakPC(uint64_t v, uint32_t cause) {}
+    virtual void enterDebugMode(uint64_t v, uint32_t cause) {}
     virtual void setBranch(uint64_t npc);
     virtual void pushStackTrace();
     virtual void popStackTrace();

@@ -25,23 +25,29 @@
   .globl _mbist_ram_exit
   .globl exception_handler_c
   .globl interrupt_handler_c
+  .globl interrupt_s_software_c
+  .globl interrupt_m_software_c
+  .globl interrupt_s_timer_c
+  .globl interrupt_m_timer_c
+  .globl interrupt_s_external_c
+  .globl interrupt_m_external_c
 
 _start:
   j reset_vector
 trap_table:
   j trap_entry
 /* if mtvec is configured as a vectorized interrupt handlers */
-  j bad_irq  # 1 Supervisor software interrupt
-  j bad_irq  # 2 Reserved
-  j bad_irq  # 3 Machine software interrupt
-  j bad_irq  # 4 User timer interrupt
-  j bad_irq  # 5 Supervisor timer interrupt
-  j bad_irq  # 6 Reserved
-  j bad_irq  # 7 Machine timer interrupt
-  j bad_irq  # 8 User external interrupt
-  j bad_irq  # 9 Supervisor external interrupt
-  j bad_irq  # 10 Reserved
-  j bad_irq  # 11 Machine external interrupt
+  j interrupt_s_software_entry  # 1 Supervisor software interrupt
+  j bad_irq                     # 2 Reserved
+  j interrupt_m_software_entry  # 3 Machine software interrupt
+  j bad_irq                     # 4 User timer interrupt
+  j interrupt_s_timer_entry     # 5 Supervisor timer interrupt
+  j bad_irq                     # 6 Reserved
+  j interrupt_m_timer_entry     # 7 Machine timer interrupt
+  j bad_irq                     # 8 User external interrupt
+  j interrupt_s_external_entry  # 9 Supervisor external interrupt
+  j bad_irq                     # 10 Reserved
+  j interrupt_m_external_entry  # 11 Machine external interrupt
 
 bad_irq:
   j bad_irq
@@ -93,8 +99,9 @@ reset_vector:
   #li t0, MSTATUS_XS;   
   #csrs mstatus, t0    # enable accelerator
 
-  ##! init mtvec register (see https://github.com/riscv/riscv-test-env/blob/master/p/riscv_test.h)
+  ##! init mtvec register in vector mode (MODE=0x1)
   la t0, trap_table
+  or t0, t0, 0x1
   csrw mtvec, t0
 
 #if 0
@@ -183,6 +190,46 @@ sp_init_coreall:
   jal main
   ## Never reach here
 
+
+
+interrupt_s_software_entry:
+  _save_context(tp)
+  jal interrupt_s_software_c
+  _restore_context(tp)
+  sret
+
+interrupt_m_software_entry:
+  _save_context(tp)
+  jal interrupt_m_software_c
+  _restore_context(tp)
+  mret
+
+
+interrupt_s_timer_entry:
+  _save_context(tp)
+  jal interrupt_s_timer_c
+  _restore_context(tp)
+  sret
+
+interrupt_m_timer_entry:
+  _save_context(tp)
+  jal interrupt_m_timer_c
+  _restore_context(tp)
+  mret
+
+
+interrupt_s_external_entry:
+  _save_context(tp)
+  jal interrupt_s_external_c
+  _restore_context(tp)
+  sret
+
+interrupt_m_external_entry:
+  _save_context(tp)
+  jal interrupt_m_external_c
+  _restore_context(tp)
+  mret
+
 trap_entry:
   ## was it an interrupt or an exception?
   csrw mscratch, t5;
@@ -202,10 +249,6 @@ interrupt_entry:
   csrr a1, mepc
   sd a1,COOP_REG_TP(tp)
   mv a2, sp
-  # !!! Cannot reset external pending bits only via IrqController (page 28)
-  li t0, 0x00000800
-  csrc mip, t0      #csrc pseudo asm instruction clear CSR bit.
-                    #[11] MEIP: machine pending external interrupt
   jal interrupt_handler_c
 
   # tp-offset in the context array is used to save mepc value. An it may be

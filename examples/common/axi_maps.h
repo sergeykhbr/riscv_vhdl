@@ -23,7 +23,6 @@
 #include "maps/map_gpio.h"
 #include "maps/map_gptimers.h"
 #include "maps/map_uart.h"
-#include "maps/map_irqctrl.h"
 #include "maps/map_rfctrl.h"
 #include "maps/map_gnssengine.h"
 #include "maps/map_ethmac.h"
@@ -37,8 +36,8 @@
 #define ADDR_BUS0_XSLV_PLIC         0x0C000000
 #define ADDR_BUS0_XSLV_SRAM         0x10000000
 #define ADDR_BUS0_XSLV_GPIO         0x80000000
-#define ADDR_BUS0_XSLV_UART1        0x80001000
-#define ADDR_BUS0_XSLV_IRQCTRL      0x80002000
+#define ADDR_BUS0_XSLV_UART0        0x80001000
+//#define ADDR_BUS0_XSLV_IRQCTRL      0x80002000
 #define ADDR_BUS0_XSLV_GPTIMERS     0x80005000
 #define ADDR_BUS0_XSLV_GNSS_SS      0x80008000
 #define ADDR_BUS0_XSLV_ETHMAC       0x80040000
@@ -50,11 +49,12 @@
 
 // Interrupt pins assignemts:
 #define CFG_IRQ_UNUSED      0
-#define CFG_IRQ_UART1       1
-#define CFG_IRQ_ETHMAC      2
-#define CFG_IRQ_GPTIMERS    3
-#define CFG_IRQ_GNSS_SS     4
-#define CFG_IRQ_TOTAL       5
+#define CFG_IRQ_UART0       39   // The same in 740 (unmatched)
+// Interrupt for the self-test that triggered on write access 
+// into read-only register pnp->hwid
+#define PLIC_IRQ_PNP        70
+#define CFG_IRQ_GNSS_SS     71
+#define PLIC_ISR_MAX        73 // Any number up to 1024
 
 
 #endif  // __AXI_MAPS_H__

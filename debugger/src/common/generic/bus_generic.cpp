@@ -16,7 +16,6 @@
 
 #include <api_core.h>
 #include "bus_generic.h"
-#include "coreservices/icpugen.h"
 #include "debug/dsumap.h"
 
 namespace debugger {

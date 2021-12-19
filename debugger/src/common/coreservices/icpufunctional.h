@@ -67,7 +67,7 @@ class ICpuFunctional : public IFace {
     virtual void setNPC(uint64_t v) = 0;
 
     /** Save specified instruction pointer on berakpoint (into dpc for riscv) */
-    virtual void setBreakPC(uint64_t v, uint32_t cause) = 0;
+    virtual void enterDebugMode(uint64_t v, uint32_t cause) = 0;
     virtual void setBranch(uint64_t npc) = 0;
     virtual void pushStackTrace() = 0;
     virtual void popStackTrace() = 0;

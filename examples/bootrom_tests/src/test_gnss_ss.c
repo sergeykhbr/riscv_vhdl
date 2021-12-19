@@ -32,8 +32,8 @@ void test_gnss_ss(uint64_t bar) {
     GnssEngine_map *gnss = (GnssEngine_map *)(bar + 1*0x1000);
     fsev2_map *fse = (fsev2_map *)(bar + 2*0x1000);
 
-    fw_register_isr_handler(CFG_IRQ_GNSS_SS, isr_gnss_ss);
-    fw_enable_isr(CFG_IRQ_GNSS_SS);
+    register_ext_interrupt_handler(CFG_IRQ_GNSS_SS, isr_gnss_ss);
+    fw_enable_plic_irq(CTX_CPU0_M_MODE, CFG_IRQ_GNSS_SS);
 
     // rf controller
     pnp->fwdbg1 = rf->subsystem_config;
@@ -47,8 +47,8 @@ void test_gnss_ss(uint64_t bar) {
     asm("csrs mie, %0" : :"r"(t1));  // enable external irq from PLIC
 
     while (pnp->fwdbg1 != WAS_GNSS_ISR_MARKER) {}
-    fw_disable_isr(CFG_IRQ_GNSS_SS);
 
+    fw_disable_plic_irq(CTX_CPU0_M_MODE, CFG_IRQ_GNSS_SS);
     asm("csrc mie, %0" : :"r"(t1));  // disable external irq from PLIC
 
     pnp->fwdbg1 = gnss->tmr.rw_tow;

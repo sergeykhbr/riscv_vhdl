@@ -41,7 +41,7 @@ class CpuRiver_Functional : public CpuGeneric,
     virtual void reset(IFace *isource);
 
     /** ICpuFunctional interface */
-    virtual void setBreakPC(uint64_t v, uint32_t cause) override;
+    virtual void enterDebugMode(uint64_t v, uint32_t cause) override;
     virtual void raiseSoftwareIrq() {}
     virtual void setReg(int idx, uint64_t val) override {
         if (idx) {

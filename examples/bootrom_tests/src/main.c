@@ -20,6 +20,7 @@
 #include "fw_api.h"
 
 void allocate_exception_table(void);
+void allocate_interrupt_table(void);
 void test_plic(void);
 void test_fpu(void);
 void test_timer(void);
@@ -33,32 +34,22 @@ void print_pnp(void);
 int main() {
     uint32_t tech;
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
-    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART1;
+    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
     gpio_map *gpio = (gpio_map *)ADDR_BUS0_XSLV_GPIO;
-    irqctrl_map *p_irq = (irqctrl_map *)ADDR_BUS0_XSLV_IRQCTRL;
     uint64_t bar;
 
     if (fw_get_cpuid() != 0) {
         while (1) {}
     }
 
-    // mask all interrupts in interrupt controller to avoid
-    // unpredictable behaviour after elf-file reloading via debug port.
-    p_irq->irq_mask = 0xFFFFFFFF;
-    p_irq->isr_table = 0;
     pnp->fwid = 0x20190516;
-
     gpio->direction = 0xf;
-    // !! All interrupts from PLIC are disabled (not enabled in crt.S anymore)!!!
-    //li t0, 0x00000800
-    //csrs mie, t0       # Enable External irq (ftom PLIC) for M mode
-    p_irq->irq_lock = 1;
     fw_malloc_init();
     
     allocate_exception_table();
+    allocate_interrupt_table();
 
     uart_isr_init();   // enable printf_uart function and Tx irq=1
-    p_irq->irq_lock = 0;
  
     led_set(0x01);
 
@@ -75,7 +66,7 @@ int main() {
     test_fpu();
 
     led_set(0x03);
-    test_timer();      // Enabling timer[0] with 1 sec interrupts
+//    test_timer();      // Enabling timer[0] with 1 sec interrupts
 #elif 0
     test_timer_multicycle_instructions();
 #else
@@ -113,7 +104,7 @@ int main() {
     // TODO: implement test console
     while (1) {
         // temporary put it here, while PLIC not fully ready
-        isr_uart1_tx();
+        isr_uart0_tx();
     }
 
     // NEVER REACH THIS POINT

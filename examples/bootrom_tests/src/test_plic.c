@@ -21,16 +21,9 @@
 
 static const char TEST_PLIC_NAME[8] = "plic";
 
-// Interrupt for the self-test that triggered on write access 
-// into read-only register pnp->hwid
-static const int PLIC_IRQ_PNP      = 70;
-
 uint32_t plic_claim(int ctxid);
 void plic_complete(int ctxid, int irqid);
 
-
-void isr_plic(void) {
-}
 
 void plic_enable_irq(int ctxid, int irqidx) {
     plic_map *p = (plic_map *)ADDR_BUS0_XSLV_PLIC;
@@ -56,6 +49,7 @@ void test_generate_interrupt() {
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     pnp->hwid = 0;
 }
+
 
 void test_plic(void) {
     plic_map *p = (plic_map *)ADDR_BUS0_XSLV_PLIC;

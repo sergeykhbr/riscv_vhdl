@@ -20,7 +20,7 @@
 #include <axi_maps.h>
 #include "fw_api.h"
 
-static const char UART1_NAME[8] = "uart1";
+static const char UART0_NAME[8] = "uart0";
 static const int UART_BUF_SZ = 4096;
 
 typedef void (*f_putch)(int, void**);
@@ -59,9 +59,9 @@ void buf_put(uart_data_type *p, char s) {
     }
 }
 
-void isr_uart1_tx() {
-    uart_data_type *pdata = fw_get_ram_data(UART1_NAME);
-    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART1;
+void isr_uart0_tx() {
+    uart_data_type *pdata = fw_get_ram_data(UART0_NAME);
+    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
 
     while (buf_total(pdata)) {
         if (uart->status & UART_STATUS_TX_FULL) {
@@ -72,27 +72,27 @@ void isr_uart1_tx() {
 }
 
 int uart_tx_nempty() {
-    uart_data_type *pdata = fw_get_ram_data(UART1_NAME);
+    uart_data_type *pdata = fw_get_ram_data(UART0_NAME);
     return buf_total(pdata);
 }
 
 void uart_isr_init(void) {
-    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART1;
+    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
     uart_data_type *pdata;
 
-    fw_register_isr_handler(CFG_IRQ_UART1, isr_uart1_tx);
+    register_ext_interrupt_handler(CFG_IRQ_UART0, isr_uart0_tx);
 
     pdata = fw_malloc(sizeof(uart_data_type));
     pdata->fifo = fw_malloc(UART_BUF_SZ);
     pdata->wrcnt = 1;
     pdata->rdcnt = 0;
-    fw_register_ram_data(UART1_NAME, pdata);
+    fw_register_ram_data(UART0_NAME, pdata);
 
     // scaler is enabled in SRAM self test, duplicate it here
     uart->scaler = SYS_HZ / 115200 / 2;
     uart->status |= UART_CONTROL_TXIRQ_ENA;
 
-    fw_enable_isr(CFG_IRQ_UART1);
+    fw_enable_plic_irq(CTX_CPU0_M_MODE, CFG_IRQ_UART0);
 }
 
 
@@ -102,7 +102,7 @@ static void printnum(f_putch putch,
                      unsigned base,
                      int width,
                      int padc) {
-    uart_data_type *p = fw_get_ram_data(UART1_NAME);
+    uart_data_type *p = fw_get_ram_data(UART0_NAME);
     int pos = 0;
 
     while (1) {
@@ -301,7 +301,7 @@ signed_number:
 }
 
 void print_uart(const char *buf, int sz) {
-    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART1;
+    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
     for (int i = 0; i < sz; i++) {
         while (uart->status & UART_STATUS_TX_FULL) {}
         uart->data = buf[i];
@@ -310,7 +310,7 @@ void print_uart(const char *buf, int sz) {
 
 void print_uart_hex(uint64_t val) {
     unsigned char t, s;
-    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART1;
+    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
     for (int i = 0; i < 16; i++) {
         while (uart->status & UART_STATUS_TX_FULL) {}
         
@@ -326,14 +326,14 @@ void print_uart_hex(uint64_t val) {
 
 #undef putchar
 int putchar(int ch) {
-    uart_data_type *p = fw_get_ram_data(UART1_NAME);
+    uart_data_type *p = fw_get_ram_data(UART0_NAME);
     buf_put(p, ch);
     return 0;
 }
 
 void printf_uart(const char *fmt, ... ) {
-    uart_data_type *pdata = fw_get_ram_data(UART1_NAME);
-    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART1;
+    uart_data_type *pdata = fw_get_ram_data(UART0_NAME);
+    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
     int id = fw_get_cpuid() + 1;
 
     // lock UART to current CPU

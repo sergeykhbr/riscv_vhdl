@@ -347,7 +347,7 @@ bool RtlWrapper::isHalt() {
     return i_halted0.read();
 }
 
-void RtlWrapper::raiseSignal(int idx) {
+/*void RtlWrapper::raiseSignal(int idx) {
     switch (idx) {
     case SIGNAL_HardReset:
         request_reset = true;
@@ -366,7 +366,7 @@ void RtlWrapper::lowerSignal(int idx) {
         break;
     default:;
     }
-}
+}*/
 
 }  // namespace debugger
 

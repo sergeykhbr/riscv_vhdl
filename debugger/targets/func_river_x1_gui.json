@@ -95,8 +95,8 @@
                 ['LogLevel',3],
                 ['UseHash',false],
                 ['MapList',['bootrom0','fwimage0','sram0','gpio0',
-                        'uart0','irqctrl0','gnss0','gptmr0','spiflash0',
-                        'pnp0','rfctrl0','fsegps0','dmi0','plic0']]
+                        'uart0','plic0','gnss0','spiflash0',
+                        'pnp0','rfctrl0','fsegps0','dmi0']]
                 ]}]},
   ]
 }

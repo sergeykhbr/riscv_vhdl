@@ -19,7 +19,6 @@
 #include <iclass.h>
 #include <iservice.h>
 #include "coreservices/imemop.h"
-#include "coreservices/icpugen.h"
 #include "coreservices/iirq.h"
 #include "generic/mapreg.h"
 #include "generic/rmembank_gen1.h"

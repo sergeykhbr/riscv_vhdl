@@ -39,12 +39,6 @@ DsuRegisters::DPORT_REGION_BANK64::b_transport(Axi4TransactionType *trans) {
 ETransStatus
 DsuRegisters::DPORT_REGION_BANK64::nb_transport(Axi4TransactionType *trans,
                                               IAxi4NbResponse *cb) {
-    if (!icpu_) {
-        trans->response = MemResp_Error;
-        cb->nb_response(trans);
-        return TRANS_ERROR;
-    }
-
     nb_trans_.p_axi_trans = trans;
     nb_trans_.iaxi_cb = cb;
 

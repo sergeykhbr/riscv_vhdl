@@ -132,7 +132,6 @@ void CpuRiscV_RTL::createSystemC() {
 
     /** Create all objects, then initilize SystemC context: */
     wrapper_ = new RtlWrapper(static_cast<IService *>(this), "wrapper");
-    registerInterface(static_cast<ICpuGeneric *>(wrapper_));
     registerInterface(static_cast<ICpuRiscV *>(wrapper_));
     registerInterface(static_cast<IResetListener *>(wrapper_));
     w_clk = wrapper_->o_clk;

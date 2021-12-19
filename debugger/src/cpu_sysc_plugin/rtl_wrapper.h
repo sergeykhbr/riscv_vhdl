@@ -14,14 +14,12 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_RTL_WRAPPER_H__
-#define __DEBUGGER_RTL_WRAPPER_H__
+#pragma once
 
 #include "async_tqueue.h"
 #include "api_core.h"
 #include "coreservices/imemop.h"
 #include "coreservices/ireset.h"
-#include "coreservices/icpugen.h"
 #include "coreservices/iclock.h"
 #include "coreservices/icpuriscv.h"
 #include "ambalib/types_amba.h"
@@ -32,7 +30,6 @@ namespace debugger {
 
 class RtlWrapper : public sc_module,
                    public IResetListener,
-                   public ICpuGeneric,
                    public ICpuRiscV {
  public:
     sc_clock o_clk;
@@ -109,8 +106,6 @@ class RtlWrapper : public sc_module,
    
     /** ICpuGeneric interface */
     virtual bool isHalt();
-    virtual void raiseSignal(int idx);
-    virtual void lowerSignal(int idx);
 
     /** ICpuRiscV interface */
     virtual uint64_t readCSR(uint32_t regno) { return 0; }
@@ -149,4 +144,3 @@ class RtlWrapper : public sc_module,
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_RTL_WRAPPER_H__
