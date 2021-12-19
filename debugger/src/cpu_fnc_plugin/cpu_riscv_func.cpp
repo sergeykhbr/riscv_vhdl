@@ -273,6 +273,7 @@ void CpuRiver_Functional::reset(IFace *isource) {
     portCSR_.write(CSR_mhartid, hartid_.to_uint64());
     portCSR_.write(CSR_mtvec, 0);
     portCSR_.write(CSR_misa, misa);
+    portCSR_.write(CSR_dpc, getResetAddress());
 
     cur_prv_level = PRV_M;           // Current privilege level
     mmuReservedAddrWatchdog_ = 0;

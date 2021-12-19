@@ -62,12 +62,14 @@ void buf_put(uart_data_type *p, char s) {
 void isr_uart0_tx() {
     uart_data_type *pdata = fw_get_ram_data(UART0_NAME);
     uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
-
+    uart_txdata_type txdata;
+    
     while (buf_total(pdata)) {
-        if (uart->status & UART_STATUS_TX_FULL) {
+        txdata.v = uart->txdata;
+        if (txdata.b.full) {
              break;
         }
-        uart->data = buf_get(pdata);
+        uart->txdata = buf_get(pdata);
     }
 }
 
@@ -90,7 +92,13 @@ void uart_isr_init(void) {
 
     // scaler is enabled in SRAM self test, duplicate it here
     uart->scaler = SYS_HZ / 115200 / 2;
-    uart->status |= UART_CONTROL_TXIRQ_ENA;
+    uart->txctrl = 0x1;  // txen=1
+    uart->rxctrl = 0x1;  // rxen=1
+    uart_irq_type ie;
+    ie.v = 0;
+    ie.b.txwm = 1;
+    ie.b.rxwm = 0;
+    uart->ie = ie.v;
 
     fw_enable_plic_irq(CTX_CPU0_M_MODE, CFG_IRQ_UART0);
 }
@@ -302,17 +310,24 @@ signed_number:
 
 void print_uart(const char *buf, int sz) {
     uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
+    uart_txdata_type txdata;
     for (int i = 0; i < sz; i++) {
-        while (uart->status & UART_STATUS_TX_FULL) {}
-        uart->data = buf[i];
+        do {
+            txdata.v = uart->txdata;
+        } while (txdata.b.full);
+        uart->txdata = buf[i];
     }
 }
 
 void print_uart_hex(uint64_t val) {
     unsigned char t, s;
     uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
+    uart_txdata_type txdata;
+
     for (int i = 0; i < 16; i++) {
-        while (uart->status & UART_STATUS_TX_FULL) {}
+        do {
+            txdata.v = uart->txdata;
+        } while (txdata.b.full);
         
         t = (unsigned char)((val >> ((15 - i) * 4)) & 0xf);
         if (t < 10) {
@@ -320,7 +335,7 @@ void print_uart_hex(uint64_t val) {
         } else {
             s = (t - 10) + 'a';
         }
-        uart->data = s;
+        uart->txdata = s;
     }
 }
 
@@ -347,13 +362,15 @@ void printf_uart(const char *fmt, ... ) {
     va_list arg;
     va_start(arg, fmt);
     vprintfmt_lib((f_putch)putchar, 0, fmt, arg);
+
     va_end(arg);
 
-    while (!(uart->status & UART_STATUS_TX_FULL) && buf_total(pdata)){
-        uart->data = buf_get(pdata);
+    uart_txdata_type txdata;
+    txdata.v = uart->txdata;
+    while (!txdata.b.full && buf_total(pdata)){
+        uart->txdata = buf_get(pdata);
+        txdata.v = uart->txdata;
     }
     // free UART lock
     uart->fwcpuid = 0;
-
-    // TODO: Enable mstatus.meie interrupts from PLIC !!! (was disabled)
 }

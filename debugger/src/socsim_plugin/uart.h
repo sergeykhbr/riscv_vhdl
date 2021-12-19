@@ -94,48 +94,57 @@ class UART : public RegMemBankGeneric,
     /** Common methods */
     uint32_t getScaler();
     int getFifoSize() { return fifoSize_.to_int(); }
-    int getRxTotal() { return rx_total_; }
-    int getTxTotal() { return tx_total_; }
+    uint32_t getRxTotal() { return rx_total_; }
+    uint32_t getTxTotal() { return tx_total_; }
+    uint32_t getTxWatermark() { return txctrl_.getTyped().b.txcnt; }
+    uint32_t getRxWatermark() { return rxctrl_.getTyped().b.rxcnt; }
     void putByte(char v);
     char getByte();
 
  protected:
-    class STATUS_TYPE : public MappedReg32Type {
+    class TXCTRL_TYPE : public MappedReg32Type {
      public:
-        STATUS_TYPE(IService *parent, const char *name, uint64_t addr) :
-                    MappedReg32Type(parent, name, addr) {
-            value_type t;
-            t.v = 0;
-            t.b.rx_irq_ena = 0;
-            t.b.tx_irq_ena = 0;
-            value_.val = t.v;
-        }
+        TXCTRL_TYPE(IService *parent, const char *name, uint64_t addr) :
+                    MappedReg32Type(parent, name, addr) {}
 
         union value_type {
             uint32_t v;
             struct bits_type {
-                uint32_t tx_fifo_full : 1;      // [0]
-                uint32_t tx_fifo_empty : 1;     // [1]
-                uint32_t rsrv1 : 2;             // [3:2]
-                uint32_t rx_fifo_full : 1;      // [4]
-                uint32_t rx_fifo_empty : 1;     // [5]
-                uint32_t rsrv2 : 2;             // [7:6]
-                uint32_t err_parity : 1;        // [8]
-                uint32_t err_stopbit : 1;       // [9]
-                uint32_t rsrv3 : 3;             // [12:10]
-                uint32_t rx_irq_ena : 1;        // [13]
-                uint32_t tx_irq_ena : 1;        // [14]
-                uint32_t parity_bit : 1;        // [15]
+                uint32_t txen : 1;      // [0] TX enable
+                uint32_t nstop : 1;     // [1] Number of stop bits
+                uint32_t rsrv1 : 14;    // [15:2]
+                uint32_t txcnt : 3;     // [18:16] tx watermark fifo
+                uint32_t rsrv2 : 13;    // [31:19]
             } b;
         };
 
-        STATUS_TYPE::value_type getTyped() {
+        TXCTRL_TYPE::value_type getTyped() {
             value_type ret;
             ret.v =  value_.val;
             return ret;
         }
-     protected:
-        virtual uint32_t aboutToRead(uint32_t cur_val) override;
+    };
+
+    class RXCTRL_TYPE : public MappedReg32Type {
+     public:
+        RXCTRL_TYPE(IService *parent, const char *name, uint64_t addr) :
+                    MappedReg32Type(parent, name, addr) {}
+
+        union value_type {
+            uint32_t v;
+            struct bits_type {
+                uint32_t rxen : 1;      // [0] RX enable
+                uint32_t rsrv1 : 15;    // [15:1]
+                uint32_t rxcnt : 3;     // [18:16] rx watermark fifo
+                uint32_t rsrv2 : 13;    // [31:19]
+            } b;
+        };
+
+        RXCTRL_TYPE::value_type getTyped() {
+            value_type ret;
+            ret.v =  value_.val;
+            return ret;
+        }
     };
 
     class SCALER_TYPE : public MappedReg32Type {
@@ -154,13 +163,64 @@ class UART : public RegMemBankGeneric,
         virtual uint32_t aboutToWrite(uint32_t new_val) override;
     };
 
-    class DATA_TYPE : public MappedReg32Type {
+    class TXDATA_TYPE : public MappedReg32Type {
      public:
-        DATA_TYPE(IService *parent, const char *name, uint64_t addr) :
+        TXDATA_TYPE(IService *parent, const char *name, uint64_t addr) :
                     MappedReg32Type(parent, name, addr) {}
      protected:
         virtual uint32_t aboutToRead(uint32_t cur_val) override;
         virtual uint32_t aboutToWrite(uint32_t new_val) override;
+    };
+
+    class RXDATA_TYPE : public MappedReg32Type {
+     public:
+        RXDATA_TYPE(IService *parent, const char *name, uint64_t addr) :
+                    MappedReg32Type(parent, name, addr) {}
+     protected:
+        virtual uint32_t aboutToRead(uint32_t cur_val) override;
+    };
+
+    class IEDATA_TYPE : public MappedReg32Type {
+     public:
+        IEDATA_TYPE(IService *parent, const char *name, uint64_t addr) :
+                    MappedReg32Type(parent, name, addr) {}
+
+        union value_type {
+            uint32_t v;
+            struct bits_type {
+                uint32_t txwm : 1;      // [0] 
+                uint32_t rxwm : 1;      // [1]
+                uint32_t rsrv : 30;     // [31:2]
+            } b;
+        };
+
+        IEDATA_TYPE::value_type getTyped() {
+            value_type ret;
+            ret.v =  value_.val;
+            return ret;
+        }
+    };
+
+    class IPDATA_TYPE : public MappedReg32Type {
+     public:
+        IPDATA_TYPE(IService *parent, const char *name, uint64_t addr) :
+                    MappedReg32Type(parent, name, addr) {}
+
+        union value_type {
+            uint32_t v;
+            struct bits_type {
+                uint32_t txwm : 1;      // [0] 
+                uint32_t rxwm : 1;      // [1]
+                uint32_t rsrv : 30;     // [31:2]
+            } b;
+        };
+
+        IPDATA_TYPE::value_type getTyped() {
+            value_type ret;
+            ret.v =  value_.val;
+            return ret;
+        }
+        virtual uint32_t aboutToRead(uint32_t cur_val) override;
     };
 
  private:
@@ -179,20 +239,24 @@ class UART : public RegMemBankGeneric,
     char *rxfifo_;
     char *p_rx_wr_;
     char *p_rx_rd_;
-    int rx_total_;
+    uint32_t rx_total_;
 
     static const int FIFOSZ = 15;
     char tx_fifo_[FIFOSZ];
-    int tx_wcnt_;
-    int tx_total_;
+    uint32_t tx_wcnt_;
+    uint32_t tx_total_;
 
     mutex_def mutexListeners_;
     UartCmdType *pcmd_;
 
-    STATUS_TYPE status_;
+    TXDATA_TYPE txdata_;
+    RXDATA_TYPE rxdata_;
+    TXCTRL_TYPE txctrl_;
+    RXCTRL_TYPE rxctrl_;
+    IEDATA_TYPE ie_;
+    IPDATA_TYPE ip_;
     SCALER_TYPE scaler_;
     FWCPUID_TYPE fwcpuid_;
-    DATA_TYPE data_;
     int t_cb_cnt_;
 };
 

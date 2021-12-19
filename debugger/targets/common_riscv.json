@@ -43,7 +43,7 @@
                 ['LogLevel',1],
                 ['InitFile','${REPO_PATH}/../examples/bootrom_tests/linuxbuild/bin/bootrom_tests.hex'],
                 ['ReadOnly',true],
-                ['BaseAddress',0x0],
+                ['BaseAddress',0x10000, 'Rom+reserved from 0x0001_0000 upto 0x0100_0000 on FU740'],
                 ['Length',0x10000]
                 ]}]},
     {'Class':'MemorySimClass','Instances':[
@@ -51,7 +51,7 @@
                 ['LogLevel',1],
                 ['InitFile','${REPO_PATH}/../examples/zephyr/gcc711/zephyr.hex'],
                 ['ReadOnly',true],
-                ['BaseAddress',0x00100000],
+                ['BaseAddress',0x09000000, 'Also rom region on FU740'],
                 ['Length',0x40000]
                 ]}]},
     {'Class':'MemorySimClass','Instances':[
@@ -59,6 +59,6 @@
                 ['LogLevel',1],
                 ['InitFile','${REPO_PATH}/../examples/dhrystone21/makefiles/bin/dhrystone21.hex'],
                 ['ReadOnly',false],
-                ['BaseAddress',0x10000000],
-                ['Length',0x80000]
+                ['BaseAddress',0x08000000, 'L2 Cache controller range on FU740 used by bootloader'],
+                ['Length',0x200000, '2 MB alloacted on FU740']
                 ]}]},

@@ -172,6 +172,9 @@ void CpuGeneric::postinitService() {
             trace_file_ = new std::ofstream(generateTraceFile_.to_string());
         }
     }
+
+    setPC(getResetAddress());
+    setNPC(getResetAddress());
 }
 
 void CpuGeneric::hapTriggered(EHapType type,

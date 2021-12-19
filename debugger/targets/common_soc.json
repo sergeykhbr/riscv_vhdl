@@ -88,7 +88,7 @@
     {'Class':'GPIOClass','Instances':[
           {'Name':'gpio0','Attr':[
                 ['LogLevel',3],
-                ['BaseAddress',0x80000000],
+                ['BaseAddress',0x10060000],
                 ['Length',4096],
                 ['DIP',0x0]
                 ]}]},
@@ -97,34 +97,38 @@
                 ['LogLevel',1],
                 ['FifoSize',16],
                 ['CmdExecutor','cmdexec0'],
-                ['BaseAddress',0x80001000],
+                ['BaseAddress',0x10010000],
                 ['Length',4096],
                 ['Clock','core0']
                 ['IrqController','plic0'],
                 ['IrqIdTx',39, 'The same as in FU740'],
                 ['IrqIdRx',39, 'The same as in FU740'],
-                ['MapList',[['uart0','status'],
+                ['MapList',[['uart0','txdata'],
+                            ['uart0','rxdata'],
+                            ['uart0','txctrl'],
+                            ['uart0','rxctrl'],
+                            ['uart0','ie'],
+                            ['uart0','ip'],
                             ['uart0','scaler'],
                             ['uart0','fwcpuid'],
-                            ['uart0','data'],
                            ]]
 
-                ]}]},
-    {'Class':'GNSSStubClass','Instances':[
-          {'Name':'gnss0','Attr':[
-                ['LogLevel',3],
-                ['BaseAddress',0x80009000],
-                ['Length',4096],
-                ['IrqController','plic0'],
-                ['IrqId',71],
-                ['ClkSource','core0']
                 ]}]},
     {'Class':'RfControllerClass','Instances':[
           {'Name':'rfctrl0','Attr':[
                 ['LogLevel',1],
-                ['BaseAddress',0x80008000],
+                ['BaseAddress',0x100f0000],
                 ['Length',4096],
                 ['SubSystemConfig',0x7, '[0]=RfController enable; [1]=Engine; [2]=Fse GPS; [3]=Fse Glonass; [4]Fse Galileo']
+                ]}]},
+    {'Class':'GNSSStubClass','Instances':[
+          {'Name':'gnss0','Attr':[
+                ['LogLevel',3],
+                ['BaseAddress',0x100f1000],
+                ['Length',4096],
+                ['IrqController','plic0'],
+                ['IrqId',71],
+                ['ClkSource','core0']
                 ]}]},
     {'Class':'UartMstClass','Instances':[
           {'Name':'uartmst0','Attr':[
@@ -134,13 +138,13 @@
     {'Class':'FseV2Class','Instances':[
           {'Name':'fsegps0','Attr':[
                 ['LogLevel',1],
-                ['BaseAddress',0x8000A000],
+                ['BaseAddress',0x100f2000],
                 ['Length',4096]
                 ]}]},
     {'Class':'PNPClass','Instances':[
           {'Name':'pnp0','Attr':[
                 ['LogLevel',4],
-                ['BaseAddress',0xfffff000],
+                ['BaseAddress',0x100ff000],
                 ['Length',4096],
                 ['Tech',0],
                 ['IrqController','plic0'],

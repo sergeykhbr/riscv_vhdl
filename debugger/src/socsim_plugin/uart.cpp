@@ -22,10 +22,14 @@
 namespace debugger {
 
 UART::UART(const char *name) : RegMemBankGeneric(name),
-    status_(static_cast<IService *>(this), "status", 0x00),
-    scaler_(static_cast<IService *>(this), "scaler", 0x04),
-    fwcpuid_(static_cast<IService *>(this), "fwcpuid", 0x08),
-    data_(static_cast<IService *>(this), "data", 0x10) {
+    txdata_(static_cast<IService *>(this), "txdata", 0x00),
+    rxdata_(static_cast<IService *>(this), "rxdata", 0x04),
+    txctrl_(static_cast<IService *>(this), "txctrl", 0x08),
+    rxctrl_(static_cast<IService *>(this), "rxctrl", 0x0C),
+    ie_(static_cast<IService *>(this), "ie", 0x10),
+    ip_(static_cast<IService *>(this), "ip", 0x14),
+    scaler_(static_cast<IService *>(this), "scaler", 0x18),
+    fwcpuid_(static_cast<IService *>(this), "fwcpuid", 0x1C) {
     registerInterface(static_cast<ISerial *>(this));
     registerInterface(static_cast<IClockListener *>(this));
     registerAttribute("FifoSize", &fifoSize_);
@@ -112,8 +116,9 @@ int UART::writeData(const char *buf, int sz) {
     if (rxfifo_ == 0) {
         return 0;
     }
-    if (sz > (fifoSize_.to_int() - rx_total_)) {
-        sz = (fifoSize_.to_int() - rx_total_);
+    if (static_cast<uint32_t>(sz) > 
+        (fifoSize_.to_uint32() - rx_total_)) {
+        sz = (fifoSize_.to_uint32() - rx_total_);
     }
     for (int i = 0; i < sz; i++) {
         rx_total_++;
@@ -123,7 +128,8 @@ int UART::writeData(const char *buf, int sz) {
         }
     }
 
-    if (status_.getTyped().b.rx_irq_ena) {
+    if (ie_.getTyped().b.rxwm
+        && rx_total_ > rxctrl_.getTyped().b.rxcnt) {
         iirq_->requestInterrupt(static_cast<IService *>(this),
                               irqidrx_.to_int());
     }
@@ -161,11 +167,14 @@ void UART::closePort() {
 }
 
 void UART::stepCallback(uint64_t t) {
+    bool sent = false;
     if (tx_total_) {
+        sent = true;
         tx_total_--;
     }
 
-    if (tx_total_ == 0 && status_.getTyped().b.tx_irq_ena) {
+    if (sent && ie_.getTyped().b.txwm
+        && tx_total_ < txctrl_.getTyped().b.txcnt) {
         iirq_->requestInterrupt(static_cast<IService*>(this),
                                 irqidtx_.to_int());
     } else {
@@ -215,33 +224,6 @@ char UART::getByte() {
     return ret;
 }
 
-uint32_t UART::STATUS_TYPE::aboutToRead(uint32_t cur_val) {
-    UART *p = static_cast<UART *>(parent_);
-    value_type t;
-    t.v = cur_val;
-    if (p->getRxTotal() == 0) {
-        t.b.rx_fifo_empty = 1;
-        t.b.rx_fifo_full = 0;
-    } else if (p->getRxTotal() >= (p->getFifoSize() - 1)) {
-        t.b.rx_fifo_empty = 0;
-        t.b.rx_fifo_full = 1;
-    } else {
-        t.b.rx_fifo_empty = 0;
-        t.b.rx_fifo_full = 0;
-    }
-
-    if (p->getTxTotal() == 0) {
-        t.b.tx_fifo_empty = 1;
-        t.b.tx_fifo_full = 0;
-    } else if (p->getTxTotal() == FIFOSZ) {
-        t.b.tx_fifo_empty = 0;
-        t.b.tx_fifo_full = 1;
-    } else {
-        t.b.tx_fifo_empty = 0;
-        t.b.tx_fifo_full = 0;
-    }
-    return t.v;
-}
 uint32_t UART::SCALER_TYPE::aboutToWrite(uint32_t new_val) {
 //    UART *p = static_cast<UART *>(parent_);
     return new_val;    
@@ -256,15 +238,43 @@ uint32_t UART::FWCPUID_TYPE::aboutToWrite(uint32_t new_val) {
     }
 }
 
-uint32_t UART::DATA_TYPE::aboutToRead(uint32_t cur_val) {
+uint32_t UART::TXDATA_TYPE::aboutToRead(uint32_t cur_val) {
     UART *p = static_cast<UART *>(parent_);
-    return static_cast<uint8_t>(p->getByte());
+    cur_val = 0;
+    if (p->getTxTotal() == FIFOSZ) {
+        cur_val |= 1ull << 31;  // TX FIFO full flag
+    }
+    return cur_val;
 }
 
-uint32_t UART::DATA_TYPE::aboutToWrite(uint32_t new_val) {
+uint32_t UART::TXDATA_TYPE::aboutToWrite(uint32_t new_val) {
     UART *p = static_cast<UART *>(parent_);
     p->putByte(static_cast<char>(new_val));
     return new_val;    
+}
+
+uint32_t UART::RXDATA_TYPE::aboutToRead(uint32_t cur_val) {
+    UART *p = static_cast<UART *>(parent_);
+    cur_val = 0;
+    if (p->getRxTotal() == 0) {
+        cur_val |= 1ull << 31;  // RX FIFO empty flag
+    } else {
+        cur_val = static_cast<uint8_t>(p->getByte());
+    }
+    return cur_val;
+}
+
+uint32_t UART::IPDATA_TYPE::aboutToRead(uint32_t cur_val) {
+    UART *p = static_cast<UART *>(parent_);
+    value_type ret;
+    ret.v = 0;
+    if (p->getTxTotal() < p->getTxWatermark()) {
+        ret.b.txwm = 1;
+    }
+    if (p->getRxTotal() > p->getRxWatermark()) {
+        ret.b.rxwm = 1;
+    }
+    return ret.v;
 }
 
 }  // namespace debugger

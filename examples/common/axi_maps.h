@@ -30,22 +30,20 @@
 #include "maps/map_fsev2.h"
 #include "maps/map_plic.h"
 
-#define ADDR_BUS0_XSLV_OTP          0x00010000
 #define ADDR_BUS0_XSLV_FWIMAGE      0x00100000
 #define ADDR_BUS0_XSLV_EXTFLASH     0x00200000
-#define ADDR_BUS0_XSLV_PLIC         0x0C000000
-#define ADDR_BUS0_XSLV_SRAM         0x10000000
-#define ADDR_BUS0_XSLV_GPIO         0x80000000
-#define ADDR_BUS0_XSLV_UART0        0x80001000
-//#define ADDR_BUS0_XSLV_IRQCTRL      0x80002000
-#define ADDR_BUS0_XSLV_GPTIMERS     0x80005000
-#define ADDR_BUS0_XSLV_GNSS_SS      0x80008000
-#define ADDR_BUS0_XSLV_ETHMAC       0x80040000
-#define ADDR_BUS0_XSLV_PNP          0xfffff000
+#define ADDR_BUS0_XSLV_SRAM         0x08000000 // 0x0800_0000..0x081F_FFFF = L2 Cache Controller
+#define ADDR_BUS0_XSLV_PLIC         0x0C000000 // FU740 compatible
+#define ADDR_BUS0_XSLV_UART0        0x10010000 // FU740 compatible
+#define ADDR_BUS0_XSLV_UART1        0x10020000 // FU740 compatible
+#define ADDR_BUS0_XSLV_GPIO         0x10060000 // FU740 compatible
+#define ADDR_BUS0_XSLV_OTP          0x10070000
+#define ADDR_BUS0_XSLV_ETHMAC       0x10090000 // 0x1009_0000 .. 0x1009_1FFF Ethernet on FU740
 // GNSS Sub System
-#define ADDR_GNSS_SS_RFCTRL         0x80008000
-#define ADDR_GNSS_SS_ENGINE         0x80009000
-#define ADDR_GNSS_SS_FSEGPS         0x8000a000
+#define ADDR_BUS0_XSLV_RF_CTRL      0x100f0000 // Reserved region of FU740
+#define ADDR_BUS0_XSLV_GNSS_SS      0x100f1000 // Reserved region of FU740
+#define ADDR_BUS0_XSLV_FSE          0x100f2000 // Reserved region of FU740
+#define ADDR_BUS0_XSLV_PNP          0x100ff000 // Reserved region of FU740
 
 // Interrupt pins assignemts:
 #define CFG_IRQ_UNUSED      0

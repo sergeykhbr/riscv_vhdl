@@ -162,7 +162,7 @@ reset_vector:
   csrr a0, mhartid            # a0 <= MHARTID value
 
   # Task stack pointer (tp) uses the same value as sp.
-#define SRAM_BASE_ADDR  0x10000000
+#define SRAM_BASE_ADDR  0x08000000
 #define SRAM_SIZE_BYTES (1<<19)
 #define STACK_CORE1_BYTES 4096
 

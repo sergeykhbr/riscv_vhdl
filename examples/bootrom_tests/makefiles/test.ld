@@ -16,7 +16,7 @@ SECTIONS
 {
 
   /* text: test code section */
-  . = 0x0000;
+  . = 0x10000;
   .text : 
   {
     KEEP(*(.isr_vector))
