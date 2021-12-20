@@ -195,7 +195,7 @@ void CpuRiver_Functional::handleInterrupts() {
         mtvec &= ~0x3ull;
         // Vector table only for interrupts (not for exceptions):
         if (mtvecmode == 0x1) {
-            setNPC(mtvec + 4 * 11);
+            setNPC(mtvec + 4 * mcause.bits.code);
         } else {
             setNPC(mtvec);
         }
@@ -217,78 +217,6 @@ void CpuRiver_Functional::switchContext(uint32_t prvnxt) {
     int xepc = static_cast<int>((cur_prv_level << 8) + 0x41);
     writeCSR(xepc, getNPC());
 }
-
-/*void CpuRiver_Functional::handleTrap() {
-    csr_mstatus_type mstatus;
-    csr_mcause_type mcause;
-
-
-    mstatus.value = portCSR_.read(CSR_mstatus).val;
-    uint64_t exception_mask = (1ull << SIGNAL_XSoftware) - 1;
-    if ((interrupt_pending_[0] & exception_mask) == 0 && 
-        mstatus.bits.MIE == 0 && cur_prv_level == PRV_M) {
-        return;
-    }
-
-    int pendidx = -1;
-    for (size_t i = 0; i < 8*sizeof(interrupt_pending_); i++) {
-        if (interrupt_pending_[i >> 6] & (1ull << (i & 0x3f))) {
-            pendidx = static_cast<int>(i);
-            break;
-        }
-    }
-    mcause.value     = 0;
-    if (pendidx >= EXCEPTIONS_Total) {
-        mcause.bits.irq  = 1;
-        mcause.bits.code = pendidx - EXCEPTIONS_Total + PRV_M;
-    } else {
-        mcause.bits.code = pendidx;
-    }
-    if (estate_ != CORE_ProgbufExec) {
-        portCSR_.write(CSR_mcause, mcause.value);
-    }
-
-    if (mcause.bits.irq == 0 && mcause.value == EXCEPTION_Breakpoint) {
-        if (estate_ == CORE_ProgbufExec) {
-            exitProgbufExec();
-            return;
-        }
-
-        DCSR_TYPE::ValueType dcsr;
-        dcsr.val = static_cast<uint32_t>(readCSR(CSR_dcsr));
-        if (dcsr.bits.ebreakm == 1) {
-            interrupt_pending_[0] &= ~(1ull << EXCEPTION_Breakpoint);
-            setNPC(getPC());
-            halt(HALT_CAUSE_EBREAK, "EBREAK Breakpoint");
-            return;
-        } else {
-            // Call ebreak handler
-            setNPC(readCSR(CSR_mtvec));
-        }
-    }
-
-    // All traps handle via machine mode while CSR mdelegate
-    // doesn't setup other.
-    // @todo delegating
-    mstatus.bits.MPP = cur_prv_level;
-    mstatus.bits.MPIE = (mstatus.value >> cur_prv_level) & 0x1;
-    mstatus.bits.MIE = 0;
-    cur_prv_level = PRV_M;
-    portCSR_.write(CSR_mstatus, mstatus.value);
-
-    int xepc = static_cast<int>((cur_prv_level << 8) + 0x41);
-    portCSR_.write(xepc, getNPC());
-
-    uint64_t mtvec = portCSR_.read(CSR_mtvec).val;
-    uint64_t mtvecmode = mtvec & 0x3;
-    mtvec &= ~0x3ull;
-    if (mtvecmode == 0x1 && mcause.bits.irq) {
-        setNPC(mtvec + 4 * mcause.bits.code);
-    } else {
-        setNPC(mtvec);
-    }
-    interrupt_pending_[pendidx >> 6] &= ~(1ull << (pendidx & 0x3F));
-}*/
 
 void CpuRiver_Functional::reset(IFace *isource) {
     CpuGeneric::reset(isource);
@@ -394,24 +322,6 @@ bool CpuRiver_Functional::isStepEnabled() {
     dcsr.val = static_cast<uint32_t>(readCSR(CSR_dcsr));
     return dcsr.bits.step;
 }
-
-/*void CpuRiver_Functional::raiseSignal(int idx) {
-    if (idx < SIGNAL_HardReset) {
-        interrupt_pending_[idx >> 6] |= 1LL << (idx & 0x3F);
-    } else if (idx == SIGNAL_HardReset) {
-    } else {
-        RISCV_error("Raise unsupported signal %d", idx);
-    }
-}
-
-void CpuRiver_Functional::lowerSignal(int idx) {
-    if (idx == SIGNAL_HardReset) {
-    } else if (idx < SIGNAL_HardReset) {
-        interrupt_pending_[idx >> 6] &= ~(1ull << (idx & 0x3F));
-    } else {
-        RISCV_error("Lower unsupported signal %d", idx);
-    }
-}*/
 
 void CpuRiver_Functional::enterDebugMode(uint64_t v, uint32_t cause) {
     DCSR_TYPE::ValueType dcsr;

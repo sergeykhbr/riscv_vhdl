@@ -20,6 +20,8 @@
 #ifndef __TEST_NORF_SRC_GENERAL_H__
 #define __TEST_NORF_SRC_GENERAL_H__
 
+#define MAGIC_SWIRQ_TEST_NUMBER 0xaabbccdd11223344ull
+
 typedef struct ram_data_type {
     char name[8];
     void *pattern;

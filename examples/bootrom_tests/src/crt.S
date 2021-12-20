@@ -164,29 +164,34 @@ reset_vector:
   # Task stack pointer (tp) uses the same value as sp.
 #define SRAM_BASE_ADDR  0x08000000
 #define SRAM_SIZE_BYTES (1<<19)
-#define STACK_CORE1_BYTES 4096
+#define STACK_PER_CORE_BYTES 4096
+#define CFG_CPU_MAX 4
 
   li  sp, SRAM_BASE_ADDR+SRAM_SIZE_BYTES
-  li  a1, 1
-  beq a0, a1, sp_init_core1
-  li  a1, 0
-  beq a0, a1, sp_init_core0
-sp_init_core1:
-  j sp_init_coreall
-sp_init_core0:
-  li t0,-STACK_CORE1_BYTES
-  add sp, sp, t0
+  addi sp,sp,-256
+  csrw 0x7b3, sp          # save dedicated stack region into dscratch1 register to run riscv-tests
+  mv tp, sp               # or use dedicated tp for context saving
 
+  # Initialze stack pointer for each cpu
+  li  a1, (CFG_CPU_MAX - 1)
+  sub a0, a1, a0                  # (CFG_CPU_MAX - 1 - hartid)
+  li  a1, STACK_PER_CORE_BYTES
+  mul a0, a0, a1
+  sub sp, sp, a0
+
+  # check Hart ID
+  csrr a0, mhartid            # a0 <= MHARTID value
+  beqz a0, init0
+  wfi
+  j end_init0
+init0:
+  # HW Initialization is run only on Core[0]
   # run memory selftest only on Core[0]
   #jal _mbist_ram
 _mbist_ram_exit:
+end_init0:
 
-sp_init_coreall:
-  add tp, zero, sp            # tp = sp + 0 (mov)
-  ## Use tp register to save/restore registers context on task switching
-  addi tp,tp,-256              # tp = tp - 256 = 0x1007ff00
-  addi sp, sp,-264
-
+  # run tests in machine mode:
   jal main
   ## Never reach here
 

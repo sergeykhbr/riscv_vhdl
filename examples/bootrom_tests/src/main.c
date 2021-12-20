@@ -23,8 +23,8 @@ void allocate_exception_table(void);
 void allocate_interrupt_table(void);
 void test_plic(void);
 void test_fpu(void);
-void test_timer(void);
-void test_timer_multicycle_instructions(void);
+void test_swirq(void);
+void test_mtimer(void);
 void test_missaccess(void);
 void test_stackprotect(void);
 void test_spiflash(uint64_t bar);
@@ -54,7 +54,6 @@ int main() {
  
     led_set(0x01);
 
-#if 1
     printf_uart("HARTID . . . . .%d\r\n", fw_get_cpuid());
     printf_uart("Tech . . . . . .0x%08x\r\n", pnp->tech);
     printf_uart("HWID . . . . . .0x%08x\r\n", pnp->hwid);
@@ -63,15 +62,11 @@ int main() {
     led_set(0x02);
 
     test_plic();
-
-    test_fpu();
+    test_mtimer();
+    test_swirq();
 
     led_set(0x03);
-//    test_timer();      // Enabling timer[0] with 1 sec interrupts
-#elif 0
-    test_timer_multicycle_instructions();
-#else
-#endif
+    test_fpu();
 
     led_set(0x04);
     test_missaccess();

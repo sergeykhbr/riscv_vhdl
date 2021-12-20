@@ -21,8 +21,6 @@
 
 static const char INTERRUPT_TABLE_NAME[8] = "irqtbl";
 
-void isr_plic(irqid);
-
 typedef union csr_mcause_type {
     struct bits_type {
         uint64_t code   : 63;   // 11 - Machine external interrupt
@@ -70,12 +68,23 @@ void interrupt_s_software_c() {
 }
 
 void interrupt_m_software_c() {
+    pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
+    clint_map *clint = (clint_map *)ADDR_BUS0_XSLV_CLINT;
+
+    clint->msip[fw_get_cpuid()] = 0x0;     // clear pending bit
+    pnp->fwdbg1 = MAGIC_SWIRQ_TEST_NUMBER; // to pass test write this value
 }
 
 void interrupt_s_timer_c() {
 }
 
 void interrupt_m_timer_c() {
+    pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
+    clint_map *clint = (clint_map *)ADDR_BUS0_XSLV_CLINT;
+    pnp->fwdbg1 = clint->mtime;
+
+    // just to give time before next interrupt
+    clint->mtimecmp[fw_get_cpuid()] = clint->mtime + 10000;
 }
 
 void interrupt_s_external_c() {
