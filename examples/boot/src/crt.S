@@ -132,7 +132,7 @@ reset_vector:
   ##! get core id
   csrr a0, mhartid            # a0 <= MHARTID value
 
-#define SRAM_BASE_ADDR  0x10000000
+#define SRAM_BASE_ADDR  0x08000000
 #define SRAM_SIZE_BYTES (1<<19)
 #define STACK_PER_CORE_BYTES 4096
 #define CFG_CPU_MAX 4
@@ -159,7 +159,7 @@ init0:
   jal _init
 end_init0:
 
-  ##! jump to entry point in SRAM = 0x10000000
+  ##! jump to entry point in SRAM = 0x08000000
   ##!     'meps' - Machine Exception Program Coutner
   li  t0, SRAM_BASE_ADDR
   csrw mepc, t0
@@ -184,10 +184,6 @@ interrupt_entry:
   csrr a0, mcause
   csrr a1, mepc
   mv a2, sp
-  # !!! Cannot reset external pending bits only via IrqController (page 28)
-  li t0, 0x00000800
-  csrc mip, t0      #csrc pseudo asm instruction clear CSR bit.
-                    #[11] MEIP: machine pending external interrupt
   jal interrupt_handler_c
 
   # tp-offset in the context array is used to save mepc value. An it may be

@@ -37,13 +37,14 @@ class DIV : public RiscvInstruction {
         int64_t rs1 = static_cast<int64_t>(R[u.bits.rs1]);
         int64_t rs2 = static_cast<int64_t>(R[u.bits.rs2]);
         if (rs2) {
-#ifdef _WIN32
-            if (rs1 == 0x8000000000000000ll && rs2 == 0xffffffffffffffffll) {
-                res = 0;
-            } else
-#endif
-            res = rs1 / rs2;
+            if (rs1 == (-1ll << 63) && rs2 == (-1ll)) {
+                // Integer division overflow condition
+                res = (-1ll << 63);
+            } else {
+                res = rs1 / rs2;
+            }
         } else {
+            // Interger exception div-by-zero
             res = -1;
         }
         icpu_->setReg(u.bits.rd, static_cast<uint64_t>(res));
@@ -66,7 +67,7 @@ class DIVU : public RiscvInstruction {
         if (R[u.bits.rs2]) {
             res = R[u.bits.rs1] / R[u.bits.rs2];
         } else {
-            // Difference relative x86
+            // exception division by zero (see isa manual). This differs from x86.
             res = ~0ull;
         }
         icpu_->setReg(u.bits.rd, res);
@@ -92,6 +93,7 @@ class DIVUW : public RiscvInstruction {
             // DIVUW also sign-extended
             res = static_cast<int32_t>(a1 / a2);
         } else {
+            // exception division by zero (see isa manual). This differs from x86.
             res = -1;
         }
         icpu_->setReg(u.bits.rd, static_cast<int64_t>(res));
@@ -112,12 +114,18 @@ class DIVW : public RiscvInstruction {
         u.value = payload->buf32[0];
         int32_t divident = static_cast<int32_t>(R[u.bits.rs1]);
         int32_t divisor = static_cast<int32_t>(R[u.bits.rs2]);
+        int64_t rs1 = static_cast<int64_t>(divident);
+        int64_t rs2 = static_cast<int64_t>(divisor);
         int64_t res;
         if (divisor) {
-            // ! Integer overflow on x86
-            res = static_cast<int64_t>(divident) /
-                  static_cast<int64_t>(divisor);
+            if (rs1 == (-1ll << 63) && rs2 == (-1ll)) {
+                // Integer division overflow condition
+                res = (-1ll << 63);
+            } else {
+                res = rs1 / rs2;
+            }
         } else {
+            // Integer division overflow
             res = -1;
         }
         res <<= 32;
@@ -545,10 +553,17 @@ public:
         ISA_R_type u;
         int64_t res;
         u.value = payload->buf32[0];
+        int64_t rs1 = static_cast<int64_t>(R[u.bits.rs1]);
+        int64_t rs2 = static_cast<int64_t>(R[u.bits.rs2]);
         if (R[u.bits.rs2]) {
-            res = static_cast<int64_t>(R[u.bits.rs1])
-                 % static_cast<int64_t>(R[u.bits.rs2]);
+            if (rs1 == (1ull << 63) && rs2 == -1ll) {
+                // exception overflow
+                res = 0;
+            } else {
+                res = rs1 % rs2;
+            }
         } else {
+            // exception div-by-zero
             res = static_cast<int64_t>(R[u.bits.rs1]);
         }
         icpu_->setReg(u.bits.rd, static_cast<uint64_t>(res));
@@ -597,9 +612,15 @@ public:
         u.value = payload->buf32[0];
         int32_t a1 = static_cast<int32_t>(R[u.bits.rs1]);
         int32_t a2 = static_cast<int32_t>(R[u.bits.rs2]);
+        int64_t rs1 = static_cast<int64_t>(a1);
+        int64_t rs2 = static_cast<int64_t>(a2);
         if (a2) {
-            // To avoid integer overflow exception on x86 use int64_t
-            res = static_cast<int64_t>(a1) % static_cast<int64_t>(a2);
+            if (rs1 == (1ull << 63) && rs2 == -1ll) {
+                // overflow exception
+                res = 0;
+            } else {
+                res = rs1 % rs2;
+            }
         } else {
             res = a1;
         }

@@ -38,18 +38,24 @@ int get_dip(int idx) {
 }
 
 void print_uart(const char *buf, int sz) {
-    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART1;
+    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
+    uart_txdata_type txdata;
     for (int i = 0; i < sz; i++) {
-        while (uart->status & UART_STATUS_TX_FULL) {}
-        uart->data = buf[i];
+        do {
+            txdata.v = uart->txdata;
+        } while (txdata.b.full);
+        uart->txdata = buf[i];
     }
 }
 
 void print_uart_hex(long val) {
     unsigned char t, s;
-    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART1;
+    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
+    uart_txdata_type txdata;
     for (int i = 0; i < 16; i++) {
-        while (uart->status & UART_STATUS_TX_FULL) {}
+        do {
+            txdata.v = uart->txdata;
+        } while (txdata.b.full);;
         
         t = (unsigned char)((val >> ((15 - i) * 4)) & 0xf);
         if (t < 10) {
@@ -57,7 +63,7 @@ void print_uart_hex(long val) {
         } else {
             s = (t - 10) + 'a';
         }
-        uart->data = s;
+        uart->txdata = s;
     }
 }
 
@@ -92,7 +98,7 @@ void copy_image() {
  Zephyr OS
 */
 void timestamp_output() {
-    gptimers_map *tmr = (gptimers_map *)ADDR_BUS0_XSLV_GPTIMERS;
+    /*gptimers_map *tmr = (gptimers_map *)ADDR_BUS0_XSLV_GPTIMERS;
     uint64_t start = tmr->highcnt;
     while (1) {
         if (tmr->highcnt < start || (start + SYS_HZ) < tmr->highcnt) {
@@ -101,19 +107,21 @@ void timestamp_output() {
             print_uart_hex(start);
             print_uart("\r\n", 2);
         }
-    }
+    }*/
 }
 
 void _init() {
     uint32_t tech;
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
-    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART1;
+    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
     gpio_map *gpio = (gpio_map *)ADDR_BUS0_XSLV_GPIO;
-    irqctrl_map *p_irq = (irqctrl_map *)ADDR_BUS0_XSLV_IRQCTRL;
   
     // mask all interrupts in interrupt controller to avoid
     // unpredictable behaviour after elf-file reloading via debug port.
-    p_irq->irq_mask = 0xFFFFFFFF;
+    uint64_t t1 = 0x00000008;
+    asm("csrc mstatus, %0" : :"r"(t1));  // clear mie
+    t1 = 0x00000800;
+    asm("csrc mie, %0" : :"r"(t1));  // disable external irq from PLIC
 
     // Half period of the uart = Fbus / 115200 / 2 = 70 MHz / 115200 / 2:
     uart->scaler = SYS_HZ / 115200 / 2;  // 40 MHz

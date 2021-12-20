@@ -3,7 +3,7 @@ ENTRY(_start)
 
 SECTIONS
 {
-  . = 0x10000000;
+  . = 0x08000000;
   .text : { *(.text) }
   . = ALIGN(0x1000);
   .data : { *(.data) }

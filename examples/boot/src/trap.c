@@ -85,6 +85,27 @@ void exception_handler_c(long long arg) {
     while (1) {}
 }
 
+/** Fatal Error Handler can be used to transmit dump image
+ *  or trigger watchdog
+ */
+void fatal_error() {
+    led_set(0xF0);
+    print_uart("fatal_error()\r\n", 15);
+    while (1) {}
+}
+
+
+uint32_t plic_claim(int ctxid) {
+    plic_map *p = (plic_map *)ADDR_BUS0_XSLV_PLIC;
+    return p->ctx_prio[ctxid].claim_complete;
+}
+
+void plic_complete(int ctxid, int irqid) {
+    plic_map *p = (plic_map *)ADDR_BUS0_XSLV_PLIC;
+    p->ctx_prio[ctxid].claim_complete = irqid;
+}
+
+
 long interrupt_handler_c(long cause, long epc, long long regs[32]) {
     /**
      * Pending interrupt bit is cleared in the crt.S file by calling:
@@ -94,26 +115,15 @@ long interrupt_handler_c(long cause, long epc, long long regs[32]) {
      * Rise interrupt from the software maybe done sending a self-IPI:
      *      csrwi mipi, 0
      */
-    irqctrl_map *p_irqctrl = (irqctrl_map *)ADDR_BUS0_XSLV_IRQCTRL;
-    IRQ_HANDLER irq_handler = (IRQ_HANDLER)p_irqctrl->isr_table;
-    uint32_t pending;
     csr_mcause_type mcause;
-
     mcause.value = cause;
-    p_irqctrl->dbg_cause = cause;
-    p_irqctrl->dbg_epc = epc;
 
-    p_irqctrl->irq_lock = 1;
-    pending = p_irqctrl->irq_pending;
-    p_irqctrl->irq_clear = pending;
-    p_irqctrl->irq_lock = 0;
-
-    for (int i = 0; i < CFG_IRQ_TOTAL; i++) {
-        if (pending & 0x1) {
-            p_irqctrl->irq_cause_idx = i;
-            irq_handler(i, NULL);
-        }
-        pending >>= 1;
+    if (mcause.bits.irq == 0x1 && mcause.bits.code == 11) {
+        // External M-Mode
+        uint32_t irqid = plic_claim(0);
+        plic_complete(0, irqid);
+    } else {
+        fatal_error();
     }
 
     return epc;
