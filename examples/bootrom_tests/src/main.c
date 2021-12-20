@@ -43,7 +43,8 @@ int main() {
     }
 
     pnp->fwid = 0x20190516;
-    gpio->direction = 0xf;
+    gpio->input_en = 0x000f;
+    gpio->output_en = 0xfff0;
     fw_malloc_init();
     
     allocate_exception_table();

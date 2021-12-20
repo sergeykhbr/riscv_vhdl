@@ -10,58 +10,49 @@
 
 namespace debugger {
 
-GPIO::GPIO(const char *name)  : IService(name) {
-    registerInterface(static_cast<IMemoryOperation *>(this));
-    registerInterface(static_cast<IWire *>(this));
+GPIO::GPIO(const char *name) : RegMemBankGeneric(name),
+    input_val(static_cast<IService *>(this), "input_val", 0x00),
+    input_en(static_cast<IService *>(this), "input_en", 0x04),
+    output_en(static_cast<IService *>(this), "output_en", 0x08),
+    output_val(static_cast<IService *>(this), "output_val", 0x0C),
+    pue(static_cast<IService *>(this), "pue", 0x10),
+    ds(static_cast<IService *>(this), "ds", 0x14),
+    rise_ie(static_cast<IService *>(this), "rise_ie", 0x18),
+    rise_ip(static_cast<IService *>(this), "rise_ip", 0x1C),
+    fall_ie(static_cast<IService *>(this), "fall_ie", 0x20),
+    fall_ip(static_cast<IService *>(this), "fall_ip", 0x24),
+    high_ie(static_cast<IService *>(this), "high_ie", 0x28),
+    high_ip(static_cast<IService *>(this), "high_ip", 0x2C),
+    low_ie(static_cast<IService *>(this), "low_ie", 0x30),
+    low_ip(static_cast<IService *>(this), "low_ip", 0x34),
+    iof_en(static_cast<IService *>(this), "iof_en", 0x38),
+    iof_sel(static_cast<IService *>(this), "iof_sel", 0x3C),
+    out_xor(static_cast<IService *>(this), "out_xor", 0x40) {
+    registerAttribute("IrqController", &irqctrl_);
+    registerAttribute("IrqId", &irqid_);
     registerAttribute("DIP", &dip_);
-
-    memset(&regs_, 0, sizeof(regs_));
-}
-
-GPIO::~GPIO() {
 }
 
 void GPIO::postinitService() {
-    regs_.direction = ~0u;
-    regs_.iuser = static_cast<uint32_t>(dip_.to_uint64());
+    RegMemBankGeneric::postinitService();
+
 }
 
-ETransStatus GPIO::b_transport(Axi4TransactionType *trans) {
-    uint64_t mask = (length_.to_uint64() - 1);
-    uint64_t off = ((trans->addr - getBaseAddress()) & mask) / 4;
-    uint32_t *mem_ = reinterpret_cast<uint32_t *>(&regs_);
-    trans->response = MemResp_Valid;
-    if (trans->action == MemAction_Write) {
-        for (uint64_t i = 0; i < trans->xsize/4; i++) {
-            if (trans->wstrb & (0xf << 4*i)) {
-                mem_[off + i] = trans->wpayload.b32[i];
-            }
-
-            if (off + i == (reinterpret_cast<uint64_t>(&regs_.ouser) 
-                          - reinterpret_cast<uint64_t>(&regs_))) {
-                /*ISignalListener *ilistener;
-                for (unsigned n = 0; n < listOfListerners_.size(); n++) {
-                    ilistener = static_cast<ISignalListener *>(
-                                    listOfListerners_[n].to_iface());
-                    ilistener->updateSignal(0, 8, regs_.led & 0xFF);
-                }*/
-            }
-        }
-    } else {
-        for (uint64_t i = 0; i < trans->xsize/4; i++) {
-            trans->rpayload.b32[i] = mem_[i + off];
-        }
-    }
-    return TRANS_OK;
+uint32_t GPIO::readInputs() {
+    uint32_t i = input_en.getValue().buf16[0];  // 16 IOs total
+    i |= (dip_.to_uint32() & 0xFFFF);
+    return i;
 }
 
-/*void GPIO::setLevel(int start, int width, uint64_t value) {
-    uint64_t t = value >> start;
-    uint64_t msk = (1LL << width) - 1;
-    uint64_t prev = dip_.to_uint64() & ~(msk << start);
-    t &= msk;
-    dip_.make_uint64(prev | (t << start));
-    RISCV_info("set level pins[%d:%d] <= %" RV_PRI64 "x", start - 1, width, t);
-}*/
+void GPIO::requestInterrupt(int pinidx) {
+    iirq_->requestInterrupt(static_cast<IService *>(this),
+                            irqid_.to_int() + pinidx);
+}
+
+uint32_t GPIO::GPIO_INPUT_VAL_TYPE::aboutToRead(uint32_t cur_val) {
+    GPIO *p = static_cast<GPIO *>(parent_);
+    cur_val = p->readInputs();
+    return cur_val;
+}
 
 }  // namespace debugger

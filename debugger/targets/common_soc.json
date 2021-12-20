@@ -94,7 +94,8 @@
                 ['MapList',[['plic0','src_priority'],
                             ['plic0','pending']
                            ], 'Context bank will be added on Postinit stage'],
-                ['ContextList',['HART0_M', 'HART0_S'], 'Use any convinient names']
+                ['ContextList',['HART0_M',
+                                'HART0_S'], 'Use any convinient names']
                 ]}]},
     {'Class':'GPIOClass','Instances':[
           {'Name':'gpio0','Attr':[
@@ -103,7 +104,25 @@
                 ['Length',4096],
                 ['IrqController','plic0'],
                 ['IrqId',23, 'Last IrqId 38 (same as FU740), Total 16 IOs with a separate IRQ request'],
-                ['DIP',0x0]
+                ['MapList',[['gpio0','input_val'],
+                            ['gpio0','input_en'],
+                            ['gpio0','output_en'],
+                            ['gpio0','output_val'],
+                            ['gpio0','pue'],
+                            ['gpio0','ds'],
+                            ['gpio0','rise_ie'],
+                            ['gpio0','rise_ip'],
+                            ['gpio0','fall_ie'],
+                            ['gpio0','fall_ip'],
+                            ['gpio0','high_ie'],
+                            ['gpio0','high_ip'],
+                            ['gpio0','low_ie'],
+                            ['gpio0','low_ip'],
+                            ['gpio0','iof_en'],
+                            ['gpio0','iof_sel'],
+                            ['gpio0','out_xor']
+                           ]],
+                ['DIP',0x0B, '1011 Rescue image from SD for FU740 (FSBL=QSPI2 SD, BBL=QSPI2 SD)']
                 ]}]},
     {'Class':'UARTClass','Instances':[
           {'Name':'uart0','Attr':[
