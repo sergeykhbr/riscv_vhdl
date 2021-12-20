@@ -75,6 +75,17 @@
                 ['BaseAddress',0x00200000],
                 ['Length',0x40000]
                 ]}]},
+    {'Class':'CLINTClass','Instances':[
+          {'Name':'clint0','Attr':[
+                ['LogLevel',4],
+                ['Clock','core0'],
+                ['BaseAddress',0x02000000, 'FU740(unmatched) uses this base address'],
+                ['Length',0x10000],
+                ['MapList',[['clint0','msip'],
+                            ['clint0','mtimecmp'],
+                            ['clint0','mtime']
+                           ]]
+                ]}]},
     {'Class':'PLICClass','Instances':[
           {'Name':'plic0','Attr':[
                 ['LogLevel',4],
@@ -82,7 +93,7 @@
                 ['Length',0x04000000, 'End of PLIC is 0x10000000'],
                 ['MapList',[['plic0','src_priority'],
                             ['plic0','pending']
-                           ], 'Context bank will be added on Postinit stage']
+                           ], 'Context bank will be added on Postinit stage'],
                 ['ContextList',['HART0_M', 'HART0_S'], 'Use any convinient names']
                 ]}]},
     {'Class':'GPIOClass','Instances':[
@@ -90,6 +101,8 @@
                 ['LogLevel',3],
                 ['BaseAddress',0x10060000],
                 ['Length',4096],
+                ['IrqController','plic0'],
+                ['IrqId',23, 'Last IrqId 38 (same as FU740), Total 16 IOs with a separate IRQ request'],
                 ['DIP',0x0]
                 ]}]},
     {'Class':'UARTClass','Instances':[
@@ -111,6 +124,28 @@
                             ['uart0','ip'],
                             ['uart0','scaler'],
                             ['uart0','fwcpuid'],
+                           ]]
+
+                ]}]},
+    {'Class':'UARTClass','Instances':[
+          {'Name':'uart1','Attr':[
+                ['LogLevel',4],
+                ['FifoSize',16],
+                ['CmdExecutor','cmdexec0'],
+                ['BaseAddress',0x10011000],
+                ['Length',4096],
+                ['Clock','core0']
+                ['IrqController','plic0'],
+                ['IrqIdTx',40, 'The same as in FU740'],
+                ['IrqIdRx',40, 'The same as in FU740'],
+                ['MapList',[['uart1','txdata'],
+                            ['uart1','rxdata'],
+                            ['uart1','txctrl'],
+                            ['uart1','rxctrl'],
+                            ['uart1','ie'],
+                            ['uart1','ip'],
+                            ['uart1','scaler'],
+                            ['uart1','fwcpuid'],
                            ]]
 
                 ]}]},

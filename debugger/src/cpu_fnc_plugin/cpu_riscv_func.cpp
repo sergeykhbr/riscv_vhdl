@@ -30,6 +30,7 @@ CpuRiver_Functional::CpuRiver_Functional(const char *name) :
     registerAttribute("ContextID", &contextid_);
     registerAttribute("HartID", &hartid_);
     registerAttribute("ListExtISA", &listExtISA_);
+    registerAttribute("CLINT", &clint_);
     registerAttribute("PLIC", &plic_);
 
     mmuReservatedAddr_ = 0;
@@ -65,11 +66,18 @@ void CpuRiver_Functional::postinitService() {
 
     CpuGeneric::postinitService();
 
-    iirq_ = static_cast<IIrqController *>(RISCV_get_service_iface(
+    iirqext_ = static_cast<IIrqController *>(RISCV_get_service_iface(
         plic_.to_string(), IFACE_IRQ_CONTROLLER));
-    if (!iirq_) {
+    if (!iirqext_) {
         RISCV_error("Interface IIrqController in %s not found",
                     plic_.to_string());
+    }
+
+    iirqloc_ = static_cast<IIrqController *>(RISCV_get_service_iface(
+        clint_.to_string(), IFACE_IRQ_CONTROLLER));
+    if (!iirqloc_) {
+        RISCV_error("Interface IIrqController in %s not found",
+                    clint_.to_string());
     }
 
     pcmd_br_ = new CmdBrRiscv(dmibar_.to_uint64(), 0);
@@ -140,6 +148,7 @@ void CpuRiver_Functional::handleException(int e) {
 
 void CpuRiver_Functional::handleInterrupts() {
     int ctx = 0;
+    csr_mcause_type mcause;
     csr_mstatus_type mstatus;
     mstatus.value = readCSR(CSR_mstatus);
     if (mstatus.bits.MIE == 0) {
@@ -149,28 +158,46 @@ void CpuRiver_Functional::handleInterrupts() {
     csr_mie_type mie;
     mie.value = readCSR(CSR_mie);
 
+    // Check software interrupt
+    mcause.value = 0;
+    if (mie.bits.MSIE == 1) {
+        if (iirqloc_->getPendingRequest(2*hartid_.to_int())) {
+            mcause.bits.irq = 1;
+            mcause.bits.code = 3;
+        }
+    }
+
+    // Check mtimer interrupt
+    if (!mcause.bits.irq && mie.bits.MTIE == 1) {
+        if (iirqloc_->getPendingRequest(2*hartid_.to_int() + 1)) {
+            mcause.bits.irq = 1;
+            mcause.bits.code = 7;
+        }
+    }
+
     // Check PLIC interrupt request
-    if (mie.bits.MEIE == 1) {
+    if (!mcause.bits.irq && mie.bits.MEIE == 1) {
         // external interrupt disabled
-        int irqidx = iirq_->getPendingRequest(ctx);
+        int irqidx = iirqext_->getPendingRequest(ctx);
         if (irqidx != IRQ_REQUEST_NONE) {
-            csr_mcause_type mcause;
             mcause.bits.irq = 1;
             mcause.bits.code = 11;
-            portCSR_.write(CSR_mcause, mcause.value);
+        }
+    }
 
-            switchContext(PRV_M);
+    if (mcause.bits.irq) {
+        portCSR_.write(CSR_mcause, mcause.value);
 
-            uint64_t mtvec = readCSR(CSR_mtvec);
-            uint64_t mtvecmode = mtvec & 0x3;
-            mtvec &= ~0x3ull;
-            // Vector table only for interrupts (not for exceptions):
-            if (mtvecmode == 0x1) {
-                setNPC(mtvec + 4 * 11);
-            } else {
-                setNPC(mtvec);
-            }
-            return;
+        switchContext(PRV_M);
+
+        uint64_t mtvec = readCSR(CSR_mtvec);
+        uint64_t mtvecmode = mtvec & 0x3;
+        mtvec &= ~0x3ull;
+        // Vector table only for interrupts (not for exceptions):
+        if (mtvecmode == 0x1) {
+            setNPC(mtvec + 4 * 11);
+        } else {
+            setNPC(mtvec);
         }
     }
 }
@@ -463,9 +490,12 @@ uint64_t CpuRiver_Functional::readCSR(uint32_t regno) {
         break;
     case CSR_mip:
         {
+            int hartid = hartid_.to_int();
             csr_mip_type mip;
             mip.value = 0;
-            mip.bits.MEIP = iirq_->getPendingRequest(0) != IRQ_REQUEST_NONE;
+            mip.bits.MSIP = iirqloc_->getPendingRequest(2*hartid);
+            mip.bits.MTIP = iirqloc_->getPendingRequest(2*hartid + 1);
+            mip.bits.MEIP = iirqext_->getPendingRequest(hartid) != IRQ_REQUEST_NONE;
             ret = mip.value;
             rd_access = false;
         }

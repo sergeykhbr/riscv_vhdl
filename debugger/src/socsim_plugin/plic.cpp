@@ -25,7 +25,6 @@ PLIC::PLIC(const char *name) : RegMemBankGeneric(name),
     src_priority(static_cast<IService *>(this), "src_priority", 0x00, 1024),
     pending(static_cast<IService *>(this), "pending", 0x001000, 1024) {
     registerInterface(static_cast<IIrqController *>(this));
-    registerAttribute("Clock", &clock_);
     registerAttribute("ContextList", &contextList_);
 
     contextList_.make_list(0);

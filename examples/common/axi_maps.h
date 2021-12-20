@@ -32,6 +32,7 @@
 
 #define ADDR_BUS0_XSLV_FWIMAGE      0x00100000
 #define ADDR_BUS0_XSLV_EXTFLASH     0x00200000
+#define ADDR_BUS0_XSLV_CLINT        0x02000000 // Core-local interruptor
 #define ADDR_BUS0_XSLV_SRAM         0x08000000 // 0x0800_0000..0x081F_FFFF = L2 Cache Controller
 #define ADDR_BUS0_XSLV_PLIC         0x0C000000 // FU740 compatible
 #define ADDR_BUS0_XSLV_UART0        0x10010000 // FU740 compatible

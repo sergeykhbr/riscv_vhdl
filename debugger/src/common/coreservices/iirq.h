@@ -25,6 +25,19 @@ static const char *const IFACE_IRQ_CONTROLLER = "IIrqController";
 
 static const int IRQ_REQUEST_NONE = 0;
 
+// Context id can any value, for PLIC for an example:
+// Example 1: (for PLIC)
+//   HART0_M = 0
+//   HART0_S = 1
+//   HART1_M = 2
+//   etc
+// Example 2: (for CLINT)
+//   HART0_SOFTWARE_IRQ = 0
+//   HART0_TIMER_IRQ = 1
+//   HART1_SOFTWARE_IRQ = 2
+//   HART1_TIMER_IRQ = 3
+//   etc
+
 class IIrqController : public IFace {
  public:
     IIrqController() : IFace(IFACE_IRQ_CONTROLLER) {}

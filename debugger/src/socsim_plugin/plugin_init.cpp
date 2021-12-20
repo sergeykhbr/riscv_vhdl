@@ -26,6 +26,7 @@
 #include "hardreset.h"
 #include "fpu_func.h"
 #include "plic.h"
+#include "clint.h"
 
 namespace debugger {
 
@@ -35,6 +36,7 @@ extern "C" void plugin_init(void) {
     REGISTER_CLASS_IDX(GPIO, 3);
     REGISTER_CLASS_IDX(UART, 4);
     REGISTER_CLASS_IDX(PNP, 5);
+    REGISTER_CLASS_IDX(CLINT, 6);
     REGISTER_CLASS_IDX(GNSSStub, 7);
     REGISTER_CLASS_IDX(GPTimers, 9);
     REGISTER_CLASS_IDX(RfController, 10);

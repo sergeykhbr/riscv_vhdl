@@ -31,7 +31,7 @@ class PLIC : public RegMemBankGeneric,
              public IIrqController {
  public:
     explicit PLIC(const char *name);
-    ~PLIC();
+    virtual ~PLIC();
 
     /** IService interface */
     virtual void postinitService() override;
@@ -101,7 +101,6 @@ class PLIC : public RegMemBankGeneric,
         unsigned contextid_;
     };
 
-    AttributeType clock_;
     AttributeType contextList_;     // List of context names: [MCore0, MCore1, SCore1, MCore2, ...]
     AttributeType pendingList_;     // requested interrupt packed into attribute for better performance
 

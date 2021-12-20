@@ -35,6 +35,7 @@
                 ['ImplementationID',0x20211219],
                 ['SysBusMasterID',0,'Used to gather Bus statistic'],
                 ['SysBus','axi0'],
+                ['CLINT','clint0', 'Core-Local Interuptor to generate sw and mtimer interrupts'],
                 ['PLIC','plic0'],
                 ['CmdExecutor','cmdexec0'],
                 ['DmiBAR',0x00000000AF000000,'Base address of the DMI module'],
@@ -45,8 +46,8 @@
                 ['FreqHz',12000000],
                 ['ResetVector',0x10000,'Initial intruction pointer value (config parameter)'],
                 ['GenerateTraceFile','trace_river_func.log','Specify file name to enable tracer'],
-                ['CacheBaseAddress',0x10000000],
-                ['CacheAddressMask',0x7ffff],
+                ['CacheBaseAddress',0x08000000],
+                ['CacheAddressMask',0x1fffff, '2MB cache L2 reserved on FU740'],
                 ['TriggersTotal',2],
                 ['McontrolMaskmax',63,'Possible value in range 0 to 63 (NAPOT mask see spec)'],
                 ['ResetState','Halted', 'CPU state after reset signal is raised: Halted or OFF'],
@@ -95,7 +96,7 @@
                 ['LogLevel',3],
                 ['UseHash',false],
                 ['MapList',['bootrom0','fwimage0','sram0','gpio0',
-                        'uart0','plic0','gnss0','spiflash0',
+                        'uart0','uart1','plic0','clint0','gnss0','spiflash0',
                         'pnp0','rfctrl0','fsegps0','dmi0']]
                 ]}]},
   ]
