@@ -35,6 +35,7 @@
 #include "coreservices/iclock.h"
 #include "coreservices/icmdexec.h"
 #include "coreservices/itap.h"
+#include "coreservices/iirq.h"
 #include "cmds/cmd_br_riscv.h"
 #include "rtl_wrapper.h"
 #include "l1serdes.h"
@@ -99,6 +100,8 @@ class CpuRiscV_RTL : public IService,
     AttributeType tracerEnable_;
     AttributeType l2CacheEnable_;
     AttributeType coherenceEnable_;
+    AttributeType clint_;
+    AttributeType plic_;
     AttributeType bus_;
     AttributeType cmdexec_;
     AttributeType dmibar_;
@@ -107,6 +110,8 @@ class CpuRiscV_RTL : public IService,
     AttributeType OutVcdFile_;
     event_def config_done_;
 
+    IIrqController *iirqloc_;
+    IIrqController *iirqext_;
     ICmdExecutor *icmdexec_;
     IMemoryOperation *ibus_;
 
@@ -127,8 +132,10 @@ class CpuRiscV_RTL : public IService,
     sc_signal<axi4_l1_out_type> acpo;
 
     /** Interrupt line from external interrupts controller. */
-    sc_signal<bool> w_tmr_irq;
-    sc_signal<bool> w_plic_irq;
+    sc_signal<sc_uint<1>> wb_msip;  // actually bus width should be CFG_CPU_MAX
+    sc_signal<sc_uint<1>> wb_mtip;
+    sc_signal<sc_uint<1>> wb_meip;
+    sc_signal<sc_uint<1>> wb_seip;  
     // Debug interface
     sc_signal<bool> w_ndmreset;
     sc_signal<sc_uint<CFG_CPU_MAX>> wb_halted;

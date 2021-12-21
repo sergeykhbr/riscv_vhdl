@@ -39,8 +39,10 @@ SC_MODULE(CsrRegs) {
     sc_in<bool> i_e_halted;
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_pc;   // current latched instruction pointer in executor
     sc_in<sc_uint<32>> i_e_instr;               // current latched opcode in executor
-    sc_in<bool> i_irq_timer;
-    sc_in<bool> i_irq_external;
+    sc_in<sc_uint<1>> i_msip;                   // machine software pening interrupt
+    sc_in<sc_uint<1>> i_mtip;                   // machine timer pening interrupt
+    sc_in<sc_uint<1>> i_meip;                   // machine external pening interrupt
+    sc_in<sc_uint<1>> i_seip;                   // supervisor external pening interrupt
     sc_out<bool> o_irq_software;                // software interrupt pending bit
     sc_out<bool> o_irq_timer;                   // timer interrupt pending bit
     sc_out<bool> o_irq_external;                // external interrupt pending bit
@@ -218,7 +220,7 @@ private:
         iv.executed_cnt = 0;
         iv.dscratch0 = 0;
         iv.dscratch1 = 0;
-        iv.dpc = 0;
+        iv.dpc = CFG_RESET_VECTOR;
         iv.halt_cause = 0;
         iv.dcsr_ebreakm = 0;
         iv.dcsr_stopcount = 0;

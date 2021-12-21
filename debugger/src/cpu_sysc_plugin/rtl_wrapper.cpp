@@ -31,7 +31,10 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     o_dmi_nrst("o_dmi_nrst"),
     o_msti("o_msti"),
     i_msto("i_msto"),
-    o_interrupt("o_interrupt"),
+    o_msip("o_msip"),
+    o_mtip("o_mtip"),
+    o_meip("o_meip"),
+    o_seip("o_seip"),
     i_hartreset("i_hartreset"),
     i_ndmreset("i_ndmreset"),
     i_halted0("i_halted0"),
@@ -45,7 +48,6 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     v.req_burst = 0;
     v.b_valid = 0;
     v.b_resp = 0;
-    v.interrupt = false;
     async_interrupt = 0;
     request_reset = false;
     w_interrupt = 0;
@@ -55,6 +57,12 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     v.clk_cnt = 0;
     r.clk_cnt = 0;
     trans.source_idx = 0;//CFG_NASTI_MASTER_CACHED;
+    w_msip = 0;
+    w_mtip = 0;
+    w_meip = 0;
+    w_seip = 0;
+    iirqloc_ = 0;
+    iirqext_ = 0;
 
     SC_METHOD(comb);
     sensitive << w_interrupt;
@@ -69,7 +77,6 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     sensitive << r.b_valid;
     sensitive << r.b_resp;
     sensitive << r.nrst;
-    sensitive << r.interrupt;
     sensitive << r.state;
     sensitive << r.halted;
     sensitive << r.r_error;
@@ -95,6 +102,7 @@ void RtlWrapper::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
         sc_trace(o_vcd, i_msto, i_msto.name());
         sc_trace(o_vcd, o_msti, o_msti.name());
+        sc_trace(o_vcd, o_msip, o_msip.name());
 
         std::string pn(name());
         sc_trace(o_vcd, r.nrst, pn + ".r_nrst");
@@ -123,6 +131,10 @@ void RtlWrapper::comb() {
     sc_uint<BUS_DATA_WIDTH> vb_wdata;
     sc_uint<BUS_DATA_BYTES> vb_wstrb;
     axi4_master_in_type vmsti;
+    sc_uint<1> vb_msip;
+    sc_uint<1> vb_mtip;
+    sc_uint<1> vb_meip;
+    sc_uint<1> vb_seip;
 
     w_req_mem_ready = 0;
     vb_r_resp = 0; // OKAY
@@ -134,9 +146,12 @@ void RtlWrapper::comb() {
 
     vb_wdata = 0;
     vb_wstrb = 0;
+    vb_msip = 0;
+    vb_mtip = 0;
+    vb_meip = 0;
+    vb_seip = 0;
 
     v.clk_cnt = r.clk_cnt.read() + 1;
-    v.interrupt = w_interrupt;
     v.halted = (0, i_halted0.read());
 
     v.nrst = (r.nrst.read() << 1) | 1;
@@ -235,7 +250,15 @@ void RtlWrapper::comb() {
     vmsti.r_user = 0;
     o_msti = vmsti;     // to trigger event;
 
-    o_interrupt = r.interrupt;
+    vb_msip[0] = w_msip;
+    vb_mtip[0] = w_mtip;
+    vb_meip[0] = w_meip;
+    vb_seip[0] = w_seip;
+
+    o_msip = vb_msip;
+    o_mtip = vb_mtip;
+    o_meip = vb_meip;
+    o_seip = vb_seip;
     o_halted = r.halted;
 
     if (!r.nrst.read()[1]) {
@@ -244,6 +267,29 @@ void RtlWrapper::comb() {
 
 void RtlWrapper::registers() {
     bus_req_event_.notify(1, SC_NS);
+
+    w_msip = 0;
+    w_mtip = 0;
+    w_meip = 0;
+    w_seip = 0;
+
+    if (iirqloc_) {
+        int hartid = 0;
+        w_msip = iirqloc_->getPendingRequest(2*hartid);
+        w_mtip = iirqloc_->getPendingRequest(2*hartid + 1);
+    }
+    if (iirqext_) {
+        int ctx = 0;
+        int irqidx = iirqext_->getPendingRequest(ctx);
+        if (irqidx != IRQ_REQUEST_NONE) {
+            w_meip = 1;
+        }
+        irqidx = iirqext_->getPendingRequest(ctx + 1);
+        if (irqidx != IRQ_REQUEST_NONE) {
+            w_seip = 1;
+        }
+    }
+
     r = v;
 }
 
@@ -346,27 +392,6 @@ void RtlWrapper::registerStepCallback(IClockListener *cb, uint64_t t) {
 bool RtlWrapper::isHalt() {
     return i_halted0.read();
 }
-
-/*void RtlWrapper::raiseSignal(int idx) {
-    switch (idx) {
-    case SIGNAL_HardReset:
-        request_reset = true;
-        break;
-    case SIGNAL_XExternal:
-        async_interrupt = true;
-        break;
-    default:;
-    }
-}
-
-void RtlWrapper::lowerSignal(int idx) {
-    switch (idx) {
-    case SIGNAL_XExternal:
-        async_interrupt = false;
-        break;
-    default:;
-    }
-}*/
 
 }  // namespace debugger
 

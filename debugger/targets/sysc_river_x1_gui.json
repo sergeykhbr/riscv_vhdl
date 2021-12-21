@@ -33,6 +33,8 @@
                 ['TracerEnable',false, 'Enable Verification Trace collector module'],
                 ['L2CacheEnable',false, 'Enable coherent L2-cache model'],
                 ['CoherenceEnable',true, 'Enable addtional states in D-cache and RiverAmba to support coherence'],
+                ['CLINT','clint0', 'Core-Local Interuptor to generate sw and mtimer interrupts'],
+                ['PLIC','plic0'],
                 ['Bus','axi0'],
                 ['CmdExecutor','cmdexec0']
                 ['DmiBAR',0x00000000AF000000,'Base address of the DMI module'],

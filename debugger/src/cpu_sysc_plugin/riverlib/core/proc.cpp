@@ -48,8 +48,10 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     i_resp_data_er_mpu_load("i_resp_data_er_mpu_load"),
     i_resp_data_er_mpu_store("i_resp_data_er_mpu_store"),
     o_resp_data_ready("o_resp_data_ready"),
-    i_tmr_irq("i_tmr_irq"),
-    i_ext_irq("i_ext_irq"),
+    i_msip("i_msip"),
+    i_mtip("i_mtip"),
+    i_meip("i_meip"),
+    i_seip("i_seip"),
     o_mpu_region_we("o_mpu_region_we"),
     o_mpu_region_idx("o_mpu_region_idx"),
     o_mpu_region_addr("o_mpu_region_addr"),
@@ -377,8 +379,10 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     csr0->i_e_halted(w.e.halted);
     csr0->i_e_pc(w.e.pc);
     csr0->i_e_instr(w.e.instr);
-    csr0->i_irq_timer(i_tmr_irq);
-    csr0->i_irq_external(i_ext_irq);
+    csr0->i_msip(i_msip);
+    csr0->i_mtip(i_mtip);
+    csr0->i_meip(i_meip);
+    csr0->i_seip(i_seip);
     csr0->o_irq_software(csr.irq_software);
     csr0->o_irq_timer(csr.irq_timer);
     csr0->o_irq_external(csr.irq_external);

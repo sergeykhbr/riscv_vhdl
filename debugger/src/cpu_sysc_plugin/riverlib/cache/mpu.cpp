@@ -104,24 +104,42 @@ void MPU::comb() {
             v_tbl[i].mask = ~0ull;
         }
 
-        // All address above 0x80000000 are uncached (IO devices)
-        v_tbl[0].addr(31, 0) = 0x80000000ull;
-        v_tbl[0].mask(31, 0) = 0x80000000ull;
+        // Uncached CLINT
+        v_tbl[0].addr = 0x0000000002000000ull;
+        v_tbl[0].mask = 0xFFFFFFFFFE000000ull;
         v_tbl[0].flags[CFG_MPU_FL_ENA] = 1;
         v_tbl[0].flags[CFG_MPU_FL_CACHABLE] = 0;
-        v_tbl[0].flags[CFG_MPU_FL_EXEC] = 1;
+        v_tbl[0].flags[CFG_MPU_FL_EXEC] = 0;
         v_tbl[0].flags[CFG_MPU_FL_RD] = 1;
         v_tbl[0].flags[CFG_MPU_FL_WR] = 1;
 
-#if 1
-        // Debug: Make first 128 Byte uncachable to test MPU
-        v_tbl[1].addr(31, 0) = 0x00000000ull;
-        v_tbl[1].mask(31, 0) = 0xFFFFFF80ull;
+        // Uncached PLIC
+        v_tbl[1].addr = 0x000000000C000000ull;
+        v_tbl[1].mask = 0xFFFFFFFFFC000000ull;
         v_tbl[1].flags[CFG_MPU_FL_ENA] = 1;
         v_tbl[1].flags[CFG_MPU_FL_CACHABLE] = 0;
-        v_tbl[1].flags[CFG_MPU_FL_EXEC] = 1;
+        v_tbl[1].flags[CFG_MPU_FL_EXEC] = 0;
         v_tbl[1].flags[CFG_MPU_FL_RD] = 1;
         v_tbl[1].flags[CFG_MPU_FL_WR] = 1;
+
+        // Uncached peripheries (IO)
+        v_tbl[2].addr = 0x0000000010000000ull;
+        v_tbl[2].mask = 0xFFFFFFFFF0000000ull;
+        v_tbl[2].flags[CFG_MPU_FL_ENA] = 1;
+        v_tbl[2].flags[CFG_MPU_FL_CACHABLE] = 0;
+        v_tbl[2].flags[CFG_MPU_FL_EXEC] = 1;
+        v_tbl[2].flags[CFG_MPU_FL_RD] = 1;
+        v_tbl[2].flags[CFG_MPU_FL_WR] = 1;
+
+#if 1
+        // Debug: Make first 128 Byte uncachable to test MPU
+        v_tbl[3].addr(31, 0) = 0x00010000ull;
+        v_tbl[3].mask(31, 0) = 0xFFFFFF80ull;
+        v_tbl[3].flags[CFG_MPU_FL_ENA] = 1;
+        v_tbl[3].flags[CFG_MPU_FL_CACHABLE] = 0;
+        v_tbl[3].flags[CFG_MPU_FL_EXEC] = 1;
+        v_tbl[3].flags[CFG_MPU_FL_RD] = 1;
+        v_tbl[3].flags[CFG_MPU_FL_WR] = 1;
 #endif
     }
 
@@ -137,14 +155,32 @@ void MPU::registers() {
             tbl[i].mask = ~0ull;
         }
 
-        // All address above 0x80000000 are uncached (IO devices)
-        tbl[0].addr(31, 0) = 0x80000000ull;
-        tbl[0].mask(31, 0) = 0x80000000ull;
-        tbl[0].flags[CFG_MPU_FL_ENA] = 1;
-        tbl[0].flags[CFG_MPU_FL_CACHABLE] = 0;
-        tbl[0].flags[CFG_MPU_FL_EXEC] = 1;
-        tbl[0].flags[CFG_MPU_FL_RD] = 1;
-        tbl[0].flags[CFG_MPU_FL_WR] = 1;
+        // Uncached CLINT
+        v_tbl[0].addr = 0x0000000002000000ull;
+        v_tbl[0].mask = 0xFFFFFFFFFE000000ull;
+        v_tbl[0].flags[CFG_MPU_FL_ENA] = 1;
+        v_tbl[0].flags[CFG_MPU_FL_CACHABLE] = 0;
+        v_tbl[0].flags[CFG_MPU_FL_EXEC] = 0;
+        v_tbl[0].flags[CFG_MPU_FL_RD] = 1;
+        v_tbl[0].flags[CFG_MPU_FL_WR] = 1;
+
+        // Uncached PLIC
+        v_tbl[1].addr = 0x000000000C000000ull;
+        v_tbl[1].mask = 0xFFFFFFFFFC000000ull;
+        v_tbl[1].flags[CFG_MPU_FL_ENA] = 1;
+        v_tbl[1].flags[CFG_MPU_FL_CACHABLE] = 0;
+        v_tbl[1].flags[CFG_MPU_FL_EXEC] = 0;
+        v_tbl[1].flags[CFG_MPU_FL_RD] = 1;
+        v_tbl[1].flags[CFG_MPU_FL_WR] = 1;
+
+        // Uncached peripheries (IO)
+        v_tbl[2].addr = 0x0000000010000000ull;
+        v_tbl[2].mask = 0xFFFFFFFFF0000000ull;
+        v_tbl[2].flags[CFG_MPU_FL_ENA] = 1;
+        v_tbl[2].flags[CFG_MPU_FL_CACHABLE] = 0;
+        v_tbl[2].flags[CFG_MPU_FL_EXEC] = 1;
+        v_tbl[2].flags[CFG_MPU_FL_RD] = 1;
+        v_tbl[2].flags[CFG_MPU_FL_WR] = 1;
     } else {
         for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
             tbl[i] = v_tbl[i];

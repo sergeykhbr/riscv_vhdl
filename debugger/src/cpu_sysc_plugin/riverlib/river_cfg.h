@@ -53,6 +53,20 @@ static const int CFG_BP_DEPTH = 5;
  */
 static const int CFG_DEC_DEPTH = CFG_BP_DEPTH - 3;  // requested, fetching, fetched
 
+/** Power-on start address can be free changed
+ */
+static const uint64_t CFG_RESET_VECTOR      = 0x10000;
+
+// Valid size 0..16
+static const int CFG_PROGBUF_REG_TOTAL      = 16;
+// Must be at least 2 to support RV64I
+static const int CFG_DATA_REG_TOTAL         = 4;
+// Total number of dscratch registers
+static const int CFG_DSCRATCH_REG_TOTAL     = 2;
+/** Number of elements each 2*CFG_ADDR_WIDTH in stack trace buffer: */
+static const int CFG_LOG2_STACK_TRACE_ADDR  = 5;
+static const int STACK_TRACE_BUF_SIZE       = 1 << CFG_LOG2_STACK_TRACE_ADDR;
+
 /** 
  * ICacheLru config (16 KB by default)
  */
@@ -148,7 +162,7 @@ static const int L2_REQ_TYPE_SNOOP  = 3;    // Use data received through snoop c
 static const int L2_REQ_TYPE_BITS   = 4;
 
 /** MPU config */
-static const int CFG_MPU_TBL_WIDTH   = 2;    // [1:0]  log2(MPU_TBL_SIZE)
+static const int CFG_MPU_TBL_WIDTH   = 3;    // [1:0]  log2(MPU_TBL_SIZE)
 static const int CFG_MPU_TBL_SIZE    = 1 << CFG_MPU_TBL_WIDTH;
 static const int CFG_MPU_FL_WR       = 0;
 static const int CFG_MPU_FL_RD       = 1;
@@ -162,20 +176,6 @@ static const uint8_t MEMOP_8B = 3;
 static const uint8_t MEMOP_4B = 2;
 static const uint8_t MEMOP_2B = 1;
 static const uint8_t MEMOP_1B = 0;
-
-/** Power-on start address can be free changed
- */
-static const uint64_t CFG_RESET_VECTOR      = 0x0000;
-
-// Valid size 0..16
-static const int CFG_PROGBUF_REG_TOTAL      = 16;
-// Must be at least 2 to support RV64I
-static const int CFG_DATA_REG_TOTAL         = 4;
-// Total number of dscratch registers
-static const int CFG_DSCRATCH_REG_TOTAL     = 2;
-/** Number of elements each 2*CFG_ADDR_WIDTH in stack trace buffer: */
-static const int CFG_LOG2_STACK_TRACE_ADDR  = 5;
-static const int STACK_TRACE_BUF_SIZE       = 1 << CFG_LOG2_STACK_TRACE_ADDR;
 
 // Dport request types:
 static const int DPortReq_Write         = 0;

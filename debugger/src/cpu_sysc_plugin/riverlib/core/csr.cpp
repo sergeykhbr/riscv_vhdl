@@ -37,8 +37,10 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     i_e_halted("i_e_halted"),
     i_e_pc("i_e_pc"),
     i_e_instr("i_e_instr"),
-    i_irq_timer("i_irq_timer"),
-    i_irq_external("i_irq_external"),
+    i_msip("i_msip"),
+    i_mtip("i_mtip"),
+    i_meip("i_meip"),
+    i_seip("i_seip"),
     o_irq_software("o_irq_software"),
     o_irq_timer("o_irq_timer"),
     o_irq_external("o_irq_external"),
@@ -69,8 +71,10 @@ CsrRegs::CsrRegs(sc_module_name name_, uint32_t hartid, bool async_reset)
     sensitive << i_e_halted;
     sensitive << i_e_pc;
     sensitive << i_e_instr;
-    sensitive << i_irq_timer;
-    sensitive << i_irq_external;
+    sensitive << i_msip;
+    sensitive << i_mtip;
+    sensitive << i_meip;
+    sensitive << i_seip;
     sensitive << i_e_valid;
     sensitive << i_dbg_progbuf_ena;
     sensitive << r.state;
@@ -154,8 +158,10 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_e_halted, i_e_halted.name());
         sc_trace(o_vcd, i_e_pc, i_e_pc.name());
         sc_trace(o_vcd, i_e_instr, i_e_instr.name());
-        sc_trace(o_vcd, i_irq_timer, i_irq_timer.name());
-        sc_trace(o_vcd, i_irq_external, i_irq_external.name());
+        sc_trace(o_vcd, i_msip, i_msip.name());
+        sc_trace(o_vcd, i_mtip, i_mtip.name());
+        sc_trace(o_vcd, i_meip, i_meip.name());
+        sc_trace(o_vcd, i_seip, i_seip.name());
         sc_trace(o_vcd, i_dbg_progbuf_ena, i_dbg_progbuf_ena.name());
         sc_trace(o_vcd, o_irq_software, o_irq_software.name());
         sc_trace(o_vcd, o_irq_timer, o_irq_timer.name());
@@ -518,15 +524,6 @@ void CsrRegs::comb() {
         vb_rdata[8] = r.ueip;   // user external pending bit
         vb_rdata[9] = r.seip;   // super-user external pending bit
         vb_rdata[11] = r.meip;  // RO: machine external pending bit (cleared by writing into mtimecmp)
-        if (v_csr_wena && r.mode.read() == PRV_M) {
-            v.usip = r.cmd_data.read()[0];
-            v.ssip = r.cmd_data.read()[1];
-            v.msip = r.cmd_data.read()[2];
-            v.utip = r.cmd_data.read()[4];
-            v.stip = r.cmd_data.read()[5];
-            v.ueip = r.cmd_data.read()[8];
-            v.seip = r.cmd_data.read()[9];
-        }
         break;
     case CSR_cycle:
         vb_rdata = r.cycle_cnt;
@@ -664,13 +661,14 @@ void CsrRegs::comb() {
         }
     }
 
-
+    v.msip = i_msip.read();
     v_sw_irq = r.msip.read() && r.msie.read() && r.mie.read() && (!r.dcsr_step || r.dcsr_stepie);
 
-    v.mtip = i_irq_timer;
+    v.mtip = i_mtip.read();
     v_tmr_irq = r.mtip.read() && r.mtie.read() && r.mie.read() && (!r.dcsr_step || r.dcsr_stepie);
 
-    v.meip = i_irq_external;
+    v.meip = i_meip.read();
+    v.seip = i_seip.read();
     v_ext_irq = r.meip.read() && r.meie.read() && r.mie.read() && (!r.dcsr_step || r.dcsr_stepie);
 
 

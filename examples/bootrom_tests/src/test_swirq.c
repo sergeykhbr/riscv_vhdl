@@ -28,11 +28,18 @@ void test_swirq(void) {
     uint64_t mip;
 
     asm("csrc mie, %0" : :"r"(msie));         // MSIE=0: disable software interrupt
-    pnp->fwdbg1 = 0;
 
     fw_enable_m_interrupts();
 
     clint->msip[fw_get_cpuid()] = 0x1;
+
+    // It is necessary to implement memory barrier because
+    // memory access could be postponed relative next CSR read:
+    pnp->fwdbg1 = 0;
+    while (pnp->fwdbg1 != 0) {
+        // Instead of membarier use this uncached read-write
+        pnp->fwdbg1 = 0;
+    }
 
     // Check mip[3] = msip
     asm("csrr %0, mip" : "=r" (mip));

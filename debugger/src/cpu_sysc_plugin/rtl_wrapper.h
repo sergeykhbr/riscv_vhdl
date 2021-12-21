@@ -19,6 +19,7 @@
 #include "async_tqueue.h"
 #include "api_core.h"
 #include "coreservices/imemop.h"
+#include "coreservices/iirq.h"
 #include "coreservices/ireset.h"
 #include "coreservices/iclock.h"
 #include "coreservices/icpuriscv.h"
@@ -39,7 +40,10 @@ class RtlWrapper : public sc_module,
     sc_out<axi4_master_in_type> o_msti;
     sc_in<axi4_master_out_type> i_msto;
     /** Interrupt line from external interrupts controller. */
-    sc_out<bool> o_interrupt;
+    sc_out<sc_uint<1>> o_msip;  // actually bus width should be CFG_CPU_MAX
+    sc_out<sc_uint<1>> o_mtip;
+    sc_out<sc_uint<1>> o_meip;
+    sc_out<sc_uint<1>> o_seip;  
     sc_in<bool> i_hartreset;
     sc_in<bool> i_ndmreset;
     sc_in<bool> i_halted0;
@@ -63,7 +67,6 @@ class RtlWrapper : public sc_module,
         sc_signal<sc_uint<2>> b_resp;
         //
         sc_signal<sc_bv<5>> nrst;
-        sc_signal<bool> interrupt;
         sc_signal<sc_uint<3>> state;
         sc_signal<sc_uint<CFG_CPU_MAX>> halted;
         sc_signal<bool> r_error;
@@ -80,6 +83,11 @@ class RtlWrapper : public sc_module,
     sc_signal<bool> w_w_error;
 
     sc_signal<bool> w_interrupt;
+
+    int w_msip;    // machine software interrupt pending
+    int w_mtip;    // machine timer interrupt pending
+    int w_meip;    // machine external interrupt pending
+    int w_seip;    // supervisor external interrupt pending
 
     Axi4TransactionType trans;
     ETransStatus resp;
@@ -100,6 +108,8 @@ class RtlWrapper : public sc_module,
 
  public:
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
+    void setCLINT(IIrqController *v) { iirqloc_ = v; }
+    void setPLIC(IIrqController *v) { iirqext_ = v; }
     void setBus(IMemoryOperation *v) { ibus_ = v; }
     /** Default time resolution 1 picosecond. */
     void setClockHz(double hz);
@@ -133,6 +143,8 @@ class RtlWrapper : public sc_module,
     uint32_t mask2size(uint8_t mask);       // nask with removed offset
 
  private:
+    IIrqController *iirqloc_;
+    IIrqController *iirqext_;
     IMemoryOperation *ibus_;
     IFace *iparent_;    // pointer on parent module object (used for logging)
     int clockCycles_;   // default in [ps]

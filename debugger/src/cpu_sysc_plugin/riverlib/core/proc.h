@@ -64,9 +64,11 @@ SC_MODULE(Processor) {
     sc_in<bool> i_resp_data_er_mpu_load;
     sc_in<bool> i_resp_data_er_mpu_store;
     sc_out<bool> o_resp_data_ready;                     // Core is ready to accept response from DCache
-    // External interrupt pin
-    sc_in<bool> i_tmr_irq;                              // timer interrupt
-    sc_in<bool> i_ext_irq;                              // PLIC interrupt accordingly with spec
+    // pening interrupt pin
+    sc_in<sc_uint<1>> i_msip;                           // machine software pening interrupt
+    sc_in<sc_uint<1>> i_mtip;                           // machine timer pening interrupt
+    sc_in<sc_uint<1>> i_meip;                           // machine external pening interrupt
+    sc_in<sc_uint<1>> i_seip;                           // supervisor external pening interrupt
     // MPU interface
     sc_out<bool> o_mpu_region_we;
     sc_out<sc_uint<CFG_MPU_TBL_WIDTH>> o_mpu_region_idx;

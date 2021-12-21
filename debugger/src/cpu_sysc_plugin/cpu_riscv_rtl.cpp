@@ -31,6 +31,8 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     registerAttribute("TracerEnable", &tracerEnable_);
     registerAttribute("L2CacheEnable", &l2CacheEnable_);
     registerAttribute("CoherenceEnable", &coherenceEnable_);
+    registerAttribute("CLINT", &clint_);
+    registerAttribute("PLIC", &plic_);
     registerAttribute("Bus", &bus_);
     registerAttribute("CmdExecutor", &cmdexec_);
     registerAttribute("DmiBAR", &dmibar_);
@@ -76,6 +78,19 @@ void CpuRiscV_RTL::postinitService() {
         return;
     }
 
+    iirqext_ = static_cast<IIrqController *>(RISCV_get_service_iface(
+        plic_.to_string(), IFACE_IRQ_CONTROLLER));
+    if (!iirqext_) {
+        RISCV_error("Interface IIrqController in %s not found",
+                    plic_.to_string());
+    }
+
+    iirqloc_ = static_cast<IIrqController *>(RISCV_get_service_iface(
+        clint_.to_string(), IFACE_IRQ_CONTROLLER));
+    if (!iirqloc_) {
+        RISCV_error("Interface IIrqController in %s not found",
+                    clint_.to_string());
+    }
 
     if (InVcdFile_.size()) {
         i_vcd_ = sc_create_vcd_trace_file(InVcdFile_.to_string());
@@ -92,6 +107,8 @@ void CpuRiscV_RTL::postinitService() {
     }
 
     wrapper_->setBus(ibus_);
+    wrapper_->setCLINT(iirqloc_);
+    wrapper_->setPLIC(iirqext_);
     wrapper_->setClockHz(freqHz_.to_int());
     wrapper_->generateVCD(i_vcd_, o_vcd_);
     dmi_->setBaseAddress(dmibar_.to_uint64());
@@ -139,7 +156,10 @@ void CpuRiscV_RTL::createSystemC() {
     wrapper_->o_dmi_nrst(w_dmi_nrst);
     wrapper_->o_msti(msti);
     wrapper_->i_msto(msto);
-    wrapper_->o_interrupt(w_plic_irq);
+    wrapper_->o_msip(wb_msip);
+    wrapper_->o_mtip(wb_mtip);
+    wrapper_->o_meip(wb_meip);
+    wrapper_->o_seip(wb_seip);
     wrapper_->i_hartreset(w_hartreset);
     wrapper_->i_ndmreset(w_ndmreset);
     wrapper_->i_halted0(w_halted0);
@@ -212,8 +232,10 @@ void CpuRiscV_RTL::createSystemC() {
     core_->i_nrst(w_sys_nrst);
     core_->i_msti(corei0);
     core_->o_msto(coreo0);
-    core_->i_tmr_irq(w_tmr_irq);
-    core_->i_ext_irq(w_plic_irq);
+    core_->i_msip(wb_msip);
+    core_->i_mtip(wb_mtip);
+    core_->i_meip(wb_meip);
+    core_->i_seip(wb_seip);
     core_->i_haltreq(w_haltreq);
     core_->i_resumereq(w_resumereq);
     core_->i_dport_req_valid(w_dport_req_valid);

@@ -64,6 +64,7 @@ IntDiv::IntDiv(sc_module_name name_, bool async_reset)
     sensitive << r.divident_i;
     sensitive << r.bits_i;
     sensitive << r.div_on_zero;
+    sensitive << r.overflow;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -88,6 +89,7 @@ void IntDiv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.divisor_i, pn + ".r_divisor_i");
         sc_trace(o_vcd, r.bits_i, pn + ".r_bits_i");
         sc_trace(o_vcd, r.div_on_zero, pn + ".r_div_on_zero");
+        sc_trace(o_vcd, r.overflow, pn + ".r_overflow");
     }
     stage0.generateVCD(i_vcd, o_vcd);
     stage1.generateVCD(i_vcd, o_vcd);
@@ -100,6 +102,8 @@ void IntDiv::comb() {
     sc_uint<64> wb_a2;
     sc_uint<64> vb_rem;
     sc_uint<64> vb_div;
+    bool v_a1_m0;      //   a1 == -0ll
+    bool v_a2_m1;      //   a2 == -1ll
 
     v = r;
 
@@ -131,6 +135,9 @@ void IntDiv::comb() {
             wb_a2(63, 0) = (~i_a2.read()) + 1;
         }
     }
+
+    v_a1_m0 = wb_a1[63] & !wb_a1(62, 0).or_reduce();    // = (1ull << 63)
+    v_a2_m1 = wb_a2.and_reduce();                       // = -1ll
 
     v.ena = (r.ena.read() << 1) | (i_ena & !r.busy);
 
@@ -181,14 +188,18 @@ void IntDiv::comb() {
         if (i_rv32.read() == 1) {
             if (i_unsigned.read() == 1) {
                 v.div_on_zero = !i_a2.read()(31, 0).or_reduce();
+                v.overflow = 0;
             } else {
                 v.div_on_zero = !i_a2.read()(30, 0).or_reduce();
+                v.overflow = v_a1_m0 & v_a2_m1;
             }
         } else {
             if (i_unsigned.read() == 1) {
                 v.div_on_zero = !i_a2.read()(63, 0).or_reduce();
+                v.overflow = 0;
             } else {
                 v.div_on_zero = !i_a2.read()(62, 0).or_reduce();
+                v.overflow = v_a1_m0 & v_a2_m1;
             }
         }
 
@@ -200,9 +211,15 @@ void IntDiv::comb() {
     } else if (r.ena.read()[8]) {
         v.busy = 0;
         if (r.resid.read()) {
-            v.result = vb_rem;
+            if (r.overflow.read() == 1) {
+                v.result = 0;
+            } else {
+                v.result = vb_rem;
+            }
         } else if (r.div_on_zero.read() == 1) {
             v.result = ~0ull;
+        } else if (r.overflow.read() == 1) {
+            v.result = ~0ull << 63;
         } else {
             v.result = vb_div;
         }

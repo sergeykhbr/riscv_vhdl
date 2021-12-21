@@ -30,8 +30,10 @@ SC_MODULE(RiverAmba) {
     sc_in<axi4_l1_in_type> i_msti;
     sc_out<axi4_l1_out_type> o_msto;
     /** Interrupt line from external interrupts controller (PLIC). */
-    sc_in<bool> i_tmr_irq;
-    sc_in<bool> i_ext_irq;
+    sc_in<sc_uint<1>> i_msip;
+    sc_in<sc_uint<1>> i_mtip;
+    sc_in<sc_uint<1>> i_meip;
+    sc_in<sc_uint<1>> i_seip;
     // Debug interface
     sc_in<bool> i_haltreq;                              // DMI: halt request from debug unit
     sc_in<bool> i_resumereq;                            // DMI: resume request from debug unit
