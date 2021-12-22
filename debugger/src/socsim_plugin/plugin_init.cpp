@@ -30,6 +30,7 @@
 #include "ddr_phys_flt.h"
 #include "ddr_ctrl.h"
 #include "prci.h"
+#include "qspi_ctrl.h"
 
 namespace debugger {
 
@@ -50,6 +51,7 @@ extern "C" void plugin_init(void) {
     REGISTER_CLASS_IDX(DdrPhysFilter, 15);
     REGISTER_CLASS_IDX(DdrController, 16);
     REGISTER_CLASS_IDX(PRCI, 17);
+    REGISTER_CLASS_IDX(QspiController, 18);
 }
 
 }  // namespace debugger

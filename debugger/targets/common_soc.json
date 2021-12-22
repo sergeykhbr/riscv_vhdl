@@ -124,33 +124,6 @@
                            ]]
 
                 ]}]},
-    {'Class':'GPIOClass','Instances':[
-          {'Name':'gpio0','Attr':[
-                ['LogLevel',3],
-                ['BaseAddress',0x10060000],
-                ['Length',4096],
-                ['IrqController','plic0'],
-                ['IrqId',23, 'Last IrqId 38 (same as FU740), Total 16 IOs with a separate IRQ request'],
-                ['MapList',[['gpio0','input_val'],
-                            ['gpio0','input_en'],
-                            ['gpio0','output_en'],
-                            ['gpio0','output_val'],
-                            ['gpio0','pue'],
-                            ['gpio0','ds'],
-                            ['gpio0','rise_ie'],
-                            ['gpio0','rise_ip'],
-                            ['gpio0','fall_ie'],
-                            ['gpio0','fall_ip'],
-                            ['gpio0','high_ie'],
-                            ['gpio0','high_ip'],
-                            ['gpio0','low_ie'],
-                            ['gpio0','low_ip'],
-                            ['gpio0','iof_en'],
-                            ['gpio0','iof_sel'],
-                            ['gpio0','out_xor']
-                           ]],
-                ['DIP',0x0B, '1011 Rescue image from SD for FU740 (FSBL=QSPI2 SD, BBL=QSPI2 SD)']
-                ]}]},
     {'Class':'UARTClass','Instances':[
           {'Name':'uart0','Attr':[
                 ['LogLevel',1],
@@ -194,6 +167,62 @@
                             ['uart1','fwcpuid'],
                            ]]
 
+                ]}]},
+    {'Class':'QspiControllerClass','Instances':[
+          {'Name':'qspi2','Attr':[
+                ['LogLevel',3],
+                ['CmdExecutor','cmdexec0'],
+                ['BaseAddress',0x10050000],
+                ['Length',0x1000],
+                ['IrqController','plic0'],
+                ['IrqId',43, 'same as FU740'],
+                ['SlaveList',[
+                              'sd0'
+                             ], 'Assign slave SPI device on available CS signal'],
+                ['MapList',[['qspi2','sckdiv'],
+                            ['qspi2','sckmode'],
+                            ['qspi2','csid'],
+                            ['qspi2','csdef'],
+                            ['qspi2','csmode'],
+                            ['qspi2','delay0'],
+                            ['qspi2','delay1'],
+                            ['qspi2','fmt'],
+                            ['qspi2','txdata'],
+                            ['qspi2','rxdata'],
+                            ['qspi2','txmark'],
+                            ['qspi2','rxmark'],
+                            ['qspi2','fctrl'],
+                            ['qspi2','ffmt'],
+                            ['qspi2','ie'],
+                            ['qspi2','ip'],
+                           ]],
+                ]}]},
+    {'Class':'GPIOClass','Instances':[
+          {'Name':'gpio0','Attr':[
+                ['LogLevel',3],
+                ['BaseAddress',0x10060000],
+                ['Length',4096],
+                ['IrqController','plic0'],
+                ['IrqId',23, 'Last IrqId 38 (same as FU740), Total 16 IOs with a separate IRQ request'],
+                ['MapList',[['gpio0','input_val'],
+                            ['gpio0','input_en'],
+                            ['gpio0','output_en'],
+                            ['gpio0','output_val'],
+                            ['gpio0','pue'],
+                            ['gpio0','ds'],
+                            ['gpio0','rise_ie'],
+                            ['gpio0','rise_ip'],
+                            ['gpio0','fall_ie'],
+                            ['gpio0','fall_ip'],
+                            ['gpio0','high_ie'],
+                            ['gpio0','high_ip'],
+                            ['gpio0','low_ie'],
+                            ['gpio0','low_ip'],
+                            ['gpio0','iof_en'],
+                            ['gpio0','iof_sel'],
+                            ['gpio0','out_xor']
+                           ]],
+                ['DIP',0x0B, '1011 Rescue image from SD for FU740 (FSBL=QSPI2 SD, BBL=QSPI2 SD)']
                 ]}]},
     {'Class':'DdrControllerClass','Instances':[
           {'Name':'ddrctrl0','Attr':[
