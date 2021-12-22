@@ -97,6 +97,33 @@
                 ['ContextList',['HART0_M',
                                 'HART0_S'], 'Use any convinient names']
                 ]}]},
+    {'Class':'PRCIClass','Instances':[
+          {'Name':'prci0','Attr':[
+                ['ObjDescription','PLL and clock sources control registers']
+                ['LogLevel',4],
+                ['BaseAddress',0x10000000],
+                ['Length',0x1000],
+                ['MapList',[['prci0','hfxosccfg'],
+                            ['prci0','core_pllcfg'],
+                            ['prci0','core_plloutdiv'],
+                            ['prci0','ddr_pllcfg'],
+                            ['prci0','ddr_plloutdiv'],
+                            ['prci0','gemgxl_pllcfg'],
+                            ['prci0','gemgxl_plloutdiv'],
+                            ['prci0','core_clk_sel_reg'],
+                            ['prci0','devices_reset_n'],
+                            ['prci0','clk_mux_status'],
+                            ['prci0','dvfs_core_pllcfg'],
+                            ['prci0','dvfs_core_plloutdiv'],
+                            ['prci0','corepllsel'],
+                            ['prci0','hfpclk_pllcfg'],
+                            ['prci0','hfpclk_plloutdiv'],
+                            ['prci0','hfpclkpllsel'],
+                            ['prci0','hfpclk_div_reg'],
+                            ['prci0','prci_plls'],
+                           ]]
+
+                ]}]},
     {'Class':'GPIOClass','Instances':[
           {'Name':'gpio0','Attr':[
                 ['LogLevel',3],
@@ -165,6 +192,33 @@
                             ['uart1','ip'],
                             ['uart1','scaler'],
                             ['uart1','fwcpuid'],
+                           ]]
+
+                ]}]},
+    {'Class':'DdrControllerClass','Instances':[
+          {'Name':'ddrctrl0','Attr':[
+                ['LogLevel',4],
+                ['BaseAddress',0x100B0000],
+                ['Length',0x4000, 'The last addr should be 0x100B_3FFF'],
+                ['MapList',[['ddrctrl0','ctrl0'],
+                            ['ddrctrl0','ctrl19'],
+                            ['ddrctrl0','ctrl21'],
+                            ['ddrctrl0','ctrl120'],
+                            ['ddrctrl0','ctrl132'],
+                            ['ddrctrl0','ctrl136'],
+                           ]]
+
+                ]}]},
+    {'Class':'DdrPhysFilterClass','Instances':[
+          {'Name':'ddrflt0','Attr':[
+                ['LogLevel',4],
+                ['DdrController','ddrctrl0']
+                ['BaseAddress',0x100B8000],
+                ['Length',4096],
+                ['MapList',[['ddrflt0','devicepmp0'],
+                            ['ddrflt0','devicepmp1'],
+                            ['ddrflt0','devicepmp2'],
+                            ['ddrflt0','devicepmp3'],
                            ]]
 
                 ]}]},

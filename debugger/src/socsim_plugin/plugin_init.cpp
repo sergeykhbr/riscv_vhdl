@@ -27,6 +27,9 @@
 #include "fpu_func.h"
 #include "plic.h"
 #include "clint.h"
+#include "ddr_phys_flt.h"
+#include "ddr_ctrl.h"
+#include "prci.h"
 
 namespace debugger {
 
@@ -44,6 +47,9 @@ extern "C" void plugin_init(void) {
     REGISTER_CLASS_IDX(UartMst, 12);
     REGISTER_CLASS_IDX(HardReset, 13);
     REGISTER_CLASS_IDX(FpuFunctional, 14);
+    REGISTER_CLASS_IDX(DdrPhysFilter, 15);
+    REGISTER_CLASS_IDX(DdrController, 16);
+    REGISTER_CLASS_IDX(PRCI, 17);
 }
 
 }  // namespace debugger
