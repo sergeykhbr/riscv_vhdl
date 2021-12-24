@@ -31,6 +31,8 @@
 #include "ddr_ctrl.h"
 #include "prci.h"
 #include "qspi_ctrl.h"
+#include "otp.h"
+#include "sdcard.h"
 
 namespace debugger {
 
@@ -52,6 +54,8 @@ extern "C" void plugin_init(void) {
     REGISTER_CLASS_IDX(DdrController, 16);
     REGISTER_CLASS_IDX(PRCI, 17);
     REGISTER_CLASS_IDX(QspiController, 18);
+    REGISTER_CLASS_IDX(OTP, 19);
+    REGISTER_CLASS_IDX(SdCard, 20);
 }
 
 }  // namespace debugger

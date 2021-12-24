@@ -33,6 +33,10 @@ class QspiController : public RegMemBankGeneric,
     /** IService interface */
     virtual void postinitService() override;
 
+    // Common methods
+    void sdWrite(uint8_t byte);
+    uint8_t sdRead();
+
  protected:
     // Chip Select Default Register
     class QSPI_CSDEF_TYPE : public MappedReg32Type {
@@ -213,8 +217,32 @@ class QspiController : public RegMemBankGeneric,
     AttributeType irqid_;
 
     IIrqController *iirq_;
+    ISlaveSPI *ics_;
 
-    MappedReg32Type sckdiv;              // [0x00] Serial clock divisor
+    enum EWrState {
+        WrIdle,
+        CmdAddress,
+        Reading
+    } wrstate_;
+    enum ERdState {
+        RdIdle,
+        RdCmdResponse,
+        RdDataToken,
+        RdDataBlock,
+        RdCrc,
+        RdCmdDiscard
+    } rdstate_;
+
+    int datablockcnt_;
+    int wrbytecnt_;
+    int rdbytecnt_;
+    int rdblocksize_;
+    uint64_t addr_;
+    uint8_t txbuf_[4096];
+    uint8_t rxbuf_[4096];
+    int txcnt_;
+
+    MappedReg32Type sckdiv;             // [0x00] Serial clock divisor
     MappedReg32Type sckmode;            // [0x04] Serial clock mode
     MappedReg32Type csid;               // [0x10] Chip select ID
     QSPI_CSDEF_TYPE csdef;              // [0x14] Chip select default

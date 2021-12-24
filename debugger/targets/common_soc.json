@@ -1,3 +1,9 @@
+    {'Class':'SdCardClass','Instances':[
+          {'Name':'sd0','Attr':[
+                ['ObjDescription','Ubuntu image storage']
+                ['LogLevel',4],
+                ['Image','${REPO_PATH}/../examples/ubuntu-21.04-preinstalled-server-riscv64+unmatched.img']
+                ]}]},
     {'Class':'TcpServerClass','Instances':[
           {'Name':'rpcserver','Attr':[
                 ['LogLevel',4],
@@ -45,7 +51,6 @@
                      'csr MTIME',
                      'read 0xfffff004 128',
                      'loadelf helloworld',
-                     'loadelf e:/zephyr.elf nocode',
                      ]]
                 ]}]},
     {'Class':'CmdExecutorClass','Instances':[
@@ -223,6 +228,30 @@
                             ['gpio0','out_xor']
                            ]],
                 ['DIP',0x0B, '1011 Rescue image from SD for FU740 (FSBL=QSPI2 SD, BBL=QSPI2 SD)']
+                ]}]},
+    {'Class':'OTPClass','Instances':[
+          {'Name':'otp0','Attr':[
+                ['LogLevel',4],
+                ['BaseAddress',0x10070000],
+                ['Length',0x1000],
+                ['MapList',[['otp0','PA'],
+                            ['otp0','PAI0'],
+                            ['otp0','PAS'],
+                            ['otp0','PCE'],
+                            ['otp0','PCLK'],
+                            ['otp0','PDIN'],
+                            ['otp0','PDOUT'],
+                            ['otp0','PDSTB'],
+                            ['otp0','PPROG'],
+                            ['otp0','PTC'],
+                            ['otp0','PTM'],
+                            ['otp0','PTM_REP'],
+                            ['otp0','PTR'],
+                            ['otp0','PTRIM'],
+                            ['otp0','PWE'],
+                           ]],
+                ['InitData',[[0x80,0x11223344],
+                           ]]
                 ]}]},
     {'Class':'DdrControllerClass','Instances':[
           {'Name':'ddrctrl0','Attr':[

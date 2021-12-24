@@ -29,10 +29,13 @@ PLIC::PLIC(const char *name) : RegMemBankGeneric(name),
 
     contextList_.make_list(0);
     pendingList_.make_list(0);
+    ctx_enable = 0;
+    ctx_priority_th = 0;
+    ctx_claim = 0;
 }
 
 PLIC::~PLIC() {
-    if (contextList_.size()) {
+    if (contextList_.size() && ctx_enable) {
         for (unsigned i = 0; i < contextList_.size(); i++) {
             delete ctx_enable[i];
             delete ctx_priority_th[i];
