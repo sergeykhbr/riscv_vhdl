@@ -60,5 +60,17 @@
                 ['InitFile','${REPO_PATH}/../examples/riscv-tests/makefiles/bin/riscv-tests.hex'],
                 ['ReadOnly',false],
                 ['BaseAddress',0x08000000, 'L2 Cache controller range on FU740 used by bootloader'],
-                ['Length',0x200000, '2 MB alloacted on FU740']
+                ['Length',0x200000, '2 MB alloacted on FU740. More than 1 MB need for U-boot']
+                ]}]},
+    {'Class':'DDRClass','Instances':[
+          {'Name':'ddr0','Attr':[
+                ['LogLevel',1],
+                ['BaseAddress',0x80000000],
+                ['Length',0x80000000, '2GB bank']
+                ]}]},
+    {'Class':'DDRClass','Instances':[
+          {'Name':'ddr1','Attr':[
+                ['LogLevel',1],
+                ['BaseAddress',0x100000000],
+                ['Length',0x200000000, '8GB bank']
                 ]}]},

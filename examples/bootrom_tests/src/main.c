@@ -88,7 +88,6 @@ int main() {
     if (bar != DEV_NONE) {
         led_set(0x0A);
         printf_uart("SPI Flash BAR. .0x%08x\r\n", bar);
-        test_spiflash(bar);
     }
     led_set(0x0B);
 

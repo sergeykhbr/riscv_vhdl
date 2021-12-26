@@ -56,6 +56,8 @@ static const uint16_t CSR_mscratch       = 0x340;
 /** Exception program counters. */
 static const uint16_t CSR_uepc           = 0x041;
 static const uint16_t CSR_sepc           = 0x141;
+/** Supervisor Address Translation and Protection */
+static const uint16_t CSR_satp           = 0x180;
 static const uint16_t CSR_hepc           = 0x241;
 static const uint16_t CSR_mepc           = 0x341;
 /** Machine trap cause */

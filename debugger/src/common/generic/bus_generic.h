@@ -46,14 +46,14 @@ class BusGeneric : public IService,
 
  protected:
     /** Speed-optimized mapping */
-    virtual uint64_t adr_hash(uint64_t adr) { return adr; }
-    virtual void maphash(IMemoryOperation *imemop);
-    virtual IMemoryOperation *getHashedDevice(uint64_t addr);
+    virtual void maphash();
     void getMapedDevice(Axi4TransactionType *trans,
                         IMemoryOperation **pdev, uint32_t *sz);
 
  protected:
-    AttributeType useHash_;
+    static const int HASH_ADDR_WIDTH = 14;
+    static const int HASH_TBL_SIZE = 1 << HASH_ADDR_WIDTH;
+    AttributeType addrWidth_;       // address bits (39 bits for FU740). [63:39] must be equal to [38]
     mutex_def mutexBAccess_;
     mutex_def mutexNBAccess_;
     Axi4TransactionType b_tr_;
@@ -61,6 +61,18 @@ class BusGeneric : public IService,
 
     GenericReg64Bank busUtil_;    // per master read/write access statistic
     IMemoryOperation **imaphash_;
+
+    struct HashTableItemType {
+        bool nxtlvlena;
+        IMemoryOperation *idev;
+        HashTableItemType *tbl;
+        AttributeType devlist;
+    } imemtbl_[HASH_TBL_SIZE];
+
+    uint64_t ADDR_MASK_;
+    uint64_t HASH_MASK_;
+    uint64_t HASH_LVL1_OFFSET_;
+    uint64_t HASH_LVL2_OFFSET_;
 };
 
 DECLARE_CLASS(BusGeneric)

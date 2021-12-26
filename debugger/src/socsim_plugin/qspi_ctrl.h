@@ -209,6 +209,8 @@ class QspiController : public RegMemBankGeneric,
         virtual uint32_t aboutToWrite(uint32_t new_val) override;
     };
 
+ private:
+    void processCommand();
 
  private:
     AttributeType cmdexec_;
@@ -219,10 +221,21 @@ class QspiController : public RegMemBankGeneric,
     IIrqController *iirq_;
     ISlaveSPI *ics_;
 
+    union SdCommandType {
+        uint8_t u8[6];
+        struct bits_type {
+            uint8_t cmd : 6;
+            uint8_t prefix_01 : 2;
+            uint8_t addr[4];
+            uint8_t crc;
+        } b;
+    } cmd_;
+
     enum EWrState {
         WrIdle,
-        CmdAddress,
-        Reading
+        WrCmdAddress,
+        WrCrc,
+        WrReading
     } wrstate_;
     enum ERdState {
         RdIdle,

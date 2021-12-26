@@ -27,12 +27,18 @@ BusGeneric::BusGeneric(const char *name) : IService(name),
             sizeof(DsuMapType::local_regs_type::\
                    local_region_type::mst_bus_util_type)) {
     registerInterface(static_cast<IMemoryOperation *>(this));
-    registerAttribute("UseHash", &useHash_);
+    registerAttribute("AddrWidth", &addrWidth_);
     RISCV_mutex_init(&mutexBAccess_);
     RISCV_mutex_init(&mutexNBAccess_);
     RISCV_register_hap(static_cast<IHap *>(this));
     busUtil_.setPriority(10);     // Overmap DSU registers
     imaphash_ = 0;
+
+    memset(imemtbl_, 0, sizeof(imemtbl_));
+    for (int i = 0; i < HASH_TBL_SIZE; i++) {
+        imemtbl_[i].devlist.make_list(0);
+    }
+    addrWidth_.make_int64(39);      // 39-bits address width for FU740
 }
 
 BusGeneric::~BusGeneric() {
@@ -44,6 +50,12 @@ BusGeneric::~BusGeneric() {
 }
 
 void BusGeneric::postinitService() {
+    ADDR_MASK_ = (1ull << addrWidth_.to_int()) - 1;
+    HASH_MASK_ = (1ull << HASH_ADDR_WIDTH) - 1;
+
+    HASH_LVL1_OFFSET_ = addrWidth_.to_int() - HASH_ADDR_WIDTH;
+    HASH_LVL2_OFFSET_ = addrWidth_.to_int() - 2*HASH_ADDR_WIDTH;
+
     IMemoryOperation *imem;
     for (unsigned i = 0; i < listMap_.size(); i++) {
         const AttributeType &dev = listMap_[i];
@@ -77,10 +89,11 @@ void BusGeneric::postinitService() {
 void BusGeneric::hapTriggered(EHapType type,
                               uint64_t param,
                               const char *descr) {
-    if (!useHash_.to_bool()) {
-        return;
-    }
-    maphash(0);
+    RISCV_mutex_lock(&mutexNBAccess_);
+    RISCV_mutex_lock(&mutexBAccess_);
+    maphash();
+    RISCV_mutex_unlock(&mutexBAccess_);
+    RISCV_mutex_unlock(&mutexNBAccess_);
 }
 
 ETransStatus BusGeneric::b_transport(Axi4TransactionType *trans) {
@@ -154,67 +167,52 @@ ETransStatus BusGeneric::nb_transport(Axi4TransactionType *trans,
 void BusGeneric::getMapedDevice(Axi4TransactionType *trans,
                          IMemoryOperation **pdev, uint32_t *sz) {
     IMemoryOperation *imem;
+    uint64_t bar, barsz;
     *pdev = 0;
     *sz = 0;
-    if (useHash_.to_bool()) {
-        imem = getHashedDevice(trans->addr);
-        if (imem) {
-            *pdev = imem;
-            return;
-        }
-    }
 
-    uint64_t bar, barsz;
-    for (unsigned i = 0; i < imap_.size(); i++) {
-        imem = static_cast<IMemoryOperation *>(imap_[i].to_iface());
-        bar = imem->getBaseAddress();
-        barsz = imem->getLength();
-        if (bar <= trans->addr && trans->addr < (bar + barsz)) {
-            if (!(*pdev) || imem->getPriority() > (*pdev)->getPriority()) {
-                *pdev = imem;
+    uint64_t hashidx = (trans->addr & ADDR_MASK_) >> HASH_LVL1_OFFSET_;
+    HashTableItemType &item = imemtbl_[hashidx];
+    if (item.idev) {
+        *pdev = item.idev;
+    } else if (item.nxtlvlena) {
+        for (unsigned i = 0; i < item.devlist.size(); i++) {
+            imem = static_cast<IMemoryOperation *>(item.devlist[i].to_iface());
+            bar = imem->getBaseAddress();
+            barsz = imem->getLength();
+            if (bar <= trans->addr && trans->addr < (bar + barsz)) {
+                if (!(*pdev) || imem->getPriority() > (*pdev)->getPriority()) {
+                    *pdev = imem;
+                }
             }
         }
     }
 }
 
-void BusGeneric::maphash(IMemoryOperation *imemop) {
+void BusGeneric::maphash() {
     IMemoryOperation *imem;
-    uint64_t maxadr = 0;
-    uint64_t t;
-    uint64_t bar, barsz;
-    for (unsigned i = 0; i < imap_.size(); i++) {
-        imem = static_cast<IMemoryOperation *>(imap_[i].to_iface());
-        t = imem->getBaseAddress() + imem->getLength();
-        if (t > maxadr) {
-            maxadr = t;
-        }
-    }
-
-    if (maxadr > 0x1000000) {
-        RISCV_error("Hashmap is too big, %x B", maxadr);
-        useHash_.make_boolean(false);
-        return;
-    }
-
-    imaphash_ = new IMemoryOperation *[static_cast<size_t>(maxadr)];
-    memset(imaphash_, 0,
-        static_cast<size_t>(maxadr) * sizeof(IMemoryOperation *));
+    uint64_t first, last;
+    uint64_t bar;
     for (unsigned i = 0; i < imap_.size(); i++) {
         imem = static_cast<IMemoryOperation *>(imap_[i].to_iface());
         bar = imem->getBaseAddress();
-        barsz = imem->getLength();
-        for (uint64_t addr = bar; addr < (bar + barsz); addr++) {
-            if (imaphash_[addr] == 0) {
-                imaphash_[addr] = imem;
-            } else if (imem->getPriority() > imaphash_[addr]->getPriority()) {
-                imaphash_[addr] = imem;
+        first = (bar >> HASH_LVL1_OFFSET_) & HASH_MASK_;
+        last = ((bar + imem->getLength()) >> HASH_LVL1_OFFSET_) & HASH_MASK_;
+
+        for (uint64_t n = first; n <= last; n++) {
+            HashTableItemType &item = imemtbl_[n];
+            if (!item.nxtlvlena && !item.idev) {
+                item.idev = imem;
+            } else if (item.idev) {
+                item.nxtlvlena = true;
+                item.devlist.new_list_item().make_iface(item.idev);
+                item.devlist.new_list_item().make_iface(imem);
+                item.idev = 0;
+            } else {
+                item.devlist.new_list_item().make_iface(imem);
             }
         }
     }
-}
-
-IMemoryOperation *BusGeneric::getHashedDevice(uint64_t addr) {
-    return imaphash_[addr];
 }
 
 }  // namespace debugger

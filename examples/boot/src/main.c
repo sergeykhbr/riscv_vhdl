@@ -17,6 +17,10 @@
 #include <string.h>
 #include "axi_maps.h"
 #include "encoding.h"
+#include "sd_uefi.h"
+#include "uart.h"
+
+uint64_t get_dev_bar(uint16_t vid, uint16_t did);
 
 static const int FW_IMAGE_SIZE_BYTES = 1 << 18;
 
@@ -28,49 +32,19 @@ int fw_get_cpuid() {
 
 void led_set(int output) {
     // [3:0] DIP pins
-    ((gpio_map *)ADDR_BUS0_XSLV_GPIO)->ouser = (output << 4);
+    ((gpio_map *)ADDR_BUS0_XSLV_GPIO)->output_val = (output << 4);
 }
 
 int get_dip(int idx) {
     // [3:0] DIP pins
-    int dip = ((gpio_map *)ADDR_BUS0_XSLV_GPIO)->iuser >> idx;
+    int dip = ((gpio_map *)ADDR_BUS0_XSLV_GPIO)->input_val >> idx;
     return dip & 1;
 }
 
-void print_uart(const char *buf, int sz) {
-    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
-    uart_txdata_type txdata;
-    for (int i = 0; i < sz; i++) {
-        do {
-            txdata.v = uart->txdata;
-        } while (txdata.b.full);
-        uart->txdata = buf[i];
-    }
-}
-
-void print_uart_hex(long val) {
-    unsigned char t, s;
-    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
-    uart_txdata_type txdata;
-    for (int i = 0; i < 16; i++) {
-        do {
-            txdata.v = uart->txdata;
-        } while (txdata.b.full);;
-        
-        t = (unsigned char)((val >> ((15 - i) * 4)) & 0xf);
-        if (t < 10) {
-            s = t + '0';
-        } else {
-            s = (t - 10) + 'a';
-        }
-        uart->txdata = s;
-    }
-}
 
 void copy_image() { 
     uint32_t tech;
     uint64_t *fwrom = (uint64_t *)ADDR_BUS0_XSLV_FWIMAGE;
-    uint64_t *flash = (uint64_t *)ADDR_BUS0_XSLV_EXTFLASH;
     uint64_t *sram = (uint64_t *)ADDR_BUS0_XSLV_SRAM;
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
 
@@ -80,14 +54,20 @@ void copy_image() {
      */
     tech = pnp->tech & 0xFF;
 
-    if (tech != TECH_INFERRED && pnp->fwid == 0) {
-        if (get_dip(0) == 1) {
-            print_uart("Coping FLASH\r\n", 14);
-            memcpy(sram, flash, FW_IMAGE_SIZE_BYTES);
-        } else {
-            print_uart("Coping FWIMAGE\r\n", 16);
-            memcpy(sram, fwrom, FW_IMAGE_SIZE_BYTES);
+    uint64_t qspi2 = get_dev_bar(VENDOR_GNSSSENSOR, GNSSSENSOR_SPI_FLASH);
+    if (qspi2 != ~0ull) {
+        print_uart("Select . . .QSPI2\r\n", 19);
+        if (run_from_sdcard() == -1) {
+            print_uart("QSPI2. . . FAILED\r\n", 19);
+            qspi2 = ~0ull;
         }
+    }
+
+    if (qspi2 != ~0ull) {
+        // Copy BSL from SD-card
+    } else if (tech != TECH_INFERRED && pnp->fwid == 0) {
+        print_uart("Select . .FWIMAGE\r\n", 19);
+        memcpy(sram, fwrom, FW_IMAGE_SIZE_BYTES);
     }
     // Write Firmware ID to avoid copy image after soft-reset.
     pnp->fwid = 0x20211123;
@@ -126,19 +106,20 @@ void _init() {
     // Half period of the uart = Fbus / 115200 / 2 = 70 MHz / 115200 / 2:
     uart->scaler = SYS_HZ / 115200 / 2;  // 40 MHz
 
-    gpio->direction = 0xF;  // [3:0] input DIP; [11:4] output LEDs
+    gpio->input_en = 0xF;  // [3:0] input DIP; [11:4] output LEDs
+    gpio->output_en = 0xFF0;  
 
     led_set(0x01);
-    print_uart("Boot . . .", 10);
-    led_set(0x02);
 
     copy_image();
-    led_set(0x03);
+    led_set(0x02);
+
+    print_uart("Boot . . .", 10);
     print_uart("OK\r\n", 4);
 
     tech = (pnp->tech >> 24) & 0xff;
     led_set(tech);
-    led_set(0x04);
+    led_set(0x03);
 }
 
 /** Not used actually */

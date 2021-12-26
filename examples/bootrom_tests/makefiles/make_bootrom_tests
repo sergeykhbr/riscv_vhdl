@@ -51,7 +51,6 @@ SOURCES = crt \
 	test_missaccess \
 	test_mpu \
 	test_stackprotect \
-	test_spiflash \
 	test_gnss_ss \
 	test_plic \
 	test_mtimer \

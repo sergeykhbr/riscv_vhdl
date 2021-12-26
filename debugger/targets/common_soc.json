@@ -57,7 +57,7 @@
           {'Name':'cmdexec0','Attr':[
                 ['LogLevel',4],
                 ['Bus','axi0'],
-                ['DmiBAR',0x00000000AF000000]
+                ['DmiBAR',0x1000]
                 ]}]},
     {'Class':'SimplePluginClass','Instances':[
           {'Name':'example0','Attr':[
@@ -82,7 +82,7 @@
                 ]}]},
     {'Class':'CLINTClass','Instances':[
           {'Name':'clint0','Attr':[
-                ['LogLevel',4],
+                ['LogLevel',3],
                 ['Clock','core0'],
                 ['BaseAddress',0x02000000, 'FU740(unmatched) uses this base address'],
                 ['Length',0x10000],

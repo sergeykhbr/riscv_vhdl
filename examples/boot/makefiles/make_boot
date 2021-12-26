@@ -43,7 +43,11 @@ VPATH = $(SRC_PATH)
 
 SOURCES = main \
 	trap \
-	crt
+	crt \
+	pnp \
+	uart \
+	spi \
+	sd_uefi
 
 OBJ_FILES = $(addsuffix .o,$(SOURCES))
 EXECUTABLE = bootimage

@@ -107,15 +107,15 @@ unsigned CpuRiver_Functional::addSupportedInstruction(
 
 /** Check stack protection exceptions: */
 void CpuRiver_Functional::checkStackProtection() {
-    uint64_t mstackovr = portCSR_.read(CSR_mstackovr).val;
-    uint64_t mstackund = portCSR_.read(CSR_mstackund).val;
+    uint64_t mstackovr = readCSR(CSR_mstackovr);
+    uint64_t mstackund = readCSR(CSR_mstackund);
     uint64_t sp = portRegs_.read(Reg_sp).val;
     if (mstackovr != 0 && sp < mstackovr) {
         generateException(EXCEPTION_StackOverflow, getPC());
-        portCSR_.write(CSR_mstackovr, 0);
+        writeCSR(CSR_mstackovr, 0);
     } else if (mstackund != 0 && sp > mstackund) {
         generateException(EXCEPTION_StackUnderflow, getPC());
-        portCSR_.write(CSR_mstackund, 0);
+        writeCSR(CSR_mstackund, 0);
     }
 }
 
@@ -471,6 +471,12 @@ void CpuRiver_Functional::writeCSR(uint32_t regno, uint64_t val) {
         break;
     case CSR_flushi:
         flush(val);
+        break;
+    case CSR_satp:
+        if ((val >> 60) & 0xf) {
+            RISCV_error(
+                "[satp] <= %016" RV_PRI64 "x. Paging not supported", val);
+        }
         break;
     default:;
     }

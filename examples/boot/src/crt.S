@@ -133,7 +133,7 @@ reset_vector:
   csrr a0, mhartid            # a0 <= MHARTID value
 
 #define SRAM_BASE_ADDR  0x08000000
-#define SRAM_SIZE_BYTES (1<<19)
+#define SRAM_SIZE_BYTES (1<<21)
 #define STACK_PER_CORE_BYTES 4096
 #define CFG_CPU_MAX 4
 

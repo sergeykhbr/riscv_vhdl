@@ -19,16 +19,16 @@
 
 namespace debugger {
 
-static const uint8_t CMD0 = 0x00;   // () software reset
-static const uint8_t CMD1 = 0x01;   // () Initiate initialization process
-static const uint8_t ACMD41 = 0x41; // () For only SDC. Initiate initialization process
-static const uint8_t CMD8 = 0x08;   // () For only SDC V2. Check voltage range
-static const uint8_t CMD58 = 0x58;  // () Read OCR
-static const uint8_t CMD12 = 0x12;  // () Stop to read transmission
-static const uint8_t CMD16 = 0x16;  // (Block Length[31:0]) Change R/W Block size
-static const uint8_t CMD18 = 0x18;  // (address[31:0]) Read multiple blocks
+static const uint8_t CMD0 = 0;   // () software reset
+static const uint8_t CMD1 = 1;   // () Initiate initialization process
+static const uint8_t ACMD41 = 41; // () For only SDC. Initiate initialization process
+static const uint8_t CMD8 = 8;   // () For only SDC V2. Check voltage range
+static const uint8_t CMD58 = 58;  // () Read OCR
+static const uint8_t CMD12 = 12;  // () Stop to read transmission
+static const uint8_t CMD16 = 16;  // (Block Length[31:0]) Change R/W Block size
+static const uint8_t CMD18 = 18;  // (address[31:0]) Read multiple blocks
 
-static const uint8_t R1_RESPONSE_NO_ERROR = 0x00;
+static const uint8_t R1_RESPONSE_NO_ERROR = 0x01;   // No errors, [0] Idle state
 static const uint8_t TOKEN_CMD18 = 0xFE;    // CMD17/18/24
 
 QspiController::QspiController(const char *name) : RegMemBankGeneric(name),
@@ -61,6 +61,7 @@ QspiController::QspiController(const char *name) : RegMemBankGeneric(name),
     rdstate_ = RdIdle;
     wrbytecnt_ = 0;
     rdbytecnt_ = 0;
+    addr_ = 0;
     txcnt_ = 0;
 }
 
@@ -86,30 +87,50 @@ void QspiController::postinitService() {
     }
 }
 
+void QspiController::processCommand() {
+    if (cmd_.b.prefix_01 != 0x1) {
+        return;
+    }
+
+    switch (cmd_.b.cmd) {
+    case CMD0:
+        RISCV_info("%s", "CMD0: software reset");
+        break;
+    case CMD12:
+        wrstate_ = WrIdle;
+        rdstate_ = RdCmdDiscard;
+        break;
+    case CMD18:
+        addr_ = cmd_.b.addr[1];
+        addr_ = (addr_ << 8) | cmd_.b.addr[2];
+        addr_ = (addr_ << 8) | cmd_.b.addr[3];
+        datablockcnt_ = -1; // open ended
+        wrstate_ = WrReading;
+        rdstate_ = RdCmdResponse;
+        break;
+    default:
+        RISCV_error("Unsupported command: %02x", cmd_.b.cmd);
+    }
+}
+
 void QspiController::sdWrite(uint8_t byte) {
-    switch (wrstate_) {
-    case WrIdle:
-        if (byte == CMD18) {
-            wrstate_ = CmdAddress;
-            wrbytecnt_ = ffmt.getTyped().b.addr_len;
-            addr_ = 0;
-            datablockcnt_ = -1; // open ended
-        }
-        break;
-    case CmdAddress:
-        addr_ = (addr_ << 8) | byte;
-        if (--wrbytecnt_ == 0) {
-            wrstate_ = Reading;
-            rdstate_ = RdCmdResponse;
-        }
-        break;
-    case Reading:
-        if (byte == CMD12) {
-            wrstate_ = WrIdle;
-            rdstate_ = RdCmdDiscard;
-        }
-        break;
-    default:;
+    if (wrbytecnt_ == 0 && byte != 0xFF) {
+        cmd_.u8[wrbytecnt_++] = byte;
+    } else if (wrbytecnt_) {
+        cmd_.u8[wrbytecnt_++] = byte;
+    }
+
+    if (wrbytecnt_ == 6) {
+        wrbytecnt_ = 0;
+        RISCV_info("CMD%d  %02x %02x %02x %02x  %02x",
+            cmd_.b.cmd,
+            cmd_.b.addr[0],
+            cmd_.b.addr[1],
+            cmd_.b.addr[2],
+            cmd_.b.addr[3],
+            cmd_.b.crc
+            );
+        processCommand();
     }
 }
 
@@ -119,7 +140,7 @@ uint8_t QspiController::sdRead() {
     case RdCmdResponse:
         ret = R1_RESPONSE_NO_ERROR;
         if (datablockcnt_) {
-            rdstate_ = RdDataBlock;
+            rdstate_ = RdDataToken;
             rdblocksize_ = 512;
             rdbytecnt_ = 0;
             if (datablockcnt_ != -1) {
@@ -134,8 +155,8 @@ uint8_t QspiController::sdRead() {
         ret =  TOKEN_CMD18;
         rdstate_ = RdDataBlock;
         if (ics_) {
-            ics_->spiRead(addr_, rxbuf_, rdbytecnt_);
-            addr_ += rdbytecnt_;
+            ics_->spiRead(addr_, rxbuf_, rdblocksize_);
+            addr_ += rdblocksize_;
         }
         break;
     case RdDataBlock:
@@ -147,24 +168,24 @@ uint8_t QspiController::sdRead() {
         break;
     case RdCrc:
         ret = 0xFF;
-        if (++rdbytecnt_ == 2) {
-            if (datablockcnt_ == 0) {
-                rdstate_ = RdIdle;
-            } else {
-                rdstate_ = RdDataBlock;
-                rdbytecnt_ = 0;
-                if (datablockcnt_ != -1) {
-                    datablockcnt_--;
-                }
+        if (datablockcnt_ == 0) {
+            rdstate_ = RdIdle;
+        } else {
+            rdstate_ = RdDataToken;
+            rdbytecnt_ = 0;
+            if (datablockcnt_ != -1) {
+                datablockcnt_--;
             }
         }
         break;
     case RdCmdDiscard:
+        ret = R1_RESPONSE_NO_ERROR;
         datablockcnt_ = 0;
         rdbytecnt_ = 0;
-        rdstate_ = RdCmdResponse;
+        rdstate_ = RdIdle;
         break;
-    default:;
+    default:
+        ret = 0x80; // empty flag
     }
     return ret;
 }
