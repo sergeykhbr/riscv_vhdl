@@ -56,17 +56,17 @@ void copy_image() {
 
     uint64_t qspi2 = get_dev_bar(VENDOR_GNSSSENSOR, GNSSSENSOR_SPI_FLASH);
     if (qspi2 != ~0ull) {
-        print_uart("Select . . .QSPI2\r\n", 19);
+        print_uart("Select . .QSPI2\r\n", 17);
         if (run_from_sdcard() == -1) {
-            print_uart("QSPI2. . . FAILED\r\n", 19);
+            print_uart("QSPI2. . .FAILED\r\n", 18);
             qspi2 = ~0ull;
         }
     }
 
     if (qspi2 != ~0ull) {
         // Copy BSL from SD-card
-    } else if (tech != TECH_INFERRED && pnp->fwid == 0) {
-        print_uart("Select . .FWIMAGE\r\n", 19);
+    } else if (pnp->fwid == 0) {
+        print_uart("Coping . .FWIMAGE\r\n", 19);
         memcpy(sram, fwrom, FW_IMAGE_SIZE_BYTES);
     }
     // Write Firmware ID to avoid copy image after soft-reset.

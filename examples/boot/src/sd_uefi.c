@@ -79,6 +79,11 @@ int run_from_sdcard() {
     sd_read_block((uint8_t *)&lba0, sizeof(gpt_legacy_mbr));
     sd_read_block((uint8_t *)&lba1, sizeof(gpt_header));
 
+    if (lba1.signature != 0x5452415020494645ULL) {
+        sd_stop_reading();
+        return -1;
+    }
+
     for (int i = 0; i < lba1.npartition_entries; i++) {
         i4 = i % 4;
         if (i4 == 0) {
