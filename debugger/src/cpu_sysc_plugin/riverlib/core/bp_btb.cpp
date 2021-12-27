@@ -80,9 +80,6 @@ void BpBTB::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, dbg_npc[2], pn + ".dbg_npc2");
         sc_trace(o_vcd, dbg_npc[3], pn + ".dbg_npc3");
         sc_trace(o_vcd, dbg_npc[4], pn + ".dbg_npc4");
-        sc_trace(o_vcd, dbg_npc[5], pn + ".dbg_npc5");
-        sc_trace(o_vcd, dbg_npc[6], pn + ".dbg_npc6");
-        sc_trace(o_vcd, dbg_npc[7], pn + ".dbg_npc7");
     }
 }
 
@@ -142,7 +139,7 @@ void BpBTB::comb() {
         }
     }
 
-    for (int i = 0; i < CFG_BTB_SIZE; i++) {
+    for (int i = 0; i < CFG_BP_DEPTH; i++) {
         dbg_npc[i] = vb_addr((i+1)*CFG_CPU_ADDR_BITS-1, i*CFG_CPU_ADDR_BITS).to_uint64();
     }
 

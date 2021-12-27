@@ -48,7 +48,7 @@ SC_MODULE(BpBTB) {
     };
     BtbEntryType r_btb[CFG_BTB_SIZE];
     BtbEntryType v_btb[CFG_BTB_SIZE];
-    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> dbg_npc[CFG_BTB_SIZE];
+    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> dbg_npc[CFG_BP_DEPTH];
 
     void R_RESET(BtbEntryType &iv) {
         iv.pc = ~0ul;
