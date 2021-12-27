@@ -66,6 +66,23 @@ void BpBTB::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r_btb[2].npc, pn + ".btb2_npc");
         sc_trace(o_vcd, r_btb[3].pc, pn + ".btb3_pc");
         sc_trace(o_vcd, r_btb[3].npc, pn + ".btb3_npc");
+        sc_trace(o_vcd, r_btb[4].pc, pn + ".btb4_pc");
+        sc_trace(o_vcd, r_btb[4].npc, pn + ".btb4_npc");
+        sc_trace(o_vcd, r_btb[5].pc, pn + ".btb5_pc");
+        sc_trace(o_vcd, r_btb[5].npc, pn + ".btb5_npc");
+        sc_trace(o_vcd, r_btb[6].pc, pn + ".btb6_pc");
+        sc_trace(o_vcd, r_btb[6].npc, pn + ".btb6_npc");
+        sc_trace(o_vcd, r_btb[7].pc, pn + ".btb7_pc");
+        sc_trace(o_vcd, r_btb[7].npc, pn + ".btb7_npc");
+
+        sc_trace(o_vcd, dbg_npc[0], pn + ".dbg_npc0");
+        sc_trace(o_vcd, dbg_npc[1], pn + ".dbg_npc1");
+        sc_trace(o_vcd, dbg_npc[2], pn + ".dbg_npc2");
+        sc_trace(o_vcd, dbg_npc[3], pn + ".dbg_npc3");
+        sc_trace(o_vcd, dbg_npc[4], pn + ".dbg_npc4");
+        sc_trace(o_vcd, dbg_npc[5], pn + ".dbg_npc5");
+        sc_trace(o_vcd, dbg_npc[6], pn + ".dbg_npc6");
+        sc_trace(o_vcd, dbg_npc[7], pn + ".dbg_npc7");
     }
 }
 
@@ -123,6 +140,10 @@ void BpBTB::comb() {
         for (int i = 0; i < CFG_BTB_SIZE; i++) {
             R_RESET(v_btb[i]);
         }
+    }
+
+    for (int i = 0; i < CFG_BTB_SIZE; i++) {
+        dbg_npc[i] = vb_addr((i+1)*CFG_CPU_ADDR_BITS-1, i*CFG_CPU_ADDR_BITS).to_uint64();
     }
 
     o_bp_npc = vb_addr;

@@ -143,13 +143,13 @@ void BranchPredictor::comb() {
 
     // Check availablity of pc in pipeline
     for (int i = 0; i < CFG_BP_DEPTH; i++) {
-        if (vb_addr[i] == i_f_requested_pc.read()
-            || vb_addr[i] == i_f_fetching_pc.read()
-            || vb_addr[i] == i_f_fetched_pc.read()) {
+        if (vb_addr[i](CFG_CPU_ADDR_BITS-1,2) == i_f_requested_pc.read()(CFG_CPU_ADDR_BITS-1,2)
+            || vb_addr[i](CFG_CPU_ADDR_BITS-1,2) == i_f_fetching_pc.read()(CFG_CPU_ADDR_BITS-1,2)
+            || vb_addr[i](CFG_CPU_ADDR_BITS-1,2) == i_f_fetched_pc.read()(CFG_CPU_ADDR_BITS-1,2)) {
             vb_skip[i] = 1;
         }
         for (int n = 0; n < CFG_DEC_DEPTH; n++) {
-            if (vb_addr[i] == t_d_addr[n]) {
+            if (vb_addr[i](CFG_CPU_ADDR_BITS-1,2) == t_d_addr[n](CFG_CPU_ADDR_BITS-1,2)) {
                 vb_skip[i] = 1;
             }
         }
@@ -159,7 +159,7 @@ void BranchPredictor::comb() {
     vb_fetch_npc = ~0ull;
     for (int i = CFG_BP_DEPTH-1; i >= 0; i--) {
         if (vb_skip[i] == 0) {
-            vb_fetch_npc = vb_addr[i];
+            vb_fetch_npc = (vb_addr[i] >> 2) << 2;
         }
     }
 
@@ -172,20 +172,20 @@ void BranchPredictor::comb() {
 
     v_btb_we = i_e_jmp || wb_pd[0].jmp || wb_pd[1].jmp;
     if (i_e_jmp) {
-        vb_btb_we_pc = (i_e_pc.read() >> 2) << 2;
-        vb_btb_we_npc = (i_e_npc.read() >> 2) << 2;
+        vb_btb_we_pc = i_e_pc;
+        vb_btb_we_npc = i_e_npc;
     } else if (wb_pd[0].jmp) {
-        vb_btb_we_pc = (wb_pd[0].pc.read() >> 2) << 2;
-        vb_btb_we_npc = (wb_pd[0].npc.read() >> 2) << 2;
+        vb_btb_we_pc = wb_pd[0].pc;
+        vb_btb_we_npc = wb_pd[0].npc;
     } else if (wb_pd[1].jmp) {
-        vb_btb_we_pc = (wb_pd[1].pc.read() >> 2) << 2;
-        vb_btb_we_npc = (wb_pd[1].npc.read() >> 2) << 2;
+        vb_btb_we_pc = wb_pd[1].pc;
+        vb_btb_we_npc = wb_pd[1].npc;
     } else {
-        vb_btb_we_pc = (i_e_pc.read() >> 2) << 2;
-        vb_btb_we_npc = (i_e_npc.read() >> 2) << 2;
+        vb_btb_we_pc = i_e_pc;
+        vb_btb_we_npc = i_e_npc;
     }
 
-    wb_start_pc = (i_e_npc.read() >> 2) << 2;
+    wb_start_pc = i_e_npc;
     w_btb_we = v_btb_we;
     wb_btb_we_pc = vb_btb_we_pc;
     wb_btb_we_npc = vb_btb_we_npc;

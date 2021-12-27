@@ -136,8 +136,8 @@ void BpPreDecoder::comb() {
 
 
     o_jmp = v_jal | v_branch | v_c_j | v_c_ret;
-    o_pc = (vb_pc >> 2) << 2;
-    o_npc = (vb_npc >> 2) << 2;
+    o_pc = vb_pc;
+    o_npc = vb_npc;
 }
 
 
