@@ -58,7 +58,7 @@ void CmdRead::exec(AttributeType *args, AttributeType *res) {
         rdData_.make_data(4 * bytes);
     }
 
-    if (tap_->read(addr, bytes, rdData_.data()) == TAP_ERROR) {
+    if (dma_read(addr, bytes, rdData_.data()) == TRANS_ERROR) {
         res->make_nil();
         return;
     }

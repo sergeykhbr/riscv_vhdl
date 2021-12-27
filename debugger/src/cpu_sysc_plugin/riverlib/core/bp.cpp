@@ -112,6 +112,12 @@ void BranchPredictor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         std::string pn(name());
         sc_trace(o_vcd, wb_start_pc, pn + ".wb_start_pc");
         sc_trace(o_vcd, wb_npc, pn + ".wb_npc");
+        sc_trace(o_vcd, wb_pd[0].jmp, pn + ".wb_pd0_jmp");
+        sc_trace(o_vcd, wb_pd[0].pc, pn + ".wb_pd0_pc");
+        sc_trace(o_vcd, wb_pd[0].npc, pn + ".wb_pd0_npc");
+        sc_trace(o_vcd, wb_pd[1].jmp, pn + ".wb_pd1_jmp");
+        sc_trace(o_vcd, wb_pd[1].pc, pn + ".wb_pd1_pc");
+        sc_trace(o_vcd, wb_pd[1].npc, pn + ".wb_pd1_npc");
     }
 }
 
@@ -120,6 +126,9 @@ void BranchPredictor::comb() {
     sc_uint<CFG_CPU_ADDR_BITS> vb_addr[CFG_BP_DEPTH];
     sc_uint<CFG_BP_DEPTH> vb_skip;
     sc_uint<CFG_CPU_ADDR_BITS> vb_fetch_npc;
+    bool v_btb_we;
+    sc_uint<CFG_CPU_ADDR_BITS> vb_btb_we_pc;
+    sc_uint<CFG_CPU_ADDR_BITS> vb_btb_we_npc;
 
 
     for (int i = 0; i < CFG_DEC_DEPTH; i++) {
@@ -161,11 +170,25 @@ void BranchPredictor::comb() {
         wb_pd[i].data = i_resp_mem_data.read()(16*i + 31, 16*i);
     }
 
+    v_btb_we = i_e_jmp || wb_pd[0].jmp || wb_pd[1].jmp;
+    if (i_e_jmp) {
+        vb_btb_we_pc = (i_e_pc.read() >> 2) << 2;
+        vb_btb_we_npc = (i_e_npc.read() >> 2) << 2;
+    } else if (wb_pd[0].jmp) {
+        vb_btb_we_pc = (wb_pd[0].pc.read() >> 2) << 2;
+        vb_btb_we_npc = (wb_pd[0].npc.read() >> 2) << 2;
+    } else if (wb_pd[1].jmp) {
+        vb_btb_we_pc = (wb_pd[1].pc.read() >> 2) << 2;
+        vb_btb_we_npc = (wb_pd[1].npc.read() >> 2) << 2;
+    } else {
+        vb_btb_we_pc = (i_e_pc.read() >> 2) << 2;
+        vb_btb_we_npc = (i_e_npc.read() >> 2) << 2;
+    }
 
     wb_start_pc = (i_e_npc.read() >> 2) << 2;
-    w_btb_we = i_e_jmp;
-    wb_btb_we_pc = (i_e_pc.read() >> 2) << 2;
-    wb_btb_we_npc = (i_e_npc.read() >> 2) << 2;
+    w_btb_we = v_btb_we;
+    wb_btb_we_pc = vb_btb_we_pc;
+    wb_btb_we_npc = vb_btb_we_npc;
 
     o_f_valid = !vb_skip.and_reduce();
     o_f_pc = vb_fetch_npc;

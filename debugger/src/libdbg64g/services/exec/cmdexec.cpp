@@ -63,11 +63,11 @@ void CmdExecutor::postinitService() {
             (RISCV_get_service_iface(bus_.to_string(), IFACE_MEMORY_OPERATION));
 
     // Core commands registration:
-    ICommand *idisas = new CmdDisas(dmibar_.to_uint64(), 0);
-    idisas->enableDMA(ibus_, dmibar_.to_uint64());
+    ICommand *tcmd;
     registerCommand(new CmdCpi(dmibar_.to_uint64(), 0));
     registerCommand(new CmdCpuContext(dmibar_.to_uint64(), 0));
-    registerCommand(idisas);
+    registerCommand(tcmd = new CmdDisas(dmibar_.to_uint64(), 0));
+    tcmd->enableDMA(ibus_, dmibar_.to_uint64());
     registerCommand(new CmdElf2Raw(dmibar_.to_uint64(), 0));
     registerCommand(new CmdExit(dmibar_.to_uint64(), 0));
     registerCommand(new CmdLoadBin(dmibar_.to_uint64(), 0));
@@ -76,11 +76,13 @@ void CmdExecutor::postinitService() {
     registerCommand(new CmdLoadSrec(dmibar_.to_uint64(), 0));
     registerCommand(new CmdLog(dmibar_.to_uint64(), 0));
     registerCommand(new CmdMemDump(dmibar_.to_uint64(), 0));
-    registerCommand(new CmdRead(dmibar_.to_uint64(), 0));
+    registerCommand(tcmd = new CmdRead(dmibar_.to_uint64(), 0));
+    tcmd->enableDMA(ibus_, dmibar_.to_uint64());
     registerCommand(new CmdReset(dmibar_.to_uint64(), 0));
     registerCommand(new CmdStack(dmibar_.to_uint64(), 0));
     registerCommand(new CmdSymb(dmibar_.to_uint64(), 0));
-    registerCommand(new CmdWrite(dmibar_.to_uint64(), 0));
+    registerCommand(tcmd = new CmdWrite(dmibar_.to_uint64(), 0));
+    tcmd->enableDMA(ibus_, dmibar_.to_uint64());
 }
 
 void CmdExecutor::registerCommand(ICommand *icmd) {

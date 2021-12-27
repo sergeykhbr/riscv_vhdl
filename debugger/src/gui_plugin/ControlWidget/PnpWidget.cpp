@@ -65,9 +65,11 @@ PnpWidget::PnpWidget(IGui *igui, QWidget *parent) : QWidget(parent) {
     setMinimumHeight(300);
 
     char tstr[64];
-    uint32_t addr_pnp = 0xFFFFF000;
+    const AttributeType &cfg = *igui->getpConfig();
     RISCV_sprintf(tstr, sizeof(tstr),
-                "read 0x%08x %d", addr_pnp, sizeof(PnpMapType));
+                "read 0x%08" RV_PRI64 "x %d",
+                cfg["AddrPNP"].to_uint64(),
+                sizeof(PnpMapType));
     reqcmd_.make_string(tstr);
 }
 

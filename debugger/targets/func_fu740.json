@@ -1,0 +1,12 @@
+    {'Class':'DDRClass','Instances':[
+          {'Name':'ddr0','Attr':[
+                ['LogLevel',1],
+                ['BaseAddress',0x80000000],
+                ['Length',0x80000000, '2GB bank']
+                ]}]},
+    {'Class':'DDRClass','Instances':[
+          {'Name':'ddr1','Attr':[
+                ['LogLevel',1],
+                ['BaseAddress',0x100000000],
+                ['Length',0x200000000, '8GB bank']
+                ]}]},

@@ -10,6 +10,7 @@
 
 #include "common_riscv.json"
 #include "common_soc.json"
+#include "func_fu740.json"
 
     {'Class':'TcpServerClass','Instances':[
           {'Name':'jtagbb','Attr':[

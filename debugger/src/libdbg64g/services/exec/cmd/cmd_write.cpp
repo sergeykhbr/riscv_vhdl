@@ -68,7 +68,7 @@ void CmdWrite::exec(AttributeType *args, AttributeType *res) {
         generateError(res, "Write value must be i or [i*]");
         return;
     }
-    tap_->write(addr, bytes, wrData_.data());
+    dma_write(addr, bytes, wrData_.data());
 }
 
 }  // namespace debugger
