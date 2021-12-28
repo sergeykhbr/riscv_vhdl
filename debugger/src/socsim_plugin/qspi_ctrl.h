@@ -34,8 +34,13 @@ class QspiController : public RegMemBankGeneric,
     virtual void postinitService() override;
 
     // Common methods
-    void sdWrite(uint8_t byte);
-    uint8_t sdRead();
+    uint32_t isPendingRx();
+    void write_fifo(uint8_t byte);
+    uint8_t read_fifo();
+
+ private:
+    void put_rx_fifo(uint8_t byte);
+    void load_data_block();
 
  protected:
     // Chip Select Default Register
@@ -232,28 +237,19 @@ class QspiController : public RegMemBankGeneric,
     } cmd_;
 
     enum EWrState {
-        WrIdle,
-        WrCmdAddress,
-        WrCrc,
-        WrReading
-    } wrstate_;
-    enum ERdState {
-        RdIdle,
-        RdCmdResponse,
-        RdDataToken,
-        RdDataBlock,
-        RdCrc,
-        RdCmdDiscard
-    } rdstate_;
+        Idle,
+        BulkReading,
+    } state_;
 
-    int datablockcnt_;
+    static const int FIFO_SIZE = 4096;
+
     int wrbytecnt_;
-    int rdbytecnt_;
     int rdblocksize_;
     uint64_t addr_;
-    uint8_t txbuf_[4096];
-    uint8_t rxbuf_[4096];
-    int txcnt_;
+    uint8_t rxbuf_[FIFO_SIZE];
+    size_t rxcnt_;
+    uint8_t* prx_wr_;
+    uint8_t* prx_rd_;
 
     MappedReg32Type sckdiv;             // [0x00] Serial clock divisor
     MappedReg32Type sckmode;            // [0x04] Serial clock mode

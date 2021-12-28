@@ -53,6 +53,7 @@ void sd_read_block(uint8_t *buf, int sz) {
        buf++;
     }
     crc = sd_get_byte();
+    crc = sd_get_byte();
 }
 
 int sd_start_reading(uint64_t addr) {
