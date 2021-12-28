@@ -54,6 +54,7 @@ BranchPredictor::BranchPredictor(sc_module_name name_, bool async_reset) :
     btb->i_clk(i_clk);
     btb->i_nrst(i_nrst);
     btb->i_flush_pipeline(i_flush_pipeline);
+    btb->i_e(w_btb_e);
     btb->i_we(w_btb_we);
     btb->i_we_pc(wb_btb_we_pc);
     btb->i_we_npc(wb_btb_we_npc);
@@ -186,6 +187,7 @@ void BranchPredictor::comb() {
     }
 
     wb_start_pc = i_e_npc;
+    w_btb_e = i_e_jmp;
     w_btb_we = v_btb_we;
     wb_btb_we_pc = vb_btb_we_pc;
     wb_btb_we_npc = vb_btb_we_npc;

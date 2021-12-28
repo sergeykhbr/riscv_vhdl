@@ -45,7 +45,7 @@ ETransStatus SdCard::b_transport(Axi4TransactionType *trans) {
     uint64_t off = (trans->addr - getBaseAddress()) % length_.to_int();
     trans->response = MemResp_Valid;
 
-    RISCV_error("Sd-card memory access not implemented");
+    RISCV_error("%s", "Sd-card memory access not implemented");
     return TRANS_OK;
 }
 

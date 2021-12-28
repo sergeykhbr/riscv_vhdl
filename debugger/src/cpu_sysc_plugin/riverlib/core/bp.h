@@ -63,6 +63,7 @@ SC_MODULE(BranchPredictor) {
     };
     PreDecType wb_pd[2];
 
+    sc_signal<bool> w_btb_e;
     sc_signal<bool> w_btb_we;
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_btb_we_pc;
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_btb_we_npc;

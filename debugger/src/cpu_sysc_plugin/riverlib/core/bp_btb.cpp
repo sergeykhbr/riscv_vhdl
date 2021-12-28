@@ -24,6 +24,7 @@ BpBTB::BpBTB(sc_module_name name_, bool async_reset) :
     i_clk("i_clk"),
     i_nrst("i_nrst"),
     i_flush_pipeline("i_flush_pipeline"),
+    i_e("i_e"),
     i_we("i_we"),
     i_we_pc("i_we_pc"),
     i_we_npc("i_we_npc"),
@@ -34,6 +35,7 @@ BpBTB::BpBTB(sc_module_name name_, bool async_reset) :
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_flush_pipeline;
+    sensitive << i_e;
     sensitive << i_we;
     sensitive << i_we_pc;
     sensitive << i_we_npc;
@@ -41,6 +43,7 @@ BpBTB::BpBTB(sc_module_name name_, bool async_reset) :
     for (int i = 0; i < CFG_BTB_SIZE; i++) {
         sensitive << r_btb[i].pc;
         sensitive << r_btb[i].npc;
+        sensitive << r_btb[i].exec;
     }
 
     SC_METHOD(registers);
@@ -51,6 +54,7 @@ BpBTB::BpBTB(sc_module_name name_, bool async_reset) :
 void BpBTB::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
         sc_trace(o_vcd, i_flush_pipeline, i_flush_pipeline.name());
+        sc_trace(o_vcd, i_e, i_e.name());
         sc_trace(o_vcd, i_we, i_we.name());
         sc_trace(o_vcd, i_we_pc, i_we_pc.name());
         sc_trace(o_vcd, i_we_npc, i_we_npc.name());
@@ -89,6 +93,7 @@ void BpBTB::comb() {
     sc_uint<CFG_CPU_ADDR_BITS> t_addr;
     sc_uint<CFG_BTB_SIZE> vb_pc_equal;
     sc_uint<CFG_BTB_SIZE> vb_pc_nshift;
+    bool v_dont_update;
     vb_hit = 0;
 
     for (int i = 0; i < CFG_BTB_SIZE; i++) {
@@ -108,10 +113,12 @@ void BpBTB::comb() {
         }
     }
 
+    v_dont_update = 0;
     vb_pc_equal = 0;
     for (int i = 0; i < CFG_BTB_SIZE; i++) {
         if (r_btb[i].pc == i_we_pc) {
             vb_pc_equal[i] = 1;
+            v_dont_update = r_btb[i].exec && !i_e;
         }
     }
     vb_pc_nshift = 0;
@@ -119,12 +126,11 @@ void BpBTB::comb() {
         vb_pc_nshift[i] = vb_pc_equal[i-1] | vb_pc_nshift[i-1];
     }
 
-    if (i_we 
-        && (r_btb[0].pc != i_we_pc || r_btb[0].npc != i_we_npc)
-        && (i_we_pc != i_we_npc)) {
+    if (i_we && !v_dont_update) {
+        v_btb[0].exec = i_e;
         v_btb[0].pc = i_we_pc;
         v_btb[0].npc = i_we_npc;
-        for (int i = 1; i < CFG_BTB_SIZE - 1; i++) {
+        for (int i = 1; i < CFG_BTB_SIZE; i++) {
             if (vb_pc_nshift[i] == 0) {
                 v_btb[i] = r_btb[i - 1];
             } else {

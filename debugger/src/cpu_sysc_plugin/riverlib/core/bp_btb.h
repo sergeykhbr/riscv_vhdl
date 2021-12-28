@@ -25,6 +25,7 @@ SC_MODULE(BpBTB) {
     sc_in<bool> i_clk;                  // CPU clock
     sc_in<bool> i_nrst;                 // Reset. Active LOW.
     sc_in<bool> i_flush_pipeline;                    // sync reset BTB
+    sc_in<bool> i_e;                                 // executed jump
     sc_in<bool> i_we;                                // Write enable into BTB
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_we_pc;       // Jump start instruction address
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_we_npc;      // Jump target address
@@ -45,6 +46,7 @@ SC_MODULE(BpBTB) {
     struct BtbEntryType {
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> npc;
+        sc_signal<bool> exec;   // 0=predec; 1=exec (high priority)
     };
     BtbEntryType r_btb[CFG_BTB_SIZE];
     BtbEntryType v_btb[CFG_BTB_SIZE];
@@ -53,6 +55,7 @@ SC_MODULE(BpBTB) {
     void R_RESET(BtbEntryType &iv) {
         iv.pc = ~0ul;
         iv.npc = 0;
+        iv.exec = 0;
     }
 
     bool async_reset_;
