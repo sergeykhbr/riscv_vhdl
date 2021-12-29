@@ -32,8 +32,6 @@ SC_MODULE(InstrDecoder) {
     sc_in<bool> i_instr_executable;             // MPU flag
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_npc;   // executor expected instr pointer
 
-    sc_out<sc_biguint<CFG_DEC_DEPTH*CFG_CPU_ADDR_BITS>> o_decoded_pc;// already decoded instructions
-
     sc_out<sc_uint<6>> o_radr1;                 // register bank address 1 (rs1)
     sc_out<sc_uint<6>> o_radr2;                 // register bank address 2 (rs2)
     sc_out<sc_uint<6>> o_waddr;                 // register bank output (rd)

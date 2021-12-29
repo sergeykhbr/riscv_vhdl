@@ -135,7 +135,6 @@ private:
         sc_signal<bool> exception;
         sc_signal<bool> instr_load_fault;
         sc_signal<bool> instr_executable;
-        sc_signal<sc_biguint<CFG_DEC_DEPTH*CFG_CPU_ADDR_BITS>> decoded_pc;    // Predicted pc already in decoder
         sc_signal<sc_uint<6>> radr1;
         sc_signal<sc_uint<6>> radr2;
         sc_signal<sc_uint<6>> waddr;

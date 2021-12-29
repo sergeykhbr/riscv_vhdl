@@ -35,7 +35,7 @@ BranchPredictor::BranchPredictor(sc_module_name name_, bool async_reset) :
     i_f_requested_pc("i_f_requested_pc"),
     i_f_fetched_pc("i_f_fetched_pc"),
     i_f_fetching_pc("i_f_fetching_pc"),
-    i_d_decoded_pc("i_d_decoded_pc") {
+    i_d_pc("i_d_pc") {
 
     char tstr[256];
     for (int i = 0; i < 2; i++) {
@@ -60,6 +60,7 @@ BranchPredictor::BranchPredictor(sc_module_name name_, bool async_reset) :
     btb->i_we_npc(wb_btb_we_npc);
     btb->i_bp_pc(wb_start_pc);
     btb->o_bp_npc(wb_npc);
+    btb->o_bp_exec(wb_bp_exec);
 
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -73,8 +74,9 @@ BranchPredictor::BranchPredictor(sc_module_name name_, bool async_reset) :
     sensitive << i_f_requested_pc;
     sensitive << i_f_fetching_pc;
     sensitive << i_f_fetched_pc;
-    sensitive << i_d_decoded_pc;
+    sensitive << i_d_pc;
     sensitive << wb_npc;
+    sensitive << wb_bp_exec;
     for (int i = 0; i < 2; i++) {
         sensitive << wb_pd[i].jmp;
         sensitive << wb_pd[i].pc;
@@ -108,59 +110,55 @@ void BranchPredictor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_f_requested_pc, i_f_requested_pc.name());
         sc_trace(o_vcd, i_f_fetching_pc, i_f_fetching_pc.name());
         sc_trace(o_vcd, i_f_fetched_pc, i_f_fetched_pc.name());
-        sc_trace(o_vcd, i_d_decoded_pc, i_d_decoded_pc.name());
+        sc_trace(o_vcd, i_d_pc, i_d_pc.name());
 
         std::string pn(name());
         sc_trace(o_vcd, wb_start_pc, pn + ".wb_start_pc");
         sc_trace(o_vcd, wb_npc, pn + ".wb_npc");
+        sc_trace(o_vcd, wb_bp_exec, pn + ".wb_bp_exec");
         sc_trace(o_vcd, wb_pd[0].jmp, pn + ".wb_pd0_jmp");
         sc_trace(o_vcd, wb_pd[0].pc, pn + ".wb_pd0_pc");
         sc_trace(o_vcd, wb_pd[0].npc, pn + ".wb_pd0_npc");
         sc_trace(o_vcd, wb_pd[1].jmp, pn + ".wb_pd1_jmp");
         sc_trace(o_vcd, wb_pd[1].pc, pn + ".wb_pd1_pc");
         sc_trace(o_vcd, wb_pd[1].npc, pn + ".wb_pd1_npc");
+        sc_trace(o_vcd, vb_ignore_pd, pn + ".vb_ignore_pd");
     }
 }
 
 void BranchPredictor::comb() {
-    sc_uint<CFG_CPU_ADDR_BITS> t_d_addr[CFG_DEC_DEPTH];
     sc_uint<CFG_CPU_ADDR_BITS> vb_addr[CFG_BP_DEPTH];
-    sc_uint<CFG_BP_DEPTH> vb_skip;
+    sc_uint<CFG_CPU_ADDR_BITS> vb_piped[4];
     sc_uint<CFG_CPU_ADDR_BITS> vb_fetch_npc;
     bool v_btb_we;
     sc_uint<CFG_CPU_ADDR_BITS> vb_btb_we_pc;
     sc_uint<CFG_CPU_ADDR_BITS> vb_btb_we_npc;
-
-
-    for (int i = 0; i < CFG_DEC_DEPTH; i++) {
-        t_d_addr[i] = i_d_decoded_pc.read()((i+1)*CFG_CPU_ADDR_BITS-1, i*CFG_CPU_ADDR_BITS);
-    }
+    sc_uint<4> vb_hit;
+    sc_uint<2> vb_ignore_pd;
 
     // Transform address into 2-dimesional array for convinience
-    vb_skip = 0;
     for (int i = 0; i < CFG_BP_DEPTH; i++) {
         vb_addr[i] = wb_npc.read()((i+1)*CFG_CPU_ADDR_BITS-1, i*CFG_CPU_ADDR_BITS);
     }
 
-    // Check availablity of pc in pipeline
-    for (int i = 0; i < CFG_BP_DEPTH; i++) {
-        if (vb_addr[i](CFG_CPU_ADDR_BITS-1,2) == i_f_requested_pc.read()(CFG_CPU_ADDR_BITS-1,2)
-            || vb_addr[i](CFG_CPU_ADDR_BITS-1,2) == i_f_fetching_pc.read()(CFG_CPU_ADDR_BITS-1,2)
-            || vb_addr[i](CFG_CPU_ADDR_BITS-1,2) == i_f_fetched_pc.read()(CFG_CPU_ADDR_BITS-1,2)) {
-            vb_skip[i] = 1;
-        }
-        for (int n = 0; n < CFG_DEC_DEPTH; n++) {
-            if (vb_addr[i](CFG_CPU_ADDR_BITS-1,2) == t_d_addr[n](CFG_CPU_ADDR_BITS-1,2)) {
-                vb_skip[i] = 1;
+    vb_piped[0] = i_d_pc.read()(CFG_CPU_ADDR_BITS-1, 2);
+    vb_piped[1] = i_f_fetched_pc.read()(CFG_CPU_ADDR_BITS-1, 2);
+    vb_piped[2] = i_f_fetching_pc.read()(CFG_CPU_ADDR_BITS-1, 2);
+    vb_piped[3] = i_f_requested_pc.read()(CFG_CPU_ADDR_BITS-1, 2);
+
+    vb_hit = 0;
+    for (int n = 0; n < 4; n++) {
+        for (int i = n; i < 4; i++) {
+            if (vb_addr[n](CFG_CPU_ADDR_BITS-1, 2) == vb_piped[i]) {
+                vb_hit[n] = 1;
             }
         }
     }
 
-    // Select instruction to fetch
-    vb_fetch_npc = ~0ull;
-    for (int i = CFG_BP_DEPTH-1; i >= 0; i--) {
-        if (vb_skip[i] == 0) {
-            vb_fetch_npc = (vb_addr[i] >> 2) << 2;
+    vb_fetch_npc = vb_addr[CFG_BP_DEPTH-1];
+    for (int i = 3; i >= 0; i--) {
+        if (vb_hit[i] == 0) {
+            vb_fetch_npc = vb_addr[i];
         }
     }
 
@@ -170,6 +168,15 @@ void BranchPredictor::comb() {
         wb_pd[i].addr = i_resp_mem_addr.read() + 2*i;
         wb_pd[i].data = i_resp_mem_data.read()(16*i + 31, 16*i);
     }
+    vb_ignore_pd = 0;
+    for (int i = 0; i < 4; i++) {
+        if (wb_pd[0].npc.read()(CFG_CPU_ADDR_BITS-1, 2) == vb_piped[i]) {
+            vb_ignore_pd[0] = 1;
+        }
+        if (wb_pd[1].npc.read()(CFG_CPU_ADDR_BITS-1, 2) == vb_piped[i]) {
+            vb_ignore_pd[1] = 1;
+        }
+    }
 
     v_btb_we = i_e_jmp || wb_pd[0].jmp || wb_pd[1].jmp;
     if (i_e_jmp) {
@@ -178,9 +185,15 @@ void BranchPredictor::comb() {
     } else if (wb_pd[0].jmp) {
         vb_btb_we_pc = wb_pd[0].pc;
         vb_btb_we_npc = wb_pd[0].npc;
+        if (vb_hit(2, 0) == 0x7 && wb_bp_exec.read()[2] == 0 && !vb_ignore_pd[0]) {
+            vb_fetch_npc = wb_pd[0].npc;
+        }
     } else if (wb_pd[1].jmp) {
         vb_btb_we_pc = wb_pd[1].pc;
         vb_btb_we_npc = wb_pd[1].npc;
+        if (vb_hit(2, 0) == 0x7 && wb_bp_exec.read()[2] == 0 && !vb_ignore_pd[1]) {
+            vb_fetch_npc = wb_pd[1].npc;
+        }
     } else {
         vb_btb_we_pc = i_e_pc;
         vb_btb_we_npc = i_e_npc;
@@ -192,8 +205,8 @@ void BranchPredictor::comb() {
     wb_btb_we_pc = vb_btb_we_pc;
     wb_btb_we_npc = vb_btb_we_npc;
 
-    o_f_valid = !vb_skip.and_reduce();
-    o_f_pc = vb_fetch_npc;
+    o_f_valid = 1;
+    o_f_pc = (vb_fetch_npc >> 2) << 2;
 }
 
 }  // namespace debugger

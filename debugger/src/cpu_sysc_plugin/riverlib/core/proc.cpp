@@ -140,7 +140,6 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     dec0->i_instr_load_fault(w.f.instr_load_fault);
     dec0->i_instr_executable(w.f.instr_executable);
     dec0->i_e_npc(w.e.npc);
-    dec0->o_decoded_pc(w.d.decoded_pc);
     dec0->o_radr1(w.d.radr1);
     dec0->o_radr2(w.d.radr2);
     dec0->o_waddr(w.d.waddr);
@@ -307,7 +306,7 @@ Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
     predic0->i_f_requested_pc(w.f.requested_pc);
     predic0->i_f_fetching_pc(w.f.fetching_pc);
     predic0->i_f_fetched_pc(w.f.pc);
-    predic0->i_d_decoded_pc(w.d.decoded_pc);
+    predic0->i_d_pc(w.d.pc);
 
     iregs0 = new RegIntBank("iregs0", async_reset);
     iregs0->i_clk(i_clk);

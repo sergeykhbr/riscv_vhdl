@@ -31,6 +31,7 @@ SC_MODULE(BpBTB) {
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_we_npc;      // Jump target address
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_bp_pc;       // Start address of the prediction sequence
     sc_out<sc_biguint<CFG_BP_DEPTH*CFG_CPU_ADDR_BITS>> o_bp_npc;    // Predicted sequence
+    sc_out<sc_uint<CFG_BP_DEPTH>> o_bp_exec;         // Predicted value was jump-executed before
 
 
     void comb();

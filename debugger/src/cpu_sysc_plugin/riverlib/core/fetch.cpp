@@ -136,6 +136,9 @@ void InstrFetch::comb() {
             v.mem_resp_shadow = r.req_addr;
             v.resp_ready = 1;
             v.state = WaitResp;
+        } else if (i_bp_valid) {
+            // re-write requested address (while it wasn't accepted)
+            v.req_addr = i_bp_pc;
         }
         break;
     case WaitResp:

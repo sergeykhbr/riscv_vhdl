@@ -28,7 +28,6 @@ InstrDecoder::InstrDecoder(sc_module_name name_, bool async_reset,
     i_instr_load_fault("i_instr_load_fault"),
     i_instr_executable("i_instr_executable"),
     i_e_npc("i_e_npc"),
-    o_decoded_pc("o_decoded_pc"),
     o_radr1("o_radr1"),
     o_radr2("o_radr2"),
     o_waddr("o_waddr"),
@@ -223,8 +222,6 @@ void InstrDecoder::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void InstrDecoder::comb() {
-    sc_biguint<CFG_DEC_DEPTH*CFG_CPU_ADDR_BITS> vb_decoded_pc;
-
     selidx = 0;
     shift_ena = 0;
 
@@ -264,18 +261,11 @@ void InstrDecoder::comb() {
         wb_f_instr[i] = i_f_instr.read()(16*i+31, 16*i);
     }
 
-    for (int i = 0; i < CFG_DEC_DEPTH; i++) {
-        vb_decoded_pc((i+1)*CFG_CPU_ADDR_BITS - 1, i*CFG_CPU_ADDR_BITS)
-                = wd[i*DEC_BLOCK].pc;
-    }
-
     if ((!async_reset_ && !i_nrst.read()) || i_flush_pipeline.read() == 1) {
         for (int i = 0; i < FULL_DEC_DEPTH; i++) {
             R_RESET(v[i]);
         }
     }
-
-    o_decoded_pc = vb_decoded_pc;
 
     o_pc = wd[selidx].pc;
     o_instr = wd[selidx].instr;

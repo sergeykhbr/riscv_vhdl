@@ -29,7 +29,8 @@ BpBTB::BpBTB(sc_module_name name_, bool async_reset) :
     i_we_pc("i_we_pc"),
     i_we_npc("i_we_npc"),
     i_bp_pc("i_bp_pc"),
-    o_bp_npc("o_bp_npc") {
+    o_bp_npc("o_bp_npc"),
+    o_bp_exec("o_bp_exec") {
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
@@ -60,6 +61,7 @@ void BpBTB::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_we_npc, i_we_npc.name());
         sc_trace(o_vcd, i_bp_pc, i_bp_pc.name());
         sc_trace(o_vcd, o_bp_npc, o_bp_npc.name());
+        sc_trace(o_vcd, o_bp_exec, o_bp_exec.name());
 
         std::string pn(name());
         sc_trace(o_vcd, r_btb[0].pc, pn + ".btb0_pc");
@@ -93,20 +95,24 @@ void BpBTB::comb() {
     sc_uint<CFG_CPU_ADDR_BITS> t_addr;
     sc_uint<CFG_BTB_SIZE> vb_pc_equal;
     sc_uint<CFG_BTB_SIZE> vb_pc_nshift;
+    sc_uint<CFG_BP_DEPTH> vb_bp_exec;
     bool v_dont_update;
     vb_hit = 0;
+    vb_bp_exec = 0;
 
     for (int i = 0; i < CFG_BTB_SIZE; i++) {
         v_btb[i] = r_btb[i];
     }
 
     vb_addr(CFG_CPU_ADDR_BITS-1,0) = i_bp_pc.read();
+    vb_bp_exec[0] = i_e;
     for (int i = 1; i < CFG_BP_DEPTH; i++) {
         t_addr = vb_addr(i*CFG_CPU_ADDR_BITS-1, (i-1)*CFG_CPU_ADDR_BITS);
         for (int n = CFG_BTB_SIZE-1; n >= 0; n--) {
             if (t_addr == r_btb[n].pc) {
                 vb_addr((i+1)*CFG_CPU_ADDR_BITS-1, i*CFG_CPU_ADDR_BITS) = r_btb[n].npc;
                 vb_hit[i] = 1;
+                vb_bp_exec[i] = r_btb[n].exec;   // Used for: Do not override by pre-decoded jumps
             } else if (vb_hit[i] == 0) {
                 vb_addr((i+1)*CFG_CPU_ADDR_BITS-1, i*CFG_CPU_ADDR_BITS) = t_addr + 4;
             }
@@ -150,6 +156,7 @@ void BpBTB::comb() {
     }
 
     o_bp_npc = vb_addr;
+    o_bp_exec = vb_bp_exec;
 }
 
 void BpBTB::registers() {

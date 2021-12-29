@@ -39,7 +39,7 @@ SC_MODULE(BranchPredictor) {
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_f_requested_pc;         // already requested but not accepted address
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_f_fetching_pc;          // currently memory address
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_f_fetched_pc;           // already requested and fetched address
-    sc_in<sc_biguint<CFG_DEC_DEPTH*CFG_CPU_ADDR_BITS>> i_d_decoded_pc;  // decoded instructions
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_d_pc;                   // decoded instructions
 
 
     void comb();
@@ -69,6 +69,8 @@ SC_MODULE(BranchPredictor) {
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_btb_we_npc;
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_start_pc;
     sc_signal<sc_biguint<CFG_BP_DEPTH*CFG_CPU_ADDR_BITS>> wb_npc;
+    sc_signal<sc_uint<CFG_BP_DEPTH>> wb_bp_exec;         // Predicted value was jump-executed before
+    sc_uint<2> vb_ignore_pd;
 
     BpBTB *btb;
     BpPreDecoder *predec[2];
