@@ -12,8 +12,6 @@ static char tmpUartStr[BUF_LENGTH];
 //****************************************************************************
 extern "C" void uart_init() {
 #ifdef CONFIG_RISCV64
-    //uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART1;
-    // Inited in bootloader
 #elif CONFIG_LEON3
     uart_fields *uart = (uart_fields *)ADR_APBUART_BASE;
     // scaler = 66MHz/(8*(1+rate)) = 115200 = 71
@@ -25,8 +23,8 @@ extern "C" void uart_init() {
 
 extern "C" int uart_busy() {
 #ifdef CONFIG_RISCV64
-    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART1;
-    return uart->status & UART_STATUS_TX_FULL;
+    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
+    return uart->txdata & UART_TX_FULL;
 
 #elif CONFIG_LEON3
     uart_fields *uart = (uart_fields *)ADR_APBUART_BASE;
@@ -36,8 +34,8 @@ extern "C" int uart_busy() {
 
 extern "C" void uart_send(unsigned v) {
 #ifdef CONFIG_RISCV64
-    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART1;
-    uart->data = v;
+    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
+    uart->txdata = v;
 #elif CONFIG_LEON3
     uart_fields *uart = (uart_fields *)ADR_APBUART_BASE;
     uart->data = v;

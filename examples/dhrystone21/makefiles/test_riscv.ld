@@ -7,7 +7,7 @@ SECTIONS
 {
 
   /* text: test code section */
-  . = 0x10000000;
+  . = 0x08000000;
   .text : 
   {
     *(.text.entrypoint*)

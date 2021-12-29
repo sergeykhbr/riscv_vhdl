@@ -68,8 +68,8 @@ uint64_t k_cycle_get_64() {
 
 #ifdef CONFIG_RISCV64
 uint64_t k_cycle_get_64() {
-    uint64_t *p_highcnt = (uint64_t *)0x80005000;
-    return p_highcnt[0];
+    uint64_t *mtime = (uint64_t *)(0x0200bff8);
+    return *mtime;
 }
 #endif
 

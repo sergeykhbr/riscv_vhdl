@@ -34,8 +34,18 @@ class DDR : public IService,
     /** IMemoryOperation */
     virtual ETransStatus b_transport(Axi4TransactionType *trans);
 
+ private:
+    virtual uint8_t *getpMem(uint64_t addr);
+
  protected:
-    char *mem_;
+    static const int BLOCK_SIZE = 1024*1024;
+
+    struct MemBlockType {
+        MemBlockType *nxt;
+        MemBlockType *prv;
+        uint64_t bid;
+        uint8_t m[BLOCK_SIZE];
+    } mem_;
 };
 
 DECLARE_CLASS(DDR)

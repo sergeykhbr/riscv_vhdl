@@ -19,9 +19,9 @@ char *_sbrk(int incr) {
     return &_end;
 }
 
-void _exit(int c) {
-    for (;;) { }
-}
+//void _exit(int c) {
+//    for (;;) { }
+//}
 
 int _kill(pid_t pid, int signum) {
     return 0;
