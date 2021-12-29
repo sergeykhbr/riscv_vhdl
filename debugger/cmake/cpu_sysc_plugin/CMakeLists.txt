@@ -51,7 +51,7 @@ endif()
 if (MSVC)
     add_compile_options(/vmg /wd"4244" /wd"4996")
 else()
-#    add_compile_options(-Wl,-Bstatic -lsystemc -Wl,-Bdynamic)
+    add_compile_options(-Wl,-Bstatic -lsystemc -Wl,-Bdynamic)
 endif()
 
 link_directories(BEFORE "$ENV{SYSTEMC_LIB}")

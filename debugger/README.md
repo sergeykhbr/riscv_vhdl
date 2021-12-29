@@ -43,8 +43,17 @@ and capabilities of the running platform:
 
         $ export QT_PATH=/home/user/Qt/6.2.0/gcc_64
 
-5. Optionally download and build SystemC library (see SystemC documentation).
-   Specify SYSTEMC_PATH in the same way as for Qt.
+5. Define environment variables SYSTEMC_SRC and SYSTEMC_LIB (in the same way as for Qt).
+   For this download SystemC from [here](https://www.accellera.org/downloads/standards/systemc):
+
+5.1. Build SystemC library on Windows
+
+- Generate MSVC project using cmake-gui utility
+- Change default "Configuration Properties"->"C/C++"->"All Options"->"Runtime Library" = Multi-threaded DLL (/MD)
+- Build solution
+- Define env. variables SYSTEMC_SRC and SYSTEMC_LIB as on picture above.
+
+5.2. Build systemc library on Linux
 
         $ tar -xvzf systemc-2.3.1a.tar.gz
         $ cd systemc-2.3.1a
@@ -53,7 +62,8 @@ and capabilities of the running platform:
         $ ./../configure --prefix=/home/user/systemc-2.3.1a/build
         $ make
         $ make install
-        $ export SYSTEMC_PATH=/home/user/systemc-2.3.1a/build")
+        $ export SYSTEMC_SRC=/home/user/systemc-2.3.1a/build/include/")
+        $ export SYSTEMC_LIB=/home/user/systemc-2.3.1a/build/lib-linux64/")
 
 6. Generate MSVC project for Windows or makefiles for Linux
 
