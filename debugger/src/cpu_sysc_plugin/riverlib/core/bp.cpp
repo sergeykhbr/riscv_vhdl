@@ -122,7 +122,6 @@ void BranchPredictor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, wb_pd[1].jmp, pn + ".wb_pd1_jmp");
         sc_trace(o_vcd, wb_pd[1].pc, pn + ".wb_pd1_pc");
         sc_trace(o_vcd, wb_pd[1].npc, pn + ".wb_pd1_npc");
-        sc_trace(o_vcd, vb_ignore_pd, pn + ".vb_ignore_pd");
     }
 }
 

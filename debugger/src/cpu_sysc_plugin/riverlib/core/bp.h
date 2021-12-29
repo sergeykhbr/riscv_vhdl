@@ -70,7 +70,6 @@ SC_MODULE(BranchPredictor) {
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_start_pc;
     sc_signal<sc_biguint<CFG_BP_DEPTH*CFG_CPU_ADDR_BITS>> wb_npc;
     sc_signal<sc_uint<CFG_BP_DEPTH>> wb_bp_exec;         // Predicted value was jump-executed before
-    sc_uint<2> vb_ignore_pd;
 
     BpBTB *btb;
     BpPreDecoder *predec[2];
