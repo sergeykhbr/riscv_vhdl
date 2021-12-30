@@ -35,6 +35,7 @@ class QspiController : public RegMemBankGeneric,
 
     // Common methods
     uint32_t isPendingRx();
+    uint32_t isRxFifoEmpty();
     void write_fifo(uint8_t byte);
     uint8_t read_fifo();
 

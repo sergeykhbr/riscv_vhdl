@@ -209,6 +209,7 @@ void QspiController::load_data_block() {
         prx_wr_ += rdblocksize_ - t;
     }
     rxcnt_ += rdblocksize_;
+    addr_ += rdblocksize_;
 
     put_rx_fifo(static_cast<uint8_t>(crc >> 8));
     put_rx_fifo(static_cast<uint8_t>(crc));
@@ -246,6 +247,14 @@ uint32_t QspiController::isPendingRx() {
     return 0ul;
 }
 
+uint32_t QspiController::isRxFifoEmpty() {
+    uint32_t ret = 0;
+    if (rxcnt_ == 0 && state_ != BulkReading) {
+        ret = 1;
+    }
+    return ret;
+}
+
 uint32_t QspiController::QSPI_TXDATA_TYPE::aboutToRead(uint32_t cur_val) {
     QspiController *p = static_cast<QspiController *>(parent_);
     return cur_val;
@@ -259,7 +268,12 @@ uint32_t QspiController::QSPI_TXDATA_TYPE::aboutToWrite(uint32_t new_val) {
 
 uint32_t QspiController::QSPI_RXDATA_TYPE::aboutToRead(uint32_t cur_val) {
     QspiController *p = static_cast<QspiController *>(parent_);
-    cur_val = p->read_fifo();
+    if (p->isRxFifoEmpty()) {
+        // when empty is set 'data' field doesn't contain a valid frame
+        cur_val = 1ul << 31;
+    } else {
+        cur_val = p->read_fifo();
+    }
     return cur_val;
 }
 
