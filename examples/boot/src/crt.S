@@ -89,8 +89,6 @@ reset_vector:
 
   la t0, trap_table
   csrw mtvec, t0
-  li t0, 0x00000800
-  csrs mie, t0       # Enable External irq (ftom PLIC) for M mode
 
 # intialization when HW FPU enabled
 #ifdef FPU_ENABLED
@@ -148,6 +146,36 @@ reset_vector:
   li  a1, STACK_PER_CORE_BYTES
   mul a0, a0, a1
   sub sp, sp, a0
+
+  ## Initialize MPU regions
+
+  ## Make all cachable, rwx (default):
+  li a1, 0x0ull
+  csrw CSR_mpu_addr, a1
+  csrw CSR_mpu_mask, a1
+  li a1, (0 << 8) | MPU_CTRL_FL_ENA | MPU_CTRL_FL_CACHABLE | MPU_CTRL_FL_EXEC | MPU_CTRL_FL_WR | MPU_CTRL_FL_RD
+  csrw CSR_mpu_ctrl, a1
+  ## Uncached CLINT:
+  li a1, 0x0000000002000000ull
+  csrw CSR_mpu_addr, a1
+  li a1, 0xFFFFFFFFFE000000ull
+  csrw CSR_mpu_mask, a1
+  li a1, (1 << 8) | MPU_CTRL_FL_ENA | MPU_CTRL_FL_WR | MPU_CTRL_FL_RD
+  csrw CSR_mpu_ctrl, a1
+  ## Uncached PLIC:
+  li a1, 0x000000000C000000ull
+  csrw CSR_mpu_addr, a1
+  li a1, 0xFFFFFFFFFC000000ull
+  csrw CSR_mpu_mask, a1
+  li a1, (2 << 8) | MPU_CTRL_FL_ENA | MPU_CTRL_FL_WR | MPU_CTRL_FL_RD
+  csrw CSR_mpu_ctrl, a1
+  ## Uncached peripheries (IO):
+  li a1, 0x0000000010000000ull
+  csrw CSR_mpu_addr, a1
+  li a1, 0xFFFFFFFFF0000000ull
+  csrw CSR_mpu_mask, a1
+  li a1, (3 << 8) | MPU_CTRL_FL_ENA | MPU_CTRL_FL_EXEC | MPU_CTRL_FL_WR | MPU_CTRL_FL_RD
+  csrw CSR_mpu_ctrl, a1
 
   # copy image 64 KB
   csrr a0, mhartid            # a0 <= MHARTID value

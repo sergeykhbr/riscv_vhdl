@@ -1,7 +1,7 @@
 {
   'GlobalSettings':{
     'SimEnable':true,
-    'GUI':true,
+    'GUI':false
     'InitCommands':[
                    ],
     'Description':'This configuration creates SystemC instance of CPU RIVER Sinle Core'

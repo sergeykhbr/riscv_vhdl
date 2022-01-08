@@ -343,6 +343,12 @@ void CsrRegs::comb() {
         v.state = State_Response;
         v_csr_rena = r.cmd_type.read()[CsrReq_ReadBit];
         v_csr_wena = r.cmd_type.read()[CsrReq_WriteBit];
+        if (r.mode.read() < r.cmd_addr.read()(9,8)) {
+            // Not enough priv to access this register
+            v.cmd_exception = 1;
+        }
+        // All operation into CSR implemented through the Read-Modify-Write
+        // we cannot generate exception on write access into read-only regs
         break;
     case State_Wfi:
         v.state = State_Response;
@@ -619,6 +625,10 @@ void CsrRegs::comb() {
         }
         break;
     default:;
+        // Not implemented CSR:
+        if (r.state.read() == State_RW) {
+            v.cmd_exception = 1;
+        }
     }
 
     if (v_csr_rena) {

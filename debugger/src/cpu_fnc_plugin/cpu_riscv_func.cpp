@@ -129,7 +129,7 @@ void CpuRiver_Functional::handleException(int e) {
         csr_mcause_type mcause;
         mcause.bits.irq = 0;
         mcause.bits.code = e;
-        portCSR_.write(CSR_mcause, mcause.value);
+        writeCSR(CSR_mcause, mcause.value);
     }
 
     DCSR_TYPE::ValueType dcsr;
@@ -186,7 +186,7 @@ void CpuRiver_Functional::handleInterrupts() {
     }
 
     if (mcause.bits.irq) {
-        portCSR_.write(CSR_mcause, mcause.value);
+        writeCSR(CSR_mcause, mcause.value);
 
         switchContext(PRV_M);
 
@@ -221,14 +221,14 @@ void CpuRiver_Functional::switchContext(uint32_t prvnxt) {
 void CpuRiver_Functional::reset(IFace *isource) {
     CpuGeneric::reset(isource);
     portRegs_.reset();
-    uint64_t misa = portCSR_.read(CSR_misa).val;
+    uint64_t misa = readCSR(CSR_misa);
     portCSR_.reset();
-    portCSR_.write(CSR_mvendorid, vendorid_.to_uint64());
-    portCSR_.write(CSR_mimplementationid, implementationid_.to_uint64());
-    portCSR_.write(CSR_mhartid, hartid_.to_uint64());
-    portCSR_.write(CSR_mtvec, 0);
-    portCSR_.write(CSR_misa, misa);
-    portCSR_.write(CSR_dpc, getResetAddress());
+    writeCSR(CSR_mvendorid, vendorid_.to_uint64());
+    writeCSR(CSR_mimplementationid, implementationid_.to_uint64());
+    writeCSR(CSR_mhartid, hartid_.to_uint64());
+    writeCSR(CSR_mtvec, 0);
+    writeCSR(CSR_misa, misa);
+    writeCSR(CSR_dpc, getResetAddress());
 
     cur_prv_level = PRV_M;           // Current privilege level
     mmuReservedAddrWatchdog_ = 0;

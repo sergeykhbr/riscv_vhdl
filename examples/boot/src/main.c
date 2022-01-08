@@ -41,6 +41,13 @@ int get_dip(int idx) {
     return dip & 1;
 }
 
+int get_dips() {
+    // [3:0] DIP pins
+    int dip = ((gpio_map *)ADDR_BUS0_XSLV_GPIO)->input_val;
+    return dip & 0xF;
+}
+
+
 
 void copy_image() { 
     uint32_t tech;
@@ -54,12 +61,17 @@ void copy_image() {
      */
     tech = pnp->tech & 0xFF;
 
-    uint64_t qspi2 = get_dev_bar(VENDOR_GNSSSENSOR, GNSSSENSOR_SPI_FLASH);
-    if (qspi2 != ~0ull) {
-        print_uart("Select . .QSPI2\r\n", 17);
-        if (run_from_sdcard() == -1) {
-            print_uart("QSPI2. . .FAILED\r\n", 18);
-            qspi2 = ~0ull;
+
+    uint64_t qspi2 = ~0ull;
+    if (get_dips() == 0xB) {
+        // Load from SD-card
+        qspi2 = get_dev_bar(VENDOR_GNSSSENSOR, GNSSSENSOR_SPI_FLASH);
+        if (qspi2 != ~0ull) {
+            print_uart("Select . .QSPI2\r\n", 17);
+            if (run_from_sdcard() == -1) {
+                print_uart("QSPI2. . .FAILED\r\n", 18);
+                qspi2 = ~0ull;
+            }
         }
     }
 
@@ -95,6 +107,8 @@ void _init() {
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
     gpio_map *gpio = (gpio_map *)ADDR_BUS0_XSLV_GPIO;
+    uart_txctrl_type txctrl;
+    uart_rxctrl_type rxctrl;
   
     // mask all interrupts in interrupt controller to avoid
     // unpredictable behaviour after elf-file reloading via debug port.
@@ -103,8 +117,13 @@ void _init() {
     t1 = 0x00000800;
     asm("csrc mie, %0" : :"r"(t1));  // disable external irq from PLIC
 
-    // Half period of the uart = Fbus / 115200 / 2 = 70 MHz / 115200 / 2:
+    txctrl.v = 0;
+    txctrl.b.txen = 1;
+    rxctrl.v = 0;
+    rxctrl.b.rxen = 1;
     uart->scaler = SYS_HZ / 115200 / 2;  // 40 MHz
+    uart->txctrl = txctrl.v;
+    uart->rxctrl = rxctrl.v;
 
     gpio->input_en = 0xF;  // [3:0] input DIP; [11:4] output LEDs
     gpio->output_en = 0xFF0;  

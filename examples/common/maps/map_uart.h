@@ -10,8 +10,8 @@
 
 #include <inttypes.h>
 
-static const uint32_t UART_TX_FULL            = 0x10000000;
-static const uint32_t UART_RX_EMPTY           = 0x10000000;
+static const uint32_t UART_TX_FULL            = 0x80000000;
+static const uint32_t UART_RX_EMPTY           = 0x80000000;
 
 
 typedef struct uart_txdata_bits_type {

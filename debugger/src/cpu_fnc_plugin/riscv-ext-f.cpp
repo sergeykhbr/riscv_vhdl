@@ -1676,9 +1676,9 @@ void CpuRiver_Functional::addIsaExtensionD() {
     addSupportedInstruction(new FSD(this));
     addSupportedInstruction(new FSUB_D(this));
 
-    uint64_t isa = portCSR_.read(CSR_misa).val;
+    uint64_t isa = readCSR(CSR_misa);
     isa |= (1LL << ('D' - 'A'));
-    portCSR_.write(CSR_misa, isa);
+    writeCSR(CSR_misa, isa);
 }
 
 void CpuRiver_Functional::addIsaExtensionF() {
@@ -1759,9 +1759,9 @@ void CpuRiver_Functional::addIsaExtensionF() {
     def FSCSR              = BitPat("b000000000011?????001?????1110011")
     def FRCSR              = BitPat("b00000000001100000010?????1110011")
     */
-    uint64_t isa = portCSR_.read(CSR_misa).val;
+    uint64_t isa = readCSR(CSR_misa);
     isa |= (1LL << ('F' - 'A'));
-    portCSR_.write(CSR_misa, isa);
+    writeCSR(CSR_misa, isa);
 }
 
 }  // namespace debugger

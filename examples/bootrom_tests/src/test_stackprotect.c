@@ -40,7 +40,7 @@ void recursive_ret() {
         asm("mv %0, sp" : "=r" (sp));
         // Write CSR_mstackund register as underflow border
         sp += 16*sizeof(uint64_t);         // stack underflow limit
-        asm("csrw 0x351, %0": : "r"(sp));
+        asm("csrw 0xBC1, %0": : "r"(sp));
     }
 }
 
@@ -58,7 +58,7 @@ void test_stackprotect(void) {
 
     // Write CSR_mstackovr register as overflow border
     sp -= 16*sizeof(uint64_t);         // stack overflow limit
-    asm("csrw 0x350, %0": : "r"(sp));
+    asm("csrw 0xBC0, %0": : "r"(sp));
 
     asm("csrc mstatus, %0" : :"r"(t1));  // clear mie
     recursive_call();

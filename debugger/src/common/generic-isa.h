@@ -32,6 +32,8 @@ static const uint64_t EXT_SIGN_32 = 0xFFFFFFFF00000000LL;
 /**
  * @name Use RISC-V CSR registers mapping for all platforms: ARM, Leon3, HC08 etc.
  */
+// CSR[11:10] indicate whether the register is read/write (00, 01, or 10) or read-only (11)
+// CSR[9:8] encode the lowest privilege level that can access the CSR
 /// @{
 /** FPU Accrued Exceptions fields from FCSR */
 static const uint16_t CSR_fflags         = 0x001;
@@ -66,18 +68,6 @@ static const uint16_t CSR_mcause         = 0x342;
 static const uint16_t CSR_mtval          = 0x343;
 /** Machine interrupt pending */
 static const uint16_t CSR_mip            = 0x344;
-/** Stack overflow (non-standard CSR). */
-static const uint16_t CSR_mstackovr      = 0x350;
-/** Stack underflow (non-standard CSR). */
-static const uint16_t CSR_mstackund      = 0x351;
-/** MPU region address (non-standard CSR). */
-static const uint16_t CSR_mpu_addr       = 0x352;
-/** MPU region mask (non-standard CSR). */
-static const uint16_t CSR_mpu_mask       = 0x353;
-/** MPU region control (non-standard CSR). */
-static const uint16_t CSR_mpu_ctrl       = 0x354;
-/** Flush specified address in I-cache module without execution of fence.i */
-static const uint16_t CSR_flushi         = 0x359;
 // Software reset.
 static const uint16_t CSR_mreset         = 0x782;
 // Trigger select
@@ -104,10 +94,28 @@ static const uint16_t CSR_dpc            = 0x7b1;
 static const uint16_t CSR_dscratch0      = 0x7b2;
 // Debug Scratch Register 1
 static const uint16_t CSR_dscratch1      = 0x7b3;
+/** Non-stadnard usermode CSR:
+   Flush specified address in I-cache module without execution of fence.i */
+static const uint16_t CSR_flushi         = 0x800;
+
+// Standard read/write Machine CSRs:
 /** Machine Cycle counter */
 static const uint16_t CSR_mcycle         = 0xB00;
 /** Machine Instructions-retired counter */
 static const uint16_t CSR_minsret        = 0xB02;
+
+// Non-standard machine mode CSR
+/** Stack overflow. */
+static const uint16_t CSR_mstackovr      = 0xBC0;
+/** Stack underflow (non-standard CSR). */
+static const uint16_t CSR_mstackund      = 0xBC1;
+/** MPU region address (non-standard CSR). */
+static const uint16_t CSR_mpu_addr       = 0xBC2;
+/** MPU region mask (non-standard CSR). */
+static const uint16_t CSR_mpu_mask       = 0xBC3;
+/** MPU region control (non-standard CSR). */
+static const uint16_t CSR_mpu_ctrl       = 0xBC4;
+
 /** User Cycle counter for RDCYCLE pseudo-instruction */
 static const uint16_t CSR_cycle          = 0xC00;
 /** User Timer for RDTIME pseudo-instruction */
