@@ -40,7 +40,7 @@ void GPIO::postinitService() {
 
 uint32_t GPIO::readInputs() {
     uint32_t i = input_en.getValue().buf16[0];  // 16 IOs total
-    i |= (dip_.to_uint32() & 0xFFFF);
+    i &= (dip_.to_uint32() & 0xFFFF);
     return i;
 }
 

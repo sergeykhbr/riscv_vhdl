@@ -2,7 +2,7 @@
           {'Name':'sd0','Attr':[
                 ['ObjDescription','Ubuntu image storage']
                 ['LogLevel',4],
-                ['Image','${REPO_PATH}/../examples/ubuntu-21.04-preinstalled-server-riscv64+unmatched.img']
+                ['Image','${REPO_PATH}/../examples/ubuntu-22.04-preinstalled-server-riscv64+unmatched.img']
                 ]}]},
     {'Class':'TcpServerClass','Instances':[
           {'Name':'rpcserver','Attr':[

@@ -1,5 +1,6 @@
 .svn
 openocd_gdb_cfg/*.log
 examples/ubuntu-21.04-preinstalled-server-riscv64+unmatched.img
+examples/ubuntu-22.04-preinstalled-server-riscv64+unmatched.img
 
 

@@ -63,6 +63,7 @@ void copy_image() {
 
 
     uint64_t qspi2 = ~0ull;
+    printf_uart("dip=%02x\r\n", get_dips());
     if (get_dips() == 0xB) {
         // Load from SD-card
         qspi2 = get_dev_bar(VENDOR_GNSSSENSOR, GNSSSENSOR_SPI_FLASH);
