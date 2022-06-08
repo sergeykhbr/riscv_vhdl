@@ -67,7 +67,7 @@ else()
     set_target_properties(riscvdebugger PROPERTIES RUNTIME_OUTPUT_DIRECTORY "winbuild/bin")
     set_target_properties(riscvdebugger PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE "winbuild/bin")
     set_target_properties(riscvdebugger PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG "winbuild/bin")
-    set_target_properties(riscvdebugger PROPERTIES VS_STARTUP_PROJECT riscvdebugger)
+    set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT riscvdebugger)
     set_target_properties(riscvdebugger PROPERTIES
                                         VS_DEBUGGER_COMMAND_ARGUMENTS 
                                         "-c ${CMAKE_CURRENT_SOURCE_DIR}/../targets/func_river_x1_gui.json")
@@ -77,6 +77,10 @@ else()
 	        )
 
     target_link_libraries(riscvdebugger libdbg64g)
+if (DEFINED ENV{SYSTEMC_SRC} AND DEFINED ENV{SYSTEMC_LIB})
     add_dependencies(riscvdebugger libdbg64g simple_plugin socsim_plugin cpu_sysc_plugin cpu_arm_plugin cpu_fnc_plugin gui_plugin)
+else()
+    add_dependencies(riscvdebugger libdbg64g simple_plugin socsim_plugin cpu_arm_plugin cpu_fnc_plugin gui_plugin)
+endif()
 endif()
   
