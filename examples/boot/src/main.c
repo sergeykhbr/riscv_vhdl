@@ -134,8 +134,8 @@ void _init() {
     copy_image();
     led_set(0x02);
 
-    print_uart("Boot . . .", 10);
-    print_uart("OK\r\n", 4);
+    printf_uart("FPL. . . .%s\r\n", "DONE");
+    printf_uart("SPL. . . .%s\r\n", "Started");
 
     tech = (pnp->tech >> 24) & 0xff;
     led_set(tech);

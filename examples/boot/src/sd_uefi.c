@@ -119,6 +119,13 @@ int run_from_sdcard() {
     printf_uart("Coping %d KB", (lba_end - lba_start + 1) / 2);
     for (uint64_t i = lba_start; i <= lba_end; i++) {
         sd_read_block((uint8_t *)entry, sizeof(entry));   // reuse the same buffer
+  
+        // Check SRAM already initialized with loader1 (sim only)
+        if (((uint64_t *)entry)[0] == ((uint64_t *)sram)[0]) {
+            printf_uart(". . . . . %s", "SKIPPED(sim)");
+            break;
+        }
+
         memcpy(sram, entry, sizeof(entry));
         sram += sizeof(entry);
         if ((i % 100) == 0) {

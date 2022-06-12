@@ -1203,7 +1203,7 @@ void InstrExecute::comb() {
         }
         break;
     case State_Wfi:
-        if (i_haltreq || i_irq_external || i_irq_timer) {
+        if (i_haltreq || i_irq_software || i_irq_external || i_irq_timer) {
             v.state = State_Idle;
         }
         break;
