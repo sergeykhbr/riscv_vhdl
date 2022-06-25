@@ -102,7 +102,7 @@ SC_MODULE(Processor) {
 
     SC_HAS_PROCESS(Processor);
 
-    Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
+    Processor(sc_module_name name_, bool async_reset, uint32_t hartid,
              bool fpu_ena, bool tracer_ena);
     virtual ~Processor();
 

@@ -18,46 +18,6 @@
 
 namespace debugger {
 
-sc_uint<REQ_MEM_TYPE_BITS> ReadNoSnoop() {
-    sc_uint<REQ_MEM_TYPE_BITS> ret = 0x0;
-    return ret;
-}
-
-sc_uint<REQ_MEM_TYPE_BITS> ReadShared() {
-    sc_uint<REQ_MEM_TYPE_BITS> ret = 0x0;
-    ret[REQ_MEM_TYPE_CACHED] = 1;
-    return ret;
-}
-
-sc_uint<REQ_MEM_TYPE_BITS> ReadMakeUnique() {
-    sc_uint<REQ_MEM_TYPE_BITS> ret = 0x0;
-    ret[REQ_MEM_TYPE_CACHED] = 1;
-    ret[REQ_MEM_TYPE_UNIQUE] = 1;
-    return ret;
-}
-
-sc_uint<REQ_MEM_TYPE_BITS> WriteNoSnoop() {
-    sc_uint<REQ_MEM_TYPE_BITS> ret = 0x0;
-    ret[REQ_MEM_TYPE_WRITE] = 1;
-    return ret;
-}
-
-sc_uint<REQ_MEM_TYPE_BITS> WriteLineUnique() {
-    sc_uint<REQ_MEM_TYPE_BITS> ret = 0x0;
-    ret[REQ_MEM_TYPE_WRITE] = 1;
-    ret[REQ_MEM_TYPE_CACHED] = 1;
-    ret[REQ_MEM_TYPE_UNIQUE] = 1;
-    return ret;
-}
-
-sc_uint<REQ_MEM_TYPE_BITS> WriteBack() {
-    sc_uint<REQ_MEM_TYPE_BITS> ret = 0x0;
-    ret[REQ_MEM_TYPE_WRITE] = 1;
-    ret[REQ_MEM_TYPE_CACHED] = 1;
-    return ret;
-}
-
-
 RiverAmba::RiverAmba(sc_module_name name_, uint32_t hartid, bool async_reset,
     bool fpu_ena, bool coherence_ena, bool tracer_ena) : sc_module(name_),
     i_clk("i_clk"),
@@ -85,7 +45,7 @@ RiverAmba::RiverAmba(sc_module_name name_, uint32_t hartid, bool async_reset,
     async_reset_ = async_reset;
     coherence_ena_ = coherence_ena;
 
-    river0 = new RiverTop("river0", hartid, async_reset, fpu_ena,
+    river0 = new RiverTop("river0", async_reset, hartid, fpu_ena,
                                     coherence_ena, tracer_ena);
     river0->i_clk(i_clk);
     river0->i_nrst(i_nrst);

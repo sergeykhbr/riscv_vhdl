@@ -18,7 +18,7 @@
 
 namespace debugger {
 
-RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
+RiverTop::RiverTop(sc_module_name name_, bool async_reset, uint32_t hartid,
     bool fpu_ena, bool coherence_ena, bool tracer_ena) : sc_module(name_),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
@@ -62,7 +62,7 @@ RiverTop::RiverTop(sc_module_name name_, uint32_t hartid, bool async_reset,
     i_progbuf("i_progbuf"),
     o_halted("o_halted") {
 
-    proc0 = new Processor("proc0", hartid, async_reset, fpu_ena, tracer_ena);
+    proc0 = new Processor("proc0", async_reset, hartid, fpu_ena, tracer_ena);
     proc0->i_clk(i_clk);
     proc0->i_nrst(i_nrst);
     proc0->i_req_ctrl_ready(w_req_ctrl_ready);

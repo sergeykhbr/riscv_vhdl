@@ -15,6 +15,7 @@
  */
 
 #include "dcache_lru.h"
+#include "../../ambalib/types_amba.h"
 
 namespace debugger {
 

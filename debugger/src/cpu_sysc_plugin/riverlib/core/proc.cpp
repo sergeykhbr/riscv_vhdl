@@ -19,7 +19,7 @@
 
 namespace debugger {
 
-Processor::Processor(sc_module_name name_, uint32_t hartid, bool async_reset,
+Processor::Processor(sc_module_name name_, bool async_reset, uint32_t hartid,
     bool fpu_ena, bool tracer_ena) : sc_module(name_),
     i_clk("i_clk"),
     i_nrst("i_nrst"),

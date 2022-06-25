@@ -80,7 +80,7 @@ SC_MODULE(CacheTop) {
     sc_in<bool> i_req_snoop_valid;
     sc_in<sc_uint<SNOOP_REQ_TYPE_BITS>> i_req_snoop_type;
     sc_out<bool> o_req_snoop_ready;
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> i_req_snoop_addr;
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_req_snoop_addr;
     sc_in<bool> i_resp_snoop_ready;
     sc_out<bool> o_resp_snoop_valid;
     sc_out<sc_biguint<L1CACHE_LINE_BITS>> o_resp_snoop_data;

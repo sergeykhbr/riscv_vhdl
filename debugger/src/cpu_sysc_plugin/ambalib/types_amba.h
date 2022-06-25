@@ -60,6 +60,62 @@ static const int AWSNOOP_WRITE_BACK        = 0x3;
 static const int AC_SNOOP_READ_UNIQUE   = 0x7;
 static const int AC_SNOOP_MAKE_INVALID  = 0xD;
 
+static const int REQ_MEM_TYPE_WRITE = 0;
+static const int REQ_MEM_TYPE_CACHED = 1;
+static const int REQ_MEM_TYPE_UNIQUE = 2;
+static const int REQ_MEM_TYPE_BITS = 3;
+
+static sc_uint<REQ_MEM_TYPE_BITS> ReadNoSnoop() {
+    sc_uint<REQ_MEM_TYPE_BITS> ret;
+
+    ret = 0;
+    return ret;
+}
+
+static sc_uint<REQ_MEM_TYPE_BITS> ReadShared() {
+    sc_uint<REQ_MEM_TYPE_BITS> ret;
+
+    ret = 0;
+    ret[REQ_MEM_TYPE_CACHED] = 1;
+    return ret;
+}
+
+static sc_uint<REQ_MEM_TYPE_BITS> ReadMakeUnique() {
+    sc_uint<REQ_MEM_TYPE_BITS> ret;
+
+    ret = 0;
+    ret[REQ_MEM_TYPE_CACHED] = 1;
+    ret[REQ_MEM_TYPE_UNIQUE] = 1;
+    return ret;
+}
+
+static sc_uint<REQ_MEM_TYPE_BITS> WriteNoSnoop() {
+    sc_uint<REQ_MEM_TYPE_BITS> ret;
+
+    ret = 0;
+    ret[REQ_MEM_TYPE_WRITE] = 1;
+    return ret;
+}
+
+static sc_uint<REQ_MEM_TYPE_BITS> WriteLineUnique() {
+    sc_uint<REQ_MEM_TYPE_BITS> ret;
+
+    ret = 0;
+    ret[REQ_MEM_TYPE_WRITE] = 1;
+    ret[REQ_MEM_TYPE_CACHED] = 1;
+    ret[REQ_MEM_TYPE_UNIQUE] = 1;
+    return ret;
+}
+
+static sc_uint<REQ_MEM_TYPE_BITS> WriteBack() {
+    sc_uint<REQ_MEM_TYPE_BITS> ret;
+
+    ret = 0;
+    ret[REQ_MEM_TYPE_WRITE] = 1;
+    ret[REQ_MEM_TYPE_CACHED] = 1;
+    return ret;
+}
+
 struct axi4_meta_type {
     sc_uint<CFG_BUS_ADDR_WIDTH> addr;
     sc_uint<8> len;              // burst len = len[7:0] + 1
