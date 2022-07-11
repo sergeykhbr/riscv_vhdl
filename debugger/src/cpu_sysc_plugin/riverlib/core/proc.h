@@ -204,12 +204,6 @@ private:
         sc_signal<sc_uint<RISCV_ARCH>> sp;      // Stack pointer
     } ireg;
 
-    struct FloatRegsType {
-        sc_signal<sc_uint<RISCV_ARCH>> rdata1;
-        sc_signal<sc_uint<RISCV_ARCH>> rdata2;
-        sc_signal<sc_uint<RISCV_ARCH>> dport_rdata;
-    } freg;
-
     struct CsrType {
         sc_signal<bool> req_ready;                  // CSR module is ready to accept request
         sc_signal<bool> resp_valid;                 // CSR module Response is valid

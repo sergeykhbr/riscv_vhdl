@@ -50,7 +50,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'fwimage0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','${REPO_PATH}/../examples/dhrystone21/makefiles/bin/dhrystone21.hex'],
+                ['InitFile','${REPO_PATH}/../examples/riscv-tests/makefiles/bin/riscv-tests.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x09000000, 'Also rom region on FU740'],
                 ['Length',0x40000]
