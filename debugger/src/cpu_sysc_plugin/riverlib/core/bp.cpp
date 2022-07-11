@@ -1,28 +1,30 @@
-/*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+// 
+//  Copyright 2022 Sergey Khabarov, sergeykhbr@gmail.com
+// 
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+// 
+//      http://www.apache.org/licenses/LICENSE-2.0
+// 
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+// 
 
-#include "api_core.h"
 #include "bp.h"
+#include "api_core.h"
 
 namespace debugger {
 
-BranchPredictor::BranchPredictor(sc_module_name name_, bool async_reset) :
-    sc_module(name_),
+BranchPredictor::BranchPredictor(sc_module_name name,
+                                 bool async_reset)
+    : sc_module(name),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
+    i_flush_pipeline("i_flush_pipeline"),
     i_resp_mem_valid("i_resp_mem_valid"),
     i_resp_mem_addr("i_resp_mem_addr"),
     i_resp_mem_data("i_resp_mem_data"),
@@ -33,12 +35,14 @@ BranchPredictor::BranchPredictor(sc_module_name name_, bool async_reset) :
     o_f_valid("o_f_valid"),
     o_f_pc("o_f_pc"),
     i_f_requested_pc("i_f_requested_pc"),
-    i_f_fetched_pc("i_f_fetched_pc"),
     i_f_fetching_pc("i_f_fetching_pc"),
+    i_f_fetched_pc("i_f_fetched_pc"),
     i_d_pc("i_d_pc") {
 
-    char tstr[256];
+    async_reset_ = async_reset;
+
     for (int i = 0; i < 2; i++) {
+        char tstr[256];
         RISCV_sprintf(tstr, sizeof(tstr), "predec%d", i);
         predec[i] = new BpPreDecoder(tstr);
         predec[i]->i_c_valid(wb_pd[i].c_valid);
@@ -48,6 +52,7 @@ BranchPredictor::BranchPredictor(sc_module_name name_, bool async_reset) :
         predec[i]->o_jmp(wb_pd[i].jmp);
         predec[i]->o_pc(wb_pd[i].pc);
         predec[i]->o_npc(wb_pd[i].npc);
+
     }
 
     btb = new BpBTB("btb", async_reset);
@@ -64,6 +69,7 @@ BranchPredictor::BranchPredictor(sc_module_name name_, bool async_reset) :
 
     SC_METHOD(comb);
     sensitive << i_nrst;
+    sensitive << i_flush_pipeline;
     sensitive << i_resp_mem_valid;
     sensitive << i_resp_mem_addr;
     sensitive << i_resp_mem_data;
@@ -75,27 +81,31 @@ BranchPredictor::BranchPredictor(sc_module_name name_, bool async_reset) :
     sensitive << i_f_fetching_pc;
     sensitive << i_f_fetched_pc;
     sensitive << i_d_pc;
-    sensitive << wb_npc;
-    sensitive << wb_bp_exec;
     for (int i = 0; i < 2; i++) {
+        sensitive << wb_pd[i].c_valid;
+        sensitive << wb_pd[i].addr;
+        sensitive << wb_pd[i].data;
         sensitive << wb_pd[i].jmp;
         sensitive << wb_pd[i].pc;
         sensitive << wb_pd[i].npc;
     }
-};
+    sensitive << w_btb_e;
+    sensitive << w_btb_we;
+    sensitive << wb_btb_we_pc;
+    sensitive << wb_btb_we_npc;
+    sensitive << wb_start_pc;
+    sensitive << wb_npc;
+    sensitive << wb_bp_exec;
+}
 
 BranchPredictor::~BranchPredictor() {
+    delete btb;
     for (int i = 0; i < 2; i++) {
         delete predec[i];
     }
-    delete btb;
 }
 
 void BranchPredictor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
-    btb->generateVCD(i_vcd, o_vcd);
-    for (int i = 0; i < 2; i++) {
-        predec[i]->generateVCD(i_vcd, o_vcd);
-    }
     if (o_vcd) {
         sc_trace(o_vcd, i_flush_pipeline, i_flush_pipeline.name());
         sc_trace(o_vcd, i_resp_mem_valid, i_resp_mem_valid.name());
@@ -111,17 +121,11 @@ void BranchPredictor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_f_fetching_pc, i_f_fetching_pc.name());
         sc_trace(o_vcd, i_f_fetched_pc, i_f_fetched_pc.name());
         sc_trace(o_vcd, i_d_pc, i_d_pc.name());
+    }
 
-        std::string pn(name());
-        sc_trace(o_vcd, wb_start_pc, pn + ".wb_start_pc");
-        sc_trace(o_vcd, wb_npc, pn + ".wb_npc");
-        sc_trace(o_vcd, wb_bp_exec, pn + ".wb_bp_exec");
-        sc_trace(o_vcd, wb_pd[0].jmp, pn + ".wb_pd0_jmp");
-        sc_trace(o_vcd, wb_pd[0].pc, pn + ".wb_pd0_pc");
-        sc_trace(o_vcd, wb_pd[0].npc, pn + ".wb_pd0_npc");
-        sc_trace(o_vcd, wb_pd[1].jmp, pn + ".wb_pd1_jmp");
-        sc_trace(o_vcd, wb_pd[1].pc, pn + ".wb_pd1_pc");
-        sc_trace(o_vcd, wb_pd[1].npc, pn + ".wb_pd1_npc");
+    btb->generateVCD(i_vcd, o_vcd);
+    for (int i = 0; i < 2; i++) {
+        predec[i]->generateVCD(i_vcd, o_vcd);
     }
 }
 
@@ -137,24 +141,23 @@ void BranchPredictor::comb() {
 
     // Transform address into 2-dimesional array for convinience
     for (int i = 0; i < CFG_BP_DEPTH; i++) {
-        vb_addr[i] = wb_npc.read()((i+1)*CFG_CPU_ADDR_BITS-1, i*CFG_CPU_ADDR_BITS);
+        vb_addr[i] = wb_npc.read()((((i + 1) * CFG_CPU_ADDR_BITS) - 1), (i * CFG_CPU_ADDR_BITS));
     }
 
-    vb_piped[0] = i_d_pc.read()(CFG_CPU_ADDR_BITS-1, 2);
-    vb_piped[1] = i_f_fetched_pc.read()(CFG_CPU_ADDR_BITS-1, 2);
-    vb_piped[2] = i_f_fetching_pc.read()(CFG_CPU_ADDR_BITS-1, 2);
-    vb_piped[3] = i_f_requested_pc.read()(CFG_CPU_ADDR_BITS-1, 2);
-
+    vb_piped[0] = i_d_pc.read()((CFG_CPU_ADDR_BITS - 1), 2);
+    vb_piped[1] = i_f_fetched_pc.read()((CFG_CPU_ADDR_BITS - 1), 2);
+    vb_piped[2] = i_f_fetching_pc.read()((CFG_CPU_ADDR_BITS - 1), 2);
+    vb_piped[3] = i_f_requested_pc.read()((CFG_CPU_ADDR_BITS - 1), 2);
     vb_hit = 0;
     for (int n = 0; n < 4; n++) {
         for (int i = n; i < 4; i++) {
-            if (vb_addr[n](CFG_CPU_ADDR_BITS-1, 2) == vb_piped[i]) {
+            if (vb_addr[n]((CFG_CPU_ADDR_BITS - 1), 2) == vb_piped[i]) {
                 vb_hit[n] = 1;
             }
         }
     }
 
-    vb_fetch_npc = vb_addr[CFG_BP_DEPTH-1];
+    vb_fetch_npc = vb_addr[(CFG_BP_DEPTH - 1)];
     for (int i = 3; i >= 0; i--) {
         if (vb_hit[i] == 0) {
             vb_fetch_npc = vb_addr[i];
@@ -163,34 +166,34 @@ void BranchPredictor::comb() {
 
     // Pre-decoder input signals (not used for now)
     for (int i = 0; i < 2; i++) {
-        wb_pd[i].c_valid = !i_resp_mem_data.read()(16*i+1, 16*i).and_reduce();
-        wb_pd[i].addr = i_resp_mem_addr.read() + 2*i;
-        wb_pd[i].data = i_resp_mem_data.read()(16*i + 31, 16*i);
+        wb_pd[i].c_valid = (!i_resp_mem_data.read()(((16 * i) + 1), (16 * i)).and_reduce());
+        wb_pd[i].addr = (i_resp_mem_addr.read() + (2 * i));
+        wb_pd[i].data = i_resp_mem_data.read()(((16 * i) + 31), (16 * i));
     }
     vb_ignore_pd = 0;
     for (int i = 0; i < 4; i++) {
-        if (wb_pd[0].npc.read()(CFG_CPU_ADDR_BITS-1, 2) == vb_piped[i]) {
+        if (wb_pd[0].npc.read()((CFG_CPU_ADDR_BITS - 1), 2) == vb_piped[i]) {
             vb_ignore_pd[0] = 1;
         }
-        if (wb_pd[1].npc.read()(CFG_CPU_ADDR_BITS-1, 2) == vb_piped[i]) {
+        if (wb_pd[1].npc.read()((CFG_CPU_ADDR_BITS - 1), 2) == vb_piped[i]) {
             vb_ignore_pd[1] = 1;
         }
     }
 
-    v_btb_we = i_e_jmp || wb_pd[0].jmp || wb_pd[1].jmp;
-    if (i_e_jmp) {
+    v_btb_we = (i_e_jmp || wb_pd[0].jmp || wb_pd[1].jmp);
+    if (i_e_jmp == 1) {
         vb_btb_we_pc = i_e_pc;
         vb_btb_we_npc = i_e_npc;
     } else if (wb_pd[0].jmp) {
         vb_btb_we_pc = wb_pd[0].pc;
         vb_btb_we_npc = wb_pd[0].npc;
-        if (vb_hit(2, 0) == 0x7 && wb_bp_exec.read()[2] == 0 && !vb_ignore_pd[0]) {
+        if ((vb_hit(2, 0) == 0x7) && (wb_bp_exec.read()[2] == 0) && (vb_ignore_pd[0] == 0)) {
             vb_fetch_npc = wb_pd[0].npc;
         }
     } else if (wb_pd[1].jmp) {
         vb_btb_we_pc = wb_pd[1].pc;
         vb_btb_we_npc = wb_pd[1].npc;
-        if (vb_hit(2, 0) == 0x7 && wb_bp_exec.read()[2] == 0 && !vb_ignore_pd[1]) {
+        if ((vb_hit(2, 0) == 0x7) && (wb_bp_exec.read()[2] == 0) && (vb_ignore_pd[1] == 0)) {
             vb_fetch_npc = wb_pd[1].npc;
         }
     } else {
@@ -205,7 +208,7 @@ void BranchPredictor::comb() {
     wb_btb_we_npc = vb_btb_we_npc;
 
     o_f_valid = 1;
-    o_f_pc = (vb_fetch_npc >> 2) << 2;
+    o_f_pc = (vb_fetch_npc((CFG_CPU_ADDR_BITS - 1), 2) << 2);
 }
 
 }  // namespace debugger
