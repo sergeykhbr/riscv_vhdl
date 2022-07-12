@@ -18,7 +18,6 @@
 #define __DEBUGGER_RIVERLIB_CACHE_MPU_H__
 
 #include <systemc.h>
-#include "riscv-isa.h"
 #include "../river_cfg.h"
 
 namespace debugger {

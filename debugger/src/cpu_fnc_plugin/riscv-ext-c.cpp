@@ -108,7 +108,7 @@ public:
             imm |= EXT_SIGN_6;
         }
         imm <<= 4;
-        icpu_->setReg(Reg_sp, R[Reg_sp] + imm);
+        icpu_->setReg(ICpuRiscV::Reg_sp, R[ICpuRiscV::Reg_sp] + imm);
         return 2;
     }
 };
@@ -134,7 +134,7 @@ public:
         uint64_t imm = (u.bits.imm9_6 << 4) | (u.bits.imm5_4 << 2)
                     | (u.bits.imm3 << 1) | u.bits.imm2;
         imm <<= 2;
-        icpu_->setReg(8 + u.bits.rd, R[Reg_sp] + imm);
+        icpu_->setReg(8 + u.bits.rd, R[ICpuRiscV::Reg_sp] + imm);
         return 2;
     }
 };
@@ -323,7 +323,7 @@ public:
         "C_EBREAK", "????????????????1001000000000010") {}
 
     virtual int exec(Reg64Type *payload) {
-        icpu_->generateException(EXCEPTION_Breakpoint, icpu_->getPC());
+        icpu_->generateException(ICpuRiscV::EXCEPTION_Breakpoint, icpu_->getPC());
         icpu_->doNotCache(icpu_->getPC());
         return 2;
     }
@@ -382,7 +382,7 @@ public:
         if (u.bits.off11) {
             off |= EXT_SIGN_11;
         }
-        R[Reg_ra] = icpu_->getPC() + 2;
+        R[ICpuRiscV::Reg_ra] = icpu_->getPC() + 2;
         icpu_->setBranch(icpu_->getPC() + off);
         icpu_->pushStackTrace();
         return 2;
@@ -411,7 +411,7 @@ public:
     virtual int exec(Reg64Type *payload) {
         ISA_CR_type u;
         u.value = payload->buf16[0];
-        icpu_->setReg(Reg_ra, icpu_->getPC() + 2);
+        icpu_->setReg(ICpuRiscV::Reg_ra, icpu_->getPC() + 2);
         icpu_->setBranch(R[u.bits.rdrs1]);
         icpu_->pushStackTrace();
         return 2;
@@ -439,7 +439,7 @@ public:
         ISA_CR_type u;
         u.value = payload->buf16[0];
         icpu_->setBranch(R[u.bits.rdrs1]);
-        if (u.bits.rdrs1 == Reg_ra) {
+        if (u.bits.rdrs1 == ICpuRiscV::Reg_ra) {
             icpu_->popStackTrace();
         }
         return 2;
@@ -471,10 +471,10 @@ public:
         trans.xsize = 8;
         if (trans.addr & 0x7) {
             trans.rpayload.b64[0] = 0;
-            icpu_->generateException(EXCEPTION_LoadMisalign, icpu_->getPC());
+            icpu_->generateException(ICpuRiscV::EXCEPTION_LoadMisalign, icpu_->getPC());
         } else {
             if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
-                icpu_->generateException(EXCEPTION_LoadFault, trans.addr);
+                icpu_->generateException(ICpuRiscV::EXCEPTION_LoadFault, trans.addr);
             }
         }
         icpu_->setReg(8 + u.bits.rd, trans.rpayload.b64[0]);
@@ -509,14 +509,14 @@ public:
                      | u.ldspbits.off4_3;
         off <<= 3;
         trans.action = MemAction_Read;
-        trans.addr = R[Reg_sp] + off;
+        trans.addr = R[ICpuRiscV::Reg_sp] + off;
         trans.xsize = 8;
         if (trans.addr & 0x7) {
             trans.rpayload.b64[0] = 0;
-            icpu_->generateException(EXCEPTION_LoadMisalign, icpu_->getPC());
+            icpu_->generateException(ICpuRiscV::EXCEPTION_LoadMisalign, icpu_->getPC());
         } else {
             if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
-                icpu_->generateException(EXCEPTION_LoadFault, trans.addr);
+                icpu_->generateException(ICpuRiscV::EXCEPTION_LoadFault, trans.addr);
             }
         }
         icpu_->setReg(u.ldspbits.rd, trans.rpayload.b64[0]);
@@ -579,10 +579,10 @@ public:
         trans.rpayload.b64[0] = 0;
         if (trans.addr & 0x3) {
             trans.rpayload.b64[0] = 0;
-            icpu_->generateException(EXCEPTION_LoadMisalign, icpu_->getPC());
+            icpu_->generateException(ICpuRiscV::EXCEPTION_LoadMisalign, icpu_->getPC());
         } else {
             if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
-                icpu_->generateException(EXCEPTION_LoadFault, trans.addr);
+                icpu_->generateException(ICpuRiscV::EXCEPTION_LoadFault, trans.addr);
             }
         }
         res = trans.rpayload.b32[0];
@@ -621,14 +621,14 @@ public:
                      | u.lwspbits.off4_2;
         off <<= 2;
         trans.action = MemAction_Read;
-        trans.addr = R[Reg_sp] + off;
+        trans.addr = R[ICpuRiscV::Reg_sp] + off;
         trans.xsize = 4;
         if (trans.addr & 0x3) {
             trans.rpayload.b64[0] = 0;
-            icpu_->generateException(EXCEPTION_LoadMisalign, icpu_->getPC());
+            icpu_->generateException(ICpuRiscV::EXCEPTION_LoadMisalign, icpu_->getPC());
         } else {
             if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
-                icpu_->generateException(EXCEPTION_LoadFault, trans.addr);
+                icpu_->generateException(ICpuRiscV::EXCEPTION_LoadFault, trans.addr);
             }
         }
         res = trans.rpayload.b32[0];
@@ -658,7 +658,7 @@ public:
         ISA_CR_type u;
         u.value = static_cast<uint16_t>(payload[0]);
         return RiscvInstruction::parse(payload) && u.bits.rdrs1
-            && u.bits.rdrs1 != Reg_sp;
+            && u.bits.rdrs1 != ICpuRiscV::Reg_sp;
     }
 
     virtual int exec(Reg64Type *payload) {
@@ -765,10 +765,10 @@ public:
         trans.addr = R[8 + u.bits.rs1] + off;
         trans.wpayload.b64[0] = R[8 + u.bits.rs2];
         if (trans.addr & 0x7) {
-            icpu_->generateException(EXCEPTION_StoreMisalign, icpu_->getPC());
+            icpu_->generateException(ICpuRiscV::EXCEPTION_StoreMisalign, icpu_->getPC());
         } else {
             if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
-                icpu_->generateException(EXCEPTION_StoreFault, trans.addr);
+                icpu_->generateException(ICpuRiscV::EXCEPTION_StoreFault, trans.addr);
             }
         }
         return 2;
@@ -797,13 +797,13 @@ public:
         trans.action = MemAction_Write;
         trans.xsize = 8;
         trans.wstrb = (1 << trans.xsize) - 1;
-        trans.addr = R[Reg_sp] + off;
+        trans.addr = R[ICpuRiscV::Reg_sp] + off;
         trans.wpayload.b64[0] = R[u.dbits.rs2];
         if (trans.addr & 0x7) {
-            icpu_->generateException(EXCEPTION_StoreMisalign, icpu_->getPC());
+            icpu_->generateException(ICpuRiscV::EXCEPTION_StoreMisalign, icpu_->getPC());
         } else {
             if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
-                icpu_->generateException(EXCEPTION_StoreFault, trans.addr);
+                icpu_->generateException(ICpuRiscV::EXCEPTION_StoreFault, trans.addr);
             }
         }
         return 2;
@@ -962,10 +962,10 @@ public:
         trans.addr = R[8 + u.bits.rs1] + off;
         trans.wpayload.b64[0] = R[8 + u.bits.rs2];
         if (trans.addr & 0x3) {
-            icpu_->generateException(EXCEPTION_StoreMisalign, icpu_->getPC());
+            icpu_->generateException(ICpuRiscV::EXCEPTION_StoreMisalign, icpu_->getPC());
         } else {
             if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
-                icpu_->generateException(EXCEPTION_StoreFault, trans.addr);
+                icpu_->generateException(ICpuRiscV::EXCEPTION_StoreFault, trans.addr);
             }
         }
         return 2;
@@ -993,13 +993,13 @@ public:
         trans.action = MemAction_Write;
         trans.xsize = 4;
         trans.wstrb = (1 << trans.xsize) - 1;
-        trans.addr = R[Reg_sp] + off;
+        trans.addr = R[ICpuRiscV::Reg_sp] + off;
         trans.wpayload.b64[0] = R[u.wbits.rs2];
         if (trans.addr & 0x3) {
-            icpu_->generateException(EXCEPTION_StoreMisalign, icpu_->getPC());
+            icpu_->generateException(ICpuRiscV::EXCEPTION_StoreMisalign, icpu_->getPC());
         } else {
             if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
-                icpu_->generateException(EXCEPTION_StoreFault, trans.addr);
+                icpu_->generateException(ICpuRiscV::EXCEPTION_StoreFault, trans.addr);
             }
         }
         return 2;

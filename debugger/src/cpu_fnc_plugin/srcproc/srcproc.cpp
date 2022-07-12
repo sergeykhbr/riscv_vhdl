@@ -17,6 +17,7 @@
 #include "srcproc.h"
 #include <iostream>
 #include <riscv-isa.h>
+#include "coreservices/icpuriscv.h"
 
 namespace debugger {
 
@@ -27,8 +28,8 @@ enum ESymbInfo {
     SymbInfo_Total,
 };
 
-const char *const *RN = IREGS_NAMES;
-const char *const *RF = &IREGS_NAMES[RegFpu_Offset];
+static const char *const *RN = RISCV_IREGS_NAMES;
+static const char *const *RF = &RISCV_IREGS_NAMES[ICpuRiscV::RegFpu_Offset];
 
 int opcode_0x00(ISourceCode *isrc, uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
@@ -1137,7 +1138,7 @@ int opcode_0x19(ISourceCode *isrc, uint64_t pc, uint32_t code,
     i.value = code;
     imm64 = static_cast<int32_t>(code) >> 20;
     if (imm64 == 0) {
-        if (i.bits.rs1 == Reg_ra) {
+        if (i.bits.rs1 == ICpuRiscV::Reg_ra) {
             RISCV_sprintf(tstr, sizeof(tstr), "%s", "ret");
         } else if (i.bits.rd == 0) {
             RISCV_sprintf(tstr, sizeof(tstr), "jr      %s",

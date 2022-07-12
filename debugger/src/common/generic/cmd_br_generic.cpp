@@ -14,7 +14,6 @@
  *  limitations under the License.
  */
 
-#include <generic-isa.h>
 #include "cmd_br_generic.h"
 #include "debug/dsumap.h"
 #include "debug/dmi_regs.h"

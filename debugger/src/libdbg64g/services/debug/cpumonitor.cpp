@@ -18,7 +18,6 @@
 #include <iostream>
 #include <stdio.h>
 #include <string.h>
-#include <generic-isa.h>
 #include "debug/dsumap.h"
 #include "cpumonitor.h"
 #include "coreservices/isrccode.h"

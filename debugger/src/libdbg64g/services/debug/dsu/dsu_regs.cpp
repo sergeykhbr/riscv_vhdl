@@ -15,7 +15,6 @@
  */
 
 #include <api_core.h>
-#include <generic-isa.h>
 #include "dsu_regs.h"
 #include "dsu.h"
 

@@ -16,7 +16,6 @@
 
 #include <api_core.h>
 #include "dsu.h"
-#include <generic-isa.h>
 #include "cmd_dsu_busutil.h"
 #include "cmd_dsu_isrunning.h"
 #include "cmd_dsu_run.h"

@@ -19,7 +19,6 @@
 
 #include <systemc.h>
 #include "../river_cfg.h"
-#include "riscv-isa.h"
 #include "arith/alu_logic.h"
 #include "arith/int_addsub.h"
 #include "arith/int_div.h"
@@ -344,7 +343,7 @@ private:
     sc_signal<sc_uint<RISCV_ARCH>> wb_shifter_a1;      // Shifters operand 1
     sc_signal<sc_uint<6>> wb_shifter_a2;               // Shifters operand 2
 
-    sc_uint<CFG_REG_TAG_WIDTH> tag_expected[Reg_Total];
+    sc_uint<CFG_REG_TAG_WIDTH> tag_expected[INTREGS_TOTAL];
 
     AluLogic *alu0;
     IntAddSub *addsub0;

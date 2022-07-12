@@ -16,7 +16,6 @@
 
 #include "cmd_dsu_halt.h"
 #include "debug/dsumap.h"
-#include <generic-isa.h>
 
 namespace debugger {
 

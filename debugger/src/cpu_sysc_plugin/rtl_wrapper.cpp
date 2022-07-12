@@ -18,7 +18,6 @@
 #include "rtl_wrapper.h"
 #include "iservice.h"
 #include "ihap.h"
-#include <riscv-isa.h>
 #include "coreservices/iserial.h"
 
 namespace debugger {

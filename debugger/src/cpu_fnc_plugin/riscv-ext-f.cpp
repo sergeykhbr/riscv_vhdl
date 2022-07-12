@@ -926,7 +926,7 @@ class FADD_D : public FpuInstruction {
         AddSubCompare(1, 0, 0, 0, 0, 0,
                        src1, src2, &dest, except);
         //dest.f64 = src1.f64 + src2.f64;
-        icpu_->setReg(RegFpu_Offset + u.bits.rd, dest.val);
+        icpu_->setReg(ICpuRiscV::RegFpu_Offset + u.bits.rd, dest.val);
         return 4;
     }
 };
@@ -946,7 +946,7 @@ class FCVT_D_L: public FpuInstruction {
         src1.val = R[u.bits.rs1];
         Int2Double(1, 0, src1, &dest);
         //dest.f64 = static_cast<double>(src1.ival);
-        icpu_->setReg(RegFpu_Offset + u.bits.rd, dest.val);
+        icpu_->setReg(ICpuRiscV::RegFpu_Offset + u.bits.rd, dest.val);
         return 4;
     }
 };
@@ -966,7 +966,7 @@ class FCVT_D_LU: public FpuInstruction {
         src1.val = R[u.bits.rs1];
         Int2Double(0, 0, src1, &dest);
         //dest.f64 = static_cast<double>(src1.val);
-        icpu_->setReg(RegFpu_Offset + u.bits.rd, dest.val);
+        icpu_->setReg(ICpuRiscV::RegFpu_Offset + u.bits.rd, dest.val);
         return 4;
     }
 };
@@ -986,7 +986,7 @@ class FCVT_D_W: public FpuInstruction {
         src1.val = R[u.bits.rs1];
         Int2Double(1, 1, src1, &dest);
         //dest.f64 = static_cast<double>(static_cast<int>(src1.buf32[0]));
-        icpu_->setReg(RegFpu_Offset + u.bits.rd, dest.val);
+        icpu_->setReg(ICpuRiscV::RegFpu_Offset + u.bits.rd, dest.val);
         return 4;
     }
 };
@@ -1006,7 +1006,7 @@ class FCVT_D_WU: public FpuInstruction {
         src1.val = R[u.bits.rs1];
         Int2Double(0, 1, src1, &dest);
         //dest.f64 = static_cast<double>(src1.buf32[0]);
-        icpu_->setReg(RegFpu_Offset + u.bits.rd, dest.val);
+        icpu_->setReg(ICpuRiscV::RegFpu_Offset + u.bits.rd, dest.val);
         return 4;
     }
 };
@@ -1239,11 +1239,11 @@ class FDIV_D : public FpuInstruction {
 
         if (RF[u.bits.rs2] == 0) {
             csr_fcsr_type fcsr;
-            fcsr.value = icpu_->readCSR(CSR_fcsr);
+            fcsr.value = icpu_->readCSR(ICpuRiscV::CSR_fcsr);
             fcsr.bits.DZ = 1;
-            icpu_->writeCSR(CSR_fcsr, fcsr.value);
+            icpu_->writeCSR(ICpuRiscV::CSR_fcsr, fcsr.value);
         }
-        icpu_->setReg(RegFpu_Offset + u.bits.rd, dest.val);
+        icpu_->setReg(ICpuRiscV::RegFpu_Offset + u.bits.rd, dest.val);
         return 4;
     }
 };
@@ -1268,9 +1268,9 @@ class FEQ_D : public FpuInstruction {
         if (src1.f64bits.exp == 0x7FF || src2.f64bits.exp == 0x7FF) {
             /** Do not cause trap, only signal Invalid Operation */
             csr_fcsr_type fcsr;
-            fcsr.value = icpu_->readCSR(CSR_fcsr);
+            fcsr.value = icpu_->readCSR(ICpuRiscV::CSR_fcsr);
             fcsr.bits.NV = 1;
-            icpu_->writeCSR(CSR_fcsr, fcsr.value);
+            icpu_->writeCSR(ICpuRiscV::CSR_fcsr, fcsr.value);
         }
         //else {
         //    eq = src1.val == src2.val ? 1ull: 0;
@@ -1302,14 +1302,14 @@ public:
         trans.xsize = 8;
         if (trans.addr & 0x7) {
             trans.rpayload.b64[0] = 0;
-            icpu_->generateException(EXCEPTION_LoadMisalign, icpu_->getPC());
+            icpu_->generateException(ICpuRiscV::EXCEPTION_LoadMisalign, icpu_->getPC());
         } else {
             if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
-                icpu_->generateException(EXCEPTION_LoadFault, trans.addr);
+                icpu_->generateException(ICpuRiscV::EXCEPTION_LoadFault, trans.addr);
             }
         }
         dst.val = trans.rpayload.b64[0];
-        icpu_->setReg(RegFpu_Offset + u.bits.rd, dst.val);
+        icpu_->setReg(ICpuRiscV::RegFpu_Offset + u.bits.rd, dst.val);
         return 4;
     }
 };
@@ -1334,9 +1334,9 @@ class FLE_D : public FpuInstruction {
         if (src1.f64bits.exp == 0x7FF || src2.f64bits.exp == 0x7FF) {
             /** Do not cause trap, only signal Invalid Operation */
             csr_fcsr_type fcsr;
-            fcsr.value = icpu_->readCSR(CSR_fcsr);
+            fcsr.value = icpu_->readCSR(ICpuRiscV::CSR_fcsr);
             fcsr.bits.NV = 1;
-            icpu_->writeCSR(CSR_fcsr, fcsr.value);
+            icpu_->writeCSR(ICpuRiscV::CSR_fcsr, fcsr.value);
         }
         //else {
         //    le = src1.f64 <= src2.f64 ? 1ull: 0;
@@ -1366,9 +1366,9 @@ class FLT_D : public FpuInstruction {
         if (src1.f64bits.exp == 0x7FF || src2.f64bits.exp == 0x7FF) {
             /** Do not cause trap, only signal Invalid Operation */
             csr_fcsr_type fcsr;
-            fcsr.value = icpu_->readCSR(CSR_fcsr);
+            fcsr.value = icpu_->readCSR(ICpuRiscV::CSR_fcsr);
             fcsr.bits.NV = 1;
-            icpu_->writeCSR(CSR_fcsr, fcsr.value);
+            icpu_->writeCSR(ICpuRiscV::CSR_fcsr, fcsr.value);
         }
         //else {
         //    le = src1.f64 < src2.f64 ? 1ull: 0;
@@ -1395,7 +1395,7 @@ class FMAX_D : public FpuInstruction {
         src2.val = RF[u.bits.rs2];
         AddSubCompare(0, 0, 0, 0, 1, 0, src1, src2, &dest, except);
         //dest.f64 = src1.f64 > src2.f64 ? src1.f64: src2.f64;
-        icpu_->setReg(RegFpu_Offset + u.bits.rd, dest.val);
+        icpu_->setReg(ICpuRiscV::RegFpu_Offset + u.bits.rd, dest.val);
         return 4;
     }
 };
@@ -1417,7 +1417,7 @@ class FMIN_D : public FpuInstruction {
         src2.val = RF[u.bits.rs2];
         AddSubCompare(0, 0, 0, 0, 0, 1, src1, src2, &dest, except);
         //dest.f64 = src1.f64 < src2.f64 ? src1.f64: src2.f64;
-        icpu_->setReg(RegFpu_Offset + u.bits.rd, dest.val);
+        icpu_->setReg(ICpuRiscV::RegFpu_Offset + u.bits.rd, dest.val);
         return 4;
     }
 };
@@ -1435,7 +1435,7 @@ class FMOV_D_X : public FpuInstruction {
         Reg64Type src1;
         u.value = payload->buf32[0];
         src1.val = R[u.bits.rs1];
-        icpu_->setReg(RegFpu_Offset + u.bits.rd, src1.val);
+        icpu_->setReg(ICpuRiscV::RegFpu_Offset + u.bits.rd, src1.val);
         return 4;
     }
 };
@@ -1594,7 +1594,7 @@ class FMUL_D : public FpuInstruction {
 
         //except = nanA | nanB | overflow;
         //dest.f64 = src1.f64 * src2.f64;
-        icpu_->setReg(RegFpu_Offset + u.bits.rd, dest.val);
+        icpu_->setReg(ICpuRiscV::RegFpu_Offset + u.bits.rd, dest.val);
         return 4;
     }
 };
@@ -1621,10 +1621,10 @@ public:
         trans.addr = R[u.bits.rs1] + off;
         trans.wpayload.b64[0] = RF[u.bits.rs2];
         if (trans.addr & 0x7) {
-            icpu_->generateException(EXCEPTION_StoreMisalign, icpu_->getPC());
+            icpu_->generateException(ICpuRiscV::EXCEPTION_StoreMisalign, icpu_->getPC());
         } else {
             if (icpu_->dma_memop(&trans) == TRANS_ERROR) {
-                icpu_->generateException(EXCEPTION_StoreFault, trans.addr);
+                icpu_->generateException(ICpuRiscV::EXCEPTION_StoreFault, trans.addr);
             }
         }
         return 4;
@@ -1648,7 +1648,7 @@ class FSUB_D : public FpuInstruction {
         src2.val = RF[u.bits.rs2];
         AddSubCompare(0, 1, 0, 0, 0, 0, src1, src2, &dest, except);
         //dest.f64 = src1.f64 - src2.f64;
-        icpu_->setReg(RegFpu_Offset + u.bits.rd, dest.val);
+        icpu_->setReg(ICpuRiscV::RegFpu_Offset + u.bits.rd, dest.val);
         return 4;
     }
 };
@@ -1676,9 +1676,9 @@ void CpuRiver_Functional::addIsaExtensionD() {
     addSupportedInstruction(new FSD(this));
     addSupportedInstruction(new FSUB_D(this));
 
-    uint64_t isa = readCSR(CSR_misa);
+    uint64_t isa = readCSR(ICpuRiscV::CSR_misa);
     isa |= (1LL << ('D' - 'A'));
-    writeCSR(CSR_misa, isa);
+    writeCSR(ICpuRiscV::CSR_misa, isa);
 }
 
 void CpuRiver_Functional::addIsaExtensionF() {

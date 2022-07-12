@@ -334,7 +334,7 @@ union ProgramStatusRegsiterType {
     uint32_t value;
 };
 
-static const char *const IREGS_NAMES[] = {
+static const char *const ARM_IREGS_NAMES[] = {
     "r0",       // [0]
     "r1",       // [1] 
     "r2",       // [2] 
@@ -396,7 +396,7 @@ enum EConditionSuffix {
     Cond_AL,    // always
 };
 
-enum ERegNames {
+enum EArmRegNames {
     Reg_r0,
     Reg_r1,       // [1] Return address
     Reg_r2,       // [2] Stack pointer

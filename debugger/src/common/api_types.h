@@ -88,6 +88,21 @@ typedef struct LibThreadType {
     thread_def Handle;
 } LibThreadType;
 
+static const uint64_t EXT_SIGN_5  = 0xFFFFFFFFFFFFFFF0LL;
+static const uint64_t EXT_SIGN_6  = 0xFFFFFFFFFFFFFFE0LL;
+static const uint64_t EXT_SIGN_8  = 0xFFFFFFFFFFFFFF80LL;
+static const uint64_t EXT_SIGN_9  = 0xFFFFFFFFFFFFFF00LL;
+static const uint64_t EXT_SIGN_11 = 0xFFFFFFFFFFFFF800LL;
+static const uint64_t EXT_SIGN_12 = 0xFFFFFFFFFFFFF000LL;
+static const uint64_t EXT_SIGN_16 = 0xFFFFFFFFFFFF0000LL;
+static const uint64_t EXT_SIGN_32 = 0xFFFFFFFF00000000LL;
+
+struct ECpuRegMapping {
+    const char name[16];
+    int size;
+    uint32_t offset;
+};
+
 union Reg8Type {
     uint8_t byte;
     int8_t sbyte;

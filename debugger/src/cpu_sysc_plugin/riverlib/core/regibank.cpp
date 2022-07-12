@@ -80,16 +80,16 @@ void RegIntBank::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_dport_rdata, o_dport_rdata.name());
 
         std::string pn(name());
-        sc_trace(o_vcd, r.reg[Reg_s0].val, pn + ".s0");
-        sc_trace(o_vcd, r.reg[Reg_s0].tag, pn + ".s0_tag");
-        sc_trace(o_vcd, r.reg[Reg_s1].val, pn + ".s1");
-        sc_trace(o_vcd, r.reg[Reg_s1].tag, pn + ".s1_tag");
-        sc_trace(o_vcd, r.reg[Reg_a5].val, pn + ".a5");
-        sc_trace(o_vcd, r.reg[Reg_a5].tag, pn + ".a5_tag");
-        sc_trace(o_vcd, r.reg[Reg_tp].val, pn + ".tp");
-        sc_trace(o_vcd, r.reg[Reg_tp].tag, pn + ".tp_tag");
-        sc_trace(o_vcd, r.reg[Reg_sp].val, pn + ".sp");
-        sc_trace(o_vcd, r.reg[Reg_sp].tag, pn + ".sp_tag");
+        sc_trace(o_vcd, r.reg[REG_S0].val, pn + ".s0");
+        sc_trace(o_vcd, r.reg[REG_S0].tag, pn + ".s0_tag");
+        sc_trace(o_vcd, r.reg[REG_S1].val, pn + ".s1");
+        sc_trace(o_vcd, r.reg[REG_S1].tag, pn + ".s1_tag");
+        sc_trace(o_vcd, r.reg[REG_A5].val, pn + ".a5");
+        sc_trace(o_vcd, r.reg[REG_A5].tag, pn + ".a5_tag");
+        sc_trace(o_vcd, r.reg[REG_TP].val, pn + ".tp");
+        sc_trace(o_vcd, r.reg[REG_TP].tag, pn + ".tp_tag");
+        sc_trace(o_vcd, r.reg[REG_SP].val, pn + ".sp");
+        sc_trace(o_vcd, r.reg[REG_SP].tag, pn + ".sp_tag");
     }
 }
 
@@ -139,8 +139,8 @@ void RegIntBank::comb() {
     o_rdata2 = r.reg[int_radr2].val;
     o_rtag2 = r.reg[int_radr2].tag;
     o_dport_rdata = r.reg[int_daddr].val;
-    o_ra = r.reg[Reg_ra].val;
-    o_sp = r.reg[Reg_sp].val;
+    o_ra = r.reg[REG_RA].val;
+    o_sp = r.reg[REG_SP].val;
 }
 
 void RegIntBank::registers() {

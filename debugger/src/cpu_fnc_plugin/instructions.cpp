@@ -25,7 +25,7 @@ RiscvInstruction::RiscvInstruction(CpuRiver_Functional *icpu, const char *name,
                                     const char *bits) {
     icpu_ = icpu;
     R = icpu->getpRegs();
-    RF = &icpu->getpRegs()[RegFpu_Offset];
+    RF = &icpu->getpRegs()[ICpuRiscV::RegFpu_Offset];
     name_.make_string(name);
     mask_ = 0;
     opcode_ = 0;

@@ -19,7 +19,7 @@
  */
 
 #include "cmd_dsu_busutil.h"
-#include <riscv-isa.h>
+#include "coreservices/icpuriscv.h"
 
 namespace debugger {
 
@@ -81,7 +81,7 @@ void CmdDsuBusUtil::exec(AttributeType *args, AttributeType *res) {
         Reg64Type r_cnt;
     } mst_stat;
     Reg64Type cnt_total;
-    addr = DSUREGBASE(csr[CSR_time]);
+    addr = DSUREGBASE(csr[ICpuRiscV::CSR_time]);
     tap_->read(addr, 8, cnt_total.buf);
     double d_cnt_total = static_cast<double>(cnt_total.val - clock_cnt_z_);
     if (d_cnt_total == 0) {

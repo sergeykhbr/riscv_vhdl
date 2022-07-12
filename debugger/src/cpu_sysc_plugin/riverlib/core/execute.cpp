@@ -15,7 +15,6 @@
  */
 
 #include "execute.h"
-#include "riscv-isa.h"
 
 namespace debugger {
 
@@ -771,11 +770,11 @@ void InstrExecute::comb() {
     vb_select[Res_Zero] = !vb_select(Res_Total-1, Res_Zero+1).or_reduce();  // load memory, fence
 
 
-    if ((wv[Instr_JAL] || wv[Instr_JALR]) && mux.waddr == Reg_ra) {
+    if ((wv[Instr_JAL] || wv[Instr_JALR]) && mux.waddr == REG_RA) {
         v_call = 1;
     }
     if (wv[Instr_JALR] && vb_rdata2 == 0 
-        && mux.waddr != Reg_ra && mux.radr1 == Reg_ra) {
+        && mux.waddr != REG_RA && mux.radr1 == REG_RA) {
         v_ret = 1;
     }
 
@@ -1382,7 +1381,7 @@ void InstrExecute::comb() {
     o_halted = r.state.read() == State_Halted ? 1: 0;
 
     // Debug rtl only:!!
-    for (int i = 0; i < Reg_Total; i++) {
+    for (int i = 0; i < INTREGS_TOTAL; i++) {
         tag_expected[i] = r.tagcnt.read()(CFG_REG_TAG_WIDTH*i+(CFG_REG_TAG_WIDTH-1), CFG_REG_TAG_WIDTH*i).to_int();
     }
 }

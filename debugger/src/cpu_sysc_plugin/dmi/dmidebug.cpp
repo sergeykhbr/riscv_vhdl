@@ -15,7 +15,6 @@
  */
 
 #include "dmidebug.h"
-#include <riscv-isa.h>
 
 namespace debugger {
 

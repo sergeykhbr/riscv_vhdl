@@ -32,7 +32,7 @@
 #include "coreservices/itap.h"
 #include "coreservices/icoveragetracker.h"
 #include "generic/mapreg.h"
-#include <generic-isa.h>
+#include <riscv-isa.h>
 #include <fstream>
 
 namespace debugger {
@@ -162,6 +162,13 @@ class CpuGeneric : public IService,
     ICmdExecutor *icmdexec_;
     IMemoryOperation *isysbus_;
     GenericInstruction *instr_;
+
+    // DCSR register halt causes:
+    static const uint64_t HALT_CAUSE_EBREAK       = 1;  // software breakpoint
+    static const uint64_t HALT_CAUSE_TRIGGER      = 2;  // hardware breakpoint
+    static const uint64_t HALT_CAUSE_HALTREQ      = 3;  // halt request via debug interface
+    static const uint64_t HALT_CAUSE_STEP         = 4;  // step done
+    static const uint64_t HALT_CAUSE_RESETHALTREQ = 5;  // not implemented
 
     enum EContextTypes {
         Ctx_Normal,

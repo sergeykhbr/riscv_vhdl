@@ -18,7 +18,7 @@
 #define __DEBUGGER_RISCV_ISA_H__
 
 #include <inttypes.h>
-#include <generic-isa.h>
+#include <api_types.h>
 
 namespace debugger {
 
@@ -259,193 +259,6 @@ union ISA_CJ_type {
     uint16_t value;
 };
 
-static const char *const IREGS_NAMES[] = {
-    "zero",     // [0] zero
-    "ra",       // [1] Return address
-    "sp",       // [2] Stack pointer
-    "gp",       // [3] Global pointer
-    "tp",       // [4] Thread pointer
-    "t0",       // [5] Temporaries 0 s3
-    "t1",       // [6] Temporaries 1 s4
-    "t2",       // [7] Temporaries 2 s5
-    "s0",       // [8] s0/fp Saved register/frame pointer
-    "s1",       // [9] Saved register 1
-    "a0",       // [10] Function argumentes 0
-    "a1",       // [11] Function argumentes 1
-    "a2",       // [12] Function argumentes 2
-    "a3",       // [13] Function argumentes 3
-    "a4",       // [14] Function argumentes 4
-    "a5",       // [15] Function argumentes 5
-    "a6",       // [16] Function argumentes 6
-    "a7",       // [17] Function argumentes 7
-    "s2",       // [18] Saved register 2
-    "s3",       // [19] Saved register 3
-    "s4",       // [20] Saved register 4
-    "s5",       // [21] Saved register 5
-    "s6",       // [22] Saved register 6
-    "s7",       // [23] Saved register 7
-    "s8",       // [24] Saved register 8
-    "s9",       // [25] Saved register 9
-    "s10",      // [26] Saved register 10
-    "s11",      // [27] Saved register 11
-    "t3",       // [28]
-    "t4",       // [29]
-    "t5",       // [30]
-    "t6",       // [31]
-    // RegFpu_Offset
-    "ft0", "ft1", "ft2",  "ft3",  "ft4", "ft5", "ft6",  "ft7",
-    "fs0", "fs1", "fa0",  "fa1",  "fa2", "fa3", "fa4",  "fa5",
-    "fa6", "fa7", "fs2",  "fs3",  "fs4", "fs5", "fs6",  "fs7",
-    "fs8", "fs9", "fs10", "fs11", "ft8", "ft9", "ft10", "ft11"
-};
-
-static const ECpuRegMapping RISCV_DEBUG_REG_MAP[] = {
-    {"npc",   8, CSR_dpc},
-    {"steps", 8, CSR_insret},
-    {"zero",  8, 0x1000},
-    {"ra",    8, 0x1001},
-    {"sp",    8, 0x1002},
-    {"gp",    8, 0x1003},
-    {"tp",    8, 0x1004},
-    {"t0",    8, 0x1005},
-    {"t1",    8, 0x1006},
-    {"t2",    8, 0x1007},
-    {"s0",    8, 0x1008},
-    {"s1",    8, 0x1009},
-    {"a0",    8, 0x100A},
-    {"a1",    8, 0x100B},
-    {"a2",    8, 0x100C},
-    {"a3",    8, 0x100D},
-    {"a4",    8, 0x100E},
-    {"a5",    8, 0x100F},
-    {"a6",    8, 0x1010},
-    {"a7",    8, 0x1011},
-    {"s2",    8, 0x1012},
-    {"s3",    8, 0x1013},
-    {"s4",    8, 0x1014},
-    {"s5",    8, 0x1015},
-    {"s6",    8, 0x1016},
-    {"s7",    8, 0x1017},
-    {"s8",    8, 0x1018},
-    {"s9",    8, 0x1019},
-    {"s10",   8, 0x101A},
-    {"s11",   8, 0x101B},
-    {"t3",    8, 0x101C},
-    {"t4",    8, 0x101D},
-    {"t5",    8, 0x101E},
-    {"t6",    8, 0x101F},
-    {"ft0",   8, 0x1020},
-    {"ft1",   8, 0x1021},
-    {"ft2",   8, 0x1022},
-    {"ft3",   8, 0x1023},
-    {"ft4",   8, 0x1024},
-    {"ft5",   8, 0x1025},
-    {"ft6",   8, 0x1026},
-    {"ft7",   8, 0x1027},
-    {"fs0",   8, 0x1028},
-    {"fs1",   8, 0x1029},
-    {"fa0",   8, 0x102A},
-    {"fa1",   8, 0x102B},
-    {"fa2",   8, 0x102C},
-    {"fa3",   8, 0x102D},
-    {"fa4",   8, 0x102E},
-    {"fa5",   8, 0x102F},
-    {"fa6",   8, 0x1030},
-    {"fa7",   8, 0x1031},
-    {"fs2",   8, 0x1032},
-    {"fs3",   8, 0x1033},
-    {"fs4",   8, 0x1034},
-    {"fs5",   8, 0x1035},
-    {"fs6",   8, 0x1036},
-    {"fs7",   8, 0x1037},
-    {"fs8",   8, 0x1038},
-    {"fs9",   8, 0x1039},
-    {"fs10",  8, 0x103A},
-    {"fs11",  8, 0x103B},
-    {"ft8",   8, 0x103C},
-    {"ft9",   8, 0x103D},
-    {"ft10",  8, 0x103E},
-    {"ft11",  8, 0x103F},
-    {"",      0, 0}
-};
-
-enum ERegNames {
-    Reg_Zero,
-    Reg_ra,       // [1] Return address
-    Reg_sp,       // [2] Stack pointer
-    Reg_gp,       // [3] Global pointer
-    Reg_tp,       // [4] Thread pointer
-    Reg_t0,       // [5] Temporaries 0 s3
-    Reg_t1,       // [6] Temporaries 1 s4
-    Reg_t2,       // [7] Temporaries 2 s5
-    Reg_s0,       // [8] s0/fp Saved register/frame pointer
-    Reg_s1,       // [9] Saved register 1
-    Reg_a0,       // [10] Function argumentes 0
-    Reg_a1,       // [11] Function argumentes 1
-    Reg_a2,       // [12] Function argumentes 2
-    Reg_a3,       // [13] Function argumentes 3
-    Reg_a4,       // [14] Function argumentes 4
-    Reg_a5,       // [15] Function argumentes 5
-    Reg_a6,       // [16] Function argumentes 6
-    Reg_a7,       // [17] Function argumentes 7
-    Reg_s2,       // [18] Saved register 2
-    Reg_s3,       // [19] Saved register 3
-    Reg_s4,       // [20] Saved register 4
-    Reg_s5,       // [21] Saved register 5
-    Reg_s6,       // [22] Saved register 6
-    Reg_s7,       // [23] Saved register 7
-    Reg_s8,       // [24] Saved register 8
-    Reg_s9,       // [25] Saved register 9
-    Reg_s10,      // [26] Saved register 10
-    Reg_s11,      // [27] Saved register 11
-    Reg_t3,       // [28]
-    Reg_t4,       // [29]
-    Reg_t5,       // [30]
-    Reg_t6,       // [31]
-    Reg_Total
-};
-
-static const int RegFpu_Offset = Reg_Total;
-
-enum ERegFpuNames {
-    Reg_f0,     // ft0 temporary register
-    Reg_f1,     // ft1
-    Reg_f2,     // ft2
-    Reg_f3,     // ft3
-    Reg_f4,     // ft4
-    Reg_f5,     // ft5
-    Reg_f6,     // ft6
-    Reg_f7,     // ft7
-    Reg_f8,     // fs0 saved register
-    Reg_f9,     // fs1
-    Reg_f10,    // fa0 argument/return value
-    Reg_f11,    // fa1 argument/return value
-    Reg_f12,    // fa2 argument register
-    Reg_f13,    // fa3
-    Reg_f14,    // fa4
-    Reg_f15,    // fa5
-    Reg_f16,    // fa6
-    Reg_f17,    // fa7
-    Reg_f18,    // fs2 saved register
-    Reg_f19,    // fs3
-    Reg_f20,    // fs4
-    Reg_f21,    // fs5
-    Reg_f22,    // fs6
-    Reg_f23,    // fs7
-    Reg_f24,    // fs8
-    Reg_f25,    // fs9
-    Reg_f26,    // fs10
-    Reg_f27,    // fs11
-    Reg_f28,    // ft8 temporary register
-    Reg_f29,    // ft9
-    Reg_f30,    // ft10
-    Reg_f31,    // ft11
-    RegFpu_Total
-};
-
-static const int REGS_BUS_WIDTH = 6;
-static const int REGS_TOTAL = (1 << REGS_BUS_WIDTH);//Reg_Total + RegFpu_Total;
-
 union csr_mstatus_type {
     struct bits_type {
         uint64_t UIE    : 1;    // [0]: User level interrupts ena for current
@@ -538,77 +351,172 @@ union csr_fcsr_type {
     uint64_t value;
 };
 
-/**
- * @name PRV bits possible values:
- */
-/// @{
-/// User-mode
-static const uint64_t PRV_U       = 0;
-/// super-visor mode
-static const uint64_t PRV_S       = 1;
-/// hyper-visor mode
-static const uint64_t PRV_H       = 2;
-//// machine mode
-static const uint64_t PRV_M       = 3;
-/// @}
-
-enum EExceptions {
-    // Instruction address misaligned
-    EXCEPTION_InstrMisalign,
-    // Instruction access fault
-    EXCEPTION_InstrFault,
-    // Illegal instruction
-    EXCEPTION_InstrIllegal,
-    // Breakpoint
-    EXCEPTION_Breakpoint,
-    // Load address misaligned
-    EXCEPTION_LoadMisalign,
-    // Load access fault
-    EXCEPTION_LoadFault,
-    // Store/AMO address misaligned
-    EXCEPTION_StoreMisalign,
-    // Store/AMO access fault
-    EXCEPTION_StoreFault,
-    // Environment call from U-mode
-    EXCEPTION_CallFromUmode,
-    // Environment call from S-mode
-    EXCEPTION_CallFromSmode,
-    // Environment call from H-mode
-    EXCEPTION_CallFromHmode,
-    // Environment call from M-mode
-    EXCEPTION_CallFromMmode,
-    // Instruction page fault
-    EXCEPTION_InstrPageFault,
-    // Load page fault
-    EXCEPTION_LoadPageFault,
-    // reserved
-    EXCEPTION_rsrv14,
-    // Store/AMO page fault
-    EXCEPTION_StorePageFault,
-    // Stack overflow
-    EXCEPTION_StackOverflow,
-    // Stack underflow
-    EXCEPTION_StackUnderflow,
-    EXCEPTIONS_Total
+// Trigger Data1
+union TriggerData1Type {
+    uint64_t val;
+    uint8_t u8[8];
+    struct bits_type {
+        uint64_t data : 59;     // [58:0]
+        uint64_t dmode : 1;     // [59]
+        uint64_t type : 4;      // [63:60]
+    } bitsdef;
+    struct bits_type2 {
+        uint64_t load : 1;      // [0]
+        uint64_t store : 1;     // [1]
+        uint64_t execute : 1;   // [2]
+        uint64_t u : 1;         // [3]
+        uint64_t s : 1;         // [4]
+        uint64_t rsr5 : 1;      // [5]
+        uint64_t m : 1;         // [6]
+        uint64_t match : 4;     // [10:7]
+        uint64_t chain : 1;     // [11]
+        uint64_t action : 4;    // [15:12]
+        uint64_t sizelo : 2;    // [17:16]
+        uint64_t timing : 1;    // [18]
+        uint64_t select : 1;    // [19]
+        uint64_t hit : 1;       // [20]
+        uint64_t sizehi : 2;    // [22:21]
+        uint64_t rsrv_23 : 30;  // [52:23]
+        uint64_t maskmax : 6;   // [58:53]
+        uint64_t dmode : 1;     // [59]
+        uint64_t type : 4;      // [63:60]
+    } mcontrol_bits;
+    struct bits_type3 {
+        uint64_t action : 6;    // [5:0]: 0=raise breakpoint exception; 1=Enter Debug Mode
+        uint64_t u : 1;         // [6]
+        uint64_t s : 1;         // [7]
+        uint64_t rsr5 : 1;      // [8]
+        uint64_t m : 1;         // [9]
+        uint64_t count : 14;    // [23:10]
+        uint64_t hit : 1;       // [24]
+        uint64_t rsrv57_10 : 34;// [58:25]
+        uint64_t dmode : 1;     // [59]
+        uint64_t type : 4;      // [63:60]
+    } icount_bits;
+    struct bits_type4 {         // the same for type4 and type5
+        uint64_t action : 6;    // [5:0]: 0=raise breakpoint exception; 1=Enter Debug Mode
+        uint64_t u : 1;         // [6]
+        uint64_t s : 1;         // [7]
+        uint64_t rsr5 : 1;      // [8]
+        uint64_t m : 1;         // [9]
+        uint64_t rsrv57_10 : 48;// [57:10]
+        uint64_t hit : 1;       // [58]
+        uint64_t dmode : 1;     // [59]
+        uint64_t type : 4;      // [63:60]
+    } itrigger_bits;
 };
 
-enum EInterrupts {
-    INTERRUPT_XSoftware,
-    INTERRUPT_XTimer,
-    INTERRUPT_XExternal,
-    INTERRUPT_Total
-};
-/** Exceptions */
-enum ESignals {
-    SIGNAL_Exception = 0,
-    SIGNAL_XSoftware = EXCEPTIONS_Total + 4*INTERRUPT_XSoftware,
-    SIGNAL_XTimer = EXCEPTIONS_Total + 4*INTERRUPT_XTimer,
-    SIGNAL_XExternal = EXCEPTIONS_Total + 4*INTERRUPT_XExternal,
-    SIGNAL_HardReset,
-    SIGNAL_Total
+
+static const char *const RISCV_IREGS_NAMES[] = {
+    "zero",     // [0] zero
+    "ra",       // [1] Return address
+    "sp",       // [2] Stack pointer
+    "gp",       // [3] Global pointer
+    "tp",       // [4] Thread pointer
+    "t0",       // [5] Temporaries 0 s3
+    "t1",       // [6] Temporaries 1 s4
+    "t2",       // [7] Temporaries 2 s5
+    "s0",       // [8] s0/fp Saved register/frame pointer
+    "s1",       // [9] Saved register 1
+    "a0",       // [10] Function argumentes 0
+    "a1",       // [11] Function argumentes 1
+    "a2",       // [12] Function argumentes 2
+    "a3",       // [13] Function argumentes 3
+    "a4",       // [14] Function argumentes 4
+    "a5",       // [15] Function argumentes 5
+    "a6",       // [16] Function argumentes 6
+    "a7",       // [17] Function argumentes 7
+    "s2",       // [18] Saved register 2
+    "s3",       // [19] Saved register 3
+    "s4",       // [20] Saved register 4
+    "s5",       // [21] Saved register 5
+    "s6",       // [22] Saved register 6
+    "s7",       // [23] Saved register 7
+    "s8",       // [24] Saved register 8
+    "s9",       // [25] Saved register 9
+    "s10",      // [26] Saved register 10
+    "s11",      // [27] Saved register 11
+    "t3",       // [28]
+    "t4",       // [29]
+    "t5",       // [30]
+    "t6",       // [31]
+    // RegFpu_Offset
+    "ft0", "ft1", "ft2",  "ft3",  "ft4", "ft5", "ft6",  "ft7",
+    "fs0", "fs1", "fa0",  "fa1",  "fa2", "fa3", "fa4",  "fa5",
+    "fa6", "fa7", "fs2",  "fs3",  "fs4", "fs5", "fs6",  "fs7",
+    "fs8", "fs9", "fs10", "fs11", "ft8", "ft9", "ft10", "ft11"
 };
 
-static const int EXCEPTION_CallFromXMode    = EXCEPTION_CallFromUmode;
+static const ECpuRegMapping RISCV_DEBUG_REG_MAP[] = {
+    {"npc",   8, 0x7b1}, //CSR_dpc},
+    {"steps", 8, 0xC02}, //CSR_insret},
+    {"zero",  8, 0x1000},
+    {"ra",    8, 0x1001},
+    {"sp",    8, 0x1002},
+    {"gp",    8, 0x1003},
+    {"tp",    8, 0x1004},
+    {"t0",    8, 0x1005},
+    {"t1",    8, 0x1006},
+    {"t2",    8, 0x1007},
+    {"s0",    8, 0x1008},
+    {"s1",    8, 0x1009},
+    {"a0",    8, 0x100A},
+    {"a1",    8, 0x100B},
+    {"a2",    8, 0x100C},
+    {"a3",    8, 0x100D},
+    {"a4",    8, 0x100E},
+    {"a5",    8, 0x100F},
+    {"a6",    8, 0x1010},
+    {"a7",    8, 0x1011},
+    {"s2",    8, 0x1012},
+    {"s3",    8, 0x1013},
+    {"s4",    8, 0x1014},
+    {"s5",    8, 0x1015},
+    {"s6",    8, 0x1016},
+    {"s7",    8, 0x1017},
+    {"s8",    8, 0x1018},
+    {"s9",    8, 0x1019},
+    {"s10",   8, 0x101A},
+    {"s11",   8, 0x101B},
+    {"t3",    8, 0x101C},
+    {"t4",    8, 0x101D},
+    {"t5",    8, 0x101E},
+    {"t6",    8, 0x101F},
+    {"ft0",   8, 0x1020},
+    {"ft1",   8, 0x1021},
+    {"ft2",   8, 0x1022},
+    {"ft3",   8, 0x1023},
+    {"ft4",   8, 0x1024},
+    {"ft5",   8, 0x1025},
+    {"ft6",   8, 0x1026},
+    {"ft7",   8, 0x1027},
+    {"fs0",   8, 0x1028},
+    {"fs1",   8, 0x1029},
+    {"fa0",   8, 0x102A},
+    {"fa1",   8, 0x102B},
+    {"fa2",   8, 0x102C},
+    {"fa3",   8, 0x102D},
+    {"fa4",   8, 0x102E},
+    {"fa5",   8, 0x102F},
+    {"fa6",   8, 0x1030},
+    {"fa7",   8, 0x1031},
+    {"fs2",   8, 0x1032},
+    {"fs3",   8, 0x1033},
+    {"fs4",   8, 0x1034},
+    {"fs5",   8, 0x1035},
+    {"fs6",   8, 0x1036},
+    {"fs7",   8, 0x1037},
+    {"fs8",   8, 0x1038},
+    {"fs9",   8, 0x1039},
+    {"fs10",  8, 0x103A},
+    {"fs11",  8, 0x103B},
+    {"ft8",   8, 0x103C},
+    {"ft9",   8, 0x103D},
+    {"ft10",  8, 0x103E},
+    {"ft11",  8, 0x103F},
+    {"",      0, 0}
+};
+
 
 }  // namespace debugger
 

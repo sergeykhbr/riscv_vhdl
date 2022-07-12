@@ -14,9 +14,9 @@
  *  limitations under the License.
  */
 
-#include <generic-isa.h>
 #include <ihap.h>
 #include <iservice.h>
+#include "coreservices/icpuriscv.h"
 #include "cmd_dsu_run.h"
 #include "debug/dsumap.h"
 #include "debug/dmi_regs.h"
@@ -104,7 +104,7 @@ void CmdDsuRun::exec(AttributeType *args, AttributeType *res) {
 }
 
 uint64_t CmdDsuRun::checkSwBreakpoint() {
-    uint64_t addr_dpc = DSUREGBASE(csr[CSR_dpc]);
+    uint64_t addr_dpc = DSUREGBASE(csr[ICpuRiscV::CSR_dpc]);
     //uint64_t addr_dcsr = DSUREGBASE(csr[CSR_dcsr]);
     //uint64_t addr_runcontrol = -1;//DSUREGBASE(csr[CSR_runcontrol]);
     uint64_t addr_dmstatus = DSUREGBASE(ulocal.v.dmstatus);
@@ -152,7 +152,7 @@ void CmdDsuRun::writeBreakpoints() {
     uint64_t br_addr;
     uint64_t br_flags;
     uint32_t br_oplen;
-    uint64_t addr_flushi = DSUREGBASE(csr[CSR_flushi]);
+    uint64_t addr_flushi = DSUREGBASE(csr[ICpuRiscV::CSR_flushi]);
     Reg64Type data;
 
     for (unsigned i = 0; i < brList_.size(); i++) {

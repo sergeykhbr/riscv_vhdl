@@ -15,7 +15,6 @@
  */
 
 #include "dbg_port.h"
-#include <riscv-isa.h>
 
 namespace debugger {
 

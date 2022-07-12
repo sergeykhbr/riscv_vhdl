@@ -30,6 +30,8 @@ static const int CMD_VALID      = 0;
 static const int CMD_WRONG_ARGS = 1;
 static const int CMD_INVALID    = 2;
 
+const uint32_t REG_ADDR_ERROR = 0xFFFFFFFFul;
+
 class ICommand : public IFace {
  public:
     ICommand(const char *name, uint64_t dmibar, ITap *tap)

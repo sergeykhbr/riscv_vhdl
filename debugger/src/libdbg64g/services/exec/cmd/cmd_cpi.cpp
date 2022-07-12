@@ -16,7 +16,7 @@
 
 #include "cmd_cpi.h"
 #include "debug/dsumap.h"
-#include <riscv-isa.h>
+#include "coreservices/icpuriscv.h"
 
 namespace debugger {
 
@@ -67,7 +67,7 @@ void CmdCpi::exec(AttributeType *args, AttributeType *res) {
         CpiRegsType regs;
         uint8_t buf[sizeof(CpiRegsType)];
     } t1;
-    uint64_t addr_user_timers = DSUREGBASE(csr[CSR_cycle]);
+    uint64_t addr_user_timers = DSUREGBASE(csr[ICpuRiscV::CSR_cycle]);
     uint64_t d1, d2;
     tap_->read(addr_user_timers, 3*8, t1.buf);
 

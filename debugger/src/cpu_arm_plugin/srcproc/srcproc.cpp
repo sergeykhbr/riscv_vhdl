@@ -28,7 +28,7 @@ enum ESymbInfo {
     SymbInfo_Total,
 };
 
-const char *const *RN = IREGS_NAMES;
+static const char *const *RN = ARM_IREGS_NAMES;
 
 
 ArmSourceService::ArmSourceService(const char *name) : IService(name) {
@@ -351,13 +351,13 @@ int ArmSourceService::parseUndefinedInstruction(uint64_t pc, uint32_t instr,
         uint32_t imm16 = instr & 0xFFF;
         imm16 |= ((instr & 0xF0000) >> 12);
         RISCV_sprintf(tstr, sizeof(tstr), "movt     %s,#%04x",
-            IREGS_NAMES[(instr >> 12) & 0xf], imm16);
+            RN[(instr >> 12) & 0xf], imm16);
     } else if (((instr >> 20) & 0xFF) == 0x30) {
         DataProcessingType u;
         u.value = instr;
         uint32_t imm16 = (u.mov_bits.imm4 << 12) | u.mov_bits.imm12;
         RISCV_sprintf(tstr, sizeof(tstr), "movw     %s,#%04x",
-            IREGS_NAMES[u.mov_bits.rd], imm16);
+            RN[u.mov_bits.rd], imm16);
         
     }
     mnemonic->make_string(tstr);
@@ -386,17 +386,17 @@ int ArmSourceService::parseSingleDataTransfer(uint64_t pc, uint32_t instr,
                 }
             } else {
                 RISCV_sprintf(tstr, sizeof(tstr), "ldr      %s,[%s,#%s%d]",
-                    IREGS_NAMES[u.imm_bits.rd],
-                    IREGS_NAMES[u.imm_bits.rn],
+                    RN[u.imm_bits.rd],
+                    RN[u.imm_bits.rn],
                     strdown[u.imm_bits.U],
                     u.imm_bits.imm
                     );
             }
         } else {
             RISCV_sprintf(tstr, sizeof(tstr), "ldr      %s,[%s,%s,LSL#%d]",
-                IREGS_NAMES[u.reg_bits.rd],
-                IREGS_NAMES[u.reg_bits.rn],
-                IREGS_NAMES[u.reg_bits.rm],
+                RN[u.reg_bits.rd],
+                RN[u.reg_bits.rn],
+                RN[u.reg_bits.rm],
                 u.reg_bits.sh_sel
                 );
         }
@@ -405,17 +405,17 @@ int ArmSourceService::parseSingleDataTransfer(uint64_t pc, uint32_t instr,
         if (!u.imm_bits.I) {
                 RISCV_sprintf(tstr, sizeof(tstr), "%s %s,[%s,#%s%d]",
                     instrname[u.imm_bits.B],
-                    IREGS_NAMES[u.imm_bits.rd],
-                    IREGS_NAMES[u.imm_bits.rn],
+                    RN[u.imm_bits.rd],
+                    RN[u.imm_bits.rn],
                     strdown[u.imm_bits.U],
                     u.imm_bits.imm
                     );
         } else {
             RISCV_sprintf(tstr, sizeof(tstr), "%s %s,[%s,%s,LSL#%d]",
                 instrname[u.imm_bits.B],
-                IREGS_NAMES[u.reg_bits.rd],
-                IREGS_NAMES[u.reg_bits.rn],
-                IREGS_NAMES[u.reg_bits.rm],
+                RN[u.reg_bits.rd],
+                RN[u.reg_bits.rn],
+                RN[u.reg_bits.rm],
                 u.reg_bits.sh_sel
                 );
         }
@@ -441,10 +441,10 @@ int ArmSourceService::parseBlockDataTransfer(uint64_t pc, uint32_t instr,
         }
         if (sz) {
             sz = RISCV_sprintf(&rnames[sz], sizeof(rnames) - sz,
-                                ",%s", IREGS_NAMES[i]);
+                                ",%s", RN[i]);
         } else {
             sz = RISCV_sprintf(&rnames[sz], sizeof(rnames) - sz,
-                                "%s", IREGS_NAMES[i]);
+                                "%s", RN[i]);
         }
     }
 
@@ -457,7 +457,7 @@ int ArmSourceService::parseBlockDataTransfer(uint64_t pc, uint32_t instr,
     } else {
         RISCV_sprintf(tstr, sizeof(tstr), "%s %s,{%s}%s",
             instrname[u.bits.L],
-            IREGS_NAMES[u.bits.rn],
+            RN[u.bits.rn],
             rnames,
             sflag[u.bits.S]
             );
@@ -498,11 +498,11 @@ int ArmSourceService::parseDataProcessing(uint64_t pc, uint32_t instr,
     } else {
         if (u.reg_bits.shift) {
             RISCV_sprintf(op2, sizeof(op2), "%s{,%d}",
-                IREGS_NAMES[u.reg_bits.rm],
+                RN[u.reg_bits.rm],
                 u.reg_bits.shift);
         } else {
             RISCV_sprintf(op2, sizeof(op2), "%s",
-                IREGS_NAMES[u.reg_bits.rm],
+                RN[u.reg_bits.rm],
                 u.reg_bits.shift);
         }
     }
@@ -511,7 +511,7 @@ int ArmSourceService::parseDataProcessing(uint64_t pc, uint32_t instr,
     } else if (u.mrs_bits.b27_23 == 0x2 && u.mrs_bits.b21_20 == 0
         && u.mrs_bits.mask == 0xF && u.mrs_bits.zero12 == 0) {
         RISCV_sprintf(tstr, sizeof(tstr), "mrs      %s,%s",
-            IREGS_NAMES[u.mrs_bits.rd],
+            RN[u.mrs_bits.rd],
             psrname[u.mrs_bits.ps]);
     } else if ((u.mrs_bits.b27_23 == 0x2 || u.mrs_bits.b27_23 == 0x6)
         && u.mrs_bits.b21_20 == 0x2
@@ -525,20 +525,20 @@ int ArmSourceService::parseDataProcessing(uint64_t pc, uint32_t instr,
         // MOV, MVN
         RISCV_sprintf(tstr, sizeof(tstr), "%s %s,%s",
             instr_name[u.imm_bits.opcode],
-            IREGS_NAMES[u.imm_bits.rd],
+            RN[u.imm_bits.rd],
             op2);
     } else if (u.imm_bits.opcode == 8 || u.imm_bits.opcode == 9
         || u.imm_bits.opcode == 10 || u.imm_bits.opcode == 11) {
         // CMP, CMN, TEQ, TST
         RISCV_sprintf(tstr, sizeof(tstr), "%s %s,%s",
             instr_name[u.imm_bits.opcode],
-            IREGS_NAMES[u.imm_bits.rn],
+            RN[u.imm_bits.rn],
             op2);
     } else {
         RISCV_sprintf(tstr, sizeof(tstr), "%s %s,%s,%s",
             instr_name[u.imm_bits.opcode],
-            IREGS_NAMES[u.imm_bits.rd],
-            IREGS_NAMES[u.imm_bits.rn],
+            RN[u.imm_bits.rd],
+            RN[u.imm_bits.rn],
             op2);
     }
     mnemonic->make_string(tstr);
@@ -555,15 +555,15 @@ int ArmSourceService::parseMultiply(uint64_t pc, uint32_t instr,
         u.value = instr;
         if (u.bits.A) {
             RISCV_sprintf(tstr, sizeof(tstr), "mla      %s,%s,%s,%s",
-                IREGS_NAMES[u.bits.rd],
-                IREGS_NAMES[u.bits.rm],
-                IREGS_NAMES[u.bits.rs],
-                IREGS_NAMES[u.bits.rn]);
+                RN[u.bits.rd],
+                RN[u.bits.rm],
+                RN[u.bits.rs],
+                RN[u.bits.rn]);
         } else {
             RISCV_sprintf(tstr, sizeof(tstr), "mul      %s,%s,%s",
-                IREGS_NAMES[u.bits.rd],
-                IREGS_NAMES[u.bits.rm],
-                IREGS_NAMES[u.bits.rs]);
+                RN[u.bits.rd],
+                RN[u.bits.rm],
+                RN[u.bits.rs]);
         }
     } else if ((instr >> 23) == 1) {
         const char *str_s[2] = {"u", "s"};
@@ -573,10 +573,10 @@ int ArmSourceService::parseMultiply(uint64_t pc, uint32_t instr,
         RISCV_sprintf(tstr, sizeof(tstr), "%s%s %s,%s,%s,%s",
             str_s[u.bits.S],
             str_instr[u.bits.A],
-            IREGS_NAMES[u.bits.rdhi],
-            IREGS_NAMES[u.bits.rdlo],
-            IREGS_NAMES[u.bits.rm],
-            IREGS_NAMES[u.bits.rs]);
+            RN[u.bits.rdhi],
+            RN[u.bits.rdlo],
+            RN[u.bits.rm],
+            RN[u.bits.rs]);
     }
     mnemonic->make_string(tstr);
     return 4;
@@ -592,14 +592,14 @@ int ArmSourceService::parseDivide(uint64_t pc, uint32_t instr,
     u.value = instr;
     if (u.bits.S) {
         RISCV_sprintf(tstr, sizeof(tstr), "udiv     %s,%s,%s",
-            IREGS_NAMES[u.bits.rd],
-            IREGS_NAMES[u.bits.rn],
-            IREGS_NAMES[u.bits.rm]);
+            RN[u.bits.rd],
+            RN[u.bits.rn],
+            RN[u.bits.rm]);
     } else {
         RISCV_sprintf(tstr, sizeof(tstr), "sdiv     %s,%s,%s",
-            IREGS_NAMES[u.bits.rd],
-            IREGS_NAMES[u.bits.rn],
-            IREGS_NAMES[u.bits.rm]);
+            RN[u.bits.rd],
+            RN[u.bits.rn],
+            RN[u.bits.rm]);
     }
     mnemonic->make_string(tstr);
     return 4;
@@ -614,38 +614,38 @@ int ArmSourceService::parseBytesExtending(uint64_t pc, uint32_t instr,
     if (u.bits.rn == 0xF) {
         if (u.bits.b27_20 == 0x6E) {
             RISCV_sprintf(tstr, sizeof(tstr), "uxtb     %s,%s,sh#%d",
-                IREGS_NAMES[u.bits.rd],
-                IREGS_NAMES[u.bits.rm],
+                RN[u.bits.rd],
+                RN[u.bits.rm],
                 8*u.bits.rotate);
         } else if (u.bits.b27_20 == 0x6C) {
             RISCV_sprintf(tstr, sizeof(tstr), "uxtb16   %s,%s,sh#%d",
-                IREGS_NAMES[u.bits.rd],
-                IREGS_NAMES[u.bits.rm],
+                RN[u.bits.rd],
+                RN[u.bits.rm],
                 8*u.bits.rotate);
         } else if (u.bits.b27_20 == 0x6F) {
             RISCV_sprintf(tstr, sizeof(tstr), "uxth     %s,%s,sh#%d",
-                IREGS_NAMES[u.bits.rd],
-                IREGS_NAMES[u.bits.rm],
+                RN[u.bits.rd],
+                RN[u.bits.rm],
                 8*u.bits.rotate);
         }
     } else {
         if (u.bits.b27_20 == 0x6E) {
             RISCV_sprintf(tstr, sizeof(tstr), "uxtab    %s,%s,%s,sh#%d",
-                IREGS_NAMES[u.bits.rd],
-                IREGS_NAMES[u.bits.rn],
-                IREGS_NAMES[u.bits.rm],
+                RN[u.bits.rd],
+                RN[u.bits.rn],
+                RN[u.bits.rm],
                 8*u.bits.rotate);
         } else if (u.bits.b27_20 == 0x6C) {
             RISCV_sprintf(tstr, sizeof(tstr), "uxtab16  %s,%s,%s,sh#%d",
-                IREGS_NAMES[u.bits.rd],
-                IREGS_NAMES[u.bits.rn],
-                IREGS_NAMES[u.bits.rm],
+                RN[u.bits.rd],
+                RN[u.bits.rn],
+                RN[u.bits.rm],
                 8*u.bits.rotate);
         } else if (u.bits.b27_20 == 0x6F) {
             RISCV_sprintf(tstr, sizeof(tstr), "uxtah    %s,%s,%s,sh#%d",
-                IREGS_NAMES[u.bits.rd],
-                IREGS_NAMES[u.bits.rn],
-                IREGS_NAMES[u.bits.rm],
+                RN[u.bits.rd],
+                RN[u.bits.rn],
+                RN[u.bits.rm],
                 8*u.bits.rotate);
         }
     }
@@ -665,7 +665,7 @@ int ArmSourceService::parseCoprocRegTransfer(uint64_t pc, uint32_t instr,
         instr_name[u.bits.L],
         u.bits.cp_num,
         u.bits.mode,
-        IREGS_NAMES[u.bits.rd],
+        RN[u.bits.rd],
         u.bits.crn,
         u.bits.crm,
         u.bits.cp_nfo
@@ -711,7 +711,7 @@ int ArmSourceService::parseBranchExchange(uint64_t pc, uint32_t instr,
     u.value = instr;
 
     RISCV_sprintf(tstr, sizeof(tstr), "bx       %s",
-            IREGS_NAMES[u.bits.offset & 0xF]);
+            RN[u.bits.offset & 0xF]);
     mnemonic->make_string(tstr);
     return 4;
 }
@@ -724,7 +724,7 @@ int ArmSourceService::parseBranchLinkExchange(uint64_t pc, uint32_t instr,
     u.value = instr;
 
     RISCV_sprintf(tstr, sizeof(tstr), "blx      %s",
-        IREGS_NAMES[u.bits.rm]);
+        RN[u.bits.rm]);
     mnemonic->make_string(tstr);
     return 4;
 }

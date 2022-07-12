@@ -18,7 +18,6 @@
 #define __DEBUGGER_RIVERLIB_REGIBANK_H__
 
 #include <systemc.h>
-#include "riscv-isa.h"
 #include "../river_cfg.h"
 
 namespace debugger {

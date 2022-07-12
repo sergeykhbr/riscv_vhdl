@@ -296,7 +296,7 @@ void CpuRiver_Functional::traceOutput() {
             RISCV_sprintf(tstr, sizeof(tstr),
                 "%20s %10s <= %016" RV_PRI64 "x\r\n",
                     "",
-                    IREGS_NAMES[pa->waddr],
+                    RISCV_IREGS_NAMES[pa->waddr],
                     pa->wdata);
         } else if (pa->memop_write) {
             RISCV_sprintf(tstr, sizeof(tstr),

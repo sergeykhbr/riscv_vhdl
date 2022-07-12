@@ -366,7 +366,7 @@ void CpuCortex_Functional::traceOutput() {
             RISCV_sprintf(tstr, sizeof(tstr),
                 "%21s %10s <= %08x\n",
                     "",
-                    IREGS_NAMES[pa->waddr],
+                    ARM_IREGS_NAMES[pa->waddr],
                     static_cast<uint32_t>(pa->wdata));
         } else if (pa->memop_write) {
             RISCV_sprintf(tstr, sizeof(tstr),

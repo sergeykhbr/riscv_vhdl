@@ -204,14 +204,14 @@ public:
         RiscvInstruction(icpu, "URET", "00000000001000000000000001110011") {}
 
     virtual int exec(Reg64Type *payload) {
-        if (icpu_->getPrvLevel() != PRV_U) {
-            icpu_->generateException(EXCEPTION_InstrIllegal, icpu_->getPC());
+        if (icpu_->getPrvLevel() != ICpuRiscV::PRV_U) {
+            icpu_->generateException(ICpuRiscV::EXCEPTION_InstrIllegal, icpu_->getPC());
             return 4;
         }
         csr_mstatus_type mstatus;
-        mstatus.value = icpu_->readCSR(CSR_mstatus);
+        mstatus.value = icpu_->readCSR(ICpuRiscV::CSR_mstatus);
 
-        uint64_t xepc = (PRV_U << 8) + 0x41;
+        uint64_t xepc = (ICpuRiscV::PRV_U << 8) + 0x41;
         icpu_->setBranch(icpu_->readCSR(static_cast<uint32_t>(xepc)));
 
         bool is_N_extension = false;
@@ -223,8 +223,8 @@ public:
             mstatus.bits.UIE = 0;
             mstatus.bits.UPIE = 0;
         }
-        icpu_->setPrvLevel(PRV_U);
-        icpu_->writeCSR(CSR_mstatus, mstatus.value);
+        icpu_->setPrvLevel(ICpuRiscV::PRV_U);
+        icpu_->writeCSR(ICpuRiscV::CSR_mstatus, mstatus.value);
         return 4;
     }
 };
@@ -238,22 +238,22 @@ public:
         RiscvInstruction(icpu, "SRET", "00010000001000000000000001110011") {}
 
     virtual int exec(Reg64Type *payload) {
-        if (icpu_->getPrvLevel() != PRV_S) {
-            icpu_->generateException(EXCEPTION_InstrIllegal, icpu_->getPC());
+        if (icpu_->getPrvLevel() != ICpuRiscV::PRV_S) {
+            icpu_->generateException(ICpuRiscV::EXCEPTION_InstrIllegal, icpu_->getPC());
             return 4;
         }
         csr_mstatus_type mstatus;
-        mstatus.value = icpu_->readCSR(CSR_mstatus);
+        mstatus.value = icpu_->readCSR(ICpuRiscV::CSR_mstatus);
 
-        uint64_t xepc = (PRV_S << 8) + 0x41;
+        uint64_t xepc = (ICpuRiscV::PRV_S << 8) + 0x41;
         icpu_->setBranch(icpu_->readCSR(static_cast<uint32_t>(xepc)));
 
         mstatus.bits.SIE = mstatus.bits.SPIE;
         mstatus.bits.SPIE = 1;
         icpu_->setPrvLevel(mstatus.bits.SPP);
-        mstatus.bits.SPP = PRV_U;
+        mstatus.bits.SPP = ICpuRiscV::PRV_U;
             
-        icpu_->writeCSR(CSR_mstatus, mstatus.value);
+        icpu_->writeCSR(ICpuRiscV::CSR_mstatus, mstatus.value);
         return 4;
     }
 };
@@ -267,22 +267,22 @@ public:
         RiscvInstruction(icpu, "HRET", "00100000001000000000000001110011") {}
 
     virtual int exec(Reg64Type *payload) {
-        if (icpu_->getPrvLevel() != PRV_H) {
-            icpu_->generateException(EXCEPTION_InstrIllegal, icpu_->getPC());
+        if (icpu_->getPrvLevel() != ICpuRiscV::PRV_H) {
+            icpu_->generateException(ICpuRiscV::EXCEPTION_InstrIllegal, icpu_->getPC());
             return 4;
         }
         csr_mstatus_type mstatus;
-        mstatus.value = icpu_->readCSR(CSR_mstatus);
+        mstatus.value = icpu_->readCSR(ICpuRiscV::CSR_mstatus);
 
-        uint64_t xepc = (PRV_H << 8) + 0x41;
+        uint64_t xepc = (ICpuRiscV::PRV_H << 8) + 0x41;
         icpu_->setBranch(icpu_->readCSR(static_cast<uint32_t>(xepc)));
 
         mstatus.bits.HIE = mstatus.bits.HPIE;
         mstatus.bits.HPIE = 1;
         icpu_->setPrvLevel(mstatus.bits.HPP);
-        mstatus.bits.HPP = PRV_U;
+        mstatus.bits.HPP = ICpuRiscV::PRV_U;
             
-        icpu_->writeCSR(CSR_mstatus, mstatus.value);
+        icpu_->writeCSR(ICpuRiscV::CSR_mstatus, mstatus.value);
         return 4;
     }
 };
@@ -296,22 +296,22 @@ public:
         RiscvInstruction(icpu, "MRET", "00110000001000000000000001110011") {}
 
     virtual int exec(Reg64Type *payload) {
-        if (icpu_->getPrvLevel() != PRV_M) {
-            icpu_->generateException(EXCEPTION_InstrIllegal, icpu_->getPC());
+        if (icpu_->getPrvLevel() != ICpuRiscV::PRV_M) {
+            icpu_->generateException(ICpuRiscV::EXCEPTION_InstrIllegal, icpu_->getPC());
             return 4;
         }
         csr_mstatus_type mstatus;
-        mstatus.value = icpu_->readCSR(CSR_mstatus);
+        mstatus.value = icpu_->readCSR(ICpuRiscV::CSR_mstatus);
 
-        uint64_t xepc = (PRV_M << 8) + 0x41;
+        uint64_t xepc = (ICpuRiscV::PRV_M << 8) + 0x41;
         icpu_->setBranch(icpu_->readCSR(static_cast<uint32_t>(xepc)));
 
         mstatus.bits.MIE = mstatus.bits.MPIE;
         mstatus.bits.MPIE = 1;
         icpu_->setPrvLevel(mstatus.bits.MPP);
-        mstatus.bits.MPP = PRV_U;
+        mstatus.bits.MPP = ICpuRiscV::PRV_U;
 
-        icpu_->writeCSR(CSR_mstatus, mstatus.value);
+        icpu_->writeCSR(ICpuRiscV::CSR_mstatus, mstatus.value);
         return 4;
     }
 };
@@ -359,7 +359,7 @@ public:
         RiscvInstruction(icpu, "EBREAK", "00000000000100000000000001110011") {}
 
     virtual int exec(Reg64Type *payload) {
-        icpu_->generateException(EXCEPTION_Breakpoint, icpu_->getPC());
+        icpu_->generateException(ICpuRiscV::EXCEPTION_Breakpoint, icpu_->getPC());
         icpu_->doNotCache(icpu_->getPC());
         return 4;
     }
@@ -380,11 +380,11 @@ public:
 
     virtual int exec(Reg64Type *payload) {
         switch (icpu_->getPrvLevel()) {
-        case PRV_M:
-            icpu_->generateException(EXCEPTION_CallFromMmode, icpu_->getPC());
+        case ICpuRiscV::PRV_M:
+            icpu_->generateException(ICpuRiscV::EXCEPTION_CallFromMmode, icpu_->getPC());
             break;
-        case PRV_U:
-            icpu_->generateException(EXCEPTION_CallFromUmode, icpu_->getPC());
+        case ICpuRiscV::PRV_U:
+            icpu_->generateException(ICpuRiscV::EXCEPTION_CallFromUmode, icpu_->getPC());
             break;
         default:;
         }

@@ -15,7 +15,6 @@
  */
 
 #include <api_core.h>
-#include <generic-isa.h>
 #include "cpu_generic.h"
 #include "debug/dmi_regs.h"
 
