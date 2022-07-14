@@ -50,7 +50,7 @@ static const int CFG_BP_DEPTH = 5;
 static const int CFG_DEC_DEPTH = (CFG_BP_DEPTH - 3);        // requested, fetching, fetched
 
 // Power-on start address can be free changed
-static const sc_uint<CFG_BUS_ADDR_WIDTH> CFG_RESET_VECTOR = 0x10000;
+static const sc_uint<CFG_CPU_ADDR_BITS> CFG_RESET_VECTOR = 0x10000;
 
 // Valid size 0..16
 static const int CFG_PROGBUF_REG_TOTAL = 16;
@@ -151,6 +151,12 @@ static const int CFG_MPU_FL_CACHABLE = 3;
 static const int CFG_MPU_FL_ENA = 4;
 static const int CFG_MPU_FL_TOTAL = 5;
 
+// MMU config. Fetch and Data pathes have its own MMU block
+static const int CFG_MMU_TLB_AWIDTH = 9;                    // TLB memory address bus width
+static const int CFG_MMU_TLB_SIZE = (1 << CFG_MMU_TLB_AWIDTH);// Number of PTE entries in a table
+static const int CFG_MMU_PTE_DWIDTH = ((2 * RISCV_ARCH) + 8);// PTE entry size in bits: pa + va + 8 flags
+static const int CFG_MMU_PTE_DBYTES = (CFG_MMU_PTE_DWIDTH / 8);// PTE entry size in bytes
+
 
 enum EnumMemopSize {
     MEMOP_1B = 0,
@@ -158,6 +164,181 @@ enum EnumMemopSize {
     MEMOP_4B = 2,
     MEMOP_8B = 3
 };
+
+// Integer Registers specified by ISA
+static const int REG_ZERO = 0;
+static const int REG_RA = 1;                                // [1] Return address
+static const int REG_SP = 2;                                // [2] Stack pointer
+static const int REG_GP = 3;                                // [3] Global pointer
+static const int REG_TP = 4;                                // [4] Thread pointer
+static const int REG_T0 = 5;                                // [5] Temporaries 0 s3
+static const int REG_T1 = 6;                                // [6] Temporaries 1 s4
+static const int REG_T2 = 7;                                // [7] Temporaries 2 s5
+static const int REG_S0 = 8;                                // [8] s0/fp Saved register/frame pointer
+static const int REG_S1 = 9;                                // [9] Saved register 1
+static const int REG_A0 = 10;                               // [10] Function argumentes 0
+static const int REG_A1 = 11;                               // [11] Function argumentes 1
+static const int REG_A2 = 12;                               // [12] Function argumentes 2
+static const int REG_A3 = 13;                               // [13] Function argumentes 3
+static const int REG_A4 = 14;                               // [14] Function argumentes 4
+static const int REG_A5 = 15;                               // [15] Function argumentes 5
+static const int REG_A6 = 16;                               // [16] Function argumentes 6
+static const int REG_A7 = 17;                               // [17] Function argumentes 7
+static const int REG_S2 = 18;                               // [18] Saved register 2
+static const int REG_S3 = 19;                               // [19] Saved register 3
+static const int REG_S4 = 20;                               // [20] Saved register 4
+static const int REG_S5 = 21;                               // [21] Saved register 5
+static const int REG_S6 = 22;                               // [22] Saved register 6
+static const int REG_S7 = 23;                               // [23] Saved register 7
+static const int REG_S8 = 24;                               // [24] Saved register 8
+static const int REG_S9 = 25;                               // [25] Saved register 9
+static const int REG_S10 = 26;                              // [26] Saved register 10
+static const int REG_S11 = 27;                              // [27] Saved register 11
+static const int REG_T3 = 28;                               // [28]
+static const int REG_T4 = 29;                               // [29]
+static const int REG_T5 = 30;                               // [30]
+static const int REG_T6 = 31;                               // [31]
+
+static const int REG_F0 = 0;                                // ft0 temporary register
+static const int REG_F1 = 1;                                // ft1
+static const int REG_F2 = 2;                                // ft2
+static const int REG_F3 = 3;                                // ft3
+static const int REG_F4 = 4;                                // ft4
+static const int REG_F5 = 5;                                // ft5
+static const int REG_F6 = 6;                                // ft6
+static const int REG_F7 = 7;                                // ft7
+static const int REG_F8 = 8;                                // fs0 saved register
+static const int REG_F9 = 9;                                // fs1
+static const int REG_F10 = 10;                              // fa0 argument/return value
+static const int REG_F11 = 11;                              // fa1 argument/return value
+static const int REG_F12 = 12;                              // fa2 argument register
+static const int REG_F13 = 13;                              // fa3
+static const int REG_F14 = 14;                              // fa4
+static const int REG_F15 = 15;                              // fa5
+static const int REG_F16 = 16;                              // fa6
+static const int REG_F17 = 17;                              // fa7
+static const int REG_F18 = 18;                              // fs2 saved register
+static const int REG_F19 = 19;                              // fs3
+static const int REG_F20 = 20;                              // fs4
+static const int REG_F21 = 21;                              // fs5
+static const int REG_F22 = 22;                              // fs6
+static const int REG_F23 = 23;                              // fs7
+static const int REG_F24 = 24;                              // fs8
+static const int REG_F25 = 25;                              // fs9
+static const int REG_F26 = 26;                              // fs10
+static const int REG_F27 = 27;                              // fs11
+static const int REG_F28 = 28;                              // ft8 temporary register
+static const int REG_F29 = 29;                              // ft9
+static const int REG_F30 = 30;                              // ft10
+static const int REG_F31 = 31;                              // ft11
+
+static const int INTREGS_TOTAL = 32;
+static const int FPUREGS_OFFSET = INTREGS_TOTAL;
+static const int FPUREGS_TOTAL = 32;
+
+static const int REGS_BUS_WIDTH = 6;
+static const int REGS_TOTAL = (1 << REGS_BUS_WIDTH);        // INTREGS_TOTAL + FPUREGS_TOTAL
+
+// CSR[11:10] indicate whether the register is read/write (00, 01, or 10) or read-only (11)
+// CSR[9:8] encode the lowest privilege level that can access the CSR
+// @{
+// FPU Accrued Exceptions fields from FCSR
+static const uint16_t CSR_fflags = 0x001;
+// FPU dynamic Rounding Mode fields from FCSR
+static const uint16_t CSR_frm = 0x002;
+// FPU Control and Status register (frm + fflags)
+static const uint16_t CSR_fcsr = 0x003;
+// machine mode status read/write register.
+static const uint16_t CSR_mstatus = 0x300;
+// ISA and extensions supported.
+static const uint16_t CSR_misa = 0x301;
+// Machine exception delegation
+static const uint16_t CSR_medeleg = 0x302;
+// Machine interrupt delegation
+static const uint16_t CSR_mideleg = 0x303;
+// Machine interrupt enable
+static const uint16_t CSR_mie = 0x304;
+// The base address of the M-mode trap vector.
+static const uint16_t CSR_mtvec = 0x305;
+// Scratch register for machine trap handlers.
+static const uint16_t CSR_mscratch = 0x340;
+// Exception program counters.
+static const uint16_t CSR_uepc = 0x041;
+static const uint16_t CSR_sepc = 0x141;
+// Supervisor Address Translation and Protection
+static const uint16_t CSR_satp = 0x180;
+static const uint16_t CSR_hepc = 0x241;
+static const uint16_t CSR_mepc = 0x341;
+// Machine trap cause
+static const uint16_t CSR_mcause = 0x342;
+// Machine bad address or instruction.
+static const uint16_t CSR_mtval = 0x343;
+// Machine interrupt pending
+static const uint16_t CSR_mip = 0x344;
+// Software reset.
+static const uint16_t CSR_mreset = 0x782;
+// Trigger select
+static const uint16_t CSR_tselect = 0x7a0;
+// Trigger data1
+static const uint16_t CSR_tdata1 = 0x7a1;
+// Trigger data2
+static const uint16_t CSR_tdata2 = 0x7a2;
+// Trigger extra (RV64)
+static const uint16_t CSR_textra = 0x7a3;
+// Trigger info
+static const uint16_t CSR_tinfo = 0x7a4;
+// Trigger control
+static const uint16_t CSR_tcontrol = 0x7a5;
+// Machine context
+static const uint16_t CSR_mcontext = 0x7a8;
+// Supervisor context
+static const uint16_t CSR_scontext = 0x7aa;
+// Debug Control and status
+static const uint16_t CSR_dcsr = 0x7b0;
+// Debug PC
+static const uint16_t CSR_dpc = 0x7b1;
+// Debug Scratch Register 0
+static const uint16_t CSR_dscratch0 = 0x7b2;
+// Debug Scratch Register 1
+static const uint16_t CSR_dscratch1 = 0x7b3;
+// Non-stadnard usermode CSR:
+//    Flush specified address in I-cache module without execution of fence.i
+static const uint16_t CSR_flushi = 0x800;
+
+// Standard read/write Machine CSRs:
+// Machine Cycle counter
+static const uint16_t CSR_mcycle = 0xB00;
+// Machine Instructions-retired counter
+static const uint16_t CSR_minsret = 0xB02;
+
+// Non-standard machine mode CSR
+// Stack overflow.
+static const uint16_t CSR_mstackovr = 0xBC0;
+// Stack underflow (non-standard CSR).
+static const uint16_t CSR_mstackund = 0xBC1;
+// MPU region address (non-standard CSR).
+static const uint16_t CSR_mpu_addr = 0xBC2;
+// MPU region mask (non-standard CSR).
+static const uint16_t CSR_mpu_mask = 0xBC3;
+// MPU region control (non-standard CSR).
+static const uint16_t CSR_mpu_ctrl = 0xBC4;
+
+// User Cycle counter for RDCYCLE pseudo-instruction
+static const uint16_t CSR_cycle = 0xC00;
+// User Timer for RDTIME pseudo-instruction
+static const uint16_t CSR_time = 0xC01;
+// User Instructions-retired counter for RDINSTRET pseudo-instruction
+static const uint16_t CSR_insret = 0xC02;
+// 0xC00 to 0xC1F reserved for counters
+// Vendor ID.
+static const uint16_t CSR_mvendorid = 0xf11;
+// Architecture ID.
+static const uint16_t CSR_marchid = 0xf12;
+// Vendor ID.
+static const uint16_t CSR_mimplementationid = 0xf13;
+// Thread id (the same as core).
+static const uint16_t CSR_mhartid = 0xf14;
+// @}
 
 // Dport request types:
 static const int DPortReq_Write = 0;
@@ -167,273 +348,70 @@ static const int DPortReq_MemVirtual = 3;
 static const int DPortReq_Progexec = 4;
 static const int DPortReq_Total = 5;
 
-static const int REG_ZERO = 0;
-static const int REG_RA = 1;       // [1] Return address
-static const int REG_SP = 2;       // [2] Stack pointer
-static const int REG_GP = 3;       // [3] Global pointer
-static const int REG_TP = 4;       // [4] Thread pointer
-static const int REG_T0 = 5;       // [5] Temporaries 0 s3
-static const int REG_T1 = 6;       // [6] Temporaries 1 s4
-static const int REG_T2 = 7;       // [7] Temporaries 2 s5
-static const int REG_S0 = 8;       // [8] s0/fp Saved register/frame pointer
-static const int REG_S1 = 9;       // [9] Saved register 1
-static const int REG_A0 = 10;       // [10] Function argumentes 0
-static const int REG_A1 = 11;       // [11] Function argumentes 1
-static const int REG_A2 = 12;       // [12] Function argumentes 2
-static const int REG_A3 = 13;       // [13] Function argumentes 3
-static const int REG_A4 = 14;       // [14] Function argumentes 4
-static const int REG_A5 = 15;       // [15] Function argumentes 5
-static const int REG_A6 = 16;       // [16] Function argumentes 6
-static const int REG_A7 = 17;       // [17] Function argumentes 7
-static const int REG_S2 = 18;       // [18] Saved register 2
-static const int REG_S3 = 19;       // [19] Saved register 3
-static const int REG_S4 = 20;       // [20] Saved register 4
-static const int REG_S5 = 21;       // [21] Saved register 5
-static const int REG_S6 = 22;       // [22] Saved register 6
-static const int REG_S7 = 23;       // [23] Saved register 7
-static const int REG_S8 = 24;       // [24] Saved register 8
-static const int REG_S9 = 25;       // [25] Saved register 9
-static const int REG_S10 = 26;      // [26] Saved register 10
-static const int REG_S11 = 27;      // [27] Saved register 11
-static const int REG_T3 = 28;       // [28]
-static const int REG_T4 = 29;       // [29]
-static const int REG_T5 = 30;       // [30]
-static const int REG_T6 = 31;       // [31]
-
-static const int INTREGS_TOTAL = 32;
-
-static const int REG_F0 = 0;     // ft0 temporary register
-static const int REG_F1 = 1;     // ft1
-static const int REG_F2 = 2;     // ft2
-static const int REG_F3 = 3;     // ft3
-static const int REG_F4 = 4;     // ft4
-static const int REG_F5 = 5;     // ft5
-static const int REG_F6 = 6;     // ft6
-static const int REG_F7 = 7;     // ft7
-static const int REG_F8 = 8;     // fs0 saved register
-static const int REG_F9 = 9;     // fs1
-static const int REG_F10 = 10;    // fa0 argument/return value
-static const int REG_F11 = 11;    // fa1 argument/return value
-static const int REG_F12 = 12;    // fa2 argument register
-static const int REG_F13 = 13;    // fa3
-static const int REG_F14 = 14;    // fa4
-static const int REG_F15 = 15;    // fa5
-static const int REG_F16 = 16;    // fa6
-static const int REG_F17 = 17;    // fa7
-static const int REG_F18 = 18;    // fs2 saved register
-static const int REG_F19 = 19;    // fs3
-static const int REG_F20 = 20;    // fs4
-static const int REG_F21 = 21;    // fs5
-static const int REG_F22 = 22;    // fs6
-static const int REG_F23 = 23;    // fs7
-static const int REG_F24 = 24;    // fs8
-static const int REG_F25 = 25;    // fs9
-static const int REG_F26 = 26;    // fs10
-static const int REG_F27 = 27;    // fs11
-static const int REG_F28 = 28;    // ft8 temporary register
-static const int REG_F29 = 29;    // ft9
-static const int REG_F30 = 30;    // ft10
-static const int REG_F31 = 31;    // ft11
-
-static const int FPUREGS_OFFSET = INTREGS_TOTAL;
-static const int FPUREGS_TOTAL = 32;
-
-
-static const int REGS_BUS_WIDTH = 6;
-static const int REGS_TOTAL = (1 << REGS_BUS_WIDTH);//Reg_Total + RegFpu_Total;
-
-/**
- * @name Use RISC-V CSR registers mapping for all platforms: ARM, Leon3, HC08 etc.
- */
-// CSR[11:10] indicate whether the register is read/write (00, 01, or 10) or read-only (11)
-// CSR[9:8] encode the lowest privilege level that can access the CSR
-/// @{
-/** FPU Accrued Exceptions fields from FCSR */
-static const uint16_t CSR_fflags         = 0x001;
-/** FPU dynamic Rounding Mode fields from FCSR */
-static const uint16_t CSR_frm            = 0x002;
-/** FPU Control and Status register (frm + fflags) */
-static const uint16_t CSR_fcsr           = 0x003;
-/** machine mode status read/write register. */
-static const uint16_t CSR_mstatus        = 0x300;
-/** ISA and extensions supported. */
-static const uint16_t CSR_misa           = 0x301;
-/** Machine exception delegation  */
-static const uint16_t CSR_medeleg        = 0x302;
-/** Machine interrupt delegation  */
-static const uint16_t CSR_mideleg        = 0x303;
-/** Machine interrupt enable */
-static const uint16_t CSR_mie            = 0x304;
-/** The base address of the M-mode trap vector. */
-static const uint16_t CSR_mtvec          = 0x305;
-/** Scratch register for machine trap handlers. */
-static const uint16_t CSR_mscratch       = 0x340;
-/** Exception program counters. */
-static const uint16_t CSR_uepc           = 0x041;
-static const uint16_t CSR_sepc           = 0x141;
-/** Supervisor Address Translation and Protection */
-static const uint16_t CSR_satp           = 0x180;
-static const uint16_t CSR_hepc           = 0x241;
-static const uint16_t CSR_mepc           = 0x341;
-/** Machine trap cause */
-static const uint16_t CSR_mcause         = 0x342;
-/** Machine bad address or instruction. */
-static const uint16_t CSR_mtval          = 0x343;
-/** Machine interrupt pending */
-static const uint16_t CSR_mip            = 0x344;
-// Software reset.
-static const uint16_t CSR_mreset         = 0x782;
-// Trigger select
-static const uint16_t CSR_tselect        = 0x7a0;
-// Trigger data1
-static const uint16_t CSR_tdata1         = 0x7a1;
-// Trigger data2
-static const uint16_t CSR_tdata2         = 0x7a2;
-// Trigger extra (RV64)
-static const uint16_t CSR_textra         = 0x7a3;
-// Trigger info
-static const uint16_t CSR_tinfo          = 0x7a4;
-// Trigger control
-static const uint16_t CSR_tcontrol       = 0x7a5;
-// Machine context
-static const uint16_t CSR_mcontext       = 0x7a8;
-// Supervisor context
-static const uint16_t CSR_scontext       = 0x7aa;
-// Debug Control and status
-static const uint16_t CSR_dcsr           = 0x7b0;
-// Debug PC
-static const uint16_t CSR_dpc            = 0x7b1;
-// Debug Scratch Register 0
-static const uint16_t CSR_dscratch0      = 0x7b2;
-// Debug Scratch Register 1
-static const uint16_t CSR_dscratch1      = 0x7b3;
-/** Non-stadnard usermode CSR:
-   Flush specified address in I-cache module without execution of fence.i */
-static const uint16_t CSR_flushi         = 0x800;
-
-// Standard read/write Machine CSRs:
-/** Machine Cycle counter */
-static const uint16_t CSR_mcycle         = 0xB00;
-/** Machine Instructions-retired counter */
-static const uint16_t CSR_minsret        = 0xB02;
-
-// Non-standard machine mode CSR
-/** Stack overflow. */
-static const uint16_t CSR_mstackovr      = 0xBC0;
-/** Stack underflow (non-standard CSR). */
-static const uint16_t CSR_mstackund      = 0xBC1;
-/** MPU region address (non-standard CSR). */
-static const uint16_t CSR_mpu_addr       = 0xBC2;
-/** MPU region mask (non-standard CSR). */
-static const uint16_t CSR_mpu_mask       = 0xBC3;
-/** MPU region control (non-standard CSR). */
-static const uint16_t CSR_mpu_ctrl       = 0xBC4;
-
-/** User Cycle counter for RDCYCLE pseudo-instruction */
-static const uint16_t CSR_cycle          = 0xC00;
-/** User Timer for RDTIME pseudo-instruction */
-static const uint16_t CSR_time           = 0xC01;
-/** User Instructions-retired counter for RDINSTRET pseudo-instruction */
-static const uint16_t CSR_insret         = 0xC02;
-/** 0xC00 to 0xC1F reserved for counters */
-/** Vendor ID. */
-static const uint16_t CSR_mvendorid         = 0xf11;
-/** Architecture ID. */
-static const uint16_t CSR_marchid           = 0xf12;
-/** Vendor ID. */
-static const uint16_t CSR_mimplementationid = 0xf13;
-/** Thread id (the same as core). */
-static const uint16_t CSR_mhartid           = 0xf14;
-/// @}
-
-
 // DCSR register halt causes:
-static const uint64_t HALT_CAUSE_EBREAK       = 1;  // software breakpoint
-static const uint64_t HALT_CAUSE_TRIGGER      = 2;  // hardware breakpoint
-static const uint64_t HALT_CAUSE_HALTREQ      = 3;  // halt request via debug interface
-static const uint64_t HALT_CAUSE_STEP         = 4;  // step done
-static const uint64_t HALT_CAUSE_RESETHALTREQ = 5;  // not implemented
+static const uint32_t HALT_CAUSE_EBREAK = 1;                // software breakpoint
+static const uint32_t HALT_CAUSE_TRIGGER = 2;               // hardware breakpoint
+static const uint32_t HALT_CAUSE_HALTREQ = 3;               // halt request via debug interface
+static const uint32_t HALT_CAUSE_STEP = 4;                  // step done
+static const uint32_t HALT_CAUSE_RESETHALTREQ = 5;          // not implemented
 
-static const uint64_t PROGBUF_ERR_NONE = 0;         // no error
-static const uint64_t PROGBUF_ERR_BUSY = 1;         // abstract command in progress
-static const uint64_t PROGBUF_ERR_NOT_SUPPORTED = 2;// Request command not supported
-static const uint64_t PROGBUF_ERR_EXCEPTION = 3;    // Exception occurs while executing progbuf
-static const uint64_t PROGBUF_ERR_HALT_RESUME = 4;  // Command cannot be executed because of wrong CPU state
-static const uint64_t PROGBUF_ERR_BUS = 5;          // Bus error occurs
-static const uint64_t PROGBUF_ERR_OTHER = 7;        // Other reason
+static const uint32_t PROGBUF_ERR_NONE = 0;                 // no error
+static const uint32_t PROGBUF_ERR_BUSY = 1;                 // abstract command in progress
+static const uint32_t PROGBUF_ERR_NOT_SUPPORTED = 2;        // Request command not supported
+static const uint32_t PROGBUF_ERR_EXCEPTION = 3;            // Exception occurs while executing progbuf
+static const uint32_t PROGBUF_ERR_HALT_RESUME = 4;          // Command cannot be executed because of wrong CPU state
+static const uint32_t PROGBUF_ERR_BUS = 5;                  // Bus error occurs
+static const uint32_t PROGBUF_ERR_OTHER = 7;                // Other reason
 
-/**
- * @name PRV bits possible values:
- */
-/// @{
-/// User-mode
-static const uint64_t PRV_U       = 0;
-/// super-visor mode
-static const uint64_t PRV_S       = 1;
-/// hyper-visor mode
-static const uint64_t PRV_H       = 2;
-//// machine mode
-static const uint64_t PRV_M       = 3;
-/// @}
+// @name PRV bits possible values:
+// @{
+// User-mode
+static const sc_uint<2> PRV_U = 0;
+// super-visor mode
+static const sc_uint<2> PRV_S = 1;
+// hyper-visor mode
+static const sc_uint<2> PRV_H = 2;
+// machine mode
+static const sc_uint<2> PRV_M = 3;
+// @}
 
 enum EExceptions {
-    // Instruction address misaligned
-    EXCEPTION_InstrMisalign,
-    // Instruction access fault
-    EXCEPTION_InstrFault,
-    // Illegal instruction
-    EXCEPTION_InstrIllegal,
-    // Breakpoint
-    EXCEPTION_Breakpoint,
-    // Load address misaligned
-    EXCEPTION_LoadMisalign,
-    // Load access fault
-    EXCEPTION_LoadFault,
-    // Store/AMO address misaligned
-    EXCEPTION_StoreMisalign,
-    // Store/AMO access fault
-    EXCEPTION_StoreFault,
-    // Environment call from U-mode
-    EXCEPTION_CallFromUmode,
-    // Environment call from S-mode
-    EXCEPTION_CallFromSmode,
-    // Environment call from H-mode
-    EXCEPTION_CallFromHmode,
-    // Environment call from M-mode
-    EXCEPTION_CallFromMmode,
-    // Instruction page fault
-    EXCEPTION_InstrPageFault,
-    // Load page fault
-    EXCEPTION_LoadPageFault,
-    // reserved
-    EXCEPTION_rsrv14,
-    // Store/AMO page fault
-    EXCEPTION_StorePageFault,
-    // Stack overflow
-    EXCEPTION_StackOverflow,
-    // Stack underflow
-    EXCEPTION_StackUnderflow,
-    EXCEPTIONS_Total
+    EXCEPTION_InstrMisalign = 0,                            // Instruction address misaligned
+    EXCEPTION_InstrFault = 1,                               // Instruction access fault
+    EXCEPTION_InstrIllegal = 2,                             // Illegal instruction
+    EXCEPTION_Breakpoint = 3,                               // Breakpoint
+    EXCEPTION_LoadMisalign = 4,                             // Load address misaligned
+    EXCEPTION_LoadFault = 5,                                // Load access fault
+    EXCEPTION_StoreMisalign = 6,                            // Store/AMO address misaligned
+    EXCEPTION_StoreFault = 7,                               // Store/AMO access fault
+    EXCEPTION_CallFromUmode = 8,                            // Environment call from U-mode
+    EXCEPTION_CallFromSmode = 9,                            // Environment call from S-mode
+    EXCEPTION_CallFromHmode = 10,                           // Environment call from H-mode
+    EXCEPTION_CallFromMmode = 11,                           // Environment call from M-mode
+    EXCEPTION_InstrPageFault = 12,                          // Instruction page fault
+    EXCEPTION_LoadPageFault = 13,                           // Load page fault
+    EXCEPTION_rsrv14 = 14,                                  // reserved
+    EXCEPTION_StorePageFault = 15,                          // Store/AMO page fault
+    EXCEPTION_StackOverflow = 16,                           // Stack overflow
+    EXCEPTION_StackUnderflow = 17,                          // Stack underflow
+    EXCEPTIONS_Total = 18
 };
 
 enum EInterrupts {
-    INTERRUPT_XSoftware,
-    INTERRUPT_XTimer,
-    INTERRUPT_XExternal,
-    INTERRUPT_Total
-};
-/** Exceptions */
-enum ESignals {
-    SIGNAL_Exception = 0,
-    SIGNAL_XSoftware = EXCEPTIONS_Total + 4*INTERRUPT_XSoftware,
-    SIGNAL_XTimer = EXCEPTIONS_Total + 4*INTERRUPT_XTimer,
-    SIGNAL_XExternal = EXCEPTIONS_Total + 4*INTERRUPT_XExternal,
-    SIGNAL_HardReset,
-    SIGNAL_Total
+    INTERRUPT_XSoftware = 0,
+    INTERRUPT_XTimer = 1,
+    INTERRUPT_XExternal = 2,
+    INTERRUPT_Total = 3
 };
 
-static const int EXCEPTION_CallFromXMode    = EXCEPTION_CallFromUmode;
+static const int SIGNAL_Exception = 0;
+static const int SIGNAL_XSoftware = (EXCEPTIONS_Total + (4 * INTERRUPT_XSoftware));
+static const int SIGNAL_XTimer = (EXCEPTIONS_Total + (4 * INTERRUPT_XTimer));
+static const int SIGNAL_XExternal = (EXCEPTIONS_Total + (4 * INTERRUPT_XExternal));
+static const int SIGNAL_HardReset = (SIGNAL_XExternal + 1);
+static const int SIGNAL_Total = (SIGNAL_HardReset + 1);
 
+static const int EXCEPTION_CallFromXMode = EXCEPTION_CallFromUmode;
 
 // Instruction formats specified by ISA specification
 enum EIsaType {

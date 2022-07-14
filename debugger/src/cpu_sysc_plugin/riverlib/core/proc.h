@@ -276,6 +276,8 @@ private:
 
     sc_signal<bool> w_flush_pipeline;
     sc_signal<bool> w_mem_resp_error;
+    sc_signal<bool> w_mmu_ena;                                 // MMU enabled in U and S modes. Sv48 only.
+    sc_signal<sc_uint<44>> wb_mmu_ppn;                          // Physical Page Number
 
     InstrFetch *fetch0;
     InstrDecoder *dec0;

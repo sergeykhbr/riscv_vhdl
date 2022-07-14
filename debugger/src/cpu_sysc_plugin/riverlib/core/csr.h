@@ -61,6 +61,9 @@ SC_MODULE(CsrRegs) {
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mpu_region_addr;   // MPU region base address
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mpu_region_mask;   // MPU region mask
     sc_out<sc_uint<CFG_MPU_FL_TOTAL>> o_mpu_region_flags;   // {ena, cachable, r, w, x}
+    
+    sc_out<bool> o_mmu_ena;                                 // MMU enabled in U and S modes. Sv48 only.
+    sc_out<sc_uint<44>> o_mmu_ppn;                          // Physical Page Number
 
     void comb();
     void registers();
@@ -87,6 +90,7 @@ SC_MODULE(CsrRegs) {
     static const uint32_t State_Resume = 7;
     static const uint32_t State_Wfi = 8;
     static const uint32_t State_Response = 9;
+    static const uint32_t SATP_MODE_SV48 = 9;
 
     struct CsrRegs_registers {
         sc_signal<sc_uint<4>> state;
@@ -107,6 +111,9 @@ SC_MODULE(CsrRegs) {
         sc_signal<sc_uint<CFG_MPU_TBL_WIDTH>> mpu_idx;
         sc_signal<sc_uint<CFG_MPU_FL_TOTAL>> mpu_flags;
         sc_signal<bool> mpu_we;
+        sc_signal<bool> mmu_ena;                            // MMU SV48 enabled in U- and S- modes
+        sc_signal<sc_uint<44>> satp_ppn;                    // Physcal Page Number
+        sc_signal<sc_uint<4>> satp_mode;                    // Supervisor Address Translation and Protection mode
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mepc;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> uepc;
         sc_signal<sc_uint<2>> mode;
@@ -177,6 +184,9 @@ SC_MODULE(CsrRegs) {
         iv.mpu_idx = 0;
         iv.mpu_flags = 0;
         iv.mpu_we = 0;
+        iv.mmu_ena = 0;
+        iv.satp_ppn = 0;
+        iv.satp_mode = 0;
         iv.mepc = 0;
         iv.uepc = 0;
         iv.mode = PRV_M;

@@ -400,6 +400,8 @@ Processor::Processor(sc_module_name name_, bool async_reset, uint32_t hartid,
     csr0->o_mpu_region_addr(o_mpu_region_addr);
     csr0->o_mpu_region_mask(o_mpu_region_mask);
     csr0->o_mpu_region_flags(o_mpu_region_flags);
+    csr0->o_mmu_ena(w_mmu_ena);
+    csr0->o_mmu_ppn(wb_mmu_ppn);
 
     dbg0 = new DbgPort("dbg0", async_reset);
     dbg0->i_clk(i_clk);

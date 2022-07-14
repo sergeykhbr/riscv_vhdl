@@ -59,7 +59,9 @@ CsrRegs::CsrRegs(sc_module_name name,
     o_mpu_region_idx("o_mpu_region_idx"),
     o_mpu_region_addr("o_mpu_region_addr"),
     o_mpu_region_mask("o_mpu_region_mask"),
-    o_mpu_region_flags("o_mpu_region_flags") {
+    o_mpu_region_flags("o_mpu_region_flags"),
+    o_mmu_ena("o_mmu_ena"),
+    o_mmu_ppn("o_mmu_ppn") {
 
     async_reset_ = async_reset;
     hartid_ = hartid;
@@ -99,6 +101,9 @@ CsrRegs::CsrRegs(sc_module_name name,
     sensitive << r.mpu_idx;
     sensitive << r.mpu_flags;
     sensitive << r.mpu_we;
+    sensitive << r.mmu_ena;
+    sensitive << r.satp_ppn;
+    sensitive << r.satp_mode;
     sensitive << r.mepc;
     sensitive << r.uepc;
     sensitive << r.mode;
@@ -192,6 +197,8 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_mpu_region_addr, o_mpu_region_addr.name());
         sc_trace(o_vcd, o_mpu_region_mask, o_mpu_region_mask.name());
         sc_trace(o_vcd, o_mpu_region_flags, o_mpu_region_flags.name());
+        sc_trace(o_vcd, o_mmu_ena, o_mmu_ena.name());
+        sc_trace(o_vcd, o_mmu_ppn, o_mmu_ppn.name());
         sc_trace(o_vcd, r.state, pn + ".r_state");
         sc_trace(o_vcd, r.cmd_type, pn + ".r_cmd_type");
         sc_trace(o_vcd, r.cmd_addr, pn + ".r_cmd_addr");
@@ -210,6 +217,9 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.mpu_idx, pn + ".r_mpu_idx");
         sc_trace(o_vcd, r.mpu_flags, pn + ".r_mpu_flags");
         sc_trace(o_vcd, r.mpu_we, pn + ".r_mpu_we");
+        sc_trace(o_vcd, r.mmu_ena, pn + ".r_mmu_ena");
+        sc_trace(o_vcd, r.satp_ppn, pn + ".r_satp_ppn");
+        sc_trace(o_vcd, r.satp_mode, pn + ".r_satp_mode");
         sc_trace(o_vcd, r.mepc, pn + ".r_mepc");
         sc_trace(o_vcd, r.uepc, pn + ".r_uepc");
         sc_trace(o_vcd, r.mode, pn + ".r_mode");
@@ -407,6 +417,8 @@ void CsrRegs::comb() {
         break;
     case State_RW:
         v.state = State_Response;
+        // csr[9:8] encode the loweset priviledge level that can access to CSR
+        // csr[11:10] register is read/write (00, 01 or 10) or read-only (11)
         if (r.mode.read() < r.cmd_addr.read()(9, 8)) {
             // Not enough priv to access this register
             v.cmd_exception = 1;
@@ -571,6 +583,17 @@ void CsrRegs::comb() {
             v.mscratch = r.cmd_data;
         }
         break;
+    case CSR_satp:                                          // Supervisor Address Translation and Protection
+        // Writing unssoprted MODE[63:60], entire write has no effect
+        //     MODE = 0 Bare. No translation or protection
+        //     MODE = 9 Sv48. Page based 48-bit virtual addressing
+        vb_rdata(43, 0) = r.satp_ppn;
+        vb_rdata(63, 60) = r.satp_mode;
+        if ((v_csr_wena == 1) && ((r.cmd_data.read()(63, 60) == 0) || (r.cmd_data.read()(63, 60) == SATP_MODE_SV48))) {
+            v.satp_ppn = r.cmd_data.read()(43, 0);
+            v.satp_mode = r.cmd_data.read()(63, 60);
+        }
+        break;
     case CSR_mepc:                                          // Machine program counter
         vb_rdata = r.mepc;
         if (v_csr_wena) {
@@ -710,11 +733,21 @@ void CsrRegs::comb() {
             v.mie = r.mpie;
             v.mpie = 1;
             v.mode = r.mpp;
+            if ((r.mpp.read() <= PRV_S) && (r.satp_mode.read() == SATP_MODE_SV48)) {
+                v.mmu_ena = 1;
+            } else {
+                v.mmu_ena = 0;
+            }
             v.mpp = PRV_U;
         } else if ((r.mode.read() == PRV_U) && (r.cmd_addr.read() == CSR_uepc)) {
             v.mie = r.mpie;
             v.mpie = 0;                                    // Interrupts in a user mode actually not supported
             v.mode = r.mpp;
+            if ((r.mpp.read() <= PRV_S) && (r.satp_mode.read() == SATP_MODE_SV48)) {
+                v.mmu_ena = 1;
+            } else {
+                v.mmu_ena = 0;
+            }
             v.mpp = PRV_U;
         } else {
             v.cmd_exception = 1;
@@ -729,15 +762,11 @@ void CsrRegs::comb() {
         v.trap_cause = wb_trap_cause;
         v.trap_irq = v_trap_irq;
         v.mode = PRV_M;
-        switch (r.mode.read()) {
-        case PRV_U:
+        v.mmu_ena = 0;
+        if (r.mode.read() == PRV_U) {
             v.mpie = r.uie;
-            break;
-        case PRV_M:
+        } else if (r.mode.read() == PRV_M) {
             v.mpie = r.mie;
-            break;
-        default:
-            break;
         }
     }
 
@@ -801,6 +830,8 @@ void CsrRegs::comb() {
     o_mpu_region_addr = r.mpu_addr;
     o_mpu_region_mask = r.mpu_mask;
     o_mpu_region_flags = r.mpu_flags;
+    o_mmu_ena = r.mmu_ena;
+    o_mmu_ppn = r.satp_ppn;
     o_step = r.dcsr_step;
     o_flushi_ena = r.flushi_ena;
     o_flushi_addr = r.flushi_addr;
