@@ -20,6 +20,7 @@
 #include <systemc.h>
 #include "../river_cfg.h"
 #include "fetch.h"
+#include "mmu.h"
 #include "decoder.h"
 #include "execute.h"
 #include "memaccess.h"
@@ -116,7 +117,19 @@ private:
         sc_signal<sc_uint<64>> instr;
         sc_signal<bool> imem_req_valid;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> imem_req_addr;
+        sc_signal<bool> imem_resp_ready;
     };
+
+    struct MmuType {
+        sc_signal<bool> fetch_req_ready;
+        sc_signal<bool> fetch_data_valid;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> fetch_data_addr;
+        sc_signal<sc_uint<64>> fetch_data;
+        sc_signal<bool> fetch_load_fault;
+        sc_signal<bool> fetch_executable;
+        sc_signal<bool> fetch_page_fault;
+    };
+
 
     struct InstructionDecodeType {
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
@@ -247,6 +260,8 @@ private:
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> f_pc;
     } bp;
 
+    MmuType immu;
+
     /** 5-stages CPU pipeline */
     struct PipelineType {
         FetchType f;                            // Fetch instruction stage
@@ -283,6 +298,7 @@ private:
     InstrDecoder *dec0;
     InstrExecute *exec0;
     MemAccess *mem0;
+    Mmu *immu0;
 
     BranchPredictor *predic0;
     RegIntBank *iregs0;

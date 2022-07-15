@@ -33,6 +33,7 @@ SC_MODULE(Mmu) {
     sc_out<sc_uint<64>> o_fetch_data;
     sc_out<bool> o_fetch_load_fault;
     sc_out<bool> o_fetch_executable;
+    sc_out<bool> o_fetch_page_fault;
     sc_in<bool> i_fetch_resp_ready;
     sc_in<bool> i_mem_req_ready;
     sc_out<bool> o_mem_addr_valid;
@@ -43,8 +44,8 @@ SC_MODULE(Mmu) {
     sc_in<bool> i_mem_load_fault;
     sc_in<bool> i_mem_executable;
     sc_out<bool> o_mem_resp_ready;
-    sc_in<sc_uint<2>> i_prv;                                // CPU priviledge level
-    sc_in<sc_uint<RISCV_ARCH>> i_satp;                      // Supervisor Adress Translation and Protection
+    sc_in<bool> i_mmu_ena;                                  // MMU enabled in U and S modes. Sv48 only.
+    sc_in<sc_uint<44>> i_mmu_ppn;                           // Physical Page Number from SATP CSR
     sc_in<bool> i_flush_pipeline;                           // reset pipeline and cache
 
     void comb();
@@ -63,37 +64,61 @@ SC_MODULE(Mmu) {
 
     static const uint32_t Idle = 0;
     static const uint32_t CheckTlb = 1;
-    static const uint32_t WaitReqAccept = 2;
+    static const uint32_t CacheReq = 2;
     static const uint32_t WaitResp = 3;
+    static const uint32_t HandleResp = 4;
+    static const uint32_t UpdateTlb = 5;
+    static const uint32_t AcceptFetch = 6;
+    static const uint32_t FlushTlb = 7;
+    static const int PTE_V = 0;
+    static const int PTE_R = 1;
+    static const int PTE_W = 2;
+    static const int PTE_X = 3;
+    static const int PTE_U = 4;
+    static const int PTE_G = 5;
+    static const int PTE_A = 6;
+    static const int PTE_D = 7;
 
     struct Mmu_registers {
         sc_signal<sc_uint<2>> state;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_va;
+        sc_signal<bool> req_x;
+        sc_signal<bool> req_r;
+        sc_signal<bool> req_w;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_pa;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> last_va;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> last_pa;
-        sc_signal<bool> req_valid;
-        sc_signal<bool> resp_ready;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_addr;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mem_resp_shadow;// the same as memory response but internal
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
-        sc_signal<sc_uint<64>> instr;
-        sc_signal<bool> instr_load_fault;
-        sc_signal<bool> instr_executable;
+        sc_signal<sc_uint<52>> last_pa;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> resp_addr;
+        sc_signal<sc_uint<64>> resp_data;
+        sc_signal<sc_uint<8>> pte_permission;               // See permission bits: DAGUXWRV
+        sc_signal<bool> ex_load_fault;
+        sc_signal<bool> ex_mpu_executable;
+        sc_signal<bool> ex_page_fault;
+        sc_signal<bool> tlb_hit;
+        sc_signal<sc_uint<4>> tlb_level;
+        sc_signal<sc_biguint<CFG_MMU_PTE_DWIDTH>> tlb_wdata;
+        sc_signal<bool> tlb_flush_cnt;
+        sc_signal<bool> tlb_flush_adr;
     } v, r;
 
     void Mmu_r_reset(Mmu_registers &iv) {
         iv.state = Idle;
-        iv.req_va = 0;
+        iv.req_x = 0;
+        iv.req_r = 0;
+        iv.req_w = 0;
+        iv.req_pa = 0;
         iv.last_va = ~0ull;
         iv.last_pa = ~0ull;
-        iv.req_valid = 0;
-        iv.resp_ready = 0;
-        iv.req_addr = ~0ull;
-        iv.mem_resp_shadow = ~0ull;
-        iv.pc = ~0ull;
-        iv.instr = 0;
-        iv.instr_load_fault = 0;
-        iv.instr_executable = 0;
+        iv.resp_addr = 0;
+        iv.resp_data = 0;
+        iv.pte_permission = 0;
+        iv.ex_load_fault = 0;
+        iv.ex_mpu_executable = 0;
+        iv.ex_page_fault = 0;
+        iv.tlb_hit = 0;
+        iv.tlb_level = 0;
+        iv.tlb_wdata = 0;
+        iv.tlb_flush_cnt = 0;
+        iv.tlb_flush_adr = 0;
     }
 
     sc_signal<sc_uint<CFG_MMU_TLB_AWIDTH>> wb_tlb_adr;

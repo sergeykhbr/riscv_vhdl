@@ -112,15 +112,15 @@ Processor::Processor(sc_module_name name_, bool async_reset, uint32_t hartid,
     fetch0->i_nrst(i_nrst);
     fetch0->i_bp_valid(bp.f_valid);
     fetch0->i_bp_pc(bp.f_pc);
-    fetch0->i_mem_req_ready(i_req_ctrl_ready);
+    fetch0->i_mem_req_ready(immu.fetch_req_ready);
     fetch0->o_mem_addr_valid(w.f.imem_req_valid);
     fetch0->o_mem_addr(w.f.imem_req_addr);
-    fetch0->i_mem_data_valid(i_resp_ctrl_valid);
-    fetch0->i_mem_data_addr(i_resp_ctrl_addr);
-    fetch0->i_mem_data(i_resp_ctrl_data);
-    fetch0->i_mem_load_fault(i_resp_ctrl_load_fault);
-    fetch0->i_mem_executable(i_resp_ctrl_executable);
-    fetch0->o_mem_resp_ready(o_resp_ctrl_ready);
+    fetch0->i_mem_data_valid(immu.fetch_data_valid);
+    fetch0->i_mem_data_addr(immu.fetch_data_addr);
+    fetch0->i_mem_data(immu.fetch_data);
+    fetch0->i_mem_load_fault(immu.fetch_load_fault);
+    fetch0->i_mem_executable(immu.fetch_executable);
+    fetch0->o_mem_resp_ready(w.f.imem_resp_ready);
     fetch0->i_flush_pipeline(w_flush_pipeline);
     fetch0->i_progbuf_ena(dbg.progbuf_ena);
     fetch0->i_progbuf_pc(dbg.progbuf_pc);
@@ -131,6 +131,32 @@ Processor::Processor(sc_module_name name_, bool async_reset, uint32_t hartid,
     fetch0->o_fetching_pc(w.f.fetching_pc);
     fetch0->o_pc(w.f.pc);
     fetch0->o_instr(w.f.instr);
+
+    immu0 = new Mmu("immu0", async_reset);
+    immu0->i_clk(i_clk);
+    immu0->i_nrst(i_nrst);
+    immu0->o_fetch_req_ready(immu.fetch_req_ready);
+    immu0->i_fetch_addr_valid(w.f.imem_req_valid);
+    immu0->i_fetch_addr(w.f.imem_req_addr);
+    immu0->o_fetch_data_valid(immu.fetch_data_valid);
+    immu0->o_fetch_data_addr(immu.fetch_data_addr);
+    immu0->o_fetch_data(immu.fetch_data);
+    immu0->o_fetch_load_fault(immu.fetch_load_fault);
+    immu0->o_fetch_executable(immu.fetch_executable);
+    immu0->o_fetch_page_fault(immu.fetch_page_fault);
+    immu0->i_fetch_resp_ready(w.f.imem_resp_ready);
+    immu0->i_mem_req_ready(i_req_ctrl_ready);
+    immu0->o_mem_addr_valid(o_req_ctrl_valid);
+    immu0->o_mem_addr(o_req_ctrl_addr);
+    immu0->i_mem_data_valid(i_resp_ctrl_valid);
+    immu0->i_mem_data_addr(i_resp_ctrl_addr);
+    immu0->i_mem_data(i_resp_ctrl_data);
+    immu0->i_mem_load_fault(i_resp_ctrl_load_fault);
+    immu0->i_mem_executable(i_resp_ctrl_executable);
+    immu0->o_mem_resp_ready(o_resp_ctrl_ready);
+    immu0->i_mmu_ena(w_mmu_ena);
+    immu0->i_mmu_ppn(wb_mmu_ppn);
+    immu0->i_flush_pipeline(w_flush_pipeline);
 
     dec0 = new InstrDecoder("dec0", async_reset, fpu_ena);
     dec0->i_clk(i_clk);
@@ -542,8 +568,6 @@ void Processor::comb() {
     o_data_flush_address = ~0ull;
     o_data_flush_valid = w.m.flushd;
 
-    o_req_ctrl_valid = w.f.imem_req_valid;
-    o_req_ctrl_addr = w.f.imem_req_addr;
     o_halted = w.e.halted;
 }
 

@@ -154,7 +154,7 @@ static const int CFG_MPU_FL_TOTAL = 5;
 // MMU config. Fetch and Data pathes have its own MMU block
 static const int CFG_MMU_TLB_AWIDTH = 9;                    // TLB memory address bus width
 static const int CFG_MMU_TLB_SIZE = (1 << CFG_MMU_TLB_AWIDTH);// Number of PTE entries in a table
-static const int CFG_MMU_PTE_DWIDTH = ((2 * RISCV_ARCH) + 8);// PTE entry size in bits: pa + va + 8 flags
+static const int CFG_MMU_PTE_DWIDTH = ((2 * RISCV_ARCH) - 12);// PTE entry size in bits
 static const int CFG_MMU_PTE_DBYTES = (CFG_MMU_PTE_DWIDTH / 8);// PTE entry size in bytes
 
 
