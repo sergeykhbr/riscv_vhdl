@@ -20,14 +20,8 @@
 
 namespace debugger {
 
-// 
-// 2**Number of CPU slots in the clusters. Some of them could be unavailable
-// 
-static const int CFG_LOG2_CPU_MAX = 2;
-static const int CFG_CPU_MAX = (1 << CFG_LOG2_CPU_MAX);
-
-static const sc_uint<32> CFG_VENDOR_ID = 0x000000F1;
-static const sc_uint<32> CFG_IMPLEMENTATION_ID = 0x20191123;
+static const uint32_t CFG_VENDOR_ID = 0x000000F1;
+static const uint32_t CFG_IMPLEMENTATION_ID = 0x20191123;
 static const bool CFG_HW_FPU_ENABLE = true;
 
 static const int RISCV_ARCH = 64;
@@ -35,6 +29,15 @@ static const int RISCV_ARCH = 64;
 static const int CFG_CPU_ADDR_BITS = CFG_BUS_ADDR_WIDTH;
 static const int CFG_CPU_ID_BITS = 1;
 static const int CFG_CPU_USER_BITS = 1;
+
+// 
+// 2**Number of CPU slots in the clusters. Some of them could be unavailable
+// 
+static const int CFG_LOG2_CPU_MAX = 2;
+static const int CFG_CPU_MAX = (1 << CFG_LOG2_CPU_MAX);
+
+// Power-on start address can be free changed
+static const uint64_t CFG_RESET_VECTOR = 0x10000;
 
 // 
 // Branch Predictor Branch Target Buffer (BTB) size
@@ -48,9 +51,6 @@ static const int CFG_BP_DEPTH = 5;
 // Decoded instructions history buffer size in Decoder
 // 
 static const int CFG_DEC_DEPTH = (CFG_BP_DEPTH - 3);        // requested, fetching, fetched
-
-// Power-on start address can be free changed
-static const sc_uint<CFG_CPU_ADDR_BITS> CFG_RESET_VECTOR = 0x10000;
 
 // Valid size 0..16
 static const int CFG_PROGBUF_REG_TOTAL = 16;
@@ -158,12 +158,10 @@ static const int CFG_MMU_PTE_DWIDTH = ((2 * RISCV_ARCH) - 12);// PTE entry size 
 static const int CFG_MMU_PTE_DBYTES = (CFG_MMU_PTE_DWIDTH / 8);// PTE entry size in bytes
 
 
-enum EnumMemopSize {
-    MEMOP_1B = 0,
-    MEMOP_2B = 1,
-    MEMOP_4B = 2,
-    MEMOP_8B = 3
-};
+static const uint8_t MEMOP_8B = 3;
+static const uint8_t MEMOP_4B = 2;
+static const uint8_t MEMOP_2B = 1;
+static const uint8_t MEMOP_1B = 0;
 
 // Integer Registers specified by ISA
 static const int REG_ZERO = 0;
@@ -340,79 +338,6 @@ static const uint16_t CSR_mimplementationid = 0xf13;
 static const uint16_t CSR_mhartid = 0xf14;
 // @}
 
-// Dport request types:
-static const int DPortReq_Write = 0;
-static const int DPortReq_RegAccess = 1;
-static const int DPortReq_MemAccess = 2;
-static const int DPortReq_MemVirtual = 3;
-static const int DPortReq_Progexec = 4;
-static const int DPortReq_Total = 5;
-
-// DCSR register halt causes:
-static const uint32_t HALT_CAUSE_EBREAK = 1;                // software breakpoint
-static const uint32_t HALT_CAUSE_TRIGGER = 2;               // hardware breakpoint
-static const uint32_t HALT_CAUSE_HALTREQ = 3;               // halt request via debug interface
-static const uint32_t HALT_CAUSE_STEP = 4;                  // step done
-static const uint32_t HALT_CAUSE_RESETHALTREQ = 5;          // not implemented
-
-static const uint32_t PROGBUF_ERR_NONE = 0;                 // no error
-static const uint32_t PROGBUF_ERR_BUSY = 1;                 // abstract command in progress
-static const uint32_t PROGBUF_ERR_NOT_SUPPORTED = 2;        // Request command not supported
-static const uint32_t PROGBUF_ERR_EXCEPTION = 3;            // Exception occurs while executing progbuf
-static const uint32_t PROGBUF_ERR_HALT_RESUME = 4;          // Command cannot be executed because of wrong CPU state
-static const uint32_t PROGBUF_ERR_BUS = 5;                  // Bus error occurs
-static const uint32_t PROGBUF_ERR_OTHER = 7;                // Other reason
-
-// @name PRV bits possible values:
-// @{
-// User-mode
-static const sc_uint<2> PRV_U = 0;
-// super-visor mode
-static const sc_uint<2> PRV_S = 1;
-// hyper-visor mode
-static const sc_uint<2> PRV_H = 2;
-// machine mode
-static const sc_uint<2> PRV_M = 3;
-// @}
-
-enum EExceptions {
-    EXCEPTION_InstrMisalign = 0,                            // Instruction address misaligned
-    EXCEPTION_InstrFault = 1,                               // Instruction access fault
-    EXCEPTION_InstrIllegal = 2,                             // Illegal instruction
-    EXCEPTION_Breakpoint = 3,                               // Breakpoint
-    EXCEPTION_LoadMisalign = 4,                             // Load address misaligned
-    EXCEPTION_LoadFault = 5,                                // Load access fault
-    EXCEPTION_StoreMisalign = 6,                            // Store/AMO address misaligned
-    EXCEPTION_StoreFault = 7,                               // Store/AMO access fault
-    EXCEPTION_CallFromUmode = 8,                            // Environment call from U-mode
-    EXCEPTION_CallFromSmode = 9,                            // Environment call from S-mode
-    EXCEPTION_CallFromHmode = 10,                           // Environment call from H-mode
-    EXCEPTION_CallFromMmode = 11,                           // Environment call from M-mode
-    EXCEPTION_InstrPageFault = 12,                          // Instruction page fault
-    EXCEPTION_LoadPageFault = 13,                           // Load page fault
-    EXCEPTION_rsrv14 = 14,                                  // reserved
-    EXCEPTION_StorePageFault = 15,                          // Store/AMO page fault
-    EXCEPTION_StackOverflow = 16,                           // Stack overflow
-    EXCEPTION_StackUnderflow = 17,                          // Stack underflow
-    EXCEPTIONS_Total = 18
-};
-
-enum EInterrupts {
-    INTERRUPT_XSoftware = 0,
-    INTERRUPT_XTimer = 1,
-    INTERRUPT_XExternal = 2,
-    INTERRUPT_Total = 3
-};
-
-static const int SIGNAL_Exception = 0;
-static const int SIGNAL_XSoftware = (EXCEPTIONS_Total + (4 * INTERRUPT_XSoftware));
-static const int SIGNAL_XTimer = (EXCEPTIONS_Total + (4 * INTERRUPT_XTimer));
-static const int SIGNAL_XExternal = (EXCEPTIONS_Total + (4 * INTERRUPT_XExternal));
-static const int SIGNAL_HardReset = (SIGNAL_XExternal + 1);
-static const int SIGNAL_Total = (SIGNAL_HardReset + 1);
-
-static const int EXCEPTION_CallFromXMode = EXCEPTION_CallFromUmode;
-
 // Instruction formats specified by ISA specification
 enum EIsaType {
     ISA_R_type = 0,
@@ -551,6 +476,79 @@ enum EInstructionType {
 
 static const int Instr_FPU_Total = ((Instr_FSUB_D - Instr_FADD_D) + 1);
 
+
+// @name PRV bits possible values:
+// @{
+// User-mode
+static const uint8_t PRV_U = 0;
+// super-visor mode
+static const uint8_t PRV_S = 1;
+// hyper-visor mode
+static const uint8_t PRV_H = 2;
+// machine mode
+static const uint8_t PRV_M = 3;
+// @}
+
+// Dport request types:
+static const int DPortReq_Write = 0;
+static const int DPortReq_RegAccess = 1;
+static const int DPortReq_MemAccess = 2;
+static const int DPortReq_MemVirtual = 3;
+static const int DPortReq_Progexec = 4;
+static const int DPortReq_Total = 5;
+
+// DCSR register halt causes:
+static const uint8_t HALT_CAUSE_EBREAK = 1;                 // software breakpoint
+static const uint8_t HALT_CAUSE_TRIGGER = 2;                // hardware breakpoint
+static const uint8_t HALT_CAUSE_HALTREQ = 3;                // halt request via debug interface
+static const uint8_t HALT_CAUSE_STEP = 4;                   // step done
+static const uint8_t HALT_CAUSE_RESETHALTREQ = 5;           // not implemented
+
+static const uint8_t PROGBUF_ERR_NONE = 0;                  // no error
+static const uint8_t PROGBUF_ERR_BUSY = 1;                  // abstract command in progress
+static const uint8_t PROGBUF_ERR_NOT_SUPPORTED = 2;         // Request command not supported
+static const uint8_t PROGBUF_ERR_EXCEPTION = 3;             // Exception occurs while executing progbuf
+static const uint8_t PROGBUF_ERR_HALT_RESUME = 4;           // Command cannot be executed because of wrong CPU state
+static const uint8_t PROGBUF_ERR_BUS = 5;                   // Bus error occurs
+static const uint8_t PROGBUF_ERR_OTHER = 7;                 // Other reason
+
+enum EExceptions {
+    EXCEPTION_InstrMisalign = 0,                            // Instruction address misaligned
+    EXCEPTION_InstrFault = 1,                               // Instruction access fault
+    EXCEPTION_InstrIllegal = 2,                             // Illegal instruction
+    EXCEPTION_Breakpoint = 3,                               // Breakpoint
+    EXCEPTION_LoadMisalign = 4,                             // Load address misaligned
+    EXCEPTION_LoadFault = 5,                                // Load access fault
+    EXCEPTION_StoreMisalign = 6,                            // Store/AMO address misaligned
+    EXCEPTION_StoreFault = 7,                               // Store/AMO access fault
+    EXCEPTION_CallFromUmode = 8,                            // Environment call from U-mode
+    EXCEPTION_CallFromSmode = 9,                            // Environment call from S-mode
+    EXCEPTION_CallFromHmode = 10,                           // Environment call from H-mode
+    EXCEPTION_CallFromMmode = 11,                           // Environment call from M-mode
+    EXCEPTION_InstrPageFault = 12,                          // Instruction page fault
+    EXCEPTION_LoadPageFault = 13,                           // Load page fault
+    EXCEPTION_rsrv14 = 14,                                  // reserved
+    EXCEPTION_StorePageFault = 15,                          // Store/AMO page fault
+    EXCEPTION_StackOverflow = 16,                           // Stack overflow
+    EXCEPTION_StackUnderflow = 17,                          // Stack underflow
+    EXCEPTIONS_Total = 18
+};
+
+enum EInterrupts {
+    INTERRUPT_XSoftware = 0,
+    INTERRUPT_XTimer = 1,
+    INTERRUPT_XExternal = 2,
+    INTERRUPT_Total = 3
+};
+
+static const int SIGNAL_Exception = 0;
+static const int SIGNAL_XSoftware = (EXCEPTIONS_Total + (4 * INTERRUPT_XSoftware));
+static const int SIGNAL_XTimer = (EXCEPTIONS_Total + (4 * INTERRUPT_XTimer));
+static const int SIGNAL_XExternal = (EXCEPTIONS_Total + (4 * INTERRUPT_XExternal));
+static const int SIGNAL_HardReset = (SIGNAL_XExternal + 1);
+static const int SIGNAL_Total = (SIGNAL_HardReset + 1);
+
+static const int EXCEPTION_CallFromXMode = EXCEPTION_CallFromUmode;
 // Depth of the fifo between Executor and MemoryAccess modules.
 static const int CFG_MEMACCESS_QUEUE_DEPTH = 2;
 // Register's tag used to detect reg hazard and it should be higher than available
@@ -569,15 +567,15 @@ static const int CsrReq_ResumeBit = 7;
 static const int CsrReq_WfiBit = 8;                         // wait for interrupt
 static const int CsrReq_TotalBits = 9;
 
-static const sc_uint<CsrReq_TotalBits> CsrReq_ReadCmd = (1 << CsrReq_ReadBit);
-static const sc_uint<CsrReq_TotalBits> CsrReq_WriteCmd = (1 << CsrReq_WriteBit);
-static const sc_uint<CsrReq_TotalBits> CsrReq_TrapReturnCmd = (1 << CsrReq_TrapReturnBit);
-static const sc_uint<CsrReq_TotalBits> CsrReq_ExceptionCmd = (1 << CsrReq_ExceptionBit);
-static const sc_uint<CsrReq_TotalBits> CsrReq_InterruptCmd = (1 << CsrReq_InterruptBit);
-static const sc_uint<CsrReq_TotalBits> CsrReq_BreakpointCmd = (1 << CsrReq_BreakpointBit);
-static const sc_uint<CsrReq_TotalBits> CsrReq_HaltCmd = (1 << CsrReq_HaltBit);
-static const sc_uint<CsrReq_TotalBits> CsrReq_ResumeCmd = (1 << CsrReq_ResumeBit);
-static const sc_uint<CsrReq_TotalBits> CsrReq_WfiCmd = (1 << CsrReq_WfiBit);
+static const uint16_t CsrReq_ReadCmd = (1 << CsrReq_ReadBit);
+static const uint16_t CsrReq_WriteCmd = (1 << CsrReq_WriteBit);
+static const uint16_t CsrReq_TrapReturnCmd = (1 << CsrReq_TrapReturnBit);
+static const uint16_t CsrReq_ExceptionCmd = (1 << CsrReq_ExceptionBit);
+static const uint16_t CsrReq_InterruptCmd = (1 << CsrReq_InterruptBit);
+static const uint16_t CsrReq_BreakpointCmd = (1 << CsrReq_BreakpointBit);
+static const uint16_t CsrReq_HaltCmd = (1 << CsrReq_HaltBit);
+static const uint16_t CsrReq_ResumeCmd = (1 << CsrReq_ResumeBit);
+static const uint16_t CsrReq_WfiCmd = (1 << CsrReq_WfiBit);
 
 static const int MemopType_Store = 0;                       // 0=load; 1=store
 static const int MemopType_Locked = 1;                      // AMO instructions

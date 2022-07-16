@@ -207,14 +207,9 @@ void Mmu::comb() {
     // Temporary variables are neccessary in systemc
     t_req_pa((CFG_CPU_ADDR_BITS - 1), 12) = wb_tlb_rdata.read()((CFG_CPU_ADDR_BITS - 1), 12).to_uint64();
     t_req_pa(11, 0) = r.last_va.read()(11, 0);
-    t_tlb_wdata = 0;
-    t_tlb_wdata(115, 64) = vb_pte_base_va;
-    if (r.resp_data.read()[53] == 1) {
-        t_tlb_wdata(63, 56) = ~0ull;
-    } else {
-        t_tlb_wdata(63, 56) = 0;
-    }
-    t_tlb_wdata(55, 12) = r.resp_data.read()(53, 10);
+
+    t_tlb_wdata(115, 64) = r.last_va.read()(63, 12);
+    t_tlb_wdata(63, 12) = vb_pte_base_va;
     t_tlb_wdata(7, 0) = r.resp_data.read()(7, 0);
 
     switch (r.state.read()) {
@@ -235,21 +230,9 @@ void Mmu::comb() {
             v_mem_addr_valid = i_fetch_addr_valid;
             vb_mem_addr = i_fetch_addr;
             v_mem_resp_ready = i_fetch_resp_ready;
-        } else if (r.tlb_flush_cnt.read() == 1) {
+        } else if (r.tlb_flush_cnt.read().or_reduce() == 1) {
             v.state = FlushTlb;
             v.tlb_wdata = 0;
-        } else if (i_fetch_addr.read()(63, 12) == r.last_va.read()(63, 12)) {
-            // Direct connection to cache with the fast changing va to last_pa
-            v_fetch_req_ready = i_mem_req_ready;
-            v_fetch_data_valid = i_mem_data_valid;
-            vb_fetch_data_addr = r.last_va;
-            vb_fetch_data = i_mem_data;
-            v_fetch_load_fault = i_mem_load_fault;
-            v_fetch_executable = i_mem_executable;
-            v_mem_addr_valid = i_fetch_addr_valid;
-            vb_mem_addr(63, 12) = r.last_pa;
-            vb_mem_addr(11, 0) = i_fetch_addr.read()(11, 0);
-            v_mem_resp_ready = i_fetch_resp_ready;
         } else {
             // MMU enabled: check TLB
             v_fetch_req_ready = 1;
@@ -276,7 +259,7 @@ void Mmu::comb() {
     case CacheReq:
         v_mem_addr_valid = 1;
         vb_mem_addr = r.req_pa;
-        if (i_mem_req_ready) {
+        if (i_mem_req_ready.read() == 1) {
             v.state = WaitResp;
         }
         break;
@@ -316,10 +299,10 @@ void Mmu::comb() {
             }
         } else {
             // PTE is a leaf
-            if ((r.req_x.read() == 1) && (wb_tlb_rdata.read()[PTE_X] == 0)) {
+            if ((r.req_x.read() == 1) && (r.resp_data.read()[PTE_X] == 0)) {
                 v.state = AcceptFetch;
                 v.ex_page_fault = 1;
-            } else if ((wb_tlb_rdata.read()[PTE_A] == 0) || (r.req_w && (!wb_tlb_rdata.read()[PTE_D]))) {
+            } else if ((r.resp_data.read()[PTE_A] == 0) || (r.req_w && (!r.resp_data.read()[PTE_D]))) {
                 // Implement option 1: raise a page-fault instead of (2) memory update with the new A,D-bits
                 v.state = AcceptFetch;
                 v.ex_page_fault = 1;
@@ -355,7 +338,9 @@ void Mmu::comb() {
     case FlushTlb:
         v_tlb_wena = 1;
         vb_tlb_adr = r.tlb_flush_adr;
-        if (r.tlb_flush_cnt.read() == 0) {
+        v.last_va = ~0ull;
+        v.last_pa = ~0ull;
+        if (r.tlb_flush_cnt.read().or_reduce() == 0) {
             v.state = Idle;
         } else {
             v.tlb_flush_cnt = (r.tlb_flush_cnt.read() - 1);

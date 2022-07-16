@@ -80,7 +80,7 @@ SC_MODULE(Mmu) {
     static const int PTE_D = 7;
 
     struct Mmu_registers {
-        sc_signal<sc_uint<2>> state;
+        sc_signal<sc_uint<3>> state;
         sc_signal<bool> req_x;
         sc_signal<bool> req_r;
         sc_signal<bool> req_w;
@@ -96,12 +96,12 @@ SC_MODULE(Mmu) {
         sc_signal<bool> tlb_hit;
         sc_signal<sc_uint<4>> tlb_level;
         sc_signal<sc_biguint<CFG_MMU_PTE_DWIDTH>> tlb_wdata;
-        sc_signal<bool> tlb_flush_cnt;
-        sc_signal<bool> tlb_flush_adr;
+        sc_signal<sc_uint<CFG_MMU_TLB_AWIDTH>> tlb_flush_cnt;
+        sc_signal<sc_uint<CFG_MMU_TLB_AWIDTH>> tlb_flush_adr;
     } v, r;
 
     void Mmu_r_reset(Mmu_registers &iv) {
-        iv.state = Idle;
+        iv.state = FlushTlb;
         iv.req_x = 0;
         iv.req_r = 0;
         iv.req_w = 0;
@@ -117,7 +117,7 @@ SC_MODULE(Mmu) {
         iv.tlb_hit = 0;
         iv.tlb_level = 0;
         iv.tlb_wdata = 0;
-        iv.tlb_flush_cnt = 0;
+        iv.tlb_flush_cnt = ~0ul;
         iv.tlb_flush_adr = 0;
     }
 
