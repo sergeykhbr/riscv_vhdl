@@ -339,15 +339,13 @@ static const uint16_t CSR_mhartid = 0xf14;
 // @}
 
 // Instruction formats specified by ISA specification
-enum EIsaType {
-    ISA_R_type = 0,
-    ISA_I_type = 1,
-    ISA_S_type = 2,
-    ISA_SB_type = 3,
-    ISA_U_type = 4,
-    ISA_UJ_type = 5,
-    ISA_Total = 6
-};
+static const int ISA_R_type = 0;
+static const int ISA_I_type = 1;
+static const int ISA_S_type = 2;
+static const int ISA_SB_type = 3;
+static const int ISA_U_type = 4;
+static const int ISA_UJ_type = 5;
+static const int ISA_Total = 6;
 
 // Implemented instruction list and its indexes
 enum EInstructionType {
@@ -474,6 +472,8 @@ enum EInstructionType {
     Instr_Total = 120
 };
 
+static const int Instr_FPU_First = Instr_FADD_D;
+static const int Instr_FPU_Last = Instr_FSUB_D;
 static const int Instr_FPU_Total = ((Instr_FSUB_D - Instr_FADD_D) + 1);
 
 
@@ -512,34 +512,30 @@ static const uint8_t PROGBUF_ERR_HALT_RESUME = 4;           // Command cannot be
 static const uint8_t PROGBUF_ERR_BUS = 5;                   // Bus error occurs
 static const uint8_t PROGBUF_ERR_OTHER = 7;                 // Other reason
 
-enum EExceptions {
-    EXCEPTION_InstrMisalign = 0,                            // Instruction address misaligned
-    EXCEPTION_InstrFault = 1,                               // Instruction access fault
-    EXCEPTION_InstrIllegal = 2,                             // Illegal instruction
-    EXCEPTION_Breakpoint = 3,                               // Breakpoint
-    EXCEPTION_LoadMisalign = 4,                             // Load address misaligned
-    EXCEPTION_LoadFault = 5,                                // Load access fault
-    EXCEPTION_StoreMisalign = 6,                            // Store/AMO address misaligned
-    EXCEPTION_StoreFault = 7,                               // Store/AMO access fault
-    EXCEPTION_CallFromUmode = 8,                            // Environment call from U-mode
-    EXCEPTION_CallFromSmode = 9,                            // Environment call from S-mode
-    EXCEPTION_CallFromHmode = 10,                           // Environment call from H-mode
-    EXCEPTION_CallFromMmode = 11,                           // Environment call from M-mode
-    EXCEPTION_InstrPageFault = 12,                          // Instruction page fault
-    EXCEPTION_LoadPageFault = 13,                           // Load page fault
-    EXCEPTION_rsrv14 = 14,                                  // reserved
-    EXCEPTION_StorePageFault = 15,                          // Store/AMO page fault
-    EXCEPTION_StackOverflow = 16,                           // Stack overflow
-    EXCEPTION_StackUnderflow = 17,                          // Stack underflow
-    EXCEPTIONS_Total = 18
-};
+static const int EXCEPTION_InstrMisalign = 0;               // Instruction address misaligned
+static const int EXCEPTION_InstrFault = 1;                  // Instruction access fault
+static const int EXCEPTION_InstrIllegal = 2;                // Illegal instruction
+static const int EXCEPTION_Breakpoint = 3;                  // Breakpoint
+static const int EXCEPTION_LoadMisalign = 4;                // Load address misaligned
+static const int EXCEPTION_LoadFault = 5;                   // Load access fault
+static const int EXCEPTION_StoreMisalign = 6;               // Store/AMO address misaligned
+static const int EXCEPTION_StoreFault = 7;                  // Store/AMO access fault
+static const int EXCEPTION_CallFromUmode = 8;               // Environment call from U-mode
+static const int EXCEPTION_CallFromSmode = 9;               // Environment call from S-mode
+static const int EXCEPTION_CallFromHmode = 10;              // Environment call from H-mode
+static const int EXCEPTION_CallFromMmode = 11;              // Environment call from M-mode
+static const int EXCEPTION_InstrPageFault = 12;             // Instruction page fault
+static const int EXCEPTION_LoadPageFault = 13;              // Load page fault
+static const int EXCEPTION_rsrv14 = 14;                     // reserved
+static const int EXCEPTION_StorePageFault = 15;             // Store/AMO page fault
+static const int EXCEPTION_StackOverflow = 16;              // Stack overflow
+static const int EXCEPTION_StackUnderflow = 17;             // Stack underflow
+static const int EXCEPTIONS_Total = 18;
 
-enum EInterrupts {
-    INTERRUPT_XSoftware = 0,
-    INTERRUPT_XTimer = 1,
-    INTERRUPT_XExternal = 2,
-    INTERRUPT_Total = 3
-};
+static const int INTERRUPT_XSoftware = 0;
+static const int INTERRUPT_XTimer = 1;
+static const int INTERRUPT_XExternal = 2;
+static const int INTERRUPT_Total = 3;
 
 static const int SIGNAL_Exception = 0;
 static const int SIGNAL_XSoftware = (EXCEPTIONS_Total + (4 * INTERRUPT_XSoftware));
