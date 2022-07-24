@@ -19,7 +19,6 @@
 
 #include <inttypes.h>
 #include <api_types.h>
-#include <generic-isa.h>
 
 namespace debugger {
 
