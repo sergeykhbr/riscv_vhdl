@@ -238,7 +238,7 @@ void CacheTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     i1->generateVCD(i_vcd, o_vcd);
     d0->generateVCD(i_vcd, o_vcd);
     mpu0->generateVCD(i_vcd, o_vcd);
-    queue0->generateVCD(i_vcd, o_vcd);
+    //queue0->generateVCD(i_vcd, o_vcd);
 }
 
 CacheTop::~CacheTop() {
