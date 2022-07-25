@@ -792,7 +792,7 @@ void DecoderRv::comb() {
                     }
                     break;
                 case 0x51:
-                    vb_waddr[5] = 1;
+                    vb_waddr[5] = 0;
                     if (vb_opcode2 == 0) {
                         vb_dec[Instr_FLE_D] = 1;
                     } else if (vb_opcode2 == 1) {
@@ -804,7 +804,7 @@ void DecoderRv::comb() {
                     }
                     break;
                 case 0x61:
-                    vb_waddr[5] = 1;
+                    vb_waddr[5] = 0;
                     if (vb_instr(24, 20) == 0) {
                         vb_dec[Instr_FCVT_W_D] = 1;
                     } else if (vb_instr(24, 20) == 1) {
@@ -818,7 +818,7 @@ void DecoderRv::comb() {
                     }
                     break;
                 case 0x69:
-                    vb_radr1[5] = 1;
+                    vb_radr1[5] = 0;
                     if (vb_instr(24, 20) == 0) {
                         vb_dec[Instr_FCVT_D_W] = 1;
                     } else if (vb_instr(24, 20) == 1) {
@@ -832,7 +832,7 @@ void DecoderRv::comb() {
                     }
                     break;
                 case 0x71:
-                    vb_waddr[5] = 1;
+                    vb_waddr[5] = 0;
                     if ((vb_instr(24, 20).or_reduce() == 0) && (vb_opcode2.or_reduce() == 0)) {
                         vb_dec[Instr_FMOV_X_D] = 1;
                     } else {
@@ -840,7 +840,7 @@ void DecoderRv::comb() {
                     }
                     break;
                 case 0x79:
-                    vb_radr1[5] = 1;
+                    vb_radr1[5] = 0;
                     if ((vb_instr(24, 20).or_reduce() == 0) && (vb_opcode2.or_reduce() == 0)) {
                         vb_dec[Instr_FMOV_D_X] = 1;
                     } else {
