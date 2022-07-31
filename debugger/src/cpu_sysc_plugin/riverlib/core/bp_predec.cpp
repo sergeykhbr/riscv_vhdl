@@ -66,6 +66,16 @@ void BpPreDecoder::comb() {
     sc_uint<CFG_CPU_ADDR_BITS> vb_c_j_off;
     sc_uint<CFG_CPU_ADDR_BITS> vb_c_j_addr;
 
+    vb_tmp = 0;
+    vb_npc = 0;
+    vb_pc = 0;
+    vb_jal_off = 0;
+    vb_jal_addr = 0;
+    vb_branch_off = 0;
+    vb_branch_addr = 0;
+    vb_c_j_off = 0;
+    vb_c_j_addr = 0;
+
     vb_pc = i_addr;
     vb_tmp = i_data;
 
@@ -131,13 +141,13 @@ void BpPreDecoder::comb() {
         v_c_ret = i_c_valid;
     }
 
-    if (v_jal == 1) {
+    if (v_jal.read() == 1) {
         vb_npc = vb_jal_addr;
-    } else if (v_branch == 1) {
+    } else if (v_branch.read() == 1) {
         vb_npc = vb_branch_addr;
-    } else if (v_c_j == 1) {
+    } else if (v_c_j.read() == 1) {
         vb_npc = vb_c_j_addr;
-    } else if (v_c_ret == 1) {
+    } else if (v_c_ret.read() == 1) {
         vb_npc = i_ra;
     } else {
         vb_npc = (vb_pc + 4);

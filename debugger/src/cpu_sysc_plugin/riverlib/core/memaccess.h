@@ -94,7 +94,7 @@ SC_MODULE(MemAccess) {
     );
 
     struct MemAccess_registers {
-        sc_signal<sc_uint<2>> state;                        // State_Idle
+        sc_signal<sc_uint<2>> state;
         sc_signal<sc_uint<MemopType_Total>> memop_type;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> memop_addr;
         sc_signal<sc_uint<64>> memop_wdata;
@@ -114,22 +114,22 @@ SC_MODULE(MemAccess) {
     } v, r;
 
     void MemAccess_r_reset(MemAccess_registers &iv) {
-        iv.state = 0;
+        iv.state = State_Idle;
         iv.memop_type = 0;
-        iv.memop_addr = 0;
-        iv.memop_wdata = 0;
+        iv.memop_addr = 0ull;
+        iv.memop_wdata = 0ull;
         iv.memop_wstrb = 0;
         iv.memop_sign_ext = 0;
         iv.memop_size = 0;
         iv.memop_debug = 0;
-        iv.memop_res_pc = 0;
+        iv.memop_res_pc = 0ull;
         iv.memop_res_instr = 0;
         iv.memop_res_addr = 0;
         iv.memop_res_wtag = 0;
-        iv.memop_res_data = 0;
+        iv.memop_res_data = 0ull;
         iv.memop_res_wena = 0;
-        iv.hold_rdata = 0;
-        iv.pc = 0;
+        iv.hold_rdata = 0ull;
+        iv.pc = 0ull;
         iv.valid = 0;
     }
 

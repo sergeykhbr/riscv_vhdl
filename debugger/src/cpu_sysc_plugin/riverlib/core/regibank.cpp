@@ -110,12 +110,18 @@ void RegIntBank::comb() {
     bool v_inordered;
     sc_uint<CFG_REG_TAG_WIDTH> next_tag;
 
+    int_daddr = 0;
+    int_waddr = 0;
+    int_radr1 = 0;
+    int_radr2 = 0;
+    v_inordered = 0;
+    next_tag = 0;
+
     for (int i = 0; i < REGS_TOTAL; i++) {
         v.reg[i].val = r.reg[i].val;
         v.reg[i].tag = r.reg[i].tag;
     }
 
-    v_inordered = 0;
     int_daddr = i_dport_addr.read().to_int();
     int_waddr = i_waddr.read().to_int();
     int_radr1 = i_radr1.read().to_int();
@@ -138,7 +144,7 @@ void RegIntBank::comb() {
 
     if (!async_reset_ && i_nrst.read() == 0) {
         for (int i = 0; i < REGS_TOTAL; i++) {
-            v.reg[i].val = 0;
+            v.reg[i].val = 0ull;
             v.reg[i].tag = 0;
         }
     }
@@ -156,7 +162,7 @@ void RegIntBank::comb() {
 void RegIntBank::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
         for (int i = 0; i < REGS_TOTAL; i++) {
-            r.reg[i].val = 0;
+            r.reg[i].val = 0ull;
             r.reg[i].tag = 0;
         }
     } else {

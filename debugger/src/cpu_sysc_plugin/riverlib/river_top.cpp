@@ -1,25 +1,31 @@
-/*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+// 
+//  Copyright 2022 Sergey Khabarov, sergeykhbr@gmail.com
+// 
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+// 
+//      http://www.apache.org/licenses/LICENSE-2.0
+// 
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+// 
 
 #include "river_top.h"
+#include "api_core.h"
 
 namespace debugger {
 
-RiverTop::RiverTop(sc_module_name name_, bool async_reset, uint32_t hartid,
-    bool fpu_ena, bool coherence_ena, bool tracer_ena) : sc_module(name_),
+RiverTop::RiverTop(sc_module_name name,
+                   bool async_reset,
+                   uint32_t hartid,
+                   bool fpu_ena,
+                   bool coherence_ena,
+                   bool tracer_ena)
+    : sc_module(name),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
     i_req_mem_ready("i_req_mem_ready"),
@@ -61,6 +67,14 @@ RiverTop::RiverTop(sc_module_name name_, bool async_reset, uint32_t hartid,
     o_dport_rdata("o_dport_rdata"),
     i_progbuf("i_progbuf"),
     o_halted("o_halted") {
+
+    async_reset_ = async_reset;
+    hartid_ = hartid;
+    fpu_ena_ = fpu_ena;
+    coherence_ena_ = coherence_ena;
+    tracer_ena_ = tracer_ena;
+    proc0 = 0;
+    cache0 = 0;
 
     proc0 = new Processor("proc0", async_reset, hartid, fpu_ena, tracer_ena);
     proc0->i_clk(i_clk);
@@ -178,80 +192,67 @@ RiverTop::RiverTop(sc_module_name name_, bool async_reset, uint32_t hartid,
     cache0->i_data_flush_address(wb_data_flush_address);
     cache0->i_data_flush_valid(w_data_flush_valid);
     cache0->o_data_flush_end(w_data_flush_end);
-};
+
+}
 
 RiverTop::~RiverTop() {
-    delete cache0;
-    delete proc0;
+    if (proc0) {
+        delete proc0;
+    }
+    if (cache0) {
+        delete cache0;
+    }
 }
 
 void RiverTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
-    /**
-     * ModelSim commands for automatic comparision Stimulus vs SystemC reference:
-     *
-     * Convert VCD to WLF and back to VCD because ModelSim supports only 
-     * 1-bit signals, such conversion allows to create compatible VCD-file.
-     * 
-     * 1. Prepare compatible VCD/wlf files:
-     *      vcd2wlf E:/../win32build/Debug/i_river.vcd -o e:/i_river.wlf
-     *      vcd2wlf E:/../win32build/Debug/o_river.vcd -o e:/o_river.wlf
-     *      wlf2vcd e:/i_river.wlf -o e:/i_river.vcd
-     *
-     * 2. Add waves to simulation view and simulate 350 us:
-     *      vsim -t 1ps -vcdstim E:/i_river.vcd riverlib.RiverTop
-     *      vsim -view e:/o_river.wlf
-     *      add wave o_river:/SystemC/ *
-     *      add wave sim:/rivertop/ *
-     *      run 350us
-     *
-     * 3. Start automatic comparision:
-     *      compare start o_river sim
-     *      compare add -wave sim:/RiverTop/o_req_mem_valid o_river:/SystemC/o_req_mem_valid
-     *      compare add -wave sim:/RiverTop/o_req_mem_write o_river:/SystemC/o_req_mem_write
-     *      compare add -wave sim:/RiverTop/o_req_mem_addr o_river:/SystemC/o_req_mem_addr
-     *      compare add -wave sim:/RiverTop/o_req_mem_strob o_river:/SystemC/o_req_mem_strob
-     *      compare add -wave sim:/RiverTop/o_req_mem_data o_river:/SystemC/o_req_mem_data
-     *      compare add -wave sim:/RiverTop/o_step_cnt o_river:/SystemC/o_step_cnt
-     *      compare run
-     *
-     */
-    if (i_vcd) {
-        sc_trace(i_vcd, i_clk, i_clk.name());
-        sc_trace(i_vcd, i_nrst, i_nrst.name());
-        sc_trace(i_vcd, i_req_mem_ready, i_req_mem_ready.name());
-        sc_trace(i_vcd, i_resp_mem_valid, i_resp_mem_valid.name());
-        sc_trace(i_vcd, i_resp_mem_data, i_resp_mem_data.name());
-        sc_trace(i_vcd, i_resp_mem_load_fault, i_resp_mem_load_fault.name());
-        sc_trace(i_vcd, i_resp_mem_store_fault, i_resp_mem_store_fault.name());
-        sc_trace(i_vcd, i_msip, i_msip.name());
-        sc_trace(i_vcd, i_mtip, i_mtip.name());
-        sc_trace(i_vcd, i_meip, i_meip.name());
-        sc_trace(i_vcd, i_seip, i_seip.name());
-        sc_trace(i_vcd, i_haltreq, i_haltreq.name());
-        sc_trace(i_vcd, i_resumereq, i_resumereq.name());
-        sc_trace(i_vcd, i_dport_req_valid, i_dport_req_valid.name());
-        sc_trace(i_vcd, i_dport_type, i_dport_type.name());
-        sc_trace(i_vcd, i_dport_addr, i_dport_addr.name());
-        sc_trace(i_vcd, i_dport_wdata, i_dport_wdata.name());
-        sc_trace(i_vcd, i_dport_size, i_dport_size.name());
-        sc_trace(i_vcd, i_dport_resp_ready, i_dport_resp_ready.name());
-        sc_trace(i_vcd, i_progbuf, i_progbuf.name());
-    }
     if (o_vcd) {
+        sc_trace(o_vcd, i_req_mem_ready, i_req_mem_ready.name());
+        sc_trace(o_vcd, o_req_mem_path, o_req_mem_path.name());
         sc_trace(o_vcd, o_req_mem_valid, o_req_mem_valid.name());
         sc_trace(o_vcd, o_req_mem_type, o_req_mem_type.name());
+        sc_trace(o_vcd, o_req_mem_size, o_req_mem_size.name());
         sc_trace(o_vcd, o_req_mem_addr, o_req_mem_addr.name());
         sc_trace(o_vcd, o_req_mem_strob, o_req_mem_strob.name());
         sc_trace(o_vcd, o_req_mem_data, o_req_mem_data.name());
-        sc_trace(o_vcd, o_halted, o_halted.name());
+        sc_trace(o_vcd, i_resp_mem_valid, i_resp_mem_valid.name());
+        sc_trace(o_vcd, i_resp_mem_path, i_resp_mem_path.name());
+        sc_trace(o_vcd, i_resp_mem_data, i_resp_mem_data.name());
+        sc_trace(o_vcd, i_resp_mem_load_fault, i_resp_mem_load_fault.name());
+        sc_trace(o_vcd, i_resp_mem_store_fault, i_resp_mem_store_fault.name());
+        sc_trace(o_vcd, i_req_snoop_valid, i_req_snoop_valid.name());
+        sc_trace(o_vcd, i_req_snoop_type, i_req_snoop_type.name());
+        sc_trace(o_vcd, o_req_snoop_ready, o_req_snoop_ready.name());
+        sc_trace(o_vcd, i_req_snoop_addr, i_req_snoop_addr.name());
+        sc_trace(o_vcd, i_resp_snoop_ready, i_resp_snoop_ready.name());
+        sc_trace(o_vcd, o_resp_snoop_valid, o_resp_snoop_valid.name());
+        sc_trace(o_vcd, o_resp_snoop_data, o_resp_snoop_data.name());
+        sc_trace(o_vcd, o_resp_snoop_flags, o_resp_snoop_flags.name());
+        sc_trace(o_vcd, i_msip, i_msip.name());
+        sc_trace(o_vcd, i_mtip, i_mtip.name());
+        sc_trace(o_vcd, i_meip, i_meip.name());
+        sc_trace(o_vcd, i_seip, i_seip.name());
+        sc_trace(o_vcd, i_haltreq, i_haltreq.name());
+        sc_trace(o_vcd, i_resumereq, i_resumereq.name());
+        sc_trace(o_vcd, i_dport_req_valid, i_dport_req_valid.name());
+        sc_trace(o_vcd, i_dport_type, i_dport_type.name());
+        sc_trace(o_vcd, i_dport_addr, i_dport_addr.name());
+        sc_trace(o_vcd, i_dport_wdata, i_dport_wdata.name());
+        sc_trace(o_vcd, i_dport_size, i_dport_size.name());
         sc_trace(o_vcd, o_dport_req_ready, o_dport_req_ready.name());
+        sc_trace(o_vcd, i_dport_resp_ready, i_dport_resp_ready.name());
         sc_trace(o_vcd, o_dport_resp_valid, o_dport_resp_valid.name());
         sc_trace(o_vcd, o_dport_resp_error, o_dport_resp_error.name());
         sc_trace(o_vcd, o_dport_rdata, o_dport_rdata.name());
+        sc_trace(o_vcd, i_progbuf, i_progbuf.name());
+        sc_trace(o_vcd, o_halted, o_halted.name());
     }
 
-    proc0->generateVCD(i_vcd, o_vcd);
-    cache0->generateVCD(i_vcd, o_vcd);
+    if (proc0) {
+        proc0->generateVCD(i_vcd, o_vcd);
+    }
+    if (cache0) {
+        cache0->generateVCD(i_vcd, o_vcd);
+    }
 }
 
 }  // namespace debugger

@@ -37,7 +37,7 @@ static const int CFG_LOG2_CPU_MAX = 2;
 static const int CFG_CPU_MAX = (1 << CFG_LOG2_CPU_MAX);
 
 // Power-on start address can be free changed
-static const uint64_t CFG_RESET_VECTOR = 0x10000;
+static const uint64_t CFG_RESET_VECTOR = 0x10000ull;
 
 // 
 // Branch Predictor Branch Target Buffer (BTB) size

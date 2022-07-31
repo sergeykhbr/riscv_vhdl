@@ -90,14 +90,20 @@ void BpBTB::comb() {
     sc_uint<CFG_BP_DEPTH> vb_bp_exec;
     bool v_dont_update;
 
+    vb_addr = 0;
+    vb_hit = 0;
+    t_addr = 0;
+    vb_pc_equal = 0;
+    vb_pc_nshift = 0;
+    vb_bp_exec = 0;
+    v_dont_update = 0;
+
     for (int i = 0; i < CFG_BTB_SIZE; i++) {
         v.btb[i].pc = r.btb[i].pc;
         v.btb[i].npc = r.btb[i].npc;
         v.btb[i].exec = r.btb[i].exec;
     }
 
-    vb_hit = 0;
-    vb_bp_exec = 0;
     vb_addr((CFG_CPU_ADDR_BITS - 1), 0) = i_bp_pc;
     vb_bp_exec[0] = i_e;
 
@@ -117,7 +123,7 @@ void BpBTB::comb() {
     v_dont_update = 0;
     vb_pc_equal = 0;
     for (int i = 0; i < CFG_BTB_SIZE; i++) {
-        if (r.btb[i].pc == i_we_pc) {
+        if (r.btb[i].pc == i_we_pc.read()) {
             vb_pc_equal[i] = 1;
             v_dont_update = (r.btb[i].exec && (!i_e));
         }
@@ -142,8 +148,8 @@ void BpBTB::comb() {
 
     if ((!async_reset_ && i_nrst.read() == 0) || i_flush_pipeline) {
         for (int i = 0; i < CFG_BTB_SIZE; i++) {
-            v.btb[i].pc = 0xffffffffffffffff;
-            v.btb[i].npc = 0;
+            v.btb[i].pc = ~0ull;
+            v.btb[i].npc = 0ull;
             v.btb[i].exec = 0;
         }
     }
@@ -158,8 +164,8 @@ void BpBTB::comb() {
 void BpBTB::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
         for (int i = 0; i < CFG_BTB_SIZE; i++) {
-            r.btb[i].pc = 0xffffffffffffffff;
-            r.btb[i].npc = 0;
+            r.btb[i].pc = ~0ull;
+            r.btb[i].npc = 0ull;
             r.btb[i].exec = 0;
         }
     } else {

@@ -57,6 +57,12 @@ InstrDecoder::InstrDecoder(sc_module_name name,
 
     async_reset_ = async_reset;
     fpu_ena_ = fpu_ena;
+    for (int i = 0; i < DEC_NUM; i++) {
+        rv[i] = 0;
+    }
+    for (int i = 0; i < DEC_NUM; i++) {
+        rvc[i] = 0;
+    }
 
     for (int i = 0; i < DEC_NUM; i++) {
         char tstr[256];
@@ -131,6 +137,7 @@ InstrDecoder::InstrDecoder(sc_module_name name,
         rvc[i]->o_progbuf_ena(wd[((2 * i) + 1)].progbuf_ena);
 
     }
+
 
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -233,13 +240,20 @@ void InstrDecoder::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_instr_load_fault, o_instr_load_fault.name());
         sc_trace(o_vcd, o_instr_executable, o_instr_executable.name());
         sc_trace(o_vcd, o_progbuf_ena, o_progbuf_ena.name());
+        for (int i = 0; i < FULL_DEC_DEPTH; i++) {
+            char tstr[1024];
+        }
     }
 
     for (int i = 0; i < DEC_NUM; i++) {
-        rv[i]->generateVCD(i_vcd, o_vcd);
+        if (rv) {
+            rv[i]->generateVCD(i_vcd, o_vcd);
+        }
     }
     for (int i = 0; i < DEC_NUM; i++) {
-        rvc[i]->generateVCD(i_vcd, o_vcd);
+        if (rvc) {
+            rvc[i]->generateVCD(i_vcd, o_vcd);
+        }
     }
 }
 
@@ -314,7 +328,7 @@ void InstrDecoder::comb() {
         for (int i = 0; i < FULL_DEC_DEPTH; i++) {
             v.d[i].pc = ~0ull;
             v.d[i].isa_type = 0;
-            v.d[i].instr_vec = 0;
+            v.d[i].instr_vec = 0ull;
             v.d[i].instr = ~0ul;
             v.d[i].memop_store = 0;
             v.d[i].memop_load = 0;
@@ -332,7 +346,7 @@ void InstrDecoder::comb() {
             v.d[i].radr2 = 0;
             v.d[i].waddr = 0;
             v.d[i].csr_addr = 0;
-            v.d[i].imm = 0;
+            v.d[i].imm = 0ull;
             v.d[i].progbuf_ena = 0;
         }
     }
@@ -366,7 +380,7 @@ void InstrDecoder::registers() {
         for (int i = 0; i < FULL_DEC_DEPTH; i++) {
             r.d[i].pc = ~0ull;
             r.d[i].isa_type = 0;
-            r.d[i].instr_vec = 0;
+            r.d[i].instr_vec = 0ull;
             r.d[i].instr = ~0ul;
             r.d[i].memop_store = 0;
             r.d[i].memop_load = 0;
@@ -384,7 +398,7 @@ void InstrDecoder::registers() {
             r.d[i].radr2 = 0;
             r.d[i].waddr = 0;
             r.d[i].csr_addr = 0;
-            r.d[i].imm = 0;
+            r.d[i].imm = 0ull;
             r.d[i].progbuf_ena = 0;
         }
     } else {

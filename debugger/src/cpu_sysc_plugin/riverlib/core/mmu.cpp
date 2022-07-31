@@ -24,30 +24,45 @@ Mmu::Mmu(sc_module_name name,
     : sc_module(name),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
-    o_fetch_req_ready("o_fetch_req_ready"),
-    i_fetch_addr_valid("i_fetch_addr_valid"),
-    i_fetch_addr("i_fetch_addr"),
-    o_fetch_data_valid("o_fetch_data_valid"),
-    o_fetch_data_addr("o_fetch_data_addr"),
-    o_fetch_data("o_fetch_data"),
-    o_fetch_load_fault("o_fetch_load_fault"),
-    o_fetch_executable("o_fetch_executable"),
-    o_fetch_page_fault("o_fetch_page_fault"),
-    i_fetch_resp_ready("i_fetch_resp_ready"),
+    o_core_req_ready("o_core_req_ready"),
+    i_core_req_valid("i_core_req_valid"),
+    i_core_req_addr("i_core_req_addr"),
+    i_core_req_fetch("i_core_req_fetch"),
+    i_core_req_type("i_core_req_type"),
+    i_core_req_wdata("i_core_req_wdata"),
+    i_core_req_wstrb("i_core_req_wstrb"),
+    i_core_req_size("i_core_req_size"),
+    o_core_resp_valid("o_core_resp_valid"),
+    o_core_resp_addr("o_core_resp_addr"),
+    o_core_resp_data("o_core_resp_data"),
+    o_core_resp_executable("o_core_resp_executable"),
+    o_core_resp_load_fault("o_core_resp_load_fault"),
+    o_core_resp_store_fault("o_core_resp_store_fault"),
+    o_core_resp_page_x_fault("o_core_resp_page_x_fault"),
+    o_core_resp_page_r_fault("o_core_resp_page_r_fault"),
+    o_core_resp_page_w_fault("o_core_resp_page_w_fault"),
+    i_core_resp_ready("i_core_resp_ready"),
     i_mem_req_ready("i_mem_req_ready"),
-    o_mem_addr_valid("o_mem_addr_valid"),
-    o_mem_addr("o_mem_addr"),
-    i_mem_data_valid("i_mem_data_valid"),
-    i_mem_data_addr("i_mem_data_addr"),
-    i_mem_data("i_mem_data"),
-    i_mem_load_fault("i_mem_load_fault"),
-    i_mem_executable("i_mem_executable"),
+    o_mem_req_valid("o_mem_req_valid"),
+    o_mem_req_addr("o_mem_req_addr"),
+    o_mem_req_type("o_mem_req_type"),
+    o_mem_req_wdata("o_mem_req_wdata"),
+    o_mem_req_wstrb("o_mem_req_wstrb"),
+    o_mem_req_size("o_mem_req_size"),
+    i_mem_resp_valid("i_mem_resp_valid"),
+    i_mem_resp_addr("i_mem_resp_addr"),
+    i_mem_resp_data("i_mem_resp_data"),
+    i_mem_resp_executable("i_mem_resp_executable"),
+    i_mem_resp_load_fault("i_mem_resp_load_fault"),
+    i_mem_resp_store_fault("i_mem_resp_store_fault"),
     o_mem_resp_ready("o_mem_resp_ready"),
     i_mmu_ena("i_mmu_ena"),
     i_mmu_ppn("i_mmu_ppn"),
-    i_flush_pipeline("i_flush_pipeline") {
+    i_fence("i_fence"),
+    i_fence_addr("i_fence_addr") {
 
     async_reset_ = async_reset;
+    tlb = 0;
 
     tlb = new MmuTlb("tlb");
     tlb->i_clk(i_clk);
@@ -57,20 +72,28 @@ Mmu::Mmu(sc_module_name name,
     tlb->o_rdata(wb_tlb_rdata);
 
 
+
     SC_METHOD(comb);
     sensitive << i_nrst;
-    sensitive << i_fetch_addr_valid;
-    sensitive << i_fetch_addr;
-    sensitive << i_fetch_resp_ready;
+    sensitive << i_core_req_valid;
+    sensitive << i_core_req_addr;
+    sensitive << i_core_req_fetch;
+    sensitive << i_core_req_type;
+    sensitive << i_core_req_wdata;
+    sensitive << i_core_req_wstrb;
+    sensitive << i_core_req_size;
+    sensitive << i_core_resp_ready;
     sensitive << i_mem_req_ready;
-    sensitive << i_mem_data_valid;
-    sensitive << i_mem_data_addr;
-    sensitive << i_mem_data;
-    sensitive << i_mem_load_fault;
-    sensitive << i_mem_executable;
+    sensitive << i_mem_resp_valid;
+    sensitive << i_mem_resp_addr;
+    sensitive << i_mem_resp_data;
+    sensitive << i_mem_resp_executable;
+    sensitive << i_mem_resp_load_fault;
+    sensitive << i_mem_resp_store_fault;
     sensitive << i_mmu_ena;
     sensitive << i_mmu_ppn;
-    sensitive << i_flush_pipeline;
+    sensitive << i_fence;
+    sensitive << i_fence_addr;
     sensitive << wb_tlb_adr;
     sensitive << w_tlb_wena;
     sensitive << wb_tlb_wdata;
@@ -80,13 +103,18 @@ Mmu::Mmu(sc_module_name name,
     sensitive << r.req_r;
     sensitive << r.req_w;
     sensitive << r.req_pa;
+    sensitive << r.req_type;
+    sensitive << r.req_wdata;
+    sensitive << r.req_wstrb;
+    sensitive << r.req_size;
     sensitive << r.last_va;
     sensitive << r.last_pa;
+    sensitive << r.last_permission;
     sensitive << r.resp_addr;
     sensitive << r.resp_data;
-    sensitive << r.pte_permission;
-    sensitive << r.ex_load_fault;
-    sensitive << r.ex_mpu_executable;
+    sensitive << r.resp_executable;
+    sensitive << r.resp_load_fault;
+    sensitive << r.resp_store_fault;
     sensitive << r.ex_page_fault;
     sensitive << r.tlb_hit;
     sensitive << r.tlb_level;
@@ -100,46 +128,67 @@ Mmu::Mmu(sc_module_name name,
 }
 
 Mmu::~Mmu() {
-    delete tlb;
+    if (tlb) {
+        delete tlb;
+    }
 }
 
 void Mmu::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     std::string pn(name());
     if (o_vcd) {
-        sc_trace(o_vcd, o_fetch_req_ready, o_fetch_req_ready.name());
-        sc_trace(o_vcd, i_fetch_addr_valid, i_fetch_addr_valid.name());
-        sc_trace(o_vcd, i_fetch_addr, i_fetch_addr.name());
-        sc_trace(o_vcd, o_fetch_data_valid, o_fetch_data_valid.name());
-        sc_trace(o_vcd, o_fetch_data_addr, o_fetch_data_addr.name());
-        sc_trace(o_vcd, o_fetch_data, o_fetch_data.name());
-        sc_trace(o_vcd, o_fetch_load_fault, o_fetch_load_fault.name());
-        sc_trace(o_vcd, o_fetch_executable, o_fetch_executable.name());
-        sc_trace(o_vcd, o_fetch_page_fault, o_fetch_page_fault.name());
-        sc_trace(o_vcd, i_fetch_resp_ready, i_fetch_resp_ready.name());
+        sc_trace(o_vcd, o_core_req_ready, o_core_req_ready.name());
+        sc_trace(o_vcd, i_core_req_valid, i_core_req_valid.name());
+        sc_trace(o_vcd, i_core_req_addr, i_core_req_addr.name());
+        sc_trace(o_vcd, i_core_req_fetch, i_core_req_fetch.name());
+        sc_trace(o_vcd, i_core_req_type, i_core_req_type.name());
+        sc_trace(o_vcd, i_core_req_wdata, i_core_req_wdata.name());
+        sc_trace(o_vcd, i_core_req_wstrb, i_core_req_wstrb.name());
+        sc_trace(o_vcd, i_core_req_size, i_core_req_size.name());
+        sc_trace(o_vcd, o_core_resp_valid, o_core_resp_valid.name());
+        sc_trace(o_vcd, o_core_resp_addr, o_core_resp_addr.name());
+        sc_trace(o_vcd, o_core_resp_data, o_core_resp_data.name());
+        sc_trace(o_vcd, o_core_resp_executable, o_core_resp_executable.name());
+        sc_trace(o_vcd, o_core_resp_load_fault, o_core_resp_load_fault.name());
+        sc_trace(o_vcd, o_core_resp_store_fault, o_core_resp_store_fault.name());
+        sc_trace(o_vcd, o_core_resp_page_x_fault, o_core_resp_page_x_fault.name());
+        sc_trace(o_vcd, o_core_resp_page_r_fault, o_core_resp_page_r_fault.name());
+        sc_trace(o_vcd, o_core_resp_page_w_fault, o_core_resp_page_w_fault.name());
+        sc_trace(o_vcd, i_core_resp_ready, i_core_resp_ready.name());
         sc_trace(o_vcd, i_mem_req_ready, i_mem_req_ready.name());
-        sc_trace(o_vcd, o_mem_addr_valid, o_mem_addr_valid.name());
-        sc_trace(o_vcd, o_mem_addr, o_mem_addr.name());
-        sc_trace(o_vcd, i_mem_data_valid, i_mem_data_valid.name());
-        sc_trace(o_vcd, i_mem_data_addr, i_mem_data_addr.name());
-        sc_trace(o_vcd, i_mem_data, i_mem_data.name());
-        sc_trace(o_vcd, i_mem_load_fault, i_mem_load_fault.name());
-        sc_trace(o_vcd, i_mem_executable, i_mem_executable.name());
+        sc_trace(o_vcd, o_mem_req_valid, o_mem_req_valid.name());
+        sc_trace(o_vcd, o_mem_req_addr, o_mem_req_addr.name());
+        sc_trace(o_vcd, o_mem_req_type, o_mem_req_type.name());
+        sc_trace(o_vcd, o_mem_req_wdata, o_mem_req_wdata.name());
+        sc_trace(o_vcd, o_mem_req_wstrb, o_mem_req_wstrb.name());
+        sc_trace(o_vcd, o_mem_req_size, o_mem_req_size.name());
+        sc_trace(o_vcd, i_mem_resp_valid, i_mem_resp_valid.name());
+        sc_trace(o_vcd, i_mem_resp_addr, i_mem_resp_addr.name());
+        sc_trace(o_vcd, i_mem_resp_data, i_mem_resp_data.name());
+        sc_trace(o_vcd, i_mem_resp_executable, i_mem_resp_executable.name());
+        sc_trace(o_vcd, i_mem_resp_load_fault, i_mem_resp_load_fault.name());
+        sc_trace(o_vcd, i_mem_resp_store_fault, i_mem_resp_store_fault.name());
         sc_trace(o_vcd, o_mem_resp_ready, o_mem_resp_ready.name());
         sc_trace(o_vcd, i_mmu_ena, i_mmu_ena.name());
         sc_trace(o_vcd, i_mmu_ppn, i_mmu_ppn.name());
-        sc_trace(o_vcd, i_flush_pipeline, i_flush_pipeline.name());
+        sc_trace(o_vcd, i_fence, i_fence.name());
+        sc_trace(o_vcd, i_fence_addr, i_fence_addr.name());
         sc_trace(o_vcd, r.state, pn + ".r_state");
         sc_trace(o_vcd, r.req_x, pn + ".r_req_x");
         sc_trace(o_vcd, r.req_r, pn + ".r_req_r");
         sc_trace(o_vcd, r.req_w, pn + ".r_req_w");
         sc_trace(o_vcd, r.req_pa, pn + ".r_req_pa");
+        sc_trace(o_vcd, r.req_type, pn + ".r_req_type");
+        sc_trace(o_vcd, r.req_wdata, pn + ".r_req_wdata");
+        sc_trace(o_vcd, r.req_wstrb, pn + ".r_req_wstrb");
+        sc_trace(o_vcd, r.req_size, pn + ".r_req_size");
         sc_trace(o_vcd, r.last_va, pn + ".r_last_va");
         sc_trace(o_vcd, r.last_pa, pn + ".r_last_pa");
+        sc_trace(o_vcd, r.last_permission, pn + ".r_last_permission");
         sc_trace(o_vcd, r.resp_addr, pn + ".r_resp_addr");
         sc_trace(o_vcd, r.resp_data, pn + ".r_resp_data");
-        sc_trace(o_vcd, r.pte_permission, pn + ".r_pte_permission");
-        sc_trace(o_vcd, r.ex_load_fault, pn + ".r_ex_load_fault");
-        sc_trace(o_vcd, r.ex_mpu_executable, pn + ".r_ex_mpu_executable");
+        sc_trace(o_vcd, r.resp_executable, pn + ".r_resp_executable");
+        sc_trace(o_vcd, r.resp_load_fault, pn + ".r_resp_load_fault");
+        sc_trace(o_vcd, r.resp_store_fault, pn + ".r_resp_store_fault");
         sc_trace(o_vcd, r.ex_page_fault, pn + ".r_ex_page_fault");
         sc_trace(o_vcd, r.tlb_hit, pn + ".r_tlb_hit");
         sc_trace(o_vcd, r.tlb_level, pn + ".r_tlb_level");
@@ -148,20 +197,32 @@ void Mmu::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.tlb_flush_adr, pn + ".r_tlb_flush_adr");
     }
 
-    tlb->generateVCD(i_vcd, o_vcd);
+    if (tlb) {
+        tlb->generateVCD(i_vcd, o_vcd);
+    }
 }
 
 void Mmu::comb() {
-    bool v_fetch_req_ready;
-    bool v_fetch_data_valid;
-    sc_uint<CFG_CPU_ADDR_BITS> vb_fetch_data_addr;
-    sc_uint<64> vb_fetch_data;
-    bool v_fetch_load_fault;
-    bool v_fetch_executable;
-    bool v_mem_addr_valid;
-    sc_uint<CFG_CPU_ADDR_BITS> vb_mem_addr;
+    bool v_core_req_x;
+    bool v_core_req_r;
+    bool v_core_req_w;
+    bool last_page_fault_x;
+    bool last_page_fault_r;
+    bool last_page_fault_w;
+    bool v_core_req_ready;
+    bool v_core_resp_valid;
+    sc_uint<CFG_CPU_ADDR_BITS> vb_core_resp_addr;
+    sc_uint<64> vb_core_resp_data;
+    bool v_core_resp_executable;
+    bool v_core_resp_load_fault;
+    bool v_core_resp_store_fault;
+    bool v_mem_req_valid;
+    sc_uint<CFG_CPU_ADDR_BITS> vb_mem_req_addr;
+    sc_uint<MemopType_Total> vb_mem_req_type;
+    sc_uint<64> vb_mem_req_wdata;
+    sc_uint<8> vb_mem_req_wstrb;
+    sc_uint<2> vb_mem_req_size;
     bool v_mem_resp_ready;
-    bool v_mpu_fault;
     bool v_tlb_wena;
     sc_uint<CFG_MMU_TLB_AWIDTH> vb_tlb_adr;
     sc_uint<(CFG_CPU_ADDR_BITS - 12)> vb_pte_start_va;
@@ -170,25 +231,68 @@ void Mmu::comb() {
     sc_uint<12> vb_level1_off;
     sc_uint<12> vb_level2_off;
     sc_uint<12> vb_level3_off;
+    bool v_last_valid;
     sc_uint<CFG_CPU_ADDR_BITS> t_req_pa;
     sc_biguint<CFG_MMU_PTE_DWIDTH> t_tlb_wdata;
 
-    v = r;
-
-    v_fetch_req_ready = 0;
-    v_fetch_data_valid = 0;
-    vb_fetch_data_addr = 0;
-    vb_fetch_data = 0;
-    v_fetch_load_fault = 0;
-    v_fetch_executable = 0;
-    v_mem_addr_valid = 0;
-    vb_mem_addr = 0;
+    v_core_req_x = 0;
+    v_core_req_r = 0;
+    v_core_req_w = 0;
+    last_page_fault_x = 0;
+    last_page_fault_r = 0;
+    last_page_fault_w = 0;
+    v_core_req_ready = 0;
+    v_core_resp_valid = 0;
+    vb_core_resp_addr = 0;
+    vb_core_resp_data = 0;
+    v_core_resp_executable = 0;
+    v_core_resp_load_fault = 0;
+    v_core_resp_store_fault = 0;
+    v_mem_req_valid = 0;
+    vb_mem_req_addr = 0;
+    vb_mem_req_type = 0;
+    vb_mem_req_wdata = 0;
+    vb_mem_req_wstrb = 0;
+    vb_mem_req_size = 0;
     v_mem_resp_ready = 0;
+    v_tlb_wena = 0;
+    vb_tlb_adr = 0;
     vb_pte_start_va = 0;
     vb_pte_base_va = 0;
-    v_tlb_wena = 0;
-    vb_tlb_adr = i_fetch_addr.read()(((12 + CFG_MMU_TLB_AWIDTH) - 1), 12);
-    v_mpu_fault = (i_mem_load_fault || (!i_mem_executable));
+    vb_level0_off = 0;
+    vb_level1_off = 0;
+    vb_level2_off = 0;
+    vb_level3_off = 0;
+    v_last_valid = 0;
+    t_req_pa = 0;
+    t_tlb_wdata = 0;
+
+    v = r;
+
+    vb_tlb_adr = i_core_req_addr.read()(((12 + CFG_MMU_TLB_AWIDTH) - 1), 12);
+
+    if (i_core_req_fetch.read() == 1) {
+        v_core_req_x = 1;
+    } else if ((i_core_req_type.read().or_reduce() == 0) || (i_core_req_type.read() == MemopType_Reserve)) {
+        v_core_req_r = 1;
+    } else {
+        v_core_req_w = 1;
+    }
+    if (r.last_permission.read()[PTE_A] == 0) {
+        last_page_fault_x = 1;
+        last_page_fault_r = 1;
+        last_page_fault_w = 1;
+    }
+    if (r.last_permission.read()[PTE_X] == 0) {
+        last_page_fault_x = 1;
+    }
+    if (r.last_permission.read()[PTE_R] == 0) {
+        last_page_fault_r = 1;
+    }
+    if ((r.last_permission.read()[PTE_W] == 0) || (r.last_permission.read()[PTE_D] == 0)) {
+        last_page_fault_w = 1;
+    }
+
     // Start Page Physical Address
     vb_pte_start_va(43, 0) = i_mmu_ppn;
     if (i_mmu_ppn.read()[43] == 1) {
@@ -204,6 +308,11 @@ void Mmu::comb() {
     vb_level2_off = (r.last_va.read()(29, 21) << 3);
     vb_level3_off = (r.last_va.read()(20, 12) << 3);
 
+    v_last_valid = 0;
+    if (i_core_req_addr.read()(63, 12) == r.last_va.read()(63, 12)) {
+        v_last_valid = 1;
+    }
+
     // Temporary variables are neccessary in systemc
     t_req_pa((CFG_CPU_ADDR_BITS - 1), 12) = wb_tlb_rdata.read()((CFG_CPU_ADDR_BITS - 1), 12).to_uint64();
     t_req_pa(11, 0) = r.last_va.read()(11, 0);
@@ -215,30 +324,134 @@ void Mmu::comb() {
     switch (r.state.read()) {
     case Idle:
         v.tlb_hit = 0;
+        v.resp_executable = 0;
+        v.resp_load_fault = 0;
+        v.resp_store_fault = 0;
         v.ex_page_fault = 0;
-        if (i_fetch_addr_valid.read() == 1) {
-            v.last_va = i_fetch_addr;
+        if (i_core_req_valid.read() == 1) {
+            v.last_va = i_core_req_addr;
+            v.req_type = i_core_req_type;
+            v.req_wdata = i_core_req_wdata;
+            v.req_wstrb = i_core_req_wstrb;
+            v.req_size = i_core_req_size;
         }
         if (i_mmu_ena.read() == 0) {
             // Direct connection to Cache
-            v_fetch_req_ready = i_mem_req_ready;
-            v_fetch_data_valid = i_mem_data_valid;
-            vb_fetch_data_addr = i_mem_data_addr;
-            vb_fetch_data = i_mem_data;
-            v_fetch_load_fault = i_mem_load_fault;
-            v_fetch_executable = i_mem_executable;
-            v_mem_addr_valid = i_fetch_addr_valid;
-            vb_mem_addr = i_fetch_addr;
-            v_mem_resp_ready = i_fetch_resp_ready;
+            v_core_req_ready = i_mem_req_ready;
+            v_core_resp_valid = i_mem_resp_valid;
+            vb_core_resp_addr = i_mem_resp_addr;
+            vb_core_resp_data = i_mem_resp_data;
+            v_core_resp_executable = i_mem_resp_executable;
+            v_core_resp_load_fault = i_mem_resp_load_fault;
+            v_core_resp_store_fault = i_mem_resp_store_fault;
+            v_mem_req_valid = i_core_req_valid;
+            vb_mem_req_addr = i_core_req_addr;
+            vb_mem_req_type = i_core_req_type;
+            vb_mem_req_wdata = i_core_req_wdata;
+            vb_mem_req_wstrb = i_core_req_wstrb;
+            vb_mem_req_size = i_core_req_size;
+            v_mem_resp_ready = i_core_resp_ready;
+            if ((i_core_req_valid && i_mem_req_ready) == 1) {
+                v.state = WaitRespNoMmu;
+            }
         } else if (r.tlb_flush_cnt.read().or_reduce() == 1) {
             v.state = FlushTlb;
             v.tlb_wdata = 0;
+        } else if (v_last_valid == 1) {
+            // Direct connection to cache with the fast changing va to last_pa
+            v_core_req_ready = i_mem_req_ready;
+            v_core_resp_valid = i_mem_resp_valid;
+            vb_core_resp_addr = r.last_va;
+            vb_core_resp_data = i_mem_resp_data;
+            v_core_resp_executable = i_mem_resp_executable;
+            v_core_resp_load_fault = i_mem_resp_load_fault;
+            v_core_resp_store_fault = i_mem_resp_store_fault;
+            v_mem_req_valid = i_core_req_valid;
+            vb_mem_req_addr(63, 12) = r.last_pa;
+            vb_mem_req_addr(11, 0) = i_core_req_addr.read()(11, 0);
+            vb_mem_req_type = i_core_req_type;
+            vb_mem_req_wdata = i_core_req_wdata;
+            vb_mem_req_wstrb = i_core_req_wstrb;
+            vb_mem_req_size = i_core_req_size;
+            v_mem_resp_ready = i_core_resp_ready;
+            if ((i_core_req_valid && i_mem_req_ready) == 1) {
+                v.state = WaitRespLast;
+            }
         } else {
             // MMU enabled: check TLB
-            v_fetch_req_ready = 1;
-            if (i_fetch_addr_valid.read() == 1) {
+            v_core_req_ready = 1;
+            if (i_core_req_valid.read() == 1) {
                 v.state = CheckTlb;
-                v.req_x = 1;
+                v.req_x = v_core_req_x;
+                v.req_r = v_core_req_r;
+                v.req_w = v_core_req_w;
+            }
+        }
+        break;
+    case WaitRespNoMmu:
+        v_core_req_ready = i_mem_req_ready;
+        v_core_resp_valid = i_mem_resp_valid;
+        vb_core_resp_addr = i_mem_resp_addr;
+        vb_core_resp_data = i_mem_resp_data;
+        v_core_resp_executable = i_mem_resp_executable;
+        v_core_resp_load_fault = i_mem_resp_load_fault;
+        v_core_resp_store_fault = i_mem_resp_store_fault;
+        v_mem_req_valid = i_core_req_valid;
+        vb_mem_req_addr = i_core_req_addr;
+        vb_mem_req_type = i_core_req_type;
+        vb_mem_req_wdata = i_core_req_wdata;
+        vb_mem_req_wstrb = i_core_req_wstrb;
+        vb_mem_req_size = i_core_req_size;
+        v_mem_resp_ready = i_core_resp_ready;
+        if ((i_mem_resp_valid && i_core_resp_ready) == 1) {
+            if (i_mmu_ena.read() == 1) {
+                // Do not accept new request because MMU state changed
+                v_core_req_ready = 0;
+                v_mem_req_valid = 0;
+            }
+            if ((v_core_req_ready == 0) || (v_mem_req_valid == 0)) {
+                v.state = Idle;
+            }
+        }
+        break;
+    case WaitRespLast:
+        v_core_req_ready = i_mem_req_ready;
+        v_core_resp_valid = i_mem_resp_valid;
+        vb_core_resp_addr = r.last_va;
+        vb_core_resp_data = i_mem_resp_data;
+        v_core_resp_executable = i_mem_resp_executable;
+        v_core_resp_load_fault = i_mem_resp_load_fault;
+        v_core_resp_store_fault = i_mem_resp_store_fault;
+        v_mem_req_valid = i_core_req_valid;
+        vb_mem_req_addr(63, 12) = r.last_pa;
+        vb_mem_req_addr(11, 0) = i_core_req_addr.read()(11, 0);
+        vb_mem_req_type = i_core_req_type;
+        vb_mem_req_wdata = i_core_req_wdata;
+        vb_mem_req_wstrb = i_core_req_wstrb;
+        vb_mem_req_size = i_core_req_size;
+        v_mem_resp_ready = i_core_resp_ready;
+        if ((i_mem_resp_valid && i_core_resp_ready) == 1) {
+            if (v_last_valid == 0) {
+                // Do not accept new request because of new VA request
+                v_core_req_ready = 0;
+                v_mem_req_valid = 0;
+            }
+            if ((v_core_req_ready == 0) || (v_mem_req_valid == 0)) {
+                v.state = Idle;
+            } else {
+                v.last_va = i_core_req_addr;
+                v.req_type = i_core_req_type;
+                v.req_wdata = i_core_req_wdata;
+                v.req_wstrb = i_core_req_wstrb;
+                v.req_size = i_core_req_size;
+                v.req_x = v_core_req_x;
+                v.req_r = v_core_req_r;
+                v.req_w = v_core_req_w;
+                if ((v_core_req_x && last_page_fault_x) || (v_core_req_r && last_page_fault_r) || (v_core_req_w && last_page_fault_w)) {
+                    // New request to the same page has not permission
+                    v.ex_page_fault = 1;
+                    v.state = AcceptCore;
+                }
             }
         }
         break;
@@ -247,8 +460,8 @@ void Mmu::comb() {
             // TLB hit
             v.tlb_hit = 1;
             v.last_pa = wb_tlb_rdata.read()(63, 12).to_uint64();
+            v.last_permission = wb_tlb_rdata.read()(7, 0).to_uint64();
             v.req_pa = t_req_pa;
-            v.pte_permission = wb_tlb_rdata.read()(7, 0).to_uint64();
         } else {
             // TLB miss
             v.tlb_level = 0x1;                             // Start page decoding
@@ -257,21 +470,26 @@ void Mmu::comb() {
         v.state = CacheReq;
         break;
     case CacheReq:
-        v_mem_addr_valid = 1;
-        vb_mem_addr = r.req_pa;
+        v_mem_req_valid = 1;
+        vb_mem_req_addr = r.req_pa;
+        vb_mem_req_type = r.req_type;
+        vb_mem_req_wdata = r.req_wdata;
+        vb_mem_req_wstrb = r.req_wstrb;
+        vb_mem_req_size = r.req_size;
         if (i_mem_req_ready.read() == 1) {
             v.state = WaitResp;
         }
         break;
     case WaitResp:
         v_mem_resp_ready = 1;
-        if (i_mem_data_valid.read() == 1) {
-            v.resp_addr = i_mem_data_addr;
-            v.resp_data = i_mem_data;
-            v.ex_load_fault = i_mem_load_fault;            // Hardware error (unmapped access)
-            v.ex_mpu_executable = i_mem_executable;        // MPU executable flag
-            if ((r.tlb_hit || v_mpu_fault) == 1) {
-                v.state = AcceptFetch;
+        if (i_mem_resp_valid.read() == 1) {
+            v.resp_addr = i_mem_resp_addr;
+            v.resp_data = i_mem_resp_data;
+            v.resp_executable = i_mem_resp_executable;     // MPU executable flag
+            v.resp_load_fault = i_mem_resp_load_fault;     // Hardware error Load (unmapped access)
+            v.resp_store_fault = i_mem_resp_store_fault;   // Hardware error Store/AMO (unmapped access)
+            if ((r.tlb_hit || i_mem_resp_load_fault || i_mem_resp_store_fault) == 1) {
+                v.state = AcceptCore;
             } else {
                 v.state = HandleResp;
             }
@@ -281,8 +499,8 @@ void Mmu::comb() {
         if ((r.resp_data.read()[PTE_V] == 0) || (((!r.resp_data.read()[PTE_R]) && r.resp_data.read()[PTE_W]) == 1)) {
             // PTE is invalid
             v.ex_page_fault = 1;
-            v.state = AcceptFetch;
-        } else if ((r.resp_data.read()[PTE_R] || r.resp_data.read()[PTE_X]) == 0) {
+            v.state = AcceptCore;
+        } else if ((r.resp_data.read()[PTE_R] || r.resp_data.read()[PTE_W] || r.resp_data.read()[PTE_X]) == 0) {
             // PTE is a apointer to the next level
             v.state = CacheReq;
             v.tlb_level = (r.tlb_level.read() << 1);
@@ -295,21 +513,27 @@ void Mmu::comb() {
             } else {
                 // It was the last level
                 v.ex_page_fault = 1;
-                v.state = AcceptFetch;
+                v.state = AcceptCore;
             }
         } else {
             // PTE is a leaf
-            if ((r.req_x.read() == 1) && (r.resp_data.read()[PTE_X] == 0)) {
-                v.state = AcceptFetch;
+            if (r.resp_data.read()[PTE_A] == 0) {
+                v.state = AcceptCore;
                 v.ex_page_fault = 1;
-            } else if ((r.resp_data.read()[PTE_A] == 0) || (r.req_w && (!r.resp_data.read()[PTE_D]))) {
-                // Implement option 1: raise a page-fault instead of (2) memory update with the new A,D-bits
-                v.state = AcceptFetch;
+            } else if ((r.req_x.read() == 1) && (r.resp_data.read()[PTE_X] == 0)) {
+                v.state = AcceptCore;
+                v.ex_page_fault = 1;
+            } else if ((r.req_r.read() == 1) && (r.resp_data.read()[PTE_R] == 0)) {
+                v.state = AcceptCore;
+                v.ex_page_fault = 1;
+            } else if ((r.req_w.read() == 1) && ((r.resp_data.read()[PTE_W] == 0) || (r.resp_data.read()[PTE_D] == 0))) {
+                v.state = AcceptCore;
                 v.ex_page_fault = 1;
             } else {
                 v.state = UpdateTlb;
             }
             v.last_pa = vb_pte_base_va;
+            v.last_permission = r.resp_data.read()(7, 0);
             v.req_pa = (vb_pte_base_va, r.last_va.read()(11, 0));
             v.tlb_wdata = t_tlb_wdata;
         }
@@ -321,13 +545,14 @@ void Mmu::comb() {
         v.state = CacheReq;                                // Read data by physical address
         v.tlb_hit = 1;
         break;
-    case AcceptFetch:
-        v_fetch_data_valid = 1;
-        vb_fetch_data_addr = r.last_va;
-        vb_fetch_data = r.resp_data;
-        v_fetch_load_fault = r.ex_load_fault;
-        v_fetch_executable = r.ex_mpu_executable;
-        if (i_fetch_resp_ready.read() == 1) {
+    case AcceptCore:
+        v_core_resp_valid = 1;
+        vb_core_resp_addr = r.last_va;
+        vb_core_resp_data = r.resp_data;
+        v_core_resp_executable = r.resp_executable;
+        v_core_resp_load_fault = r.resp_load_fault;
+        v_core_resp_store_fault = r.resp_store_fault;
+        if (i_core_resp_ready.read() == 1) {
             v.state = Idle;
             if (r.ex_page_fault.read() == 1) {
                 v.last_va = ~0ull;
@@ -351,10 +576,14 @@ void Mmu::comb() {
         break;
     }
 
-    if (i_flush_pipeline.read() == 1) {
+    if (i_fence.read() == 1) {
         // Clear pipeline stage
-        v.tlb_flush_cnt = ~0ull;
-        v.tlb_flush_adr = 0;
+        if (i_fence_addr.read().or_reduce() == 0) {
+            v.tlb_flush_cnt = ~0ull;
+        } else {
+            v.tlb_flush_cnt = 1;
+        }
+        v.tlb_flush_adr = i_fence_addr;
     }
 
     if (!async_reset_ && i_nrst.read() == 0) {
@@ -364,15 +593,22 @@ void Mmu::comb() {
     w_tlb_wena = v_tlb_wena;
     wb_tlb_adr = vb_tlb_adr;
     wb_tlb_wdata = r.tlb_wdata;
-    o_fetch_req_ready = v_fetch_req_ready;
-    o_fetch_data_valid = v_fetch_data_valid;
-    o_fetch_data_addr = vb_fetch_data_addr;
-    o_fetch_data = vb_fetch_data;
-    o_fetch_load_fault = v_fetch_load_fault;
-    o_fetch_executable = v_fetch_executable;
-    o_fetch_page_fault = r.ex_page_fault;
-    o_mem_addr_valid = v_mem_addr_valid;
-    o_mem_addr = vb_mem_addr;
+    o_core_req_ready = v_core_req_ready;
+    o_core_resp_valid = v_core_resp_valid;
+    o_core_resp_addr = vb_core_resp_addr;
+    o_core_resp_data = vb_core_resp_data;
+    o_core_resp_executable = v_core_resp_executable;
+    o_core_resp_load_fault = v_core_resp_load_fault;
+    o_core_resp_store_fault = v_core_resp_store_fault;
+    o_core_resp_page_x_fault = (r.ex_page_fault && r.req_x);
+    o_core_resp_page_r_fault = (r.ex_page_fault && r.req_r);
+    o_core_resp_page_w_fault = (r.ex_page_fault && r.req_w);
+    o_mem_req_valid = v_mem_req_valid;
+    o_mem_req_addr = vb_mem_req_addr;
+    o_mem_req_type = vb_mem_req_type;
+    o_mem_req_wdata = vb_mem_req_wdata;
+    o_mem_req_wstrb = vb_mem_req_wstrb;
+    o_mem_req_size = vb_mem_req_size;
     o_mem_resp_ready = v_mem_resp_ready;
 }
 

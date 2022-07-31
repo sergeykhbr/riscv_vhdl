@@ -31,7 +31,7 @@ SC_MODULE(FpuTop) {
     sc_in<bool> i_clk;
     sc_in<bool> i_nrst;
     sc_in<bool> i_ena;
-    sc_in<sc_bv<Instr_FPU_Total>> i_ivec;
+    sc_in<sc_uint<Instr_FPU_Total>> i_ivec;
     sc_in<sc_uint<64>> i_a;        // Operand 1
     sc_in<sc_uint<64>> i_b;        // Operand 2
     sc_out<sc_uint<64>> o_res;     // Result

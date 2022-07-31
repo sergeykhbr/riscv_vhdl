@@ -48,8 +48,8 @@ SC_MODULE(InstrExecute) {
     sc_in<bool> i_compressed;                               // C-extension (2-bytes length)
     sc_in<bool> i_amo;                                      // A-extension (atomic)
     sc_in<bool> i_f64;                                      // D-extension (FPU)
-    sc_in<sc_bv<ISA_Total>> i_isa_type;                   // Type of the instruction's structure (ISA spec.)
-    sc_in<sc_bv<Instr_Total>> i_ivec;                  // One pulse per supported instruction.
+    sc_in<sc_uint<ISA_Total>> i_isa_type;                   // Type of the instruction's structure (ISA spec.)
+    sc_in<sc_biguint<Instr_Total>> i_ivec;                  // One pulse per supported instruction.
     sc_in<bool> i_stack_overflow;                           // exception stack overflow
     sc_in<bool> i_stack_underflow;                          // exception stack overflow
     sc_in<bool> i_unsup_exception;                          // Unsupported instruction exception
@@ -182,8 +182,8 @@ SC_MODULE(InstrExecute) {
         bool rv32;
         bool compressed;
         bool f64;
-        sc_bv<Instr_Total> ivec;
-        sc_bv<ISA_Total> isa_type;
+        sc_biguint<Instr_Total> ivec;
+        sc_uint<ISA_Total> isa_type;
     };
 
 
@@ -199,8 +199,8 @@ SC_MODULE(InstrExecute) {
         sc_signal<sc_uint<6>> waddr;
         sc_signal<sc_uint<RISCV_ARCH>> rdata1;
         sc_signal<sc_uint<RISCV_ARCH>> rdata2;
-        sc_signal<sc_bv<Instr_Total>> ivec;
-        sc_signal<sc_bv<ISA_Total>> isa_type;
+        sc_signal<sc_biguint<Instr_Total>> ivec;
+        sc_signal<sc_uint<ISA_Total>> isa_type;
         sc_signal<sc_uint<RISCV_ARCH>> imm;
         sc_signal<sc_uint<32>> instr;
         sc_signal<sc_biguint<(CFG_REG_TAG_WIDTH * REGS_TOTAL)>> tagcnt;// N-bits tag per register (expected)
@@ -248,34 +248,34 @@ SC_MODULE(InstrExecute) {
         iv.state = State_Idle;
         iv.csrstate = CsrState_Idle;
         iv.amostate = AmoState_WaitMemAccess;
-        iv.pc = 0;
+        iv.pc = 0ull;
         iv.npc = CFG_RESET_VECTOR;
-        iv.dnpc = 0;
+        iv.dnpc = 0ull;
         iv.radr1 = 0;
         iv.radr2 = 0;
         iv.waddr = 0;
-        iv.rdata1 = 0;
-        iv.rdata2 = 0;
-        iv.ivec = 0;
+        iv.rdata1 = 0ull;
+        iv.rdata2 = 0ull;
+        iv.ivec = 0ull;
         iv.isa_type = 0;
-        iv.imm = 0;
+        iv.imm = 0ull;
         iv.instr = 0;
-        iv.tagcnt = 0;
+        iv.tagcnt = 0ull;
         iv.reg_write = 0;
         iv.reg_waddr = 0;
         iv.reg_wtag = 0;
         iv.csr_req_rmw = 0;
         iv.csr_req_type = 0;
         iv.csr_req_addr = 0;
-        iv.csr_req_data = 0;
+        iv.csr_req_data = 0ull;
         iv.memop_valid = 0;
         iv.memop_debug = 0;
         iv.memop_halted = 0;
         iv.memop_type = 0;
         iv.memop_sign_ext = 0;
         iv.memop_size = 0;
-        iv.memop_memaddr = 0;
-        iv.memop_wdata = 0;
+        iv.memop_memaddr = 0ull;
+        iv.memop_wdata = 0ull;
         iv.unsigned_op = 0;
         iv.rv32 = 0;
         iv.compressed = 0;
@@ -286,10 +286,10 @@ SC_MODULE(InstrExecute) {
         iv.mem_ex_store_fault = 0;
         iv.mem_ex_mpu_store = 0;
         iv.mem_ex_mpu_load = 0;
-        iv.mem_ex_addr = 0;
-        iv.res_npc = 0;
-        iv.res_ra = 0;
-        iv.res_csr = 0;
+        iv.mem_ex_addr = 0ull;
+        iv.res_npc = 0ull;
+        iv.res_ra = 0ull;
+        iv.res_csr = 0ull;
         iv.select = 0;
         iv.valid = 0;
         iv.call = 0;
@@ -297,7 +297,7 @@ SC_MODULE(InstrExecute) {
         iv.jmp = 0;
         iv.flushd = 0;
         iv.flushi = 0;
-        iv.flushi_addr = 0;
+        iv.flushi_addr = 0ull;
         iv.stepdone = 0;
     }
 
@@ -307,7 +307,7 @@ SC_MODULE(InstrExecute) {
     sc_signal<sc_uint<4>> wb_shifter_mode;
     sc_signal<bool> w_arith_residual_high;
     sc_signal<bool> w_mul_hsu;
-    sc_signal<sc_bv<Instr_FPU_Total>> wb_fpu_vec;
+    sc_signal<sc_uint<Instr_FPU_Total>> wb_fpu_vec;
     sc_signal<bool> w_ex_fpu_invalidop;                     // FPU Exception: invalid operation
     sc_signal<bool> w_ex_fpu_divbyzero;                     // FPU Exception: divide by zero
     sc_signal<bool> w_ex_fpu_overflow;                      // FPU Exception: overflow

@@ -49,8 +49,8 @@ SC_MODULE(InstrDecoder) {
     sc_out<bool> o_amo;                                     // A-type instruction
     sc_out<bool> o_f64;                                     // 64-bits FPU (D-extension)
     sc_out<bool> o_unsigned_op;                             // Unsigned operands
-    sc_out<sc_bv<ISA_Total>> o_isa_type;                  // Instruction format accordingly with ISA
-    sc_out<sc_bv<Instr_Total>> o_instr_vec;            // One bit per decoded instruction bus
+    sc_out<sc_uint<ISA_Total>> o_isa_type;                  // Instruction format accordingly with ISA
+    sc_out<sc_biguint<Instr_Total>> o_instr_vec;            // One bit per decoded instruction bus
     sc_out<bool> o_exception;                               // Exception detected
     sc_out<bool> o_instr_load_fault;                        // fault instruction's address
     sc_out<bool> o_instr_executable;                        // MPU flag
@@ -77,8 +77,8 @@ SC_MODULE(InstrDecoder) {
 
     struct DecoderDataType {
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
-        sc_signal<sc_bv<ISA_Total>> isa_type;
-        sc_signal<sc_bv<Instr_Total>> instr_vec;
+        sc_signal<sc_uint<ISA_Total>> isa_type;
+        sc_signal<sc_biguint<Instr_Total>> instr_vec;
         sc_signal<sc_uint<32>> instr;
         sc_signal<bool> memop_store;
         sc_signal<bool> memop_load;

@@ -27,6 +27,9 @@ MmuTlb::MmuTlb(sc_module_name name)
     i_wdata("i_wdata"),
     o_rdata("o_rdata") {
 
+    for (int i = 0; i < CFG_MMU_PTE_DWIDTH; i++) {
+        mem[i] = 0;
+    }
 
     for (int i = 0; i < CFG_MMU_PTE_DBYTES; i++) {
         char tstr[256];
@@ -40,6 +43,7 @@ MmuTlb::MmuTlb(sc_module_name name)
         mem[i]->o_rdata(wb_mem_data[i].rdata);
 
     }
+
 
     SC_METHOD(comb);
     sensitive << i_adr;
@@ -63,6 +67,8 @@ void MmuTlb::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
 void MmuTlb::comb() {
     sc_biguint<CFG_MMU_PTE_DWIDTH> vb_rdata;
+
+    vb_rdata = 0;
 
     for (int i = 0; i < CFG_MMU_PTE_DBYTES; i++) {
         wb_mem_data[i].wdata = i_wdata.read()(((8 * (i + 1)) - 1), (8 * i)).to_uint64();

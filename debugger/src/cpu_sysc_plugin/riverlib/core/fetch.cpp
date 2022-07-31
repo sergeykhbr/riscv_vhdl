@@ -120,7 +120,7 @@ void InstrFetch::comb() {
     v = r;
 
     switch (r.state.read()) {
-    case Idle :
+    case Idle:
         v.req_valid = 0;
         v.resp_ready = 0;
         v.progbuf_ena = 0;
@@ -137,7 +137,7 @@ void InstrFetch::comb() {
             v.req_valid = 1;
         }
         break;
-    case WaitReqAccept :
+    case WaitReqAccept:
         if (i_mem_req_ready) {
             v.req_valid = (i_bp_valid && (!i_progbuf_ena));
             v.req_addr = i_bp_pc;
@@ -149,7 +149,7 @@ void InstrFetch::comb() {
             v.req_addr = i_bp_pc;
         }
         break;
-    case WaitResp :
+    case WaitResp:
         if (i_mem_data_valid.read() == 1) {
             v.pc = i_mem_data_addr;
             v.instr = i_mem_data;

@@ -40,6 +40,10 @@ BranchPredictor::BranchPredictor(sc_module_name name,
     i_d_pc("i_d_pc") {
 
     async_reset_ = async_reset;
+    btb = 0;
+    for (int i = 0; i < 2; i++) {
+        predec[i] = 0;
+    }
 
     for (int i = 0; i < 2; i++) {
         char tstr[256];
@@ -66,6 +70,8 @@ BranchPredictor::BranchPredictor(sc_module_name name,
     btb->i_bp_pc(wb_start_pc);
     btb->o_bp_npc(wb_npc);
     btb->o_bp_exec(wb_bp_exec);
+
+
 
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -99,9 +105,13 @@ BranchPredictor::BranchPredictor(sc_module_name name,
 }
 
 BranchPredictor::~BranchPredictor() {
-    delete btb;
+    if (btb) {
+        delete btb;
+    }
     for (int i = 0; i < 2; i++) {
-        delete predec[i];
+        if (predec[i]) {
+            delete predec[i];
+        }
     }
 }
 
@@ -123,9 +133,13 @@ void BranchPredictor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_d_pc, i_d_pc.name());
     }
 
-    btb->generateVCD(i_vcd, o_vcd);
+    if (btb) {
+        btb->generateVCD(i_vcd, o_vcd);
+    }
     for (int i = 0; i < 2; i++) {
-        predec[i]->generateVCD(i_vcd, o_vcd);
+        if (predec) {
+            predec[i]->generateVCD(i_vcd, o_vcd);
+        }
     }
 }
 
@@ -138,6 +152,19 @@ void BranchPredictor::comb() {
     sc_uint<CFG_CPU_ADDR_BITS> vb_btb_we_npc;
     sc_uint<4> vb_hit;
     sc_uint<2> vb_ignore_pd;
+
+    for (int i = 0; i < CFG_BP_DEPTH; i++) {
+        vb_addr[i] = 0;
+    }
+    for (int i = 0; i < 4; i++) {
+        vb_piped[i] = 0;
+    }
+    vb_fetch_npc = 0;
+    v_btb_we = 0;
+    vb_btb_we_pc = 0;
+    vb_btb_we_npc = 0;
+    vb_hit = 0;
+    vb_ignore_pd = 0;
 
     // Transform address into 2-dimesional array for convinience
     for (int i = 0; i < CFG_BP_DEPTH; i++) {
@@ -181,7 +208,7 @@ void BranchPredictor::comb() {
     }
 
     v_btb_we = (i_e_jmp || wb_pd[0].jmp || wb_pd[1].jmp);
-    if (i_e_jmp == 1) {
+    if (i_e_jmp.read() == 1) {
         vb_btb_we_pc = i_e_pc;
         vb_btb_we_npc = i_e_npc;
     } else if (wb_pd[0].jmp) {

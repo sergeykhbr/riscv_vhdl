@@ -59,6 +59,7 @@ MemAccess::MemAccess(sc_module_name name,
     o_debug_valid("o_debug_valid") {
 
     async_reset_ = async_reset;
+    queue0 = 0;
 
     queue0 = new Queue<CFG_MEMACCESS_QUEUE_DEPTH,
                        QUEUE_WIDTH>("queue0", async_reset);
@@ -70,6 +71,7 @@ MemAccess::MemAccess(sc_module_name name,
     queue0->o_rdata(queue_data_o);
     queue0->o_full(queue_full);
     queue0->o_nempty(queue_nempty);
+
 
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -120,7 +122,9 @@ MemAccess::MemAccess(sc_module_name name,
 }
 
 MemAccess::~MemAccess() {
-    delete queue0;
+    if (queue0) {
+        delete queue0;
+    }
 }
 
 void MemAccess::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {

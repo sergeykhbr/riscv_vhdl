@@ -112,6 +112,12 @@ InstrExecute::InstrExecute(sc_module_name name,
 
     async_reset_ = async_reset;
     fpu_ena_ = fpu_ena;
+    alu0 = 0;
+    addsub0 = 0;
+    mul0 = 0;
+    div0 = 0;
+    sh0 = 0;
+    fpu0 = 0;
 
     alu0 = new AluLogic("alu0", async_reset);
     alu0->i_clk(i_clk);
@@ -121,6 +127,7 @@ InstrExecute::InstrExecute(sc_module_name name,
     alu0->i_a2(wb_rdata2);
     alu0->o_res(wb_select[Res_Alu].res);
 
+
     addsub0 = new IntAddSub("addsub0", async_reset);
     addsub0->i_clk(i_clk);
     addsub0->i_nrst(i_nrst);
@@ -128,6 +135,7 @@ InstrExecute::InstrExecute(sc_module_name name,
     addsub0->i_a1(wb_rdata1);
     addsub0->i_a2(wb_rdata2);
     addsub0->o_res(wb_select[Res_AddSub].res);
+
 
     mul0 = new IntMul("mul0", async_reset);
     mul0->i_clk(i_clk);
@@ -142,6 +150,7 @@ InstrExecute::InstrExecute(sc_module_name name,
     mul0->o_res(wb_select[Res_IMul].res);
     mul0->o_valid(wb_select[Res_IMul].valid);
 
+
     div0 = new IntDiv("div0", async_reset);
     div0->i_clk(i_clk);
     div0->i_nrst(i_nrst);
@@ -154,6 +163,7 @@ InstrExecute::InstrExecute(sc_module_name name,
     div0->o_res(wb_select[Res_IDiv].res);
     div0->o_valid(wb_select[Res_IDiv].valid);
 
+
     sh0 = new Shifter("sh0", async_reset);
     sh0->i_clk(i_clk);
     sh0->i_nrst(i_nrst);
@@ -161,6 +171,7 @@ InstrExecute::InstrExecute(sc_module_name name,
     sh0->i_a1(wb_shifter_a1);
     sh0->i_a2(wb_shifter_a2);
     sh0->o_res(wb_select[Res_Shifter].res);
+
 
     if (fpu_ena_) {
         fpu0 = new FpuTop("fpu0", async_reset);
@@ -185,7 +196,9 @@ InstrExecute::InstrExecute(sc_module_name name,
         w_ex_fpu_overflow = 0;
         w_ex_fpu_underflow = 0;
         w_ex_fpu_inexact = 0;
+
     }
+
 
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -328,12 +341,24 @@ InstrExecute::InstrExecute(sc_module_name name,
 }
 
 InstrExecute::~InstrExecute() {
-    delete alu0;
-    delete addsub0;
-    delete mul0;
-    delete div0;
-    delete sh0;
-    delete fpu0;
+    if (alu0) {
+        delete alu0;
+    }
+    if (addsub0) {
+        delete addsub0;
+    }
+    if (mul0) {
+        delete mul0;
+    }
+    if (div0) {
+        delete div0;
+    }
+    if (sh0) {
+        delete sh0;
+    }
+    if (fpu0) {
+        delete fpu0;
+    }
 }
 
 void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
@@ -479,12 +504,24 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.stepdone, pn + ".r_stepdone");
     }
 
-    alu0->generateVCD(i_vcd, o_vcd);
-    addsub0->generateVCD(i_vcd, o_vcd);
-    mul0->generateVCD(i_vcd, o_vcd);
-    div0->generateVCD(i_vcd, o_vcd);
-    sh0->generateVCD(i_vcd, o_vcd);
-    fpu0->generateVCD(i_vcd, o_vcd);
+    if (alu0) {
+        alu0->generateVCD(i_vcd, o_vcd);
+    }
+    if (addsub0) {
+        addsub0->generateVCD(i_vcd, o_vcd);
+    }
+    if (mul0) {
+        mul0->generateVCD(i_vcd, o_vcd);
+    }
+    if (div0) {
+        div0->generateVCD(i_vcd, o_vcd);
+    }
+    if (sh0) {
+        sh0->generateVCD(i_vcd, o_vcd);
+    }
+    if (fpu0) {
+        fpu0->generateVCD(i_vcd, o_vcd);
+    }
 }
 
 void InstrExecute::comb() {
@@ -508,12 +545,12 @@ void InstrExecute::comb() {
     bool v_call;
     bool v_ret;
     bool v_pc_branch;
-    bool v_eq;
-    bool v_ge;
-    bool v_geu;
-    bool v_lt;
-    bool v_ltu;
-    bool v_neq;
+    bool v_eq;                                              // equal
+    bool v_ge;                                              // greater/equal signed
+    bool v_geu;                                             // greater/equal unsigned
+    bool v_lt;                                              // less signed
+    bool v_ltu;                                             // less unsigned
+    bool v_neq;                                             // not equal
     sc_uint<RISCV_ARCH> vb_rdata1;
     sc_uint<RISCV_ARCH> vb_rdata2;
     bool v_check_tag1;
@@ -528,7 +565,7 @@ void InstrExecute::comb() {
     bool v_instr_misaligned;
     bool v_store_misaligned;
     bool v_load_misaligned;
-    bool v_debug_misaligned;
+    bool v_debug_misaligned;                                // from the debug interface
     bool v_csr_cmd_ena;
     bool v_mem_ex;
     sc_uint<12> vb_csr_cmd_addr;

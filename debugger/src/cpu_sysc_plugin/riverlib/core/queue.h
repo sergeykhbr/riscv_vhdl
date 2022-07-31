@@ -39,6 +39,7 @@ SC_MODULE(Queue) {
     Queue(sc_module_name name,
           bool async_reset);
 
+
  private:
     bool async_reset_;
 

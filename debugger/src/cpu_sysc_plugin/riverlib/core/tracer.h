@@ -1,23 +1,19 @@
-/*
- *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- * @brief      Stack trace buffer on hardware level.
- */
-
-#ifndef __DEBUGGER_RIVERLIB_TRACER_H__
-#define __DEBUGGER_RIVERLIB_TRACER_H__
+// 
+//  Copyright 2022 Sergey Khabarov, sergeykhbr@gmail.com
+// 
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+// 
+//      http://www.apache.org/licenses/LICENSE-2.0
+// 
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+// 
+#pragma once
 
 #include <systemc.h>
 #include <string>
@@ -26,8 +22,9 @@
 namespace debugger {
 
 SC_MODULE(Tracer) {
-    sc_in<bool> i_clk;
-    sc_in<bool> i_nrst;
+ public:
+    sc_in<bool> i_clk;                                      // CPU clock
+    sc_in<bool> i_nrst;                                     // Reset: active LOW
     sc_in<sc_uint<64>> i_dbg_executed_cnt;
     sc_in<bool> i_e_valid;
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_pc;
@@ -41,8 +38,8 @@ SC_MODULE(Tracer) {
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_memop_addr;
     sc_in<sc_uint<RISCV_ARCH>> i_e_memop_wdata;
     sc_in<bool> i_e_flushd;
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_m_pc;        // executed memory/flush request only
-    sc_in<bool> i_m_valid;                           // memory/flush operation completed
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_m_pc;               // executed memory/flush request only
+    sc_in<bool> i_m_valid;                                  // memory/flush operation completed
     sc_in<bool> i_m_memop_ready;
     sc_in<bool> i_m_wena;
     sc_in<sc_uint<6>> i_m_waddr;
@@ -54,56 +51,65 @@ SC_MODULE(Tracer) {
 
     SC_HAS_PROCESS(Tracer);
 
-    Tracer(sc_module_name name_, bool async_reset, const char *trace_file);
+    Tracer(sc_module_name name,
+           bool async_reset,
+           std::string trace_file);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
+    bool async_reset_;
+    std::string trace_file_;
+
+    static const int TRACE_TBL_ABITS = 6;
     static const int TRACE_TBL_SZ = 64;
 
+    std::string TaskDisassembler(sc_uint<32> instr);
+    std::string TraceOutput(sc_uint<TRACE_TBL_ABITS> rcnt);
+
     struct MemopActionType {
-        bool store;      // 0=load;1=store
-        int size;
-        uint64_t memaddr;
-        uint64_t data;
-        uint32_t regaddr;   // writeback address
-        bool complete;
-        bool sc_release;
-        bool ignored;
+        sc_signal<bool> store;                              // 0=load;1=store
+        sc_signal<sc_uint<2>> size;
+        sc_signal<sc_uint<64>> mask;
+        sc_signal<sc_uint<64>> memaddr;
+        sc_signal<sc_uint<64>> data;
+        sc_signal<sc_uint<6>> regaddr;                      // writeback address
+        sc_signal<bool> complete;
+        sc_signal<bool> sc_release;
+        sc_signal<bool> ignored;
     };
 
     struct RegActionType {
-        uint32_t waddr;
-        uint64_t wres;
+        sc_signal<sc_uint<6>> waddr;
+        sc_signal<sc_uint<64>> wres;
     };
 
     struct TraceStepType {
-        uint64_t exec_cnt;
-        uint64_t pc;
-        uint32_t instr;
-        int regactioncnt;
-        int memactioncnt;
+        sc_signal<sc_uint<64>> exec_cnt;
+        sc_signal<sc_uint<64>> pc;
+        sc_signal<sc_uint<32>> instr;
+        sc_signal<sc_uint<32>> regactioncnt;
+        sc_signal<sc_uint<32>> memactioncnt;
         RegActionType regaction[TRACE_TBL_SZ];
         MemopActionType memaction[TRACE_TBL_SZ];
-        bool completed;
+        sc_signal<bool> completed;
     };
 
-    void trace_output(TraceStepType *tr);
-    void task_disassembler(uint32_t instr);
 
-    TraceStepType trace_tbl_[TRACE_TBL_SZ];
-    int tr_wcnt_;
-    int tr_rcnt_;
-    int tr_total_;
-    int tr_opened_;
+    struct Tracer_registers {
+        TraceStepType trace_tbl[TRACE_TBL_SZ];
+        sc_signal<sc_uint<TRACE_TBL_ABITS>> tr_wcnt;
+        sc_signal<sc_uint<TRACE_TBL_ABITS>> tr_rcnt;
+        sc_signal<sc_uint<TRACE_TBL_ABITS>> tr_total;
+        sc_signal<sc_uint<TRACE_TBL_ABITS>> tr_opened;
+    } v, r;
 
-    FILE *fl_;
-    char disasm[1024];
+    std::string outstr;
+    std::string tracestr;
+    FILE *fl;
 
-    bool async_reset_;
+
 };
-
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_RIVERLIB_TRACER_H__
