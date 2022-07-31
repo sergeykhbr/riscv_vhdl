@@ -79,8 +79,22 @@ void copy_image() {
     if (qspi2 != ~0ull) {
         // Copy BSL from SD-card
     } else if (pnp->fwid == 0) {
-        print_uart("Coping . .FWIMAGE\r\n", 19);
-        memcpy(sram, fwrom, FW_IMAGE_SIZE_BYTES);
+        // Check if SRAM already initialized in RTL simulation, then skip copying
+        uint64_t *dst = (uint64_t *)sram;
+        uint64_t *src = (uint64_t *)fwrom;
+        int skip_rtl_sim = 1;
+        for (int i = 0; i < 8; i++) {
+            if (src[i] != dst[i]) {
+                skip_rtl_sim = 0;
+                break;
+            }
+        }
+        if (skip_rtl_sim) {
+            print_uart("NO.COPY. .rtl.sim\r\n", 19);
+        } else {
+            print_uart("Coping . .FWIMAGE\r\n", 19);
+            memcpy(sram, fwrom, FW_IMAGE_SIZE_BYTES);
+        }
     }
     // Write Firmware ID to avoid copy image after soft-reset.
     pnp->fwid = 0x20211123;
