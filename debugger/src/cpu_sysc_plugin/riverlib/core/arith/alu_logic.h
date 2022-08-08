@@ -47,7 +47,7 @@ SC_MODULE(AluLogic) {
     } v, r;
 
     void AluLogic_r_reset(AluLogic_registers &iv) {
-        iv.res = 0;
+        iv.res = 0ull;
     }
 
 };

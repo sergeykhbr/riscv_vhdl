@@ -42,7 +42,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'bootrom0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','${REPO_PATH}/../examples/boot/linuxbuild/bin/bootimage.hex'],
+                ['InitFile','${REPO_PATH}/../examples/bootrom_tests/linuxbuild/bin/bootrom_tests.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x10000, 'Rom+reserved from 0x0001_0000 upto 0x0100_0000 on FU740'],
                 ['Length',0x10000]
@@ -58,8 +58,8 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'sram0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','${REPO_PATH}/../examples/loader1.bin'],
-                ['BinaryFile',true],
+                ['InitFile','${REPO_PATH}/../examples/riscv-tests/makefiles/bin/riscv-tests.hex'],
+                ['BinaryFile',false],
                 ['ReadOnly',false],
                 ['BaseAddress',0x08000000, 'L2 Cache controller range on FU740 used by bootloader'],
                 ['Length',0x200000, '2 MB alloacted on FU740. More than 1 MB need for U-boot']

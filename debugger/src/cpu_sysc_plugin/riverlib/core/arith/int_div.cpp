@@ -122,8 +122,12 @@ void IntDiv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.a2_dbg, pn + ".r_a2_dbg");
     }
 
-    stage0->generateVCD(i_vcd, o_vcd);
-    stage1->generateVCD(i_vcd, o_vcd);
+    if (stage0) {
+        stage0->generateVCD(i_vcd, o_vcd);
+    }
+    if (stage1) {
+        stage1->generateVCD(i_vcd, o_vcd);
+    }
 }
 
 void IntDiv::comb() {
@@ -133,9 +137,9 @@ void IntDiv::comb() {
     sc_uint<64> vb_a2;
     sc_uint<64> vb_rem;
     sc_uint<64> vb_div;
-    bool v_a1_m0;
-    bool v_a2_m1;
-    sc_uint<1> v_ena;
+    bool v_a1_m0;                                           // a1 == -0ll
+    bool v_a2_m1;                                           // a2 == -1ll
+    sc_uint<1> v_ena;                                       // 1
     sc_biguint<120> t_divisor;
 
     v_invert64 = 0;
@@ -281,7 +285,7 @@ void IntDiv::comb() {
         v.divisor_i = (0, r.divisor_i.read()(119, 8));
         v.bits_i = (r.bits_i, wb_bits0_o, wb_bits1_o);
     }
-    wb_divisor0_i = (r.divisor_i << 4);
+    wb_divisor0_i = (r.divisor_i.read() << 4);
     wb_divisor1_i = (0, r.divisor_i);
 
     if (!async_reset_ && i_nrst.read() == 0) {

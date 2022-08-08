@@ -47,7 +47,7 @@ SC_MODULE(IntAddSub) {
     } v, r;
 
     void IntAddSub_r_reset(IntAddSub_registers &iv) {
-        iv.res = 0;
+        iv.res = 0ull;
     }
 
 };
