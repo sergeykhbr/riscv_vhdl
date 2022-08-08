@@ -1,26 +1,27 @@
-/*
- *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+// 
+//  Copyright 2022 Sergey Khabarov, sergeykhbr@gmail.com
+// 
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+// 
+//      http://www.apache.org/licenses/LICENSE-2.0
+// 
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+// 
 
-#include "api_core.h"
 #include "fadd_d.h"
+#include "api_core.h"
 
 namespace debugger {
 
-DoubleAdd::DoubleAdd(sc_module_name name_, bool async_reset) :
-    sc_module(name_),
+DoubleAdd::DoubleAdd(sc_module_name name,
+                     bool async_reset)
+    : sc_module(name),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
     i_ena("i_ena"),
@@ -38,6 +39,7 @@ DoubleAdd::DoubleAdd(sc_module_name name_, bool async_reset) :
     o_overflow("o_overflow"),
     o_valid("o_valid"),
     o_busy("o_busy") {
+
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
@@ -85,9 +87,10 @@ DoubleAdd::DoubleAdd(sc_module_name name_, bool async_reset) :
     SC_METHOD(registers);
     sensitive << i_nrst;
     sensitive << i_clk.pos();
-};
+}
 
 void DoubleAdd::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+    std::string pn(name());
     if (o_vcd) {
         sc_trace(o_vcd, i_ena, i_ena.name());
         sc_trace(o_vcd, i_add, i_add.name());
@@ -100,27 +103,45 @@ void DoubleAdd::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_a, i_a.name());
         sc_trace(o_vcd, i_b, i_b.name());
         sc_trace(o_vcd, o_res, o_res.name());
+        sc_trace(o_vcd, o_illegal_op, o_illegal_op.name());
+        sc_trace(o_vcd, o_overflow, o_overflow.name());
         sc_trace(o_vcd, o_valid, o_valid.name());
         sc_trace(o_vcd, o_busy, o_busy.name());
-
-        std::string pn(name());
+        sc_trace(o_vcd, r.busy, pn + ".r_busy");
         sc_trace(o_vcd, r.ena, pn + ".r_ena");
+        sc_trace(o_vcd, r.a, pn + ".r_a");
+        sc_trace(o_vcd, r.b, pn + ".r_b");
         sc_trace(o_vcd, r.result, pn + ".r_result");
+        sc_trace(o_vcd, r.illegal_op, pn + ".r_illegal_op");
+        sc_trace(o_vcd, r.overflow, pn + ".r_overflow");
+        sc_trace(o_vcd, r.add, pn + ".r_add");
+        sc_trace(o_vcd, r.sub, pn + ".r_sub");
+        sc_trace(o_vcd, r.eq, pn + ".r_eq");
+        sc_trace(o_vcd, r.lt, pn + ".r_lt");
+        sc_trace(o_vcd, r.le, pn + ".r_le");
+        sc_trace(o_vcd, r.max, pn + ".r_max");
+        sc_trace(o_vcd, r.min, pn + ".r_min");
+        sc_trace(o_vcd, r.flMore, pn + ".r_flMore");
+        sc_trace(o_vcd, r.flEqual, pn + ".r_flEqual");
+        sc_trace(o_vcd, r.flLess, pn + ".r_flLess");
         sc_trace(o_vcd, r.preShift, pn + ".r_preShift");
         sc_trace(o_vcd, r.signOpMore, pn + ".r_signOpMore");
         sc_trace(o_vcd, r.expMore, pn + ".r_expMore");
         sc_trace(o_vcd, r.mantMore, pn + ".r_mantMore");
         sc_trace(o_vcd, r.mantLess, pn + ".r_mantLess");
-        sc_trace(o_vcd, r.lshift, pn + ".r_lshift");
+        sc_trace(o_vcd, r.mantLessScale, pn + ".r_mantLessScale");
         sc_trace(o_vcd, r.mantSum, pn + ".r_mantSum");
+        sc_trace(o_vcd, r.lshift, pn + ".r_lshift");
         sc_trace(o_vcd, r.mantAlign, pn + ".r_mantAlign");
-        sc_trace(o_vcd, r.mantPostScale, pn + ".r_mantPostScale");
         sc_trace(o_vcd, r.expPostScale, pn + ".r_expPostScale");
         sc_trace(o_vcd, r.expPostScaleInv, pn + ".r_expPostScaleInv");
+        sc_trace(o_vcd, r.mantPostScale, pn + ".r_mantPostScale");
     }
+
 }
 
 void DoubleAdd::comb() {
+    sc_uint<1> v_ena;
     sc_uint<1> signOp;
     sc_uint<1> signA;
     sc_uint<1> signB;
@@ -144,6 +165,9 @@ void DoubleAdd::comb() {
     sc_biguint<105> vb_mantAlign;
     sc_uint<12> vb_expPostScale;
     sc_biguint<105> vb_mantPostScale;
+    sc_biguint<105> vb_mantSumInv;
+    sc_uint<7> vb_lshift_p1;
+    sc_uint<7> vb_lshift_p2;
     sc_uint<53> mantShort;
     sc_uint<52> tmpMant05;
     bool mantOnes;
@@ -165,11 +189,60 @@ void DoubleAdd::comb() {
     sc_uint<64> resMax;
     sc_uint<64> resMin;
 
+    v_ena = 0;
+    signOp = 0;
+    signA = 0;
+    signB = 0;
+    signOpB = 0;
+    mantA = 0;
+    mantB = 0;
+    mantDif = 0;
+    expDif = 0;
+    v_flMore = 0;
+    v_flEqual = 0;
+    v_flLess = 0;
+    vb_preShift = 0;
+    v_signOpMore = 0;
+    vb_expMore = 0;
+    vb_mantMore = 0;
+    vb_mantLess = 0;
+    mantMoreScale = 0;
+    mantLessScale = 0;
+    vb_mantSum = 0;
+    vb_lshift = 0;
+    vb_mantAlign = 0;
+    vb_expPostScale = 0;
+    vb_mantPostScale = 0;
+    vb_mantSumInv = 0;
+    vb_lshift_p1 = 0;
+    vb_lshift_p2 = 0;
+    mantShort = 0;
+    tmpMant05 = 0;
+    mantOnes = 0;
+    mantEven = 0;
+    mant05 = 0;
+    rndBit = 0;
+    mantZeroA = 0;
+    mantZeroB = 0;
+    allZero = 0;
+    sumZero = 0;
+    nanA = 0;
+    nanB = 0;
+    nanAB = 0;
+    overflow = 0;
+    resAdd = 0;
+    resEQ = 0;
+    resLT = 0;
+    resLE = 0;
+    resMax = 0;
+    resMin = 0;
+
     v = r;
 
-    v.ena = (r.ena.read() << 1) | (i_ena.read() & !r.busy);
+    v_ena = (i_ena && (!r.busy));
+    v.ena = (r.ena.read()(6, 0), v_ena);
 
-    if (i_ena.read()) {
+    if (i_ena.read() == 1) {
         v.busy = 1;
         v.add = i_add;
         v.sub = i_sub;
@@ -182,60 +255,47 @@ void DoubleAdd::comb() {
         v.b = i_b;
         v.illegal_op = 0;
         v.overflow = 0;
-
-        // Just for run-rime control (not for VHDL)
-        v.a_dbg = i_a;
-        v.b_dbg = i_b;
-        v.reference_res = compute_reference(i_add.read(),
-                                            i_sub.read(),
-                                            i_eq.read(),
-                                            i_lt.read(),
-                                            i_le.read(),
-                                            i_max.read(),
-                                            i_min.read(),
-                                            i_a.read(),
-                                            i_b.read());
     }
 
-    signOp = r.sub.read() | r.le.read() | r.lt.read();
+    signOp = (r.sub || r.le || r.lt);
     signA = r.a.read()[63];
     signB = r.b.read()[63];
-    signOpB = signB ^ signOp;
+    signOpB = (signB ^ signOp);
 
     mantA(51, 0) = r.a.read()(51, 0);
     mantA[52] = 0;
-    if (r.a.read()(62, 52) != 0) {
+    if (r.a.read()(62, 52).or_reduce() == 1) {
         mantA[52] = 1;
     }
 
     mantB(51, 0) = r.b.read()(51, 0);
     mantB[52] = 0;
-    if (r.b.read()(62, 52) != 0) {
+    if (r.b.read()(62, 52).or_reduce() == 1) {
         mantB[52] = 1;
     }
 
-    if (r.a.read()(62, 52) != 0 && r.b.read()(62, 52) == 0) {
-        expDif = r.a.read()(62, 52) - 1;
-    } else if (r.a.read()(62, 52) == 0 && r.b.read()(62, 52) != 0) {
-        expDif = 1 - r.b.read()(62, 52);
+    if ((r.a.read()(62, 52).or_reduce() == 1) && (r.b.read()(62, 52).or_reduce() == 0)) {
+        expDif = (r.a.read()(62, 52) - 1);
+    } else if ((r.a.read()(62, 52).or_reduce() == 0) && (r.b.read()(62, 52).or_reduce() == 1)) {
+        expDif = (1 - r.b.read()(62, 52));
     } else {
-        expDif = r.a.read()(62, 52) - r.b.read()(62, 52);
+        expDif = (r.a.read()(62, 52) - r.b.read()(62, 52));
     }
 
-    mantDif = (0, mantA) - (0, mantB);
-    if (expDif == 0) {
+    mantDif = ((0, mantA) - (0, mantB));
+    if (expDif.or_reduce() == 0) {
         vb_preShift = expDif;
-        if (mantDif == 0) {
-            v_flMore = (!signA) & (signA ^ signB);
-            v_flEqual = !(signA ^ signB);
-            v_flLess = signA & (signA ^ signB);
+        if (mantDif.or_reduce() == 0) {
+            v_flMore = ((!signA) && (signA ^ signB));
+            v_flEqual = (!(signA ^ signB));
+            v_flLess = (signA && (signA ^ signB));
 
             v_signOpMore = signA;
             vb_expMore = r.a.read()(62, 52);
             vb_mantMore = mantA;
             vb_mantLess = mantB;
-        } else if (mantDif[53] == 0) {  // A > B
-            v_flMore = !signA;
+        } else if (mantDif[53] == 0) {
+            v_flMore = (!signA);
             v_flEqual = 0;
             v_flLess = signA;
 
@@ -246,7 +306,7 @@ void DoubleAdd::comb() {
         } else {
             v_flMore = signB;
             v_flEqual = 0;
-            v_flLess = !signB;
+            v_flLess = (!signB);
 
             v_signOpMore = signOpB;
             vb_expMore = r.b.read()(62, 52);
@@ -254,7 +314,7 @@ void DoubleAdd::comb() {
             vb_mantLess = mantA;
         }
     } else if (expDif[11] == 0) {
-        v_flMore = !signA;
+        v_flMore = (!signA);
         v_flEqual = 0;
         v_flLess = signA;
 
@@ -266,9 +326,9 @@ void DoubleAdd::comb() {
     } else {
         v_flMore = signB;
         v_flEqual = 0;
-        v_flLess = !signB;
+        v_flLess = (!signB);
 
-        vb_preShift = ~expDif + 1;
+        vb_preShift = ((~expDif) + 1);
         v_signOpMore = signOpB;
         vb_expMore = r.b.read()(62, 52);
         vb_mantMore = mantB;
@@ -288,24 +348,24 @@ void DoubleAdd::comb() {
     // Pre-scale 105-bits mantissa if preShift < 105:
     // M = {mantM, 52'd0}
     mantLessScale = r.mantLess.read().to_uint64();
-    mantLessScale <<= 52;
+    mantLessScale = (mantLessScale << 52);
     if (r.ena.read()[1] == 1) {
         v.mantLessScale = 0;
-        for (unsigned i = 0; i < 105; i++) {
+        for (int i = 0; i < 105; i++) {
             if (i == r.preShift.read()) {
-                v.mantLessScale = mantLessScale >> i;
+                v.mantLessScale = (mantLessScale >> i);
             }
         }
     }
 
     mantMoreScale = r.mantMore.read().to_uint64();
-    mantMoreScale <<= 52;
+    mantMoreScale = (mantMoreScale << 52);
 
     // 106-bits adder/subtractor
-    if (signA ^ signOpB) {
-        vb_mantSum = mantMoreScale - r.mantLessScale;
+    if ((signA ^ signOpB) == 1) {
+        vb_mantSum = (mantMoreScale - r.mantLessScale.read());
     } else {
-        vb_mantSum = mantMoreScale + r.mantLessScale;
+        vb_mantSum = (mantMoreScale + r.mantLessScale.read());
     }
 
     if (r.ena.read()[2] == 1) {
@@ -314,35 +374,30 @@ void DoubleAdd::comb() {
 
     // To avoid timing constrains violation try to implement parallel demux
     // for Xilinx Vivado
-    sc_biguint<105> vb_mantSumInv;
-    sc_uint<7> vb_lshift_p1;
-    sc_uint<7> vb_lshift_p2;
-    vb_mantSumInv[0] = 0;
-    for (unsigned i = 0; i < 104; i++) {
-        vb_mantSumInv[i + 1] = r.mantSum.read()[103 - i];
+    for (int i = 0; i < 104; i++) {
+        vb_mantSumInv[(i + 1)] = r.mantSum.read()[(103 - i)];
     }
 
-    vb_lshift_p1 = 0;
-    for (unsigned i = 0; i < 64; i++) {
-        if (vb_lshift_p1 == 0 && vb_mantSumInv[i] == 1) {
+    for (int i = 0; i < 64; i++) {
+        if ((vb_lshift_p1.or_reduce() == 0) && (vb_mantSumInv[i] == 1)) {
             vb_lshift_p1 = i;
         }
     }
 
-    vb_lshift_p2 = 0;
-    for (unsigned i = 0; i < 41; i++) {
-        if (vb_lshift_p2 == 0 && vb_mantSumInv[64 + i] == 1) {
-            vb_lshift_p2 = 0x40 | i;
+    for (int i = 0; i < 41; i++) {
+        if ((vb_lshift_p2.or_reduce() == 0) && (vb_mantSumInv[(64 + i)] == 1)) {
+            vb_lshift_p2 = i;
+            vb_lshift_p2[6] = 1;
         }
     }
 
     // multiplexer
     if (r.mantSum.read()[105] == 1) {
         // shift right
-        vb_lshift = 0x7F;
+        vb_lshift = ~0ull;
     } else if (r.mantSum.read()[104] == 1) {
         vb_lshift = 0;
-    } else if (vb_lshift_p1 != 0) {
+    } else if (vb_lshift_p1.or_reduce() == 1) {
         vb_lshift = vb_lshift_p1;
     } else {
         vb_lshift = vb_lshift_p2;
@@ -352,15 +407,14 @@ void DoubleAdd::comb() {
     }
 
     // Prepare to mantissa post-scale
-    vb_mantAlign = 0;
     if (r.lshift.read() == 0x7F) {
-        vb_mantAlign = r.mantSum.read() >> 1;
-    } else if (r.lshift.read() == 0) {
-        vb_mantAlign = r.mantSum.read();
+        vb_mantAlign = (r.mantSum.read() >> 1);
+    } else if (r.lshift.read().or_reduce() == 0) {
+        vb_mantAlign = r.mantSum;
     } else {
-        for (unsigned i = 1; i < 105; i++) {
+        for (int i = 1; i < 105; i++) {
             if (i == r.lshift.read()) {
-                vb_mantAlign = r.mantSum.read() << i;
+                vb_mantAlign = (r.mantSum.read() << i);
             }
         }
     }
@@ -368,35 +422,35 @@ void DoubleAdd::comb() {
         if (r.expMore.read() == 0x7FF) {
             vb_expPostScale = (0, r.expMore);
         } else {
-            vb_expPostScale = (0, r.expMore.read()) + 1;
+            vb_expPostScale = (0, (r.expMore.read() + 1));
         }
     } else {
-        if (r.expMore.read() == 0 && r.lshift.read() == 0) {
+        if ((r.expMore.read().or_reduce() == 0) && (r.lshift.read().or_reduce() == 0)) {
             vb_expPostScale = 1;
         } else {
-            vb_expPostScale = (0, r.expMore.read()) - (0, r.lshift.read());
+            vb_expPostScale = ((0, r.expMore) - (0, r.lshift));
         }
     }
-    if (signA ^ signOpB) {
+    if ((signA ^ signOpB) == 1) {
         // subtractor only: result value becomes with exp=0
-        if (r.expMore.read() != 0 && 
-            (vb_expPostScale[11] == 1 || vb_expPostScale == 0)) {
-            vb_expPostScale -= 1;
+        if ((r.expMore.read().or_reduce() == 1)
+                && ((vb_expPostScale[11] == 1) || (vb_expPostScale.or_reduce() == 0))) {
+            vb_expPostScale = (vb_expPostScale - 1);
         }
     }
     if (r.ena.read()[4] == 1) {
         v.mantAlign = vb_mantAlign;
         v.expPostScale = vb_expPostScale;
-        v.expPostScaleInv = ~vb_expPostScale + 1;
+        v.expPostScaleInv = ((~vb_expPostScale) + 1);
     }
 
     // Mantissa post-scale:
     //    Scaled = SumScale>>(-ExpSum) only if ExpSum < 0;
     vb_mantPostScale = r.mantAlign;
     if (r.expPostScale.read()[11] == 1) {
-        for (unsigned i = 1; i < 105; i++) {
-            if (i == r.expPostScaleInv.read()) {
-                vb_mantPostScale = r.mantAlign.read() >> i;
+        for (int i = 1; i < 105; i++) {
+            if (i == r.expPostScaleInv.read().to_int()) {
+                vb_mantPostScale = (r.mantAlign.read() >> i);
             }
         }
     }
@@ -405,91 +459,82 @@ void DoubleAdd::comb() {
     }
 
     // Rounding bit
-    mantShort = r.mantPostScale.read().range(104, 52).to_uint64();
-    tmpMant05 = r.mantPostScale.read().range(51, 0).to_uint64();
+    mantShort = r.mantPostScale.read()(104, 52).to_uint64();
+    tmpMant05 = r.mantPostScale.read()(51, 0).to_uint64();
     mantOnes = 0;
-    if (mantShort == 0x001fffffffffffff) {
+    if (mantShort == 0x001fffffffffffffull) {
         mantOnes = 1;
     }
     mantEven = r.mantPostScale.read()[52];
-    mant05 = 0;
-    if (tmpMant05 == 0x0008000000000000) {
+    if (tmpMant05 == 0x0008000000000000ull) {
         mant05 = 1;
     }
-    rndBit = r.mantPostScale.read()[51] & !(mant05 & !mantEven);
+    rndBit = (r.mantPostScale.read()[51] && (!(mant05 && (!mantEven))));
 
     // Check borders
-    mantZeroA = 0;
-    if (r.a.read()(51, 0) == 0) {
+    if (r.a.read()(51, 0).or_reduce() == 0) {
         mantZeroA = 1;
     }
-    mantZeroB = 0;
-    if (r.b.read()(51, 0) == 0) {
+    if (r.b.read()(51, 0).or_reduce() == 0) {
         mantZeroB = 1;
     }
 
     // Exceptions
-    allZero = 0;
-    if (r.a.read()(62, 0) == 0 && r.b.read()(62, 0) == 0) {
+    if ((r.a.read()(62, 0).or_reduce() == 0) && (r.b.read()(62, 0).or_reduce() == 0)) {
         allZero = 1;
     }
-    sumZero = 0;
-    if (r.mantPostScale.read() == 0) {
+    if (r.mantPostScale.read().or_reduce() == 0) {
         sumZero = 1;
     }
-    nanA = 0;
     if (r.a.read()(62, 52) == 0x7ff) {
         nanA = 1;
     }
-    nanB = 0;
     if (r.b.read()(62, 52) == 0x7ff) {
         nanB = 1;
     }
-    nanAB = nanA && mantZeroA && nanB && mantZeroB;
-    overflow = 0;
-    if (r.expPostScale.read() == 0x7FF) {   // positive
+    nanAB = (nanA && mantZeroA && nanB && mantZeroB);
+    if (r.expPostScale.read() == 0x7FF) {
         overflow = 1;
     }
 
     // Result multiplexers:
-    if (nanAB && signOp) {
-        resAdd[63] = signA ^ signOpB;
-    } else if (nanA) {
-        /** when both values are NaN, value B has higher priority if sign=1 */
-        resAdd[63] = signA || (nanB && signOpB);
-    } else if (nanB) {
-        resAdd[63] = signOpB ^ (signOp && !mantZeroB);
-    } else if (allZero) {
-        resAdd[63] = signA && signOpB;
-    } else if (sumZero) {
+    if ((nanAB && signOp) == 1) {
+        resAdd[63] = (signA ^ signOpB);
+    } else if (nanA == 1) {
+        // when both values are NaN, value B has higher priority if sign=1
+        resAdd[63] = (signA || (nanB && signOpB));
+    } else if (nanB == 1) {
+        resAdd[63] = (signOpB ^ (signOp && (!mantZeroB)));
+    } else if (allZero == 1) {
+        resAdd[63] = (signA && signOpB);
+    } else if (sumZero == 1) {
         resAdd[63] = 0;
     } else {
-        resAdd[63] = r.signOpMore; 
+        resAdd[63] = r.signOpMore;
     }
 
-    if (nanA | nanB) {
-        resAdd(62, 52) = 0x7FF;
-    } else if (r.expPostScale.read()[11] == 1 || sumZero) {
+    if ((nanA || nanB) == 1) {
+        resAdd(62, 52) = ~0ull;
+    } else if ((r.expPostScale.read()[11] == 1) || (sumZero == 1)) {
         resAdd(62, 52) = 0;
     } else {
-        resAdd(62, 52) = r.expPostScale.read()
-                       + (mantOnes && rndBit && !overflow);
+        resAdd(62, 52) = (r.expPostScale.read() + (mantOnes && rndBit && (!overflow)));
     }
 
-    if (nanA & mantZeroA & nanB & mantZeroB) {
+    if ((nanA && mantZeroA && nanB && mantZeroB) == 1) {
         resAdd[51] = signOp;
         resAdd(50, 0) = 0;
-    } else if (nanA && !(nanB && signOpB)) {
-        /** when both values are NaN, value B has higher priority if sign=1 */
+    } else if ((nanA && (!(nanB && signOpB))) == 1) {
+        // when both values are NaN, value B has higher priority if sign=1
         resAdd[51] = 1;
         resAdd(50, 0) = r.a.read()(50, 0);
-    } else if (nanB) {
+    } else if (nanB == 1) {
         resAdd[51] = 1;
         resAdd(50, 0) = r.b.read()(50, 0);
-    } else if (overflow) {
+    } else if (overflow == 1) {
         resAdd(51, 0) = 0;
     } else {
-        resAdd(51, 0) = mantShort(51, 0) + rndBit;
+        resAdd(51, 0) = (mantShort(51, 0) + rndBit);
     }
 
     resEQ(63, 1) = 0;
@@ -499,9 +544,9 @@ void DoubleAdd::comb() {
     resLT[0] = r.flLess;
 
     resLE(63, 1) = 0;
-    resLE[0] = r.flLess | r.flEqual;
+    resLE[0] = (r.flLess || r.flEqual);
 
-    if (nanA | nanB) {
+    if ((nanA || nanB) == 1) {
         resMax = r.b;
     } else if (r.flMore.read() == 1) {
         resMax = r.a;
@@ -509,7 +554,7 @@ void DoubleAdd::comb() {
         resMax = r.b;
     }
 
-    if (nanA | nanB) {
+    if ((nanA || nanB) == 1) {
         resMin = r.b;
     } else if (r.flLess.read() == 1) {
         resMin = r.a;
@@ -532,7 +577,7 @@ void DoubleAdd::comb() {
             v.result = resAdd;
         }
 
-        v.illegal_op = nanA | nanB;
+        v.illegal_op = (nanA || nanB);
         v.overflow = overflow;
 
         v.busy = 0;
@@ -546,7 +591,7 @@ void DoubleAdd::comb() {
     }
 
     if (!async_reset_ && i_nrst.read() == 0) {
-        R_RESET(v);
+        DoubleAdd_r_reset(v);
     }
 
     o_res = r.result;
@@ -558,36 +603,10 @@ void DoubleAdd::comb() {
 
 void DoubleAdd::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
-        R_RESET(r);
+        DoubleAdd_r_reset(r);
     } else {
         r = v;
     }
-}
-
-uint64_t DoubleAdd::compute_reference(bool addEna, bool subEna,
-                                      bool eqEna, bool ltEna, bool leEna,
-                                      bool maxEna, bool minEna,
-                                      uint64_t a, uint64_t b) {
-    Reg64Type ra, rb, ret;
-    ra.val = a;
-    rb.val = b;
-    ret.val = 0;
-    if (addEna) {
-        ret.f64 = ra.f64 + rb.f64;
-    } else if (subEna) {
-        ret.f64 = ra.f64 - rb.f64;
-    } else if (eqEna) {
-        ret.val = ra.f64 == rb.f64 ? 1 : 0;
-    } else if (ltEna) {
-        ret.val = ra.f64 < rb.f64 ? 1 : 0;
-    } else if (leEna) {
-        ret.val = ra.f64 <= rb.f64 ? 1 : 0;
-    } else if (maxEna) {
-        ret.f64 = ra.f64 > rb.f64 ? ra.f64 : rb.f64;
-    } else if (minEna) {
-        ret.f64 = ra.f64 < rb.f64 ? ra.f64 : rb.f64;
-    }
-    return ret.val;
 }
 
 }  // namespace debugger
