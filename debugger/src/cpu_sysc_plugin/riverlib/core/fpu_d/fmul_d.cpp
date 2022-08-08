@@ -1,26 +1,27 @@
-/*
- *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+// 
+//  Copyright 2022 Sergey Khabarov, sergeykhbr@gmail.com
+// 
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+// 
+//      http://www.apache.org/licenses/LICENSE-2.0
+// 
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+// 
 
-#include "api_core.h"
 #include "fmul_d.h"
+#include "api_core.h"
 
 namespace debugger {
 
-DoubleMul::DoubleMul(sc_module_name name_, bool async_reset)
-    : sc_module(name_),
+DoubleMul::DoubleMul(sc_module_name name,
+                     bool async_reset)
+    : sc_module(name),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
     i_ena("i_ena"),
@@ -30,15 +31,34 @@ DoubleMul::DoubleMul(sc_module_name name_, bool async_reset)
     o_illegal_op("o_illegal_op"),
     o_overflow("o_overflow"),
     o_valid("o_valid"),
-    o_busy("o_busy"),
-    u_imul53("imul53", async_reset) {
+    o_busy("o_busy") {
+
     async_reset_ = async_reset;
+    u_imul53 = 0;
+
+    u_imul53 = new imul53("u_imul53", async_reset);
+    u_imul53->i_clk(i_clk);
+    u_imul53->i_nrst(i_nrst);
+    u_imul53->i_ena(w_imul_ena);
+    u_imul53->i_a(r.mantA);
+    u_imul53->i_b(r.mantB);
+    u_imul53->o_result(wb_imul_result);
+    u_imul53->o_shift(wb_imul_shift);
+    u_imul53->o_rdy(w_imul_rdy);
+    u_imul53->o_overflow(w_imul_overflow);
+
+
 
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_ena;
     sensitive << i_a;
     sensitive << i_b;
+    sensitive << w_imul_ena;
+    sensitive << wb_imul_result;
+    sensitive << wb_imul_shift;
+    sensitive << w_imul_rdy;
+    sensitive << w_imul_overflow;
     sensitive << r.busy;
     sensitive << r.ena;
     sensitive << r.a;
@@ -57,47 +77,52 @@ DoubleMul::DoubleMul(sc_module_name name_, bool async_reset)
     sensitive << r.nanB;
     sensitive << r.overflow;
     sensitive << r.illegal_op;
-    sensitive << wb_imul_result;
-    sensitive << wb_imul_shift;
-    sensitive << w_imul_rdy;
-    sensitive << w_imul_overflow;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
     sensitive << i_clk.pos();
+}
 
-    u_imul53.i_nrst(i_nrst);
-    u_imul53.i_clk(i_clk);
-    u_imul53.i_ena(w_imul_ena);
-    u_imul53.i_a(r.mantA);
-    u_imul53.i_b(r.mantB);
-    u_imul53.o_result(wb_imul_result);
-    u_imul53.o_shift(wb_imul_shift);
-    u_imul53.o_rdy(w_imul_rdy);
-    u_imul53.o_overflow(w_imul_overflow);
-};
+DoubleMul::~DoubleMul() {
+    if (u_imul53) {
+        delete u_imul53;
+    }
+}
 
 void DoubleMul::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+    std::string pn(name());
     if (o_vcd) {
         sc_trace(o_vcd, i_ena, i_ena.name());
         sc_trace(o_vcd, i_a, i_a.name());
         sc_trace(o_vcd, i_b, i_b.name());
         sc_trace(o_vcd, o_res, o_res.name());
+        sc_trace(o_vcd, o_illegal_op, o_illegal_op.name());
+        sc_trace(o_vcd, o_overflow, o_overflow.name());
         sc_trace(o_vcd, o_valid, o_valid.name());
         sc_trace(o_vcd, o_busy, o_busy.name());
-
-        std::string pn(name());
+        sc_trace(o_vcd, r.busy, pn + ".r_busy");
         sc_trace(o_vcd, r.ena, pn + ".r_ena");
+        sc_trace(o_vcd, r.a, pn + ".r_a");
+        sc_trace(o_vcd, r.b, pn + ".r_b");
         sc_trace(o_vcd, r.result, pn + ".r_result");
-        sc_trace(o_vcd, w_imul_rdy, pn + ".w_imul_rdy");
+        sc_trace(o_vcd, r.zeroA, pn + ".r_zeroA");
+        sc_trace(o_vcd, r.zeroB, pn + ".r_zeroB");
+        sc_trace(o_vcd, r.mantA, pn + ".r_mantA");
+        sc_trace(o_vcd, r.mantB, pn + ".r_mantB");
+        sc_trace(o_vcd, r.expAB, pn + ".r_expAB");
         sc_trace(o_vcd, r.expAlign, pn + ".r_expAlign");
         sc_trace(o_vcd, r.mantAlign, pn + ".r_mantAlign");
         sc_trace(o_vcd, r.postShift, pn + ".r_postShift");
-        sc_trace(o_vcd, r.expAB, pn + ".r_expAB");
         sc_trace(o_vcd, r.mantPostScale, pn + ".r_mantPostScale");
+        sc_trace(o_vcd, r.nanA, pn + ".r_nanA");
+        sc_trace(o_vcd, r.nanB, pn + ".r_nanB");
         sc_trace(o_vcd, r.overflow, pn + ".r_overflow");
+        sc_trace(o_vcd, r.illegal_op, pn + ".r_illegal_op");
     }
-    u_imul53.generateVCD(i_vcd, o_vcd);
+
+    if (u_imul53) {
+        u_imul53->generateVCD(i_vcd, o_vcd);
+    }
 }
 
 void DoubleMul::comb() {
@@ -127,55 +152,72 @@ void DoubleMul::comb() {
     bool mantZeroB;
     sc_uint<64> res;
 
+    vb_ena = 0;
+    signA = 0;
+    signB = 0;
+    mantA = 0;
+    mantB = 0;
+    zeroA = 0;
+    zeroB = 0;
+    expAB_t = 0;
+    expAB = 0;
+    mantAlign = 0;
+    expAlign_t = 0;
+    expAlign = 0;
+    postShift = 0;
+    mantPostScale = 0;
+    mantShort = 0;
+    tmpMant05 = 0;
+    mantOnes = 0;
+    mantEven = 0;
+    mant05 = 0;
+    rndBit = 0;
+    nanA = 0;
+    nanB = 0;
+    mantZeroA = 0;
+    mantZeroB = 0;
+    res = 0;
+
     v = r;
 
-    vb_ena[0] = (i_ena.read() & !r.busy);
+    vb_ena[0] = (i_ena && (!r.busy));
     vb_ena[1] = r.ena.read()[0];
     vb_ena(4, 2) = (r.ena.read()(3, 2), w_imul_rdy);
-
     v.ena = vb_ena;
 
-    if (i_ena.read()) {
+    if (i_ena.read() == 1) {
         v.busy = 1;
         v.overflow = 0;
         v.a = i_a;
         v.b = i_b;
-
-        // Just for run-rime control (not for VHDL)
-        v.a_dbg = i_a;
-        v.b_dbg = i_b;
-        v.reference_res = compute_reference(i_a.read(),
-                                            i_b.read());
     }
 
     signA = r.a.read()[63];
     signB = r.b.read()[63];
 
-    zeroA = 0;
-    if (r.a.read()(62, 0) == 0) {
+    if (r.a.read()(62, 0).or_reduce() == 0) {
         zeroA = 1;
     }
 
-    zeroB = 0;
-    if (r.b.read()(62, 0) == 0) {
+    if (r.b.read()(62, 0).or_reduce() == 0) {
         zeroB = 1;
     }
 
     mantA(51, 0) = r.a.read()(51, 0);
     mantA[52] = 0;
-    if (r.a.read()(62, 52) != 0) {
+    if (r.a.read()(62, 52).or_reduce() == 1) {
         mantA[52] = 1;
     }
 
     mantB(51, 0) = r.b.read()(51, 0);
     mantB[52] = 0;
-    if (r.b.read()(62, 52) != 0) {
+    if (r.b.read()(62, 52).or_reduce() == 1) {
         mantB[52] = 1;
     }
 
     // expA - expB + 1023
-    expAB_t = (0, r.a.read()(62, 52)) + (0, r.b.read()(62, 52));
-    expAB = (0, expAB_t)  - 1023;
+    expAB_t = ((0, r.a.read()(62, 52)) + (0, r.b.read()(62, 52)));
+    expAB = ((0, expAB_t) - 1023);
 
     if (r.ena.read()[0] == 1) {
         v.expAB = expAB;
@@ -188,41 +230,40 @@ void DoubleMul::comb() {
     w_imul_ena = r.ena.read()[1];
 
     // imul53 module:
-    mantAlign = 0;
     if (wb_imul_result.read()[105] == 1) {
         mantAlign = wb_imul_result.read()(105, 1);
     } else if (wb_imul_result.read()[104] == 1) {
         mantAlign = wb_imul_result.read()(104, 0);
     } else {
-        for (unsigned i = 1; i < 105; i++) {
-            if (i == wb_imul_shift.read()) {
-                mantAlign = wb_imul_result << i;
+        for (int i = 1; i < 105; i++) {
+            if (i == wb_imul_shift.read().to_int()) {
+                mantAlign = (wb_imul_result.read() << i);
             }
         }
     }
 
-    expAlign_t = r.expAB.read() + 1;
+    expAlign_t = (r.expAB.read() + 1);
     if (wb_imul_result.read()[105] == 1) {
         expAlign = expAlign_t;
-    } else if (r.a.read()(62, 52) == 0 || r.b.read()(62, 52) == 0) {
-        expAlign = expAlign_t - (0, wb_imul_shift.read());
+    } else if ((r.a.read()(62, 52).or_reduce() == 0) || (r.b.read()(62, 52).or_reduce() == 0)) {
+        expAlign = (expAlign_t - (0, wb_imul_shift));
     } else {
-        expAlign = r.expAB.read() - (0, wb_imul_shift.read());
+        expAlign = (r.expAB.read() - (0, wb_imul_shift));
     }
 
     // IMPORTANT exception! new ZERO value
-    if (expAlign[12] == 1 || expAlign == 0) {
-        if (wb_imul_shift.read() == 0 || wb_imul_result.read()[105] == 1
-            || r.a.read()(62, 52) == 0 || r.b.read()(62, 52) == 0) {
-            postShift = ~expAlign(11, 0) + 2;
+    if ((expAlign[12] == 1) || (expAlign.or_reduce() == 0)) {
+        if ((wb_imul_shift.read().or_reduce() == 0)
+                || (wb_imul_result.read()[105] == 1)
+                || (r.a.read()(62, 52).or_reduce() == 0)
+                || (r.b.read()(62, 52).or_reduce() == 0)) {
+            postShift = ((~expAlign(11, 0)) + 2);
         } else {
-            postShift = ~expAlign(11, 0) + 1;
+            postShift = ((~expAlign(11, 0)) + 1);
         }
-    } else {
-        postShift = 0;
     }
 
-    if (w_imul_rdy == 1) {
+    if (w_imul_rdy.read() == 1) {
         v.expAlign = expAlign(11, 0);
         v.mantAlign = mantAlign;
         v.postShift = postShift;
@@ -237,19 +278,18 @@ void DoubleMul::comb() {
             v.nanB = 1;
         }
         v.overflow = 0;
-        if (expAlign[12] == 0 && expAlign >= 0x7FF) {
+        if ((expAlign[12] == 0) && (expAlign >= 0x7FF)) {
             v.overflow = 1;
         }
     }
 
     // Prepare to mantissa post-scale
-    mantPostScale = 0;
-    if (r.postShift.read() == 0) {
-        mantPostScale = r.mantAlign.read();
+    if (r.postShift.read().or_reduce() == 0) {
+        mantPostScale = r.mantAlign;
     } else if (r.postShift.read() < 105) {
-        for (unsigned i = 1; i < 105; i++) {
-            if (i == r.postShift.read()) {
-                mantPostScale = r.mantAlign.read() >> i;
+        for (int i = 1; i < 105; i++) {
+            if (i == r.postShift.read().to_int()) {
+                mantPostScale = (r.mantAlign.read() >> i);
             }
         }
     }
@@ -258,85 +298,79 @@ void DoubleMul::comb() {
     }
 
     // Rounding bit
-    mantShort = r.mantPostScale.read().range(104, 52).to_uint64();
-    tmpMant05 = r.mantPostScale.read().range(51, 0).to_uint64();
-    mantOnes = 0;
-    if (mantShort == 0x001fffffffffffff) {
+    mantShort = r.mantPostScale.read()(104, 52).to_uint64();
+    tmpMant05 = r.mantPostScale.read()(51, 0).to_uint64();
+    if (mantShort == 0x001fffffffffffffull) {
         mantOnes = 1;
     }
     mantEven = r.mantPostScale.read()[52];
-    mant05 = 0;
-    if (tmpMant05 == 0x0008000000000000) {
+    if (tmpMant05 == 0x0008000000000000ull) {
         mant05 = 1;
     }
-    rndBit = r.mantPostScale.read()[51] & !(mant05 & !mantEven);
+    rndBit = (r.mantPostScale.read()[51] && (!(mant05 && (!mantEven))));
 
     // Check Borders
-    nanA = 0;
     if (r.a.read()(62, 52) == 0x7ff) {
         nanA = 1;
     }
-    nanB = 0;
     if (r.b.read()(62, 52) == 0x7ff) {
         nanB = 1;
     }
-    mantZeroA = 0;
-    if (r.a.read()(51, 0) == 0) {
+    if (r.a.read()(51, 0).or_reduce() == 0) {
         mantZeroA = 1;
     }
-    mantZeroB = 0;
-    if (r.b.read()(51, 0) == 0) {
+    if (r.b.read()(51, 0).or_reduce() == 0) {
         mantZeroB = 1;
     }
 
     // Result multiplexers:
-    if ((nanA && mantZeroA && r.zeroB.read()) || (nanB && mantZeroB && r.zeroA.read())) {
+    if ((nanA && mantZeroA && r.zeroB) || (nanB && mantZeroB && r.zeroA)) {
         res[63] = 1;
-    } else if (nanA && !mantZeroA) {
-        /** when both values are NaN, value B has higher priority if sign=1 */
-        res[63] = signA || (nanA && signB);
-    } else if (nanB && !mantZeroB) {
+    } else if ((nanA && (!mantZeroA)) == 1) {
+        // when both values are NaN, value B has higher priority if sign=1
+        res[63] = (signA || (nanA && signB));
+    } else if ((nanB && (!mantZeroB)) == 1) {
         res[63] = signB;
     } else {
-        res[63] = r.a.read()[63] ^ r.b.read()[63];
+        res[63] = (r.a.read()[63] ^ r.b.read()[63]);
     }
 
-    if (nanA) {
+    if (nanA == 1) {
         res(62, 52) = r.a.read()(62, 52);
-    } else if (nanB) {
+    } else if (nanB == 1) {
         res(62, 52) = r.b.read()(62, 52);
-    } else if (r.expAlign.read()[11] || r.zeroA.read() || r.zeroB.read()) {
+    } else if ((r.expAlign.read()[11] || r.zeroA || r.zeroB) == 1) {
         res(62, 52) = 0;
-    } else if (r.overflow.read()) {
-        res(62, 52) = 0x7FF;
+    } else if (r.overflow.read() == 1) {
+        res(62, 52) = ~0ull;
     } else {
-        res(62, 52) = r.expAlign.read()(10, 0)
-                       + (mantOnes && rndBit && !r.overflow.read());
+        res(62, 52) = (r.expAlign.read()(10, 0)
+                + (mantOnes && rndBit && (!r.overflow)));
     }
 
-    if ((nanA & mantZeroA & !mantZeroB)
-        || (nanB & mantZeroB & !mantZeroA)
-        || (!nanA & !nanB & r.overflow.read())) {
+    if ((nanA && mantZeroA && (!mantZeroB))
+            || (nanB && mantZeroB && (!mantZeroA))
+            || ((!nanA) && (!nanB) && r.overflow)) {
         res(51, 0) = 0;
-    } else if (nanA && !(nanB && signB)) {
-        /** when both values are NaN, value B has higher priority if sign=1 */
+    } else if ((nanA && (!(nanB && signB))) == 1) {
+        // when both values are NaN, value B has higher priority if sign=1
         res[51] = 1;
         res(50, 0) = r.a.read()(50, 0);
-    } else if (nanB) {
+    } else if (nanB == 1) {
         res[51] = 1;
         res(50, 0) = r.b.read()(50, 0);
     } else {
-        res(51, 0) = mantShort(51, 0) + rndBit;
+        res(51, 0) = (mantShort(51, 0) + rndBit);
     }
 
     if (r.ena.read()[3] == 1) {
         v.result = res;
-        v.illegal_op = nanA | nanB;
+        v.illegal_op = (nanA || nanB);
         v.busy = 0;
     }
 
     if (!async_reset_ && i_nrst.read() == 0) {
-        R_RESET(v);
+        DoubleMul_r_reset(v);
     }
 
     o_res = r.result;
@@ -348,18 +382,10 @@ void DoubleMul::comb() {
 
 void DoubleMul::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
-        R_RESET(r);
+        DoubleMul_r_reset(r);
     } else {
         r = v;
     }
-}
-
-uint64_t DoubleMul::compute_reference(uint64_t a, uint64_t b) {
-    Reg64Type ra, rb, ret;
-    ra.val = a;
-    rb.val = b;
-    ret.f64 = ra.f64 * rb.f64;
-    return ret.val;
 }
 
 }  // namespace debugger
