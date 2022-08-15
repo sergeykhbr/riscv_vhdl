@@ -159,7 +159,7 @@ void Long2Double::comb() {
         mant05 = 1;
     }
     rndBit = (r.mantAlign.read()[10] && (!(mant05 && mantEven)));
-    if (r.mantAlign.read()(63, 11) == 0x001fffffffffffffull) {
+    if (r.mantAlign.read()(63, 11) == 0x000fffffffffffffull) {
         mantOnes = 1;
     }
 

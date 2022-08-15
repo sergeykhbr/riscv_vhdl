@@ -64,7 +64,7 @@ SC_MODULE(RegIntBank) {
 
 
     struct RegIntBank_registers {
-        RegValueType reg[REGS_TOTAL];
+        RegValueType arr[REGS_TOTAL];
     } v, r;
 
 

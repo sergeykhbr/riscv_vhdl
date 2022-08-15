@@ -93,12 +93,12 @@ void BpPreDecoder::comb() {
 
     v_jal = 0;
     if (vb_tmp(6, 0) == 0x6F) {
-        v_jal = ~0ull;
+        v_jal = 1;
     }
 
     // Conditional branches "BEQ", "BNE", "BLT", "BGE", "BLTU", "BGEU"
     // Only negative offset leads to predicted jumps
-    if (vb_tmp[31]) {
+    if (vb_tmp[31] == 1) {
         vb_branch_off((CFG_CPU_ADDR_BITS - 1), 12) = ~0ull;
     } else {
         vb_branch_off((CFG_CPU_ADDR_BITS - 1), 12) = 0;
@@ -111,11 +111,11 @@ void BpPreDecoder::comb() {
 
     v_branch = 0;
     if (((vb_tmp(6, 0) == 0x63) && vb_tmp[31]) == 1) {
-        v_branch = ~0ull;
+        v_branch = 1;
     }
 
     // Check Compressed "C_J" unconditional jump
-    if (vb_tmp[12]) {
+    if (vb_tmp[12] == 1) {
         vb_c_j_off((CFG_CPU_ADDR_BITS - 1), 11) = ~0ull;
     } else {
         vb_c_j_off((CFG_CPU_ADDR_BITS - 1), 11) = 0;
@@ -148,7 +148,7 @@ void BpPreDecoder::comb() {
     } else if (v_c_j.read() == 1) {
         vb_npc = vb_c_j_addr;
     } else if (v_c_ret.read() == 1) {
-        vb_npc = i_ra;
+        vb_npc = i_ra.read()((CFG_CPU_ADDR_BITS - 1), 0);
     } else {
         vb_npc = (vb_pc + 4);
     }

@@ -71,8 +71,8 @@ void MmuTlb::comb() {
     vb_rdata = 0;
 
     for (int i = 0; i < CFG_MMU_PTE_DBYTES; i++) {
-        wb_mem_data[i].wdata = i_wdata.read()(((8 * (i + 1)) - 1), (8 * i)).to_uint64();
-        vb_rdata(((8 * (i + 1)) - 1), (8 * i)) = wb_mem_data[i].rdata;
+        wb_mem_data[i].wdata = i_wdata.read()((8 * i) + 8 - 1, (8 * i)).to_uint64();
+        vb_rdata((8 * i) + 8- 1, (8 * i)) = wb_mem_data[i].rdata;
     }
     o_rdata = vb_rdata;
 }

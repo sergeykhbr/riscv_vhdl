@@ -280,7 +280,7 @@ void CsrRegs::comb() {
     bool w_trap_valid;
     bool v_trap_irq;
     sc_uint<5> wb_trap_cause;
-    sc_uint<RISCV_ARCH> vb_mtval;
+    sc_uint<RISCV_ARCH> vb_mtval;                           // additional exception information
     bool w_mstackovr;
     bool w_mstackund;
     bool v_csr_rena;
@@ -292,25 +292,30 @@ void CsrRegs::comb() {
     bool v_req_progbuf;
     bool v_req_ready;
     bool v_resp_valid;
-    sc_uint<RISCV_ARCH> vb_mtvec_off;
+    sc_uint<RISCV_ARCH> vb_mtvec_off;                       // 4-bytes aligned
 
-    v = r;
-
-    vb_rdata = 0;
-    v_req_halt = 0;
-    v_req_resume = 0;
-    v_req_progbuf = 0;
-    v.flushi_ena = 0;
-    v.flushi_addr = 0;
-    v_req_ready = 0;
-    v_resp_valid = 0;
-    v_csr_rena = 0;
-    v_csr_wena = 0;
-    v_csr_trapreturn = 0;
+    v_sw_irq = 0;
+    v_tmr_irq = 0;
+    v_ext_irq = 0;
     w_trap_valid = 0;
     v_trap_irq = 0;
     wb_trap_cause = 0;
     vb_mtval = 0;
+    w_mstackovr = 0;
+    w_mstackund = 0;
+    v_csr_rena = 0;
+    v_csr_wena = 0;
+    v_csr_trapreturn = 0;
+    vb_rdata = 0;
+    v_req_halt = 0;
+    v_req_resume = 0;
+    v_req_progbuf = 0;
+    v_req_ready = 0;
+    v_resp_valid = 0;
+    vb_mtvec_off = 0;
+
+    v = r;
+
     v.mpu_we = 0;
     vb_mtvec_off = (r.mtvec.read()((RISCV_ARCH - 1), 2) << 2);
 
@@ -324,19 +329,19 @@ void CsrRegs::comb() {
             v.cmd_addr = i_req_addr;
             v.cmd_data = i_req_data;
             v.cmd_exception = 0;
-            if (i_req_type.read()[CsrReq_ExceptionBit]) {
+            if (i_req_type.read()[CsrReq_ExceptionBit] == 1) {
                 v.state = State_Exception;
-            } else if (i_req_type.read()[CsrReq_BreakpointBit]) {
+            } else if (i_req_type.read()[CsrReq_BreakpointBit] == 1) {
                 v.state = State_Breakpoint;
-            } else if (i_req_type.read()[CsrReq_HaltBit]) {
+            } else if (i_req_type.read()[CsrReq_HaltBit] == 1) {
                 v.state = State_Halt;
-            } else if (i_req_type.read()[CsrReq_ResumeBit]) {
+            } else if (i_req_type.read()[CsrReq_ResumeBit] == 1) {
                 v.state = State_Resume;
-            } else if (i_req_type.read()[CsrReq_InterruptBit]) {
+            } else if (i_req_type.read()[CsrReq_InterruptBit] == 1) {
                 v.state = State_Interrupt;
-            } else if (i_req_type.read()[CsrReq_TrapReturnBit]) {
+            } else if (i_req_type.read()[CsrReq_TrapReturnBit] == 1) {
                 v.state = State_TrapReturn;
-            } else if (i_req_type.read()[CsrReq_WfiBit]) {
+            } else if (i_req_type.read()[CsrReq_WfiBit] == 1) {
                 v.state = State_Wfi;
             } else {
                 v.state = State_RW;
@@ -427,7 +432,8 @@ void CsrRegs::comb() {
             v_csr_wena = r.cmd_type.read()[CsrReq_WriteBit];
         }
         // All operation into CSR implemented through the Read-Modify-Write
-        // we cannot generate exception on write access into read-only regs
+        // and we cannot generate exception on write access into read-only regs
+        // So do not check bits csr[11:10], otherwise always will be the exception.
         break;
     case State_Wfi:
         v.state = State_Response;
@@ -589,7 +595,9 @@ void CsrRegs::comb() {
         //     MODE = 9 Sv48. Page based 48-bit virtual addressing
         vb_rdata(43, 0) = r.satp_ppn;
         vb_rdata(63, 60) = r.satp_mode;
-        if ((v_csr_wena == 1) && ((r.cmd_data.read()(63, 60) == 0) || (r.cmd_data.read()(63, 60) == SATP_MODE_SV48))) {
+        if ((v_csr_wena == 1)
+                && ((r.cmd_data.read()(63, 60).or_reduce() == 0)
+                        || (r.cmd_data.read()(63, 60).to_uint() == SATP_MODE_SV48))) {
             v.satp_ppn = r.cmd_data.read()(43, 0);
             v.satp_mode = r.cmd_data.read()(63, 60);
         }
@@ -802,10 +810,11 @@ void CsrRegs::comb() {
     if ((i_e_halted.read() == 0) || (r.dcsr_stopcount.read() == 0)) {
         v.cycle_cnt = (r.cycle_cnt.read() + 1);
     }
-    if ((i_e_valid && (!r.dcsr_stopcount)) || (i_e_valid && (!(i_dbg_progbuf_ena && r.dcsr_stopcount)))) {
+    if (((i_e_valid && (!r.dcsr_stopcount)) == 1)
+            || ((i_e_valid && (!(i_dbg_progbuf_ena && r.dcsr_stopcount))) == 1)) {
         v.executed_cnt = (r.executed_cnt.read() + 1);
     }
-    if (!((i_e_halted || i_dbg_progbuf_ena) && r.dcsr_stoptimer)) {
+    if (((i_e_halted || i_dbg_progbuf_ena) && r.dcsr_stoptimer) == 0) {
         v.timer = (r.timer.read() + 1);
     }
 

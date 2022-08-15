@@ -108,14 +108,14 @@ void BpBTB::comb() {
     vb_bp_exec[0] = i_e;
 
     for (int i = 1; i < CFG_BP_DEPTH; i++) {
-        t_addr = vb_addr((i * (CFG_CPU_ADDR_BITS - 1)), ((i - 1) * CFG_CPU_ADDR_BITS));
+        t_addr = vb_addr(((i - 1) * CFG_CPU_ADDR_BITS) + CFG_CPU_ADDR_BITS - 1, ((i - 1) * CFG_CPU_ADDR_BITS));
         for (int n = (CFG_BTB_SIZE - 1); n >= 0; n--) {
             if (t_addr == r.btb[n].pc) {
-                vb_addr((((i + 1) * CFG_CPU_ADDR_BITS) - 1), (i * CFG_CPU_ADDR_BITS)) = r.btb[n].npc;
+                vb_addr((i * CFG_CPU_ADDR_BITS) + CFG_CPU_ADDR_BITS- 1, (i * CFG_CPU_ADDR_BITS)) = r.btb[n].npc;
                 vb_hit[i] = 1;
                 vb_bp_exec[i] = r.btb[n].exec;             // Used for: Do not override by pre-decoded jumps
             } else if (vb_hit[i] == 0) {
-                vb_addr((((i + 1) * CFG_CPU_ADDR_BITS) - 1), (i * CFG_CPU_ADDR_BITS)) = (t_addr + 4);
+                vb_addr((i * CFG_CPU_ADDR_BITS) + CFG_CPU_ADDR_BITS- 1, (i * CFG_CPU_ADDR_BITS)) = (t_addr + 4);
             }
         }
     }
@@ -155,7 +155,7 @@ void BpBTB::comb() {
     }
 
     for (int i = 0; i < CFG_BP_DEPTH; i++) {
-        dbg_npc[i] = vb_addr((((i + 1) * CFG_CPU_ADDR_BITS) - 1), (i * CFG_CPU_ADDR_BITS)).to_uint64();
+        dbg_npc[i] = vb_addr((i * CFG_CPU_ADDR_BITS) + CFG_CPU_ADDR_BITS - 1, (i * CFG_CPU_ADDR_BITS)).to_uint64();
     }
     o_bp_npc = vb_addr;
     o_bp_exec = vb_bp_exec;

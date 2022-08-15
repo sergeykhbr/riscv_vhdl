@@ -53,12 +53,14 @@ SC_MODULE(Tracer) {
 
     Tracer(sc_module_name name,
            bool async_reset,
+           uint32_t hartid,
            std::string trace_file);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
     bool async_reset_;
+    uint32_t hartid_;
     std::string trace_file_;
 
     static const int TRACE_TBL_ABITS = 6;
@@ -104,6 +106,7 @@ SC_MODULE(Tracer) {
         sc_signal<sc_uint<TRACE_TBL_ABITS>> tr_opened;
     } v, r;
 
+    std::string trfilename;                                 // formatted string name with hartid
     std::string outstr;
     std::string tracestr;
     FILE *fl;

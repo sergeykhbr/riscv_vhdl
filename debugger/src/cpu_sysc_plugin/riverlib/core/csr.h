@@ -37,10 +37,10 @@ SC_MODULE(CsrRegs) {
     sc_in<bool> i_e_halted;                                 // core is halted confirmation flag
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_pc;               // current latched instruction pointer in executor
     sc_in<sc_uint<32>> i_e_instr;                           // current latched opcode in executor
-    sc_in<sc_uint<1>> i_msip;                               // machine software pening interrupt
-    sc_in<sc_uint<1>> i_mtip;                               // machine timer pening interrupt
-    sc_in<sc_uint<1>> i_meip;                               // machine external pening interrupt
-    sc_in<sc_uint<1>> i_seip;                               // supervisor external pening interrupt
+    sc_in<sc_uint<1>> i_msip;                                     // machine software pening interrupt
+    sc_in<sc_uint<1>> i_mtip;                                     // machine timer pening interrupt
+    sc_in<sc_uint<1>> i_meip;                                     // machine external pening interrupt
+    sc_in<sc_uint<1>> i_seip;                                     // supervisor external pening interrupt
     sc_out<bool> o_irq_software;                            // software interrupt pending bit
     sc_out<bool> o_irq_timer;                               // timer interrupt pending bit
     sc_out<bool> o_irq_external;                            // external interrupt pending bit
@@ -90,7 +90,7 @@ SC_MODULE(CsrRegs) {
     static const uint32_t State_Resume = 7;
     static const uint32_t State_Wfi = 8;
     static const uint32_t State_Response = 9;
-    static const uint32_t SATP_MODE_SV48 = 9;
+    static const uint8_t SATP_MODE_SV48 = 9;
 
     struct CsrRegs_registers {
         sc_signal<sc_uint<4>> state;
@@ -169,26 +169,26 @@ SC_MODULE(CsrRegs) {
         iv.state = State_Idle;
         iv.cmd_type = 0;
         iv.cmd_addr = 0;
-        iv.cmd_data = 0;
+        iv.cmd_data = 0ull;
         iv.cmd_exception = 0;
         iv.progbuf_end = 0;
         iv.progbuf_err = 0;
-        iv.mtvec = 0;
+        iv.mtvec = 0ull;
         iv.mtvec_mode = 0;
-        iv.mtval = 0;
-        iv.mscratch = 0;
-        iv.mstackovr = 0;
-        iv.mstackund = 0;
-        iv.mpu_addr = 0;
-        iv.mpu_mask = 0;
+        iv.mtval = 0ull;
+        iv.mscratch = 0ull;
+        iv.mstackovr = 0ull;
+        iv.mstackund = 0ull;
+        iv.mpu_addr = 0ull;
+        iv.mpu_mask = 0ull;
         iv.mpu_idx = 0;
         iv.mpu_flags = 0;
         iv.mpu_we = 0;
         iv.mmu_ena = 0;
-        iv.satp_ppn = 0;
+        iv.satp_ppn = 0ull;
         iv.satp_mode = 0;
-        iv.mepc = 0;
-        iv.uepc = 0;
+        iv.mepc = 0ull;
+        iv.uepc = 0ull;
         iv.mode = PRV_M;
         iv.uie = 0;
         iv.mie = 0;
@@ -219,12 +219,12 @@ SC_MODULE(CsrRegs) {
         iv.ex_fpu_inexact = 0;
         iv.trap_irq = 0;
         iv.trap_cause = 0;
-        iv.trap_addr = 0;
-        iv.timer = 0;
-        iv.cycle_cnt = 0;
-        iv.executed_cnt = 0;
-        iv.dscratch0 = 0;
-        iv.dscratch1 = 0;
+        iv.trap_addr = 0ull;
+        iv.timer = 0ull;
+        iv.cycle_cnt = 0ull;
+        iv.executed_cnt = 0ull;
+        iv.dscratch0 = 0ull;
+        iv.dscratch1 = 0ull;
         iv.dpc = CFG_RESET_VECTOR;
         iv.halt_cause = 0;
         iv.dcsr_ebreakm = 0;
@@ -232,10 +232,10 @@ SC_MODULE(CsrRegs) {
         iv.dcsr_stoptimer = 0;
         iv.dcsr_step = 0;
         iv.dcsr_stepie = 0;
-        iv.stepping_mode_cnt = 0;
-        iv.ins_per_step = 1;
+        iv.stepping_mode_cnt = 0ull;
+        iv.ins_per_step = 1ull;
         iv.flushi_ena = 0;
-        iv.flushi_addr = 0;
+        iv.flushi_addr = 0ull;
     }
 
 };

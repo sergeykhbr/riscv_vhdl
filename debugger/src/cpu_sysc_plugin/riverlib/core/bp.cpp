@@ -145,7 +145,7 @@ void BranchPredictor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
 void BranchPredictor::comb() {
     sc_uint<CFG_CPU_ADDR_BITS> vb_addr[CFG_BP_DEPTH];
-    sc_uint<CFG_CPU_ADDR_BITS> vb_piped[4];
+    sc_uint<(CFG_CPU_ADDR_BITS - 2)> vb_piped[4];
     sc_uint<CFG_CPU_ADDR_BITS> vb_fetch_npc;
     bool v_btb_we;
     sc_uint<CFG_CPU_ADDR_BITS> vb_btb_we_pc;
@@ -168,13 +168,14 @@ void BranchPredictor::comb() {
 
     // Transform address into 2-dimesional array for convinience
     for (int i = 0; i < CFG_BP_DEPTH; i++) {
-        vb_addr[i] = wb_npc.read()((((i + 1) * CFG_CPU_ADDR_BITS) - 1), (i * CFG_CPU_ADDR_BITS));
+        vb_addr[i] = wb_npc.read()((i * CFG_CPU_ADDR_BITS) + CFG_CPU_ADDR_BITS - 1, (i * CFG_CPU_ADDR_BITS));
     }
 
     vb_piped[0] = i_d_pc.read()((CFG_CPU_ADDR_BITS - 1), 2);
     vb_piped[1] = i_f_fetched_pc.read()((CFG_CPU_ADDR_BITS - 1), 2);
     vb_piped[2] = i_f_fetching_pc.read()((CFG_CPU_ADDR_BITS - 1), 2);
     vb_piped[3] = i_f_requested_pc.read()((CFG_CPU_ADDR_BITS - 1), 2);
+    // Check availablity of pc in pipeline
     vb_hit = 0;
     for (int n = 0; n < 4; n++) {
         for (int i = n; i < 4; i++) {
@@ -193,9 +194,9 @@ void BranchPredictor::comb() {
 
     // Pre-decoder input signals (not used for now)
     for (int i = 0; i < 2; i++) {
-        wb_pd[i].c_valid = (!i_resp_mem_data.read()(((16 * i) + 1), (16 * i)).and_reduce());
+        wb_pd[i].c_valid = (!i_resp_mem_data.read()((16 * i) + 2 - 1, (16 * i)).and_reduce());
         wb_pd[i].addr = (i_resp_mem_addr.read() + (2 * i));
-        wb_pd[i].data = i_resp_mem_data.read()(((16 * i) + 31), (16 * i));
+        wb_pd[i].data = i_resp_mem_data.read()((16 * i) + 32 - 1, (16 * i));
     }
     vb_ignore_pd = 0;
     for (int i = 0; i < 4; i++) {

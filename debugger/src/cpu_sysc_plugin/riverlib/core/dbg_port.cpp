@@ -74,6 +74,7 @@ DbgPort::DbgPort(sc_module_name name,
     async_reset_ = async_reset;
     trbuf0 = 0;
 
+    // generate
     if (CFG_LOG2_STACK_TRACE_ADDR != 0) {
         trbuf0 = new StackTraceBuffer("trbuf0");
         trbuf0->i_clk(i_clk);
@@ -82,8 +83,9 @@ DbgPort::DbgPort(sc_module_name name,
         trbuf0->i_we(w_stack_we);
         trbuf0->i_waddr(wb_stack_waddr);
         trbuf0->i_wdata(wb_stack_wdata);
-
     }
+
+    // endgenerate
 
 
     SC_METHOD(comb);
@@ -361,12 +363,12 @@ void DbgPort::comb() {
         } else if (i_e_memop_valid.read() == 1) {
             v.dstate = exec_progbuf_waitmemop;
         } else {
-            t_idx = i_e_npc.read()(5, 1);
-            v.progbuf_pc = (0, (i_e_npc.read()(5, 2) << 2));
+            t_idx = i_e_npc.read()(5, 2);
+            v.progbuf_pc = (0ull, (i_e_npc.read()(5, 2) << 2));
             if (t_idx == 0xf) {
-                v.progbuf_instr = (0, i_progbuf.read()(((32 * t_idx) + 63), (32 * t_idx))).to_uint64();
+                v.progbuf_instr = (0, i_progbuf.read()(255, 224)).to_uint64();
             } else {
-                v.progbuf_instr = i_progbuf.read()(((32 * t_idx) + 31), (32 * t_idx)).to_uint64();
+                v.progbuf_instr = i_progbuf.read()((32 * t_idx) + 64 - 1, (32 * t_idx)).to_uint64();
             }
         }
         break;

@@ -225,7 +225,7 @@ void IntMul::comb() {
 
     if (r.ena.read()[0] == 1) {
         for (int i = 0; i < 32; i++) {
-            wb_mux_lvl0 = r.a2.read()(((2 * i) + 1), (2 * i));
+            wb_mux_lvl0 = r.a2.read()((2 * i) + 2 - 1, (2 * i));
             if (wb_mux_lvl0 == 0) {
                 wb_lvl0[i] = 0;
             } else if (wb_mux_lvl0 == 1) {
@@ -239,7 +239,7 @@ void IntMul::comb() {
         }
         for (int i = 0; i < 16; i++) {
             v.lvl1[i] = ((sc_biguint<69>(wb_lvl0[((2 * i) + 1)]) << 2)
-                    + sc_biguint<69>(wb_lvl0[(2 * i)]));
+                    + (0, sc_biguint<69>(wb_lvl0[(2 * i)])));
         }
     }
 

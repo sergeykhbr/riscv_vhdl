@@ -138,13 +138,13 @@ void InstrFetch::comb() {
         }
         break;
     case WaitReqAccept:
-        if (i_mem_req_ready) {
+        if (i_mem_req_ready.read() == 1) {
             v.req_valid = (i_bp_valid && (!i_progbuf_ena));
             v.req_addr = i_bp_pc;
             v.mem_resp_shadow = r.req_addr;
             v.resp_ready = 1;
             v.state = WaitResp;
-        } else if (i_bp_valid) {
+        } else if (i_bp_valid.read() == 1) {
             // re-write requested address (while it wasn't accepted)
             v.req_addr = i_bp_pc;
         }
@@ -164,7 +164,7 @@ void InstrFetch::comb() {
                 } else {
                     v.state = WaitReqAccept;
                 }
-            } else if (i_bp_valid && (!i_progbuf_ena)) {
+            } else if ((i_bp_valid.read() == 1) && (i_progbuf_ena.read() == 0)) {
                 v.req_addr = i_bp_pc;
                 v.state = WaitReqAccept;
             } else {

@@ -128,9 +128,9 @@ void divstage53::comb() {
     }
 
     // stage 4 of 4
-    wb_thresh[3] = ((0, wb_dif[2]) - wb_divx3.to_uint64());
-    wb_thresh[2] = ((0, wb_dif[2]) - wb_divx2.to_uint64());
-    wb_thresh[1] = ((0, wb_dif[2]) - i_divisor.read().to_uint64());
+    wb_thresh[3] = ((0, wb_dif[2]) - (0, wb_divx3.to_uint64()));
+    wb_thresh[2] = ((0, wb_dif[2]) - (0, wb_divx2.to_uint64()));
+    wb_thresh[1] = ((0, wb_dif[2]) - (0, i_divisor.read().to_uint64()));
     wb_thresh[0] = (0, wb_dif[2]);
     if (wb_thresh[3][61] == 0) {
         wb_bits(1, 0) = 3;

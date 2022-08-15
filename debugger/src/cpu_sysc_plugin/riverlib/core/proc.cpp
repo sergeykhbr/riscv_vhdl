@@ -19,7 +19,7 @@
 
 namespace debugger {
 
-static std::string trace_file = "trace_river_sysc.log";
+static std::string trace_file = "trace_river_sysc";
 
 Processor::Processor(sc_module_name name,
                      bool async_reset,
@@ -495,8 +495,9 @@ Processor::Processor(sc_module_name name,
     dbg0->i_m_valid(w.m.valid);
 
 
+    // generate
     if (tracer_ena_) {
-        trace0 = new Tracer("trace0", async_reset, trace_file);
+        trace0 = new Tracer("trace0", async_reset, hartid, trace_file);
         trace0->i_clk(i_clk);
         trace0->i_nrst(i_nrst);
         trace0->i_dbg_executed_cnt(csr.executed_cnt);
@@ -519,8 +520,9 @@ Processor::Processor(sc_module_name name,
         trace0->i_m_waddr(w.w.waddr);
         trace0->i_m_wdata(w.w.wdata);
         trace0->i_reg_ignored(w_reg_ignored);
-
     }
+
+    // endgenerate
 
 
     SC_METHOD(comb);

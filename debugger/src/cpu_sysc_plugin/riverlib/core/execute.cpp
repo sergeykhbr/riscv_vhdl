@@ -173,6 +173,7 @@ InstrExecute::InstrExecute(sc_module_name name,
     sh0->o_res(wb_select[Res_Shifter].res);
 
 
+    // generate
     if (fpu_ena_) {
         fpu0 = new FpuTop("fpu0", async_reset);
         fpu0->i_clk(i_clk);
@@ -196,8 +197,9 @@ InstrExecute::InstrExecute(sc_module_name name,
         w_ex_fpu_overflow = 0;
         w_ex_fpu_underflow = 0;
         w_ex_fpu_inexact = 0;
-
     }
+
+    // endgenerate
 
 
     SC_METHOD(comb);
@@ -734,11 +736,11 @@ void InstrExecute::comb() {
     t_radr1 = mux.radr1.to_int();
     t_radr2 = mux.radr2.to_int();
     w_hazard1 = 0;
-    if (r.tagcnt.read()(((CFG_REG_TAG_WIDTH * t_radr1) + (CFG_REG_TAG_WIDTH - 1)), (CFG_REG_TAG_WIDTH * t_radr1)) != i_rtag1.read()) {
+    if (r.tagcnt.read()((CFG_REG_TAG_WIDTH * t_radr1) + CFG_REG_TAG_WIDTH - 1, (CFG_REG_TAG_WIDTH * t_radr1)) != i_rtag1.read()) {
         w_hazard1 = v_check_tag1;
     }
     w_hazard2 = 0;
-    if (r.tagcnt.read()(((CFG_REG_TAG_WIDTH * t_radr2) + (CFG_REG_TAG_WIDTH - 1)), (CFG_REG_TAG_WIDTH * t_radr2)) != i_rtag2.read()) {
+    if (r.tagcnt.read()((CFG_REG_TAG_WIDTH * t_radr2) + CFG_REG_TAG_WIDTH - 1, (CFG_REG_TAG_WIDTH * t_radr2)) != i_rtag2.read()) {
         w_hazard2 = v_check_tag2;
     }
 
@@ -925,7 +927,10 @@ void InstrExecute::comb() {
     if (((wv[Instr_JAL] || wv[Instr_JALR]) == 1) && (mux.waddr == REG_RA)) {
         v_call = 1;
     }
-    if ((wv[Instr_JALR] == 1) && (vb_rdata2.or_reduce() == 0) && (mux.waddr != REG_RA) && (mux.radr1 == REG_RA)) {
+    if ((wv[Instr_JALR] == 1)
+            && (vb_rdata2.or_reduce() == 0)
+            && (mux.waddr != REG_RA)
+            && (mux.radr1 == REG_RA)) {
         v_ret = 1;
     }
     v_mem_ex = (r.mem_ex_load_fault
@@ -1388,10 +1393,10 @@ void InstrExecute::comb() {
     // Next tags:
     t_waddr = vb_reg_waddr.to_int();
 
-    t_tagcnt_wr = (r.tagcnt.read()(((CFG_REG_TAG_WIDTH * t_waddr) + (CFG_REG_TAG_WIDTH - 1)), (CFG_REG_TAG_WIDTH * t_waddr)) + 1);
+    t_tagcnt_wr = (r.tagcnt.read()((CFG_REG_TAG_WIDTH * t_waddr) + CFG_REG_TAG_WIDTH - 1, (CFG_REG_TAG_WIDTH * t_waddr)) + 1);
 
     vb_tagcnt_next = r.tagcnt;
-    vb_tagcnt_next(((CFG_REG_TAG_WIDTH * t_waddr) + (CFG_REG_TAG_WIDTH - 1)), (CFG_REG_TAG_WIDTH * t_waddr)) = t_tagcnt_wr;
+    vb_tagcnt_next((CFG_REG_TAG_WIDTH * t_waddr) + CFG_REG_TAG_WIDTH- 1, (CFG_REG_TAG_WIDTH * t_waddr)) = t_tagcnt_wr;
     vb_tagcnt_next((CFG_REG_TAG_WIDTH - 1), 0) = 0;        // r0 always 0
     if (i_dbg_progbuf_ena.read() == 0) {
         v.dnpc = 0;
@@ -1584,7 +1589,7 @@ void InstrExecute::comb() {
 
     // Debug rtl only:!!
     for (int i = 0; i < INTREGS_TOTAL; i++) {
-        tag_expected[i] = r.tagcnt.read()(((CFG_REG_TAG_WIDTH * i) + (CFG_REG_TAG_WIDTH - 1)), (CFG_REG_TAG_WIDTH * i)).to_uint64();
+        tag_expected[i] = r.tagcnt.read()((CFG_REG_TAG_WIDTH * i) + CFG_REG_TAG_WIDTH - 1, (CFG_REG_TAG_WIDTH * i)).to_uint64();
     }
 }
 

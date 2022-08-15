@@ -258,7 +258,7 @@ void InstrDecoder::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void InstrDecoder::comb() {
-    sc_uint<CFG_CPU_ADDR_BITS> selidx;
+    int selidx;
     bool shift_ena;
 
     selidx = 0;
@@ -321,7 +321,7 @@ void InstrDecoder::comb() {
     // generate decoders inputs with offset
     for (int i = 0; i < DEC_NUM; i++) {
         wb_f_pc[i] = (i_f_pc.read() + (2 * i));
-        wb_f_instr[i] = i_f_instr.read()(((16 * i) + 31), (16 * i));
+        wb_f_instr[i] = i_f_instr.read()((16 * i) + 32 - 1, (16 * i));
     }
 
     if ((!async_reset_ && i_nrst.read() == 0) || (i_flush_pipeline.read() == 1)) {

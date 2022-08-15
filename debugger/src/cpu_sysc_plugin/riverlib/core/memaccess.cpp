@@ -341,25 +341,25 @@ void MemAccess::comb() {
 
     switch (r.memop_addr.read()(2, 0)) {
     case 1:
-        vb_mem_resp_shifted = i_mem_data.read()(63, 8);
+        vb_mem_resp_shifted(55, 0) = i_mem_data.read()(63, 8);
         break;
     case 2:
-        vb_mem_resp_shifted = i_mem_data.read()(63, 16);
+        vb_mem_resp_shifted(47, 0) = i_mem_data.read()(63, 16);
         break;
     case 3:
-        vb_mem_resp_shifted = i_mem_data.read()(63, 24);
+        vb_mem_resp_shifted(39, 0) = i_mem_data.read()(63, 24);
         break;
     case 4:
-        vb_mem_resp_shifted = i_mem_data.read()(63, 32);
+        vb_mem_resp_shifted(31, 0) = i_mem_data.read()(63, 32);
         break;
     case 5:
-        vb_mem_resp_shifted = i_mem_data.read()(63, 40);
+        vb_mem_resp_shifted(23, 0) = i_mem_data.read()(63, 40);
         break;
     case 6:
-        vb_mem_resp_shifted = i_mem_data.read()(63, 48);
+        vb_mem_resp_shifted(15, 0) = i_mem_data.read()(63, 48);
         break;
     case 7:
-        vb_mem_resp_shifted = i_mem_data.read()(63, 56);
+        vb_mem_resp_shifted(7, 0) = i_mem_data.read()(63, 56);
         break;
     default:
         vb_mem_resp_shifted = i_mem_data;

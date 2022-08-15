@@ -21,9 +21,11 @@
 namespace debugger {
 
 static const uint32_t CFG_VENDOR_ID = 0x000000F1;
-static const uint32_t CFG_IMPLEMENTATION_ID = 0x20191123;
+static const uint32_t CFG_IMPLEMENTATION_ID = 0x20220813;
 static const bool CFG_HW_FPU_ENABLE = true;
+static const bool CFG_TRACER_ENABLE = false;
 
+// Architectural size definition
 static const int RISCV_ARCH = 64;
 
 static const int CFG_CPU_ADDR_BITS = CFG_BUS_ADDR_WIDTH;
@@ -33,8 +35,10 @@ static const int CFG_CPU_USER_BITS = 1;
 // 
 // 2**Number of CPU slots in the clusters. Some of them could be unavailable
 // 
-static const int CFG_LOG2_CPU_MAX = 2;
+static const int CFG_LOG2_CPU_MAX = 2;                      // 1=Dual-core (maximum); 2=Quad-core (maximum), 3=..
 static const int CFG_CPU_MAX = (1 << CFG_LOG2_CPU_MAX);
+// +1 ACP coherent port
+static const int CFG_SLOT_L1_TOTAL = (CFG_CPU_MAX + 1);
 
 // Power-on start address can be free changed
 static const uint64_t CFG_RESET_VECTOR = 0x10000ull;
@@ -66,7 +70,7 @@ static const int STACK_TRACE_BUF_SIZE = (1 << CFG_LOG2_STACK_TRACE_ADDR);
 // ICacheLru config (16 KB by default)
 // 
 static const int CFG_ILOG2_BYTES_PER_LINE = 5;              // [4:0] 32 Bytes = 4x8 B log2(Bytes per line)
-static const int CFG_ILOG2_LINES_PER_WAY = 7;
+static const int CFG_ILOG2_LINES_PER_WAY = 7;               // 7=16KB; 8=32KB; ..
 static const int CFG_ILOG2_NWAYS = 2;
 
 // Derivatives I$ constants:
@@ -117,13 +121,13 @@ static const int SNOOP_REQ_TYPE_BITS = 2;
 
 
 // 
-// L2 cache config (River 16 KB by default, Wasserfall 64 KB)
+// L2 cache config (River 16 KB, 2 ways by default, Wasserfall 64 KB, 4 ways)
 // 
 static const int CFG_L2_LOG2_BYTES_PER_LINE = 5;            // [4:0] 32 Bytes = 4x8 B log2(Bytes per line)
-static const int CFG_L2_LOG2_LINES_PER_WAY = 7;             // 7=16KB; 8=32KB; 9=64KB, ..
-static const int CFG_L2_LOG2_NWAYS = 2;
+static const int CFG_L2_LOG2_LINES_PER_WAY = 9;             // 7=16KB; 8=32KB; 9=64KB, ..
+static const int CFG_L2_LOG2_NWAYS = 4;
 
-// Derivatives D$ constants:
+// Derivatives L2 constants:
 static const int L2CACHE_BYTES_PER_LINE = (1 << CFG_L2_LOG2_BYTES_PER_LINE);
 static const int L2CACHE_LINES_PER_WAY = (1 << CFG_L2_LOG2_LINES_PER_WAY);
 static const int L2CACHE_WAYS = (1 << CFG_L2_LOG2_NWAYS);

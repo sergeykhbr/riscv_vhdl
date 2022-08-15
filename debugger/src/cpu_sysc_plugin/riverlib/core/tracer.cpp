@@ -88,6 +88,7 @@ static std::string rname[64] = {
 
 Tracer::Tracer(sc_module_name name,
                bool async_reset,
+               uint32_t hartid,
                std::string trace_file)
     : sc_module(name),
     i_clk("i_clk"),
@@ -114,8 +115,17 @@ Tracer::Tracer(sc_module_name name,
     i_reg_ignored("i_reg_ignored") {
 
     async_reset_ = async_reset;
+    hartid_ = hartid;
     trace_file_ = trace_file;
-    fl = fopen(trace_file_.c_str(), "wb");
+    // initial
+    char tstr[256];
+    RISCV_sprintf(tstr, sizeof(tstr), "%s%d.log",
+            trace_file_,
+            hartid_);
+    trfilename = std::string(tstr);
+    fl = fopen(trfilename.c_str(), "wb");
+
+    // end initial
 
 
     SC_METHOD(comb);
@@ -1136,25 +1146,25 @@ std::string Tracer::TaskDisassembler(sc_uint<32> instr) {
         case 0x73:
             switch (instr(14, 12)) {
             case 0:
-                if (instr == 00000073) {
+                if (instr == 0x00000073) {
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "ecall");
                     ostr = std::string(tstr);
-                } else if (instr == 00100073) {
+                } else if (instr == 0x00100073) {
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "ebreak");
                     ostr = std::string(tstr);
-                } else if (instr == 00200073) {
+                } else if (instr == 0x00200073) {
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "uret");
                     ostr = std::string(tstr);
-                } else if (instr == 10200073) {
+                } else if (instr == 0x10200073) {
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "sret");
                     ostr = std::string(tstr);
-                } else if (instr == 10500073) {
+                } else if (instr == 0x10500073) {
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "wfi");
                     ostr = std::string(tstr);
-                } else if (instr == 20200073) {
+                } else if (instr == 0x20200073) {
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "hret");
                     ostr = std::string(tstr);
-                } else if (instr == 30200073) {
+                } else if (instr == 0x30200073) {
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "mret");
                     ostr = std::string(tstr);
                 } else {
