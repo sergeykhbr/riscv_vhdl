@@ -125,7 +125,7 @@ void idiv53::comb() {
     v_ena = i_ena;
     v.delay = (r.delay.read()(13, 0), v_ena);
     if (i_ena.read() == 1) {
-        v.divident = (0, i_divident);
+        v.divident = (0, i_divident.read());
         v.divisor = i_divisor;
         v.lshift_rdy = 0;
         v.overflow = 0;

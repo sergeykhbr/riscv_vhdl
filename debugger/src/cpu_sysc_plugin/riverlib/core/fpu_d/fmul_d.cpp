@@ -182,7 +182,7 @@ void DoubleMul::comb() {
 
     vb_ena[0] = (i_ena && (!r.busy));
     vb_ena[1] = r.ena.read()[0];
-    vb_ena(4, 2) = (r.ena.read()(3, 2), w_imul_rdy);
+    vb_ena(4, 2) = (r.ena.read()(3, 2), w_imul_rdy.read());
     v.ena = vb_ena;
 
     if (i_ena.read() == 1) {
@@ -246,9 +246,9 @@ void DoubleMul::comb() {
     if (wb_imul_result.read()[105] == 1) {
         expAlign = expAlign_t;
     } else if ((r.a.read()(62, 52).or_reduce() == 0) || (r.b.read()(62, 52).or_reduce() == 0)) {
-        expAlign = (expAlign_t - (0, wb_imul_shift));
+        expAlign = (expAlign_t - (0, wb_imul_shift.read()));
     } else {
-        expAlign = (r.expAB.read() - (0, wb_imul_shift));
+        expAlign = (r.expAB.read() - (0, wb_imul_shift.read()));
     }
 
     // IMPORTANT exception! new ZERO value

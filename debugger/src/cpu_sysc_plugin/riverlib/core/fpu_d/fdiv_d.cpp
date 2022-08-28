@@ -194,7 +194,7 @@ void DoubleDiv::comb() {
 
     vb_ena[0] = (i_ena && (!r.busy));
     vb_ena[1] = r.ena.read()[0];
-    vb_ena(4, 2) = (r.ena.read()(3, 2), w_idiv_rdy);
+    vb_ena(4, 2) = (r.ena.read()(3, 2), w_idiv_rdy.read());
     v.ena = vb_ena;
 
     if (i_ena.read() == 1) {
@@ -262,7 +262,7 @@ void DoubleDiv::comb() {
         }
     }
 
-    expShift = ((0, r.preShift) - (0, wb_idiv_lshift));
+    expShift = ((0, r.preShift.read()) - (0, wb_idiv_lshift.read()));
     if ((r.b.read()(62, 52).or_reduce() == 0) && (r.a.read()(62, 52).or_reduce() == 1)) {
         expShift = (expShift - 1);
     } else if ((r.b.read()(62, 52).or_reduce() == 1) && (r.a.read()(62, 52).or_reduce() == 0)) {

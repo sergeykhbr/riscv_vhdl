@@ -115,7 +115,7 @@ void imul53::comb() {
     v.delay = (r.delay.read()(14, 0), v_ena);
 
     if (i_ena.read() == 1) {
-        v.b = (0, i_b);
+        v.b = (0, i_b.read());
         v.overflow = 0;
         v.accum_ena = 1;
         v.sum = 0;

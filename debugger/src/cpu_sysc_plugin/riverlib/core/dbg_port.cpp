@@ -253,7 +253,7 @@ void DbgPort::comb() {
         if ((i_e_call.read() == 1) && (r.stack_trace_cnt.read() != (STACK_TRACE_BUF_SIZE - 1))) {
             w_stack_we = 1;
             wb_stack_waddr = r.stack_trace_cnt;
-            wb_stack_wdata = (i_e_npc.read(), i_e_pc);
+            wb_stack_wdata = (i_e_npc.read(), i_e_pc.read());
             v.stack_trace_cnt = (r.stack_trace_cnt.read() + 1);
         } else if ((i_e_ret.read() == 1) && (r.stack_trace_cnt.read().or_reduce() == 1)) {
             v.stack_trace_cnt = (r.stack_trace_cnt.read() - 1);

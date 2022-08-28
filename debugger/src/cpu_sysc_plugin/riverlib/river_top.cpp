@@ -49,10 +49,8 @@ RiverTop::RiverTop(sc_module_name name,
     o_resp_snoop_valid("o_resp_snoop_valid"),
     o_resp_snoop_data("o_resp_snoop_data"),
     o_resp_snoop_flags("o_resp_snoop_flags"),
-    i_msip("i_msip"),
-    i_mtip("i_mtip"),
-    i_meip("i_meip"),
-    i_seip("i_seip"),
+    o_flush_l2("o_flush_l2"),
+    i_irq_pending("i_irq_pending"),
     i_haltreq("i_haltreq"),
     i_resumereq("i_resumereq"),
     i_dport_req_valid("i_dport_req_valid"),
@@ -104,10 +102,7 @@ RiverTop::RiverTop(sc_module_name name,
     proc0->i_resp_data_er_mpu_load(w_resp_data_er_mpu_load);
     proc0->i_resp_data_er_mpu_store(w_resp_data_er_mpu_store);
     proc0->o_resp_data_ready(w_resp_data_ready);
-    proc0->i_msip(i_msip);
-    proc0->i_mtip(i_mtip);
-    proc0->i_meip(i_meip);
-    proc0->i_seip(i_seip);
+    proc0->i_irq_pending(i_irq_pending);
     proc0->o_mpu_region_we(w_mpu_region_we);
     proc0->o_mpu_region_idx(wb_mpu_region_idx);
     proc0->o_mpu_region_addr(wb_mpu_region_addr);
@@ -193,6 +188,64 @@ RiverTop::RiverTop(sc_module_name name,
     cache0->i_data_flush_valid(w_data_flush_valid);
     cache0->o_data_flush_end(w_data_flush_end);
 
+
+    SC_METHOD(comb);
+    sensitive << i_nrst;
+    sensitive << i_req_mem_ready;
+    sensitive << i_resp_mem_valid;
+    sensitive << i_resp_mem_path;
+    sensitive << i_resp_mem_data;
+    sensitive << i_resp_mem_load_fault;
+    sensitive << i_resp_mem_store_fault;
+    sensitive << i_req_snoop_valid;
+    sensitive << i_req_snoop_type;
+    sensitive << i_req_snoop_addr;
+    sensitive << i_resp_snoop_ready;
+    sensitive << i_irq_pending;
+    sensitive << i_haltreq;
+    sensitive << i_resumereq;
+    sensitive << i_dport_req_valid;
+    sensitive << i_dport_type;
+    sensitive << i_dport_addr;
+    sensitive << i_dport_wdata;
+    sensitive << i_dport_size;
+    sensitive << i_dport_resp_ready;
+    sensitive << i_progbuf;
+    sensitive << w_req_ctrl_ready;
+    sensitive << w_req_ctrl_valid;
+    sensitive << wb_req_ctrl_addr;
+    sensitive << w_resp_ctrl_valid;
+    sensitive << wb_resp_ctrl_addr;
+    sensitive << wb_resp_ctrl_data;
+    sensitive << w_resp_ctrl_load_fault;
+    sensitive << w_resp_ctrl_executable;
+    sensitive << w_resp_ctrl_ready;
+    sensitive << w_req_data_ready;
+    sensitive << w_req_data_valid;
+    sensitive << wb_req_data_type;
+    sensitive << wb_req_data_addr;
+    sensitive << wb_req_data_wdata;
+    sensitive << wb_req_data_wstrb;
+    sensitive << wb_req_data_size;
+    sensitive << w_resp_data_valid;
+    sensitive << wb_resp_data_addr;
+    sensitive << wb_resp_data_data;
+    sensitive << w_resp_data_load_fault;
+    sensitive << w_resp_data_store_fault;
+    sensitive << w_resp_data_er_mpu_load;
+    sensitive << w_resp_data_er_mpu_store;
+    sensitive << wb_resp_data_fault_addr;
+    sensitive << w_resp_data_ready;
+    sensitive << w_mpu_region_we;
+    sensitive << wb_mpu_region_idx;
+    sensitive << wb_mpu_region_addr;
+    sensitive << wb_mpu_region_mask;
+    sensitive << wb_mpu_region_flags;
+    sensitive << wb_flush_address;
+    sensitive << w_flush_valid;
+    sensitive << wb_data_flush_address;
+    sensitive << w_data_flush_valid;
+    sensitive << w_data_flush_end;
 }
 
 RiverTop::~RiverTop() {
@@ -227,10 +280,8 @@ void RiverTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_resp_snoop_valid, o_resp_snoop_valid.name());
         sc_trace(o_vcd, o_resp_snoop_data, o_resp_snoop_data.name());
         sc_trace(o_vcd, o_resp_snoop_flags, o_resp_snoop_flags.name());
-        sc_trace(o_vcd, i_msip, i_msip.name());
-        sc_trace(o_vcd, i_mtip, i_mtip.name());
-        sc_trace(o_vcd, i_meip, i_meip.name());
-        sc_trace(o_vcd, i_seip, i_seip.name());
+        sc_trace(o_vcd, o_flush_l2, o_flush_l2.name());
+        sc_trace(o_vcd, i_irq_pending, i_irq_pending.name());
         sc_trace(o_vcd, i_haltreq, i_haltreq.name());
         sc_trace(o_vcd, i_resumereq, i_resumereq.name());
         sc_trace(o_vcd, i_dport_req_valid, i_dport_req_valid.name());
@@ -253,6 +304,10 @@ void RiverTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (cache0) {
         cache0->generateVCD(i_vcd, o_vcd);
     }
+}
+
+void RiverTop::comb() {
+    o_flush_l2 = w_data_flush_end;
 }
 
 }  // namespace debugger

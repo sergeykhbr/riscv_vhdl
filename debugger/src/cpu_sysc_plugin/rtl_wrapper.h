@@ -39,11 +39,8 @@ class RtlWrapper : public sc_module,
     // Timer:
     sc_out<axi4_master_in_type> o_msti;
     sc_in<axi4_master_out_type> i_msto;
-    /** Interrupt line from external interrupts controller. */
-    sc_out<sc_uint<1>> o_msip;  // actually bus width should be CFG_CPU_MAX
-    sc_out<sc_uint<1>> o_mtip;
-    sc_out<sc_uint<1>> o_meip;
-    sc_out<sc_uint<1>> o_seip;  
+    // Interrupt lines:
+    sc_out<sc_uint<IRQ_PER_HART_TOTAL>> o_irq_pending;       // Per Hart pending interrupts pins
     sc_in<bool> i_hartreset;
     sc_in<bool> i_ndmreset;
     sc_in<bool> i_halted0;

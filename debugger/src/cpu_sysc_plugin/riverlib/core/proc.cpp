@@ -54,10 +54,7 @@ Processor::Processor(sc_module_name name,
     i_resp_data_er_mpu_load("i_resp_data_er_mpu_load"),
     i_resp_data_er_mpu_store("i_resp_data_er_mpu_store"),
     o_resp_data_ready("o_resp_data_ready"),
-    i_msip("i_msip"),
-    i_mtip("i_mtip"),
-    i_meip("i_meip"),
-    i_seip("i_seip"),
+    i_irq_pending("i_irq_pending"),
     o_mpu_region_we("o_mpu_region_we"),
     o_mpu_region_idx("o_mpu_region_idx"),
     o_mpu_region_addr("o_mpu_region_addr"),
@@ -418,10 +415,7 @@ Processor::Processor(sc_module_name name,
     csr0->i_e_halted(w.e.halted);
     csr0->i_e_pc(w.e.pc);
     csr0->i_e_instr(w.e.instr);
-    csr0->i_msip(i_msip);
-    csr0->i_mtip(i_mtip);
-    csr0->i_meip(i_meip);
-    csr0->i_seip(i_seip);
+    csr0->i_irq_pending(i_irq_pending);
     csr0->o_irq_software(csr.irq_software);
     csr0->o_irq_timer(csr.irq_timer);
     csr0->o_irq_external(csr.irq_external);
@@ -542,10 +536,7 @@ Processor::Processor(sc_module_name name,
     sensitive << i_resp_data_store_fault;
     sensitive << i_resp_data_er_mpu_load;
     sensitive << i_resp_data_er_mpu_store;
-    sensitive << i_msip;
-    sensitive << i_mtip;
-    sensitive << i_meip;
-    sensitive << i_seip;
+    sensitive << i_irq_pending;
     sensitive << i_haltreq;
     sensitive << i_resumereq;
     sensitive << i_dport_req_valid;
@@ -779,10 +770,7 @@ void Processor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_resp_data_er_mpu_load, i_resp_data_er_mpu_load.name());
         sc_trace(o_vcd, i_resp_data_er_mpu_store, i_resp_data_er_mpu_store.name());
         sc_trace(o_vcd, o_resp_data_ready, o_resp_data_ready.name());
-        sc_trace(o_vcd, i_msip, i_msip.name());
-        sc_trace(o_vcd, i_mtip, i_mtip.name());
-        sc_trace(o_vcd, i_meip, i_meip.name());
-        sc_trace(o_vcd, i_seip, i_seip.name());
+        sc_trace(o_vcd, i_irq_pending, i_irq_pending.name());
         sc_trace(o_vcd, o_mpu_region_we, o_mpu_region_we.name());
         sc_trace(o_vcd, o_mpu_region_idx, o_mpu_region_idx.name());
         sc_trace(o_vcd, o_mpu_region_addr, o_mpu_region_addr.name());

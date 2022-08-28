@@ -420,7 +420,7 @@ void DoubleAdd::comb() {
     }
     if (r.lshift.read() == 0x7F) {
         if (r.expMore.read() == 0x7FF) {
-            vb_expPostScale = (0, r.expMore);
+            vb_expPostScale = (0, r.expMore.read());
         } else {
             vb_expPostScale = (0, (r.expMore.read() + 1));
         }
@@ -428,7 +428,7 @@ void DoubleAdd::comb() {
         if ((r.expMore.read().or_reduce() == 0) && (r.lshift.read().or_reduce() == 0)) {
             vb_expPostScale = 1;
         } else {
-            vb_expPostScale = ((0, r.expMore) - (0, r.lshift));
+            vb_expPostScale = ((0, r.expMore.read()) - (0, r.lshift.read()));
         }
     }
     if ((signA ^ signOpB) == 1) {

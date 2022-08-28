@@ -130,12 +130,9 @@ class CpuRiscV_RTL : public IService,
     sc_signal<axi4_l1_out_type> coreo3;
     sc_signal<axi4_l1_in_type> acpi;
     sc_signal<axi4_l1_out_type> acpo;
-
-    /** Interrupt line from external interrupts controller. */
-    sc_signal<sc_uint<1>> wb_msip;  // actually bus width should be CFG_CPU_MAX
-    sc_signal<sc_uint<1>> wb_mtip;
-    sc_signal<sc_uint<1>> wb_meip;
-    sc_signal<sc_uint<1>> wb_seip;  
+    sc_signal<bool> w_flush_l2;
+    // Interrupt lines:
+    sc_signal<sc_uint<IRQ_PER_HART_TOTAL>> wb_irq_pending;       // Per Hart pending interrupts pins
     // Debug interface
     sc_signal<bool> w_ndmreset;
     sc_signal<sc_uint<CFG_CPU_MAX>> wb_halted;

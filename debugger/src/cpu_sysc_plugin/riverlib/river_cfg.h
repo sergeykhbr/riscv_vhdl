@@ -536,6 +536,13 @@ static const int EXCEPTION_StackOverflow = 16;              // Stack overflow
 static const int EXCEPTION_StackUnderflow = 17;             // Stack underflow
 static const int EXCEPTIONS_Total = 18;
 
+// Per Hart Interrupt bus
+static const int IRQ_HART_MSIP = 0;                         // machine software pening interrupt
+static const int IRQ_HART_MTIP = 1;                         // machine timer pening interrupt
+static const int IRQ_HART_MEIP = 2;                         // machine external pening interrupt
+static const int IRQ_HART_SEIP = 3;                         // supervisor external pening interrupt
+static const int IRQ_PER_HART_TOTAL = 4;                    // Total number of direct core interrupt requests
+
 static const int INTERRUPT_XSoftware = 0;
 static const int INTERRUPT_XTimer = 1;
 static const int INTERRUPT_XExternal = 2;

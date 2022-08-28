@@ -17,7 +17,7 @@
 
 #include <systemc.h>
 #include "../river_cfg.h"
-#include "mmu_tlb.h"
+#include "../../techmap/mem/ram_mmu_tech.h"
 
 namespace debugger {
 
@@ -152,7 +152,7 @@ SC_MODULE(Mmu) {
     sc_signal<sc_biguint<CFG_MMU_PTE_DWIDTH>> wb_tlb_wdata;
     sc_signal<sc_biguint<CFG_MMU_PTE_DWIDTH>> wb_tlb_rdata;
 
-    MmuTlb *tlb;
+    ram_mmu_tech<CFG_MMU_TLB_AWIDTH, CFG_MMU_PTE_DWIDTH> *tlb;
 
 };
 

@@ -64,9 +64,10 @@ Mmu::Mmu(sc_module_name name,
     async_reset_ = async_reset;
     tlb = 0;
 
-    tlb = new MmuTlb("tlb");
+    tlb = new ram_mmu_tech<CFG_MMU_TLB_AWIDTH,
+                           CFG_MMU_PTE_DWIDTH>("tlb");
     tlb->i_clk(i_clk);
-    tlb->i_adr(wb_tlb_adr);
+    tlb->i_addr(wb_tlb_adr);
     tlb->i_wena(w_tlb_wena);
     tlb->i_wdata(wb_tlb_wdata);
     tlb->o_rdata(wb_tlb_rdata);
@@ -197,9 +198,6 @@ void Mmu::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.tlb_flush_adr, pn + ".r_tlb_flush_adr");
     }
 
-    if (tlb) {
-        tlb->generateVCD(i_vcd, o_vcd);
-    }
 }
 
 void Mmu::comb() {

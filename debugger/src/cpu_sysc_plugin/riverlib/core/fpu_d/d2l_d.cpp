@@ -154,7 +154,7 @@ void Double2Long::comb() {
             expMax = 1086;
         }
     }
-    expDif = ((0, expMax) - (0, r.expA));
+    expDif = ((0, expMax) - (0, r.expA.read()));
 
     expDif_gr = expDif[11];
     expDif_lt = 0;

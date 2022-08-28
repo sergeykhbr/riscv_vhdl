@@ -24,10 +24,8 @@ RiverAmba::RiverAmba(sc_module_name name_, uint32_t hartid, bool async_reset,
     i_nrst("i_nrst"),
     i_msti("i_msti"),
     o_msto("o_msto"),
-    i_msip("i_msip"),
-    i_mtip("i_mtip"),
-    i_meip("i_meip"),
-    i_seip("i_seip"),
+    o_flush_l2("o_flush_l2"),
+    i_irq_pending("i_irq_pending"),
     i_haltreq("i_haltreq"),
     i_resumereq("i_resumereq"),
     i_dport_req_valid("i_dport_req_valid"),
@@ -70,10 +68,8 @@ RiverAmba::RiverAmba(sc_module_name name_, uint32_t hartid, bool async_reset,
     river0->o_resp_snoop_valid(resp_snoop_valid_o);
     river0->o_resp_snoop_data(resp_snoop_data_o);
     river0->o_resp_snoop_flags(resp_snoop_flags_o);
-    river0->i_msip(i_msip);
-    river0->i_mtip(i_mtip);
-    river0->i_meip(i_meip);
-    river0->i_seip(i_seip);
+    river0->o_flush_l2(o_flush_l2);
+    river0->i_irq_pending(i_irq_pending);
     river0->i_haltreq(i_haltreq);
     river0->i_resumereq(i_resumereq);
     river0->i_dport_req_valid(i_dport_req_valid);

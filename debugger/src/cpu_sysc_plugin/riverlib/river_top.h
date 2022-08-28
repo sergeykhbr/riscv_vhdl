@@ -16,7 +16,6 @@
 #pragma once
 
 #include <systemc.h>
-#include "../ambalib/types_amba.h"
 #include "river_cfg.h"
 #include "core/proc.h"
 #include "cache/cache_top.h"
@@ -50,11 +49,9 @@ SC_MODULE(RiverTop) {
     sc_out<bool> o_resp_snoop_valid;
     sc_out<sc_biguint<L1CACHE_LINE_BITS>> o_resp_snoop_data;
     sc_out<sc_uint<DTAG_FL_TOTAL>> o_resp_snoop_flags;
-    // Interrupt line from external interrupts controller (PLIC):
-    sc_in<sc_uint<1>> i_msip;                                     // machine software pending interrupt
-    sc_in<sc_uint<1>> i_mtip;                                     // machine timer pending interrupt
-    sc_in<sc_uint<1>> i_meip;                                     // machine external pending interrupt
-    sc_in<sc_uint<1>> i_seip;                                     // supervisor external pending interrupt
+    sc_out<bool> o_flush_l2;                                // Flush L2 after D$ has been finished
+    // Interrupt lines:
+    sc_in<sc_uint<IRQ_PER_HART_TOTAL>> i_irq_pending;       // Per Hart pending interrupts pins
     // Debug interface:
     sc_in<bool> i_haltreq;                                  // DMI: halt request from debug unit
     sc_in<bool> i_resumereq;                                // DMI: resume request from debug unit
@@ -71,6 +68,9 @@ SC_MODULE(RiverTop) {
     sc_in<sc_biguint<(32 * CFG_PROGBUF_REG_TOTAL)>> i_progbuf;// progam buffer
     sc_out<bool> o_halted;                                  // CPU halted via debug interface
 
+    void comb();
+
+    SC_HAS_PROCESS(RiverTop);
 
     RiverTop(sc_module_name name,
              bool async_reset,

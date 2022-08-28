@@ -920,7 +920,7 @@ void InstrExecute::comb() {
     if (fpu_ena_) {
         vb_select[Res_FPU] = (mux.f64 && (!(wv[Instr_FSD] || wv[Instr_FLD])));
     }
-    if (vb_select((Res_Total - 1), (Res_Zero + 1)) == 0) {
+    if (vb_select((Res_Total - 1), (Res_Zero + 1)).or_reduce() == 0) {
         vb_select[Res_Zero] = 1;                           // load memory, fence
     }
 

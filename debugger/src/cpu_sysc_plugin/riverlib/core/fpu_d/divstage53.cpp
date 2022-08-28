@@ -69,10 +69,10 @@ void divstage53::comb() {
     wb_divx3 = (wb_divx2 + i_divisor.read());
 
     // stage 1 of 4
-    wb_thresh[15] = ((0, i_divident) - (wb_divx3.to_uint64() << 6));
-    wb_thresh[14] = ((0, i_divident) - (wb_divx2.to_uint64() << 6));
-    wb_thresh[13] = ((0, i_divident) - (i_divisor.read().to_uint64() << 6));
-    wb_thresh[12] = (0, i_divident);
+    wb_thresh[15] = ((0, i_divident.read()) - (wb_divx3.to_uint64() << 6));
+    wb_thresh[14] = ((0, i_divident.read()) - (wb_divx2.to_uint64() << 6));
+    wb_thresh[13] = ((0, i_divident.read()) - (i_divisor.read().to_uint64() << 6));
+    wb_thresh[12] = (0, i_divident.read());
 
     if (wb_thresh[15][61] == 0) {
         wb_bits(7, 6) = 3;

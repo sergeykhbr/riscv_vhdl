@@ -455,7 +455,7 @@ void DecoderRvc::comb() {
     }
 
     o_pc = r.pc;
-    o_instr = (0, r.instr);
+    o_instr = (0, r.instr.read());
     o_memop_load = r.memop_load;
     o_memop_store = r.memop_store;
     o_memop_sign_ext = r.memop_sign_ext;

@@ -16,10 +16,12 @@
 #pragma once
 
 #include <systemc.h>
+#include "api_core.h"
 
 namespace debugger {
 
-template<int abits = 6, int dbits = 128>
+template<int abits = 6,
+         int dbits = 128>
 SC_MODULE(Queue) {
  public:
     sc_in<bool> i_clk;                                      // CPU clock
