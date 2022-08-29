@@ -65,9 +65,8 @@ void ram_tech<abits, dbits>::registers() {
 
     if (i_wena.read() == 1) {
         mem[i_addr.read().to_int()] = i_wdata;
-    } else {
-        rdata = mem[i_addr.read().to_int()];
     }
+    rdata = mem[i_addr.read().to_int()];
 
     o_rdata = rdata;
 }

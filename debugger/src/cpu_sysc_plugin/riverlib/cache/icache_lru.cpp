@@ -148,7 +148,7 @@ void ICacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.req_flush_addr, pn + ".r_req_flush_addr");
         sc_trace(o_vcd, r.req_flush_cnt, pn + ".r_req_flush_cnt");
     }
-    memcouple->generateVCD(i_vcd, o_vcd);
+    //memcouple->generateVCD(i_vcd, o_vcd);
 }
 
 void ICacheLru::comb() {
