@@ -44,7 +44,6 @@ VPATH = $(SRC_PATH)
 SOURCES = main \
 	trap \
 	crt \
-	pnp \
 	uart \
 	spi \
 	sd_uefi

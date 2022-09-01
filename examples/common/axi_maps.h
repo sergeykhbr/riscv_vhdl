@@ -30,6 +30,7 @@
 #include "maps/map_fsev2.h"
 #include "maps/map_plic.h"
 #include "maps/map_clint.h"
+#include "maps/map_mpu.h"
 
 #define ADDR_BUS0_XSLV_CLINT        0x02000000 // Core-local interruptor (CLINT)
 #define ADDR_BUS0_XSLV_SRAM         0x08000000 // 0x0800_0000..0x081F_FFFF = L2 Cache Controller

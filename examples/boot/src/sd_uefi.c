@@ -18,6 +18,7 @@
 #include "sd_uefi.h"
 #include "spi.h"
 #include "uart.h"
+#include <string.h>
 
 int is_empty_gui(const struct gpt_guid *guid) {
     return guid->time_low == 0
@@ -98,7 +99,7 @@ int run_from_sdcard() {
         printf_uart("[%2d] ", i);
         print_guid(&entry[i4].type);
         print_uart(" : ", 3);
-        print_uart(entry[i4].name, sizeof(entry[i4].name));
+        print_uart((const char *)entry[i4].name, sizeof(entry[i4].name));
         print_uart("\r\n", 2);
 
         if (is_uboot_guid(&entry[i4].type)) {

@@ -60,14 +60,5 @@ int uart_tx_nempty();
 void led_set(int output);
 int is_simulation();
 
-#define DEV_NONE (~0ull)
-uint64_t get_dev_bar(uint16_t vid, uint16_t did);
-
-// MPU methods:
-void mpu_enable_region(int idx,
-                       uint64_t bar,
-                       uint64_t KB,
-                       int cached,
-                       const char *rwx);
 
 #endif  // __TEST_NORF_SRC_GENERAL_H__

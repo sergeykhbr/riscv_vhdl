@@ -19,54 +19,41 @@
 
 #include <inttypes.h>
 
+#define DEV_NONE (~0ull)
 
-typedef struct MasterConfigType {
-    /*union DescrType {
-        struct bits_type {
-            uint32_t descrsize : 8;
-            uint32_t descrtype : 2;
-            uint32_t rsrv : 14;
-            uint32_t xindex : 8;
-        } bits;
-        uint32_t val;
-    } descr;*/
-    uint32_t descr;
-    uint16_t did;
-    uint16_t vid;
-} MasterConfigType;
+typedef struct master_cfg_bits_type {
+    uint32_t descrsize : 8;
+    uint32_t descrtype : 2;
+    uint32_t rsrv : 22;
+    uint32_t did : 16;
+    uint32_t vid : 16;
+} master_cfg_bits_type;
 
-typedef struct SlaveConfigType {
-    /*union DescrType {
-        struct bits_type {
-            uint32_t descrsize : 8;
-            uint32_t descrtype : 2;
-            uint32_t bar_total : 2;
-            uint32_t rsrv1 : 4;
-            uint32_t irq_idx : 8;
-            uint32_t xindex : 8;
-        } bits;
-        uint32_t val;
-    } descr;*/
-    uint32_t descr;
-    uint16_t did;
-    uint16_t vid;
+typedef union master_cfg_type {
+    master_cfg_bits_type u;
+    uint64_t v[1];
+} master_cfg_type;
+
+
+typedef struct slave_cfg_bits_type {
+    uint32_t descrsize : 8;
+    uint32_t descrtype : 2;
+    uint32_t rsrv : 22;
+    uint32_t did : 16;
+    uint32_t vid : 16;
     uint32_t xmask;
     uint32_t xaddr;
-} SlaveConfigType;
+} slave_cfg_bits_type;
+
+typedef union slave_cfg_type {
+    slave_cfg_bits_type u;
+    uint64_t v[2];
+} slave_cfg_type;
+
 
 typedef struct pnp_map {
     uint32_t hwid;              /// 0xfffff000: RO: HW ID
     uint32_t fwid;              /// 0xfffff004: RW: FW ID
-    /*union TechType {
-        struct bits_type {
-            uint8_t tech;
-            uint8_t slv_total;
-            uint8_t mst_total;
-            uint8_t adc_detect;
-        } bits;
-        uint32_t val;
-    } tech;                     /// 0xfffff008: RO: technology index
-    */
     uint32_t tech;
     uint32_t rsrv1;             /// 0xfffff00c: 
     uint64_t idt;               /// 0xfffff010: 
@@ -78,5 +65,31 @@ typedef struct pnp_map {
     uint8_t cfg_table[(1 << 12) - 0x40];/// 0xfffff040: RO: PNP configuration
 } pnp_map;
 
+
+static uint64_t get_dev_bar(pnp_map *pnp, uint16_t vid, uint16_t did) {
+    master_cfg_type mcfg;
+    slave_cfg_type scfg;
+    int slv_total = (pnp->tech >> 8) & 0xFF;
+    int mst_total = (pnp->tech >> 16) & 0xFF;
+    int off = 0;
+
+    // skip all masters
+    for (int i = 0; i < mst_total; i++) {
+        mcfg.v[0] = *(uint64_t *)&pnp->cfg_table[off];
+        off += pnp->cfg_table[off];
+    }
+
+    for (int i = 0; i < slv_total; i++) {
+        scfg.v[0] = *(uint64_t *)&pnp->cfg_table[off];
+        scfg.v[1] = *(uint64_t *)&pnp->cfg_table[off + 8];
+
+        if (scfg.u.vid == vid && scfg.u.did == did) {
+            return scfg.u.xaddr;
+        }
+        off += pnp->cfg_table[off];
+    }
+
+    return DEV_NONE;
+}
 
 #endif  // __MAP_PNP_H__

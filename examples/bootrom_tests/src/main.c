@@ -31,12 +31,53 @@ void test_spiflash(uint64_t bar);
 void test_gnss_ss(uint64_t bar);
 void print_pnp(void);
 
+void init_mpu() {
+    int mpu_total = mpu_region_total();
+    int dis_idx = 0;
+
+    // FU740 copmatible
+    // [0] Lowest prioirty: region enable all memory as rwx
+    mpu_enable_region(0,  // idx
+                      (0x0000000000000000ull), // bar
+                      (~0ull), // KB (all memory ranges)
+                      1, // cached
+                      "rwx");
+
+    // Uncached CLINT
+    mpu_enable_region(1,  // idx
+                      (0x0000000002000000ull), // bar
+                      (32768), // KB
+                      0, // uncached
+                      "rw");
+
+    // Uncached PLIC
+    mpu_enable_region(2,  // idx
+                      (0x000000000C000000ull), // bar
+                      (65536), // KB
+                      0, // uncached
+                      "rw");
+
+    // Uncached peripheries (IO)
+    mpu_enable_region(3,  // idx
+                      (0x0000000010000000ull), // bar
+                      (0x40000), // KB
+                      0, // uncached
+                      "rw");
+    dis_idx = 4;
+
+    for (int i = dis_idx; i < mpu_total; i++) {
+        mpu_disable_region(i);
+    }
+}
+
 int main() {
     uint32_t tech;
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
     gpio_map *gpio = (gpio_map *)ADDR_BUS0_XSLV_GPIO;
     uint64_t bar;
+
+    init_mpu();
 
     if (fw_get_cpuid() != 0) {
         while (1) {}
@@ -74,7 +115,7 @@ int main() {
     led_set(0x05);
     test_stackprotect();
 
-    bar = get_dev_bar(VENDOR_GNSSSENSOR, GNSS_SUB_SYSTEM);
+    bar = get_dev_bar(pnp, VENDOR_GNSSSENSOR, GNSS_SUB_SYSTEM);
     led_set(0x06);
     if (bar != DEV_NONE) {
         led_set(0x07);
@@ -83,7 +124,7 @@ int main() {
     }
     led_set(0x08);
 
-    bar = get_dev_bar(VENDOR_GNSSSENSOR, GNSSSENSOR_SPI_FLASH);
+    bar = get_dev_bar(pnp, VENDOR_GNSSSENSOR, GNSSSENSOR_SPI_FLASH);
     led_set(0x09);
     if (bar != DEV_NONE) {
         led_set(0x0A);

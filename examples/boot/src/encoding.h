@@ -131,10 +131,5 @@
 #define CSR_mpu_mask       0xBC3
 #define CSR_mpu_ctrl       0xBC4
 
-#define MPU_CTRL_FL_WR        0x01 
-#define MPU_CTRL_FL_RD        0x02 
-#define MPU_CTRL_FL_EXEC      0x04
-#define MPU_CTRL_FL_CACHABLE  0x08
-#define MPU_CTRL_FL_ENA       0x10
 
 #endif

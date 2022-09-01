@@ -20,8 +20,6 @@
 #include "sd_uefi.h"
 #include "uart.h"
 
-uint64_t get_dev_bar(uint16_t vid, uint16_t did);
-
 static const int FW_IMAGE_SIZE_BYTES = 1 << 18;
 
 int fw_get_cpuid() {
@@ -66,7 +64,7 @@ void copy_image() {
     printf_uart("dip=%02x\r\n", get_dips());
     if (get_dips() == 0xB) {
         // Load from SD-card
-        qspi2 = get_dev_bar(VENDOR_GNSSSENSOR, GNSSSENSOR_SPI_FLASH);
+        qspi2 = get_dev_bar(pnp, VENDOR_GNSSSENSOR, GNSSSENSOR_SPI_FLASH);
         if (qspi2 != ~0ull) {
             print_uart("Select . .QSPI2\r\n", 17);
             if (run_from_sdcard() == -1) {
@@ -117,6 +115,45 @@ void timestamp_output() {
     }*/
 }
 
+void init_mpu() {
+    int mpu_total = mpu_region_total();
+    int dis_idx = 0;
+
+    // FU740 copmatible
+    // [0] Lowest prioirty: region enable all memory as rwx
+    mpu_enable_region(0,  // idx
+                      (0x0000000000000000ull), // bar
+                      (~0ull), // KB (all memory ranges)
+                      1, // cached
+                      "rwx");
+
+    // Uncached CLINT
+    mpu_enable_region(1,  // idx
+                      (0x0000000002000000ull), // bar
+                      (32768), // KB
+                      0, // uncached
+                      "rw");
+
+    // Uncached PLIC
+    mpu_enable_region(2,  // idx
+                      (0x000000000C000000ull), // bar
+                      (65536), // KB
+                      0, // uncached
+                      "rw");
+
+    // Uncached peripheries (IO)
+    mpu_enable_region(3,  // idx
+                      (0x0000000010000000ull), // bar
+                      (0x40000), // KB
+                      0, // uncached
+                      "rw");
+    dis_idx = 4;
+
+    for (int i = dis_idx; i < mpu_total; i++) {
+        mpu_disable_region(i);
+    }
+}
+
 void _init() {
     uint32_t tech;
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
@@ -131,6 +168,8 @@ void _init() {
     asm("csrc mstatus, %0" : :"r"(t1));  // clear mie
     t1 = 0x00000800;
     asm("csrc mie, %0" : :"r"(t1));  // disable external irq from PLIC
+
+    init_mpu();
 
     txctrl.v = 0;
     txctrl.b.txen = 1;
