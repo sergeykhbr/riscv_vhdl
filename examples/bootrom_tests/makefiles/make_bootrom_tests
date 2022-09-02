@@ -71,8 +71,8 @@ all: bootrom_tests
 
 bootrom_tests: $(EXECUTABLE) $(DUMPFILE) $(HEXFILE)
 $(HEXFILE): $(EXECUTABLE)
-	echo elf2rawx $(addprefix $(ELF_DIR)/,$<) -h -f 32768 -l 8 -o $(addprefix $(ELF_DIR)/,$(HEXFILE))
-	elf2rawx $(addprefix $(ELF_DIR)/,$<) -h -f 32768 -l 8 -o $(addprefix $(ELF_DIR)/,$(HEXFILE))
+	echo elf2rawx $(addprefix $(ELF_DIR)/,$<) -h -f 65536 -l 8 -o $(addprefix $(ELF_DIR)/,$(HEXFILE))
+	elf2rawx $(addprefix $(ELF_DIR)/,$<) -h -f 65536 -l 8 -o $(addprefix $(ELF_DIR)/,$(HEXFILE))
 
 $(DUMPFILE): $(EXECUTABLE)
 	echo $(OBJDUMP) --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.data $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)
