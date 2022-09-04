@@ -9,10 +9,10 @@ ELF_DIR = $(TOP_DIR)linuxbuild/bin
 .SILENT:
   TEA = 2>&1 | tee _$@-comp.err
 
-all: boot
+all: bootrom_tests
 	$(ECHO) "    All done.\n"
 
-boot:
+bootrom_tests:
 	$(ECHO) "    Bootrom tests image building started:"
 	$(MKDIR) ./$(OBJ_DIR)
 	$(MKDIR) ./$(ELF_DIR)

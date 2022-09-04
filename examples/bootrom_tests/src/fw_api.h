@@ -58,7 +58,5 @@ void uart_isr_init(void);
 int uart_tx_nempty();
 
 void led_set(int output);
-int is_simulation();
-
 
 #endif  // __TEST_NORF_SRC_GENERAL_H__

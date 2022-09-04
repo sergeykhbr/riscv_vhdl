@@ -1,0 +1,34 @@
+riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imafd -DFPU_ENABLED -D__ASSEMBLY__=1 -I../../common -I../src ../src/crt.S -o ../linuxbuild/obj/crt.o
+riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imafd -DFPU_ENABLED -I../../common -I../src ../src/exceptions.c -o ../linuxbuild/obj/exceptions.o
+riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imafd -DFPU_ENABLED -I../../common -I../src ../src/interrupts.c -o ../linuxbuild/obj/interrupts.o
+riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imafd -DFPU_ENABLED -I../../common -I../src ../src/memanager.c -o ../linuxbuild/obj/memanager.o
+riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imafd -DFPU_ENABLED -I../../common -I../src ../src/uart.c -o ../linuxbuild/obj/uart.o
+riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imafd -DFPU_ENABLED -I../../common -I../src ../src/fw_api.c -o ../linuxbuild/obj/fw_api.o
+riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imafd -DFPU_ENABLED -D__ASSEMBLY__=1 -I../../common -I../src ../src/test_mbist_ram.S -o ../linuxbuild/obj/test_mbist_ram.o
+riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imafd -DFPU_ENABLED -I../../common -I../src ../src/test_pnp.c -o ../linuxbuild/obj/test_pnp.o
+riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imafd -DFPU_ENABLED -I../../common -I../src ../src/test_fpu.c -o ../linuxbuild/obj/test_fpu.o
+riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imafd -DFPU_ENABLED -I../../common -I../src ../src/test_missaccess.c -o ../linuxbuild/obj/test_missaccess.o
+riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imafd -DFPU_ENABLED -I../../common -I../src ../src/test_mpu.c -o ../linuxbuild/obj/test_mpu.o
+riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imafd -DFPU_ENABLED -I../../common -I../src ../src/test_stackprotect.c -o ../linuxbuild/obj/test_stackprotect.o
+riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imafd -DFPU_ENABLED -I../../common -I../src ../src/test_gnss_ss.c -o ../linuxbuild/obj/test_gnss_ss.o
+riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imafd -DFPU_ENABLED -I../../common -I../src ../src/test_plic.c -o ../linuxbuild/obj/test_plic.o
+riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imafd -DFPU_ENABLED -I../../common -I../src ../src/test_mtimer.c -o ../linuxbuild/obj/test_mtimer.o
+riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imafd -DFPU_ENABLED -I../../common -I../src ../src/test_swirq.c -o ../linuxbuild/obj/test_swirq.o
+riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imafd -DFPU_ENABLED -I../../common -I../src ../src/test_l2coherence.c -o ../linuxbuild/obj/test_l2coherence.o
+../src/test_l2coherence.c: In function 'test_l2coherence':
+../src/test_l2coherence.c:30:17: warning: assignment to 'uint64_t' {aka 'long unsigned int'} from 'uint32_t *' {aka 'unsigned int *'} makes integer from pointer without a cast [-Wint-conversion]
+   30 |     pnp->fwdbg1 = &cohtestcnt;     // shared variable in local stack
+      |                 ^
+riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imafd -DFPU_ENABLED -I../../common -I../src ../src/hwthread1.c -o ../linuxbuild/obj/hwthread1.o
+riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imafd -DFPU_ENABLED -I../../common -I../src ../src/hwthread2.c -o ../linuxbuild/obj/hwthread2.o
+riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imafd -DFPU_ENABLED -I../../common -I../src ../src/hwthread3.c -o ../linuxbuild/obj/hwthread3.o
+riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imafd -DFPU_ENABLED -I../../common -I../src ../src/main.c -o ../linuxbuild/obj/main.o
+../src/main.c: In function 'main':
+../src/main.c:164:9: warning: implicit declaration of function 'isr_uart0_tx' [-Wimplicit-function-declaration]
+  164 |         isr_uart0_tx();
+      |         ^~~~~~~~~~~~
+riscv64-unknown-elf-gcc -T test.ld -nostdlib -nostartfiles ../linuxbuild/obj/crt.o ../linuxbuild/obj/exceptions.o ../linuxbuild/obj/interrupts.o ../linuxbuild/obj/memanager.o ../linuxbuild/obj/uart.o ../linuxbuild/obj/fw_api.o ../linuxbuild/obj/test_mbist_ram.o ../linuxbuild/obj/test_pnp.o ../linuxbuild/obj/test_fpu.o ../linuxbuild/obj/test_missaccess.o ../linuxbuild/obj/test_mpu.o ../linuxbuild/obj/test_stackprotect.o ../linuxbuild/obj/test_gnss_ss.o ../linuxbuild/obj/test_plic.o ../linuxbuild/obj/test_mtimer.o ../linuxbuild/obj/test_swirq.o ../linuxbuild/obj/test_l2coherence.o ../linuxbuild/obj/hwthread1.o ../linuxbuild/obj/hwthread2.o ../linuxbuild/obj/hwthread3.o ../linuxbuild/obj/main.o -o ../linuxbuild/bin/bootrom_tests.elf -lgcc -lc -lm
+\n  Shared Library has been built successfully.\n
+elf2rawx ../linuxbuild/bin/bootrom_tests.elf -h -f 65536 -l 8 -o ../linuxbuild/bin/bootrom_tests.hex
+elf2rawx: Loaded: 48937 B
+elf2rawx: HexRom was generated: 8192x64 lines

@@ -21,6 +21,7 @@
 
 void allocate_exception_table(void);
 void allocate_interrupt_table(void);
+void test_l2coherence(void);
 void test_plic(void);
 void test_fpu(void);
 void test_swirq(void);
@@ -30,6 +31,9 @@ void test_stackprotect(void);
 void test_spiflash(uint64_t bar);
 void test_gnss_ss(uint64_t bar);
 void print_pnp(void);
+int hwthread1(void);
+int hwthread2(void);
+int hwthread3(void);
 
 void init_mpu() {
     int mpu_total = mpu_region_total();
@@ -71,15 +75,28 @@ void init_mpu() {
 }
 
 int main() {
-    uint32_t tech;
+    uint32_t cfg;
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
     gpio_map *gpio = (gpio_map *)ADDR_BUS0_XSLV_GPIO;
     uint64_t bar;
+    uint32_t cpu_max;
 
     init_mpu();
 
-    if (fw_get_cpuid() != 0) {
+    switch (fw_get_cpuid()) {
+    case 0:
+        break;
+    case 1:
+        hwthread1();
+        break;
+    case 2:
+        hwthread2();
+        break;
+    case 3:
+        hwthread3();
+        break;
+    default:
         while (1) {}
     }
 
@@ -94,9 +111,12 @@ int main() {
     uart_isr_init();   // enable printf_uart function and Tx irq=1
  
     led_set(0x01);
+  
+    cpu_max = pnp->cfg >> 24;
 
     printf_uart("HARTID . . . . .%d\r\n", fw_get_cpuid());
-    printf_uart("Tech . . . . . .0x%08x\r\n", pnp->tech);
+    printf_uart("HARTS. . . . . .%d\r\n", cpu_max);
+    printf_uart("PLIC_IRQS  . . .%d\r\n", (pnp->cfg & 0xFF));
     printf_uart("HWID . . . . . .0x%08x\r\n", pnp->hwid);
     printf_uart("FWID . . . . . .0x%08x\r\n", pnp->fwid);
 
@@ -105,6 +125,7 @@ int main() {
     test_plic();
     test_mtimer();
     test_swirq();
+    test_l2coherence();
 
     led_set(0x03);
     test_fpu();

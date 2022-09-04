@@ -55,6 +55,10 @@ SOURCES = crt \
 	test_plic \
 	test_mtimer \
 	test_swirq \
+	test_l2coherence \
+	hwthread1 \
+	hwthread2 \
+	hwthread3 \
 	main
 
 OBJ_FILES = $(addsuffix .o,$(SOURCES))

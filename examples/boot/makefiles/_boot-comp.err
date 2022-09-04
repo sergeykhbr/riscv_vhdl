@@ -1,0 +1,16 @@
+riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imac -mabi=lp64 -I../../common -I../src ../src/main.c -o ../linuxbuild/obj/main.o
+riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imac -mabi=lp64 -I../../common -I../src ../src/trap.c -o ../linuxbuild/obj/trap.o
+riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imac -mabi=lp64 -D__ASSEMBLY__=1 -I../../common -I../src ../src/crt.S -o ../linuxbuild/obj/crt.o
+riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imac -mabi=lp64 -I../../common -I../src ../src/uart.c -o ../linuxbuild/obj/uart.o
+../src/uart.c: In function 'vprintfmt_lib':
+../src/uart.c:194:36: warning: implicit declaration of function 'strnlen' [-Wimplicit-function-declaration]
+  194 |                 for (width -= (int)strnlen(p, precision); width > 0; width--) {
+      |                                    ^~~~~~~
+../src/uart.c:194:36: warning: incompatible implicit declaration of built-in function 'strnlen'
+riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imac -mabi=lp64 -I../../common -I../src ../src/spi.c -o ../linuxbuild/obj/spi.o
+riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imac -mabi=lp64 -I../../common -I../src ../src/sd_uefi.c -o ../linuxbuild/obj/sd_uefi.o
+riscv64-unknown-elf-gcc -T test.ld -nostdlib -nostartfiles -march=rv64imac -mabi=lp64 ../linuxbuild/obj/main.o ../linuxbuild/obj/trap.o ../linuxbuild/obj/crt.o ../linuxbuild/obj/uart.o ../linuxbuild/obj/spi.o ../linuxbuild/obj/sd_uefi.o -o ../linuxbuild/bin/bootimage -lgcc -lc -lm
+\n  Shared Library has been built successfully.\n
+elf2rawx ../linuxbuild/bin/bootimage -h -f 32768 -l 8 -o ../linuxbuild/bin/bootimage.hex
+elf2rawx: Loaded: 10360 B
+elf2rawx: HexRom was generated: 4096x64 lines

@@ -72,7 +72,9 @@ void interrupt_m_software_c() {
     clint_map *clint = (clint_map *)ADDR_BUS0_XSLV_CLINT;
 
     clint->msip[fw_get_cpuid()] = 0x0;     // clear pending bit
-    pnp->fwdbg1 = MAGIC_SWIRQ_TEST_NUMBER; // to pass test write this value
+    if (fw_get_cpuid() == 0) {
+        pnp->fwdbg1 = MAGIC_SWIRQ_TEST_NUMBER; // to pass test write this value
+    }
 }
 
 void interrupt_s_timer_c() {

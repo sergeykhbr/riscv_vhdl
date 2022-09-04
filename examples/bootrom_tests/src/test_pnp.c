@@ -27,14 +27,14 @@ const char *const SLV_DID_EMPTY_NAME = "Empty slave slot";
 
 const char *const UNKOWN_ID_NAME = "Unknown";
 
-static const char *const GNSS_SENSOR_MST_DEVICE_NAMES[] = {
+static const char *const XMST_DEVICE_NAMES[] = {
     "Rocket Cached TileLink",           // 0x500
     "Rocket Uncached TileLink",         // 0x501
     "Gaisler Ethernet MAC with DMA ",   // 0x502
     "Gaisler Ethernet EDCL with DMA",   // 0x503
     "Reserved",                         // 0x504
     "RISC-V River CPU",                 // 0x505
-    "Reserved",                         // 0x506
+    "RISC-V River x4 Workgroup",        // 0x506
     "Reserved",                         // 0x507
     "Reserved",                         // 0x508
     "Reserved",                         // 0x509
@@ -42,7 +42,7 @@ static const char *const GNSS_SENSOR_MST_DEVICE_NAMES[] = {
     "JTAG TAP",                         // 0x50b
 };
 
-static const char *const GNSS_SENSOR_SLV_DEVICE_NAMES[] = {
+static const char *const XSLV_DEVICE_NAMES[] = {
     "GNSS Sub-System",          // 0x67
     "GNSS Engine stub",         // 0x68
     "Reserved",                 // 0x69
@@ -71,7 +71,8 @@ static const char *const GNSS_SENSOR_SLV_DEVICE_NAMES[] = {
     "Debug Support Unit (DSU)", // 0x80
     "GP Timers",                // 0x81
     "ADC Recorder",             // 0x82
-    "OTP Bank, 8KB",            // 0x83
+    "CLINT",                    // 0x83
+    "PLIC"                      // 0x84
 };
 
 static const char *const MIKRON_SLV_DEVICE_NAMES[] = {
@@ -82,7 +83,7 @@ static const char *const MIKRON_SLV_DEVICE_NAMES[] = {
  * @brief Get device Vendor name by its ID
  */
 static const char *get_vendor_name(uint16_t vid) {
-    if (vid == VENDOR_GNSSSENSOR) {
+    if (vid == VENDOR_GNSSSENSOR || vid == VENDOR_OPTIMITECH) {
         return VENDOR_NAME;
     }
     if (vid == 0xABCD) {
@@ -96,7 +97,7 @@ static const char *get_vendor_name(uint16_t vid) {
  */
 static const char *get_device_name(uint16_t vid, uint16_t did)
 {
-    if (vid != VENDOR_GNSSSENSOR) {
+    if (vid != VENDOR_GNSSSENSOR && vid != VENDOR_OPTIMITECH) {
         if (did == 0x1234) {
             return MIKRON_SLV_DEVICE_NAMES[0];
         }
@@ -108,11 +109,11 @@ static const char *get_device_name(uint16_t vid, uint16_t did)
     if (did == SLV_DID_EMPTY) {
         return SLV_DID_EMPTY_NAME;
     }
-    if (did >= GNSS_SUB_SYSTEM && did <= GNSSSENSOR_OTP_8KB) {
-        return GNSS_SENSOR_SLV_DEVICE_NAMES[did - GNSS_SUB_SYSTEM];
+    if (did >= GNSS_SUB_SYSTEM && did <= OPTIMITECH_PLIC) {
+        return XSLV_DEVICE_NAMES[did - GNSS_SUB_SYSTEM];
     }
     if (did >= RISCV_CACHED_TILELINK && did <= GNSSSENSOR_JTAG_TAP) {
-        return GNSS_SENSOR_MST_DEVICE_NAMES[did - RISCV_CACHED_TILELINK];
+        return XMST_DEVICE_NAMES[did - RISCV_CACHED_TILELINK];
     }
     return UNKOWN_ID_NAME;
 }
@@ -121,8 +122,8 @@ void print_pnp() {
     master_cfg_type mcfg;
     slave_cfg_type scfg;
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
-    int slv_total = (pnp->tech >> 8) & 0xFF;
-    int mst_total = (pnp->tech >> 16) & 0xFF;
+    int slv_total = (pnp->cfg >> 8) & 0xFF;
+    int mst_total = (pnp->cfg >> 16) & 0xFF;
     int off = 0;
     uint32_t xsize;
 

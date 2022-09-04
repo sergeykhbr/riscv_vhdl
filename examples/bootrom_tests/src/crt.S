@@ -168,9 +168,6 @@ reset_vector:
 #define CFG_CPU_MAX 4
 
   li  sp, SRAM_BASE_ADDR+SRAM_SIZE_BYTES
-  addi sp,sp,-256
-  csrw 0x7b3, sp          # save dedicated stack region into dscratch1 register to run riscv-tests
-  mv tp, sp               # or use dedicated tp for context saving
 
   # Initialze stack pointer for each cpu
   li  a1, (CFG_CPU_MAX - 1)
@@ -178,12 +175,15 @@ reset_vector:
   li  a1, STACK_PER_CORE_BYTES
   mul a0, a0, a1
   sub sp, sp, a0
+  # allocate special 256B region in a stack to save/restore context
+  addi sp, sp,-256
+  csrw 0x7b3, sp          # save dedicated stack region into dscratch1 register to run riscv-tests
+  mv tp, sp               # or use dedicated tp for context saving
 
 
   # check Hart ID
   csrr a0, mhartid            # a0 <= MHARTID value
   beqz a0, init0
-  wfi
   j end_init0
 init0:
   # HW Initialization is run only on Core[0]

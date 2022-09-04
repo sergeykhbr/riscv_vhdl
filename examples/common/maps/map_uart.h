@@ -1,12 +1,10 @@
 /******************************************************************************
  * @file
- * @copyright Copyright 2015 GNSS Sensor Ltd. All right reserved.
  * @author    Sergey Khabarov - sergeykhbr@gmail.com
  * @brief     UART register mapping definition.
 ******************************************************************************/
 
-#ifndef __MAP_UART_H__
-#define __MAP_UART_H__
+#pragma once
 
 #include <inttypes.h>
 
@@ -41,7 +39,8 @@ typedef union uart_rxdata_type {
 typedef struct uart_txctrl_bits_type {
     uint32_t txen : 1;           // [0] [RW] Transmit enable
     uint32_t nstop : 1;          // [1] [RW] Number of stop bits
-    uint32_t rsrv15_2 : 14;      // [15:2]
+    uint32_t parity : 1;         // [2] [RW] Number of stop bits
+    uint32_t rsrv15_3 : 13;      // [15:3]
     uint32_t txcnt : 3;          // [18:16] [RW] Transmit watermark level
     uint32_t rsrv31_19 : 13;     // [31:19]
 } uart_txctrl_bits_type;
@@ -88,4 +87,3 @@ typedef struct uart_map {
     volatile uint32_t fwcpuid;   // 0x1c lock flag on multi cpu access
 } uart_map;
 
-#endif  // __MAP_UART_H__

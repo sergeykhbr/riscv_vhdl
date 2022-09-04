@@ -48,17 +48,9 @@ int get_dips() {
 
 
 void copy_image() { 
-    uint32_t tech;
     uint64_t *fwrom = (uint64_t *)ADDR_BUS0_XSLV_FWIMAGE;
     uint64_t *sram = (uint64_t *)ADDR_BUS0_XSLV_SRAM;
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
-
-    /** 
-     * Speed-up RTL simulation by skipping coping stage.
-     * Or skip this stage to avoid rewritting of externally loaded image.
-     */
-    tech = pnp->tech & 0xFF;
-
 
     uint64_t qspi2 = ~0ull;
     printf_uart("dip=%02x\r\n", get_dips());
@@ -155,7 +147,6 @@ void init_mpu() {
 }
 
 void _init() {
-    uint32_t tech;
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
     gpio_map *gpio = (gpio_map *)ADDR_BUS0_XSLV_GPIO;
@@ -190,8 +181,6 @@ void _init() {
     printf_uart("FPL. . . .%s\r\n", "DONE");
     printf_uart("SPL. . . .%s\r\n", "Started");
 
-    tech = (pnp->tech >> 24) & 0xff;
-    led_set(tech);
     led_set(0x03);
 }
 

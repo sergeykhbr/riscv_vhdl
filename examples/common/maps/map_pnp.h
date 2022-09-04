@@ -54,7 +54,7 @@ typedef union slave_cfg_type {
 typedef struct pnp_map {
     uint32_t hwid;              /// 0xfffff000: RO: HW ID
     uint32_t fwid;              /// 0xfffff004: RW: FW ID
-    uint32_t tech;
+    uint32_t cfg;               /// 0x008: RO target configuration: cpu_max, mst_max, slv_max, plic_irq_max
     uint32_t rsrv1;             /// 0xfffff00c: 
     uint64_t idt;               /// 0xfffff010: 
     uint64_t malloc_addr;       /// 0xfffff018: RW: debuggind memalloc pointer 0x18
@@ -69,8 +69,8 @@ typedef struct pnp_map {
 static uint64_t get_dev_bar(pnp_map *pnp, uint16_t vid, uint16_t did) {
     master_cfg_type mcfg;
     slave_cfg_type scfg;
-    int slv_total = (pnp->tech >> 8) & 0xFF;
-    int mst_total = (pnp->tech >> 16) & 0xFF;
+    int slv_total = (pnp->cfg >> 8) & 0xFF;
+    int mst_total = (pnp->cfg >> 16) & 0xFF;
     int off = 0;
 
     // skip all masters
