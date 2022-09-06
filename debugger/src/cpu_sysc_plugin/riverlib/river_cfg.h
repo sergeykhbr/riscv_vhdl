@@ -16,7 +16,6 @@
 #pragma once
 
 #include <systemc.h>
-#include "../ambalib/types_amba.h"
 
 namespace debugger {
 
@@ -28,7 +27,7 @@ static const bool CFG_TRACER_ENABLE = false;
 // Architectural size definition
 static const int RISCV_ARCH = 64;
 
-static const int CFG_CPU_ADDR_BITS = CFG_BUS_ADDR_WIDTH;
+static const int CFG_CPU_ADDR_BITS = 64;
 static const int CFG_CPU_ID_BITS = 1;
 static const int CFG_CPU_USER_BITS = 1;
 
@@ -589,6 +588,62 @@ static const int MemopType_Locked = 1;                      // AMO instructions
 static const int MemopType_Reserve = 2;                     // LS load with reserve
 static const int MemopType_Release = 3;                     // SC store with release
 static const int MemopType_Total = 4;
+
+static const int REQ_MEM_TYPE_WRITE = 0;
+static const int REQ_MEM_TYPE_CACHED = 1;
+static const int REQ_MEM_TYPE_UNIQUE = 2;
+static const int REQ_MEM_TYPE_BITS = 3;
+
+static sc_uint<REQ_MEM_TYPE_BITS> ReadNoSnoop() {
+    sc_uint<REQ_MEM_TYPE_BITS> ret;
+
+    ret = 0;
+    return ret;
+}
+
+static sc_uint<REQ_MEM_TYPE_BITS> ReadShared() {
+    sc_uint<REQ_MEM_TYPE_BITS> ret;
+
+    ret = 0;
+    ret[REQ_MEM_TYPE_CACHED] = 1;
+    return ret;
+}
+
+static sc_uint<REQ_MEM_TYPE_BITS> ReadMakeUnique() {
+    sc_uint<REQ_MEM_TYPE_BITS> ret;
+
+    ret = 0;
+    ret[REQ_MEM_TYPE_CACHED] = 1;
+    ret[REQ_MEM_TYPE_UNIQUE] = 1;
+    return ret;
+}
+
+static sc_uint<REQ_MEM_TYPE_BITS> WriteNoSnoop() {
+    sc_uint<REQ_MEM_TYPE_BITS> ret;
+
+    ret = 0;
+    ret[REQ_MEM_TYPE_WRITE] = 1;
+    return ret;
+}
+
+static sc_uint<REQ_MEM_TYPE_BITS> WriteLineUnique() {
+    sc_uint<REQ_MEM_TYPE_BITS> ret;
+
+    ret = 0;
+    ret[REQ_MEM_TYPE_WRITE] = 1;
+    ret[REQ_MEM_TYPE_CACHED] = 1;
+    ret[REQ_MEM_TYPE_UNIQUE] = 1;
+    return ret;
+}
+
+static sc_uint<REQ_MEM_TYPE_BITS> WriteBack() {
+    sc_uint<REQ_MEM_TYPE_BITS> ret;
+
+    ret = 0;
+    ret[REQ_MEM_TYPE_WRITE] = 1;
+    ret[REQ_MEM_TYPE_CACHED] = 1;
+    return ret;
+}
 
 }  // namespace debugger
 

@@ -27,8 +27,25 @@ static const int CFG_LOG2_BUS_DATA_BYTES = 3;
 static const int CFG_BUS_ID_BITS         = 5;
 static const int CFG_BUS_USER_BITS       = 1;
 
+static const int CFG_SYSBUS_ADDR_BITS = CFG_BUS_ADDR_WIDTH;
+static const int CFG_LOG2_SYSBUS_DATA_BYTES = CFG_LOG2_BUS_DATA_BYTES;
+static const int CFG_SYSBUS_ID_BITS = CFG_BUS_ID_BITS;
+static const int CFG_SYSBUS_USER_BITS = CFG_BUS_USER_BITS;
+
 static const int BUS_DATA_BYTES      = (1 << CFG_LOG2_BUS_DATA_BYTES);
 static const int BUS_DATA_WIDTH      = 8 * BUS_DATA_BYTES;
+
+
+// Burst length size decoder
+static const int XSIZE_TOTAL = 8;
+// Decoder of the transaction bytes from AXI format to Bytes.
+static sc_uint<XSIZE_TOTAL> XSizeToBytes(sc_uint<3> xsize) {
+    sc_uint<XSIZE_TOTAL> ret;
+
+    ret = (1 << xsize.to_int());
+    return ret;
+}
+
 
 static const unsigned ARCACHE_DEVICE_NON_BUFFERABLE = 0x0;  // 4'b0000
 static const unsigned ARCACHE_WRBACK_READ_ALLOCATE  = 0xF;  // 4'b1111
@@ -60,61 +77,23 @@ static const int AWSNOOP_WRITE_BACK        = 0x3;
 static const int AC_SNOOP_READ_UNIQUE   = 0x7;
 static const int AC_SNOOP_MAKE_INVALID  = 0xD;
 
-static const int REQ_MEM_TYPE_WRITE = 0;
-static const int REQ_MEM_TYPE_CACHED = 1;
-static const int REQ_MEM_TYPE_UNIQUE = 2;
-static const int REQ_MEM_TYPE_BITS = 3;
 
-static sc_uint<REQ_MEM_TYPE_BITS> ReadNoSnoop() {
-    sc_uint<REQ_MEM_TYPE_BITS> ret;
+// @brief Fixed address burst operation.
+// @details The address is the same for every transfer in the burst
+//          (FIFO type)
+static const uint8_t AXI_BURST_FIXED = 0;
+// @brief Burst operation with address increment.
+// @details The address for each transfer in the burst is an increment of
+//         the address for the previous transfer. The increment value depends
+//        on the size of the transfer.
+static const uint8_t AXI_BURST_INCR = 1;
+// @brief Burst operation with address increment and wrapping.
+// @details A wrapping burst is similar to an incrementing burst, except that
+//          the address wraps around to a lower address if an upper address
+//          limit is reached
+static const uint8_t AXI_BURST_WRAP = 2;
+// @}
 
-    ret = 0;
-    return ret;
-}
-
-static sc_uint<REQ_MEM_TYPE_BITS> ReadShared() {
-    sc_uint<REQ_MEM_TYPE_BITS> ret;
-
-    ret = 0;
-    ret[REQ_MEM_TYPE_CACHED] = 1;
-    return ret;
-}
-
-static sc_uint<REQ_MEM_TYPE_BITS> ReadMakeUnique() {
-    sc_uint<REQ_MEM_TYPE_BITS> ret;
-
-    ret = 0;
-    ret[REQ_MEM_TYPE_CACHED] = 1;
-    ret[REQ_MEM_TYPE_UNIQUE] = 1;
-    return ret;
-}
-
-static sc_uint<REQ_MEM_TYPE_BITS> WriteNoSnoop() {
-    sc_uint<REQ_MEM_TYPE_BITS> ret;
-
-    ret = 0;
-    ret[REQ_MEM_TYPE_WRITE] = 1;
-    return ret;
-}
-
-static sc_uint<REQ_MEM_TYPE_BITS> WriteLineUnique() {
-    sc_uint<REQ_MEM_TYPE_BITS> ret;
-
-    ret = 0;
-    ret[REQ_MEM_TYPE_WRITE] = 1;
-    ret[REQ_MEM_TYPE_CACHED] = 1;
-    ret[REQ_MEM_TYPE_UNIQUE] = 1;
-    return ret;
-}
-
-static sc_uint<REQ_MEM_TYPE_BITS> WriteBack() {
-    sc_uint<REQ_MEM_TYPE_BITS> ret;
-
-    ret = 0;
-    ret[REQ_MEM_TYPE_WRITE] = 1;
-    ret[REQ_MEM_TYPE_CACHED] = 1;
-    return ret;
-}
 
 struct axi4_meta_type {
     sc_uint<CFG_BUS_ADDR_WIDTH> addr;
@@ -127,6 +106,8 @@ struct axi4_meta_type {
     sc_uint<4> qos;
     sc_uint<4> region;
 };
+
+typedef axi4_meta_type axi4_metadata_type;
 
 
 class axi4_master_in_type {

@@ -1,180 +1,182 @@
-/*
- *  Copyright 2020 Sergey Khabarov, sergeykhbr@gmail.com
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+// 
+//  Copyright 2022 Sergey Khabarov, sergeykhbr@gmail.com
+// 
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+// 
+//      http://www.apache.org/licenses/LICENSE-2.0
+// 
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+// 
+#pragma once
 
-#ifndef __DEBUGGER_SRC_CPU_SYSC_PLUGIN_TYPES_RIVER_H__
-#define __DEBUGGER_SRC_CPU_SYSC_PLUGIN_TYPES_RIVER_H__
-
+#include <systemc.h>
 #include "river_cfg.h"
 #include "../ambalib/types_amba.h"
-#include <systemc.h>
-#include <string>
-#include <iomanip>
 
 namespace debugger {
 
-/** CPU output: L1 cache inerface */
-class axi4_l1_in_type {
+
+
+// Debug interface
+class dport_in_type {
  public:
-    axi4_l1_in_type() {
-        aw_ready = 0;
-        w_ready = 0;
-        b_valid = 0;
-        b_resp = 0;
-        b_id = 0;
-        b_user = 0;
-        ar_ready = 0;
-        r_valid = 0;
-        r_resp = 0;
-        r_data = 0;
-        r_last = 0;
-        r_id = 0;
-        r_user = 0;
-        ac_valid = 0;
-        ac_addr = 0;
-        ac_snoop = 0;
-        ac_prot = 0;
-        cr_ready = 1;
-        cd_ready = 1;
+    dport_in_type() {
+        haltreq = 0;
+        resumereq = 0;
+        resethaltreq = 0;
+        hartreset = 0;
+        req_valid = 0;
+        dtype = 0;
+        addr = 0ull;
+        wdata = 0ull;
+        size = 0;
+        resp_ready = 0;
     }
 
-    inline bool operator == (const axi4_l1_in_type &rhs) const {
-        return (rhs.aw_ready == aw_ready
-             && rhs.w_ready == w_ready
-             && rhs.b_valid == b_valid
-             && rhs.b_resp == b_resp
-             && rhs.b_id == b_id
-             && rhs.b_user == b_user
-             && rhs.ar_ready == ar_ready
-             && rhs.r_valid == r_valid
-             && rhs.r_resp == r_resp
-             && rhs.r_data == r_data
-             && rhs.r_last == r_last
-             && rhs.r_id == r_id
-             && rhs.r_user == r_user
-             && rhs.ac_valid == ac_valid
-             && rhs.ac_addr == ac_addr
-             && rhs.ac_snoop == ac_snoop
-             && rhs.ac_prot == ac_prot
-             && rhs.cr_ready == cr_ready
-             && rhs.cd_ready == cd_ready);
+    inline bool operator == (const dport_in_type &rhs) const {
+        return (rhs.haltreq == haltreq
+            && rhs.resumereq == resumereq
+            && rhs.resethaltreq == resethaltreq
+            && rhs.hartreset == hartreset
+            && rhs.req_valid == req_valid
+            && rhs.dtype == dtype
+            && rhs.addr == addr
+            && rhs.wdata == wdata
+            && rhs.size == size
+            && rhs.resp_ready == resp_ready
+        );
     }
 
-    inline axi4_l1_in_type& operator = (const axi4_l1_in_type &rhs) {
-        aw_ready = rhs.aw_ready;
-        w_ready = rhs.w_ready;
-        b_valid = rhs.b_valid;
-        b_resp = rhs.b_resp;
-        b_id = rhs.b_id;
-        b_user = rhs.b_user;
-        ar_ready = rhs.ar_ready;
-        r_valid = rhs.r_valid;
-        r_resp = rhs.r_resp;
-        r_data = rhs.r_data;
-        r_last = rhs.r_last;
-        r_id = rhs.r_id;
-        r_user = rhs.r_user;
-        ac_valid = rhs.ac_valid;
-        ac_addr = rhs.ac_addr;
-        ac_snoop = rhs.ac_snoop;
-        ac_prot = rhs.ac_prot;
-        cr_ready = rhs.cr_ready;
-        cd_ready = rhs.cd_ready;
+    inline dport_in_type& operator = (const dport_in_type &rhs) {
+        haltreq = rhs.haltreq;
+        resumereq = rhs.resumereq;
+        resethaltreq = rhs.resethaltreq;
+        hartreset = rhs.hartreset;
+        req_valid = rhs.req_valid;
+        dtype = rhs.dtype;
+        addr = rhs.addr;
+        wdata = rhs.wdata;
+        size = rhs.size;
+        resp_ready = rhs.resp_ready;
         return *this;
     }
 
     inline friend void sc_trace(sc_trace_file *tf,
-                                const axi4_l1_in_type &v,
+                                const dport_in_type&v,
                                 const std::string &NAME) {
-        sc_trace(tf, v.aw_ready, NAME + "_aw_ready");
-        sc_trace(tf, v.w_ready, NAME + "_w_ready");
-        sc_trace(tf, v.b_valid, NAME + "_b_valid");
-        sc_trace(tf, v.b_resp, NAME + "_b_resp");
-        sc_trace(tf, v.b_id, NAME + "_b_id");
-        sc_trace(tf, v.b_user, NAME + "_b_user");
-        sc_trace(tf, v.ar_ready, NAME + "_ar_ready");
-        sc_trace(tf, v.r_valid, NAME + "_r_valid");
-        sc_trace(tf, v.r_resp, NAME + "_r_resp");
-        sc_trace(tf, v.r_data, NAME + "_r_data");
-        sc_trace(tf, v.r_last, NAME + "_r_last");
-        sc_trace(tf, v.r_id, NAME + "_r_id");
-        sc_trace(tf, v.r_user, NAME + "_r_user");
-        sc_trace(tf, v.ac_valid, NAME + "_ac_valid");
-        sc_trace(tf, v.ac_addr, NAME + "_ac_addr");
-        sc_trace(tf, v.ac_snoop, NAME + "_ac_snoop");
-        sc_trace(tf, v.ac_prot, NAME + "_ac_prot");
-        sc_trace(tf, v.cr_ready, NAME + "_cr_ready");
-        sc_trace(tf, v.cd_ready, NAME + "_cd_ready");
+        sc_trace(tf, v.haltreq, NAME + "_haltreq");
+        sc_trace(tf, v.resumereq, NAME + "_resumereq");
+        sc_trace(tf, v.resethaltreq, NAME + "_resethaltreq");
+        sc_trace(tf, v.hartreset, NAME + "_hartreset");
+        sc_trace(tf, v.req_valid, NAME + "_req_valid");
+        sc_trace(tf, v.dtype, NAME + "_dtype");
+        sc_trace(tf, v.addr, NAME + "_addr");
+        sc_trace(tf, v.wdata, NAME + "_wdata");
+        sc_trace(tf, v.size, NAME + "_size");
+        sc_trace(tf, v.resp_ready, NAME + "_resp_ready");
     }
 
     inline friend ostream &operator << (ostream &os,
-                                        axi4_l1_in_type const &v) {
+                                        dport_in_type const &v) {
         os << "("
-        << v.aw_ready << ","
-        << v.w_ready << ","
-        << v.b_valid << ","
-        << v.b_resp << ","
-        << v.b_id << ","
-        << v.b_user << ","
-        << v.ar_ready << ","
-        << v.r_valid << ","
-        << v.r_resp << ","
-        << v.r_data << ","
-        << v.r_last << ","
-        << v.r_id << ","
-        << v.r_user << ","
-        << v.ac_valid << ","
-        << v.ac_addr << ","
-        << v.ac_snoop << ","
-        << v.ac_prot << ","
-        << v.cr_ready << ","
-        << v.cd_ready << ")";
+        << v.haltreq << ","
+        << v.resumereq << ","
+        << v.resethaltreq << ","
+        << v.hartreset << ","
+        << v.req_valid << ","
+        << v.dtype << ","
+        << v.addr << ","
+        << v.wdata << ","
+        << v.size << ","
+        << v.resp_ready << ")";
         return os;
     }
 
  public:
-    bool aw_ready;
-    bool w_ready;
-    bool b_valid;
-    sc_uint<2> b_resp;
-    sc_uint<CFG_CPU_ID_BITS> b_id;
-    sc_uint<CFG_CPU_USER_BITS> b_user;
-    bool ar_ready;
-    bool r_valid;
-    sc_uint<4> r_resp;
-    sc_biguint<L1CACHE_LINE_BITS> r_data;
-    bool r_last;
-    sc_uint<CFG_CPU_ID_BITS> r_id;
-    sc_uint<CFG_CPU_USER_BITS> r_user;
-    bool ac_valid;
-    sc_uint<CFG_CPU_ADDR_BITS> ac_addr;
-    sc_uint<4> ac_snoop;                  // Table C3-19
-    sc_uint<3> ac_prot;
-    bool cr_ready;
-    bool cd_ready;
-};
+        bool haltreq;
+        bool resumereq;
+        bool resethaltreq;
+        bool hartreset;
+        bool req_valid;
+        sc_uint<DPortReq_Total> dtype;
+        sc_uint<CFG_CPU_ADDR_BITS> addr;
+        sc_uint<RISCV_ARCH> wdata;
+        sc_uint<3> size;
+        bool resp_ready;
+    };
+
+static const dport_in_type dport_in_none;
+
+class dport_out_type {
+ public:
+    dport_out_type() {
+        req_ready = 1;
+        resp_valid = 1;
+        resp_error = 0;
+        rdata = 0ull;
+    }
+
+    inline bool operator == (const dport_out_type &rhs) const {
+        return (rhs.req_ready == req_ready
+            && rhs.resp_valid == resp_valid
+            && rhs.resp_error == resp_error
+            && rhs.rdata == rdata
+        );
+    }
+
+    inline dport_out_type& operator = (const dport_out_type &rhs) {
+        req_ready = rhs.req_ready;
+        resp_valid = rhs.resp_valid;
+        resp_error = rhs.resp_error;
+        rdata = rhs.rdata;
+        return *this;
+    }
+
+    inline friend void sc_trace(sc_trace_file *tf,
+                                const dport_out_type&v,
+                                const std::string &NAME) {
+        sc_trace(tf, v.req_ready, NAME + "_req_ready");
+        sc_trace(tf, v.resp_valid, NAME + "_resp_valid");
+        sc_trace(tf, v.resp_error, NAME + "_resp_error");
+        sc_trace(tf, v.rdata, NAME + "_rdata");
+    }
+
+    inline friend ostream &operator << (ostream &os,
+                                        dport_out_type const &v) {
+        os << "("
+        << v.req_ready << ","
+        << v.resp_valid << ","
+        << v.resp_error << ","
+        << v.rdata << ")";
+        return os;
+    }
+
+ public:
+        bool req_ready;                                     // ready to accept request
+        bool resp_valid;                                    // rdata is valid
+        bool resp_error;                                    // response error
+        sc_uint<RISCV_ARCH> rdata;
+    };
+
+static const dport_out_type dport_out_none;
 
 
+
+// L1 AXI interface
 class axi4_l1_out_type {
  public:
     axi4_l1_out_type() {
         aw_valid = 0;
-        aw_bits.addr = 0;
+        aw_bits.addr = 0ull;
         aw_bits.len = 0;
         aw_bits.size = 0;
-        aw_bits.burst = 0;
+        aw_bits.burst = AXI_BURST_INCR;
         aw_bits.lock = 0;
         aw_bits.cache = 0;
         aw_bits.prot = 0;
@@ -183,16 +185,16 @@ class axi4_l1_out_type {
         aw_id = 0;
         aw_user = 0;
         w_valid = 0;
-        w_data = 0;
+        w_data = 0ull;
         w_last = 0;
         w_strb = 0;
         w_user = 0;
         b_ready = 0;
         ar_valid = 0;
-        ar_bits.addr = 0;
+        ar_bits.addr = 0ull;
         ar_bits.len = 0;
         ar_bits.size = 0;
-        ar_bits.burst = 0;
+        ar_bits.burst = AXI_BURST_INCR;
         ar_bits.lock = 0;
         ar_bits.cache = 0;
         ar_bits.prot = 0;
@@ -201,6 +203,7 @@ class axi4_l1_out_type {
         ar_id = 0;
         ar_user = 0;
         r_ready = 0;
+        // ACE signals
         ar_domain = 0;
         ar_snoop = 0;
         ar_bar = 0;
@@ -211,7 +214,7 @@ class axi4_l1_out_type {
         cr_valid = 1;
         cr_resp = 0;
         cd_valid = 0;
-        cd_data = 0;
+        cd_data = 0ull;
         cd_last = 0;
         rack = 0;
         wack = 0;
@@ -262,7 +265,8 @@ class axi4_l1_out_type {
             && rhs.cd_data == cd_data
             && rhs.cd_last == cd_last
             && rhs.rack == rack
-            && rhs.wack == wack);
+            && rhs.wack == wack
+        );
     }
 
     inline axi4_l1_out_type& operator = (const axi4_l1_out_type &rhs) {
@@ -315,7 +319,7 @@ class axi4_l1_out_type {
     }
 
     inline friend void sc_trace(sc_trace_file *tf,
-                                const axi4_l1_out_type &v,
+                                const axi4_l1_out_type&v,
                                 const std::string &NAME) {
         sc_trace(tf, v.aw_valid, NAME + "_aw_valid");
         sc_trace(tf, v.aw_bits.addr, NAME + "_aw_bits_addr");
@@ -416,42 +420,43 @@ class axi4_l1_out_type {
     }
 
  public:
-    bool aw_valid;
-    axi4_meta_type aw_bits;
-    sc_uint<CFG_CPU_ID_BITS> aw_id;
-    sc_uint<CFG_CPU_USER_BITS> aw_user;
-    bool w_valid;
-    sc_biguint<L1CACHE_LINE_BITS> w_data;
-    bool w_last;
-    sc_uint<L1CACHE_BYTES_PER_LINE> w_strb;
-    sc_uint<CFG_CPU_USER_BITS> w_user;
-    bool b_ready;
-    bool ar_valid;
-    axi4_meta_type ar_bits;
-    sc_uint<CFG_CPU_ID_BITS> ar_id;
-    sc_uint<CFG_CPU_USER_BITS> ar_user;
-    bool r_ready;
-    sc_uint<2> ar_domain;                // 00=Non-shareable (single master in domain)
-    sc_uint<4> ar_snoop;                 // Table C3-7:
-    sc_uint<2> ar_bar;                   // read barrier transaction
-    sc_uint<2> aw_domain;
-    sc_uint<3> aw_snoop;                 // Table C3-8
-    sc_uint<2> aw_bar;                   // write barrier transaction
-    bool ac_ready;
-    bool cr_valid;
-    sc_uint<5> cr_resp;
-    bool cd_valid;
-    sc_biguint<L1CACHE_LINE_BITS> cd_data;
-    bool cd_last;
-    bool rack;
-    bool wack;
-};
+        bool aw_valid;
+        axi4_metadata_type aw_bits;
+        sc_uint<CFG_CPU_ID_BITS> aw_id;
+        bool aw_user;
+        bool w_valid;
+        sc_biguint<L1CACHE_LINE_BITS> w_data;
+        bool w_last;
+        sc_uint<L1CACHE_BYTES_PER_LINE> w_strb;
+        bool w_user;
+        bool b_ready;
+        bool ar_valid;
+        axi4_metadata_type ar_bits;
+        sc_uint<CFG_CPU_ID_BITS> ar_id;
+        bool ar_user;
+        bool r_ready;
+        // ACE signals;
+        sc_uint<2> ar_domain;                               // 00=Non-shareable (single master in domain)
+        sc_uint<4> ar_snoop;                                // Table C3-7:
+        sc_uint<2> ar_bar;                                  // read barrier transaction
+        sc_uint<2> aw_domain;
+        sc_uint<3> aw_snoop;                                // Table C3-8
+        sc_uint<2> aw_bar;                                  // write barrier transaction
+        bool ac_ready;
+        bool cr_valid;
+        sc_uint<5> cr_resp;
+        bool cd_valid;
+        sc_biguint<L1CACHE_LINE_BITS> cd_data;
+        bool cd_last;
+        bool rack;
+        bool wack;
+    };
 
+static const axi4_l1_out_type axi4_l1_out_none;
 
-/** L2 cache inerface */
-class axi4_l2_in_type {
+class axi4_l1_in_type {
  public:
-    axi4_l2_in_type() {
+    axi4_l1_in_type() {
         aw_ready = 0;
         w_ready = 0;
         b_valid = 0;
@@ -461,29 +466,42 @@ class axi4_l2_in_type {
         ar_ready = 0;
         r_valid = 0;
         r_resp = 0;
-        r_data = 0;
+        r_data = 0ull;
         r_last = 0;
         r_id = 0;
         r_user = 0;
+        ac_valid = 0;
+        ac_addr = 0ull;
+        ac_snoop = 0;
+        ac_prot = 0;
+        cr_ready = 1;
+        cd_ready = 1;
     }
 
-    inline bool operator == (const axi4_l2_in_type &rhs) const {
+    inline bool operator == (const axi4_l1_in_type &rhs) const {
         return (rhs.aw_ready == aw_ready
-             && rhs.w_ready == w_ready
-             && rhs.b_valid == b_valid
-             && rhs.b_resp == b_resp
-             && rhs.b_id == b_id
-             && rhs.b_user == b_user
-             && rhs.ar_ready == ar_ready
-             && rhs.r_valid == r_valid
-             && rhs.r_resp == r_resp
-             && rhs.r_data == r_data
-             && rhs.r_last == r_last
-             && rhs.r_id == r_id
-             && rhs.r_user == r_user);
+            && rhs.w_ready == w_ready
+            && rhs.b_valid == b_valid
+            && rhs.b_resp == b_resp
+            && rhs.b_id == b_id
+            && rhs.b_user == b_user
+            && rhs.ar_ready == ar_ready
+            && rhs.r_valid == r_valid
+            && rhs.r_resp == r_resp
+            && rhs.r_data == r_data
+            && rhs.r_last == r_last
+            && rhs.r_id == r_id
+            && rhs.r_user == r_user
+            && rhs.ac_valid == ac_valid
+            && rhs.ac_addr == ac_addr
+            && rhs.ac_snoop == ac_snoop
+            && rhs.ac_prot == ac_prot
+            && rhs.cr_ready == cr_ready
+            && rhs.cd_ready == cd_ready
+        );
     }
 
-    inline axi4_l2_in_type& operator = (const axi4_l2_in_type &rhs) {
+    inline axi4_l1_in_type& operator = (const axi4_l1_in_type &rhs) {
         aw_ready = rhs.aw_ready;
         w_ready = rhs.w_ready;
         b_valid = rhs.b_valid;
@@ -497,11 +515,17 @@ class axi4_l2_in_type {
         r_last = rhs.r_last;
         r_id = rhs.r_id;
         r_user = rhs.r_user;
+        ac_valid = rhs.ac_valid;
+        ac_addr = rhs.ac_addr;
+        ac_snoop = rhs.ac_snoop;
+        ac_prot = rhs.ac_prot;
+        cr_ready = rhs.cr_ready;
+        cd_ready = rhs.cd_ready;
         return *this;
     }
 
     inline friend void sc_trace(sc_trace_file *tf,
-                                const axi4_l2_in_type &v,
+                                const axi4_l1_in_type&v,
                                 const std::string &NAME) {
         sc_trace(tf, v.aw_ready, NAME + "_aw_ready");
         sc_trace(tf, v.w_ready, NAME + "_w_ready");
@@ -516,10 +540,16 @@ class axi4_l2_in_type {
         sc_trace(tf, v.r_last, NAME + "_r_last");
         sc_trace(tf, v.r_id, NAME + "_r_id");
         sc_trace(tf, v.r_user, NAME + "_r_user");
+        sc_trace(tf, v.ac_valid, NAME + "_ac_valid");
+        sc_trace(tf, v.ac_addr, NAME + "_ac_addr");
+        sc_trace(tf, v.ac_snoop, NAME + "_ac_snoop");
+        sc_trace(tf, v.ac_prot, NAME + "_ac_prot");
+        sc_trace(tf, v.cr_ready, NAME + "_cr_ready");
+        sc_trace(tf, v.cd_ready, NAME + "_cd_ready");
     }
 
     inline friend ostream &operator << (ostream &os,
-                                        axi4_l2_in_type const &v) {
+                                        axi4_l1_in_type const &v) {
         os << "("
         << v.aw_ready << ","
         << v.w_ready << ","
@@ -533,34 +563,49 @@ class axi4_l2_in_type {
         << v.r_data << ","
         << v.r_last << ","
         << v.r_id << ","
-        << v.r_user <<  ")";
+        << v.r_user << ","
+        << v.ac_valid << ","
+        << v.ac_addr << ","
+        << v.ac_snoop << ","
+        << v.ac_prot << ","
+        << v.cr_ready << ","
+        << v.cd_ready << ")";
         return os;
     }
 
  public:
-    bool aw_ready;
-    bool w_ready;
-    bool b_valid;
-    sc_uint<2> b_resp;
-    sc_uint<CFG_CPU_ID_BITS> b_id;       // create ID for L2?
-    sc_uint<CFG_CPU_USER_BITS> b_user;
-    bool ar_ready;
-    bool r_valid;
-    sc_uint<2> r_resp;
-    sc_biguint<L2CACHE_LINE_BITS> r_data;
-    bool r_last;
-    sc_uint<CFG_CPU_ID_BITS> r_id;
-    sc_uint<CFG_CPU_USER_BITS> r_user;
-};
+        bool aw_ready;
+        bool w_ready;
+        bool b_valid;
+        sc_uint<2> b_resp;
+        sc_uint<CFG_CPU_ID_BITS> b_id;
+        bool b_user;
+        bool ar_ready;
+        bool r_valid;
+        sc_uint<4> r_resp;
+        sc_biguint<L1CACHE_LINE_BITS> r_data;
+        bool r_last;
+        sc_uint<CFG_CPU_ID_BITS> r_id;
+        bool r_user;
+        bool ac_valid;
+        sc_uint<CFG_CPU_ADDR_BITS> ac_addr;
+        sc_uint<4> ac_snoop;                                // Table C3-19
+        sc_uint<3> ac_prot;
+        bool cr_ready;
+        bool cd_ready;
+    };
+
+static const axi4_l1_in_type axi4_l1_in_none;
+
 
 class axi4_l2_out_type {
  public:
     axi4_l2_out_type() {
         aw_valid = 0;
-        aw_bits.addr = 0;
+        aw_bits.addr = 0ull;
         aw_bits.len = 0;
         aw_bits.size = 0;
-        aw_bits.burst = 0;
+        aw_bits.burst = AXI_BURST_INCR;
         aw_bits.lock = 0;
         aw_bits.cache = 0;
         aw_bits.prot = 0;
@@ -569,16 +614,16 @@ class axi4_l2_out_type {
         aw_id = 0;
         aw_user = 0;
         w_valid = 0;
-        w_data = 0;
+        w_data = 0ull;
         w_last = 0;
         w_strb = 0;
         w_user = 0;
         b_ready = 0;
         ar_valid = 0;
-        ar_bits.addr = 0;
+        ar_bits.addr = 0ull;
         ar_bits.len = 0;
         ar_bits.size = 0;
-        ar_bits.burst = 0;
+        ar_bits.burst = AXI_BURST_INCR;
         ar_bits.lock = 0;
         ar_bits.cache = 0;
         ar_bits.prot = 0;
@@ -620,7 +665,8 @@ class axi4_l2_out_type {
             && rhs.ar_bits.region == ar_bits.region
             && rhs.ar_id == ar_id
             && rhs.ar_user == ar_user
-            && rhs.r_ready == r_ready);
+            && rhs.r_ready == r_ready
+        );
     }
 
     inline axi4_l2_out_type& operator = (const axi4_l2_out_type &rhs) {
@@ -659,7 +705,7 @@ class axi4_l2_out_type {
     }
 
     inline friend void sc_trace(sc_trace_file *tf,
-                                const axi4_l2_out_type &v,
+                                const axi4_l2_out_type&v,
                                 const std::string &NAME) {
         sc_trace(tf, v.aw_valid, NAME + "_aw_valid");
         sc_trace(tf, v.aw_bits.addr, NAME + "_aw_bits_addr");
@@ -732,370 +778,132 @@ class axi4_l2_out_type {
     }
 
  public:
-    bool aw_valid;
-    axi4_meta_type aw_bits;
-    sc_uint<CFG_CPU_ID_BITS> aw_id;
-    sc_uint<CFG_CPU_USER_BITS> aw_user;
-    bool w_valid;
-    sc_biguint<L2CACHE_LINE_BITS> w_data;
-    bool w_last;
-    sc_uint<L2CACHE_BYTES_PER_LINE> w_strb;
-    sc_uint<CFG_CPU_USER_BITS> w_user;
-    bool b_ready;
-    bool ar_valid;
-    axi4_meta_type ar_bits;
-    sc_uint<CFG_CPU_ID_BITS> ar_id;
-    sc_uint<CFG_CPU_USER_BITS> ar_user;
-    bool r_ready;
-};
+        bool aw_valid;
+        axi4_metadata_type aw_bits;
+        sc_uint<CFG_CPU_ID_BITS> aw_id;
+        bool aw_user;
+        bool w_valid;
+        sc_biguint<L2CACHE_LINE_BITS> w_data;
+        bool w_last;
+        sc_uint<L2CACHE_BYTES_PER_LINE> w_strb;
+        bool w_user;
+        bool b_ready;
+        bool ar_valid;
+        axi4_metadata_type ar_bits;
+        sc_uint<CFG_CPU_ID_BITS> ar_id;
+        bool ar_user;
+        bool r_ready;
+    };
 
+static const axi4_l2_out_type axi4_l2_out_none;
 
-/** Workgroup interface */
-class axi4_domain_in_vector {
+class axi4_l2_in_type {
  public:
-    axi4_domain_in_vector(){}
-
-    inline bool operator == (const axi4_domain_in_vector &rhs) const {
-        bool t;
-        for (int i = 0; i < CFG_CPU_MAX; i++) {
-            t = (rhs.arr[i].aw_ready == arr[i].aw_ready
-                 && rhs.arr[i].w_ready == arr[i].w_ready
-                 && rhs.arr[i].b_valid == arr[i].b_valid
-                 && rhs.arr[i].b_resp == arr[i].b_resp
-                 && rhs.arr[i].b_id == arr[i].b_id
-                 && rhs.arr[i].b_user == arr[i].b_user
-                 && rhs.arr[i].ar_ready == arr[i].ar_ready
-                 && rhs.arr[i].r_valid == arr[i].r_valid
-                 && rhs.arr[i].r_resp == arr[i].r_resp
-                 && rhs.arr[i].r_data == arr[i].r_data
-                 && rhs.arr[i].r_last == arr[i].r_last
-                 && rhs.arr[i].r_id == arr[i].r_id
-                 && rhs.arr[i].r_user == arr[i].r_user
-                 && rhs.arr[i].ac_valid == arr[i].ac_valid
-                 && rhs.arr[i].ac_addr == arr[i].ac_addr
-                 && rhs.arr[i].ac_snoop == arr[i].ac_snoop
-                 && rhs.arr[i].ac_prot == arr[i].ac_prot
-                 && rhs.arr[i].cr_ready == arr[i].cr_ready
-                 && rhs.arr[i].cd_ready == arr[i].cd_ready);
-            if (!t) {
-                return false;
-            }
-        }
-        return true;
+    axi4_l2_in_type() {
+        aw_ready = 0;
+        w_ready = 0;
+        b_valid = 0;
+        b_resp = 0;
+        b_id = 0;
+        b_user = 0;
+        ar_ready = 0;
+        r_valid = 0;
+        r_resp = 0;
+        r_data = 0ull;
+        r_last = 0;
+        r_id = 0;
+        r_user = 0;
     }
 
-    inline axi4_domain_in_vector& operator = (const axi4_domain_in_vector &rhs) {
-        for (int i = 0; i < CFG_CPU_MAX; i++) {
-            arr[i].aw_ready = rhs.arr[i].aw_ready;
-            arr[i].w_ready = rhs.arr[i].w_ready;
-            arr[i].b_valid = rhs.arr[i].b_valid;
-            arr[i].b_resp = rhs.arr[i].b_resp;
-            arr[i].b_id = rhs.arr[i].b_id;
-            arr[i].b_user = rhs.arr[i].b_user;
-            arr[i].ar_ready = rhs.arr[i].ar_ready;
-            arr[i].r_valid = rhs.arr[i].r_valid;
-            arr[i].r_resp = rhs.arr[i].r_resp;
-            arr[i].r_data = rhs.arr[i].r_data;
-            arr[i].r_last = rhs.arr[i].r_last;
-            arr[i].r_id = rhs.arr[i].r_id;
-            arr[i].r_user = rhs.arr[i].r_user;
-            arr[i].ac_valid = rhs.arr[i].ac_valid;
-            arr[i].ac_addr = rhs.arr[i].ac_addr;
-            arr[i].ac_snoop = rhs.arr[i].ac_snoop;
-            arr[i].ac_prot = rhs.arr[i].ac_prot;
-            arr[i].cr_ready = rhs.arr[i].cr_ready;
-            arr[i].cd_ready = rhs.arr[i].cd_ready;
-        }
+    inline bool operator == (const axi4_l2_in_type &rhs) const {
+        return (rhs.aw_ready == aw_ready
+            && rhs.w_ready == w_ready
+            && rhs.b_valid == b_valid
+            && rhs.b_resp == b_resp
+            && rhs.b_id == b_id
+            && rhs.b_user == b_user
+            && rhs.ar_ready == ar_ready
+            && rhs.r_valid == r_valid
+            && rhs.r_resp == r_resp
+            && rhs.r_data == r_data
+            && rhs.r_last == r_last
+            && rhs.r_id == r_id
+            && rhs.r_user == r_user
+        );
+    }
+
+    inline axi4_l2_in_type& operator = (const axi4_l2_in_type &rhs) {
+        aw_ready = rhs.aw_ready;
+        w_ready = rhs.w_ready;
+        b_valid = rhs.b_valid;
+        b_resp = rhs.b_resp;
+        b_id = rhs.b_id;
+        b_user = rhs.b_user;
+        ar_ready = rhs.ar_ready;
+        r_valid = rhs.r_valid;
+        r_resp = rhs.r_resp;
+        r_data = rhs.r_data;
+        r_last = rhs.r_last;
+        r_id = rhs.r_id;
+        r_user = rhs.r_user;
         return *this;
     }
 
     inline friend void sc_trace(sc_trace_file *tf,
-                                const axi4_domain_in_vector &v,
+                                const axi4_l2_in_type&v,
                                 const std::string &NAME) {
-        char N[4] = "(0)";
-        for (int i = 0; i < CFG_CPU_MAX; i++) {
-            N[1] = '0' + static_cast<char>(i);
-            sc_trace(tf, v.arr[i].aw_ready, NAME + N + "_aw_ready");
-            sc_trace(tf, v.arr[i].w_ready, NAME + N + "_w_ready");
-            sc_trace(tf, v.arr[i].b_valid, NAME + N + "_b_valid");
-            sc_trace(tf, v.arr[i].b_resp, NAME + N + "_b_resp");
-            sc_trace(tf, v.arr[i].b_id, NAME + N + "_b_id");
-            sc_trace(tf, v.arr[i].b_user, NAME + N + "_b_user");
-            sc_trace(tf, v.arr[i].ar_ready, NAME + N + "_ar_ready");
-            sc_trace(tf, v.arr[i].r_valid, NAME + N + "_r_valid");
-            sc_trace(tf, v.arr[i].r_resp, NAME + N + "_r_resp");
-            sc_trace(tf, v.arr[i].r_data, NAME + N + "_r_data");
-            sc_trace(tf, v.arr[i].r_last, NAME + N + "_r_last");
-            sc_trace(tf, v.arr[i].r_id, NAME + N + "_r_id");
-            sc_trace(tf, v.arr[i].r_user, NAME + N + "_r_user");
-            sc_trace(tf, v.arr[i].ac_valid, NAME + N + "_ac_valid");
-            sc_trace(tf, v.arr[i].ac_addr, NAME + N + "_ac_addr");
-            sc_trace(tf, v.arr[i].ac_snoop, NAME + N + "_ac_snoop");
-            sc_trace(tf, v.arr[i].ac_prot, NAME + N + "_ac_prot");
-            sc_trace(tf, v.arr[i].cr_ready, NAME + N + "_cr_ready");
-            sc_trace(tf, v.arr[i].cd_ready, NAME + N + "_cd_ready");
-        }
+        sc_trace(tf, v.aw_ready, NAME + "_aw_ready");
+        sc_trace(tf, v.w_ready, NAME + "_w_ready");
+        sc_trace(tf, v.b_valid, NAME + "_b_valid");
+        sc_trace(tf, v.b_resp, NAME + "_b_resp");
+        sc_trace(tf, v.b_id, NAME + "_b_id");
+        sc_trace(tf, v.b_user, NAME + "_b_user");
+        sc_trace(tf, v.ar_ready, NAME + "_ar_ready");
+        sc_trace(tf, v.r_valid, NAME + "_r_valid");
+        sc_trace(tf, v.r_resp, NAME + "_r_resp");
+        sc_trace(tf, v.r_data, NAME + "_r_data");
+        sc_trace(tf, v.r_last, NAME + "_r_last");
+        sc_trace(tf, v.r_id, NAME + "_r_id");
+        sc_trace(tf, v.r_user, NAME + "_r_user");
     }
 
     inline friend ostream &operator << (ostream &os,
-                                        axi4_domain_in_vector const &v) {
-        os << "(";
-        for (int i = 0; i < CFG_CPU_MAX; i++) {
-            os << "("
-            << v.arr[i].aw_ready << ","
-            << v.arr[i].w_ready << ","
-            << v.arr[i].b_valid << ","
-            << v.arr[i].b_resp << ","
-            << v.arr[i].b_id << ","
-            << v.arr[i].b_user << ","
-            << v.arr[i].ar_ready << ","
-            << v.arr[i].r_valid << ","
-            << v.arr[i].r_resp << ","
-            << v.arr[i].r_data << ","
-            << v.arr[i].r_last << ","
-            << v.arr[i].r_id << ","
-            << v.arr[i].r_user << ","
-            << v.arr[i].ac_valid << ","
-            << v.arr[i].ac_addr << ","
-            << v.arr[i].ac_snoop << ","
-            << v.arr[i].ac_prot << ","
-            << v.arr[i].cr_ready << ","
-            << v.arr[i].cd_ready << ")";
-        }
-        os << ")";
+                                        axi4_l2_in_type const &v) {
+        os << "("
+        << v.aw_ready << ","
+        << v.w_ready << ","
+        << v.b_valid << ","
+        << v.b_resp << ","
+        << v.b_id << ","
+        << v.b_user << ","
+        << v.ar_ready << ","
+        << v.r_valid << ","
+        << v.r_resp << ","
+        << v.r_data << ","
+        << v.r_last << ","
+        << v.r_id << ","
+        << v.r_user << ")";
         return os;
     }
 
  public:
-    axi4_l1_in_type arr[CFG_CPU_MAX];
-};
+        bool aw_ready;
+        bool w_ready;
+        bool b_valid;
+        sc_uint<2> b_resp;
+        sc_uint<CFG_CPU_ID_BITS> b_id;                      // create ID for L2?
+        bool b_user;
+        bool ar_ready;
+        bool r_valid;
+        sc_uint<2> r_resp;
+        sc_biguint<L2CACHE_LINE_BITS> r_data;
+        bool r_last;
+        sc_uint<CFG_CPU_ID_BITS> r_id;
+        bool r_user;
+    };
 
-class axi4_domain_out_type {
- public:
-    axi4_domain_out_type(){}
+static const axi4_l2_in_type axi4_l2_in_none;
 
-    inline bool operator == (const axi4_domain_out_type &rhs) const {
-        bool t;
-        for (int i = 0; i < CFG_CPU_MAX; i++) {
-            t = (rhs.arr[i].aw_valid == arr[i].aw_valid
-                && rhs.arr[i].aw_bits.addr == arr[i].aw_bits.addr
-                && rhs.arr[i].aw_bits.len == arr[i].aw_bits.len
-                && rhs.arr[i].aw_bits.size == arr[i].aw_bits.size
-                && rhs.arr[i].aw_bits.burst == arr[i].aw_bits.burst
-                && rhs.arr[i].aw_bits.lock == arr[i].aw_bits.lock
-                && rhs.arr[i].aw_bits.cache == arr[i].aw_bits.cache
-                && rhs.arr[i].aw_bits.prot == arr[i].aw_bits.prot
-                && rhs.arr[i].aw_bits.qos == arr[i].aw_bits.qos
-                && rhs.arr[i].aw_bits.region == arr[i].aw_bits.region
-                && rhs.arr[i].aw_id == arr[i].aw_id
-                && rhs.arr[i].aw_user == arr[i].aw_user
-                && rhs.arr[i].w_valid == arr[i].w_valid
-                && rhs.arr[i].w_data == arr[i].w_data
-                && rhs.arr[i].w_last == arr[i].w_last
-                && rhs.arr[i].w_strb == arr[i].w_strb
-                && rhs.arr[i].w_user == arr[i].w_user
-                && rhs.arr[i].b_ready == arr[i].b_ready
-                && rhs.arr[i].ar_valid == arr[i].ar_valid
-                && rhs.arr[i].ar_bits.addr == arr[i].ar_bits.addr
-                && rhs.arr[i].ar_bits.len == arr[i].ar_bits.len
-                && rhs.arr[i].ar_bits.size == arr[i].ar_bits.size
-                && rhs.arr[i].ar_bits.burst == arr[i].ar_bits.burst
-                && rhs.arr[i].ar_bits.lock == arr[i].ar_bits.lock
-                && rhs.arr[i].ar_bits.cache == arr[i].ar_bits.cache
-                && rhs.arr[i].ar_bits.prot == arr[i].ar_bits.prot
-                && rhs.arr[i].ar_bits.qos == arr[i].ar_bits.qos
-                && rhs.arr[i].ar_bits.region == arr[i].ar_bits.region
-                && rhs.arr[i].ar_id == arr[i].ar_id
-                && rhs.arr[i].ar_user == arr[i].ar_user
-                && rhs.arr[i].r_ready == arr[i].r_ready
-                && rhs.arr[i].ar_domain == arr[i].ar_domain
-                && rhs.arr[i].ar_snoop == arr[i].ar_snoop
-                && rhs.arr[i].ar_bar == arr[i].ar_bar
-                && rhs.arr[i].aw_domain == arr[i].aw_domain
-                && rhs.arr[i].aw_snoop == arr[i].aw_snoop
-                && rhs.arr[i].aw_bar == arr[i].aw_bar
-                && rhs.arr[i].ac_ready == arr[i].ac_ready
-                && rhs.arr[i].cr_valid == arr[i].cr_valid
-                && rhs.arr[i].cr_resp == arr[i].cr_resp
-                && rhs.arr[i].cd_valid == arr[i].cd_valid
-                && rhs.arr[i].cd_data == arr[i].cd_data
-                && rhs.arr[i].cd_last == arr[i].cd_last
-                && rhs.arr[i].rack == arr[i].rack
-                && rhs.arr[i].wack == arr[i].wack);
-            if (!t) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    inline axi4_domain_out_type& operator = (const axi4_domain_out_type &rhs) {
-        for (int i = 0; i < CFG_CPU_MAX; i++) {
-            arr[i].aw_valid = rhs.arr[i].aw_valid;
-            arr[i].aw_bits.addr = rhs.arr[i].aw_bits.addr;
-            arr[i].aw_bits.len = rhs.arr[i].aw_bits.len;
-            arr[i].aw_bits.size = rhs.arr[i].aw_bits.size;
-            arr[i].aw_bits.burst = rhs.arr[i].aw_bits.burst;
-            arr[i].aw_bits.lock = rhs.arr[i].aw_bits.lock;
-            arr[i].aw_bits.cache = rhs.arr[i].aw_bits.cache;
-            arr[i].aw_bits.prot = rhs.arr[i].aw_bits.prot;
-            arr[i].aw_bits.qos = rhs.arr[i].aw_bits.qos;
-            arr[i].aw_bits.region = rhs.arr[i].aw_bits.region;
-            arr[i].aw_id = rhs.arr[i].aw_id;
-            arr[i].aw_user = rhs.arr[i].aw_user;
-            arr[i].w_valid = rhs.arr[i].w_valid;
-            arr[i].w_data = rhs.arr[i].w_data;
-            arr[i].w_last = rhs.arr[i].w_last;
-            arr[i].w_strb = rhs.arr[i].w_strb;
-            arr[i].w_user = rhs.arr[i].w_user;
-            arr[i].b_ready = rhs.arr[i].b_ready;
-            arr[i].ar_valid = rhs.arr[i].ar_valid;
-            arr[i].ar_bits.addr = rhs.arr[i].ar_bits.addr;
-            arr[i].ar_bits.len = rhs.arr[i].ar_bits.len;
-            arr[i].ar_bits.size = rhs.arr[i].ar_bits.size;
-            arr[i].ar_bits.burst = rhs.arr[i].ar_bits.burst;
-            arr[i].ar_bits.lock = rhs.arr[i].ar_bits.lock;
-            arr[i].ar_bits.cache = rhs.arr[i].ar_bits.cache;
-            arr[i].ar_bits.prot = rhs.arr[i].ar_bits.prot;
-            arr[i].ar_bits.qos = rhs.arr[i].ar_bits.qos;
-            arr[i].ar_bits.region = rhs.arr[i].ar_bits.region;
-            arr[i].ar_id = rhs.arr[i].ar_id;
-            arr[i].ar_user = rhs.arr[i].ar_user;
-            arr[i].r_ready = rhs.arr[i].r_ready;
-            arr[i].ar_domain = rhs.arr[i].ar_domain;
-            arr[i].ar_snoop = rhs.arr[i].ar_snoop;
-            arr[i].ar_bar = rhs.arr[i].ar_bar;
-            arr[i].aw_domain = rhs.arr[i].aw_domain;
-            arr[i].aw_snoop = rhs.arr[i].aw_snoop;
-            arr[i].aw_bar = rhs.arr[i].aw_bar;
-            arr[i].ac_ready = rhs.arr[i].ac_ready;
-            arr[i].cr_valid = rhs.arr[i].cr_valid;
-            arr[i].cr_resp = rhs.arr[i].cr_resp;
-            arr[i].cd_valid = rhs.arr[i].cd_valid;
-            arr[i].cd_data = rhs.arr[i].cd_data;
-            arr[i].cd_last = rhs.arr[i].cd_last;
-            arr[i].rack = rhs.arr[i].rack;
-            arr[i].wack = rhs.arr[i].wack;
-        }
-        return *this;
-    }
-
-    inline friend void sc_trace(sc_trace_file *tf,
-                                const axi4_domain_out_type &v,
-                                const std::string &NAME) {
-        char N[4] = "(0)";
-        for (int i = 0; i < CFG_CPU_MAX; i++) {
-            N[1] = '0' + static_cast<char>(i);
-            sc_trace(tf, v.arr[i].aw_valid, NAME + N + "_aw_valid");
-            sc_trace(tf, v.arr[i].aw_bits.addr, NAME + N + "_aw_bits_addr");
-            sc_trace(tf, v.arr[i].aw_bits.len, NAME + N + "_aw_bits_len");
-            sc_trace(tf, v.arr[i].aw_bits.size, NAME + N + "_aw_bits_size");
-            sc_trace(tf, v.arr[i].aw_bits.burst, NAME + N + "_aw_bits_burst");
-            sc_trace(tf, v.arr[i].aw_bits.lock, NAME + N + "_aw_bits_lock");
-            sc_trace(tf, v.arr[i].aw_bits.cache, NAME + N + "_aw_bits_cache");
-            sc_trace(tf, v.arr[i].aw_bits.prot, NAME + N + "_aw_bits_prot");
-            sc_trace(tf, v.arr[i].aw_bits.qos, NAME + N + "_aw_bits_qos");
-            sc_trace(tf, v.arr[i].aw_bits.region, NAME + N + "_aw_bits_region");
-            sc_trace(tf, v.arr[i].aw_id, NAME + N + "_aw_id");
-            sc_trace(tf, v.arr[i].aw_user, NAME + N + "_aw_user");
-            sc_trace(tf, v.arr[i].w_valid, NAME + N + "_w_valid");
-            sc_trace(tf, v.arr[i].w_data, NAME + N + "_w_data");
-            sc_trace(tf, v.arr[i].w_last, NAME + N + "_w_last");
-            sc_trace(tf, v.arr[i].w_strb, NAME + N + "_w_strb");
-            sc_trace(tf, v.arr[i].w_user, NAME + N + "_w_user");
-            sc_trace(tf, v.arr[i].b_ready, NAME + N + "_b_ready");
-            sc_trace(tf, v.arr[i].ar_valid, NAME + N + "_ar_valid");
-            sc_trace(tf, v.arr[i].ar_bits.addr, NAME + N + "_ar_bits_addr");
-            sc_trace(tf, v.arr[i].ar_bits.len, NAME + N + "_ar_bits_len");
-            sc_trace(tf, v.arr[i].ar_bits.size, NAME + N + "_ar_bits_size");
-            sc_trace(tf, v.arr[i].ar_bits.burst, NAME + N + "_ar_bits_burst");
-            sc_trace(tf, v.arr[i].ar_bits.lock, NAME + N + "_ar_bits_lock");
-            sc_trace(tf, v.arr[i].ar_bits.cache, NAME + N + "_ar_bits_cache");
-            sc_trace(tf, v.arr[i].ar_bits.prot, NAME + N + "_ar_bits_prot");
-            sc_trace(tf, v.arr[i].ar_bits.qos, NAME + N + "_ar_bits_qos");
-            sc_trace(tf, v.arr[i].ar_bits.region, NAME + N + "_ar_bits_region");
-            sc_trace(tf, v.arr[i].ar_id, NAME + N + "_ar_id");
-            sc_trace(tf, v.arr[i].ar_user, NAME + N + "_ar_user");
-            sc_trace(tf, v.arr[i].r_ready, NAME + N + "_r_ready");
-            sc_trace(tf, v.arr[i].ar_domain, NAME + N + "_ar_domain");
-            sc_trace(tf, v.arr[i].ar_snoop, NAME + N + "_ar_snoop");
-            sc_trace(tf, v.arr[i].ar_bar, NAME + N + "_ar_bar");
-            sc_trace(tf, v.arr[i].aw_domain, NAME + N + "_aw_domain");
-            sc_trace(tf, v.arr[i].aw_snoop, NAME + N + "_aw_snoop");
-            sc_trace(tf, v.arr[i].aw_bar, NAME + N + "_aw_bar");
-            sc_trace(tf, v.arr[i].ac_ready, NAME + N + "_ac_ready");
-            sc_trace(tf, v.arr[i].cr_valid, NAME + N + "_cr_valid");
-            sc_trace(tf, v.arr[i].cr_resp, NAME + N + "_cr_resp");
-            sc_trace(tf, v.arr[i].cd_valid, NAME + N + "_cd_valid");
-            sc_trace(tf, v.arr[i].cd_data, NAME + N + "_cd_data");
-            sc_trace(tf, v.arr[i].cd_last, NAME + N + "_cd_last");
-            sc_trace(tf, v.arr[i].rack, NAME + N + "_rack");
-            sc_trace(tf, v.arr[i].wack, NAME + N + "_wack");
-        }
-    }
-
-    inline friend ostream &operator << (ostream &os,
-                                        axi4_domain_out_type const &v) {
-        os << "(";
-        for (int i = 0; i < CFG_CPU_MAX; i++) {
-            os << "("
-            << v.arr[i].aw_valid << ","
-            << v.arr[i].aw_bits.addr << ","
-            << v.arr[i].aw_bits.len << ","
-            << v.arr[i].aw_bits.size << ","
-            << v.arr[i].aw_bits.burst << ","
-            << v.arr[i].aw_bits.lock << ","
-            << v.arr[i].aw_bits.cache << ","
-            << v.arr[i].aw_bits.prot << ","
-            << v.arr[i].aw_bits.qos << ","
-            << v.arr[i].aw_bits.region << ","
-            << v.arr[i].aw_id << ","
-            << v.arr[i].aw_user << ","
-            << v.arr[i].w_valid << ","
-            << v.arr[i].w_data << ","
-            << v.arr[i].w_last << ","
-            << v.arr[i].w_strb << ","
-            << v.arr[i].w_user << ","
-            << v.arr[i].b_ready << ","
-            << v.arr[i].ar_valid << ","
-            << v.arr[i].ar_bits.addr << ","
-            << v.arr[i].ar_bits.len << ","
-            << v.arr[i].ar_bits.size << ","
-            << v.arr[i].ar_bits.burst << ","
-            << v.arr[i].ar_bits.lock << ","
-            << v.arr[i].ar_bits.cache << ","
-            << v.arr[i].ar_bits.prot << ","
-            << v.arr[i].ar_bits.qos << ","
-            << v.arr[i].ar_bits.region << ","
-            << v.arr[i].ar_id << ","
-            << v.arr[i].ar_user << ","
-            << v.arr[i].r_ready << ","
-            << v.arr[i].ar_domain << ","
-            << v.arr[i].ar_snoop << ","
-            << v.arr[i].ar_bar << ","
-            << v.arr[i].aw_domain << ","
-            << v.arr[i].aw_snoop << ","
-            << v.arr[i].aw_bar << ","
-            << v.arr[i].ac_ready << ","
-            << v.arr[i].cr_valid << ","
-            << v.arr[i].cr_resp << ","
-            << v.arr[i].cd_valid << ","
-            << v.arr[i].cd_data << ","
-            << v.arr[i].cd_last << ","
-            << v.arr[i].rack << ","
-            << v.arr[i].wack << ")";
-        }
-        os << ")";
-        return os;
-    }
-
- public:
-    axi4_l1_out_type arr[CFG_CPU_MAX];
-};
-
-static const axi4_l1_in_type axi4_l1_in_none;
-static const axi4_l1_out_type axi4_l1_out_none;
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_SRC_CPU_SYSC_PLUGIN_TYPES_RIVER_H__

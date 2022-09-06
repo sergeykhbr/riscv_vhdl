@@ -22,6 +22,7 @@
 #include "coreservices/ireset.h"
 #include "coreservices/ijtagtap.h"
 #include "riverlib/river_cfg.h"
+#include "ambalib/types_amba.h"
 #include "jtagtap.h"
 #include "jtagcdc.h"
 #include <systemc.h>
