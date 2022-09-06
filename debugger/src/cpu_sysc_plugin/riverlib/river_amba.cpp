@@ -24,7 +24,7 @@ RiverAmba::RiverAmba(sc_module_name name_, uint32_t hartid, bool async_reset,
     i_nrst("i_nrst"),
     i_msti("i_msti"),
     o_msto("o_msto"),
-    o_flush_l2("o_flush_l2"),
+    o_xcfg("o_xcfg"),
     i_msip("i_msip"),
     i_mtip("i_mtip"),
     i_meip("i_meip"),
@@ -41,8 +41,10 @@ RiverAmba::RiverAmba(sc_module_name name_, uint32_t hartid, bool async_reset,
     o_dport_resp_valid("o_dport_resp_valid"),
     o_dport_resp_error("o_dport_resp_error"),
     o_dport_rdata("o_dport_rdata"),
-    i_progbuf("i_progbuf"),
-    o_halted("o_halted") {
+    o_flush_l2("o_flush_l2"),
+    o_halted("o_halted"),
+    o_available("o_available"),
+    i_progbuf("i_progbuf") {
     async_reset_ = async_reset;
     coherence_ena_ = coherence_ena;
 
@@ -456,6 +458,13 @@ void RiverAmba::snoopcomb() {
     w_cd_last = v_cd_valid;
     w_rack = 0;
     w_wack = 0;
+
+    wb_xcfg.descrsize = PNP_CFG_MASTER_DESCR_BYTES;
+    wb_xcfg.descrtype = PNP_CFG_TYPE_MASTER;
+    wb_xcfg.vid = VENDOR_OPTIMITECH;
+    wb_xcfg.did = RISCV_RIVER_CPU;
+    o_xcfg = wb_xcfg;
+    o_available = 1;
 }
 
 void RiverAmba::registers() {

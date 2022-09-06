@@ -29,13 +29,15 @@ SC_MODULE(RiverAmba) {
     sc_in<bool> i_nrst;                                 // Reset: active LOW
     sc_in<axi4_l1_in_type> i_msti;
     sc_out<axi4_l1_out_type> o_msto;
-    sc_out<bool> o_flush_l2;                                // Flush L2 after D$ has been finished
+    sc_out<axi4_master_config_type> o_xcfg;
     // Interrupt lines:
     sc_in<bool> i_msip;                                     // machine software pending interrupt
     sc_in<bool> i_mtip;                                     // machine timer pending interrupt
     sc_in<bool> i_meip;                                     // machine external pending interrupt
     sc_in<bool> i_seip;                                     // supervisor external pending interrupt
     // Debug interface
+    sc_in<dport_in_type> i_dporti;
+    sc_out<dport_out_type> o_dporto;
     sc_in<bool> i_haltreq;                              // DMI: halt request from debug unit
     sc_in<bool> i_resumereq;                            // DMI: resume request from debug unit
     sc_in<bool> i_dport_req_valid;                      // Debug access from DSU is valid
@@ -48,8 +50,10 @@ SC_MODULE(RiverAmba) {
     sc_out<bool> o_dport_resp_valid;                    // Response is valid
     sc_out<bool> o_dport_resp_error;                    // Something wrong during command execution
     sc_out<sc_uint<RISCV_ARCH>> o_dport_rdata;          // Response value (data or error code)
-    sc_in<sc_biguint<32*CFG_PROGBUF_REG_TOTAL>> i_progbuf;  // progam buffer
+    sc_out<bool> o_flush_l2;                            // Flush L2 after D$ has been finished
     sc_out<bool> o_halted;                              // CPU halted via debug interface
+    sc_out<bool> o_available;                           // =1 if the CPU full functional
+    sc_in<sc_biguint<32*CFG_PROGBUF_REG_TOTAL>> i_progbuf;  // progam buffer
 
     void comb();
     void snoopcomb();
@@ -129,6 +133,7 @@ SC_MODULE(RiverAmba) {
     sc_signal<bool> w_cd_last;
     sc_signal<bool> w_rack;
     sc_signal<bool> w_wack;
+    axi4_master_config_type wb_xcfg;
 
 
     enum state_type {

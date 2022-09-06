@@ -130,6 +130,7 @@ class CpuRiscV_RTL : public IService,
     sc_signal<axi4_l1_out_type> coreo3;
     sc_signal<axi4_l1_in_type> acpi;
     sc_signal<axi4_l1_out_type> acpo;
+    sc_signal<axi4_master_config_type> xcfg;
     sc_signal<bool> w_flush_l2;
     // Interrupt lines:
     sc_vector<sc_signal<bool>> wb_irq_pending;       // Per Hart pending interrupts pins
@@ -154,9 +155,12 @@ class CpuRiscV_RTL : public IService,
     sc_signal<sc_uint<RISCV_ARCH>> wb_dport_rdata;
     sc_signal<sc_biguint<32*CFG_PROGBUF_REG_TOTAL>> wb_progbuf;
     sc_signal<bool> w_halted0;
+    sc_signal<bool> w_available0;
     
     sc_signal<axi4_master_in_type> msti;
     sc_signal<axi4_master_out_type> msto;
+    sc_signal<dport_in_type> wb_dporti;
+    sc_signal<dport_out_type> wb_dporto;
 
     sc_trace_file *i_vcd_;      // stimulus pattern
     sc_trace_file *o_vcd_;      // reference pattern for comparision

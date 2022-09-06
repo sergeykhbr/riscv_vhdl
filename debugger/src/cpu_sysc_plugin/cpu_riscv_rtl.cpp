@@ -230,11 +230,9 @@ void CpuRiscV_RTL::createSystemC() {
     core_->i_nrst(w_sys_nrst);
     core_->i_msti(corei0);
     core_->o_msto(coreo0);
-    core_->o_flush_l2(w_flush_l2);
-    core_->i_msip(wb_irq_pending[IRQ_HART_MSIP]);
-    core_->i_mtip(wb_irq_pending[IRQ_HART_MTIP]);
-    core_->i_meip(wb_irq_pending[IRQ_HART_MEIP]);
-    core_->i_seip(wb_irq_pending[IRQ_HART_SEIP]);
+    core_->o_xcfg(xcfg);
+    core_->i_dporti(wb_dporti);
+    core_->o_dporto(wb_dporto);
     core_->i_haltreq(w_haltreq);
     core_->i_resumereq(w_resumereq);
     core_->i_dport_req_valid(w_dport_req_valid);
@@ -247,8 +245,14 @@ void CpuRiscV_RTL::createSystemC() {
     core_->o_dport_resp_valid(w_dport_resp_valid);
     core_->o_dport_resp_error(w_dport_resp_error);
     core_->o_dport_rdata(wb_dport_rdata);
-    core_->i_progbuf(wb_progbuf);
+    core_->i_msip(wb_irq_pending[IRQ_HART_MSIP]);
+    core_->i_mtip(wb_irq_pending[IRQ_HART_MTIP]);
+    core_->i_meip(wb_irq_pending[IRQ_HART_MEIP]);
+    core_->i_seip(wb_irq_pending[IRQ_HART_SEIP]);
+    core_->o_flush_l2(w_flush_l2);
     core_->o_halted(w_halted0);
+    core_->o_available(w_available0);
+    core_->i_progbuf(wb_progbuf);
 
 #ifdef DBG_ICACHE_LRU_TB
     ICacheLru_tb *tb = new ICacheLru_tb("tb");

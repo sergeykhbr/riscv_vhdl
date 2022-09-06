@@ -35,6 +35,109 @@ static const int CFG_SYSBUS_USER_BITS = CFG_BUS_USER_BITS;
 static const int BUS_DATA_BYTES      = (1 << CFG_LOG2_BUS_DATA_BYTES);
 static const int BUS_DATA_WIDTH      = 8 * BUS_DATA_BYTES;
 
+// @name Vendor IDs defintion.
+static const uint16_t VENDOR_GNSSSENSOR = 0x00F1;
+static const uint16_t VENDOR_OPTIMITECH = 0x00F2;
+
+// @name Master Device IDs definition:
+// Empty master slot device
+static const uint16_t MST_DID_EMPTY = 0x7755;
+// Ethernet MAC master device.
+static const uint16_t GAISLER_ETH_MAC_MASTER = 0x0502;
+// Ethernet MAC master debug interface (EDCL).
+static const uint16_t GAISLER_ETH_EDCL_MASTER = 0x0503;
+// "River" CPU Device ID.
+static const uint16_t RISCV_RIVER_CPU = 0x0505;
+// "Wasserfall" CPU Device ID.
+static const uint16_t RISCV_WASSERFALL_WORKGROUP = 0x0506;
+// "Wasserfall" debug registers
+static const uint16_t RISCV_WASSERFALL_DMI = 0x0507;
+// UART with DMA: Test Access Point (TAP)
+static const uint16_t GNSSSENSOR_UART_TAP = 0x050A;
+// JTAG Test Access Point (TAP)
+static const uint16_t GNSSSENSOR_JTAG_TAP = 0x050B;
+
+// Plug'n'Play descriptor localparams.
+// Undefined type of the descriptor (empty device).
+static const uint8_t PNP_CFG_TYPE_INVALID = 0x0;
+// AXI slave device standard descriptor.
+static const uint8_t PNP_CFG_TYPE_MASTER = 0x1;
+// AXI master device standard descriptor.
+static const uint8_t PNP_CFG_TYPE_SLAVE = 0x2;
+// @brief Size in bytes of the standard slave descriptor..
+// @details Firmware uses this value instead of sizeof(axi4_slave_config_type).
+static const uint8_t PNP_CFG_SLAVE_DESCR_BYTES = 0x10;
+// @brief Size in bytes of the standard master descriptor.
+// @details Firmware uses this value instead of sizeof(axi4_master_config_type).
+static const uint8_t PNP_CFG_MASTER_DESCR_BYTES = 0x08;
+
+// @brief   Plug-n-play descriptor structure for slave device.
+// @details Each slave device must generates this datatype output that
+//          is connected directly to the 'pnp' slave module on system bus.
+class axi4_master_config_type {
+ public:
+    axi4_master_config_type() {
+        // Descriptor size in bytes.
+        descrsize = PNP_CFG_MASTER_DESCR_BYTES;
+        // Descriptor type.
+        descrtype = PNP_CFG_TYPE_MASTER;
+        // Vendor ID.
+        vid = VENDOR_GNSSSENSOR;
+        // Device ID.
+        did = MST_DID_EMPTY;
+    }
+
+    inline bool operator == (const axi4_master_config_type &rhs) const {
+        bool ret = true;
+        ret = ret
+            && rhs.descrsize == descrsize
+            && rhs.descrtype == descrtype
+            && rhs.vid == vid
+            && rhs.did == did;
+        return ret;
+    }
+
+    inline axi4_master_config_type& operator = (const axi4_master_config_type &rhs) {
+        descrsize = rhs.descrsize;
+        descrtype = rhs.descrtype;
+        vid = rhs.vid;
+        did = rhs.did;
+        return *this;
+    }
+
+    inline friend void sc_trace(sc_trace_file *tf,
+                                const axi4_master_config_type&v,
+                                const std::string &NAME) {
+        sc_trace(tf, v.descrsize, NAME + "_descrsize");
+        sc_trace(tf, v.descrtype, NAME + "_descrtype");
+        sc_trace(tf, v.vid, NAME + "_vid");
+        sc_trace(tf, v.did, NAME + "_did");
+    }
+
+    inline friend ostream &operator << (ostream &os,
+                                        axi4_master_config_type const &v) {
+        os << "("
+        << v.descrsize << ","
+        << v.descrtype << ","
+        << v.vid << ","
+        << v.did << ")";
+        return os;
+    }
+
+ public:
+    // Descriptor size in bytes.;
+    sc_uint<8> descrsize;
+    // Descriptor type.;
+    sc_uint<2> descrtype;
+    // Vendor ID.;
+    sc_uint<16> vid;
+    // Device ID.;
+    sc_uint<16> did;
+};
+
+// @brief Default master config value.
+static const axi4_master_config_type axi4_master_config_none;
+
 
 // Burst length size decoder
 static const int XSIZE_TOTAL = 8;
