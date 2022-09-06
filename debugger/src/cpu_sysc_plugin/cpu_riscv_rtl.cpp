@@ -21,7 +21,8 @@
 namespace debugger {
 
 CpuRiscV_RTL::CpuRiscV_RTL(const char *name)  
-    : IService(name), IHap(HAP_ConfigDone) {
+    : IService(name), IHap(HAP_ConfigDone),
+    wb_irq_pending("wb_irq_pending", IRQ_PER_HART_TOTAL) {
     registerInterface(static_cast<IThread *>(this));
     registerInterface(static_cast<IClock *>(this));
     registerInterface(static_cast<IHap *>(this));
@@ -230,7 +231,10 @@ void CpuRiscV_RTL::createSystemC() {
     core_->i_msti(corei0);
     core_->o_msto(coreo0);
     core_->o_flush_l2(w_flush_l2);
-    core_->i_irq_pending(wb_irq_pending);
+    core_->i_msip(wb_irq_pending[IRQ_HART_MSIP]);
+    core_->i_mtip(wb_irq_pending[IRQ_HART_MTIP]);
+    core_->i_meip(wb_irq_pending[IRQ_HART_MEIP]);
+    core_->i_seip(wb_irq_pending[IRQ_HART_SEIP]);
     core_->i_haltreq(w_haltreq);
     core_->i_resumereq(w_resumereq);
     core_->i_dport_req_valid(w_dport_req_valid);

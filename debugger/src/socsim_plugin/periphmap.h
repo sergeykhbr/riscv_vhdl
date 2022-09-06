@@ -66,10 +66,6 @@ static const uint32_t PNP_CFG_TYPE_INVALID     = 0;
 static const uint32_t PNP_CFG_TYPE_MASTER      = 1;
 static const uint32_t PNP_CFG_TYPE_SLAVE       = 2;
 
-static const uint32_t TECH_INFERRED            = 0;
-static const uint32_t TECH_VIRTEX6             = 36;
-static const uint32_t TECH_KINTEX7             = 49;
-
 typedef struct MasterConfigType {
     union DescrType {
         struct bits_type {
@@ -107,10 +103,10 @@ typedef struct PnpMapType {
     uint32_t fwid;              /// 0xfffff004: RW: FW ID
     union TechType {
         struct bits_type {
-            uint8_t tech;
+            uint8_t plic_irq_total;
             uint8_t slv_total;
             uint8_t mst_total;
-            uint8_t adc_detect;
+            uint8_t cfg;
         } bits;
         uint32_t val;
     } tech;                     /// 0xfffff008: RO: technology index

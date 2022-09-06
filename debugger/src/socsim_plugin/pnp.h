@@ -34,10 +34,10 @@ private:
     void addSlave(uint64_t addr, uint64_t size, unsigned irq,
                   unsigned vid, unsigned did);
 
-    AttributeType tech_;
     AttributeType irqController_;
     AttributeType irqId_;
-    AttributeType adc_detector_;
+    AttributeType cpu_max_;
+    AttributeType l2cache_ena_;
 
     IIrqController *iirq_;
 

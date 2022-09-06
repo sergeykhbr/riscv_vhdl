@@ -132,7 +132,7 @@ class CpuRiscV_RTL : public IService,
     sc_signal<axi4_l1_out_type> acpo;
     sc_signal<bool> w_flush_l2;
     // Interrupt lines:
-    sc_signal<sc_uint<IRQ_PER_HART_TOTAL>> wb_irq_pending;       // Per Hart pending interrupts pins
+    sc_vector<sc_signal<bool>> wb_irq_pending;       // Per Hart pending interrupts pins
     // Debug interface
     sc_signal<bool> w_ndmreset;
     sc_signal<sc_uint<CFG_CPU_MAX>> wb_halted;

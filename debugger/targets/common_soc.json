@@ -312,10 +312,10 @@
                 ['LogLevel',4],
                 ['BaseAddress',0x100ff000],
                 ['Length',4096],
-                ['Tech',0],
                 ['IrqController','plic0'],
                 ['IrqId',70, 'The last interrupt index in FU740 is 69, use the next unused'],
-                ['AdcDetector',0x00]
+                ['cpu_max',1, 'Number of CPU visible by software CFG_CPU_MAX'],
+                ['l2cache_ena',0, '0=diable; 1=ena. L2Cache/L2Dummy selector']
                 ]}]},
     {'Class':'HardResetClass','Instances':[
           {'Name':'reset0','Attr':[

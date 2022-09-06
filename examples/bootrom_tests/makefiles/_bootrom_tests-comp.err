@@ -16,8 +16,8 @@ riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-pr
 riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imafd -DFPU_ENABLED -I../../common -I../src ../src/test_swirq.c -o ../linuxbuild/obj/test_swirq.o
 riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imafd -DFPU_ENABLED -I../../common -I../src ../src/test_l2coherence.c -o ../linuxbuild/obj/test_l2coherence.o
 ../src/test_l2coherence.c: In function 'test_l2coherence':
-../src/test_l2coherence.c:30:17: warning: assignment to 'uint64_t' {aka 'long unsigned int'} from 'uint32_t *' {aka 'unsigned int *'} makes integer from pointer without a cast [-Wint-conversion]
-   30 |     pnp->fwdbg1 = &cohtestcnt;     // shared variable in local stack
+../src/test_l2coherence.c:31:17: warning: assignment to 'uint64_t' {aka 'long unsigned int'} from 'uint32_t *' {aka 'unsigned int *'} makes integer from pointer without a cast [-Wint-conversion]
+   31 |     pnp->fwdbg1 = &cohtestcnt;     // shared variable in local stack
       |                 ^
 riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imafd -DFPU_ENABLED -I../../common -I../src ../src/hwthread1.c -o ../linuxbuild/obj/hwthread1.o
 riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-printf -DSYS_HZ=40000000 -march=rv64imafd -DFPU_ENABLED -I../../common -I../src ../src/hwthread2.c -o ../linuxbuild/obj/hwthread2.o
@@ -30,5 +30,5 @@ riscv64-unknown-elf-gcc -c -g -static -std=gnu99 -O0 -fno-common -fno-builtin-pr
 riscv64-unknown-elf-gcc -T test.ld -nostdlib -nostartfiles ../linuxbuild/obj/crt.o ../linuxbuild/obj/exceptions.o ../linuxbuild/obj/interrupts.o ../linuxbuild/obj/memanager.o ../linuxbuild/obj/uart.o ../linuxbuild/obj/fw_api.o ../linuxbuild/obj/test_mbist_ram.o ../linuxbuild/obj/test_pnp.o ../linuxbuild/obj/test_fpu.o ../linuxbuild/obj/test_missaccess.o ../linuxbuild/obj/test_mpu.o ../linuxbuild/obj/test_stackprotect.o ../linuxbuild/obj/test_gnss_ss.o ../linuxbuild/obj/test_plic.o ../linuxbuild/obj/test_mtimer.o ../linuxbuild/obj/test_swirq.o ../linuxbuild/obj/test_l2coherence.o ../linuxbuild/obj/hwthread1.o ../linuxbuild/obj/hwthread2.o ../linuxbuild/obj/hwthread3.o ../linuxbuild/obj/main.o -o ../linuxbuild/bin/bootrom_tests.elf -lgcc -lc -lm
 \n  Shared Library has been built successfully.\n
 elf2rawx ../linuxbuild/bin/bootrom_tests.elf -h -f 65536 -l 8 -o ../linuxbuild/bin/bootrom_tests.hex
-elf2rawx: Loaded: 48937 B
+elf2rawx: Loaded: 49013 B
 elf2rawx: HexRom was generated: 8192x64 lines

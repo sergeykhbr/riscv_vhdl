@@ -23,7 +23,8 @@
 void test_l2coherence(void) {
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     clint_map *clint = (clint_map *)ADDR_BUS0_XSLV_CLINT;
-    uint32_t cpu_max = pnp->cfg >> 24;
+    uint32_t cpu_max = pnp->cfg >> 28;
+    uint32_t l2cache_ena = (pnp->cfg >> 24) & 1;
     uint32_t cohtestcnt = 0;
     uint32_t mod40;
 
@@ -31,7 +32,10 @@ void test_l2coherence(void) {
     pnp->fwdbg2 = fw_get_cpuid();  // to debug in RTL and see CPU index
 
     printf_uart("%s", "L2.Coherence . .");
-    if (cpu_max <= 1) {
+    if (l2cache_ena == 0) {
+        printf_uart("%s\r\n", "Disabled");
+        return;
+    } else if (cpu_max <= 1) {
         printf_uart("%s\r\n", "SKIPPED");
         return;
     }

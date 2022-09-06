@@ -112,7 +112,7 @@ int main() {
  
     led_set(0x01);
   
-    cpu_max = pnp->cfg >> 24;
+    cpu_max = pnp->cfg >> 28;
 
     printf_uart("HARTID . . . . .%d\r\n", fw_get_cpuid());
     printf_uart("HARTS. . . . . .%d\r\n", cpu_max);

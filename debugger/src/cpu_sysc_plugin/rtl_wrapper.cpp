@@ -30,7 +30,7 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     o_dmi_nrst("o_dmi_nrst"),
     o_msti("o_msti"),
     i_msto("i_msto"),
-    o_irq_pending("o_irq_pending"),
+    o_irq_pending("o_irq_pending", IRQ_PER_HART_TOTAL),
     i_hartreset("i_hartreset"),
     i_ndmreset("i_ndmreset"),
     i_halted0("i_halted0"),
@@ -98,7 +98,6 @@ void RtlWrapper::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
         sc_trace(o_vcd, i_msto, i_msto.name());
         sc_trace(o_vcd, o_msti, o_msti.name());
-        sc_trace(o_vcd, o_irq_pending, o_irq_pending.name());
 
         std::string pn(name());
         sc_trace(o_vcd, r.nrst, pn + ".r_nrst");
@@ -245,7 +244,9 @@ void RtlWrapper::comb() {
     vb_irq_pending[IRQ_HART_MEIP] = w_meip;
     vb_irq_pending[IRQ_HART_SEIP] = w_seip;
 
-    o_irq_pending = vb_irq_pending;
+    for (int i = 0; i < IRQ_PER_HART_TOTAL; i++) {
+        o_irq_pending[i] = vb_irq_pending[i];
+    }
     o_halted = r.halted;
 
     if (!r.nrst.read()[1]) {

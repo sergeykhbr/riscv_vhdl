@@ -50,7 +50,10 @@ RiverTop::RiverTop(sc_module_name name,
     o_resp_snoop_data("o_resp_snoop_data"),
     o_resp_snoop_flags("o_resp_snoop_flags"),
     o_flush_l2("o_flush_l2"),
-    i_irq_pending("i_irq_pending"),
+    i_msip("i_msip"),
+    i_mtip("i_mtip"),
+    i_meip("i_meip"),
+    i_seip("i_seip"),
     i_haltreq("i_haltreq"),
     i_resumereq("i_resumereq"),
     i_dport_req_valid("i_dport_req_valid"),
@@ -102,7 +105,10 @@ RiverTop::RiverTop(sc_module_name name,
     proc0->i_resp_data_er_mpu_load(w_resp_data_er_mpu_load);
     proc0->i_resp_data_er_mpu_store(w_resp_data_er_mpu_store);
     proc0->o_resp_data_ready(w_resp_data_ready);
-    proc0->i_irq_pending(i_irq_pending);
+    proc0->i_msip(i_msip);
+    proc0->i_mtip(i_mtip);
+    proc0->i_meip(i_meip);
+    proc0->i_seip(i_seip);
     proc0->o_mpu_region_we(w_mpu_region_we);
     proc0->o_mpu_region_idx(wb_mpu_region_idx);
     proc0->o_mpu_region_addr(wb_mpu_region_addr);
@@ -201,7 +207,10 @@ RiverTop::RiverTop(sc_module_name name,
     sensitive << i_req_snoop_type;
     sensitive << i_req_snoop_addr;
     sensitive << i_resp_snoop_ready;
-    sensitive << i_irq_pending;
+    sensitive << i_msip;
+    sensitive << i_mtip;
+    sensitive << i_meip;
+    sensitive << i_seip;
     sensitive << i_haltreq;
     sensitive << i_resumereq;
     sensitive << i_dport_req_valid;
@@ -281,7 +290,6 @@ void RiverTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_resp_snoop_data, o_resp_snoop_data.name());
         sc_trace(o_vcd, o_resp_snoop_flags, o_resp_snoop_flags.name());
         sc_trace(o_vcd, o_flush_l2, o_flush_l2.name());
-        sc_trace(o_vcd, i_irq_pending, i_irq_pending.name());
         sc_trace(o_vcd, i_haltreq, i_haltreq.name());
         sc_trace(o_vcd, i_resumereq, i_resumereq.name());
         sc_trace(o_vcd, i_dport_req_valid, i_dport_req_valid.name());

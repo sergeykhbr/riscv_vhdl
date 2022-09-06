@@ -31,7 +31,7 @@
                 ['AsyncReset',false],
                 ['FpuEnable',true, 'Enable Hardware FPU module'],
                 ['TracerEnable',false, 'Enable Verification Trace collector module'],
-                ['L2CacheEnable',false, 'Enable coherent L2-cache model'],
+                ['L2CacheEnable',false, 'Check: PNP seetings too!!!. Enable coherent L2-cache model'],
                 ['CoherenceEnable',true, 'Enable addtional states in D-cache and RiverAmba to support coherence'],
                 ['CLINT','clint0', 'Core-Local Interuptor to generate sw and mtimer interrupts'],
                 ['PLIC','plic0'],

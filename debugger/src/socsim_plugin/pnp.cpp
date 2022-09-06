@@ -13,19 +13,16 @@ namespace debugger {
 
 PNP::PNP(const char *name)  : IService(name) {
     registerInterface(static_cast<IMemoryOperation *>(this));
-    registerAttribute("Tech", &tech_);
     registerAttribute("IrqController", &irqController_);
     registerAttribute("IrqId", &irqId_);
-    registerAttribute("AdcDetector", &adc_detector_);
-
-    tech_.make_uint64(0);
-    adc_detector_.make_uint64(0);
+    registerAttribute("cpu_max", &cpu_max_);
+    registerAttribute("l2cache_ena", &l2cache_ena_);
 
     memset(&regs_, 0, sizeof(regs_));
     iter_.buf = regs_.cfg_table;
     regs_.hwid = 0x20170313;
     regs_.fwid = 0;
-    regs_.tech.bits.tech = TECH_INFERRED;
+    regs_.tech.bits.cfg = 0;
     regs_.tech.bits.mst_total = 0;
     regs_.tech.bits.slv_total = 0;
 
@@ -73,9 +70,10 @@ void PNP::addSlave(uint64_t addr, uint64_t size, unsigned irq, unsigned vid, uns
 }
 
 void PNP::postinitService() {
-    regs_.tech.bits.tech = static_cast<uint8_t>(tech_.to_uint64());
-    regs_.tech.bits.adc_detect =
-        static_cast<uint8_t>(adc_detector_.to_uint64());
+    regs_.tech.bits.cfg = static_cast<uint8_t>(cpu_max_.to_uint64() << 4);
+    regs_.tech.bits.cfg |= static_cast<uint8_t>(l2cache_ena_.to_uint64());
+    regs_.tech.bits.plic_irq_total =
+        static_cast<uint8_t>(irqId_.to_uint64());
 
     iirq_ = static_cast<IIrqController *>(RISCV_get_service_iface(
         irqController_.to_string(), IFACE_IRQ_CONTROLLER));

@@ -97,7 +97,7 @@ void PnpWidget::slotUpdate() {
     QPixmap pixmapBkg;
     QString targetText;
 
-    switch (pnp_.tech.bits.tech) {
+    /*switch (pnp_.tech.bits.tech) {
     case TECH_INFERRED:
         targetText = QString("Target: Simulation");
         pixmapBkg = QPixmap(size()).fromImage(imgTarget_[SIMULATION]);
@@ -115,7 +115,7 @@ void PnpWidget::slotUpdate() {
         pixmapBkg = QPixmap(size()).fromImage(imgTarget_[TARGET_Unknown]);
     }
     getLabel(WTarget_Name)->setText(targetText);
-    getLabel(WTarget_image)->setPixmap(pixmapBkg);
+    getLabel(WTarget_image)->setPixmap(pixmapBkg);*/
 
     QFontMetrics fm(font());
     int h = pixmapBkg.size().height() + fm.height() + 50;
