@@ -40,7 +40,9 @@ class dport_in_type {
     }
 
     inline bool operator == (const dport_in_type &rhs) const {
-        return (rhs.haltreq == haltreq
+        bool ret = true;
+        ret = ret
+            && rhs.haltreq == haltreq
             && rhs.resumereq == resumereq
             && rhs.resethaltreq == resethaltreq
             && rhs.hartreset == hartreset
@@ -49,8 +51,8 @@ class dport_in_type {
             && rhs.addr == addr
             && rhs.wdata == wdata
             && rhs.size == size
-            && rhs.resp_ready == resp_ready
-        );
+            && rhs.resp_ready == resp_ready;
+        return ret;
     }
 
     inline dport_in_type& operator = (const dport_in_type &rhs) {
@@ -99,17 +101,17 @@ class dport_in_type {
     }
 
  public:
-        bool haltreq;
-        bool resumereq;
-        bool resethaltreq;
-        bool hartreset;
-        bool req_valid;
-        sc_uint<DPortReq_Total> dtype;
-        sc_uint<CFG_CPU_ADDR_BITS> addr;
-        sc_uint<RISCV_ARCH> wdata;
-        sc_uint<3> size;
-        bool resp_ready;
-    };
+    bool haltreq;
+    bool resumereq;
+    bool resethaltreq;
+    bool hartreset;
+    bool req_valid;
+    sc_uint<DPortReq_Total> dtype;
+    sc_uint<CFG_CPU_ADDR_BITS> addr;
+    sc_uint<RISCV_ARCH> wdata;
+    sc_uint<3> size;
+    bool resp_ready;
+};
 
 static const dport_in_type dport_in_none;
 
@@ -123,11 +125,13 @@ class dport_out_type {
     }
 
     inline bool operator == (const dport_out_type &rhs) const {
-        return (rhs.req_ready == req_ready
+        bool ret = true;
+        ret = ret
+            && rhs.req_ready == req_ready
             && rhs.resp_valid == resp_valid
             && rhs.resp_error == resp_error
-            && rhs.rdata == rdata
-        );
+            && rhs.rdata == rdata;
+        return ret;
     }
 
     inline dport_out_type& operator = (const dport_out_type &rhs) {
@@ -158,14 +162,16 @@ class dport_out_type {
     }
 
  public:
-        bool req_ready;                                     // ready to accept request
-        bool resp_valid;                                    // rdata is valid
-        bool resp_error;                                    // response error
-        sc_uint<RISCV_ARCH> rdata;
-    };
+    bool req_ready;                                         // ready to accept request
+    bool resp_valid;                                        // rdata is valid
+    bool resp_error;                                        // response error
+    sc_uint<RISCV_ARCH> rdata;
+};
 
 static const dport_out_type dport_out_none;
 
+typedef sc_vector<sc_signal<dport_in_type>> dport_in_vector;
+typedef sc_vector<sc_signal<dport_out_type>> dport_out_vector;
 
 
 // L1 AXI interface
@@ -221,7 +227,9 @@ class axi4_l1_out_type {
     }
 
     inline bool operator == (const axi4_l1_out_type &rhs) const {
-        return (rhs.aw_valid == aw_valid
+        bool ret = true;
+        ret = ret
+            && rhs.aw_valid == aw_valid
             && rhs.aw_bits.addr == aw_bits.addr
             && rhs.aw_bits.len == aw_bits.len
             && rhs.aw_bits.size == aw_bits.size
@@ -265,8 +273,8 @@ class axi4_l1_out_type {
             && rhs.cd_data == cd_data
             && rhs.cd_last == cd_last
             && rhs.rack == rack
-            && rhs.wack == wack
-        );
+            && rhs.wack == wack;
+        return ret;
     }
 
     inline axi4_l1_out_type& operator = (const axi4_l1_out_type &rhs) {
@@ -420,37 +428,37 @@ class axi4_l1_out_type {
     }
 
  public:
-        bool aw_valid;
-        axi4_metadata_type aw_bits;
-        sc_uint<CFG_CPU_ID_BITS> aw_id;
-        bool aw_user;
-        bool w_valid;
-        sc_biguint<L1CACHE_LINE_BITS> w_data;
-        bool w_last;
-        sc_uint<L1CACHE_BYTES_PER_LINE> w_strb;
-        bool w_user;
-        bool b_ready;
-        bool ar_valid;
-        axi4_metadata_type ar_bits;
-        sc_uint<CFG_CPU_ID_BITS> ar_id;
-        bool ar_user;
-        bool r_ready;
-        // ACE signals;
-        sc_uint<2> ar_domain;                               // 00=Non-shareable (single master in domain)
-        sc_uint<4> ar_snoop;                                // Table C3-7:
-        sc_uint<2> ar_bar;                                  // read barrier transaction
-        sc_uint<2> aw_domain;
-        sc_uint<3> aw_snoop;                                // Table C3-8
-        sc_uint<2> aw_bar;                                  // write barrier transaction
-        bool ac_ready;
-        bool cr_valid;
-        sc_uint<5> cr_resp;
-        bool cd_valid;
-        sc_biguint<L1CACHE_LINE_BITS> cd_data;
-        bool cd_last;
-        bool rack;
-        bool wack;
-    };
+    bool aw_valid;
+    axi4_metadata_type aw_bits;
+    sc_uint<CFG_CPU_ID_BITS> aw_id;
+    bool aw_user;
+    bool w_valid;
+    sc_biguint<L1CACHE_LINE_BITS> w_data;
+    bool w_last;
+    sc_uint<L1CACHE_BYTES_PER_LINE> w_strb;
+    bool w_user;
+    bool b_ready;
+    bool ar_valid;
+    axi4_metadata_type ar_bits;
+    sc_uint<CFG_CPU_ID_BITS> ar_id;
+    bool ar_user;
+    bool r_ready;
+    // ACE signals;
+    sc_uint<2> ar_domain;                                   // 00=Non-shareable (single master in domain)
+    sc_uint<4> ar_snoop;                                    // Table C3-7:
+    sc_uint<2> ar_bar;                                      // read barrier transaction
+    sc_uint<2> aw_domain;
+    sc_uint<3> aw_snoop;                                    // Table C3-8
+    sc_uint<2> aw_bar;                                      // write barrier transaction
+    bool ac_ready;
+    bool cr_valid;
+    sc_uint<5> cr_resp;
+    bool cd_valid;
+    sc_biguint<L1CACHE_LINE_BITS> cd_data;
+    bool cd_last;
+    bool rack;
+    bool wack;
+};
 
 static const axi4_l1_out_type axi4_l1_out_none;
 
@@ -479,7 +487,9 @@ class axi4_l1_in_type {
     }
 
     inline bool operator == (const axi4_l1_in_type &rhs) const {
-        return (rhs.aw_ready == aw_ready
+        bool ret = true;
+        ret = ret
+            && rhs.aw_ready == aw_ready
             && rhs.w_ready == w_ready
             && rhs.b_valid == b_valid
             && rhs.b_resp == b_resp
@@ -497,8 +507,8 @@ class axi4_l1_in_type {
             && rhs.ac_snoop == ac_snoop
             && rhs.ac_prot == ac_prot
             && rhs.cr_ready == cr_ready
-            && rhs.cd_ready == cd_ready
-        );
+            && rhs.cd_ready == cd_ready;
+        return ret;
     }
 
     inline axi4_l1_in_type& operator = (const axi4_l1_in_type &rhs) {
@@ -574,29 +584,31 @@ class axi4_l1_in_type {
     }
 
  public:
-        bool aw_ready;
-        bool w_ready;
-        bool b_valid;
-        sc_uint<2> b_resp;
-        sc_uint<CFG_CPU_ID_BITS> b_id;
-        bool b_user;
-        bool ar_ready;
-        bool r_valid;
-        sc_uint<4> r_resp;
-        sc_biguint<L1CACHE_LINE_BITS> r_data;
-        bool r_last;
-        sc_uint<CFG_CPU_ID_BITS> r_id;
-        bool r_user;
-        bool ac_valid;
-        sc_uint<CFG_CPU_ADDR_BITS> ac_addr;
-        sc_uint<4> ac_snoop;                                // Table C3-19
-        sc_uint<3> ac_prot;
-        bool cr_ready;
-        bool cd_ready;
-    };
+    bool aw_ready;
+    bool w_ready;
+    bool b_valid;
+    sc_uint<2> b_resp;
+    sc_uint<CFG_CPU_ID_BITS> b_id;
+    bool b_user;
+    bool ar_ready;
+    bool r_valid;
+    sc_uint<4> r_resp;
+    sc_biguint<L1CACHE_LINE_BITS> r_data;
+    bool r_last;
+    sc_uint<CFG_CPU_ID_BITS> r_id;
+    bool r_user;
+    bool ac_valid;
+    sc_uint<CFG_CPU_ADDR_BITS> ac_addr;
+    sc_uint<4> ac_snoop;                                    // Table C3-19
+    sc_uint<3> ac_prot;
+    bool cr_ready;
+    bool cd_ready;
+};
 
 static const axi4_l1_in_type axi4_l1_in_none;
 
+typedef sc_vector<sc_signal<axi4_l1_in_type>> axi4_l1_in_vector;
+typedef sc_vector<sc_signal<axi4_l1_out_type>> axi4_l1_out_vector;
 
 class axi4_l2_out_type {
  public:
@@ -635,7 +647,9 @@ class axi4_l2_out_type {
     }
 
     inline bool operator == (const axi4_l2_out_type &rhs) const {
-        return (rhs.aw_valid == aw_valid
+        bool ret = true;
+        ret = ret
+            && rhs.aw_valid == aw_valid
             && rhs.aw_bits.addr == aw_bits.addr
             && rhs.aw_bits.len == aw_bits.len
             && rhs.aw_bits.size == aw_bits.size
@@ -665,8 +679,8 @@ class axi4_l2_out_type {
             && rhs.ar_bits.region == ar_bits.region
             && rhs.ar_id == ar_id
             && rhs.ar_user == ar_user
-            && rhs.r_ready == r_ready
-        );
+            && rhs.r_ready == r_ready;
+        return ret;
     }
 
     inline axi4_l2_out_type& operator = (const axi4_l2_out_type &rhs) {
@@ -778,22 +792,22 @@ class axi4_l2_out_type {
     }
 
  public:
-        bool aw_valid;
-        axi4_metadata_type aw_bits;
-        sc_uint<CFG_CPU_ID_BITS> aw_id;
-        bool aw_user;
-        bool w_valid;
-        sc_biguint<L2CACHE_LINE_BITS> w_data;
-        bool w_last;
-        sc_uint<L2CACHE_BYTES_PER_LINE> w_strb;
-        bool w_user;
-        bool b_ready;
-        bool ar_valid;
-        axi4_metadata_type ar_bits;
-        sc_uint<CFG_CPU_ID_BITS> ar_id;
-        bool ar_user;
-        bool r_ready;
-    };
+    bool aw_valid;
+    axi4_metadata_type aw_bits;
+    sc_uint<CFG_CPU_ID_BITS> aw_id;
+    bool aw_user;
+    bool w_valid;
+    sc_biguint<L2CACHE_LINE_BITS> w_data;
+    bool w_last;
+    sc_uint<L2CACHE_BYTES_PER_LINE> w_strb;
+    bool w_user;
+    bool b_ready;
+    bool ar_valid;
+    axi4_metadata_type ar_bits;
+    sc_uint<CFG_CPU_ID_BITS> ar_id;
+    bool ar_user;
+    bool r_ready;
+};
 
 static const axi4_l2_out_type axi4_l2_out_none;
 
@@ -816,7 +830,9 @@ class axi4_l2_in_type {
     }
 
     inline bool operator == (const axi4_l2_in_type &rhs) const {
-        return (rhs.aw_ready == aw_ready
+        bool ret = true;
+        ret = ret
+            && rhs.aw_ready == aw_ready
             && rhs.w_ready == w_ready
             && rhs.b_valid == b_valid
             && rhs.b_resp == b_resp
@@ -828,8 +844,8 @@ class axi4_l2_in_type {
             && rhs.r_data == r_data
             && rhs.r_last == r_last
             && rhs.r_id == r_id
-            && rhs.r_user == r_user
-        );
+            && rhs.r_user == r_user;
+        return ret;
     }
 
     inline axi4_l2_in_type& operator = (const axi4_l2_in_type &rhs) {
@@ -887,20 +903,20 @@ class axi4_l2_in_type {
     }
 
  public:
-        bool aw_ready;
-        bool w_ready;
-        bool b_valid;
-        sc_uint<2> b_resp;
-        sc_uint<CFG_CPU_ID_BITS> b_id;                      // create ID for L2?
-        bool b_user;
-        bool ar_ready;
-        bool r_valid;
-        sc_uint<2> r_resp;
-        sc_biguint<L2CACHE_LINE_BITS> r_data;
-        bool r_last;
-        sc_uint<CFG_CPU_ID_BITS> r_id;
-        bool r_user;
-    };
+    bool aw_ready;
+    bool w_ready;
+    bool b_valid;
+    sc_uint<2> b_resp;
+    sc_uint<CFG_CPU_ID_BITS> b_id;                          // create ID for L2?
+    bool b_user;
+    bool ar_ready;
+    bool r_valid;
+    sc_uint<2> r_resp;
+    sc_biguint<L2CACHE_LINE_BITS> r_data;
+    bool r_last;
+    sc_uint<CFG_CPU_ID_BITS> r_id;
+    bool r_user;
+};
 
 static const axi4_l2_in_type axi4_l2_in_none;
 
