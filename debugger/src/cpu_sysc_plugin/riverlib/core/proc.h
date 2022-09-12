@@ -62,10 +62,8 @@ SC_MODULE(Processor) {
     sc_in<bool> i_resp_data_er_mpu_load;
     sc_in<bool> i_resp_data_er_mpu_store;
     sc_out<bool> o_resp_data_ready;                         // Core is ready to accept response from DCache
-    sc_in<bool> i_msip;                                     // machine software pending interrupt
-    sc_in<bool> i_mtip;                                     // machine timer pending interrupt
-    sc_in<bool> i_meip;                                     // machine external pending interrupt
-    sc_in<bool> i_seip;                                     // supervisor external pending interrupt
+    // Interrupt line from external interrupts controller (PLIC):
+    sc_in<sc_uint<IRQ_PER_HART_TOTAL>> i_irq_pending;       // Per Hart pending interrupts pins
     // MPU interface
     sc_out<bool> o_mpu_region_we;
     sc_out<sc_uint<CFG_MPU_TBL_WIDTH>> o_mpu_region_idx;

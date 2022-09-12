@@ -25,6 +25,7 @@
 #include "coreservices/icpuriscv.h"
 #include "ambalib/types_amba.h"
 #include "riverlib/river_cfg.h"
+#include "riverlib/types_river.h"
 #include <systemc.h>
 
 namespace debugger {
@@ -41,7 +42,7 @@ class RtlWrapper : public sc_module,
     sc_in<axi4_master_out_type> i_msto;
     // Interrupt lines:
     sc_vector<sc_out<bool>> o_irq_pending;       // Per Hart pending interrupts pins
-    sc_in<bool> i_hartreset;
+    sc_in<dport_in_type> i_dporti;
     sc_in<bool> i_ndmreset;
     sc_in<bool> i_halted0;
     sc_out<sc_uint<CFG_CPU_MAX>> o_halted;
@@ -56,7 +57,7 @@ class RtlWrapper : public sc_module,
     struct RegistersType {
         sc_signal<sc_uint<64>> clk_cnt;
         // AXI4 Request 
-        sc_signal<sc_uint<CFG_BUS_ADDR_WIDTH>> req_addr;
+        sc_signal<sc_uint<CFG_SYSBUS_ADDR_BITS>> req_addr;
         sc_signal<sc_uint<8>> req_len;
         sc_signal<sc_uint<2>> req_burst;
         // AXI4 B-Channel
@@ -73,9 +74,9 @@ class RtlWrapper : public sc_module,
     sc_event bus_req_event_;
     sc_event bus_resp_event_;
     sc_signal<bool> w_resp_valid;
-    sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_wdata;
-    sc_signal<sc_uint<BUS_DATA_BYTES>> wb_wstrb;
-    sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_resp_data;
+    sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> wb_wdata;
+    sc_signal<sc_uint<CFG_SYSBUS_DATA_BYTES>> wb_wstrb;
+    sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> wb_resp_data;
     sc_signal<bool> w_r_error;
     sc_signal<bool> w_w_error;
 

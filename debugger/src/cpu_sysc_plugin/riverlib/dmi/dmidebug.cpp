@@ -26,7 +26,9 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name, bool async_reset)
     i_halted("i_halted"),
     i_available("i_available"),
     o_hartsel("o_hartsel"),
-    o_haltreq("o_haltreq"),
+    i_dporto("i_dporto"),
+    o_dporti("o_dporti"),
+    /*o_haltreq("o_haltreq"),
     o_resumereq("o_resumereq"),
     o_resethaltreq("o_resethaltreq"),
     o_hartreset("o_hartreset"),
@@ -39,7 +41,7 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name, bool async_reset)
     o_dport_resp_ready("o_dport_resp_ready"),
     i_dport_resp_valid("i_dport_resp_valid"),
     i_dport_resp_error("i_dport_resp_error"),
-    i_dport_rdata("i_dport_rdata"),
+    i_dport_rdata("i_dport_rdata"),*/
     o_progbuf("o_progbuf") {
     iparent_ = parent;
     async_reset_ = async_reset;
@@ -49,9 +51,9 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name, bool async_reset)
     sensitive << i_nrst;
     sensitive << i_halted;
     sensitive << i_available;
-    sensitive << i_dport_req_ready;
-    sensitive << i_dport_resp_valid;
-    sensitive << i_dport_rdata;
+    sensitive << i_dporto;//i_dport_req_ready;
+    //sensitive << i_dport_resp_valid;
+    //sensitive << i_dport_rdata;
     sensitive << w_i_trst;
     sensitive << w_i_tck;
     sensitive << w_i_tms;
@@ -165,17 +167,17 @@ void DmiDebug::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (i_vcd) {
     }
     if (o_vcd) {
-        sc_trace(o_vcd, o_haltreq, o_haltreq.name());
-        sc_trace(o_vcd, o_resumereq, o_resumereq.name());
+        //sc_trace(o_vcd, o_haltreq, o_haltreq.name());
+        //sc_trace(o_vcd, o_resumereq, o_resumereq.name());
         sc_trace(o_vcd, i_halted, i_halted.name());
-        sc_trace(o_vcd, o_dport_req_valid, o_dport_req_valid.name());
-        sc_trace(o_vcd, o_dport_req_type, o_dport_req_type.name());
+        sc_trace(o_vcd, i_dporto, i_dporto.name());
+        /*sc_trace(o_vcd, o_dport_req_type, o_dport_req_type.name());
         sc_trace(o_vcd, o_dport_addr, o_dport_addr.name());
         sc_trace(o_vcd, o_dport_wdata, o_dport_wdata.name());
         sc_trace(o_vcd, i_dport_req_ready, i_dport_req_ready.name());
         sc_trace(o_vcd, o_dport_resp_ready, o_dport_resp_ready.name());
         sc_trace(o_vcd, i_dport_resp_valid, i_dport_resp_valid.name());
-        sc_trace(o_vcd, i_dport_rdata, i_dport_rdata.name());
+        sc_trace(o_vcd, i_dport_rdata, i_dport_rdata.name());*/
 
         std::string pn(name());
         sc_trace(o_vcd, w_i_trst, pn + ".i_trst");
@@ -285,6 +287,7 @@ bool DmiDebug::getTDO() {
 
 void DmiDebug::comb() {
     v = r;
+    dport_in_type vdporti;
     sc_uint<DPortReq_Total> vb_req_type;
     sc_uint<32> vb_resp_data;
     sc_uint<CFG_LOG2_CPU_MAX> vb_hartselnext;
@@ -553,32 +556,32 @@ void DmiDebug::comb() {
         }
         break;
     case CMD_STATE_REQUEST:
-        if (i_dport_req_ready.read()) {
+        if (i_dporto.read().req_ready) {
             v.cmdstate = CMD_STATE_RESPONSE;
             v.dport_req_valid = 0;
             v.dport_resp_ready = 1;
         }
         break;
     case CMD_STATE_RESPONSE:
-        if (i_dport_resp_valid.read()) {
+        if (i_dporto.read().resp_valid) {
             v.dport_resp_ready = 0;
             if (r.cmd_read) {
                 switch (r.command.read()(22,20)) {          // aamsize/aarsize
                 case 0:
-                    v.data0 = (0, i_dport_rdata.read()(7, 0));
+                    v.data0 = (0, i_dporto.read().rdata(7, 0));
                     v.data1 = 0;
                     break;
                 case 1:
-                    v.data0 = (0, i_dport_rdata.read()(15, 0));
+                    v.data0 = (0, i_dporto.read().rdata(15, 0));
                     v.data1 = 0;
                     break;
                 case 2:
-                    v.data0 = i_dport_rdata.read()(31, 0);
+                    v.data0 = i_dporto.read().rdata(31, 0);
                     v.data1 = 0;
                     break;
                 case 3:
-                    v.data0 = i_dport_rdata.read()(31, 0);
-                    v.data1 = i_dport_rdata.read()(63, 32);
+                    v.data0 = i_dporto.read().rdata(31, 0);
+                    v.data1 = i_dporto.read().rdata(63, 32);
                     break;
                 default:;
                 }
@@ -612,7 +615,7 @@ void DmiDebug::comb() {
                     v.data3 = arg1(63, 32);
                 }
             }
-            if (i_dport_resp_error.read()) {
+            if (i_dporto.read().resp_error) {
                 v.cmdstate = CMD_STATE_IDLE;
                 if (r.cmd_memaccess) {
                     // @spec The abstract command failed due to a bus error
@@ -672,17 +675,17 @@ void DmiDebug::comb() {
 
     o_ndmreset = r.ndmreset;
     o_hartsel = r.hartsel;
-    o_haltreq = r.haltreq;
-    o_resumereq = r.resumereq;
-    o_resethaltreq = r.resethaltreq;
-    o_hartreset = r.hartreset;
-
-    o_dport_req_valid = r.dport_req_valid;
-    o_dport_req_type = vb_req_type;
-    o_dport_addr = r.dport_addr;
-    o_dport_wdata = r.dport_wdata;
-    o_dport_size = r.dport_size;
-    o_dport_resp_ready = r.dport_resp_ready;
+    vdporti.haltreq = r.haltreq;
+    vdporti.resumereq = r.resumereq;
+    vdporti.resethaltreq = r.resethaltreq;
+    vdporti.hartreset = r.hartreset;
+    vdporti.req_valid = r.dport_req_valid;
+    vdporti.dtype = vb_req_type;
+    vdporti.addr = r.dport_addr;
+    vdporti.wdata = r.dport_wdata;
+    vdporti.size = r.dport_size;
+    vdporti.resp_ready = r.dport_resp_ready;
+    o_dporti = vdporti;
     o_progbuf = r.progbuf_data;
 
     wb_jtag_dmi_resp_data = r.jtag_resp_data;

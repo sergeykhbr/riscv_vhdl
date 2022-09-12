@@ -1,39 +1,31 @@
-/*
- *  Copyright 2020 Sergey Khabarov, sergeykhbr@gmail.com
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
-
- #pragma once
+// 
+//  Copyright 2022 Sergey Khabarov, sergeykhbr@gmail.com
+// 
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+// 
+//      http://www.apache.org/licenses/LICENSE-2.0
+// 
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+// 
+#pragma once
 
 #include <systemc.h>
-#include <string>
-#include <iomanip>
 
 namespace debugger {
 
-static const int CFG_BUS_ADDR_WIDTH      = 64;
-static const int CFG_LOG2_BUS_DATA_BYTES = 3;
-static const int CFG_BUS_ID_BITS         = 5;
-static const int CFG_BUS_USER_BITS       = 1;
+static const int CFG_SYSBUS_ADDR_BITS = 64;
+static const int CFG_LOG2_SYSBUS_DATA_BYTES = 3;
+static const int CFG_SYSBUS_ID_BITS = 5;
+static const int CFG_SYSBUS_USER_BITS = 1;
 
-static const int CFG_SYSBUS_ADDR_BITS = CFG_BUS_ADDR_WIDTH;
-static const int CFG_LOG2_SYSBUS_DATA_BYTES = CFG_LOG2_BUS_DATA_BYTES;
-static const int CFG_SYSBUS_ID_BITS = CFG_BUS_ID_BITS;
-static const int CFG_SYSBUS_USER_BITS = CFG_BUS_USER_BITS;
-
-static const int BUS_DATA_BYTES      = (1 << CFG_LOG2_BUS_DATA_BYTES);
-static const int BUS_DATA_WIDTH      = 8 * BUS_DATA_BYTES;
+static const int CFG_SYSBUS_DATA_BYTES = (1 << CFG_LOG2_SYSBUS_DATA_BYTES);
+static const int CFG_SYSBUS_DATA_BITS = (8 * CFG_SYSBUS_DATA_BYTES);
 
 // @name Vendor IDs defintion.
 static const uint16_t VENDOR_GNSSSENSOR = 0x00F1;
@@ -49,7 +41,7 @@ static const uint16_t GAISLER_ETH_EDCL_MASTER = 0x0503;
 // "River" CPU Device ID.
 static const uint16_t RISCV_RIVER_CPU = 0x0505;
 // "Wasserfall" CPU Device ID.
-static const uint16_t RISCV_WASSERFALL_WORKGROUP = 0x0506;
+static const uint16_t RISCV_RIVER_WORKGROUP = 0x0506;
 // "Wasserfall" debug registers
 static const uint16_t RISCV_WASSERFALL_DMI = 0x0507;
 // UART with DMA: Test Access Point (TAP)
@@ -138,7 +130,6 @@ class axi4_master_config_type {
 // @brief Default master config value.
 static const axi4_master_config_type axi4_master_config_none;
 
-
 // Burst length size decoder
 static const int XSIZE_TOTAL = 8;
 // Decoder of the transaction bytes from AXI format to Bytes.
@@ -149,37 +140,23 @@ static sc_uint<XSIZE_TOTAL> XSizeToBytes(sc_uint<3> xsize) {
     return ret;
 }
 
-
-static const unsigned ARCACHE_DEVICE_NON_BUFFERABLE = 0x0;  // 4'b0000
-static const unsigned ARCACHE_WRBACK_READ_ALLOCATE  = 0xF;  // 4'b1111
-
-static const unsigned AWCACHE_DEVICE_NON_BUFFERABLE = 0x0;  // 4'b0000
-static const unsigned AWCACHE_WRBACK_WRITE_ALLOCATE = 0xF;  // 4'b1111
-
-// see table C3-7 Permitted read address control signal combinations
-//
-//    read  |  cached  |  unique  |
-//     0    |    0     |    *     |    ReadNoSnoop
-//     0    |    1     |    0     |    ReadShared
-//     0    |    1     |    1     |    ReadMakeUnique
-static const int ARSNOOP_READ_NO_SNOOP     = 0x0;
-static const int ARSNOOP_READ_SHARED       = 0x1;
-static const int ARSNOOP_READ_MAKE_UNIQUE  = 0xC;
-
-// see table C3-8 Permitted read address control signal combinations
-//
-//   write  |  cached  |  unique  |
-//     1    |    0     |    *     |    WriteNoSnoop
-//     1    |    1     |    1     |    WriteLineUnique
-//     1    |    1     |    0     |    WriteBack
-static const int AWSNOOP_WRITE_NO_SNOOP    = 0x0;
-static const int AWSNOOP_WRITE_LINE_UNIQUE = 0x1;
-static const int AWSNOOP_WRITE_BACK        = 0x3;
-
-// see table C3-19
-static const int AC_SNOOP_READ_UNIQUE   = 0x7;
-static const int AC_SNOOP_MAKE_INVALID  = 0xD;
-
+// @brief Normal access success.
+// @details Indicates that a normal access has been
+// successful. Can also indicate an exclusive access has failed.
+static const uint8_t AXI_RESP_OKAY = 1;
+// @brief Exclusive access okay.
+// @details Indicates that either the read or write
+// portion of an exclusive access has been successful.
+static const uint8_t AXI_RESP_EXOKAY = 1;
+// @brief Slave error.
+// @details Used the access has reached the slave successfully,
+// but the slave wishes to return an error condition to the originating
+// master.
+static const uint8_t AXI_RESP_SLVERR = 2;
+// @brief Decode error.
+// @details Generated, typically by an interconnect component,
+// to indicate that there is no slave at the transaction address.
+static const uint8_t AXI_RESP_DECERR = 3;
 
 // @brief Fixed address burst operation.
 // @details The address is the same for every transfer in the burst
@@ -197,119 +174,244 @@ static const uint8_t AXI_BURST_INCR = 1;
 static const uint8_t AXI_BURST_WRAP = 2;
 // @}
 
+static const uint8_t ARCACHE_DEVICE_NON_BUFFERABLE = 0x0;
+static const uint8_t ARCACHE_WRBACK_READ_ALLOCATE = 0xF;
 
-struct axi4_meta_type {
-    sc_uint<CFG_BUS_ADDR_WIDTH> addr;
-    sc_uint<8> len;              // burst len = len[7:0] + 1
-    sc_uint<3> size;             // 0=1B; 1=2B; 2=4B; 3=8B; ...
-    sc_uint<2> burst;            // 00=FIXED; 01=INCR; 10=WRAP; 11=reserved
-    bool lock;
-    sc_uint<4> cache;
-    sc_uint<3> prot;
-    sc_uint<4> qos;
-    sc_uint<4> region;
-};
+static const uint8_t AWCACHE_DEVICE_NON_BUFFERABLE = 0x0;
+static const uint8_t AWCACHE_WRBACK_WRITE_ALLOCATE = 0xF;
 
-typedef axi4_meta_type axi4_metadata_type;
+// see table C3-7 Permitted read address control signal combinations
+//  
+//    read  |  cached  |  unique  |
+//     0    |    0     |    *     |    ReadNoSnoop
+//     0    |    1     |    0     |    ReadShared
+//     0    |    1     |    1     |    ReadMakeUnique
+static const int ARSNOOP_READ_NO_SNOOP = 0x0;
+static const int ARSNOOP_READ_SHARED = 0x1;
+static const int ARSNOOP_READ_MAKE_UNIQUE = 0xC;
 
+// see table C3-8 Permitted read address control signal combinations
+//  
+//   write  |  cached  |  unique  |
+//     1    |    0     |    *     |    WriteNoSnoop
+//     1    |    1     |    1     |    WriteLineUnique
+//     1    |    1     |    0     |    WriteBack
+static const int AWSNOOP_WRITE_NO_SNOOP = 0x0;
+static const int AWSNOOP_WRITE_LINE_UNIQUE = 0x1;
+static const int AWSNOOP_WRITE_BACK = 0x3;
 
-class axi4_master_in_type {
+// see table C3-19
+static const int AC_SNOOP_READ_UNIQUE = 0x7;
+static const int AC_SNOOP_MAKE_INVALID = 0xD;
+
+class axi4_metadata_type {
  public:
-    axi4_master_in_type(){}
-
-    inline bool operator == (const axi4_master_in_type &rhs) const {
-        return (rhs.aw_ready == aw_ready
-             && rhs.w_ready == w_ready
-             && rhs.b_valid == b_valid
-             && rhs.b_resp == b_resp
-             && rhs.b_id == b_id
-             && rhs.b_user == b_user
-             && rhs.ar_ready == ar_ready
-             && rhs.r_valid == r_valid
-             && rhs.r_resp == r_resp
-             && rhs.r_data == r_data
-             && rhs.r_last == r_last
-             && rhs.r_id == r_id
-             && rhs.r_user == r_user);
+    axi4_metadata_type() {
+        addr = 0ull;
+        // @brief   Burst length.
+        // @details This signal indicates the exact number of transfers in
+        //          a burst. This changes between AXI3 and AXI4. nastiXLenBits=8 so
+        //          this is an AXI4 implementation.
+        //              Burst_Length = len[7:0] + 1
+        len = 0;
+        // @brief   Burst size.
+        // @details This signal indicates the size of each transfer
+        //          in the burst: 0=1 byte; ..., 6=64 bytes; 7=128 bytes;
+        size = 0;
+        // @brief   Read response.
+        // @details This signal indicates the status of the read transfer.
+        // The responses are:
+        //      0b00 FIXED - In a fixed burst, the address is the same for every transfer
+        //                  in the burst. Typically is used for FIFO.
+        //      0b01 INCR - Incrementing. In an incrementing burst, the address for each
+        //                  transfer in the burst is an increment of the address for the
+        //                  previous transfer. The increment value depends on the size of
+        //                  the transfer.
+        //      0b10 WRAP - A wrapping burst is similar to an incrementing burst, except
+        //                  that the address wraps around to a lower address if an upper address
+        //                  limit is reached.
+        //      0b11 resrved.
+        burst = AXI_BURST_INCR;
+        lock = 0;
+        cache = 0;
+        // @brief   Protection type.
+        // @details This signal indicates the privilege and security level
+        //          of the transaction, and whether the transaction is a data access
+        //          or an instruction access:
+        //  [0] :   0 = Unpriviledge access
+        //          1 = Priviledge access
+        //  [1] :   0 = Secure access
+        //          1 = Non-secure access
+        //  [2] :   0 = Data access
+        //          1 = Instruction access
+        prot = 0;
+        // @brief   Quality of Service, QoS.
+        // @details QoS identifier sent for each read transaction.
+        //          Implemented only in AXI4:
+        //              0b0000 - default value. Indicates that the interface is
+        //                       not participating in any QoS scheme.
+        qos = 0;
+        // @brief Region identifier.
+        // @details Permits a single physical interface on a slave to be used for
+        //          multiple logical interfaces. Implemented only in AXI4. This is
+        //          similar to the banks implementation in Leon3 without address
+        //          decoding.
+        region = 0;
     }
 
-    inline axi4_master_in_type& operator = (const axi4_master_in_type &rhs) {
-        aw_ready = rhs.aw_ready;
-        w_ready = rhs.w_ready;
-        b_valid = rhs.b_valid;
-        b_resp = rhs.b_resp;
-        b_id = rhs.b_id;
-        b_user = rhs.b_user;
-        ar_ready = rhs.ar_ready;
-        r_valid = rhs.r_valid;
-        r_resp = rhs.r_resp;
-        r_data = rhs.r_data;
-        r_last = rhs.r_last;
-        r_id = rhs.r_id;
-        r_user = rhs.r_user;
+    inline bool operator == (const axi4_metadata_type &rhs) const {
+        bool ret = true;
+        ret = ret
+            && rhs.addr == addr
+            && rhs.len == len
+            && rhs.size == size
+            && rhs.burst == burst
+            && rhs.lock == lock
+            && rhs.cache == cache
+            && rhs.prot == prot
+            && rhs.qos == qos
+            && rhs.region == region;
+        return ret;
+    }
+
+    inline axi4_metadata_type& operator = (const axi4_metadata_type &rhs) {
+        addr = rhs.addr;
+        len = rhs.len;
+        size = rhs.size;
+        burst = rhs.burst;
+        lock = rhs.lock;
+        cache = rhs.cache;
+        prot = rhs.prot;
+        qos = rhs.qos;
+        region = rhs.region;
         return *this;
     }
 
     inline friend void sc_trace(sc_trace_file *tf,
-                                const axi4_master_in_type &v,
+                                const axi4_metadata_type&v,
                                 const std::string &NAME) {
-        sc_trace(tf, v.aw_ready, NAME + "_aw_ready");
-        sc_trace(tf, v.w_ready, NAME + "_w_ready");
-        sc_trace(tf, v.b_valid, NAME + "_b_valid");
-        sc_trace(tf, v.b_resp, NAME + "_b_resp");
-        sc_trace(tf, v.b_id, NAME + "_b_id");
-        sc_trace(tf, v.b_user, NAME + "_b_user");
-        sc_trace(tf, v.ar_ready, NAME + "_ar_ready");
-        sc_trace(tf, v.r_valid, NAME + "_r_valid");
-        sc_trace(tf, v.r_resp, NAME + "_r_resp");
-        sc_trace(tf, v.r_data, NAME + "_r_data");
-        sc_trace(tf, v.r_last, NAME + "_r_last");
-        sc_trace(tf, v.r_id, NAME + "_r_id");
-        sc_trace(tf, v.r_user, NAME + "_r_user");
+        sc_trace(tf, v.addr, NAME + "_addr");
+        sc_trace(tf, v.len, NAME + "_len");
+        sc_trace(tf, v.size, NAME + "_size");
+        sc_trace(tf, v.burst, NAME + "_burst");
+        sc_trace(tf, v.lock, NAME + "_lock");
+        sc_trace(tf, v.cache, NAME + "_cache");
+        sc_trace(tf, v.prot, NAME + "_prot");
+        sc_trace(tf, v.qos, NAME + "_qos");
+        sc_trace(tf, v.region, NAME + "_region");
     }
 
     inline friend ostream &operator << (ostream &os,
-                                        axi4_master_in_type const &v) {
+                                        axi4_metadata_type const &v) {
         os << "("
-        << v.aw_ready << ","
-        << v.w_ready << ","
-        << v.b_valid << ","
-        << v.b_resp << ","
-        << v.b_id << ","
-        << v.b_user << ","
-        << v.ar_ready << ","
-        << v.r_valid << ","
-        << v.r_resp << ","
-        << v.r_data << ","
-        << v.r_last << ","
-        << v.r_id << ","
-        << v.r_user << ")";
+        << v.addr << ","
+        << v.len << ","
+        << v.size << ","
+        << v.burst << ","
+        << v.lock << ","
+        << v.cache << ","
+        << v.prot << ","
+        << v.qos << ","
+        << v.region << ")";
         return os;
     }
 
  public:
-    bool aw_ready;
-    bool w_ready;
-    bool b_valid;
-    sc_uint<2> b_resp;
-    sc_uint<CFG_BUS_ID_BITS> b_id;
-    sc_uint<CFG_BUS_USER_BITS> b_user;
-    bool ar_ready;
-    bool r_valid;
-    sc_uint<2> r_resp;
-    sc_uint<BUS_DATA_WIDTH> r_data;
-    bool r_last;
-    sc_uint<CFG_BUS_ID_BITS> r_id;
-    sc_uint<CFG_BUS_USER_BITS> r_user;
+    sc_uint<CFG_SYSBUS_ADDR_BITS> addr;
+    // @brief   Burst length.;
+    // @details This signal indicates the exact number of transfers in;
+    //          a burst. This changes between AXI3 and AXI4. nastiXLenBits=8 so;
+    //          this is an AXI4 implementation.;
+    //              Burst_Length = len[7:0] + 1;
+    sc_uint<8> len;
+    // @brief   Burst size.;
+    // @details This signal indicates the size of each transfer;
+    //          in the burst: 0=1 byte; ..., 6=64 bytes; 7=128 bytes;;
+    sc_uint<3> size;
+    // @brief   Read response.;
+    // @details This signal indicates the status of the read transfer.;
+    // The responses are:;
+    //      0b00 FIXED - In a fixed burst, the address is the same for every transfer;
+    //                  in the burst. Typically is used for FIFO.;
+    //      0b01 INCR - Incrementing. In an incrementing burst, the address for each;
+    //                  transfer in the burst is an increment of the address for the;
+    //                  previous transfer. The increment value depends on the size of;
+    //                  the transfer.;
+    //      0b10 WRAP - A wrapping burst is similar to an incrementing burst, except;
+    //                  that the address wraps around to a lower address if an upper address;
+    //                  limit is reached.;
+    //      0b11 resrved.;
+    sc_uint<2> burst;
+    bool lock;
+    sc_uint<4> cache;
+    // @brief   Protection type.;
+    // @details This signal indicates the privilege and security level;
+    //          of the transaction, and whether the transaction is a data access;
+    //          or an instruction access:;
+    //  [0] :   0 = Unpriviledge access;
+    //          1 = Priviledge access;
+    //  [1] :   0 = Secure access;
+    //          1 = Non-secure access;
+    //  [2] :   0 = Data access;
+    //          1 = Instruction access;
+    sc_uint<3> prot;
+    // @brief   Quality of Service, QoS.;
+    // @details QoS identifier sent for each read transaction.;
+    //          Implemented only in AXI4:;
+    //              0b0000 - default value. Indicates that the interface is;
+    //                       not participating in any QoS scheme.;
+    sc_uint<4> qos;
+    // @brief Region identifier.;
+    // @details Permits a single physical interface on a slave to be used for;
+    //          multiple logical interfaces. Implemented only in AXI4. This is;
+    //          similar to the banks implementation in Leon3 without address;
+    //          decoding.;
+    sc_uint<4> region;
 };
+
+static const axi4_metadata_type META_NONE;
 
 
 class axi4_master_out_type {
  public:
-    axi4_master_out_type(){}
+    axi4_master_out_type() {
+        aw_valid = 0;
+        aw_bits.addr = 0ull;
+        aw_bits.len = 0;
+        aw_bits.size = 0;
+        aw_bits.burst = AXI_BURST_INCR;
+        aw_bits.lock = 0;
+        aw_bits.cache = 0;
+        aw_bits.prot = 0;
+        aw_bits.qos = 0;
+        aw_bits.region = 0;
+        aw_id = 0;
+        aw_user = 0;
+        w_valid = 0;
+        w_data = 0;
+        w_last = 0;
+        w_strb = 0;
+        w_user = 0;
+        b_ready = 0;
+        ar_valid = 0;
+        ar_bits.addr = 0ull;
+        ar_bits.len = 0;
+        ar_bits.size = 0;
+        ar_bits.burst = AXI_BURST_INCR;
+        ar_bits.lock = 0;
+        ar_bits.cache = 0;
+        ar_bits.prot = 0;
+        ar_bits.qos = 0;
+        ar_bits.region = 0;
+        ar_id = 0;
+        ar_user = 0;
+        r_ready = 0;
+    }
 
     inline bool operator == (const axi4_master_out_type &rhs) const {
-        return (rhs.aw_valid == aw_valid
+        bool ret = true;
+        ret = ret
+            && rhs.aw_valid == aw_valid
             && rhs.aw_bits.addr == aw_bits.addr
             && rhs.aw_bits.len == aw_bits.len
             && rhs.aw_bits.size == aw_bits.size
@@ -339,7 +441,8 @@ class axi4_master_out_type {
             && rhs.ar_bits.region == ar_bits.region
             && rhs.ar_id == ar_id
             && rhs.ar_user == ar_user
-            && rhs.r_ready == r_ready);
+            && rhs.r_ready == r_ready;
+        return ret;
     }
 
     inline axi4_master_out_type& operator = (const axi4_master_out_type &rhs) {
@@ -378,7 +481,7 @@ class axi4_master_out_type {
     }
 
     inline friend void sc_trace(sc_trace_file *tf,
-                                const axi4_master_out_type &v,
+                                const axi4_master_out_type&v,
                                 const std::string &NAME) {
         sc_trace(tf, v.aw_valid, NAME + "_aw_valid");
         sc_trace(tf, v.aw_bits.addr, NAME + "_aw_bits_addr");
@@ -446,27 +549,139 @@ class axi4_master_out_type {
         << v.ar_bits.region << ","
         << v.ar_id << ","
         << v.ar_user << ","
-        << v.r_ready
-        << ")";
+        << v.r_ready << ")";
         return os;
     }
 
  public:
     bool aw_valid;
-    axi4_meta_type aw_bits;
-    sc_uint<CFG_BUS_ID_BITS> aw_id;
-    sc_uint<CFG_BUS_USER_BITS> aw_user;
+    axi4_metadata_type aw_bits;
+    sc_uint<CFG_SYSBUS_ID_BITS> aw_id;
+    sc_uint<CFG_SYSBUS_USER_BITS> aw_user;
     bool w_valid;
-    sc_uint<BUS_DATA_WIDTH> w_data;
+    sc_uint<CFG_SYSBUS_DATA_BITS> w_data;
     bool w_last;
-    sc_uint<BUS_DATA_BYTES> w_strb;
-    sc_uint<CFG_BUS_USER_BITS> w_user;
+    sc_uint<CFG_SYSBUS_DATA_BYTES> w_strb;
+    sc_uint<CFG_SYSBUS_USER_BITS> w_user;
     bool b_ready;
     bool ar_valid;
-    axi4_meta_type ar_bits;
-    sc_uint<CFG_BUS_ID_BITS> ar_id;
-    sc_uint<CFG_BUS_USER_BITS> ar_user;
+    axi4_metadata_type ar_bits;
+    sc_uint<CFG_SYSBUS_ID_BITS> ar_id;
+    sc_uint<CFG_SYSBUS_USER_BITS> ar_user;
     bool r_ready;
+};
+
+// @brief   Master device empty value.
+// @warning If the master is not connected to the vector begin vector value
+//          MUST BE initialized by this value.
+static const axi4_master_out_type axi4_master_out_none;
+
+// @brief Master device input signals.
+class axi4_master_in_type {
+ public:
+    axi4_master_in_type() {
+        aw_ready = 0;
+        w_ready = 0;
+        b_valid = 0;
+        b_resp = 0;
+        b_id = 0;
+        b_user = 0;
+        ar_ready = 0;
+        r_valid = 0;
+        r_resp = 0;
+        r_data = 0;
+        r_last = 0;
+        r_id = 0;
+        r_user = 0;
+    }
+
+    inline bool operator == (const axi4_master_in_type &rhs) const {
+        bool ret = true;
+        ret = ret
+            && rhs.aw_ready == aw_ready
+            && rhs.w_ready == w_ready
+            && rhs.b_valid == b_valid
+            && rhs.b_resp == b_resp
+            && rhs.b_id == b_id
+            && rhs.b_user == b_user
+            && rhs.ar_ready == ar_ready
+            && rhs.r_valid == r_valid
+            && rhs.r_resp == r_resp
+            && rhs.r_data == r_data
+            && rhs.r_last == r_last
+            && rhs.r_id == r_id
+            && rhs.r_user == r_user;
+        return ret;
+    }
+
+    inline axi4_master_in_type& operator = (const axi4_master_in_type &rhs) {
+        aw_ready = rhs.aw_ready;
+        w_ready = rhs.w_ready;
+        b_valid = rhs.b_valid;
+        b_resp = rhs.b_resp;
+        b_id = rhs.b_id;
+        b_user = rhs.b_user;
+        ar_ready = rhs.ar_ready;
+        r_valid = rhs.r_valid;
+        r_resp = rhs.r_resp;
+        r_data = rhs.r_data;
+        r_last = rhs.r_last;
+        r_id = rhs.r_id;
+        r_user = rhs.r_user;
+        return *this;
+    }
+
+    inline friend void sc_trace(sc_trace_file *tf,
+                                const axi4_master_in_type&v,
+                                const std::string &NAME) {
+        sc_trace(tf, v.aw_ready, NAME + "_aw_ready");
+        sc_trace(tf, v.w_ready, NAME + "_w_ready");
+        sc_trace(tf, v.b_valid, NAME + "_b_valid");
+        sc_trace(tf, v.b_resp, NAME + "_b_resp");
+        sc_trace(tf, v.b_id, NAME + "_b_id");
+        sc_trace(tf, v.b_user, NAME + "_b_user");
+        sc_trace(tf, v.ar_ready, NAME + "_ar_ready");
+        sc_trace(tf, v.r_valid, NAME + "_r_valid");
+        sc_trace(tf, v.r_resp, NAME + "_r_resp");
+        sc_trace(tf, v.r_data, NAME + "_r_data");
+        sc_trace(tf, v.r_last, NAME + "_r_last");
+        sc_trace(tf, v.r_id, NAME + "_r_id");
+        sc_trace(tf, v.r_user, NAME + "_r_user");
+    }
+
+    inline friend ostream &operator << (ostream &os,
+                                        axi4_master_in_type const &v) {
+        os << "("
+        << v.aw_ready << ","
+        << v.w_ready << ","
+        << v.b_valid << ","
+        << v.b_resp << ","
+        << v.b_id << ","
+        << v.b_user << ","
+        << v.ar_ready << ","
+        << v.r_valid << ","
+        << v.r_resp << ","
+        << v.r_data << ","
+        << v.r_last << ","
+        << v.r_id << ","
+        << v.r_user << ")";
+        return os;
+    }
+
+ public:
+    bool aw_ready;
+    bool w_ready;
+    bool b_valid;
+    sc_uint<2> b_resp;
+    sc_uint<CFG_SYSBUS_ID_BITS> b_id;
+    sc_uint<CFG_SYSBUS_USER_BITS> b_user;
+    bool ar_ready;
+    bool r_valid;
+    sc_uint<2> r_resp;
+    sc_uint<CFG_SYSBUS_DATA_BITS> r_data;
+    bool r_last;
+    sc_uint<CFG_SYSBUS_ID_BITS> r_id;
+    sc_uint<CFG_SYSBUS_USER_BITS> r_user;
 };
 
 static const axi4_master_in_type axi4_master_in_none;

@@ -333,7 +333,7 @@ void Mmu::comb() {
             v.req_wstrb = i_core_req_wstrb;
             v.req_size = i_core_req_size;
         }
-        if (i_mmu_ena.read() == 0) {
+        if (i_mmu_ena.read() == 0) {                        // MMU disabled
             // Direct connection to Cache
             v_core_req_ready = i_mem_req_ready;
             v_core_resp_valid = i_mem_resp_valid;
@@ -355,7 +355,7 @@ void Mmu::comb() {
         } else if (r.tlb_flush_cnt.read().or_reduce() == 1) {
             v.state = FlushTlb;
             v.tlb_wdata = 0;
-        } else if (v_last_valid == 1) {
+        } else if (v_last_valid == 1) {                     // MMU enabled: Check the request to the same page:
             // Direct connection to cache with the fast changing va to last_pa
             v_core_req_ready = i_mem_req_ready;
             v_core_resp_valid = i_mem_resp_valid;
@@ -494,7 +494,7 @@ void Mmu::comb() {
         }
         break;
     case HandleResp:
-        if ((r.resp_data.read()[PTE_V] == 0) || (((!r.resp_data.read()[PTE_R]) && r.resp_data.read()[PTE_W]) == 1)) {
+        if ((r.resp_data.read()[PTE_V] == 0) || (((!r.resp_data.read()[PTE_R]) && r.resp_data.read()[PTE_W]) == 1)) {// v=0 or (r=0 && w=1)
             // PTE is invalid
             v.ex_page_fault = 1;
             v.state = AcceptCore;

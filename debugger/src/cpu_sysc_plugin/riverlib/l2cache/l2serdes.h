@@ -47,7 +47,7 @@ SC_MODULE(L2SerDes) {
 
     // TODO as generic parameters
     static const int linew = L2CACHE_LINE_BITS;
-    static const int busw = BUS_DATA_WIDTH;
+    static const int busw = CFG_SYSBUS_DATA_BITS;
 
     static const int lineb = linew / 8;
     static const int busb = busw / 8;

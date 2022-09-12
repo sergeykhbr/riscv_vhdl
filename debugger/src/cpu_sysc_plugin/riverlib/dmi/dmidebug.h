@@ -22,6 +22,7 @@
 #include "coreservices/ireset.h"
 #include "coreservices/ijtagtap.h"
 #include "riverlib/river_cfg.h"
+#include "riverlib/types_river.h"
 #include "ambalib/types_amba.h"
 #include "jtagtap.h"
 #include "jtagcdc.h"
@@ -40,7 +41,9 @@ class DmiDebug : public sc_module,
     sc_in<sc_uint<CFG_CPU_MAX>> i_halted;               // Halted cores
     sc_in<sc_uint<CFG_CPU_MAX>> i_available;            // Existing and available cores
     sc_out<sc_uint<CFG_LOG2_CPU_MAX>> o_hartsel;        // Selected hart index
-    sc_out<bool> o_haltreq;
+    sc_in<dport_out_type> i_dporto;
+    sc_out<dport_in_type> o_dporti;
+    /*sc_out<bool> o_haltreq;
     sc_out<bool> o_resumereq;
     sc_out<bool> o_resethaltreq;                        // Halt core after reset request.
     sc_out<bool> o_hartreset;                           // Reset currently selected hart
@@ -53,7 +56,7 @@ class DmiDebug : public sc_module,
     sc_out<bool> o_dport_resp_ready;                    // ready to accepd response
     sc_in<bool> i_dport_resp_valid;                     // Response is valid
     sc_in<bool> i_dport_resp_error;                     // Something goes wrong
-    sc_in<sc_uint<RISCV_ARCH>> i_dport_rdata;           // Response value or error code
+    sc_in<sc_uint<RISCV_ARCH>> i_dport_rdata;           // Response value or error code*/
     sc_out<sc_biguint<CFG_PROGBUF_REG_TOTAL*32>> o_progbuf;
 
     void comb();
@@ -155,9 +158,9 @@ class DmiDebug : public sc_module,
     sc_event bus_req_event_;
     sc_event bus_resp_event_;
     sc_signal<bool> w_resp_valid;
-    sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_wdata;
-    sc_signal<sc_uint<BUS_DATA_BYTES>> wb_wstrb;
-    sc_signal<sc_uint<BUS_DATA_WIDTH>> wb_resp_data;
+    sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> wb_wdata;
+    sc_signal<sc_uint<CFG_SYSBUS_DATA_BYTES>> wb_wstrb;
+    sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> wb_resp_data;
 
     struct RegistersType {
         sc_signal<bool> bus_jtag;       // source of the DMI request

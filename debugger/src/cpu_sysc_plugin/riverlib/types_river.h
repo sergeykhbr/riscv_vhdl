@@ -431,7 +431,7 @@ class axi4_l1_out_type {
     bool aw_valid;
     axi4_metadata_type aw_bits;
     sc_uint<CFG_CPU_ID_BITS> aw_id;
-    bool aw_user;
+    sc_uint<CFG_SYSBUS_USER_BITS> aw_user;
     bool w_valid;
     sc_biguint<L1CACHE_LINE_BITS> w_data;
     bool w_last;
@@ -441,7 +441,7 @@ class axi4_l1_out_type {
     bool ar_valid;
     axi4_metadata_type ar_bits;
     sc_uint<CFG_CPU_ID_BITS> ar_id;
-    bool ar_user;
+    sc_uint<CFG_SYSBUS_USER_BITS> ar_user;
     bool r_ready;
     // ACE signals;
     sc_uint<2> ar_domain;                                   // 00=Non-shareable (single master in domain)
@@ -795,7 +795,7 @@ class axi4_l2_out_type {
     bool aw_valid;
     axi4_metadata_type aw_bits;
     sc_uint<CFG_CPU_ID_BITS> aw_id;
-    bool aw_user;
+    sc_uint<CFG_SYSBUS_USER_BITS> aw_user;
     bool w_valid;
     sc_biguint<L2CACHE_LINE_BITS> w_data;
     bool w_last;
@@ -805,7 +805,7 @@ class axi4_l2_out_type {
     bool ar_valid;
     axi4_metadata_type ar_bits;
     sc_uint<CFG_CPU_ID_BITS> ar_id;
-    bool ar_user;
+    sc_uint<CFG_SYSBUS_USER_BITS> ar_user;
     bool r_ready;
 };
 

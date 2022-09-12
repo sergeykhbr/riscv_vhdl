@@ -50,10 +50,8 @@ SC_MODULE(RiverTop) {
     sc_out<sc_biguint<L1CACHE_LINE_BITS>> o_resp_snoop_data;
     sc_out<sc_uint<DTAG_FL_TOTAL>> o_resp_snoop_flags;
     sc_out<bool> o_flush_l2;                                // Flush L2 after D$ has been finished
-    sc_in<bool> i_msip;                                     // machine software pending interrupt
-    sc_in<bool> i_mtip;                                     // machine timer pending interrupt
-    sc_in<bool> i_meip;                                     // machine external pending interrupt
-    sc_in<bool> i_seip;                                     // supervisor external pending interrupt
+    // Interrupt lines:
+    sc_in<sc_uint<IRQ_PER_HART_TOTAL>> i_irq_pending;       // Per Hart pending interrupts pins
     // Debug interface:
     sc_in<bool> i_haltreq;                                  // DMI: halt request from debug unit
     sc_in<bool> i_resumereq;                                // DMI: resume request from debug unit

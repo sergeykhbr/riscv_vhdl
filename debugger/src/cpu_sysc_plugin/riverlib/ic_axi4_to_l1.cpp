@@ -33,6 +33,8 @@ ic_axi4_to_l1::ic_axi4_to_l1(sc_module_name name,
 
     SC_METHOD(comb);
     sensitive << i_nrst;
+    sensitive << i_xmsto;
+    sensitive << i_l1i;
     sensitive << r.state;
     sensitive << r.req_addr;
     sensitive << r.req_id;
@@ -87,6 +89,7 @@ void ic_axi4_to_l1::comb() {
     sc_biguint<L1CACHE_LINE_BITS> vb_r_data_modified;
     sc_uint<L1CACHE_BYTES_PER_LINE> vb_line_wstrb;
     sc_uint<64> vb_resp_data;
+    sc_uint<CFG_SYSBUS_ADDR_BITS> t_req_addr;
 
     idx = 0;
     vb_req_xbytes = 0;
@@ -94,11 +97,13 @@ void ic_axi4_to_l1::comb() {
     vb_r_data_modified = 0;
     vb_line_wstrb = 0;
     vb_resp_data = 0;
+    t_req_addr = 0;
 
     v = r;
 
     vb_xmsti = axi4_master_in_none;
     vb_l1o = axi4_l1_out_none;
+    t_req_addr = r.req_addr;
 
     idx = r.req_addr.read()((CFG_DLOG2_BYTES_PER_LINE - 1), 3);
     vb_req_xbytes = XSizeToBytes(r.req_size);
@@ -164,7 +169,7 @@ void ic_axi4_to_l1::comb() {
         vb_l1o.ar_bits.prot = r.req_prot;
         vb_l1o.ar_snoop = ARSNOOP_READ_MAKE_UNIQUE;
         vb_l1o.ar_id = r.req_id;
-        vb_l1o.ar_user = r.req_user.read();
+        vb_l1o.ar_user = r.req_user;
         if (i_l1i.read().ar_ready == 1) {
             v.state = WaitReadLineResponse;
         }
@@ -192,7 +197,7 @@ void ic_axi4_to_l1::comb() {
         vb_l1o.aw_bits.prot = r.req_prot;
         vb_l1o.aw_snoop = AWSNOOP_WRITE_NO_SNOOP;          // offloading non-cached always
         vb_l1o.aw_id = r.req_id;
-        vb_l1o.aw_user = r.req_user.read();
+        vb_l1o.aw_user = r.req_user;
         // axi lite for L2-cache
         vb_l1o.w_valid = 1;
         vb_l1o.w_last = 1;
@@ -236,7 +241,8 @@ void ic_axi4_to_l1::comb() {
         } else {
             // Burst transaction to support external DMA engine
             v.req_len = (r.req_len.read() - 1);
-//            v.req_addr(11, 0) = (r.req_addr.read()(11, 0) + vb_req_xbytes);
+            t_req_addr(11, 0) = (r.req_addr.read()(11, 0) + vb_req_xbytes);
+            v.req_addr = t_req_addr;
             v.read_modify_write = 0;
             if (r.writing.read() == 1) {
                 v.state = WriteDataAccept;

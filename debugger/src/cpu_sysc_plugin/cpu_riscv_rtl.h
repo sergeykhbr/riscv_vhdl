@@ -42,7 +42,7 @@
 #include "ambalib/types_amba.h"
 #include "riverlib/river_amba.h"
 #include "riverlib/l2cache/l2_top.h"
-#include "dmi/dmidebug.h"
+#include "riverlib/dmi/dmidebug.h"
 #include <systemc.h>
 
 namespace debugger {
@@ -139,7 +139,7 @@ class CpuRiscV_RTL : public IService,
     sc_signal<sc_uint<CFG_CPU_MAX>> wb_halted;
     sc_signal<sc_uint<CFG_CPU_MAX>> wb_available;
     sc_signal<sc_uint<CFG_LOG2_CPU_MAX>> wb_hartsel;
-    sc_signal<bool> w_haltreq;
+    /*sc_signal<bool> w_haltreq;
     sc_signal<bool> w_resumereq;
     sc_signal<bool> w_resethaltreq;
     sc_signal<bool> w_hartreset;
@@ -152,7 +152,7 @@ class CpuRiscV_RTL : public IService,
     sc_signal<bool> w_dport_resp_ready;
     sc_signal<bool> w_dport_resp_valid;
     sc_signal<bool> w_dport_resp_error;
-    sc_signal<sc_uint<RISCV_ARCH>> wb_dport_rdata;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_dport_rdata;*/
     sc_signal<sc_biguint<32*CFG_PROGBUF_REG_TOTAL>> wb_progbuf;
     sc_signal<bool> w_halted0;
     sc_signal<bool> w_available0;

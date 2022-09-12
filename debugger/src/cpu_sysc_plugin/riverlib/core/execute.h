@@ -143,6 +143,7 @@ SC_MODULE(InstrExecute) {
     static const int Res_IDiv = 9;
     static const int Res_FPU = 10;
     static const int Res_Total = 11;
+    
     static const uint8_t State_Idle = 0;
     static const uint8_t State_WaitMemAcces = 1;
     static const uint8_t State_WaitMulti = 2;
@@ -154,9 +155,11 @@ SC_MODULE(InstrExecute) {
     static const uint8_t State_DebugMemRequest = 8;
     static const uint8_t State_DebugMemError = 9;
     static const uint8_t State_Wfi = 0xf;
+    
     static const uint8_t CsrState_Idle = 0;
     static const uint8_t CsrState_Req = 1;
     static const uint8_t CsrState_Resp = 2;
+    
     static const uint8_t AmoState_WaitMemAccess = 0;
     static const uint8_t AmoState_Read = 1;
     static const uint8_t AmoState_Modify = 2;

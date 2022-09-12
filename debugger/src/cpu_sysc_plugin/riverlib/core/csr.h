@@ -37,10 +37,7 @@ SC_MODULE(CsrRegs) {
     sc_in<bool> i_e_halted;                                 // core is halted confirmation flag
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_pc;               // current latched instruction pointer in executor
     sc_in<sc_uint<32>> i_e_instr;                           // current latched opcode in executor
-    sc_in<bool> i_msip;                                     // machine software pending interrupt
-    sc_in<bool> i_mtip;                                     // machine timer pending interrupt
-    sc_in<bool> i_meip;                                     // machine external pending interrupt
-    sc_in<bool> i_seip;                                     // supervisor external pending interrupt
+    sc_in<sc_uint<IRQ_PER_HART_TOTAL>> i_irq_pending;       // Per Hart pending interrupts pins
     sc_out<bool> o_irq_software;                            // software interrupt pending bit
     sc_out<bool> o_irq_timer;                               // timer interrupt pending bit
     sc_out<bool> o_irq_external;                            // external interrupt pending bit

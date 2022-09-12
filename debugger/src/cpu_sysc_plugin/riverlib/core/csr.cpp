@@ -38,10 +38,7 @@ CsrRegs::CsrRegs(sc_module_name name,
     i_e_halted("i_e_halted"),
     i_e_pc("i_e_pc"),
     i_e_instr("i_e_instr"),
-    i_msip("i_msip"),
-    i_mtip("i_mtip"),
-    i_meip("i_meip"),
-    i_seip("i_seip"),
+    i_irq_pending("i_irq_pending"),
     o_irq_software("o_irq_software"),
     o_irq_timer("o_irq_timer"),
     o_irq_external("o_irq_external"),
@@ -77,10 +74,7 @@ CsrRegs::CsrRegs(sc_module_name name,
     sensitive << i_e_halted;
     sensitive << i_e_pc;
     sensitive << i_e_instr;
-    sensitive << i_msip;
-    sensitive << i_mtip;
-    sensitive << i_meip;
-    sensitive << i_seip;
+    sensitive << i_irq_pending;
     sensitive << i_e_valid;
     sensitive << i_dbg_progbuf_ena;
     sensitive << r.state;
@@ -175,6 +169,7 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_e_halted, i_e_halted.name());
         sc_trace(o_vcd, i_e_pc, i_e_pc.name());
         sc_trace(o_vcd, i_e_instr, i_e_instr.name());
+        sc_trace(o_vcd, i_irq_pending, i_irq_pending.name());
         sc_trace(o_vcd, o_irq_software, o_irq_software.name());
         sc_trace(o_vcd, o_irq_timer, o_irq_timer.name());
         sc_trace(o_vcd, o_irq_external, o_irq_external.name());
@@ -774,14 +769,14 @@ void CsrRegs::comb() {
         }
     }
 
-    v.msip = i_msip;
+    v.msip = i_irq_pending.read()[IRQ_HART_MSIP];
     v_sw_irq = (r.msip && r.msie && r.mie && ((!r.dcsr_step) || r.dcsr_stepie));
 
-    v.mtip = i_mtip;
+    v.mtip = i_irq_pending.read()[IRQ_HART_MTIP];
     v_tmr_irq = (r.mtip && r.mtie && r.mie && ((!r.dcsr_step) || r.dcsr_stepie));
 
-    v.meip = i_meip;
-    v.seip = i_seip;
+    v.meip = i_irq_pending.read()[IRQ_HART_MEIP];
+    v.seip = i_irq_pending.read()[IRQ_HART_SEIP];
     v_ext_irq = (r.meip && r.meie && r.mie && ((!r.dcsr_step) || r.dcsr_stepie));
 
     w_mstackovr = 0;

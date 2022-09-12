@@ -73,6 +73,7 @@ SC_MODULE(InstrDecoder) {
 
     static const int DEC_NUM = 2;
     static const int DEC_BLOCK = (2 * DEC_NUM);
+    // shift registers depth to store previous decoded data
     static const int FULL_DEC_DEPTH = (DEC_BLOCK * ((CFG_DEC_DEPTH - 1) + CFG_BP_DEPTH));
 
     struct DecoderDataType {

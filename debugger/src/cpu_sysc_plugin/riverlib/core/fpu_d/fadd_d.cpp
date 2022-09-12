@@ -294,7 +294,7 @@ void DoubleAdd::comb() {
             vb_expMore = r.a.read()(62, 52);
             vb_mantMore = mantA;
             vb_mantLess = mantB;
-        } else if (mantDif[53] == 0) {
+        } else if (mantDif[53] == 0) {                      // A > B
             v_flMore = (!signA);
             v_flEqual = 0;
             v_flLess = signA;
@@ -493,7 +493,7 @@ void DoubleAdd::comb() {
         nanB = 1;
     }
     nanAB = (nanA && mantZeroA && nanB && mantZeroB);
-    if (r.expPostScale.read() == 0x7FF) {
+    if (r.expPostScale.read() == 0x7FF) {                   // positive
         overflow = 1;
     }
 

@@ -31,7 +31,7 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     o_msti("o_msti"),
     i_msto("i_msto"),
     o_irq_pending("o_irq_pending", IRQ_PER_HART_TOTAL),
-    i_hartreset("i_hartreset"),
+    i_dporti("i_dporti"),
     i_ndmreset("i_ndmreset"),
     i_halted0("i_halted0"),
     o_halted("o_halted") {
@@ -63,7 +63,7 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     SC_METHOD(comb);
     sensitive << w_interrupt;
     sensitive << i_msto;
-    sensitive << i_hartreset;
+    sensitive << i_dporti;
     sensitive << i_ndmreset;
     sensitive << i_halted0;
     sensitive << r.clk_cnt;
@@ -118,13 +118,13 @@ void RtlWrapper::clk_gen() {
 
 void RtlWrapper::comb() {
     bool w_req_mem_ready;
-    sc_uint<CFG_BUS_ADDR_WIDTH> vb_req_addr;
+    sc_uint<CFG_SYSBUS_ADDR_BITS> vb_req_addr;
     sc_uint<4> vb_r_resp;
     bool v_r_valid;
     bool v_r_last;
     bool v_w_ready;
-    sc_uint<BUS_DATA_WIDTH> vb_wdata;
-    sc_uint<BUS_DATA_BYTES> vb_wstrb;
+    sc_uint<CFG_SYSBUS_DATA_BITS> vb_wdata;
+    sc_uint<CFG_SYSBUS_DATA_BYTES> vb_wstrb;
     axi4_master_in_type vmsti;
     sc_uint<IRQ_PER_HART_TOTAL> vb_irq_pending;
 
@@ -220,7 +220,7 @@ void RtlWrapper::comb() {
 
     o_dmi_nrst = r.nrst.read()[1].to_bool();
     o_sys_nrst = r.nrst.read()[1].to_bool() 
-            && !i_hartreset.read()
+            && !i_dporti.read().hartreset
             && !i_ndmreset.read();
 
     vmsti.aw_ready = w_req_mem_ready;
@@ -312,7 +312,7 @@ void RtlWrapper::sys_bus_proc() {
         resp = ibus_->b_transport(&trans);
 
         w_resp_valid = 1;
-        toff = r.req_addr.read()(CFG_LOG2_BUS_DATA_BYTES - 1, 0);
+        toff = r.req_addr.read()(CFG_LOG2_SYSBUS_DATA_BYTES - 1, 0);
         wb_resp_data = (trans.rpayload.b64[0]) << (8*toff);
         if (resp == TRANS_ERROR) {
             w_r_error = 1;
@@ -322,7 +322,7 @@ void RtlWrapper::sys_bus_proc() {
         trans.action = MemAction_Write;
         strob = static_cast<uint8_t>(wb_wstrb.read());
         offset = mask2offset(strob);
-        trans.addr = r.req_addr.read() & ~((1 << CFG_LOG2_BUS_DATA_BYTES) - 1);
+        trans.addr = r.req_addr.read() & ~((1 << CFG_LOG2_SYSBUS_DATA_BYTES) - 1);
         if (offset) {
             trans.addr += offset;
         }
@@ -341,7 +341,7 @@ void RtlWrapper::sys_bus_proc() {
 }
 
 uint64_t RtlWrapper::mask2offset(uint8_t mask) {
-    for (int i = 0; i < BUS_DATA_BYTES; i++) {
+    for (int i = 0; i < CFG_SYSBUS_DATA_BYTES; i++) {
         if (mask & 0x1) {
             return static_cast<uint64_t>(i);
         }
@@ -352,7 +352,7 @@ uint64_t RtlWrapper::mask2offset(uint8_t mask) {
 
 uint32_t RtlWrapper::mask2size(uint8_t mask) {
     uint32_t bytes = 0;
-    for (int i = 0; i < BUS_DATA_BYTES; i++) {
+    for (int i = 0; i < CFG_SYSBUS_DATA_BYTES; i++) {
         if (!(mask & 0x1)) {
             break;
         }

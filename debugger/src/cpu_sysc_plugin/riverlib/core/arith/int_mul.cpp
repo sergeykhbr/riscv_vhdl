@@ -119,13 +119,13 @@ void IntMul::comb() {
     vb_a2 = 0;
     wb_mux_lvl0 = 0;
     for (int i = 0; i < 32; i++) {
-        wb_lvl0[i] = 0;
+        wb_lvl0[i] = 0ull;
     }
     for (int i = 0; i < 8; i++) {
-        wb_lvl2[i] = 0;
+        wb_lvl2[i] = 0ull;
     }
     for (int i = 0; i < 2; i++) {
-        wb_lvl4[i] = 0;
+        wb_lvl4[i] = 0ull;
     }
     wb_lvl5 = 0;
     wb_res32 = 0;

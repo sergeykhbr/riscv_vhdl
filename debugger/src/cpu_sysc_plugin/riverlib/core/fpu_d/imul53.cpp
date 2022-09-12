@@ -82,7 +82,7 @@ void imul53::comb() {
 
     v_ena = 0;
     for (int i = 0; i < 17; i++) {
-        vb_mux[i] = 0;
+        vb_mux[i] = 0ull;
     }
     vb_sel = 0;
     vb_shift = 0;
