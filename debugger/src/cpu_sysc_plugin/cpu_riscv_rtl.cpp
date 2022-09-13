@@ -22,16 +22,18 @@ namespace debugger {
 
 CpuRiscV_RTL::CpuRiscV_RTL(const char *name)  
     : IService(name), IHap(HAP_ConfigDone),
-    wb_irq_pending("wb_irq_pending", IRQ_PER_HART_TOTAL) {
+    corei("corei", CFG_SLOT_L1_TOTAL),
+    coreo("coreo", CFG_SLOT_L1_TOTAL),
+    wb_irq_pending("wb_irq_pending", IRQ_PER_HART_TOTAL),
+    wb_dporti("wb_dporti", CFG_CPU_MAX),
+    wb_dporto("wb_dporto", CFG_CPU_MAX) {
     registerInterface(static_cast<IThread *>(this));
     registerInterface(static_cast<IClock *>(this));
     registerInterface(static_cast<IHap *>(this));
     registerAttribute("HartID", &hartid_);
     registerAttribute("AsyncReset", &asyncReset_);
-    registerAttribute("FpuEnable", &fpuEnable_);
-    registerAttribute("TracerEnable", &tracerEnable_);
+    registerAttribute("CpuNum", &cpuNum_);
     registerAttribute("L2CacheEnable", &l2CacheEnable_);
-    registerAttribute("CoherenceEnable", &coherenceEnable_);
     registerAttribute("CLINT", &clint_);
     registerAttribute("PLIC", &plic_);
     registerAttribute("Bus", &bus_);
@@ -43,7 +45,7 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
 
     bus_.make_string("");
     freqHz_.make_uint64(1);
-    fpuEnable_.make_boolean(true);
+    coherenceEnable_ = false;;
     InVcdFile_.make_string("");
     OutVcdFile_.make_string("");
     RISCV_event_create(&config_done_, "riscv_sysc_config_done");
@@ -158,7 +160,7 @@ void CpuRiscV_RTL::createSystemC() {
     wrapper_->o_msti(msti);
     wrapper_->i_msto(msto);
     wrapper_->o_irq_pending(wb_irq_pending);
-    wrapper_->i_dporti(wb_dporti);
+    wrapper_->i_dporti(wb_dporti[0]);
     wrapper_->i_ndmreset(w_ndmreset);
     wrapper_->i_halted0(w_halted0);
     wrapper_->o_halted(wb_halted);
@@ -174,22 +176,8 @@ void CpuRiscV_RTL::createSystemC() {
     dmi_->i_halted(wb_halted);
     dmi_->i_available(wb_available);
     dmi_->o_hartsel(wb_hartsel);
-    dmi_->i_dporto(wb_dporto);
-    dmi_->o_dporti(wb_dporti);
-    /*dmi_->o_haltreq(w_haltreq);
-    dmi_->o_resumereq(w_resumereq);
-    dmi_->o_resethaltreq(w_resethaltreq);       // Halt after reset
-    dmi_->o_hartreset(w_hartreset);             // reselet only selected core
-    dmi_->o_dport_req_valid(w_dport_req_valid);
-    dmi_->o_dport_req_type(wb_dport_type);
-    dmi_->o_dport_addr(wb_dport_addr);
-    dmi_->o_dport_wdata(wb_dport_wdata);
-    dmi_->o_dport_size(wb_dport_size);
-    dmi_->i_dport_req_ready(w_dport_req_ready);
-    dmi_->o_dport_resp_ready(w_dport_resp_ready);
-    dmi_->i_dport_resp_valid(w_dport_resp_valid);
-    dmi_->i_dport_resp_error(w_dport_resp_error);
-    dmi_->i_dport_rdata(wb_dport_rdata);*/
+    dmi_->i_dporto(wb_dporto[0]);
+    dmi_->o_dporti(wb_dporti[0]);
     dmi_->o_progbuf(wb_progbuf);
 
 
@@ -197,26 +185,20 @@ void CpuRiscV_RTL::createSystemC() {
         l2cache_ = new L2Top("l2top", asyncReset_.to_bool());
         l2cache_->i_clk(wrapper_->o_clk);
         l2cache_->i_nrst(w_sys_nrst);
-        l2cache_->o_l1i0(corei0);
-        l2cache_->i_l1o0(coreo0);
-        l2cache_->o_l1i1(corei1);
-        l2cache_->i_l1o1(coreo1);
-        l2cache_->o_l1i2(corei2);
-        l2cache_->i_l1o2(coreo2);
-        l2cache_->o_l1i3(corei3);
-        l2cache_->i_l1o3(coreo3);
-        l2cache_->i_acpo(acpo);
-        l2cache_->o_acpi(acpi);
-        l2cache_->i_msti(msti);
-        l2cache_->o_msto(msto);
+        l2cache_->o_l1i(corei);
+        l2cache_->i_l1o(coreo);
+        l2cache_->i_l2i(l2i);
+        l2cache_->o_l2o(l2o);
+        l2cache_->i_flush_valid(w_flush_l2);
 
+        coherenceEnable_ = cpuNum_.to_int() > 1;
         l1serdes_ = 0;
     } else {
         l1serdes_ = new L1SerDes("l1serdes0", asyncReset_.to_bool());
         l1serdes_->i_clk(wrapper_->o_clk);
         l1serdes_->i_nrst(w_sys_nrst);
-        l1serdes_->o_corei(corei0);
-        l1serdes_->i_coreo(coreo0);
+        l1serdes_->o_corei(corei[0]);
+        l1serdes_->i_coreo(coreo[0]);
         l1serdes_->i_msti(msti);
         l1serdes_->o_msto(msto);
 
@@ -225,28 +207,16 @@ void CpuRiscV_RTL::createSystemC() {
 
     core_ = new RiverAmba("core0", hartid_.to_uint32(),
                                asyncReset_.to_bool(),
-                               fpuEnable_.to_bool(),
-                               coherenceEnable_.to_bool(),
-                               tracerEnable_.to_bool());
+                               CFG_HW_FPU_ENABLE,
+                               coherenceEnable_,
+                               CFG_TRACER_ENABLE);
     core_->i_clk(wrapper_->o_clk);
     core_->i_nrst(w_sys_nrst);
-    core_->i_msti(corei0);
-    core_->o_msto(coreo0);
+    core_->i_msti(corei[0]);
+    core_->o_msto(coreo[0]);
     core_->o_xcfg(xcfg);
-    core_->i_dport(wb_dporti);
-    core_->o_dport(wb_dporto);
-    /*core_->i_haltreq(w_haltreq);
-    core_->i_resumereq(w_resumereq);
-    core_->i_dport_req_valid(w_dport_req_valid);
-    core_->i_dport_type(wb_dport_type);
-    core_->i_dport_addr(wb_dport_addr);
-    core_->i_dport_wdata(wb_dport_wdata);
-    core_->i_dport_size(wb_dport_size);
-    core_->o_dport_req_ready(w_dport_req_ready);
-    core_->i_dport_resp_ready(w_dport_resp_ready);
-    core_->o_dport_resp_valid(w_dport_resp_valid);
-    core_->o_dport_resp_error(w_dport_resp_error);
-    core_->o_dport_rdata(wb_dport_rdata);*/
+    core_->i_dport(wb_dporti[0]);
+    core_->o_dport(wb_dporto[0]);
     core_->i_msip(wb_irq_pending[IRQ_HART_MSIP]);
     core_->i_mtip(wb_irq_pending[IRQ_HART_MTIP]);
     core_->i_meip(wb_irq_pending[IRQ_HART_MEIP]);

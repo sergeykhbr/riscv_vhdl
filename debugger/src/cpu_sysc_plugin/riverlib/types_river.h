@@ -436,7 +436,7 @@ class axi4_l1_out_type {
     sc_biguint<L1CACHE_LINE_BITS> w_data;
     bool w_last;
     sc_uint<L1CACHE_BYTES_PER_LINE> w_strb;
-    bool w_user;
+    sc_uint<CFG_CPU_USER_BITS> w_user;
     bool b_ready;
     bool ar_valid;
     axi4_metadata_type ar_bits;
@@ -589,14 +589,14 @@ class axi4_l1_in_type {
     bool b_valid;
     sc_uint<2> b_resp;
     sc_uint<CFG_CPU_ID_BITS> b_id;
-    bool b_user;
+    sc_uint<CFG_SYSBUS_USER_BITS> b_user;
     bool ar_ready;
     bool r_valid;
     sc_uint<4> r_resp;
     sc_biguint<L1CACHE_LINE_BITS> r_data;
     bool r_last;
     sc_uint<CFG_CPU_ID_BITS> r_id;
-    bool r_user;
+    sc_uint<CFG_SYSBUS_USER_BITS> r_user;
     bool ac_valid;
     sc_uint<CFG_CPU_ADDR_BITS> ac_addr;
     sc_uint<4> ac_snoop;                                    // Table C3-19
@@ -800,7 +800,7 @@ class axi4_l2_out_type {
     sc_biguint<L2CACHE_LINE_BITS> w_data;
     bool w_last;
     sc_uint<L2CACHE_BYTES_PER_LINE> w_strb;
-    bool w_user;
+    sc_uint<CFG_CPU_USER_BITS> w_user;
     bool b_ready;
     bool ar_valid;
     axi4_metadata_type ar_bits;
@@ -908,14 +908,14 @@ class axi4_l2_in_type {
     bool b_valid;
     sc_uint<2> b_resp;
     sc_uint<CFG_CPU_ID_BITS> b_id;                          // create ID for L2?
-    bool b_user;
+    sc_uint<CFG_SYSBUS_USER_BITS> b_user;
     bool ar_ready;
     bool r_valid;
     sc_uint<2> r_resp;
     sc_biguint<L2CACHE_LINE_BITS> r_data;
     bool r_last;
     sc_uint<CFG_CPU_ID_BITS> r_id;
-    bool r_user;
+    sc_uint<CFG_SYSBUS_USER_BITS> r_user;
 };
 
 static const axi4_l2_in_type axi4_l2_in_none;

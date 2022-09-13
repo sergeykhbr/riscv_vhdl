@@ -1,32 +1,31 @@
-/*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+// 
+//  Copyright 2022 Sergey Khabarov, sergeykhbr@gmail.com
+// 
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+// 
+//      http://www.apache.org/licenses/LICENSE-2.0
+// 
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+// 
+#pragma once
 
-#ifndef __DEBUGGER_SRC_CPU_SYSC_PLUGIN_L2_L2_AMBA_H__
-#define __DEBUGGER_SRC_CPU_SYSC_PLUGIN_L2_L2_AMBA_H__
-
-#include "api_core.h"
-#include "../types_river.h"
-#include "../../ambalib/types_amba.h"
 #include <systemc.h>
+#include "../river_cfg.h"
+#include "../../ambalib/types_amba.h"
+#include "../types_river.h"
 
 namespace debugger {
 
 SC_MODULE(L2Amba) {
-    sc_in<bool> i_clk;                                  // CPU clock
-    sc_in<bool> i_nrst;                                 // Reset: active LOW
+ public:
+    sc_in<bool> i_clk;                                      // CPU clock
+    sc_in<bool> i_nrst;                                     // Reset: active LOW
     sc_out<bool> o_req_ready;
     sc_in<bool> i_req_valid;
     sc_in<sc_uint<REQ_MEM_TYPE_BITS>> i_req_type;
@@ -48,32 +47,28 @@ SC_MODULE(L2Amba) {
 
     SC_HAS_PROCESS(L2Amba);
 
-    L2Amba(sc_module_name name_,
-             bool async_reset);
-    virtual ~L2Amba();
+    L2Amba(sc_module_name name,
+           bool async_reset);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
+    bool async_reset_;
 
-    enum state_type {
-        idle,
-        reading,
-        writing,
-        wack
-    };
+    static const uint8_t idle = 0;
+    static const uint8_t reading = 1;
+    static const uint8_t writing = 2;
+    static const uint8_t wack = 3;
 
-    struct RegistersType {
+    struct L2Amba_registers {
         sc_signal<sc_uint<2>> state;
     } v, r;
 
-    void R_RESET(RegistersType &iv) {
+    void L2Amba_r_reset(L2Amba_registers &iv) {
         iv.state = idle;
     }
 
-    bool async_reset_;
 };
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_SRC_CPU_SYSC_PLUGIN_L2_L2_AMBA_H__

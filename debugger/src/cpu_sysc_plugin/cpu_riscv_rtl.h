@@ -42,7 +42,7 @@
 #include "ambalib/types_amba.h"
 #include "riverlib/river_amba.h"
 #include "riverlib/l2cache/l2_top.h"
-#include "riverlib/dmi/dmidebug.h"
+#include "riverlib/dmi/dmidebug.old.h"
 #include <systemc.h>
 
 namespace debugger {
@@ -96,10 +96,8 @@ class CpuRiscV_RTL : public IService,
  private:
     AttributeType hartid_;
     AttributeType asyncReset_;
-    AttributeType fpuEnable_;
-    AttributeType tracerEnable_;
+    AttributeType cpuNum_;
     AttributeType l2CacheEnable_;
-    AttributeType coherenceEnable_;
     AttributeType clint_;
     AttributeType plic_;
     AttributeType bus_;
@@ -108,6 +106,7 @@ class CpuRiscV_RTL : public IService,
     AttributeType freqHz_;
     AttributeType InVcdFile_;
     AttributeType OutVcdFile_;
+    bool coherenceEnable_;
     event_def config_done_;
 
     IIrqController *iirqloc_;
@@ -120,16 +119,8 @@ class CpuRiscV_RTL : public IService,
     sc_signal<bool> w_dmi_nrst;
 
     // AXI4 input structure:
-    sc_signal<axi4_l1_in_type> corei0;
-    sc_signal<axi4_l1_out_type> coreo0;
-    sc_signal<axi4_l1_in_type> corei1;
-    sc_signal<axi4_l1_out_type> coreo1;
-    sc_signal<axi4_l1_in_type> corei2;
-    sc_signal<axi4_l1_out_type> coreo2;
-    sc_signal<axi4_l1_in_type> corei3;
-    sc_signal<axi4_l1_out_type> coreo3;
-    sc_signal<axi4_l1_in_type> acpi;
-    sc_signal<axi4_l1_out_type> acpo;
+    sc_vector<sc_signal<axi4_l1_in_type>> corei;
+    sc_vector<sc_signal<axi4_l1_out_type>> coreo;
     sc_signal<axi4_master_config_type> xcfg;
     sc_signal<bool> w_flush_l2;
     // Interrupt lines:
@@ -139,28 +130,16 @@ class CpuRiscV_RTL : public IService,
     sc_signal<sc_uint<CFG_CPU_MAX>> wb_halted;
     sc_signal<sc_uint<CFG_CPU_MAX>> wb_available;
     sc_signal<sc_uint<CFG_LOG2_CPU_MAX>> wb_hartsel;
-    /*sc_signal<bool> w_haltreq;
-    sc_signal<bool> w_resumereq;
-    sc_signal<bool> w_resethaltreq;
-    sc_signal<bool> w_hartreset;
-    sc_signal<bool> w_dport_req_valid;
-    sc_signal<sc_uint<DPortReq_Total>> wb_dport_type;
-    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_dport_addr;
-    sc_signal<sc_uint<RISCV_ARCH>> wb_dport_wdata;
-    sc_signal<sc_uint<3>> wb_dport_size;
-    sc_signal<bool> w_dport_req_ready;
-    sc_signal<bool> w_dport_resp_ready;
-    sc_signal<bool> w_dport_resp_valid;
-    sc_signal<bool> w_dport_resp_error;
-    sc_signal<sc_uint<RISCV_ARCH>> wb_dport_rdata;*/
     sc_signal<sc_biguint<32*CFG_PROGBUF_REG_TOTAL>> wb_progbuf;
     sc_signal<bool> w_halted0;
     sc_signal<bool> w_available0;
     
+    sc_signal<axi4_l2_in_type> l2i;
+    sc_signal<axi4_l2_out_type> l2o;
     sc_signal<axi4_master_in_type> msti;
     sc_signal<axi4_master_out_type> msto;
-    sc_signal<dport_in_type> wb_dporti;
-    sc_signal<dport_out_type> wb_dporto;
+    dport_in_vector wb_dporti;
+    dport_out_vector wb_dporto;
 
     sc_trace_file *i_vcd_;      // stimulus pattern
     sc_trace_file *o_vcd_;      // reference pattern for comparision

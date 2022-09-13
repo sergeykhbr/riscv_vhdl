@@ -22,32 +22,23 @@
 
 namespace debugger {
 
-SC_MODULE(L2Destination) {
+SC_MODULE(L2Dummy) {
  public:
     sc_in<bool> i_clk;                                      // CPU clock
     sc_in<bool> i_nrst;                                     // Reset: active LOW
-    sc_in<bool> i_resp_valid;
-    sc_in<sc_biguint<L1CACHE_LINE_BITS>> i_resp_rdata;
-    sc_in<sc_uint<2>> i_resp_status;
     sc_vector<sc_in<axi4_l1_out_type>> i_l1o;
     sc_vector<sc_out<axi4_l1_in_type>> o_l1i;
-    // cache interface
-    sc_in<bool> i_req_ready;
-    sc_out<bool> o_req_valid;
-    sc_out<sc_uint<L2_REQ_TYPE_BITS>> o_req_type;
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_req_addr;
-    sc_out<sc_uint<3>> o_req_size;
-    sc_out<sc_uint<3>> o_req_prot;
-    sc_out<sc_biguint<L1CACHE_LINE_BITS>> o_req_wdata;
-    sc_out<sc_uint<L1CACHE_BYTES_PER_LINE>> o_req_wstrb;
+    sc_in<axi4_l2_in_type> i_l2i;
+    sc_out<axi4_l2_out_type> o_l2o;
+    sc_in<bool> i_flush_valid;
 
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(L2Destination);
+    SC_HAS_PROCESS(L2Dummy);
 
-    L2Destination(sc_module_name name,
-                  bool async_reset);
+    L2Dummy(sc_module_name name,
+            bool async_reset);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -55,42 +46,42 @@ SC_MODULE(L2Destination) {
     bool async_reset_;
 
     static const uint8_t Idle = 0;
-    static const uint8_t CacheReadReq = 1;
-    static const uint8_t CacheWriteReq = 2;
-    static const uint8_t ReadMem = 3;
-    static const uint8_t WriteMem = 4;
-    static const uint8_t snoop_ac = 5;
-    static const uint8_t snoop_cr = 6;
-    static const uint8_t snoop_cd = 7;
+    static const uint8_t state_ar = 1;
+    static const uint8_t state_r = 2;
+    static const uint8_t l1_r_resp = 3;
+    static const uint8_t state_aw = 4;
+    static const uint8_t state_w = 5;
+    static const uint8_t state_b = 6;
+    static const uint8_t l1_w_resp = 7;
 
-    struct L2Destination_registers {
+    struct L2Dummy_registers {
         sc_signal<sc_uint<3>> state;
         sc_signal<sc_uint<3>> srcid;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_addr;
+        sc_signal<sc_uint<CFG_SYSBUS_ADDR_BITS>> req_addr;
         sc_signal<sc_uint<3>> req_size;
         sc_signal<sc_uint<3>> req_prot;
-        sc_signal<sc_uint<5>> req_src;
-        sc_signal<sc_uint<L2_REQ_TYPE_BITS>> req_type;
+        sc_signal<bool> req_lock;
+        sc_signal<sc_uint<CFG_CPU_ID_BITS>> req_id;
+        sc_signal<sc_uint<CFG_CPU_USER_BITS>> req_user;
         sc_signal<sc_biguint<L1CACHE_LINE_BITS>> req_wdata;
         sc_signal<sc_uint<L1CACHE_BYTES_PER_LINE>> req_wstrb;
-        sc_signal<sc_uint<(CFG_SLOT_L1_TOTAL + 1)>> ac_valid;
-        sc_signal<sc_uint<(CFG_SLOT_L1_TOTAL + 1)>> cr_ready;
-        sc_signal<sc_uint<(CFG_SLOT_L1_TOTAL + 1)>> cd_ready;
+        sc_signal<sc_biguint<L1CACHE_LINE_BITS>> rdata;
+        sc_signal<sc_uint<2>> resp;
     } v, r;
 
-    void L2Destination_r_reset(L2Destination_registers &iv) {
+    void L2Dummy_r_reset(L2Dummy_registers &iv) {
         iv.state = Idle;
         iv.srcid = CFG_SLOT_L1_TOTAL;
         iv.req_addr = 0ull;
         iv.req_size = 0;
         iv.req_prot = 0;
-        iv.req_src = 0;
-        iv.req_type = 0;
+        iv.req_lock = 0;
+        iv.req_id = 0;
+        iv.req_user = 0;
         iv.req_wdata = 0ull;
         iv.req_wstrb = 0;
-        iv.ac_valid = 0;
-        iv.cr_ready = 0;
-        iv.cd_ready = 0;
+        iv.rdata = 0ull;
+        iv.resp = 0;
     }
 
 };

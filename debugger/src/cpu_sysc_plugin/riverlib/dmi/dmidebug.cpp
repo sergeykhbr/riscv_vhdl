@@ -1,34 +1,39 @@
-/*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
- *
- *  Licensed under the Apache License, Version 2.0 (the "License");
- *  you may not use this file except in compliance with the License.
- *  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- */
+// 
+//  Copyright 2022 Sergey Khabarov, sergeykhbr@gmail.com
+// 
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+// 
+//      http://www.apache.org/licenses/LICENSE-2.0
+// 
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+// 
 
 #include "dmidebug.h"
+#include "api_core.h"
 
 namespace debugger {
 
-DmiDebug::DmiDebug(IFace *parent, sc_module_name name, bool async_reset)
+dmidebug::dmidebug(sc_module_name name,
+                   bool async_reset)
     : sc_module(name),
+    i_trst("i_trst"),
+    i_tck("i_tck"),
+    i_tms("i_tms"),
+    i_tdi("i_tdi"),
+    o_tdo("o_tdo"),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
     o_ndmreset("o_ndmreset"),
     i_halted("i_halted"),
     i_available("i_available"),
     o_hartsel("o_hartsel"),
-    i_dporto("i_dporto"),
-    o_dporti("o_dporti"),
-    /*o_haltreq("o_haltreq"),
+    o_haltreq("o_haltreq"),
     o_resumereq("o_resumereq"),
     o_resethaltreq("o_resethaltreq"),
     o_hartreset("o_hartreset"),
@@ -41,36 +46,39 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name, bool async_reset)
     o_dport_resp_ready("o_dport_resp_ready"),
     i_dport_resp_valid("i_dport_resp_valid"),
     i_dport_resp_error("i_dport_resp_error"),
-    i_dport_rdata("i_dport_rdata"),*/
+    i_dport_rdata("i_dport_rdata"),
     o_progbuf("o_progbuf") {
-    iparent_ = parent;
+
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
-    sensitive << bus_req_event_;
+    sensitive << i_trst;
+    sensitive << i_tck;
+    sensitive << i_tms;
+    sensitive << i_tdi;
     sensitive << i_nrst;
     sensitive << i_halted;
     sensitive << i_available;
-    sensitive << i_dporto;//i_dport_req_ready;
-    //sensitive << i_dport_resp_valid;
-    //sensitive << i_dport_rdata;
-    sensitive << w_i_trst;
-    sensitive << w_i_tck;
-    sensitive << w_i_tms;
-    sensitive << w_i_tdi;
+    sensitive << i_dport_req_ready;
+    sensitive << i_dport_resp_valid;
+    sensitive << i_dport_resp_error;
+    sensitive << i_dport_rdata;
+    sensitive << w_tap_dmi_req_valid;
+    sensitive << w_tap_dmi_req_write;
+    sensitive << wb_tap_dmi_req_addr;
+    sensitive << wb_tap_dmi_req_data;
+    sensitive << w_tap_dmi_reset;
+    sensitive << w_tap_dmi_hardreset;
     sensitive << w_cdc_dmi_req_valid;
+    sensitive << w_cdc_dmi_req_ready;
     sensitive << w_cdc_dmi_req_write;
     sensitive << wb_cdc_dmi_req_addr;
     sensitive << wb_cdc_dmi_req_data;
     sensitive << w_cdc_dmi_reset;
     sensitive << w_cdc_dmi_hardreset;
-
-    sensitive << r.bus_req_valid;
-    sensitive << r.bus_req_addr;
-    sensitive << r.bus_req_write;
-    sensitive << r.bus_req_wdata;
-    sensitive << r.bus_resp_valid;
-    sensitive << r.bus_resp_data;
+    sensitive << wb_jtag_dmi_resp_data;
+    sensitive << w_jtag_dmi_busy;
+    sensitive << w_jtag_dmi_error;
     sensitive << r.jtag_resp_data;
     sensitive << r.regidx;
     sensitive << r.wdata;
@@ -78,7 +86,6 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name, bool async_reset)
     sensitive << r.regrd;
     sensitive << r.dmstate;
     sensitive << r.cmdstate;
-    sensitive << r.sbastate;
     sensitive << r.haltreq;
     sensitive << r.resumereq;
     sensitive << r.resumeack;
@@ -111,350 +118,250 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name, bool async_reset)
     sensitive << r.dport_resp_ready;
 
     SC_METHOD(registers);
+    sensitive << i_nrst;
     sensitive << i_clk.pos();
-
-    tap_ = new JtagTap("tap");
-    tap_->i_trst(w_i_trst);
-    tap_->i_tck(w_i_tck);
-    tap_->i_tms(w_i_tms);
-    tap_->i_tdi(w_i_tdi);
-    tap_->o_tdo(w_o_tdo);
-    tap_->o_dmi_req_valid(w_tap_dmi_req_valid);
-    tap_->o_dmi_req_write(w_tap_dmi_req_write);
-    tap_->o_dmi_req_addr(wb_tap_dmi_req_addr);
-    tap_->o_dmi_req_data(wb_tap_dmi_req_data);
-    tap_->i_dmi_resp_data(wb_jtag_dmi_resp_data);
-    tap_->i_dmi_busy(w_jtag_dmi_busy);
-    tap_->i_dmi_error(w_jtag_dmi_error);
-    tap_->o_dmi_reset(w_tap_dmi_reset);
-    tap_->o_dmi_hardreset(w_tap_dmi_hardreset);
-
-    cdc_ = new JtagCDC("cdc", async_reset);
-    cdc_->i_nrst(i_nrst);
-    cdc_->i_clk(i_clk);
-    cdc_->i_dmi_req_valid(w_tap_dmi_req_valid);
-    cdc_->i_dmi_req_write(w_tap_dmi_req_write);
-    cdc_->i_dmi_req_addr(wb_tap_dmi_req_addr);
-    cdc_->i_dmi_req_data(wb_tap_dmi_req_data);
-    cdc_->i_dmi_reset(w_tap_dmi_reset);
-    cdc_->i_dmi_hardreset(w_tap_dmi_hardreset);
-    cdc_->o_dmi_req_valid(w_cdc_dmi_req_valid);
-    cdc_->i_dmi_req_ready(w_cdc_dmi_req_ready);
-    cdc_->o_dmi_req_write(w_cdc_dmi_req_write);
-    cdc_->o_dmi_req_addr(wb_cdc_dmi_req_addr);
-    cdc_->o_dmi_req_data(wb_cdc_dmi_req_data);
-    cdc_->o_dmi_reset(w_cdc_dmi_reset);
-    cdc_->o_dmi_hardreset(w_cdc_dmi_hardreset);
-
-    trst_ = 0;
-    bus_req_valid_ = 0;
-    bus_req_addr_ = 0;
-    bus_req_write_ = 0;
-    bus_req_wdata_ = 0;
-    char tstr[256];
-    RISCV_sprintf(tstr, sizeof(tstr), "%s_event_dtm_ready", name);
-    RISCV_event_create(&event_dtm_ready_, tstr);
 }
 
-DmiDebug::~DmiDebug() {
-    delete tap_;
-    RISCV_event_close(&event_dtm_ready_);
-}
-
-void DmiDebug::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
-    tap_->generateVCD(i_vcd, o_vcd);
-    cdc_->generateVCD(i_vcd, o_vcd);
-    if (i_vcd) {
-    }
+void dmidebug::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+    std::string pn(name());
     if (o_vcd) {
-        //sc_trace(o_vcd, o_haltreq, o_haltreq.name());
-        //sc_trace(o_vcd, o_resumereq, o_resumereq.name());
+        sc_trace(o_vcd, i_trst, i_trst.name());
+        sc_trace(o_vcd, i_tck, i_tck.name());
+        sc_trace(o_vcd, i_tms, i_tms.name());
+        sc_trace(o_vcd, i_tdi, i_tdi.name());
+        sc_trace(o_vcd, o_tdo, o_tdo.name());
+        sc_trace(o_vcd, o_ndmreset, o_ndmreset.name());
         sc_trace(o_vcd, i_halted, i_halted.name());
-        sc_trace(o_vcd, i_dporto, i_dporto.name());
-        /*sc_trace(o_vcd, o_dport_req_type, o_dport_req_type.name());
+        sc_trace(o_vcd, i_available, i_available.name());
+        sc_trace(o_vcd, o_hartsel, o_hartsel.name());
+        sc_trace(o_vcd, o_haltreq, o_haltreq.name());
+        sc_trace(o_vcd, o_resumereq, o_resumereq.name());
+        sc_trace(o_vcd, o_resethaltreq, o_resethaltreq.name());
+        sc_trace(o_vcd, o_hartreset, o_hartreset.name());
+        sc_trace(o_vcd, o_dport_req_valid, o_dport_req_valid.name());
+        sc_trace(o_vcd, o_dport_req_type, o_dport_req_type.name());
         sc_trace(o_vcd, o_dport_addr, o_dport_addr.name());
         sc_trace(o_vcd, o_dport_wdata, o_dport_wdata.name());
+        sc_trace(o_vcd, o_dport_size, o_dport_size.name());
         sc_trace(o_vcd, i_dport_req_ready, i_dport_req_ready.name());
         sc_trace(o_vcd, o_dport_resp_ready, o_dport_resp_ready.name());
         sc_trace(o_vcd, i_dport_resp_valid, i_dport_resp_valid.name());
-        sc_trace(o_vcd, i_dport_rdata, i_dport_rdata.name());*/
-
-        std::string pn(name());
-        sc_trace(o_vcd, w_i_trst, pn + ".i_trst");
-        sc_trace(o_vcd, w_i_tck, pn + ".i_tck");
-        sc_trace(o_vcd, w_i_tms, pn + ".i_tms");
-        sc_trace(o_vcd, w_i_tdi, pn + ".i_tdi");
-        sc_trace(o_vcd, w_cdc_dmi_req_valid, pn + ".w_cdc_dmi_req_valid");
-        sc_trace(o_vcd, w_cdc_dmi_req_write, pn + ".w_cdc_dmi_req_write");
-        sc_trace(o_vcd, wb_cdc_dmi_req_addr, pn + ".wb_cdc_dmi_req_addr");
-        sc_trace(o_vcd, wb_cdc_dmi_req_data, pn + ".wb_cdc_dmi_req_data");
-        sc_trace(o_vcd, r.bus_jtag, pn + ".r_bus_jtag");
-        sc_trace(o_vcd, r.bus_req_valid, pn + ".r_bus_req_valid");
-        sc_trace(o_vcd, r.bus_req_addr, pn + ".r_bus_req_addr");
-        sc_trace(o_vcd, r.bus_req_wdata, pn + ".r_bus_req_wdata");
-        sc_trace(o_vcd, r.bus_req_write, pn + ".r_bus_req_write");
-        sc_trace(o_vcd, r.bus_resp_valid, pn + ".r_bus_resp_valid");
-        sc_trace(o_vcd, r.bus_resp_data, pn + ".r_bus_resp_data");
+        sc_trace(o_vcd, i_dport_resp_error, i_dport_resp_error.name());
+        sc_trace(o_vcd, i_dport_rdata, i_dport_rdata.name());
+        sc_trace(o_vcd, o_progbuf, o_progbuf.name());
         sc_trace(o_vcd, r.jtag_resp_data, pn + ".r_jtag_resp_data");
-        sc_trace(o_vcd, r.dmstate, pn + ".r_dmstate");
-        sc_trace(o_vcd, r.cmdstate, pn + ".r_cmdstate");
-        sc_trace(o_vcd, r.sbastate, pn + ".r_sbastate");
         sc_trace(o_vcd, r.regidx, pn + ".r_regidx");
         sc_trace(o_vcd, r.wdata, pn + ".r_wdata");
         sc_trace(o_vcd, r.regwr, pn + ".r_regwr");
         sc_trace(o_vcd, r.regrd, pn + ".r_regrd");
+        sc_trace(o_vcd, r.dmstate, pn + ".r_dmstate");
+        sc_trace(o_vcd, r.cmdstate, pn + ".r_cmdstate");
+        sc_trace(o_vcd, r.haltreq, pn + ".r_haltreq");
+        sc_trace(o_vcd, r.resumereq, pn + ".r_resumereq");
         sc_trace(o_vcd, r.resumeack, pn + ".r_resumeack");
         sc_trace(o_vcd, r.hartreset, pn + ".r_hartreset");
         sc_trace(o_vcd, r.resethaltreq, pn + ".r_resethaltreq");
-        sc_trace(o_vcd, r.haltreq, pn + ".r_haltreq");
         sc_trace(o_vcd, r.ndmreset, pn + ".r_ndmreset");
         sc_trace(o_vcd, r.dmactive, pn + ".r_dmactive");
         sc_trace(o_vcd, r.hartsel, pn + ".r_hartsel");
-        sc_trace(o_vcd, r.postincrement, pn + ".r_postincrement");
-        sc_trace(o_vcd, r.aamvirtual, pn + ".r_aamvirtual");
         sc_trace(o_vcd, r.cmd_regaccess, pn + ".r_cmd_regaccess");
         sc_trace(o_vcd, r.cmd_quickaccess, pn + ".r_cmd_quickaccess");
         sc_trace(o_vcd, r.cmd_memaccess, pn + ".r_cmd_memaccess");
         sc_trace(o_vcd, r.cmd_progexec, pn + ".r_cmd_progexec");
         sc_trace(o_vcd, r.cmd_read, pn + ".r_cmd_read");
         sc_trace(o_vcd, r.cmd_write, pn + ".r_cmd_write");
+        sc_trace(o_vcd, r.postincrement, pn + ".r_postincrement");
+        sc_trace(o_vcd, r.aamvirtual, pn + ".r_aamvirtual");
+        sc_trace(o_vcd, r.command, pn + ".r_command");
         sc_trace(o_vcd, r.autoexecdata, pn + ".r_autoexecdata");
         sc_trace(o_vcd, r.autoexecprogbuf, pn + ".r_autoexecprogbuf");
         sc_trace(o_vcd, r.cmderr, pn + ".r_cmderr");
+        sc_trace(o_vcd, r.data0, pn + ".r_data0");
+        sc_trace(o_vcd, r.data1, pn + ".r_data1");
+        sc_trace(o_vcd, r.data2, pn + ".r_data2");
+        sc_trace(o_vcd, r.data3, pn + ".r_data3");
+        sc_trace(o_vcd, r.progbuf_data, pn + ".r_progbuf_data");
+        sc_trace(o_vcd, r.dport_req_valid, pn + ".r_dport_req_valid");
+        sc_trace(o_vcd, r.dport_addr, pn + ".r_dport_addr");
+        sc_trace(o_vcd, r.dport_wdata, pn + ".r_dport_wdata");
+        sc_trace(o_vcd, r.dport_size, pn + ".r_dport_size");
+        sc_trace(o_vcd, r.dport_resp_ready, pn + ".r_dport_resp_ready");
     }
+
 }
 
-ETransStatus DmiDebug::b_transport(Axi4TransactionType *trans) {
-    RISCV_error("%s", "Blocking access not supported. Use non-blocking instead");
-    return TRANS_ERROR;
-}
-
-ETransStatus DmiDebug::nb_transport(Axi4TransactionType *trans,
-                                    IAxi4NbResponse *cb) {
-
-    uint64_t off = trans->addr - getBaseAddress();
-
-    // Only 4-bytes requests:
-    if (trans->action == MemAction_Read) {
-        readreg(off >> 2);
-    } else {
-        if (trans->wstrb & 0x00FF) {
-            writereg(off >> 2, trans->wpayload.b32[0]);
-        } else if (trans->wstrb & 0xFF00) {
-            writereg((off + 4) >> 2, trans->wpayload.b32[1]);
-        }
-    }
-    lasttrans_ = *trans;
-    lastcb_ = cb;
-    return TRANS_OK;
-}
-
-
-void DmiDebug::readreg(uint64_t idx) {
-    bus_req_addr_ = idx;
-    bus_req_write_ = 0;
-    bus_req_valid_ = 1;
-}
-
-void DmiDebug::writereg(uint64_t idx, uint32_t w32) {
-    bus_req_addr_ = idx;
-    bus_req_wdata_ = w32;
-    bus_req_write_ = 1;
-    bus_req_valid_ = 1;
-}
-
-void DmiDebug::resetTAP(char trst, char srst) {
-    trst_ = trst;
-    dtm_scaler_cnt_ = 0;
-    RISCV_event_clear(&event_dtm_ready_);
-    RISCV_event_wait(&event_dtm_ready_);
-}
-
-void DmiDebug::setPins(char tck, char tms, char tdi) {
-    tck_ = tck;
-    tms_ = tms;
-    tdi_ = tdi;
-    dtm_scaler_cnt_ = 0;
-
-    RISCV_event_clear(&event_dtm_ready_);
-    RISCV_event_wait(&event_dtm_ready_);
-}
-
-bool DmiDebug::getTDO() {
-    return w_o_tdo.read();
-}
-
-
-void DmiDebug::comb() {
-    v = r;
-    dport_in_type vdporti;
+void dmidebug::comb() {
     sc_uint<DPortReq_Total> vb_req_type;
     sc_uint<32> vb_resp_data;
     sc_uint<CFG_LOG2_CPU_MAX> vb_hartselnext;
     bool v_resp_valid;
     int hsel;
     bool v_cmd_busy;
+    bool v_cdc_dmi_req_ready;
+    sc_uint<64> vb_datainc;
+    sc_uint<32> t_command;
+    sc_biguint<(32 * CFG_PROGBUF_REG_TOTAL)> t_progbuf;
 
+    vb_req_type = 0;
     vb_resp_data = 0;
+    vb_hartselnext = 0;
     v_resp_valid = 0;
-    w_cdc_dmi_req_ready = 0;
+    hsel = 0;
+    v_cmd_busy = 0;
+    v_cdc_dmi_req_ready = 0;
+    vb_datainc = 0;
+    t_command = 0;
+    t_progbuf = 0;
 
-    vb_hartselnext = r.wdata.read()(16 + CFG_LOG2_CPU_MAX - 1, 16);
+    v = r;
+
+    vb_hartselnext = r.wdata.read()(((16 + CFG_LOG2_CPU_MAX) - 1), 16);
     hsel = r.hartsel.read().to_int();
     v_cmd_busy = r.cmdstate.read().or_reduce();
+    t_command = r.command;
+    t_progbuf = r.progbuf_data;
 
-    if (r.haltreq && i_halted.read()[hsel]) {
+    if ((r.haltreq.read() & i_halted.read()[hsel]) == 1) {
         v.haltreq = 0;
     }
-    if (r.resumereq && !i_halted.read()[hsel]) {
+    if ((r.resumereq.read() & (~i_halted.read()[hsel])) == 1) {
         v.resumereq = 0;
         v.resumeack = 1;
     }
 
-
     switch (r.dmstate.read()) {
     case DM_STATE_IDLE:
-        if (w_cdc_dmi_req_valid) {
-            w_cdc_dmi_req_ready = 1;
-            v.bus_jtag = 1;
+        if (w_cdc_dmi_req_valid.read() == 1) {
+            v_cdc_dmi_req_ready = 1;
             v.dmstate = DM_STATE_ACCESS;
             v.regidx = wb_cdc_dmi_req_addr;
             v.wdata = wb_cdc_dmi_req_data;
             v.regwr = w_cdc_dmi_req_write;
-            v.regrd = !w_cdc_dmi_req_write;
-        } else if (r.bus_req_valid.read()) {
-            v.bus_jtag = 0;
-            v.bus_req_valid = 0;
-            v.dmstate = DM_STATE_ACCESS;
-            v.regidx = r.bus_req_addr;
-            v.wdata = r.bus_req_wdata;
-            v.regwr = r.bus_req_write;
-            v.regrd = !r.bus_req_write;
+            v.regrd = (~w_cdc_dmi_req_write.read());
         }
         break;
     case DM_STATE_ACCESS:
         v_resp_valid = 1;
         v.dmstate = DM_STATE_IDLE;
-        if (r.regidx.read() == 0x04) {                                  // arg0[31:0]
+        if (r.regidx.read() == 0x04) {                      // arg0[31:0]
             vb_resp_data = r.data0;
-            if (r.regwr) {
+            if (r.regwr.read() == 1) {
                 v.data0 = r.wdata;
             }
-            if (r.autoexecdata.read()[0] && r.cmderr.read() == CMDERR_NONE) {
-                if (v_cmd_busy) {
+            if ((r.autoexecdata.read()[0] == 1) && (r.cmderr.read() == CMDERR_NONE)) {
+                if (v_cmd_busy == 1) {
                     v.cmderr = CMDERR_BUSY;
                 } else {
                     v.cmdstate = CMD_STATE_INIT;
                 }
             }
-        } else if (r.regidx.read() == 0x05) {                           // arg0[63:32]
+        } else if (r.regidx.read() == 0x05) {               // arg0[63:32]
             vb_resp_data = r.data1;
-            if (r.regwr) {
+            if (r.regwr.read() == 1) {
                 v.data1 = r.wdata;
             }
-            if (r.autoexecdata.read()[1] && r.cmderr.read() == CMDERR_NONE) {
-                if (v_cmd_busy) {
+            if ((r.autoexecdata.read()[1] == 1) && (r.cmderr.read() == CMDERR_NONE)) {
+                if (v_cmd_busy == 1) {
                     v.cmderr = CMDERR_BUSY;
                 } else {
                     v.cmdstate = CMD_STATE_INIT;
                 }
             }
-        } else if (r.regidx.read() == 0x06) {                           // arg1[31:0]
+        } else if (r.regidx.read() == 0x06) {               // arg1[31:0]
             vb_resp_data = r.data2;
-            if (r.regwr) {
+            if (r.regwr.read() == 1) {
                 v.data2 = r.wdata;
             }
-            if (r.autoexecdata.read()[2] && r.cmderr.read() == CMDERR_NONE) {
-                if (v_cmd_busy) {
+            if ((r.autoexecdata.read()[2] == 1) && (r.cmderr.read() == CMDERR_NONE)) {
+                if (v_cmd_busy == 1) {
                     v.cmderr = CMDERR_BUSY;
                 } else {
                     v.cmdstate = CMD_STATE_INIT;
                 }
             }
-        } else if (r.regidx.read() == 0x07) {                           // arg1[63:32]
+        } else if (r.regidx.read() == 0x07) {               // arg1[63:32]
             vb_resp_data = r.data3;
-            if (r.regwr) {
+            if (r.regwr.read() == 1) {
                 v.data3 = r.wdata;
             }
-            if (r.autoexecdata.read()[3] && r.cmderr.read() == CMDERR_NONE) {
-                if (v_cmd_busy) {
+            if ((r.autoexecdata.read()[3] == 1) && (r.cmderr.read() == CMDERR_NONE)) {
+                if (v_cmd_busy == 1) {
                     v.cmderr = CMDERR_BUSY;
                 } else {
                     v.cmdstate = CMD_STATE_INIT;
                 }
             }
-        } else if (r.regidx.read() == 0x10) {                           // dmcontrol
-            vb_resp_data[29] = r.hartreset;                             // hartreset
-            vb_resp_data[28] = 0;                                       // ackhavereset
-            vb_resp_data[26] = 0;                                       // hasel: single selected hart only
-            vb_resp_data(16 + CFG_LOG2_CPU_MAX - 1, 16) = r.hartsel;    // hartsello
+        } else if (r.regidx.read() == 0x10) {               // dmcontrol
+            vb_resp_data[29] = r.hartreset;                // hartreset
+            vb_resp_data[28] = 0;                          // ackhavereset
+            vb_resp_data[26] = 0;                          // hasel: single selected hart only
+            vb_resp_data(((16 + CFG_LOG2_CPU_MAX) - 1), 16) = r.hartsel;// hartsello
             vb_resp_data[1] = r.ndmreset;
             vb_resp_data[0] = r.dmactive;
-            if (r.regwr) {
-                if (r.wdata.read()[31]) {
-                    if (i_halted.read()[vb_hartselnext]) {
+            if (r.regwr.read() == 1) {
+                if (r.wdata.read()[31] == 1) {
+                    if (i_halted.read()[vb_hartselnext] == 1) {
                         v.cmderr = CMDERR_WRONGSTATE;
                     } else {
                         v.haltreq = 1;
                     }
-                } else if (r.wdata.read()[30]) {
+                } else if (r.wdata.read()[30] == 1) {
                     // resumereq must be ignored if haltreq is set (@see spec)
-                    if (i_halted.read()[vb_hartselnext]) {
+                    if (i_halted.read()[vb_hartselnext] == 1) {
                         v.resumereq = 1;
                     } else {
                         v.cmderr = CMDERR_WRONGSTATE;
                     }
                 }
                 v.hartreset = r.wdata.read()[29];
-                v.hartsel = r.wdata.read()(16 + CFG_LOG2_CPU_MAX - 1, 16);
-                if (r.wdata.read()[3]) {                                // setresethaltreq
+                v.hartsel = r.wdata.read()(((16 + CFG_LOG2_CPU_MAX) - 1), 16);
+                if (r.wdata.read()[3] == 1) {               // setresethaltreq
                     v.resethaltreq = 1;
-                } else if (r.wdata.read()[2]) {                         // clearresethaltreq
+                } else if (r.wdata.read()[2] == 1) {        // clearresethaltreq
                     v.resethaltreq = 0;
                 }
-                v.ndmreset = r.wdata.read()[1];                         // 1=Reset whole system including all harts
+                v.ndmreset = r.wdata.read()[1];            // 1=Reset whole system including all harts
                 v.dmactive = r.wdata.read()[0];
             }
-        } else if (r.regidx.read() == 0x11) {  // dmstatus
+        } else if (r.regidx.read() == 0x11) {               // dmstatus
             // Currently selected ONLY. We support only one selected at once 'hasel=0'
-            vb_resp_data[22] = 0;                               // impebreak
-            vb_resp_data[19] = 0;                               // allhavereset: selected hart reset but not acknowledged
-            vb_resp_data[18] = 0;                               // anyhavereset
-            vb_resp_data[17] = r.resumeack;                     // allresumeack
-            vb_resp_data[16] = r.resumeack;                     // anyresumeack
-            vb_resp_data[15] = !i_available.read()[hsel];       // allnonexistent
-            vb_resp_data[14] = !i_available.read()[hsel];       // anynonexistent
-            vb_resp_data[13] = !i_available.read()[hsel];       // allunavail
-            vb_resp_data[12] = !i_available.read()[hsel];       // anyunavail
-            vb_resp_data[11] = !i_halted.read()[hsel] && i_available.read()[hsel]; // allrunning:
-            vb_resp_data[10] = !i_halted.read()[hsel] && i_available.read()[hsel]; // anyrunning:
-            vb_resp_data[9] = i_halted.read()[hsel] && i_available.read()[hsel];   // allhalted:
-            vb_resp_data[8] = i_halted.read()[hsel] && i_available.read()[hsel];   // anyhalted:
-            vb_resp_data[7] = 1;                                // authenticated:
-            vb_resp_data[5] = 1;                                // hasresethaltreq
-            vb_resp_data(3, 0) = 0x2;                           // version: dbg spec v0.13
-
-        } else if (r.regidx.read() == 0x12) {                   // hartinfo
+            vb_resp_data[22] = 0;                          // impebreak
+            vb_resp_data[19] = 0;                          // allhavereset: selected hart reset but not acknowledged
+            vb_resp_data[18] = 0;                          // anyhavereset
+            vb_resp_data[17] = r.resumeack;                // allresumeack
+            vb_resp_data[16] = r.resumeack;                // anyresumeack
+            vb_resp_data[15] = (!i_available.read()[hsel]);// allnonexistent
+            vb_resp_data[14] = (!i_available.read()[hsel]);// anynonexistent
+            vb_resp_data[13] = (!i_available.read()[hsel]);// allunavail
+            vb_resp_data[12] = (!i_available.read()[hsel]);// anyunavail
+            vb_resp_data[11] = ((!i_halted.read()[hsel]) && i_available.read()[hsel]);// allrunning:
+            vb_resp_data[10] = ((!i_halted.read()[hsel]) && i_available.read()[hsel]);// anyrunning:
+            vb_resp_data[9] = (i_halted.read()[hsel] && i_available.read()[hsel]);// allhalted:
+            vb_resp_data[8] = (i_halted.read()[hsel] && i_available.read()[hsel]);// anyhalted:
+            vb_resp_data[7] = 1;                           // authenticated:
+            vb_resp_data[5] = 1;                           // hasresethaltreq
+            vb_resp_data(3, 0) = 2;                        // version: dbg spec v0.13
+        } else if (r.regidx.read() == 0x12) {               // hartinfo
             // Not available core should returns 0
-            if (i_available.read()[hsel]) {
-                vb_resp_data(23, 20) = 0x2;                     // nscratch number of dscratch registers
-                vb_resp_data[16] = 0;                           // dataaccess: 0=CSR shadowed;1=memory shadowed
-                vb_resp_data(15, 12) = 0x0;                     // datasize
-                vb_resp_data(11, 0) = 0x0;                      // dataaddr
+            if (i_available.read()[hsel] == 1) {
+                vb_resp_data(23, 20) = CFG_DSCRATCH_REG_TOTAL;// nscratch
+                vb_resp_data[16] = 0;                      // dataaccess: 0=CSR shadowed;1=memory shadowed
+                vb_resp_data(15, 12) = 0;                  // datasize
+                vb_resp_data(11, 0) = 0;                   // dataaddr
             }
-        } else if (r.regidx.read() == 0x16) {                   // abstractcs
-            vb_resp_data(28,24) = CFG_PROGBUF_REG_TOTAL;
-            vb_resp_data[12] = v_cmd_busy;                      // busy
-            vb_resp_data(10,8) = r.cmderr;
-            vb_resp_data(3,0) = CFG_DATA_REG_TOTAL;
-            if (r.regwr && r.wdata.read()(10,8).or_reduce()) {
+        } else if (r.regidx.read() == 0x16) {               // abstractcs
+            vb_resp_data(28, 24) = CFG_PROGBUF_REG_TOTAL;
+            vb_resp_data[12] = v_cmd_busy;                 // busy
+            vb_resp_data(10, 8) = r.cmderr;
+            vb_resp_data(3, 0) = CFG_DATA_REG_TOTAL;
+            if ((r.regwr.read() == 1) && (r.wdata.read()(10, 8).or_reduce() == 1)) {
                 v.cmderr = CMDERR_NONE;
             }
-        } else if (r.regidx.read() == 0x17) {                   // command
-            if (r.regwr) {
+        } else if (r.regidx.read() == 0x17) {               // command
+            if (r.regwr.read() == 1) {
                 if (r.cmderr.read() == CMDERR_NONE) {
                     // If cmderr is non-zero, writes to this register are ignores (@see spec)
-                    if (v_cmd_busy) {
+                    if (v_cmd_busy == 1) {
                         v.cmderr = CMDERR_BUSY;
                     } else {
                         v.command = r.wdata;
@@ -462,33 +369,33 @@ void DmiDebug::comb() {
                     }
                 }
             }
-        } else if (r.regidx.read() == 0x18) {                   // abstractauto
-            vb_resp_data(CFG_DATA_REG_TOTAL - 1, 0) = r.autoexecdata;
-            vb_resp_data(16 + CFG_PROGBUF_REG_TOTAL-1, 16) = r.autoexecprogbuf;
-            if (r.regwr) {
-                v.autoexecdata = r.wdata.read()(CFG_DATA_REG_TOTAL - 1, 0);
-                v.autoexecprogbuf = r.wdata.read()(16 + CFG_PROGBUF_REG_TOTAL-1, 16);
+        } else if (r.regidx.read() == 0x18) {               // abstractauto
+            vb_resp_data((CFG_DATA_REG_TOTAL - 1), 0) = r.autoexecdata;
+            vb_resp_data(((16 + CFG_PROGBUF_REG_TOTAL) - 1), 16) = r.autoexecprogbuf;
+            if (r.regwr.read() == 1) {
+                v.autoexecdata = r.wdata.read()((CFG_DATA_REG_TOTAL - 1), 0);
+                v.autoexecprogbuf = r.wdata.read()(((16 + CFG_PROGBUF_REG_TOTAL) - 1), 16);
             }
-        } else if (r.regidx.read()(6, 4) == 0x02) {             // progbuf[n]
-            int tidx = r.regidx.read()(3, 0).to_int();
-            vb_resp_data = r.progbuf_data.read()(32*tidx+31, 32*tidx);
-            if (r.regwr) {
-                sc_biguint<CFG_PROGBUF_REG_TOTAL*32> t2 = r.progbuf_data;
-                t2(32*tidx+31, 32*tidx) = r.wdata.read();
-                v.progbuf_data = t2;
+        } else if (r.regidx.read()(6, 4) == 0x02) {         // progbuf[n]
+            vb_resp_data = r.progbuf_data.read()((32 * r.regidx.read()(3, 0).to_int()) + 32 - 1, (32 * r.regidx.read()(3, 0).to_int())).to_uint64();
+            if (r.regwr.read() == 1) {
+                t_progbuf((32 * r.regidx.read()(3, 0).to_int()) + 32- 1, (32 * r.regidx.read()(3, 0).to_int())) = r.wdata;
+                v.progbuf_data = t_progbuf;
             }
-            if (r.autoexecprogbuf.read()[tidx] && r.cmderr.read() == CMDERR_NONE) {
-                if (v_cmd_busy) {
+            if ((r.autoexecprogbuf.read()[r.regidx.read()(3, 0).to_int()] == 1)
+                    && (r.cmderr.read() == CMDERR_NONE)) {
+                if (v_cmd_busy == 1) {
                     v.cmderr = CMDERR_BUSY;
                 } else {
                     v.cmdstate = CMD_STATE_INIT;
                 }
             }
-        } else if (r.regidx.read() == 0x40) {                   // haltsum0
-            vb_resp_data(CFG_CPU_MAX-1, 0) = i_halted;
+        } else if (r.regidx.read() == 0x40) {               // haltsum0
+            vb_resp_data((CFG_CPU_MAX - 1), 0) = i_halted;
         }
         break;
-    default:;
+    default:
+        break;
     }
 
     // Abstract Command executor state machine:
@@ -507,30 +414,30 @@ void DmiDebug::comb() {
         break;
     case CMD_STATE_INIT:
         v.postincrement = r.command.read()[CmdPostincrementBit];
-        if (r.command.read()(31, 24) == 0x0) {
+        if (r.command.read()(31, 24) == 0) {
             // Register access command
-            if (r.command.read()[CmdTransferBit]) {             // transfer
+            if (r.command.read()[CmdTransferBit] == 1) {    // transfer
                 v.cmdstate = CMD_STATE_REQUEST;
                 v.cmd_regaccess = 1;
-                v.cmd_read = !r.command.read()[CmdWriteBit];
+                v.cmd_read = (!r.command.read()[CmdWriteBit]);
                 v.cmd_write = r.command.read()[CmdWriteBit];
 
                 v.dport_req_valid = 1;
-                v.dport_addr = (0, r.command.read()(15, 0));
-                v.dport_wdata = (r.data1, r.data0);
+                v.dport_addr = (0ull, r.command.read()(15, 0));
+                v.dport_wdata = (r.data1.read(), r.data0.read());
                 v.dport_size = r.command.read()(22, 20);
-            } else if (r.command.read()[CmdPostexecBit]) {      // no transfer only buffer execution
+            } else if (r.command.read()[CmdPostexecBit] == 1) {// no transfer only buffer execution
                 v.cmdstate = CMD_STATE_REQUEST;
-        
+
                 v.dport_req_valid = 1;
                 v.cmd_progexec = 1;
             } else {
                 // Empty command: do nothing
                 v.cmdstate = CMD_STATE_IDLE;
             }
-        } else if (r.command.read()(31, 24) == 0x1) {
+        } else if (r.command.read()(31, 24) == 1) {
             // Quick access command
-            if (i_halted.read()[hsel]) {
+            if (i_halted.read()[hsel] == 1) {
                 v.cmderr = CMDERR_WRONGSTATE;
                 v.cmdstate = CMD_STATE_IDLE;
             } else {
@@ -538,17 +445,17 @@ void DmiDebug::comb() {
                 v.cmd_quickaccess = 1;
                 v.cmdstate = CMD_STATE_WAIT_HALTED;
             }
-        } else if (r.command.read()(31, 24) == 0x2) {
+        } else if (r.command.read()(31, 24) == 2) {
             // Memory access command
             v.cmdstate = CMD_STATE_REQUEST;
             v.cmd_memaccess = 1;
-            v.cmd_read = !r.command.read()[CmdWriteBit];
+            v.cmd_read = (!r.command.read()[CmdWriteBit]);
             v.cmd_write = r.command.read()[CmdWriteBit];
             v.aamvirtual = r.command.read()[23];
 
             v.dport_req_valid = 1;
-            v.dport_addr = (r.data3, r.data2);
-            v.dport_wdata = (r.data1, r.data0);
+            v.dport_addr = (r.data3.read(), r.data2.read());
+            v.dport_wdata = (r.data1.read(), r.data0.read());
             v.dport_size = r.command.read()(22, 20);
         } else {
             // Unsupported command type:
@@ -556,68 +463,68 @@ void DmiDebug::comb() {
         }
         break;
     case CMD_STATE_REQUEST:
-        if (i_dporto.read().req_ready) {
+        if (i_dport_req_ready.read() == 1) {
             v.cmdstate = CMD_STATE_RESPONSE;
             v.dport_req_valid = 0;
             v.dport_resp_ready = 1;
         }
         break;
     case CMD_STATE_RESPONSE:
-        if (i_dporto.read().resp_valid) {
+        if (i_dport_resp_valid.read() == 1) {
             v.dport_resp_ready = 0;
-            if (r.cmd_read) {
-                switch (r.command.read()(22,20)) {          // aamsize/aarsize
+            if (r.cmd_read.read() == 1) {
+                switch (r.command.read()(22, 20)) {         // aamsize/aarsize
                 case 0:
-                    v.data0 = (0, i_dporto.read().rdata(7, 0));
+                    v.data0 = (0, i_dport_rdata.read()(7, 0));
                     v.data1 = 0;
                     break;
                 case 1:
-                    v.data0 = (0, i_dporto.read().rdata(15, 0));
+                    v.data0 = (0, i_dport_rdata.read()(15, 0));
                     v.data1 = 0;
                     break;
                 case 2:
-                    v.data0 = i_dporto.read().rdata(31, 0);
+                    v.data0 = i_dport_rdata.read()(31, 0);
                     v.data1 = 0;
                     break;
                 case 3:
-                    v.data0 = i_dporto.read().rdata(31, 0);
-                    v.data1 = i_dporto.read().rdata(63, 32);
+                    v.data0 = i_dport_rdata.read()(31, 0);
+                    v.data1 = i_dport_rdata.read()(63, 32);
                     break;
-                default:;
+                default:
+                    break;
                 }
             }
-            if (r.postincrement) {
+            if (r.postincrement.read() == 1) {
                 v.postincrement = 0;
                 if (r.command.read()(31, 24) == 0) {
                     // Register access command:
-                    sc_uint<32> t1 = r.command;
-                    t1(15, 0) = t1(15, 0) + 1;
-                    v.command = t1;
+                    t_command(15, 0) = (r.command.read()(15, 0) + 1);
+                    v.command = t_command;
                 } else if (r.command.read()(31, 24) == 2) {
                     // Memory access command
-                    sc_uint<64> arg1 = (r.data3, r.data2);
-                    switch (r.command.read()(22,20)) {          // aamsize
+                    switch (r.command.read()(22, 20)) {     // aamsize
                     case 0:
-                        arg1 = arg1 + 1;
+                        vb_datainc = ((r.data3.read(), r.data2.read()) + 1ull);
                         break;
                     case 1:
-                        arg1 = arg1 + 2;
+                        vb_datainc = ((r.data3.read(), r.data2.read()) + 2ull);
                         break;
                     case 2:
-                        arg1 = arg1 + 4;
+                        vb_datainc = ((r.data3.read(), r.data2.read()) + 4ull);
                         break;
                     case 3:
-                        arg1 = arg1 + 8;
+                        vb_datainc = ((r.data3.read(), r.data2.read()) + 8ull);
                         break;
-                    default:;
+                    default:
+                        break;
                     }
-                    v.data2 = arg1(31, 0);
-                    v.data3 = arg1(63, 32);
+                    v.data3 = vb_datainc(63, 32);
+                    v.data2 = vb_datainc(31, 0);
                 }
             }
-            if (i_dporto.read().resp_error) {
+            if (i_dport_resp_error.read() == 1) {
                 v.cmdstate = CMD_STATE_IDLE;
-                if (r.cmd_memaccess) {
+                if (r.cmd_memaccess.read() == 1) {
                     // @spec The abstract command failed due to a bus error
                     //       (e.g. alignment, access size, or timeout).
                     v.cmderr = CMDERR_BUSERROR;
@@ -626,7 +533,7 @@ void DmiDebug::comb() {
                     //        command (e.g. while executing the Program Buffer).
                     v.cmderr = CMDERR_EXCEPTION;
                 }
-            } else if (r.cmd_regaccess.read() && r.command.read()[CmdPostexecBit]) {
+            } else if ((r.cmd_regaccess.read() == 1) && (r.command.read()[CmdPostexecBit] == 1)) {
                 v.dport_req_valid = 1;
                 v.cmd_progexec = 1;
                 v.cmd_regaccess = 0;
@@ -636,91 +543,61 @@ void DmiDebug::comb() {
             } else {
                 v.cmdstate = CMD_STATE_IDLE;
             }
-            if (r.cmd_quickaccess) {
+            if (r.cmd_quickaccess.read() == 1) {
                 // fast command continued even if progbuf execution failed (@see spec)
                 v.resumereq = 1;
             }
         }
         break;
     case CMD_STATE_WAIT_HALTED:
-        if (i_halted.read()[hsel]) {
+        if (i_halted.read()[hsel] == 1) {
             v.cmdstate = CMD_STATE_REQUEST;
 
             v.dport_req_valid = 1;
             v.cmd_progexec = 1;
         }
         break;
-    default:;
+    default:
+        break;
     }
-
-    if (v_resp_valid) {
-        if (!r.bus_jtag) {
-            v.bus_resp_data = vb_resp_data;
-        } else {
-            v.jtag_resp_data = vb_resp_data;
-        }
+    if (v_resp_valid == 1) {
+        v.jtag_resp_data = vb_resp_data;
     }
-    v.bus_resp_valid = v_resp_valid && !r.bus_jtag;
-
     vb_req_type[DPortReq_Write] = r.cmd_write;
     vb_req_type[DPortReq_RegAccess] = r.cmd_regaccess;
     vb_req_type[DPortReq_MemAccess] = r.cmd_memaccess;
     vb_req_type[DPortReq_MemVirtual] = r.aamvirtual;
     vb_req_type[DPortReq_Progexec] = r.cmd_progexec;
 
-
-    if (!i_nrst) {
-        R_RESET(v);
+    if (!async_reset_ && i_nrst.read() == 0) {
+        dmidebug_r_reset(v);
     }
 
     o_ndmreset = r.ndmreset;
     o_hartsel = r.hartsel;
-    vdporti.haltreq = r.haltreq;
-    vdporti.resumereq = r.resumereq;
-    vdporti.resethaltreq = r.resethaltreq;
-    vdporti.hartreset = r.hartreset;
-    vdporti.req_valid = r.dport_req_valid;
-    vdporti.dtype = vb_req_type;
-    vdporti.addr = r.dport_addr;
-    vdporti.wdata = r.dport_wdata;
-    vdporti.size = r.dport_size;
-    vdporti.resp_ready = r.dport_resp_ready;
-    o_dporti = vdporti;
+    o_haltreq = r.haltreq;
+    o_resumereq = r.resumereq;
+    o_resethaltreq = r.resethaltreq;
+    o_hartreset = r.hartreset;
+    o_dport_req_valid = r.dport_req_valid;
+    o_dport_req_type = vb_req_type;
+    o_dport_addr = r.dport_addr;
+    o_dport_wdata = r.dport_wdata;
+    o_dport_size = r.dport_size;
+    o_dport_resp_ready = r.dport_resp_ready;
     o_progbuf = r.progbuf_data;
 
+    w_cdc_dmi_req_ready = v_cdc_dmi_req_ready;
     wb_jtag_dmi_resp_data = r.jtag_resp_data;
-    w_jtag_dmi_busy = 0;//r.dmstate.read().or_reduce();
+    w_jtag_dmi_busy = 0;                                   // |r.dmstate
     w_jtag_dmi_error = 0;
 }
 
-void DmiDebug::registers() {
-    r = v;
-
-    if (bus_req_valid_ && r.dmstate.read() == DM_STATE_IDLE) {
-        bus_req_valid_ = 0;
-        r.bus_req_valid = 1;
-        r.bus_req_addr = bus_req_addr_;
-        r.bus_req_wdata = bus_req_wdata_;
-        r.bus_req_write = bus_req_write_;
-        r.bus_resp_valid = 0;
-        r.bus_resp_data = 0;
-    }
-
-    if (r.bus_resp_valid) {
-        bus_resp_data_ = r.bus_resp_data.read();
-        // We cannot get here without valid request no need additional checks
-        lasttrans_.rpayload.b32[0] = bus_resp_data_;
-        lastcb_->nb_response(&lasttrans_);
-    }
-
-    w_i_trst = trst_;
-    w_i_tck = tck_;
-    w_i_tms = tms_;
-    w_i_tdi = tdi_;
-    if (dtm_scaler_cnt_ < 3) {
-        if (++dtm_scaler_cnt_ == 3) {
-            RISCV_event_set(&event_dtm_ready_);
-        }
+void dmidebug::registers() {
+    if (async_reset_ && i_nrst.read() == 0) {
+        dmidebug_r_reset(r);
+    } else {
+        r = v;
     }
 }
 
