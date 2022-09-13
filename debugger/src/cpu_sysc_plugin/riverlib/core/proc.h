@@ -201,6 +201,14 @@ SC_MODULE(Processor) {
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
         sc_signal<bool> valid;
         sc_signal<bool> debug_valid;
+        sc_signal<bool> mmu_ena;
+        sc_signal<bool> req_data_valid;
+        sc_signal<sc_uint<MemopType_Total>> req_data_type;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_data_addr;
+        sc_signal<sc_uint<64>> req_data_wdata;
+        sc_signal<sc_uint<8>> req_data_wstrb;
+        sc_signal<sc_uint<2>> req_data_size;
+        sc_signal<bool> resp_data_ready;
     };
 
     struct WriteBackType {
@@ -274,6 +282,7 @@ SC_MODULE(Processor) {
 
     PipelineType w;                                         // 5-stages CPU pipeline
     MmuType immu;
+    MmuType dmmu;
     IntRegsType ireg;
     CsrType csr;
     DebugType dbg;
@@ -312,19 +321,22 @@ SC_MODULE(Processor) {
     sc_signal<sc_uint<64>> unused_immu_mem_req_wdata;
     sc_signal<sc_uint<8>> unused_immu_mem_req_wstrb;
     sc_signal<sc_uint<2>> unused_immu_mem_req_size;
-    sc_signal<bool> unused_immu_core_req_fetch;
+    sc_signal<bool> w_immu_core_req_fetch;                  // assign to 1: fetch instruction
+    sc_signal<bool> w_dmmu_core_req_fetch;                  // assign to 1: data
     sc_signal<sc_uint<MemopType_Total>> unused_immu_core_req_type;
     sc_signal<sc_uint<64>> unused_immu_core_req_wdata;
     sc_signal<sc_uint<8>> unused_immu_core_req_wstrb;
     sc_signal<sc_uint<2>> unused_immu_core_req_size;
     sc_signal<bool> unused_immu_mem_resp_store_fault;
     sc_signal<sc_uint<CFG_MMU_TLB_AWIDTH>> unused_immu_fence_addr;
+    sc_signal<bool> unused_dmmu_mem_resp_executable;
 
     InstrFetch *fetch0;
     InstrDecoder *dec0;
     InstrExecute *exec0;
     MemAccess *mem0;
     Mmu *immu0;
+    Mmu *dmmu0;
     BranchPredictor *predic0;
     RegIntBank *iregs0;
     ic_csr_m2_s1 *iccsr0;
