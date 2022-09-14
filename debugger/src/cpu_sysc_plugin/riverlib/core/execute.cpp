@@ -564,6 +564,7 @@ void InstrExecute::comb() {
     bool v_memop_debug;
     bool v_reg_ena;
     sc_uint<6> vb_reg_waddr;
+    bool v_instr_executable;
     bool v_instr_misaligned;
     bool v_store_misaligned;
     bool v_load_misaligned;
@@ -623,6 +624,7 @@ void InstrExecute::comb() {
     v_memop_debug = 0;
     v_reg_ena = 0;
     vb_reg_waddr = 0;
+    v_instr_executable = 0;
     v_instr_misaligned = 0;
     v_store_misaligned = 0;
     v_load_misaligned = 0;
@@ -933,6 +935,8 @@ void InstrExecute::comb() {
             && (mux.radr1 == REG_RA)) {
         v_ret = 1;
     }
+
+    v_instr_executable = (i_instr_executable || i_dbg_progbuf_ena);
     v_mem_ex = (r.mem_ex_load_fault
             || r.mem_ex_store_fault
             || r.mem_ex_mpu_store
@@ -942,7 +946,7 @@ void InstrExecute::comb() {
             || i_unsup_exception
             || i_instr_load_fault
             || v_mem_ex
-            || (!i_instr_executable)
+            || (!v_instr_executable)
             || r.stack_overflow
             || r.stack_underflow
             || v_instr_misaligned
@@ -972,7 +976,7 @@ void InstrExecute::comb() {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_InstrMisalign;         // Instruction address misaligned
         vb_csr_cmd_wdata = mux.pc;
-    } else if ((i_instr_load_fault.read() == 1) || (i_instr_executable.read() == 0)) {
+    } else if ((i_instr_load_fault.read() == 1) || (v_instr_executable == 0)) {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_InstrFault;            // Instruction access fault
         vb_csr_cmd_wdata = mux.pc;
