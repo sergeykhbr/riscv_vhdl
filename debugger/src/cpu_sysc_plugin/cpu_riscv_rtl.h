@@ -39,6 +39,7 @@
 #include "cmds/cmd_br_riscv.h"
 #include "rtl_wrapper.h"
 #include "tap_bitbang.h"
+#include "bus_slv.h"
 #include "l1serdes.h"
 #include "ambalib/types_amba.h"
 #include "riverlib/river_amba.h"
@@ -140,6 +141,15 @@ class CpuRiscV_RTL : public IService,
     sc_signal<bool> w_tdi;
     sc_signal<bool> w_tdo;
 
+    sc_signal<bool> w_bus_req_valid;
+    sc_signal<bool> w_bus_req_ready;
+    sc_signal<sc_uint<7>> wb_bus_req_addr;
+    sc_signal<bool> w_bus_req_write;
+    sc_signal<sc_uint<32>> wb_bus_req_wdata;
+    sc_signal<bool> w_bus_resp_valid;
+    sc_signal<bool> w_bus_resp_ready;
+    sc_signal<sc_uint<32>> wb_bus_resp_rdata;
+
     
     sc_signal<axi4_l2_in_type> l2i;
     sc_signal<axi4_l2_out_type> l2o;
@@ -156,6 +166,7 @@ class CpuRiscV_RTL : public IService,
     L2Top *l2cache_;
     DmiDebug *dmi_;
     TapBitBang *tapbb_;
+    BusSlave *dmislv_;
 
     CmdBrRiscv *pcmd_br_;
     ICommand *pcmd_cpu_;

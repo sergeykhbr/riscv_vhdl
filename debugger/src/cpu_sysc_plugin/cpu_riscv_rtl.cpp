@@ -114,8 +114,8 @@ void CpuRiscV_RTL::postinitService() {
     wrapper_->setPLIC(iirqext_);
     wrapper_->setClockHz(freqHz_.to_int());
     wrapper_->generateVCD(i_vcd_, o_vcd_);
-    dmi_->setBaseAddress(dmibar_.to_uint64());
-    dmi_->setLength(4096);
+    dmislv_->setBaseAddress(dmibar_.to_uint64());
+    dmislv_->setLength(4096);
     dmi_->generateVCD(i_vcd_, o_vcd_);
     if (l2cache_) {
         l2cache_->generateVCD(i_vcd_, o_vcd_);
@@ -174,19 +174,38 @@ void CpuRiscV_RTL::createSystemC() {
     tapbb_->o_tdo(w_tdi);
     tapbb_->i_tdi(w_tdo);
 
+    dmislv_ = new BusSlave("dmislv");
+    registerPortInterface("dmi", static_cast<IMemoryOperation *>(dmislv_));
+    dmislv_->i_clk(wrapper_->o_clk),
+    dmislv_->i_nrst(w_dmi_nrst),
+    dmislv_->o_req_valid(w_bus_req_valid);
+    dmislv_->i_req_ready(w_bus_req_ready);
+    dmislv_->o_req_addr(wb_bus_req_addr);
+    dmislv_->o_req_write(w_bus_req_write);
+    dmislv_->o_req_wdata(wb_bus_req_wdata);
+    dmislv_->i_slv_resp_valid(w_bus_resp_valid);
+    dmislv_->o_slv_resp_ready(w_bus_resp_ready);
+    dmislv_->i_slv_resp_rdata(wb_bus_resp_rdata);
+
 
     dmi_ = new DmiDebug(static_cast<IService *>(this),
                         "dmidbg",
                         asyncReset_.to_bool());
-    registerPortInterface("dmi", static_cast<IMemoryOperation *>(dmi_));
-    //registerPortInterface("tap", static_cast<IJtagTap *>(dmi_));
     dmi_->i_clk(wrapper_->o_clk);
+    dmi_->i_nrst(w_dmi_nrst);
     dmi_->i_trst(w_trst);
     dmi_->i_tck(w_tck);
     dmi_->i_tms(w_tms);
     dmi_->i_tdi(w_tdi);
     dmi_->o_tdo(w_tdo);
-    dmi_->i_nrst(w_dmi_nrst);
+    dmi_->i_bus_req_valid(w_bus_req_valid);
+    dmi_->o_bus_req_ready(w_bus_req_ready);
+    dmi_->i_bus_req_addr(wb_bus_req_addr);
+    dmi_->i_bus_req_write(w_bus_req_write);
+    dmi_->i_bus_req_wdata(wb_bus_req_wdata);
+    dmi_->o_bus_resp_valid(w_bus_resp_valid);
+    dmi_->i_bus_resp_ready(w_bus_resp_ready);
+    dmi_->o_bus_resp_rdata(wb_bus_resp_rdata);
     dmi_->o_ndmreset(w_ndmreset);               // reset whole system
     dmi_->i_halted(wb_halted);
     dmi_->i_available(wb_available);

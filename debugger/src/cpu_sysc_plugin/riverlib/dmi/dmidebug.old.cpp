@@ -21,12 +21,20 @@ namespace debugger {
 DmiDebug::DmiDebug(IFace *parent, sc_module_name name, bool async_reset)
     : sc_module(name),
     i_clk("i_clk"),
+    i_nrst("i_nrst"),
     i_trst("i_trst"),
     i_tck("i_tck"),
     i_tms("i_tms"),
     i_tdi("i_tdi"),
     o_tdo("o_tdo"),
-    i_nrst("i_nrst"),
+    i_bus_req_valid("i_bus_req_valid"),
+    o_bus_req_ready("o_bus_req_ready"),
+    i_bus_req_addr("i_bus_req_addr"),
+    i_bus_req_write("i_bus_req_write"),
+    i_bus_req_wdata("i_bus_req_wdata"),
+    o_bus_resp_valid("o_bus_resp_valid"),
+    i_bus_resp_ready("i_bus_resp_ready"),
+    o_bus_resp_rdata("o_bus_resp_rdata"),
     o_ndmreset("o_ndmreset"),
     i_halted("i_halted"),
     i_available("i_available"),
@@ -54,10 +62,11 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name, bool async_reset)
     sensitive << w_cdc_dmi_reset;
     sensitive << w_cdc_dmi_hardreset;
 
-    sensitive << r.bus_req_valid;
-    sensitive << r.bus_req_addr;
-    sensitive << r.bus_req_write;
-    sensitive << r.bus_req_wdata;
+    sensitive << i_bus_req_valid;
+    sensitive << i_bus_req_addr;
+    sensitive << i_bus_req_write;
+    sensitive << i_bus_req_wdata;
+    sensitive << i_bus_resp_ready;
     sensitive << r.bus_resp_valid;
     sensitive << r.bus_resp_data;
     sensitive << r.jtag_resp_data;
@@ -134,11 +143,6 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name, bool async_reset)
     cdc_->o_dmi_req_data(wb_cdc_dmi_req_data);
     cdc_->o_dmi_reset(w_cdc_dmi_reset);
     cdc_->o_dmi_hardreset(w_cdc_dmi_hardreset);
-
-    bus_req_valid_ = 0;
-    bus_req_addr_ = 0;
-    bus_req_write_ = 0;
-    bus_req_wdata_ = 0;
 }
 
 DmiDebug::~DmiDebug() {
@@ -165,11 +169,11 @@ void DmiDebug::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, wb_cdc_dmi_req_addr, pn + ".wb_cdc_dmi_req_addr");
         sc_trace(o_vcd, wb_cdc_dmi_req_data, pn + ".wb_cdc_dmi_req_data");
         sc_trace(o_vcd, r.bus_jtag, pn + ".r_bus_jtag");
-        sc_trace(o_vcd, r.bus_req_valid, pn + ".r_bus_req_valid");
-        sc_trace(o_vcd, r.bus_req_addr, pn + ".r_bus_req_addr");
-        sc_trace(o_vcd, r.bus_req_wdata, pn + ".r_bus_req_wdata");
-        sc_trace(o_vcd, r.bus_req_write, pn + ".r_bus_req_write");
-        sc_trace(o_vcd, r.bus_resp_valid, pn + ".r_bus_resp_valid");
+        sc_trace(o_vcd, i_bus_req_valid, i_bus_req_valid.name());
+        sc_trace(o_vcd, i_bus_req_addr, i_bus_req_addr.name());
+        sc_trace(o_vcd, i_bus_req_wdata, i_bus_req_wdata.name());
+        sc_trace(o_vcd, i_bus_req_write, i_bus_req_write.name());
+        sc_trace(o_vcd, o_bus_resp_valid, o_bus_resp_valid.name());
         sc_trace(o_vcd, r.bus_resp_data, pn + ".r_bus_resp_data");
         sc_trace(o_vcd, r.jtag_resp_data, pn + ".r_jtag_resp_data");
         sc_trace(o_vcd, r.dmstate, pn + ".r_dmstate");
@@ -200,45 +204,6 @@ void DmiDebug::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
 }
 
-ETransStatus DmiDebug::b_transport(Axi4TransactionType *trans) {
-    RISCV_error("%s", "Blocking access not supported. Use non-blocking instead");
-    return TRANS_ERROR;
-}
-
-ETransStatus DmiDebug::nb_transport(Axi4TransactionType *trans,
-                                    IAxi4NbResponse *cb) {
-
-    uint64_t off = trans->addr - getBaseAddress();
-
-    // Only 4-bytes requests:
-    if (trans->action == MemAction_Read) {
-        readreg(off >> 2);
-    } else {
-        if (trans->wstrb & 0x00FF) {
-            writereg(off >> 2, trans->wpayload.b32[0]);
-        } else if (trans->wstrb & 0xFF00) {
-            writereg((off + 4) >> 2, trans->wpayload.b32[1]);
-        }
-    }
-    lasttrans_ = *trans;
-    lastcb_ = cb;
-    return TRANS_OK;
-}
-
-
-void DmiDebug::readreg(uint64_t idx) {
-    bus_req_addr_ = idx;
-    bus_req_write_ = 0;
-    bus_req_valid_ = 1;
-}
-
-void DmiDebug::writereg(uint64_t idx, uint32_t w32) {
-    bus_req_addr_ = idx;
-    bus_req_wdata_ = w32;
-    bus_req_write_ = 1;
-    bus_req_valid_ = 1;
-}
-
 void DmiDebug::comb() {
     v = r;
     dport_in_type vdporti;
@@ -246,12 +211,14 @@ void DmiDebug::comb() {
     sc_uint<32> vb_resp_data;
     sc_uint<CFG_LOG2_CPU_MAX> vb_hartselnext;
     bool v_resp_valid;
+    bool v_bus_req_ready;
     int hsel;
     bool v_cmd_busy;
 
     vb_resp_data = 0;
     v_resp_valid = 0;
     w_cdc_dmi_req_ready = 0;
+    v_bus_req_ready = 0;
 
     vb_hartselnext = r.wdata.read()(16 + CFG_LOG2_CPU_MAX - 1, 16);
     hsel = r.hartsel.read().to_int();
@@ -268,7 +235,9 @@ void DmiDebug::comb() {
 
     switch (r.dmstate.read()) {
     case DM_STATE_IDLE:
+        v_bus_req_ready = 1;
         if (w_cdc_dmi_req_valid) {
+            v_bus_req_ready = 0;
             w_cdc_dmi_req_ready = 1;
             v.bus_jtag = 1;
             v.dmstate = DM_STATE_ACCESS;
@@ -276,14 +245,13 @@ void DmiDebug::comb() {
             v.wdata = wb_cdc_dmi_req_data;
             v.regwr = w_cdc_dmi_req_write;
             v.regrd = !w_cdc_dmi_req_write;
-        } else if (r.bus_req_valid.read()) {
+        } else if (i_bus_req_valid.read()) {
             v.bus_jtag = 0;
-            v.bus_req_valid = 0;
             v.dmstate = DM_STATE_ACCESS;
-            v.regidx = r.bus_req_addr;
-            v.wdata = r.bus_req_wdata;
-            v.regwr = r.bus_req_write;
-            v.regrd = !r.bus_req_write;
+            v.regidx = i_bus_req_addr;
+            v.wdata = i_bus_req_wdata;
+            v.regwr = i_bus_req_write;
+            v.regrd = !i_bus_req_write.read();
         }
         break;
     case DM_STATE_ACCESS:
@@ -614,7 +582,11 @@ void DmiDebug::comb() {
             v.jtag_resp_data = vb_resp_data;
         }
     }
-    v.bus_resp_valid = v_resp_valid && !r.bus_jtag;
+    if (v_resp_valid == 1 && r.bus_jtag == 0) {
+        v.bus_resp_valid = 1;
+    } else if (i_bus_resp_ready.read() == 1) {
+        v.bus_resp_valid = 0;
+    }
 
     vb_req_type[DPortReq_Write] = r.cmd_write;
     vb_req_type[DPortReq_RegAccess] = r.cmd_regaccess;
@@ -645,27 +617,14 @@ void DmiDebug::comb() {
     wb_jtag_dmi_resp_data = r.jtag_resp_data;
     w_jtag_dmi_busy = 0;//r.dmstate.read().or_reduce();
     w_jtag_dmi_error = 0;
+
+    o_bus_req_ready = v_bus_req_ready;
+    o_bus_resp_valid = r.bus_resp_valid;
+    o_bus_resp_rdata = r.bus_resp_data;
 }
 
 void DmiDebug::registers() {
     r = v;
-
-    if (bus_req_valid_ && r.dmstate.read() == DM_STATE_IDLE) {
-        bus_req_valid_ = 0;
-        r.bus_req_valid = 1;
-        r.bus_req_addr = bus_req_addr_;
-        r.bus_req_wdata = bus_req_wdata_;
-        r.bus_req_write = bus_req_write_;
-        r.bus_resp_valid = 0;
-        r.bus_resp_data = 0;
-    }
-
-    if (r.bus_resp_valid) {
-        bus_resp_data_ = r.bus_resp_data.read();
-        // We cannot get here without valid request no need additional checks
-        lasttrans_.rpayload.b32[0] = bus_resp_data_;
-        lastcb_->nb_response(&lasttrans_);
-    }
 }
 
 }  // namespace debugger
