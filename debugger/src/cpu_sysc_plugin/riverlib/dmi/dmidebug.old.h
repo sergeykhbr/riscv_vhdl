@@ -31,11 +31,15 @@
 namespace debugger {
 
 class DmiDebug : public sc_module,
-                 public IMemoryOperation,
-                 public IJtagTap {
+                 public IMemoryOperation {
 
  public:
     sc_in<bool> i_clk;
+    sc_in<bool> i_trst;
+    sc_in<bool> i_tck;
+    sc_in<bool> i_tms;
+    sc_in<bool> i_tdi;
+    sc_out<bool> o_tdo;
     sc_in<bool> i_nrst;
     sc_out<bool> o_ndmreset;                            // whole system reset including all cores
     sc_in<sc_uint<CFG_CPU_MAX>> i_halted;               // Halted cores
@@ -43,20 +47,6 @@ class DmiDebug : public sc_module,
     sc_out<sc_uint<CFG_LOG2_CPU_MAX>> o_hartsel;        // Selected hart index
     sc_in<dport_out_type> i_dporto;
     sc_out<dport_in_type> o_dporti;
-    /*sc_out<bool> o_haltreq;
-    sc_out<bool> o_resumereq;
-    sc_out<bool> o_resethaltreq;                        // Halt core after reset request.
-    sc_out<bool> o_hartreset;                           // Reset currently selected hart
-    sc_out<bool> o_dport_req_valid;                     // Debug access from DSU is valid
-    sc_out<sc_uint<DPortReq_Total>> o_dport_req_type;   // Debug access types
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_dport_addr;    // Register index
-    sc_out<sc_uint<RISCV_ARCH>> o_dport_wdata;          // Write value
-    sc_out<sc_uint<3>> o_dport_size;                    // 0=1B;1=2B;2=4B;3=8B;4=128B
-    sc_in<bool> i_dport_req_ready;                      // Response is ready
-    sc_out<bool> o_dport_resp_ready;                    // ready to accepd response
-    sc_in<bool> i_dport_resp_valid;                     // Response is valid
-    sc_in<bool> i_dport_resp_error;                     // Something goes wrong
-    sc_in<sc_uint<RISCV_ARCH>> i_dport_rdata;           // Response value or error code*/
     sc_out<sc_biguint<CFG_PROGBUF_REG_TOTAL*32>> o_progbuf;
 
     void comb();
@@ -71,11 +61,6 @@ class DmiDebug : public sc_module,
     virtual ETransStatus b_transport(Axi4TransactionType *trans);
     virtual ETransStatus nb_transport(Axi4TransactionType *trans,
                                       IAxi4NbResponse *cb) override ;
-
-    /** IJtagTap */
-    virtual void resetTAP(char trst, char srst);
-    virtual void setPins(char tck, char tms, char tdi);
-    virtual bool getTDO();
 
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
@@ -101,13 +86,6 @@ class DmiDebug : public sc_module,
     bool bus_req_write_;
     uint32_t bus_req_wdata_;
     uint32_t bus_resp_data_;
-    event_def event_dtm_ready_;
-
-    char trst_;
-    char tck_;
-    char tms_;
-    char tdi_;
-    int dtm_scaler_cnt_;
 
     static const unsigned DM_STATE_IDLE = 0;
     static const unsigned DM_STATE_ACCESS = 1;
@@ -131,11 +109,6 @@ class DmiDebug : public sc_module,
     static const int CmdWriteBit = 16;
     static const int CmdPostincrementBit = 19;
 
-    sc_signal<bool> w_i_trst;
-    sc_signal<bool> w_i_tck;
-    sc_signal<bool> w_i_tms;
-    sc_signal<bool> w_i_tdi;
-    sc_signal<bool> w_o_tdo;
     sc_signal<bool> w_tap_dmi_req_valid;
     sc_signal<bool> w_tap_dmi_req_write;
     sc_signal<sc_uint<7>> wb_tap_dmi_req_addr;

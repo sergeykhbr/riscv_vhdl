@@ -165,12 +165,27 @@ void CpuRiscV_RTL::createSystemC() {
     wrapper_->i_halted0(w_halted0);
     wrapper_->o_halted(wb_halted);
 
+    tapbb_ = new TapBitBang("tapbb");
+    registerPortInterface("tap", static_cast<IJtagTap *>(tapbb_));
+    tapbb_->i_clk(wrapper_->o_clk);
+    tapbb_->o_trst(w_trst);
+    tapbb_->o_tck(w_tck);
+    tapbb_->o_tms(w_tms);
+    tapbb_->o_tdo(w_tdi);
+    tapbb_->i_tdi(w_tdo);
+
+
     dmi_ = new DmiDebug(static_cast<IService *>(this),
                         "dmidbg",
                         asyncReset_.to_bool());
     registerPortInterface("dmi", static_cast<IMemoryOperation *>(dmi_));
-    registerPortInterface("tap", static_cast<IJtagTap *>(dmi_));
+    //registerPortInterface("tap", static_cast<IJtagTap *>(dmi_));
     dmi_->i_clk(wrapper_->o_clk);
+    dmi_->i_trst(w_trst);
+    dmi_->i_tck(w_tck);
+    dmi_->i_tms(w_tms);
+    dmi_->i_tdi(w_tdi);
+    dmi_->o_tdo(w_tdo);
     dmi_->i_nrst(w_dmi_nrst);
     dmi_->o_ndmreset(w_ndmreset);               // reset whole system
     dmi_->i_halted(wb_halted);

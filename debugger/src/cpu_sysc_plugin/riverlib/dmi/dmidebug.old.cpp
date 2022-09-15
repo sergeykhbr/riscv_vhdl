@@ -21,6 +21,11 @@ namespace debugger {
 DmiDebug::DmiDebug(IFace *parent, sc_module_name name, bool async_reset)
     : sc_module(name),
     i_clk("i_clk"),
+    i_trst("i_trst"),
+    i_tck("i_tck"),
+    i_tms("i_tms"),
+    i_tdi("i_tdi"),
+    o_tdo("o_tdo"),
     i_nrst("i_nrst"),
     o_ndmreset("o_ndmreset"),
     i_halted("i_halted"),
@@ -28,20 +33,6 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name, bool async_reset)
     o_hartsel("o_hartsel"),
     i_dporto("i_dporto"),
     o_dporti("o_dporti"),
-    /*o_haltreq("o_haltreq"),
-    o_resumereq("o_resumereq"),
-    o_resethaltreq("o_resethaltreq"),
-    o_hartreset("o_hartreset"),
-    o_dport_req_valid("o_dport_req_valid"),
-    o_dport_req_type("o_dport_req_type"),
-    o_dport_addr("o_dport_addr"),
-    o_dport_wdata("o_dport_wdata"),
-    o_dport_size("o_dport_size"),
-    i_dport_req_ready("i_dport_req_ready"),
-    o_dport_resp_ready("o_dport_resp_ready"),
-    i_dport_resp_valid("i_dport_resp_valid"),
-    i_dport_resp_error("i_dport_resp_error"),
-    i_dport_rdata("i_dport_rdata"),*/
     o_progbuf("o_progbuf") {
     iparent_ = parent;
     async_reset_ = async_reset;
@@ -51,13 +42,11 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name, bool async_reset)
     sensitive << i_nrst;
     sensitive << i_halted;
     sensitive << i_available;
-    sensitive << i_dporto;//i_dport_req_ready;
-    //sensitive << i_dport_resp_valid;
-    //sensitive << i_dport_rdata;
-    sensitive << w_i_trst;
-    sensitive << w_i_tck;
-    sensitive << w_i_tms;
-    sensitive << w_i_tdi;
+    sensitive << i_dporto;
+    sensitive << i_trst;
+    sensitive << i_tck;
+    sensitive << i_tms;
+    sensitive << i_tdi;
     sensitive << w_cdc_dmi_req_valid;
     sensitive << w_cdc_dmi_req_write;
     sensitive << wb_cdc_dmi_req_addr;
@@ -114,11 +103,11 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name, bool async_reset)
     sensitive << i_clk.pos();
 
     tap_ = new JtagTap("tap");
-    tap_->i_trst(w_i_trst);
-    tap_->i_tck(w_i_tck);
-    tap_->i_tms(w_i_tms);
-    tap_->i_tdi(w_i_tdi);
-    tap_->o_tdo(w_o_tdo);
+    tap_->i_trst(i_trst);
+    tap_->i_tck(i_tck);
+    tap_->i_tms(i_tms);
+    tap_->i_tdi(i_tdi);
+    tap_->o_tdo(o_tdo);
     tap_->o_dmi_req_valid(w_tap_dmi_req_valid);
     tap_->o_dmi_req_write(w_tap_dmi_req_write);
     tap_->o_dmi_req_addr(wb_tap_dmi_req_addr);
@@ -146,19 +135,15 @@ DmiDebug::DmiDebug(IFace *parent, sc_module_name name, bool async_reset)
     cdc_->o_dmi_reset(w_cdc_dmi_reset);
     cdc_->o_dmi_hardreset(w_cdc_dmi_hardreset);
 
-    trst_ = 0;
     bus_req_valid_ = 0;
     bus_req_addr_ = 0;
     bus_req_write_ = 0;
     bus_req_wdata_ = 0;
-    char tstr[256];
-    RISCV_sprintf(tstr, sizeof(tstr), "%s_event_dtm_ready", name);
-    RISCV_event_create(&event_dtm_ready_, tstr);
 }
 
 DmiDebug::~DmiDebug() {
     delete tap_;
-    RISCV_event_close(&event_dtm_ready_);
+    delete cdc_;
 }
 
 void DmiDebug::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
@@ -167,23 +152,14 @@ void DmiDebug::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (i_vcd) {
     }
     if (o_vcd) {
-        //sc_trace(o_vcd, o_haltreq, o_haltreq.name());
-        //sc_trace(o_vcd, o_resumereq, o_resumereq.name());
         sc_trace(o_vcd, i_halted, i_halted.name());
         sc_trace(o_vcd, i_dporto, i_dporto.name());
-        /*sc_trace(o_vcd, o_dport_req_type, o_dport_req_type.name());
-        sc_trace(o_vcd, o_dport_addr, o_dport_addr.name());
-        sc_trace(o_vcd, o_dport_wdata, o_dport_wdata.name());
-        sc_trace(o_vcd, i_dport_req_ready, i_dport_req_ready.name());
-        sc_trace(o_vcd, o_dport_resp_ready, o_dport_resp_ready.name());
-        sc_trace(o_vcd, i_dport_resp_valid, i_dport_resp_valid.name());
-        sc_trace(o_vcd, i_dport_rdata, i_dport_rdata.name());*/
 
         std::string pn(name());
-        sc_trace(o_vcd, w_i_trst, pn + ".i_trst");
-        sc_trace(o_vcd, w_i_tck, pn + ".i_tck");
-        sc_trace(o_vcd, w_i_tms, pn + ".i_tms");
-        sc_trace(o_vcd, w_i_tdi, pn + ".i_tdi");
+        sc_trace(o_vcd, i_trst, pn + ".i_trst");
+        sc_trace(o_vcd, i_tck, pn + ".i_tck");
+        sc_trace(o_vcd, i_tms, pn + ".i_tms");
+        sc_trace(o_vcd, i_tdi, pn + ".i_tdi");
         sc_trace(o_vcd, w_cdc_dmi_req_valid, pn + ".w_cdc_dmi_req_valid");
         sc_trace(o_vcd, w_cdc_dmi_req_write, pn + ".w_cdc_dmi_req_write");
         sc_trace(o_vcd, wb_cdc_dmi_req_addr, pn + ".wb_cdc_dmi_req_addr");
@@ -262,28 +238,6 @@ void DmiDebug::writereg(uint64_t idx, uint32_t w32) {
     bus_req_write_ = 1;
     bus_req_valid_ = 1;
 }
-
-void DmiDebug::resetTAP(char trst, char srst) {
-    trst_ = trst;
-    dtm_scaler_cnt_ = 0;
-    RISCV_event_clear(&event_dtm_ready_);
-    RISCV_event_wait(&event_dtm_ready_);
-}
-
-void DmiDebug::setPins(char tck, char tms, char tdi) {
-    tck_ = tck;
-    tms_ = tms;
-    tdi_ = tdi;
-    dtm_scaler_cnt_ = 0;
-
-    RISCV_event_clear(&event_dtm_ready_);
-    RISCV_event_wait(&event_dtm_ready_);
-}
-
-bool DmiDebug::getTDO() {
-    return w_o_tdo.read();
-}
-
 
 void DmiDebug::comb() {
     v = r;
@@ -711,16 +665,6 @@ void DmiDebug::registers() {
         // We cannot get here without valid request no need additional checks
         lasttrans_.rpayload.b32[0] = bus_resp_data_;
         lastcb_->nb_response(&lasttrans_);
-    }
-
-    w_i_trst = trst_;
-    w_i_tck = tck_;
-    w_i_tms = tms_;
-    w_i_tdi = tdi_;
-    if (dtm_scaler_cnt_ < 3) {
-        if (++dtm_scaler_cnt_ == 3) {
-            RISCV_event_set(&event_dtm_ready_);
-        }
     }
 }
 

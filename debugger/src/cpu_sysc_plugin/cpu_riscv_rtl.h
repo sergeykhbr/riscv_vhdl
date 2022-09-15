@@ -38,6 +38,7 @@
 #include "coreservices/iirq.h"
 #include "cmds/cmd_br_riscv.h"
 #include "rtl_wrapper.h"
+#include "tap_bitbang.h"
 #include "l1serdes.h"
 #include "ambalib/types_amba.h"
 #include "riverlib/river_amba.h"
@@ -133,6 +134,12 @@ class CpuRiscV_RTL : public IService,
     sc_signal<sc_biguint<32*CFG_PROGBUF_REG_TOTAL>> wb_progbuf;
     sc_signal<bool> w_halted0;
     sc_signal<bool> w_available0;
+    sc_signal<bool> w_trst;
+    sc_signal<bool> w_tck;
+    sc_signal<bool> w_tms;
+    sc_signal<bool> w_tdi;
+    sc_signal<bool> w_tdo;
+
     
     sc_signal<axi4_l2_in_type> l2i;
     sc_signal<axi4_l2_out_type> l2o;
@@ -148,6 +155,7 @@ class CpuRiscV_RTL : public IService,
     L1SerDes *l1serdes_;
     L2Top *l2cache_;
     DmiDebug *dmi_;
+    TapBitBang *tapbb_;
 
     CmdBrRiscv *pcmd_br_;
     ICommand *pcmd_cpu_;
