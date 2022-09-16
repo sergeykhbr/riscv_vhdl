@@ -318,7 +318,7 @@ void DecoderRv::comb() {
         vb_isa_type[ISA_R_type] = 1;
         vb_radr1 = (0, vb_instr(19, 15));
         vb_radr2 = (0, vb_instr(24, 20));
-        vb_waddr = vb_instr(11, 7);                        // rdc
+        vb_waddr = vb_instr(11, 7);                         // rdc
         switch (vb_opcode2) {
         case 0:
             if (vb_instr(31, 25) == 0x00) {
@@ -404,7 +404,7 @@ void DecoderRv::comb() {
     case OPCODE_ADDI:
         vb_isa_type[ISA_I_type] = 1;
         vb_radr1 = (0, vb_instr(19, 15));
-        vb_waddr = vb_instr(11, 7);                        // rd
+        vb_waddr = vb_instr(11, 7);                         // rd
         vb_imm = vb_instr(31, 20);
         if (vb_instr[31] == 1) {
             vb_imm((RISCV_ARCH - 1), 12) = ~0ull;
@@ -448,7 +448,7 @@ void DecoderRv::comb() {
     case OPCODE_ADDIW:
         vb_isa_type[ISA_I_type] = 1;
         vb_radr1 = (0, vb_instr(19, 15));
-        vb_waddr = vb_instr(11, 7);                        // rd
+        vb_waddr = vb_instr(11, 7);                         // rd
         vb_imm = vb_instr(31, 20);
         if (vb_instr[31] == 1) {
             vb_imm((RISCV_ARCH - 1), 12) = ~0ull;
@@ -478,7 +478,7 @@ void DecoderRv::comb() {
         vb_isa_type[ISA_R_type] = 1;
         vb_radr1 = (0, vb_instr(19, 15));
         vb_radr2 = (0, vb_instr(24, 20));
-        vb_waddr = vb_instr(11, 7);                        // rd
+        vb_waddr = vb_instr(11, 7);                         // rd
         switch (vb_opcode2) {
         case 0:
             if (vb_instr(31, 25) == 0x00) {
@@ -534,7 +534,7 @@ void DecoderRv::comb() {
     case OPCODE_AUIPC:
         vb_isa_type[ISA_U_type] = 1;
         vb_dec[Instr_AUIPC] = 1;
-        vb_waddr = vb_instr(11, 7);                        // rd
+        vb_waddr = vb_instr(11, 7);                         // rd
         vb_imm(31, 12) = vb_instr(31, 12);
         if (vb_instr[31] == 1) {
             vb_imm((RISCV_ARCH - 1), 32) = ~0ull;
@@ -575,7 +575,7 @@ void DecoderRv::comb() {
     case OPCODE_JAL:
         vb_isa_type[ISA_UJ_type] = 1;
         vb_dec[Instr_JAL] = 1;
-        vb_waddr = (0, vb_instr(11, 7));                   // rd
+        vb_waddr = (0, vb_instr(11, 7));                    // rd
         vb_imm(19, 1) = (vb_instr(19, 12), vb_instr[20], vb_instr(30, 21));
         if (vb_instr[31] == 1) {
             vb_imm((RISCV_ARCH - 1), 20) = ~0ull;
@@ -584,7 +584,7 @@ void DecoderRv::comb() {
     case OPCODE_JALR:
         vb_isa_type[ISA_I_type] = 1;
         vb_radr1 = (0, vb_instr(19, 15));
-        vb_waddr = vb_instr(11, 7);                        // rd
+        vb_waddr = vb_instr(11, 7);                         // rd
         vb_imm(11, 0) = vb_instr(31, 20);
         if (vb_instr[31] == 1) {
             vb_imm((RISCV_ARCH - 1), 12) = ~0ull;
@@ -601,7 +601,7 @@ void DecoderRv::comb() {
     case OPCODE_LB:
         vb_isa_type[ISA_I_type] = 1;
         vb_radr1 = (0, vb_instr(19, 15));
-        vb_waddr = vb_instr(11, 7);                        // rd
+        vb_waddr = vb_instr(11, 7);                         // rd
         vb_imm(11, 0) = vb_instr(31, 20);
         if (vb_instr[31] == 1) {
             vb_imm((RISCV_ARCH - 1), 12) = ~0ull;
@@ -636,7 +636,7 @@ void DecoderRv::comb() {
     case OPCODE_LUI:
         vb_isa_type[ISA_U_type] = 1;
         vb_dec[Instr_LUI] = 1;
-        vb_waddr = vb_instr(11, 7);                        // rd
+        vb_waddr = vb_instr(11, 7);                         // rd
         vb_imm(31, 12) = vb_instr(31, 12);
         if (vb_instr[31] == 1) {
             vb_imm((RISCV_ARCH - 1), 32) = ~0ull;
@@ -671,7 +671,7 @@ void DecoderRv::comb() {
     case OPCODE_CSRR:
         vb_isa_type[ISA_I_type] = 1;
         vb_radr1 = (0, vb_instr(19, 15));
-        vb_waddr = vb_instr(11, 7);                        // rd
+        vb_waddr = vb_instr(11, 7);                         // rd
         vb_csr_addr = vb_instr(31, 20);
         vb_imm(11, 0) = vb_instr(31, 20);
         if (vb_instr[31] == 1) {
@@ -739,7 +739,7 @@ void DecoderRv::comb() {
             case OPCODE_FPU_LD:
                 vb_isa_type[ISA_I_type] = 1;
                 vb_radr1 = (0, vb_instr(19, 15));
-                vb_waddr = (1, vb_instr(11, 7));           // rd
+                vb_waddr = (1, vb_instr(11, 7));            // rd
                 vb_imm(11, 0) = vb_instr(31, 20);
                 if (vb_instr[31] == 1) {
                     vb_imm((RISCV_ARCH - 1), 12) = ~0ull;
@@ -768,7 +768,7 @@ void DecoderRv::comb() {
                 vb_isa_type[ISA_R_type] = 1;
                 vb_radr1 = (1, vb_instr(19, 15));
                 vb_radr2 = (1, vb_instr(24, 20));
-                vb_waddr = (1, vb_instr(11, 7));           // rd
+                vb_waddr = (1, vb_instr(11, 7));            // rd
                 switch (vb_instr(31, 25)) {
                 case 0x1:
                     vb_dec[Instr_FADD_D] = 1;

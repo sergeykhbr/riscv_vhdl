@@ -292,7 +292,7 @@ void ICacheLru::comb() {
             } else {
                 v.mem_addr = (r.req_addr.read()((CFG_CPU_ADDR_BITS - 1), 3) << 3);
                 v.req_mem_type = ReadNoSnoop();
-                v.req_mem_size = 4;                        // uncached, 16 B
+                v.req_mem_size = 4;                         // uncached, 16 B
             }
         }
 
@@ -309,7 +309,7 @@ void ICacheLru::comb() {
         if (i_mem_data_valid.read() == 1) {
             v.cache_line_i = i_mem_data;
             v.state = State_CheckResp;
-            v.write_addr = r.req_addr;                     // Swap addres for 1 clock to write line
+            v.write_addr = r.req_addr;                      // Swap addres for 1 clock to write line
             v.req_addr = r.write_addr;
             if (i_mem_load_fault.read() == 1) {
                 v.load_fault = 1;
@@ -317,7 +317,7 @@ void ICacheLru::comb() {
         }
         break;
     case State_CheckResp:
-        v.req_addr = r.write_addr;                         // Restore req_addr after line write
+        v.req_addr = r.write_addr;                          // Restore req_addr after line write
         if ((r.req_mem_type.read()[REQ_MEM_TYPE_CACHED] == 0)
                 || (r.load_fault.read() == 1)) {
             v_resp_valid = 1;
@@ -330,7 +330,7 @@ void ICacheLru::comb() {
             v.state = State_SetupReadAdr;
             v_line_cs_write = 1;
             v_line_wflags[TAG_FL_VALID] = 1;
-            vb_line_wstrb = ~0ull;                         // write full line
+            vb_line_wstrb = ~0ull;                          // write full line
         }
         break;
     case State_SetupReadAdr:
@@ -338,8 +338,8 @@ void ICacheLru::comb() {
         break;
     case State_FlushAddr:
         v.state = State_FlushCheck;
-        v_direct_access = r.req_flush_all;                 // 0=only if hit; 1=will be applied ignoring hit
-        v_invalidate = 1;                                  // generate: wstrb='1; wflags='0
+        v_direct_access = r.req_flush_all;                  // 0=only if hit; 1=will be applied ignoring hit
+        v_invalidate = 1;                                   // generate: wstrb='1; wflags='0
         v.cache_line_i = 0;
         break;
     case State_FlushCheck:
@@ -360,7 +360,7 @@ void ICacheLru::comb() {
     case State_Reset:
         // Write clean line
         v_direct_access = 1;
-        v_invalidate = 1;                                  // generate: wstrb='1; wflags='0
+        v_invalidate = 1;                                   // generate: wstrb='1; wflags='0
         v.state = State_ResetWrite;
         break;
     case State_ResetWrite:

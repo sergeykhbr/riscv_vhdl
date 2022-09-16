@@ -241,7 +241,7 @@ void DoubleDiv::comb() {
 
     // expA - expB + 1023
     expAB_t = ((0, r.a.read()(62, 52)) + 1023);
-    expAB = ((0, expAB_t) - (0, r.b.read()(62, 52)));      // signed value
+    expAB = ((0, expAB_t) - (0, r.b.read()(62, 52)));       // signed value
 
     if (r.ena.read()[0] == 1) {
         v.divisor = divisor;

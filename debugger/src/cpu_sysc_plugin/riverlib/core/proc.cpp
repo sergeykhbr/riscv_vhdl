@@ -914,13 +914,13 @@ void Processor::comb() {
         wb_reg_waddr = w.e.reg_waddr;
         wb_reg_wdata = w.e.reg_wdata;
         wb_reg_wtag = w.e.reg_wtag;
-        w_reg_inorder = 0;                                 // Executor can overwrite memory loading before it was loaded
+        w_reg_inorder = 0;                                  // Executor can overwrite memory loading before it was loaded
     } else {
         w_reg_wena = w.w.wena;
         wb_reg_waddr = w.w.waddr;
         wb_reg_wdata = w.w.wdata;
         wb_reg_wtag = w.w.wtag;
-        w_reg_inorder = 1;                                 // Cannot write loaded from memory value if it was overwritten
+        w_reg_inorder = 1;                                  // Cannot write loaded from memory value if it was overwritten
     }
     w_flush_pipeline = (w.e.flushi || csr.flushi_ena);
     if (w.e.flushi.read() == 1) {

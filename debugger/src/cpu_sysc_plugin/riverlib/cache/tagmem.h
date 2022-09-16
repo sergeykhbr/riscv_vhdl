@@ -223,7 +223,7 @@ void TagMem<abus, ibits, lnbits, flbits, snoop>::comb() {
 
 
     if (r.tagaddr.read() == wb_tago_rdata.read()((TAG_BITS - 1), 0)) {
-        v_hit = wb_tago_rdata.read()[TAG_BITS];            // valid bit
+        v_hit = wb_tago_rdata.read()[TAG_BITS];             // valid bit
     }
 
     vb_raddr((abus - 1), (ibits + lnbits)) = wb_tago_rdata.read()((TAG_BITS - 1), 0);

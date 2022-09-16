@@ -195,7 +195,7 @@ void L2Dummy::comb() {
         vl2o.aw_bits.prot = r.req_prot;
         vl2o.aw_id = r.req_id;
         vl2o.aw_user = r.req_user;
-        vl2o.w_valid = 1;                                  // AXI-Lite request
+        vl2o.w_valid = 1;                                   // AXI-Lite request
         vl2o.w_last = 1;
         vl2o.w_data = r.req_wdata;
         vl2o.w_strb = r.req_wstrb;

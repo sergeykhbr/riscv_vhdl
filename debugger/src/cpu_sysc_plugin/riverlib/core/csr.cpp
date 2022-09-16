@@ -77,6 +77,12 @@ CsrRegs::CsrRegs(sc_module_name name,
     sensitive << i_irq_pending;
     sensitive << i_e_valid;
     sensitive << i_dbg_progbuf_ena;
+    for (int i = 0; i < 4; i++) {
+        sensitive << r.xmode[i].xepc;
+        sensitive << r.xmode[i].xpp;
+        sensitive << r.xmode[i].xpie;
+        sensitive << r.xmode[i].xie;
+    }
     sensitive << r.state;
     sensitive << r.cmd_type;
     sensitive << r.cmd_addr;
@@ -98,13 +104,8 @@ CsrRegs::CsrRegs(sc_module_name name,
     sensitive << r.mmu_ena;
     sensitive << r.satp_ppn;
     sensitive << r.satp_mode;
-    sensitive << r.mepc;
-    sensitive << r.uepc;
     sensitive << r.mode;
-    sensitive << r.uie;
-    sensitive << r.mie;
-    sensitive << r.mpie;
-    sensitive << r.mpp;
+    sensitive << r.mprv;
     sensitive << r.usie;
     sensitive << r.ssie;
     sensitive << r.msie;
@@ -190,6 +191,17 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_mpu_region_flags, o_mpu_region_flags.name());
         sc_trace(o_vcd, o_mmu_ena, o_mmu_ena.name());
         sc_trace(o_vcd, o_mmu_ppn, o_mmu_ppn.name());
+        for (int i = 0; i < 4; i++) {
+            char tstr[1024];
+            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_xmode%d_xepc", pn.c_str(), i);
+            sc_trace(o_vcd, r.xmode[i].xepc, tstr);
+            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_xmode%d_xpp", pn.c_str(), i);
+            sc_trace(o_vcd, r.xmode[i].xpp, tstr);
+            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_xmode%d_xpie", pn.c_str(), i);
+            sc_trace(o_vcd, r.xmode[i].xpie, tstr);
+            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_xmode%d_xie", pn.c_str(), i);
+            sc_trace(o_vcd, r.xmode[i].xie, tstr);
+        }
         sc_trace(o_vcd, r.state, pn + ".r_state");
         sc_trace(o_vcd, r.cmd_type, pn + ".r_cmd_type");
         sc_trace(o_vcd, r.cmd_addr, pn + ".r_cmd_addr");
@@ -211,13 +223,8 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.mmu_ena, pn + ".r_mmu_ena");
         sc_trace(o_vcd, r.satp_ppn, pn + ".r_satp_ppn");
         sc_trace(o_vcd, r.satp_mode, pn + ".r_satp_mode");
-        sc_trace(o_vcd, r.mepc, pn + ".r_mepc");
-        sc_trace(o_vcd, r.uepc, pn + ".r_uepc");
         sc_trace(o_vcd, r.mode, pn + ".r_mode");
-        sc_trace(o_vcd, r.uie, pn + ".r_uie");
-        sc_trace(o_vcd, r.mie, pn + ".r_mie");
-        sc_trace(o_vcd, r.mpie, pn + ".r_mpie");
-        sc_trace(o_vcd, r.mpp, pn + ".r_mpp");
+        sc_trace(o_vcd, r.mprv, pn + ".r_mprv");
         sc_trace(o_vcd, r.usie, pn + ".r_usie");
         sc_trace(o_vcd, r.ssie, pn + ".r_ssie");
         sc_trace(o_vcd, r.msie, pn + ".r_msie");
@@ -265,6 +272,12 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void CsrRegs::comb() {
+    int iM;
+    int iH;
+    int iS;
+    int iU;
+    sc_uint<2> vb_xpp;
+    bool v_step_irq;
     bool v_sw_irq;
     bool v_tmr_irq;
     bool v_ext_irq;
@@ -285,6 +298,12 @@ void CsrRegs::comb() {
     bool v_resp_valid;
     sc_uint<RISCV_ARCH> vb_mtvec_off;                       // 4-bytes aligned
 
+    iM = PRV_M;
+    iH = PRV_H;
+    iS = PRV_S;
+    iU = PRV_U;
+    vb_xpp = 0;
+    v_step_irq = 0;
     v_sw_irq = 0;
     v_tmr_irq = 0;
     v_ext_irq = 0;
@@ -305,10 +324,81 @@ void CsrRegs::comb() {
     v_resp_valid = 0;
     vb_mtvec_off = 0;
 
-    v = r;
+    for (int i = 0; i < 4; i++) {
+        v.xmode[i].xepc = r.xmode[i].xepc;
+        v.xmode[i].xpp = r.xmode[i].xpp;
+        v.xmode[i].xpie = r.xmode[i].xpie;
+        v.xmode[i].xie = r.xmode[i].xie;
+    }
+    v.state = r.state;
+    v.cmd_type = r.cmd_type;
+    v.cmd_addr = r.cmd_addr;
+    v.cmd_data = r.cmd_data;
+    v.cmd_exception = r.cmd_exception;
+    v.progbuf_end = r.progbuf_end;
+    v.progbuf_err = r.progbuf_err;
+    v.mtvec = r.mtvec;
+    v.mtvec_mode = r.mtvec_mode;
+    v.mtval = r.mtval;
+    v.mscratch = r.mscratch;
+    v.mstackovr = r.mstackovr;
+    v.mstackund = r.mstackund;
+    v.mpu_addr = r.mpu_addr;
+    v.mpu_mask = r.mpu_mask;
+    v.mpu_idx = r.mpu_idx;
+    v.mpu_flags = r.mpu_flags;
+    v.mpu_we = r.mpu_we;
+    v.mmu_ena = r.mmu_ena;
+    v.satp_ppn = r.satp_ppn;
+    v.satp_mode = r.satp_mode;
+    v.mode = r.mode;
+    v.mprv = r.mprv;
+    v.usie = r.usie;
+    v.ssie = r.ssie;
+    v.msie = r.msie;
+    v.utie = r.utie;
+    v.stie = r.stie;
+    v.mtie = r.mtie;
+    v.ueie = r.ueie;
+    v.seie = r.seie;
+    v.meie = r.meie;
+    v.usip = r.usip;
+    v.ssip = r.ssip;
+    v.msip = r.msip;
+    v.utip = r.utip;
+    v.stip = r.stip;
+    v.mtip = r.mtip;
+    v.ueip = r.ueip;
+    v.seip = r.seip;
+    v.meip = r.meip;
+    v.ex_fpu_invalidop = r.ex_fpu_invalidop;
+    v.ex_fpu_divbyzero = r.ex_fpu_divbyzero;
+    v.ex_fpu_overflow = r.ex_fpu_overflow;
+    v.ex_fpu_underflow = r.ex_fpu_underflow;
+    v.ex_fpu_inexact = r.ex_fpu_inexact;
+    v.trap_irq = r.trap_irq;
+    v.trap_cause = r.trap_cause;
+    v.trap_addr = r.trap_addr;
+    v.timer = r.timer;
+    v.cycle_cnt = r.cycle_cnt;
+    v.executed_cnt = r.executed_cnt;
+    v.dscratch0 = r.dscratch0;
+    v.dscratch1 = r.dscratch1;
+    v.dpc = r.dpc;
+    v.halt_cause = r.halt_cause;
+    v.dcsr_ebreakm = r.dcsr_ebreakm;
+    v.dcsr_stopcount = r.dcsr_stopcount;
+    v.dcsr_stoptimer = r.dcsr_stoptimer;
+    v.dcsr_step = r.dcsr_step;
+    v.dcsr_stepie = r.dcsr_stepie;
+    v.stepping_mode_cnt = r.stepping_mode_cnt;
+    v.ins_per_step = r.ins_per_step;
+    v.flushi_ena = r.flushi_ena;
+    v.flushi_addr = r.flushi_addr;
 
     v.mpu_we = 0;
     vb_mtvec_off = (r.mtvec.read()((RISCV_ARCH - 1), 2) << 2);
+    vb_xpp = r.xmode[r.mode.read().to_int()].xpp;
 
     switch (r.state.read()) {
     case State_Idle:
@@ -359,21 +449,21 @@ void CsrRegs::comb() {
         if (i_dbg_progbuf_ena.read() == 1) {
             // do not modify halt cause in debug mode
             v.progbuf_end = 1;
-            v.cmd_data = ~0ull;                            // signal to executor to switch into Debug Mode and halt
+            v.cmd_data = ~0ull;                             // signal to executor to switch into Debug Mode and halt
         } else if (r.dcsr_ebreakm.read() == 1) {
             v.halt_cause = HALT_CAUSE_EBREAK;
             v.dpc = r.cmd_data;
-            v.cmd_data = ~0ull;                            // signal to executor to switch into Debug Mode and halt
+            v.cmd_data = ~0ull;                             // signal to executor to switch into Debug Mode and halt
         } else {
             w_trap_valid = 1;
             wb_trap_cause = r.cmd_addr.read()(4, 0);
             vb_mtval = i_e_pc;
-            v.cmd_data = vb_mtvec_off;                     // Jump to exception handler
+            v.cmd_data = vb_mtvec_off;                      // Jump to exception handler
         }
         break;
     case State_Halt:
         v.state = State_Response;
-        v.halt_cause = r.cmd_addr.read()(2, 0);            // Halt Request or Step done
+        v.halt_cause = r.cmd_addr.read()(2, 0);             // Halt Request or Step done
         v.dpc = i_e_pc;
         break;
     case State_Resume:
@@ -399,17 +489,7 @@ void CsrRegs::comb() {
     case State_TrapReturn:
         v.state = State_Response;
         v_csr_trapreturn = 1;
-        if (r.cmd_addr.read() == CSR_mepc) {
-            v.cmd_data = r.mepc;
-        } else if (r.cmd_addr.read() == CSR_hepc) {
-            v.cmd_data = 0;
-        } else if (r.cmd_addr.read() == CSR_sepc) {
-            v.cmd_data = 0;
-        } else if (r.cmd_addr.read() == CSR_uepc) {
-            v.cmd_data = r.uepc;
-        } else {
-            v.cmd_data = 0;
-        }
+        v.cmd_data = r.xmode[r.mode.read().to_int()].xepc;
         break;
     case State_RW:
         v.state = State_Response;
@@ -428,7 +508,7 @@ void CsrRegs::comb() {
         break;
     case State_Wfi:
         v.state = State_Response;
-        v.cmd_data = 0;                                    // no error, valid for all mdoes
+        v.cmd_data = 0;                                     // no error, valid for all mdoes
         break;
     case State_Response:
         v_resp_valid = 1;
@@ -440,31 +520,153 @@ void CsrRegs::comb() {
         break;
     }
 
-    // CSR registers:
+    // CSR registers. Priviledge Arch. V20211203, page 9(19):
+    //     CSR[11:10] indicate whether the register is read/write (00, 01, or 10) or read-only (11)
+    //     CSR[9:8] encode the lowest privilege level that can access the CSR
     switch (r.cmd_addr.read()) {
-    case CSR_fflags:
+    case 0x000:                                             // ustatus: [URW] User status register
+        break;
+    case 0x004:                                             // uie: [URW] User interrupt-enable register
+        break;
+    case 0x005:                                             // ustatus: [URW] User trap handler base address
+        break;
+    case 0x040:                                             // uscratch: [URW] Scratch register for user trap handlers
+        break;
+    case 0x041:                                             // uepc: [URW] User exception program counter
+        vb_rdata = r.xmode[iU].xepc;
+        if (v_csr_wena) {
+            v.xmode[iU].xepc = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
+        }
+        break;
+    case 0x042:                                             // ucause: [URW] User trap cause
+        break;
+    case 0x043:                                             // utval: [URW] User bad address or instruction
+        break;
+    case 0x044:                                             // uip: [URW] User interrupt pending
+        break;
+    case 0x001:                                             // fflags: [URW] Floating-Point Accrued Exceptions
         vb_rdata[0] = r.ex_fpu_inexact;
         vb_rdata[1] = r.ex_fpu_underflow;
         vb_rdata[2] = r.ex_fpu_overflow;
         vb_rdata[3] = r.ex_fpu_divbyzero;
         vb_rdata[4] = r.ex_fpu_invalidop;
         break;
-    case CSR_frm:
+    case 0x002:                                             // fflags: [URW] Floating-Point Dynamic Rounding Mode
         if (CFG_HW_FPU_ENABLE) {
-            vb_rdata(2, 0) = 4;                            // Round mode: round to Nearest (RMM)
+            vb_rdata(2, 0) = 4;                             // Round mode: round to Nearest (RMM)
         }
         break;
-    case CSR_fcsr:
+    case 0x003:                                             // fcsr: [URW] Floating-Point Control and Status Register (frm + fflags)
         vb_rdata[0] = r.ex_fpu_inexact;
         vb_rdata[1] = r.ex_fpu_underflow;
         vb_rdata[2] = r.ex_fpu_overflow;
         vb_rdata[3] = r.ex_fpu_divbyzero;
         vb_rdata[4] = r.ex_fpu_invalidop;
         if (CFG_HW_FPU_ENABLE) {
-            vb_rdata(7, 5) = 4;                            // Round mode: round to Nearest (RMM)
+            vb_rdata(7, 5) = 4;                             // Round mode: round to Nearest (RMM)
         }
         break;
-    case CSR_misa:
+    case 0xC00:                                             // cycle: [URO] User Cycle counter for RDCYCLE pseudo-instruction
+        vb_rdata = r.cycle_cnt;
+        break;
+    case 0xC01:                                             // time: [URO] User Timer for RDTIME pseudo-instruction
+        vb_rdata = r.timer;
+        break;
+    case 0xC03:                                             // insret: [URO] User Instructions-retired counter for RDINSTRET pseudo-instruction
+        vb_rdata = r.executed_cnt;
+        break;
+    case 0x100:                                             // sstatus: [SRW] Supervisor status register
+        break;
+    case 0x104:                                             // sie: [SRW] Supervisor interrupt-enable register
+        break;
+    case 0x105:                                             // sstatus: [SRW] Supervisor trap handler base address
+        break;
+    case 0x106:                                             // scounteren: [SRW] Supervisor counter enable
+        break;
+    case 0x10A:                                             // senvcfg: [SRW] Supervisor environment configuration register
+        break;
+    case 0x140:                                             // sscratch: [SRW] Supervisor register for supervisor trap handlers
+        break;
+    case 0x141:                                             // sepc: [SRW] Supervisor exception program counter
+        vb_rdata = r.xmode[iS].xepc;
+        if (v_csr_wena) {
+            v.xmode[iS].xepc = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
+        }
+        break;
+    case 0x142:                                             // scause: [SRW] Supervisor trap cause
+        break;
+    case 0x143:                                             // stval: [SRW] Supervisor bad address or instruction
+        break;
+    case 0x144:                                             // sip: [SRW] Supervisor interrupt pending
+        break;
+    case 0x180:                                             // satp: [SRW] Supervisor address translation and protection
+        // Writing unssoprted MODE[63:60], entire write has no effect
+        //     MODE = 0 Bare. No translation or protection
+        //     MODE = 9 Sv48. Page based 48-bit virtual addressing
+        vb_rdata(43, 0) = r.satp_ppn;
+        vb_rdata(63, 60) = r.satp_mode;
+        if ((v_csr_wena == 1)
+                && ((r.cmd_data.read()(63, 60).or_reduce() == 0)
+                        || (r.cmd_data.read()(63, 60).to_uint() == SATP_MODE_SV48))) {
+            v.satp_ppn = r.cmd_data.read()(43, 0);
+            v.satp_mode = r.cmd_data.read()(63, 60);
+        }
+        break;
+    case 0x5A8:                                             // scontext: [SRW] Supervisor-mode context register
+        break;
+    case 0xF11:                                             // mvendorid: [MRO] Vendor ID
+        vb_rdata = CFG_VENDOR_ID;
+        break;
+    case 0xF12:                                             // marchid: [MRO] Architecture ID
+        break;
+    case 0xF13:                                             // mimplementationid: [MRO] Implementation ID
+        vb_rdata = CFG_IMPLEMENTATION_ID;
+        break;
+    case 0xF14:                                             // mhartid: [MRO] Hardware thread ID
+        vb_rdata(63, 0) = hartid_;
+        break;
+    case 0xF15:                                             // mconfigptr: [MRO] Pointer to configuration data structure
+        break;
+    case 0x300:                                             // mstatus: [MRW] Machine mode status register
+        // [0] WPRI
+        vb_rdata[1] = r.xmode[iS].xie;
+        // [2] WPRI
+        vb_rdata[3] = r.xmode[iM].xie;
+        // [4] WPRI
+        vb_rdata[5] = r.xmode[iS].xpie;
+        // [6] UBE
+        vb_rdata[7] = r.xmode[iM].xpie;
+        vb_rdata[8] = r.xmode[iS].xpp.read()[0];            // SPP can have onle 0 or 1 values, so 1 bit only
+        // [10:9] VS
+        vb_rdata(12, 11) = r.xmode[iM].xpp;
+        if (CFG_HW_FPU_ENABLE) {
+            vb_rdata(14, 13) = 0x1;                         // FS field: Initial state
+        }
+        // [16:15] XS
+        vb_rdata[17] = r.mprv;
+        // [18] SUM
+        // [19] MXR
+        // [20] TVM
+        // [21] TW
+        // [22] TSR
+        // [31:23] WPRI
+        vb_rdata(33, 32) = 0x2;                             // UXL: User is 64-bits
+        vb_rdata(35, 34) = 0x2;                             // SXL: Supervisor is 64-bits
+        // [36] SBE
+        // [37] MBE
+        // [62:38] WPRI
+        // [63] SD. Read-only bit that summize FS, VS or XS fields
+        if (v_csr_wena == 1) {
+            v.xmode[iS].xie = r.cmd_data.read()[1];
+            v.xmode[iM].xie = r.cmd_data.read()[3];
+            v.xmode[iS].xpie = r.cmd_data.read()[5];
+            v.xmode[iM].xpie = r.cmd_data.read()[7];
+            v.xmode[iS].xpp = (0, r.cmd_data.read()[8]);
+            v.xmode[iM].xpp = r.cmd_data.read()(12, 11);
+            v.mprv = r.cmd_data.read()[17];
+        }
+        break;
+    case 0x301:                                             // misa: [MRW] ISA and extensions
         // Base[XLEN-1:XLEN-2]
         //      1 = 32
         //      2 = 64
@@ -498,62 +700,30 @@ void CsrRegs::comb() {
         //      23 X Non-standard extensions present
         //      24 Y Reserved
         //      25 Z Reserve
-        vb_rdata[0] = 1;
-        vb_rdata[8] = 1;
-        vb_rdata[12] = 1;
-        vb_rdata[20] = 1;
-        vb_rdata[2] = 1;
+        vb_rdata[0] = 1;                                    // A-extension
+        vb_rdata[8] = 1;                                    // I-extension
+        vb_rdata[12] = 1;                                   // M-extension
+        vb_rdata[18] = 1;                                   // S-extension
+        vb_rdata[20] = 1;                                   // U-extension
+        vb_rdata[2] = 1;                                    // C-extension
         if (CFG_HW_FPU_ENABLE) {
-            vb_rdata[3] = 1;
+            vb_rdata[3] = 1;                                // D-extension
         }
         break;
-    case CSR_mvendorid:
-        vb_rdata = CFG_VENDOR_ID;
+    case 0x302:                                             // medeleg: [MRW] Machine exception delegation
         break;
-    case CSR_marchid:
+    case 0x303:                                             // mideleg: [MRW] Machine interrupt delegation
         break;
-    case CSR_mimplementationid:
-        vb_rdata = CFG_IMPLEMENTATION_ID;
-        break;
-    case CSR_mhartid:
-        vb_rdata(63, 0) = hartid_;
-        break;
-    case CSR_uepc:                                          // User mode program counter
-        vb_rdata = r.uepc;
-        if (v_csr_wena) {
-            v.uepc = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
-        }
-        break;
-    case CSR_mstatus:                                       // Machine mode status register
-        vb_rdata[0] = r.uie;
-        vb_rdata[3] = r.mie;
-        vb_rdata[7] = r.mpie;
-        vb_rdata(12, 11) = r.mpp;
-        if (CFG_HW_FPU_ENABLE) {
-            vb_rdata(14, 13) = 0x1;                        // FS field: Initial state
-        }
-        vb_rdata(33, 32) = 0x2;                            // UXL: User mode supported 64-bits
-        if (v_csr_wena == 1) {
-            v.uie = r.cmd_data.read()[0];
-            v.mie = r.cmd_data.read()[3];
-            v.mpie = r.cmd_data.read()[7];
-            v.mpp = r.cmd_data.read()(12, 11);
-        }
-        break;
-    case CSR_medeleg:                                       // Machine exception delegation
-        break;
-    case CSR_mideleg:                                       // Machine interrupt delegation
-        break;
-    case CSR_mie:                                           // Machine interrupt enable bit
-        vb_rdata[0] = r.usie;                              // user software interrupt
-        vb_rdata[1] = r.ssie;                              // super-user software interrupt
-        vb_rdata[3] = r.msie;                              // machine software interrupt
-        vb_rdata[4] = r.utie;                              // user timer interrupt
-        vb_rdata[5] = r.stie;                              // super-user timer interrupt
-        vb_rdata[7] = r.mtie;                              // machine timer interrupt
-        vb_rdata[8] = r.ueie;                              // user external interrupt
-        vb_rdata[9] = r.seie;                              // super-user external interrupt
-        vb_rdata[11] = r.meie;                             // machine external interrupt
+    case 0x304:                                             // mie: [MRW] Machine interrupt enable bit
+        vb_rdata[0] = r.usie;                               // user software interrupt
+        vb_rdata[1] = r.ssie;                               // super-user software interrupt
+        vb_rdata[3] = r.msie;                               // machine software interrupt
+        vb_rdata[4] = r.utie;                               // user timer interrupt
+        vb_rdata[5] = r.stie;                               // super-user timer interrupt
+        vb_rdata[7] = r.mtie;                               // machine timer interrupt
+        vb_rdata[8] = r.ueie;                               // user external interrupt
+        vb_rdata[9] = r.seie;                               // super-user external interrupt
+        vb_rdata[11] = r.meie;                              // machine external interrupt
         if (v_csr_wena) {
             v.usie = r.cmd_data.read()[0];
             v.ssie = r.cmd_data.read()[1];
@@ -566,7 +736,7 @@ void CsrRegs::comb() {
             v.meie = r.cmd_data.read()[11];
         }
         break;
-    case CSR_mtvec:
+    case 0x305:                                             // mtvec: [MRW] Machine trap-handler base address
         vb_rdata = r.mtvec;
         vb_rdata(1, 0) = r.mtvec_mode;
         if (v_csr_wena == 1) {
@@ -574,107 +744,95 @@ void CsrRegs::comb() {
             v.mtvec_mode = r.cmd_data.read()(1, 0);
         }
         break;
-    case CSR_mscratch:                                      // Machine scratch register
+    case 0x306:                                             // mcounteren: [MRW] Machine counter enable
+        break;
+    case 0x340:                                             // mscratch: [MRW] Machine scratch register
         vb_rdata = r.mscratch;
         if (v_csr_wena) {
             v.mscratch = r.cmd_data;
         }
         break;
-    case CSR_satp:                                          // Supervisor Address Translation and Protection
-        // Writing unssoprted MODE[63:60], entire write has no effect
-        //     MODE = 0 Bare. No translation or protection
-        //     MODE = 9 Sv48. Page based 48-bit virtual addressing
-        vb_rdata(43, 0) = r.satp_ppn;
-        vb_rdata(63, 60) = r.satp_mode;
-        if ((v_csr_wena == 1)
-                && ((r.cmd_data.read()(63, 60).or_reduce() == 0)
-                        || (r.cmd_data.read()(63, 60).to_uint() == SATP_MODE_SV48))) {
-            v.satp_ppn = r.cmd_data.read()(43, 0);
-            v.satp_mode = r.cmd_data.read()(63, 60);
-        }
-        break;
-    case CSR_mepc:                                          // Machine program counter
-        vb_rdata = r.mepc;
+    case 0x341:                                             // mepc: [MRW] Machine program counter
+        vb_rdata = r.xmode[iM].xepc;
         if (v_csr_wena) {
-            v.mepc = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
+            v.xmode[iM].xepc = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
         }
         break;
-    case CSR_mcause:                                        // Machine trap cause
+    case 0x342:                                             // mcause: [MRW] Machine trap cause
         vb_rdata = 0;
         vb_rdata[63] = r.trap_irq;
         vb_rdata(4, 0) = r.trap_cause;
         break;
-    case CSR_mtval:                                         // Machine bad address or instruction
+    case 0x343:                                             // mtval: [MRW] Machine bad address or instruction
         vb_rdata = r.mtval;
         if (v_csr_wena) {
             v.mtval = r.cmd_data;
         }
         break;
-    case CSR_mip:                                           // Machine interrupt pending
-        vb_rdata[0] = r.usip;                              // user software pending bit
-        vb_rdata[1] = r.ssip;                              // super-user software pending bit
-        vb_rdata[3] = r.msip;                              // machine software pending bit
-        vb_rdata[4] = r.utip;                              // user timer pending bit
-        vb_rdata[5] = r.stip;                              // super-user timer pending bit
-        vb_rdata[7] = r.mtip;                              // RO: machine timer pending bit
-        vb_rdata[8] = r.ueip;                              // user external pending bit
-        vb_rdata[9] = r.seip;                              // super-user external pending bit
-        vb_rdata[11] = r.meip;                             // RO: machine external pending bit (cleared by writing into mtimecmp)
+    case 0x344:                                             // mip: [MRW] Machine interrupt pending
+        vb_rdata[0] = r.usip;                               // user software pending bit
+        vb_rdata[1] = r.ssip;                               // super-user software pending bit
+        vb_rdata[3] = r.msip;                               // machine software pending bit
+        vb_rdata[4] = r.utip;                               // user timer pending bit
+        vb_rdata[5] = r.stip;                               // super-user timer pending bit
+        vb_rdata[7] = r.mtip;                               // RO: machine timer pending bit
+        vb_rdata[8] = r.ueip;                               // user external pending bit
+        vb_rdata[9] = r.seip;                               // super-user external pending bit
+        vb_rdata[11] = r.meip;                              // RO: machine external pending bit (cleared by writing into mtimecmp)
         break;
-    case CSR_cycle:
+    case 0x34A:                                             // mtinst: [MRW] Machine trap instruction (transformed)
+        break;
+    case 0x34B:                                             // mtval2: [MRW] Machine bad guest physical register
+        break;
+    case 0x30A:                                             // menvcfg: [MRW] Machine environment configuration register
+        break;
+    case 0x747:                                             // mseccfg: [MRW] Machine security configuration register
+        break;
+    case 0x3A0:                                             // pmpcfg0: [MRW] Physical memory protection configuration
+        break;
+    case 0x3A2:                                             // pmpcfg2: [MRW] Physical memory protection configuration
+        break;
+    case 0x3AE:                                             // pmpcfg14: [MRW] Physical memory protection configuration
+        break;
+    case 0x3B0:                                             // pmpaddr0: [MRW] Physical memory protection address register
+        break;
+    case 0x3B1:                                             // pmpaddr1: [MRW] Physical memory protection address register
+        break;
+    case 0x3EF:                                             // pmpaddr63: [MRW] Physical memory protection address register
+        break;
+    case 0xB00:                                             // mcycle: [MRW] Machine cycle counter
         vb_rdata = r.cycle_cnt;
         break;
-    case CSR_time:
-        vb_rdata = r.timer;
-        break;
-    case CSR_insret:
+    case 0xB02:                                             // minstret: [MRW] Machine instructions-retired counter
         vb_rdata = r.executed_cnt;
         break;
-    case CSR_mstackovr:                                     // Machine Stack Overflow
-        vb_rdata = r.mstackovr;
-        if (v_csr_wena == 1) {
-            v.mstackovr = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
-        }
+    case 0x320:                                             // mcounterinhibit: [MRW] Machine counter-inhibit register
         break;
-    case CSR_mstackund:                                     // Machine Stack Underflow
-        vb_rdata = r.mstackund;
-        if (v_csr_wena == 1) {
-            v.mstackund = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
-        }
+    case 0x323:                                             // mpevent3: [MRW] Machine performance-monitoring event selector
         break;
-    case CSR_mpu_addr:                                      // [WO] MPU address
-        if (v_csr_wena == 1) {
-            v.mpu_addr = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
-        }
+    case 0x324:                                             // mpevent4: [MRW] Machine performance-monitoring event selector
         break;
-    case CSR_mpu_mask:                                      // [WO] MPU mask
-        if (v_csr_wena == 1) {
-            v.mpu_mask = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
-        }
+    case 0x33F:                                             // mpevent31: [MRW] Machine performance-monitoring event selector
         break;
-    case CSR_mpu_ctrl:                                      // [RW] MPU flags and write ena
-        vb_rdata = (CFG_MPU_TBL_SIZE << 8);
-        if (v_csr_wena == 1) {
-            v.mpu_idx = r.cmd_data.read()((8 + (CFG_MPU_TBL_WIDTH - 1)), 8);
-            v.mpu_flags = r.cmd_data.read()((CFG_MPU_FL_TOTAL - 1), 0);
-            v.mpu_we = r.cmd_data.read()[7];
-        }
+    case 0x7A0:                                             // tselect: [MRW] Debug/Trace trigger register select
         break;
-    case CSR_flushi:
-        if (v_csr_wena == 1) {
-            v.flushi_ena = 1;
-            v.flushi_addr = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
-        }
+    case 0x7A1:                                             // tdata1: [MRW] First Debug/Trace trigger data register
         break;
-    case CSR_dcsr:
-        vb_rdata(31, 28) = 4;                              // xdebugver: 4=External debug supported
+    case 0x7A2:                                             // tdata2: [MRW] Second Debug/Trace trigger data register
+        break;
+    case 0x7A3:                                             // tdata3: [MRW] Third Debug/Trace trigger data register
+        break;
+    case 0x7A8:                                             // mcontext: [MRW] Machine-mode context register
+        break;
+    case 0x7B0:                                             // dcsr: [DRW] Debug control and status register
+        vb_rdata(31, 28) = 4;                               // xdebugver: 4=External debug supported
         vb_rdata[15] = r.dcsr_ebreakm;
-        vb_rdata[11] = r.dcsr_stepie;                      // interrupt dis/ena during step
-        vb_rdata[10] = r.dcsr_stopcount;                   // don't increment any counter
-        vb_rdata[9] = r.dcsr_stoptimer;                    // don't increment timer
+        vb_rdata[11] = r.dcsr_stepie;                       // interrupt dis/ena during step
+        vb_rdata[10] = r.dcsr_stopcount;                    // don't increment any counter
+        vb_rdata[9] = r.dcsr_stoptimer;                     // don't increment timer
         vb_rdata(8, 6) = r.halt_cause;
         vb_rdata[2] = r.dcsr_step;
-        vb_rdata(1, 0) = 3;                                // prv: privilege in debug mode: 3=machine
+        vb_rdata(1, 0) = 3;                                 // prv: privilege in debug mode: 3=machine
         if (v_csr_wena == 1) {
             v.dcsr_ebreakm = r.cmd_data.read()[15];
             v.dcsr_stepie = r.cmd_data.read()[11];
@@ -683,7 +841,7 @@ void CsrRegs::comb() {
             v.dcsr_step = r.cmd_data.read()[2];
         }
         break;
-    case CSR_dpc:
+    case 0x7B1:                                             // dpc: [DRW] Debug PC
         // Upon entry into debug mode DPC must contains:
         //        cause        |   Address
         // --------------------|----------------
@@ -702,16 +860,52 @@ void CsrRegs::comb() {
             v.dpc = r.cmd_data;
         }
         break;
-    case CSR_dscratch0:
+    case 0x7B2:                                             // dscratch0: [DRW] Debug scratch register 0
         vb_rdata = r.dscratch0;
         if (v_csr_wena == 1) {
             v.dscratch0 = r.cmd_data;
         }
         break;
-    case CSR_dscratch1:
+    case 0x7B3:                                             // dscratch1: [DRW] Debug scratch register 1
         vb_rdata = r.dscratch1;
         if (v_csr_wena) {
             v.dscratch1 = r.cmd_data;
+        }
+        break;
+    case 0xBC0:                                             // mstackovr: [MRW] Machine Stack Overflow
+        vb_rdata = r.mstackovr;
+        if (v_csr_wena == 1) {
+            v.mstackovr = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
+        }
+        break;
+    case 0xBC1:                                             // mstackund: [MRW] Machine Stack Underflow
+        vb_rdata = r.mstackund;
+        if (v_csr_wena == 1) {
+            v.mstackund = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
+        }
+        break;
+    case 0xBC2:                                             // mpu_addr: [MWO] MPU address
+        if (v_csr_wena == 1) {
+            v.mpu_addr = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
+        }
+        break;
+    case 0xBC3:                                             // mpu_mask: [MWO] MPU mask
+        if (v_csr_wena == 1) {
+            v.mpu_mask = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
+        }
+        break;
+    case 0xBC4:                                             // mpu_ctrl: [MRW] MPU flags and write ena
+        vb_rdata = (CFG_MPU_TBL_SIZE << 8);
+        if (v_csr_wena == 1) {
+            v.mpu_idx = r.cmd_data.read()((8 + (CFG_MPU_TBL_WIDTH - 1)), 8);
+            v.mpu_flags = r.cmd_data.read()((CFG_MPU_FL_TOTAL - 1), 0);
+            v.mpu_we = r.cmd_data.read()[7];
+        }
+        break;
+    case 0x800:                                             // flushi: [UWO]
+        if (v_csr_wena == 1) {
+            v.flushi_ena = 1;
+            v.flushi_addr = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
         }
         break;
     default:
@@ -728,56 +922,53 @@ void CsrRegs::comb() {
 
 
     if (v_csr_trapreturn == 1) {
-        if ((r.mode.read() == PRV_M) && (r.cmd_addr.read() == CSR_mepc)) {
-            v.mie = r.mpie;
-            v.mpie = 1;
-            v.mode = r.mpp;
-            if ((r.mpp.read() <= PRV_S) && (r.satp_mode.read() == SATP_MODE_SV48)) {
-                v.mmu_ena = 1;
-            } else {
-                v.mmu_ena = 0;
-            }
-            v.mpp = PRV_U;
-        } else if ((r.mode.read() == PRV_U) && (r.cmd_addr.read() == CSR_uepc)) {
-            v.mie = r.mpie;
-            v.mpie = 0;                                    // Interrupts in a user mode actually not supported
-            v.mode = r.mpp;
-            if ((r.mpp.read() <= PRV_S) && (r.satp_mode.read() == SATP_MODE_SV48)) {
-                v.mmu_ena = 1;
-            } else {
-                v.mmu_ena = 0;
-            }
-            v.mpp = PRV_U;
+        if (r.mode.read() == r.cmd_addr.read()) {
+            v.mode = vb_xpp;
+            v.xmode[r.mode.read().to_int()].xpie = 1;       // xPIE is set to 1 always, page 21
+            v.xmode[r.mode.read().to_int()].xpp = PRV_U;    // Set to least-privildged supported mode (U), page 21
         } else {
-            v.cmd_exception = 1;
+            v.cmd_exception = 1;                            // xret not matched to current mode
+        }
+        if (r.xmode[r.mode.read().to_int()].xpp.read() != PRV_M) {// see page 21
+            v.mprv = 0;
+        }
+
+        // Check MMU:
+        if (vb_xpp[1] == 1) {
+            // H and M modes
+            v.mmu_ena = 0;
+        } else {
+            // S and U modes
+            if (r.satp_mode.read() == SATP_MODE_SV48) {     // Only SV48 implemented
+                v.mmu_ena = 1;
+            }
         }
     }
 
     if (w_trap_valid == 1) {
-        v.mie = 0;
-        v.mpp = r.mode;
-        v.mepc = i_e_pc;                                   // current latched instruction not executed overwritten by exception/interrupt
-        v.mtval = vb_mtval;                                // additional information for hwbreakpoint, memaccess faults and illegal opcodes
+        // By default all excpetions and interrupts handled in M-mode (not delegations)
+        v.xmode[iM].xpp = r.mode;
+        v.xmode[iM].xpie = r.xmode[r.mode.read().to_int()].xie;
+        v.xmode[iM].xie = 0;
+        v.xmode[iM].xepc = i_e_pc;                          // current latched instruction not executed overwritten by exception/interrupt
+        v.mtval = vb_mtval;                                 // additional information for hwbreakpoint, memaccess faults and illegal opcodes
         v.trap_cause = wb_trap_cause;
         v.trap_irq = v_trap_irq;
         v.mode = PRV_M;
         v.mmu_ena = 0;
-        if (r.mode.read() == PRV_U) {
-            v.mpie = r.uie;
-        } else if (r.mode.read() == PRV_M) {
-            v.mpie = r.mie;
-        }
     }
 
+    // Interrupt enabled during stepping
+    v_step_irq = ((!r.dcsr_step) || r.dcsr_stepie);
     v.msip = i_irq_pending.read()[IRQ_HART_MSIP];
-    v_sw_irq = (r.msip && r.msie && r.mie && ((!r.dcsr_step) || r.dcsr_stepie));
+    v_sw_irq = (r.msip && r.msie && r.xmode[iM].xie && v_step_irq);
 
     v.mtip = i_irq_pending.read()[IRQ_HART_MTIP];
-    v_tmr_irq = (r.mtip && r.mtie && r.mie && ((!r.dcsr_step) || r.dcsr_stepie));
+    v_tmr_irq = (r.mtip && r.mtie && r.xmode[iM].xie && v_step_irq);
 
     v.meip = i_irq_pending.read()[IRQ_HART_MEIP];
     v.seip = i_irq_pending.read()[IRQ_HART_SEIP];
-    v_ext_irq = (r.meip && r.meie && r.mie && ((!r.dcsr_step) || r.dcsr_stepie));
+    v_ext_irq = (r.meip && r.meie && r.xmode[iM].xie && v_step_irq);
 
     w_mstackovr = 0;
     if ((r.mstackovr.read().or_reduce() == 1) && (i_sp.read()((CFG_CPU_ADDR_BITS - 1), 0) < r.mstackovr.read())) {
@@ -810,7 +1001,77 @@ void CsrRegs::comb() {
     }
 
     if (!async_reset_ && i_nrst.read() == 0) {
-        CsrRegs_r_reset(v);
+        for (int i = 0; i < 4; i++) {
+            v.xmode[i].xepc = 0ull;
+            v.xmode[i].xpp = 0;
+            v.xmode[i].xpie = 0;
+            v.xmode[i].xie = 0;
+        }
+        v.state = State_Idle;
+        v.cmd_type = 0;
+        v.cmd_addr = 0;
+        v.cmd_data = 0ull;
+        v.cmd_exception = 0;
+        v.progbuf_end = 0;
+        v.progbuf_err = 0;
+        v.mtvec = 0ull;
+        v.mtvec_mode = 0;
+        v.mtval = 0ull;
+        v.mscratch = 0ull;
+        v.mstackovr = 0ull;
+        v.mstackund = 0ull;
+        v.mpu_addr = 0ull;
+        v.mpu_mask = 0ull;
+        v.mpu_idx = 0;
+        v.mpu_flags = 0;
+        v.mpu_we = 0;
+        v.mmu_ena = 0;
+        v.satp_ppn = 0ull;
+        v.satp_mode = 0;
+        v.mode = PRV_M;
+        v.mprv = 0;
+        v.usie = 0;
+        v.ssie = 0;
+        v.msie = 0;
+        v.utie = 0;
+        v.stie = 0;
+        v.mtie = 0;
+        v.ueie = 0;
+        v.seie = 0;
+        v.meie = 0;
+        v.usip = 0;
+        v.ssip = 0;
+        v.msip = 0;
+        v.utip = 0;
+        v.stip = 0;
+        v.mtip = 0;
+        v.ueip = 0;
+        v.seip = 0;
+        v.meip = 0;
+        v.ex_fpu_invalidop = 0;
+        v.ex_fpu_divbyzero = 0;
+        v.ex_fpu_overflow = 0;
+        v.ex_fpu_underflow = 0;
+        v.ex_fpu_inexact = 0;
+        v.trap_irq = 0;
+        v.trap_cause = 0;
+        v.trap_addr = 0ull;
+        v.timer = 0ull;
+        v.cycle_cnt = 0ull;
+        v.executed_cnt = 0ull;
+        v.dscratch0 = 0ull;
+        v.dscratch1 = 0ull;
+        v.dpc = CFG_RESET_VECTOR;
+        v.halt_cause = 0;
+        v.dcsr_ebreakm = 0;
+        v.dcsr_stopcount = 0;
+        v.dcsr_stoptimer = 0;
+        v.dcsr_step = 0;
+        v.dcsr_stepie = 0;
+        v.stepping_mode_cnt = 0ull;
+        v.ins_per_step = 1ull;
+        v.flushi_ena = 0;
+        v.flushi_addr = 0ull;
     }
 
     o_req_ready = v_req_ready;
@@ -839,9 +1100,149 @@ void CsrRegs::comb() {
 
 void CsrRegs::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
-        CsrRegs_r_reset(r);
+        for (int i = 0; i < 4; i++) {
+            r.xmode[i].xepc = 0ull;
+            r.xmode[i].xpp = 0;
+            r.xmode[i].xpie = 0;
+            r.xmode[i].xie = 0;
+        }
+        r.state = State_Idle;
+        r.cmd_type = 0;
+        r.cmd_addr = 0;
+        r.cmd_data = 0ull;
+        r.cmd_exception = 0;
+        r.progbuf_end = 0;
+        r.progbuf_err = 0;
+        r.mtvec = 0ull;
+        r.mtvec_mode = 0;
+        r.mtval = 0ull;
+        r.mscratch = 0ull;
+        r.mstackovr = 0ull;
+        r.mstackund = 0ull;
+        r.mpu_addr = 0ull;
+        r.mpu_mask = 0ull;
+        r.mpu_idx = 0;
+        r.mpu_flags = 0;
+        r.mpu_we = 0;
+        r.mmu_ena = 0;
+        r.satp_ppn = 0ull;
+        r.satp_mode = 0;
+        r.mode = PRV_M;
+        r.mprv = 0;
+        r.usie = 0;
+        r.ssie = 0;
+        r.msie = 0;
+        r.utie = 0;
+        r.stie = 0;
+        r.mtie = 0;
+        r.ueie = 0;
+        r.seie = 0;
+        r.meie = 0;
+        r.usip = 0;
+        r.ssip = 0;
+        r.msip = 0;
+        r.utip = 0;
+        r.stip = 0;
+        r.mtip = 0;
+        r.ueip = 0;
+        r.seip = 0;
+        r.meip = 0;
+        r.ex_fpu_invalidop = 0;
+        r.ex_fpu_divbyzero = 0;
+        r.ex_fpu_overflow = 0;
+        r.ex_fpu_underflow = 0;
+        r.ex_fpu_inexact = 0;
+        r.trap_irq = 0;
+        r.trap_cause = 0;
+        r.trap_addr = 0ull;
+        r.timer = 0ull;
+        r.cycle_cnt = 0ull;
+        r.executed_cnt = 0ull;
+        r.dscratch0 = 0ull;
+        r.dscratch1 = 0ull;
+        r.dpc = CFG_RESET_VECTOR;
+        r.halt_cause = 0;
+        r.dcsr_ebreakm = 0;
+        r.dcsr_stopcount = 0;
+        r.dcsr_stoptimer = 0;
+        r.dcsr_step = 0;
+        r.dcsr_stepie = 0;
+        r.stepping_mode_cnt = 0ull;
+        r.ins_per_step = 1ull;
+        r.flushi_ena = 0;
+        r.flushi_addr = 0ull;
     } else {
-        r = v;
+        for (int i = 0; i < 4; i++) {
+            r.xmode[i].xepc = v.xmode[i].xepc;
+            r.xmode[i].xpp = v.xmode[i].xpp;
+            r.xmode[i].xpie = v.xmode[i].xpie;
+            r.xmode[i].xie = v.xmode[i].xie;
+        }
+        r.state = v.state;
+        r.cmd_type = v.cmd_type;
+        r.cmd_addr = v.cmd_addr;
+        r.cmd_data = v.cmd_data;
+        r.cmd_exception = v.cmd_exception;
+        r.progbuf_end = v.progbuf_end;
+        r.progbuf_err = v.progbuf_err;
+        r.mtvec = v.mtvec;
+        r.mtvec_mode = v.mtvec_mode;
+        r.mtval = v.mtval;
+        r.mscratch = v.mscratch;
+        r.mstackovr = v.mstackovr;
+        r.mstackund = v.mstackund;
+        r.mpu_addr = v.mpu_addr;
+        r.mpu_mask = v.mpu_mask;
+        r.mpu_idx = v.mpu_idx;
+        r.mpu_flags = v.mpu_flags;
+        r.mpu_we = v.mpu_we;
+        r.mmu_ena = v.mmu_ena;
+        r.satp_ppn = v.satp_ppn;
+        r.satp_mode = v.satp_mode;
+        r.mode = v.mode;
+        r.mprv = v.mprv;
+        r.usie = v.usie;
+        r.ssie = v.ssie;
+        r.msie = v.msie;
+        r.utie = v.utie;
+        r.stie = v.stie;
+        r.mtie = v.mtie;
+        r.ueie = v.ueie;
+        r.seie = v.seie;
+        r.meie = v.meie;
+        r.usip = v.usip;
+        r.ssip = v.ssip;
+        r.msip = v.msip;
+        r.utip = v.utip;
+        r.stip = v.stip;
+        r.mtip = v.mtip;
+        r.ueip = v.ueip;
+        r.seip = v.seip;
+        r.meip = v.meip;
+        r.ex_fpu_invalidop = v.ex_fpu_invalidop;
+        r.ex_fpu_divbyzero = v.ex_fpu_divbyzero;
+        r.ex_fpu_overflow = v.ex_fpu_overflow;
+        r.ex_fpu_underflow = v.ex_fpu_underflow;
+        r.ex_fpu_inexact = v.ex_fpu_inexact;
+        r.trap_irq = v.trap_irq;
+        r.trap_cause = v.trap_cause;
+        r.trap_addr = v.trap_addr;
+        r.timer = v.timer;
+        r.cycle_cnt = v.cycle_cnt;
+        r.executed_cnt = v.executed_cnt;
+        r.dscratch0 = v.dscratch0;
+        r.dscratch1 = v.dscratch1;
+        r.dpc = v.dpc;
+        r.halt_cause = v.halt_cause;
+        r.dcsr_ebreakm = v.dcsr_ebreakm;
+        r.dcsr_stopcount = v.dcsr_stopcount;
+        r.dcsr_stoptimer = v.dcsr_stoptimer;
+        r.dcsr_step = v.dcsr_step;
+        r.dcsr_stepie = v.dcsr_stepie;
+        r.stepping_mode_cnt = v.stepping_mode_cnt;
+        r.ins_per_step = v.ins_per_step;
+        r.flushi_ena = v.flushi_ena;
+        r.flushi_addr = v.flushi_addr;
     }
 }
 

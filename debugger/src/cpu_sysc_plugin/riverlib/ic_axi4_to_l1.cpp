@@ -195,7 +195,7 @@ void ic_axi4_to_l1::comb() {
         vb_l1o.aw_bits.size = CFG_DLOG2_BYTES_PER_LINE;
         vb_l1o.aw_bits.len = 0;
         vb_l1o.aw_bits.prot = r.req_prot;
-        vb_l1o.aw_snoop = AWSNOOP_WRITE_NO_SNOOP;          // offloading non-cached always
+        vb_l1o.aw_snoop = AWSNOOP_WRITE_NO_SNOOP;           // offloading non-cached always
         vb_l1o.aw_id = r.req_id;
         vb_l1o.aw_user = r.req_user;
         // axi lite for L2-cache

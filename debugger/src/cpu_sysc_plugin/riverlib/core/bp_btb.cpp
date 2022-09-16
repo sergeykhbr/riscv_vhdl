@@ -113,7 +113,7 @@ void BpBTB::comb() {
             if (t_addr == r.btb[n].pc) {
                 vb_addr((i * CFG_CPU_ADDR_BITS) + CFG_CPU_ADDR_BITS- 1, (i * CFG_CPU_ADDR_BITS)) = r.btb[n].npc;
                 vb_hit[i] = 1;
-                vb_bp_exec[i] = r.btb[n].exec;             // Used for: Do not override by pre-decoded jumps
+                vb_bp_exec[i] = r.btb[n].exec;              // Used for: Do not override by pre-decoded jumps
             } else if (vb_hit[i] == 0) {
                 vb_addr((i * CFG_CPU_ADDR_BITS) + CFG_CPU_ADDR_BITS- 1, (i * CFG_CPU_ADDR_BITS)) = (t_addr + 4);
             }

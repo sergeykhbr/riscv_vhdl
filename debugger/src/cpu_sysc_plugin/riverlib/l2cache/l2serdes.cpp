@@ -195,7 +195,7 @@ void L2SerDes::comb() {
             v.state = State_Read;
             v.rmux = 1;
         } else if ((i_l2o.read().aw_valid && i_msti.read().aw_ready) == 1) {
-            v.line = i_l2o.read().w_data;                  // Undocumented RIVER (Axi-lite feature)
+            v.line = i_l2o.read().w_data;                   // Undocumented RIVER (Axi-lite feature)
             v.wstrb = i_l2o.read().w_strb;
             v.state = State_Write;
         } else {
@@ -210,9 +210,9 @@ void L2SerDes::comb() {
 
     vmsto.aw_valid = i_l2o.read().aw_valid;
     vmsto.aw_bits.addr = i_l2o.read().aw_bits.addr;
-    vmsto.aw_bits.len = vb_len;                            // burst len = len[7:0] + 1
-    vmsto.aw_bits.size = vb_size;                          // 0=1B; 1=2B; 2=4B; 3=8B; ...
-    vmsto.aw_bits.burst = 0x1;                             // 00=FIXED; 01=INCR; 10=WRAP; 11=reserved
+    vmsto.aw_bits.len = vb_len;                             // burst len = len[7:0] + 1
+    vmsto.aw_bits.size = vb_size;                           // 0=1B; 1=2B; 2=4B; 3=8B; ...
+    vmsto.aw_bits.burst = 0x1;                              // 00=FIXED; 01=INCR; 10=WRAP; 11=reserved
     vmsto.aw_bits.lock = i_l2o.read().aw_bits.lock;
     vmsto.aw_bits.cache = i_l2o.read().aw_bits.cache;
     vmsto.aw_bits.prot = i_l2o.read().aw_bits.prot;
@@ -228,9 +228,9 @@ void L2SerDes::comb() {
     vmsto.b_ready = i_l2o.read().b_ready;
     vmsto.ar_valid = i_l2o.read().ar_valid;
     vmsto.ar_bits.addr = i_l2o.read().ar_bits.addr;
-    vmsto.ar_bits.len = vb_len;                            // burst len = len[7:0] + 1
-    vmsto.ar_bits.size = vb_size;                          // 0=1B; 1=2B; 2=4B; 3=8B; ...
-    vmsto.ar_bits.burst = 0x1;                             // 00=FIXED; 01=INCR; 10=WRAP; 11=reserved
+    vmsto.ar_bits.len = vb_len;                             // burst len = len[7:0] + 1
+    vmsto.ar_bits.size = vb_size;                           // 0=1B; 1=2B; 2=4B; 3=8B; ...
+    vmsto.ar_bits.burst = 0x1;                              // 00=FIXED; 01=INCR; 10=WRAP; 11=reserved
     vmsto.ar_bits.lock = i_l2o.read().ar_bits.lock;
     vmsto.ar_bits.cache = i_l2o.read().ar_bits.cache;
     vmsto.ar_bits.prot = i_l2o.read().ar_bits.prot;

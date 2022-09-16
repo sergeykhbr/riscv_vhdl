@@ -275,29 +275,29 @@ void RiverAmba::comb() {
     wb_xcfg.vid = VENDOR_OPTIMITECH;
     wb_xcfg.did = RISCV_RIVER_CPU;
 
-    w_dporti_haltreq = i_dport.read().haltreq;             // systemc compatibility
-    w_dporti_resumereq = i_dport.read().resumereq;         // systemc compatibility
-    w_dporti_resethaltreq = i_dport.read().resethaltreq;   // systemc compatibility
-    w_dporti_hartreset = i_dport.read().hartreset;         // systemc compatibility
-    w_dporti_req_valid = i_dport.read().req_valid;         // systemc compatibility
-    wb_dporti_dtype = i_dport.read().dtype;                // systemc compatibility
-    wb_dporti_addr = i_dport.read().addr;                  // systemc compatibility
-    wb_dporti_wdata = i_dport.read().wdata;                // systemc compatibility
-    wb_dporti_size = i_dport.read().size;                  // systemc compatibility
-    w_dporti_resp_ready = i_dport.read().resp_ready;       // systemc compatibility
+    w_dporti_haltreq = i_dport.read().haltreq;              // systemc compatibility
+    w_dporti_resumereq = i_dport.read().resumereq;          // systemc compatibility
+    w_dporti_resethaltreq = i_dport.read().resethaltreq;    // systemc compatibility
+    w_dporti_hartreset = i_dport.read().hartreset;          // systemc compatibility
+    w_dporti_req_valid = i_dport.read().req_valid;          // systemc compatibility
+    wb_dporti_dtype = i_dport.read().dtype;                 // systemc compatibility
+    wb_dporti_addr = i_dport.read().addr;                   // systemc compatibility
+    wb_dporti_wdata = i_dport.read().wdata;                 // systemc compatibility
+    wb_dporti_size = i_dport.read().size;                   // systemc compatibility
+    w_dporti_resp_ready = i_dport.read().resp_ready;        // systemc compatibility
 
-    vdporto.req_ready = w_dporto_req_ready;                // systemc compatibility
-    vdporto.resp_valid = w_dporto_resp_valid;              // systemc compatibility
-    vdporto.resp_error = w_dporto_resp_error;              // systemc compatibility
-    vdporto.rdata = wb_dporto_rdata;                       // systemc compatibility
+    vdporto.req_ready = w_dporto_req_ready;                 // systemc compatibility
+    vdporto.resp_valid = w_dporto_resp_valid;               // systemc compatibility
+    vdporto.resp_error = w_dporto_resp_error;               // systemc compatibility
+    vdporto.rdata = wb_dporto_rdata;                        // systemc compatibility
 
     vb_ip[IRQ_HART_MSIP] = i_msip;
     vb_ip[IRQ_HART_MTIP] = i_mtip;
     vb_ip[IRQ_HART_MEIP] = i_meip;
     vb_ip[IRQ_HART_SEIP] = i_seip;
     vmsto = axi4_l1_out_none;
-    vmsto.ar_bits.burst = AXI_BURST_INCR;                  // INCR (possible any value actually)
-    vmsto.aw_bits.burst = AXI_BURST_INCR;                  // INCR (possible any value actually)
+    vmsto.ar_bits.burst = AXI_BURST_INCR;                   // INCR (possible any value actually)
+    vmsto.aw_bits.burst = AXI_BURST_INCR;                   // INCR (possible any value actually)
     switch (r.state.read()) {
     case state_idle:
         v_next_ready = 1;
@@ -424,8 +424,8 @@ void RiverAmba::comb() {
                 // Need second request with cache access
                 v.cache_access = 1;
                 // see table C3-21 "Snoop response bit allocation"
-                vb_cr_resp[0] = 1;                         // will be Data transfer
-                vb_cr_resp[4] = 1;                         // WasUnique
+                vb_cr_resp[0] = 1;                          // will be Data transfer
+                vb_cr_resp[4] = 1;                          // WasUnique
                 if (r.ac_snoop.read() == AC_SNOOP_READ_UNIQUE) {
                     vb_req_snoop_type[SNOOP_REQ_TYPE_READCLEAN] = 1;
                 } else {
@@ -488,7 +488,7 @@ void RiverAmba::comb() {
             && (i_msti.read().ac_valid == 1)) {
         req_snoop_valid = 1;
         v.cache_access = 0;
-        vb_req_snoop_type = 0;                             // First snoop operation always just to read flags
+        vb_req_snoop_type = 0;                              // First snoop operation always just to read flags
         v.req_snoop_type = 0;
         vb_req_snoop_addr = i_msti.read().ac_addr;
         v.ac_addr = i_msti.read().ac_addr;
@@ -530,7 +530,7 @@ void RiverAmba::comb() {
 
     o_msto = vmsto;
     o_xcfg = wb_xcfg;
-    o_dport = vdporto;                                     // systemc compatibility
+    o_dport = vdporto;                                      // systemc compatibility
     o_available = 1;
 }
 

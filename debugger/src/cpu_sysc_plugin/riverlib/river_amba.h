@@ -17,8 +17,8 @@
 
 #include <systemc.h>
 #include "river_cfg.h"
-#include "types_river.h"
 #include "../ambalib/types_amba.h"
+#include "types_river.h"
 #include "river_top.h"
 
 namespace debugger {

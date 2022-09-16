@@ -389,7 +389,7 @@ void DCacheLru::comb() {
                     v_line_wflags[DTAG_FL_DIRTY] = 1;
                     v_line_wflags[DTAG_FL_RESERVED] = 0;
                     t_req_type[MemopType_Store] = 0;
-                    v.req_type = t_req_type;               // clear MemopType_Store bit
+                    v.req_type = t_req_type;                // clear MemopType_Store bit
                     vb_line_wstrb = vb_line_rdata_o_wstrb;
                     vb_line_wdata = vb_line_rdata_o_modified;
                     if ((r.req_type.read()[MemopType_Release] == 1)
@@ -397,7 +397,7 @@ void DCacheLru::comb() {
                         // ignore writing if cacheline wasn't reserved before:
                         v_line_cs_write = 0;
                         vb_line_wstrb = 0;
-                        vb_resp_data = 1;                  // return error
+                        vb_resp_data = 1;                   // return error
                         v.state = State_Idle;
                     } else {
                         if (coherence_ena_ && (line_rflags_o.read()[DTAG_FL_SHARED] == 1)) {
@@ -420,7 +420,7 @@ void DCacheLru::comb() {
                     v_line_wflags = line_rflags_o;
                     v_line_wflags[DTAG_FL_RESERVED] = 1;
                     vb_line_wdata = vb_cached_data;
-                    vb_line_wstrb = ~0ull;                 // flags will be modified only if wstrb != 0
+                    vb_line_wstrb = ~0ull;                  // flags will be modified only if wstrb != 0
                     v.state = State_Idle;
                 } else {
                     v_ready_next = 1;
@@ -431,7 +431,7 @@ void DCacheLru::comb() {
             // Miss
             if ((r.req_type.read()[MemopType_Store] == 1)
                     && (r.req_type.read()[MemopType_Release] == 1)) {
-                vb_resp_data = 1;                          // return error. Cannot store into unreserved cache line
+                vb_resp_data = 1;                           // return error. Cannot store into unreserved cache line
                 v.state = State_Idle;
             } else {
                 v.state = State_TranslateAddress;
@@ -547,11 +547,11 @@ void DCacheLru::comb() {
             v_line_wflags[TAG_FL_VALID] = 1;
             v_line_wflags[DTAG_FL_SHARED] = 1;
             v_line_wflags[DTAG_FL_RESERVED] = r.req_type.read()[MemopType_Reserve];
-            vb_line_wstrb = ~0ull;                         // write full line
+            vb_line_wstrb = ~0ull;                          // write full line
             if (r.req_type.read()[MemopType_Store] == 1) {
                 // Modify tagged mem output with request before write
                 t_req_type[MemopType_Store] = 0;
-                v.req_type = t_req_type;                   // clear MemopType_Store bit
+                v.req_type = t_req_type;                    // clear MemopType_Store bit
                 v_line_wflags[DTAG_FL_DIRTY] = 1;
                 v_line_wflags[DTAG_FL_SHARED] = 0;
                 v_line_wflags[DTAG_FL_RESERVED] = 0;
@@ -603,8 +603,8 @@ void DCacheLru::comb() {
         break;
     case State_FlushAddr:
         v.state = State_FlushCheck;
-        v_direct_access = r.req_flush_all;                 // 0=only if hit; 1=will be applied ignoring hit
-        v_invalidate = 1;                                  // generate: wstrb='1; wflags='0
+        v_direct_access = r.req_flush_all;                  // 0=only if hit; 1=will be applied ignoring hit
+        v_invalidate = 1;                                   // generate: wstrb='1; wflags='0
         v.write_flush = 0;
         v.cache_line_i = 0;
         break;
@@ -641,7 +641,7 @@ void DCacheLru::comb() {
     case State_Reset:
         // Write clean line
         v_direct_access = 1;
-        v_invalidate = 1;                                  // generate: wstrb='1; wflags='0
+        v_invalidate = 1;                                   // generate: wstrb='1; wflags='0
         v.state = State_ResetWrite;
         break;
     case State_ResetWrite:

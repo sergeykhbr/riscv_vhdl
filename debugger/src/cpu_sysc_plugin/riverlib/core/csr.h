@@ -89,7 +89,16 @@ SC_MODULE(CsrRegs) {
     static const uint32_t State_Response = 9;
     static const uint8_t SATP_MODE_SV48 = 9;
 
+    struct RegModeType {
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> xepc;
+        sc_signal<sc_uint<2>> xpp;                          // Previous Privildge mode. If x is not implemented, then xPP mus be 0
+        sc_signal<bool> xpie;                               // Previous Privildge mode global interrupt enable
+        sc_signal<bool> xie;                                // Global interrupt enbale bit.
+    };
+
+
     struct CsrRegs_registers {
+        RegModeType xmode[4];
         sc_signal<sc_uint<4>> state;
         sc_signal<sc_uint<CsrReq_TotalBits>> cmd_type;
         sc_signal<sc_uint<12>> cmd_addr;
@@ -111,13 +120,8 @@ SC_MODULE(CsrRegs) {
         sc_signal<bool> mmu_ena;                            // MMU SV48 enabled in U- and S- modes
         sc_signal<sc_uint<44>> satp_ppn;                    // Physcal Page Number
         sc_signal<sc_uint<4>> satp_mode;                    // Supervisor Address Translation and Protection mode
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mepc;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> uepc;
         sc_signal<sc_uint<2>> mode;
-        sc_signal<bool> uie;                                // mstatus: User level interrupts ena for current priv. mode
-        sc_signal<bool> mie;                                // mstatus: Machine level interrupts ena for current priv. mode
-        sc_signal<bool> mpie;                               // mstatus: Previous MIE value
-        sc_signal<sc_uint<2>> mpp;                          // mstatus: Previous mode
+        sc_signal<bool> mprv;                               // Modify PRiVilege. (Table 8.5) If MPRV=0, load and stores as normal, when MPRV=1, use translation of previous mode
         sc_signal<bool> usie;                               // mie: User software interrupt enable
         sc_signal<bool> ssie;                               // mie: Supervisor software interrupt enable
         sc_signal<bool> msie;                               // mie: machine software interrupt enable
@@ -162,78 +166,6 @@ SC_MODULE(CsrRegs) {
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> flushi_addr;
     } v, r;
 
-    void CsrRegs_r_reset(CsrRegs_registers &iv) {
-        iv.state = State_Idle;
-        iv.cmd_type = 0;
-        iv.cmd_addr = 0;
-        iv.cmd_data = 0ull;
-        iv.cmd_exception = 0;
-        iv.progbuf_end = 0;
-        iv.progbuf_err = 0;
-        iv.mtvec = 0ull;
-        iv.mtvec_mode = 0;
-        iv.mtval = 0ull;
-        iv.mscratch = 0ull;
-        iv.mstackovr = 0ull;
-        iv.mstackund = 0ull;
-        iv.mpu_addr = 0ull;
-        iv.mpu_mask = 0ull;
-        iv.mpu_idx = 0;
-        iv.mpu_flags = 0;
-        iv.mpu_we = 0;
-        iv.mmu_ena = 0;
-        iv.satp_ppn = 0ull;
-        iv.satp_mode = 0;
-        iv.mepc = 0ull;
-        iv.uepc = 0ull;
-        iv.mode = PRV_M;
-        iv.uie = 0;
-        iv.mie = 0;
-        iv.mpie = 0;
-        iv.mpp = 0;
-        iv.usie = 0;
-        iv.ssie = 0;
-        iv.msie = 0;
-        iv.utie = 0;
-        iv.stie = 0;
-        iv.mtie = 0;
-        iv.ueie = 0;
-        iv.seie = 0;
-        iv.meie = 0;
-        iv.usip = 0;
-        iv.ssip = 0;
-        iv.msip = 0;
-        iv.utip = 0;
-        iv.stip = 0;
-        iv.mtip = 0;
-        iv.ueip = 0;
-        iv.seip = 0;
-        iv.meip = 0;
-        iv.ex_fpu_invalidop = 0;
-        iv.ex_fpu_divbyzero = 0;
-        iv.ex_fpu_overflow = 0;
-        iv.ex_fpu_underflow = 0;
-        iv.ex_fpu_inexact = 0;
-        iv.trap_irq = 0;
-        iv.trap_cause = 0;
-        iv.trap_addr = 0ull;
-        iv.timer = 0ull;
-        iv.cycle_cnt = 0ull;
-        iv.executed_cnt = 0ull;
-        iv.dscratch0 = 0ull;
-        iv.dscratch1 = 0ull;
-        iv.dpc = CFG_RESET_VECTOR;
-        iv.halt_cause = 0;
-        iv.dcsr_ebreakm = 0;
-        iv.dcsr_stopcount = 0;
-        iv.dcsr_stoptimer = 0;
-        iv.dcsr_step = 0;
-        iv.dcsr_stepie = 0;
-        iv.stepping_mode_cnt = 0ull;
-        iv.ins_per_step = 1ull;
-        iv.flushi_ena = 0;
-        iv.flushi_addr = 0ull;
-    }
 
 };
 

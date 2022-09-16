@@ -70,8 +70,6 @@ void MPU::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_dflags, o_dflags.name());
         for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
             char tstr[1024];
-            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_tbl%d_flags", pn.c_str(), i);
-            sc_trace(o_vcd, r.tbl[i].flags, tstr);
         }
     }
 

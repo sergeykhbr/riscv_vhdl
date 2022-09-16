@@ -163,13 +163,13 @@ void L2Amba::comb() {
         L2Amba_r_reset(v);
     }
 
-    o_resp_data = i_msti.read().r_data;                    // can't directly pass to lower level
+    o_resp_data = i_msti.read().r_data;                     // can't directly pass to lower level
 
     // o_msto_aw_valid = vmsto_aw_valid;
     vmsto.aw_bits.addr = i_req_addr;
     vmsto.aw_bits.len = 0;
-    vmsto.aw_bits.size = i_req_size;                       // 0=1B; 1=2B; 2=4B; 3=8B; 4=16B; 5=32B; 6=64B; 7=128B
-    vmsto.aw_bits.burst = 0x1;                             // 00=FIX; 01=INCR; 10=WRAP
+    vmsto.aw_bits.size = i_req_size;                        // 0=1B; 1=2B; 2=4B; 3=8B; 4=16B; 5=32B; 6=64B; 7=128B
+    vmsto.aw_bits.burst = 0x1;                              // 00=FIX; 01=INCR; 10=WRAP
     vmsto.aw_bits.lock = 0;
     vmsto.aw_bits.cache = i_req_type.read()[REQ_MEM_TYPE_CACHED];
     vmsto.aw_bits.prot = i_req_prot;
@@ -187,8 +187,8 @@ void L2Amba::comb() {
     // vmsto.ar_valid = vmsto_ar_valid;
     vmsto.ar_bits.addr = i_req_addr;
     vmsto.ar_bits.len = 0;
-    vmsto.ar_bits.size = i_req_size;                       // 0=1B; 1=2B; 2=4B; 3=8B; ...
-    vmsto.ar_bits.burst = 0x1;                             // INCR
+    vmsto.ar_bits.size = i_req_size;                        // 0=1B; 1=2B; 2=4B; 3=8B; ...
+    vmsto.ar_bits.burst = 0x1;                              // INCR
     vmsto.ar_bits.lock = 0;
     vmsto.ar_bits.cache = i_req_type.read()[REQ_MEM_TYPE_CACHED];
     vmsto.ar_bits.prot = i_req_prot;

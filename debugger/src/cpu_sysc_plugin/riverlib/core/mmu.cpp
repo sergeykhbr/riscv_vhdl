@@ -462,7 +462,7 @@ void Mmu::comb() {
             v.req_pa = t_req_pa;
         } else {
             // TLB miss
-            v.tlb_level = 0x1;                             // Start page decoding
+            v.tlb_level = 0x1;                              // Start page decoding
             v.req_pa = (vb_pte_start_va, vb_level0_off);
         }
         v.state = CacheReq;
@@ -483,9 +483,9 @@ void Mmu::comb() {
         if (i_mem_resp_valid.read() == 1) {
             v.resp_addr = i_mem_resp_addr;
             v.resp_data = i_mem_resp_data;
-            v.resp_executable = i_mem_resp_executable;     // MPU executable flag
-            v.resp_load_fault = i_mem_resp_load_fault;     // Hardware error Load (unmapped access)
-            v.resp_store_fault = i_mem_resp_store_fault;   // Hardware error Store/AMO (unmapped access)
+            v.resp_executable = i_mem_resp_executable;      // MPU executable flag
+            v.resp_load_fault = i_mem_resp_load_fault;      // Hardware error Load (unmapped access)
+            v.resp_store_fault = i_mem_resp_store_fault;    // Hardware error Store/AMO (unmapped access)
             if ((r.tlb_hit || i_mem_resp_load_fault || i_mem_resp_store_fault) == 1) {
                 v.state = AcceptCore;
             } else {
@@ -540,7 +540,7 @@ void Mmu::comb() {
         // Translation is finished: write va/pa into TLB memory
         v_tlb_wena = 1;
         vb_tlb_adr = r.last_va.read()(((12 + CFG_MMU_TLB_AWIDTH) - 1), 12);
-        v.state = CacheReq;                                // Read data by physical address
+        v.state = CacheReq;                                 // Read data by physical address
         v.tlb_hit = 1;
         break;
     case AcceptCore:

@@ -180,10 +180,10 @@ void IntDiv::comb() {
     }
 
     if ((vb_a1[63] == 1) && (vb_a1(62, 0).or_reduce() == 0)) {
-        v_a1_m0 = 1;                                       // = (1ull << 63)
+        v_a1_m0 = 1;                                        // = (1ull << 63)
     }
     if (vb_a2.and_reduce() == 1) {
-        v_a2_m1 = 1;                                       // = -1ll
+        v_a2_m1 = 1;                                        // = -1ll
     }
 
     v_ena = (i_ena && (!r.busy));

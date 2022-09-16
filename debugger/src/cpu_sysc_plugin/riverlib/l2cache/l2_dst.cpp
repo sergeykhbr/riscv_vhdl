@@ -162,9 +162,9 @@ void L2Destination::comb() {
     vb_cd_ready = r.cd_ready;
 
     vb_broadband_mask_full = ~0ull;
-    vb_broadband_mask_full[CFG_SLOT_L1_TOTAL] = 0;         // exclude empty slot
+    vb_broadband_mask_full[CFG_SLOT_L1_TOTAL] = 0;          // exclude empty slot
     vb_broadband_mask = vb_broadband_mask_full;
-    vb_broadband_mask[vb_srcid.to_int()] = 0;              // exclude source
+    vb_broadband_mask[vb_srcid.to_int()] = 0;               // exclude source
 
     switch (r.state.read()) {
     case Idle:
@@ -245,7 +245,7 @@ void L2Destination::comb() {
             vlxi[r.srcid.read().to_int()].r_resp = AXI_RESP_SLVERR;
         }
         if (i_resp_valid.read() == 1) {
-            v.state = Idle;                                // Wouldn't implement wait to accept because L1 is always ready
+            v.state = Idle;                                 // Wouldn't implement wait to accept because L1 is always ready
         }
         break;
     case WriteMem:
@@ -256,7 +256,7 @@ void L2Destination::comb() {
             vlxi[r.srcid.read().to_int()].b_resp = AXI_RESP_SLVERR;
         }
         if (i_resp_valid.read() == 1) {
-            v.state = Idle;                                // Wouldn't implement wait to accept because L1 is always ready
+            v.state = Idle;                                 // Wouldn't implement wait to accept because L1 is always ready
         }
         break;
     case snoop_ac:

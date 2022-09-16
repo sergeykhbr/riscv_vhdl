@@ -259,7 +259,7 @@ void L2CacheLru::comb() {
 
     v = r;
 
-    vb_req_type = r.req_type;                              // systemc specific
+    vb_req_type = r.req_type;                               // systemc specific
     if (L2CACHE_LINE_BITS != L1CACHE_LINE_BITS) {
         ridx = r.req_addr.read()((CFG_L2_LOG2_BYTES_PER_LINE - 1), (CFG_L2_LOG2_BYTES_PER_LINE - CFG_DLOG2_BYTES_PER_LINE)).to_int();
     }
@@ -432,7 +432,7 @@ void L2CacheLru::comb() {
             v.cache_line_i = i_mem_data;
             v.state = State_CheckResp;
             if (i_mem_load_fault.read() == 1) {
-                v.rb_resp = 0x2;                           // SLVERR
+                v.rb_resp = 0x2;                            // SLVERR
             }
         }
         break;
@@ -448,7 +448,7 @@ void L2CacheLru::comb() {
             v.state = State_SetupReadAdr;
             v_line_cs_write = 1;
             v_line_wflags[TAG_FL_VALID] = 1;
-            vb_line_wstrb = ~0ull;                         // write full line
+            vb_line_wstrb = ~0ull;                          // write full line
             if (r.req_type.read()[L2_REQ_TYPE_WRITE] == 1) {
                 // Modify tagged mem output with request before write
                 vb_req_type[L2_REQ_TYPE_WRITE] = 0;
@@ -483,14 +483,14 @@ void L2CacheLru::comb() {
                 // Non-cached write
                 v.state = State_Idle;
                 v_resp_valid = 1;
-                vb_resp_status[1] = i_mem_store_fault;     // rb_resp
+                vb_resp_status[1] = i_mem_store_fault;      // rb_resp
             }
         }
         break;
     case State_FlushAddr:
         v.state = State_FlushCheck;
-        v_direct_access = r.req_flush_all;                 // 0=only if hit; 1=will be applied ignoring hit
-        v_invalidate = 1;                                  // generate: wstrb='1; wflags='0
+        v_direct_access = r.req_flush_all;                  // 0=only if hit; 1=will be applied ignoring hit
+        v_invalidate = 1;                                   // generate: wstrb='1; wflags='0
         v.write_flush = 0;
         v.cache_line_i = 0;
         break;
@@ -528,7 +528,7 @@ void L2CacheLru::comb() {
     case State_Reset:
         // Write clean line
         v_direct_access = 1;
-        v_invalidate = 1;                                  // generate: wstrb='1; wflags='0
+        v_invalidate = 1;                                   // generate: wstrb='1; wflags='0
         v.state = State_ResetWrite;
         break;
     case State_ResetWrite:
@@ -565,7 +565,7 @@ void L2CacheLru::comb() {
                 v.req_type = i_req_type;
                 v.req_size = i_req_size;
                 v.req_prot = i_req_prot;
-                v.rb_resp = 0;                             // RESP OK
+                v.rb_resp = 0;                              // RESP OK
                 v.state = State_CheckHit;
             }
         }

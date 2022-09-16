@@ -254,7 +254,7 @@ void MemAccess::comb() {
 
     v = r;
 
-    v.valid = 0;                                           // valid on next clock
+    v.valid = 0;                                            // valid on next clock
 
     switch (i_memop_size.read()) {
     case 0:
@@ -317,7 +317,7 @@ void MemAccess::comb() {
     }
 
     // Form Queue inputs:
-    t_memop_debug = i_memop_debug;                         // looks like bug in systemc, cannot handle bool properly
+    t_memop_debug = i_memop_debug;                          // looks like bug in systemc, cannot handle bool properly
     queue_data_i = (t_memop_debug,
             i_e_flushd,
             i_mmu_ena,

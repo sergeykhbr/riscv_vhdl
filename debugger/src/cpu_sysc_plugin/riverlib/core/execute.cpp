@@ -748,22 +748,18 @@ void InstrExecute::comb() {
 
     // Compute branch conditions:
     vb_sub64 = (vb_rdata1 - vb_rdata2);
-    if (vb_sub64.or_reduce() == 0) {
-        v_eq = 1;                                          // equal
-    }
-    v_ge = (!vb_sub64[63]);                                // greater/equal (signed)
+    v_eq = (!vb_sub64.or_reduce());                         // equal
+    v_ge = (!vb_sub64[63]);                                 // greater/equal (signed)
     v_geu = 0;
     if (vb_rdata1 >= vb_rdata2) {
-        v_geu = 1;                                         // greater/equal (unsigned)
+        v_geu = 1;                                          // greater/equal (unsigned)
     }
-    v_lt = vb_sub64[63];                                   // less (signed)
+    v_lt = vb_sub64[63];                                    // less (signed)
     v_ltu = 0;
     if (vb_rdata1 < vb_rdata2) {
-        v_ltu = 1;                                         // less (unsiged)
+        v_ltu = 1;                                          // less (unsiged)
     }
-    if (vb_sub64.or_reduce() == 1) {
-        v_neq = 1;                                         // not equal
-    }
+    v_neq = vb_sub64.or_reduce();                           // not equal
 
     // Relative Branch on some condition:
     v_pc_branch = 0;
@@ -851,6 +847,8 @@ void InstrExecute::comb() {
             || wv[Instr_JAL]
             || wv[Instr_JALR]
             || wv[Instr_MRET]
+            || wv[Instr_HRET]
+            || wv[Instr_SRET]
             || wv[Instr_URET]);
     vb_select[Res_Csr] = (wv[Instr_CSRRC]
             || wv[Instr_CSRRCI]
@@ -922,9 +920,7 @@ void InstrExecute::comb() {
     if (fpu_ena_) {
         vb_select[Res_FPU] = (mux.f64 && (!(wv[Instr_FSD] || wv[Instr_FLD])));
     }
-    if (vb_select((Res_Total - 1), (Res_Zero + 1)).or_reduce() == 0) {
-        vb_select[Res_Zero] = 1;                           // load memory, fence
-    }
+    vb_select[Res_Zero] = (!vb_select((Res_Total - 1), (Res_Zero + 1)).or_reduce());// load memory, fence
 
     if (((wv[Instr_JAL] || wv[Instr_JALR]) == 1) && (mux.waddr == REG_RA)) {
         v_call = 1;
@@ -959,6 +955,8 @@ void InstrExecute::comb() {
             || wv[Instr_EBREAK]
             || wv[Instr_ECALL]
             || wv[Instr_MRET]
+            || wv[Instr_HRET]
+            || wv[Instr_SRET]
             || wv[Instr_URET]
             || wv[Instr_CSRRC]
             || wv[Instr_CSRRCI]
@@ -974,62 +972,68 @@ void InstrExecute::comb() {
         vb_csr_cmd_addr = HALT_CAUSE_STEP;
     } else if (v_instr_misaligned == 1) {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
-        vb_csr_cmd_addr = EXCEPTION_InstrMisalign;         // Instruction address misaligned
+        vb_csr_cmd_addr = EXCEPTION_InstrMisalign;          // Instruction address misaligned
         vb_csr_cmd_wdata = mux.pc;
     } else if ((i_instr_load_fault.read() == 1) || (v_instr_executable == 0)) {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
-        vb_csr_cmd_addr = EXCEPTION_InstrFault;            // Instruction access fault
+        vb_csr_cmd_addr = EXCEPTION_InstrFault;             // Instruction access fault
         vb_csr_cmd_wdata = mux.pc;
     } else if (i_unsup_exception) {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
-        vb_csr_cmd_addr = EXCEPTION_InstrIllegal;          // Illegal instruction
+        vb_csr_cmd_addr = EXCEPTION_InstrIllegal;           // Illegal instruction
         vb_csr_cmd_wdata = mux.instr;
     } else if (wv[Instr_EBREAK] == 1) {
         vb_csr_cmd_type = CsrReq_BreakpointCmd;
         vb_csr_cmd_addr = EXCEPTION_Breakpoint;
     } else if (v_load_misaligned == 1) {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
-        vb_csr_cmd_addr = EXCEPTION_LoadMisalign;          // Load address misaligned
+        vb_csr_cmd_addr = EXCEPTION_LoadMisalign;           // Load address misaligned
         vb_csr_cmd_wdata = vb_memop_memaddr_load;
     } else if ((r.mem_ex_load_fault || r.mem_ex_mpu_load) == 1) {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
-        vb_csr_cmd_addr = EXCEPTION_LoadFault;             // Load access fault
+        vb_csr_cmd_addr = EXCEPTION_LoadFault;              // Load access fault
         vb_csr_cmd_wdata = r.mem_ex_addr;
     } else if (v_store_misaligned == 1) {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
-        vb_csr_cmd_addr = EXCEPTION_StoreMisalign;         // Store/AMO address misaligned
+        vb_csr_cmd_addr = EXCEPTION_StoreMisalign;          // Store/AMO address misaligned
         vb_csr_cmd_wdata = vb_memop_memaddr_store;
     } else if ((r.mem_ex_store_fault || r.mem_ex_mpu_store) == 1) {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
-        vb_csr_cmd_addr = EXCEPTION_StoreFault;            // Store/AMO access fault
+        vb_csr_cmd_addr = EXCEPTION_StoreFault;             // Store/AMO access fault
         vb_csr_cmd_wdata = r.mem_ex_addr;
     } else if (r.stack_overflow.read() == 1) {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
-        vb_csr_cmd_addr = EXCEPTION_StackOverflow;         // Stack overflow
+        vb_csr_cmd_addr = EXCEPTION_StackOverflow;          // Stack overflow
     } else if (r.stack_underflow.read() == 1) {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
-        vb_csr_cmd_addr = EXCEPTION_StackUnderflow;        // Stack Underflow
+        vb_csr_cmd_addr = EXCEPTION_StackUnderflow;         // Stack Underflow
     } else if (wv[Instr_ECALL] == 1) {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
-        vb_csr_cmd_addr = EXCEPTION_CallFromXMode;         // Environment call
+        vb_csr_cmd_addr = EXCEPTION_CallFromXMode;          // Environment call
     } else if (i_irq_software.read() == 1) {
         vb_csr_cmd_type = CsrReq_InterruptCmd;
-        vb_csr_cmd_addr = INTERRUPT_XSoftware;             // Software interrupt request
+        vb_csr_cmd_addr = INTERRUPT_XSoftware;              // Software interrupt request
     } else if (i_irq_timer.read() == 1) {
         vb_csr_cmd_type = CsrReq_InterruptCmd;
-        vb_csr_cmd_addr = INTERRUPT_XTimer;                // Timer interrupt request
+        vb_csr_cmd_addr = INTERRUPT_XTimer;                 // Timer interrupt request
     } else if (i_irq_external.read() == 1) {
         vb_csr_cmd_type = CsrReq_InterruptCmd;
-        vb_csr_cmd_addr = INTERRUPT_XExternal;             // PLIC interrupt request
+        vb_csr_cmd_addr = INTERRUPT_XExternal;              // PLIC interrupt request
     } else if (wv[Instr_WFI] == 1) {
         vb_csr_cmd_type = CsrReq_WfiCmd;
-        vb_csr_cmd_addr = mux.instr(14, 12);               // PRIV field
+        vb_csr_cmd_addr = mux.instr(14, 12);                // PRIV field
     } else if (wv[Instr_MRET] == 1) {
         vb_csr_cmd_type = CsrReq_TrapReturnCmd;
-        vb_csr_cmd_addr = CSR_mepc;
+        vb_csr_cmd_addr = PRV_M;
+    } else if (wv[Instr_HRET] == 1) {
+        vb_csr_cmd_type = CsrReq_TrapReturnCmd;
+        vb_csr_cmd_addr = PRV_H;
+    } else if (wv[Instr_SRET] == 1) {
+        vb_csr_cmd_type = CsrReq_TrapReturnCmd;
+        vb_csr_cmd_addr = PRV_S;
     } else if (wv[Instr_URET] == 1) {
         vb_csr_cmd_type = CsrReq_TrapReturnCmd;
-        vb_csr_cmd_addr = CSR_uepc;
+        vb_csr_cmd_addr = PRV_U;
     } else if (wv[Instr_CSRRC] == 1) {
         vb_csr_cmd_type = CsrReq_ReadCmd;
         vb_csr_cmd_addr = i_d_csr_addr;
@@ -1055,7 +1059,7 @@ void InstrExecute::comb() {
     } else if (wv[Instr_CSRRWI] == 1) {
         vb_csr_cmd_type = CsrReq_ReadCmd;
         vb_csr_cmd_addr = i_d_csr_addr;
-        vb_csr_cmd_wdata(4, 0) = r.radr1.read()(4, 0);     // zero-extending 5 to 64-bits
+        vb_csr_cmd_wdata(4, 0) = r.radr1.read()(4, 0);      // zero-extending 5 to 64-bits
     }
 
     wb_select[Res_Zero].res = 0;
@@ -1158,15 +1162,13 @@ void InstrExecute::comb() {
                 if (i_memop_ready.read() == 0) {
                     v.state = State_WaitFlushingAccept;
                 } else if (v_fence_i == 1) {
-                    v.state = State_Flushing_I;            // Flushing I need to wait ending of flashing D
+                    v.state = State_Flushing_I;             // Flushing I need to wait ending of flashing D
                 } else {
                     v.valid = 1;
                 }
             } else {
                 v.valid = 1;
-                if ((i_d_waddr.read().or_reduce() == 1) && (i_memop_load.read() == 0)) {
-                    v_reg_ena = 1;                         // should be written by memaccess, but tag must be updated
-                }
+                v_reg_ena = (i_d_waddr.read().or_reduce() && (!i_memop_load));// should be written by memaccess, but tag must be updated
             }
         }
         break;
@@ -1220,7 +1222,7 @@ void InstrExecute::comb() {
                 } else if ((r.csr_req_type.read()[CsrReq_ExceptionBit]
                             || r.csr_req_type.read()[CsrReq_InterruptBit]
                             || r.csr_req_type.read()[CsrReq_ResumeBit]) == 1) {
-                    v.valid = 0;                           // No valid strob should be generated
+                    v.valid = 0;                            // No valid strob should be generated
                     v.state = State_Idle;
                     if (i_dbg_progbuf_ena.read() == 0) {
                         v.npc = i_csr_resp_data;
@@ -1251,9 +1253,7 @@ void InstrExecute::comb() {
 
                     // Store result int cpu register on next clock
                     v.res_csr = i_csr_resp_data;
-                    if (r.waddr.read().or_reduce() == 1) {
-                        v_reg_ena = 1;
-                    }
+                    v_reg_ena = r.waddr.read().or_reduce();
                     vb_reg_waddr = r.waddr;
                 } else {
                     v.state = State_Idle;
@@ -1285,7 +1285,7 @@ void InstrExecute::comb() {
             if ((w_hazard1.read() == 0) && (w_hazard2.read() == 0)) {
                 // Need to wait 1 clock to latch addsub/alu output
                 v.amostate = AmoState_Write;
-                mux.memop_type[MemopType_Store] = 1;       // no need to do this in rtl, just assign to v.memop_type[0]
+                mux.memop_type[MemopType_Store] = 1;        // no need to do this in rtl, just assign to v.memop_type[0]
                 v.memop_type = mux.memop_type;
             }
             break;
@@ -1309,9 +1309,7 @@ void InstrExecute::comb() {
                 || wb_select[Res_IDiv].valid
                 || wb_select[Res_FPU].valid) == 1) {
             v.state = State_Idle;
-            if (r.waddr.read().or_reduce() == 1) {
-                v_reg_ena = 1;
-            }
+            v_reg_ena = r.waddr.read().or_reduce();
             vb_reg_waddr = r.waddr;
             v.valid = 1;
         }
@@ -1401,7 +1399,7 @@ void InstrExecute::comb() {
 
     vb_tagcnt_next = r.tagcnt;
     vb_tagcnt_next((CFG_REG_TAG_WIDTH * t_waddr) + CFG_REG_TAG_WIDTH- 1, (CFG_REG_TAG_WIDTH * t_waddr)) = t_tagcnt_wr;
-    vb_tagcnt_next((CFG_REG_TAG_WIDTH - 1), 0) = 0;        // r0 always 0
+    vb_tagcnt_next((CFG_REG_TAG_WIDTH - 1), 0) = 0;         // r0 always 0
     if (i_dbg_progbuf_ena.read() == 0) {
         v.dnpc = 0;
     }
@@ -1413,7 +1411,7 @@ void InstrExecute::comb() {
         } else {
             v.dnpc = 0;
             v.pc = i_d_pc;
-            v.npc = vb_prog_npc;                           // Actually this value will be restored on resume request
+            v.npc = vb_prog_npc;                            // Actually this value will be restored on resume request
         }
         v.radr1 = i_d_radr1;
         v.radr2 = i_d_radr2;
@@ -1441,6 +1439,8 @@ void InstrExecute::comb() {
                 || wv[Instr_JAL]
                 || wv[Instr_JALR]
                 || wv[Instr_MRET]
+                || wv[Instr_HRET]
+                || wv[Instr_SRET]
                 || wv[Instr_URET]);
         v.res_npc = vb_prog_npc;
         v.res_ra = vb_npc_incr;
@@ -1583,7 +1583,7 @@ void InstrExecute::comb() {
     o_pc = r.pc;
     o_npc = vb_o_npc;
     o_instr = r.instr;
-    o_flushd = r.flushd;                                   // must be post in a memory queue to avoid to early flushing
+    o_flushd = r.flushd;                                    // must be post in a memory queue to avoid to early flushing
     o_flushi = r.flushi;
     o_flushi_addr = r.flushi_addr;
     o_call = r.call;
