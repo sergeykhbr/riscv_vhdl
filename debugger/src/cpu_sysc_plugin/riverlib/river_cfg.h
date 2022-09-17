@@ -444,7 +444,7 @@ static const int IRQ_STIP = 5;                              // Supervisor timer 
 static const int IRQ_MTIP = 7;                              // Machine timer pening interrupt
 static const int IRQ_SEIP = 9;                              // Supervisor external pening interrupt
 static const int IRQ_MEIP = 11;                             // Machine external pening interrupt
-static const int IRQ_TOTAL = 12;                            // Total number of direct core interrupt requests
+static const int IRQ_TOTAL = 16;                            // Total number of direct core interrupt requests
 // Depth of the fifo between Executor and MemoryAccess modules.
 static const int CFG_MEMACCESS_QUEUE_DEPTH = 2;
 // Register's tag used to detect reg hazard and it should be higher than available

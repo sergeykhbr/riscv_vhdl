@@ -283,7 +283,10 @@ void CsrRegs::comb() {
     bool v_req_progbuf;
     bool v_req_ready;
     bool v_resp_valid;
-    sc_uint<RISCV_ARCH> vb_xtvec_off;                       // 4-bytes aligned
+    bool v_medeleg_ena;
+    bool v_mideleg_ena;
+    sc_uint<RISCV_ARCH> vb_xtvec_off_ideleg;                // 4-bytes aligned
+    sc_uint<RISCV_ARCH> vb_xtvec_off_edeleg;                // 4-bytes aligned
 
     iM = PRV_M;
     iH = PRV_H;
@@ -309,7 +312,10 @@ void CsrRegs::comb() {
     v_req_progbuf = 0;
     v_req_ready = 0;
     v_resp_valid = 0;
-    vb_xtvec_off = 0;
+    v_medeleg_ena = 0;
+    v_mideleg_ena = 0;
+    vb_xtvec_off_ideleg = 0;
+    vb_xtvec_off_edeleg = 0;
 
     for (int i = 0; i < 4; i++) {
         v.xmode[i].xepc = r.xmode[i].xepc;
@@ -376,7 +382,20 @@ void CsrRegs::comb() {
 
     v.mpu_we = 0;
     vb_xpp = r.xmode[r.mode.read().to_int()].xpp;
-    vb_xtvec_off = r.xmode[r.mode.read().to_int()].xtvec_off;
+
+    vb_xtvec_off_edeleg = r.xmode[iM].xtvec_off;
+    if ((r.mode.read() <= PRV_S) && (r.medeleg.read()[r.cmd_addr.read()(4, 0).to_int()] == 1)) {
+        // Exception delegation to S-mode
+        v_medeleg_ena = 1;
+        vb_xtvec_off_edeleg = r.xmode[iS].xtvec_off;
+    }
+
+    vb_xtvec_off_ideleg = r.xmode[iM].xtvec_off;
+    if ((r.mode.read() <= PRV_S) && (r.mideleg.read()[r.cmd_addr.read()(3, 0).to_int()] == 1)) {
+        // Interrupt delegation to S-mode
+        v_mideleg_ena = 1;
+        vb_xtvec_off_ideleg = r.xmode[iS].xtvec_off;
+    }
 
     switch (r.state.read()) {
     case State_Idle:
@@ -412,7 +431,7 @@ void CsrRegs::comb() {
         vb_e_emux[r.cmd_addr.read()(4, 0).to_int()] = 1;
         vb_xtval = r.cmd_data;
         wb_trap_cause = r.cmd_addr.read()(4, 0);
-        v.cmd_data = vb_xtvec_off;
+        v.cmd_data = vb_xtvec_off_edeleg;
         if (i_dbg_progbuf_ena.read() == 1) {
             v.progbuf_err = 1;
             v.progbuf_end = 1;
@@ -436,7 +455,7 @@ void CsrRegs::comb() {
             vb_e_emux[EXCEPTION_Breakpoint] = 1;
             wb_trap_cause = r.cmd_addr.read()(4, 0);
             vb_xtval = i_e_pc;
-            v.cmd_data = vb_xtvec_off;                      // Jump to exception handler
+            v.cmd_data = vb_xtvec_off_edeleg;               // Jump to exception handler
         }
         break;
     case State_Halt:
@@ -456,11 +475,10 @@ void CsrRegs::comb() {
         v.state = State_Response;
         vb_e_imux[r.cmd_addr.read()(3, 0).to_int()] = 1;
         wb_trap_cause = r.cmd_addr.read()(4, 0);
+        v.cmd_data = vb_xtvec_off_ideleg;
         if (r.xmode[r.mode.read().to_int()].xtvec_mode.read() == 1) {
             // vectorized
-            v.cmd_data = (vb_xtvec_off + (wb_trap_cause << 2));
-        } else {
-            v.cmd_data = vb_xtvec_off;
+            v.cmd_data = (vb_xtvec_off_ideleg + (wb_trap_cause << 2));
         }
         break;
     case State_TrapReturn:
