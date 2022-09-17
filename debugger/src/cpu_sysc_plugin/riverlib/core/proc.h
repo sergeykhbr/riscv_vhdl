@@ -63,7 +63,7 @@ SC_MODULE(Processor) {
     sc_in<bool> i_resp_data_er_mpu_store;
     sc_out<bool> o_resp_data_ready;                         // Core is ready to accept response from DCache
     // Interrupt line from external interrupts controller (PLIC):
-    sc_in<sc_uint<IRQ_PER_HART_TOTAL>> i_irq_pending;       // Per Hart pending interrupts pins
+    sc_in<sc_uint<IRQ_TOTAL>> i_irq_pending;                // Per Hart pending interrupts pins
     // MPU interface
     sc_out<bool> o_mpu_region_we;
     sc_out<sc_uint<CFG_MPU_TBL_WIDTH>> o_mpu_region_idx;
@@ -236,9 +236,7 @@ SC_MODULE(Processor) {
         sc_signal<bool> flushi_ena;                         // clear specified addr in ICache without execution of fence.i
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> flushi_addr;
         sc_signal<sc_uint<64>> executed_cnt;                // Number of executed instruction
-        sc_signal<bool> irq_software;
-        sc_signal<bool> irq_timer;
-        sc_signal<bool> irq_external;
+        sc_signal<sc_uint<IRQ_TOTAL>> irq_pending;
         sc_signal<bool> stack_overflow;
         sc_signal<bool> stack_underflow;
         sc_signal<bool> step;

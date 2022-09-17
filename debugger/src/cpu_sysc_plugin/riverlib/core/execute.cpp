@@ -56,9 +56,7 @@ InstrExecute::InstrExecute(sc_module_name name,
     i_mem_ex_mpu_store("i_mem_ex_mpu_store"),
     i_mem_ex_mpu_load("i_mem_ex_mpu_load"),
     i_mem_ex_addr("i_mem_ex_addr"),
-    i_irq_software("i_irq_software"),
-    i_irq_timer("i_irq_timer"),
-    i_irq_external("i_irq_external"),
+    i_irq_pending("i_irq_pending"),
     i_haltreq("i_haltreq"),
     i_resumereq("i_resumereq"),
     i_step("i_step"),
@@ -235,9 +233,7 @@ InstrExecute::InstrExecute(sc_module_name name,
     sensitive << i_mem_ex_mpu_store;
     sensitive << i_mem_ex_mpu_load;
     sensitive << i_mem_ex_addr;
-    sensitive << i_irq_software;
-    sensitive << i_irq_timer;
-    sensitive << i_irq_external;
+    sensitive << i_irq_pending;
     sensitive << i_haltreq;
     sensitive << i_resumereq;
     sensitive << i_step;
@@ -397,9 +393,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_mem_ex_mpu_store, i_mem_ex_mpu_store.name());
         sc_trace(o_vcd, i_mem_ex_mpu_load, i_mem_ex_mpu_load.name());
         sc_trace(o_vcd, i_mem_ex_addr, i_mem_ex_addr.name());
-        sc_trace(o_vcd, i_irq_software, i_irq_software.name());
-        sc_trace(o_vcd, i_irq_timer, i_irq_timer.name());
-        sc_trace(o_vcd, i_irq_external, i_irq_external.name());
+        sc_trace(o_vcd, i_irq_pending, i_irq_pending.name());
         sc_trace(o_vcd, i_haltreq, i_haltreq.name());
         sc_trace(o_vcd, i_resumereq, i_resumereq.name());
         sc_trace(o_vcd, i_step, i_step.name());
@@ -524,6 +518,30 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (fpu0) {
         fpu0->generateVCD(i_vcd, o_vcd);
     }
+}
+
+sc_uint<4> InstrExecute::irq2idx(sc_uint<IRQ_TOTAL> irqbus) {
+    sc_uint<4> ret;
+
+    // see page 34, cursive text about prioirty handling:
+    //     1. Higher priv mode must be served first
+    //     2. External interrupts first
+    //     3. SW interrupts seconds
+    //     4. Timer interrupts last
+    if (irqbus[IRQ_MEIP] == 1) {
+        ret = IRQ_MEIP;
+    } else if (irqbus[IRQ_MSIP] == 1) {
+        ret = IRQ_MSIP;
+    } else if (irqbus[IRQ_MTIP] == 1) {
+        ret = IRQ_MTIP;
+    } else if (irqbus[IRQ_SEIP] == 1) {
+        ret = IRQ_SEIP;
+    } else if (irqbus[IRQ_SSIP] == 1) {
+        ret = IRQ_SSIP;
+    } else if (irqbus[IRQ_STIP] == 1) {
+        ret = IRQ_STIP;
+    }
+    return ret;
 }
 
 void InstrExecute::comb() {
@@ -948,9 +966,7 @@ void InstrExecute::comb() {
             || v_instr_misaligned
             || v_load_misaligned
             || v_store_misaligned
-            || i_irq_software
-            || i_irq_timer
-            || i_irq_external
+            || i_irq_pending.read().or_reduce()
             || wv[Instr_WFI]
             || wv[Instr_EBREAK]
             || wv[Instr_ECALL]
@@ -1010,15 +1026,9 @@ void InstrExecute::comb() {
     } else if (wv[Instr_ECALL] == 1) {
         vb_csr_cmd_type = CsrReq_ExceptionCmd;
         vb_csr_cmd_addr = EXCEPTION_CallFromXMode;          // Environment call
-    } else if (i_irq_software.read() == 1) {
+    } else if (i_irq_pending.read().or_reduce() == 1) {
         vb_csr_cmd_type = CsrReq_InterruptCmd;
-        vb_csr_cmd_addr = INTERRUPT_XSoftware;              // Software interrupt request
-    } else if (i_irq_timer.read() == 1) {
-        vb_csr_cmd_type = CsrReq_InterruptCmd;
-        vb_csr_cmd_addr = INTERRUPT_XTimer;                 // Timer interrupt request
-    } else if (i_irq_external.read() == 1) {
-        vb_csr_cmd_type = CsrReq_InterruptCmd;
-        vb_csr_cmd_addr = INTERRUPT_XExternal;              // PLIC interrupt request
+        vb_csr_cmd_addr = irq2idx(i_irq_pending);
     } else if (wv[Instr_WFI] == 1) {
         vb_csr_cmd_type = CsrReq_WfiCmd;
         vb_csr_cmd_addr = mux.instr(14, 12);                // PRIV field
@@ -1384,7 +1394,7 @@ void InstrExecute::comb() {
         }
         break;
     case State_Wfi:
-        if ((i_haltreq || i_irq_software || i_irq_external || i_irq_timer) == 1) {
+        if ((i_haltreq || i_irq_pending.read().or_reduce()) == 1) {
             v.state = State_Idle;
         }
         break;

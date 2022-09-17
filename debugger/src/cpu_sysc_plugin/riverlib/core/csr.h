@@ -37,10 +37,8 @@ SC_MODULE(CsrRegs) {
     sc_in<bool> i_e_halted;                                 // core is halted confirmation flag
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_pc;               // current latched instruction pointer in executor
     sc_in<sc_uint<32>> i_e_instr;                           // current latched opcode in executor
-    sc_in<sc_uint<IRQ_PER_HART_TOTAL>> i_irq_pending;       // Per Hart pending interrupts pins
-    sc_out<bool> o_irq_software;                            // software interrupt pending bit
-    sc_out<bool> o_irq_timer;                               // timer interrupt pending bit
-    sc_out<bool> o_irq_external;                            // external interrupt pending bit
+    sc_in<sc_uint<IRQ_TOTAL>> i_irq_pending;                // Per Hart pending interrupts pins
+    sc_out<sc_uint<IRQ_TOTAL>> o_irq_pending;               // Unmasked interrupt pending bits
     sc_out<bool> o_stack_overflow;                          // stack overflow exception
     sc_out<bool> o_stack_underflow;                         // stack underflow exception
     sc_in<bool> i_e_valid;                                  // instructuin executed flag
@@ -94,22 +92,33 @@ SC_MODULE(CsrRegs) {
         sc_signal<sc_uint<2>> xpp;                          // Previous Privildge mode. If x is not implemented, then xPP mus be 0
         sc_signal<bool> xpie;                               // Previous Privildge mode global interrupt enable
         sc_signal<bool> xie;                                // Global interrupt enbale bit.
+        sc_signal<bool> xsie;                               // Enable Software interrupts.
+        sc_signal<bool> xtie;                               // Enable Timer interrupts.
+        sc_signal<bool> xeie;                               // Enable External interrupts.
+        sc_signal<sc_uint<RISCV_ARCH>> xtvec_off;           // Trap Vector BAR
+        sc_signal<sc_uint<2>> xtvec_mode;                   // Trap Vector mode: 0=direct; 1=vectored
+        sc_signal<sc_uint<RISCV_ARCH>> xtval;               // Trap value, bad address
+        sc_signal<bool> xcause_irq;                         // 0=Exception, 1=Interrupt
+        sc_signal<sc_uint<5>> xcause_code;                  // Exception code
+        sc_signal<sc_uint<RISCV_ARCH>> xscratch;            // software dependable register
     };
 
 
     struct CsrRegs_registers {
         RegModeType xmode[4];
         sc_signal<sc_uint<4>> state;
+        sc_signal<sc_uint<IRQ_TOTAL>> irq_pending;
         sc_signal<sc_uint<CsrReq_TotalBits>> cmd_type;
         sc_signal<sc_uint<12>> cmd_addr;
         sc_signal<sc_uint<RISCV_ARCH>> cmd_data;
         sc_signal<bool> cmd_exception;                      // exception on CSR access
         sc_signal<bool> progbuf_end;
         sc_signal<bool> progbuf_err;
-        sc_signal<sc_uint<RISCV_ARCH>> mtvec;
-        sc_signal<sc_uint<2>> mtvec_mode;
-        sc_signal<sc_uint<RISCV_ARCH>> mtval;
-        sc_signal<sc_uint<RISCV_ARCH>> mscratch;
+        sc_signal<bool> mip_ssip;                           // page 34: SSIP is writable to re-request SW irq from machine to supervisor
+        sc_signal<bool> mip_stip;                           // page 34: SSIP is writable in mip
+        sc_signal<bool> mip_seip;                           // page 34: SSIP is writable in mip
+        sc_signal<sc_uint<64>> medeleg;
+        sc_signal<sc_uint<IRQ_TOTAL>> mideleg;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mstackovr;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mstackund;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mpu_addr;
@@ -122,31 +131,11 @@ SC_MODULE(CsrRegs) {
         sc_signal<sc_uint<4>> satp_mode;                    // Supervisor Address Translation and Protection mode
         sc_signal<sc_uint<2>> mode;
         sc_signal<bool> mprv;                               // Modify PRiVilege. (Table 8.5) If MPRV=0, load and stores as normal, when MPRV=1, use translation of previous mode
-        sc_signal<bool> usie;                               // mie: User software interrupt enable
-        sc_signal<bool> ssie;                               // mie: Supervisor software interrupt enable
-        sc_signal<bool> msie;                               // mie: machine software interrupt enable
-        sc_signal<bool> utie;                               // mie: User timer interrupt enable
-        sc_signal<bool> stie;                               // mie: Supervisor timer interrupt enable
-        sc_signal<bool> mtie;                               // mie: Machine timer interrupt enable
-        sc_signal<bool> ueie;                               // mie: User external interrupt enable
-        sc_signal<bool> seie;                               // mie: Supervisor external interrupt enable
-        sc_signal<bool> meie;                               // mie: Machine external interrupt enable
-        sc_signal<bool> usip;                               // mip: user software interrupt pending
-        sc_signal<bool> ssip;                               // mip: supervisor software interrupt pending
-        sc_signal<bool> msip;                               // mip: machine software interrupt pending
-        sc_signal<bool> utip;                               // mip: user timer interrupt pending
-        sc_signal<bool> stip;                               // mip: supervisor timer interrupt pending
-        sc_signal<bool> mtip;                               // mip: machine timer interrupt pending
-        sc_signal<bool> ueip;                               // mip: user external interrupt pending
-        sc_signal<bool> seip;                               // mip: supervisor external interrupt pending
-        sc_signal<bool> meip;                               // mip: machine external interrupt pending
         sc_signal<bool> ex_fpu_invalidop;                   // FPU Exception: invalid operation
         sc_signal<bool> ex_fpu_divbyzero;                   // FPU Exception: divide by zero
         sc_signal<bool> ex_fpu_overflow;                    // FPU Exception: overflow
         sc_signal<bool> ex_fpu_underflow;                   // FPU Exception: underflow
         sc_signal<bool> ex_fpu_inexact;                     // FPU Exception: inexact
-        sc_signal<bool> trap_irq;
-        sc_signal<sc_uint<5>> trap_cause;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> trap_addr;
         sc_signal<sc_uint<64>> timer;                       // Timer in clocks.
         sc_signal<sc_uint<64>> cycle_cnt;                   // Cycle in clocks.

@@ -51,7 +51,7 @@ SC_MODULE(RiverTop) {
     sc_out<sc_uint<DTAG_FL_TOTAL>> o_resp_snoop_flags;
     sc_out<bool> o_flush_l2;                                // Flush L2 after D$ has been finished
     // Interrupt lines:
-    sc_in<sc_uint<IRQ_PER_HART_TOTAL>> i_irq_pending;       // Per Hart pending interrupts pins
+    sc_in<sc_uint<IRQ_TOTAL>> i_irq_pending;                // Per Hart pending interrupts pins
     // Debug interface:
     sc_in<bool> i_haltreq;                                  // DMI: halt request from debug unit
     sc_in<bool> i_resumereq;                                // DMI: resume request from debug unit

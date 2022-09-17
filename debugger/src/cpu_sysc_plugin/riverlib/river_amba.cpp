@@ -252,7 +252,7 @@ void RiverAmba::comb() {
     sc_uint<5> vb_cr_resp;
     bool v_cd_valid;
     sc_biguint<L1CACHE_LINE_BITS> vb_cd_data;
-    sc_uint<IRQ_PER_HART_TOTAL> vb_ip;                      // Interrupt pending bits
+    sc_uint<IRQ_TOTAL> vb_ip;                               // Interrupt pending bits
 
     v_resp_mem_valid = 0;
     v_mem_er_load_fault = 0;
@@ -291,10 +291,10 @@ void RiverAmba::comb() {
     vdporto.resp_error = w_dporto_resp_error;               // systemc compatibility
     vdporto.rdata = wb_dporto_rdata;                        // systemc compatibility
 
-    vb_ip[IRQ_HART_MSIP] = i_msip;
-    vb_ip[IRQ_HART_MTIP] = i_mtip;
-    vb_ip[IRQ_HART_MEIP] = i_meip;
-    vb_ip[IRQ_HART_SEIP] = i_seip;
+    vb_ip[IRQ_MSIP] = i_msip;
+    vb_ip[IRQ_MTIP] = i_mtip;
+    vb_ip[IRQ_MEIP] = i_meip;
+    vb_ip[IRQ_SEIP] = i_seip;
     vmsto = axi4_l1_out_none;
     vmsto.ar_bits.burst = AXI_BURST_INCR;                   // INCR (possible any value actually)
     vmsto.aw_bits.burst = AXI_BURST_INCR;                   // INCR (possible any value actually)

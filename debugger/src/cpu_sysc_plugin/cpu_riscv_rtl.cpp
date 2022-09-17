@@ -24,7 +24,7 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
     : IService(name), IHap(HAP_ConfigDone),
     corei("corei", CFG_SLOT_L1_TOTAL),
     coreo("coreo", CFG_SLOT_L1_TOTAL),
-    wb_irq_pending("wb_irq_pending", IRQ_PER_HART_TOTAL),
+    wb_irq_pending("wb_irq_pending", IRQ_TOTAL),
     wb_dporti("wb_dporti", CFG_CPU_MAX),
     wb_dporto("wb_dporto", CFG_CPU_MAX) {
     registerInterface(static_cast<IThread *>(this));
@@ -251,10 +251,10 @@ void CpuRiscV_RTL::createSystemC() {
     core_->o_xcfg(xcfg);
     core_->i_dport(wb_dporti[0]);
     core_->o_dport(wb_dporto[0]);
-    core_->i_msip(wb_irq_pending[IRQ_HART_MSIP]);
-    core_->i_mtip(wb_irq_pending[IRQ_HART_MTIP]);
-    core_->i_meip(wb_irq_pending[IRQ_HART_MEIP]);
-    core_->i_seip(wb_irq_pending[IRQ_HART_SEIP]);
+    core_->i_msip(wb_irq_pending[IRQ_MSIP]);
+    core_->i_mtip(wb_irq_pending[IRQ_MTIP]);
+    core_->i_meip(wb_irq_pending[IRQ_MEIP]);
+    core_->i_seip(wb_irq_pending[IRQ_SEIP]);
     core_->o_flush_l2(w_flush_l2);
     core_->o_halted(w_halted0);
     core_->o_available(w_available0);

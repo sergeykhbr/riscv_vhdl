@@ -61,9 +61,7 @@ SC_MODULE(InstrExecute) {
     sc_in<bool> i_mem_ex_mpu_store;                         // Memoryaccess: MPU access error on storing data
     sc_in<bool> i_mem_ex_mpu_load;                          // Memoryaccess: MPU access error on load data
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_mem_ex_addr;        // Memoryaccess: exception address
-    sc_in<bool> i_irq_software;                             // software interrupt request from CSR register xSIP
-    sc_in<bool> i_irq_timer;                                // interrupt request from wallclock timer
-    sc_in<bool> i_irq_external;                             // interrupt request from PLIC
+    sc_in<sc_uint<IRQ_TOTAL>> i_irq_pending;                // Per Hart pending interrupts pins
     sc_in<bool> i_haltreq;                                  // halt request from debug unit
     sc_in<bool> i_resumereq;                                // resume request from debug unit
     sc_in<bool> i_step;                                     // resume with step
@@ -164,6 +162,8 @@ SC_MODULE(InstrExecute) {
     static const uint8_t AmoState_Read = 1;
     static const uint8_t AmoState_Modify = 2;
     static const uint8_t AmoState_Write = 3;
+
+    sc_uint<4> irq2idx(sc_uint<IRQ_TOTAL> irqbus);
 
     struct select_type {
         sc_signal<bool> ena;

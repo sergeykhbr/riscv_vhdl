@@ -140,7 +140,7 @@ SC_MODULE(RiverAmba) {
     sc_signal<bool> resp_snoop_valid_o;
     sc_signal<sc_biguint<L1CACHE_LINE_BITS>> resp_snoop_data_o;
     sc_signal<sc_uint<DTAG_FL_TOTAL>> resp_snoop_flags_o;
-    sc_signal<sc_uint<IRQ_PER_HART_TOTAL>> wb_ip;           // Interrupt pending bits
+    sc_signal<sc_uint<IRQ_TOTAL>> wb_ip;                    // Interrupt pending bits
     axi4_master_config_type wb_xcfg;
     sc_signal<bool> w_dporti_haltreq;
     sc_signal<bool> w_dporti_resumereq;

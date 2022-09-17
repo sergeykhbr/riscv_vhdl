@@ -30,7 +30,7 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     o_dmi_nrst("o_dmi_nrst"),
     o_msti("o_msti"),
     i_msto("i_msto"),
-    o_irq_pending("o_irq_pending", IRQ_PER_HART_TOTAL),
+    o_irq_pending("o_irq_pending", IRQ_TOTAL),
     i_dporti("i_dporti"),
     i_ndmreset("i_ndmreset"),
     i_halted0("i_halted0"),
@@ -126,7 +126,7 @@ void RtlWrapper::comb() {
     sc_uint<CFG_SYSBUS_DATA_BITS> vb_wdata;
     sc_uint<CFG_SYSBUS_DATA_BYTES> vb_wstrb;
     axi4_master_in_type vmsti;
-    sc_uint<IRQ_PER_HART_TOTAL> vb_irq_pending;
+    sc_uint<IRQ_TOTAL> vb_irq_pending;
 
     w_req_mem_ready = 0;
     vb_r_resp = 0; // OKAY
@@ -239,12 +239,12 @@ void RtlWrapper::comb() {
     vmsti.r_user = 0;
     o_msti = vmsti;     // to trigger event;
 
-    vb_irq_pending[IRQ_HART_MSIP] = w_msip;
-    vb_irq_pending[IRQ_HART_MTIP] = w_mtip;
-    vb_irq_pending[IRQ_HART_MEIP] = w_meip;
-    vb_irq_pending[IRQ_HART_SEIP] = w_seip;
+    vb_irq_pending[IRQ_MSIP] = w_msip;
+    vb_irq_pending[IRQ_MTIP] = w_mtip;
+    vb_irq_pending[IRQ_MEIP] = w_meip;
+    vb_irq_pending[IRQ_SEIP] = w_seip;
 
-    for (int i = 0; i < IRQ_PER_HART_TOTAL; i++) {
+    for (int i = 0; i < IRQ_TOTAL; i++) {
         o_irq_pending[i] = vb_irq_pending[i];
     }
     o_halted = r.halted;

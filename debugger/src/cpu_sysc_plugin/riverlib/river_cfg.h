@@ -433,28 +433,18 @@ static const int EXCEPTION_rsrv14 = 14;                     // reserved
 static const int EXCEPTION_StorePageFault = 15;             // Store/AMO page fault
 static const int EXCEPTION_StackOverflow = 16;              // Stack overflow
 static const int EXCEPTION_StackUnderflow = 17;             // Stack underflow
-static const int EXCEPTIONS_Total = 18;
-
-// Per Hart Interrupt bus
-static const int IRQ_HART_MSIP = 0;                         // machine software pening interrupt
-static const int IRQ_HART_MTIP = 1;                         // machine timer pening interrupt
-static const int IRQ_HART_MEIP = 2;                         // machine external pening interrupt
-static const int IRQ_HART_SEIP = 3;                         // supervisor external pening interrupt
-static const int IRQ_PER_HART_TOTAL = 4;                    // Total number of direct core interrupt requests
-
-static const int INTERRUPT_XSoftware = 0;
-static const int INTERRUPT_XTimer = 1;
-static const int INTERRUPT_XExternal = 2;
-static const int INTERRUPT_Total = 3;
-
-static const int SIGNAL_Exception = 0;
-static const int SIGNAL_XSoftware = (EXCEPTIONS_Total + (4 * INTERRUPT_XSoftware));
-static const int SIGNAL_XTimer = (EXCEPTIONS_Total + (4 * INTERRUPT_XTimer));
-static const int SIGNAL_XExternal = (EXCEPTIONS_Total + (4 * INTERRUPT_XExternal));
-static const int SIGNAL_HardReset = (SIGNAL_XExternal + 1);
-static const int SIGNAL_Total = (SIGNAL_HardReset + 1);
+static const int EXCEPTIONS_Total = 64;
 
 static const int EXCEPTION_CallFromXMode = EXCEPTION_CallFromUmode;
+
+// Per Hart Interrupt bus
+static const int IRQ_SSIP = 1;                              // Supervisor software pening interrupt
+static const int IRQ_MSIP = 3;                              // Machine software pening interrupt
+static const int IRQ_STIP = 5;                              // Supervisor timer pening interrupt
+static const int IRQ_MTIP = 7;                              // Machine timer pening interrupt
+static const int IRQ_SEIP = 9;                              // Supervisor external pening interrupt
+static const int IRQ_MEIP = 11;                             // Machine external pening interrupt
+static const int IRQ_TOTAL = 12;                            // Total number of direct core interrupt requests
 // Depth of the fifo between Executor and MemoryAccess modules.
 static const int CFG_MEMACCESS_QUEUE_DEPTH = 2;
 // Register's tag used to detect reg hazard and it should be higher than available
