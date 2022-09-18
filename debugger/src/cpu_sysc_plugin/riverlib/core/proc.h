@@ -35,6 +35,7 @@ SC_MODULE(Processor) {
  public:
     sc_in<bool> i_clk;                                      // CPU clock
     sc_in<bool> i_nrst;                                     // Reset: active LOW
+    sc_in<sc_uint<64>> i_mtimer;                            // Read-only shadow value of memory-mapped mtimer register (see CLINT).
     // Control path:
     sc_in<bool> i_req_ctrl_ready;                           // ICache is ready to accept request
     sc_out<bool> o_req_ctrl_valid;                          // Request to ICache is valid

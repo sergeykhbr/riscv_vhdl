@@ -119,6 +119,7 @@ class CpuRiscV_RTL : public IService,
     sc_signal<bool> w_clk;
     sc_signal<bool> w_sys_nrst;
     sc_signal<bool> w_dmi_nrst;
+    sc_signal<sc_uint<64>> wb_mtimer;
 
     // AXI4 input structure:
     sc_vector<sc_signal<axi4_l1_in_type>> corei;

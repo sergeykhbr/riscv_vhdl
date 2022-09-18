@@ -44,6 +44,7 @@ CsrRegs::CsrRegs(sc_module_name name,
     o_stack_overflow("o_stack_overflow"),
     o_stack_underflow("o_stack_underflow"),
     i_e_valid("i_e_valid"),
+    i_mtimer("i_mtimer"),
     o_executed_cnt("o_executed_cnt"),
     o_step("o_step"),
     i_dbg_progbuf_ena("i_dbg_progbuf_ena"),
@@ -75,6 +76,7 @@ CsrRegs::CsrRegs(sc_module_name name,
     sensitive << i_e_instr;
     sensitive << i_irq_pending;
     sensitive << i_e_valid;
+    sensitive << i_mtimer;
     sensitive << i_dbg_progbuf_ena;
     for (int i = 0; i < 4; i++) {
         sensitive << r.xmode[i].xepc;
@@ -90,6 +92,7 @@ CsrRegs::CsrRegs(sc_module_name name,
         sensitive << r.xmode[i].xcause_irq;
         sensitive << r.xmode[i].xcause_code;
         sensitive << r.xmode[i].xscratch;
+        sensitive << r.xmode[i].xcounteren;
     }
     sensitive << r.state;
     sensitive << r.irq_pending;
@@ -104,6 +107,7 @@ CsrRegs::CsrRegs(sc_module_name name,
     sensitive << r.mip_seip;
     sensitive << r.medeleg;
     sensitive << r.mideleg;
+    sensitive << r.mcountinhibit;
     sensitive << r.mstackovr;
     sensitive << r.mstackund;
     sensitive << r.mpu_addr;
@@ -122,9 +126,8 @@ CsrRegs::CsrRegs(sc_module_name name,
     sensitive << r.ex_fpu_underflow;
     sensitive << r.ex_fpu_inexact;
     sensitive << r.trap_addr;
-    sensitive << r.timer;
-    sensitive << r.cycle_cnt;
-    sensitive << r.executed_cnt;
+    sensitive << r.mcycle_cnt;
+    sensitive << r.minstret_cnt;
     sensitive << r.dscratch0;
     sensitive << r.dscratch1;
     sensitive << r.dpc;
@@ -166,6 +169,7 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_stack_overflow, o_stack_overflow.name());
         sc_trace(o_vcd, o_stack_underflow, o_stack_underflow.name());
         sc_trace(o_vcd, i_e_valid, i_e_valid.name());
+        sc_trace(o_vcd, i_mtimer, i_mtimer.name());
         sc_trace(o_vcd, o_executed_cnt, o_executed_cnt.name());
         sc_trace(o_vcd, o_step, o_step.name());
         sc_trace(o_vcd, i_dbg_progbuf_ena, i_dbg_progbuf_ena.name());
@@ -208,6 +212,8 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
             sc_trace(o_vcd, r.xmode[i].xcause_code, tstr);
             RISCV_sprintf(tstr, sizeof(tstr), "%s.r_xmode%d_xscratch", pn.c_str(), i);
             sc_trace(o_vcd, r.xmode[i].xscratch, tstr);
+            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_xmode%d_xcounteren", pn.c_str(), i);
+            sc_trace(o_vcd, r.xmode[i].xcounteren, tstr);
         }
         sc_trace(o_vcd, r.state, pn + ".r_state");
         sc_trace(o_vcd, r.irq_pending, pn + ".r_irq_pending");
@@ -222,6 +228,7 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.mip_seip, pn + ".r_mip_seip");
         sc_trace(o_vcd, r.medeleg, pn + ".r_medeleg");
         sc_trace(o_vcd, r.mideleg, pn + ".r_mideleg");
+        sc_trace(o_vcd, r.mcountinhibit, pn + ".r_mcountinhibit");
         sc_trace(o_vcd, r.mstackovr, pn + ".r_mstackovr");
         sc_trace(o_vcd, r.mstackund, pn + ".r_mstackund");
         sc_trace(o_vcd, r.mpu_addr, pn + ".r_mpu_addr");
@@ -240,9 +247,8 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.ex_fpu_underflow, pn + ".r_ex_fpu_underflow");
         sc_trace(o_vcd, r.ex_fpu_inexact, pn + ".r_ex_fpu_inexact");
         sc_trace(o_vcd, r.trap_addr, pn + ".r_trap_addr");
-        sc_trace(o_vcd, r.timer, pn + ".r_timer");
-        sc_trace(o_vcd, r.cycle_cnt, pn + ".r_cycle_cnt");
-        sc_trace(o_vcd, r.executed_cnt, pn + ".r_executed_cnt");
+        sc_trace(o_vcd, r.mcycle_cnt, pn + ".r_mcycle_cnt");
+        sc_trace(o_vcd, r.minstret_cnt, pn + ".r_minstret_cnt");
         sc_trace(o_vcd, r.dscratch0, pn + ".r_dscratch0");
         sc_trace(o_vcd, r.dscratch1, pn + ".r_dscratch1");
         sc_trace(o_vcd, r.dpc, pn + ".r_dpc");
@@ -329,6 +335,7 @@ void CsrRegs::comb() {
         v.xmode[i].xcause_irq = r.xmode[i].xcause_irq;
         v.xmode[i].xcause_code = r.xmode[i].xcause_code;
         v.xmode[i].xscratch = r.xmode[i].xscratch;
+        v.xmode[i].xcounteren = r.xmode[i].xcounteren;
     }
     v.state = r.state;
     v.irq_pending = r.irq_pending;
@@ -343,6 +350,7 @@ void CsrRegs::comb() {
     v.mip_seip = r.mip_seip;
     v.medeleg = r.medeleg;
     v.mideleg = r.mideleg;
+    v.mcountinhibit = r.mcountinhibit;
     v.mstackovr = r.mstackovr;
     v.mstackund = r.mstackund;
     v.mpu_addr = r.mpu_addr;
@@ -361,9 +369,8 @@ void CsrRegs::comb() {
     v.ex_fpu_underflow = r.ex_fpu_underflow;
     v.ex_fpu_inexact = r.ex_fpu_inexact;
     v.trap_addr = r.trap_addr;
-    v.timer = r.timer;
-    v.cycle_cnt = r.cycle_cnt;
-    v.executed_cnt = r.executed_cnt;
+    v.mcycle_cnt = r.mcycle_cnt;
+    v.minstret_cnt = r.minstret_cnt;
     v.dscratch0 = r.dscratch0;
     v.dscratch1 = r.dscratch1;
     v.dpc = r.dpc;
@@ -560,13 +567,46 @@ void CsrRegs::comb() {
         }
         break;
     case 0xC00:                                             // cycle: [URO] User Cycle counter for RDCYCLE pseudo-instruction
-        vb_rdata = r.cycle_cnt;
+        if ((r.mode.read() == PRV_U)
+                && ((r.xmode[iM].xcounteren.read()[0] == 0)
+                        || (r.xmode[iS].xcounteren.read()[0] == 0))) {
+            // Available only if all more prv. bit CY are set
+            v.cmd_exception = 1;
+        } else if ((r.mode.read() == PRV_S)
+                    && (r.xmode[iM].xcounteren.read()[0] == 0)) {
+            // Available only if bit CY is set
+            v.cmd_exception = 1;
+        } else {
+            vb_rdata = r.mcycle_cnt;                        // Read-only shadows of mcycle
+        }
         break;
     case 0xC01:                                             // time: [URO] User Timer for RDTIME pseudo-instruction
-        vb_rdata = r.timer;
+        if ((r.mode.read() == PRV_U)
+                && ((r.xmode[iM].xcounteren.read()[1] == 0)
+                        || (r.xmode[iS].xcounteren.read()[1] == 0))) {
+            // Available only if all more prv. bit TM are set
+            v.cmd_exception = 1;
+        } else if ((r.mode.read() == PRV_S)
+                    && (r.xmode[iM].xcounteren.read()[1] == 0)) {
+            // Available only if bit TM is set
+            v.cmd_exception = 1;
+        } else {
+            vb_rdata = i_mtimer;
+        }
         break;
     case 0xC03:                                             // insret: [URO] User Instructions-retired counter for RDINSTRET pseudo-instruction
-        vb_rdata = r.executed_cnt;
+        if ((r.mode.read() == PRV_U)
+                && ((r.xmode[iM].xcounteren.read()[2] == 0)
+                        || (r.xmode[iS].xcounteren.read()[2] == 0))) {
+            // Available only if all more prv. bit IR are set
+            v.cmd_exception = 1;
+        } else if ((r.mode.read() == PRV_S)
+                    && (r.xmode[iM].xcounteren.read()[2] == 0)) {
+            // Available only if bit IR is set
+            v.cmd_exception = 1;
+        } else {
+            vb_rdata = r.minstret_cnt;                      // Read-only shadow of minstret
+        }
         break;
     case 0x100:                                             // sstatus: [SRW] Supervisor status register
         // [0] WPRI
@@ -615,6 +655,10 @@ void CsrRegs::comb() {
         }
         break;
     case 0x106:                                             // scounteren: [SRW] Supervisor counter enable
+        vb_rdata = r.xmode[iS].xcounteren;
+        if (v_csr_wena == 1) {
+            v.xmode[iS].xcounteren = r.cmd_data.read()(15, 0);
+        }
         break;
     case 0x10A:                                             // senvcfg: [SRW] Supervisor environment configuration register
         break;
@@ -799,6 +843,10 @@ void CsrRegs::comb() {
         }
         break;
     case 0x306:                                             // mcounteren: [MRW] Machine counter enable
+        vb_rdata = r.xmode[iM].xcounteren;
+        if (v_csr_wena == 1) {
+            v.xmode[iM].xcounteren = r.cmd_data.read()(15, 0);
+        }
         break;
     case 0x340:                                             // mscratch: [MRW] Machine scratch register
         vb_rdata = r.xmode[iM].xscratch;
@@ -851,12 +899,22 @@ void CsrRegs::comb() {
     case 0x3EF:                                             // pmpaddr63: [MRW] Physical memory protection address register
         break;
     case 0xB00:                                             // mcycle: [MRW] Machine cycle counter
-        vb_rdata = r.cycle_cnt;
+        vb_rdata = r.mcycle_cnt;
+        if (v_csr_wena) {
+            v.mcycle_cnt = r.cmd_data;
+        }
         break;
     case 0xB02:                                             // minstret: [MRW] Machine instructions-retired counter
-        vb_rdata = r.executed_cnt;
+        vb_rdata = r.minstret_cnt;
+        if (v_csr_wena) {
+            v.minstret_cnt = r.cmd_data;
+        }
         break;
-    case 0x320:                                             // mcounterinhibit: [MRW] Machine counter-inhibit register
+    case 0x320:                                             // mcountinhibit: [MRW] Machine counter-inhibit register
+        vb_rdata = r.mcountinhibit;
+        if (v_csr_wena == 1) {
+            v.mcountinhibit = r.cmd_data.read()(15, 0);
+        }
         break;
     case 0x323:                                             // mpevent3: [MRW] Machine performance-monitoring event selector
         break;
@@ -1059,15 +1117,15 @@ void CsrRegs::comb() {
     //     v.ex_fpu_inexact = i_ex_fpu_inexact.read();
     // }
 
-    if ((i_e_halted.read() == 0) || (r.dcsr_stopcount.read() == 0)) {
-        v.cycle_cnt = (r.cycle_cnt.read() + 1);
+    // stopcount: do not increment any counters including cycle and instret
+    if ((i_e_halted.read() == 0) && (r.dcsr_stopcount.read() == 0) && (r.mcountinhibit.read()[0] == 0)) {
+        v.mcycle_cnt = (r.mcycle_cnt.read() + 1);
     }
-    if (((i_e_valid && (!r.dcsr_stopcount)) == 1)
-            || ((i_e_valid && (!(i_dbg_progbuf_ena && r.dcsr_stopcount))) == 1)) {
-        v.executed_cnt = (r.executed_cnt.read() + 1);
-    }
-    if (((i_e_halted || i_dbg_progbuf_ena) && r.dcsr_stoptimer) == 0) {
-        v.timer = (r.timer.read() + 1);
+    if ((i_e_valid.read() == 1)
+            && (r.dcsr_stopcount.read() == 0)
+            && (i_dbg_progbuf_ena.read() == 0)
+            && (r.mcountinhibit.read()[2] == 0)) {
+        v.minstret_cnt = (r.minstret_cnt.read() + 1);
     }
 
     if (!async_reset_ && i_nrst.read() == 0) {
@@ -1085,6 +1143,7 @@ void CsrRegs::comb() {
             v.xmode[i].xcause_irq = 0;
             v.xmode[i].xcause_code = 0;
             v.xmode[i].xscratch = 0ull;
+            v.xmode[i].xcounteren = 0;
         }
         v.state = State_Idle;
         v.irq_pending = 0;
@@ -1099,6 +1158,7 @@ void CsrRegs::comb() {
         v.mip_seip = 0;
         v.medeleg = 0ull;
         v.mideleg = 0;
+        v.mcountinhibit = 0;
         v.mstackovr = 0ull;
         v.mstackund = 0ull;
         v.mpu_addr = 0ull;
@@ -1117,9 +1177,8 @@ void CsrRegs::comb() {
         v.ex_fpu_underflow = 0;
         v.ex_fpu_inexact = 0;
         v.trap_addr = 0ull;
-        v.timer = 0ull;
-        v.cycle_cnt = 0ull;
-        v.executed_cnt = 0ull;
+        v.mcycle_cnt = 0ull;
+        v.minstret_cnt = 0ull;
         v.dscratch0 = 0ull;
         v.dscratch1 = 0ull;
         v.dpc = CFG_RESET_VECTOR;
@@ -1145,7 +1204,7 @@ void CsrRegs::comb() {
     o_wakeup = r.irq_pending.read().or_reduce();
     o_stack_overflow = w_mstackovr;
     o_stack_underflow = w_mstackund;
-    o_executed_cnt = r.executed_cnt;
+    o_executed_cnt = r.minstret_cnt;
     o_mpu_region_we = r.mpu_we;
     o_mpu_region_idx = r.mpu_idx;
     o_mpu_region_addr = r.mpu_addr;
@@ -1174,6 +1233,7 @@ void CsrRegs::registers() {
             r.xmode[i].xcause_irq = 0;
             r.xmode[i].xcause_code = 0;
             r.xmode[i].xscratch = 0ull;
+            r.xmode[i].xcounteren = 0;
         }
         r.state = State_Idle;
         r.irq_pending = 0;
@@ -1188,6 +1248,7 @@ void CsrRegs::registers() {
         r.mip_seip = 0;
         r.medeleg = 0ull;
         r.mideleg = 0;
+        r.mcountinhibit = 0;
         r.mstackovr = 0ull;
         r.mstackund = 0ull;
         r.mpu_addr = 0ull;
@@ -1206,9 +1267,8 @@ void CsrRegs::registers() {
         r.ex_fpu_underflow = 0;
         r.ex_fpu_inexact = 0;
         r.trap_addr = 0ull;
-        r.timer = 0ull;
-        r.cycle_cnt = 0ull;
-        r.executed_cnt = 0ull;
+        r.mcycle_cnt = 0ull;
+        r.minstret_cnt = 0ull;
         r.dscratch0 = 0ull;
         r.dscratch1 = 0ull;
         r.dpc = CFG_RESET_VECTOR;
@@ -1237,6 +1297,7 @@ void CsrRegs::registers() {
             r.xmode[i].xcause_irq = v.xmode[i].xcause_irq;
             r.xmode[i].xcause_code = v.xmode[i].xcause_code;
             r.xmode[i].xscratch = v.xmode[i].xscratch;
+            r.xmode[i].xcounteren = v.xmode[i].xcounteren;
         }
         r.state = v.state;
         r.irq_pending = v.irq_pending;
@@ -1251,6 +1312,7 @@ void CsrRegs::registers() {
         r.mip_seip = v.mip_seip;
         r.medeleg = v.medeleg;
         r.mideleg = v.mideleg;
+        r.mcountinhibit = v.mcountinhibit;
         r.mstackovr = v.mstackovr;
         r.mstackund = v.mstackund;
         r.mpu_addr = v.mpu_addr;
@@ -1269,9 +1331,8 @@ void CsrRegs::registers() {
         r.ex_fpu_underflow = v.ex_fpu_underflow;
         r.ex_fpu_inexact = v.ex_fpu_inexact;
         r.trap_addr = v.trap_addr;
-        r.timer = v.timer;
-        r.cycle_cnt = v.cycle_cnt;
-        r.executed_cnt = v.executed_cnt;
+        r.mcycle_cnt = v.mcycle_cnt;
+        r.minstret_cnt = v.minstret_cnt;
         r.dscratch0 = v.dscratch0;
         r.dscratch1 = v.dscratch1;
         r.dpc = v.dpc;

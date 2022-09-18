@@ -29,6 +29,7 @@ Processor::Processor(sc_module_name name,
     : sc_module(name),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
+    i_mtimer("i_mtimer"),
     i_req_ctrl_ready("i_req_ctrl_ready"),
     o_req_ctrl_valid("o_req_ctrl_valid"),
     o_req_ctrl_addr("o_req_ctrl_addr"),
@@ -464,6 +465,7 @@ Processor::Processor(sc_module_name name,
     csr0->o_stack_overflow(csr.stack_overflow);
     csr0->o_stack_underflow(csr.stack_underflow);
     csr0->i_e_valid(w.e.valid);
+    csr0->i_mtimer(i_mtimer);
     csr0->o_executed_cnt(csr.executed_cnt);
     csr0->o_step(csr.step);
     csr0->i_dbg_progbuf_ena(dbg.progbuf_ena);
@@ -563,6 +565,7 @@ Processor::Processor(sc_module_name name,
 
     SC_METHOD(comb);
     sensitive << i_nrst;
+    sensitive << i_mtimer;
     sensitive << i_req_ctrl_ready;
     sensitive << i_resp_ctrl_valid;
     sensitive << i_resp_ctrl_addr;
@@ -809,6 +812,7 @@ Processor::~Processor() {
 
 void Processor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
+        sc_trace(o_vcd, i_mtimer, i_mtimer.name());
         sc_trace(o_vcd, i_req_ctrl_ready, i_req_ctrl_ready.name());
         sc_trace(o_vcd, o_req_ctrl_valid, o_req_ctrl_valid.name());
         sc_trace(o_vcd, o_req_ctrl_addr, o_req_ctrl_addr.name());

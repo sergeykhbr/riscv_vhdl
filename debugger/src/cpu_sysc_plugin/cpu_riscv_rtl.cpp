@@ -159,6 +159,7 @@ void CpuRiscV_RTL::createSystemC() {
     wrapper_->o_dmi_nrst(w_dmi_nrst);
     wrapper_->o_msti(msti);
     wrapper_->i_msto(msto);
+    wrapper_->o_mtimer(wb_mtimer);
     wrapper_->o_irq_pending(wb_irq_pending);
     wrapper_->i_dporti(wb_dporti[0]);
     wrapper_->i_ndmreset(w_ndmreset);
@@ -246,6 +247,7 @@ void CpuRiscV_RTL::createSystemC() {
                                CFG_TRACER_ENABLE);
     core_->i_clk(wrapper_->o_clk);
     core_->i_nrst(w_sys_nrst);
+    core_->i_mtimer(wb_mtimer);
     core_->i_msti(corei[0]);
     core_->o_msto(coreo[0]);
     core_->o_xcfg(xcfg);

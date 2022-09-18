@@ -26,6 +26,7 @@ SC_MODULE(RiverTop) {
  public:
     sc_in<bool> i_clk;                                      // CPU clock
     sc_in<bool> i_nrst;                                     // Reset: active LOW
+    sc_in<sc_uint<64>> i_mtimer;                            // Read-only shadow value of memory-mapped mtimer register (see CLINT).
     // Memory interface:
     sc_in<bool> i_req_mem_ready;                            // System Bus is ready to accept memory operation request
     sc_out<bool> o_req_mem_path;                            // 0=ctrl; 1=data path

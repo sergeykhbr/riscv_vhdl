@@ -28,6 +28,7 @@ RiverTop::RiverTop(sc_module_name name,
     : sc_module(name),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
+    i_mtimer("i_mtimer"),
     i_req_mem_ready("i_req_mem_ready"),
     o_req_mem_path("o_req_mem_path"),
     o_req_mem_valid("o_req_mem_valid"),
@@ -77,6 +78,7 @@ RiverTop::RiverTop(sc_module_name name,
     proc0 = new Processor("proc0", async_reset, hartid, fpu_ena, tracer_ena);
     proc0->i_clk(i_clk);
     proc0->i_nrst(i_nrst);
+    proc0->i_mtimer(i_mtimer);
     proc0->i_req_ctrl_ready(w_req_ctrl_ready);
     proc0->o_req_ctrl_valid(w_req_ctrl_valid);
     proc0->o_req_ctrl_addr(wb_req_ctrl_addr);
@@ -193,6 +195,7 @@ RiverTop::RiverTop(sc_module_name name,
 
     SC_METHOD(comb);
     sensitive << i_nrst;
+    sensitive << i_mtimer;
     sensitive << i_req_mem_ready;
     sensitive << i_resp_mem_valid;
     sensitive << i_resp_mem_path;
@@ -261,6 +264,7 @@ RiverTop::~RiverTop() {
 
 void RiverTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
+        sc_trace(o_vcd, i_mtimer, i_mtimer.name());
         sc_trace(o_vcd, i_req_mem_ready, i_req_mem_ready.name());
         sc_trace(o_vcd, o_req_mem_path, o_req_mem_path.name());
         sc_trace(o_vcd, o_req_mem_valid, o_req_mem_valid.name());

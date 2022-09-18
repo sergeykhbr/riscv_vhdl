@@ -248,6 +248,7 @@ void RtlWrapper::comb() {
         o_irq_pending[i] = vb_irq_pending[i];
     }
     o_halted = r.halted;
+    o_mtimer = r.clk_cnt;
 
     if (!r.nrst.read()[1]) {
     }

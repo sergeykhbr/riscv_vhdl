@@ -28,6 +28,7 @@ RiverAmba::RiverAmba(sc_module_name name,
     : sc_module(name),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
+    i_mtimer("i_mtimer"),
     i_msti("i_msti"),
     o_msto("o_msto"),
     o_xcfg("o_xcfg"),
@@ -52,6 +53,7 @@ RiverAmba::RiverAmba(sc_module_name name,
     river0 = new RiverTop("river0", async_reset, hartid, fpu_ena, coherence_ena, tracer_ena);
     river0->i_clk(i_clk);
     river0->i_nrst(i_nrst);
+    river0->i_mtimer(i_mtimer);
     river0->i_req_mem_ready(req_mem_ready_i);
     river0->o_req_mem_path(req_mem_path_o);
     river0->o_req_mem_valid(req_mem_valid_o);
@@ -94,6 +96,7 @@ RiverAmba::RiverAmba(sc_module_name name,
 
     SC_METHOD(comb);
     sensitive << i_nrst;
+    sensitive << i_mtimer;
     sensitive << i_msti;
     sensitive << i_dport;
     sensitive << i_msip;
@@ -168,6 +171,7 @@ RiverAmba::~RiverAmba() {
 void RiverAmba::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     std::string pn(name());
     if (o_vcd) {
+        sc_trace(o_vcd, i_mtimer, i_mtimer.name());
         sc_trace(o_vcd, i_msti, i_msti.name());
         sc_trace(o_vcd, o_msto, o_msto.name());
         sc_trace(o_vcd, o_xcfg, o_xcfg.name());

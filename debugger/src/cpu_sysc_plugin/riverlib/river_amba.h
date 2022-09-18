@@ -27,6 +27,7 @@ SC_MODULE(RiverAmba) {
  public:
     sc_in<bool> i_clk;                                      // CPU clock
     sc_in<bool> i_nrst;                                     // Reset: active LOW
+    sc_in<sc_uint<64>> i_mtimer;                            // Read-only shadow value of memory-mapped mtimer register (see CLINT).
     sc_in<axi4_l1_in_type> i_msti;
     sc_out<axi4_l1_out_type> o_msto;
     sc_out<axi4_master_config_type> o_xcfg;

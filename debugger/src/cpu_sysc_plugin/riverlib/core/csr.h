@@ -43,6 +43,7 @@ SC_MODULE(CsrRegs) {
     sc_out<bool> o_stack_overflow;                          // stack overflow exception
     sc_out<bool> o_stack_underflow;                         // stack underflow exception
     sc_in<bool> i_e_valid;                                  // instructuin executed flag
+    sc_in<sc_uint<64>> i_mtimer;                            // Read-only shadow value of memory-mapped mtimer register (see CLINT).
     sc_out<sc_uint<64>> o_executed_cnt;                     // Number of executed instructions
     
     sc_out<bool> o_step;                                    // Stepping enabled
@@ -102,6 +103,7 @@ SC_MODULE(CsrRegs) {
         sc_signal<bool> xcause_irq;                         // 0=Exception, 1=Interrupt
         sc_signal<sc_uint<5>> xcause_code;                  // Exception code
         sc_signal<sc_uint<RISCV_ARCH>> xscratch;            // software dependable register
+        sc_signal<sc_uint<32>> xcounteren;                  // Counter-enable controls access to timers from the next less priv mode
     };
 
 
@@ -120,6 +122,7 @@ SC_MODULE(CsrRegs) {
         sc_signal<bool> mip_seip;                           // page 34: SSIP is writable in mip
         sc_signal<sc_uint<64>> medeleg;
         sc_signal<sc_uint<IRQ_TOTAL>> mideleg;
+        sc_signal<sc_uint<32>> mcountinhibit;               // When non zero stop specified performance counter
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mstackovr;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mstackund;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mpu_addr;
@@ -138,9 +141,8 @@ SC_MODULE(CsrRegs) {
         sc_signal<bool> ex_fpu_underflow;                   // FPU Exception: underflow
         sc_signal<bool> ex_fpu_inexact;                     // FPU Exception: inexact
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> trap_addr;
-        sc_signal<sc_uint<64>> timer;                       // Timer in clocks.
-        sc_signal<sc_uint<64>> cycle_cnt;                   // Cycle in clocks.
-        sc_signal<sc_uint<64>> executed_cnt;                // Number of valid executed instructions
+        sc_signal<sc_uint<64>> mcycle_cnt;                  // Cycle in clocks.
+        sc_signal<sc_uint<64>> minstret_cnt;                // Number of the instructions the hart has retired
         sc_signal<sc_uint<RISCV_ARCH>> dscratch0;
         sc_signal<sc_uint<RISCV_ARCH>> dscratch1;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> dpc;
