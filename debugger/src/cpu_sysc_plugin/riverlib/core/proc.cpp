@@ -233,6 +233,7 @@ Processor::Processor(sc_module_name name,
     exec0->i_mem_ex_mpu_load(i_resp_data_er_mpu_load);
     exec0->i_mem_ex_addr(i_resp_data_fault_addr);
     exec0->i_irq_pending(csr.irq_pending);
+    exec0->i_wakeup(csr.o_wakeup);
     exec0->i_haltreq(i_haltreq);
     exec0->i_resumereq(i_resumereq);
     exec0->i_step(csr.step);
@@ -459,6 +460,7 @@ Processor::Processor(sc_module_name name,
     csr0->i_e_instr(w.e.instr);
     csr0->i_irq_pending(i_irq_pending);
     csr0->o_irq_pending(csr.irq_pending);
+    csr0->o_wakeup(csr.o_wakeup);
     csr0->o_stack_overflow(csr.stack_overflow);
     csr0->o_stack_underflow(csr.stack_underflow);
     csr0->i_e_valid(w.e.valid);
@@ -701,6 +703,7 @@ Processor::Processor(sc_module_name name,
     sensitive << csr.flushi_addr;
     sensitive << csr.executed_cnt;
     sensitive << csr.irq_pending;
+    sensitive << csr.o_wakeup;
     sensitive << csr.stack_overflow;
     sensitive << csr.stack_underflow;
     sensitive << csr.step;

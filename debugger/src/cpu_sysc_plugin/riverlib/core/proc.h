@@ -237,6 +237,7 @@ SC_MODULE(Processor) {
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> flushi_addr;
         sc_signal<sc_uint<64>> executed_cnt;                // Number of executed instruction
         sc_signal<sc_uint<IRQ_TOTAL>> irq_pending;
+        sc_signal<bool> o_wakeup;                           // There's pending bit even if interrupts globally disabled
         sc_signal<bool> stack_overflow;
         sc_signal<bool> stack_underflow;
         sc_signal<bool> step;

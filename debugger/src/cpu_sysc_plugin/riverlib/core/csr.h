@@ -38,7 +38,8 @@ SC_MODULE(CsrRegs) {
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_pc;               // current latched instruction pointer in executor
     sc_in<sc_uint<32>> i_e_instr;                           // current latched opcode in executor
     sc_in<sc_uint<IRQ_TOTAL>> i_irq_pending;                // Per Hart pending interrupts pins
-    sc_out<sc_uint<IRQ_TOTAL>> o_irq_pending;               // Unmasked interrupt pending bits
+    sc_out<sc_uint<IRQ_TOTAL>> o_irq_pending;               // Enabled and Unmasked interrupt pending bits
+    sc_out<bool> o_wakeup;                                  // There's pending bit even if interrupts globally disabled
     sc_out<bool> o_stack_overflow;                          // stack overflow exception
     sc_out<bool> o_stack_underflow;                         // stack underflow exception
     sc_in<bool> i_e_valid;                                  // instructuin executed flag

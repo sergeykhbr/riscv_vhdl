@@ -57,6 +57,7 @@ InstrExecute::InstrExecute(sc_module_name name,
     i_mem_ex_mpu_load("i_mem_ex_mpu_load"),
     i_mem_ex_addr("i_mem_ex_addr"),
     i_irq_pending("i_irq_pending"),
+    i_wakeup("i_wakeup"),
     i_haltreq("i_haltreq"),
     i_resumereq("i_resumereq"),
     i_step("i_step"),
@@ -234,6 +235,7 @@ InstrExecute::InstrExecute(sc_module_name name,
     sensitive << i_mem_ex_mpu_load;
     sensitive << i_mem_ex_addr;
     sensitive << i_irq_pending;
+    sensitive << i_wakeup;
     sensitive << i_haltreq;
     sensitive << i_resumereq;
     sensitive << i_step;
@@ -394,6 +396,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_mem_ex_mpu_load, i_mem_ex_mpu_load.name());
         sc_trace(o_vcd, i_mem_ex_addr, i_mem_ex_addr.name());
         sc_trace(o_vcd, i_irq_pending, i_irq_pending.name());
+        sc_trace(o_vcd, i_wakeup, i_wakeup.name());
         sc_trace(o_vcd, i_haltreq, i_haltreq.name());
         sc_trace(o_vcd, i_resumereq, i_resumereq.name());
         sc_trace(o_vcd, i_step, i_step.name());
@@ -1394,7 +1397,7 @@ void InstrExecute::comb() {
         }
         break;
     case State_Wfi:
-        if ((i_haltreq || i_irq_pending.read().or_reduce()) == 1) {
+        if ((i_haltreq || i_wakeup) == 1) {
             v.state = State_Idle;
         }
         break;

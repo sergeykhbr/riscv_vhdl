@@ -62,6 +62,7 @@ SC_MODULE(InstrExecute) {
     sc_in<bool> i_mem_ex_mpu_load;                          // Memoryaccess: MPU access error on load data
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_mem_ex_addr;        // Memoryaccess: exception address
     sc_in<sc_uint<IRQ_TOTAL>> i_irq_pending;                // Per Hart pending interrupts pins
+    sc_in<bool> i_wakeup;                                   // There's pending bit even if interrupts globally disabled
     sc_in<bool> i_haltreq;                                  // halt request from debug unit
     sc_in<bool> i_resumereq;                                // resume request from debug unit
     sc_in<bool> i_step;                                     // resume with step

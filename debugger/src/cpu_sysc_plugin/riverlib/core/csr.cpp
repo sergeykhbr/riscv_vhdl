@@ -40,6 +40,7 @@ CsrRegs::CsrRegs(sc_module_name name,
     i_e_instr("i_e_instr"),
     i_irq_pending("i_irq_pending"),
     o_irq_pending("o_irq_pending"),
+    o_wakeup("o_wakeup"),
     o_stack_overflow("o_stack_overflow"),
     o_stack_underflow("o_stack_underflow"),
     i_e_valid("i_e_valid"),
@@ -161,6 +162,7 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_e_instr, i_e_instr.name());
         sc_trace(o_vcd, i_irq_pending, i_irq_pending.name());
         sc_trace(o_vcd, o_irq_pending, o_irq_pending.name());
+        sc_trace(o_vcd, o_wakeup, o_wakeup.name());
         sc_trace(o_vcd, o_stack_overflow, o_stack_overflow.name());
         sc_trace(o_vcd, o_stack_underflow, o_stack_underflow.name());
         sc_trace(o_vcd, i_e_valid, i_e_valid.name());
@@ -264,9 +266,7 @@ void CsrRegs::comb() {
     int iS;
     int iU;
     sc_uint<2> vb_xpp;
-    bool v_mie_glob;
-    sc_uint<IRQ_TOTAL> vb_mip_pending;
-    sc_uint<IRQ_TOTAL> vb_irq_pending;
+    sc_uint<IRQ_TOTAL> vb_pending;
     sc_uint<IRQ_TOTAL> vb_irq_ena;
     sc_uint<64> vb_e_emux;                                  // Exception request from executor to process
     sc_uint<16> vb_e_imux;                                  // Interrupt request from executor to process
@@ -293,9 +293,7 @@ void CsrRegs::comb() {
     iS = PRV_S;
     iU = PRV_U;
     vb_xpp = 0;
-    v_mie_glob = 0;
-    vb_mip_pending = 0;
-    vb_irq_pending = 0;
+    vb_pending = 0;
     vb_irq_ena = 0;
     vb_e_emux = 0;
     vb_e_imux = 0;
@@ -643,11 +641,11 @@ void CsrRegs::comb() {
         }
         break;
     case 0x144:                                             // sip: [SRW] Supervisor interrupt pending
-        vb_rdata((IRQ_TOTAL - 1), 0) = (r.irq_pending.read() & r.mideleg.read());
+        vb_rdata(15, 0) = (r.irq_pending.read() & 0x0222);  // see fig 4.7. Only s-bits are visible
         if (v_csr_wena) {
-            v.mip_ssip = (r.cmd_data.read()[IRQ_SSIP] && r.mideleg.read()[IRQ_SSIP]);
-            v.mip_stip = (r.cmd_data.read()[IRQ_SSIP] && r.mideleg.read()[IRQ_STIP]);
-            v.mip_seip = (r.cmd_data.read()[IRQ_SSIP] && r.mideleg.read()[IRQ_SEIP]);
+            v.mip_ssip = r.cmd_data.read()[IRQ_SSIP];
+            v.mip_stip = r.cmd_data.read()[IRQ_STIP];
+            v.mip_seip = r.cmd_data.read()[IRQ_SEIP];
         }
         break;
     case 0x180:                                             // satp: [SRW] Supervisor address translation and protection
@@ -1022,19 +1020,25 @@ void CsrRegs::comb() {
     }
 
     // Step is not enabled or interrupt enabled during stepping
-    v_mie_glob = (r.xmode[iM].xie && ((!r.dcsr_step) || r.dcsr_stepie));
-    vb_irq_ena[IRQ_MSIP] = (v_mie_glob && r.xmode[iM].xsie);
-    vb_irq_ena[IRQ_MTIP] = (v_mie_glob && r.xmode[iM].xtie);
-    vb_irq_ena[IRQ_MEIP] = (v_mie_glob && r.xmode[iM].xeie);
-    vb_irq_ena[IRQ_SSIP] = (v_mie_glob && r.xmode[iS].xsie);
-    vb_irq_ena[IRQ_STIP] = (v_mie_glob && r.xmode[iS].xtie);
-    vb_irq_ena[IRQ_SEIP] = (v_mie_glob && r.xmode[iS].xeie);
+    if (((!r.dcsr_step) || r.dcsr_stepie) == 1) {
+        if (r.xmode[iM].xie) {
+            // ALL not-delegated interrupts
+            vb_irq_ena = (~r.mideleg.read());
+        }
+        if (r.xmode[iS].xie) {
+            // Delegated to S-mode:
+            vb_irq_ena = (vb_irq_ena | r.mideleg.read());
+        }
+    }
 
     // The following pending interrupt could be set in mip:
-    vb_mip_pending[IRQ_SSIP] = r.mip_ssip;
-    vb_mip_pending[IRQ_STIP] = r.mip_stip;
-    vb_mip_pending[IRQ_SEIP] = r.mip_seip;
-    v.irq_pending = (i_irq_pending.read() | vb_mip_pending);
+    vb_pending[IRQ_MSIP] = (i_irq_pending.read()[IRQ_MSIP] && r.xmode[iM].xsie);
+    vb_pending[IRQ_MTIP] = (i_irq_pending.read()[IRQ_MTIP] && r.xmode[iM].xtie);
+    vb_pending[IRQ_MEIP] = (i_irq_pending.read()[IRQ_MEIP] && r.xmode[iM].xeie);
+    vb_pending[IRQ_SSIP] = ((i_irq_pending.read()[IRQ_SSIP] || r.mip_ssip) && r.xmode[iS].xsie);
+    vb_pending[IRQ_STIP] = ((i_irq_pending.read()[IRQ_STIP] || r.mip_stip) && r.xmode[iS].xtie);
+    vb_pending[IRQ_SEIP] = ((i_irq_pending.read()[IRQ_SEIP] || r.mip_seip) && r.xmode[iS].xeie);
+    v.irq_pending = vb_pending;
 
     w_mstackovr = 0;
     if ((r.mstackovr.read().or_reduce() == 1) && (i_sp.read()((CFG_CPU_ADDR_BITS - 1), 0) < r.mstackovr.read())) {
@@ -1138,6 +1142,7 @@ void CsrRegs::comb() {
     o_progbuf_end = (r.progbuf_end && i_resp_ready);
     o_progbuf_error = (r.progbuf_err && i_resp_ready);
     o_irq_pending = (r.irq_pending.read() & vb_irq_ena);
+    o_wakeup = r.irq_pending.read().or_reduce();
     o_stack_overflow = w_mstackovr;
     o_stack_underflow = w_mstackund;
     o_executed_cnt = r.executed_cnt;
