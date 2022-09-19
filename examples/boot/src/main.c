@@ -160,6 +160,10 @@ void _init() {
     t1 = 0x00000800;
     asm("csrc mie, %0" : :"r"(t1));  // disable external irq from PLIC
 
+    t1 = 0x00000007;
+    asm("csrw mcounteren, %0" : :"r"(t1));  // allow counter access from S-mode
+    asm("csrw scounteren, %0" : :"r"(t1));  // allow counter access from U-mode
+
     init_mpu();
 
     txctrl.v = 0;
