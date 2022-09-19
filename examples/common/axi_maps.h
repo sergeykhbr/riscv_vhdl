@@ -48,6 +48,15 @@
 #define ADDR_BUS0_XSLV_FSE          0x100f2000 // Reserved region of FU740
 #define ADDR_BUS0_XSLV_PNP          0x100ff000 // Reserved region of FU740
 
+// Hart irq bus
+#define HART_IRQ_SSIP 1
+#define HART_IRQ_MSIP 3
+#define HART_IRQ_STIP 5
+#define HART_IRQ_MTIP 7
+#define HART_IRQ_SEIP 9
+#define HART_IRQ_MEIP 11
+#define HART_IRQ_TOTAL 16
+
 // Interrupt pins assignemts:
 #define CFG_IRQ_UNUSED      0
 #define CFG_IRQ_GPIO_0      23   // The same in 740 (unmatched)

@@ -54,8 +54,8 @@ void test_generate_interrupt() {
 void test_plic(void) {
     plic_map *p = (plic_map *)ADDR_BUS0_XSLV_PLIC;
 
-    int t1 = 0x1 << 11;
-    asm("csrc mie, %0" : :"r"(t1));         // MEIE=0: disable external irq from PLIC
+    fw_disable_m_interrupts();
+    fw_mie_enable(HART_IRQ_MEIP);
 
     plic_enable_irq(CTX_CPU0_M_MODE, PLIC_IRQ_PNP);
 
@@ -92,5 +92,8 @@ void test_plic(void) {
     // write complete
     plic_complete(CTX_CPU0_M_MODE, irqid);
     printf_uart("PLIC . . . . . .%s", "PASS\r\n");
+
+    fw_mie_disable(HART_IRQ_MEIP);
+    fw_enable_m_interrupts();
 }
 

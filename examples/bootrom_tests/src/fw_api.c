@@ -36,6 +36,15 @@ void fw_disable_m_interrupts() {
     asm("csrc mstatus, %0" : :"r"(t1));  // clear mie
 }
 
+void fw_mie_enable(int idx) {
+    int xie = 1ull << idx;
+    asm("csrs mie, %0" : :"r"(xie));
+}
+
+void fw_mie_disable(int idx) {
+    int xie = 1ull << idx;
+    asm("csrc mie, %0" : :"r"(xie));
+}
 
 void fw_enable_plic_irq(int ctxid, int irqidx) {
     plic_map *p = (plic_map *)ADDR_BUS0_XSLV_PLIC;

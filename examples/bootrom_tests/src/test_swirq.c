@@ -27,9 +27,9 @@ void test_swirq(void) {
     uint64_t msie = 0x1ull << 3;
     uint64_t mip;
 
-    asm("csrc mie, %0" : :"r"(msie));         // MSIE=0: disable software interrupt
-
-    fw_enable_m_interrupts();
+    fw_disable_m_interrupts();
+ 
+    fw_mie_enable(HART_IRQ_MSIP);
 
     clint->msip[fw_get_cpuid()] = 0x1;
 
@@ -47,16 +47,17 @@ void test_swirq(void) {
         printf_uart("FAIL: %s\r\n", "mip[3] = 0");
     }
 
-    asm("csrs mie, %0" : :"r"(msie));         // MSIE=1: enable software interrupt
+    fw_enable_m_interrupts();
 
     while (pnp->fwdbg1 == 0) {}               // should be update int irq handler
 
-    asm("csrc mie, %0" : :"r"(msie));         // MSIE=0: disable software interrupt
+    fw_mie_disable(HART_IRQ_MSIP);
 
     if (pnp->fwdbg1 == MAGIC_SWIRQ_TEST_NUMBER) {
         printf_uart("SWIRQ. . . . . .%s", "PASS\r\n");
     } else {
         printf_uart("SWIRQ. . . . . .%s", "FAIL\r\n");
     }
+
 }
 

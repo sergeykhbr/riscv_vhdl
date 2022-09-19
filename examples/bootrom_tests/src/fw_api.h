@@ -45,6 +45,9 @@ int fw_get_cpuid();
 // mstatus::mie bit controler
 void fw_enable_m_interrupts();
 void fw_disable_m_interrupts();
+void fw_mie_enable(int idx);
+void fw_mie_disable(int idx);
+
 // plic isr table entries
 void fw_enable_plic_irq(int ctxid, int idx);
 void fw_disable_plic_irq(int ctxid, int idx);
