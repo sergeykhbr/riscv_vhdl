@@ -17,18 +17,31 @@
 
 #include <systemc.h>
 #include "../river_cfg.h"
+#include "jtagcdc.h"
+#include "jtagtap.h"
 
 namespace debugger {
 
 SC_MODULE(dmidebug) {
  public:
+    sc_in<bool> i_clk;
+    sc_in<bool> i_nrst;                                     // full reset including dmi (usually via reset button)
+    // JTAG interface:
     sc_in<bool> i_trst;                                     // Test reset: must be open-drain, pullup
     sc_in<bool> i_tck;                                      // Test Clock
     sc_in<bool> i_tms;                                      // Test Mode State
     sc_in<bool> i_tdi;                                      // Test Data Input
     sc_out<bool> o_tdo;                                     // Test Data Output
-    sc_in<bool> i_clk;
-    sc_in<bool> i_nrst;                                     // full reset including dmi (usually via reset button)
+    // Bus interface (APB):
+    sc_in<bool> i_bus_req_valid;
+    sc_out<bool> o_bus_req_ready;
+    sc_in<sc_uint<7>> i_bus_req_addr;
+    sc_in<bool> i_bus_req_write;
+    sc_in<sc_uint<32>> i_bus_req_wdata;
+    sc_out<bool> o_bus_resp_valid;
+    sc_in<bool> i_bus_resp_ready;
+    sc_out<sc_uint<32>> o_bus_resp_rdata;
+    // DMI interface:
     sc_out<bool> o_ndmreset;                                // system reset: cores + peripheries (except dmi itself)
     sc_in<sc_uint<CFG_CPU_MAX>> i_halted;                   // Halted cores
     sc_in<sc_uint<CFG_CPU_MAX>> i_available;                // Existing and available cores
@@ -56,6 +69,7 @@ SC_MODULE(dmidebug) {
 
     dmidebug(sc_module_name name,
              bool async_reset);
+    virtual ~dmidebug();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -85,7 +99,9 @@ SC_MODULE(dmidebug) {
     static const uint8_t CMD_STATE_WAIT_HALTED = 4;
 
     struct dmidebug_registers {
+        sc_signal<bool> bus_jtag;
         sc_signal<sc_uint<32>> jtag_resp_data;
+        sc_signal<sc_uint<32>> bus_resp_data;
         sc_signal<sc_uint<7>> regidx;
         sc_signal<sc_uint<32>> wdata;
         sc_signal<bool> regwr;
@@ -122,10 +138,13 @@ SC_MODULE(dmidebug) {
         sc_signal<sc_uint<RISCV_ARCH>> dport_wdata;
         sc_signal<sc_uint<3>> dport_size;
         sc_signal<bool> dport_resp_ready;
+        sc_signal<bool> bus_resp_valid;
     } v, r;
 
     void dmidebug_r_reset(dmidebug_registers &iv) {
+        iv.bus_jtag = 0;
         iv.jtag_resp_data = 0;
+        iv.bus_resp_data = 0;
         iv.regidx = 0;
         iv.wdata = 0;
         iv.regwr = 0;
@@ -162,6 +181,7 @@ SC_MODULE(dmidebug) {
         iv.dport_wdata = 0ull;
         iv.dport_size = 0;
         iv.dport_resp_ready = 0;
+        iv.bus_resp_valid = 0;
     }
 
     sc_signal<bool> w_tap_dmi_req_valid;
@@ -180,6 +200,9 @@ SC_MODULE(dmidebug) {
     sc_signal<sc_uint<32>> wb_jtag_dmi_resp_data;
     sc_signal<bool> w_jtag_dmi_busy;
     sc_signal<bool> w_jtag_dmi_error;
+
+    jtagcdc *cdc;
+    jtagtap<0x10e31913, 7, 5> *tap;
 
 };
 

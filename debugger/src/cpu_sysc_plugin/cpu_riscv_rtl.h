@@ -44,7 +44,8 @@
 #include "ambalib/types_amba.h"
 #include "riverlib/river_amba.h"
 #include "riverlib/l2cache/l2_top.h"
-#include "riverlib/dmi/dmidebug.old.h"
+#include "riverlib/dmi/dmidebug.h"
+#include "riverlib/dmi/ic_dport.h"
 #include <systemc.h>
 
 namespace debugger {
@@ -132,7 +133,21 @@ class CpuRiscV_RTL : public IService,
     sc_signal<bool> w_ndmreset;
     sc_signal<sc_uint<CFG_CPU_MAX>> wb_halted;
     sc_signal<sc_uint<CFG_CPU_MAX>> wb_available;
-    sc_signal<sc_uint<CFG_LOG2_CPU_MAX>> wb_hartsel;
+    sc_signal<sc_uint<CFG_LOG2_CPU_MAX>> wb_dmi_hartsel;
+    sc_signal<bool> w_dmi_haltreq;
+    sc_signal<bool> w_dmi_resumereq;
+    sc_signal<bool> w_dmi_resethaltreq;
+    sc_signal<bool> w_dmi_hartreset;
+    sc_signal<bool> w_dmi_dport_req_valid;
+    sc_signal<sc_uint<DPortReq_Total>> wb_dmi_dport_req_type;
+    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_dmi_dport_addr;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_dmi_dport_wdata;
+    sc_signal<sc_uint<3>> wb_dmi_dport_size;
+    sc_signal<bool> w_ic_dport_req_ready;
+    sc_signal<bool> w_dmi_dport_resp_ready;
+    sc_signal<bool> w_ic_dport_resp_valid;
+    sc_signal<bool> w_ic_dport_resp_error;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_ic_dport_rdata;
     sc_signal<sc_biguint<32*CFG_PROGBUF_REG_TOTAL>> wb_progbuf;
     sc_signal<bool> w_halted0;
     sc_signal<bool> w_available0;
@@ -165,7 +180,8 @@ class CpuRiscV_RTL : public IService,
     RtlWrapper *wrapper_;
     L1SerDes *l1serdes_;
     L2Top *l2cache_;
-    DmiDebug *dmi_;
+    dmidebug *dmi_;
+    ic_dport *dport_ic0;
     TapBitBang *tapbb_;
     BusSlave *dmislv_;
 

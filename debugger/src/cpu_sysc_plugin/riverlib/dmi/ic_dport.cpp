@@ -39,8 +39,8 @@ ic_dport::ic_dport(sc_module_name name,
     o_dport_resp_valid("o_dport_resp_valid"),
     o_dport_resp_error("o_dport_resp_error"),
     o_dport_rdata("o_dport_rdata"),
-    o_dporti("o_dporti"),
-    i_dporto("i_dporto") {
+    o_dporti("o_dporti", CFG_CPU_MAX),
+    i_dporto("i_dporto", CFG_CPU_MAX) {
 
     async_reset_ = async_reset;
 

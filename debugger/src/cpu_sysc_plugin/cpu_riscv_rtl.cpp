@@ -189,8 +189,7 @@ void CpuRiscV_RTL::createSystemC() {
     dmislv_->i_slv_resp_rdata(wb_bus_resp_rdata);
 
 
-    dmi_ = new DmiDebug(static_cast<IService *>(this),
-                        "dmidbg",
+    dmi_ = new dmidebug("dmidbg",
                         asyncReset_.to_bool());
     dmi_->i_clk(wrapper_->o_clk);
     dmi_->i_nrst(w_dmi_nrst);
@@ -210,10 +209,45 @@ void CpuRiscV_RTL::createSystemC() {
     dmi_->o_ndmreset(w_ndmreset);               // reset whole system
     dmi_->i_halted(wb_halted);
     dmi_->i_available(wb_available);
-    dmi_->o_hartsel(wb_hartsel);
-    dmi_->i_dporto(wb_dporto[0]);
-    dmi_->o_dporti(wb_dporti[0]);
+    dmi_->o_hartsel(wb_dmi_hartsel);
+    dmi_->o_haltreq(w_dmi_haltreq);
+    dmi_->o_resumereq(w_dmi_resumereq);
+    dmi_->o_resethaltreq(w_dmi_resethaltreq);
+    dmi_->o_hartreset(w_dmi_hartreset);
+    dmi_->o_dport_req_valid(w_dmi_dport_req_valid);
+    dmi_->o_dport_req_type(wb_dmi_dport_req_type);
+    dmi_->o_dport_addr(wb_dmi_dport_addr);
+    dmi_->o_dport_wdata(wb_dmi_dport_wdata);
+    dmi_->o_dport_size(wb_dmi_dport_size);
+    dmi_->i_dport_req_ready(w_ic_dport_req_ready);
+    dmi_->o_dport_resp_ready(w_dmi_dport_resp_ready);
+    dmi_->i_dport_resp_valid(w_ic_dport_resp_valid);
+    dmi_->i_dport_resp_error(w_ic_dport_resp_error);
+    dmi_->i_dport_rdata(wb_ic_dport_rdata);
+//dmi_->i_dporto(wb_dporto[0]);
+    //dmi_->o_dporti(wb_dporti[0]);
     dmi_->o_progbuf(wb_progbuf);
+
+    dport_ic0 = new ic_dport("dport_ic0", asyncReset_.to_bool());
+    dport_ic0->i_clk(wrapper_->o_clk);
+    dport_ic0->i_nrst(w_dmi_nrst);
+    dport_ic0->i_hartsel(wb_dmi_hartsel);
+    dport_ic0->i_haltreq(w_dmi_haltreq);
+    dport_ic0->i_resumereq(w_dmi_resumereq);
+    dport_ic0->i_resethaltreq(w_dmi_resethaltreq);
+    dport_ic0->i_hartreset(w_dmi_hartreset);
+    dport_ic0->i_dport_req_valid(w_dmi_dport_req_valid);
+    dport_ic0->i_dport_req_type(wb_dmi_dport_req_type);
+    dport_ic0->i_dport_addr(wb_dmi_dport_addr);
+    dport_ic0->i_dport_wdata(wb_dmi_dport_wdata);
+    dport_ic0->i_dport_size(wb_dmi_dport_size);
+    dport_ic0->o_dport_req_ready(w_ic_dport_req_ready);
+    dport_ic0->i_dport_resp_ready(w_dmi_dport_resp_ready);
+    dport_ic0->o_dport_resp_valid(w_ic_dport_resp_valid);
+    dport_ic0->o_dport_resp_error(w_ic_dport_resp_error);
+    dport_ic0->o_dport_rdata(wb_ic_dport_rdata);
+    dport_ic0->o_dporti(wb_dporti);
+    dport_ic0->i_dporto(wb_dporto);
 
 
     if (l2CacheEnable_.to_bool()) {
