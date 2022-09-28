@@ -185,9 +185,6 @@ SC_MODULE(Processor) {
         sc_signal<sc_uint<2>> memop_size;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> memop_addr;
         sc_signal<sc_uint<RISCV_ARCH>> memop_wdata;
-        sc_signal<bool> flushd;
-        sc_signal<bool> flushi;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> flushi_addr;
         sc_signal<bool> call;                               // pseudo-instruction CALL
         sc_signal<bool> ret;                                // pseudo-instruction RET
         sc_signal<bool> jmp;                                // jump was executed
@@ -234,8 +231,9 @@ SC_MODULE(Processor) {
         sc_signal<bool> resp_valid;                         // CSR module Response is valid
         sc_signal<sc_uint<RISCV_ARCH>> resp_data;           // Responded CSR data
         sc_signal<bool> resp_exception;                     // Exception of CSR access
-        sc_signal<bool> flushi_ena;                         // clear specified addr in ICache without execution of fence.i
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> flushi_addr;
+        sc_signal<bool> flushd_valid;                       // clear specified addr in D$
+        sc_signal<bool> flushi_valid;                       // clear specified addr in I$
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> flush_addr;
         sc_signal<sc_uint<64>> executed_cnt;                // Number of executed instruction
         sc_signal<sc_uint<IRQ_TOTAL>> irq_pending;
         sc_signal<bool> o_wakeup;                           // There's pending bit even if interrupts globally disabled
@@ -306,7 +304,6 @@ SC_MODULE(Processor) {
     sc_signal<bool> iccsr_s0_resp_ready;
     sc_signal<bool> iccsr_s0_resp_exception;
     
-    sc_signal<bool> w_flush_pipeline;
     sc_signal<bool> w_mem_resp_error;
     sc_signal<bool> w_writeback_ready;
     sc_signal<bool> w_reg_wena;
@@ -317,6 +314,7 @@ SC_MODULE(Processor) {
     sc_signal<bool> w_reg_ignored;
     sc_signal<bool> w_mmu_ena;                              // MMU enabled in U and S modes. Sv48 only.
     sc_signal<sc_uint<44>> wb_mmu_ppn;                      // Physical Page Number
+    sc_signal<bool> w_f_flush_ready;
     sc_signal<sc_uint<MemopType_Total>> unused_immu_mem_req_type;
     sc_signal<sc_uint<64>> unused_immu_mem_req_wdata;
     sc_signal<sc_uint<8>> unused_immu_mem_req_wstrb;

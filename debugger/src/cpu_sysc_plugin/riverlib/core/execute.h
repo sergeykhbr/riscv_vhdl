@@ -105,10 +105,6 @@ SC_MODULE(InstrExecute) {
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_pc;                // Valid instruction pointer
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_npc;               // Next instruction pointer. Next decoded pc must match to this value or will be ignored.
     sc_out<sc_uint<32>> o_instr;                            // Valid instruction value
-    sc_in<bool> i_flushd_end;
-    sc_out<bool> o_flushd;
-    sc_out<bool> o_flushi;
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_flushi_addr;
     sc_out<bool> o_call;                                    // CALL pseudo instruction detected
     sc_out<bool> o_ret;                                     // RET pseudoinstruction detected (hw stack tracing)
     sc_out<bool> o_jmp;                                     // Jump was executed
@@ -146,8 +142,6 @@ SC_MODULE(InstrExecute) {
     static const uint8_t State_Idle = 0;
     static const uint8_t State_WaitMemAcces = 1;
     static const uint8_t State_WaitMulti = 2;
-    static const uint8_t State_WaitFlushingAccept = 3;
-    static const uint8_t State_Flushing_I = 4;
     static const uint8_t State_Amo = 5;
     static const uint8_t State_Csr = 6;
     static const uint8_t State_Halted = 7;
@@ -242,9 +236,6 @@ SC_MODULE(InstrExecute) {
         sc_signal<bool> call;
         sc_signal<bool> ret;
         sc_signal<bool> jmp;
-        sc_signal<bool> flushd;
-        sc_signal<bool> flushi;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> flushi_addr;
         sc_signal<bool> stepdone;
     } v, r;
 
@@ -299,9 +290,6 @@ SC_MODULE(InstrExecute) {
         iv.call = 0;
         iv.ret = 0;
         iv.jmp = 0;
-        iv.flushd = 0;
-        iv.flushi = 0;
-        iv.flushi_addr = 0ull;
         iv.stepdone = 0;
     }
 

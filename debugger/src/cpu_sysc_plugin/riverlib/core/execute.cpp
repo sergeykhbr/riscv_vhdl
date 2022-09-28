@@ -100,10 +100,6 @@ InstrExecute::InstrExecute(sc_module_name name,
     o_pc("o_pc"),
     o_npc("o_npc"),
     o_instr("o_instr"),
-    i_flushd_end("i_flushd_end"),
-    o_flushd("o_flushd"),
-    o_flushi("o_flushi"),
-    o_flushi_addr("o_flushi_addr"),
     o_call("o_call"),
     o_ret("o_ret"),
     o_jmp("o_jmp"),
@@ -254,7 +250,6 @@ InstrExecute::InstrExecute(sc_module_name name,
     sensitive << i_dbg_mem_req_size;
     sensitive << i_dbg_mem_req_addr;
     sensitive << i_dbg_mem_req_wdata;
-    sensitive << i_flushd_end;
     for (int i = 0; i < Res_Total; i++) {
         sensitive << wb_select[i].ena;
         sensitive << wb_select[i].valid;
@@ -330,9 +325,6 @@ InstrExecute::InstrExecute(sc_module_name name,
     sensitive << r.call;
     sensitive << r.ret;
     sensitive << r.jmp;
-    sensitive << r.flushd;
-    sensitive << r.flushi;
-    sensitive << r.flushi_addr;
     sensitive << r.stepdone;
 
     SC_METHOD(registers);
@@ -439,10 +431,6 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_pc, o_pc.name());
         sc_trace(o_vcd, o_npc, o_npc.name());
         sc_trace(o_vcd, o_instr, o_instr.name());
-        sc_trace(o_vcd, i_flushd_end, i_flushd_end.name());
-        sc_trace(o_vcd, o_flushd, o_flushd.name());
-        sc_trace(o_vcd, o_flushi, o_flushi.name());
-        sc_trace(o_vcd, o_flushi_addr, o_flushi_addr.name());
         sc_trace(o_vcd, o_call, o_call.name());
         sc_trace(o_vcd, o_ret, o_ret.name());
         sc_trace(o_vcd, o_jmp, o_jmp.name());
@@ -497,9 +485,6 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.call, pn + ".r_call");
         sc_trace(o_vcd, r.ret, pn + ".r_ret");
         sc_trace(o_vcd, r.jmp, pn + ".r_jmp");
-        sc_trace(o_vcd, r.flushd, pn + ".r_flushd");
-        sc_trace(o_vcd, r.flushi, pn + ".r_flushi");
-        sc_trace(o_vcd, r.flushi_addr, pn + ".r_flushi_addr");
         sc_trace(o_vcd, r.stepdone, pn + ".r_stepdone");
     }
 
@@ -549,8 +534,6 @@ sc_uint<4> InstrExecute::irq2idx(sc_uint<IRQ_TOTAL> irqbus) {
 
 void InstrExecute::comb() {
     bool v_d_valid;
-    bool v_fence_d;
-    bool v_fence_i;
     bool v_csr_req_valid;
     bool v_csr_resp_ready;
     sc_uint<RISCV_ARCH> vb_csr_cmd_wdata;
@@ -609,8 +592,6 @@ void InstrExecute::comb() {
     sc_uint<4> t_shifter_mode;
 
     v_d_valid = 0;
-    v_fence_d = 0;
-    v_fence_i = 0;
     v_csr_req_valid = 0;
     v_csr_resp_ready = 0;
     vb_csr_cmd_wdata = 0;
@@ -673,7 +654,6 @@ void InstrExecute::comb() {
     v.call = 0;
     v.ret = 0;
     v.reg_write = 0;
-    v.flushi_addr = 0;
     for (int i = 0; i < Res_Total; i++) {
         wb_select[i].ena = 0;
     }
@@ -794,8 +774,6 @@ void InstrExecute::comb() {
     }
 
     wb_fpu_vec = wv(Instr_FPU_Last, Instr_FPU_First).to_uint64();// directly connected i_ivec
-    v_fence_d = wv[Instr_FENCE];
-    v_fence_i = wv[Instr_FENCE_I];
     w_arith_residual_high = (wv[Instr_REM]
             || wv[Instr_REMU]
             || wv[Instr_REMW]
@@ -982,7 +960,9 @@ void InstrExecute::comb() {
             || wv[Instr_CSRRS]
             || wv[Instr_CSRRSI]
             || wv[Instr_CSRRW]
-            || wv[Instr_CSRRWI]);
+            || wv[Instr_CSRRWI]
+            || wv[Instr_FENCE]
+            || wv[Instr_FENCE_I]);
     if (i_haltreq.read() == 1) {
         vb_csr_cmd_type = CsrReq_HaltCmd;
         vb_csr_cmd_addr = HALT_CAUSE_HALTREQ;
@@ -1073,6 +1053,15 @@ void InstrExecute::comb() {
         vb_csr_cmd_type = CsrReq_ReadCmd;
         vb_csr_cmd_addr = i_d_csr_addr;
         vb_csr_cmd_wdata(4, 0) = r.radr1.read()(4, 0);      // zero-extending 5 to 64-bits
+    } else if ((wv[Instr_FENCE] == 1) || (wv[Instr_FENCE_I] == 1)) {
+        vb_csr_cmd_type = CsrReq_FenceCmd;
+        if (wv[Instr_FENCE] == 1) {
+            vb_csr_cmd_addr = 0x001;
+        }
+        if (wv[Instr_FENCE_I] == 1) {
+            vb_csr_cmd_addr = 0x003;
+        }
+        vb_csr_cmd_wdata = ~0ull;                           // flush address
     }
 
     wb_select[Res_Zero].res = 0;
@@ -1167,15 +1156,6 @@ void InstrExecute::comb() {
                 if (i_memop_ready.read() == 0) {
                     // Wait cycles until FIFO to memoryaccess becomes available
                     v.state = State_WaitMemAcces;
-                } else {
-                    v.valid = 1;
-                }
-            } else if ((v_fence_i || v_fence_d) == 1) {
-                vb_memop_memaddr = ~0ull;
-                if (i_memop_ready.read() == 0) {
-                    v.state = State_WaitFlushingAccept;
-                } else if (v_fence_i == 1) {
-                    v.state = State_Flushing_I;             // Flushing I need to wait ending of flashing D
                 } else {
                     v.valid = 1;
                 }
@@ -1327,32 +1307,6 @@ void InstrExecute::comb() {
             v.valid = 1;
         }
         break;
-    case State_WaitFlushingAccept:
-        // Fifo exec => memacess is full
-        vb_memop_memaddr = ~0ull;
-        if (i_memop_ready.read() == 1) {
-            v.flushd = 0;
-            v.flushi = 0;
-            if (mux.ivec[Instr_FENCE] == 1) {
-                // no need to wait ending of D-flashing
-                v.state = State_Idle;
-                v.valid = 1;
-            } else {
-                v.state = State_Flushing_I;
-            }
-        }
-        break;
-    case State_Flushing_I:
-        // Flushing DataCache could take much more time than flushing I
-        // so that we should wait D-cache finish before requesting new
-        // instruction to avoid reading obsolete data.
-        v.flushd = 0;
-        v.flushi = 0;
-        if (i_flushd_end.read() == 1) {
-            v.state = State_Idle;
-            v.valid = 1;
-        }
-        break;
     case State_Halted:
         v.stepdone = 0;
         if ((i_resumereq.read() == 1) || (i_dbg_progbuf_ena.read() == 1)) {
@@ -1439,13 +1393,6 @@ void InstrExecute::comb() {
         v.compressed = i_compressed;
         v.f64 = i_f64;
         v.instr = i_d_instr;
-        v.flushd = (v_fence_i || v_fence_d);
-        v.flushi = v_fence_i;
-        if (v_fence_i == 1) {
-            v.flushi_addr = ~0ull;
-        } else if (wv[Instr_EBREAK] == 1) {
-            v.flushi_addr = i_d_pc;
-        }
         v.call = v_call;
         v.ret = v_ret;
         v.jmp = (v_pc_branch
@@ -1596,9 +1543,6 @@ void InstrExecute::comb() {
     o_pc = r.pc;
     o_npc = vb_o_npc;
     o_instr = r.instr;
-    o_flushd = r.flushd;                                    // must be post in a memory queue to avoid to early flushing
-    o_flushi = r.flushi;
-    o_flushi_addr = r.flushi_addr;
     o_call = r.call;
     o_ret = r.ret;
     o_jmp = r.jmp;

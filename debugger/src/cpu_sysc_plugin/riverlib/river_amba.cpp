@@ -34,10 +34,7 @@ RiverAmba::RiverAmba(sc_module_name name,
     o_xcfg("o_xcfg"),
     i_dport("i_dport"),
     o_dport("o_dport"),
-    i_msip("i_msip"),
-    i_mtip("i_mtip"),
-    i_meip("i_meip"),
-    i_seip("i_seip"),
+    i_irq_pending("i_irq_pending"),
     o_flush_l2("o_flush_l2"),
     o_halted("o_halted"),
     o_available("o_available"),
@@ -76,7 +73,7 @@ RiverAmba::RiverAmba(sc_module_name name,
     river0->o_resp_snoop_data(resp_snoop_data_o);
     river0->o_resp_snoop_flags(resp_snoop_flags_o);
     river0->o_flush_l2(o_flush_l2);
-    river0->i_irq_pending(wb_ip);
+    river0->i_irq_pending(i_irq_pending);
     river0->i_haltreq(w_dporti_haltreq);
     river0->i_resumereq(w_dporti_resumereq);
     river0->i_dport_req_valid(w_dporti_req_valid);
@@ -99,10 +96,7 @@ RiverAmba::RiverAmba(sc_module_name name,
     sensitive << i_mtimer;
     sensitive << i_msti;
     sensitive << i_dport;
-    sensitive << i_msip;
-    sensitive << i_mtip;
-    sensitive << i_meip;
-    sensitive << i_seip;
+    sensitive << i_irq_pending;
     sensitive << i_progbuf;
     sensitive << req_mem_ready_i;
     sensitive << req_mem_path_o;
@@ -124,7 +118,6 @@ RiverAmba::RiverAmba(sc_module_name name,
     sensitive << resp_snoop_valid_o;
     sensitive << resp_snoop_data_o;
     sensitive << resp_snoop_flags_o;
-    sensitive << wb_ip;
     sensitive << w_dporti_haltreq;
     sensitive << w_dporti_resumereq;
     sensitive << w_dporti_resethaltreq;
@@ -177,10 +170,7 @@ void RiverAmba::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_xcfg, o_xcfg.name());
         sc_trace(o_vcd, i_dport, i_dport.name());
         sc_trace(o_vcd, o_dport, o_dport.name());
-        sc_trace(o_vcd, i_msip, i_msip.name());
-        sc_trace(o_vcd, i_mtip, i_mtip.name());
-        sc_trace(o_vcd, i_meip, i_meip.name());
-        sc_trace(o_vcd, i_seip, i_seip.name());
+        sc_trace(o_vcd, i_irq_pending, i_irq_pending.name());
         sc_trace(o_vcd, o_flush_l2, o_flush_l2.name());
         sc_trace(o_vcd, o_halted, o_halted.name());
         sc_trace(o_vcd, o_available, o_available.name());
@@ -256,7 +246,6 @@ void RiverAmba::comb() {
     sc_uint<5> vb_cr_resp;
     bool v_cd_valid;
     sc_biguint<L1CACHE_LINE_BITS> vb_cd_data;
-    sc_uint<IRQ_TOTAL> vb_ip;                               // Interrupt pending bits
 
     v_resp_mem_valid = 0;
     v_mem_er_load_fault = 0;
@@ -270,7 +259,6 @@ void RiverAmba::comb() {
     vb_cr_resp = 0;
     v_cd_valid = 0;
     vb_cd_data = 0;
-    vb_ip = 0;
 
     v = r;
 
@@ -295,10 +283,6 @@ void RiverAmba::comb() {
     vdporto.resp_error = w_dporto_resp_error;               // systemc compatibility
     vdporto.rdata = wb_dporto_rdata;                        // systemc compatibility
 
-    vb_ip[IRQ_MSIP] = i_msip;
-    vb_ip[IRQ_MTIP] = i_mtip;
-    vb_ip[IRQ_MEIP] = i_meip;
-    vb_ip[IRQ_SEIP] = i_seip;
     vmsto = axi4_l1_out_none;
     vmsto.ar_bits.burst = AXI_BURST_INCR;                   // INCR (possible any value actually)
     vmsto.aw_bits.burst = AXI_BURST_INCR;                   // INCR (possible any value actually)
@@ -520,7 +504,6 @@ void RiverAmba::comb() {
     vmsto.rack = 0;
     vmsto.wack = 0;
 
-    wb_ip = vb_ip;
     req_mem_ready_i = v_next_ready;
     resp_mem_valid_i = v_resp_mem_valid;
     resp_mem_data_i = i_msti.read().r_data;

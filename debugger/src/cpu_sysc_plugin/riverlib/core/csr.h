@@ -42,7 +42,10 @@ SC_MODULE(CsrRegs) {
     sc_out<bool> o_wakeup;                                  // There's pending bit even if interrupts globally disabled
     sc_out<bool> o_stack_overflow;                          // stack overflow exception
     sc_out<bool> o_stack_underflow;                         // stack underflow exception
+    sc_in<bool> i_f_flush_ready;                            // fetcher is ready to accept Flush $I request
     sc_in<bool> i_e_valid;                                  // instructuin executed flag
+    sc_in<bool> i_m_memop_ready;                            // memaccess module is ready to accept the request
+    sc_in<bool> i_flushd_end;
     sc_in<sc_uint<64>> i_mtimer;                            // Read-only shadow value of memory-mapped mtimer register (see CLINT).
     sc_out<sc_uint<64>> o_executed_cnt;                     // Number of executed instructions
     
@@ -50,8 +53,9 @@ SC_MODULE(CsrRegs) {
     sc_in<bool> i_dbg_progbuf_ena;                          // Executing progbuf is in progress
     sc_out<bool> o_progbuf_end;                             // End of execution from prog buffer
     sc_out<bool> o_progbuf_error;                           // exception during progbuf execution
-    sc_out<bool> o_flushi_ena;                              // clear specified addr in ICache without execution of fence.i
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_flushi_addr;       // ICache address to flush
+    sc_out<bool> o_flushd_valid;                            // clear specified addr in DCache
+    sc_out<bool> o_flushi_valid;                            // clear specified addr in ICache
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_flush_addr;        // Cache address to flush. All ones means flush all.
     
     sc_out<bool> o_mpu_region_we;                           // write enable into MPU
     sc_out<sc_uint<CFG_MPU_TBL_WIDTH>> o_mpu_region_idx;    // selected MPU region
@@ -86,7 +90,15 @@ SC_MODULE(CsrRegs) {
     static const uint32_t State_Halt = 6;
     static const uint32_t State_Resume = 7;
     static const uint32_t State_Wfi = 8;
-    static const uint32_t State_Response = 9;
+    static const uint32_t State_Fence = 9;
+    static const uint32_t State_Response = 10;
+    
+    static const uint8_t Fence_None = 0;
+    static const uint8_t Fence_Data = 1;
+    static const uint8_t Fence_DataWaitEnd = 2;
+    static const uint8_t Fence_Fetch = 3;
+    static const uint8_t Fence_End = 4;
+    
     static const uint8_t SATP_MODE_SV48 = 9;
 
     struct RegModeType {
@@ -110,6 +122,7 @@ SC_MODULE(CsrRegs) {
     struct CsrRegs_registers {
         RegModeType xmode[4];
         sc_signal<sc_uint<4>> state;
+        sc_signal<sc_uint<3>> fencestate;
         sc_signal<sc_uint<IRQ_TOTAL>> irq_pending;
         sc_signal<sc_uint<CsrReq_TotalBits>> cmd_type;
         sc_signal<sc_uint<12>> cmd_addr;
@@ -154,8 +167,6 @@ SC_MODULE(CsrRegs) {
         sc_signal<bool> dcsr_stepie;                        // interrupt 0=dis;1=ena during stepping
         sc_signal<sc_uint<RISCV_ARCH>> stepping_mode_cnt;
         sc_signal<sc_uint<RISCV_ARCH>> ins_per_step;        // Number of steps before halt in stepping mode
-        sc_signal<bool> flushi_ena;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> flushi_addr;
     } v, r;
 
 

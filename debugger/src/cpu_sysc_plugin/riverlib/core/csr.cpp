@@ -43,15 +43,19 @@ CsrRegs::CsrRegs(sc_module_name name,
     o_wakeup("o_wakeup"),
     o_stack_overflow("o_stack_overflow"),
     o_stack_underflow("o_stack_underflow"),
+    i_f_flush_ready("i_f_flush_ready"),
     i_e_valid("i_e_valid"),
+    i_m_memop_ready("i_m_memop_ready"),
+    i_flushd_end("i_flushd_end"),
     i_mtimer("i_mtimer"),
     o_executed_cnt("o_executed_cnt"),
     o_step("o_step"),
     i_dbg_progbuf_ena("i_dbg_progbuf_ena"),
     o_progbuf_end("o_progbuf_end"),
     o_progbuf_error("o_progbuf_error"),
-    o_flushi_ena("o_flushi_ena"),
-    o_flushi_addr("o_flushi_addr"),
+    o_flushd_valid("o_flushd_valid"),
+    o_flushi_valid("o_flushi_valid"),
+    o_flush_addr("o_flush_addr"),
     o_mpu_region_we("o_mpu_region_we"),
     o_mpu_region_idx("o_mpu_region_idx"),
     o_mpu_region_addr("o_mpu_region_addr"),
@@ -75,7 +79,10 @@ CsrRegs::CsrRegs(sc_module_name name,
     sensitive << i_e_pc;
     sensitive << i_e_instr;
     sensitive << i_irq_pending;
+    sensitive << i_f_flush_ready;
     sensitive << i_e_valid;
+    sensitive << i_m_memop_ready;
+    sensitive << i_flushd_end;
     sensitive << i_mtimer;
     sensitive << i_dbg_progbuf_ena;
     for (int i = 0; i < 4; i++) {
@@ -95,6 +102,7 @@ CsrRegs::CsrRegs(sc_module_name name,
         sensitive << r.xmode[i].xcounteren;
     }
     sensitive << r.state;
+    sensitive << r.fencestate;
     sensitive << r.irq_pending;
     sensitive << r.cmd_type;
     sensitive << r.cmd_addr;
@@ -139,8 +147,6 @@ CsrRegs::CsrRegs(sc_module_name name,
     sensitive << r.dcsr_stepie;
     sensitive << r.stepping_mode_cnt;
     sensitive << r.ins_per_step;
-    sensitive << r.flushi_ena;
-    sensitive << r.flushi_addr;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -168,15 +174,19 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_wakeup, o_wakeup.name());
         sc_trace(o_vcd, o_stack_overflow, o_stack_overflow.name());
         sc_trace(o_vcd, o_stack_underflow, o_stack_underflow.name());
+        sc_trace(o_vcd, i_f_flush_ready, i_f_flush_ready.name());
         sc_trace(o_vcd, i_e_valid, i_e_valid.name());
+        sc_trace(o_vcd, i_m_memop_ready, i_m_memop_ready.name());
+        sc_trace(o_vcd, i_flushd_end, i_flushd_end.name());
         sc_trace(o_vcd, i_mtimer, i_mtimer.name());
         sc_trace(o_vcd, o_executed_cnt, o_executed_cnt.name());
         sc_trace(o_vcd, o_step, o_step.name());
         sc_trace(o_vcd, i_dbg_progbuf_ena, i_dbg_progbuf_ena.name());
         sc_trace(o_vcd, o_progbuf_end, o_progbuf_end.name());
         sc_trace(o_vcd, o_progbuf_error, o_progbuf_error.name());
-        sc_trace(o_vcd, o_flushi_ena, o_flushi_ena.name());
-        sc_trace(o_vcd, o_flushi_addr, o_flushi_addr.name());
+        sc_trace(o_vcd, o_flushd_valid, o_flushd_valid.name());
+        sc_trace(o_vcd, o_flushi_valid, o_flushi_valid.name());
+        sc_trace(o_vcd, o_flush_addr, o_flush_addr.name());
         sc_trace(o_vcd, o_mpu_region_we, o_mpu_region_we.name());
         sc_trace(o_vcd, o_mpu_region_idx, o_mpu_region_idx.name());
         sc_trace(o_vcd, o_mpu_region_addr, o_mpu_region_addr.name());
@@ -216,6 +226,7 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
             sc_trace(o_vcd, r.xmode[i].xcounteren, tstr);
         }
         sc_trace(o_vcd, r.state, pn + ".r_state");
+        sc_trace(o_vcd, r.fencestate, pn + ".r_fencestate");
         sc_trace(o_vcd, r.irq_pending, pn + ".r_irq_pending");
         sc_trace(o_vcd, r.cmd_type, pn + ".r_cmd_type");
         sc_trace(o_vcd, r.cmd_addr, pn + ".r_cmd_addr");
@@ -260,8 +271,6 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.dcsr_stepie, pn + ".r_dcsr_stepie");
         sc_trace(o_vcd, r.stepping_mode_cnt, pn + ".r_stepping_mode_cnt");
         sc_trace(o_vcd, r.ins_per_step, pn + ".r_ins_per_step");
-        sc_trace(o_vcd, r.flushi_ena, pn + ".r_flushi_ena");
-        sc_trace(o_vcd, r.flushi_addr, pn + ".r_flushi_addr");
     }
 
 }
@@ -293,6 +302,8 @@ void CsrRegs::comb() {
     bool v_mideleg_ena;
     sc_uint<RISCV_ARCH> vb_xtvec_off_ideleg;                // 4-bytes aligned
     sc_uint<RISCV_ARCH> vb_xtvec_off_edeleg;                // 4-bytes aligned
+    bool v_flushd;
+    bool v_flushi;
 
     iM = PRV_M;
     iH = PRV_H;
@@ -320,6 +331,8 @@ void CsrRegs::comb() {
     v_mideleg_ena = 0;
     vb_xtvec_off_ideleg = 0;
     vb_xtvec_off_edeleg = 0;
+    v_flushd = 0;
+    v_flushi = 0;
 
     for (int i = 0; i < 4; i++) {
         v.xmode[i].xepc = r.xmode[i].xepc;
@@ -338,6 +351,7 @@ void CsrRegs::comb() {
         v.xmode[i].xcounteren = r.xmode[i].xcounteren;
     }
     v.state = r.state;
+    v.fencestate = r.fencestate;
     v.irq_pending = r.irq_pending;
     v.cmd_type = r.cmd_type;
     v.cmd_addr = r.cmd_addr;
@@ -382,8 +396,6 @@ void CsrRegs::comb() {
     v.dcsr_stepie = r.dcsr_stepie;
     v.stepping_mode_cnt = r.stepping_mode_cnt;
     v.ins_per_step = r.ins_per_step;
-    v.flushi_ena = r.flushi_ena;
-    v.flushi_addr = r.flushi_addr;
 
     v.mpu_we = 0;
     vb_xpp = r.xmode[r.mode.read().to_int()].xpp;
@@ -426,6 +438,9 @@ void CsrRegs::comb() {
                 v.state = State_TrapReturn;
             } else if (i_req_type.read()[CsrReq_WfiBit] == 1) {
                 v.state = State_Wfi;
+            } else if (i_req_type.read()[CsrReq_FenceBit] == 1) {
+                v.state = State_Fence;
+                v.fencestate = Fence_Data;
             } else {
                 v.state = State_RW;
             }
@@ -510,11 +525,51 @@ void CsrRegs::comb() {
         v.state = State_Response;
         v.cmd_data = 0;                                     // no error, valid for all mdoes
         break;
+    case State_Fence:
+        if (r.fencestate.read() == Fence_End) {
+            v.cmd_data = 0;
+            v.state = State_Response;
+            v.fencestate = Fence_None;
+        }
+        break;
     case State_Response:
         v_resp_valid = 1;
         if (i_resp_ready.read() == 1) {
             v.state = State_Idle;
         }
+        break;
+    default:
+        break;
+    }
+
+    // Caches flushing state machine
+    switch (r.fencestate.read()) {
+    case Fence_None:
+        break;
+    case Fence_Data:
+        v_flushd = 1;
+        if (i_m_memop_ready.read() == 1) {
+            v.fencestate = Fence_DataWaitEnd;
+        }
+        break;
+    case Fence_DataWaitEnd:
+        if (i_flushd_end.read() == 1) {
+            // [0] flush data
+            // [1] flush fetch
+            if (r.cmd_addr.read()[1] == 1) {
+                v.fencestate = Fence_Fetch;
+            } else {
+                v.fencestate = Fence_End;
+            }
+        }
+        break;
+    case Fence_Fetch:
+        v_flushi = 1;
+        if (i_f_flush_ready.read() == 1) {
+            v.fencestate = Fence_End;
+        }
+        break;
+    case Fence_End:
         break;
     default:
         break;
@@ -1010,12 +1065,6 @@ void CsrRegs::comb() {
             v.mpu_we = r.cmd_data.read()[7];
         }
         break;
-    case 0x800:                                             // flushi: [UWO]
-        if (v_csr_wena == 1) {
-            v.flushi_ena = 1;
-            v.flushi_addr = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
-        }
-        break;
     default:
         // Not implemented CSR:
         if (r.state.read() == State_RW) {
@@ -1146,6 +1195,7 @@ void CsrRegs::comb() {
             v.xmode[i].xcounteren = 0;
         }
         v.state = State_Idle;
+        v.fencestate = Fence_None;
         v.irq_pending = 0;
         v.cmd_type = 0;
         v.cmd_addr = 0;
@@ -1190,8 +1240,6 @@ void CsrRegs::comb() {
         v.dcsr_stepie = 0;
         v.stepping_mode_cnt = 0ull;
         v.ins_per_step = 1ull;
-        v.flushi_ena = 0;
-        v.flushi_addr = 0ull;
     }
 
     o_req_ready = v_req_ready;
@@ -1213,8 +1261,9 @@ void CsrRegs::comb() {
     o_mmu_ena = r.mmu_ena;
     o_mmu_ppn = r.satp_ppn;
     o_step = r.dcsr_step;
-    o_flushi_ena = r.flushi_ena;
-    o_flushi_addr = r.flushi_addr;
+    o_flushd_valid = v_flushd;
+    o_flushi_valid = v_flushi;
+    o_flush_addr = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
 }
 
 void CsrRegs::registers() {
@@ -1236,6 +1285,7 @@ void CsrRegs::registers() {
             r.xmode[i].xcounteren = 0;
         }
         r.state = State_Idle;
+        r.fencestate = Fence_None;
         r.irq_pending = 0;
         r.cmd_type = 0;
         r.cmd_addr = 0;
@@ -1280,8 +1330,6 @@ void CsrRegs::registers() {
         r.dcsr_stepie = 0;
         r.stepping_mode_cnt = 0ull;
         r.ins_per_step = 1ull;
-        r.flushi_ena = 0;
-        r.flushi_addr = 0ull;
     } else {
         for (int i = 0; i < 4; i++) {
             r.xmode[i].xepc = v.xmode[i].xepc;
@@ -1300,6 +1348,7 @@ void CsrRegs::registers() {
             r.xmode[i].xcounteren = v.xmode[i].xcounteren;
         }
         r.state = v.state;
+        r.fencestate = v.fencestate;
         r.irq_pending = v.irq_pending;
         r.cmd_type = v.cmd_type;
         r.cmd_addr = v.cmd_addr;
@@ -1344,8 +1393,6 @@ void CsrRegs::registers() {
         r.dcsr_stepie = v.dcsr_stepie;
         r.stepping_mode_cnt = v.stepping_mode_cnt;
         r.ins_per_step = v.ins_per_step;
-        r.flushi_ena = v.flushi_ena;
-        r.flushi_addr = v.flushi_addr;
     }
 }
 

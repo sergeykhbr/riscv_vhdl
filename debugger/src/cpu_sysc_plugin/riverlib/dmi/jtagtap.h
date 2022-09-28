@@ -20,7 +20,7 @@
 
 namespace debugger {
 
-template<int idcode = 0x10e31913,
+template<uint32_t idcode = 0x10e31913,
          int abits = 7,
          int irlen = 5>
 SC_MODULE(jtagtap) {
@@ -117,7 +117,7 @@ SC_MODULE(jtagtap) {
 
 };
 
-template<int idcode, int abits, int irlen>
+template<uint32_t idcode, int abits, int irlen>
 jtagtap<idcode, abits, irlen>::jtagtap(sc_module_name name)
     : sc_module(name),
     i_trst("i_trst"),
@@ -164,7 +164,7 @@ jtagtap<idcode, abits, irlen>::jtagtap(sc_module_name name)
     sensitive << i_tck.neg();
 }
 
-template<int idcode, int abits, int irlen>
+template<uint32_t idcode, int abits, int irlen>
 void jtagtap<idcode, abits, irlen>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     std::string pn(name());
     if (o_vcd) {
@@ -196,7 +196,7 @@ void jtagtap<idcode, abits, irlen>::generateVCD(sc_trace_file *i_vcd, sc_trace_f
 
 }
 
-template<int idcode, int abits, int irlen>
+template<uint32_t idcode, int abits, int irlen>
 void jtagtap<idcode, abits, irlen>::comb() {
     sc_uint<drlen> vb_dr;
     sc_uint<2> vb_stat;
@@ -401,7 +401,7 @@ void jtagtap<idcode, abits, irlen>::comb() {
     o_dmi_hardreset = v_dmi_hardreset;
 }
 
-template<int idcode, int abits, int irlen>
+template<uint32_t idcode, int abits, int irlen>
 void jtagtap<idcode, abits, irlen>::registers() {
     if (i_trst.read() == 1) {
         jtagtap_r_reset(r);
@@ -410,7 +410,7 @@ void jtagtap<idcode, abits, irlen>::registers() {
     }
 }
 
-template<int idcode, int abits, int irlen>
+template<uint32_t idcode, int abits, int irlen>
 void jtagtap<idcode, abits, irlen>::nregisters() {
     if (i_trst.read() == 1) {
         jtagtap_nr_reset(nr);

@@ -33,10 +33,7 @@ SC_MODULE(RiverAmba) {
     sc_out<axi4_master_config_type> o_xcfg;
     sc_in<dport_in_type> i_dport;
     sc_out<dport_out_type> o_dport;
-    sc_in<bool> i_msip;                                     // machine software pending interrupt
-    sc_in<bool> i_mtip;                                     // machine timer pending interrupt
-    sc_in<bool> i_meip;                                     // machine external pending interrupt
-    sc_in<bool> i_seip;                                     // supervisor external pending interrupt
+    sc_in<sc_uint<IRQ_TOTAL>> i_irq_pending;                // Per Hart pending interrupts pins
     sc_out<bool> o_flush_l2;                                // Flush L2 after D$ has been finished
     sc_out<bool> o_halted;                                  // CPU halted via debug interface
     sc_out<bool> o_available;                               // CPU was instantitated of stubbed
@@ -141,7 +138,6 @@ SC_MODULE(RiverAmba) {
     sc_signal<bool> resp_snoop_valid_o;
     sc_signal<sc_biguint<L1CACHE_LINE_BITS>> resp_snoop_data_o;
     sc_signal<sc_uint<DTAG_FL_TOTAL>> resp_snoop_flags_o;
-    sc_signal<sc_uint<IRQ_TOTAL>> wb_ip;                    // Interrupt pending bits
     axi4_master_config_type wb_xcfg;
     sc_signal<bool> w_dporti_haltreq;
     sc_signal<bool> w_dporti_resumereq;

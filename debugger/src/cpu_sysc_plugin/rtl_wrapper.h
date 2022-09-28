@@ -42,7 +42,7 @@ class RtlWrapper : public sc_module,
     sc_in<axi4_master_out_type> i_msto;
     // Interrupt lines:
     sc_out<sc_uint<64>> o_mtimer;
-    sc_vector<sc_out<bool>> o_irq_pending;       // Per Hart pending interrupts pins
+    sc_out<sc_uint<IRQ_TOTAL>> o_irq_pending;       // Per Hart pending interrupts pins
     sc_in<dport_in_type> i_dporti;
     sc_in<bool> i_ndmreset;
     sc_in<bool> i_halted0;

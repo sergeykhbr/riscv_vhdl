@@ -27,7 +27,8 @@ SC_MODULE(MemAccess) {
     sc_in<bool> i_nrst;                                     // Reset: active LOW
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_pc;               // Execution stage instruction pointer
     sc_in<sc_uint<32>> i_e_instr;                           // Execution stage instruction value
-    sc_in<bool> i_e_flushd;
+    sc_in<bool> i_flushd_valid;
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_flushd_addr;
     sc_out<bool> o_flushd;
     sc_in<bool> i_mmu_ena;                                  // MMU enabled
     sc_out<bool> o_mmu_ena;                                 // Delayed MMU enabled
@@ -81,7 +82,7 @@ SC_MODULE(MemAccess) {
     static const uint8_t State_WaitResponse = 2;
     static const uint8_t State_Hold = 3;
     static const int QUEUE_WIDTH = (1  // memop_debug
-            + 1  // i_e_flushd
+            + 1  // i_flushd_valid
             + 1  // i_mmu_ena
             + CFG_REG_TAG_WIDTH  // vb_res_wtag
             + 64  // vb_mem_wdata

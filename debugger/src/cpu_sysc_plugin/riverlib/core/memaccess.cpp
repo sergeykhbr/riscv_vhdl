@@ -26,7 +26,8 @@ MemAccess::MemAccess(sc_module_name name,
     i_nrst("i_nrst"),
     i_e_pc("i_e_pc"),
     i_e_instr("i_e_instr"),
-    i_e_flushd("i_e_flushd"),
+    i_flushd_valid("i_flushd_valid"),
+    i_flushd_addr("i_flushd_addr"),
     o_flushd("o_flushd"),
     i_mmu_ena("i_mmu_ena"),
     o_mmu_ena("o_mmu_ena"),
@@ -79,7 +80,8 @@ MemAccess::MemAccess(sc_module_name name,
     sensitive << i_nrst;
     sensitive << i_e_pc;
     sensitive << i_e_instr;
-    sensitive << i_e_flushd;
+    sensitive << i_flushd_valid;
+    sensitive << i_flushd_addr;
     sensitive << i_mmu_ena;
     sensitive << i_reg_waddr;
     sensitive << i_reg_wtag;
@@ -136,7 +138,8 @@ void MemAccess::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
         sc_trace(o_vcd, i_e_pc, i_e_pc.name());
         sc_trace(o_vcd, i_e_instr, i_e_instr.name());
-        sc_trace(o_vcd, i_e_flushd, i_e_flushd.name());
+        sc_trace(o_vcd, i_flushd_valid, i_flushd_valid.name());
+        sc_trace(o_vcd, i_flushd_addr, i_flushd_addr.name());
         sc_trace(o_vcd, o_flushd, o_flushd.name());
         sc_trace(o_vcd, i_mmu_ena, i_mmu_ena.name());
         sc_trace(o_vcd, o_mmu_ena, o_mmu_ena.name());
@@ -192,6 +195,7 @@ void MemAccess::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void MemAccess::comb() {
+    sc_uint<CFG_CPU_ADDR_BITS> vb_req_addr;
     sc_uint<64> vb_memop_wdata;
     sc_uint<8> vb_memop_wstrb;
     bool v_mem_valid;
@@ -222,6 +226,7 @@ void MemAccess::comb() {
     bool v_valid;
     sc_uint<1> t_memop_debug;
 
+    vb_req_addr = 0;
     vb_memop_wdata = 0;
     vb_memop_wstrb = 0;
     v_mem_valid = 0;
@@ -255,6 +260,12 @@ void MemAccess::comb() {
     v = r;
 
     v.valid = 0;                                            // valid on next clock
+
+    if (i_flushd_valid.read() == 1) {
+        vb_req_addr = i_flushd_addr;
+    } else {
+        vb_req_addr = i_memop_addr;
+    }
 
     switch (i_memop_size.read()) {
     case 0:
@@ -319,7 +330,7 @@ void MemAccess::comb() {
     // Form Queue inputs:
     t_memop_debug = i_memop_debug;                          // looks like bug in systemc, cannot handle bool properly
     queue_data_i = (t_memop_debug,
-            i_e_flushd,
+            i_flushd_valid,
             i_mmu_ena,
             i_reg_wtag,
             vb_memop_wdata,
@@ -331,8 +342,8 @@ void MemAccess::comb() {
             i_memop_size,
             i_memop_sign_ext,
             i_memop_type,
-            i_memop_addr);
-    queue_we = ((i_memop_valid.read() | i_e_flushd.read()) & (!queue_full));
+            vb_req_addr);
+    queue_we = ((i_memop_valid.read() | i_flushd_valid.read()) & (!queue_full));
 
     // Split Queue outputs:
     v_mem_debug = queue_data_o.read()[314];
