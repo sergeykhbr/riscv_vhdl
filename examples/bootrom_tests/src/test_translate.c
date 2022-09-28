@@ -1,14 +1,17 @@
 #include <stdint.h>
 #include <axi_maps.h>
 #include "encoding.h"
+#include "fw_api.h"
 
 #define get_field(reg, mask) (((reg) & (mask)) / ((mask) & ~((mask) << 1)))
 #define set_field(reg, mask, val) (((reg) & ~(mask)) | (((val) * ((mask) & ~((mask) << 1))) & (mask)))
 
 typedef uint64_t reg_t;
 
-static char page_buffer[4096 * 8];
-static char *page_buffer_next = page_buffer;
+typedef struct mmu_type {
+    char buf[8 * 4096];
+    char *next;
+} mmu_type;
 
 typedef struct {
     unsigned mode;
@@ -65,13 +68,13 @@ void assert(int condition)
 }
 
 // Return a 4Kb, aligned, page.
-void *get_page()
+void *get_page(mmu_type *mmu)
 {
-    page_buffer_next = (char *) (((unsigned long) page_buffer_next + 4095) & ~0xfff);
-    while (page_buffer_next + 4096 >= page_buffer + sizeof(page_buffer))
+    mmu->next = (char *) (((unsigned long) mmu->next + 4095) & ~0xfff);
+    while (mmu->next + 4096 >= mmu->buf + sizeof(mmu->buf))
         ;
-    void *result = page_buffer_next;
-    page_buffer_next += 4096;
+    void *result = mmu->next;
+    mmu->next += 4096;
     return result;
 }
 
@@ -117,7 +120,7 @@ unsigned vpn(uint64_t virtual, unsigned level)
 }
  
 // Add an entry to the given table, at the given level (0 for 4Kb page).
-void add_entry(char *table, unsigned level, uint64_t virtual, uint64_t physical)
+void add_entry(mmu_type *mmu, char *table, unsigned level, uint64_t virtual, uint64_t physical)
 {
     unsigned current_level = vms->levels - 1;
     while (1) {
@@ -133,7 +136,7 @@ void add_entry(char *table, unsigned level, uint64_t virtual, uint64_t physical)
         if (!(pte & PTE_V) ||
                 ((pte & PTE_R) && (pte & PTE_W))) {
             // Create a new page
-            void *new_page = get_page();
+            void *new_page = get_page(mmu);
             setup_page_table(new_page, current_level - 1, virtual);
             entry_set(table, index, PTE_V |
                     ((((reg_t) new_page) >> 2) & ~((1 << 10) - 1)));
@@ -145,18 +148,23 @@ void add_entry(char *table, unsigned level, uint64_t virtual, uint64_t physical)
     }
 }
 
-int translate()
+int test_translate()
 {
-    void *master_table = get_page();
+    mmu_type *pages = (mmu_type *)fw_malloc(sizeof(mmu_type));
+    pages->next = pages->buf;
+
+    fw_register_ram_data("mmu", pages);
+
+    void *master_table = get_page(pages);
     setup_page_table(master_table, vms->levels-1, 0);
-    uint32_t *physical = get_page();
+    uint32_t *physical = get_page(pages);
     //uint32_t *virtual = (uint32_t *) (((reg_t) physical) ^ ((reg_t) 0x40000000));
     uint32_t *virtual = (uint32_t *) (((reg_t) physical) ^ (((reg_t) 0xf) << (vms->vaddr_bits - 4)));
     // Virtual addresses must be sign-extended.
     if (vms->vaddr_bits < sizeof(virtual) * 8 && (reg_t) virtual & ((reg_t) 1<<(vms->vaddr_bits-1)))
         virtual = (uint32_t *) (
                 (reg_t) virtual | ~(((reg_t) 1 << vms->vaddr_bits) - 1));
-    add_entry(master_table, 0, (reg_t) virtual, (reg_t) physical);
+    add_entry(pages, master_table, 0, (reg_t) virtual, (reg_t) physical);
 
     unsigned long satp = set_field(0, SATP_MODE, vms->mode);
     satp = set_field(satp, SATP_PPN, ((unsigned long) master_table) >> 12);

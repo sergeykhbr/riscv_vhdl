@@ -30,6 +30,7 @@ void test_missaccess(void);
 void test_stackprotect(void);
 void test_spiflash(uint64_t bar);
 void test_gnss_ss(uint64_t bar);
+int test_translate();
 void print_pnp(void);
 int hwthread1(void);
 int hwthread2(void);
@@ -111,6 +112,8 @@ int main() {
     uart_isr_init();   // enable printf_uart function and Tx irq=1
  
     led_set(0x01);
+
+    test_translate();
   
     cpu_max = pnp->cfg >> 28;
 

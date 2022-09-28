@@ -199,7 +199,7 @@ SC_MODULE(Processor) {
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
         sc_signal<bool> valid;
         sc_signal<bool> debug_valid;
-        sc_signal<bool> mmu_ena;
+        sc_signal<bool> dmmu_ena;
         sc_signal<bool> req_data_valid;
         sc_signal<sc_uint<MemopType_Total>> req_data_type;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_data_addr;
@@ -312,7 +312,8 @@ SC_MODULE(Processor) {
     sc_signal<sc_uint<CFG_REG_TAG_WIDTH>> wb_reg_wtag;
     sc_signal<bool> w_reg_inorder;
     sc_signal<bool> w_reg_ignored;
-    sc_signal<bool> w_mmu_ena;                              // MMU enabled in U and S modes. Sv48 only.
+    sc_signal<bool> w_immu_ena;                             // Instruction MMU enabled in U and S modes. Sv48 only.
+    sc_signal<bool> w_dmmu_ena;                             // Instruction MMU enabled in U and S modes or MPRV. Sv48 only.
     sc_signal<sc_uint<44>> wb_mmu_ppn;                      // Physical Page Number
     sc_signal<bool> w_f_flush_ready;
     sc_signal<sc_uint<MemopType_Total>> unused_immu_mem_req_type;

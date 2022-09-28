@@ -159,7 +159,7 @@ Processor::Processor(sc_module_name name,
     immu0->i_mem_resp_load_fault(i_resp_ctrl_load_fault);
     immu0->i_mem_resp_store_fault(unused_immu_mem_resp_store_fault);
     immu0->o_mem_resp_ready(o_resp_ctrl_ready);
-    immu0->i_mmu_ena(w_mmu_ena);
+    immu0->i_mmu_ena(w_immu_ena);
     immu0->i_mmu_ppn(wb_mmu_ppn);
     immu0->i_fence(csr.flushi_valid);
     immu0->i_fence_addr(unused_immu_fence_addr);
@@ -291,8 +291,8 @@ Processor::Processor(sc_module_name name,
     mem0->i_flushd_valid(csr.flushd_valid);
     mem0->i_flushd_addr(csr.flush_addr);
     mem0->o_flushd(w.m.flushd);
-    mem0->i_mmu_ena(w_mmu_ena);
-    mem0->o_mmu_ena(w.m.mmu_ena);
+    mem0->i_mmu_ena(w_dmmu_ena);
+    mem0->o_mmu_ena(w.m.dmmu_ena);
     mem0->i_reg_waddr(w.e.reg_waddr);
     mem0->i_reg_wtag(w.e.reg_wtag);
     mem0->i_memop_valid(w.e.memop_valid);
@@ -359,7 +359,7 @@ Processor::Processor(sc_module_name name,
     dmmu0->i_mem_resp_load_fault(i_resp_data_load_fault);
     dmmu0->i_mem_resp_store_fault(i_resp_data_store_fault);
     dmmu0->o_mem_resp_ready(o_resp_data_ready);
-    dmmu0->i_mmu_ena(w.m.mmu_ena);
+    dmmu0->i_mmu_ena(w.m.dmmu_ena);
     dmmu0->i_mmu_ppn(wb_mmu_ppn);
     dmmu0->i_fence(csr.flushi_valid);
     dmmu0->i_fence_addr(unused_immu_fence_addr);
@@ -479,7 +479,8 @@ Processor::Processor(sc_module_name name,
     csr0->o_mpu_region_addr(o_mpu_region_addr);
     csr0->o_mpu_region_mask(o_mpu_region_mask);
     csr0->o_mpu_region_flags(o_mpu_region_flags);
-    csr0->o_mmu_ena(w_mmu_ena);
+    csr0->o_immu_ena(w_immu_ena);
+    csr0->o_dmmu_ena(w_dmmu_ena);
     csr0->o_mmu_ppn(wb_mmu_ppn);
 
 
@@ -657,7 +658,7 @@ Processor::Processor(sc_module_name name,
     sensitive << w.m.pc;
     sensitive << w.m.valid;
     sensitive << w.m.debug_valid;
-    sensitive << w.m.mmu_ena;
+    sensitive << w.m.dmmu_ena;
     sensitive << w.m.req_data_valid;
     sensitive << w.m.req_data_type;
     sensitive << w.m.req_data_addr;
@@ -752,7 +753,8 @@ Processor::Processor(sc_module_name name,
     sensitive << wb_reg_wtag;
     sensitive << w_reg_inorder;
     sensitive << w_reg_ignored;
-    sensitive << w_mmu_ena;
+    sensitive << w_immu_ena;
+    sensitive << w_dmmu_ena;
     sensitive << wb_mmu_ppn;
     sensitive << w_f_flush_ready;
     sensitive << unused_immu_mem_req_type;

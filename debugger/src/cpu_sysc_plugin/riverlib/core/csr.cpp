@@ -61,7 +61,8 @@ CsrRegs::CsrRegs(sc_module_name name,
     o_mpu_region_addr("o_mpu_region_addr"),
     o_mpu_region_mask("o_mpu_region_mask"),
     o_mpu_region_flags("o_mpu_region_flags"),
-    o_mmu_ena("o_mmu_ena"),
+    o_immu_ena("o_immu_ena"),
+    o_dmmu_ena("o_dmmu_ena"),
     o_mmu_ppn("o_mmu_ppn") {
 
     async_reset_ = async_reset;
@@ -123,7 +124,8 @@ CsrRegs::CsrRegs(sc_module_name name,
     sensitive << r.mpu_idx;
     sensitive << r.mpu_flags;
     sensitive << r.mpu_we;
-    sensitive << r.mmu_ena;
+    sensitive << r.immu_ena;
+    sensitive << r.dmmu_ena;
     sensitive << r.satp_ppn;
     sensitive << r.satp_mode;
     sensitive << r.mode;
@@ -192,7 +194,8 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_mpu_region_addr, o_mpu_region_addr.name());
         sc_trace(o_vcd, o_mpu_region_mask, o_mpu_region_mask.name());
         sc_trace(o_vcd, o_mpu_region_flags, o_mpu_region_flags.name());
-        sc_trace(o_vcd, o_mmu_ena, o_mmu_ena.name());
+        sc_trace(o_vcd, o_immu_ena, o_immu_ena.name());
+        sc_trace(o_vcd, o_dmmu_ena, o_dmmu_ena.name());
         sc_trace(o_vcd, o_mmu_ppn, o_mmu_ppn.name());
         for (int i = 0; i < 4; i++) {
             char tstr[1024];
@@ -247,7 +250,8 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.mpu_idx, pn + ".r_mpu_idx");
         sc_trace(o_vcd, r.mpu_flags, pn + ".r_mpu_flags");
         sc_trace(o_vcd, r.mpu_we, pn + ".r_mpu_we");
-        sc_trace(o_vcd, r.mmu_ena, pn + ".r_mmu_ena");
+        sc_trace(o_vcd, r.immu_ena, pn + ".r_immu_ena");
+        sc_trace(o_vcd, r.dmmu_ena, pn + ".r_dmmu_ena");
         sc_trace(o_vcd, r.satp_ppn, pn + ".r_satp_ppn");
         sc_trace(o_vcd, r.satp_mode, pn + ".r_satp_mode");
         sc_trace(o_vcd, r.mode, pn + ".r_mode");
@@ -372,7 +376,8 @@ void CsrRegs::comb() {
     v.mpu_idx = r.mpu_idx;
     v.mpu_flags = r.mpu_flags;
     v.mpu_we = r.mpu_we;
-    v.mmu_ena = r.mmu_ena;
+    v.immu_ena = r.immu_ena;
+    v.dmmu_ena = r.dmmu_ena;
     v.satp_ppn = r.satp_ppn;
     v.satp_mode = r.satp_mode;
     v.mode = r.mode;
@@ -1089,16 +1094,20 @@ void CsrRegs::comb() {
         if (r.xmode[r.mode.read().to_int()].xpp.read() != PRV_M) {// see page 21
             v.mprv = 0;
         }
+    }
 
-        // Check MMU:
-        if (vb_xpp[1] == 1) {
-            // H and M modes
-            v.mmu_ena = 0;
-        } else {
+    // Check MMU:
+    v.immu_ena = 0;
+    v.dmmu_ena = 0;
+    if (r.satp_mode.read() == SATP_MODE_SV48) {             // Only SV48 implemented
+        if (r.mode.read()[1] == 0) {
             // S and U modes
-            if (r.satp_mode.read() == SATP_MODE_SV48) {     // Only SV48 implemented
-                v.mmu_ena = 1;
-            }
+            v.immu_ena = 1;
+            v.dmmu_ena = 1;
+        } else if ((r.mprv.read() == 1) && (vb_xpp[1] == 0)) {
+            // Previous state is S or U mode
+            // Instruction address-translation and protection are unaffected
+            v.dmmu_ena = 1;
         }
     }
 
@@ -1123,7 +1132,8 @@ void CsrRegs::comb() {
         v.xmode[iM].xcause_code = wb_trap_cause;
         v.xmode[iM].xcause_irq = (!vb_e_emux.or_reduce());
         v.mode = PRV_M;
-        v.mmu_ena = 0;
+        v.immu_ena = 0;
+        v.dmmu_ena = 0;
     }
 
     // Step is not enabled or interrupt enabled during stepping
@@ -1216,7 +1226,8 @@ void CsrRegs::comb() {
         v.mpu_idx = 0;
         v.mpu_flags = 0;
         v.mpu_we = 0;
-        v.mmu_ena = 0;
+        v.immu_ena = 0;
+        v.dmmu_ena = 0;
         v.satp_ppn = 0ull;
         v.satp_mode = 0;
         v.mode = PRV_M;
@@ -1258,7 +1269,8 @@ void CsrRegs::comb() {
     o_mpu_region_addr = r.mpu_addr;
     o_mpu_region_mask = r.mpu_mask;
     o_mpu_region_flags = r.mpu_flags;
-    o_mmu_ena = r.mmu_ena;
+    o_immu_ena = r.immu_ena;
+    o_dmmu_ena = r.dmmu_ena;
     o_mmu_ppn = r.satp_ppn;
     o_step = r.dcsr_step;
     o_flushd_valid = v_flushd;
@@ -1306,7 +1318,8 @@ void CsrRegs::registers() {
         r.mpu_idx = 0;
         r.mpu_flags = 0;
         r.mpu_we = 0;
-        r.mmu_ena = 0;
+        r.immu_ena = 0;
+        r.dmmu_ena = 0;
         r.satp_ppn = 0ull;
         r.satp_mode = 0;
         r.mode = PRV_M;
@@ -1369,7 +1382,8 @@ void CsrRegs::registers() {
         r.mpu_idx = v.mpu_idx;
         r.mpu_flags = v.mpu_flags;
         r.mpu_we = v.mpu_we;
-        r.mmu_ena = v.mmu_ena;
+        r.immu_ena = v.immu_ena;
+        r.dmmu_ena = v.dmmu_ena;
         r.satp_ppn = v.satp_ppn;
         r.satp_mode = v.satp_mode;
         r.mode = v.mode;
