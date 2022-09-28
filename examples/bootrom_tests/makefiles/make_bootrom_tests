@@ -59,6 +59,7 @@ SOURCES = crt \
 	hwthread1 \
 	hwthread2 \
 	hwthread3 \
+	translate \
 	main
 
 OBJ_FILES = $(addsuffix .o,$(SOURCES))

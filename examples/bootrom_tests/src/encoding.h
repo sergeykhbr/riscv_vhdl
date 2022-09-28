@@ -159,4 +159,65 @@
 #define MPU_CTRL_FL_ENA       0x10
 
 
+#define SATP32_MODE 0x80000000
+#define SATP32_ASID 0x7FC00000
+#define SATP32_PPN  0x003FFFFF
+#define SATP64_MODE 0xF000000000000000
+#define SATP64_ASID 0x0FFFF00000000000
+#define SATP64_PPN  0x00000FFFFFFFFFFF
+
+#define SATP_MODE_OFF  0
+#define SATP_MODE_SV32 1
+#define SATP_MODE_SV39 8
+#define SATP_MODE_SV48 9
+#define SATP_MODE_SV57 10
+#define SATP_MODE_SV64 11
+
+#define PMP_R     0x01
+#define PMP_W     0x02
+#define PMP_X     0x04
+#define PMP_A     0x18
+#define PMP_L     0x80
+#define PMP_SHIFT 2
+
+#define PMP_TOR   0x08
+#define PMP_NA4   0x10
+#define PMP_NAPOT 0x18
+
+/* page table entry (PTE) fields */
+#define PTE_V     0x001 /* Valid */
+#define PTE_R     0x002 /* Read */
+#define PTE_W     0x004 /* Write */
+#define PTE_X     0x008 /* Execute */
+#define PTE_U     0x010 /* User */
+#define PTE_G     0x020 /* Global */
+#define PTE_A     0x040 /* Accessed */
+#define PTE_D     0x080 /* Dirty */
+#define PTE_SOFT  0x300 /* Reserved for Software */
+#define PTE_RSVD  0x1FC0000000000000 /* Reserved for future standard use */
+#define PTE_PBMT  0x6000000000000000 /* Svpbmt: Page-based memory types */
+#define PTE_N     0x8000000000000000 /* Svnapot: NAPOT translation contiguity */
+#define PTE_ATTR  0xFFC0000000000000 /* All attributes and reserved bits */
+
+#define PTE_PPN_SHIFT 10
+
+#define PTE_TABLE(PTE) (((PTE) & (PTE_V | PTE_R | PTE_W | PTE_X)) == PTE_V)
+
+#if __riscv_xlen == 64
+    #define MSTATUS_SD MSTATUS64_SD
+    #define SSTATUS_SD SSTATUS64_SD
+    #define RISCV_PGLEVEL_BITS 9
+    #define SATP_MODE SATP64_MODE
+    #define SATP_PPN  SATP64_PPN
+#else
+    #define MSTATUS_SD MSTATUS32_SD
+    #define SSTATUS_SD SSTATUS32_SD
+    #define RISCV_PGLEVEL_BITS 10
+    #define SATP_MODE SATP32_MODE
+    #define SATP_PPN  SATP32_PPN
 #endif
+#define RISCV_PGSHIFT 12
+#define RISCV_PGSIZE (1 << RISCV_PGSHIFT)
+
+
+#endif  // RISCV_CSR_ENCODING_H
