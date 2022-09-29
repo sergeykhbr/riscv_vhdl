@@ -120,7 +120,7 @@ Tracer::Tracer(sc_module_name name,
     // initial
     char tstr[256];
     RISCV_sprintf(tstr, sizeof(tstr), "%s%d.log",
-            trace_file_,
+            trace_file_.c_str(),
             hartid_);
     trfilename = std::string(tstr);
     fl = fopen(trfilename.c_str(), "wb");

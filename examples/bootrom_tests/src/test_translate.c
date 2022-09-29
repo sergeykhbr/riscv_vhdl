@@ -53,7 +53,7 @@ static virtual_memory_system_t sv48 = {
     .vaddr_bits = 48
 };
 
-static virtual_memory_system_t *vms;
+static virtual_memory_system_t *vms = &sv48;
 
 void error()
 {
