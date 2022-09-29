@@ -157,9 +157,9 @@ int test_translate()
 
     void *master_table = get_page(pages);
     setup_page_table(master_table, vms->levels-1, 0);
-    uint32_t *physical = get_page(pages);
+    register uint32_t *physical = get_page(pages);
     //uint32_t *virtual = (uint32_t *) (((reg_t) physical) ^ ((reg_t) 0x40000000));
-    uint32_t *virtual = (uint32_t *) (((reg_t) physical) ^ (((reg_t) 0xf) << (vms->vaddr_bits - 4)));
+    register uint32_t *virtual = (uint32_t *) (((reg_t) physical) ^ (((reg_t) 0xf) << (vms->vaddr_bits - 4)));
     // Virtual addresses must be sign-extended.
     if (vms->vaddr_bits < sizeof(virtual) * 8 && (reg_t) virtual & ((reg_t) 1<<(vms->vaddr_bits-1)))
         virtual = (uint32_t *) (

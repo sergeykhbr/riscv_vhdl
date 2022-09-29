@@ -352,6 +352,7 @@ void Mmu::comb() {
             if ((i_core_req_valid && i_mem_req_ready) == 1) {
                 v.state = WaitRespNoMmu;
             }
+            v.last_va = ~0ull;
         } else if (r.tlb_flush_cnt.read().or_reduce() == 1) {
             v.state = FlushTlb;
             v.tlb_wdata = 0;
