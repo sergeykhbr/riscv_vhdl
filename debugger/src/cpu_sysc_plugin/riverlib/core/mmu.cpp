@@ -225,6 +225,7 @@ void Mmu::comb() {
     sc_uint<CFG_MMU_TLB_AWIDTH> vb_tlb_adr;
     sc_uint<(CFG_CPU_ADDR_BITS - 12)> vb_pte_start_va;
     sc_uint<(CFG_CPU_ADDR_BITS - 12)> vb_pte_base_va;
+    bool v_va_ena;
     sc_uint<12> vb_level0_off;
     sc_uint<12> vb_level1_off;
     sc_uint<12> vb_level2_off;
@@ -257,6 +258,7 @@ void Mmu::comb() {
     vb_tlb_adr = 0;
     vb_pte_start_va = 0;
     vb_pte_base_va = 0;
+    v_va_ena = 0;
     vb_level0_off = 0;
     vb_level1_off = 0;
     vb_level2_off = 0;
@@ -301,6 +303,7 @@ void Mmu::comb() {
     if (r.resp_data.read()[53] == 1) {
         vb_pte_base_va(51, 44) = ~0ull;
     }
+    v_va_ena = i_core_req_addr.read()(63, 48).and_reduce();
     vb_level0_off = (r.last_va.read()(47, 39) << 3);
     vb_level1_off = (r.last_va.read()(38, 30) << 3);
     vb_level2_off = (r.last_va.read()(29, 21) << 3);
@@ -333,7 +336,7 @@ void Mmu::comb() {
             v.req_wstrb = i_core_req_wstrb;
             v.req_size = i_core_req_size;
         }
-        if (i_mmu_ena.read() == 0) {                        // MMU disabled
+        if ((i_mmu_ena.read() == 0) || (v_va_ena == 0)) {   // MMU disabled
             // Direct connection to Cache
             v_core_req_ready = i_mem_req_ready;
             v_core_resp_valid = i_mem_resp_valid;

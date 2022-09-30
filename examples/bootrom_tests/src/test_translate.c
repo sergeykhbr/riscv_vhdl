@@ -3,6 +3,8 @@
 #include "encoding.h"
 #include "fw_api.h"
 
+#define MMU_FAST_TEST  // init only several used entries instead of all entries on all  4 levels
+
 #define get_field(reg, mask) (((reg) & (mask)) / ((mask) & ~((mask) << 1)))
 #define set_field(reg, mask, val) (((reg) & ~(mask)) | (((val) * ((mask) & ~((mask) << 1))) & (mask)))
 
@@ -63,8 +65,10 @@ void error()
 
 void assert(int condition)
 {
-    if (!condition)
+    if (!condition) {
+        printf_uart("%s", "FAIL,ASSERT\r\n");
         error();
+    }
 }
 
 // Return a 4Kb, aligned, page.
@@ -101,7 +105,11 @@ void entry_set(char *table, unsigned index, uint64_t value)
 // Set up 1-to-1 for this entire table.
 void setup_page_table(char *table, unsigned level, uint64_t physical)
 {
+#ifdef MMU_FAST_TEST
+    for (unsigned i = 0; i < 4; i++) {
+#else
     for (unsigned i = 0; i < (1<<vms->vpn_width_bits); i++) {
+#endif
         uint64_t pte = PTE_V | PTE_R | PTE_W | PTE_X | PTE_U | PTE_A | PTE_D;
         // Add in portion of physical address.
         pte |= physical & (((1LL<<vms->vpn_width_bits)-1) <<
@@ -145,6 +153,7 @@ void add_entry(mmu_type *mmu, char *table, unsigned level, uint64_t virtual, uin
             table = (char *) (pte & ~0xfff);
         }
         current_level--;
+        printf_uart("%s", " .");
     }
 }
 
@@ -155,23 +164,28 @@ int test_translate()
 
     fw_register_ram_data("mmu", pages);
 
+    printf_uart("%s", "MMU.MPRV .");
+
     void *master_table = get_page(pages);
     setup_page_table(master_table, vms->levels-1, 0);
-    register uint32_t *physical = get_page(pages);
-    //uint32_t *virtual = (uint32_t *) (((reg_t) physical) ^ ((reg_t) 0x40000000));
-    register uint32_t *virtual = (uint32_t *) (((reg_t) physical) ^ (((reg_t) 0xf) << (vms->vaddr_bits - 4)));
+    uint32_t *physical = get_page(pages);
+    uint32_t *virtual = (uint32_t *) (((reg_t) physical) ^ (((reg_t) 0xf) << (vms->vaddr_bits - 4)));
+
     // Virtual addresses must be sign-extended.
-    if (vms->vaddr_bits < sizeof(virtual) * 8 && (reg_t) virtual & ((reg_t) 1<<(vms->vaddr_bits-1)))
+    if (vms->vaddr_bits < sizeof(virtual) * 8 && (reg_t) virtual & ((reg_t) 1<<(vms->vaddr_bits-1))) {
         virtual = (uint32_t *) (
                 (reg_t) virtual | ~(((reg_t) 1 << vms->vaddr_bits) - 1));
+    }
     add_entry(pages, master_table, 0, (reg_t) virtual, (reg_t) physical);
 
     unsigned long satp = set_field(0, SATP_MODE, vms->mode);
     satp = set_field(satp, SATP_PPN, ((unsigned long) master_table) >> 12);
     write_csr(0x180, satp);  // csr 180 = satp
     satp = read_csr(0x180);
-    if (get_field(satp, SATP_MODE) != vms->mode)
-        error();
+    if (get_field(satp, SATP_MODE) != vms->mode) {
+        printf_uart("%s", "FAIL,SATP_MODE\r\n");
+        return;
+    }
 
     reg_t mstatus = read_csr(mstatus);
     mstatus |= MSTATUS_MPRV;
@@ -180,13 +194,23 @@ int test_translate()
     // Address translation is enabled.
     physical[0] = 0xdeadbeef;
     virtual[1] = 0x55667788;
-    assert(virtual[0] == 0xdeadbeef);
-    assert(physical[0] == 0xdeadbeef);
-    assert(virtual[1] == 0x55667788);
-    assert(physical[1] == 0x55667788);
+    if (!(virtual[0] == 0xdeadbeef)) {
+        printf_uart("%s", "FAIL2\r\n");
+        return;
+    }
+    if (!(physical[0] == 0xdeadbeef)) {
+        printf_uart("%s", "FAIL3\r\n");
+        return;
+    }
+    if (!(virtual[1] == 0x55667788)) {
+        printf_uart("%s", "FAIL4\r\n");
+        return;
+    }
+    if (!(physical[1] == 0x55667788)) {
+        printf_uart("%s", "FAIL5\r\n");
+        return;
+    }
 
-active:
-end:
-    while (1)
-        ;
+    clear_csr(mstatus, MSTATUS_MPRV);
+    printf_uart("%s", "PASS\r\n");
 }

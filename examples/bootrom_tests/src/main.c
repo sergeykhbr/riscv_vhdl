@@ -113,8 +113,6 @@ int main() {
  
     led_set(0x01);
 
-    test_translate();
-  
     cpu_max = pnp->cfg >> 28;
 
     printf_uart("HARTID . . . . .%d\r\n", fw_get_cpuid());
@@ -129,6 +127,7 @@ int main() {
     test_mtimer();
     test_swirq();
     test_l2coherence();
+    test_translate();
 
     led_set(0x03);
     test_fpu();
