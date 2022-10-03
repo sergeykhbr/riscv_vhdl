@@ -666,8 +666,8 @@ void InstrExecute::comb() {
         mux.imm = i_d_imm;
         mux.pc = i_d_pc;
         mux.instr = i_d_instr;
-        mux.memop_type[MemopType_Store] = i_memop_store;
-        mux.memop_type[MemopType_Locked] = i_amo;
+        mux.memop_type[MemopType_Store] = i_memop_store.read();
+        mux.memop_type[MemopType_Locked] = i_amo.read();
         mux.memop_type[MemopType_Reserve] = (i_ivec.read()[Instr_LR_D] || i_ivec.read()[Instr_LR_W]);
         mux.memop_type[MemopType_Release] = (i_ivec.read()[Instr_SC_D] || i_ivec.read()[Instr_SC_W]);
         mux.memop_sign_ext = i_memop_sign_ext;
@@ -1122,7 +1122,7 @@ void InstrExecute::comb() {
                 }
                 v.memop_halted = 0;
                 v.memop_sign_ext = 0;
-                t_type[MemopType_Store] = i_dbg_mem_req_write;
+                t_type[MemopType_Store] = i_dbg_mem_req_write.read();
                 v.memop_type = t_type;
                 v.memop_size = i_dbg_mem_req_size;
             } else if (v_csr_cmd_ena == 1) {
@@ -1325,7 +1325,7 @@ void InstrExecute::comb() {
             }
             v.memop_halted = 1;
             v.memop_sign_ext = 0;
-            t_type[MemopType_Store] = i_dbg_mem_req_write;
+            t_type[MemopType_Store] = i_dbg_mem_req_write.read();
             v.memop_type = t_type;
             v.memop_size = i_dbg_mem_req_size;
         }

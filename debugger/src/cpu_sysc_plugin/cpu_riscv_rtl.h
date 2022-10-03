@@ -46,6 +46,7 @@
 #include "riverlib/l2cache/l2_top.h"
 #include "riverlib/dmi/dmidebug.h"
 #include "riverlib/dmi/ic_dport.h"
+#include "riverlib/workgroup.h"
 #include <systemc.h>
 
 namespace debugger {

@@ -483,7 +483,7 @@ void L2CacheLru::comb() {
                 // Non-cached write
                 v.state = State_Idle;
                 v_resp_valid = 1;
-                vb_resp_status[1] = i_mem_store_fault;      // rb_resp
+                vb_resp_status[1] = i_mem_store_fault.read();// rb_resp
             }
         }
         break;

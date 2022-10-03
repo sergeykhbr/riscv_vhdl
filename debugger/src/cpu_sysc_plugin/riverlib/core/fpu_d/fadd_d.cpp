@@ -510,7 +510,7 @@ void DoubleAdd::comb() {
     } else if (sumZero == 1) {
         resAdd[63] = 0;
     } else {
-        resAdd[63] = r.signOpMore;
+        resAdd[63] = r.signOpMore.read();
     }
 
     if ((nanA || nanB) == 1) {
@@ -538,10 +538,10 @@ void DoubleAdd::comb() {
     }
 
     resEQ(63, 1) = 0;
-    resEQ[0] = r.flEqual;
+    resEQ[0] = r.flEqual.read();
 
     resLT(63, 1) = 0;
-    resLT[0] = r.flLess;
+    resLT[0] = r.flLess.read();
 
     resLE(63, 1) = 0;
     resLE[0] = (r.flLess || r.flEqual);

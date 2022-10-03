@@ -605,11 +605,11 @@ void CsrRegs::comb() {
     case 0x044:                                             // uip: [URW] User interrupt pending
         break;
     case 0x001:                                             // fflags: [URW] Floating-Point Accrued Exceptions
-        vb_rdata[0] = r.ex_fpu_inexact;
-        vb_rdata[1] = r.ex_fpu_underflow;
-        vb_rdata[2] = r.ex_fpu_overflow;
-        vb_rdata[3] = r.ex_fpu_divbyzero;
-        vb_rdata[4] = r.ex_fpu_invalidop;
+        vb_rdata[0] = r.ex_fpu_inexact.read();
+        vb_rdata[1] = r.ex_fpu_underflow.read();
+        vb_rdata[2] = r.ex_fpu_overflow.read();
+        vb_rdata[3] = r.ex_fpu_divbyzero.read();
+        vb_rdata[4] = r.ex_fpu_invalidop.read();
         break;
     case 0x002:                                             // fflags: [URW] Floating-Point Dynamic Rounding Mode
         if (CFG_HW_FPU_ENABLE) {
@@ -617,11 +617,11 @@ void CsrRegs::comb() {
         }
         break;
     case 0x003:                                             // fcsr: [URW] Floating-Point Control and Status Register (frm + fflags)
-        vb_rdata[0] = r.ex_fpu_inexact;
-        vb_rdata[1] = r.ex_fpu_underflow;
-        vb_rdata[2] = r.ex_fpu_overflow;
-        vb_rdata[3] = r.ex_fpu_divbyzero;
-        vb_rdata[4] = r.ex_fpu_invalidop;
+        vb_rdata[0] = r.ex_fpu_inexact.read();
+        vb_rdata[1] = r.ex_fpu_underflow.read();
+        vb_rdata[2] = r.ex_fpu_overflow.read();
+        vb_rdata[3] = r.ex_fpu_divbyzero.read();
+        vb_rdata[4] = r.ex_fpu_invalidop.read();
         if (CFG_HW_FPU_ENABLE) {
             vb_rdata(7, 5) = 4;                             // Round mode: round to Nearest (RMM)
         }
@@ -796,7 +796,7 @@ void CsrRegs::comb() {
             vb_rdata(14, 13) = 0x1;                         // FS field: Initial state
         }
         // [16:15] XS
-        vb_rdata[17] = r.mprv;
+        vb_rdata[17] = r.mprv.read();
         // [18] SUM
         // [19] MXR
         // [20] TVM
@@ -994,12 +994,12 @@ void CsrRegs::comb() {
         break;
     case 0x7B0:                                             // dcsr: [DRW] Debug control and status register
         vb_rdata(31, 28) = 4;                               // xdebugver: 4=External debug supported
-        vb_rdata[15] = r.dcsr_ebreakm;
-        vb_rdata[11] = r.dcsr_stepie;                       // interrupt dis/ena during step
-        vb_rdata[10] = r.dcsr_stopcount;                    // don't increment any counter
-        vb_rdata[9] = r.dcsr_stoptimer;                     // don't increment timer
+        vb_rdata[15] = r.dcsr_ebreakm.read();
+        vb_rdata[11] = r.dcsr_stepie.read();                // interrupt dis/ena during step
+        vb_rdata[10] = r.dcsr_stopcount.read();             // don't increment any counter
+        vb_rdata[9] = r.dcsr_stoptimer.read();              // don't increment timer
         vb_rdata(8, 6) = r.halt_cause;
-        vb_rdata[2] = r.dcsr_step;
+        vb_rdata[2] = r.dcsr_step.read();
         vb_rdata(1, 0) = 3;                                 // prv: privilege in debug mode: 3=machine
         if (v_csr_wena == 1) {
             v.dcsr_ebreakm = r.cmd_data.read()[15];

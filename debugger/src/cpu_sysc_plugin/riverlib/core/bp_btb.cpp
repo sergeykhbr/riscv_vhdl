@@ -105,7 +105,7 @@ void BpBTB::comb() {
     }
 
     vb_addr((CFG_CPU_ADDR_BITS - 1), 0) = i_bp_pc;
-    vb_bp_exec[0] = i_e;
+    vb_bp_exec[0] = i_e.read();
 
     for (int i = 1; i < CFG_BP_DEPTH; i++) {
         t_addr = vb_addr(((i - 1) * CFG_CPU_ADDR_BITS) + CFG_CPU_ADDR_BITS - 1, ((i - 1) * CFG_CPU_ADDR_BITS));

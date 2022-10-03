@@ -272,7 +272,7 @@ void jtagtap<idcode, abits, irlen>::comb() {
             vb_dr(((34 + abits) - 1), 34) = nr.dmi_addr;
             v.dr_length = (abits + 34);
         } else if (nr.ir.read() == IR_BYPASS) {
-            vb_dr[0] = r.bypass;
+            vb_dr[0] = r.bypass.read();
             v.dr_length = 1;
         }
         v.datacnt = 0;
@@ -286,9 +286,9 @@ void jtagtap<idcode, abits, irlen>::comb() {
         if (r.dr_length.read() > 1) {
             // For the bypass dr_length = 1
             vb_dr = (0, r.dr.read()((drlen - 1), 1));
-            vb_dr[(r.dr_length.read().to_int() - 1)] = i_tdi;
+            vb_dr[(r.dr_length.read().to_int() - 1)] = i_tdi.read();
         } else {
-            vb_dr[0] = i_tdi;
+            vb_dr[0] = i_tdi.read();
         }
         v.datacnt = (r.datacnt.read() + 1);                 // debug counter no need in rtl
         break;
@@ -355,7 +355,7 @@ void jtagtap<idcode, abits, irlen>::comb() {
         } else {
             v.state = SHIFT_IR;
         }
-        vb_dr[(irlen - 1)] = i_tdi;
+        vb_dr[(irlen - 1)] = i_tdi.read();
         vb_dr((irlen - 2), 0) = r.dr.read()((irlen - 1), 1);
         break;
     case EXIT1_IR:

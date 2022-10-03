@@ -224,8 +224,6 @@ void CpuRiscV_RTL::createSystemC() {
     dmi_->i_dport_resp_valid(w_ic_dport_resp_valid);
     dmi_->i_dport_resp_error(w_ic_dport_resp_error);
     dmi_->i_dport_rdata(wb_ic_dport_rdata);
-//dmi_->i_dporto(wb_dporto[0]);
-    //dmi_->o_dporti(wb_dporti[0]);
     dmi_->o_progbuf(wb_progbuf);
 
     dport_ic0 = new ic_dport("dport_ic0", asyncReset_.to_bool());

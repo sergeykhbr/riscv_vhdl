@@ -52,6 +52,15 @@ SC_MODULE(Workgroup) {
     // System bus port
     sc_in<axi4_master_in_type> i_msti;
     sc_out<axi4_master_out_type> o_msto;
+    // APB debug access:
+    sc_in<bool> i_apb_dmi_req_valid;
+    sc_out<bool> o_apb_dmi_req_ready;
+    sc_in<sc_uint<7>> i_apb_dmi_req_addr;
+    sc_in<bool> i_apb_dmi_req_write;
+    sc_in<sc_uint<32>> i_apb_dmi_req_wdata;
+    sc_out<bool> o_apb_dmi_resp_valid;
+    sc_in<bool> i_apb_dmi_resp_ready;
+    sc_out<sc_uint<32>> o_apb_dmi_resp_rdata;
     sc_out<bool> o_dmreset;                                 // reset everything except DMI debug interface
 
     void comb();
@@ -86,14 +95,6 @@ SC_MODULE(Workgroup) {
     hart_signal_vector vec_flush_l2;
     sc_signal<sc_uint<CFG_CPU_MAX>> wb_halted;
     sc_signal<sc_uint<CFG_CPU_MAX>> wb_available;
-    sc_signal<bool> w_pdmi_req_valid;
-    sc_signal<bool> w_pdmi_req_ready;
-    sc_signal<sc_uint<7>> wb_pdmi_req_addr;
-    sc_signal<bool> w_pdmi_req_write;
-    sc_signal<sc_uint<32>> wb_pdmi_req_wdata;
-    sc_signal<bool> w_pdmi_resp_valid;
-    sc_signal<bool> w_pdmi_resp_ready;
-    sc_signal<sc_uint<32>> wb_pdmi_resp_rdata;
     sc_signal<sc_uint<CFG_LOG2_CPU_MAX>> wb_dmi_hartsel;
     sc_signal<bool> w_dmi_haltreq;
     sc_signal<bool> w_dmi_resumereq;

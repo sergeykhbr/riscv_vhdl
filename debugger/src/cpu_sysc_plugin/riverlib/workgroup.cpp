@@ -42,6 +42,14 @@ Workgroup::Workgroup(sc_module_name name,
     o_acpi("o_acpi"),
     i_msti("i_msti"),
     o_msto("o_msto"),
+    i_apb_dmi_req_valid("i_apb_dmi_req_valid"),
+    o_apb_dmi_req_ready("o_apb_dmi_req_ready"),
+    i_apb_dmi_req_addr("i_apb_dmi_req_addr"),
+    i_apb_dmi_req_write("i_apb_dmi_req_write"),
+    i_apb_dmi_req_wdata("i_apb_dmi_req_wdata"),
+    o_apb_dmi_resp_valid("o_apb_dmi_resp_valid"),
+    i_apb_dmi_resp_ready("i_apb_dmi_resp_ready"),
+    o_apb_dmi_resp_rdata("o_apb_dmi_resp_rdata"),
     o_dmreset("o_dmreset"),
     coreo("coreo", CFG_SLOT_L1_TOTAL),
     corei("corei", CFG_SLOT_L1_TOTAL),
@@ -77,14 +85,14 @@ Workgroup::Workgroup(sc_module_name name,
     dmi0->i_tms(i_tck);
     dmi0->i_tdi(i_tdi);
     dmi0->o_tdo(o_tdo);
-    dmi0->i_bus_req_valid(w_pdmi_req_valid);
-    dmi0->o_bus_req_ready(w_pdmi_req_ready);
-    dmi0->i_bus_req_addr(wb_pdmi_req_addr);
-    dmi0->i_bus_req_write(w_pdmi_req_write);
-    dmi0->i_bus_req_wdata(wb_pdmi_req_wdata);
-    dmi0->o_bus_resp_valid(w_pdmi_resp_valid);
-    dmi0->i_bus_resp_ready(w_pdmi_resp_ready);
-    dmi0->o_bus_resp_rdata(wb_pdmi_resp_rdata);
+    dmi0->i_bus_req_valid(i_apb_dmi_req_valid);
+    dmi0->o_bus_req_ready(o_apb_dmi_req_ready);
+    dmi0->i_bus_req_addr(i_apb_dmi_req_addr);
+    dmi0->i_bus_req_write(i_apb_dmi_req_write);
+    dmi0->i_bus_req_wdata(i_apb_dmi_req_wdata);
+    dmi0->o_bus_resp_valid(o_apb_dmi_resp_valid);
+    dmi0->i_bus_resp_ready(i_apb_dmi_resp_ready);
+    dmi0->o_bus_resp_rdata(o_apb_dmi_resp_rdata);
     dmi0->o_ndmreset(o_dmreset);
     dmi0->i_halted(wb_halted);
     dmi0->i_available(wb_available);
@@ -213,6 +221,11 @@ Workgroup::Workgroup(sc_module_name name,
     sensitive << i_mtimer;
     sensitive << i_acpo;
     sensitive << i_msti;
+    sensitive << i_apb_dmi_req_valid;
+    sensitive << i_apb_dmi_req_addr;
+    sensitive << i_apb_dmi_req_write;
+    sensitive << i_apb_dmi_req_wdata;
+    sensitive << i_apb_dmi_resp_ready;
     for (int i = 0; i < CFG_SLOT_L1_TOTAL; i++) {
         sensitive << coreo[i];
     }
@@ -241,14 +254,6 @@ Workgroup::Workgroup(sc_module_name name,
     }
     sensitive << wb_halted;
     sensitive << wb_available;
-    sensitive << w_pdmi_req_valid;
-    sensitive << w_pdmi_req_ready;
-    sensitive << wb_pdmi_req_addr;
-    sensitive << w_pdmi_req_write;
-    sensitive << wb_pdmi_req_wdata;
-    sensitive << w_pdmi_resp_valid;
-    sensitive << w_pdmi_resp_ready;
-    sensitive << wb_pdmi_resp_rdata;
     sensitive << wb_dmi_hartsel;
     sensitive << w_dmi_haltreq;
     sensitive << w_dmi_resumereq;
@@ -319,6 +324,14 @@ void Workgroup::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_acpi, o_acpi.name());
         sc_trace(o_vcd, i_msti, i_msti.name());
         sc_trace(o_vcd, o_msto, o_msto.name());
+        sc_trace(o_vcd, i_apb_dmi_req_valid, i_apb_dmi_req_valid.name());
+        sc_trace(o_vcd, o_apb_dmi_req_ready, o_apb_dmi_req_ready.name());
+        sc_trace(o_vcd, i_apb_dmi_req_addr, i_apb_dmi_req_addr.name());
+        sc_trace(o_vcd, i_apb_dmi_req_write, i_apb_dmi_req_write.name());
+        sc_trace(o_vcd, i_apb_dmi_req_wdata, i_apb_dmi_req_wdata.name());
+        sc_trace(o_vcd, o_apb_dmi_resp_valid, o_apb_dmi_resp_valid.name());
+        sc_trace(o_vcd, i_apb_dmi_resp_ready, i_apb_dmi_resp_ready.name());
+        sc_trace(o_vcd, o_apb_dmi_resp_rdata, o_apb_dmi_resp_rdata.name());
         sc_trace(o_vcd, o_dmreset, o_dmreset.name());
     }
 
@@ -356,10 +369,14 @@ void Workgroup::comb() {
     bool v_flush_l2;
     sc_uint<CFG_CPU_MAX> vb_halted;
     sc_uint<CFG_CPU_MAX> vb_available;
+    sc_uint<IRQ_TOTAL> vb_irq[CFG_CPU_MAX];
 
     v_flush_l2 = 0;
     vb_halted = 0;
     vb_available = 0;
+    for (int i = 0; i < CFG_CPU_MAX; i++) {
+        vb_irq[i] = 0;
+    }
 
     wb_xcfg.descrsize = PNP_CFG_MASTER_DESCR_BYTES;
     wb_xcfg.descrtype = PNP_CFG_TYPE_MASTER;
@@ -371,6 +388,10 @@ void Workgroup::comb() {
         v_flush_l2 = (v_flush_l2 || vec_flush_l2[i]);
         vb_halted[i] = vec_halted[i];
         vb_available[i] = vec_available[i];
+        vb_irq[i][IRQ_MSIP] = i_msip.read();
+        vb_irq[i][IRQ_MTIP] = i_mtip.read();
+        vb_irq[i][IRQ_MEIP] = i_meip.read();
+        vb_irq[i][IRQ_SEIP] = i_seip.read();
     }
     w_flush_l2 = v_flush_l2;
     wb_halted = vb_halted;
