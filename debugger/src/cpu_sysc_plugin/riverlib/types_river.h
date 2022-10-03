@@ -173,6 +173,7 @@ static const dport_out_type dport_out_none;
 typedef sc_vector<sc_signal<dport_in_type>> dport_in_vector;
 typedef sc_vector<sc_signal<dport_out_type>> dport_out_vector;
 
+typedef sc_vector<sc_signal<bool>> hart_signal_vector;
 typedef sc_vector<sc_signal<sc_uint<IRQ_TOTAL>>> hart_irq_vector;
 
 // L1 AXI interface

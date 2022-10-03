@@ -31,7 +31,6 @@ RiverAmba::RiverAmba(sc_module_name name,
     i_mtimer("i_mtimer"),
     i_msti("i_msti"),
     o_msto("o_msto"),
-    o_xcfg("o_xcfg"),
     i_dport("i_dport"),
     o_dport("o_dport"),
     i_irq_pending("i_irq_pending"),
@@ -167,7 +166,6 @@ void RiverAmba::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_mtimer, i_mtimer.name());
         sc_trace(o_vcd, i_msti, i_msti.name());
         sc_trace(o_vcd, o_msto, o_msto.name());
-        sc_trace(o_vcd, o_xcfg, o_xcfg.name());
         sc_trace(o_vcd, i_dport, i_dport.name());
         sc_trace(o_vcd, o_dport, o_dport.name());
         sc_trace(o_vcd, i_irq_pending, i_irq_pending.name());
@@ -262,10 +260,6 @@ void RiverAmba::comb() {
 
     v = r;
 
-    wb_xcfg.descrsize = PNP_CFG_MASTER_DESCR_BYTES;
-    wb_xcfg.descrtype = PNP_CFG_TYPE_MASTER;
-    wb_xcfg.vid = VENDOR_OPTIMITECH;
-    wb_xcfg.did = RISCV_RIVER_CPU;
 
     w_dporti_haltreq = i_dport.read().haltreq;              // systemc compatibility
     w_dporti_resumereq = i_dport.read().resumereq;          // systemc compatibility
@@ -516,7 +510,6 @@ void RiverAmba::comb() {
     resp_snoop_ready_i = 1;
 
     o_msto = vmsto;
-    o_xcfg = wb_xcfg;
     o_dport = vdporto;                                      // systemc compatibility
     o_available = 1;
 }

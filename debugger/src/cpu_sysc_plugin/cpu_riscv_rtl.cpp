@@ -284,7 +284,7 @@ void CpuRiscV_RTL::createSystemC() {
     core_->i_mtimer(wb_mtimer);
     core_->i_msti(corei[0]);
     core_->o_msto(coreo[0]);
-    core_->o_xcfg(xcfg);
+    //core_->o_xcfg(xcfg);
     core_->i_dport(wb_dporti[0]);
     core_->o_dport(wb_dporto[0]);
     core_->i_irq_pending(wb_irq_pending[0]);

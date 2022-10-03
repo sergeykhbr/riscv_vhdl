@@ -30,7 +30,6 @@ SC_MODULE(RiverAmba) {
     sc_in<sc_uint<64>> i_mtimer;                            // Read-only shadow value of memory-mapped mtimer register (see CLINT).
     sc_in<axi4_l1_in_type> i_msti;
     sc_out<axi4_l1_out_type> o_msto;
-    sc_out<axi4_master_config_type> o_xcfg;
     sc_in<dport_in_type> i_dport;
     sc_out<dport_out_type> o_dport;
     sc_in<sc_uint<IRQ_TOTAL>> i_irq_pending;                // Per Hart pending interrupts pins
@@ -138,7 +137,6 @@ SC_MODULE(RiverAmba) {
     sc_signal<bool> resp_snoop_valid_o;
     sc_signal<sc_biguint<L1CACHE_LINE_BITS>> resp_snoop_data_o;
     sc_signal<sc_uint<DTAG_FL_TOTAL>> resp_snoop_flags_o;
-    axi4_master_config_type wb_xcfg;
     sc_signal<bool> w_dporti_haltreq;
     sc_signal<bool> w_dporti_resumereq;
     sc_signal<bool> w_dporti_resethaltreq;
