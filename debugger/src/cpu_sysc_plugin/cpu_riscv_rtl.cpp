@@ -21,12 +21,7 @@
 namespace debugger {
 
 CpuRiscV_RTL::CpuRiscV_RTL(const char *name)  
-    : IService(name), IHap(HAP_ConfigDone),
-    corei("corei", CFG_SLOT_L1_TOTAL),
-    coreo("coreo", CFG_SLOT_L1_TOTAL),
-    wb_irq_pending("wb_irq_pending", CFG_CPU_MAX),
-    wb_dporti("wb_dporti", CFG_CPU_MAX),
-    wb_dporto("wb_dporto", CFG_CPU_MAX) {
+    : IService(name), IHap(HAP_ConfigDone) {
     registerInterface(static_cast<IThread *>(this));
     registerInterface(static_cast<IClock *>(this));
     registerInterface(static_cast<IHap *>(this));
@@ -45,7 +40,6 @@ CpuRiscV_RTL::CpuRiscV_RTL(const char *name)
 
     bus_.make_string("");
     freqHz_.make_uint64(1);
-    coherenceEnable_ = false;;
     InVcdFile_.make_string("");
     OutVcdFile_.make_string("");
     RISCV_event_create(&config_done_, "riscv_sysc_config_done");
@@ -116,14 +110,7 @@ void CpuRiscV_RTL::postinitService() {
     wrapper_->generateVCD(i_vcd_, o_vcd_);
     dmislv_->setBaseAddress(dmibar_.to_uint64());
     dmislv_->setLength(4096);
-    dmi_->generateVCD(i_vcd_, o_vcd_);
-    if (l2cache_) {
-        l2cache_->generateVCD(i_vcd_, o_vcd_);
-    }
-    if (l1serdes_) {
-        l1serdes_->generateVCD(i_vcd_, o_vcd_);
-    }
-    core_->generateVCD(i_vcd_, o_vcd_);
+    group0_->generateVCD(i_vcd_, o_vcd_);
 
     pcmd_br_ = new CmdBrRiscv(dmibar_.to_uint64(), 0);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_br_));
@@ -148,7 +135,6 @@ void CpuRiscV_RTL::predeleteService() {
 void CpuRiscV_RTL::createSystemC() {
     sc_set_default_time_unit(1, SC_NS);
 
-    wb_available = 0x1; // only 1 core available
 
     /** Create all objects, then initilize SystemC context: */
     wrapper_ = new RtlWrapper(static_cast<IService *>(this), "wrapper");
@@ -160,11 +146,11 @@ void CpuRiscV_RTL::createSystemC() {
     wrapper_->o_msti(msti);
     wrapper_->i_msto(msto);
     wrapper_->o_mtimer(wb_mtimer);
-    wrapper_->o_irq_pending(wb_irq_pending[0]);
-    wrapper_->i_dporti(wb_dporti[0]);
+    wrapper_->o_msip(wb_msip);
+    wrapper_->o_mtip(wb_mtip);
+    wrapper_->o_meip(wb_meip);
+    wrapper_->o_seip(wb_seip);
     wrapper_->i_ndmreset(w_ndmreset);
-    wrapper_->i_halted0(w_halted0);
-    wrapper_->o_halted(wb_halted);
 
     tapbb_ = new TapBitBang("tapbb");
     registerPortInterface("tap", static_cast<IJtagTap *>(tapbb_));
@@ -188,108 +174,38 @@ void CpuRiscV_RTL::createSystemC() {
     dmislv_->o_slv_resp_ready(w_bus_resp_ready);
     dmislv_->i_slv_resp_rdata(wb_bus_resp_rdata);
 
+    group0_ = new Workgroup("group0",
+                            asyncReset_.to_bool(),
+                            cpuNum_.to_uint32(),
+                            l2CacheEnable_.to_uint32());
+    group0_->i_cores_nrst(w_sys_nrst);
+    group0_->i_dmi_nrst(w_dmi_nrst);
+    group0_->i_clk(wrapper_->o_clk);
+    group0_->i_trst(w_trst);
+    group0_->i_tck(w_tck);
+    group0_->i_tms(w_tms);
+    group0_->i_tdi(w_tdi);
+    group0_->o_tdo(w_tdo);
+    group0_->i_msip(wb_msip);
+    group0_->i_mtip(wb_mtip);
+    group0_->i_meip(wb_meip);
+    group0_->i_seip(wb_seip);
+    group0_->i_mtimer(wb_mtimer);
+    group0_->o_xcfg(xcfg);
+    group0_->i_acpo(acpo);
+    group0_->o_acpi(acpi);
+    group0_->i_msti(msti);
+    group0_->o_msto(msto);
+    group0_->i_apb_dmi_req_valid(w_bus_req_valid);
+    group0_->o_apb_dmi_req_ready(w_bus_req_ready);
+    group0_->i_apb_dmi_req_addr(wb_bus_req_addr);
+    group0_->i_apb_dmi_req_write(w_bus_req_write);
+    group0_->i_apb_dmi_req_wdata(wb_bus_req_wdata);
+    group0_->o_apb_dmi_resp_valid(w_bus_resp_valid);
+    group0_->i_apb_dmi_resp_ready(w_bus_resp_ready);
+    group0_->o_apb_dmi_resp_rdata(wb_bus_resp_rdata);
+    group0_->o_dmreset(w_ndmreset);
 
-    dmi_ = new dmidebug("dmidbg",
-                        asyncReset_.to_bool());
-    dmi_->i_clk(wrapper_->o_clk);
-    dmi_->i_nrst(w_dmi_nrst);
-    dmi_->i_trst(w_trst);
-    dmi_->i_tck(w_tck);
-    dmi_->i_tms(w_tms);
-    dmi_->i_tdi(w_tdi);
-    dmi_->o_tdo(w_tdo);
-    dmi_->i_bus_req_valid(w_bus_req_valid);
-    dmi_->o_bus_req_ready(w_bus_req_ready);
-    dmi_->i_bus_req_addr(wb_bus_req_addr);
-    dmi_->i_bus_req_write(w_bus_req_write);
-    dmi_->i_bus_req_wdata(wb_bus_req_wdata);
-    dmi_->o_bus_resp_valid(w_bus_resp_valid);
-    dmi_->i_bus_resp_ready(w_bus_resp_ready);
-    dmi_->o_bus_resp_rdata(wb_bus_resp_rdata);
-    dmi_->o_ndmreset(w_ndmreset);               // reset whole system
-    dmi_->i_halted(wb_halted);
-    dmi_->i_available(wb_available);
-    dmi_->o_hartsel(wb_dmi_hartsel);
-    dmi_->o_haltreq(w_dmi_haltreq);
-    dmi_->o_resumereq(w_dmi_resumereq);
-    dmi_->o_resethaltreq(w_dmi_resethaltreq);
-    dmi_->o_hartreset(w_dmi_hartreset);
-    dmi_->o_dport_req_valid(w_dmi_dport_req_valid);
-    dmi_->o_dport_req_type(wb_dmi_dport_req_type);
-    dmi_->o_dport_addr(wb_dmi_dport_addr);
-    dmi_->o_dport_wdata(wb_dmi_dport_wdata);
-    dmi_->o_dport_size(wb_dmi_dport_size);
-    dmi_->i_dport_req_ready(w_ic_dport_req_ready);
-    dmi_->o_dport_resp_ready(w_dmi_dport_resp_ready);
-    dmi_->i_dport_resp_valid(w_ic_dport_resp_valid);
-    dmi_->i_dport_resp_error(w_ic_dport_resp_error);
-    dmi_->i_dport_rdata(wb_ic_dport_rdata);
-    dmi_->o_progbuf(wb_progbuf);
-
-    dport_ic0 = new ic_dport("dport_ic0", asyncReset_.to_bool());
-    dport_ic0->i_clk(wrapper_->o_clk);
-    dport_ic0->i_nrst(w_dmi_nrst);
-    dport_ic0->i_hartsel(wb_dmi_hartsel);
-    dport_ic0->i_haltreq(w_dmi_haltreq);
-    dport_ic0->i_resumereq(w_dmi_resumereq);
-    dport_ic0->i_resethaltreq(w_dmi_resethaltreq);
-    dport_ic0->i_hartreset(w_dmi_hartreset);
-    dport_ic0->i_dport_req_valid(w_dmi_dport_req_valid);
-    dport_ic0->i_dport_req_type(wb_dmi_dport_req_type);
-    dport_ic0->i_dport_addr(wb_dmi_dport_addr);
-    dport_ic0->i_dport_wdata(wb_dmi_dport_wdata);
-    dport_ic0->i_dport_size(wb_dmi_dport_size);
-    dport_ic0->o_dport_req_ready(w_ic_dport_req_ready);
-    dport_ic0->i_dport_resp_ready(w_dmi_dport_resp_ready);
-    dport_ic0->o_dport_resp_valid(w_ic_dport_resp_valid);
-    dport_ic0->o_dport_resp_error(w_ic_dport_resp_error);
-    dport_ic0->o_dport_rdata(wb_ic_dport_rdata);
-    dport_ic0->o_dporti(wb_dporti);
-    dport_ic0->i_dporto(wb_dporto);
-
-
-    if (l2CacheEnable_.to_bool()) {
-        l2cache_ = new L2Top("l2top", asyncReset_.to_bool());
-        l2cache_->i_clk(wrapper_->o_clk);
-        l2cache_->i_nrst(w_sys_nrst);
-        l2cache_->o_l1i(corei);
-        l2cache_->i_l1o(coreo);
-        l2cache_->i_l2i(l2i);
-        l2cache_->o_l2o(l2o);
-        l2cache_->i_flush_valid(w_flush_l2);
-
-        coherenceEnable_ = cpuNum_.to_int() > 1;
-        l1serdes_ = 0;
-    } else {
-        l1serdes_ = new L1SerDes("l1serdes0", asyncReset_.to_bool());
-        l1serdes_->i_clk(wrapper_->o_clk);
-        l1serdes_->i_nrst(w_sys_nrst);
-        l1serdes_->o_corei(corei[0]);
-        l1serdes_->i_coreo(coreo[0]);
-        l1serdes_->i_msti(msti);
-        l1serdes_->o_msto(msto);
-
-        l2cache_ = 0;
-    }
-
-    core_ = new RiverAmba("core0", hartid_.to_uint32(),
-                               asyncReset_.to_bool(),
-                               CFG_HW_FPU_ENABLE,
-                               coherenceEnable_,
-                               CFG_TRACER_ENABLE);
-    core_->i_clk(wrapper_->o_clk);
-    core_->i_nrst(w_sys_nrst);
-    core_->i_mtimer(wb_mtimer);
-    core_->i_msti(corei[0]);
-    core_->o_msto(coreo[0]);
-    //core_->o_xcfg(xcfg);
-    core_->i_dport(wb_dporti[0]);
-    core_->o_dport(wb_dporto[0]);
-    core_->i_irq_pending(wb_irq_pending[0]);
-    core_->o_flush_l2(w_flush_l2);
-    core_->o_halted(w_halted0);
-    core_->o_available(w_available0);
-    core_->i_progbuf(wb_progbuf);
 
 #ifdef DBG_ICACHE_LRU_TB
     ICacheLru_tb *tb = new ICacheLru_tb("tb");
@@ -307,14 +223,9 @@ void CpuRiscV_RTL::createSystemC() {
 
 void CpuRiscV_RTL::deleteSystemC() {
     delete wrapper_;
-    delete dmi_;
-    delete core_;
-    if (l1serdes_) {
-        delete l1serdes_;
-    }
-    if (l2cache_) {
-        delete l2cache_;
-    }
+    delete tapbb_;
+    delete dmislv_;
+    delete group0_;
 }
 
 void CpuRiscV_RTL::hapTriggered(EHapType type,

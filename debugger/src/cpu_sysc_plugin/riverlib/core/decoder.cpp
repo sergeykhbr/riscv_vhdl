@@ -246,12 +246,12 @@ void InstrDecoder::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
 
     for (int i = 0; i < DEC_NUM; i++) {
-        if (rv) {
+        if (rv[i]) {
             rv[i]->generateVCD(i_vcd, o_vcd);
         }
     }
     for (int i = 0; i < DEC_NUM; i++) {
-        if (rvc) {
+        if (rvc[i]) {
             rvc[i]->generateVCD(i_vcd, o_vcd);
         }
     }

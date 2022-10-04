@@ -137,7 +137,7 @@ void BranchPredictor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         btb->generateVCD(i_vcd, o_vcd);
     }
     for (int i = 0; i < 2; i++) {
-        if (predec) {
+        if (predec[i]) {
             predec[i]->generateVCD(i_vcd, o_vcd);
         }
     }

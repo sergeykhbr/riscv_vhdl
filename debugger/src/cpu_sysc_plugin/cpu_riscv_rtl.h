@@ -110,7 +110,6 @@ class CpuRiscV_RTL : public IService,
     AttributeType freqHz_;
     AttributeType InVcdFile_;
     AttributeType OutVcdFile_;
-    bool coherenceEnable_;
     event_def config_done_;
 
     IIrqController *iirqloc_;
@@ -124,34 +123,14 @@ class CpuRiscV_RTL : public IService,
     sc_signal<sc_uint<64>> wb_mtimer;
 
     // AXI4 input structure:
-    sc_vector<sc_signal<axi4_l1_in_type>> corei;
-    sc_vector<sc_signal<axi4_l1_out_type>> coreo;
     sc_signal<axi4_master_config_type> xcfg;
-    sc_signal<bool> w_flush_l2;
     // Interrupt lines:
-    hart_irq_vector wb_irq_pending;       // Per Hart pending interrupts pins
+    sc_signal<sc_uint<CFG_CPU_MAX>> wb_msip;
+    sc_signal<sc_uint<CFG_CPU_MAX>> wb_mtip;
+    sc_signal<sc_uint<CFG_CPU_MAX>> wb_meip;
+    sc_signal<sc_uint<CFG_CPU_MAX>> wb_seip;
     // Debug interface
     sc_signal<bool> w_ndmreset;
-    sc_signal<sc_uint<CFG_CPU_MAX>> wb_halted;
-    sc_signal<sc_uint<CFG_CPU_MAX>> wb_available;
-    sc_signal<sc_uint<CFG_LOG2_CPU_MAX>> wb_dmi_hartsel;
-    sc_signal<bool> w_dmi_haltreq;
-    sc_signal<bool> w_dmi_resumereq;
-    sc_signal<bool> w_dmi_resethaltreq;
-    sc_signal<bool> w_dmi_hartreset;
-    sc_signal<bool> w_dmi_dport_req_valid;
-    sc_signal<sc_uint<DPortReq_Total>> wb_dmi_dport_req_type;
-    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_dmi_dport_addr;
-    sc_signal<sc_uint<RISCV_ARCH>> wb_dmi_dport_wdata;
-    sc_signal<sc_uint<3>> wb_dmi_dport_size;
-    sc_signal<bool> w_ic_dport_req_ready;
-    sc_signal<bool> w_dmi_dport_resp_ready;
-    sc_signal<bool> w_ic_dport_resp_valid;
-    sc_signal<bool> w_ic_dport_resp_error;
-    sc_signal<sc_uint<RISCV_ARCH>> wb_ic_dport_rdata;
-    sc_signal<sc_biguint<32*CFG_PROGBUF_REG_TOTAL>> wb_progbuf;
-    sc_signal<bool> w_halted0;
-    sc_signal<bool> w_available0;
     sc_signal<bool> w_trst;
     sc_signal<bool> w_tck;
     sc_signal<bool> w_tms;
@@ -172,19 +151,15 @@ class CpuRiscV_RTL : public IService,
     sc_signal<axi4_l2_out_type> l2o;
     sc_signal<axi4_master_in_type> msti;
     sc_signal<axi4_master_out_type> msto;
-    dport_in_vector wb_dporti;
-    dport_out_vector wb_dporto;
+    sc_signal<axi4_master_in_type> acpi;
+    sc_signal<axi4_master_out_type> acpo;
 
     sc_trace_file *i_vcd_;      // stimulus pattern
     sc_trace_file *o_vcd_;      // reference pattern for comparision
-    RiverAmba *core_;
     RtlWrapper *wrapper_;
-    L1SerDes *l1serdes_;
-    L2Top *l2cache_;
-    dmidebug *dmi_;
-    ic_dport *dport_ic0;
     TapBitBang *tapbb_;
     BusSlave *dmislv_;
+    Workgroup *group0_;
 
     CmdBrRiscv *pcmd_br_;
     ICommand *pcmd_cpu_;

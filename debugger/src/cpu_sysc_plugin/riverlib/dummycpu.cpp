@@ -27,13 +27,8 @@ DummyCpu::DummyCpu(sc_module_name name)
     o_halted("o_halted"),
     o_available("o_available") {
 
-    o_msto = axi4_l1_out_none;
-    o_dport = dport_out_none;
-    o_flush_l2 = 0;
-    o_halted = 0;
-    o_available = 0;
 
-
+    SC_METHOD(comb);
 }
 
 void DummyCpu::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
@@ -45,6 +40,14 @@ void DummyCpu::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_available, o_available.name());
     }
 
+}
+
+void DummyCpu::comb() {
+    o_msto = axi4_l1_out_none;
+    o_dport = dport_out_none;
+    o_flush_l2 = 0;
+    o_halted = 0;
+    o_available = 0;
 }
 
 }  // namespace debugger

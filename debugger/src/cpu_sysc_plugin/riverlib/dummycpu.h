@@ -30,6 +30,9 @@ SC_MODULE(DummyCpu) {
     sc_out<bool> o_halted;                                  // CPU halted via debug interface
     sc_out<bool> o_available;                               // CPU was instantitated of stubbed
 
+    void comb();
+
+    SC_HAS_PROCESS(DummyCpu);
 
     DummyCpu(sc_module_name name);
 

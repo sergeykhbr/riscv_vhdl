@@ -256,7 +256,7 @@ void TagMemNWay<abus, waybits, ibits, lnbits, flbits, snoop>::generateVCD(sc_tra
     }
 
     for (int i = 0; i < NWAYS; i++) {
-        if (wayx) {
+        if (wayx[i]) {
             wayx[i]->generateVCD(i_vcd, o_vcd);
         }
     }

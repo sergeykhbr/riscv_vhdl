@@ -42,11 +42,11 @@ class RtlWrapper : public sc_module,
     sc_in<axi4_master_out_type> i_msto;
     // Interrupt lines:
     sc_out<sc_uint<64>> o_mtimer;
-    sc_out<sc_uint<IRQ_TOTAL>> o_irq_pending;       // Per Hart pending interrupts pins
-    sc_in<dport_in_type> i_dporti;
+    sc_out<sc_uint<CFG_CPU_MAX>> o_msip;
+    sc_out<sc_uint<CFG_CPU_MAX>> o_mtip;
+    sc_out<sc_uint<CFG_CPU_MAX>> o_meip;
+    sc_out<sc_uint<CFG_CPU_MAX>> o_seip;
     sc_in<bool> i_ndmreset;
-    sc_in<bool> i_halted0;
-    sc_out<sc_uint<CFG_CPU_MAX>> o_halted;
 
     enum EState {
         State_Idle,
@@ -67,7 +67,6 @@ class RtlWrapper : public sc_module,
         //
         sc_signal<sc_bv<5>> nrst;
         sc_signal<sc_uint<3>> state;
-        sc_signal<sc_uint<CFG_CPU_MAX>> halted;
         sc_signal<bool> r_error;
         sc_signal<bool> w_error;
     } r, v;

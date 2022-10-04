@@ -345,12 +345,12 @@ void Workgroup::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         acp_bridge->generateVCD(i_vcd, o_vcd);
     }
     for (int i = 0; i < CFG_CPU_MAX; i++) {
-        if (cpux) {
+        if (cpux[i]) {
             cpux[i]->generateVCD(i_vcd, o_vcd);
         }
     }
     for (int i = 0; i < CFG_CPU_MAX; i++) {
-        if (dumx) {
+        if (dumx[i]) {
             dumx[i]->generateVCD(i_vcd, o_vcd);
         }
     }

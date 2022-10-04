@@ -30,11 +30,11 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     o_dmi_nrst("o_dmi_nrst"),
     o_msti("o_msti"),
     i_msto("i_msto"),
-    o_irq_pending("o_irq_pending"),
-    i_dporti("i_dporti"),
-    i_ndmreset("i_ndmreset"),
-    i_halted0("i_halted0"),
-    o_halted("o_halted") {
+    o_msip("o_msip"),
+    o_mtip("o_mtip"),
+    o_meip("o_meip"),
+    o_seip("o_seip"),
+    i_ndmreset("i_ndmreset") {
     iparent_ = parent;
     clockCycles_ = 1000000; // 1 MHz when default resolution = 1 ps
 
@@ -47,7 +47,6 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     async_interrupt = 0;
     request_reset = false;
     w_interrupt = 0;
-    v.halted = false;
     v.state = State_Idle;
     r.state = State_Idle;
     v.clk_cnt = 0;
@@ -63,9 +62,7 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     SC_METHOD(comb);
     sensitive << w_interrupt;
     sensitive << i_msto;
-    sensitive << i_dporti;
     sensitive << i_ndmreset;
-    sensitive << i_halted0;
     sensitive << r.clk_cnt;
     sensitive << r.req_addr;
     sensitive << r.req_len;
@@ -74,7 +71,6 @@ RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
     sensitive << r.b_resp;
     sensitive << r.nrst;
     sensitive << r.state;
-    sensitive << r.halted;
     sensitive << r.r_error;
     sensitive << r.w_error;
     sensitive << w_resp_valid;
@@ -126,7 +122,10 @@ void RtlWrapper::comb() {
     sc_uint<CFG_SYSBUS_DATA_BITS> vb_wdata;
     sc_uint<CFG_SYSBUS_DATA_BYTES> vb_wstrb;
     axi4_master_in_type vmsti;
-    sc_uint<IRQ_TOTAL> vb_irq_pending;
+    sc_uint<CFG_CPU_MAX> vb_msip;
+    sc_uint<CFG_CPU_MAX> vb_mtip;
+    sc_uint<CFG_CPU_MAX> vb_meip;
+    sc_uint<CFG_CPU_MAX> vb_seip;
 
     w_req_mem_ready = 0;
     vb_r_resp = 0; // OKAY
@@ -138,10 +137,12 @@ void RtlWrapper::comb() {
 
     vb_wdata = 0;
     vb_wstrb = 0;
-    vb_irq_pending = 0;
+    vb_msip = 0;
+    vb_mtip = 0;
+    vb_meip = 0;
+    vb_seip = 0;
 
     v.clk_cnt = r.clk_cnt.read() + 1;
-    v.halted = (0, i_halted0.read());
 
     v.nrst = (r.nrst.read() << 1) | 1;
     switch (r.state.read()) {
@@ -220,7 +221,6 @@ void RtlWrapper::comb() {
 
     o_dmi_nrst = r.nrst.read()[1].to_bool();
     o_sys_nrst = r.nrst.read()[1].to_bool() 
-            && !i_dporti.read().hartreset
             && !i_ndmreset.read();
 
     vmsti.aw_ready = w_req_mem_ready;
@@ -239,13 +239,15 @@ void RtlWrapper::comb() {
     vmsti.r_user = 0;
     o_msti = vmsti;     // to trigger event;
 
-    vb_irq_pending[IRQ_MSIP] = w_msip;
-    vb_irq_pending[IRQ_MTIP] = w_mtip;
-    vb_irq_pending[IRQ_MEIP] = w_meip;
-    vb_irq_pending[IRQ_SEIP] = w_seip;
+    vb_msip[0] = w_msip;
+    vb_mtip[0] = w_mtip;
+    vb_meip[0] = w_meip;
+    vb_seip[0] = w_seip;
 
-    o_irq_pending = vb_irq_pending;
-    o_halted = r.halted;
+    o_msip = vb_msip;
+    o_mtip = vb_mtip;
+    o_meip = vb_meip;
+    o_seip = vb_seip;
     o_mtimer = r.clk_cnt;
 
     if (!r.nrst.read()[1]) {
@@ -377,7 +379,7 @@ void RtlWrapper::registerStepCallback(IClockListener *cb, uint64_t t) {
 }
 
 bool RtlWrapper::isHalt() {
-    return i_halted0.read();
+    return 0;
 }
 
 }  // namespace debugger
