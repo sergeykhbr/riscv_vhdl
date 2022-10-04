@@ -388,10 +388,11 @@ void Workgroup::comb() {
         v_flush_l2 = (v_flush_l2 || vec_flush_l2[i]);
         vb_halted[i] = vec_halted[i];
         vb_available[i] = vec_available[i];
-        vb_irq[i][IRQ_MSIP] = i_msip.read();
-        vb_irq[i][IRQ_MTIP] = i_mtip.read();
-        vb_irq[i][IRQ_MEIP] = i_meip.read();
-        vb_irq[i][IRQ_SEIP] = i_seip.read();
+        vb_irq[i][IRQ_MSIP] = i_msip.read()[i];
+        vb_irq[i][IRQ_MTIP] = i_mtip.read()[i];
+        vb_irq[i][IRQ_MEIP] = i_meip.read()[i];
+        vb_irq[i][IRQ_SEIP] = i_seip.read()[i];
+        vec_irq[i] = vb_irq[i];
     }
     w_flush_l2 = v_flush_l2;
     wb_halted = vb_halted;
