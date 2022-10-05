@@ -17,6 +17,7 @@ SECTIONS
 
   /* text: test code section */
   . = 0x10000;
+  _ftext = .;
   .text : 
   {
     KEEP(*(.isr_vector))

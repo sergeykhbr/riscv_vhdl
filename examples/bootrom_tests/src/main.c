@@ -36,6 +36,8 @@ int hwthread1(void);
 int hwthread2(void);
 int hwthread3(void);
 
+void protect_memory(void);  // MPU setup in BBL
+
 void init_mpu() {
     int mpu_total = mpu_region_total();
     int dis_idx = 0;
@@ -73,6 +75,8 @@ void init_mpu() {
     for (int i = dis_idx; i < mpu_total; i++) {
         mpu_disable_region(i);
     }
+
+    protect_memory();
 }
 
 int main() {

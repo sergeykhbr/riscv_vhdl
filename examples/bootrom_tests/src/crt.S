@@ -84,40 +84,6 @@ reset_vector:
   li  x29,0
   li  x30,0
   li  x31,0
-
-  ##! csrs (pseudo asm instruction) - set bit   
-  ##! csrrs - atomic read and set bit
-  ##! csrc (pseudo asm instruction) - clear bit 
-  ##! csrrc - atomic read and clear bit
-
-  li t0, 0x00001800   # MPP[12:11] = 0x3 (Previous to machine mode)
-  csrc mstatus, t0    # run tests in user mode = 0, by clearing bits
-  li t0, 0x00000008   # Enable irq in machine and user modes after execution of xRET
-  csrs mstatus, t0    # enable interrupts in user mode
-  #li t0, MSTATUS_FS;
-  #csrs mstatus, t0    # enable FPU
-  #li t0, MSTATUS_XS;   
-  #csrs mstatus, t0    # enable accelerator
-
-  ##! init mtvec register in vector mode (MODE=0x1)
-  la t0, trap_table
-  or t0, t0, 0x1
-  csrw mtvec, t0
-
-#if 0
-  ##! see https://github.com/riscv/riscv-tests/benchmarks/common
-  csrr t0, mstatus
-  li t1, MSTATUS_XS
-  and t1, t0, t1
-  sw t1, have_vec, t2
-#endif
-#if 0
-  ## if that didn't stick, we don't have a FPU, so don't initialize it
-  li t1, MSTATUS_FS
-  and t1, t0, t1
-  beqz t1, 1f
-#endif
-
 # intialization when HW FPU enabled
 #ifdef FPU_ENABLED
   fssr    x0
@@ -154,9 +120,15 @@ reset_vector:
   fmv.d.x f30,x0
   fmv.d.x f31,x0
 #endif
+  csrw mscratch, x0
 
-  ##! initialize global pointer (no need in it)
-  lui gp, 0x10000
+  ##! init mtvec register in vector mode (MODE=0x1)
+  la t0, trap_table
+  or t0, t0, 0x1
+  csrw mtvec, t0
+
+#  li t0, 0x00001800   # MPP[12:11] = 0x3 (Previous to machine mode)
+#  csrc mstatus, t0    # run tests in user mode = 0, by clearing bits
 
   ##! get core id
   csrr a0, mhartid            # a0 <= MHARTID value

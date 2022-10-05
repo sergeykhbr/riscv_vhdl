@@ -41,6 +41,8 @@ void *fw_get_ram_data(const char *name);
 
 typedef void (*IRQ_HANDLER)(void);
 
+void flush_tlb();
+
 int fw_get_cpuid();
 // mstatus::mie bit controler
 void fw_enable_m_interrupts();

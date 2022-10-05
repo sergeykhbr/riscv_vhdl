@@ -25,6 +25,11 @@ int fw_get_cpuid() {
     return ret;
 }
 
+void flush_tlb()
+{
+    asm volatile ("sfence.vma");
+}
+
 // external interrupts
 void fw_enable_m_interrupts() {
     uint64_t t1 = 0x00000008;
