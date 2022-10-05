@@ -31,9 +31,6 @@ ICacheLru::ICacheLru(sc_module_name name,
     o_resp_addr("o_resp_addr"),
     o_resp_data("o_resp_data"),
     o_resp_load_fault("o_resp_load_fault"),
-    o_resp_executable("o_resp_executable"),
-    o_resp_writable("o_resp_writable"),
-    o_resp_readable("o_resp_readable"),
     i_resp_ready("i_resp_ready"),
     i_req_mem_ready("i_req_mem_ready"),
     o_req_mem_valid("o_req_mem_valid"),
@@ -139,9 +136,6 @@ void ICacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_resp_addr, o_resp_addr.name());
         sc_trace(o_vcd, o_resp_data, o_resp_data.name());
         sc_trace(o_vcd, o_resp_load_fault, o_resp_load_fault.name());
-        sc_trace(o_vcd, o_resp_executable, o_resp_executable.name());
-        sc_trace(o_vcd, o_resp_writable, o_resp_writable.name());
-        sc_trace(o_vcd, o_resp_readable, o_resp_readable.name());
         sc_trace(o_vcd, i_resp_ready, i_resp_ready.name());
         sc_trace(o_vcd, i_req_mem_ready, i_req_mem_ready.name());
         sc_trace(o_vcd, o_req_mem_valid, o_req_mem_valid.name());
@@ -422,10 +416,7 @@ void ICacheLru::comb() {
     o_resp_valid = v_resp_valid;
     o_resp_data = vb_resp_data;
     o_resp_addr = r.req_addr;
-    o_resp_load_fault = v_resp_er_load_fault;
-    o_resp_executable = r.executable;
-    o_resp_writable = 0;
-    o_resp_readable = 0;
+    o_resp_load_fault = (v_resp_er_load_fault || (!r.executable));
     o_mpu_addr = r.req_addr;
 }
 

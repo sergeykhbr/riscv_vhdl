@@ -28,7 +28,7 @@ InstrDecoder::InstrDecoder(sc_module_name name,
     i_f_pc("i_f_pc"),
     i_f_instr("i_f_instr"),
     i_instr_load_fault("i_instr_load_fault"),
-    i_instr_executable("i_instr_executable"),
+    i_instr_page_fault_x("i_instr_page_fault_x"),
     i_e_npc("i_e_npc"),
     o_radr1("o_radr1"),
     o_radr2("o_radr2"),
@@ -52,7 +52,7 @@ InstrDecoder::InstrDecoder(sc_module_name name,
     o_instr_vec("o_instr_vec"),
     o_exception("o_exception"),
     o_instr_load_fault("o_instr_load_fault"),
-    o_instr_executable("o_instr_executable"),
+    o_instr_page_fault_x("o_instr_page_fault_x"),
     o_progbuf_ena("o_progbuf_ena") {
 
     async_reset_ = async_reset;
@@ -75,7 +75,7 @@ InstrDecoder::InstrDecoder(sc_module_name name,
         rv[i]->i_f_pc(wb_f_pc[i]);
         rv[i]->i_f_instr(wb_f_instr[i]);
         rv[i]->i_instr_load_fault(i_instr_load_fault);
-        rv[i]->i_instr_executable(i_instr_executable);
+        rv[i]->i_instr_page_fault_x(i_instr_page_fault_x);
         rv[i]->o_radr1(wd[(2 * i)].radr1);
         rv[i]->o_radr2(wd[(2 * i)].radr2);
         rv[i]->o_waddr(wd[(2 * i)].waddr);
@@ -96,7 +96,7 @@ InstrDecoder::InstrDecoder(sc_module_name name,
         rv[i]->o_instr_vec(wd[(2 * i)].instr_vec);
         rv[i]->o_exception(wd[(2 * i)].instr_unimplemented);
         rv[i]->o_instr_load_fault(wd[(2 * i)].instr_load_fault);
-        rv[i]->o_instr_executable(wd[(2 * i)].instr_executable);
+        rv[i]->o_instr_page_fault_x(wd[(2 * i)].instr_page_fault_x);
         rv[i]->o_progbuf_ena(wd[(2 * i)].progbuf_ena);
 
     }
@@ -112,7 +112,7 @@ InstrDecoder::InstrDecoder(sc_module_name name,
         rvc[i]->i_f_pc(wb_f_pc[i]);
         rvc[i]->i_f_instr(wb_f_instr[i]);
         rvc[i]->i_instr_load_fault(i_instr_load_fault);
-        rvc[i]->i_instr_executable(i_instr_executable);
+        rvc[i]->i_instr_page_fault_x(i_instr_page_fault_x);
         rvc[i]->o_radr1(wd[((2 * i) + 1)].radr1);
         rvc[i]->o_radr2(wd[((2 * i) + 1)].radr2);
         rvc[i]->o_waddr(wd[((2 * i) + 1)].waddr);
@@ -133,7 +133,7 @@ InstrDecoder::InstrDecoder(sc_module_name name,
         rvc[i]->o_instr_vec(wd[((2 * i) + 1)].instr_vec);
         rvc[i]->o_exception(wd[((2 * i) + 1)].instr_unimplemented);
         rvc[i]->o_instr_load_fault(wd[((2 * i) + 1)].instr_load_fault);
-        rvc[i]->o_instr_executable(wd[((2 * i) + 1)].instr_executable);
+        rvc[i]->o_instr_page_fault_x(wd[((2 * i) + 1)].instr_page_fault_x);
         rvc[i]->o_progbuf_ena(wd[((2 * i) + 1)].progbuf_ena);
 
     }
@@ -144,7 +144,7 @@ InstrDecoder::InstrDecoder(sc_module_name name,
     sensitive << i_f_pc;
     sensitive << i_f_instr;
     sensitive << i_instr_load_fault;
-    sensitive << i_instr_executable;
+    sensitive << i_instr_page_fault_x;
     sensitive << i_e_npc;
     sensitive << i_flush_pipeline;
     sensitive << i_progbuf_ena;
@@ -163,7 +163,7 @@ InstrDecoder::InstrDecoder(sc_module_name name,
         sensitive << wd[i].compressed;
         sensitive << wd[i].amo;
         sensitive << wd[i].instr_load_fault;
-        sensitive << wd[i].instr_executable;
+        sensitive << wd[i].instr_page_fault_x;
         sensitive << wd[i].instr_unimplemented;
         sensitive << wd[i].radr1;
         sensitive << wd[i].radr2;
@@ -187,7 +187,7 @@ InstrDecoder::InstrDecoder(sc_module_name name,
         sensitive << r.d[i].compressed;
         sensitive << r.d[i].amo;
         sensitive << r.d[i].instr_load_fault;
-        sensitive << r.d[i].instr_executable;
+        sensitive << r.d[i].instr_page_fault_x;
         sensitive << r.d[i].instr_unimplemented;
         sensitive << r.d[i].radr1;
         sensitive << r.d[i].radr2;
@@ -214,7 +214,7 @@ void InstrDecoder::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_f_pc, i_f_pc.name());
         sc_trace(o_vcd, i_f_instr, i_f_instr.name());
         sc_trace(o_vcd, i_instr_load_fault, i_instr_load_fault.name());
-        sc_trace(o_vcd, i_instr_executable, i_instr_executable.name());
+        sc_trace(o_vcd, i_instr_page_fault_x, i_instr_page_fault_x.name());
         sc_trace(o_vcd, i_e_npc, i_e_npc.name());
         sc_trace(o_vcd, o_radr1, o_radr1.name());
         sc_trace(o_vcd, o_radr2, o_radr2.name());
@@ -238,7 +238,7 @@ void InstrDecoder::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_instr_vec, o_instr_vec.name());
         sc_trace(o_vcd, o_exception, o_exception.name());
         sc_trace(o_vcd, o_instr_load_fault, o_instr_load_fault.name());
-        sc_trace(o_vcd, o_instr_executable, o_instr_executable.name());
+        sc_trace(o_vcd, o_instr_page_fault_x, o_instr_page_fault_x.name());
         sc_trace(o_vcd, o_progbuf_ena, o_progbuf_ena.name());
         for (int i = 0; i < FULL_DEC_DEPTH; i++) {
             char tstr[1024];
@@ -279,7 +279,7 @@ void InstrDecoder::comb() {
         v.d[i].compressed = r.d[i].compressed;
         v.d[i].amo = r.d[i].amo;
         v.d[i].instr_load_fault = r.d[i].instr_load_fault;
-        v.d[i].instr_executable = r.d[i].instr_executable;
+        v.d[i].instr_page_fault_x = r.d[i].instr_page_fault_x;
         v.d[i].instr_unimplemented = r.d[i].instr_unimplemented;
         v.d[i].radr1 = r.d[i].radr1;
         v.d[i].radr2 = r.d[i].radr2;
@@ -340,7 +340,7 @@ void InstrDecoder::comb() {
             v.d[i].compressed = 0;
             v.d[i].amo = 0;
             v.d[i].instr_load_fault = 0;
-            v.d[i].instr_executable = 0;
+            v.d[i].instr_page_fault_x = 0;
             v.d[i].instr_unimplemented = 0;
             v.d[i].radr1 = 0;
             v.d[i].radr2 = 0;
@@ -366,7 +366,7 @@ void InstrDecoder::comb() {
     o_instr_vec = wd[selidx].instr_vec;
     o_exception = wd[selidx].instr_unimplemented;
     o_instr_load_fault = wd[selidx].instr_load_fault;
-    o_instr_executable = wd[selidx].instr_executable;
+    o_instr_page_fault_x = wd[selidx].instr_page_fault_x;
     o_radr1 = wd[selidx].radr1;
     o_radr2 = wd[selidx].radr2;
     o_waddr = wd[selidx].waddr;
@@ -392,7 +392,7 @@ void InstrDecoder::registers() {
             r.d[i].compressed = 0;
             r.d[i].amo = 0;
             r.d[i].instr_load_fault = 0;
-            r.d[i].instr_executable = 0;
+            r.d[i].instr_page_fault_x = 0;
             r.d[i].instr_unimplemented = 0;
             r.d[i].radr1 = 0;
             r.d[i].radr2 = 0;
@@ -417,7 +417,7 @@ void InstrDecoder::registers() {
             r.d[i].compressed = v.d[i].compressed;
             r.d[i].amo = v.d[i].amo;
             r.d[i].instr_load_fault = v.d[i].instr_load_fault;
-            r.d[i].instr_executable = v.d[i].instr_executable;
+            r.d[i].instr_page_fault_x = v.d[i].instr_page_fault_x;
             r.d[i].instr_unimplemented = v.d[i].instr_unimplemented;
             r.d[i].radr1 = v.d[i].radr1;
             r.d[i].radr2 = v.d[i].radr2;

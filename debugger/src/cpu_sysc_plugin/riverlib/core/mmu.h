@@ -36,8 +36,7 @@ SC_MODULE(Mmu) {
     sc_out<bool> o_core_resp_valid;
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_core_resp_addr;
     sc_out<sc_uint<64>> o_core_resp_data;
-    sc_out<bool> o_core_resp_executable;                    // Ex.2. Instruction access fault when = 0 and fetch
-    sc_out<bool> o_core_resp_load_fault;                    // Ex.5. Load access fault
+    sc_out<bool> o_core_resp_load_fault;                    // Ex.2./Ex.5. Instruction access fault when = 0 and fetch or Load access fault
     sc_out<bool> o_core_resp_store_fault;                   // Ex.7. Store/AMO access fault
     sc_out<bool> o_core_resp_page_x_fault;                  // Ex.12 Instruction page fault
     sc_out<bool> o_core_resp_page_r_fault;                  // Ex.13 Load page fault
@@ -53,7 +52,6 @@ SC_MODULE(Mmu) {
     sc_in<bool> i_mem_resp_valid;
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_mem_resp_addr;
     sc_in<sc_uint<64>> i_mem_resp_data;
-    sc_in<bool> i_mem_resp_executable;
     sc_in<bool> i_mem_resp_load_fault;
     sc_in<bool> i_mem_resp_store_fault;
     sc_out<bool> o_mem_resp_ready;
@@ -110,7 +108,6 @@ SC_MODULE(Mmu) {
         sc_signal<sc_uint<8>> last_permission;              // Last permisison flags: DAGUXWRV
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> resp_addr;
         sc_signal<sc_uint<64>> resp_data;
-        sc_signal<bool> resp_executable;
         sc_signal<bool> resp_load_fault;
         sc_signal<bool> resp_store_fault;
         sc_signal<bool> ex_page_fault;
@@ -136,7 +133,6 @@ SC_MODULE(Mmu) {
         iv.last_permission = 0;
         iv.resp_addr = 0ull;
         iv.resp_data = 0ull;
-        iv.resp_executable = 0;
         iv.resp_load_fault = 0;
         iv.resp_store_fault = 0;
         iv.ex_page_fault = 0;

@@ -54,12 +54,12 @@ SC_MODULE(InstrExecute) {
     sc_in<bool> i_stack_underflow;                          // exception stack overflow
     sc_in<bool> i_unsup_exception;                          // Unsupported instruction exception
     sc_in<bool> i_instr_load_fault;                         // fault instruction's address. Bus returned ERR on read transaction
-    sc_in<bool> i_instr_executable;                         // MPU flag 'executable' not set for this memory region
     sc_in<bool> i_mem_ex_debug;                             // Memoryaccess: Debug requested processed with error. Ignore it.
     sc_in<bool> i_mem_ex_load_fault;                        // Memoryaccess: Bus response with SLVERR or DECERR on read data
     sc_in<bool> i_mem_ex_store_fault;                       // Memoryaccess: Bus response with SLVERR or DECERR on write data
-    sc_in<bool> i_mem_ex_mpu_store;                         // Memoryaccess: MPU access error on storing data
-    sc_in<bool> i_mem_ex_mpu_load;                          // Memoryaccess: MPU access error on load data
+    sc_in<bool> i_page_fault_x;                             // IMMU execute page fault signal
+    sc_in<bool> i_page_fault_r;                             // DMMU read access page fault
+    sc_in<bool> i_page_fault_w;                             // DMMU write access page fault
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_mem_ex_addr;        // Memoryaccess: exception address
     sc_in<sc_uint<IRQ_TOTAL>> i_irq_pending;                // Per Hart pending interrupts pins
     sc_in<bool> i_wakeup;                                   // There's pending bit even if interrupts globally disabled
@@ -225,8 +225,9 @@ SC_MODULE(InstrExecute) {
         sc_signal<bool> stack_underflow;
         sc_signal<bool> mem_ex_load_fault;
         sc_signal<bool> mem_ex_store_fault;
-        sc_signal<bool> mem_ex_mpu_store;
-        sc_signal<bool> mem_ex_mpu_load;
+        sc_signal<bool> page_fault_x;
+        sc_signal<bool> page_fault_r;
+        sc_signal<bool> page_fault_w;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mem_ex_addr;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> res_npc;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> res_ra;
@@ -279,8 +280,9 @@ SC_MODULE(InstrExecute) {
         iv.stack_underflow = 0;
         iv.mem_ex_load_fault = 0;
         iv.mem_ex_store_fault = 0;
-        iv.mem_ex_mpu_store = 0;
-        iv.mem_ex_mpu_load = 0;
+        iv.page_fault_x = 0;
+        iv.page_fault_r = 0;
+        iv.page_fault_w = 0;
         iv.mem_ex_addr = 0ull;
         iv.res_npc = 0ull;
         iv.res_ra = 0ull;

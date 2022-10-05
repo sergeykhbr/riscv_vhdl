@@ -33,9 +33,6 @@ SC_MODULE(ICacheLru) {
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_resp_addr;
     sc_out<sc_uint<64>> o_resp_data;
     sc_out<bool> o_resp_load_fault;
-    sc_out<bool> o_resp_executable;
-    sc_out<bool> o_resp_writable;
-    sc_out<bool> o_resp_readable;
     sc_in<bool> i_resp_ready;
     // Memory interface:
     sc_in<bool> i_req_mem_ready;

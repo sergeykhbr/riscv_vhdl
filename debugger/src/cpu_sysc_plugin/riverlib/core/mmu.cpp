@@ -35,7 +35,6 @@ Mmu::Mmu(sc_module_name name,
     o_core_resp_valid("o_core_resp_valid"),
     o_core_resp_addr("o_core_resp_addr"),
     o_core_resp_data("o_core_resp_data"),
-    o_core_resp_executable("o_core_resp_executable"),
     o_core_resp_load_fault("o_core_resp_load_fault"),
     o_core_resp_store_fault("o_core_resp_store_fault"),
     o_core_resp_page_x_fault("o_core_resp_page_x_fault"),
@@ -52,7 +51,6 @@ Mmu::Mmu(sc_module_name name,
     i_mem_resp_valid("i_mem_resp_valid"),
     i_mem_resp_addr("i_mem_resp_addr"),
     i_mem_resp_data("i_mem_resp_data"),
-    i_mem_resp_executable("i_mem_resp_executable"),
     i_mem_resp_load_fault("i_mem_resp_load_fault"),
     i_mem_resp_store_fault("i_mem_resp_store_fault"),
     o_mem_resp_ready("o_mem_resp_ready"),
@@ -88,7 +86,6 @@ Mmu::Mmu(sc_module_name name,
     sensitive << i_mem_resp_valid;
     sensitive << i_mem_resp_addr;
     sensitive << i_mem_resp_data;
-    sensitive << i_mem_resp_executable;
     sensitive << i_mem_resp_load_fault;
     sensitive << i_mem_resp_store_fault;
     sensitive << i_mmu_ena;
@@ -113,7 +110,6 @@ Mmu::Mmu(sc_module_name name,
     sensitive << r.last_permission;
     sensitive << r.resp_addr;
     sensitive << r.resp_data;
-    sensitive << r.resp_executable;
     sensitive << r.resp_load_fault;
     sensitive << r.resp_store_fault;
     sensitive << r.ex_page_fault;
@@ -148,7 +144,6 @@ void Mmu::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_core_resp_valid, o_core_resp_valid.name());
         sc_trace(o_vcd, o_core_resp_addr, o_core_resp_addr.name());
         sc_trace(o_vcd, o_core_resp_data, o_core_resp_data.name());
-        sc_trace(o_vcd, o_core_resp_executable, o_core_resp_executable.name());
         sc_trace(o_vcd, o_core_resp_load_fault, o_core_resp_load_fault.name());
         sc_trace(o_vcd, o_core_resp_store_fault, o_core_resp_store_fault.name());
         sc_trace(o_vcd, o_core_resp_page_x_fault, o_core_resp_page_x_fault.name());
@@ -165,7 +160,6 @@ void Mmu::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_mem_resp_valid, i_mem_resp_valid.name());
         sc_trace(o_vcd, i_mem_resp_addr, i_mem_resp_addr.name());
         sc_trace(o_vcd, i_mem_resp_data, i_mem_resp_data.name());
-        sc_trace(o_vcd, i_mem_resp_executable, i_mem_resp_executable.name());
         sc_trace(o_vcd, i_mem_resp_load_fault, i_mem_resp_load_fault.name());
         sc_trace(o_vcd, i_mem_resp_store_fault, i_mem_resp_store_fault.name());
         sc_trace(o_vcd, o_mem_resp_ready, o_mem_resp_ready.name());
@@ -187,7 +181,6 @@ void Mmu::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.last_permission, pn + ".r_last_permission");
         sc_trace(o_vcd, r.resp_addr, pn + ".r_resp_addr");
         sc_trace(o_vcd, r.resp_data, pn + ".r_resp_data");
-        sc_trace(o_vcd, r.resp_executable, pn + ".r_resp_executable");
         sc_trace(o_vcd, r.resp_load_fault, pn + ".r_resp_load_fault");
         sc_trace(o_vcd, r.resp_store_fault, pn + ".r_resp_store_fault");
         sc_trace(o_vcd, r.ex_page_fault, pn + ".r_ex_page_fault");
@@ -211,7 +204,6 @@ void Mmu::comb() {
     bool v_core_resp_valid;
     sc_uint<CFG_CPU_ADDR_BITS> vb_core_resp_addr;
     sc_uint<64> vb_core_resp_data;
-    bool v_core_resp_executable;
     bool v_core_resp_load_fault;
     bool v_core_resp_store_fault;
     bool v_mem_req_valid;
@@ -244,7 +236,6 @@ void Mmu::comb() {
     v_core_resp_valid = 0;
     vb_core_resp_addr = 0;
     vb_core_resp_data = 0;
-    v_core_resp_executable = 0;
     v_core_resp_load_fault = 0;
     v_core_resp_store_fault = 0;
     v_mem_req_valid = 0;
@@ -325,7 +316,6 @@ void Mmu::comb() {
     switch (r.state.read()) {
     case Idle:
         v.tlb_hit = 0;
-        v.resp_executable = 0;
         v.resp_load_fault = 0;
         v.resp_store_fault = 0;
         v.ex_page_fault = 0;
@@ -342,7 +332,6 @@ void Mmu::comb() {
             v_core_resp_valid = i_mem_resp_valid;
             vb_core_resp_addr = i_mem_resp_addr;
             vb_core_resp_data = i_mem_resp_data;
-            v_core_resp_executable = i_mem_resp_executable;
             v_core_resp_load_fault = i_mem_resp_load_fault;
             v_core_resp_store_fault = i_mem_resp_store_fault;
             v_mem_req_valid = i_core_req_valid;
@@ -365,7 +354,6 @@ void Mmu::comb() {
             v_core_resp_valid = i_mem_resp_valid;
             vb_core_resp_addr = r.last_va;
             vb_core_resp_data = i_mem_resp_data;
-            v_core_resp_executable = i_mem_resp_executable;
             v_core_resp_load_fault = i_mem_resp_load_fault;
             v_core_resp_store_fault = i_mem_resp_store_fault;
             v_mem_req_valid = i_core_req_valid;
@@ -395,7 +383,6 @@ void Mmu::comb() {
         v_core_resp_valid = i_mem_resp_valid;
         vb_core_resp_addr = i_mem_resp_addr;
         vb_core_resp_data = i_mem_resp_data;
-        v_core_resp_executable = i_mem_resp_executable;
         v_core_resp_load_fault = i_mem_resp_load_fault;
         v_core_resp_store_fault = i_mem_resp_store_fault;
         v_mem_req_valid = i_core_req_valid;
@@ -421,7 +408,6 @@ void Mmu::comb() {
         v_core_resp_valid = i_mem_resp_valid;
         vb_core_resp_addr = r.last_va;
         vb_core_resp_data = i_mem_resp_data;
-        v_core_resp_executable = i_mem_resp_executable;
         v_core_resp_load_fault = i_mem_resp_load_fault;
         v_core_resp_store_fault = i_mem_resp_store_fault;
         v_mem_req_valid = i_core_req_valid;
@@ -487,7 +473,6 @@ void Mmu::comb() {
         if (i_mem_resp_valid.read() == 1) {
             v.resp_addr = i_mem_resp_addr;
             v.resp_data = i_mem_resp_data;
-            v.resp_executable = i_mem_resp_executable;      // MPU executable flag
             v.resp_load_fault = i_mem_resp_load_fault;      // Hardware error Load (unmapped access)
             v.resp_store_fault = i_mem_resp_store_fault;    // Hardware error Store/AMO (unmapped access)
             if ((r.tlb_hit || i_mem_resp_load_fault || i_mem_resp_store_fault) == 1) {
@@ -551,7 +536,6 @@ void Mmu::comb() {
         v_core_resp_valid = 1;
         vb_core_resp_addr = r.last_va;
         vb_core_resp_data = r.resp_data;
-        v_core_resp_executable = r.resp_executable;
         v_core_resp_load_fault = r.resp_load_fault;
         v_core_resp_store_fault = r.resp_store_fault;
         if (i_core_resp_ready.read() == 1) {
@@ -599,7 +583,6 @@ void Mmu::comb() {
     o_core_resp_valid = v_core_resp_valid;
     o_core_resp_addr = vb_core_resp_addr;
     o_core_resp_data = vb_core_resp_data;
-    o_core_resp_executable = v_core_resp_executable;
     o_core_resp_load_fault = v_core_resp_load_fault;
     o_core_resp_store_fault = v_core_resp_store_fault;
     o_core_resp_page_x_fault = (r.ex_page_fault && r.req_x);

@@ -36,7 +36,6 @@ SC_MODULE(CacheTop) {
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_resp_ctrl_addr;    // ICache response address
     sc_out<sc_uint<64>> o_resp_ctrl_data;                   // ICache read data
     sc_out<bool> o_resp_ctrl_load_fault;                    // Bus response ERRSLV or ERRDEC on read
-    sc_out<bool> o_resp_ctrl_executable;                    // MPU flag: executable
     sc_in<bool> i_resp_ctrl_ready;                          // CPU Core is ready to accept ICache response
     // Data path:
     sc_in<bool> i_req_data_valid;                           // Data path request from CPU Core is valid
@@ -52,8 +51,6 @@ SC_MODULE(CacheTop) {
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_resp_data_fault_addr;// AXI B-channel error
     sc_out<bool> o_resp_data_load_fault;                    // Bus response ERRSLV or ERRDEC on read
     sc_out<bool> o_resp_data_store_fault;                   // Bus response ERRSLV or ERRDEC on write
-    sc_out<bool> o_resp_data_er_mpu_load;
-    sc_out<bool> o_resp_data_er_mpu_store;
     sc_in<bool> i_resp_data_ready;                          // CPU Core is ready to accept DCache repsonse
     // Memory interface:
     sc_in<bool> i_req_mem_ready;                            // System Bus is ready to accept memory operation request
@@ -131,8 +128,6 @@ SC_MODULE(CacheTop) {
     sc_signal<bool> w_ctrl_resp_mem_data_valid;
     sc_signal<sc_biguint<ICACHE_LINE_BITS>> wb_ctrl_resp_mem_data;
     sc_signal<bool> w_ctrl_resp_mem_load_fault;
-    sc_signal<bool> w_resp_ctrl_writable_unused;
-    sc_signal<bool> w_resp_ctrl_readable_unused;
     sc_signal<bool> w_ctrl_req_ready;
     // Memory Data interface:
     sc_signal<bool> w_data_resp_mem_data_valid;

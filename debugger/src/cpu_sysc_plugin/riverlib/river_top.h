@@ -98,7 +98,6 @@ SC_MODULE(RiverTop) {
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_resp_ctrl_addr;
     sc_signal<sc_uint<64>> wb_resp_ctrl_data;
     sc_signal<bool> w_resp_ctrl_load_fault;
-    sc_signal<bool> w_resp_ctrl_executable;
     sc_signal<bool> w_resp_ctrl_ready;
     // Data path:
     sc_signal<bool> w_req_data_ready;
@@ -113,8 +112,6 @@ SC_MODULE(RiverTop) {
     sc_signal<sc_uint<64>> wb_resp_data_data;
     sc_signal<bool> w_resp_data_load_fault;
     sc_signal<bool> w_resp_data_store_fault;
-    sc_signal<bool> w_resp_data_er_mpu_load;
-    sc_signal<bool> w_resp_data_er_mpu_store;
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_resp_data_fault_addr;
     sc_signal<bool> w_resp_data_ready;
     sc_signal<bool> w_mpu_region_we;

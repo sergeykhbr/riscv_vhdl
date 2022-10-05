@@ -32,7 +32,6 @@ CacheTop::CacheTop(sc_module_name name,
     o_resp_ctrl_addr("o_resp_ctrl_addr"),
     o_resp_ctrl_data("o_resp_ctrl_data"),
     o_resp_ctrl_load_fault("o_resp_ctrl_load_fault"),
-    o_resp_ctrl_executable("o_resp_ctrl_executable"),
     i_resp_ctrl_ready("i_resp_ctrl_ready"),
     i_req_data_valid("i_req_data_valid"),
     i_req_data_type("i_req_data_type"),
@@ -47,8 +46,6 @@ CacheTop::CacheTop(sc_module_name name,
     o_resp_data_fault_addr("o_resp_data_fault_addr"),
     o_resp_data_load_fault("o_resp_data_load_fault"),
     o_resp_data_store_fault("o_resp_data_store_fault"),
-    o_resp_data_er_mpu_load("o_resp_data_er_mpu_load"),
-    o_resp_data_er_mpu_store("o_resp_data_er_mpu_store"),
     i_resp_data_ready("i_resp_data_ready"),
     i_req_mem_ready("i_req_mem_ready"),
     o_req_mem_path("o_req_mem_path"),
@@ -99,9 +96,6 @@ CacheTop::CacheTop(sc_module_name name,
     i1->o_resp_addr(o_resp_ctrl_addr);
     i1->o_resp_data(o_resp_ctrl_data);
     i1->o_resp_load_fault(o_resp_ctrl_load_fault);
-    i1->o_resp_executable(o_resp_ctrl_executable);
-    i1->o_resp_writable(w_resp_ctrl_writable_unused);
-    i1->o_resp_readable(w_resp_ctrl_readable_unused);
     i1->i_resp_ready(i_resp_ctrl_ready);
     i1->i_req_mem_ready(w_ctrl_req_ready);
     i1->o_req_mem_valid(i.req_mem_valid);
@@ -135,8 +129,6 @@ CacheTop::CacheTop(sc_module_name name,
     d0->o_resp_er_addr(o_resp_data_fault_addr);
     d0->o_resp_er_load_fault(o_resp_data_load_fault);
     d0->o_resp_er_store_fault(o_resp_data_store_fault);
-    d0->o_resp_er_mpu_load(o_resp_data_er_mpu_load);
-    d0->o_resp_er_mpu_store(o_resp_data_er_mpu_store);
     d0->i_resp_ready(i_resp_data_ready);
     d0->i_req_mem_ready(w_data_req_ready);
     d0->o_req_mem_valid(d.req_mem_valid);
@@ -239,8 +231,6 @@ CacheTop::CacheTop(sc_module_name name,
     sensitive << w_ctrl_resp_mem_data_valid;
     sensitive << wb_ctrl_resp_mem_data;
     sensitive << w_ctrl_resp_mem_load_fault;
-    sensitive << w_resp_ctrl_writable_unused;
-    sensitive << w_resp_ctrl_readable_unused;
     sensitive << w_ctrl_req_ready;
     sensitive << w_data_resp_mem_data_valid;
     sensitive << wb_data_resp_mem_data;
@@ -280,7 +270,6 @@ void CacheTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_resp_ctrl_addr, o_resp_ctrl_addr.name());
         sc_trace(o_vcd, o_resp_ctrl_data, o_resp_ctrl_data.name());
         sc_trace(o_vcd, o_resp_ctrl_load_fault, o_resp_ctrl_load_fault.name());
-        sc_trace(o_vcd, o_resp_ctrl_executable, o_resp_ctrl_executable.name());
         sc_trace(o_vcd, i_resp_ctrl_ready, i_resp_ctrl_ready.name());
         sc_trace(o_vcd, i_req_data_valid, i_req_data_valid.name());
         sc_trace(o_vcd, i_req_data_type, i_req_data_type.name());
@@ -295,8 +284,6 @@ void CacheTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_resp_data_fault_addr, o_resp_data_fault_addr.name());
         sc_trace(o_vcd, o_resp_data_load_fault, o_resp_data_load_fault.name());
         sc_trace(o_vcd, o_resp_data_store_fault, o_resp_data_store_fault.name());
-        sc_trace(o_vcd, o_resp_data_er_mpu_load, o_resp_data_er_mpu_load.name());
-        sc_trace(o_vcd, o_resp_data_er_mpu_store, o_resp_data_er_mpu_store.name());
         sc_trace(o_vcd, i_resp_data_ready, i_resp_data_ready.name());
         sc_trace(o_vcd, i_req_mem_ready, i_req_mem_ready.name());
         sc_trace(o_vcd, o_req_mem_path, o_req_mem_path.name());

@@ -35,14 +35,14 @@ InstrFetch::InstrFetch(sc_module_name name,
     i_mem_data_addr("i_mem_data_addr"),
     i_mem_data("i_mem_data"),
     i_mem_load_fault("i_mem_load_fault"),
-    i_mem_executable("i_mem_executable"),
+    i_mem_page_fault_x("i_mem_page_fault_x"),
     o_mem_resp_ready("o_mem_resp_ready"),
     i_flush_pipeline("i_flush_pipeline"),
     i_progbuf_ena("i_progbuf_ena"),
     i_progbuf_pc("i_progbuf_pc"),
     i_progbuf_instr("i_progbuf_instr"),
     o_instr_load_fault("o_instr_load_fault"),
-    o_instr_executable("o_instr_executable"),
+    o_instr_page_fault_x("o_instr_page_fault_x"),
     o_pc("o_pc"),
     o_instr("o_instr") {
 
@@ -57,7 +57,7 @@ InstrFetch::InstrFetch(sc_module_name name,
     sensitive << i_mem_data_addr;
     sensitive << i_mem_data;
     sensitive << i_mem_load_fault;
-    sensitive << i_mem_executable;
+    sensitive << i_mem_page_fault_x;
     sensitive << i_flush_pipeline;
     sensitive << i_progbuf_ena;
     sensitive << i_progbuf_pc;
@@ -70,7 +70,7 @@ InstrFetch::InstrFetch(sc_module_name name,
     sensitive << r.pc;
     sensitive << r.instr;
     sensitive << r.instr_load_fault;
-    sensitive << r.instr_executable;
+    sensitive << r.instr_page_fault_x;
     sensitive << r.progbuf_ena;
 
     SC_METHOD(registers);
@@ -92,14 +92,14 @@ void InstrFetch::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_mem_data_addr, i_mem_data_addr.name());
         sc_trace(o_vcd, i_mem_data, i_mem_data.name());
         sc_trace(o_vcd, i_mem_load_fault, i_mem_load_fault.name());
-        sc_trace(o_vcd, i_mem_executable, i_mem_executable.name());
+        sc_trace(o_vcd, i_mem_page_fault_x, i_mem_page_fault_x.name());
         sc_trace(o_vcd, o_mem_resp_ready, o_mem_resp_ready.name());
         sc_trace(o_vcd, i_flush_pipeline, i_flush_pipeline.name());
         sc_trace(o_vcd, i_progbuf_ena, i_progbuf_ena.name());
         sc_trace(o_vcd, i_progbuf_pc, i_progbuf_pc.name());
         sc_trace(o_vcd, i_progbuf_instr, i_progbuf_instr.name());
         sc_trace(o_vcd, o_instr_load_fault, o_instr_load_fault.name());
-        sc_trace(o_vcd, o_instr_executable, o_instr_executable.name());
+        sc_trace(o_vcd, o_instr_page_fault_x, o_instr_page_fault_x.name());
         sc_trace(o_vcd, o_pc, o_pc.name());
         sc_trace(o_vcd, o_instr, o_instr.name());
         sc_trace(o_vcd, r.state, pn + ".r_state");
@@ -110,7 +110,7 @@ void InstrFetch::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.pc, pn + ".r_pc");
         sc_trace(o_vcd, r.instr, pn + ".r_instr");
         sc_trace(o_vcd, r.instr_load_fault, pn + ".r_instr_load_fault");
-        sc_trace(o_vcd, r.instr_executable, pn + ".r_instr_executable");
+        sc_trace(o_vcd, r.instr_page_fault_x, pn + ".r_instr_page_fault_x");
         sc_trace(o_vcd, r.progbuf_ena, pn + ".r_progbuf_ena");
     }
 
@@ -130,7 +130,7 @@ void InstrFetch::comb() {
             v.pc = i_progbuf_pc;
             v.instr = i_progbuf_instr;
             v.instr_load_fault = 0;
-            v.instr_executable = 0;
+            v.instr_page_fault_x = 0;
         } else if (i_bp_valid.read() == 1) {
             v.state = WaitReqAccept;
             v.req_addr = i_bp_pc;
@@ -154,7 +154,7 @@ void InstrFetch::comb() {
             v.pc = i_mem_data_addr;
             v.instr = i_mem_data;
             v.instr_load_fault = i_mem_load_fault;
-            v.instr_executable = i_mem_executable;
+            v.instr_page_fault_x = i_mem_page_fault_x;
             v.req_valid = (i_bp_valid && (!i_progbuf_ena));
 
             if (r.req_valid.read() == 1) {
@@ -183,7 +183,7 @@ void InstrFetch::comb() {
         v.pc = ~0ull;
         v.instr = 0;
         v.instr_load_fault = 0;
-        v.instr_executable = 0;
+        v.instr_page_fault_x = 0;
     }
 
     if (!async_reset_ && i_nrst.read() == 0) {
@@ -194,7 +194,7 @@ void InstrFetch::comb() {
     o_mem_addr = r.req_addr;
     o_mem_resp_ready = r.resp_ready;
     o_instr_load_fault = r.instr_load_fault;
-    o_instr_executable = r.instr_executable;
+    o_instr_page_fault_x = r.instr_page_fault_x;
     o_requested_pc = r.req_addr;
     o_fetching_pc = r.mem_resp_shadow;
     o_pc = r.pc;

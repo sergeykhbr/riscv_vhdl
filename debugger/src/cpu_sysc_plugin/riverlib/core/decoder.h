@@ -29,7 +29,7 @@ SC_MODULE(InstrDecoder) {
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_f_pc;               // Fetched pc
     sc_in<sc_uint<64>> i_f_instr;                           // Fetched instruction value
     sc_in<bool> i_instr_load_fault;                         // fault instruction's address
-    sc_in<bool> i_instr_executable;                         // MPU flag
+    sc_in<bool> i_instr_page_fault_x;                       // Instruction MMU page fault
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_npc;              // executor expected instr pointer
     sc_out<sc_uint<6>> o_radr1;                             // register bank address 1 (rs1)
     sc_out<sc_uint<6>> o_radr2;                             // register bank address 2 (rs2)
@@ -53,7 +53,7 @@ SC_MODULE(InstrDecoder) {
     sc_out<sc_biguint<Instr_Total>> o_instr_vec;            // One bit per decoded instruction bus
     sc_out<bool> o_exception;                               // Exception detected
     sc_out<bool> o_instr_load_fault;                        // fault instruction's address
-    sc_out<bool> o_instr_executable;                        // MPU flag
+    sc_out<bool> o_instr_page_fault_x;                      // IMMU page fault signal
     sc_out<bool> o_progbuf_ena;
 
     void comb();
@@ -91,7 +91,7 @@ SC_MODULE(InstrDecoder) {
         sc_signal<bool> compressed;
         sc_signal<bool> amo;
         sc_signal<bool> instr_load_fault;
-        sc_signal<bool> instr_executable;
+        sc_signal<bool> instr_page_fault_x;
         sc_signal<bool> instr_unimplemented;
         sc_signal<sc_uint<6>> radr1;
         sc_signal<sc_uint<6>> radr2;

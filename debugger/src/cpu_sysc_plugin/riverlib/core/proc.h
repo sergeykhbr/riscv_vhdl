@@ -44,7 +44,6 @@ SC_MODULE(Processor) {
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_resp_ctrl_addr;     // Response address must be equal to the latest request address
     sc_in<sc_uint<64>> i_resp_ctrl_data;                    // Read value
     sc_in<bool> i_resp_ctrl_load_fault;
-    sc_in<bool> i_resp_ctrl_executable;                     // MPU flag
     sc_out<bool> o_resp_ctrl_ready;                         // Core is ready to accept response from ICache
     // Data path:
     sc_in<bool> i_req_data_ready;                           // DCache is ready to accept request
@@ -60,8 +59,6 @@ SC_MODULE(Processor) {
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_resp_data_fault_addr;// write-error address (B-channel)
     sc_in<bool> i_resp_data_load_fault;                     // Bus response with SLVERR or DECERR on read
     sc_in<bool> i_resp_data_store_fault;                    // Bus response with SLVERR or DECERR on write
-    sc_in<bool> i_resp_data_er_mpu_load;
-    sc_in<bool> i_resp_data_er_mpu_store;
     sc_out<bool> o_resp_data_ready;                         // Core is ready to accept response from DCache
     // Interrupt line from external interrupts controller (PLIC):
     sc_in<sc_uint<IRQ_TOTAL>> i_irq_pending;                // Per Hart pending interrupts pins
@@ -114,7 +111,7 @@ SC_MODULE(Processor) {
 
     struct FetchType {
         sc_signal<bool> instr_load_fault;
-        sc_signal<bool> instr_executable;
+        sc_signal<bool> instr_page_fault_x;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> requested_pc; // requested but responded address
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> fetching_pc;  // receiving from cache before latch
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
@@ -125,11 +122,10 @@ SC_MODULE(Processor) {
     };
 
     struct MmuType {
-        sc_signal<bool> fetch_req_ready;
-        sc_signal<bool> fetch_data_valid;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> fetch_data_addr;
-        sc_signal<sc_uint<64>> fetch_data;
-        sc_signal<bool> fetch_executable;
+        sc_signal<bool> req_ready;
+        sc_signal<bool> valid;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> addr;
+        sc_signal<sc_uint<64>> data;
         sc_signal<bool> load_fault;
         sc_signal<bool> store_fault;
         sc_signal<bool> page_fault_x;
@@ -153,7 +149,7 @@ SC_MODULE(Processor) {
         sc_signal<sc_biguint<Instr_Total>> instr_vec;
         sc_signal<bool> exception;
         sc_signal<bool> instr_load_fault;
-        sc_signal<bool> instr_executable;
+        sc_signal<bool> page_fault_x;
         sc_signal<sc_uint<6>> radr1;
         sc_signal<sc_uint<6>> radr2;
         sc_signal<sc_uint<6>> waddr;
@@ -321,14 +317,13 @@ SC_MODULE(Processor) {
     sc_signal<sc_uint<8>> unused_immu_mem_req_wstrb;
     sc_signal<sc_uint<2>> unused_immu_mem_req_size;
     sc_signal<bool> w_immu_core_req_fetch;                  // assign to 1: fetch instruction
-    sc_signal<bool> w_dmmu_core_req_fetch;                  // assign to 1: data
+    sc_signal<bool> w_dmmu_core_req_fetch;                  // assign to 0: data
     sc_signal<sc_uint<MemopType_Total>> unused_immu_core_req_type;
     sc_signal<sc_uint<64>> unused_immu_core_req_wdata;
     sc_signal<sc_uint<8>> unused_immu_core_req_wstrb;
     sc_signal<sc_uint<2>> unused_immu_core_req_size;
     sc_signal<bool> unused_immu_mem_resp_store_fault;
     sc_signal<sc_uint<CFG_MMU_TLB_AWIDTH>> unused_immu_fence_addr;
-    sc_signal<bool> unused_dmmu_mem_resp_executable;
 
     InstrFetch *fetch0;
     InstrDecoder *dec0;

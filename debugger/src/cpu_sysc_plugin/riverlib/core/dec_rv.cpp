@@ -30,7 +30,7 @@ DecoderRv::DecoderRv(sc_module_name name,
     i_f_pc("i_f_pc"),
     i_f_instr("i_f_instr"),
     i_instr_load_fault("i_instr_load_fault"),
-    i_instr_executable("i_instr_executable"),
+    i_instr_page_fault_x("i_instr_page_fault_x"),
     o_radr1("o_radr1"),
     o_radr2("o_radr2"),
     o_waddr("o_waddr"),
@@ -51,7 +51,7 @@ DecoderRv::DecoderRv(sc_module_name name,
     o_instr_vec("o_instr_vec"),
     o_exception("o_exception"),
     o_instr_load_fault("o_instr_load_fault"),
-    o_instr_executable("o_instr_executable"),
+    o_instr_page_fault_x("o_instr_page_fault_x"),
     o_progbuf_ena("o_progbuf_ena") {
 
     async_reset_ = async_reset;
@@ -64,7 +64,7 @@ DecoderRv::DecoderRv(sc_module_name name,
     sensitive << i_f_pc;
     sensitive << i_f_instr;
     sensitive << i_instr_load_fault;
-    sensitive << i_instr_executable;
+    sensitive << i_instr_page_fault_x;
     sensitive << r.pc;
     sensitive << r.isa_type;
     sensitive << r.instr_vec;
@@ -79,7 +79,7 @@ DecoderRv::DecoderRv(sc_module_name name,
     sensitive << r.compressed;
     sensitive << r.amo;
     sensitive << r.instr_load_fault;
-    sensitive << r.instr_executable;
+    sensitive << r.instr_page_fault_x;
     sensitive << r.instr_unimplemented;
     sensitive << r.radr1;
     sensitive << r.radr2;
@@ -101,7 +101,7 @@ void DecoderRv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_f_pc, i_f_pc.name());
         sc_trace(o_vcd, i_f_instr, i_f_instr.name());
         sc_trace(o_vcd, i_instr_load_fault, i_instr_load_fault.name());
-        sc_trace(o_vcd, i_instr_executable, i_instr_executable.name());
+        sc_trace(o_vcd, i_instr_page_fault_x, i_instr_page_fault_x.name());
         sc_trace(o_vcd, o_radr1, o_radr1.name());
         sc_trace(o_vcd, o_radr2, o_radr2.name());
         sc_trace(o_vcd, o_waddr, o_waddr.name());
@@ -122,7 +122,7 @@ void DecoderRv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_instr_vec, o_instr_vec.name());
         sc_trace(o_vcd, o_exception, o_exception.name());
         sc_trace(o_vcd, o_instr_load_fault, o_instr_load_fault.name());
-        sc_trace(o_vcd, o_instr_executable, o_instr_executable.name());
+        sc_trace(o_vcd, o_instr_page_fault_x, o_instr_page_fault_x.name());
         sc_trace(o_vcd, o_progbuf_ena, o_progbuf_ena.name());
         sc_trace(o_vcd, r.pc, pn + ".r_pc");
         sc_trace(o_vcd, r.isa_type, pn + ".r_isa_type");
@@ -138,7 +138,7 @@ void DecoderRv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.compressed, pn + ".r_compressed");
         sc_trace(o_vcd, r.amo, pn + ".r_amo");
         sc_trace(o_vcd, r.instr_load_fault, pn + ".r_instr_load_fault");
-        sc_trace(o_vcd, r.instr_executable, pn + ".r_instr_executable");
+        sc_trace(o_vcd, r.instr_page_fault_x, pn + ".r_instr_page_fault_x");
         sc_trace(o_vcd, r.instr_unimplemented, pn + ".r_instr_unimplemented");
         sc_trace(o_vcd, r.radr1, pn + ".r_radr1");
         sc_trace(o_vcd, r.radr2, pn + ".r_radr2");
@@ -1067,7 +1067,7 @@ void DecoderRv::comb() {
     v.compressed = v_compressed;
     v.amo = v_amo;
     v.instr_load_fault = i_instr_load_fault;
-    v.instr_executable = i_instr_executable;
+    v.instr_page_fault_x = i_instr_page_fault_x;
     v.instr_unimplemented = v_error;
     v.radr1 = vb_radr1;
     v.radr2 = vb_radr2;
@@ -1095,7 +1095,7 @@ void DecoderRv::comb() {
     o_instr_vec = r.instr_vec;
     o_exception = r.instr_unimplemented;
     o_instr_load_fault = r.instr_load_fault;
-    o_instr_executable = r.instr_executable;
+    o_instr_page_fault_x = r.instr_page_fault_x;
     o_radr1 = r.radr1;
     o_radr2 = r.radr2;
     o_waddr = r.waddr;

@@ -86,7 +86,6 @@ RiverTop::RiverTop(sc_module_name name,
     proc0->i_resp_ctrl_addr(wb_resp_ctrl_addr);
     proc0->i_resp_ctrl_data(wb_resp_ctrl_data);
     proc0->i_resp_ctrl_load_fault(w_resp_ctrl_load_fault);
-    proc0->i_resp_ctrl_executable(w_resp_ctrl_executable);
     proc0->o_resp_ctrl_ready(w_resp_ctrl_ready);
     proc0->i_req_data_ready(w_req_data_ready);
     proc0->o_req_data_valid(w_req_data_valid);
@@ -101,8 +100,6 @@ RiverTop::RiverTop(sc_module_name name,
     proc0->i_resp_data_fault_addr(wb_resp_data_fault_addr);
     proc0->i_resp_data_load_fault(w_resp_data_load_fault);
     proc0->i_resp_data_store_fault(w_resp_data_store_fault);
-    proc0->i_resp_data_er_mpu_load(w_resp_data_er_mpu_load);
-    proc0->i_resp_data_er_mpu_store(w_resp_data_er_mpu_store);
     proc0->o_resp_data_ready(w_resp_data_ready);
     proc0->i_irq_pending(i_irq_pending);
     proc0->o_mpu_region_we(w_mpu_region_we);
@@ -141,7 +138,6 @@ RiverTop::RiverTop(sc_module_name name,
     cache0->o_resp_ctrl_addr(wb_resp_ctrl_addr);
     cache0->o_resp_ctrl_data(wb_resp_ctrl_data);
     cache0->o_resp_ctrl_load_fault(w_resp_ctrl_load_fault);
-    cache0->o_resp_ctrl_executable(w_resp_ctrl_executable);
     cache0->i_resp_ctrl_ready(w_resp_ctrl_ready);
     cache0->i_req_data_valid(w_req_data_valid);
     cache0->i_req_data_type(wb_req_data_type);
@@ -156,8 +152,6 @@ RiverTop::RiverTop(sc_module_name name,
     cache0->o_resp_data_fault_addr(wb_resp_data_fault_addr);
     cache0->o_resp_data_load_fault(w_resp_data_load_fault);
     cache0->o_resp_data_store_fault(w_resp_data_store_fault);
-    cache0->o_resp_data_er_mpu_load(w_resp_data_er_mpu_load);
-    cache0->o_resp_data_er_mpu_store(w_resp_data_er_mpu_store);
     cache0->i_resp_data_ready(w_resp_data_ready);
     cache0->i_req_mem_ready(i_req_mem_ready);
     cache0->o_req_mem_path(o_req_mem_path);
@@ -223,7 +217,6 @@ RiverTop::RiverTop(sc_module_name name,
     sensitive << wb_resp_ctrl_addr;
     sensitive << wb_resp_ctrl_data;
     sensitive << w_resp_ctrl_load_fault;
-    sensitive << w_resp_ctrl_executable;
     sensitive << w_resp_ctrl_ready;
     sensitive << w_req_data_ready;
     sensitive << w_req_data_valid;
@@ -237,8 +230,6 @@ RiverTop::RiverTop(sc_module_name name,
     sensitive << wb_resp_data_data;
     sensitive << w_resp_data_load_fault;
     sensitive << w_resp_data_store_fault;
-    sensitive << w_resp_data_er_mpu_load;
-    sensitive << w_resp_data_er_mpu_store;
     sensitive << wb_resp_data_fault_addr;
     sensitive << w_resp_data_ready;
     sensitive << w_mpu_region_we;

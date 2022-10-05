@@ -39,8 +39,6 @@ SC_MODULE(DCacheLru) {
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_resp_er_addr;
     sc_out<bool> o_resp_er_load_fault;
     sc_out<bool> o_resp_er_store_fault;
-    sc_out<bool> o_resp_er_mpu_load;                        // No access rights to read/execute
-    sc_out<bool> o_resp_er_mpu_store;                       // No access rights to write
     sc_in<bool> i_resp_ready;
     // Memory interface:
     sc_in<bool> i_req_mem_ready;

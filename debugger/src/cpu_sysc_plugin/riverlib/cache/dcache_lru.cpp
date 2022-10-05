@@ -38,8 +38,6 @@ DCacheLru::DCacheLru(sc_module_name name,
     o_resp_er_addr("o_resp_er_addr"),
     o_resp_er_load_fault("o_resp_er_load_fault"),
     o_resp_er_store_fault("o_resp_er_store_fault"),
-    o_resp_er_mpu_load("o_resp_er_mpu_load"),
-    o_resp_er_mpu_store("o_resp_er_mpu_store"),
     i_resp_ready("i_resp_ready"),
     i_req_mem_ready("i_req_mem_ready"),
     o_req_mem_valid("o_req_mem_valid"),
@@ -189,8 +187,6 @@ void DCacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_resp_er_addr, o_resp_er_addr.name());
         sc_trace(o_vcd, o_resp_er_load_fault, o_resp_er_load_fault.name());
         sc_trace(o_vcd, o_resp_er_store_fault, o_resp_er_store_fault.name());
-        sc_trace(o_vcd, o_resp_er_mpu_load, o_resp_er_mpu_load.name());
-        sc_trace(o_vcd, o_resp_er_mpu_store, o_resp_er_mpu_store.name());
         sc_trace(o_vcd, i_resp_ready, i_resp_ready.name());
         sc_trace(o_vcd, i_req_mem_ready, i_req_mem_ready.name());
         sc_trace(o_vcd, o_req_mem_valid, o_req_mem_valid.name());
@@ -750,10 +746,8 @@ void DCacheLru::comb() {
     o_resp_data = vb_resp_data;
     o_resp_addr = r.req_addr;
     o_resp_er_addr = r.req_addr;
-    o_resp_er_load_fault = v_resp_er_load_fault;
-    o_resp_er_store_fault = v_resp_er_store_fault;
-    o_resp_er_mpu_load = r.mpu_er_load;
-    o_resp_er_mpu_store = r.mpu_er_store;
+    o_resp_er_load_fault = (v_resp_er_load_fault || r.mpu_er_load);
+    o_resp_er_store_fault = (v_resp_er_store_fault || r.mpu_er_store);
     o_mpu_addr = r.req_addr;
 
     o_req_snoop_ready = v_req_snoop_ready;
