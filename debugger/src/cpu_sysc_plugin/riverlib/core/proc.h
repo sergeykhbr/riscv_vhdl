@@ -84,11 +84,11 @@ SC_MODULE(Processor) {
     sc_in<sc_biguint<(32 * CFG_PROGBUF_REG_TOTAL)>> i_progbuf;// progam buffer
     sc_out<bool> o_halted;                                  // CPU halted via debug interface
     // Cache debug signals:
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_flush_address;     // Address of instruction to remove from ICache
-    sc_out<bool> o_flush_valid;                             // Remove address from ICache is valid
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_data_flush_address;// Address of instruction to remove from D$
-    sc_out<bool> o_data_flush_valid;                        // Remove address from D$ is valid
-    sc_in<bool> i_data_flush_end;
+    sc_out<bool> o_flushi_valid;                            // Remove address from ICache is valid
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_flushi_addr;       // Address of instruction to remove from ICache
+    sc_out<bool> o_flushd_valid;                            // Remove address from D$ is valid
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_flushd_addr;       // Address of instruction to remove from D$
+    sc_in<bool> i_flushd_end;
 
     void comb();
 
@@ -229,6 +229,7 @@ SC_MODULE(Processor) {
         sc_signal<bool> resp_exception;                     // Exception of CSR access
         sc_signal<bool> flushd_valid;                       // clear specified addr in D$
         sc_signal<bool> flushi_valid;                       // clear specified addr in I$
+        sc_signal<bool> flushmmu_valid;                     // clear specified leaf in xMMU
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> flush_addr;
         sc_signal<sc_uint<64>> executed_cnt;                // Number of executed instruction
         sc_signal<sc_uint<IRQ_TOTAL>> irq_pending;
@@ -323,7 +324,6 @@ SC_MODULE(Processor) {
     sc_signal<sc_uint<8>> unused_immu_core_req_wstrb;
     sc_signal<sc_uint<2>> unused_immu_core_req_size;
     sc_signal<bool> unused_immu_mem_resp_store_fault;
-    sc_signal<sc_uint<CFG_MMU_TLB_AWIDTH>> unused_immu_fence_addr;
 
     InstrFetch *fetch0;
     InstrDecoder *dec0;

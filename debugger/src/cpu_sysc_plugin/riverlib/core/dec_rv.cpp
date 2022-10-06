@@ -693,6 +693,8 @@ void DecoderRv::comb() {
                 vb_dec[Instr_HRET] = 1;
             } else if (vb_instr == 0x30200073) {
                 vb_dec[Instr_MRET] = 1;
+            } else if ((vb_instr(31, 25) == 0x09) && (vb_waddr.or_reduce() == 0)) {
+                vb_dec[Instr_SFENCE_VMA] = 1;
             } else {
                 v_error = 1;
             }

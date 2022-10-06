@@ -49,6 +49,7 @@ SC_MODULE(MPU) {
 
     struct MpuTableItemType {
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> addr;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> endaddr;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mask;
         sc_signal<sc_uint<CFG_MPU_FL_TOTAL>> flags;         // Enable all regions by default
     };

@@ -55,6 +55,7 @@ SC_MODULE(CsrRegs) {
     sc_out<bool> o_progbuf_error;                           // exception during progbuf execution
     sc_out<bool> o_flushd_valid;                            // clear specified addr in DCache
     sc_out<bool> o_flushi_valid;                            // clear specified addr in ICache
+    sc_out<bool> o_flushmmu_valid;                          // clear specific leaf entry in MMU
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_flush_addr;        // Cache address to flush. All ones means flush all.
     
     sc_out<bool> o_mpu_region_we;                           // write enable into MPU
@@ -98,7 +99,8 @@ SC_MODULE(CsrRegs) {
     static const uint8_t Fence_Data = 1;
     static const uint8_t Fence_DataWaitEnd = 2;
     static const uint8_t Fence_Fetch = 3;
-    static const uint8_t Fence_End = 4;
+    static const uint8_t Fence_MMU = 4;
+    static const uint8_t Fence_End = 5;
     
     static const uint8_t SATP_MODE_SV48 = 9;
 
@@ -150,6 +152,7 @@ SC_MODULE(CsrRegs) {
         sc_signal<sc_uint<4>> satp_mode;                    // Supervisor Address Translation and Protection mode
         sc_signal<sc_uint<2>> mode;
         sc_signal<bool> mprv;                               // Modify PRiVilege. (Table 8.5) If MPRV=0, load and stores as normal, when MPRV=1, use translation of previous mode
+        sc_signal<bool> tvm;                                // Trap Virtual Memory bit. When 1 SFENCE.VMA or SINVAL.VMA or rw access to SATP raise an illegal instruction
         sc_signal<bool> ex_fpu_invalidop;                   // FPU Exception: invalid operation
         sc_signal<bool> ex_fpu_divbyzero;                   // FPU Exception: divide by zero
         sc_signal<bool> ex_fpu_overflow;                    // FPU Exception: overflow

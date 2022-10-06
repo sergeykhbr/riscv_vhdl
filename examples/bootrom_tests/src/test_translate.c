@@ -164,6 +164,8 @@ int test_translate()
 
     fw_register_ram_data("mmu", pages);
 
+    flush_tlb();  // Check sfence.vma
+
     printf_uart("%s", "MMU.MPRV .");
 
     void *master_table = get_page(pages);

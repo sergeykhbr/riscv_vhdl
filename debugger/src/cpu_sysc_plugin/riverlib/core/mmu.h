@@ -58,7 +58,7 @@ SC_MODULE(Mmu) {
     sc_in<bool> i_mmu_ena;                                  // MMU enabled in U and S modes. Sv48 only.
     sc_in<sc_uint<44>> i_mmu_ppn;                           // Physical Page Number from SATP CSR
     sc_in<bool> i_fence;                                    // reset TBL entries at specific address
-    sc_in<sc_uint<CFG_MMU_TLB_AWIDTH>> i_fence_addr;        // Fence address: 0=clean all TBL
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_fence_addr;         // Fence address: 0=clean all TBL
 
     void comb();
     void registers();

@@ -121,11 +121,11 @@ RiverTop::RiverTop(sc_module_name name,
     proc0->o_dport_rdata(o_dport_rdata);
     proc0->i_progbuf(i_progbuf);
     proc0->o_halted(o_halted);
-    proc0->o_flush_address(wb_flush_address);
-    proc0->o_flush_valid(w_flush_valid);
-    proc0->o_data_flush_address(wb_data_flush_address);
-    proc0->o_data_flush_valid(w_data_flush_valid);
-    proc0->i_data_flush_end(w_data_flush_end);
+    proc0->o_flushi_valid(w_flushi_valid);
+    proc0->o_flushi_addr(wb_flushi_addr);
+    proc0->o_flushd_valid(w_flushd_valid);
+    proc0->o_flushd_addr(wb_flushd_addr);
+    proc0->i_flushd_end(w_flushd_end);
 
 
     cache0 = new CacheTop("cache0", async_reset, coherence_ena);
@@ -179,11 +179,11 @@ RiverTop::RiverTop(sc_module_name name,
     cache0->o_resp_snoop_valid(o_resp_snoop_valid);
     cache0->o_resp_snoop_data(o_resp_snoop_data);
     cache0->o_resp_snoop_flags(o_resp_snoop_flags);
-    cache0->i_flush_address(wb_flush_address);
-    cache0->i_flush_valid(w_flush_valid);
-    cache0->i_data_flush_address(wb_data_flush_address);
-    cache0->i_data_flush_valid(w_data_flush_valid);
-    cache0->o_data_flush_end(w_data_flush_end);
+    cache0->i_flushi_valid(w_flushi_valid);
+    cache0->i_flushi_addr(wb_flushi_addr);
+    cache0->i_flushd_valid(w_flushd_valid);
+    cache0->i_flushd_addr(wb_flushd_addr);
+    cache0->o_flushd_end(w_flushd_end);
 
 
 
@@ -237,11 +237,11 @@ RiverTop::RiverTop(sc_module_name name,
     sensitive << wb_mpu_region_addr;
     sensitive << wb_mpu_region_mask;
     sensitive << wb_mpu_region_flags;
-    sensitive << wb_flush_address;
-    sensitive << w_flush_valid;
-    sensitive << wb_data_flush_address;
-    sensitive << w_data_flush_valid;
-    sensitive << w_data_flush_end;
+    sensitive << w_flushi_valid;
+    sensitive << wb_flushi_addr;
+    sensitive << w_flushd_valid;
+    sensitive << wb_flushd_addr;
+    sensitive << w_flushd_end;
 }
 
 RiverTop::~RiverTop() {
@@ -304,7 +304,7 @@ void RiverTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void RiverTop::comb() {
-    o_flush_l2 = w_data_flush_end;
+    o_flush_l2 = w_flushd_end;
 }
 
 }  // namespace debugger

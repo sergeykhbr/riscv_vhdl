@@ -47,6 +47,7 @@ MPU::MPU(sc_module_name name,
     sensitive << i_region_flags;
     for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
         sensitive << r.tbl[i].addr;
+        sensitive << r.tbl[i].endaddr;
         sensitive << r.tbl[i].mask;
         sensitive << r.tbl[i].flags;
     }
@@ -90,6 +91,7 @@ void MPU::comb() {
 
     for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
         v.tbl[i].addr = r.tbl[i].addr;
+        v.tbl[i].endaddr = r.tbl[i].endaddr;
         v.tbl[i].mask = r.tbl[i].mask;
         v.tbl[i].flags = r.tbl[i].flags;
     }
@@ -120,6 +122,7 @@ void MPU::comb() {
 
     if (i_region_we.read() == 1) {
         v.tbl[i_region_idx.read().to_int()].addr = vb_addr;
+        v.tbl[i_region_idx.read().to_int()].endaddr = (vb_addr + (~vb_mask));
         v.tbl[i_region_idx.read().to_int()].mask = vb_mask;
         v.tbl[i_region_idx.read().to_int()].flags = vb_flags;
     }
@@ -127,6 +130,7 @@ void MPU::comb() {
     if (!async_reset_ && i_nrst.read() == 0) {
         for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
             v.tbl[i].addr = 0ull;
+            v.tbl[i].endaddr = 0ull;
             v.tbl[i].mask = 0ull;
             v.tbl[i].flags = ~0ul;
         }
@@ -140,12 +144,14 @@ void MPU::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
         for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
             r.tbl[i].addr = 0ull;
+            r.tbl[i].endaddr = 0ull;
             r.tbl[i].mask = 0ull;
             r.tbl[i].flags = ~0ul;
         }
     } else {
         for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
             r.tbl[i].addr = v.tbl[i].addr;
+            r.tbl[i].endaddr = v.tbl[i].endaddr;
             r.tbl[i].mask = v.tbl[i].mask;
             r.tbl[i].flags = v.tbl[i].flags;
         }

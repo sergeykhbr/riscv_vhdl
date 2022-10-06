@@ -72,11 +72,11 @@ Processor::Processor(sc_module_name name,
     o_dport_rdata("o_dport_rdata"),
     i_progbuf("i_progbuf"),
     o_halted("o_halted"),
-    o_flush_address("o_flush_address"),
-    o_flush_valid("o_flush_valid"),
-    o_data_flush_address("o_data_flush_address"),
-    o_data_flush_valid("o_data_flush_valid"),
-    i_data_flush_end("i_data_flush_end") {
+    o_flushi_valid("o_flushi_valid"),
+    o_flushi_addr("o_flushi_addr"),
+    o_flushd_valid("o_flushd_valid"),
+    o_flushd_addr("o_flushd_addr"),
+    i_flushd_end("i_flushd_end") {
 
     async_reset_ = async_reset;
     hartid_ = hartid;
@@ -130,8 +130,8 @@ Processor::Processor(sc_module_name name,
     immu0->o_mem_resp_ready(o_resp_ctrl_ready);
     immu0->i_mmu_ena(w_immu_ena);
     immu0->i_mmu_ppn(wb_mmu_ppn);
-    immu0->i_fence(csr.flushi_valid);
-    immu0->i_fence_addr(unused_immu_fence_addr);
+    immu0->i_fence(csr.flushmmu_valid);
+    immu0->i_fence_addr(csr.flush_addr);
 
 
     fetch0 = new InstrFetch("fetch0", async_reset);
@@ -354,8 +354,8 @@ Processor::Processor(sc_module_name name,
     dmmu0->o_mem_resp_ready(o_resp_data_ready);
     dmmu0->i_mmu_ena(w.m.dmmu_ena);
     dmmu0->i_mmu_ppn(wb_mmu_ppn);
-    dmmu0->i_fence(csr.flushi_valid);
-    dmmu0->i_fence_addr(unused_immu_fence_addr);
+    dmmu0->i_fence(csr.flushmmu_valid);
+    dmmu0->i_fence_addr(csr.flush_addr);
 
 
     predic0 = new BranchPredictor("predic0", async_reset);
@@ -457,7 +457,7 @@ Processor::Processor(sc_module_name name,
     csr0->i_f_flush_ready(w_f_flush_ready);
     csr0->i_e_valid(w.e.valid);
     csr0->i_m_memop_ready(w.m.memop_ready);
-    csr0->i_flushd_end(i_data_flush_end);
+    csr0->i_flushd_end(i_flushd_end);
     csr0->i_mtimer(i_mtimer);
     csr0->o_executed_cnt(csr.executed_cnt);
     csr0->o_step(csr.step);
@@ -466,6 +466,7 @@ Processor::Processor(sc_module_name name,
     csr0->o_progbuf_error(csr.progbuf_error);
     csr0->o_flushd_valid(csr.flushd_valid);
     csr0->o_flushi_valid(csr.flushi_valid);
+    csr0->o_flushmmu_valid(csr.flushmmu_valid);
     csr0->o_flush_addr(csr.flush_addr);
     csr0->o_mpu_region_we(o_mpu_region_we);
     csr0->o_mpu_region_idx(o_mpu_region_idx);
@@ -583,7 +584,7 @@ Processor::Processor(sc_module_name name,
     sensitive << i_dport_size;
     sensitive << i_dport_resp_ready;
     sensitive << i_progbuf;
-    sensitive << i_data_flush_end;
+    sensitive << i_flushd_end;
     sensitive << w.f.instr_load_fault;
     sensitive << w.f.instr_page_fault_x;
     sensitive << w.f.requested_pc;
@@ -691,6 +692,7 @@ Processor::Processor(sc_module_name name,
     sensitive << csr.resp_exception;
     sensitive << csr.flushd_valid;
     sensitive << csr.flushi_valid;
+    sensitive << csr.flushmmu_valid;
     sensitive << csr.flush_addr;
     sensitive << csr.executed_cnt;
     sensitive << csr.irq_pending;
@@ -756,7 +758,6 @@ Processor::Processor(sc_module_name name,
     sensitive << unused_immu_core_req_wstrb;
     sensitive << unused_immu_core_req_size;
     sensitive << unused_immu_mem_resp_store_fault;
-    sensitive << unused_immu_fence_addr;
 }
 
 Processor::~Processor() {
@@ -843,11 +844,11 @@ void Processor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_dport_rdata, o_dport_rdata.name());
         sc_trace(o_vcd, i_progbuf, i_progbuf.name());
         sc_trace(o_vcd, o_halted, o_halted.name());
-        sc_trace(o_vcd, o_flush_address, o_flush_address.name());
-        sc_trace(o_vcd, o_flush_valid, o_flush_valid.name());
-        sc_trace(o_vcd, o_data_flush_address, o_data_flush_address.name());
-        sc_trace(o_vcd, o_data_flush_valid, o_data_flush_valid.name());
-        sc_trace(o_vcd, i_data_flush_end, i_data_flush_end.name());
+        sc_trace(o_vcd, o_flushi_valid, o_flushi_valid.name());
+        sc_trace(o_vcd, o_flushi_addr, o_flushi_addr.name());
+        sc_trace(o_vcd, o_flushd_valid, o_flushd_valid.name());
+        sc_trace(o_vcd, o_flushd_addr, o_flushd_addr.name());
+        sc_trace(o_vcd, i_flushd_end, i_flushd_end.name());
     }
 
     if (fetch0) {
@@ -912,11 +913,10 @@ void Processor::comb() {
     unused_immu_core_req_wstrb = 0;
     unused_immu_core_req_size = 0;
     unused_immu_mem_resp_store_fault = 0;
-    unused_immu_fence_addr = 0;
-    o_flush_valid = csr.flushi_valid;
-    o_flush_address = csr.flush_addr;
-    o_data_flush_address = ~0ull;
-    o_data_flush_valid = w.m.flushd;
+    o_flushi_valid = csr.flushi_valid;
+    o_flushi_addr = csr.flush_addr;
+    o_flushd_addr = ~0ull;
+    o_flushd_valid = w.m.flushd;
     o_halted = w.e.halted;
 }
 

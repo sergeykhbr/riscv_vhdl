@@ -82,11 +82,11 @@ SC_MODULE(CacheTop) {
     sc_out<sc_biguint<L1CACHE_LINE_BITS>> o_resp_snoop_data;
     sc_out<sc_uint<DTAG_FL_TOTAL>> o_resp_snoop_flags;
     // Debug signals:
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_flush_address;      // clear ICache address from debug interface
-    sc_in<bool> i_flush_valid;                              // address to clear icache is valid
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_data_flush_address;
-    sc_in<bool> i_data_flush_valid;
-    sc_out<bool> o_data_flush_end;
+    sc_in<bool> i_flushi_valid;                             // address to clear icache is valid
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_flushi_addr;        // clear ICache address from debug interface
+    sc_in<bool> i_flushd_valid;
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_flushd_addr;
+    sc_out<bool> o_flushd_end;
 
     void comb();
 

@@ -965,7 +965,8 @@ void InstrExecute::comb() {
             || wv[Instr_CSRRW]
             || wv[Instr_CSRRWI]
             || wv[Instr_FENCE]
-            || wv[Instr_FENCE_I]);
+            || wv[Instr_FENCE_I]
+            || wv[Instr_SFENCE_VMA]);
     if (i_haltreq.read() == 1) {
         vb_csr_cmd_type = CsrReq_HaltCmd;
         vb_csr_cmd_addr = HALT_CAUSE_HALTREQ;
@@ -1071,12 +1072,21 @@ void InstrExecute::comb() {
     } else if ((wv[Instr_FENCE] == 1) || (wv[Instr_FENCE_I] == 1)) {
         vb_csr_cmd_type = CsrReq_FenceCmd;
         if (wv[Instr_FENCE] == 1) {
-            vb_csr_cmd_addr = 0x001;
+            vb_csr_cmd_addr = 0x005;                        // [0]=flush D$; [2]=flush mmu
         }
         if (wv[Instr_FENCE_I] == 1) {
-            vb_csr_cmd_addr = 0x003;
+            vb_csr_cmd_addr = 0x007;                        // [0]=flush D$; [1]=flush I$; [2]=flush mmu
         }
         vb_csr_cmd_wdata = ~0ull;                           // flush address
+    } else if (wv[Instr_SFENCE_VMA] == 1) {
+        vb_csr_cmd_type = CsrReq_FenceCmd;
+        vb_csr_cmd_addr = 0x004;                            // [2]=flush mmu
+        if (mux.radr1.or_reduce() == 0) {                   // must be set to zero in standard extension for fence and fence.i 
+            vb_csr_cmd_wdata = ~0ull;                       // flush address
+        } else {
+            vb_csr_cmd_wdata = i_rdata1;                    // flush specific address
+        }
+        // rs2 register contains Adress Space ID (asid) or Guest Space ID (gsid). Only one MMU implemented.
     }
 
     wb_select[Res_Zero].res = 0;

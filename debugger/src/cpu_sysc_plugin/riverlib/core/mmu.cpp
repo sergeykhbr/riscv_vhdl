@@ -326,7 +326,10 @@ void Mmu::comb() {
             v.req_wstrb = i_core_req_wstrb;
             v.req_size = i_core_req_size;
         }
-        if ((i_mmu_ena.read() == 0) || (v_va_ena == 0)) {   // MMU disabled
+        if (r.tlb_flush_cnt.read().or_reduce() == 1) {
+            v.state = FlushTlb;
+            v.tlb_wdata = 0;
+        } else if ((i_mmu_ena.read() == 0) || (v_va_ena == 0)) {// MMU disabled
             // Direct connection to Cache
             v_core_req_ready = i_mem_req_ready;
             v_core_resp_valid = i_mem_resp_valid;
@@ -345,9 +348,6 @@ void Mmu::comb() {
                 v.state = WaitRespNoMmu;
             }
             v.last_va = ~0ull;
-        } else if (r.tlb_flush_cnt.read().or_reduce() == 1) {
-            v.state = FlushTlb;
-            v.tlb_wdata = 0;
         } else if (v_last_valid == 1) {                     // MMU enabled: Check the request to the same page:
             // Direct connection to cache with the fast changing va to last_pa
             v_core_req_ready = i_mem_req_ready;
@@ -563,13 +563,9 @@ void Mmu::comb() {
     }
 
     if (i_fence.read() == 1) {
-        // Clear pipeline stage
-        if (i_fence_addr.read().or_reduce() == 0) {
-            v.tlb_flush_cnt = ~0ull;
-        } else {
-            v.tlb_flush_cnt = 1;
-        }
-        v.tlb_flush_adr = i_fence_addr;
+        // Clear whole table ignoring i_fence_addr
+        v.tlb_flush_cnt = ~0ull;
+        v.tlb_flush_adr = 0;
     }
 
     if (!async_reset_ && i_nrst.read() == 0) {

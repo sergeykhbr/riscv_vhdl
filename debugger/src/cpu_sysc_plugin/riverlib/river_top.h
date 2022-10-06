@@ -119,11 +119,11 @@ SC_MODULE(RiverTop) {
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_mpu_region_addr;
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_mpu_region_mask;
     sc_signal<sc_uint<CFG_MPU_FL_TOTAL>> wb_mpu_region_flags;
-    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_flush_address;
-    sc_signal<bool> w_flush_valid;
-    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_data_flush_address;
-    sc_signal<bool> w_data_flush_valid;
-    sc_signal<bool> w_data_flush_end;
+    sc_signal<bool> w_flushi_valid;
+    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_flushi_addr;
+    sc_signal<bool> w_flushd_valid;
+    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_flushd_addr;
+    sc_signal<bool> w_flushd_end;
 
     Processor *proc0;
     CacheTop *cache0;

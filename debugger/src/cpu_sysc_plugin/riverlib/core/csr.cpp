@@ -55,6 +55,7 @@ CsrRegs::CsrRegs(sc_module_name name,
     o_progbuf_error("o_progbuf_error"),
     o_flushd_valid("o_flushd_valid"),
     o_flushi_valid("o_flushi_valid"),
+    o_flushmmu_valid("o_flushmmu_valid"),
     o_flush_addr("o_flush_addr"),
     o_mpu_region_we("o_mpu_region_we"),
     o_mpu_region_idx("o_mpu_region_idx"),
@@ -130,6 +131,7 @@ CsrRegs::CsrRegs(sc_module_name name,
     sensitive << r.satp_mode;
     sensitive << r.mode;
     sensitive << r.mprv;
+    sensitive << r.tvm;
     sensitive << r.ex_fpu_invalidop;
     sensitive << r.ex_fpu_divbyzero;
     sensitive << r.ex_fpu_overflow;
@@ -188,6 +190,7 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_progbuf_error, o_progbuf_error.name());
         sc_trace(o_vcd, o_flushd_valid, o_flushd_valid.name());
         sc_trace(o_vcd, o_flushi_valid, o_flushi_valid.name());
+        sc_trace(o_vcd, o_flushmmu_valid, o_flushmmu_valid.name());
         sc_trace(o_vcd, o_flush_addr, o_flush_addr.name());
         sc_trace(o_vcd, o_mpu_region_we, o_mpu_region_we.name());
         sc_trace(o_vcd, o_mpu_region_idx, o_mpu_region_idx.name());
@@ -256,6 +259,7 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.satp_mode, pn + ".r_satp_mode");
         sc_trace(o_vcd, r.mode, pn + ".r_mode");
         sc_trace(o_vcd, r.mprv, pn + ".r_mprv");
+        sc_trace(o_vcd, r.tvm, pn + ".r_tvm");
         sc_trace(o_vcd, r.ex_fpu_invalidop, pn + ".r_ex_fpu_invalidop");
         sc_trace(o_vcd, r.ex_fpu_divbyzero, pn + ".r_ex_fpu_divbyzero");
         sc_trace(o_vcd, r.ex_fpu_overflow, pn + ".r_ex_fpu_overflow");
@@ -308,6 +312,7 @@ void CsrRegs::comb() {
     sc_uint<RISCV_ARCH> vb_xtvec_off_edeleg;                // 4-bytes aligned
     bool v_flushd;
     bool v_flushi;
+    bool v_flushmmu;
 
     iM = PRV_M;
     iH = PRV_H;
@@ -337,6 +342,7 @@ void CsrRegs::comb() {
     vb_xtvec_off_edeleg = 0;
     v_flushd = 0;
     v_flushi = 0;
+    v_flushmmu = 0;
 
     for (int i = 0; i < 4; i++) {
         v.xmode[i].xepc = r.xmode[i].xepc;
@@ -382,6 +388,7 @@ void CsrRegs::comb() {
     v.satp_mode = r.satp_mode;
     v.mode = r.mode;
     v.mprv = r.mprv;
+    v.tvm = r.tvm;
     v.ex_fpu_invalidop = r.ex_fpu_invalidop;
     v.ex_fpu_divbyzero = r.ex_fpu_divbyzero;
     v.ex_fpu_overflow = r.ex_fpu_overflow;
@@ -445,7 +452,17 @@ void CsrRegs::comb() {
                 v.state = State_Wfi;
             } else if (i_req_type.read()[CsrReq_FenceBit] == 1) {
                 v.state = State_Fence;
-                v.fencestate = Fence_Data;
+                if (i_req_addr.read()(1, 0).or_reduce() == 1) {
+                    // FENCE or FENCE.I
+                    v.fencestate = Fence_Data;
+                } else if ((i_req_addr.read()[2] == 1) && (r.tvm.read() == 0) && (r.mode.read() != PRV_S)) {
+                    // FENCE.VMA: is illegal in S-mode when TVM bit=1
+                    v.fencestate = Fence_MMU;
+                } else {
+                    // Illegal fence
+                    v.state = State_Response;
+                    v.cmd_exception = 1;
+                }
             } else {
                 v.state = State_RW;
             }
@@ -561,8 +578,11 @@ void CsrRegs::comb() {
         if (i_flushd_end.read() == 1) {
             // [0] flush data
             // [1] flush fetch
+            // [2] flush mmu
             if (r.cmd_addr.read()[1] == 1) {
                 v.fencestate = Fence_Fetch;
+            } else if (r.cmd_addr.read()[2] == 1) {
+                v.fencestate = Fence_MMU;
             } else {
                 v.fencestate = Fence_End;
             }
@@ -571,8 +591,16 @@ void CsrRegs::comb() {
     case Fence_Fetch:
         v_flushi = 1;
         if (i_f_flush_ready.read() == 1) {
-            v.fencestate = Fence_End;
+            if (r.cmd_addr.read()[2] == 1) {
+                v.fencestate = Fence_MMU;
+            } else {
+                v.fencestate = Fence_End;
+            }
         }
+        break;
+    case Fence_MMU:
+        v_flushmmu = 1;
+        v.fencestate = Fence_End;
         break;
     case Fence_End:
         break;
@@ -756,13 +784,18 @@ void CsrRegs::comb() {
         // Writing unssoprted MODE[63:60], entire write has no effect
         //     MODE = 0 Bare. No translation or protection
         //     MODE = 9 Sv48. Page based 48-bit virtual addressing
-        vb_rdata(43, 0) = r.satp_ppn;
-        vb_rdata(63, 60) = r.satp_mode;
-        if ((v_csr_wena == 1)
-                && ((r.cmd_data.read()(63, 60).or_reduce() == 0)
-                        || (r.cmd_data.read()(63, 60).to_uint() == SATP_MODE_SV48))) {
-            v.satp_ppn = r.cmd_data.read()(43, 0);
-            v.satp_mode = r.cmd_data.read()(63, 60);
+        if ((r.tvm.read() == 1) && (r.mode.read() == PRV_S)) {
+            // SATP is illegal in S-mode when TVM=1
+            v.cmd_exception = 1;
+        } else {
+            vb_rdata(43, 0) = r.satp_ppn;
+            vb_rdata(63, 60) = r.satp_mode;
+            if ((v_csr_wena == 1)
+                    && ((r.cmd_data.read()(63, 60).or_reduce() == 0)
+                            || (r.cmd_data.read()(63, 60).to_uint() == SATP_MODE_SV48))) {
+                v.satp_ppn = r.cmd_data.read()(43, 0);
+                v.satp_mode = r.cmd_data.read()(63, 60);
+            }
         }
         break;
     case 0x5A8:                                             // scontext: [SRW] Supervisor-mode context register
@@ -799,7 +832,7 @@ void CsrRegs::comb() {
         vb_rdata[17] = r.mprv.read();
         // [18] SUM
         // [19] MXR
-        // [20] TVM
+        vb_rdata[20] = r.tvm.read();                        // Trap Virtual Memory
         // [21] TW
         // [22] TSR
         // [31:23] WPRI
@@ -817,6 +850,7 @@ void CsrRegs::comb() {
             v.xmode[iS].xpp = (0, r.cmd_data.read()[8]);
             v.xmode[iM].xpp = r.cmd_data.read()(12, 11);
             v.mprv = r.cmd_data.read()[17];
+            v.tvm = r.cmd_data.read()[20];
         }
         break;
     case 0x301:                                             // misa: [MRW] ISA and extensions
@@ -1232,6 +1266,7 @@ void CsrRegs::comb() {
         v.satp_mode = 0;
         v.mode = PRV_M;
         v.mprv = 0;
+        v.tvm = 0;
         v.ex_fpu_invalidop = 0;
         v.ex_fpu_divbyzero = 0;
         v.ex_fpu_overflow = 0;
@@ -1275,6 +1310,7 @@ void CsrRegs::comb() {
     o_step = r.dcsr_step;
     o_flushd_valid = v_flushd;
     o_flushi_valid = v_flushi;
+    o_flushmmu_valid = v_flushmmu;
     o_flush_addr = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
 }
 
@@ -1324,6 +1360,7 @@ void CsrRegs::registers() {
         r.satp_mode = 0;
         r.mode = PRV_M;
         r.mprv = 0;
+        r.tvm = 0;
         r.ex_fpu_invalidop = 0;
         r.ex_fpu_divbyzero = 0;
         r.ex_fpu_overflow = 0;
@@ -1388,6 +1425,7 @@ void CsrRegs::registers() {
         r.satp_mode = v.satp_mode;
         r.mode = v.mode;
         r.mprv = v.mprv;
+        r.tvm = v.tvm;
         r.ex_fpu_invalidop = v.ex_fpu_invalidop;
         r.ex_fpu_divbyzero = v.ex_fpu_divbyzero;
         r.ex_fpu_overflow = v.ex_fpu_overflow;

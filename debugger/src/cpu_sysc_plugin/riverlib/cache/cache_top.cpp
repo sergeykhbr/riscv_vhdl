@@ -73,11 +73,11 @@ CacheTop::CacheTop(sc_module_name name,
     o_resp_snoop_valid("o_resp_snoop_valid"),
     o_resp_snoop_data("o_resp_snoop_data"),
     o_resp_snoop_flags("o_resp_snoop_flags"),
-    i_flush_address("i_flush_address"),
-    i_flush_valid("i_flush_valid"),
-    i_data_flush_address("i_data_flush_address"),
-    i_data_flush_valid("i_data_flush_valid"),
-    o_data_flush_end("o_data_flush_end") {
+    i_flushi_valid("i_flushi_valid"),
+    i_flushi_addr("i_flushi_addr"),
+    i_flushd_valid("i_flushd_valid"),
+    i_flushd_addr("i_flushd_addr"),
+    o_flushd_end("o_flushd_end") {
 
     async_reset_ = async_reset;
     coherence_ena_ = coherence_ena;
@@ -109,8 +109,8 @@ CacheTop::CacheTop(sc_module_name name,
     i1->i_mem_load_fault(w_ctrl_resp_mem_load_fault);
     i1->o_mpu_addr(i.mpu_addr);
     i1->i_mpu_flags(wb_mpu_iflags);
-    i1->i_flush_address(i_flush_address);
-    i1->i_flush_valid(i_flush_valid);
+    i1->i_flush_address(i_flushi_addr);
+    i1->i_flush_valid(i_flushi_valid);
 
 
     d0 = new DCacheLru("d0", async_reset, coherence_ena);
@@ -151,9 +151,9 @@ CacheTop::CacheTop(sc_module_name name,
     d0->o_resp_snoop_valid(o_resp_snoop_valid);
     d0->o_resp_snoop_data(o_resp_snoop_data);
     d0->o_resp_snoop_flags(o_resp_snoop_flags);
-    d0->i_flush_address(i_data_flush_address);
-    d0->i_flush_valid(i_data_flush_valid);
-    d0->o_flush_end(o_data_flush_end);
+    d0->i_flush_address(i_flushd_addr);
+    d0->i_flush_valid(i_flushd_valid);
+    d0->o_flush_end(o_flushd_end);
 
 
     mpu0 = new MPU("mpu0", async_reset);
@@ -210,10 +210,10 @@ CacheTop::CacheTop(sc_module_name name,
     sensitive << i_req_snoop_type;
     sensitive << i_req_snoop_addr;
     sensitive << i_resp_snoop_ready;
-    sensitive << i_flush_address;
-    sensitive << i_flush_valid;
-    sensitive << i_data_flush_address;
-    sensitive << i_data_flush_valid;
+    sensitive << i_flushi_valid;
+    sensitive << i_flushi_addr;
+    sensitive << i_flushd_valid;
+    sensitive << i_flushd_addr;
     sensitive << i.req_mem_valid;
     sensitive << i.req_mem_type;
     sensitive << i.req_mem_size;
@@ -311,11 +311,11 @@ void CacheTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_resp_snoop_valid, o_resp_snoop_valid.name());
         sc_trace(o_vcd, o_resp_snoop_data, o_resp_snoop_data.name());
         sc_trace(o_vcd, o_resp_snoop_flags, o_resp_snoop_flags.name());
-        sc_trace(o_vcd, i_flush_address, i_flush_address.name());
-        sc_trace(o_vcd, i_flush_valid, i_flush_valid.name());
-        sc_trace(o_vcd, i_data_flush_address, i_data_flush_address.name());
-        sc_trace(o_vcd, i_data_flush_valid, i_data_flush_valid.name());
-        sc_trace(o_vcd, o_data_flush_end, o_data_flush_end.name());
+        sc_trace(o_vcd, i_flushi_valid, i_flushi_valid.name());
+        sc_trace(o_vcd, i_flushi_addr, i_flushi_addr.name());
+        sc_trace(o_vcd, i_flushd_valid, i_flushd_valid.name());
+        sc_trace(o_vcd, i_flushd_addr, i_flushd_addr.name());
+        sc_trace(o_vcd, o_flushd_end, o_flushd_end.name());
     }
 
     if (i1) {
