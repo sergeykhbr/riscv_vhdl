@@ -103,6 +103,10 @@ CsrRegs::CsrRegs(sc_module_name name,
         sensitive << r.xmode[i].xscratch;
         sensitive << r.xmode[i].xcounteren;
     }
+    for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
+        sensitive << r.pmp[i].cfg;
+        sensitive << r.pmp[i].addr;
+    }
     sensitive << r.state;
     sensitive << r.fencestate;
     sensitive << r.irq_pending;
@@ -151,6 +155,8 @@ CsrRegs::CsrRegs(sc_module_name name,
     sensitive << r.dcsr_stepie;
     sensitive << r.stepping_mode_cnt;
     sensitive << r.ins_per_step;
+    sensitive << r.pmp_upd_ena;
+    sensitive << r.pmp_upd_cnt;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -231,6 +237,13 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
             RISCV_sprintf(tstr, sizeof(tstr), "%s.r_xmode%d_xcounteren", pn.c_str(), i);
             sc_trace(o_vcd, r.xmode[i].xcounteren, tstr);
         }
+        for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
+            char tstr[1024];
+            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_pmp%d_cfg", pn.c_str(), i);
+            sc_trace(o_vcd, r.pmp[i].cfg, tstr);
+            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_pmp%d_addr", pn.c_str(), i);
+            sc_trace(o_vcd, r.pmp[i].addr, tstr);
+        }
         sc_trace(o_vcd, r.state, pn + ".r_state");
         sc_trace(o_vcd, r.fencestate, pn + ".r_fencestate");
         sc_trace(o_vcd, r.irq_pending, pn + ".r_irq_pending");
@@ -279,6 +292,8 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.dcsr_stepie, pn + ".r_dcsr_stepie");
         sc_trace(o_vcd, r.stepping_mode_cnt, pn + ".r_stepping_mode_cnt");
         sc_trace(o_vcd, r.ins_per_step, pn + ".r_ins_per_step");
+        sc_trace(o_vcd, r.pmp_upd_ena, pn + ".r_pmp_upd_ena");
+        sc_trace(o_vcd, r.pmp_upd_cnt, pn + ".r_pmp_upd_cnt");
     }
 
 }
@@ -313,6 +328,9 @@ void CsrRegs::comb() {
     bool v_flushd;
     bool v_flushi;
     bool v_flushmmu;
+    sc_uint<CFG_MPU_TBL_SIZE> vb_pmp_upd_ena;
+    int t_pmpdataidx;
+    int t_pmpcfgidx;
 
     iM = PRV_M;
     iH = PRV_H;
@@ -343,6 +361,9 @@ void CsrRegs::comb() {
     v_flushd = 0;
     v_flushi = 0;
     v_flushmmu = 0;
+    vb_pmp_upd_ena = 0;
+    t_pmpdataidx = 0;
+    t_pmpcfgidx = 0;
 
     for (int i = 0; i < 4; i++) {
         v.xmode[i].xepc = r.xmode[i].xepc;
@@ -359,6 +380,10 @@ void CsrRegs::comb() {
         v.xmode[i].xcause_code = r.xmode[i].xcause_code;
         v.xmode[i].xscratch = r.xmode[i].xscratch;
         v.xmode[i].xcounteren = r.xmode[i].xcounteren;
+    }
+    for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
+        v.pmp[i].cfg = r.pmp[i].cfg;
+        v.pmp[i].addr = r.pmp[i].addr;
     }
     v.state = r.state;
     v.fencestate = r.fencestate;
@@ -408,9 +433,14 @@ void CsrRegs::comb() {
     v.dcsr_stepie = r.dcsr_stepie;
     v.stepping_mode_cnt = r.stepping_mode_cnt;
     v.ins_per_step = r.ins_per_step;
+    v.pmp_upd_ena = r.pmp_upd_ena;
+    v.pmp_upd_cnt = r.pmp_upd_cnt;
 
     v.mpu_we = 0;
     vb_xpp = r.xmode[r.mode.read().to_int()].xpp;
+    vb_pmp_upd_ena = r.pmp_upd_ena;
+    t_pmpdataidx = (r.cmd_addr.read().to_int() - 0x3B0);
+    t_pmpcfgidx = (8 * r.cmd_addr.read()(3, 1).to_int());
 
     vb_xtvec_off_edeleg = r.xmode[iM].xtvec_off;
     if ((r.mode.read() <= PRV_S) && (r.medeleg.read()[r.cmd_addr.read()(4, 0).to_int()] == 1)) {
@@ -611,40 +641,29 @@ void CsrRegs::comb() {
     // CSR registers. Priviledge Arch. V20211203, page 9(19):
     //     CSR[11:10] indicate whether the register is read/write (00, 01, or 10) or read-only (11)
     //     CSR[9:8] encode the lowest privilege level that can access the CSR
-    switch (r.cmd_addr.read()) {
-    case 0x000:                                             // ustatus: [URW] User status register
-        break;
-    case 0x004:                                             // uie: [URW] User interrupt-enable register
-        break;
-    case 0x005:                                             // ustatus: [URW] User trap handler base address
-        break;
-    case 0x040:                                             // uscratch: [URW] Scratch register for user trap handlers
-        break;
-    case 0x041:                                             // uepc: [URW] User exception program counter
+    if (r.cmd_addr.read() == 0x000) {                       // ustatus: [URW] User status register
+    } else if (r.cmd_addr.read() == 0x004) {                // uie: [URW] User interrupt-enable register
+    } else if (r.cmd_addr.read() == 0x005) {                // ustatus: [URW] User trap handler base address
+    } else if (r.cmd_addr.read() == 0x040) {                // uscratch: [URW] Scratch register for user trap handlers
+    } else if (r.cmd_addr.read() == 0x041) {                // uepc: [URW] User exception program counter
         vb_rdata = r.xmode[iU].xepc;
         if (v_csr_wena) {
             v.xmode[iU].xepc = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
         }
-        break;
-    case 0x042:                                             // ucause: [URW] User trap cause
-        break;
-    case 0x043:                                             // utval: [URW] User bad address or instruction
-        break;
-    case 0x044:                                             // uip: [URW] User interrupt pending
-        break;
-    case 0x001:                                             // fflags: [URW] Floating-Point Accrued Exceptions
+    } else if (r.cmd_addr.read() == 0x042) {                // ucause: [URW] User trap cause
+    } else if (r.cmd_addr.read() == 0x043) {                // utval: [URW] User bad address or instruction
+    } else if (r.cmd_addr.read() == 0x044) {                // uip: [URW] User interrupt pending
+    } else if (r.cmd_addr.read() == 0x001) {                // fflags: [URW] Floating-Point Accrued Exceptions
         vb_rdata[0] = r.ex_fpu_inexact.read();
         vb_rdata[1] = r.ex_fpu_underflow.read();
         vb_rdata[2] = r.ex_fpu_overflow.read();
         vb_rdata[3] = r.ex_fpu_divbyzero.read();
         vb_rdata[4] = r.ex_fpu_invalidop.read();
-        break;
-    case 0x002:                                             // fflags: [URW] Floating-Point Dynamic Rounding Mode
+    } else if (r.cmd_addr.read() == 0x002) {                // fflags: [URW] Floating-Point Dynamic Rounding Mode
         if (CFG_HW_FPU_ENABLE) {
             vb_rdata(2, 0) = 4;                             // Round mode: round to Nearest (RMM)
         }
-        break;
-    case 0x003:                                             // fcsr: [URW] Floating-Point Control and Status Register (frm + fflags)
+    } else if (r.cmd_addr.read() == 0x003) {                // fcsr: [URW] Floating-Point Control and Status Register (frm + fflags)
         vb_rdata[0] = r.ex_fpu_inexact.read();
         vb_rdata[1] = r.ex_fpu_underflow.read();
         vb_rdata[2] = r.ex_fpu_overflow.read();
@@ -653,8 +672,7 @@ void CsrRegs::comb() {
         if (CFG_HW_FPU_ENABLE) {
             vb_rdata(7, 5) = 4;                             // Round mode: round to Nearest (RMM)
         }
-        break;
-    case 0xC00:                                             // cycle: [URO] User Cycle counter for RDCYCLE pseudo-instruction
+    } else if (r.cmd_addr.read() == 0xC00) {                // cycle: [URO] User Cycle counter for RDCYCLE pseudo-instruction
         if ((r.mode.read() == PRV_U)
                 && ((r.xmode[iM].xcounteren.read()[0] == 0)
                         || (r.xmode[iS].xcounteren.read()[0] == 0))) {
@@ -667,8 +685,7 @@ void CsrRegs::comb() {
         } else {
             vb_rdata = r.mcycle_cnt;                        // Read-only shadows of mcycle
         }
-        break;
-    case 0xC01:                                             // time: [URO] User Timer for RDTIME pseudo-instruction
+    } else if (r.cmd_addr.read() == 0xC01) {                // time: [URO] User Timer for RDTIME pseudo-instruction
         if ((r.mode.read() == PRV_U)
                 && ((r.xmode[iM].xcounteren.read()[1] == 0)
                         || (r.xmode[iS].xcounteren.read()[1] == 0))) {
@@ -681,8 +698,7 @@ void CsrRegs::comb() {
         } else {
             vb_rdata = i_mtimer;
         }
-        break;
-    case 0xC03:                                             // insret: [URO] User Instructions-retired counter for RDINSTRET pseudo-instruction
+    } else if (r.cmd_addr.read() == 0xC03) {                // insret: [URO] User Instructions-retired counter for RDINSTRET pseudo-instruction
         if ((r.mode.read() == PRV_U)
                 && ((r.xmode[iM].xcounteren.read()[2] == 0)
                         || (r.xmode[iS].xcounteren.read()[2] == 0))) {
@@ -695,8 +711,7 @@ void CsrRegs::comb() {
         } else {
             vb_rdata = r.minstret_cnt;                      // Read-only shadow of minstret
         }
-        break;
-    case 0x100:                                             // sstatus: [SRW] Supervisor status register
+    } else if (r.cmd_addr.read() == 0x100) {                // sstatus: [SRW] Supervisor status register
         // [0] WPRI
         vb_rdata[1] = r.xmode[iS].xie;
         // [4:2] WPRI
@@ -722,8 +737,7 @@ void CsrRegs::comb() {
             v.xmode[iS].xpie = r.cmd_data.read()[5];
             v.xmode[iS].xpp = (0, r.cmd_data.read()[8]);
         }
-        break;
-    case 0x104:                                             // sie: [SRW] Supervisor interrupt-enable register
+    } else if (r.cmd_addr.read() == 0x104) {                // sie: [SRW] Supervisor interrupt-enable register
         vb_rdata[(IRQ_SSIP - 1)] = r.xmode[iS].xsie;
         vb_rdata[(IRQ_STIP - 1)] = r.xmode[iS].xtie;
         vb_rdata[(IRQ_SEIP - 1)] = r.xmode[iS].xeie;
@@ -733,54 +747,45 @@ void CsrRegs::comb() {
             v.xmode[iS].xtie = r.cmd_data.read()[IRQ_STIP];
             v.xmode[iS].xeie = r.cmd_data.read()[IRQ_SEIP];
         }
-        break;
-    case 0x105:                                             // stvec: [SRW] Supervisor trap handler base address
+    } else if (r.cmd_addr.read() == 0x105) {                // stvec: [SRW] Supervisor trap handler base address
         vb_rdata = r.xmode[iS].xtvec_off;
         vb_rdata(1, 0) = r.xmode[iS].xtvec_mode;
         if (v_csr_wena == 1) {
             v.xmode[iS].xtvec_off = (r.cmd_data.read()((RISCV_ARCH - 1), 2) << 2);
             v.xmode[iS].xtvec_mode = r.cmd_data.read()(1, 0);
         }
-        break;
-    case 0x106:                                             // scounteren: [SRW] Supervisor counter enable
+    } else if (r.cmd_addr.read() == 0x106) {                // scounteren: [SRW] Supervisor counter enable
         vb_rdata = r.xmode[iS].xcounteren;
         if (v_csr_wena == 1) {
             v.xmode[iS].xcounteren = r.cmd_data.read()(15, 0);
         }
-        break;
-    case 0x10A:                                             // senvcfg: [SRW] Supervisor environment configuration register
-        break;
-    case 0x140:                                             // sscratch: [SRW] Supervisor register for supervisor trap handlers
+    } else if (r.cmd_addr.read() == 0x10A) {                // senvcfg: [SRW] Supervisor environment configuration register
+    } else if (r.cmd_addr.read() == 0x140) {                // sscratch: [SRW] Supervisor register for supervisor trap handlers
         vb_rdata = r.xmode[iS].xscratch;
         if (v_csr_wena) {
             v.xmode[iS].xscratch = r.cmd_data;
         }
-        break;
-    case 0x141:                                             // sepc: [SRW] Supervisor exception program counter
+    } else if (r.cmd_addr.read() == 0x141) {                // sepc: [SRW] Supervisor exception program counter
         vb_rdata = r.xmode[iS].xepc;
         if (v_csr_wena) {
             v.xmode[iS].xepc = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
         }
-        break;
-    case 0x142:                                             // scause: [SRW] Supervisor trap cause
+    } else if (r.cmd_addr.read() == 0x142) {                // scause: [SRW] Supervisor trap cause
         vb_rdata[63] = r.xmode[iS].xcause_irq;
         vb_rdata(4, 0) = r.xmode[iS].xcause_code;
-        break;
-    case 0x143:                                             // stval: [SRW] Supervisor bad address or instruction
+    } else if (r.cmd_addr.read() == 0x143) {                // stval: [SRW] Supervisor bad address or instruction
         vb_rdata = r.xmode[iS].xtval;
         if (v_csr_wena) {
             v.xmode[iS].xtval = r.cmd_data;
         }
-        break;
-    case 0x144:                                             // sip: [SRW] Supervisor interrupt pending
+    } else if (r.cmd_addr.read() == 0x144) {                // sip: [SRW] Supervisor interrupt pending
         vb_rdata(15, 0) = (r.irq_pending.read() & 0x0222);  // see fig 4.7. Only s-bits are visible
         if (v_csr_wena) {
             v.mip_ssip = r.cmd_data.read()[IRQ_SSIP];
             v.mip_stip = r.cmd_data.read()[IRQ_STIP];
             v.mip_seip = r.cmd_data.read()[IRQ_SEIP];
         }
-        break;
-    case 0x180:                                             // satp: [SRW] Supervisor address translation and protection
+    } else if (r.cmd_addr.read() == 0x180) {                // satp: [SRW] Supervisor address translation and protection
         // Writing unssoprted MODE[63:60], entire write has no effect
         //     MODE = 0 Bare. No translation or protection
         //     MODE = 9 Sv48. Page based 48-bit virtual addressing
@@ -797,23 +802,16 @@ void CsrRegs::comb() {
                 v.satp_mode = r.cmd_data.read()(63, 60);
             }
         }
-        break;
-    case 0x5A8:                                             // scontext: [SRW] Supervisor-mode context register
-        break;
-    case 0xF11:                                             // mvendorid: [MRO] Vendor ID
+    } else if (r.cmd_addr.read() == 0x5A8) {                // scontext: [SRW] Supervisor-mode context register
+    } else if (r.cmd_addr.read() == 0xF11) {                // mvendorid: [MRO] Vendor ID
         vb_rdata = CFG_VENDOR_ID;
-        break;
-    case 0xF12:                                             // marchid: [MRO] Architecture ID
-        break;
-    case 0xF13:                                             // mimplementationid: [MRO] Implementation ID
+    } else if (r.cmd_addr.read() == 0xF12) {                // marchid: [MRO] Architecture ID
+    } else if (r.cmd_addr.read() == 0xF13) {                // mimplementationid: [MRO] Implementation ID
         vb_rdata = CFG_IMPLEMENTATION_ID;
-        break;
-    case 0xF14:                                             // mhartid: [MRO] Hardware thread ID
+    } else if (r.cmd_addr.read() == 0xF14) {                // mhartid: [MRO] Hardware thread ID
         vb_rdata(63, 0) = hartid_;
-        break;
-    case 0xF15:                                             // mconfigptr: [MRO] Pointer to configuration data structure
-        break;
-    case 0x300:                                             // mstatus: [MRW] Machine mode status register
+    } else if (r.cmd_addr.read() == 0xF15) {                // mconfigptr: [MRO] Pointer to configuration data structure
+    } else if (r.cmd_addr.read() == 0x300) {                // mstatus: [MRW] Machine mode status register
         // [0] WPRI
         vb_rdata[1] = r.xmode[iS].xie;
         // [2] WPRI
@@ -852,8 +850,7 @@ void CsrRegs::comb() {
             v.mprv = r.cmd_data.read()[17];
             v.tvm = r.cmd_data.read()[20];
         }
-        break;
-    case 0x301:                                             // misa: [MRW] ISA and extensions
+    } else if (r.cmd_addr.read() == 0x301) {                // misa: [MRW] ISA and extensions
         // Base[XLEN-1:XLEN-2]
         //      1 = 32
         //      2 = 64
@@ -896,22 +893,19 @@ void CsrRegs::comb() {
         if (CFG_HW_FPU_ENABLE) {
             vb_rdata[3] = 1;                                // D-extension
         }
-        break;
-    case 0x302:                                             // medeleg: [MRW] Machine exception delegation
+    } else if (r.cmd_addr.read() == 0x302) {                // medeleg: [MRW] Machine exception delegation
         vb_rdata = r.medeleg;
         if (v_csr_wena) {
             // page 31. Read-only zero for exceptions that could not be delegated, especially Call from M-mode
             v.medeleg = (r.cmd_data.read() & 0xb3ffull);
         }
-        break;
-    case 0x303:                                             // mideleg: [MRW] Machine interrupt delegation
+    } else if (r.cmd_addr.read() == 0x303) {                // mideleg: [MRW] Machine interrupt delegation
         vb_rdata = r.mideleg;
         if (v_csr_wena) {
             // No need to delegate machine interrupts to supervisor (but possible)
             v.mideleg = (r.cmd_data.read()((IRQ_TOTAL - 1), 0) & 0x222);
         }
-        break;
-    case 0x304:                                             // mie: [MRW] Machine interrupt enable bit
+    } else if (r.cmd_addr.read() == 0x304) {                // mie: [MRW] Machine interrupt enable bit
         vb_rdata[(IRQ_SSIP - 1)] = r.xmode[iS].xsie;
         vb_rdata[(IRQ_MSIP - 1)] = r.xmode[iM].xsie;
         vb_rdata[(IRQ_STIP - 1)] = r.xmode[iS].xtie;
@@ -927,106 +921,99 @@ void CsrRegs::comb() {
             v.xmode[iS].xeie = r.cmd_data.read()[IRQ_SEIP];
             v.xmode[iM].xeie = r.cmd_data.read()[IRQ_MEIP];
         }
-        break;
-    case 0x305:                                             // mtvec: [MRW] Machine trap-handler base address
+    } else if (r.cmd_addr.read() == 0x305) {                // mtvec: [MRW] Machine trap-handler base address
         vb_rdata = r.xmode[iM].xtvec_off;
         vb_rdata(1, 0) = r.xmode[iM].xtvec_mode;
         if (v_csr_wena == 1) {
             v.xmode[iM].xtvec_off = (r.cmd_data.read()((RISCV_ARCH - 1), 2) << 2);
             v.xmode[iM].xtvec_mode = r.cmd_data.read()(1, 0);
         }
-        break;
-    case 0x306:                                             // mcounteren: [MRW] Machine counter enable
+    } else if (r.cmd_addr.read() == 0x306) {                // mcounteren: [MRW] Machine counter enable
         vb_rdata = r.xmode[iM].xcounteren;
         if (v_csr_wena == 1) {
             v.xmode[iM].xcounteren = r.cmd_data.read()(15, 0);
         }
-        break;
-    case 0x340:                                             // mscratch: [MRW] Machine scratch register
+    } else if (r.cmd_addr.read() == 0x340) {                // mscratch: [MRW] Machine scratch register
         vb_rdata = r.xmode[iM].xscratch;
         if (v_csr_wena) {
             v.xmode[iM].xscratch = r.cmd_data;
         }
-        break;
-    case 0x341:                                             // mepc: [MRW] Machine program counter
+    } else if (r.cmd_addr.read() == 0x341) {                // mepc: [MRW] Machine program counter
         vb_rdata = r.xmode[iM].xepc;
         if (v_csr_wena) {
             v.xmode[iM].xepc = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
         }
-        break;
-    case 0x342:                                             // mcause: [MRW] Machine trap cause
+    } else if (r.cmd_addr.read() == 0x342) {                // mcause: [MRW] Machine trap cause
         vb_rdata[63] = r.xmode[iM].xcause_irq;
         vb_rdata(4, 0) = r.xmode[iM].xcause_code;
-        break;
-    case 0x343:                                             // mtval: [MRW] Machine bad address or instruction
+    } else if (r.cmd_addr.read() == 0x343) {                // mtval: [MRW] Machine bad address or instruction
         vb_rdata = r.xmode[iM].xtval;
         if (v_csr_wena) {
             v.xmode[iM].xtval = r.cmd_data;
         }
-        break;
-    case 0x344:                                             // mip: [MRW] Machine interrupt pending
+    } else if (r.cmd_addr.read() == 0x344) {                // mip: [MRW] Machine interrupt pending
         vb_rdata((IRQ_TOTAL - 1), 0) = r.irq_pending;
         if (v_csr_wena) {
             v.mip_ssip = r.cmd_data.read()[IRQ_SSIP];
             v.mip_stip = r.cmd_data.read()[IRQ_STIP];
             v.mip_seip = r.cmd_data.read()[IRQ_SEIP];
         }
-        break;
-    case 0x34A:                                             // mtinst: [MRW] Machine trap instruction (transformed)
-        break;
-    case 0x34B:                                             // mtval2: [MRW] Machine bad guest physical register
-        break;
-    case 0x30A:                                             // menvcfg: [MRW] Machine environment configuration register
-        break;
-    case 0x747:                                             // mseccfg: [MRW] Machine security configuration register
-        break;
-    case 0x3A0:                                             // pmpcfg0: [MRW] Physical memory protection configuration
-        break;
-    case 0x3A2:                                             // pmpcfg2: [MRW] Physical memory protection configuration
-        break;
-    case 0x3AE:                                             // pmpcfg14: [MRW] Physical memory protection configuration
-        break;
-    case 0x3B0:                                             // pmpaddr0: [MRW] Physical memory protection address register
-        break;
-    case 0x3B1:                                             // pmpaddr1: [MRW] Physical memory protection address register
-        break;
-    case 0x3EF:                                             // pmpaddr63: [MRW] Physical memory protection address register
-        break;
-    case 0xB00:                                             // mcycle: [MRW] Machine cycle counter
+    } else if (r.cmd_addr.read() == 0x34A) {                // mtinst: [MRW] Machine trap instruction (transformed)
+    } else if (r.cmd_addr.read() == 0x34B) {                // mtval2: [MRW] Machine bad guest physical register
+    } else if (r.cmd_addr.read() == 0x30A) {                // menvcfg: [MRW] Machine environment configuration register
+    } else if (r.cmd_addr.read() == 0x747) {                // mseccfg: [MRW] Machine security configuration register
+    } else if (r.cmd_addr.read()(11, 4) == 0x3A) {          // pmpcfg0..63: [MRW] Physical memory protection configuration
+        if (r.cmd_addr.read()[0] == 1) {
+            v.cmd_exception = 1;                            // RV32 only
+        } else if (t_pmpcfgidx < CFG_MPU_TBL_SIZE) {
+            for (int i = 0; i < 8; i++) {
+                vb_rdata((8 * i) + 8- 1, (8 * i)) = r.pmp[(t_pmpcfgidx + i)].cfg;
+                if ((v_csr_wena == 1)
+                        && (r.pmp[(t_pmpcfgidx + i)].cfg.read()[7] == 0)) {
+                    // [7] Bit L = locked cannot be modified upto reset
+                    v.pmp[(t_pmpcfgidx + i)].cfg = r.cmd_data.read()((8 * i) + 8 - 1, (8 * i));
+                    vb_pmp_upd_ena[(t_pmpcfgidx + i)] = 1;
+                    v.pmp_upd_cnt = 0;
+                }
+            }
+        }
+    } else if ((r.cmd_addr.read() >= 0x3B0)
+                && (r.cmd_addr.read() <= 0x3EF)) {
+        // pmpaddr0..63: [MRW] Physical memory protection address register
+        if (t_pmpdataidx < CFG_MPU_TBL_SIZE) {
+            vb_rdata(53, 0) = r.pmp[t_pmpdataidx].addr;
+            if ((v_csr_wena == 1)
+                    && (r.pmp[t_pmpdataidx].cfg.read()[7] == 0)) {
+                v.pmp[t_pmpdataidx].addr = r.cmd_data.read()(53, 0);
+                vb_pmp_upd_ena[t_pmpdataidx] = 1;
+                v.pmp_upd_cnt = 0;
+            }
+        }
+    } else if (r.cmd_addr.read() <= 0x3EF) {                // pmpaddr63: [MRW] Physical memory protection address register
+    } else if (r.cmd_addr.read() == 0xB00) {                // mcycle: [MRW] Machine cycle counter
         vb_rdata = r.mcycle_cnt;
         if (v_csr_wena) {
             v.mcycle_cnt = r.cmd_data;
         }
-        break;
-    case 0xB02:                                             // minstret: [MRW] Machine instructions-retired counter
+    } else if (r.cmd_addr.read() == 0xB02) {                // minstret: [MRW] Machine instructions-retired counter
         vb_rdata = r.minstret_cnt;
         if (v_csr_wena) {
             v.minstret_cnt = r.cmd_data;
         }
-        break;
-    case 0x320:                                             // mcountinhibit: [MRW] Machine counter-inhibit register
+    } else if (r.cmd_addr.read() == 0x320) {                // mcountinhibit: [MRW] Machine counter-inhibit register
         vb_rdata = r.mcountinhibit;
         if (v_csr_wena == 1) {
             v.mcountinhibit = r.cmd_data.read()(15, 0);
         }
-        break;
-    case 0x323:                                             // mpevent3: [MRW] Machine performance-monitoring event selector
-        break;
-    case 0x324:                                             // mpevent4: [MRW] Machine performance-monitoring event selector
-        break;
-    case 0x33F:                                             // mpevent31: [MRW] Machine performance-monitoring event selector
-        break;
-    case 0x7A0:                                             // tselect: [MRW] Debug/Trace trigger register select
-        break;
-    case 0x7A1:                                             // tdata1: [MRW] First Debug/Trace trigger data register
-        break;
-    case 0x7A2:                                             // tdata2: [MRW] Second Debug/Trace trigger data register
-        break;
-    case 0x7A3:                                             // tdata3: [MRW] Third Debug/Trace trigger data register
-        break;
-    case 0x7A8:                                             // mcontext: [MRW] Machine-mode context register
-        break;
-    case 0x7B0:                                             // dcsr: [DRW] Debug control and status register
+    } else if (r.cmd_addr.read() == 0x323) {                // mpevent3: [MRW] Machine performance-monitoring event selector
+    } else if (r.cmd_addr.read() == 0x324) {                // mpevent4: [MRW] Machine performance-monitoring event selector
+    } else if (r.cmd_addr.read() == 0x33F) {                // mpevent31: [MRW] Machine performance-monitoring event selector
+    } else if (r.cmd_addr.read() == 0x7A0) {                // tselect: [MRW] Debug/Trace trigger register select
+    } else if (r.cmd_addr.read() == 0x7A1) {                // tdata1: [MRW] First Debug/Trace trigger data register
+    } else if (r.cmd_addr.read() == 0x7A2) {                // tdata2: [MRW] Second Debug/Trace trigger data register
+    } else if (r.cmd_addr.read() == 0x7A3) {                // tdata3: [MRW] Third Debug/Trace trigger data register
+    } else if (r.cmd_addr.read() == 0x7A8) {                // mcontext: [MRW] Machine-mode context register
+    } else if (r.cmd_addr.read() == 0x7B0) {                // dcsr: [DRW] Debug control and status register
         vb_rdata(31, 28) = 4;                               // xdebugver: 4=External debug supported
         vb_rdata[15] = r.dcsr_ebreakm.read();
         vb_rdata[11] = r.dcsr_stepie.read();                // interrupt dis/ena during step
@@ -1042,8 +1029,7 @@ void CsrRegs::comb() {
             v.dcsr_stoptimer = r.cmd_data.read()[9];
             v.dcsr_step = r.cmd_data.read()[2];
         }
-        break;
-    case 0x7B1:                                             // dpc: [DRW] Debug PC
+    } else if (r.cmd_addr.read() == 0x7B1) {                // dpc: [DRW] Debug PC
         // Upon entry into debug mode DPC must contains:
         //        cause        |   Address
         // --------------------|----------------
@@ -1061,55 +1047,46 @@ void CsrRegs::comb() {
         if (v_csr_wena == 1) {
             v.dpc = r.cmd_data;
         }
-        break;
-    case 0x7B2:                                             // dscratch0: [DRW] Debug scratch register 0
+    } else if (r.cmd_addr.read() == 0x7B2) {                // dscratch0: [DRW] Debug scratch register 0
         vb_rdata = r.dscratch0;
         if (v_csr_wena == 1) {
             v.dscratch0 = r.cmd_data;
         }
-        break;
-    case 0x7B3:                                             // dscratch1: [DRW] Debug scratch register 1
+    } else if (r.cmd_addr.read() == 0x7B3) {                // dscratch1: [DRW] Debug scratch register 1
         vb_rdata = r.dscratch1;
         if (v_csr_wena) {
             v.dscratch1 = r.cmd_data;
         }
-        break;
-    case 0xBC0:                                             // mstackovr: [MRW] Machine Stack Overflow
+    } else if (r.cmd_addr.read() == 0xBC0) {                // mstackovr: [MRW] Machine Stack Overflow
         vb_rdata = r.mstackovr;
         if (v_csr_wena == 1) {
             v.mstackovr = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
         }
-        break;
-    case 0xBC1:                                             // mstackund: [MRW] Machine Stack Underflow
+    } else if (r.cmd_addr.read() == 0xBC1) {                // mstackund: [MRW] Machine Stack Underflow
         vb_rdata = r.mstackund;
         if (v_csr_wena == 1) {
             v.mstackund = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
         }
-        break;
-    case 0xBC2:                                             // mpu_addr: [MWO] MPU address
+    } else if (r.cmd_addr.read() == 0xBC2) {                // mpu_addr: [MWO] MPU address
         if (v_csr_wena == 1) {
             v.mpu_addr = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
         }
-        break;
-    case 0xBC3:                                             // mpu_mask: [MWO] MPU mask
+    } else if (r.cmd_addr.read() == 0xBC3) {                // mpu_mask: [MWO] MPU mask
         if (v_csr_wena == 1) {
             v.mpu_mask = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
         }
-        break;
-    case 0xBC4:                                             // mpu_ctrl: [MRW] MPU flags and write ena
+    } else if (r.cmd_addr.read() == 0xBC4) {                // mpu_ctrl: [MRW] MPU flags and write ena
         vb_rdata = (CFG_MPU_TBL_SIZE << 8);
         if (v_csr_wena == 1) {
             v.mpu_idx = r.cmd_data.read()((8 + (CFG_MPU_TBL_WIDTH - 1)), 8);
             v.mpu_flags = r.cmd_data.read()((CFG_MPU_FL_TOTAL - 1), 0);
             v.mpu_we = r.cmd_data.read()[7];
         }
-        break;
-    default:
+    } else {
         // Not implemented CSR:
         if (r.state.read() == State_RW) {
             v.cmd_exception = 1;
         }
-        break;
     }
 
     if (v_csr_rena == 1) {
@@ -1191,6 +1168,15 @@ void CsrRegs::comb() {
     vb_pending[IRQ_SEIP] = ((i_irq_pending.read()[IRQ_SEIP] || r.mip_seip) && r.xmode[iS].xeie);
     v.irq_pending = vb_pending;
 
+    // Transmit data to MPU
+    if (r.pmp_upd_ena.read().or_reduce() == 1) {
+        vb_pmp_upd_ena[r.pmp_upd_cnt.read().to_int()] = 0;
+        v.pmp_upd_cnt = (r.pmp_upd_cnt.read() + 1);
+    } else {
+        v.pmp_upd_cnt = 0;
+    }
+    v.pmp_upd_ena = vb_pmp_upd_ena;
+
     w_mstackovr = 0;
     if ((r.mstackovr.read().or_reduce() == 1) && (i_sp.read()((CFG_CPU_ADDR_BITS - 1), 0) < r.mstackovr.read())) {
         w_mstackovr = 1;
@@ -1237,6 +1223,10 @@ void CsrRegs::comb() {
             v.xmode[i].xcause_code = 0;
             v.xmode[i].xscratch = 0ull;
             v.xmode[i].xcounteren = 0;
+        }
+        for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
+            v.pmp[i].cfg = 0;
+            v.pmp[i].addr = 0ull;
         }
         v.state = State_Idle;
         v.fencestate = Fence_None;
@@ -1286,6 +1276,8 @@ void CsrRegs::comb() {
         v.dcsr_stepie = 0;
         v.stepping_mode_cnt = 0ull;
         v.ins_per_step = 1ull;
+        v.pmp_upd_ena = 0;
+        v.pmp_upd_cnt = 0;
     }
 
     o_req_ready = v_req_ready;
@@ -1331,6 +1323,10 @@ void CsrRegs::registers() {
             r.xmode[i].xcause_code = 0;
             r.xmode[i].xscratch = 0ull;
             r.xmode[i].xcounteren = 0;
+        }
+        for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
+            r.pmp[i].cfg = 0;
+            r.pmp[i].addr = 0ull;
         }
         r.state = State_Idle;
         r.fencestate = Fence_None;
@@ -1380,6 +1376,8 @@ void CsrRegs::registers() {
         r.dcsr_stepie = 0;
         r.stepping_mode_cnt = 0ull;
         r.ins_per_step = 1ull;
+        r.pmp_upd_ena = 0;
+        r.pmp_upd_cnt = 0;
     } else {
         for (int i = 0; i < 4; i++) {
             r.xmode[i].xepc = v.xmode[i].xepc;
@@ -1396,6 +1394,10 @@ void CsrRegs::registers() {
             r.xmode[i].xcause_code = v.xmode[i].xcause_code;
             r.xmode[i].xscratch = v.xmode[i].xscratch;
             r.xmode[i].xcounteren = v.xmode[i].xcounteren;
+        }
+        for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
+            r.pmp[i].cfg = v.pmp[i].cfg;
+            r.pmp[i].addr = v.pmp[i].addr;
         }
         r.state = v.state;
         r.fencestate = v.fencestate;
@@ -1445,6 +1447,8 @@ void CsrRegs::registers() {
         r.dcsr_stepie = v.dcsr_stepie;
         r.stepping_mode_cnt = v.stepping_mode_cnt;
         r.ins_per_step = v.ins_per_step;
+        r.pmp_upd_ena = v.pmp_upd_ena;
+        r.pmp_upd_cnt = v.pmp_upd_cnt;
     }
 }
 

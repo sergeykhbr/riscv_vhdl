@@ -121,9 +121,15 @@ SC_MODULE(CsrRegs) {
         sc_signal<sc_uint<32>> xcounteren;                  // Counter-enable controls access to timers from the next less priv mode
     };
 
+    struct PmpItemType {
+        sc_signal<sc_uint<8>> cfg;                          // pmpcfg bits without changes
+        sc_signal<sc_uint<54>> addr;                        // PMP address bits [55:2]
+    };
+
 
     struct CsrRegs_registers {
         RegModeType xmode[4];
+        PmpItemType pmp[CFG_MPU_TBL_SIZE];
         sc_signal<sc_uint<4>> state;
         sc_signal<sc_uint<3>> fencestate;
         sc_signal<sc_uint<IRQ_TOTAL>> irq_pending;
@@ -172,6 +178,8 @@ SC_MODULE(CsrRegs) {
         sc_signal<bool> dcsr_stepie;                        // interrupt 0=dis;1=ena during stepping
         sc_signal<sc_uint<RISCV_ARCH>> stepping_mode_cnt;
         sc_signal<sc_uint<RISCV_ARCH>> ins_per_step;        // Number of steps before halt in stepping mode
+        sc_signal<sc_uint<CFG_MPU_TBL_SIZE>> pmp_upd_ena;
+        sc_signal<sc_uint<CFG_MPU_TBL_WIDTH>> pmp_upd_cnt;
     } v, r;
 
 
