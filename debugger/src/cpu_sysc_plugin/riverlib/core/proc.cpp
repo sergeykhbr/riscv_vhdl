@@ -53,11 +53,12 @@ Processor::Processor(sc_module_name name,
     i_resp_data_store_fault("i_resp_data_store_fault"),
     o_resp_data_ready("o_resp_data_ready"),
     i_irq_pending("i_irq_pending"),
-    o_mpu_region_we("o_mpu_region_we"),
-    o_mpu_region_idx("o_mpu_region_idx"),
-    o_mpu_region_addr("o_mpu_region_addr"),
-    o_mpu_region_mask("o_mpu_region_mask"),
-    o_mpu_region_flags("o_mpu_region_flags"),
+    o_pmp_ena("o_pmp_ena"),
+    o_pmp_we("o_pmp_we"),
+    o_pmp_region("o_pmp_region"),
+    o_pmp_start_addr("o_pmp_start_addr"),
+    o_pmp_end_addr("o_pmp_end_addr"),
+    o_pmp_flags("o_pmp_flags"),
     i_haltreq("i_haltreq"),
     i_resumereq("i_resumereq"),
     i_dport_req_valid("i_dport_req_valid"),
@@ -468,11 +469,12 @@ Processor::Processor(sc_module_name name,
     csr0->o_flushi_valid(csr.flushi_valid);
     csr0->o_flushmmu_valid(csr.flushmmu_valid);
     csr0->o_flush_addr(csr.flush_addr);
-    csr0->o_mpu_region_we(o_mpu_region_we);
-    csr0->o_mpu_region_idx(o_mpu_region_idx);
-    csr0->o_mpu_region_addr(o_mpu_region_addr);
-    csr0->o_mpu_region_mask(o_mpu_region_mask);
-    csr0->o_mpu_region_flags(o_mpu_region_flags);
+    csr0->o_pmp_ena(o_pmp_ena);
+    csr0->o_pmp_we(o_pmp_we);
+    csr0->o_pmp_region(o_pmp_region);
+    csr0->o_pmp_start_addr(o_pmp_start_addr);
+    csr0->o_pmp_end_addr(o_pmp_end_addr);
+    csr0->o_pmp_flags(o_pmp_flags);
     csr0->o_immu_ena(w_immu_ena);
     csr0->o_dmmu_ena(w_dmmu_ena);
     csr0->o_mmu_ppn(wb_mmu_ppn);
@@ -825,11 +827,12 @@ void Processor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_resp_data_store_fault, i_resp_data_store_fault.name());
         sc_trace(o_vcd, o_resp_data_ready, o_resp_data_ready.name());
         sc_trace(o_vcd, i_irq_pending, i_irq_pending.name());
-        sc_trace(o_vcd, o_mpu_region_we, o_mpu_region_we.name());
-        sc_trace(o_vcd, o_mpu_region_idx, o_mpu_region_idx.name());
-        sc_trace(o_vcd, o_mpu_region_addr, o_mpu_region_addr.name());
-        sc_trace(o_vcd, o_mpu_region_mask, o_mpu_region_mask.name());
-        sc_trace(o_vcd, o_mpu_region_flags, o_mpu_region_flags.name());
+        sc_trace(o_vcd, o_pmp_ena, o_pmp_ena.name());
+        sc_trace(o_vcd, o_pmp_we, o_pmp_we.name());
+        sc_trace(o_vcd, o_pmp_region, o_pmp_region.name());
+        sc_trace(o_vcd, o_pmp_start_addr, o_pmp_start_addr.name());
+        sc_trace(o_vcd, o_pmp_end_addr, o_pmp_end_addr.name());
+        sc_trace(o_vcd, o_pmp_flags, o_pmp_flags.name());
         sc_trace(o_vcd, i_haltreq, i_haltreq.name());
         sc_trace(o_vcd, i_resumereq, i_resumereq.name());
         sc_trace(o_vcd, i_dport_req_valid, i_dport_req_valid.name());

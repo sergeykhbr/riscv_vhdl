@@ -107,45 +107,6 @@ void timestamp_output() {
     }*/
 }
 
-void init_mpu() {
-    int mpu_total = mpu_region_total();
-    int dis_idx = 0;
-
-    // FU740 copmatible
-    // [0] Lowest prioirty: region enable all memory as rwx
-    mpu_enable_region(0,  // idx
-                      (0x0000000000000000ull), // bar
-                      (~0ull), // KB (all memory ranges)
-                      1, // cached
-                      "rwx");
-
-    // Uncached CLINT
-    mpu_enable_region(1,  // idx
-                      (0x0000000002000000ull), // bar
-                      (32768), // KB
-                      0, // uncached
-                      "rw");
-
-    // Uncached PLIC
-    mpu_enable_region(2,  // idx
-                      (0x000000000C000000ull), // bar
-                      (65536), // KB
-                      0, // uncached
-                      "rw");
-
-    // Uncached peripheries (IO)
-    mpu_enable_region(3,  // idx
-                      (0x0000000010000000ull), // bar
-                      (0x40000), // KB
-                      0, // uncached
-                      "rw");
-    dis_idx = 4;
-
-    for (int i = dis_idx; i < mpu_total; i++) {
-        mpu_disable_region(i);
-    }
-}
-
 void _init() {
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
@@ -163,8 +124,6 @@ void _init() {
     t1 = 0x00000007;
     asm("csrw mcounteren, %0" : :"r"(t1));  // allow counter access from S-mode
     asm("csrw scounteren, %0" : :"r"(t1));  // allow counter access from U-mode
-
-    init_mpu();
 
     txctrl.v = 0;
     txctrl.b.txen = 1;

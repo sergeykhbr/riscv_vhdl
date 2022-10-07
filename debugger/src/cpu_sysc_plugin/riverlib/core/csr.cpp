@@ -57,11 +57,12 @@ CsrRegs::CsrRegs(sc_module_name name,
     o_flushi_valid("o_flushi_valid"),
     o_flushmmu_valid("o_flushmmu_valid"),
     o_flush_addr("o_flush_addr"),
-    o_mpu_region_we("o_mpu_region_we"),
-    o_mpu_region_idx("o_mpu_region_idx"),
-    o_mpu_region_addr("o_mpu_region_addr"),
-    o_mpu_region_mask("o_mpu_region_mask"),
-    o_mpu_region_flags("o_mpu_region_flags"),
+    o_pmp_ena("o_pmp_ena"),
+    o_pmp_we("o_pmp_we"),
+    o_pmp_region("o_pmp_region"),
+    o_pmp_start_addr("o_pmp_start_addr"),
+    o_pmp_end_addr("o_pmp_end_addr"),
+    o_pmp_flags("o_pmp_flags"),
     o_immu_ena("o_immu_ena"),
     o_dmmu_ena("o_dmmu_ena"),
     o_mmu_ppn("o_mmu_ppn") {
@@ -103,7 +104,7 @@ CsrRegs::CsrRegs(sc_module_name name,
         sensitive << r.xmode[i].xscratch;
         sensitive << r.xmode[i].xcounteren;
     }
-    for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
+    for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) {
         sensitive << r.pmp[i].cfg;
         sensitive << r.pmp[i].addr;
         sensitive << r.pmp[i].mask;
@@ -125,11 +126,6 @@ CsrRegs::CsrRegs(sc_module_name name,
     sensitive << r.mcountinhibit;
     sensitive << r.mstackovr;
     sensitive << r.mstackund;
-    sensitive << r.mpu_addr;
-    sensitive << r.mpu_mask;
-    sensitive << r.mpu_idx;
-    sensitive << r.mpu_flags;
-    sensitive << r.mpu_we;
     sensitive << r.immu_ena;
     sensitive << r.dmmu_ena;
     sensitive << r.satp_ppn;
@@ -158,6 +154,7 @@ CsrRegs::CsrRegs(sc_module_name name,
     sensitive << r.ins_per_step;
     sensitive << r.pmp_upd_ena;
     sensitive << r.pmp_upd_cnt;
+    sensitive << r.pmp_ena;
     sensitive << r.pmp_we;
     sensitive << r.pmp_region;
     sensitive << r.pmp_start_addr;
@@ -204,11 +201,12 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_flushi_valid, o_flushi_valid.name());
         sc_trace(o_vcd, o_flushmmu_valid, o_flushmmu_valid.name());
         sc_trace(o_vcd, o_flush_addr, o_flush_addr.name());
-        sc_trace(o_vcd, o_mpu_region_we, o_mpu_region_we.name());
-        sc_trace(o_vcd, o_mpu_region_idx, o_mpu_region_idx.name());
-        sc_trace(o_vcd, o_mpu_region_addr, o_mpu_region_addr.name());
-        sc_trace(o_vcd, o_mpu_region_mask, o_mpu_region_mask.name());
-        sc_trace(o_vcd, o_mpu_region_flags, o_mpu_region_flags.name());
+        sc_trace(o_vcd, o_pmp_ena, o_pmp_ena.name());
+        sc_trace(o_vcd, o_pmp_we, o_pmp_we.name());
+        sc_trace(o_vcd, o_pmp_region, o_pmp_region.name());
+        sc_trace(o_vcd, o_pmp_start_addr, o_pmp_start_addr.name());
+        sc_trace(o_vcd, o_pmp_end_addr, o_pmp_end_addr.name());
+        sc_trace(o_vcd, o_pmp_flags, o_pmp_flags.name());
         sc_trace(o_vcd, o_immu_ena, o_immu_ena.name());
         sc_trace(o_vcd, o_dmmu_ena, o_dmmu_ena.name());
         sc_trace(o_vcd, o_mmu_ppn, o_mmu_ppn.name());
@@ -243,7 +241,7 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
             RISCV_sprintf(tstr, sizeof(tstr), "%s.r_xmode%d_xcounteren", pn.c_str(), i);
             sc_trace(o_vcd, r.xmode[i].xcounteren, tstr);
         }
-        for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
+        for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) {
             char tstr[1024];
             RISCV_sprintf(tstr, sizeof(tstr), "%s.r_pmp%d_cfg", pn.c_str(), i);
             sc_trace(o_vcd, r.pmp[i].cfg, tstr);
@@ -269,11 +267,6 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.mcountinhibit, pn + ".r_mcountinhibit");
         sc_trace(o_vcd, r.mstackovr, pn + ".r_mstackovr");
         sc_trace(o_vcd, r.mstackund, pn + ".r_mstackund");
-        sc_trace(o_vcd, r.mpu_addr, pn + ".r_mpu_addr");
-        sc_trace(o_vcd, r.mpu_mask, pn + ".r_mpu_mask");
-        sc_trace(o_vcd, r.mpu_idx, pn + ".r_mpu_idx");
-        sc_trace(o_vcd, r.mpu_flags, pn + ".r_mpu_flags");
-        sc_trace(o_vcd, r.mpu_we, pn + ".r_mpu_we");
         sc_trace(o_vcd, r.immu_ena, pn + ".r_immu_ena");
         sc_trace(o_vcd, r.dmmu_ena, pn + ".r_dmmu_ena");
         sc_trace(o_vcd, r.satp_ppn, pn + ".r_satp_ppn");
@@ -302,6 +295,7 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.ins_per_step, pn + ".r_ins_per_step");
         sc_trace(o_vcd, r.pmp_upd_ena, pn + ".r_pmp_upd_ena");
         sc_trace(o_vcd, r.pmp_upd_cnt, pn + ".r_pmp_upd_cnt");
+        sc_trace(o_vcd, r.pmp_ena, pn + ".r_pmp_ena");
         sc_trace(o_vcd, r.pmp_we, pn + ".r_pmp_we");
         sc_trace(o_vcd, r.pmp_region, pn + ".r_pmp_region");
         sc_trace(o_vcd, r.pmp_start_addr, pn + ".r_pmp_start_addr");
@@ -341,7 +335,7 @@ void CsrRegs::comb() {
     bool v_flushd;
     bool v_flushi;
     bool v_flushmmu;
-    sc_uint<CFG_MPU_TBL_SIZE> vb_pmp_upd_ena;
+    sc_uint<CFG_PMP_TBL_SIZE> vb_pmp_upd_ena;
     sc_uint<CFG_CPU_ADDR_BITS> vb_pmp_napot_mask;
     bool v_napot_shift;
     int t_pmpdataidx;
@@ -398,7 +392,7 @@ void CsrRegs::comb() {
         v.xmode[i].xscratch = r.xmode[i].xscratch;
         v.xmode[i].xcounteren = r.xmode[i].xcounteren;
     }
-    for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
+    for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) {
         v.pmp[i].cfg = r.pmp[i].cfg;
         v.pmp[i].addr = r.pmp[i].addr;
         v.pmp[i].mask = r.pmp[i].mask;
@@ -420,11 +414,6 @@ void CsrRegs::comb() {
     v.mcountinhibit = r.mcountinhibit;
     v.mstackovr = r.mstackovr;
     v.mstackund = r.mstackund;
-    v.mpu_addr = r.mpu_addr;
-    v.mpu_mask = r.mpu_mask;
-    v.mpu_idx = r.mpu_idx;
-    v.mpu_flags = r.mpu_flags;
-    v.mpu_we = r.mpu_we;
     v.immu_ena = r.immu_ena;
     v.dmmu_ena = r.dmmu_ena;
     v.satp_ppn = r.satp_ppn;
@@ -453,13 +442,13 @@ void CsrRegs::comb() {
     v.ins_per_step = r.ins_per_step;
     v.pmp_upd_ena = r.pmp_upd_ena;
     v.pmp_upd_cnt = r.pmp_upd_cnt;
+    v.pmp_ena = r.pmp_ena;
     v.pmp_we = r.pmp_we;
     v.pmp_region = r.pmp_region;
     v.pmp_start_addr = r.pmp_start_addr;
     v.pmp_end_addr = r.pmp_end_addr;
     v.pmp_flags = r.pmp_flags;
 
-    v.mpu_we = 0;
     vb_xpp = r.xmode[r.mode.read().to_int()].xpp;
     vb_pmp_upd_ena = r.pmp_upd_ena;
     t_pmpdataidx = (r.cmd_addr.read().to_int() - 0x3B0);
@@ -592,6 +581,9 @@ void CsrRegs::comb() {
         } else {
             v_csr_rena = r.cmd_type.read()[CsrReq_ReadBit];
             v_csr_wena = r.cmd_type.read()[CsrReq_WriteBit];
+            if (r.cmd_addr.read()(11, 4) == 0x3A) {         // pmpcfgx
+                v.state = State_WaitPmp;
+            }
         }
         // All operation into CSR implemented through the Read-Modify-Write
         // and we cannot generate exception on write access into read-only regs
@@ -606,6 +598,11 @@ void CsrRegs::comb() {
             v.cmd_data = 0;
             v.state = State_Response;
             v.fencestate = Fence_None;
+        }
+        break;
+    case State_WaitPmp:
+        if (r.pmp_upd_ena.read().or_reduce() == 0) {
+            v.state = State_Response;
         }
         break;
     case State_Response:
@@ -989,7 +986,7 @@ void CsrRegs::comb() {
     } else if (r.cmd_addr.read()(11, 4) == 0x3A) {          // pmpcfg0..63: [MRW] Physical memory protection configuration
         if (r.cmd_addr.read()[0] == 1) {
             v.cmd_exception = 1;                            // RV32 only
-        } else if (t_pmpcfgidx < CFG_MPU_TBL_SIZE) {
+        } else if (t_pmpcfgidx < CFG_PMP_TBL_SIZE) {
             for (int i = 0; i < 8; i++) {
                 vb_rdata((8 * i) + 8- 1, (8 * i)) = r.pmp[(t_pmpcfgidx + i)].cfg;
                 if ((v_csr_wena == 1)
@@ -997,8 +994,6 @@ void CsrRegs::comb() {
                     // [7] Bit L = locked cannot be modified upto reset
                     v.pmp[(t_pmpcfgidx + i)].cfg = r.cmd_data.read()((8 * i) + 8 - 1, (8 * i));
                     vb_pmp_upd_ena[(t_pmpcfgidx + i)] = 1;
-                    v.pmp_upd_cnt = 0;
-                    v.pmp_start_addr = 0;
                 }
             }
         }
@@ -1012,15 +1007,12 @@ void CsrRegs::comb() {
                 v_napot_shift = 1;
             }
         }
-        if (t_pmpdataidx < CFG_MPU_TBL_SIZE) {
+        if (t_pmpdataidx < CFG_PMP_TBL_SIZE) {
             vb_rdata((CFG_CPU_ADDR_BITS - 3), 0) = r.pmp[t_pmpdataidx].addr.read()((CFG_CPU_ADDR_BITS - 1), 0);
             if ((v_csr_wena == 1)
                     && (r.pmp[t_pmpdataidx].cfg.read()[7] == 0)) {
                 v.pmp[t_pmpdataidx].addr = (r.cmd_data.read()((CFG_CPU_ADDR_BITS - 3), 0) << 2);
                 v.pmp[t_pmpdataidx].mask = vb_pmp_napot_mask;
-                vb_pmp_upd_ena[t_pmpdataidx] = 1;
-                v.pmp_upd_cnt = 0;
-                v.pmp_start_addr = 0;
             }
         }
     } else if (r.cmd_addr.read() <= 0x3EF) {                // pmpaddr63: [MRW] Physical memory protection address register
@@ -1100,21 +1092,6 @@ void CsrRegs::comb() {
         vb_rdata = r.mstackund;
         if (v_csr_wena == 1) {
             v.mstackund = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
-        }
-    } else if (r.cmd_addr.read() == 0xBC2) {                // mpu_addr: [MWO] MPU address
-        if (v_csr_wena == 1) {
-            v.mpu_addr = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
-        }
-    } else if (r.cmd_addr.read() == 0xBC3) {                // mpu_mask: [MWO] MPU mask
-        if (v_csr_wena == 1) {
-            v.mpu_mask = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
-        }
-    } else if (r.cmd_addr.read() == 0xBC4) {                // mpu_ctrl: [MRW] MPU flags and write ena
-        vb_rdata = (CFG_MPU_TBL_SIZE << 8);
-        if (v_csr_wena == 1) {
-            v.mpu_idx = r.cmd_data.read()((8 + (CFG_MPU_TBL_WIDTH - 1)), 8);
-            v.mpu_flags = r.cmd_data.read()((CFG_MPU_FL_TOTAL - 1), 0);
-            v.mpu_we = r.cmd_data.read()[7];
         }
     } else {
         // Not implemented CSR:
@@ -1237,6 +1214,7 @@ void CsrRegs::comb() {
         v.pmp_we = 0;
     }
     v.pmp_upd_ena = vb_pmp_upd_ena;
+    v.pmp_ena = ((!r.mode.read()[1]) | r.mprv.read());      // S,U mode or MPRV is set
 
     w_mstackovr = 0;
     if ((r.mstackovr.read().or_reduce() == 1) && (i_sp.read()((CFG_CPU_ADDR_BITS - 1), 0) < r.mstackovr.read())) {
@@ -1285,7 +1263,7 @@ void CsrRegs::comb() {
             v.xmode[i].xscratch = 0ull;
             v.xmode[i].xcounteren = 0;
         }
-        for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
+        for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) {
             v.pmp[i].cfg = 0;
             v.pmp[i].addr = 0ull;
             v.pmp[i].mask = 0ull;
@@ -1307,11 +1285,6 @@ void CsrRegs::comb() {
         v.mcountinhibit = 0;
         v.mstackovr = 0ull;
         v.mstackund = 0ull;
-        v.mpu_addr = 0ull;
-        v.mpu_mask = 0ull;
-        v.mpu_idx = 0;
-        v.mpu_flags = 0;
-        v.mpu_we = 0;
         v.immu_ena = 0;
         v.dmmu_ena = 0;
         v.satp_ppn = 0ull;
@@ -1340,6 +1313,7 @@ void CsrRegs::comb() {
         v.ins_per_step = 1ull;
         v.pmp_upd_ena = 0;
         v.pmp_upd_cnt = 0;
+        v.pmp_ena = 0;
         v.pmp_we = 0;
         v.pmp_region = 0;
         v.pmp_start_addr = 0ull;
@@ -1358,11 +1332,12 @@ void CsrRegs::comb() {
     o_stack_overflow = w_mstackovr;
     o_stack_underflow = w_mstackund;
     o_executed_cnt = r.minstret_cnt;
-    o_mpu_region_we = r.mpu_we;
-    o_mpu_region_idx = r.mpu_idx;
-    o_mpu_region_addr = r.mpu_addr;
-    o_mpu_region_mask = r.mpu_mask;
-    o_mpu_region_flags = r.mpu_flags;
+    o_pmp_ena = r.pmp_ena;                                  // S,U mode or MPRV is set
+    o_pmp_we = r.pmp_we;
+    o_pmp_region = r.pmp_region;
+    o_pmp_start_addr = r.pmp_start_addr;
+    o_pmp_end_addr = r.pmp_end_addr;
+    o_pmp_flags = r.pmp_flags;
     o_immu_ena = r.immu_ena;
     o_dmmu_ena = r.dmmu_ena;
     o_mmu_ppn = r.satp_ppn;
@@ -1391,7 +1366,7 @@ void CsrRegs::registers() {
             r.xmode[i].xscratch = 0ull;
             r.xmode[i].xcounteren = 0;
         }
-        for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
+        for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) {
             r.pmp[i].cfg = 0;
             r.pmp[i].addr = 0ull;
             r.pmp[i].mask = 0ull;
@@ -1413,11 +1388,6 @@ void CsrRegs::registers() {
         r.mcountinhibit = 0;
         r.mstackovr = 0ull;
         r.mstackund = 0ull;
-        r.mpu_addr = 0ull;
-        r.mpu_mask = 0ull;
-        r.mpu_idx = 0;
-        r.mpu_flags = 0;
-        r.mpu_we = 0;
         r.immu_ena = 0;
         r.dmmu_ena = 0;
         r.satp_ppn = 0ull;
@@ -1446,6 +1416,7 @@ void CsrRegs::registers() {
         r.ins_per_step = 1ull;
         r.pmp_upd_ena = 0;
         r.pmp_upd_cnt = 0;
+        r.pmp_ena = 0;
         r.pmp_we = 0;
         r.pmp_region = 0;
         r.pmp_start_addr = 0ull;
@@ -1468,7 +1439,7 @@ void CsrRegs::registers() {
             r.xmode[i].xscratch = v.xmode[i].xscratch;
             r.xmode[i].xcounteren = v.xmode[i].xcounteren;
         }
-        for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
+        for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) {
             r.pmp[i].cfg = v.pmp[i].cfg;
             r.pmp[i].addr = v.pmp[i].addr;
             r.pmp[i].mask = v.pmp[i].mask;
@@ -1490,11 +1461,6 @@ void CsrRegs::registers() {
         r.mcountinhibit = v.mcountinhibit;
         r.mstackovr = v.mstackovr;
         r.mstackund = v.mstackund;
-        r.mpu_addr = v.mpu_addr;
-        r.mpu_mask = v.mpu_mask;
-        r.mpu_idx = v.mpu_idx;
-        r.mpu_flags = v.mpu_flags;
-        r.mpu_we = v.mpu_we;
         r.immu_ena = v.immu_ena;
         r.dmmu_ena = v.dmmu_ena;
         r.satp_ppn = v.satp_ppn;
@@ -1523,6 +1489,7 @@ void CsrRegs::registers() {
         r.ins_per_step = v.ins_per_step;
         r.pmp_upd_ena = v.pmp_upd_ena;
         r.pmp_upd_cnt = v.pmp_upd_cnt;
+        r.pmp_ena = v.pmp_ena;
         r.pmp_we = v.pmp_we;
         r.pmp_region = v.pmp_region;
         r.pmp_start_addr = v.pmp_start_addr;

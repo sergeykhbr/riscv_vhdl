@@ -38,46 +38,6 @@ int hwthread3(void);
 
 void protect_memory(void);  // MPU setup in BBL
 
-void init_mpu() {
-    int mpu_total = mpu_region_total();
-    int dis_idx = 0;
-
-    // FU740 copmatible
-    // [0] Lowest prioirty: region enable all memory as rwx
-    mpu_enable_region(0,  // idx
-                      (0x0000000000000000ull), // bar
-                      (~0ull), // KB (all memory ranges)
-                      1, // cached
-                      "rwx");
-
-    // Uncached CLINT
-    mpu_enable_region(1,  // idx
-                      (0x0000000002000000ull), // bar
-                      (32768), // KB
-                      0, // uncached
-                      "rw");
-
-    // Uncached PLIC
-    mpu_enable_region(2,  // idx
-                      (0x000000000C000000ull), // bar
-                      (65536), // KB
-                      0, // uncached
-                      "rw");
-
-    // Uncached peripheries (IO)
-    mpu_enable_region(3,  // idx
-                      (0x0000000010000000ull), // bar
-                      (0x40000), // KB
-                      0, // uncached
-                      "rw");
-    dis_idx = 4;
-
-    for (int i = dis_idx; i < mpu_total; i++) {
-        mpu_disable_region(i);
-    }
-
-    protect_memory();
-}
 
 int main() {
     uint32_t cfg;
@@ -87,7 +47,7 @@ int main() {
     uint64_t bar;
     uint32_t cpu_max;
 
-    init_mpu();
+    protect_memory();
 
     switch (fw_get_cpuid()) {
     case 0:

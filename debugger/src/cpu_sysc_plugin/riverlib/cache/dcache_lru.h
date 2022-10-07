@@ -54,7 +54,9 @@ SC_MODULE(DCacheLru) {
     sc_in<bool> i_mem_store_fault;
     // Mpu interface
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mpu_addr;
-    sc_in<sc_uint<CFG_MPU_FL_TOTAL>> i_mpu_flags;
+    sc_in<bool> i_pma_cached;
+    sc_in<bool> i_pmp_r;                                    // PMP Read access
+    sc_in<bool> i_pmp_w;                                    // PMP Write access
     // D$ Snoop interface
     sc_in<bool> i_req_snoop_valid;
     sc_in<sc_uint<SNOOP_REQ_TYPE_BITS>> i_req_snoop_type;

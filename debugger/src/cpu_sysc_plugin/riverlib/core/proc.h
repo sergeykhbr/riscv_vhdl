@@ -62,12 +62,13 @@ SC_MODULE(Processor) {
     sc_out<bool> o_resp_data_ready;                         // Core is ready to accept response from DCache
     // Interrupt line from external interrupts controller (PLIC):
     sc_in<sc_uint<IRQ_TOTAL>> i_irq_pending;                // Per Hart pending interrupts pins
-    // MPU interface
-    sc_out<bool> o_mpu_region_we;
-    sc_out<sc_uint<CFG_MPU_TBL_WIDTH>> o_mpu_region_idx;
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mpu_region_addr;
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mpu_region_mask;
-    sc_out<sc_uint<CFG_MPU_FL_TOTAL>> o_mpu_region_flags;   // {ena, cachable, r, w, x}
+    // PMP interface
+    sc_out<bool> o_pmp_ena;                                 // PMP is active in S or U modes or if L/MPRV bit is set in M-mode
+    sc_out<bool> o_pmp_we;                                  // write enable into PMP
+    sc_out<sc_uint<CFG_PMP_TBL_WIDTH>> o_pmp_region;        // selected PMP region
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_pmp_start_addr;    // PMP region start address
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_pmp_end_addr;      // PMP region end address (inclusive)
+    sc_out<sc_uint<CFG_PMP_FL_TOTAL>> o_pmp_flags;          // {ena, lock, r, w, x}
     // Debug interface:
     sc_in<bool> i_haltreq;                                  // DMI: halt request from debug unit
     sc_in<bool> i_resumereq;                                // DMI: resume request from debug unit

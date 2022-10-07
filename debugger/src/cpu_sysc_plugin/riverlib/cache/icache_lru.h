@@ -47,7 +47,8 @@ SC_MODULE(ICacheLru) {
     sc_in<bool> i_mem_load_fault;
     // Mpu interface
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mpu_addr;
-    sc_in<sc_uint<CFG_MPU_FL_TOTAL>> i_mpu_flags;
+    sc_in<bool> i_pma_cached;
+    sc_in<bool> i_pmp_x;                                    // PMP eXecute access
     // Flush interface
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_flush_address;
     sc_in<bool> i_flush_valid;
@@ -93,7 +94,6 @@ SC_MODULE(ICacheLru) {
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mem_addr;
         sc_signal<sc_uint<REQ_MEM_TYPE_BITS>> req_mem_type;
         sc_signal<sc_uint<3>> req_mem_size;
-        sc_signal<bool> executable;
         sc_signal<bool> load_fault;
         sc_signal<bool> req_flush;                          // init flush request
         sc_signal<bool> req_flush_all;
@@ -112,7 +112,6 @@ SC_MODULE(ICacheLru) {
         iv.mem_addr = 0ull;
         iv.req_mem_type = 0;
         iv.req_mem_size = 0;
-        iv.executable = 0;
         iv.load_fault = 0;
         iv.req_flush = 0;
         iv.req_flush_all = 0;

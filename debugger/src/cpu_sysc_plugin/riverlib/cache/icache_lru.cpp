@@ -43,7 +43,8 @@ ICacheLru::ICacheLru(sc_module_name name,
     i_mem_data("i_mem_data"),
     i_mem_load_fault("i_mem_load_fault"),
     o_mpu_addr("o_mpu_addr"),
-    i_mpu_flags("i_mpu_flags"),
+    i_pma_cached("i_pma_cached"),
+    i_pmp_x("i_pmp_x"),
     i_flush_address("i_flush_address"),
     i_flush_valid("i_flush_valid") {
 
@@ -82,7 +83,8 @@ ICacheLru::ICacheLru(sc_module_name name,
     sensitive << i_mem_data_valid;
     sensitive << i_mem_data;
     sensitive << i_mem_load_fault;
-    sensitive << i_mpu_flags;
+    sensitive << i_pma_cached;
+    sensitive << i_pmp_x;
     sensitive << i_flush_address;
     sensitive << i_flush_valid;
     sensitive << line_direct_access_i;
@@ -106,7 +108,6 @@ ICacheLru::ICacheLru(sc_module_name name,
     sensitive << r.mem_addr;
     sensitive << r.req_mem_type;
     sensitive << r.req_mem_size;
-    sensitive << r.executable;
     sensitive << r.load_fault;
     sensitive << r.req_flush;
     sensitive << r.req_flush_all;
@@ -148,7 +149,8 @@ void ICacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_mem_data, i_mem_data.name());
         sc_trace(o_vcd, i_mem_load_fault, i_mem_load_fault.name());
         sc_trace(o_vcd, o_mpu_addr, o_mpu_addr.name());
-        sc_trace(o_vcd, i_mpu_flags, i_mpu_flags.name());
+        sc_trace(o_vcd, i_pma_cached, i_pma_cached.name());
+        sc_trace(o_vcd, i_pmp_x, i_pmp_x.name());
         sc_trace(o_vcd, i_flush_address, i_flush_address.name());
         sc_trace(o_vcd, i_flush_valid, i_flush_valid.name());
         sc_trace(o_vcd, r.req_addr, pn + ".r_req_addr");
@@ -159,7 +161,6 @@ void ICacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.mem_addr, pn + ".r_mem_addr");
         sc_trace(o_vcd, r.req_mem_type, pn + ".r_req_mem_type");
         sc_trace(o_vcd, r.req_mem_size, pn + ".r_req_mem_size");
-        sc_trace(o_vcd, r.executable, pn + ".r_executable");
         sc_trace(o_vcd, r.load_fault, pn + ".r_load_fault");
         sc_trace(o_vcd, r.req_flush, pn + ".r_req_flush");
         sc_trace(o_vcd, r.req_flush_all, pn + ".r_req_flush_all");
@@ -244,7 +245,6 @@ void ICacheLru::comb() {
 
     switch (r.state.read()) {
     case State_Idle:
-        v.executable = 1;
         v_ready_next = 1;
         break;
     case State_CheckHit:
@@ -262,16 +262,18 @@ void ICacheLru::comb() {
         }
         break;
     case State_TranslateAddress:
-        if (i_mpu_flags.read()[CFG_MPU_FL_EXEC] == 0) {
+        if (i_pmp_x.read() == 0) {
             t_cache_line_i = 0;
             v.cache_line_i = (~t_cache_line_i);
             v.state = State_CheckResp;
+            v.load_fault = 1;
         } else {
             v.req_mem_valid = 1;
             v.state = State_WaitGrant;
             v.write_addr = r.req_addr;
+            v.load_fault = 0;
 
-            if (i_mpu_flags.read()[CFG_MPU_FL_CACHABLE] == 1) {
+            if (i_pma_cached.read() == 1) {
                 if (line_hit_o.read() == 0) {
                     v.mem_addr = (r.req_addr.read()((CFG_CPU_ADDR_BITS - 1), CFG_ILOG2_BYTES_PER_LINE) << CFG_ILOG2_BYTES_PER_LINE);
                 } else {
@@ -286,9 +288,6 @@ void ICacheLru::comb() {
                 v.req_mem_size = 4;                         // uncached, 16 B
             }
         }
-
-        v.load_fault = 0;
-        v.executable = i_mpu_flags.read()[CFG_MPU_FL_EXEC];
         break;
     case State_WaitGrant:
         if (i_req_mem_ready.read() == 1) {
@@ -413,7 +412,7 @@ void ICacheLru::comb() {
     o_resp_valid = v_resp_valid;
     o_resp_data = vb_resp_data;
     o_resp_addr = r.req_addr;
-    o_resp_load_fault = (v_resp_er_load_fault || (!r.executable));
+    o_resp_load_fault = v_resp_er_load_fault;
     o_mpu_addr = r.req_addr;
 }
 

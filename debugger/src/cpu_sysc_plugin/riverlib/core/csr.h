@@ -58,11 +58,12 @@ SC_MODULE(CsrRegs) {
     sc_out<bool> o_flushmmu_valid;                          // clear specific leaf entry in MMU
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_flush_addr;        // Cache address to flush. All ones means flush all.
     
-    sc_out<bool> o_mpu_region_we;                           // write enable into MPU
-    sc_out<sc_uint<CFG_MPU_TBL_WIDTH>> o_mpu_region_idx;    // selected MPU region
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mpu_region_addr;   // MPU region base address
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mpu_region_mask;   // MPU region mask
-    sc_out<sc_uint<CFG_MPU_FL_TOTAL>> o_mpu_region_flags;   // {ena, cachable, r, w, x}
+    sc_out<bool> o_pmp_ena;                                 // PMP is active in S or U modes or if L/MPRV bit is set in M-mode
+    sc_out<bool> o_pmp_we;                                  // write enable into PMP
+    sc_out<sc_uint<CFG_PMP_TBL_WIDTH>> o_pmp_region;        // selected PMP region
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_pmp_start_addr;    // PMP region start address
+    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_pmp_end_addr;      // PMP region end address (inclusive)
+    sc_out<sc_uint<CFG_PMP_FL_TOTAL>> o_pmp_flags;          // {ena, lock, r, w, x}
     
     sc_out<bool> o_immu_ena;                                // Instruction MMU enabled in U and S modes. Sv48 only.
     sc_out<bool> o_dmmu_ena;                                // Data MMU enabled in U and S modes or MPRV bit is HIGH. Sv48 only.
@@ -93,7 +94,8 @@ SC_MODULE(CsrRegs) {
     static const uint32_t State_Resume = 7;
     static const uint32_t State_Wfi = 8;
     static const uint32_t State_Fence = 9;
-    static const uint32_t State_Response = 10;
+    static const uint32_t State_WaitPmp = 10;
+    static const uint32_t State_Response = 11;
     
     static const uint8_t Fence_None = 0;
     static const uint8_t Fence_Data = 1;
@@ -130,7 +132,7 @@ SC_MODULE(CsrRegs) {
 
     struct CsrRegs_registers {
         RegModeType xmode[4];
-        PmpItemType pmp[CFG_MPU_TBL_SIZE];
+        PmpItemType pmp[CFG_PMP_TBL_SIZE];
         sc_signal<sc_uint<4>> state;
         sc_signal<sc_uint<3>> fencestate;
         sc_signal<sc_uint<IRQ_TOTAL>> irq_pending;
@@ -148,11 +150,6 @@ SC_MODULE(CsrRegs) {
         sc_signal<sc_uint<32>> mcountinhibit;               // When non zero stop specified performance counter
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mstackovr;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mstackund;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mpu_addr;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mpu_mask;
-        sc_signal<sc_uint<CFG_MPU_TBL_WIDTH>> mpu_idx;
-        sc_signal<sc_uint<CFG_MPU_FL_TOTAL>> mpu_flags;
-        sc_signal<bool> mpu_we;
         sc_signal<bool> immu_ena;                           // Instruction MMU SV48 enabled in U- and S- modes
         sc_signal<bool> dmmu_ena;                           // Data MMU SV48 enabled in U- and S- modes, MPRV bit
         sc_signal<sc_uint<44>> satp_ppn;                    // Physcal Page Number
@@ -179,13 +176,14 @@ SC_MODULE(CsrRegs) {
         sc_signal<bool> dcsr_stepie;                        // interrupt 0=dis;1=ena during stepping
         sc_signal<sc_uint<RISCV_ARCH>> stepping_mode_cnt;
         sc_signal<sc_uint<RISCV_ARCH>> ins_per_step;        // Number of steps before halt in stepping mode
-        sc_signal<sc_uint<CFG_MPU_TBL_SIZE>> pmp_upd_ena;
-        sc_signal<sc_uint<CFG_MPU_TBL_WIDTH>> pmp_upd_cnt;
+        sc_signal<sc_uint<CFG_PMP_TBL_SIZE>> pmp_upd_ena;
+        sc_signal<sc_uint<CFG_PMP_TBL_WIDTH>> pmp_upd_cnt;
+        sc_signal<bool> pmp_ena;
         sc_signal<bool> pmp_we;
-        sc_signal<sc_uint<CFG_MPU_TBL_WIDTH>> pmp_region;
+        sc_signal<sc_uint<CFG_PMP_TBL_WIDTH>> pmp_region;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pmp_start_addr;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pmp_end_addr;
-        sc_signal<sc_uint<CFG_MPU_FL_TOTAL>> pmp_flags;
+        sc_signal<sc_uint<CFG_PMP_FL_TOTAL>> pmp_flags;
     } v, r;
 
 

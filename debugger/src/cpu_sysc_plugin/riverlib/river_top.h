@@ -114,11 +114,12 @@ SC_MODULE(RiverTop) {
     sc_signal<bool> w_resp_data_store_fault;
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_resp_data_fault_addr;
     sc_signal<bool> w_resp_data_ready;
-    sc_signal<bool> w_mpu_region_we;
-    sc_signal<sc_uint<CFG_MPU_TBL_WIDTH>> wb_mpu_region_idx;
-    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_mpu_region_addr;
-    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_mpu_region_mask;
-    sc_signal<sc_uint<CFG_MPU_FL_TOTAL>> wb_mpu_region_flags;
+    sc_signal<bool> w_pmp_ena;
+    sc_signal<bool> w_pmp_we;
+    sc_signal<sc_uint<CFG_PMP_TBL_WIDTH>> wb_pmp_region;
+    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_pmp_start_addr;
+    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_pmp_end_addr;
+    sc_signal<sc_uint<CFG_PMP_FL_TOTAL>> wb_pmp_flags;
     sc_signal<bool> w_flushi_valid;
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_flushi_addr;
     sc_signal<bool> w_flushd_valid;

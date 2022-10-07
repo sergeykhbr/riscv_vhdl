@@ -60,11 +60,12 @@ CacheTop::CacheTop(sc_module_name name,
     i_resp_mem_data("i_resp_mem_data"),
     i_resp_mem_load_fault("i_resp_mem_load_fault"),
     i_resp_mem_store_fault("i_resp_mem_store_fault"),
-    i_mpu_region_we("i_mpu_region_we"),
-    i_mpu_region_idx("i_mpu_region_idx"),
-    i_mpu_region_addr("i_mpu_region_addr"),
-    i_mpu_region_mask("i_mpu_region_mask"),
-    i_mpu_region_flags("i_mpu_region_flags"),
+    i_pmp_ena("i_pmp_ena"),
+    i_pmp_we("i_pmp_we"),
+    i_pmp_region("i_pmp_region"),
+    i_pmp_start_addr("i_pmp_start_addr"),
+    i_pmp_end_addr("i_pmp_end_addr"),
+    i_pmp_flags("i_pmp_flags"),
     i_req_snoop_valid("i_req_snoop_valid"),
     i_req_snoop_type("i_req_snoop_type"),
     o_req_snoop_ready("o_req_snoop_ready"),
@@ -83,7 +84,8 @@ CacheTop::CacheTop(sc_module_name name,
     coherence_ena_ = coherence_ena;
     i1 = 0;
     d0 = 0;
-    mpu0 = 0;
+    pma0 = 0;
+    pmp0 = 0;
     queue0 = 0;
 
     i1 = new ICacheLru("i1", async_reset);
@@ -108,7 +110,8 @@ CacheTop::CacheTop(sc_module_name name,
     i1->i_mem_data(wb_ctrl_resp_mem_data);
     i1->i_mem_load_fault(w_ctrl_resp_mem_load_fault);
     i1->o_mpu_addr(i.mpu_addr);
-    i1->i_mpu_flags(wb_mpu_iflags);
+    i1->i_pma_cached(w_pma_icached);
+    i1->i_pmp_x(w_pmp_x);
     i1->i_flush_address(i_flushi_addr);
     i1->i_flush_valid(i_flushi_valid);
 
@@ -142,7 +145,9 @@ CacheTop::CacheTop(sc_module_name name,
     d0->i_mem_load_fault(w_data_resp_mem_load_fault);
     d0->i_mem_store_fault(i_resp_mem_store_fault);
     d0->o_mpu_addr(d.mpu_addr);
-    d0->i_mpu_flags(wb_mpu_dflags);
+    d0->i_pma_cached(w_pma_dcached);
+    d0->i_pmp_r(w_pmp_r);
+    d0->i_pmp_w(w_pmp_w);
     d0->i_req_snoop_valid(i_req_snoop_valid);
     d0->i_req_snoop_type(i_req_snoop_type);
     d0->o_req_snoop_ready(o_req_snoop_ready);
@@ -156,18 +161,29 @@ CacheTop::CacheTop(sc_module_name name,
     d0->o_flush_end(o_flushd_end);
 
 
-    mpu0 = new MPU("mpu0", async_reset);
-    mpu0->i_clk(i_clk);
-    mpu0->i_nrst(i_nrst);
-    mpu0->i_iaddr(i.mpu_addr);
-    mpu0->i_daddr(d.mpu_addr);
-    mpu0->i_region_we(i_mpu_region_we);
-    mpu0->i_region_idx(i_mpu_region_idx);
-    mpu0->i_region_addr(i_mpu_region_addr);
-    mpu0->i_region_mask(i_mpu_region_mask);
-    mpu0->i_region_flags(i_mpu_region_flags);
-    mpu0->o_iflags(wb_mpu_iflags);
-    mpu0->o_dflags(wb_mpu_dflags);
+    pma0 = new PMA("pma0", async_reset);
+    pma0->i_clk(i_clk);
+    pma0->i_nrst(i_nrst);
+    pma0->i_iaddr(i.mpu_addr);
+    pma0->i_daddr(d.mpu_addr);
+    pma0->o_icached(w_pma_icached);
+    pma0->o_dcached(w_pma_dcached);
+
+
+    pmp0 = new PMP("pmp0", async_reset);
+    pmp0->i_clk(i_clk);
+    pmp0->i_nrst(i_nrst);
+    pmp0->i_ena(i_pmp_ena);
+    pmp0->i_iaddr(i.mpu_addr);
+    pmp0->i_daddr(d.mpu_addr);
+    pmp0->i_we(i_pmp_we);
+    pmp0->i_region(i_pmp_region);
+    pmp0->i_start_addr(i_pmp_start_addr);
+    pmp0->i_end_addr(i_pmp_end_addr);
+    pmp0->i_flags(i_pmp_flags);
+    pmp0->o_r(w_pmp_r);
+    pmp0->o_w(w_pmp_w);
+    pmp0->o_x(w_pmp_x);
 
 
     queue0 = new Queue<2,
@@ -201,11 +217,12 @@ CacheTop::CacheTop(sc_module_name name,
     sensitive << i_resp_mem_data;
     sensitive << i_resp_mem_load_fault;
     sensitive << i_resp_mem_store_fault;
-    sensitive << i_mpu_region_we;
-    sensitive << i_mpu_region_idx;
-    sensitive << i_mpu_region_addr;
-    sensitive << i_mpu_region_mask;
-    sensitive << i_mpu_region_flags;
+    sensitive << i_pmp_ena;
+    sensitive << i_pmp_we;
+    sensitive << i_pmp_region;
+    sensitive << i_pmp_start_addr;
+    sensitive << i_pmp_end_addr;
+    sensitive << i_pmp_flags;
     sensitive << i_req_snoop_valid;
     sensitive << i_req_snoop_type;
     sensitive << i_req_snoop_addr;
@@ -236,8 +253,11 @@ CacheTop::CacheTop(sc_module_name name,
     sensitive << wb_data_resp_mem_data;
     sensitive << w_data_resp_mem_load_fault;
     sensitive << w_data_req_ready;
-    sensitive << wb_mpu_iflags;
-    sensitive << wb_mpu_dflags;
+    sensitive << w_pma_icached;
+    sensitive << w_pma_dcached;
+    sensitive << w_pmp_r;
+    sensitive << w_pmp_w;
+    sensitive << w_pmp_x;
     sensitive << queue_re_i;
     sensitive << queue_we_i;
     sensitive << queue_wdata_i;
@@ -253,8 +273,11 @@ CacheTop::~CacheTop() {
     if (d0) {
         delete d0;
     }
-    if (mpu0) {
-        delete mpu0;
+    if (pma0) {
+        delete pma0;
+    }
+    if (pmp0) {
+        delete pmp0;
     }
     if (queue0) {
         delete queue0;
@@ -298,11 +321,12 @@ void CacheTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_resp_mem_data, i_resp_mem_data.name());
         sc_trace(o_vcd, i_resp_mem_load_fault, i_resp_mem_load_fault.name());
         sc_trace(o_vcd, i_resp_mem_store_fault, i_resp_mem_store_fault.name());
-        sc_trace(o_vcd, i_mpu_region_we, i_mpu_region_we.name());
-        sc_trace(o_vcd, i_mpu_region_idx, i_mpu_region_idx.name());
-        sc_trace(o_vcd, i_mpu_region_addr, i_mpu_region_addr.name());
-        sc_trace(o_vcd, i_mpu_region_mask, i_mpu_region_mask.name());
-        sc_trace(o_vcd, i_mpu_region_flags, i_mpu_region_flags.name());
+        sc_trace(o_vcd, i_pmp_ena, i_pmp_ena.name());
+        sc_trace(o_vcd, i_pmp_we, i_pmp_we.name());
+        sc_trace(o_vcd, i_pmp_region, i_pmp_region.name());
+        sc_trace(o_vcd, i_pmp_start_addr, i_pmp_start_addr.name());
+        sc_trace(o_vcd, i_pmp_end_addr, i_pmp_end_addr.name());
+        sc_trace(o_vcd, i_pmp_flags, i_pmp_flags.name());
         sc_trace(o_vcd, i_req_snoop_valid, i_req_snoop_valid.name());
         sc_trace(o_vcd, i_req_snoop_type, i_req_snoop_type.name());
         sc_trace(o_vcd, o_req_snoop_ready, o_req_snoop_ready.name());
@@ -324,8 +348,11 @@ void CacheTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (d0) {
         d0->generateVCD(i_vcd, o_vcd);
     }
-    if (mpu0) {
-        mpu0->generateVCD(i_vcd, o_vcd);
+    if (pma0) {
+        pma0->generateVCD(i_vcd, o_vcd);
+    }
+    if (pmp0) {
+        pmp0->generateVCD(i_vcd, o_vcd);
     }
 }
 

@@ -143,16 +143,16 @@ static const int L2_REQ_TYPE_UNIQUE = 2;
 static const int L2_REQ_TYPE_SNOOP = 3;                     // Use data received through snoop channel (no memory request)
 static const int L2_REQ_TYPE_BITS = 4;
 
-// MPU config
-static const int CFG_MPU_TBL_WIDTH = 3;                     // [1:0]  log2(MPU_TBL_SIZE)
-static const int CFG_MPU_TBL_SIZE = (1 << CFG_MPU_TBL_WIDTH);
+// PMP config
+static const int CFG_PMP_TBL_WIDTH = 3;                     // [1:0]  log2(MPU_TBL_SIZE)
+static const int CFG_PMP_TBL_SIZE = (1 << CFG_PMP_TBL_WIDTH);
 
-static const int CFG_MPU_FL_RD = 0;
-static const int CFG_MPU_FL_WR = 1;
-static const int CFG_MPU_FL_EXEC = 2;
-static const int CFG_MPU_FL_CACHABLE = 3;
-static const int CFG_MPU_FL_ENA = 4;
-static const int CFG_MPU_FL_TOTAL = 5;
+static const int CFG_PMP_FL_R = 0;
+static const int CFG_PMP_FL_W = 1;
+static const int CFG_PMP_FL_X = 2;
+static const int CFG_PMP_FL_L = 3;
+static const int CFG_PMP_FL_V = 4;
+static const int CFG_PMP_FL_TOTAL = 5;
 
 // MMU config. Fetch and Data pathes have its own MMU block
 static const int CFG_MMU_TLB_AWIDTH = 9;                    // TLB memory address bus width

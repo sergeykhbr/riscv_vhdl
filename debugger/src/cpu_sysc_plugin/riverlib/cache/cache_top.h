@@ -19,7 +19,8 @@
 #include "../river_cfg.h"
 #include "icache_lru.h"
 #include "dcache_lru.h"
-#include "mpu.h"
+#include "pma.h"
+#include "pmp.h"
 #include "../core/queue.h"
 
 namespace debugger {
@@ -66,12 +67,13 @@ SC_MODULE(CacheTop) {
     sc_in<sc_biguint<L1CACHE_LINE_BITS>> i_resp_mem_data;   // Read data
     sc_in<bool> i_resp_mem_load_fault;                      // data load error
     sc_in<bool> i_resp_mem_store_fault;                     // data store error
-    // MPU interface:
-    sc_in<bool> i_mpu_region_we;
-    sc_in<sc_uint<CFG_MPU_TBL_WIDTH>> i_mpu_region_idx;
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_mpu_region_addr;
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_mpu_region_mask;
-    sc_in<sc_uint<CFG_MPU_FL_TOTAL>> i_mpu_region_flags;    // {ena, cachable, r, w, x}
+    // PMP interface:
+    sc_in<bool> i_pmp_ena;                                  // PMP is active in S or U modes or if L/MPRV bit is set in M-mode
+    sc_in<bool> i_pmp_we;                                   // write enable into PMP
+    sc_in<sc_uint<CFG_PMP_TBL_WIDTH>> i_pmp_region;         // selected PMP region
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_pmp_start_addr;     // PMP region start address
+    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_pmp_end_addr;       // PMP region end address (inclusive)
+    sc_in<sc_uint<CFG_PMP_FL_TOTAL>> i_pmp_flags;           // {ena, lock, r, w, x}
     // $D Snoop interface:
     sc_in<bool> i_req_snoop_valid;
     sc_in<sc_uint<SNOOP_REQ_TYPE_BITS>> i_req_snoop_type;
@@ -134,8 +136,11 @@ SC_MODULE(CacheTop) {
     sc_signal<sc_biguint<DCACHE_LINE_BITS>> wb_data_resp_mem_data;
     sc_signal<bool> w_data_resp_mem_load_fault;
     sc_signal<bool> w_data_req_ready;
-    sc_signal<sc_uint<CFG_MPU_FL_TOTAL>> wb_mpu_iflags;
-    sc_signal<sc_uint<CFG_MPU_FL_TOTAL>> wb_mpu_dflags;
+    sc_signal<bool> w_pma_icached;
+    sc_signal<bool> w_pma_dcached;
+    sc_signal<bool> w_pmp_r;
+    sc_signal<bool> w_pmp_w;
+    sc_signal<bool> w_pmp_x;
     // Queue interface
     sc_signal<bool> queue_re_i;
     sc_signal<bool> queue_we_i;
@@ -146,7 +151,8 @@ SC_MODULE(CacheTop) {
 
     ICacheLru *i1;
     DCacheLru *d0;
-    MPU *mpu0;
+    PMA *pma0;
+    PMP *pmp0;
     Queue<2, QUEUE_WIDTH> *queue0;
 
 };

@@ -51,7 +51,9 @@ DCacheLru::DCacheLru(sc_module_name name,
     i_mem_load_fault("i_mem_load_fault"),
     i_mem_store_fault("i_mem_store_fault"),
     o_mpu_addr("o_mpu_addr"),
-    i_mpu_flags("i_mpu_flags"),
+    i_pma_cached("i_pma_cached"),
+    i_pmp_r("i_pmp_r"),
+    i_pmp_w("i_pmp_w"),
     i_req_snoop_valid("i_req_snoop_valid"),
     i_req_snoop_type("i_req_snoop_type"),
     o_req_snoop_ready("o_req_snoop_ready"),
@@ -108,7 +110,9 @@ DCacheLru::DCacheLru(sc_module_name name,
     sensitive << i_mem_data;
     sensitive << i_mem_load_fault;
     sensitive << i_mem_store_fault;
-    sensitive << i_mpu_flags;
+    sensitive << i_pma_cached;
+    sensitive << i_pmp_r;
+    sensitive << i_pmp_w;
     sensitive << i_req_snoop_valid;
     sensitive << i_req_snoop_type;
     sensitive << i_req_snoop_addr;
@@ -200,7 +204,9 @@ void DCacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_mem_load_fault, i_mem_load_fault.name());
         sc_trace(o_vcd, i_mem_store_fault, i_mem_store_fault.name());
         sc_trace(o_vcd, o_mpu_addr, o_mpu_addr.name());
-        sc_trace(o_vcd, i_mpu_flags, i_mpu_flags.name());
+        sc_trace(o_vcd, i_pma_cached, i_pma_cached.name());
+        sc_trace(o_vcd, i_pmp_r, i_pmp_r.name());
+        sc_trace(o_vcd, i_pmp_w, i_pmp_w.name());
         sc_trace(o_vcd, i_req_snoop_valid, i_req_snoop_valid.name());
         sc_trace(o_vcd, i_req_snoop_type, i_req_snoop_type.name());
         sc_trace(o_vcd, o_req_snoop_ready, o_req_snoop_ready.name());
@@ -435,14 +441,12 @@ void DCacheLru::comb() {
         }
         break;
     case State_TranslateAddress:
-        if ((r.req_type.read()[MemopType_Store] == 1)
-                && (i_mpu_flags.read()[CFG_MPU_FL_WR] == 0)) {
+        if ((r.req_type.read()[MemopType_Store] == 1) && (i_pmp_w.read() == 0)) {
             v.mpu_er_store = 1;
             t_cache_line_i = 0;
             v.cache_line_i = (~t_cache_line_i);
             v.state = State_CheckResp;
-        } else if ((r.req_type.read()[MemopType_Store] == 0)
-                    && (i_mpu_flags.read()[CFG_MPU_FL_RD] == 0)) {
+        } else if ((r.req_type.read()[MemopType_Store] == 0) && (i_pmp_r.read() == 0)) {
             v.mpu_er_load = 1;
             t_cache_line_i = 0;
             v.cache_line_i = (~t_cache_line_i);
@@ -450,7 +454,7 @@ void DCacheLru::comb() {
         } else {
             v.req_mem_valid = 1;
             v.state = State_WaitGrant;
-            if (i_mpu_flags.read()[CFG_MPU_FL_CACHABLE] == 1) {
+            if (i_pma_cached.read() == 1) {
                 // Cached:
                 if (r.write_share.read() == 1) {
                     v.req_mem_type = WriteLineUnique();
