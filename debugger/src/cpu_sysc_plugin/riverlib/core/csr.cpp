@@ -106,6 +106,7 @@ CsrRegs::CsrRegs(sc_module_name name,
     for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
         sensitive << r.pmp[i].cfg;
         sensitive << r.pmp[i].addr;
+        sensitive << r.pmp[i].mask;
     }
     sensitive << r.state;
     sensitive << r.fencestate;
@@ -157,6 +158,11 @@ CsrRegs::CsrRegs(sc_module_name name,
     sensitive << r.ins_per_step;
     sensitive << r.pmp_upd_ena;
     sensitive << r.pmp_upd_cnt;
+    sensitive << r.pmp_we;
+    sensitive << r.pmp_region;
+    sensitive << r.pmp_start_addr;
+    sensitive << r.pmp_end_addr;
+    sensitive << r.pmp_flags;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -243,6 +249,8 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
             sc_trace(o_vcd, r.pmp[i].cfg, tstr);
             RISCV_sprintf(tstr, sizeof(tstr), "%s.r_pmp%d_addr", pn.c_str(), i);
             sc_trace(o_vcd, r.pmp[i].addr, tstr);
+            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_pmp%d_mask", pn.c_str(), i);
+            sc_trace(o_vcd, r.pmp[i].mask, tstr);
         }
         sc_trace(o_vcd, r.state, pn + ".r_state");
         sc_trace(o_vcd, r.fencestate, pn + ".r_fencestate");
@@ -294,6 +302,11 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.ins_per_step, pn + ".r_ins_per_step");
         sc_trace(o_vcd, r.pmp_upd_ena, pn + ".r_pmp_upd_ena");
         sc_trace(o_vcd, r.pmp_upd_cnt, pn + ".r_pmp_upd_cnt");
+        sc_trace(o_vcd, r.pmp_we, pn + ".r_pmp_we");
+        sc_trace(o_vcd, r.pmp_region, pn + ".r_pmp_region");
+        sc_trace(o_vcd, r.pmp_start_addr, pn + ".r_pmp_start_addr");
+        sc_trace(o_vcd, r.pmp_end_addr, pn + ".r_pmp_end_addr");
+        sc_trace(o_vcd, r.pmp_flags, pn + ".r_pmp_flags");
     }
 
 }
@@ -329,6 +342,8 @@ void CsrRegs::comb() {
     bool v_flushi;
     bool v_flushmmu;
     sc_uint<CFG_MPU_TBL_SIZE> vb_pmp_upd_ena;
+    sc_uint<CFG_CPU_ADDR_BITS> vb_pmp_napot_mask;
+    bool v_napot_shift;
     int t_pmpdataidx;
     int t_pmpcfgidx;
 
@@ -362,6 +377,8 @@ void CsrRegs::comb() {
     v_flushi = 0;
     v_flushmmu = 0;
     vb_pmp_upd_ena = 0;
+    vb_pmp_napot_mask = 0;
+    v_napot_shift = 0;
     t_pmpdataidx = 0;
     t_pmpcfgidx = 0;
 
@@ -384,6 +401,7 @@ void CsrRegs::comb() {
     for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
         v.pmp[i].cfg = r.pmp[i].cfg;
         v.pmp[i].addr = r.pmp[i].addr;
+        v.pmp[i].mask = r.pmp[i].mask;
     }
     v.state = r.state;
     v.fencestate = r.fencestate;
@@ -435,12 +453,18 @@ void CsrRegs::comb() {
     v.ins_per_step = r.ins_per_step;
     v.pmp_upd_ena = r.pmp_upd_ena;
     v.pmp_upd_cnt = r.pmp_upd_cnt;
+    v.pmp_we = r.pmp_we;
+    v.pmp_region = r.pmp_region;
+    v.pmp_start_addr = r.pmp_start_addr;
+    v.pmp_end_addr = r.pmp_end_addr;
+    v.pmp_flags = r.pmp_flags;
 
     v.mpu_we = 0;
     vb_xpp = r.xmode[r.mode.read().to_int()].xpp;
     vb_pmp_upd_ena = r.pmp_upd_ena;
     t_pmpdataidx = (r.cmd_addr.read().to_int() - 0x3B0);
     t_pmpcfgidx = (8 * r.cmd_addr.read()(3, 1).to_int());
+    vb_pmp_napot_mask = 0x7;
 
     vb_xtvec_off_edeleg = r.xmode[iM].xtvec_off;
     if ((r.mode.read() <= PRV_S) && (r.medeleg.read()[r.cmd_addr.read()(4, 0).to_int()] == 1)) {
@@ -521,7 +545,7 @@ void CsrRegs::comb() {
             v.cmd_data = ~0ull;                             // signal to executor to switch into Debug Mode and halt
         } else if (r.dcsr_ebreakm.read() == 1) {
             v.halt_cause = HALT_CAUSE_EBREAK;
-            v.dpc = r.cmd_data;
+            v.dpc = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
             v.cmd_data = ~0ull;                             // signal to executor to switch into Debug Mode and halt
         } else {
             vb_e_emux[EXCEPTION_Breakpoint] = 1;
@@ -540,7 +564,7 @@ void CsrRegs::comb() {
         if (i_dbg_progbuf_ena.read() == 1) {
             v.cmd_data = 0;
         } else {
-            v.cmd_data = r.dpc;
+            v.cmd_data = (0, r.dpc.read());
         }
         break;
     case State_Interrupt:
@@ -556,7 +580,7 @@ void CsrRegs::comb() {
     case State_TrapReturn:
         v.state = State_Response;
         v_csr_trapreturn = 1;
-        v.cmd_data = r.xmode[r.mode.read().to_int()].xepc;
+        v.cmd_data = (0, r.xmode[r.mode.read().to_int()].xepc);
         break;
     case State_RW:
         v.state = State_Response;
@@ -974,19 +998,29 @@ void CsrRegs::comb() {
                     v.pmp[(t_pmpcfgidx + i)].cfg = r.cmd_data.read()((8 * i) + 8 - 1, (8 * i));
                     vb_pmp_upd_ena[(t_pmpcfgidx + i)] = 1;
                     v.pmp_upd_cnt = 0;
+                    v.pmp_start_addr = 0;
                 }
             }
         }
     } else if ((r.cmd_addr.read() >= 0x3B0)
                 && (r.cmd_addr.read() <= 0x3EF)) {
         // pmpaddr0..63: [MRW] Physical memory protection address register
+        for (int i = 0; i < (CFG_CPU_ADDR_BITS - 2); i++) {
+            if ((r.cmd_data.read()[i] == 1) && (v_napot_shift == 0)) {
+                vb_pmp_napot_mask = ((vb_pmp_napot_mask << 1) | 1);
+            } else {
+                v_napot_shift = 1;
+            }
+        }
         if (t_pmpdataidx < CFG_MPU_TBL_SIZE) {
-            vb_rdata(53, 0) = r.pmp[t_pmpdataidx].addr;
+            vb_rdata((CFG_CPU_ADDR_BITS - 3), 0) = r.pmp[t_pmpdataidx].addr.read()((CFG_CPU_ADDR_BITS - 1), 0);
             if ((v_csr_wena == 1)
                     && (r.pmp[t_pmpdataidx].cfg.read()[7] == 0)) {
-                v.pmp[t_pmpdataidx].addr = r.cmd_data.read()(53, 0);
+                v.pmp[t_pmpdataidx].addr = (r.cmd_data.read()((CFG_CPU_ADDR_BITS - 3), 0) << 2);
+                v.pmp[t_pmpdataidx].mask = vb_pmp_napot_mask;
                 vb_pmp_upd_ena[t_pmpdataidx] = 1;
                 v.pmp_upd_cnt = 0;
+                v.pmp_start_addr = 0;
             }
         }
     } else if (r.cmd_addr.read() <= 0x3EF) {                // pmpaddr63: [MRW] Physical memory protection address register
@@ -1045,7 +1079,7 @@ void CsrRegs::comb() {
             vb_rdata = i_e_pc;
         }
         if (v_csr_wena == 1) {
-            v.dpc = r.cmd_data;
+            v.dpc = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
         }
     } else if (r.cmd_addr.read() == 0x7B2) {                // dscratch0: [DRW] Debug scratch register 0
         vb_rdata = r.dscratch0;
@@ -1172,8 +1206,35 @@ void CsrRegs::comb() {
     if (r.pmp_upd_ena.read().or_reduce() == 1) {
         vb_pmp_upd_ena[r.pmp_upd_cnt.read().to_int()] = 0;
         v.pmp_upd_cnt = (r.pmp_upd_cnt.read() + 1);
+        v.pmp_we = r.pmp_upd_ena.read()[r.pmp_upd_cnt.read().to_int()];
+        v.pmp_region = r.pmp_upd_cnt;
+        if (r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()(4, 3) == 0) {
+            // OFF: Null region (disabled)
+            v.pmp_start_addr = 0;
+            v.pmp_end_addr = r.pmp[r.pmp_upd_cnt.read().to_int()].addr.read();
+            v.pmp_flags = 0;
+        } else if (r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()(4, 3) == 1) {
+            // TOR: Top of range
+            v.pmp_start_addr = r.pmp_end_addr;
+            v.pmp_end_addr = (r.pmp[r.pmp_upd_cnt.read().to_int()].addr.read() - 1);
+            v.pmp_flags = (0x1, r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()[7], r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()(2, 0));
+        } else if (r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()(4, 3) == 2) {
+            // NA4: Naturally aligned four-bytes region
+            v.pmp_start_addr = r.pmp[r.pmp_upd_cnt.read().to_int()].addr.read();
+            v.pmp_end_addr = (r.pmp[r.pmp_upd_cnt.read().to_int()].addr.read() | 0x3);
+            v.pmp_flags = (0x1, r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()[7], r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()(2, 0));
+        } else {
+            // NAPOT: Naturally aligned power-of-two region, >=8 bytes
+            v.pmp_start_addr = (r.pmp[r.pmp_upd_cnt.read().to_int()].addr.read() & (~r.pmp[r.pmp_upd_cnt.read().to_int()].mask.read()));
+            v.pmp_end_addr = (r.pmp_start_addr.read() | r.pmp[r.pmp_upd_cnt.read().to_int()].mask.read());
+            v.pmp_flags = (0x1, r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()[7], r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()(2, 0));
+        }
     } else {
         v.pmp_upd_cnt = 0;
+        v.pmp_start_addr = 0;
+        v.pmp_end_addr = 0;
+        v.pmp_flags = 0;
+        v.pmp_we = 0;
     }
     v.pmp_upd_ena = vb_pmp_upd_ena;
 
@@ -1227,6 +1288,7 @@ void CsrRegs::comb() {
         for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
             v.pmp[i].cfg = 0;
             v.pmp[i].addr = 0ull;
+            v.pmp[i].mask = 0ull;
         }
         v.state = State_Idle;
         v.fencestate = Fence_None;
@@ -1278,6 +1340,11 @@ void CsrRegs::comb() {
         v.ins_per_step = 1ull;
         v.pmp_upd_ena = 0;
         v.pmp_upd_cnt = 0;
+        v.pmp_we = 0;
+        v.pmp_region = 0;
+        v.pmp_start_addr = 0ull;
+        v.pmp_end_addr = 0ull;
+        v.pmp_flags = 0;
     }
 
     o_req_ready = v_req_ready;
@@ -1327,6 +1394,7 @@ void CsrRegs::registers() {
         for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
             r.pmp[i].cfg = 0;
             r.pmp[i].addr = 0ull;
+            r.pmp[i].mask = 0ull;
         }
         r.state = State_Idle;
         r.fencestate = Fence_None;
@@ -1378,6 +1446,11 @@ void CsrRegs::registers() {
         r.ins_per_step = 1ull;
         r.pmp_upd_ena = 0;
         r.pmp_upd_cnt = 0;
+        r.pmp_we = 0;
+        r.pmp_region = 0;
+        r.pmp_start_addr = 0ull;
+        r.pmp_end_addr = 0ull;
+        r.pmp_flags = 0;
     } else {
         for (int i = 0; i < 4; i++) {
             r.xmode[i].xepc = v.xmode[i].xepc;
@@ -1398,6 +1471,7 @@ void CsrRegs::registers() {
         for (int i = 0; i < CFG_MPU_TBL_SIZE; i++) {
             r.pmp[i].cfg = v.pmp[i].cfg;
             r.pmp[i].addr = v.pmp[i].addr;
+            r.pmp[i].mask = v.pmp[i].mask;
         }
         r.state = v.state;
         r.fencestate = v.fencestate;
@@ -1449,6 +1523,11 @@ void CsrRegs::registers() {
         r.ins_per_step = v.ins_per_step;
         r.pmp_upd_ena = v.pmp_upd_ena;
         r.pmp_upd_cnt = v.pmp_upd_cnt;
+        r.pmp_we = v.pmp_we;
+        r.pmp_region = v.pmp_region;
+        r.pmp_start_addr = v.pmp_start_addr;
+        r.pmp_end_addr = v.pmp_end_addr;
+        r.pmp_flags = v.pmp_flags;
     }
 }
 

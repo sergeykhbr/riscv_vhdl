@@ -1235,7 +1235,7 @@ void InstrExecute::comb() {
                     } else {
                         v.state = State_Idle;
                         if (i_dbg_progbuf_ena.read() == 0) {
-                            v.npc = i_csr_resp_data;
+                            v.npc = i_csr_resp_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
                         }
                     }
                 } else if ((r.csr_req_type.read()[CsrReq_ExceptionBit]
@@ -1244,7 +1244,7 @@ void InstrExecute::comb() {
                     v.valid = 0;                            // No valid strob should be generated
                     v.state = State_Idle;
                     if (i_dbg_progbuf_ena.read() == 0) {
-                        v.npc = i_csr_resp_data;
+                        v.npc = i_csr_resp_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
                     }
                 } else if (r.csr_req_type.read()[CsrReq_WfiBit] == 1) {
                     if (i_csr_resp_data.read()[0] == 1) {
@@ -1262,7 +1262,7 @@ void InstrExecute::comb() {
                     v.valid = 1;
                     v.state = State_Idle;
                     if (i_dbg_progbuf_ena.read() == 0) {
-                        v.npc = i_csr_resp_data;
+                        v.npc = i_csr_resp_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
                     }
                 } else if (r.csr_req_rmw.read() == 1) {
                     v.csrstate = CsrState_Req;
@@ -1428,8 +1428,16 @@ void InstrExecute::comb() {
                 || wv[Instr_HRET]
                 || wv[Instr_SRET]
                 || wv[Instr_URET]);
-        v.res_npc = vb_prog_npc;
-        v.res_ra = vb_npc_incr;
+        if (vb_prog_npc[(CFG_CPU_ADDR_BITS - 1)] == 1) {
+            v.res_npc = (~0ull, vb_prog_npc);
+        } else {
+            v.res_npc = (0, vb_prog_npc);
+        }
+        if (vb_npc_incr[(CFG_CPU_ADDR_BITS - 1)] == 1) {
+            v.res_ra = (~0ull, vb_npc_incr);
+        } else {
+            v.res_ra = (0, vb_npc_incr);
+        }
 
         wb_select[Res_IMul].ena = vb_select[Res_IMul];
         wb_select[Res_IDiv].ena = vb_select[Res_IDiv];

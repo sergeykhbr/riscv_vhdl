@@ -123,7 +123,8 @@ SC_MODULE(CsrRegs) {
 
     struct PmpItemType {
         sc_signal<sc_uint<8>> cfg;                          // pmpcfg bits without changes
-        sc_signal<sc_uint<54>> addr;                        // PMP address bits [55:2]
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> addr;         // Maximal PMP address bits [55:2]
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mask;         // NAPOT mask formed from address
     };
 
 
@@ -180,6 +181,11 @@ SC_MODULE(CsrRegs) {
         sc_signal<sc_uint<RISCV_ARCH>> ins_per_step;        // Number of steps before halt in stepping mode
         sc_signal<sc_uint<CFG_MPU_TBL_SIZE>> pmp_upd_ena;
         sc_signal<sc_uint<CFG_MPU_TBL_WIDTH>> pmp_upd_cnt;
+        sc_signal<bool> pmp_we;
+        sc_signal<sc_uint<CFG_MPU_TBL_WIDTH>> pmp_region;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pmp_start_addr;
+        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pmp_end_addr;
+        sc_signal<sc_uint<CFG_MPU_FL_TOTAL>> pmp_flags;
     } v, r;
 
 

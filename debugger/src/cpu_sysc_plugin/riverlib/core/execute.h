@@ -229,9 +229,9 @@ SC_MODULE(InstrExecute) {
         sc_signal<bool> page_fault_r;
         sc_signal<bool> page_fault_w;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mem_ex_addr;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> res_npc;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> res_ra;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> res_csr;
+        sc_signal<sc_uint<RISCV_ARCH>> res_npc;
+        sc_signal<sc_uint<RISCV_ARCH>> res_ra;
+        sc_signal<sc_uint<RISCV_ARCH>> res_csr;
         sc_signal<sc_uint<Res_Total>> select;
         sc_signal<bool> valid;
         sc_signal<bool> call;
