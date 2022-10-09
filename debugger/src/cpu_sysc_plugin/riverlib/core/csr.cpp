@@ -1192,7 +1192,11 @@ void CsrRegs::comb() {
             v.pmp_flags = 0;
         } else if (r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()(4, 3) == 1) {
             // TOR: Top of range
-            v.pmp_start_addr = r.pmp_end_addr;
+            if (r.pmp_end_addr.read()[0] == 1) {
+                v.pmp_start_addr = (r.pmp_end_addr.read() + 1);
+            } else {
+                v.pmp_start_addr = r.pmp_end_addr;
+            }
             v.pmp_end_addr = (r.pmp[r.pmp_upd_cnt.read().to_int()].addr.read() - 1);
             v.pmp_flags = (0x1, r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()[7], r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()(2, 0));
         } else if (r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()(4, 3) == 2) {
