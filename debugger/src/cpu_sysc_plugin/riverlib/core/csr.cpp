@@ -1203,7 +1203,7 @@ void CsrRegs::comb() {
         } else {
             // NAPOT: Naturally aligned power-of-two region, >=8 bytes
             v.pmp_start_addr = (r.pmp[r.pmp_upd_cnt.read().to_int()].addr.read() & (~r.pmp[r.pmp_upd_cnt.read().to_int()].mask.read()));
-            v.pmp_end_addr = (r.pmp_start_addr.read() | r.pmp[r.pmp_upd_cnt.read().to_int()].mask.read());
+            v.pmp_end_addr = (r.pmp[r.pmp_upd_cnt.read().to_int()].addr.read() | r.pmp[r.pmp_upd_cnt.read().to_int()].mask.read());
             v.pmp_flags = (0x1, r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()[7], r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()(2, 0));
         }
     } else {

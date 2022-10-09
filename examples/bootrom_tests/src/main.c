@@ -30,13 +30,12 @@ void test_missaccess(void);
 void test_stackprotect(void);
 void test_spiflash(uint64_t bar);
 void test_gnss_ss(uint64_t bar);
-int test_translate();
+int test_pmp();
+int test_mmu();
 void print_pnp(void);
 int hwthread1(void);
 int hwthread2(void);
 int hwthread3(void);
-
-void protect_memory(void);  // MPU setup in BBL
 
 
 int main() {
@@ -46,8 +45,6 @@ int main() {
     gpio_map *gpio = (gpio_map *)ADDR_BUS0_XSLV_GPIO;
     uint64_t bar;
     uint32_t cpu_max;
-
-    protect_memory();
 
     switch (fw_get_cpuid()) {
     case 0:
@@ -91,7 +88,8 @@ int main() {
     test_mtimer();
     test_swirq();
     test_l2coherence();
-    test_translate();
+    test_pmp();
+    test_mmu();
 
     led_set(0x03);
     test_fpu();

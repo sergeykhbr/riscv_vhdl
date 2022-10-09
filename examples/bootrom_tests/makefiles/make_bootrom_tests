@@ -49,14 +49,14 @@ SOURCES = crt \
 	test_pnp \
 	test_fpu \
 	test_missaccess \
-	test_mpu \
 	test_stackprotect \
 	test_gnss_ss \
 	test_plic \
 	test_mtimer \
 	test_swirq \
 	test_l2coherence \
-	test_translate \
+	test_pmp \
+	test_mmu \
 	hwthread1 \
 	hwthread2 \
 	hwthread3 \

@@ -157,7 +157,7 @@ void add_entry(mmu_type *mmu, char *table, unsigned level, uint64_t virtual, uin
     }
 }
 
-int test_translate()
+int test_mmu()
 {
     mmu_type *pages = (mmu_type *)fw_malloc(sizeof(mmu_type));
     pages->next = pages->buf;
