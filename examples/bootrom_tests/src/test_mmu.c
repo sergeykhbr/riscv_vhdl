@@ -4,6 +4,7 @@
 #include "fw_api.h"
 
 #define MMU_FAST_TEST  // init only several used entries instead of all entries on all  4 levels
+extern void setup_pmp(void);
 
 #define get_field(reg, mask) (((reg) & (mask)) / ((mask) & ~((mask) << 1)))
 #define set_field(reg, mask, val) (((reg) & ~(mask)) | (((val) * ((mask) & ~((mask) << 1))) & (mask)))
@@ -118,6 +119,37 @@ void setup_page_table(char *table, unsigned level, uint64_t physical)
         pte |= ((reg_t) i) << (PTE_PPN_SHIFT + level * vms->vpn_width_bits);
         entry_set(table, i, pte);
     }
+
+#ifdef MMU_FAST_TEST
+    // va = 0xffff.f000.0800.3004
+    // level0 bits 47:39 = 1.1110.0000
+    {
+        unsigned i = 0x1e0;
+
+        uint64_t pte = PTE_V | PTE_R | PTE_W | PTE_X | PTE_U | PTE_A | PTE_D;
+        // Add in portion of physical address.
+        pte |= physical & (((1LL<<vms->vpn_width_bits)-1) <<
+                (PTE_PPN_SHIFT + (level+1) * vms->vpn_width_bits));
+        // Add in the index.
+        pte |= ((reg_t) i) << (PTE_PPN_SHIFT + level * vms->vpn_width_bits);
+        entry_set(table, i, pte);
+    }
+    // level1 bits 38:30 = 0.0000.0000
+    // level2 bits 29:21 = 0.0100.0000
+    {
+        unsigned i = 0x040;
+
+        uint64_t pte = PTE_V | PTE_R | PTE_W | PTE_X | PTE_U | PTE_A | PTE_D;
+        // Add in portion of physical address.
+        pte |= physical & (((1LL<<vms->vpn_width_bits)-1) <<
+                (PTE_PPN_SHIFT + (level+1) * vms->vpn_width_bits));
+        // Add in the index.
+        pte |= ((reg_t) i) << (PTE_PPN_SHIFT + level * vms->vpn_width_bits);
+        entry_set(table, i, pte);
+    }
+    // level3 bits 20:12 = 0.0000.0011
+#endif
+
 }
 
 // Return contents of vpn field for the given virtual address and level.
@@ -189,6 +221,7 @@ int test_mmu()
         return;
     }
 
+    setup_pmp();
     reg_t mstatus = read_csr(mstatus);
     mstatus |= MSTATUS_MPRV;
     write_csr(mstatus, mstatus);

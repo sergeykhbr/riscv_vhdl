@@ -460,7 +460,11 @@ void Mmu::comb() {
     case CacheReq:
         v_mem_req_valid = 1;
         vb_mem_req_addr = r.req_pa;
-        vb_mem_req_type = r.req_type;
+        if (r.tlb_hit.read() == 0) {
+            vb_mem_req_type = 0;                            // Load tlb item
+        } else {
+            vb_mem_req_type = r.req_type;
+        }
         vb_mem_req_wdata = r.req_wdata;
         vb_mem_req_wstrb = r.req_wstrb;
         vb_mem_req_size = r.req_size;
