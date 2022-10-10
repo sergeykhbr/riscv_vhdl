@@ -15,8 +15,8 @@
  */
 
 #include <string.h>
-#include "axi_maps.h"
-#include "encoding.h"
+#include <axi_maps.h>
+#include <encoding.h>
 #include "sd_uefi.h"
 #include "uart.h"
 
@@ -107,6 +107,19 @@ void timestamp_output() {
     }*/
 }
 
+// Enable U,S,MPRV for all regions
+void init_pmp() {
+    uint64_t a0 = -1;  // Give S-mode free rein of everything else.
+    uint64_t cfg = (PMP_NAPOT | PMP_R | PMP_W | PMP_X) << 0; // [] channel: whole memory range
+
+    // Plug it all in.
+    asm volatile ("csrw pmpaddr0, %[a0]\n\t"
+                  "csrw pmpcfg0, %[cfg]"
+                  :: [a0] "r" (a0),
+                     [cfg] "r" (cfg));
+}
+
+
 void _init() {
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
@@ -124,6 +137,8 @@ void _init() {
     t1 = 0x00000007;
     asm("csrw mcounteren, %0" : :"r"(t1));  // allow counter access from S-mode
     asm("csrw scounteren, %0" : :"r"(t1));  // allow counter access from U-mode
+
+    init_pmp();
 
     txctrl.v = 0;
     txctrl.b.txen = 1;

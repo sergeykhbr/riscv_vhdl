@@ -195,5 +195,5 @@ void test_pmp() {
     }
 
     restore_state(pmp->mtvec, pmp->mstatus);
-    printf_uart("%s", "PASS\r\b");
+    printf_uart("%s", "PASS\r\n");
 }

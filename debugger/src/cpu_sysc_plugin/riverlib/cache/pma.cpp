@@ -66,20 +66,20 @@ void PMA::comb() {
     v = r;
 
     v_icached = 1;
-    if ((i_iaddr.read() | CLINT_MASK) == CLINT_BAR) {
+    if ((i_iaddr.read() & (~CLINT_MASK)) == CLINT_BAR) {
         v_icached = 0;
-    } else if ((i_iaddr.read() | PLIC_MASK) == PLIC_BAR) {
+    } else if ((i_iaddr.read() & (~PLIC_MASK)) == PLIC_BAR) {
         v_icached = 0;
-    } else if ((i_iaddr.read() | IO1_MASK) == IO1_BAR) {
+    } else if ((i_iaddr.read() & (~IO1_MASK)) == IO1_BAR) {
         v_icached = 0;
     }
 
-    v.dcached = 1;
-    if ((i_iaddr.read() | CLINT_MASK) == CLINT_BAR) {
+    v_dcached = 1;
+    if ((i_daddr.read() & (~CLINT_MASK)) == CLINT_BAR) {
         v_dcached = 0;
-    } else if ((i_iaddr.read() | PLIC_MASK) == PLIC_BAR) {
+    } else if ((i_daddr.read() & (~PLIC_MASK)) == PLIC_BAR) {
         v_dcached = 0;
-    } else if ((i_iaddr.read() | IO1_MASK) == IO1_BAR) {
+    } else if ((i_daddr.read() & (~IO1_MASK)) == IO1_BAR) {
         v_dcached = 0;
     }
 
@@ -90,8 +90,8 @@ void PMA::comb() {
         PMA_r_reset(v);
     }
 
-    o_icached = r.icached;
-    o_dcached = r.dcached;
+    o_icached = v_icached;
+    o_dcached = v_dcached;
 }
 
 void PMA::registers() {

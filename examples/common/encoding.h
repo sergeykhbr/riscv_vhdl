@@ -71,6 +71,9 @@
 #define COOP_REG_T4         232//(29*sizeof(uint64_t))
 /** Global pointer */
 #define COOP_REG_GP         240//(30*sizeof(uint64_t))
+#define COOP_REG_FRAME      248//(30*sizeof(uint64_t))
+
+#define INTEGER_CONTEXT_SIZE (32*REGBYTES)
 
 #define _save_context(TO) \
   sd ra, COOP_REG_RA(TO); \
@@ -112,7 +115,8 @@
 // a0 <- regs
 // a2 <- mepc
 // t0 <- user sp
-#define _save2() \
+#define _savetostack() \
+  addi sp, sp, -INTEGER_CONTEXT_SIZE; \
   STORE ra, 1*REGBYTES(sp); \
   STORE gp, 3*REGBYTES(sp); \
   STORE tp, 4*REGBYTES(sp); \
@@ -150,6 +154,40 @@
   STORE t6,31*REGBYTES(sp); \
   STORE t0, 2*REGBYTES(sp);
 
+// Restore all of the registers.
+#define _loadfromstack() \
+  LOAD ra, 1*REGBYTES(sp); \
+  LOAD gp, 3*REGBYTES(sp); \
+  LOAD tp, 4*REGBYTES(sp); \
+  LOAD t0, 5*REGBYTES(sp); \
+  LOAD t1, 6*REGBYTES(sp); \
+  LOAD t2, 7*REGBYTES(sp); \
+  LOAD s0, 8*REGBYTES(sp); \
+  LOAD s1, 9*REGBYTES(sp); \
+  LOAD a0,10*REGBYTES(sp); \
+  LOAD a1,11*REGBYTES(sp); \
+  LOAD a2,12*REGBYTES(sp); \
+  LOAD a3,13*REGBYTES(sp); \
+  LOAD a4,14*REGBYTES(sp); \
+  LOAD a5,15*REGBYTES(sp); \
+  LOAD a6,16*REGBYTES(sp); \
+  LOAD a7,17*REGBYTES(sp); \
+  LOAD s2,18*REGBYTES(sp); \
+  LOAD s3,19*REGBYTES(sp); \
+  LOAD s4,20*REGBYTES(sp); \
+  LOAD s5,21*REGBYTES(sp); \
+  LOAD s6,22*REGBYTES(sp); \
+  LOAD s7,23*REGBYTES(sp); \
+  LOAD s8,24*REGBYTES(sp); \
+  LOAD s9,25*REGBYTES(sp); \
+  LOAD s10,26*REGBYTES(sp); \
+  LOAD s11,27*REGBYTES(sp); \
+  LOAD t3,28*REGBYTES(sp); \
+  LOAD t4,29*REGBYTES(sp); \
+  LOAD t5,30*REGBYTES(sp); \
+  LOAD t6,31*REGBYTES(sp); \
+  LOAD sp, 2*REGBYTES(sp); \
+  addi sp, sp, INTEGER_CONTEXT_SIZE;
 
 #define _restore_context(FROM) \
   ld ra, COOP_REG_RA(FROM); \

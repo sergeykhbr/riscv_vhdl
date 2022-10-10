@@ -42,7 +42,7 @@
     {'Class':'MemorySimClass','Instances':[
           {'Name':'bootrom0','Attr':[
                 ['LogLevel',1],
-                ['InitFile','${REPO_PATH}/../examples/bootrom_tests/linuxbuild/bin/bootrom_tests.hex'],
+                ['InitFile','${REPO_PATH}/../examples/boot/linuxbuild/bin/bootimage.hex'],
                 ['ReadOnly',true],
                 ['BaseAddress',0x10000, 'Rom+reserved from 0x0001_0000 upto 0x0100_0000 on FU740'],
                 ['Length',0x10000]
