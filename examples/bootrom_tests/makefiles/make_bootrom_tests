@@ -30,6 +30,7 @@ INCL_PATH=\
 
 # source files directories list:
 SRC_PATH =\
+	$(TOP_DIR)../common/system \
 	$(TOP_DIR)src
 
 LIB_NAMES =\
@@ -39,7 +40,7 @@ LIB_NAMES =\
 
 VPATH = $(SRC_PATH)
 
-SOURCES = crt \
+SOURCES = startup \
 	exceptions \
 	interrupts \
 	memanager \

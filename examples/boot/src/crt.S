@@ -83,10 +83,6 @@ reset_vector:
   ##! csrc (pseudo asm instruction) - clear bit 
   ##! csrrc - atomic read and clear bit
 
-  # Clear Previous mode (set U-mode), disable interrupt in U-mode
-  li t0, 0x00001880   # MPP[12:11] = 0x0 MPIE[7]=0 (Previous to machine mode)
-  csrc mstatus, t0    # run tests in user mode = 0, by clearing bits
-
   la t0, trap_table
   csrw mtvec, t0
 

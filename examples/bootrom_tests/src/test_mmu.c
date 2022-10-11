@@ -223,6 +223,8 @@ int test_mmu()
 
     setup_pmp();
     reg_t mstatus = read_csr(mstatus);
+    mstatus &= ~(MSTATUS_MPP_M);
+    mstatus |= MSTATUS_MPP_S;  // set MPP to S-mode
     mstatus |= MSTATUS_MPRV;
     write_csr(mstatus, mstatus);
 

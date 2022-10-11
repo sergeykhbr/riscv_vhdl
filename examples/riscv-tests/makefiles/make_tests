@@ -27,7 +27,8 @@ DIR_KEY=-B
 
 # include sub-folders list
 INCL_PATH=\
-	$(TOP_DIR)common
+	$(TOP_DIR)common \
+	$(TOP_DIR)../common
 
 # source files directories list:
 SRC_PATH =\
@@ -76,8 +77,8 @@ SOURCE_64UM = \
 SOURCE_64UC = \
 	rvc
 
-SOURCES = $(SOURCE_64UI) $(SOURCE_64UA) $(SOURCE_64UC) $(SOURCE_64UM) \
-	passfail
+SOURCES = u_mode $(SOURCE_64UI) $(SOURCE_64UA) $(SOURCE_64UC) $(SOURCE_64UM) \
+	passfail trap
 
 
 OBJ_FILES = $(addsuffix .o,$(SOURCES))

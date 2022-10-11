@@ -24,9 +24,9 @@ static const char TEST_MTIMER_NAME[8] = "mtimer";
 void test_mtimer(void) {
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     clint_map *clint = (clint_map *)ADDR_BUS0_XSLV_CLINT;
-    uint64_t mtie = 0x1ull << 7;
 
-    asm("csrc mie, %0" : :"r"(mtie));         // MTIE=0: disable mtimer interrupt
+    fw_disable_m_interrupts();
+    fw_mie_enable(HART_IRQ_MTIP);
 
     clint->mtime = 0ull;
     uint64_t t1 = clint->mtime;
@@ -36,16 +36,14 @@ void test_mtimer(void) {
         return;
     }
 
-    fw_enable_m_interrupts();
-
     pnp->fwdbg1 = 0;
     clint->mtimecmp[fw_get_cpuid()] = clint->mtime + 3000;
 
-    asm("csrs mie, %0" : :"r"(mtie));         // MTIE=1: enable mtimer interrupt
-
+    fw_enable_m_interrupts();
     while (pnp->fwdbg1 == 0) {}               // should be update int irq handler
+    fw_disable_m_interrupts();
 
-    asm("csrc mie, %0" : :"r"(mtie));         // MTIE=0: disable mtimer interrupt
+    fw_mie_disable(HART_IRQ_MTIP);
 
     printf_uart("MTIMER . . . . .%s", "PASS\r\n");
 }

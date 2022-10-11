@@ -106,7 +106,7 @@
           {'Name':'prci0','Attr':[
                 ['ObjDescription','PLL and clock sources control registers']
                 ['LogLevel',4],
-                ['BaseAddress',0x10000000],
+                ['BaseAddress',0x10010000],
                 ['Length',0x1000],
                 ['MapList',[['prci0','hfxosccfg'],
                             ['prci0','core_pllcfg'],
@@ -134,7 +134,7 @@
                 ['LogLevel',1],
                 ['FifoSize',16],
                 ['CmdExecutor','cmdexec0'],
-                ['BaseAddress',0x10010000],
+                ['BaseAddress',0x10000000],
                 ['Length',4096],
                 ['Clock','core0']
                 ['IrqController','plic0'],

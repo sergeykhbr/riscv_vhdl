@@ -169,8 +169,8 @@ void test_pmp() {
     }
 
     uint64_t mstatus_s = pmp->mstatus;
-    mstatus_s &= ~(0x3 << 12);
-    mstatus_s |= (0x1 << 12);  // set MPP to S-mode
+    mstatus_s &= ~(MSTATUS_MPP_M);
+    mstatus_s |= MSTATUS_MPP_S;  // set MPP to S-mode
     mstatus_s |= MSTATUS_MPRV;
     write_csr(mstatus, mstatus_s);
 
@@ -178,6 +178,7 @@ void test_pmp() {
     wValue = W32_NO_INTERRUPT;
     asm volatile ("la %[tlabel], 1f\n\t"
                   "csrrw %[tlabel], mtvec, %[tlabel]\n\t"
+                  "fence\n\t"
                   "sw %[wValue],0(t0)\n\t"
                   "fence\n\t"
                   "j 2f\n\t"

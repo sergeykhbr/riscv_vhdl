@@ -43,9 +43,9 @@ SC_MODULE(PMA) {
     bool async_reset_;
 
     static const uint64_t CLINT_BAR = 0x0000000002000000ull;
-    static const uint64_t CLINT_MASK = 0x0000000000007FFFull;
+    static const uint64_t CLINT_MASK = 0x000000000000FFFFull;
     static const uint64_t PLIC_BAR = 0x000000000C000000ull;
-    static const uint64_t PLIC_MASK = 0x000000000000FFFFull;
+    static const uint64_t PLIC_MASK = 0x0000000003FFFFFFull;
     static const uint64_t IO1_BAR = 0x0000000010000000ull;
     static const uint64_t IO1_MASK = 0x000000000003FFFFull;
 
