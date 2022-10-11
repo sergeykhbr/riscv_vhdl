@@ -581,6 +581,7 @@ void InstrExecute::comb() {
     bool v_dbg_mem_req_ready;
     bool v_dbg_mem_req_error;
     bool v_halted;
+    bool v_idle;
     input_mux_type mux;
     sc_uint<CFG_CPU_ADDR_BITS> vb_o_npc;
     int t_radr1;
@@ -638,6 +639,7 @@ void InstrExecute::comb() {
     v_dbg_mem_req_ready = 0;
     v_dbg_mem_req_error = 0;
     v_halted = 0;
+    v_idle = 0;
     vb_o_npc = 0;
     t_radr1 = 0;
     t_radr2 = 0;
@@ -660,6 +662,7 @@ void InstrExecute::comb() {
     vb_reg_waddr = i_d_waddr;
 
     if (r.state.read() == State_Idle) {
+        v_idle = 1;
         mux.radr1 = i_d_radr1;
         mux.radr2 = i_d_radr2;
         mux.waddr = i_d_waddr;
@@ -967,101 +970,7 @@ void InstrExecute::comb() {
             || wv[Instr_FENCE]
             || wv[Instr_FENCE_I]
             || wv[Instr_SFENCE_VMA]);
-    if (i_haltreq.read() == 1 && r.state.read() == State_Idle) {
-        vb_csr_cmd_type = CsrReq_HaltCmd;
-        vb_csr_cmd_addr = HALT_CAUSE_HALTREQ;
-    } else if ((i_step.read() == 1) && (r.stepdone.read() == 1) && r.state.read() == State_Idle) {
-        vb_csr_cmd_type = CsrReq_HaltCmd;
-        vb_csr_cmd_addr = HALT_CAUSE_STEP;
-    } else if (v_instr_misaligned == 1 && r.state.read() == State_Idle) {
-        vb_csr_cmd_type = CsrReq_ExceptionCmd;
-        vb_csr_cmd_addr = EXCEPTION_InstrMisalign;          // Instruction address misaligned
-        vb_csr_cmd_wdata = mux.pc;
-    } else if (i_instr_load_fault.read() == 1 && r.state.read() == State_Idle) {
-        vb_csr_cmd_type = CsrReq_ExceptionCmd;
-        vb_csr_cmd_addr = EXCEPTION_InstrFault;             // Instruction access fault
-        vb_csr_cmd_wdata = mux.pc;
-    } else if (i_unsup_exception && r.state.read() == State_Idle) {
-        vb_csr_cmd_type = CsrReq_ExceptionCmd;
-        vb_csr_cmd_addr = EXCEPTION_InstrIllegal;           // Illegal instruction
-        vb_csr_cmd_wdata = mux.instr;
-    } else if (wv[Instr_EBREAK] == 1 && r.state.read() == State_Idle) {
-        vb_csr_cmd_type = CsrReq_BreakpointCmd;
-        vb_csr_cmd_addr = EXCEPTION_Breakpoint;
-    } else if (v_load_misaligned == 1 && r.state.read() == State_Idle) {
-        vb_csr_cmd_type = CsrReq_ExceptionCmd;
-        vb_csr_cmd_addr = EXCEPTION_LoadMisalign;           // Load address misaligned
-        vb_csr_cmd_wdata = vb_memop_memaddr_load;
-    } else if (r.mem_ex_load_fault.read() == 1 && r.state.read() == State_Idle) {
-        vb_csr_cmd_type = CsrReq_ExceptionCmd;
-        vb_csr_cmd_addr = EXCEPTION_LoadFault;              // Load access fault
-        vb_csr_cmd_wdata = r.mem_ex_addr;
-    } else if (v_store_misaligned == 1 && r.state.read() == State_Idle) {
-        vb_csr_cmd_type = CsrReq_ExceptionCmd;
-        vb_csr_cmd_addr = EXCEPTION_StoreMisalign;          // Store/AMO address misaligned
-        vb_csr_cmd_wdata = vb_memop_memaddr_store;
-    } else if (r.mem_ex_store_fault.read() == 1 && r.state.read() == State_Idle) {
-        vb_csr_cmd_type = CsrReq_ExceptionCmd;
-        vb_csr_cmd_addr = EXCEPTION_StoreFault;             // Store/AMO access fault
-        vb_csr_cmd_wdata = r.mem_ex_addr;
-    } else if (r.page_fault_x.read() == 1 && r.state.read() == State_Idle) {
-        vb_csr_cmd_type = CsrReq_ExceptionCmd;
-        vb_csr_cmd_addr = EXCEPTION_InstrPageFault;         // Instruction fetch page fault
-        vb_csr_cmd_wdata = r.mem_ex_addr;
-    } else if (r.page_fault_r.read() == 1 && r.state.read() == State_Idle) {
-        vb_csr_cmd_type = CsrReq_ExceptionCmd;
-        vb_csr_cmd_addr = EXCEPTION_LoadPageFault;          // Data load page fault
-        vb_csr_cmd_wdata = r.mem_ex_addr;
-    } else if (r.page_fault_w.read() == 1 && r.state.read() == State_Idle) {
-        vb_csr_cmd_type = CsrReq_ExceptionCmd;
-        vb_csr_cmd_addr = EXCEPTION_StorePageFault;         // Data store page fault
-        vb_csr_cmd_wdata = r.mem_ex_addr;
-    } else if (r.stack_overflow.read() == 1 && r.state.read() == State_Idle) {
-        vb_csr_cmd_type = CsrReq_ExceptionCmd;
-        vb_csr_cmd_addr = EXCEPTION_StackOverflow;          // Stack overflow
-    } else if (r.stack_underflow.read() == 1 && r.state.read() == State_Idle) {
-        vb_csr_cmd_type = CsrReq_ExceptionCmd;
-        vb_csr_cmd_addr = EXCEPTION_StackUnderflow;         // Stack Underflow
-    } else if (wv[Instr_ECALL] == 1 && r.state.read() == State_Idle) {
-        vb_csr_cmd_type = CsrReq_ExceptionCmd;
-        vb_csr_cmd_addr = EXCEPTION_CallFromXMode;          // Environment call
-    } else if (i_irq_pending.read().or_reduce() == 1 && r.state.read() == State_Idle) {
-        vb_csr_cmd_type = CsrReq_InterruptCmd;
-        vb_csr_cmd_addr = irq2idx(i_irq_pending);
-    } else if (wv[Instr_WFI] == 1 && r.state.read() == State_Idle) {
-        vb_csr_cmd_type = CsrReq_WfiCmd;
-        vb_csr_cmd_addr = mux.instr(14, 12);                // PRIV field
-    } else if (wv[Instr_MRET] == 1 && r.state.read() == State_Idle) {
-        vb_csr_cmd_type = CsrReq_TrapReturnCmd;
-        vb_csr_cmd_addr = PRV_M;
-    } else if (wv[Instr_HRET] == 1 && r.state.read() == State_Idle) {
-        vb_csr_cmd_type = CsrReq_TrapReturnCmd;
-        vb_csr_cmd_addr = PRV_H;
-    } else if (wv[Instr_SRET] == 1 && r.state.read() == State_Idle) {
-        vb_csr_cmd_type = CsrReq_TrapReturnCmd;
-        vb_csr_cmd_addr = PRV_S;
-    } else if (wv[Instr_URET] == 1 && r.state.read() == State_Idle) {
-        vb_csr_cmd_type = CsrReq_TrapReturnCmd;
-        vb_csr_cmd_addr = PRV_U;
-    } else if (((wv[Instr_FENCE] == 1) || (wv[Instr_FENCE_I] == 1)) && r.state.read() == State_Idle) {
-        vb_csr_cmd_type = CsrReq_FenceCmd;
-        if (wv[Instr_FENCE] == 1) {
-            vb_csr_cmd_addr = 0x005;                        // [0]=flush D$; [2]=flush mmu
-        }
-        if (wv[Instr_FENCE_I] == 1) {
-            vb_csr_cmd_addr = 0x007;                        // [0]=flush D$; [1]=flush I$; [2]=flush mmu
-        }
-        vb_csr_cmd_wdata = ~0ull;                           // flush address
-    } else if (wv[Instr_SFENCE_VMA] == 1 && r.state.read() == State_Idle) {
-        vb_csr_cmd_type = CsrReq_FenceCmd;
-        vb_csr_cmd_addr = 0x004;                            // [2]=flush mmu
-        if (mux.radr1.or_reduce() == 0) {                   // must be set to zero in standard extension for fence and fence.i 
-            vb_csr_cmd_wdata = ~0ull;                       // flush address
-        } else {
-            vb_csr_cmd_wdata = i_rdata1;                    // flush specific address
-        }
-        // rs2 register contains Adress Space ID (asid) or Guest Space ID (gsid). Only one MMU implemented.
-    } else if (wv[Instr_CSRRC] == 1) {
+    if (wv[Instr_CSRRC] == 1) {
         vb_csr_cmd_type = CsrReq_ReadCmd;
         vb_csr_cmd_addr = i_d_csr_addr;
         vb_csr_cmd_wdata = (i_csr_resp_data.read() & (~r.rdata1.read()));
@@ -1087,6 +996,105 @@ void InstrExecute::comb() {
         vb_csr_cmd_type = CsrReq_ReadCmd;
         vb_csr_cmd_addr = i_d_csr_addr;
         vb_csr_cmd_wdata(4, 0) = r.radr1.read()(4, 0);      // zero-extending 5 to 64-bits
+    }
+    // Higher priority CSR requests. They can redefine CSR command only in the Idle state,
+    // otherwise it is possible situation when read-modify-write sequence uses wrong cmd_wdata
+    if (v_idle) {
+        if (i_haltreq.read() == 1) {
+            vb_csr_cmd_type = CsrReq_HaltCmd;
+            vb_csr_cmd_addr = HALT_CAUSE_HALTREQ;
+        } else if ((i_step.read() == 1) && (r.stepdone.read() == 1)) {
+            vb_csr_cmd_type = CsrReq_HaltCmd;
+            vb_csr_cmd_addr = HALT_CAUSE_STEP;
+        } else if (v_instr_misaligned == 1) {
+            vb_csr_cmd_type = CsrReq_ExceptionCmd;
+            vb_csr_cmd_addr = EXCEPTION_InstrMisalign;      // Instruction address misaligned
+            vb_csr_cmd_wdata = mux.pc;
+        } else if (i_instr_load_fault.read() == 1) {
+            vb_csr_cmd_type = CsrReq_ExceptionCmd;
+            vb_csr_cmd_addr = EXCEPTION_InstrFault;         // Instruction access fault
+            vb_csr_cmd_wdata = mux.pc;
+        } else if (i_unsup_exception) {
+            vb_csr_cmd_type = CsrReq_ExceptionCmd;
+            vb_csr_cmd_addr = EXCEPTION_InstrIllegal;       // Illegal instruction
+            vb_csr_cmd_wdata = mux.instr;
+        } else if (wv[Instr_EBREAK] == 1) {
+            vb_csr_cmd_type = CsrReq_BreakpointCmd;
+            vb_csr_cmd_addr = EXCEPTION_Breakpoint;
+        } else if (v_load_misaligned == 1) {
+            vb_csr_cmd_type = CsrReq_ExceptionCmd;
+            vb_csr_cmd_addr = EXCEPTION_LoadMisalign;       // Load address misaligned
+            vb_csr_cmd_wdata = vb_memop_memaddr_load;
+        } else if (r.mem_ex_load_fault.read() == 1) {
+            vb_csr_cmd_type = CsrReq_ExceptionCmd;
+            vb_csr_cmd_addr = EXCEPTION_LoadFault;          // Load access fault
+            vb_csr_cmd_wdata = r.mem_ex_addr;
+        } else if (v_store_misaligned == 1) {
+            vb_csr_cmd_type = CsrReq_ExceptionCmd;
+            vb_csr_cmd_addr = EXCEPTION_StoreMisalign;      // Store/AMO address misaligned
+            vb_csr_cmd_wdata = vb_memop_memaddr_store;
+        } else if (r.mem_ex_store_fault.read() == 1) {
+            vb_csr_cmd_type = CsrReq_ExceptionCmd;
+            vb_csr_cmd_addr = EXCEPTION_StoreFault;         // Store/AMO access fault
+            vb_csr_cmd_wdata = r.mem_ex_addr;
+        } else if (r.page_fault_x.read() == 1) {
+            vb_csr_cmd_type = CsrReq_ExceptionCmd;
+            vb_csr_cmd_addr = EXCEPTION_InstrPageFault;     // Instruction fetch page fault
+            vb_csr_cmd_wdata = r.mem_ex_addr;
+        } else if (r.page_fault_r.read() == 1) {
+            vb_csr_cmd_type = CsrReq_ExceptionCmd;
+            vb_csr_cmd_addr = EXCEPTION_LoadPageFault;      // Data load page fault
+            vb_csr_cmd_wdata = r.mem_ex_addr;
+        } else if (r.page_fault_w.read() == 1) {
+            vb_csr_cmd_type = CsrReq_ExceptionCmd;
+            vb_csr_cmd_addr = EXCEPTION_StorePageFault;     // Data store page fault
+            vb_csr_cmd_wdata = r.mem_ex_addr;
+        } else if (r.stack_overflow.read() == 1) {
+            vb_csr_cmd_type = CsrReq_ExceptionCmd;
+            vb_csr_cmd_addr = EXCEPTION_StackOverflow;      // Stack overflow
+        } else if (r.stack_underflow.read() == 1) {
+            vb_csr_cmd_type = CsrReq_ExceptionCmd;
+            vb_csr_cmd_addr = EXCEPTION_StackUnderflow;     // Stack Underflow
+        } else if (wv[Instr_ECALL] == 1) {
+            vb_csr_cmd_type = CsrReq_ExceptionCmd;
+            vb_csr_cmd_addr = EXCEPTION_CallFromXMode;      // Environment call
+        } else if (i_irq_pending.read().or_reduce() == 1) {
+            vb_csr_cmd_type = CsrReq_InterruptCmd;
+            vb_csr_cmd_addr = irq2idx(i_irq_pending);
+        } else if (wv[Instr_WFI] == 1) {
+            vb_csr_cmd_type = CsrReq_WfiCmd;
+            vb_csr_cmd_addr = mux.instr(14, 12);            // PRIV field
+        } else if (wv[Instr_MRET] == 1) {
+            vb_csr_cmd_type = CsrReq_TrapReturnCmd;
+            vb_csr_cmd_addr = PRV_M;
+        } else if (wv[Instr_HRET] == 1) {
+            vb_csr_cmd_type = CsrReq_TrapReturnCmd;
+            vb_csr_cmd_addr = PRV_H;
+        } else if (wv[Instr_SRET] == 1) {
+            vb_csr_cmd_type = CsrReq_TrapReturnCmd;
+            vb_csr_cmd_addr = PRV_S;
+        } else if (wv[Instr_URET] == 1) {
+            vb_csr_cmd_type = CsrReq_TrapReturnCmd;
+            vb_csr_cmd_addr = PRV_U;
+        } else if ((wv[Instr_FENCE] == 1) || (wv[Instr_FENCE_I] == 1)) {
+            vb_csr_cmd_type = CsrReq_FenceCmd;
+            if (wv[Instr_FENCE] == 1) {
+                vb_csr_cmd_addr = 0x005;                    // [0]=flush D$; [2]=flush mmu
+            }
+            if (wv[Instr_FENCE_I] == 1) {
+                vb_csr_cmd_addr = 0x007;                    // [0]=flush D$; [1]=flush I$; [2]=flush mmu
+            }
+            vb_csr_cmd_wdata = ~0ull;                       // flush address
+        } else if (wv[Instr_SFENCE_VMA] == 1) {
+            vb_csr_cmd_type = CsrReq_FenceCmd;
+            vb_csr_cmd_addr = 0x004;                        // [2]=flush mmu
+            if (mux.radr1.or_reduce() == 0) {               // must be set to zero in standard extension for fence and fence.i 
+                vb_csr_cmd_wdata = ~0ull;                   // flush address
+            } else {
+                vb_csr_cmd_wdata = i_rdata1;                // flush specific address
+            }
+            // rs2 register contains Adress Space ID (asid) or Guest Space ID (gsid). Only one MMU implemented.
+        }
     }
 
     wb_select[Res_Zero].res = 0;

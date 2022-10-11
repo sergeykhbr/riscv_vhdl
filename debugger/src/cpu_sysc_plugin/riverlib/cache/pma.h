@@ -23,41 +23,26 @@ namespace debugger {
 SC_MODULE(PMA) {
  public:
     sc_in<bool> i_clk;                                      // CPU clock
-    sc_in<bool> i_nrst;                                     // Reset: active LOW
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_iaddr;
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_daddr;
     sc_out<bool> o_icached;                                 // Hardcoded cached memory range for I$
     sc_out<bool> o_dcached;                                 // Hardcoded cached memory range for D$
 
     void comb();
-    void registers();
 
     SC_HAS_PROCESS(PMA);
 
-    PMA(sc_module_name name,
-        bool async_reset);
+    PMA(sc_module_name name);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
-    bool async_reset_;
-
     static const uint64_t CLINT_BAR = 0x0000000002000000ull;
     static const uint64_t CLINT_MASK = 0x000000000000FFFFull;
     static const uint64_t PLIC_BAR = 0x000000000C000000ull;
     static const uint64_t PLIC_MASK = 0x0000000003FFFFFFull;
     static const uint64_t IO1_BAR = 0x0000000010000000ull;
-    static const uint64_t IO1_MASK = 0x000000000003FFFFull;
-
-    struct PMA_registers {
-        sc_signal<bool> icached;
-        sc_signal<bool> dcached;
-    } v, r;
-
-    void PMA_r_reset(PMA_registers &iv) {
-        iv.icached = 0;
-        iv.dcached = 0;
-    }
+    static const uint64_t IO1_MASK = 0x00000000000FFFFFull;
 
 };
 

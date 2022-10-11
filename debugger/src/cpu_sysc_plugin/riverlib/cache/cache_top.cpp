@@ -161,9 +161,8 @@ CacheTop::CacheTop(sc_module_name name,
     d0->o_flush_end(o_flushd_end);
 
 
-    pma0 = new PMA("pma0", async_reset);
+    pma0 = new PMA("pma0");
     pma0->i_clk(i_clk);
-    pma0->i_nrst(i_nrst);
     pma0->i_iaddr(i.mpu_addr);
     pma0->i_daddr(d.mpu_addr);
     pma0->o_icached(w_pma_icached);
