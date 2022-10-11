@@ -144,8 +144,6 @@ DCacheLru::DCacheLru(sc_module_name name,
     sensitive << r.req_mem_type;
     sensitive << r.req_mem_size;
     sensitive << r.mem_addr;
-    sensitive << r.mpu_er_store;
-    sensitive << r.mpu_er_load;
     sensitive << r.load_fault;
     sensitive << r.write_first;
     sensitive << r.write_flush;
@@ -228,8 +226,6 @@ void DCacheLru::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.req_mem_type, pn + ".r_req_mem_type");
         sc_trace(o_vcd, r.req_mem_size, pn + ".r_req_mem_size");
         sc_trace(o_vcd, r.mem_addr, pn + ".r_mem_addr");
-        sc_trace(o_vcd, r.mpu_er_store, pn + ".r_mpu_er_store");
-        sc_trace(o_vcd, r.mpu_er_load, pn + ".r_mpu_er_load");
         sc_trace(o_vcd, r.load_fault, pn + ".r_load_fault");
         sc_trace(o_vcd, r.write_first, pn + ".r_write_first");
         sc_trace(o_vcd, r.write_flush, pn + ".r_write_flush");
@@ -374,8 +370,7 @@ void DCacheLru::comb() {
     // System Bus access state machine
     switch (r.state.read()) {
     case State_Idle:
-        v.mpu_er_store = 0;
-        v.mpu_er_load = 0;
+        v.load_fault = 0;
         v_ready_next = 1;
         break;
     case State_CheckHit:
@@ -442,17 +437,18 @@ void DCacheLru::comb() {
         break;
     case State_TranslateAddress:
         if ((r.req_type.read()[MemopType_Store] == 1) && (i_pmp_w.read() == 0)) {
-            v.mpu_er_store = 1;
+            v.load_fault = 1;
             t_cache_line_i = 0;
             v.cache_line_i = (~t_cache_line_i);
             v.state = State_CheckResp;
         } else if ((r.req_type.read()[MemopType_Store] == 0) && (i_pmp_r.read() == 0)) {
-            v.mpu_er_load = 1;
+            v.load_fault = 1;
             t_cache_line_i = 0;
             v.cache_line_i = (~t_cache_line_i);
             v.state = State_CheckResp;
         } else {
             v.req_mem_valid = 1;
+            v.load_fault = 0;
             v.state = State_WaitGrant;
             if (i_pma_cached.read() == 1) {
                 // Cached:
@@ -492,9 +488,7 @@ void DCacheLru::comb() {
                 v.cache_line_o = t_cache_line_i;
             }
         }
-
         v.cache_line_i = 0;
-        v.load_fault = 0;
         break;
     case State_WaitGrant:
         if (i_req_mem_ready.read() == 1) {
@@ -750,8 +744,8 @@ void DCacheLru::comb() {
     o_resp_data = vb_resp_data;
     o_resp_addr = r.req_addr;
     o_resp_er_addr = r.req_addr;
-    o_resp_er_load_fault = (v_resp_er_load_fault || r.mpu_er_load);
-    o_resp_er_store_fault = (v_resp_er_store_fault || r.mpu_er_store);
+    o_resp_er_load_fault = v_resp_er_load_fault;
+    o_resp_er_store_fault = v_resp_er_store_fault;
     o_mpu_addr = r.req_addr;
 
     o_req_snoop_ready = v_req_snoop_ready;

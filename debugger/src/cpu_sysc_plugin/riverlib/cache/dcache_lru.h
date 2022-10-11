@@ -119,8 +119,6 @@ SC_MODULE(DCacheLru) {
         sc_signal<sc_uint<REQ_MEM_TYPE_BITS>> req_mem_type;
         sc_signal<sc_uint<3>> req_mem_size;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mem_addr;
-        sc_signal<bool> mpu_er_store;
-        sc_signal<bool> mpu_er_load;
         sc_signal<bool> load_fault;
         sc_signal<bool> write_first;
         sc_signal<bool> write_flush;
@@ -151,8 +149,6 @@ SC_MODULE(DCacheLru) {
         iv.req_mem_type = 0;
         iv.req_mem_size = 0;
         iv.mem_addr = 0ull;
-        iv.mpu_er_store = 0;
-        iv.mpu_er_load = 0;
         iv.load_fault = 0;
         iv.write_first = 0;
         iv.write_flush = 0;
