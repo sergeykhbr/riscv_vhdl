@@ -28,7 +28,8 @@ int hwthread2() {
     uint64_t msie = 0x1ull << 3;
 
     clint->msip[fw_get_cpuid()] = 0;          // clear SW pending bit in CLINT
-    asm("csrs mie, %0" : :"r"(msie));         // MSIE=1: enable software interrupt
+    fw_mie_enable(HART_IRQ_MSIP);
+    fw_enable_m_interrupts();
 
     // Without Coherent-L2 CPUs can't see updated value (without flush) 
     // because it is always stored in L1-cache in each processor.
