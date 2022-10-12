@@ -153,10 +153,8 @@ init0:
   jal _init
 end_init0:
 
-  ##! jump to entry point in SRAM = 0x08000000
-  ##!     'meps' - Machine Exception Program Coutner
-  li  t0, SRAM_BASE_ADDR
-  csrw mepc, t0
+  # a0 = hart id
+  # a1 = fdt header
   mret
 
 trap_entry:
