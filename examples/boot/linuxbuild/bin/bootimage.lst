@@ -149,7 +149,7 @@ reset_vector:
   sub sp, sp, a0
    100d8:	40a10133          	sub	sp,sp,a0
   addi sp,sp,-256
-   100dc:	f0010113          	addi	sp,sp,-256 # 81fff00 <_end+0x81ecd64>
+   100dc:	f0010113          	addi	sp,sp,-256 # 81fff00 <_end+0x81ecbe4>
   csrw 0x7b3, sp          # save dedicated stack region into dscratch1 register to run riscv-tests
    100e0:	7b311073          	csrw	0x7b3,sp
 
@@ -1110,7 +1110,7 @@ static uint64_t get_dev_bar(pnp_map *pnp, uint16_t vid, uint16_t did) {
    108ae:	a82d                	j	108e8 <get_dev_bar+0x86>
         mcfg.v[0] = *(uint64_t *)&pnp->cfg_table[off];
    108b0:	fec42783          	lw	a5,-20(s0)
-   108b4:	04078793          	addi	a5,a5,64 # 8000040 <_end+0x7fecea4>
+   108b4:	04078793          	addi	a5,a5,64 # 8000040 <_end+0x7fecd24>
    108b8:	fb843703          	ld	a4,-72(s0)
    108bc:	97ba                	add	a5,a5,a4
    108be:	639c                	ld	a5,0(a5)
@@ -1572,7 +1572,7 @@ uint32_t plic_claim(int ctxid) {
     return p->ctx_prio[ctxid].claim_complete;
    10ca2:	fe843703          	ld	a4,-24(s0)
    10ca6:	fdc42783          	lw	a5,-36(s0)
-   10caa:	20078793          	addi	a5,a5,512 # c000200 <_end+0xbfed064>
+   10caa:	20078793          	addi	a5,a5,512 # c000200 <_end+0xbfecee4>
    10cae:	07b2                	slli	a5,a5,0xc
    10cb0:	97ba                	add	a5,a5,a4
    10cb2:	43dc                	lw	a5,4(a5)
@@ -1601,7 +1601,7 @@ void plic_complete(int ctxid, int irqid) {
    10cda:	fd842703          	lw	a4,-40(s0)
    10cde:	fe843683          	ld	a3,-24(s0)
    10ce2:	fdc42783          	lw	a5,-36(s0)
-   10ce6:	20078793          	addi	a5,a5,512 # c000200 <_end+0xbfed064>
+   10ce6:	20078793          	addi	a5,a5,512 # c000200 <_end+0xbfecee4>
    10cea:	07b2                	slli	a5,a5,0xc
    10cec:	97b6                	add	a5,a5,a3
    10cee:	c3d8                	sw	a4,4(a5)
@@ -2021,7 +2021,7 @@ void print_uart(const char *buf, int sz) {
    11096:	fec42783          	lw	a5,-20(s0)
    1109a:	fc843703          	ld	a4,-56(s0)
    1109e:	97ba                	add	a5,a5,a4
-   110a0:	0007c783          	lbu	a5,0(a5) # 10010000 <_end+0xfffce64>
+   110a0:	0007c783          	lbu	a5,0(a5) # 10010000 <_end+0xfffcce4>
    110a4:	0007871b          	sext.w	a4,a5
    110a8:	fe043783          	ld	a5,-32(s0)
    110ac:	c398                	sw	a4,0(a5)
@@ -2146,7 +2146,7 @@ void printnum(uint64_t num, int base, int width, int padc) {
    111b8:	0ff6f713          	andi	a4,a3,255
    111bc:	ff040693          	addi	a3,s0,-16
    111c0:	97b6                	add	a5,a5,a3
-   111c2:	fae78c23          	sb	a4,-72(a5) # 1000ffb8 <_end+0xfffce1c>
+   111c2:	fae78c23          	sb	a4,-72(a5) # 1000ffb8 <_end+0xfffcc9c>
         if (num < base) {
    111c6:	f9442783          	lw	a5,-108(s0)
    111ca:	f9843703          	ld	a4,-104(s0)
@@ -3130,7 +3130,7 @@ void sd_read_block(uint8_t *buf, int sz) {
    119dc:	87aa                	mv	a5,a0
    119de:	873e                	mv	a4,a5
    119e0:	fd843783          	ld	a5,-40(s0)
-   119e4:	00e78023          	sb	a4,0(a5) # 10050000 <_end+0x1003ce64>
+   119e4:	00e78023          	sb	a4,0(a5) # 10050000 <_end+0x1003cce4>
        buf++;
    119e8:	fd843783          	ld	a5,-40(s0)
    119ec:	0785                	addi	a5,a5,1
@@ -3295,7 +3295,7 @@ static uint64_t get_dev_bar(pnp_map *pnp, uint16_t vid, uint16_t did) {
    11b4a:	a82d                	j	11b84 <get_dev_bar+0x86>
         mcfg.v[0] = *(uint64_t *)&pnp->cfg_table[off];
    11b4c:	fec42783          	lw	a5,-20(s0)
-   11b50:	04078793          	addi	a5,a5,64 # 10050040 <_end+0x1003cea4>
+   11b50:	04078793          	addi	a5,a5,64 # 10050040 <_end+0x1003cd24>
    11b54:	fb843703          	ld	a4,-72(s0)
    11b58:	97ba                	add	a5,a5,a4
    11b5a:	639c                	ld	a5,0(a5)
