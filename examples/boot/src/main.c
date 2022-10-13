@@ -119,14 +119,6 @@ void init_pmp() {
                      [cfg] "r" (cfg));
 }
 
-typedef struct fdt_header {
-    uint32_t magic;
-} fdt_header;
-
-static const fdt_header fdt_ = {
-    0xf00dcafe
-};
-
 void _init() {
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
@@ -171,10 +163,6 @@ void _init() {
     if (get_dips() == 0x0F) {
         write_csr(mepc, 0x0000000080000000ull);  // sim: jump to ddr (bbl-q should be init)
         set_csr(mstatus, MSTATUS_MPP_M);           //      run bbl-q in machine mode
-        // set a0 = hart id
-        asm("csrr a0,mhartid");
-        // set a1 = fdt header
-        asm ("la a1,fdt_");
     } else {
         write_csr(mepc, 0x0000000008000000ull);  // jump to entry point in SRAM = 0x08000000
     }

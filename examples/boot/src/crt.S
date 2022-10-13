@@ -155,6 +155,8 @@ end_init0:
 
   # a0 = hart id
   # a1 = fdt header
+  csrr a0, mhartid
+  la a1, dtb_start
   mret
 
 trap_entry:
@@ -194,3 +196,10 @@ handle_exception:
   jal exception_handler_c
   mret
 
+
+.section .dtb
+.align 3
+.global dtb_start, dtb_end
+dtb_start:
+.incbin "custom.dtb"
+dtb_end:

@@ -82,7 +82,7 @@ Workgroup::Workgroup(sc_module_name name,
     dmi0->i_nrst(i_dmi_nrst);
     dmi0->i_trst(i_trst);
     dmi0->i_tck(i_tck);
-    dmi0->i_tms(i_tck);
+    dmi0->i_tms(i_tms);
     dmi0->i_tdi(i_tdi);
     dmi0->o_tdo(o_tdo);
     dmi0->i_bus_req_valid(i_apb_dmi_req_valid);

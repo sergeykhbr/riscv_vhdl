@@ -1,3 +1,6 @@
+https://github.com/torvalds/linux/tree/master/arch/riscv/boot/dts/sifive
+cpp -x assembler-with-cpp -nostdinc -I . -I .. -I ../../../../../include -undef -D__DTS__ < custom.dts | dtc -i . -i .. -I dts -O dtb -b 0 -o custom.dtb
+
 static const MemMapEntry virt_memmap[] = {
     [VIRT_DEBUG] =        {        0x0,         0x100 },
     [VIRT_MROM] =         {     0x1000,        0xf000 },

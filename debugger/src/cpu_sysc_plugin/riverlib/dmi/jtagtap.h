@@ -85,9 +85,6 @@ SC_MODULE(jtagtap) {
 
     struct jtagtap_registers {
         sc_signal<sc_uint<4>> state;
-        sc_signal<bool> tck;
-        sc_signal<bool> tms;
-        sc_signal<bool> tdi;
         sc_signal<sc_uint<7>> dr_length;
         sc_signal<sc_uint<drlen>> dr;
         sc_signal<bool> bypass;
@@ -96,9 +93,6 @@ SC_MODULE(jtagtap) {
 
     void jtagtap_r_reset(jtagtap_registers &iv) {
         iv.state = RESET_TAP;
-        iv.tck = 0;
-        iv.tms = 0;
-        iv.tdi = 0;
         iv.dr_length = 0;
         iv.dr = idcode;
         iv.bypass = 0;
@@ -145,9 +139,6 @@ jtagtap<idcode, abits, irlen>::jtagtap(sc_module_name name)
     sensitive << i_dmi_busy;
     sensitive << i_dmi_error;
     sensitive << r.state;
-    sensitive << r.tck;
-    sensitive << r.tms;
-    sensitive << r.tdi;
     sensitive << r.dr_length;
     sensitive << r.dr;
     sensitive << r.bypass;
@@ -183,9 +174,6 @@ void jtagtap<idcode, abits, irlen>::generateVCD(sc_trace_file *i_vcd, sc_trace_f
         sc_trace(o_vcd, o_dmi_reset, o_dmi_reset.name());
         sc_trace(o_vcd, o_dmi_hardreset, o_dmi_hardreset.name());
         sc_trace(o_vcd, r.state, pn + ".r_state");
-        sc_trace(o_vcd, r.tck, pn + ".r_tck");
-        sc_trace(o_vcd, r.tms, pn + ".r_tms");
-        sc_trace(o_vcd, r.tdi, pn + ".r_tdi");
         sc_trace(o_vcd, r.dr_length, pn + ".r_dr_length");
         sc_trace(o_vcd, r.dr, pn + ".r_dr");
         sc_trace(o_vcd, r.bypass, pn + ".r_bypass");
