@@ -498,7 +498,8 @@ void CsrRegs::comb() {
                 if (i_req_addr.read()(1, 0).or_reduce() == 1) {
                     // FENCE or FENCE.I
                     v.fencestate = Fence_Data;
-                } else if ((i_req_addr.read()[2] == 1) && (r.tvm.read() == 0) && (r.mode.read() != PRV_S)) {
+                } else if ((i_req_addr.read()[2] == 1)
+                            && (!((r.tvm.read() == 1) && (r.mode.read()[1] == 0)))) {
                     // FENCE.VMA: is illegal in S-mode when TVM bit=1
                     v.fencestate = Fence_MMU;
                 } else {
