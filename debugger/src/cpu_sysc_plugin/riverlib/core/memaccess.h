@@ -31,7 +31,11 @@ SC_MODULE(MemAccess) {
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_flushd_addr;
     sc_out<bool> o_flushd;
     sc_in<bool> i_mmu_ena;                                  // MMU enabled
+    sc_in<bool> i_mmu_sv39;                                 // MMU sv39 mode is enabled
+    sc_in<bool> i_mmu_sv48;                                 // MMU sv48 mode is enabled
     sc_out<bool> o_mmu_ena;                                 // Delayed MMU enabled
+    sc_out<bool> o_mmu_sv39;                                // Delayed MMU sv39 mode is enabled
+    sc_out<bool> o_mmu_sv48;                                // Delayed MMU sv48 mode is enabled
     sc_in<sc_uint<6>> i_reg_waddr;                          // Register address to be written (0=no writing)
     sc_in<sc_uint<CFG_REG_TAG_WIDTH>> i_reg_wtag;           // Register tag for writeback operation
     sc_in<bool> i_memop_valid;                              // Memory request is valid
@@ -84,6 +88,8 @@ SC_MODULE(MemAccess) {
     static const int QUEUE_WIDTH = (1  // memop_debug
             + 1  // i_flushd_valid
             + 1  // i_mmu_ena
+            + 1  // i_mmu_sv39
+            + 1  // i_mmu_sv48
             + CFG_REG_TAG_WIDTH  // vb_res_wtag
             + 64  // vb_mem_wdata
             + 8  // vb_mem_wstrb
@@ -100,6 +106,8 @@ SC_MODULE(MemAccess) {
     struct MemAccess_registers {
         sc_signal<sc_uint<2>> state;
         sc_signal<bool> mmu_ena;
+        sc_signal<bool> mmu_sv39;
+        sc_signal<bool> mmu_sv48;
         sc_signal<sc_uint<MemopType_Total>> memop_type;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> memop_addr;
         sc_signal<sc_uint<64>> memop_wdata;
@@ -121,6 +129,8 @@ SC_MODULE(MemAccess) {
     void MemAccess_r_reset(MemAccess_registers &iv) {
         iv.state = State_Idle;
         iv.mmu_ena = 0;
+        iv.mmu_sv39 = 0;
+        iv.mmu_sv48 = 0;
         iv.memop_type = 0;
         iv.memop_addr = 0ull;
         iv.memop_wdata = 0ull;

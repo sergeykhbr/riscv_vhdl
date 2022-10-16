@@ -314,7 +314,6 @@ InstrExecute::InstrExecute(sc_module_name name,
     sensitive << r.stack_underflow;
     sensitive << r.mem_ex_load_fault;
     sensitive << r.mem_ex_store_fault;
-    sensitive << r.page_fault_x;
     sensitive << r.page_fault_r;
     sensitive << r.page_fault_w;
     sensitive << r.mem_ex_addr;
@@ -475,7 +474,6 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.stack_underflow, pn + ".r_stack_underflow");
         sc_trace(o_vcd, r.mem_ex_load_fault, pn + ".r_mem_ex_load_fault");
         sc_trace(o_vcd, r.mem_ex_store_fault, pn + ".r_mem_ex_store_fault");
-        sc_trace(o_vcd, r.page_fault_x, pn + ".r_page_fault_x");
         sc_trace(o_vcd, r.page_fault_r, pn + ".r_page_fault_r");
         sc_trace(o_vcd, r.page_fault_w, pn + ".r_page_fault_w");
         sc_trace(o_vcd, r.mem_ex_addr, pn + ".r_mem_ex_addr");
@@ -820,10 +818,6 @@ void InstrExecute::comb() {
         v.mem_ex_store_fault = 1;
         v.mem_ex_addr = i_mem_ex_addr;
     }
-    if ((i_page_fault_x.read() == 1) && (i_mem_ex_debug.read() == 0)) {
-        v.page_fault_x = 1;
-        v.mem_ex_addr = i_d_pc;
-    }
     if ((i_page_fault_r.read() == 1) && (i_mem_ex_debug.read() == 0)) {
         v.page_fault_r = 1;
         v.mem_ex_addr = i_mem_ex_addr;
@@ -944,7 +938,7 @@ void InstrExecute::comb() {
 
     v_mem_ex = (r.mem_ex_load_fault
             || r.mem_ex_store_fault
-            || r.page_fault_x
+            || i_page_fault_x
             || r.page_fault_r
             || r.page_fault_w);
     v_csr_cmd_ena = (i_haltreq
@@ -1041,10 +1035,10 @@ void InstrExecute::comb() {
             vb_csr_cmd_type = CsrReq_ExceptionCmd;
             vb_csr_cmd_addr = EXCEPTION_StoreFault;         // Store/AMO access fault
             vb_csr_cmd_wdata = r.mem_ex_addr;
-        } else if (r.page_fault_x.read() == 1) {
+        } else if (i_page_fault_x.read() == 1) {
             vb_csr_cmd_type = CsrReq_ExceptionCmd;
             vb_csr_cmd_addr = EXCEPTION_InstrPageFault;     // Instruction fetch page fault
-            vb_csr_cmd_wdata = r.mem_ex_addr;
+            vb_csr_cmd_wdata = mux.pc;
         } else if (r.page_fault_r.read() == 1) {
             vb_csr_cmd_type = CsrReq_ExceptionCmd;
             vb_csr_cmd_addr = EXCEPTION_LoadPageFault;      // Data load page fault
@@ -1171,7 +1165,6 @@ void InstrExecute::comb() {
                 v.csr_req_rmw = vb_csr_cmd_type[CsrReq_ReadBit];// read/modify/write
                 v.mem_ex_load_fault = 0;
                 v.mem_ex_store_fault = 0;
-                v.page_fault_x = 0;
                 v.page_fault_r = 0;
                 v.page_fault_w = 0;
                 v.stack_overflow = 0;

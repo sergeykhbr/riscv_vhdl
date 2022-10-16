@@ -227,7 +227,6 @@ SC_MODULE(InstrExecute) {
         sc_signal<bool> stack_underflow;
         sc_signal<bool> mem_ex_load_fault;
         sc_signal<bool> mem_ex_store_fault;
-        sc_signal<bool> page_fault_x;
         sc_signal<bool> page_fault_r;
         sc_signal<bool> page_fault_w;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mem_ex_addr;
@@ -282,7 +281,6 @@ SC_MODULE(InstrExecute) {
         iv.stack_underflow = 0;
         iv.mem_ex_load_fault = 0;
         iv.mem_ex_store_fault = 0;
-        iv.page_fault_x = 0;
         iv.page_fault_r = 0;
         iv.page_fault_w = 0;
         iv.mem_ex_addr = 0ull;

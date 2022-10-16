@@ -68,7 +68,7 @@
           {'Name':'rambbl0','Attr':[
                 ['LogLevel',1],
                 ['Priority',1],
-                ['InitFile','${REPO_PATH}/../examples/bbl-q/bbl-q.hex'],
+                ['InitFile','${REPO_PATH}/../examples/bbl-q/bbl-q-noprintf.hex'],
                 ['BinaryFile',false],
                 ['ReadOnly',false],
                 ['BaseAddress',0x80000000, 'overlay with ddr0'],

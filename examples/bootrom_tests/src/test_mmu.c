@@ -56,7 +56,7 @@ static virtual_memory_system_t sv48 = {
     .vaddr_bits = 48
 };
 
-static virtual_memory_system_t *vms = &sv48;
+static virtual_memory_system_t *vms = &sv39;
 
 void error()
 {
@@ -121,8 +121,12 @@ void setup_page_table(char *table, unsigned level, uint64_t physical)
     }
 
 #ifdef MMU_FAST_TEST
+    // sv48
     // va = 0xffff.f000.0800.3004
     // level0 bits 47:39 = 1.1110.0000
+    // sv39
+    // va = 0xff.ff80.0800.3004
+    // level0 bits 38:30 = 1.1110.0000
     {
         unsigned i = 0x1e0;
 
@@ -134,8 +138,15 @@ void setup_page_table(char *table, unsigned level, uint64_t physical)
         pte |= ((reg_t) i) << (PTE_PPN_SHIFT + level * vms->vpn_width_bits);
         entry_set(table, i, pte);
     }
+    // sv48
     // level1 bits 38:30 = 0.0000.0000
+    // sv39
+    // level1 bits 29:21 = 0.0100.0000 (see next sv48)
+
+    // sv48
     // level2 bits 29:21 = 0.0100.0000
+    // sv39
+    // level2 bits 20:12 = 0.0000.0011 (first 4 element initialized in cycle)
     {
         unsigned i = 0x040;
 

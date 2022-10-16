@@ -30,7 +30,11 @@ MemAccess::MemAccess(sc_module_name name,
     i_flushd_addr("i_flushd_addr"),
     o_flushd("o_flushd"),
     i_mmu_ena("i_mmu_ena"),
+    i_mmu_sv39("i_mmu_sv39"),
+    i_mmu_sv48("i_mmu_sv48"),
     o_mmu_ena("o_mmu_ena"),
+    o_mmu_sv39("o_mmu_sv39"),
+    o_mmu_sv48("o_mmu_sv48"),
     i_reg_waddr("i_reg_waddr"),
     i_reg_wtag("i_reg_wtag"),
     i_memop_valid("i_memop_valid"),
@@ -83,6 +87,8 @@ MemAccess::MemAccess(sc_module_name name,
     sensitive << i_flushd_valid;
     sensitive << i_flushd_addr;
     sensitive << i_mmu_ena;
+    sensitive << i_mmu_sv39;
+    sensitive << i_mmu_sv48;
     sensitive << i_reg_waddr;
     sensitive << i_reg_wtag;
     sensitive << i_memop_valid;
@@ -99,6 +105,8 @@ MemAccess::MemAccess(sc_module_name name,
     sensitive << i_mem_data;
     sensitive << r.state;
     sensitive << r.mmu_ena;
+    sensitive << r.mmu_sv39;
+    sensitive << r.mmu_sv48;
     sensitive << r.memop_type;
     sensitive << r.memop_addr;
     sensitive << r.memop_wdata;
@@ -142,7 +150,11 @@ void MemAccess::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_flushd_addr, i_flushd_addr.name());
         sc_trace(o_vcd, o_flushd, o_flushd.name());
         sc_trace(o_vcd, i_mmu_ena, i_mmu_ena.name());
+        sc_trace(o_vcd, i_mmu_sv39, i_mmu_sv39.name());
+        sc_trace(o_vcd, i_mmu_sv48, i_mmu_sv48.name());
         sc_trace(o_vcd, o_mmu_ena, o_mmu_ena.name());
+        sc_trace(o_vcd, o_mmu_sv39, o_mmu_sv39.name());
+        sc_trace(o_vcd, o_mmu_sv48, o_mmu_sv48.name());
         sc_trace(o_vcd, i_reg_waddr, i_reg_waddr.name());
         sc_trace(o_vcd, i_reg_wtag, i_reg_wtag.name());
         sc_trace(o_vcd, i_memop_valid, i_memop_valid.name());
@@ -174,6 +186,8 @@ void MemAccess::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_debug_valid, o_debug_valid.name());
         sc_trace(o_vcd, r.state, pn + ".r_state");
         sc_trace(o_vcd, r.mmu_ena, pn + ".r_mmu_ena");
+        sc_trace(o_vcd, r.mmu_sv39, pn + ".r_mmu_sv39");
+        sc_trace(o_vcd, r.mmu_sv48, pn + ".r_mmu_sv48");
         sc_trace(o_vcd, r.memop_type, pn + ".r_memop_type");
         sc_trace(o_vcd, r.memop_addr, pn + ".r_memop_addr");
         sc_trace(o_vcd, r.memop_wdata, pn + ".r_memop_wdata");
@@ -208,6 +222,8 @@ void MemAccess::comb() {
     bool v_queue_re;
     bool v_flushd;
     bool v_mmu_ena;
+    bool v_mmu_sv39;
+    bool v_mmu_sv48;
     sc_uint<CFG_REG_TAG_WIDTH> vb_res_wtag;
     sc_uint<64> vb_mem_wdata;
     sc_uint<8> vb_mem_wstrb;
@@ -239,6 +255,8 @@ void MemAccess::comb() {
     v_queue_re = 0;
     v_flushd = 0;
     v_mmu_ena = 0;
+    v_mmu_sv39 = 0;
+    v_mmu_sv48 = 0;
     vb_res_wtag = 0;
     vb_mem_wdata = 0;
     vb_mem_wstrb = 0;
@@ -332,6 +350,8 @@ void MemAccess::comb() {
     queue_data_i = (t_memop_debug,
             i_flushd_valid,
             i_mmu_ena,
+            i_mmu_sv39,
+            i_mmu_sv48,
             i_reg_wtag,
             vb_memop_wdata,
             vb_memop_wstrb,
@@ -346,9 +366,11 @@ void MemAccess::comb() {
     queue_we = ((i_memop_valid.read() | i_flushd_valid.read()) & (!queue_full));
 
     // Split Queue outputs:
-    v_mem_debug = queue_data_o.read()[314];
-    v_flushd = queue_data_o.read()[313];
-    v_mmu_ena = queue_data_o.read()[312];
+    v_mem_debug = queue_data_o.read()[316];
+    v_flushd = queue_data_o.read()[315];
+    v_mmu_ena = queue_data_o.read()[314];
+    v_mmu_sv39 = queue_data_o.read()[313];
+    v_mmu_sv48 = queue_data_o.read()[312];
     vb_res_wtag = queue_data_o.read()(311, 309);
     vb_mem_wdata = queue_data_o.read()(308, 245);
     vb_mem_wstrb = queue_data_o.read()(244, 237);
@@ -431,6 +453,8 @@ void MemAccess::comb() {
             v.pc = vb_e_pc;
             v_mem_valid = (!v_flushd);
             v.mmu_ena = v_mmu_ena;
+            v.mmu_sv39 = v_mmu_sv39;
+            v.mmu_sv48 = v_mmu_sv48;
             v.memop_res_pc = vb_e_pc;
             v.memop_res_instr = vb_e_instr;
             v.memop_res_addr = vb_res_addr;
@@ -462,6 +486,8 @@ void MemAccess::comb() {
     case State_WaitReqAccept:
         v_mem_valid = 1;
         v_mmu_ena = r.mmu_ena;
+        v_mmu_sv39 = r.mmu_sv39;
+        v_mmu_sv48 = r.mmu_sv48;
         vb_mem_type = r.memop_type;
         vb_mem_sz = r.memop_size;
         vb_mem_addr = r.memop_addr;
@@ -492,6 +518,8 @@ void MemAccess::comb() {
                 v.pc = vb_e_pc;
                 v_mem_valid = (!v_flushd);
                 v.mmu_ena = v_mmu_ena;
+                v.mmu_sv39 = v_mmu_sv39;
+                v.mmu_sv48 = v_mmu_sv48;
                 v.memop_res_pc = vb_e_pc;
                 v.memop_res_instr = vb_e_instr;
                 v.memop_res_addr = vb_res_addr;
@@ -537,6 +565,8 @@ void MemAccess::comb() {
                 v.pc = vb_e_pc;
                 v_mem_valid = (!v_flushd);
                 v.mmu_ena = v_mmu_ena;
+                v.mmu_sv39 = v_mmu_sv39;
+                v.mmu_sv48 = v_mmu_sv48;
                 v.memop_res_pc = vb_e_pc;
                 v.memop_res_instr = vb_e_instr;
                 v.memop_res_addr = vb_res_addr;
@@ -585,6 +615,8 @@ void MemAccess::comb() {
     queue_re = v_queue_re;
     o_flushd = (queue_nempty && v_flushd && v_queue_re);
     o_mmu_ena = v_mmu_ena;
+    o_mmu_sv39 = v_mmu_sv39;
+    o_mmu_sv48 = v_mmu_sv48;
     o_mem_resp_ready = 1;
     o_mem_valid = v_mem_valid;
     o_mem_type = vb_mem_type;
