@@ -160,9 +160,9 @@ void _init() {
 
     led_set(0x03);
 
+    set_csr(mstatus, MSTATUS_MPP_M);             //      run bbl-q and riscv-tests in machine mode
     if (get_dips() == 0x0F) {
         write_csr(mepc, 0x0000000080000000ull);  // sim: jump to ddr (bbl-q should be init)
-        set_csr(mstatus, MSTATUS_MPP_M);           //      run bbl-q in machine mode
     } else {
         write_csr(mepc, 0x0000000008000000ull);  // jump to entry point in SRAM = 0x08000000
     }

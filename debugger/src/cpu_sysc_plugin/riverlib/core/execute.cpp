@@ -664,8 +664,6 @@ void InstrExecute::comb() {
         mux.radr1 = i_d_radr1;
         mux.radr2 = i_d_radr2;
         mux.waddr = i_d_waddr;
-        mux.rdata1 = i_rdata1;
-        mux.rdata2 = i_rdata2;
         mux.imm = i_d_imm;
         mux.pc = i_d_pc;
         mux.instr = i_d_instr;
@@ -685,8 +683,6 @@ void InstrExecute::comb() {
         mux.radr1 = r.radr1;
         mux.radr2 = r.radr2;
         mux.waddr = r.waddr;
-        mux.rdata1 = r.rdata1;
-        mux.rdata2 = r.rdata2;
         mux.imm = r.imm;
         mux.pc = r.pc;
         mux.instr = r.instr;
@@ -703,17 +699,17 @@ void InstrExecute::comb() {
     wv = mux.ivec;
 
     if (mux.isa_type[ISA_R_type] == 1) {
-        vb_rdata1 = mux.rdata1;
-        vb_rdata2 = mux.rdata2;
+        vb_rdata1 = i_rdata1;
+        vb_rdata2 = i_rdata2;
         v_check_tag1 = 1;
         v_check_tag2 = 1;
     } else if (mux.isa_type[ISA_I_type] == 1) {
-        vb_rdata1 = mux.rdata1;
+        vb_rdata1 = i_rdata1;
         vb_rdata2 = mux.imm;
         v_check_tag1 = 1;
     } else if (mux.isa_type[ISA_SB_type] == 1) {
-        vb_rdata1 = mux.rdata1;
-        vb_rdata2 = mux.rdata2;
+        vb_rdata1 = i_rdata1;
+        vb_rdata2 = i_rdata2;
         vb_off = mux.imm;
         v_check_tag1 = 1;
         v_check_tag2 = 1;
@@ -725,8 +721,8 @@ void InstrExecute::comb() {
         vb_rdata1 = mux.pc;
         vb_rdata2 = mux.imm;
     } else if (mux.isa_type[ISA_S_type] == 1) {
-        vb_rdata1 = mux.rdata1;
-        vb_rdata2 = mux.rdata2;
+        vb_rdata1 = i_rdata1;
+        vb_rdata2 = i_rdata2;
         vb_off = mux.imm;
         v_check_tag1 = 1;
         v_check_tag2 = 1;

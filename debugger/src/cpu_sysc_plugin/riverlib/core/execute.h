@@ -170,8 +170,6 @@ SC_MODULE(InstrExecute) {
         sc_uint<6> radr1;
         sc_uint<6> radr2;
         sc_uint<6> waddr;
-        sc_uint<RISCV_ARCH> rdata1;
-        sc_uint<RISCV_ARCH> rdata2;
         sc_uint<RISCV_ARCH> imm;
         sc_uint<CFG_CPU_ADDR_BITS> pc;
         sc_uint<32> instr;

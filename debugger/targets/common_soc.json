@@ -227,7 +227,7 @@
                             ['gpio0','iof_sel'],
                             ['gpio0','out_xor']
                            ]],
-                ['DIP',0x0F, '0x0f=jump to DDR; 0x0b=1011 Rescue image from SD for FU740 (FSBL=QSPI2 SD, BBL=QSPI2 SD)']
+                ['DIP',0x0e, '0x0f=jump to DDR; 0x0b=1011 Rescue image from SD for FU740 (FSBL=QSPI2 SD, BBL=QSPI2 SD)']
                 ]}]},
     {'Class':'OTPClass','Instances':[
           {'Name':'otp0','Attr':[

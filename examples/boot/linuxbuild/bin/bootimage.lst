@@ -1035,21 +1035,21 @@ void _init() {
    1081a:	450d                	li	a0,3
    1081c:	cf7ff0ef          	jal	ra,10512 <led_set>
 
+    set_csr(mstatus, MSTATUS_MPP_M);             //      run bbl-q and riscv-tests in machine mode
+   10820:	6789                	lui	a5,0x2
+   10822:	8007879b          	addiw	a5,a5,-2048
+   10826:	3007a7f3          	csrrs	a5,mstatus,a5
+   1082a:	fcf43423          	sd	a5,-56(s0)
     if (get_dips() == 0x0F) {
-   10820:	d4fff0ef          	jal	ra,1056e <get_dips>
-   10824:	87aa                	mv	a5,a0
-   10826:	873e                	mv	a4,a5
-   10828:	47bd                	li	a5,15
-   1082a:	00f71e63          	bne	a4,a5,10846 <_init+0x116>
+   1082e:	d41ff0ef          	jal	ra,1056e <get_dips>
+   10832:	87aa                	mv	a5,a0
+   10834:	873e                	mv	a4,a5
+   10836:	47bd                	li	a5,15
+   10838:	00f71763          	bne	a4,a5,10846 <_init+0x116>
         write_csr(mepc, 0x0000000080000000ull);  // sim: jump to ddr (bbl-q should be init)
-   1082e:	4785                	li	a5,1
-   10830:	07fe                	slli	a5,a5,0x1f
-   10832:	34179073          	csrw	mepc,a5
-        set_csr(mstatus, MSTATUS_MPP_M);           //      run bbl-q in machine mode
-   10836:	6789                	lui	a5,0x2
-   10838:	8007879b          	addiw	a5,a5,-2048
-   1083c:	3007a7f3          	csrrs	a5,mstatus,a5
-   10840:	fcf43423          	sd	a5,-56(s0)
+   1083c:	4785                	li	a5,1
+   1083e:	07fe                	slli	a5,a5,0x1f
+   10840:	34179073          	csrw	mepc,a5
     } else {
         write_csr(mepc, 0x0000000008000000ull);  // jump to entry point in SRAM = 0x08000000
     }

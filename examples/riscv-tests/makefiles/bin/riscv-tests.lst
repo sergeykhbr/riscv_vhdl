@@ -23650,7 +23650,7 @@ void print_uart(const char *buf, int sz) {
  80124f0:	00058793          	mv	a5,a1
  80124f4:	fcf42223          	sw	a5,-60(s0)
     uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
- 80124f8:	100007b7          	lui	a5,0x10000
+ 80124f8:	100107b7          	lui	a5,0x10010
  80124fc:	fef43023          	sd	a5,-32(s0)
     uart_txdata_type txdata;
     for (int i = 0; i < sz; i++) {
@@ -23659,7 +23659,7 @@ void print_uart(const char *buf, int sz) {
         do {
             txdata.v = uart->txdata;
  8012508:	fe043783          	ld	a5,-32(s0)
- 801250c:	0007a783          	lw	a5,0(a5) # 10000000 <_end+0x7fec9a0>
+ 801250c:	0007a783          	lw	a5,0(a5) # 10010000 <_end+0x7ffc9a0>
  8012510:	0007879b          	sext.w	a5,a5
  8012514:	fcf42c23          	sw	a5,-40(s0)
         } while (txdata.b.full);
@@ -23700,7 +23700,7 @@ void print_uart_hex(long val) {
  8012580:	fca43423          	sd	a0,-56(s0)
     unsigned char t, s;
     uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
- 8012584:	100007b7          	lui	a5,0x10000
+ 8012584:	100107b7          	lui	a5,0x10010
  8012588:	fef43023          	sd	a5,-32(s0)
     uart_txdata_type txdata;
     for (int i = 0; i < 16; i++) {
@@ -23709,7 +23709,7 @@ void print_uart_hex(long val) {
         do {
             txdata.v = uart->txdata;
  8012594:	fe043783          	ld	a5,-32(s0)
- 8012598:	0007a783          	lw	a5,0(a5) # 10000000 <_end+0x7fec9a0>
+ 8012598:	0007a783          	lw	a5,0(a5) # 10010000 <_end+0x7ffc9a0>
  801259c:	0007879b          	sext.w	a5,a5
  80125a0:	fcf42c23          	sw	a5,-40(s0)
         } while (txdata.b.full);;
