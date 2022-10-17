@@ -197,6 +197,7 @@ SC_MODULE(InstrExecute) {
         sc_signal<sc_uint<6>> waddr;
         sc_signal<sc_uint<RISCV_ARCH>> rdata1;
         sc_signal<sc_uint<RISCV_ARCH>> rdata2;
+        sc_signal<sc_uint<RISCV_ARCH>> rdata2_amo;
         sc_signal<sc_biguint<Instr_Total>> ivec;
         sc_signal<sc_uint<ISA_Total>> isa_type;
         sc_signal<sc_uint<RISCV_ARCH>> imm;
@@ -251,6 +252,7 @@ SC_MODULE(InstrExecute) {
         iv.waddr = 0;
         iv.rdata1 = 0ull;
         iv.rdata2 = 0ull;
+        iv.rdata2_amo = 0ull;
         iv.ivec = 0ull;
         iv.isa_type = 0;
         iv.imm = 0ull;

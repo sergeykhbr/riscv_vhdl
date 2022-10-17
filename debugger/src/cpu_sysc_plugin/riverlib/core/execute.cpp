@@ -286,6 +286,7 @@ InstrExecute::InstrExecute(sc_module_name name,
     sensitive << r.waddr;
     sensitive << r.rdata1;
     sensitive << r.rdata2;
+    sensitive << r.rdata2_amo;
     sensitive << r.ivec;
     sensitive << r.isa_type;
     sensitive << r.imm;
@@ -446,6 +447,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.waddr, pn + ".r_waddr");
         sc_trace(o_vcd, r.rdata1, pn + ".r_rdata1");
         sc_trace(o_vcd, r.rdata2, pn + ".r_rdata2");
+        sc_trace(o_vcd, r.rdata2_amo, pn + ".r_rdata2_amo");
         sc_trace(o_vcd, r.ivec, pn + ".r_ivec");
         sc_trace(o_vcd, r.isa_type, pn + ".r_isa_type");
         sc_trace(o_vcd, r.imm, pn + ".r_imm");
@@ -1478,7 +1480,12 @@ void InstrExecute::comb() {
     }
 
     wb_rdata1 = vb_rdata1;
-    wb_rdata2 = vb_rdata2;
+    v.rdata2_amo = vb_rdata2;                               // Just 1 clock delay to avoid loosing op in a case of rs1=rs2 
+    if (r.state.read() == State_Amo) {
+        wb_rdata2 = r.rdata2_amo;
+    } else {
+        wb_rdata2 = vb_rdata2;
+    }
 
     t_alu_mode[2] = (wv[Instr_XOR]
             || wv[Instr_XORI]
