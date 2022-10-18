@@ -1072,18 +1072,16 @@ void InstrExecute::comb() {
         } else if (wv[Instr_URET] == 1) {
             vb_csr_cmd_type = CsrReq_TrapReturnCmd;
             vb_csr_cmd_addr = PRV_U;
-        } else if ((wv[Instr_FENCE] == 1) || (wv[Instr_FENCE_I] == 1)) {
+        } else if (wv[Instr_FENCE] == 1) {
             vb_csr_cmd_type = CsrReq_FenceCmd;
-            if (wv[Instr_FENCE] == 1) {
-                vb_csr_cmd_addr = 0x005;                    // [0]=flush D$; [2]=flush mmu
-            }
-            if (wv[Instr_FENCE_I] == 1) {
-                vb_csr_cmd_addr = 0x007;                    // [0]=flush D$; [1]=flush I$; [2]=flush mmu
-            }
+            vb_csr_cmd_addr = 0x001;                        // [0]=fence; [1] fence_i [2]=vma
+        } else if (wv[Instr_FENCE_I] == 1) {
+            vb_csr_cmd_type = CsrReq_FenceCmd;
+            vb_csr_cmd_addr = 0x002;                        // [0]=fence; [1] fence_i [2]=vma
             vb_csr_cmd_wdata = ~0ull;                       // flush address
         } else if (wv[Instr_SFENCE_VMA] == 1) {
             vb_csr_cmd_type = CsrReq_FenceCmd;
-            vb_csr_cmd_addr = 0x004;                        // [2]=flush mmu
+            vb_csr_cmd_addr = 0x004;                        // [0]=fence; [1] fence_i [2]=vma
             if (mux.radr1.or_reduce() == 0) {               // must be set to zero in standard extension for fence and fence.i 
                 vb_csr_cmd_wdata = ~0ull;                   // flush address
             } else {

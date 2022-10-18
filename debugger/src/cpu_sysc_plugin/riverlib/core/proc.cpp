@@ -323,6 +323,7 @@ Processor::Processor(sc_module_name name,
     mem0->o_mem_resp_ready(w.m.resp_data_ready);
     mem0->o_pc(w.m.pc);
     mem0->o_valid(w.m.valid);
+    mem0->o_idle(w.m.idle);
     mem0->o_debug_valid(w.m.debug_valid);
 
 
@@ -466,6 +467,7 @@ Processor::Processor(sc_module_name name,
     csr0->i_f_flush_ready(w_f_flush_ready);
     csr0->i_e_valid(w.e.valid);
     csr0->i_m_memop_ready(w.m.memop_ready);
+    csr0->i_m_idle(w.m.idle);
     csr0->i_flushd_end(i_flushd_end);
     csr0->i_mtimer(i_mtimer);
     csr0->o_executed_cnt(csr.executed_cnt);
@@ -660,6 +662,7 @@ Processor::Processor(sc_module_name name,
     sensitive << w.m.flushd;
     sensitive << w.m.pc;
     sensitive << w.m.valid;
+    sensitive << w.m.idle;
     sensitive << w.m.debug_valid;
     sensitive << w.m.dmmu_ena;
     sensitive << w.m.dmmu_sv39;

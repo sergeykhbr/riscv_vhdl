@@ -201,5 +201,5 @@ handle_exception:
 .align 3
 .global dtb_start, dtb_end
 dtb_start:
-.incbin "custom.dtb"
+.incbin "virt.dtb"
 dtb_end:

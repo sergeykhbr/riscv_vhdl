@@ -45,6 +45,7 @@ SC_MODULE(CsrRegs) {
     sc_in<bool> i_f_flush_ready;                            // fetcher is ready to accept Flush $I request
     sc_in<bool> i_e_valid;                                  // instructuin executed flag
     sc_in<bool> i_m_memop_ready;                            // memaccess module is ready to accept the request
+    sc_in<bool> i_m_idle;                                   // memaccess is in idle state, no memop in progress
     sc_in<bool> i_flushd_end;
     sc_in<sc_uint<64>> i_mtimer;                            // Read-only shadow value of memory-mapped mtimer register (see CLINT).
     sc_out<sc_uint<64>> o_executed_cnt;                     // Number of executed instructions
@@ -100,11 +101,12 @@ SC_MODULE(CsrRegs) {
     static const uint32_t State_Response = 11;
     
     static const uint8_t Fence_None = 0;
-    static const uint8_t Fence_Data = 1;
-    static const uint8_t Fence_DataWaitEnd = 2;
-    static const uint8_t Fence_Fetch = 3;
-    static const uint8_t Fence_MMU = 4;
-    static const uint8_t Fence_End = 5;
+    static const uint8_t Fence_DataBarrier = 1;
+    static const uint8_t Fence_DataFlush = 2;
+    static const uint8_t Fence_WaitDataFlushEnd = 3;
+    static const uint8_t Fence_FlushInstr = 4;
+    static const uint8_t Fence_MMU = 5;
+    static const uint8_t Fence_End = 6;
     
     static const uint8_t SATP_MODE_SV39 = 8;
     static const uint8_t SATP_MODE_SV48 = 9;

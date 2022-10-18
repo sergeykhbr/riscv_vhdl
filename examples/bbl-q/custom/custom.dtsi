@@ -22,22 +22,13 @@
 		#size-cells = <0>;
 		cpu0: cpu@0 {
 			compatible = "sifive,bullet0", "riscv";
-			d-cache-block-size = <64>;
-			d-cache-sets = <64>;
-			d-cache-size = <32768>;
-			d-tlb-sets = <1>;
-			d-tlb-size = <32>;
 			device_type = "cpu";
 			i-cache-block-size = <64>;
-			i-cache-sets = <64>;
-			i-cache-size = <32768>;
-			i-tlb-sets = <1>;
-			i-tlb-size = <32>;
-			mmu-type = "riscv,sv48";
+			i-cache-sets = <128>;
+			i-cache-size = <16384>;
 			reg = <0x0>;
 			riscv,isa = "rv64imac";
-			tlb-split;
-			status = "okay";
+			status = "disabled";
 			cpu0_intc: interrupt-controller {
 				#interrupt-cells = <1>;
 				compatible = "riscv,cpu-intc";
@@ -58,19 +49,15 @@
 		#size-cells = <2>;
 		compatible = "simple-bus";
 		ranges;
-		clint: clint@2000000 {
-			compatible = "sifive,fu540-c000-clint", "riscv,clint0";
-			reg = <0x0 0x2000000 0x0 0xC000>;
-			interrupts-extended = <&cpu0_intc 3>, <&cpu0_intc 7>;
-		};
 		plic0: interrupt-controller@c000000 {
 			#interrupt-cells = <1>;
 			#address-cells = <0>;
-			compatible = "sifive,fu540-c000-plic", "riscv,plic0";
+			compatible = "sifive,fu540-c000-plic", "sifive,plic-1.0.0";
 			reg = <0x0 0xc000000 0x0 0x4000000>;
 			riscv,ndev = <69>;
 			interrupt-controller;
-			interrupts-extended = <&cpu0_intc 11>, <&cpu0_intc 9>;
+			interrupts-extended =
+				<&cpu0_intc 0xffffffff>;
 		};
 		prci: clock-controller@10000000 {
 			compatible = "sifive,fu740-c000-prci";

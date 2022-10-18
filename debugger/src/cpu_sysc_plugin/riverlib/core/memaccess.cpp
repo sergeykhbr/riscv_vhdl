@@ -63,6 +63,7 @@ MemAccess::MemAccess(sc_module_name name,
     o_mem_resp_ready("o_mem_resp_ready"),
     o_pc("o_pc"),
     o_valid("o_valid"),
+    o_idle("o_idle"),
     o_debug_valid("o_debug_valid") {
 
     async_reset_ = async_reset;
@@ -183,6 +184,7 @@ void MemAccess::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_mem_resp_ready, o_mem_resp_ready.name());
         sc_trace(o_vcd, o_pc, o_pc.name());
         sc_trace(o_vcd, o_valid, o_valid.name());
+        sc_trace(o_vcd, o_idle, o_idle.name());
         sc_trace(o_vcd, o_debug_valid, o_debug_valid.name());
         sc_trace(o_vcd, r.state, pn + ".r_state");
         sc_trace(o_vcd, r.mmu_ena, pn + ".r_mmu_ena");
@@ -240,6 +242,7 @@ void MemAccess::comb() {
     sc_uint<RISCV_ARCH> vb_o_wdata;
     sc_uint<CFG_REG_TAG_WIDTH> vb_o_wtag;
     bool v_valid;
+    bool v_idle;
     sc_uint<1> t_memop_debug;
 
     vb_req_addr = 0;
@@ -273,6 +276,7 @@ void MemAccess::comb() {
     vb_o_wdata = 0;
     vb_o_wtag = 0;
     v_valid = 0;
+    v_idle = 0;
     t_memop_debug = 0;
 
     v = r;
@@ -608,6 +612,10 @@ void MemAccess::comb() {
         v_memop_ready = 0;
     }
 
+    if ((queue_nempty.read() == 0) && (r.state.read() == State_Idle)) {
+        v_idle = 1;
+    }
+
     if (!async_reset_ && i_nrst.read() == 0) {
         MemAccess_r_reset(v);
     }
@@ -631,6 +639,7 @@ void MemAccess::comb() {
     o_wb_wtag = vb_o_wtag;
     o_pc = r.pc;
     o_valid = ((r.valid || v_valid) && (!r.memop_debug));
+    o_idle = v_idle;
     o_debug_valid = ((r.valid || v_valid) && r.memop_debug);
 }
 

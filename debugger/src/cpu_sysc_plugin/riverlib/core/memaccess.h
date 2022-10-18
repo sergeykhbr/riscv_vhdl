@@ -65,6 +65,7 @@ SC_MODULE(MemAccess) {
     sc_out<bool> o_mem_resp_ready;                          // Pipeline is ready to accept memory operation response
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_pc;                // executed memory/flush request only
     sc_out<bool> o_valid;                                   // memory/flush operation completed
+    sc_out<bool> o_idle;                                    // All memory operation completed
     sc_out<bool> o_debug_valid;                             // Debug request processed, response is valid
 
     void comb();

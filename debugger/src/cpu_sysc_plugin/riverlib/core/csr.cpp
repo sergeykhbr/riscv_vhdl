@@ -46,6 +46,7 @@ CsrRegs::CsrRegs(sc_module_name name,
     i_f_flush_ready("i_f_flush_ready"),
     i_e_valid("i_e_valid"),
     i_m_memop_ready("i_m_memop_ready"),
+    i_m_idle("i_m_idle"),
     i_flushd_end("i_flushd_end"),
     i_mtimer("i_mtimer"),
     o_executed_cnt("o_executed_cnt"),
@@ -87,6 +88,7 @@ CsrRegs::CsrRegs(sc_module_name name,
     sensitive << i_f_flush_ready;
     sensitive << i_e_valid;
     sensitive << i_m_memop_ready;
+    sensitive << i_m_idle;
     sensitive << i_flushd_end;
     sensitive << i_mtimer;
     sensitive << i_dbg_progbuf_ena;
@@ -193,6 +195,7 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_f_flush_ready, i_f_flush_ready.name());
         sc_trace(o_vcd, i_e_valid, i_e_valid.name());
         sc_trace(o_vcd, i_m_memop_ready, i_m_memop_ready.name());
+        sc_trace(o_vcd, i_m_idle, i_m_idle.name());
         sc_trace(o_vcd, i_flushd_end, i_flushd_end.name());
         sc_trace(o_vcd, i_mtimer, i_mtimer.name());
         sc_trace(o_vcd, o_executed_cnt, o_executed_cnt.name());
@@ -502,9 +505,12 @@ void CsrRegs::comb() {
                 v.state = State_Wfi;
             } else if (i_req_type.read()[CsrReq_FenceBit] == 1) {
                 v.state = State_Fence;
-                if (i_req_addr.read()(1, 0).or_reduce() == 1) {
-                    // FENCE or FENCE.I
-                    v.fencestate = Fence_Data;
+                if (i_req_addr.read()[0] == 1) {
+                    // FENCE
+                    v.fencestate = Fence_DataBarrier;
+                } else if (i_req_addr.read()[1] == 1) {
+                    // FENCE.I
+                    v.fencestate = Fence_DataFlush;
                 } else if ((i_req_addr.read()[2] == 1)
                             && (!((r.tvm.read() == 1) && (r.mode.read()[1] == 0)))) {
                     // FENCE.VMA: is illegal in S-mode when TVM bit=1
@@ -627,34 +633,27 @@ void CsrRegs::comb() {
     switch (r.fencestate.read()) {
     case Fence_None:
         break;
-    case Fence_Data:
+    case Fence_DataBarrier:
+        if (i_m_idle.read() == 1) {
+            v.fencestate = Fence_End;
+        }
+        break;
+    case Fence_DataFlush:
         v_flushd = 1;
+        v_flushmmu = 1;
         if (i_m_memop_ready.read() == 1) {
-            v.fencestate = Fence_DataWaitEnd;
+            v.fencestate = Fence_WaitDataFlushEnd;
         }
         break;
-    case Fence_DataWaitEnd:
+    case Fence_WaitDataFlushEnd:
         if (i_flushd_end.read() == 1) {
-            // [0] flush data
-            // [1] flush fetch
-            // [2] flush mmu
-            if (r.cmd_addr.read()[1] == 1) {
-                v.fencestate = Fence_Fetch;
-            } else if (r.cmd_addr.read()[2] == 1) {
-                v.fencestate = Fence_MMU;
-            } else {
-                v.fencestate = Fence_End;
-            }
+            v.fencestate = Fence_FlushInstr;
         }
         break;
-    case Fence_Fetch:
+    case Fence_FlushInstr:
         v_flushi = 1;
         if (i_f_flush_ready.read() == 1) {
-            if (r.cmd_addr.read()[2] == 1) {
-                v.fencestate = Fence_MMU;
-            } else {
-                v.fencestate = Fence_End;
-            }
+            v.fencestate = Fence_End;
         }
         break;
     case Fence_MMU:

@@ -195,6 +195,7 @@ SC_MODULE(Processor) {
         sc_signal<bool> flushd;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
         sc_signal<bool> valid;
+        sc_signal<bool> idle;
         sc_signal<bool> debug_valid;
         sc_signal<bool> dmmu_ena;
         sc_signal<bool> dmmu_sv39;
