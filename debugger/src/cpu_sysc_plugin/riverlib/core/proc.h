@@ -224,6 +224,35 @@ SC_MODULE(Processor) {
         sc_signal<sc_uint<RISCV_ARCH>> dport_rdata;
         sc_signal<sc_uint<RISCV_ARCH>> ra;                  // Return address
         sc_signal<sc_uint<RISCV_ARCH>> sp;                  // Stack pointer
+        sc_signal<sc_uint<RISCV_ARCH>> gp;
+        sc_signal<sc_uint<RISCV_ARCH>> tp;
+        sc_signal<sc_uint<RISCV_ARCH>> t0;
+        sc_signal<sc_uint<RISCV_ARCH>> t1;
+        sc_signal<sc_uint<RISCV_ARCH>> t2;
+        sc_signal<sc_uint<RISCV_ARCH>> fp;
+        sc_signal<sc_uint<RISCV_ARCH>> s1;
+        sc_signal<sc_uint<RISCV_ARCH>> a0;
+        sc_signal<sc_uint<RISCV_ARCH>> a1;
+        sc_signal<sc_uint<RISCV_ARCH>> a2;
+        sc_signal<sc_uint<RISCV_ARCH>> a3;
+        sc_signal<sc_uint<RISCV_ARCH>> a4;
+        sc_signal<sc_uint<RISCV_ARCH>> a5;
+        sc_signal<sc_uint<RISCV_ARCH>> a6;
+        sc_signal<sc_uint<RISCV_ARCH>> a7;
+        sc_signal<sc_uint<RISCV_ARCH>> s2;
+        sc_signal<sc_uint<RISCV_ARCH>> s3;
+        sc_signal<sc_uint<RISCV_ARCH>> s4;
+        sc_signal<sc_uint<RISCV_ARCH>> s5;
+        sc_signal<sc_uint<RISCV_ARCH>> s6;
+        sc_signal<sc_uint<RISCV_ARCH>> s7;
+        sc_signal<sc_uint<RISCV_ARCH>> s8;
+        sc_signal<sc_uint<RISCV_ARCH>> s9;
+        sc_signal<sc_uint<RISCV_ARCH>> s10;
+        sc_signal<sc_uint<RISCV_ARCH>> s11;
+        sc_signal<sc_uint<RISCV_ARCH>> t3;
+        sc_signal<sc_uint<RISCV_ARCH>> t4;
+        sc_signal<sc_uint<RISCV_ARCH>> t5;
+        sc_signal<sc_uint<RISCV_ARCH>> t6;
     };
 
     struct CsrType {

@@ -94,6 +94,7 @@ SC_MODULE(InstrExecute) {
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_memop_memaddr;     // Memory access address
     sc_out<sc_uint<RISCV_ARCH>> o_memop_wdata;
     sc_in<bool> i_memop_ready;                              // memaccess is ready to accept memop on next clock
+    sc_in<bool> i_memop_idle;                               // No memory operations in progress
     sc_in<bool> i_dbg_mem_req_valid;                        // Debug Request to memory is valid
     sc_in<bool> i_dbg_mem_req_write;                        // 0=read; 1=write
     sc_in<sc_uint<2>> i_dbg_mem_req_size;                   // 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes

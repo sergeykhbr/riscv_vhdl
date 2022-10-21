@@ -89,6 +89,7 @@ InstrExecute::InstrExecute(sc_module_name name,
     o_memop_memaddr("o_memop_memaddr"),
     o_memop_wdata("o_memop_wdata"),
     i_memop_ready("i_memop_ready"),
+    i_memop_idle("i_memop_idle"),
     i_dbg_mem_req_valid("i_dbg_mem_req_valid"),
     i_dbg_mem_req_write("i_dbg_mem_req_write"),
     i_dbg_mem_req_size("i_dbg_mem_req_size"),
@@ -245,6 +246,7 @@ InstrExecute::InstrExecute(sc_module_name name,
     sensitive << i_csr_resp_data;
     sensitive << i_csr_resp_exception;
     sensitive << i_memop_ready;
+    sensitive << i_memop_idle;
     sensitive << i_dbg_mem_req_valid;
     sensitive << i_dbg_mem_req_write;
     sensitive << i_dbg_mem_req_size;
@@ -421,6 +423,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_memop_memaddr, o_memop_memaddr.name());
         sc_trace(o_vcd, o_memop_wdata, o_memop_wdata.name());
         sc_trace(o_vcd, i_memop_ready, i_memop_ready.name());
+        sc_trace(o_vcd, i_memop_idle, i_memop_idle.name());
         sc_trace(o_vcd, i_dbg_mem_req_valid, i_dbg_mem_req_valid.name());
         sc_trace(o_vcd, i_dbg_mem_req_write, i_dbg_mem_req_write.name());
         sc_trace(o_vcd, i_dbg_mem_req_size, i_dbg_mem_req_size.name());
@@ -1302,7 +1305,7 @@ void InstrExecute::comb() {
             }
             break;
         case AmoState_Modify:
-            if ((w_hazard1.read() == 0) && (w_hazard2.read() == 0)) {
+            if (i_memop_idle.read() == 1) {
                 // Need to wait 1 clock to latch addsub/alu output
                 v.amostate = AmoState_Write;
                 mux.memop_type[MemopType_Store] = 1;        // no need to do this in rtl, just assign to v.memop_type[0]

@@ -43,6 +43,35 @@ SC_MODULE(RegIntBank) {
     sc_out<sc_uint<RISCV_ARCH>> o_dport_rdata;              // Debug port read value
     sc_out<sc_uint<RISCV_ARCH>> o_ra;                       // Return address for branch predictor
     sc_out<sc_uint<RISCV_ARCH>> o_sp;                       // Stack Pointer for border control
+    sc_out<sc_uint<RISCV_ARCH>> o_gp;
+    sc_out<sc_uint<RISCV_ARCH>> o_tp;
+    sc_out<sc_uint<RISCV_ARCH>> o_t0;
+    sc_out<sc_uint<RISCV_ARCH>> o_t1;
+    sc_out<sc_uint<RISCV_ARCH>> o_t2;
+    sc_out<sc_uint<RISCV_ARCH>> o_fp;
+    sc_out<sc_uint<RISCV_ARCH>> o_s1;
+    sc_out<sc_uint<RISCV_ARCH>> o_a0;
+    sc_out<sc_uint<RISCV_ARCH>> o_a1;
+    sc_out<sc_uint<RISCV_ARCH>> o_a2;
+    sc_out<sc_uint<RISCV_ARCH>> o_a3;
+    sc_out<sc_uint<RISCV_ARCH>> o_a4;
+    sc_out<sc_uint<RISCV_ARCH>> o_a5;
+    sc_out<sc_uint<RISCV_ARCH>> o_a6;
+    sc_out<sc_uint<RISCV_ARCH>> o_a7;
+    sc_out<sc_uint<RISCV_ARCH>> o_s2;
+    sc_out<sc_uint<RISCV_ARCH>> o_s3;
+    sc_out<sc_uint<RISCV_ARCH>> o_s4;
+    sc_out<sc_uint<RISCV_ARCH>> o_s5;
+    sc_out<sc_uint<RISCV_ARCH>> o_s6;
+    sc_out<sc_uint<RISCV_ARCH>> o_s7;
+    sc_out<sc_uint<RISCV_ARCH>> o_s8;
+    sc_out<sc_uint<RISCV_ARCH>> o_s9;
+    sc_out<sc_uint<RISCV_ARCH>> o_s10;
+    sc_out<sc_uint<RISCV_ARCH>> o_s11;
+    sc_out<sc_uint<RISCV_ARCH>> o_t3;
+    sc_out<sc_uint<RISCV_ARCH>> o_t4;
+    sc_out<sc_uint<RISCV_ARCH>> o_t5;
+    sc_out<sc_uint<RISCV_ARCH>> o_t6;
 
     void comb();
     void registers();

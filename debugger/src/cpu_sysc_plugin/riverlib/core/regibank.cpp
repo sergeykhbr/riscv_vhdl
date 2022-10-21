@@ -42,7 +42,36 @@ RegIntBank::RegIntBank(sc_module_name name,
     i_dport_wdata("i_dport_wdata"),
     o_dport_rdata("o_dport_rdata"),
     o_ra("o_ra"),
-    o_sp("o_sp") {
+    o_sp("o_sp"),
+    o_gp("o_gp"),
+    o_tp("o_tp"),
+    o_t0("o_t0"),
+    o_t1("o_t1"),
+    o_t2("o_t2"),
+    o_fp("o_fp"),
+    o_s1("o_s1"),
+    o_a0("o_a0"),
+    o_a1("o_a1"),
+    o_a2("o_a2"),
+    o_a3("o_a3"),
+    o_a4("o_a4"),
+    o_a5("o_a5"),
+    o_a6("o_a6"),
+    o_a7("o_a7"),
+    o_s2("o_s2"),
+    o_s3("o_s3"),
+    o_s4("o_s4"),
+    o_s5("o_s5"),
+    o_s6("o_s6"),
+    o_s7("o_s7"),
+    o_s8("o_s8"),
+    o_s9("o_s9"),
+    o_s10("o_s10"),
+    o_s11("o_s11"),
+    o_t3("o_t3"),
+    o_t4("o_t4"),
+    o_t5("o_t5"),
+    o_t6("o_t6") {
 
     async_reset_ = async_reset;
 
@@ -91,6 +120,35 @@ void RegIntBank::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_dport_rdata, o_dport_rdata.name());
         sc_trace(o_vcd, o_ra, o_ra.name());
         sc_trace(o_vcd, o_sp, o_sp.name());
+        sc_trace(o_vcd, o_gp, o_gp.name());
+        sc_trace(o_vcd, o_tp, o_tp.name());
+        sc_trace(o_vcd, o_t0, o_t0.name());
+        sc_trace(o_vcd, o_t1, o_t1.name());
+        sc_trace(o_vcd, o_t2, o_t2.name());
+        sc_trace(o_vcd, o_fp, o_fp.name());
+        sc_trace(o_vcd, o_s1, o_s1.name());
+        sc_trace(o_vcd, o_a0, o_a0.name());
+        sc_trace(o_vcd, o_a1, o_a1.name());
+        sc_trace(o_vcd, o_a2, o_a2.name());
+        sc_trace(o_vcd, o_a3, o_a3.name());
+        sc_trace(o_vcd, o_a4, o_a4.name());
+        sc_trace(o_vcd, o_a5, o_a5.name());
+        sc_trace(o_vcd, o_a6, o_a6.name());
+        sc_trace(o_vcd, o_a7, o_a7.name());
+        sc_trace(o_vcd, o_s2, o_s2.name());
+        sc_trace(o_vcd, o_s3, o_s3.name());
+        sc_trace(o_vcd, o_s4, o_s4.name());
+        sc_trace(o_vcd, o_s5, o_s5.name());
+        sc_trace(o_vcd, o_s6, o_s6.name());
+        sc_trace(o_vcd, o_s7, o_s7.name());
+        sc_trace(o_vcd, o_s8, o_s8.name());
+        sc_trace(o_vcd, o_s9, o_s9.name());
+        sc_trace(o_vcd, o_s10, o_s10.name());
+        sc_trace(o_vcd, o_s11, o_s11.name());
+        sc_trace(o_vcd, o_t3, o_t3.name());
+        sc_trace(o_vcd, o_t4, o_t4.name());
+        sc_trace(o_vcd, o_t5, o_t5.name());
+        sc_trace(o_vcd, o_t6, o_t6.name());
         for (int i = 0; i < REGS_TOTAL; i++) {
             char tstr[1024];
             RISCV_sprintf(tstr, sizeof(tstr), "%s.r_arr%d_val", pn.c_str(), i);
@@ -157,6 +215,35 @@ void RegIntBank::comb() {
     o_dport_rdata = r.arr[int_daddr].val;
     o_ra = r.arr[REG_RA].val;
     o_sp = r.arr[REG_SP].val;
+    o_gp = r.arr[REG_GP].val;
+    o_tp = r.arr[REG_TP].val;
+    o_t0 = r.arr[REG_T0].val;
+    o_t1 = r.arr[REG_T1].val;
+    o_t2 = r.arr[REG_T2].val;
+    o_fp = r.arr[REG_S0].val;
+    o_s1 = r.arr[REG_S1].val;
+    o_a0 = r.arr[REG_A0].val;
+    o_a1 = r.arr[REG_A1].val;
+    o_a2 = r.arr[REG_A2].val;
+    o_a3 = r.arr[REG_A3].val;
+    o_a4 = r.arr[REG_A4].val;
+    o_a5 = r.arr[REG_A5].val;
+    o_a6 = r.arr[REG_A6].val;
+    o_a7 = r.arr[REG_A7].val;
+    o_s2 = r.arr[REG_S2].val;
+    o_s3 = r.arr[REG_S3].val;
+    o_s4 = r.arr[REG_S4].val;
+    o_s5 = r.arr[REG_S5].val;
+    o_s6 = r.arr[REG_S6].val;
+    o_s7 = r.arr[REG_S7].val;
+    o_s8 = r.arr[REG_S8].val;
+    o_s9 = r.arr[REG_S9].val;
+    o_s10 = r.arr[REG_S10].val;
+    o_s11 = r.arr[REG_S11].val;
+    o_t3 = r.arr[REG_T3].val;
+    o_t4 = r.arr[REG_T4].val;
+    o_t5 = r.arr[REG_T5].val;
+    o_t6 = r.arr[REG_T6].val;
 }
 
 void RegIntBank::registers() {

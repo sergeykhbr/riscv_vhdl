@@ -143,6 +143,14 @@ reset_vector:
   addi sp,sp,-256
   csrw 0x7b3, sp          # save dedicated stack region into dscratch1 register to run riscv-tests
 
+  # just test amoadd.d (temporary code)
+  li a2, 1
+  sd a2,-8(sp)
+  li a1,8
+  sub a1,sp,a1
+  amoadd.d zero,a2,(a1)
+
+
   # copy image 64 KB
   csrr a0, mhartid            # a0 <= MHARTID value
   beqz a0, init0

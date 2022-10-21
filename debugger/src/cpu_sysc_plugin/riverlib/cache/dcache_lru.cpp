@@ -389,6 +389,9 @@ void DCacheLru::comb() {
                     v.req_type = t_req_type;                // clear MemopType_Store bit
                     vb_line_wstrb = vb_line_rdata_o_wstrb;
                     vb_line_wdata = vb_line_rdata_o_modified;
+                    if (r.req_type.read()[MemopType_Release] == 1) {
+                        vb_resp_data = 0;
+                    }
                     if ((r.req_type.read()[MemopType_Release] == 1)
                             && (line_rflags_o.read()[DTAG_FL_RESERVED] == 0)) {
                         // ignore writing if cacheline wasn't reserved before:
