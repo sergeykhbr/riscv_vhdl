@@ -49,6 +49,8 @@ InstrExecute::InstrExecute(sc_module_name name,
     i_stack_underflow("i_stack_underflow"),
     i_unsup_exception("i_unsup_exception"),
     i_instr_load_fault("i_instr_load_fault"),
+    i_mem_valid("i_mem_valid"),
+    i_mem_rdata("i_mem_rdata"),
     i_mem_ex_debug("i_mem_ex_debug"),
     i_mem_ex_load_fault("i_mem_ex_load_fault"),
     i_mem_ex_store_fault("i_mem_ex_store_fault"),
@@ -224,6 +226,8 @@ InstrExecute::InstrExecute(sc_module_name name,
     sensitive << i_stack_underflow;
     sensitive << i_unsup_exception;
     sensitive << i_instr_load_fault;
+    sensitive << i_mem_valid;
+    sensitive << i_mem_rdata;
     sensitive << i_mem_ex_debug;
     sensitive << i_mem_ex_load_fault;
     sensitive << i_mem_ex_store_fault;
@@ -288,6 +292,7 @@ InstrExecute::InstrExecute(sc_module_name name,
     sensitive << r.waddr;
     sensitive << r.rdata1;
     sensitive << r.rdata2;
+    sensitive << r.rdata1_amo;
     sensitive << r.rdata2_amo;
     sensitive << r.ivec;
     sensitive << r.isa_type;
@@ -383,6 +388,8 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_stack_underflow, i_stack_underflow.name());
         sc_trace(o_vcd, i_unsup_exception, i_unsup_exception.name());
         sc_trace(o_vcd, i_instr_load_fault, i_instr_load_fault.name());
+        sc_trace(o_vcd, i_mem_valid, i_mem_valid.name());
+        sc_trace(o_vcd, i_mem_rdata, i_mem_rdata.name());
         sc_trace(o_vcd, i_mem_ex_debug, i_mem_ex_debug.name());
         sc_trace(o_vcd, i_mem_ex_load_fault, i_mem_ex_load_fault.name());
         sc_trace(o_vcd, i_mem_ex_store_fault, i_mem_ex_store_fault.name());
@@ -450,6 +457,7 @@ void InstrExecute::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.waddr, pn + ".r_waddr");
         sc_trace(o_vcd, r.rdata1, pn + ".r_rdata1");
         sc_trace(o_vcd, r.rdata2, pn + ".r_rdata2");
+        sc_trace(o_vcd, r.rdata1_amo, pn + ".r_rdata1_amo");
         sc_trace(o_vcd, r.rdata2_amo, pn + ".r_rdata2_amo");
         sc_trace(o_vcd, r.ivec, pn + ".r_ivec");
         sc_trace(o_vcd, r.isa_type, pn + ".r_isa_type");
@@ -703,7 +711,13 @@ void InstrExecute::comb() {
     }
     wv = mux.ivec;
 
-    if (mux.isa_type[ISA_R_type] == 1) {
+    if (r.state.read() == State_Amo) {
+        // AMO R-type:
+        vb_rdata1 = r.rdata1_amo;
+        vb_rdata2 = r.rdata2_amo;
+        v_check_tag1 = 1;
+        v_check_tag2 = 1;
+    } else if (mux.isa_type[ISA_R_type] == 1) {
         vb_rdata1 = i_rdata1;
         vb_rdata2 = i_rdata2;
         v_check_tag1 = 1;
@@ -731,6 +745,12 @@ void InstrExecute::comb() {
         vb_off = mux.imm;
         v_check_tag1 = 1;
         v_check_tag2 = 1;
+    }
+    // AMO value read from memory[rs1]
+    if ((wv[Instr_AMOSWAP_D] || wv[Instr_AMOSWAP_W]) == 1) {
+        v.rdata1_amo = 0;
+    } else if (i_mem_valid.read() == 1) {
+        v.rdata1_amo = i_mem_rdata;
     }
 
     vb_memop_memaddr_load = (vb_rdata1((CFG_CPU_ADDR_BITS - 1), 0) + vb_rdata2((CFG_CPU_ADDR_BITS - 1), 0));
@@ -1297,12 +1317,8 @@ void InstrExecute::comb() {
             }
             break;
         case AmoState_Read:
+            v.rdata2_amo = i_rdata2;
             v.amostate = AmoState_Modify;
-            if ((wv[Instr_AMOSWAP_D] || wv[Instr_AMOSWAP_W]) == 1) {
-                v.radr1 = 0;
-            } else {
-                v.radr1 = r.waddr;
-            }
             break;
         case AmoState_Modify:
             if (i_memop_idle.read() == 1) {
@@ -1481,12 +1497,7 @@ void InstrExecute::comb() {
     }
 
     wb_rdata1 = vb_rdata1;
-    v.rdata2_amo = vb_rdata2;                               // Just 1 clock delay to avoid loosing op in a case of rs1=rs2 
-    if (r.state.read() == State_Amo) {
-        wb_rdata2 = r.rdata2_amo;
-    } else {
-        wb_rdata2 = vb_rdata2;
-    }
+    wb_rdata2 = vb_rdata2;
 
     t_alu_mode[2] = (wv[Instr_XOR]
             || wv[Instr_XORI]

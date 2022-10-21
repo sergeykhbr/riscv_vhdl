@@ -54,6 +54,8 @@ SC_MODULE(InstrExecute) {
     sc_in<bool> i_stack_underflow;                          // exception stack overflow
     sc_in<bool> i_unsup_exception;                          // Unsupported instruction exception
     sc_in<bool> i_instr_load_fault;                         // fault instruction's address. Bus returned ERR on read transaction
+    sc_in<bool> i_mem_valid;                                // memory operation done (need for AMO)
+    sc_in<sc_uint<RISCV_ARCH>> i_mem_rdata;                 // memory operation read data (need for AMO)
     sc_in<bool> i_mem_ex_debug;                             // Memoryaccess: Debug requested processed with error. Ignore it.
     sc_in<bool> i_mem_ex_load_fault;                        // Memoryaccess: Bus response with SLVERR or DECERR on read data
     sc_in<bool> i_mem_ex_store_fault;                       // Memoryaccess: Bus response with SLVERR or DECERR on write data
@@ -198,6 +200,7 @@ SC_MODULE(InstrExecute) {
         sc_signal<sc_uint<6>> waddr;
         sc_signal<sc_uint<RISCV_ARCH>> rdata1;
         sc_signal<sc_uint<RISCV_ARCH>> rdata2;
+        sc_signal<sc_uint<RISCV_ARCH>> rdata1_amo;
         sc_signal<sc_uint<RISCV_ARCH>> rdata2_amo;
         sc_signal<sc_biguint<Instr_Total>> ivec;
         sc_signal<sc_uint<ISA_Total>> isa_type;
@@ -253,6 +256,7 @@ SC_MODULE(InstrExecute) {
         iv.waddr = 0;
         iv.rdata1 = 0ull;
         iv.rdata2 = 0ull;
+        iv.rdata1_amo = 0ull;
         iv.rdata2_amo = 0ull;
         iv.ivec = 0ull;
         iv.isa_type = 0;
