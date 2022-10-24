@@ -58,6 +58,9 @@ Mmu::Mmu(sc_module_name name,
     i_mmu_sv39("i_mmu_sv39"),
     i_mmu_sv48("i_mmu_sv48"),
     i_mmu_ppn("i_mmu_ppn"),
+    i_mprv("i_mprv"),
+    i_mxr("i_mxr"),
+    i_sum("i_sum"),
     i_fence("i_fence"),
     i_fence_addr("i_fence_addr") {
 
@@ -94,6 +97,9 @@ Mmu::Mmu(sc_module_name name,
     sensitive << i_mmu_sv39;
     sensitive << i_mmu_sv48;
     sensitive << i_mmu_ppn;
+    sensitive << i_mprv;
+    sensitive << i_mxr;
+    sensitive << i_sum;
     sensitive << i_fence;
     sensitive << i_fence_addr;
     sensitive << wb_tlb_adr;
@@ -174,6 +180,9 @@ void Mmu::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_mmu_sv39, i_mmu_sv39.name());
         sc_trace(o_vcd, i_mmu_sv48, i_mmu_sv48.name());
         sc_trace(o_vcd, i_mmu_ppn, i_mmu_ppn.name());
+        sc_trace(o_vcd, i_mprv, i_mprv.name());
+        sc_trace(o_vcd, i_mxr, i_mxr.name());
+        sc_trace(o_vcd, i_sum, i_sum.name());
         sc_trace(o_vcd, i_fence, i_fence.name());
         sc_trace(o_vcd, i_fence_addr, i_fence_addr.name());
         sc_trace(o_vcd, r.state, pn + ".r_state");
@@ -319,8 +328,12 @@ void Mmu::comb() {
     }
     // Page walking base Physical Address
     vb_resp_ppn(43, 0) = r.resp_data.read()(53, 10);
-    v_va_ena = ((i_mmu_sv48 && i_core_req_addr.read()(63, 48).and_reduce())
-            || (i_mmu_sv39 && i_core_req_addr.read()(63, 39).and_reduce()));
+    v_va_ena = i_mmu_ena;
+    // M-mode can opearate with physical and virtual addresses when MPRV=1
+    if ((i_mprv.read() == 1) && (i_core_req_addr.read()(63, 48).and_reduce() == 0)) {
+        // Use physical address
+        v_va_ena = 0;
+    }
     vb_level0_off = (r.last_va.read()(47, 39) << 3);
     vb_level1_off = (r.last_va.read()(38, 30) << 3);
     vb_level2_off = (r.last_va.read()(29, 21) << 3);

@@ -263,6 +263,7 @@ SC_MODULE(Processor) {
         sc_signal<bool> flushd_valid;                       // clear specified addr in D$
         sc_signal<bool> flushi_valid;                       // clear specified addr in I$
         sc_signal<bool> flushmmu_valid;                     // clear specified leaf in xMMU
+        sc_signal<bool> flushpipeline_valid;                // clear pipeline
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> flush_addr;
         sc_signal<sc_uint<64>> executed_cnt;                // Number of executed instruction
         sc_signal<sc_uint<IRQ_TOTAL>> irq_pending;
@@ -270,11 +271,13 @@ SC_MODULE(Processor) {
         sc_signal<bool> stack_overflow;
         sc_signal<bool> stack_underflow;
         sc_signal<bool> step;
-        sc_signal<bool> immu_ena;                           // Instruction MMU enabled in U and S modes. Sv48 only.
-        sc_signal<bool> dmmu_ena;                           // Instruction MMU enabled in U and S modes or MPRV. Sv48 only.
-        sc_signal<sc_uint<44>> mmu_ppn;                     // Physical Page Number
+        sc_signal<bool> mmu_ena;                            // MMU enabled in U and S modes. Sv48 only.
         sc_signal<bool> mmu_sv39;
         sc_signal<bool> mmu_sv48;
+        sc_signal<sc_uint<44>> mmu_ppn;                     // Physical Page Number
+        sc_signal<bool> mprv;
+        sc_signal<bool> mxr;
+        sc_signal<bool> sum;
         sc_signal<bool> progbuf_end;
         sc_signal<bool> progbuf_error;
     };

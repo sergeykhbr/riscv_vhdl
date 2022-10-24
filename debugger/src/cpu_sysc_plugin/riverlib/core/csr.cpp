@@ -57,6 +57,7 @@ CsrRegs::CsrRegs(sc_module_name name,
     o_flushd_valid("o_flushd_valid"),
     o_flushi_valid("o_flushi_valid"),
     o_flushmmu_valid("o_flushmmu_valid"),
+    o_flushpipeline_valid("o_flushpipeline_valid"),
     o_flush_addr("o_flush_addr"),
     o_pmp_ena("o_pmp_ena"),
     o_pmp_we("o_pmp_we"),
@@ -64,11 +65,13 @@ CsrRegs::CsrRegs(sc_module_name name,
     o_pmp_start_addr("o_pmp_start_addr"),
     o_pmp_end_addr("o_pmp_end_addr"),
     o_pmp_flags("o_pmp_flags"),
-    o_immu_ena("o_immu_ena"),
-    o_dmmu_ena("o_dmmu_ena"),
-    o_mmu_ppn("o_mmu_ppn"),
+    o_mmu_ena("o_mmu_ena"),
     o_mmu_sv39("o_mmu_sv39"),
-    o_mmu_sv48("o_mmu_sv48") {
+    o_mmu_sv48("o_mmu_sv48"),
+    o_mmu_ppn("o_mmu_ppn"),
+    o_mprv("o_mprv"),
+    o_mxr("o_mxr"),
+    o_sum("o_sum") {
 
     async_reset_ = async_reset;
     hartid_ = hartid;
@@ -130,13 +133,14 @@ CsrRegs::CsrRegs(sc_module_name name,
     sensitive << r.mcountinhibit;
     sensitive << r.mstackovr;
     sensitive << r.mstackund;
-    sensitive << r.immu_ena;
-    sensitive << r.dmmu_ena;
+    sensitive << r.mmu_ena;
     sensitive << r.satp_ppn;
     sensitive << r.satp_sv39;
     sensitive << r.satp_sv48;
     sensitive << r.mode;
     sensitive << r.mprv;
+    sensitive << r.mxr;
+    sensitive << r.sum;
     sensitive << r.tvm;
     sensitive << r.ex_fpu_invalidop;
     sensitive << r.ex_fpu_divbyzero;
@@ -206,6 +210,7 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_flushd_valid, o_flushd_valid.name());
         sc_trace(o_vcd, o_flushi_valid, o_flushi_valid.name());
         sc_trace(o_vcd, o_flushmmu_valid, o_flushmmu_valid.name());
+        sc_trace(o_vcd, o_flushpipeline_valid, o_flushpipeline_valid.name());
         sc_trace(o_vcd, o_flush_addr, o_flush_addr.name());
         sc_trace(o_vcd, o_pmp_ena, o_pmp_ena.name());
         sc_trace(o_vcd, o_pmp_we, o_pmp_we.name());
@@ -213,11 +218,13 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_pmp_start_addr, o_pmp_start_addr.name());
         sc_trace(o_vcd, o_pmp_end_addr, o_pmp_end_addr.name());
         sc_trace(o_vcd, o_pmp_flags, o_pmp_flags.name());
-        sc_trace(o_vcd, o_immu_ena, o_immu_ena.name());
-        sc_trace(o_vcd, o_dmmu_ena, o_dmmu_ena.name());
-        sc_trace(o_vcd, o_mmu_ppn, o_mmu_ppn.name());
+        sc_trace(o_vcd, o_mmu_ena, o_mmu_ena.name());
         sc_trace(o_vcd, o_mmu_sv39, o_mmu_sv39.name());
         sc_trace(o_vcd, o_mmu_sv48, o_mmu_sv48.name());
+        sc_trace(o_vcd, o_mmu_ppn, o_mmu_ppn.name());
+        sc_trace(o_vcd, o_mprv, o_mprv.name());
+        sc_trace(o_vcd, o_mxr, o_mxr.name());
+        sc_trace(o_vcd, o_sum, o_sum.name());
         for (int i = 0; i < 4; i++) {
             char tstr[1024];
             RISCV_sprintf(tstr, sizeof(tstr), "%s.r_xmode%d_xepc", pn.c_str(), i);
@@ -275,13 +282,14 @@ void CsrRegs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.mcountinhibit, pn + ".r_mcountinhibit");
         sc_trace(o_vcd, r.mstackovr, pn + ".r_mstackovr");
         sc_trace(o_vcd, r.mstackund, pn + ".r_mstackund");
-        sc_trace(o_vcd, r.immu_ena, pn + ".r_immu_ena");
-        sc_trace(o_vcd, r.dmmu_ena, pn + ".r_dmmu_ena");
+        sc_trace(o_vcd, r.mmu_ena, pn + ".r_mmu_ena");
         sc_trace(o_vcd, r.satp_ppn, pn + ".r_satp_ppn");
         sc_trace(o_vcd, r.satp_sv39, pn + ".r_satp_sv39");
         sc_trace(o_vcd, r.satp_sv48, pn + ".r_satp_sv48");
         sc_trace(o_vcd, r.mode, pn + ".r_mode");
         sc_trace(o_vcd, r.mprv, pn + ".r_mprv");
+        sc_trace(o_vcd, r.mxr, pn + ".r_mxr");
+        sc_trace(o_vcd, r.sum, pn + ".r_sum");
         sc_trace(o_vcd, r.tvm, pn + ".r_tvm");
         sc_trace(o_vcd, r.ex_fpu_invalidop, pn + ".r_ex_fpu_invalidop");
         sc_trace(o_vcd, r.ex_fpu_divbyzero, pn + ".r_ex_fpu_divbyzero");
@@ -344,6 +352,7 @@ void CsrRegs::comb() {
     bool v_flushd;
     bool v_flushi;
     bool v_flushmmu;
+    bool v_flushpipeline;
     sc_uint<CFG_PMP_TBL_SIZE> vb_pmp_upd_ena;
     sc_uint<CFG_CPU_ADDR_BITS> vb_pmp_napot_mask;
     bool v_napot_shift;
@@ -379,6 +388,7 @@ void CsrRegs::comb() {
     v_flushd = 0;
     v_flushi = 0;
     v_flushmmu = 0;
+    v_flushpipeline = 0;
     vb_pmp_upd_ena = 0;
     vb_pmp_napot_mask = 0;
     v_napot_shift = 0;
@@ -423,13 +433,14 @@ void CsrRegs::comb() {
     v.mcountinhibit = r.mcountinhibit;
     v.mstackovr = r.mstackovr;
     v.mstackund = r.mstackund;
-    v.immu_ena = r.immu_ena;
-    v.dmmu_ena = r.dmmu_ena;
+    v.mmu_ena = r.mmu_ena;
     v.satp_ppn = r.satp_ppn;
     v.satp_sv39 = r.satp_sv39;
     v.satp_sv48 = r.satp_sv48;
     v.mode = r.mode;
     v.mprv = r.mprv;
+    v.mxr = r.mxr;
+    v.sum = r.sum;
     v.tvm = r.tvm;
     v.ex_fpu_invalidop = r.ex_fpu_invalidop;
     v.ex_fpu_divbyzero = r.ex_fpu_divbyzero;
@@ -661,6 +672,7 @@ void CsrRegs::comb() {
         v.fencestate = Fence_End;
         break;
     case Fence_End:
+        v_flushpipeline = 1;
         break;
     default:
         break;
@@ -864,8 +876,8 @@ void CsrRegs::comb() {
         }
         // [16:15] XS
         vb_rdata[17] = r.mprv.read();
-        // [18] SUM
-        // [19] MXR
+        vb_rdata[18] = r.sum.read();
+        vb_rdata[19] = r.mxr.read();
         vb_rdata[20] = r.tvm.read();                        // Trap Virtual Memory
         // [21] TW
         // [22] TSR
@@ -884,6 +896,8 @@ void CsrRegs::comb() {
             v.xmode[iS].xpp = (0, r.cmd_data.read()[8]);
             v.xmode[iM].xpp = r.cmd_data.read()(12, 11);
             v.mprv = r.cmd_data.read()[17];
+            v.sum = r.cmd_data.read()[18];
+            v.mxr = r.cmd_data.read()[19];
             v.tvm = r.cmd_data.read()[20];
         }
     } else if (r.cmd_addr.read() == 0x301) {                // misa: [MRW] ISA and extensions
@@ -1134,17 +1148,17 @@ void CsrRegs::comb() {
     }
 
     // Check MMU:
-    v.immu_ena = 0;
-    v.dmmu_ena = 0;
+    v.mmu_ena = 0;
     if ((r.satp_sv39.read() == 1) || (r.satp_sv48.read() == 1)) {// Sv39 and Sv48 are implemented
         if (r.mode.read()[1] == 0) {
             // S and U modes
-            v.immu_ena = 1;
-            v.dmmu_ena = 1;
+            v.mmu_ena = 1;
+            v_flushpipeline = (!r.mmu_ena);                 // Flush pipeline on MMU turning on
         } else if ((r.mprv.read() == 1) && (vb_xpp[1] == 0)) {
             // Previous state is S or U mode
             // Instruction address-translation and protection are unaffected
-            v.dmmu_ena = 1;
+            v.mmu_ena = 1;
+            v_flushpipeline = (!r.mmu_ena);                 // Flush pipeline on MMU turning on
         }
     }
 
@@ -1169,8 +1183,7 @@ void CsrRegs::comb() {
         v.xmode[iM].xcause_code = wb_trap_cause;
         v.xmode[iM].xcause_irq = (!vb_e_emux.or_reduce());
         v.mode = PRV_M;
-        v.immu_ena = 0;
-        v.dmmu_ena = 0;
+        v.mmu_ena = 0;
     }
 
     // Step is not enabled or interrupt enabled during stepping
@@ -1304,13 +1317,14 @@ void CsrRegs::comb() {
         v.mcountinhibit = 0;
         v.mstackovr = 0ull;
         v.mstackund = 0ull;
-        v.immu_ena = 0;
-        v.dmmu_ena = 0;
+        v.mmu_ena = 0;
         v.satp_ppn = 0ull;
         v.satp_sv39 = 0;
         v.satp_sv48 = 0;
         v.mode = PRV_M;
         v.mprv = 0;
+        v.mxr = 0;
+        v.sum = 0;
         v.tvm = 0;
         v.ex_fpu_invalidop = 0;
         v.ex_fpu_divbyzero = 0;
@@ -1358,15 +1372,18 @@ void CsrRegs::comb() {
     o_pmp_start_addr = r.pmp_start_addr;
     o_pmp_end_addr = r.pmp_end_addr;
     o_pmp_flags = r.pmp_flags;
-    o_immu_ena = r.immu_ena;
-    o_dmmu_ena = r.dmmu_ena;
-    o_mmu_ppn = r.satp_ppn;
+    o_mmu_ena = r.mmu_ena;
     o_mmu_sv39 = r.satp_sv39;
     o_mmu_sv48 = r.satp_sv48;
+    o_mmu_ppn = r.satp_ppn;
+    o_mprv = r.mprv;
+    o_mxr = r.mxr;
+    o_sum = r.sum;
     o_step = r.dcsr_step;
     o_flushd_valid = v_flushd;
     o_flushi_valid = v_flushi;
     o_flushmmu_valid = v_flushmmu;
+    o_flushpipeline_valid = v_flushpipeline;
     o_flush_addr = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
 }
 
@@ -1410,13 +1427,14 @@ void CsrRegs::registers() {
         r.mcountinhibit = 0;
         r.mstackovr = 0ull;
         r.mstackund = 0ull;
-        r.immu_ena = 0;
-        r.dmmu_ena = 0;
+        r.mmu_ena = 0;
         r.satp_ppn = 0ull;
         r.satp_sv39 = 0;
         r.satp_sv48 = 0;
         r.mode = PRV_M;
         r.mprv = 0;
+        r.mxr = 0;
+        r.sum = 0;
         r.tvm = 0;
         r.ex_fpu_invalidop = 0;
         r.ex_fpu_divbyzero = 0;
@@ -1484,13 +1502,14 @@ void CsrRegs::registers() {
         r.mcountinhibit = v.mcountinhibit;
         r.mstackovr = v.mstackovr;
         r.mstackund = v.mstackund;
-        r.immu_ena = v.immu_ena;
-        r.dmmu_ena = v.dmmu_ena;
+        r.mmu_ena = v.mmu_ena;
         r.satp_ppn = v.satp_ppn;
         r.satp_sv39 = v.satp_sv39;
         r.satp_sv48 = v.satp_sv48;
         r.mode = v.mode;
         r.mprv = v.mprv;
+        r.mxr = v.mxr;
+        r.sum = v.sum;
         r.tvm = v.tvm;
         r.ex_fpu_invalidop = v.ex_fpu_invalidop;
         r.ex_fpu_divbyzero = v.ex_fpu_divbyzero;

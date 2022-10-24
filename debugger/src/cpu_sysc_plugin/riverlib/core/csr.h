@@ -57,6 +57,7 @@ SC_MODULE(CsrRegs) {
     sc_out<bool> o_flushd_valid;                            // clear specified addr in DCache
     sc_out<bool> o_flushi_valid;                            // clear specified addr in ICache
     sc_out<bool> o_flushmmu_valid;                          // clear specific leaf entry in MMU
+    sc_out<bool> o_flushpipeline_valid;                     // flush pipeline, must be don for fence.VMA and fence.i
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_flush_addr;        // Cache address to flush. All ones means flush all.
     
     sc_out<bool> o_pmp_ena;                                 // PMP is active in S or U modes or if L/MPRV bit is set in M-mode
@@ -66,11 +67,13 @@ SC_MODULE(CsrRegs) {
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_pmp_end_addr;      // PMP region end address (inclusive)
     sc_out<sc_uint<CFG_PMP_FL_TOTAL>> o_pmp_flags;          // {ena, lock, r, w, x}
     
-    sc_out<bool> o_immu_ena;                                // Instruction MMU enabled in U and S modes. Sv48 only.
-    sc_out<bool> o_dmmu_ena;                                // Data MMU enabled in U and S modes or MPRV bit is HIGH. Sv48 only.
-    sc_out<sc_uint<44>> o_mmu_ppn;                          // Physical Page Number
+    sc_out<bool> o_mmu_ena;                                 // MMU enabled in U and S modes. Sv48 only.
     sc_out<bool> o_mmu_sv39;                                // Translation mode sv39 is active
     sc_out<bool> o_mmu_sv48;                                // Translation mode sv48 is active
+    sc_out<sc_uint<44>> o_mmu_ppn;                          // Physical Page Number
+    sc_out<bool> o_mprv;                                    // modify priviledge flag can be active in m-mode
+    sc_out<bool> o_mxr;                                     // make executabale readable
+    sc_out<bool> o_sum;                                     // permit Supervisor User Mode access
 
     void comb();
     void registers();
@@ -155,13 +158,14 @@ SC_MODULE(CsrRegs) {
         sc_signal<sc_uint<32>> mcountinhibit;               // When non zero stop specified performance counter
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mstackovr;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mstackund;
-        sc_signal<bool> immu_ena;                           // Instruction MMU SV48 enabled in U- and S- modes
-        sc_signal<bool> dmmu_ena;                           // Data MMU SV48 enabled in U- and S- modes, MPRV bit
+        sc_signal<bool> mmu_ena;                            // Instruction MMU SV48 enabled in U- and S- modes
         sc_signal<sc_uint<44>> satp_ppn;                    // Physcal Page Number
         sc_signal<bool> satp_sv39;
         sc_signal<bool> satp_sv48;
         sc_signal<sc_uint<2>> mode;
         sc_signal<bool> mprv;                               // Modify PRiVilege. (Table 8.5) If MPRV=0, load and stores as normal, when MPRV=1, use translation of previous mode
+        sc_signal<bool> mxr;                                // Interpret Executable as Readable when =1
+        sc_signal<bool> sum;                                // Access to Userspace from Supervisor mode
         sc_signal<bool> tvm;                                // Trap Virtual Memory bit. When 1 SFENCE.VMA or SINVAL.VMA or rw access to SATP raise an illegal instruction
         sc_signal<bool> ex_fpu_invalidop;                   // FPU Exception: invalid operation
         sc_signal<bool> ex_fpu_divbyzero;                   // FPU Exception: divide by zero

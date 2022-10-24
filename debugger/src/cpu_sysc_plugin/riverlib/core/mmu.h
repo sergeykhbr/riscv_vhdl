@@ -59,6 +59,9 @@ SC_MODULE(Mmu) {
     sc_in<bool> i_mmu_sv39;                                 // MMU sv39 is active
     sc_in<bool> i_mmu_sv48;                                 // MMU sv48 is active
     sc_in<sc_uint<44>> i_mmu_ppn;                           // Physical Page Number from SATP CSR
+    sc_in<bool> i_mprv;                                     // modify priviledge flag can be active in m-mode
+    sc_in<bool> i_mxr;                                      // make executabale readable
+    sc_in<bool> i_sum;                                      // permit Supervisor User Mode access
     sc_in<bool> i_fence;                                    // reset TBL entries at specific address
     sc_in<sc_uint<RISCV_ARCH>> i_fence_addr;                // Fence address: 0=clean all TBL
 

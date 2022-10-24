@@ -129,10 +129,13 @@ Processor::Processor(sc_module_name name,
     immu0->i_mem_resp_load_fault(i_resp_ctrl_load_fault);
     immu0->i_mem_resp_store_fault(unused_immu_mem_resp_store_fault);
     immu0->o_mem_resp_ready(o_resp_ctrl_ready);
-    immu0->i_mmu_ena(csr.immu_ena);
+    immu0->i_mmu_ena(csr.mmu_ena);
     immu0->i_mmu_sv39(csr.mmu_sv39);
     immu0->i_mmu_sv48(csr.mmu_sv48);
     immu0->i_mmu_ppn(csr.mmu_ppn);
+    immu0->i_mprv(csr.mprv);
+    immu0->i_mxr(csr.mxr);
+    immu0->i_sum(csr.sum);
     immu0->i_fence(csr.flushmmu_valid);
     immu0->i_fence_addr(csr.flush_addr);
 
@@ -153,7 +156,7 @@ Processor::Processor(sc_module_name name,
     fetch0->i_mem_load_fault(immu.load_fault);
     fetch0->i_mem_page_fault_x(immu.page_fault_x);
     fetch0->o_mem_resp_ready(w.f.imem_resp_ready);
-    fetch0->i_flush_pipeline(csr.flushi_valid);
+    fetch0->i_flush_pipeline(csr.flushpipeline_valid);
     fetch0->i_progbuf_ena(dbg.progbuf_ena);
     fetch0->i_progbuf_pc(dbg.progbuf_pc);
     fetch0->i_progbuf_instr(dbg.progbuf_instr);
@@ -176,7 +179,7 @@ Processor::Processor(sc_module_name name,
     dec0->o_waddr(w.d.waddr);
     dec0->o_csr_addr(w.d.csr_addr);
     dec0->o_imm(w.d.imm);
-    dec0->i_flush_pipeline(csr.flushi_valid);
+    dec0->i_flush_pipeline(csr.flushpipeline_valid);
     dec0->i_progbuf_ena(dbg.progbuf_ena);
     dec0->o_pc(w.d.pc);
     dec0->o_instr(w.d.instr);
@@ -292,7 +295,7 @@ Processor::Processor(sc_module_name name,
     mem0->i_flushd_valid(csr.flushd_valid);
     mem0->i_flushd_addr(csr.flush_addr);
     mem0->o_flushd(w.m.flushd);
-    mem0->i_mmu_ena(csr.dmmu_ena);
+    mem0->i_mmu_ena(csr.mmu_ena);
     mem0->i_mmu_sv39(csr.mmu_sv39);
     mem0->i_mmu_sv48(csr.mmu_sv48);
     mem0->o_mmu_ena(w.m.dmmu_ena);
@@ -367,6 +370,9 @@ Processor::Processor(sc_module_name name,
     dmmu0->i_mmu_sv39(w.m.dmmu_sv39);
     dmmu0->i_mmu_sv48(w.m.dmmu_sv48);
     dmmu0->i_mmu_ppn(csr.mmu_ppn);
+    dmmu0->i_mprv(csr.mprv);
+    dmmu0->i_mxr(csr.mxr);
+    dmmu0->i_sum(csr.sum);
     dmmu0->i_fence(csr.flushmmu_valid);
     dmmu0->i_fence_addr(csr.flush_addr);
 
@@ -374,7 +380,7 @@ Processor::Processor(sc_module_name name,
     predic0 = new BranchPredictor("predic0", async_reset);
     predic0->i_clk(i_clk);
     predic0->i_nrst(i_nrst);
-    predic0->i_flush_pipeline(csr.flushi_valid);
+    predic0->i_flush_pipeline(csr.flushpipeline_valid);
     predic0->i_resp_mem_valid(immu.valid);
     predic0->i_resp_mem_addr(immu.addr);
     predic0->i_resp_mem_data(immu.data);
@@ -510,6 +516,7 @@ Processor::Processor(sc_module_name name,
     csr0->o_flushd_valid(csr.flushd_valid);
     csr0->o_flushi_valid(csr.flushi_valid);
     csr0->o_flushmmu_valid(csr.flushmmu_valid);
+    csr0->o_flushpipeline_valid(csr.flushpipeline_valid);
     csr0->o_flush_addr(csr.flush_addr);
     csr0->o_pmp_ena(o_pmp_ena);
     csr0->o_pmp_we(o_pmp_we);
@@ -517,11 +524,13 @@ Processor::Processor(sc_module_name name,
     csr0->o_pmp_start_addr(o_pmp_start_addr);
     csr0->o_pmp_end_addr(o_pmp_end_addr);
     csr0->o_pmp_flags(o_pmp_flags);
-    csr0->o_immu_ena(csr.immu_ena);
-    csr0->o_dmmu_ena(csr.dmmu_ena);
-    csr0->o_mmu_ppn(csr.mmu_ppn);
+    csr0->o_mmu_ena(csr.mmu_ena);
     csr0->o_mmu_sv39(csr.mmu_sv39);
     csr0->o_mmu_sv48(csr.mmu_sv48);
+    csr0->o_mmu_ppn(csr.mmu_ppn);
+    csr0->o_mprv(csr.mprv);
+    csr0->o_mxr(csr.mxr);
+    csr0->o_sum(csr.sum);
 
 
     dbg0 = new DbgPort("dbg0", async_reset);
@@ -771,6 +780,7 @@ Processor::Processor(sc_module_name name,
     sensitive << csr.flushd_valid;
     sensitive << csr.flushi_valid;
     sensitive << csr.flushmmu_valid;
+    sensitive << csr.flushpipeline_valid;
     sensitive << csr.flush_addr;
     sensitive << csr.executed_cnt;
     sensitive << csr.irq_pending;
@@ -778,11 +788,13 @@ Processor::Processor(sc_module_name name,
     sensitive << csr.stack_overflow;
     sensitive << csr.stack_underflow;
     sensitive << csr.step;
-    sensitive << csr.immu_ena;
-    sensitive << csr.dmmu_ena;
-    sensitive << csr.mmu_ppn;
+    sensitive << csr.mmu_ena;
     sensitive << csr.mmu_sv39;
     sensitive << csr.mmu_sv48;
+    sensitive << csr.mmu_ppn;
+    sensitive << csr.mprv;
+    sensitive << csr.mxr;
+    sensitive << csr.sum;
     sensitive << csr.progbuf_end;
     sensitive << csr.progbuf_error;
     sensitive << dbg.csr_req_valid;
