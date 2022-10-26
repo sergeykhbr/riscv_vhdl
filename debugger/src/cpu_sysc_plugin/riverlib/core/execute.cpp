@@ -572,6 +572,7 @@ void InstrExecute::comb() {
     bool v_neq;                                             // not equal
     sc_uint<RISCV_ARCH> vb_rdata1;
     sc_uint<RISCV_ARCH> vb_rdata2;
+    sc_uint<RISCV_ARCH> vb_rdata1_amo;
     bool v_check_tag1;
     bool v_check_tag2;
     sc_uint<Res_Total> vb_select;
@@ -630,6 +631,7 @@ void InstrExecute::comb() {
     v_neq = 0;
     vb_rdata1 = 0;
     vb_rdata2 = 0;
+    vb_rdata1_amo = 0;
     v_check_tag1 = 0;
     v_check_tag2 = 0;
     vb_select = 0;
@@ -748,10 +750,30 @@ void InstrExecute::comb() {
     }
     // AMO value read from memory[rs1]
     if ((wv[Instr_AMOSWAP_D] || wv[Instr_AMOSWAP_W]) == 1) {
-        v.rdata1_amo = 0;
+        vb_rdata1_amo = 0;
     } else if (i_mem_valid.read() == 1) {
-        v.rdata1_amo = i_mem_rdata;
+        if (mux.rv32 == 1) {
+            // All AMO are sign-extended:
+            if (r.memop_memaddr.read()[2] == 1) {
+                vb_rdata1_amo(31, 0) = i_mem_rdata.read()(63, 32);
+                if ((mux.memop_sign_ext == 1) && (i_mem_rdata.read()[63] == 1)) {
+                    vb_rdata1_amo(63, 32) = ~0ull;
+                } else {
+                    vb_rdata1_amo(63, 32) = 0;
+                }
+            } else {
+                vb_rdata1_amo(31, 0) = i_mem_rdata.read()(31, 0);
+                if ((mux.memop_sign_ext == 1) && (i_mem_rdata.read()[31] == 1)) {
+                    vb_rdata1_amo(63, 32) = ~0ull;
+                } else {
+                    vb_rdata1_amo(63, 32) = 0;
+                }
+            }
+        } else {
+            vb_rdata1_amo = i_mem_rdata;
+        }
     }
+    v.rdata1_amo = vb_rdata1_amo;
 
     vb_memop_memaddr_load = (vb_rdata1((CFG_CPU_ADDR_BITS - 1), 0) + vb_rdata2((CFG_CPU_ADDR_BITS - 1), 0));
     vb_memop_memaddr_store = (vb_rdata1((CFG_CPU_ADDR_BITS - 1), 0) + vb_off((CFG_CPU_ADDR_BITS - 1), 0));
@@ -1324,7 +1346,7 @@ void InstrExecute::comb() {
             if (i_memop_idle.read() == 1) {
                 // Need to wait 1 clock to latch addsub/alu output
                 v.amostate = AmoState_Write;
-                mux.memop_type[MemopType_Store] = 1;        // no need to do this in rtl, just assign to v.memop_type[0]
+                mux.memop_type[MemopType_Store] = 1;
                 v.memop_type = mux.memop_type;
             }
             break;
