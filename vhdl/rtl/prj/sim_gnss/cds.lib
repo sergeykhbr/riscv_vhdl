@@ -1,0 +1,10 @@
+include $CDS_INST_DIR/tools/inca/files/cds.lib
+
+define ambalib ./ambalib
+define techmap ./techmap
+define commonlib ./commonlib
+define work ./work
+define misclib ./misclib
+define riverlib ./riverlib
+define ethlib ./ethlib
+define gnsslib ./gnsslib

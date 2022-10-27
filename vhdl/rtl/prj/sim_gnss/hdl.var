@@ -1,0 +1,8 @@
+DEFINE ambalib ambalib
+DEFINE techmap techmap
+DEFINE commonlib commonlib
+DEFINE work work
+DEFINE misclib misclib
+DEFINE riverlib riverlib
+DEFINE ethlib ethlib
+DEFINE gnsslib gnsslib

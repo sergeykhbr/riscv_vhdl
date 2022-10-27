@@ -1,0 +1,15 @@
+.simvision
+ambalib
+commonlib
+ethlib
+misclib
+riverlib
+techmap
+gnsslib
+work
+ncsim.key
+*.log
+*.shm
+*.diag
+
+
