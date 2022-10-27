@@ -502,6 +502,9 @@ void CsrRegs::comb() {
             v.cmd_exception = 0;
             if (i_req_type.read()[CsrReq_ExceptionBit] == 1) {
                 v.state = State_Exception;
+                if (i_req_addr.read() == EXCEPTION_CallFromXMode) {
+                    v.cmd_addr = (i_req_addr.read() + r.mode.read());
+                }
             } else if (i_req_type.read()[CsrReq_BreakpointBit] == 1) {
                 v.state = State_Breakpoint;
             } else if (i_req_type.read()[CsrReq_HaltBit] == 1) {
@@ -546,9 +549,6 @@ void CsrRegs::comb() {
             v.progbuf_err = 1;
             v.progbuf_end = 1;
             v.cmd_exception = 1;
-        }
-        if (r.cmd_addr.read() == EXCEPTION_CallFromXMode) {
-            wb_trap_cause = (r.cmd_addr.read() + r.mode.read());
         }
         break;
     case State_Breakpoint:                                  // software breakpoint

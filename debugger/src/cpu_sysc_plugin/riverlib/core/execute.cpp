@@ -1287,7 +1287,7 @@ void InstrExecute::comb() {
                 } else if ((r.csr_req_type.read()[CsrReq_ExceptionBit]
                             || r.csr_req_type.read()[CsrReq_InterruptBit]
                             || r.csr_req_type.read()[CsrReq_ResumeBit]) == 1) {
-                    v.valid = 0;                            // No valid strob should be generated
+                    v.valid = wv[Instr_ECALL];              // No valid strob should be generated for all exceptions except ECALL
                     v.state = State_Idle;
                     if (i_dbg_progbuf_ena.read() == 0) {
                         v.npc = i_csr_resp_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
