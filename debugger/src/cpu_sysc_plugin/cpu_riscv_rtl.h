@@ -42,10 +42,7 @@
 #include "bus_slv.h"
 #include "l1serdes.h"
 #include "ambalib/types_amba.h"
-#include "riverlib/river_amba.h"
-#include "riverlib/l2cache/l2_top.h"
-#include "riverlib/dmi/dmidebug.h"
-#include "riverlib/dmi/ic_dport.h"
+#include "ambalib/axi2apb.h"
 #include "riverlib/workgroup.h"
 #include <systemc.h>
 
@@ -153,6 +150,10 @@ class CpuRiscV_RTL : public IService,
     sc_signal<axi4_master_out_type> msto;
     sc_signal<axi4_master_in_type> acpi;
     sc_signal<axi4_master_out_type> acpo;
+    sc_signal<axi4_slave_in_type> xslvi;
+    sc_signal<axi4_slave_out_type> xslvo;
+    sc_signal<apb_in_type> apbi;
+    sc_signal<apb_out_type> apbo;
 
     sc_trace_file *i_vcd_;      // stimulus pattern
     sc_trace_file *o_vcd_;      // reference pattern for comparision
@@ -160,6 +161,7 @@ class CpuRiscV_RTL : public IService,
     TapBitBang *tapbb_;
     BusSlave *dmislv_;
     Workgroup *group0_;
+    axi2apb *bridgeapb0_;
 
     CmdBrRiscv *pcmd_br_;
     ICommand *pcmd_cpu_;
