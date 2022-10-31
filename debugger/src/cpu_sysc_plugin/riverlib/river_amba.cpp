@@ -249,6 +249,8 @@ void RiverAmba::comb() {
     v_mem_er_load_fault = 0;
     v_mem_er_store_fault = 0;
     v_next_ready = 0;
+    vmsto = axi4_l1_out_none;
+    vdporto = dport_out_none;
     v_snoop_next_ready = 0;
     req_snoop_valid = 0;
     vb_req_snoop_addr = 0;

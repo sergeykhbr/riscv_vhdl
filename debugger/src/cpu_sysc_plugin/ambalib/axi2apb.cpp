@@ -76,58 +76,14 @@ void axi2apb::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
 }
 
-sc_uint<8> axi2apb::size2len(sc_uint<3> size) {
-    sc_uint<8> ret;
-
-    switch (size) {
-    case 4:                                                 // 16 Bytes
-        ret = 1;
-        break;
-    case 5:                                                 // 32 Bytes
-        ret = 3;
-        break;
-    case 6:                                                 // 64 Bytes
-        ret = 7;
-        break;
-    case 7:                                                 // 128 Bytes
-        ret = 15;
-        break;
-    default:
-        ret = 0;
-        break;
-    }
-    return ret;
-}
-
-sc_uint<3> axi2apb::size2size(sc_uint<3> size) {
-    sc_uint<3> ret;
-
-    if (size >= 3) {
-        ret = 3;
-    } else {
-        ret = size;
-    }
-    return ret;
-}
-
 void axi2apb::comb() {
-    bool v_req_mem_ready;
-    bool v_r_valid;
-    bool v_w_valid;
-    bool v_w_last;
-    bool v_w_ready;
-    sc_uint<8> vb_len;
-    sc_uint<3> vb_size;
+    sc_uint<CFG_SYSBUS_DATA_BITS> vb_rdata;
     axi4_slave_out_type vslvo;
     apb_in_type vapbi;
 
-    v_req_mem_ready = 0;
-    v_r_valid = 0;
-    v_w_valid = 0;
-    v_w_last = 0;
-    v_w_ready = 0;
-    vb_len = 0;
-    vb_size = 0;
+    vb_rdata = 0;
+    vslvo = axi4_slave_out_none;
+    vapbi = apb_in_none;
 
     v = r;
 
@@ -219,9 +175,9 @@ void axi2apb::comb() {
     case State_access:
         if (r.pwrite.read() == 0) {
             if (r.xsize.read().or_reduce() == 1) {
-                v.pdata(63, 32) = i_apbo.read().prdata;
+                vb_rdata(63, 32) = i_apbo.read().prdata;
             } else {
-                v.pdata(31, 0) = i_apbo.read().prdata;
+                vb_rdata(31, 0) = i_apbo.read().prdata;
             }
         }
         v.pslverr = i_apbo.read().pslverr;
@@ -252,6 +208,7 @@ void axi2apb::comb() {
         break;
     }
 
+    v.pdata = vb_rdata;
     vapbi.paddr = r.paddr;
     vapbi.pwrite = r.pwrite;
     vapbi.pwdata = r.pdata.read()(31, 0);

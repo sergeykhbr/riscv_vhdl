@@ -91,6 +91,8 @@ void ic_axi4_to_l1::comb() {
     sc_uint<64> vb_resp_data;
     sc_uint<CFG_SYSBUS_ADDR_BITS> t_req_addr;
 
+    vb_xmsti = axi4_master_in_none;
+    vb_l1o = axi4_l1_out_none;
     idx = 0;
     vb_req_xbytes = 0;
     vb_req_mask = 0;

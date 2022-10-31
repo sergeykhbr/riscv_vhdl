@@ -97,6 +97,7 @@ void L2Amba::comb() {
     v_mem_er_load_fault = 0;
     v_mem_er_store_fault = 0;
     v_next_ready = 0;
+    vmsto = axi4_l2_out_none;
 
     v = r;
 

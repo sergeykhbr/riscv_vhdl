@@ -124,6 +124,8 @@ void L2SerDes::comb() {
     vb_size = 0;
     t_line = 0;
     t_wstrb = 0;
+    vl2i = axi4_l2_in_none;
+    vmsto = axi4_master_out_none;
 
     v = r;
 

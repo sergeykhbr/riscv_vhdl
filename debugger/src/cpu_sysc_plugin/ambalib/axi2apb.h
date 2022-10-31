@@ -50,9 +50,6 @@ SC_MODULE(axi2apb) {
     static const uint8_t State_access = 5;
     static const uint8_t State_err = 6;
 
-    sc_uint<8> size2len(sc_uint<3> size);
-    sc_uint<3> size2size(sc_uint<3> size);
-
     struct axi2apb_registers {
         sc_signal<sc_uint<3>> state;
         sc_signal<sc_uint<32>> paddr;
