@@ -5,7 +5,7 @@ if (NOT DEFINED ENV{SYSTEMC_SRC} OR NOT DEFINED ENV{SYSTEMC_LIB})
     message(FATAL_ERROR "Variables SYSTEMC_SRC and SYSTEMC_LIB not defined.")
 endif()
 
-set(src_top "${CMAKE_CURRENT_SOURCE_DIR}/../../src")
+set(src_top "${CMAKE_CURRENT_SOURCE_DIR}/../../..")
 
 if(UNIX)
 	set(LIBRARY_OUTPUT_PATH "../linuxbuild/bin/plugins")
@@ -19,17 +19,20 @@ endif()
 
 include_directories(
     $ENV{SYSTEMC_SRC}
-    ${src_top}/common
-    ${src_top}/cpu_sysc_plugin
+    ${src_top}/debugger/src/common
+    ${src_top}/sc/rtl
+    ${src_top}/debugger/src/cpu_sysc_plugin
 )
 
 
 file(GLOB_RECURSE cpu_sysc_plugin_src
     LIST_DIRECTORIES false
-    ${src_top}/common/*.cpp
-    ${src_top}/common/*.h
-    ${src_top}/cpu_sysc_plugin/*.cpp
-    ${src_top}/cpu_sysc_plugin/*.h
+    ${src_top}/debugger/src/common/*.cpp
+    ${src_top}/debugger/src/common/*.h
+    ${src_top}/sc/rtl/*.cpp
+    ${src_top}/sc/rtl/*.h
+    ${src_top}/debugger/src/cpu_sysc_plugin/*.cpp
+    ${src_top}/debugger/src/cpu_sysc_plugin/*.h
     ${CMAKE_CURRENT_SOURCE_DIR}/exportmap.def
 )
 
@@ -41,7 +44,7 @@ else()
         string(REPLACE "${CMAKE_SOURCE_DIR}" "" _group_path "${_source_path}")
         string(REPLACE "/" "\\" _group_path "${_group_path}")
         string(REPLACE "cmake\\cpu_sysc_plugin" "" _group_path "${_group_path}")
-        string(REPLACE "..\\..\\" "" _group_path "${_group_path}")
+        string(REPLACE "..\\..\\..\\" "" _group_path "${_group_path}")
  
         source_group("${_group_path}" FILES "${_source}")
     endforeach()
