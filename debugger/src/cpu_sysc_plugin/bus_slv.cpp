@@ -21,14 +21,8 @@ namespace debugger {
 BusSlave::BusSlave(sc_module_name name) : sc_module(name),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
-    o_req_valid("o_req_valid"),
-    i_req_ready("i_req_ready"),
-    o_req_addr("o_req_addr"),
-    o_req_write("o_req_write"),
-    o_req_wdata("o_req_wdata"),
-    i_slv_resp_valid("i_slv_resp_valid"),
-    o_slv_resp_ready("o_slv_resp_ready"),
-    i_slv_resp_rdata("i_slv_resp_rdata") {
+    i_apbo("i_apbo"),
+    o_apbi("o_apbi") {
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();
@@ -73,18 +67,22 @@ void BusSlave::writereg(uint64_t idx, uint32_t w32) {
 
 
 void BusSlave::registers() {
-    o_req_valid = bus_req_valid_;
-    o_req_addr = bus_req_addr_;
-    o_req_write = bus_req_write_;
-    o_req_wdata = bus_req_wdata_;
-    o_slv_resp_ready = 1;
+    apb_in_type vapbi;
 
-    if (bus_req_valid_ && i_req_ready.read()) {
+    vapbi.pselx = bus_req_valid_;
+    vapbi.penable = bus_req_valid_;
+    vapbi.paddr = bus_req_addr_;
+    vapbi.pwrite = bus_req_write_;
+    vapbi.pwdata = bus_req_wdata_;
+
+    o_apbi = vapbi;
+
+    if (bus_req_valid_) {
         bus_req_valid_ = 0;
     }
 
-    if (i_slv_resp_valid.read()) {
-        bus_resp_data_ = i_slv_resp_rdata.read();
+    if (i_apbo.read().pready) {
+        i_apbo.read().prdata;
         // We cannot get here without valid request no need additional checks
         lasttrans_.rpayload.b32[0] = bus_resp_data_;
         lastcb_->nb_response(&lasttrans_);

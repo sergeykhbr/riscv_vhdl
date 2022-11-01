@@ -16,6 +16,7 @@
 #pragma once
 
 #include <systemc.h>
+#include "../../ambalib/types_amba.h"
 #include "../river_cfg.h"
 #include "jtagcdc.h"
 #include "jtagtap.h"
@@ -33,14 +34,8 @@ SC_MODULE(dmidebug) {
     sc_in<bool> i_tdi;                                      // Test Data Input
     sc_out<bool> o_tdo;                                     // Test Data Output
     // Bus interface (APB):
-    sc_in<bool> i_bus_req_valid;
-    sc_out<bool> o_bus_req_ready;
-    sc_in<sc_uint<7>> i_bus_req_addr;
-    sc_in<bool> i_bus_req_write;
-    sc_in<sc_uint<32>> i_bus_req_wdata;
-    sc_out<bool> o_bus_resp_valid;
-    sc_in<bool> i_bus_resp_ready;
-    sc_out<sc_uint<32>> o_bus_resp_rdata;
+    sc_in<apb_in_type> i_apbi;                              // APB input interface
+    sc_out<apb_out_type> o_apbo;                            // APB output interface
     // DMI interface:
     sc_out<bool> o_ndmreset;                                // system reset: cores + peripheries (except dmi itself)
     sc_in<sc_uint<CFG_CPU_MAX>> i_halted;                   // Halted cores
@@ -101,7 +96,7 @@ SC_MODULE(dmidebug) {
     struct dmidebug_registers {
         sc_signal<bool> bus_jtag;
         sc_signal<sc_uint<32>> jtag_resp_data;
-        sc_signal<sc_uint<32>> bus_resp_data;
+        sc_signal<sc_uint<32>> prdata;
         sc_signal<sc_uint<7>> regidx;
         sc_signal<sc_uint<32>> wdata;
         sc_signal<bool> regwr;
@@ -138,13 +133,13 @@ SC_MODULE(dmidebug) {
         sc_signal<sc_uint<RISCV_ARCH>> dport_wdata;
         sc_signal<sc_uint<3>> dport_size;
         sc_signal<bool> dport_resp_ready;
-        sc_signal<bool> bus_resp_valid;
+        sc_signal<bool> pready;
     } v, r;
 
     void dmidebug_r_reset(dmidebug_registers &iv) {
         iv.bus_jtag = 0;
         iv.jtag_resp_data = 0;
-        iv.bus_resp_data = 0;
+        iv.prdata = 0;
         iv.regidx = 0;
         iv.wdata = 0;
         iv.regwr = 0;
@@ -181,7 +176,7 @@ SC_MODULE(dmidebug) {
         iv.dport_wdata = 0ull;
         iv.dport_size = 0;
         iv.dport_resp_ready = 0;
-        iv.bus_resp_valid = 0;
+        iv.pready = 0;
     }
 
     sc_signal<bool> w_tap_dmi_req_valid;

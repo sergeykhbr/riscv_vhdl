@@ -165,14 +165,8 @@ void CpuRiscV_RTL::createSystemC() {
     registerPortInterface("dmi", static_cast<IMemoryOperation *>(dmislv_));
     dmislv_->i_clk(wrapper_->o_clk),
     dmislv_->i_nrst(w_dmi_nrst),
-    dmislv_->o_req_valid(w_bus_req_valid);
-    dmislv_->i_req_ready(w_bus_req_ready);
-    dmislv_->o_req_addr(wb_bus_req_addr);
-    dmislv_->o_req_write(w_bus_req_write);
-    dmislv_->o_req_wdata(wb_bus_req_wdata);
-    dmislv_->i_slv_resp_valid(w_bus_resp_valid);
-    dmislv_->o_slv_resp_ready(w_bus_resp_ready);
-    dmislv_->i_slv_resp_rdata(wb_bus_resp_rdata);
+    dmislv_->o_apbi(wb_dmi_apbi);
+    dmislv_->i_apbo(wb_dmi_apbo);
 
     group0_ = new Workgroup("group0",
                             asyncReset_.to_bool(),
@@ -196,14 +190,8 @@ void CpuRiscV_RTL::createSystemC() {
     group0_->o_acpi(acpi);
     group0_->i_msti(msti);
     group0_->o_msto(msto);
-    group0_->i_apb_dmi_req_valid(w_bus_req_valid);
-    group0_->o_apb_dmi_req_ready(w_bus_req_ready);
-    group0_->i_apb_dmi_req_addr(wb_bus_req_addr);
-    group0_->i_apb_dmi_req_write(w_bus_req_write);
-    group0_->i_apb_dmi_req_wdata(wb_bus_req_wdata);
-    group0_->o_apb_dmi_resp_valid(w_bus_resp_valid);
-    group0_->i_apb_dmi_resp_ready(w_bus_resp_ready);
-    group0_->o_apb_dmi_resp_rdata(wb_bus_resp_rdata);
+    group0_->i_dmi_apbi(wb_dmi_apbi);
+    group0_->o_dmi_apbo(wb_dmi_apbo);
     group0_->o_dmreset(w_ndmreset);
 
     bridgeapb0_ = new axi2apb("bridgeapb0",

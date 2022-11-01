@@ -19,6 +19,7 @@
 #include "api_core.h"
 #include "coreservices/imemop.h"
 #include <systemc.h>
+#include "ambalib/types_amba.h"
 
 namespace debugger {
 
@@ -27,14 +28,8 @@ class BusSlave : public sc_module,
  public:
     sc_in<bool> i_clk;   // system clock
     sc_in<bool> i_nrst;
-    sc_out<bool> o_req_valid;
-    sc_in<bool> i_req_ready;
-    sc_out<sc_uint<7>> o_req_addr;
-    sc_out<bool> o_req_write;
-    sc_out<sc_uint<32>> o_req_wdata;
-    sc_in<bool> i_slv_resp_valid;
-    sc_out<bool> o_slv_resp_ready;
-    sc_in<sc_uint<32>> i_slv_resp_rdata;
+    sc_in<apb_out_type> i_apbo;
+    sc_out<apb_in_type> o_apbi;
 
     void registers();
 

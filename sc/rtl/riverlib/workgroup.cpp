@@ -42,14 +42,8 @@ Workgroup::Workgroup(sc_module_name name,
     o_acpi("o_acpi"),
     i_msti("i_msti"),
     o_msto("o_msto"),
-    i_apb_dmi_req_valid("i_apb_dmi_req_valid"),
-    o_apb_dmi_req_ready("o_apb_dmi_req_ready"),
-    i_apb_dmi_req_addr("i_apb_dmi_req_addr"),
-    i_apb_dmi_req_write("i_apb_dmi_req_write"),
-    i_apb_dmi_req_wdata("i_apb_dmi_req_wdata"),
-    o_apb_dmi_resp_valid("o_apb_dmi_resp_valid"),
-    i_apb_dmi_resp_ready("i_apb_dmi_resp_ready"),
-    o_apb_dmi_resp_rdata("o_apb_dmi_resp_rdata"),
+    i_dmi_apbi("i_dmi_apbi"),
+    o_dmi_apbo("o_dmi_apbo"),
     o_dmreset("o_dmreset"),
     coreo("coreo", CFG_SLOT_L1_TOTAL),
     corei("corei", CFG_SLOT_L1_TOTAL),
@@ -85,14 +79,8 @@ Workgroup::Workgroup(sc_module_name name,
     dmi0->i_tms(i_tms);
     dmi0->i_tdi(i_tdi);
     dmi0->o_tdo(o_tdo);
-    dmi0->i_bus_req_valid(i_apb_dmi_req_valid);
-    dmi0->o_bus_req_ready(o_apb_dmi_req_ready);
-    dmi0->i_bus_req_addr(i_apb_dmi_req_addr);
-    dmi0->i_bus_req_write(i_apb_dmi_req_write);
-    dmi0->i_bus_req_wdata(i_apb_dmi_req_wdata);
-    dmi0->o_bus_resp_valid(o_apb_dmi_resp_valid);
-    dmi0->i_bus_resp_ready(i_apb_dmi_resp_ready);
-    dmi0->o_bus_resp_rdata(o_apb_dmi_resp_rdata);
+    dmi0->i_apbi(i_dmi_apbi);
+    dmi0->o_apbo(o_dmi_apbo);
     dmi0->o_ndmreset(o_dmreset);
     dmi0->i_halted(wb_halted);
     dmi0->i_available(wb_available);
@@ -221,11 +209,7 @@ Workgroup::Workgroup(sc_module_name name,
     sensitive << i_mtimer;
     sensitive << i_acpo;
     sensitive << i_msti;
-    sensitive << i_apb_dmi_req_valid;
-    sensitive << i_apb_dmi_req_addr;
-    sensitive << i_apb_dmi_req_write;
-    sensitive << i_apb_dmi_req_wdata;
-    sensitive << i_apb_dmi_resp_ready;
+    sensitive << i_dmi_apbi;
     for (int i = 0; i < CFG_SLOT_L1_TOTAL; i++) {
         sensitive << coreo[i];
     }
@@ -324,14 +308,8 @@ void Workgroup::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_acpi, o_acpi.name());
         sc_trace(o_vcd, i_msti, i_msti.name());
         sc_trace(o_vcd, o_msto, o_msto.name());
-        sc_trace(o_vcd, i_apb_dmi_req_valid, i_apb_dmi_req_valid.name());
-        sc_trace(o_vcd, o_apb_dmi_req_ready, o_apb_dmi_req_ready.name());
-        sc_trace(o_vcd, i_apb_dmi_req_addr, i_apb_dmi_req_addr.name());
-        sc_trace(o_vcd, i_apb_dmi_req_write, i_apb_dmi_req_write.name());
-        sc_trace(o_vcd, i_apb_dmi_req_wdata, i_apb_dmi_req_wdata.name());
-        sc_trace(o_vcd, o_apb_dmi_resp_valid, o_apb_dmi_resp_valid.name());
-        sc_trace(o_vcd, i_apb_dmi_resp_ready, i_apb_dmi_resp_ready.name());
-        sc_trace(o_vcd, o_apb_dmi_resp_rdata, o_apb_dmi_resp_rdata.name());
+        sc_trace(o_vcd, i_dmi_apbi, i_dmi_apbi.name());
+        sc_trace(o_vcd, o_dmi_apbo, o_dmi_apbo.name());
         sc_trace(o_vcd, o_dmreset, o_dmreset.name());
     }
 

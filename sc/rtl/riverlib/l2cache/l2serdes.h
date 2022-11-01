@@ -19,6 +19,7 @@
 #include "../river_cfg.h"
 #include "../../ambalib/types_amba.h"
 #include "../types_river.h"
+#include "../../ambalib/types_bus0.h"
 
 namespace debugger {
 

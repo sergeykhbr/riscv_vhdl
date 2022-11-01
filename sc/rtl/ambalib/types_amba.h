@@ -49,6 +49,10 @@ static const uint16_t GNSSSENSOR_UART_TAP = 0x050A;
 // JTAG Test Access Point (TAP)
 static const uint16_t GNSSSENSOR_JTAG_TAP = 0x050B;
 
+// @name Slave Device IDs definition:
+// Empty slave slot device
+static const uint16_t SLV_DID_EMPTY = 5577;
+
 // Plug'n'Play descriptor localparams.
 // Undefined type of the descriptor (empty device).
 static const uint8_t PNP_CFG_TYPE_INVALID = 0x0;
@@ -66,6 +70,89 @@ static const uint8_t PNP_CFG_MASTER_DESCR_BYTES = 0x08;
 // @brief   Plug-n-play descriptor structure for slave device.
 // @details Each slave device must generates this datatype output that
 //          is connected directly to the 'pnp' slave module on system bus.
+class axi4_slave_config_type {
+ public:
+    axi4_slave_config_type() {
+        // Descriptor size in bytes.
+        descrsize = PNP_CFG_SLAVE_DESCR_BYTES;
+        // Descriptor type.
+        descrtype = PNP_CFG_TYPE_SLAVE;
+        // Base Address.
+        xaddr = 0ull;
+        // Maskable bits of the base address.
+        xmask = 0ull;
+        // Vendor ID.
+        vid = VENDOR_GNSSSENSOR;
+        // Device ID.
+        did = SLV_DID_EMPTY;
+    }
+
+    inline bool operator == (const axi4_slave_config_type &rhs) const {
+        bool ret = true;
+        ret = ret
+            && rhs.descrsize == descrsize
+            && rhs.descrtype == descrtype
+            && rhs.xaddr == xaddr
+            && rhs.xmask == xmask
+            && rhs.vid == vid
+            && rhs.did == did;
+        return ret;
+    }
+
+    inline axi4_slave_config_type& operator = (const axi4_slave_config_type &rhs) {
+        descrsize = rhs.descrsize;
+        descrtype = rhs.descrtype;
+        xaddr = rhs.xaddr;
+        xmask = rhs.xmask;
+        vid = rhs.vid;
+        did = rhs.did;
+        return *this;
+    }
+
+    inline friend void sc_trace(sc_trace_file *tf,
+                                const axi4_slave_config_type&v,
+                                const std::string &NAME) {
+        sc_trace(tf, v.descrsize, NAME + "_descrsize");
+        sc_trace(tf, v.descrtype, NAME + "_descrtype");
+        sc_trace(tf, v.xaddr, NAME + "_xaddr");
+        sc_trace(tf, v.xmask, NAME + "_xmask");
+        sc_trace(tf, v.vid, NAME + "_vid");
+        sc_trace(tf, v.did, NAME + "_did");
+    }
+
+    inline friend ostream &operator << (ostream &os,
+                                        axi4_slave_config_type const &v) {
+        os << "("
+        << v.descrsize << ","
+        << v.descrtype << ","
+        << v.xaddr << ","
+        << v.xmask << ","
+        << v.vid << ","
+        << v.did << ")";
+        return os;
+    }
+
+ public:
+    // Descriptor size in bytes.;
+    sc_uint<8> descrsize;
+    // Descriptor type.;
+    sc_uint<2> descrtype;
+    // Base Address.;
+    sc_uint<CFG_SYSBUS_ADDR_BITS> xaddr;
+    // Maskable bits of the base address.;
+    sc_uint<CFG_SYSBUS_ADDR_BITS> xmask;
+    // Vendor ID.;
+    sc_uint<16> vid;
+    // Device ID.;
+    sc_uint<16> did;
+};
+
+// @brief Default slave config value.
+static const axi4_slave_config_type axi4_slave_config_none;
+
+// @brief   Plug-n-play descriptor structure for master device.
+// @details Each slave device must generates this datatype output that
+//          is connected directly to the 'pnp' master module on system bus.
 class axi4_master_config_type {
  public:
     axi4_master_config_type() {

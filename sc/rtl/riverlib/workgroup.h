@@ -18,6 +18,7 @@
 #include <systemc.h>
 #include "river_cfg.h"
 #include "../ambalib/types_amba.h"
+#include "../ambalib/types_bus0.h"
 #include "types_river.h"
 #include "dmi/dmidebug.h"
 #include "dmi/ic_dport.h"
@@ -53,14 +54,8 @@ SC_MODULE(Workgroup) {
     sc_in<axi4_master_in_type> i_msti;
     sc_out<axi4_master_out_type> o_msto;
     // APB debug access:
-    sc_in<bool> i_apb_dmi_req_valid;
-    sc_out<bool> o_apb_dmi_req_ready;
-    sc_in<sc_uint<7>> i_apb_dmi_req_addr;
-    sc_in<bool> i_apb_dmi_req_write;
-    sc_in<sc_uint<32>> i_apb_dmi_req_wdata;
-    sc_out<bool> o_apb_dmi_resp_valid;
-    sc_in<bool> i_apb_dmi_resp_ready;
-    sc_out<sc_uint<32>> o_apb_dmi_resp_rdata;
+    sc_in<apb_in_type> i_dmi_apbi;
+    sc_out<apb_out_type> o_dmi_apbo;
     sc_out<bool> o_dmreset;                                 // reset everything except DMI debug interface
 
     void comb();
