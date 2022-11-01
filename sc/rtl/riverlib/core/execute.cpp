@@ -683,7 +683,7 @@ void InstrExecute::comb() {
         mux.pc = i_d_pc;
         mux.instr = i_d_instr;
         mux.memop_type[MemopType_Store] = i_memop_store.read();
-        mux.memop_type[MemopType_Locked] = i_amo.read();
+        mux.memop_type[MemopType_Locked] = (i_amo.read() & i_memop_load.read());
         mux.memop_type[MemopType_Reserve] = (i_ivec.read()[Instr_LR_D] || i_ivec.read()[Instr_LR_W]);
         mux.memop_type[MemopType_Release] = (i_ivec.read()[Instr_SC_D] || i_ivec.read()[Instr_SC_W]);
         mux.memop_sign_ext = i_memop_sign_ext;
