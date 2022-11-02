@@ -31,6 +31,7 @@ module L2SerDes #(
 import river_cfg_pkg::*;
 import types_amba_pkg::*;
 import types_river_pkg::*;
+import types_bus0_pkg::*;
 import l2serdes_pkg::*;
 
 L2SerDes_registers r, rin;
@@ -99,6 +100,8 @@ begin: comb_proc
     vb_size = 0;
     t_line = 0;
     t_wstrb = 0;
+    vl2i = axi4_l2_in_none;
+    vmsto = axi4_master_out_none;
 
     v = r;
 
@@ -168,7 +171,7 @@ begin: comb_proc
     if (v_req_mem_ready == 1'b1) begin
         if ((i_l2o.ar_valid && i_msti.ar_ready) == 1'b1) begin
             v.state = State_Read;
-            v.rmux = 10'd1;
+            v.rmux = 4'd1;
         end else if ((i_l2o.aw_valid && i_msti.aw_ready) == 1'b1) begin
             v.line = i_l2o.w_data;                          // Undocumented RIVER (Axi-lite feature)
             v.wstrb = i_l2o.w_strb;

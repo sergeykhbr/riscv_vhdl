@@ -31,6 +31,7 @@ module ic_axi4_to_l1 #(
 );
 
 import types_amba_pkg::*;
+import types_bus0_pkg::*;
 import river_cfg_pkg::*;
 import types_river_pkg::*;
 import ic_axi4_to_l1_pkg::*;
@@ -50,6 +51,8 @@ begin: comb_proc
     logic [63:0] vb_resp_data;
     logic [CFG_SYSBUS_ADDR_BITS-1:0] t_req_addr;
 
+    vb_xmsti = axi4_master_in_none;
+    vb_l1o = axi4_l1_out_none;
     idx = 0;
     vb_req_xbytes = 0;
     vb_req_mask = 0;

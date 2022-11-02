@@ -15,6 +15,7 @@
 // 
 package dmidebug_pkg;
 
+import types_amba_pkg::*;
 import river_cfg_pkg::*;
 
 localparam bit [2:0] CMDERR_NONE = 3'h0;
@@ -42,7 +43,7 @@ localparam bit [2:0] CMD_STATE_WAIT_HALTED = 3'h4;
 typedef struct {
     logic bus_jtag;
     logic [31:0] jtag_resp_data;
-    logic [31:0] bus_resp_data;
+    logic [31:0] prdata;
     logic [6:0] regidx;
     logic [31:0] wdata;
     logic regwr;
@@ -79,13 +80,13 @@ typedef struct {
     logic [RISCV_ARCH-1:0] dport_wdata;
     logic [2:0] dport_size;
     logic dport_resp_ready;
-    logic bus_resp_valid;
+    logic pready;
 } dmidebug_registers;
 
 const dmidebug_registers dmidebug_r_reset = '{
     1'b0,                               // bus_jtag
     '0,                                 // jtag_resp_data
-    '0,                                 // bus_resp_data
+    '0,                                 // prdata
     '0,                                 // regidx
     '0,                                 // wdata
     1'b0,                               // regwr
@@ -122,7 +123,7 @@ const dmidebug_registers dmidebug_r_reset = '{
     '0,                                 // dport_wdata
     '0,                                 // dport_size
     1'b0,                               // dport_resp_ready
-    1'b0                                // bus_resp_valid
+    1'b0                                // pready
 };
 
 endpackage: dmidebug_pkg

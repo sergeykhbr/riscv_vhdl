@@ -29,14 +29,8 @@ module dmidebug #(
     input logic i_tdi,                                      // Test Data Input
     output logic o_tdo,                                     // Test Data Output
     // Bus interface (APB):
-    input logic i_bus_req_valid,
-    output logic o_bus_req_ready,
-    input logic [6:0] i_bus_req_addr,
-    input logic i_bus_req_write,
-    input logic [31:0] i_bus_req_wdata,
-    output logic o_bus_resp_valid,
-    input logic i_bus_resp_ready,
-    output logic [31:0] o_bus_resp_rdata,
+    input types_amba_pkg::apb_in_type i_apbi,               // APB input interface
+    output types_amba_pkg::apb_out_type o_apbo,             // APB output interface
     // DMI interface:
     output logic o_ndmreset,                                // system reset: cores + peripheries (except dmi itself)
     input logic [river_cfg_pkg::CFG_CPU_MAX-1:0] i_halted,  // Halted cores
@@ -59,6 +53,7 @@ module dmidebug #(
     output logic [(32 * river_cfg_pkg::CFG_PROGBUF_REG_TOTAL)-1:0] o_progbuf
 );
 
+import types_amba_pkg::*;
 import river_cfg_pkg::*;
 import dmidebug_pkg::*;
 
@@ -126,7 +121,7 @@ jtagcdc #(
 always_comb
 begin: comb_proc
     dmidebug_registers v;
-    logic v_bus_req_ready;
+    apb_out_type vapbo;
     logic [DPortReq_Total-1:0] vb_req_type;
     logic [31:0] vb_resp_data;
     logic [CFG_LOG2_CPU_MAX-1:0] vb_hartselnext;
@@ -139,7 +134,7 @@ begin: comb_proc
     logic [(32 * CFG_PROGBUF_REG_TOTAL)-1:0] t_progbuf;
     int t_idx;
 
-    v_bus_req_ready = 0;
+    vapbo = apb_out_none;
     vb_req_type = 0;
     vb_resp_data = 0;
     vb_hartselnext = 0;
@@ -172,9 +167,7 @@ begin: comb_proc
 
     case (r.dmstate)
     DM_STATE_IDLE: begin
-        v_bus_req_ready = 1'b1;
         if (w_cdc_dmi_req_valid == 1'b1) begin
-            v_bus_req_ready = 1'b0;
             v_cdc_dmi_req_ready = 1'b1;
             v.bus_jtag = 1'b1;
             v.dmstate = DM_STATE_ACCESS;
@@ -182,13 +175,14 @@ begin: comb_proc
             v.wdata = wb_cdc_dmi_req_data;
             v.regwr = w_cdc_dmi_req_write;
             v.regrd = (~w_cdc_dmi_req_write);
-        end else if (i_bus_req_valid == 1'b1) begin
+        end else if (((i_apbi.pselx == 1'b1) && (i_apbi.pwrite == 1'b0))
+                    || ((i_apbi.pselx == 1'b1) && (i_apbi.penable == 1'b1) && (i_apbi.pwrite == 1'b1))) begin
             v.bus_jtag = 1'b0;
             v.dmstate = DM_STATE_ACCESS;
-            v.regidx = i_bus_req_addr;
-            v.wdata = i_bus_req_wdata;
-            v.regwr = i_bus_req_write;
-            v.regrd = (~i_bus_req_write);
+            v.regidx = i_apbi.paddr[6: 0];
+            v.wdata = i_apbi.pwdata;
+            v.regwr = i_apbi.pwrite;
+            v.regrd = (~i_apbi.pwrite);
         end
     end
     DM_STATE_ACCESS: begin
@@ -514,16 +508,20 @@ begin: comb_proc
 
     if (v_resp_valid == 1'b1) begin
         if (r.bus_jtag == 1'b0) begin
-            v.bus_resp_data = vb_resp_data;
+            v.prdata = vb_resp_data;
         end else begin
             v.jtag_resp_data = vb_resp_data;
         end
     end
+    v.pready = 1'b0;
     if ((v_resp_valid == 1'b1) && (r.bus_jtag == 1'b0)) begin
-        v.bus_resp_valid = 1'b1;
-    end else if (i_bus_resp_ready == 1'b1) begin
-        v.bus_resp_valid = 1'b0;
+        v.pready = 1'b1;
+    end else if (i_apbi.penable == 1'b1) begin
+        v.pready = 1'b0;
     end
+
+    vapbo.pready = r.pready;
+    vapbo.prdata = r.prdata;
 
     vb_req_type[DPortReq_Write] = r.cmd_write;
     vb_req_type[DPortReq_RegAccess] = r.cmd_regaccess;
@@ -554,9 +552,7 @@ begin: comb_proc
     w_jtag_dmi_busy = 1'b0;                                 // |r.dmstate
     w_jtag_dmi_error = 1'b0;
 
-    o_bus_req_ready = v_bus_req_ready;
-    o_bus_resp_valid = r.bus_resp_valid;
-    o_bus_resp_rdata = r.bus_resp_data;
+    o_apbo = vapbo;
 
     rin = v;
 end: comb_proc

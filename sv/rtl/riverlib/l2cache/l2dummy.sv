@@ -53,6 +53,7 @@ begin: comb_proc
     for (int i = 0; i < CFG_SLOT_L1_TOTAL; i++) begin
         vlxi[i] = axi4_l1_in_none;
     end
+    vl2o = axi4_l2_out_none;
     vb_src_aw = 0;
     vb_src_ar = 0;
     vb_srcid = 0;

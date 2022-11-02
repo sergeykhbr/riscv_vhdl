@@ -43,19 +43,14 @@ module Workgroup #(
     input types_amba_pkg::axi4_master_in_type i_msti,
     output types_amba_pkg::axi4_master_out_type o_msto,
     // APB debug access:
-    input logic i_apb_dmi_req_valid,
-    output logic o_apb_dmi_req_ready,
-    input logic [6:0] i_apb_dmi_req_addr,
-    input logic i_apb_dmi_req_write,
-    input logic [31:0] i_apb_dmi_req_wdata,
-    output logic o_apb_dmi_resp_valid,
-    input logic i_apb_dmi_resp_ready,
-    output logic [31:0] o_apb_dmi_resp_rdata,
+    input types_amba_pkg::apb_in_type i_dmi_apbi,
+    output types_amba_pkg::apb_out_type o_dmi_apbo,
     output logic o_dmreset                                  // reset everything except DMI debug interface
 );
 
 import river_cfg_pkg::*;
 import types_amba_pkg::*;
+import types_bus0_pkg::*;
 import types_river_pkg::*;
 import workgroup_pkg::*;
 
@@ -102,14 +97,8 @@ dmidebug #(
     .i_tms(i_tms),
     .i_tdi(i_tdi),
     .o_tdo(o_tdo),
-    .i_bus_req_valid(i_apb_dmi_req_valid),
-    .o_bus_req_ready(o_apb_dmi_req_ready),
-    .i_bus_req_addr(i_apb_dmi_req_addr),
-    .i_bus_req_write(i_apb_dmi_req_write),
-    .i_bus_req_wdata(i_apb_dmi_req_wdata),
-    .o_bus_resp_valid(o_apb_dmi_resp_valid),
-    .i_bus_resp_ready(i_apb_dmi_resp_ready),
-    .o_bus_resp_rdata(o_apb_dmi_resp_rdata),
+    .i_apbi(i_dmi_apbi),
+    .o_apbo(o_dmi_apbo),
     .o_ndmreset(o_dmreset),
     .i_halted(wb_halted),
     .i_available(wb_available),

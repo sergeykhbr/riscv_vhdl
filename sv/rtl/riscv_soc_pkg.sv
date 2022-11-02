@@ -13,13 +13,15 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 // 
-package workgroup_pkg;
+package riscv_soc_pkg;
 
-import river_cfg_pkg::*;
+import config_target_pkg::*;
 import types_amba_pkg::*;
 import types_bus0_pkg::*;
+import river_cfg_pkg::*;
 import types_river_pkg::*;
+import workgroup_pkg::*;
 
-localparam int unsigned ACP_SLOT_IDX = CFG_CPU_MAX;
+localparam bit async_reset = CFG_ASYNC_RESET;
 
-endpackage: workgroup_pkg
+endpackage: riscv_soc_pkg

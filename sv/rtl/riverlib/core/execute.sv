@@ -397,7 +397,7 @@ begin: comb_proc
         mux.pc = i_d_pc;
         mux.instr = i_d_instr;
         mux.memop_type[MemopType_Store] = i_memop_store;
-        mux.memop_type[MemopType_Locked] = i_amo;
+        mux.memop_type[MemopType_Locked] = (i_amo & i_memop_load);
         mux.memop_type[MemopType_Reserve] = (i_ivec[Instr_LR_D] || i_ivec[Instr_LR_W]);
         mux.memop_type[MemopType_Release] = (i_ivec[Instr_SC_D] || i_ivec[Instr_SC_W]);
         mux.memop_sign_ext = i_memop_sign_ext;
