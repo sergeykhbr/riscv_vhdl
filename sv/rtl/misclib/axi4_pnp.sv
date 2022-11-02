@@ -32,7 +32,7 @@ module axi4_pnp #(
      xaddr, // xaddr
      xmask, //xmask
      VENDOR_GNSSSENSOR, //vid
-     GNSSSENSOR_PNP //did
+     OPTIMITECH_PNP //did
   };
 
   typedef logic [31 : 0] master_config_map [0 : 2*CFG_BUS0_XMST_TOTAL-1];

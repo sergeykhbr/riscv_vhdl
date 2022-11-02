@@ -22,7 +22,7 @@ import config_target_pkg::*;
 
 //! reduced name of configuration constant:
 
-localparam integer dw = CFG_SYSBUS_ADDR_OFFSET;
+localparam integer dw = CFG_LOG2_SYSBUS_DATA_BYTES;
 
 typedef logic [abits-dw-1 : 0] local_addr_type [0 : CFG_SYSBUS_DATA_BYTES-1];
 

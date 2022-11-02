@@ -50,7 +50,6 @@ module Workgroup #(
 
 import river_cfg_pkg::*;
 import types_amba_pkg::*;
-import types_bus0_pkg::*;
 import types_river_pkg::*;
 import workgroup_pkg::*;
 

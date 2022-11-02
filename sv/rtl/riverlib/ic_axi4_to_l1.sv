@@ -31,7 +31,6 @@ module ic_axi4_to_l1 #(
 );
 
 import types_amba_pkg::*;
-import types_bus0_pkg::*;
 import river_cfg_pkg::*;
 import types_river_pkg::*;
 import ic_axi4_to_l1_pkg::*;

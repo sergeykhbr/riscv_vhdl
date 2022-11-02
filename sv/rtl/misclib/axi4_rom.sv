@@ -16,8 +16,8 @@ module axi4_rom #(
 import types_amba_pkg::*;
  
 // To avoid warning 'literal negative value' use -1048576 instead of 16#fff00000#
-parameter integer size_4kbytes = ((~(xmask << 12)) + 1) >> 12; 
-parameter integer abits = 12 + $clog2(size_4kbytes);
+localparam integer size_4kbytes = ((~(xmask << 12)) + 1) >> 12; 
+localparam integer abits = 12 + $clog2(size_4kbytes);
 
 const axi4_slave_config_type xconfig = '{
    PNP_CFG_TYPE_SLAVE, //descrtype
@@ -25,7 +25,7 @@ const axi4_slave_config_type xconfig = '{
    xaddr, //xaddr
    xmask, //xmask
    VENDOR_GNSSSENSOR, //vid
-   GNSSSENSOR_ROM //did
+   OPTIMITECH_ROM //did
 };
 
 global_addr_array_type raddr;

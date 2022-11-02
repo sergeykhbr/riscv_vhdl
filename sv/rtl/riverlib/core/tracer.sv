@@ -923,8 +923,8 @@ begin
             r.trace_tbl[ircnt].exec_cnt,
             r.trace_tbl[ircnt].pc);
 
-    ostr += (disasm);
-    ostr += (" \n");
+    ostr += disasm;
+    ostr += " \n";
 
     for (int i = 0; i < int'(r.trace_tbl[ircnt].memactioncnt); i++) begin
         if (r.trace_tbl[ircnt].memaction[i].ignored == 1'b0) begin
@@ -1117,7 +1117,7 @@ begin: comb_proc
         end
         if (entry_valid == 1'b1) begin
             tracestr = TraceOutput(rcnt_inc);
-            outstr += (tracestr);
+            outstr += tracestr;
             rcnt_inc = (rcnt_inc + 1);
         end
     end

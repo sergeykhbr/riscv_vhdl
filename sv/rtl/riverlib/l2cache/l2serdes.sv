@@ -31,7 +31,6 @@ module L2SerDes #(
 import river_cfg_pkg::*;
 import types_amba_pkg::*;
 import types_river_pkg::*;
-import types_bus0_pkg::*;
 import l2serdes_pkg::*;
 
 L2SerDes_registers r, rin;

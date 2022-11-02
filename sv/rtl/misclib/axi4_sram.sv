@@ -38,7 +38,7 @@ const axi4_slave_config_type xconfig = '{
     xaddr     : xaddr[CFG_SYSBUS_CFG_ADDR_BITS-1:0],
     xmask     : xmask[CFG_SYSBUS_CFG_ADDR_BITS-1:0],
     vid       : VENDOR_GNSSSENSOR,
-    did       : GNSSSENSOR_SRAM
+    did       : OPTIMITECH_SRAM
 };
 
 typedef struct {

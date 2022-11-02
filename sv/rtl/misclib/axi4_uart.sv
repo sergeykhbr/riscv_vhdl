@@ -40,7 +40,7 @@ const axi4_slave_config_type xconfig = '{
     xaddr     : xaddr[CFG_SYSBUS_CFG_ADDR_BITS-1:0],
     xmask     : xmask[CFG_SYSBUS_CFG_ADDR_BITS-1:0],
     vid       : VENDOR_GNSSSENSOR,
-    did       : GNSSSENSOR_UART
+    did       : OPTIMITECH_UART
 };
 
 typedef logic [7:0] fifo_mem [0:fifosz-1];

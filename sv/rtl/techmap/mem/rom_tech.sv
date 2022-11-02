@@ -37,8 +37,8 @@ import config_target_pkg::*;
     ROM64
     (
         .clk(clk),
-        .address_lo(address[0]),
-        .address_hi(address[1]),
+        .address_lo(address[0][31:0]),
+        .address_hi(address[1][31:0]),
         .data_in(64'b0),
         .en(1'b1),
         .we(8'b0),

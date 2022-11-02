@@ -24,7 +24,7 @@ module axi4_gpio #(
      xaddr, //xaddr
      xmask, //xmask
      VENDOR_GNSSSENSOR, //vid
-     GNSSSENSOR_GPIO //did
+     OPTIMITECH_GPIO //did
   };
 
   typedef struct {

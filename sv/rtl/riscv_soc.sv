@@ -14,25 +14,26 @@
 //  limitations under the License.
 // 
 
-module riscv_soc (
-  input             i_rst,
-  input             i_clk,
-  //! GPIO.
-  input [11:0]      i_gpio,
-  output [11:0]     o_gpio,
-  output [11:0]     o_gpio_dir,
-  //! JTAG signals:
-  input             i_jtag_tck,
-  input             i_jtag_trst,
-  input             i_jtag_tms,
-  input             i_jtag_tdi,
-  output            o_jtag_tdo,
-  output            o_jtag_vref,
-  //! UART1 signals:
-  input             i_uart1_rd,
-  output            o_uart1_td
-);
+`timescale 1ns/10ps
 
+module riscv_soc(
+    input logic i_rst,                                      // System reset active HIGH
+    input logic i_clk,                                      // CPU clock
+    // GPIO signals:
+    input logic [11:0] i_gpio,
+    output logic [11:0] o_gpio,
+    output logic [11:0] o_gpio_dir,
+    // JTAG signals:
+    input logic i_jtag_trst,
+    input logic i_jtag_tck,
+    input logic i_jtag_tms,
+    input logic i_jtag_tdi,
+    output logic o_jtag_tdo,
+    output logic o_jtag_vref,
+    // UART1 signals
+    input logic i_uart1_rd,
+    output logic o_uart1_td
+);
 
 import config_target_pkg::*;
 import types_amba_pkg::*;
@@ -42,31 +43,31 @@ import types_river_pkg::*;
 import workgroup_pkg::*;
 import riscv_soc_pkg::*;
 
-  logic             w_sys_nrst; // System reset of whole system
-  logic             w_dbg_nrst; // Reset workgroup debug interface
-  logic             w_dmreset;  // Reset request from workgroup debug interface
+logic w_sys_nrst;                                           // System reset of whole system
+logic w_dbg_nrst;                                           // Reset workgroup debug interface
+logic w_dmreset;                                            // Reset request from workgroup debug interface
 
   axi4_l1_out_vector coreo;
   axi4_l1_in_vector corei;
-  axi4_master_out_type acpo;
-  axi4_master_in_type acpi;
-  apb_in_type apb_dmi_i;
-  apb_out_type apb_dmi_o;
+axi4_master_out_type acpo;
+axi4_master_in_type acpi;
+apb_in_type apb_dmi_i;
+apb_out_type apb_dmi_o;
 
   //! Arbiter is switching only slaves output signal, data from noc
   //! is connected to all slaves and to the arbiter itself.
-  bus0_xmst_in_vector   aximi;
-  bus0_xmst_out_vector  aximo;
-  bus0_xslv_in_vector   axisi;
-  bus0_xslv_out_vector  axiso;
-  bus0_xslv_cfg_vector  slv_cfg;
-  bus0_xmst_cfg_vector  mst_cfg;
-  logic [63:0] wb_clint_mtimer;
-  logic [CFG_CPU_MAX-1:0] wb_clint_msip;
-  logic [CFG_CPU_MAX-1:0] wb_clint_mtip;
+bus0_xmst_in_vector aximi;
+bus0_xmst_out_vector aximo;
+bus0_xslv_in_vector axisi;
+bus0_xslv_out_vector axiso;
+bus0_xslv_cfg_vector slv_cfg;
+bus0_xmst_cfg_vector mst_cfg;
+logic [63:0] wb_clint_mtimer;
+logic [CFG_CPU_MAX-1:0] wb_clint_msip;
+logic [CFG_CPU_MAX-1:0] wb_clint_mtip;
   logic [CFG_PLIC_CONTEXT_TOTAL-1:0] wb_plic_ip;
-  logic [CFG_CPU_MAX-1:0] wb_plic_meip;
-  logic [CFG_CPU_MAX-1:0] wb_plic_seip;
+logic [CFG_CPU_MAX-1:0] wb_plic_meip;
+logic [CFG_CPU_MAX-1:0] wb_plic_seip;
 
   logic [CFG_BUS0_XMST_TOTAL-1:0] wb_bus_util_w;
   logic [CFG_BUS0_XMST_TOTAL-1:0] wb_bus_util_r;
@@ -123,36 +124,33 @@ import riscv_soc_pkg::*;
     .o_bus_util_r(wb_bus_util_r)  // Bus read access utilization per master statistic
   );
 
-  Workgroup #(
-      .async_reset(async_reset),
-      .cpu_num(CFG_CPU_NUM),
-      .l2cache_ena(CFG_L2CACHE_ENA)   // 1=enable L2 cache; 0=disable L2-cache
-  ) group0 (
-      .i_cores_nrst(w_sys_nrst),    // reset CPUs wxcept DMI
-      .i_dmi_nrst(w_dbg_nrst),      // reset debug DMI interface
-      .i_clk(i_clk),
-      .i_trst(i_jtag_trst),
-      .i_tck(i_jtag_tck),
-      .i_tms(i_jtag_tms),
-      .i_tdi(i_jtag_tdi),
-      .o_tdo(o_jtag_tdo),
-      .i_mtimer(wb_clint_mtimer),
-      .i_msip(wb_clint_msip),
-      .i_mtip(wb_clint_mtip),
-      .i_meip(wb_plic_meip),
-      .i_seip(wb_plic_seip),
-      .o_xcfg(mst_cfg[CFG_BUS0_XMST_CPU0]),
-      // coherent port:
-      .i_acpo(acpo),
-      .o_acpi(acpi),
-      // System bus port
-      .i_msti(aximi[CFG_BUS0_XMST_CPU0]),
-      .o_msto(aximo[CFG_BUS0_XMST_CPU0]),
-      // APB debug access:
-      .i_dmi_apbi(apb_dmi_i),
-      .o_dmi_apbo(apb_dmi_o),
-      .o_dmreset(w_dmreset)
-  );
+Workgroup #(
+    .async_reset(async_reset),
+    .cpu_num(CFG_CPU_NUM),
+    .l2cache_ena(CFG_L2CACHE_ENA)
+) group0 (
+    .i_cores_nrst(w_sys_nrst),
+    .i_dmi_nrst(w_dbg_nrst),
+    .i_clk(i_clk),
+    .i_trst(i_jtag_trst),
+    .i_tck(i_jtag_tck),
+    .i_tms(i_jtag_tms),
+    .i_tdi(i_jtag_tdi),
+    .o_tdo(o_jtag_tdo),
+    .i_msip(wb_clint_msip),
+    .i_mtip(wb_clint_mtip),
+    .i_meip(wb_plic_meip),
+    .i_seip(wb_plic_seip),
+    .i_mtimer(wb_clint_mtimer),
+    .o_xcfg(mst_cfg[CFG_BUS0_XMST_CPU0]),
+    .i_acpo(acpo),
+    .o_acpi(acpi),
+    .i_msti(aximi[CFG_BUS0_XMST_CPU0]),
+    .o_msto(aximo[CFG_BUS0_XMST_CPU0]),
+    .i_dmi_apbi(apb_dmi_i),
+    .o_dmi_apbo(apb_dmi_o),
+    .o_dmreset(w_dmreset)
+);
   assign apb_dmi_i = apb_in_none;
 
   ////////////////////////////////////
@@ -173,14 +171,6 @@ import riscv_soc_pkg::*;
   );
 
   ////////////////////////////////////
-  //! @brief Firmware Image ROM with the AXI4 interface.
-  //! @details Map address:
-  //!          0x00000000_09000000..0x00000000_0903ffff (256 KB total)
-  //! @warning Don't forget to change ROM_ADDR_WIDTH in rom implementation
-  assign slv_cfg[CFG_BUS0_XSLV_ROMIMAGE] = axi4_slave_config_none;
-  assign axiso[CFG_BUS0_XSLV_ROMIMAGE] = axi4_slave_out_none;
-
-  ////////////////////////////////////
   //! Internal SRAM module instance with the AXI4 interface.
   //! @details Map address:
   //!          0x00000000_08000000..0x00000000_081fffff (2MB on FU740)
@@ -189,8 +179,8 @@ import riscv_soc_pkg::*;
     .xaddr(64'h0000000008000),
 //    .xmask(64'hffffffffffe00),            // 2MB KB mask
 //    .abits((10 + $clog2(2048))),        // 2 MB address
-    .xmask(64'hffffffffffff0),            // 512KB KB mask
-    .abits((10 + $clog2(64))),        // 512KB address
+    .xmask(64'hfffffffffffc0),            // 256KB KB mask
+    .abits((10 + $clog2(256))),        // 256KB address
     .init_file(CFG_SIM_FWIMAGE_HEX)     // Initialization will work only in RTL simulation
   ) sram0 (
     .clk(i_clk),
@@ -331,4 +321,4 @@ import riscv_soc_pkg::*;
     .o_irq(w_irq_pnp)
   );
 
-endmodule
+endmodule: riscv_soc
