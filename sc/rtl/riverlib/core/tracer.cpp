@@ -1226,8 +1226,8 @@ std::string Tracer::TraceOutput(sc_uint<TRACE_TBL_ABITS> rcnt) {
             r.trace_tbl[ircnt].pc.read().to_uint64());
     ostr += std::string(tstr);
 
-    ostr = (ostr + disasm);
-    ostr = (ostr + " \n");
+    ostr += disasm;
+    ostr += " \n";
 
     for (int i = 0; i < r.trace_tbl[ircnt].memactioncnt.read().to_int(); i++) {
         if (r.trace_tbl[ircnt].memaction[i].ignored.read() == 0) {
@@ -1409,7 +1409,7 @@ void Tracer::comb() {
         }
         if (entry_valid == 1) {
             tracestr = TraceOutput(rcnt_inc);
-            outstr = (outstr + tracestr);
+            outstr += tracestr;
             rcnt_inc = (rcnt_inc + 1);
         }
     }

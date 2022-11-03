@@ -480,7 +480,7 @@ void DCacheLru::comb() {
                 // Uncached read/write
                 v.mem_addr = r.req_addr;
                 v.mem_wstrb = (0, r.req_wstrb.read());
-                v.req_mem_size = (0, i_req_size.read());
+                v.req_mem_size = r.req_size;
                 if (r.req_type.read()[MemopType_Store] == 1) {
                     v.req_mem_type = WriteNoSnoop();
                 } else {

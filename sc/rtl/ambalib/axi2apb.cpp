@@ -87,6 +87,8 @@ void axi2apb::comb() {
 
     v = r;
 
+    vb_rdata = r.pdata;
+
     switch (r.state.read()) {
     case State_Idle:
         v.pslverr = 0;
@@ -104,13 +106,13 @@ void axi2apb::comb() {
             v.req_user = i_xslvi.read().aw_user;
             if (i_xslvi.read().aw_bits.size >= 3) {
                 v.xsize = 1;
-                v.pdata = i_xslvi.read().w_data;
+                vb_rdata = i_xslvi.read().w_data;
                 v.pstrb = i_xslvi.read().w_strb;
             } else if (i_xslvi.read().aw_bits.addr[2] == 0) {
-                v.pdata = (0, i_xslvi.read().w_data(31, 0));
+                vb_rdata = (0, i_xslvi.read().w_data(31, 0));
                 v.pstrb = (0, i_xslvi.read().w_strb(3, 0));
             } else {
-                v.pdata = (0, i_xslvi.read().w_data(63, 32));
+                vb_rdata = (0, i_xslvi.read().w_data(63, 32));
                 v.pstrb = (0, i_xslvi.read().w_strb(7, 4));
             }
             if (i_xslvi.read().aw_bits.len.or_reduce() == 1) {
@@ -143,13 +145,13 @@ void axi2apb::comb() {
         vslvo.w_ready = 1;
         v.pselx = 1;
         if (r.xsize.read().or_reduce() == 1) {
-            v.pdata = i_xslvi.read().w_data;
+            vb_rdata = i_xslvi.read().w_data;
             v.pstrb = i_xslvi.read().w_strb;
         } else if (r.paddr.read()[2] == 0) {
-            v.pdata = (0, i_xslvi.read().w_data(31, 0));
+            vb_rdata = (0, i_xslvi.read().w_data(31, 0));
             v.pstrb = (0, i_xslvi.read().w_strb(3, 0));
         } else {
-            v.pdata = (0, i_xslvi.read().w_data(63, 32));
+            vb_rdata = (0, i_xslvi.read().w_data(63, 32));
             v.pstrb = (0, i_xslvi.read().w_strb(7, 4));
         }
         if (i_xslvi.read().w_valid == 1) {
@@ -187,7 +189,9 @@ void axi2apb::comb() {
                 v.xsize = (r.xsize.read() - 1);
                 v.paddr = (r.paddr.read() + 4);
                 v.pstrb = (0, r.pstrb.read()(7, 4));
-                v.pdata = (0, r.pdata.read()(63, 32));
+                if (r.pwrite.read() == 1) {
+                    vb_rdata = (0, r.pdata.read()(63, 32));
+                }
                 v.state = State_setup;
             } else if (r.pwrite.read() == 1) {
                 v.state = State_b;
@@ -198,7 +202,7 @@ void axi2apb::comb() {
         break;
     default:
         // Burst transactions are not supported:
-        v.pdata = ~0ull;
+        vb_rdata = ~0ull;
         v.pslverr = 1;
         if (r.pwrite.read() == 1) {
             v.state = State_b;

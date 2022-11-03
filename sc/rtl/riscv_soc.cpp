@@ -39,7 +39,7 @@ riscv_soc::riscv_soc(sc_module_name name)
     axisi("axisi", CFG_BUS0_XSLV_TOTAL),
     axiso("axiso", CFG_BUS0_XSLV_TOTAL),
     slv_cfg("slv_cfg", CFG_BUS0_XSLV_TOTAL),
-    mst_cfg("mst_cfg", CFG_BUS0_XSLV_TOTAL) {
+    mst_cfg("mst_cfg", CFG_BUS0_XMST_TOTAL) {
 
     group0 = 0;
 
@@ -98,7 +98,7 @@ riscv_soc::riscv_soc(sc_module_name name)
     for (int i = 0; i < CFG_BUS0_XSLV_TOTAL; i++) {
         sensitive << slv_cfg[i];
     }
-    for (int i = 0; i < CFG_BUS0_XSLV_TOTAL; i++) {
+    for (int i = 0; i < CFG_BUS0_XMST_TOTAL; i++) {
         sensitive << mst_cfg[i];
     }
     sensitive << wb_clint_mtimer;

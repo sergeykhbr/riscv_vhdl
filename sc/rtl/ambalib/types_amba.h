@@ -51,7 +51,23 @@ static const uint16_t GNSSSENSOR_JTAG_TAP = 0x050B;
 
 // @name Slave Device IDs definition:
 // Empty slave slot device
-static const uint16_t SLV_DID_EMPTY = 5577;
+static const uint16_t SLV_DID_EMPTY = 0x5577;
+// Boot ROM Device ID
+static const uint16_t OPTIMITECH_ROM = 0x0071;
+// Internal SRAM block Device ID
+static const uint16_t OPTIMITECH_SRAM = 0x0073;
+// Configuration Registers Module
+static const uint16_t OPTIMITECH_PNP = 0x0074;
+// SD-card controller
+static const uint16_t OPTIMITECH_SPI_FLASH = 0x0075;
+// General purpose IOs
+static const uint16_t OPTIMITECH_GPIO = 0x0076;
+// rs-232 UART Device ID
+static const uint16_t OPTIMITECH_UART = 0x007a;
+// Core local interrupt controller
+static const uint16_t OPTIMITECH_CLINT = 0x0083;
+// External interrupt controller
+static const uint16_t OPTIMITECH_PLIC = 0x0084;
 
 // Plug'n'Play descriptor localparams.
 // Undefined type of the descriptor (empty device).
@@ -1161,7 +1177,7 @@ static const apb_in_type apb_in_none;
 class apb_out_type {
  public:
     apb_out_type() {
-        pready = 0;
+        pready = 1;
         prdata = 0;
         pslverr = 0;
     }

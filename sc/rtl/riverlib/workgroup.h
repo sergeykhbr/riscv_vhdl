@@ -18,7 +18,6 @@
 #include <systemc.h>
 #include "river_cfg.h"
 #include "../ambalib/types_amba.h"
-#include "../ambalib/types_bus0.h"
 #include "types_river.h"
 #include "dmi/dmidebug.h"
 #include "dmi/ic_dport.h"
