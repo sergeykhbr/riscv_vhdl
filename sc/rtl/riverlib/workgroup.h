@@ -45,7 +45,7 @@ SC_MODULE(Workgroup) {
     sc_in<sc_uint<CFG_CPU_MAX>> i_meip;
     sc_in<sc_uint<CFG_CPU_MAX>> i_seip;
     sc_in<sc_uint<64>> i_mtimer;                            // Read-only shadow value of memory-mapped mtimer register (see CLINT).
-    sc_out<axi4_master_config_type> o_xcfg;
+    sc_out<dev_config_type> o_xcfg;
     // coherent port:
     sc_in<axi4_master_out_type> i_acpo;
     sc_out<axi4_master_in_type> o_acpi;
@@ -106,7 +106,7 @@ SC_MODULE(Workgroup) {
     sc_signal<sc_uint<RISCV_ARCH>> wb_ic_dport_rdata;
     sc_signal<sc_biguint<(32 * CFG_PROGBUF_REG_TOTAL)>> wb_progbuf;
     sc_signal<bool> w_flush_l2;
-    axi4_master_config_type wb_xcfg;
+    dev_config_type wb_xcfg;
 
     dmidebug *dmi0;
     ic_dport *dport_ic0;

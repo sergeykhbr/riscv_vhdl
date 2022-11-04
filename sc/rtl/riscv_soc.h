@@ -17,8 +17,8 @@
 
 #include <systemc.h>
 #include "../prj/impl/asic_full/config_target.h"
-#include "ambalib/types_amba.h"
 #include "ambalib/types_bus0.h"
+#include "ambalib/types_amba.h"
 #include "riverlib/river_cfg.h"
 #include "riverlib/types_river.h"
 #include "riverlib/workgroup.h"
@@ -55,6 +55,9 @@ SC_MODULE(riscv_soc) {
 
  private:
     static const bool async_reset = CFG_ASYNC_RESET;
+    static const int PNP_SLOTS_TOTAL = (CFG_BUS0_XMST_TOTAL + CFG_BUS0_XSLV_TOTAL);
+
+    typedef sc_vector<sc_signal<dev_config_type>> soc_pnp_vector;
 
     sc_signal<bool> w_sys_nrst;                             // System reset of whole system
     sc_signal<bool> w_dbg_nrst;                             // Reset workgroup debug interface
@@ -67,8 +70,7 @@ SC_MODULE(riscv_soc) {
     bus0_xmst_out_vector aximo;
     bus0_xslv_in_vector axisi;
     bus0_xslv_out_vector axiso;
-    bus0_xslv_cfg_vector slv_cfg;
-    bus0_xmst_cfg_vector mst_cfg;
+    soc_pnp_vector dev_pnp;
     sc_signal<sc_uint<64>> wb_clint_mtimer;
     sc_signal<sc_uint<CFG_CPU_MAX>> wb_clint_msip;
     sc_signal<sc_uint<CFG_CPU_MAX>> wb_clint_mtip;

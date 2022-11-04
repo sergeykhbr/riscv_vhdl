@@ -38,8 +38,7 @@ riscv_soc::riscv_soc(sc_module_name name)
     aximo("aximo", CFG_BUS0_XMST_TOTAL),
     axisi("axisi", CFG_BUS0_XSLV_TOTAL),
     axiso("axiso", CFG_BUS0_XSLV_TOTAL),
-    slv_cfg("slv_cfg", CFG_BUS0_XSLV_TOTAL),
-    mst_cfg("mst_cfg", CFG_BUS0_XMST_TOTAL) {
+    dev_pnp("dev_pnp", PNP_SLOTS_TOTAL) {
 
     group0 = 0;
 
@@ -57,7 +56,7 @@ riscv_soc::riscv_soc(sc_module_name name)
     group0->i_meip(wb_plic_meip);
     group0->i_seip(wb_plic_seip);
     group0->i_mtimer(wb_clint_mtimer);
-    group0->o_xcfg(mst_cfg[CFG_BUS0_XMST_CPU0]);
+    group0->o_xcfg(dev_pnp[CFG_BUS0_XMST_CPU0]);
     group0->i_acpo(acpo);
     group0->o_acpi(acpi);
     group0->i_msti(aximi[CFG_BUS0_XMST_CPU0]);
@@ -95,11 +94,8 @@ riscv_soc::riscv_soc(sc_module_name name)
     for (int i = 0; i < CFG_BUS0_XSLV_TOTAL; i++) {
         sensitive << axiso[i];
     }
-    for (int i = 0; i < CFG_BUS0_XSLV_TOTAL; i++) {
-        sensitive << slv_cfg[i];
-    }
-    for (int i = 0; i < CFG_BUS0_XMST_TOTAL; i++) {
-        sensitive << mst_cfg[i];
+    for (int i = 0; i < PNP_SLOTS_TOTAL; i++) {
+        sensitive << dev_pnp[i];
     }
     sensitive << wb_clint_mtimer;
     sensitive << wb_clint_msip;

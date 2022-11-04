@@ -119,7 +119,7 @@ class CpuRiscV_RTL : public IService,
     sc_signal<sc_uint<64>> wb_mtimer;
 
     // AXI4 input structure:
-    sc_signal<axi4_master_config_type> xcfg;
+    sc_signal<dev_config_type> xcfg;
     // Interrupt lines:
     sc_signal<sc_uint<CFG_CPU_MAX>> wb_msip;
     sc_signal<sc_uint<CFG_CPU_MAX>> wb_mtip;

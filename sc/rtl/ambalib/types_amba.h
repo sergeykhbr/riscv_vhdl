@@ -77,20 +77,17 @@ static const uint8_t PNP_CFG_TYPE_MASTER = 0x1;
 // AXI master device standard descriptor.
 static const uint8_t PNP_CFG_TYPE_SLAVE = 0x2;
 // @brief Size in bytes of the standard slave descriptor..
-// @details Firmware uses this value instead of sizeof(axi4_slave_config_type).
-static const uint8_t PNP_CFG_SLAVE_DESCR_BYTES = 0x10;
-// @brief Size in bytes of the standard master descriptor.
-// @details Firmware uses this value instead of sizeof(axi4_master_config_type).
-static const uint8_t PNP_CFG_MASTER_DESCR_BYTES = 0x08;
+// @details Firmware uses this value instead of sizeof(slave_config_type).
+static const uint8_t PNP_CFG_DEV_DESCR_BYTES = 0x10;
 
-// @brief   Plug-n-play descriptor structure for slave device.
-// @details Each slave device must generates this datatype output that
+// @brief   Plug-n-play descriptor structure for connected device.
+// @details Each device must generates this datatype output that
 //          is connected directly to the 'pnp' slave module on system bus.
-class axi4_slave_config_type {
+class dev_config_type {
  public:
-    axi4_slave_config_type() {
+    dev_config_type() {
         // Descriptor size in bytes.
-        descrsize = PNP_CFG_SLAVE_DESCR_BYTES;
+        descrsize = PNP_CFG_DEV_DESCR_BYTES;
         // Descriptor type.
         descrtype = PNP_CFG_TYPE_SLAVE;
         // Base Address.
@@ -103,7 +100,7 @@ class axi4_slave_config_type {
         did = SLV_DID_EMPTY;
     }
 
-    inline bool operator == (const axi4_slave_config_type &rhs) const {
+    inline bool operator == (const dev_config_type &rhs) const {
         bool ret = true;
         ret = ret
             && rhs.descrsize == descrsize
@@ -115,7 +112,7 @@ class axi4_slave_config_type {
         return ret;
     }
 
-    inline axi4_slave_config_type& operator = (const axi4_slave_config_type &rhs) {
+    inline dev_config_type& operator = (const dev_config_type &rhs) {
         descrsize = rhs.descrsize;
         descrtype = rhs.descrtype;
         xaddr = rhs.xaddr;
@@ -126,7 +123,7 @@ class axi4_slave_config_type {
     }
 
     inline friend void sc_trace(sc_trace_file *tf,
-                                const axi4_slave_config_type&v,
+                                const dev_config_type&v,
                                 const std::string &NAME) {
         sc_trace(tf, v.descrsize, NAME + "_descrsize");
         sc_trace(tf, v.descrtype, NAME + "_descrtype");
@@ -137,7 +134,7 @@ class axi4_slave_config_type {
     }
 
     inline friend ostream &operator << (ostream &os,
-                                        axi4_slave_config_type const &v) {
+                                        dev_config_type const &v) {
         os << "("
         << v.descrsize << ","
         << v.descrtype << ","
@@ -163,75 +160,8 @@ class axi4_slave_config_type {
     sc_uint<16> did;
 };
 
-// @brief Default slave config value.
-static const axi4_slave_config_type axi4_slave_config_none;
-
-// @brief   Plug-n-play descriptor structure for master device.
-// @details Each slave device must generates this datatype output that
-//          is connected directly to the 'pnp' master module on system bus.
-class axi4_master_config_type {
- public:
-    axi4_master_config_type() {
-        // Descriptor size in bytes.
-        descrsize = PNP_CFG_MASTER_DESCR_BYTES;
-        // Descriptor type.
-        descrtype = PNP_CFG_TYPE_MASTER;
-        // Vendor ID.
-        vid = VENDOR_GNSSSENSOR;
-        // Device ID.
-        did = MST_DID_EMPTY;
-    }
-
-    inline bool operator == (const axi4_master_config_type &rhs) const {
-        bool ret = true;
-        ret = ret
-            && rhs.descrsize == descrsize
-            && rhs.descrtype == descrtype
-            && rhs.vid == vid
-            && rhs.did == did;
-        return ret;
-    }
-
-    inline axi4_master_config_type& operator = (const axi4_master_config_type &rhs) {
-        descrsize = rhs.descrsize;
-        descrtype = rhs.descrtype;
-        vid = rhs.vid;
-        did = rhs.did;
-        return *this;
-    }
-
-    inline friend void sc_trace(sc_trace_file *tf,
-                                const axi4_master_config_type&v,
-                                const std::string &NAME) {
-        sc_trace(tf, v.descrsize, NAME + "_descrsize");
-        sc_trace(tf, v.descrtype, NAME + "_descrtype");
-        sc_trace(tf, v.vid, NAME + "_vid");
-        sc_trace(tf, v.did, NAME + "_did");
-    }
-
-    inline friend ostream &operator << (ostream &os,
-                                        axi4_master_config_type const &v) {
-        os << "("
-        << v.descrsize << ","
-        << v.descrtype << ","
-        << v.vid << ","
-        << v.did << ")";
-        return os;
-    }
-
- public:
-    // Descriptor size in bytes.;
-    sc_uint<8> descrsize;
-    // Descriptor type.;
-    sc_uint<2> descrtype;
-    // Vendor ID.;
-    sc_uint<16> vid;
-    // Device ID.;
-    sc_uint<16> did;
-};
-
-// @brief Default master config value.
-static const axi4_master_config_type axi4_master_config_none;
+// @brief Default config value for empty slot.
+static const dev_config_type dev_config_none;
 
 // Burst length size decoder
 static const int XSIZE_TOTAL = 8;
@@ -289,9 +219,9 @@ static const uint8_t AWCACHE_WRBACK_WRITE_ALLOCATE = 0xF;
 //     0    |    0     |    *     |    ReadNoSnoop
 //     0    |    1     |    0     |    ReadShared
 //     0    |    1     |    1     |    ReadMakeUnique
-static const int ARSNOOP_READ_NO_SNOOP = 0x0;
-static const int ARSNOOP_READ_SHARED = 0x1;
-static const int ARSNOOP_READ_MAKE_UNIQUE = 0xC;
+static const uint8_t ARSNOOP_READ_NO_SNOOP = 0x0;
+static const uint8_t ARSNOOP_READ_SHARED = 0x1;
+static const uint8_t ARSNOOP_READ_MAKE_UNIQUE = 0xC;
 
 // see table C3-8 Permitted read address control signal combinations
 //  
@@ -299,13 +229,13 @@ static const int ARSNOOP_READ_MAKE_UNIQUE = 0xC;
 //     1    |    0     |    *     |    WriteNoSnoop
 //     1    |    1     |    1     |    WriteLineUnique
 //     1    |    1     |    0     |    WriteBack
-static const int AWSNOOP_WRITE_NO_SNOOP = 0x0;
-static const int AWSNOOP_WRITE_LINE_UNIQUE = 0x1;
-static const int AWSNOOP_WRITE_BACK = 0x3;
+static const uint8_t AWSNOOP_WRITE_NO_SNOOP = 0x0;
+static const uint8_t AWSNOOP_WRITE_LINE_UNIQUE = 0x1;
+static const uint8_t AWSNOOP_WRITE_BACK = 0x3;
 
 // see table C3-19
-static const int AC_SNOOP_READ_UNIQUE = 0x7;
-static const int AC_SNOOP_MAKE_INVALID = 0xD;
+static const uint8_t AC_SNOOP_READ_UNIQUE = 0x7;
+static const uint8_t AC_SNOOP_MAKE_INVALID = 0xD;
 
 class axi4_metadata_type {
  public:
@@ -1177,7 +1107,7 @@ static const apb_in_type apb_in_none;
 class apb_out_type {
  public:
     apb_out_type() {
-        pready = 1;
+        pready = 0; // when 1 it breaks callback to funcitonal model
         prdata = 0;
         pslverr = 0;
     }

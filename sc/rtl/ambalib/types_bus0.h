@@ -55,8 +55,7 @@ static const int CFG_BUS0_XMST_DMA = 1;
 // Total Number of master devices on system bus.
 static const int CFG_BUS0_XMST_TOTAL = 2;
 
-typedef sc_vector<sc_signal<axi4_slave_config_type>> bus0_xslv_cfg_vector;
-typedef sc_vector<sc_signal<axi4_master_config_type>> bus0_xmst_cfg_vector;
+typedef sc_vector<sc_signal<dev_config_type>> bus0_xslv_cfg_vector;
 typedef sc_vector<sc_signal<axi4_master_in_type>> bus0_xmst_in_vector;
 typedef sc_vector<sc_signal<axi4_master_out_type>> bus0_xmst_out_vector;
 typedef sc_vector<sc_signal<axi4_slave_in_type>> bus0_xslv_in_vector;

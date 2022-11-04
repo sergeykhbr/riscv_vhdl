@@ -356,7 +356,7 @@ void Workgroup::comb() {
         vb_irq[i] = 0;
     }
 
-    wb_xcfg.descrsize = PNP_CFG_MASTER_DESCR_BYTES;
+    wb_xcfg.descrsize = PNP_CFG_DEV_DESCR_BYTES;
     wb_xcfg.descrtype = PNP_CFG_TYPE_MASTER;
     wb_xcfg.vid = VENDOR_OPTIMITECH;
     wb_xcfg.did = RISCV_RIVER_WORKGROUP;
