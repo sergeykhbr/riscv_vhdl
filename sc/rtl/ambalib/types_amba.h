@@ -1107,7 +1107,7 @@ static const apb_in_type apb_in_none;
 class apb_out_type {
  public:
     apb_out_type() {
-        pready = 0; // when 1 it breaks callback to funcitonal model
+        pready = 0;
         prdata = 0;
         pslverr = 0;
     }
@@ -1146,7 +1146,7 @@ class apb_out_type {
     }
 
  public:
-    bool pready;
+    bool pready;                                            // when 1 it breaks callback to functional model
     sc_uint<32> prdata;
     bool pslverr;
 };

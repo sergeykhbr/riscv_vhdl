@@ -53,7 +53,6 @@ SC_MODULE(L2Top) {
     sc_signal<sc_uint<3>> wb_req_prot;
     sc_signal<sc_biguint<L1CACHE_LINE_BITS>> wb_req_wdata;
     sc_signal<sc_uint<L1CACHE_BYTES_PER_LINE>> wb_req_wstrb;
-    
     sc_signal<bool> w_cache_valid;
     sc_signal<sc_biguint<L1CACHE_LINE_BITS>> wb_cache_rdata;
     sc_signal<sc_uint<2>> wb_cache_status;
