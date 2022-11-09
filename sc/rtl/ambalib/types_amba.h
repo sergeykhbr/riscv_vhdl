@@ -68,6 +68,8 @@ static const uint16_t OPTIMITECH_UART = 0x007a;
 static const uint16_t OPTIMITECH_CLINT = 0x0083;
 // External interrupt controller
 static const uint16_t OPTIMITECH_PLIC = 0x0084;
+// AXI to APB Brdige
+static const uint16_t OPTIMITECH_AXI2APB_BRIDGE = 0x0085;
 
 // Plug'n'Play descriptor localparams.
 // Undefined type of the descriptor (empty device).

@@ -20,16 +20,21 @@
 namespace debugger {
 
 axi2apb::axi2apb(sc_module_name name,
-                 bool async_reset)
+                 bool async_reset,
+                 uint64_t xaddr,
+                 uint64_t xmask)
     : sc_module(name),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
+    o_cfg("o_cfg"),
     i_xslvi("i_xslvi"),
     o_xslvo("o_xslvo"),
     o_apbi("o_apbi"),
     i_apbo("i_apbo") {
 
     async_reset_ = async_reset;
+    xaddr_ = xaddr;
+    xmask_ = xmask;
 
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -56,6 +61,7 @@ axi2apb::axi2apb(sc_module_name name,
 void axi2apb::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     std::string pn(name());
     if (o_vcd) {
+        sc_trace(o_vcd, o_cfg, o_cfg.name());
         sc_trace(o_vcd, i_xslvi, i_xslvi.name());
         sc_trace(o_vcd, o_xslvo, o_xslvo.name());
         sc_trace(o_vcd, o_apbi, o_apbi.name());
@@ -77,16 +83,24 @@ void axi2apb::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void axi2apb::comb() {
+    dev_config_type vcfg;
     sc_uint<CFG_SYSBUS_DATA_BITS> vb_rdata;
     axi4_slave_out_type vslvo;
     apb_in_type vapbi;
 
+    vcfg = dev_config_none;
     vb_rdata = 0;
     vslvo = axi4_slave_out_none;
     vapbi = apb_in_none;
 
     v = r;
 
+    vcfg.descrsize = PNP_CFG_DEV_DESCR_BYTES;
+    vcfg.descrtype = PNP_CFG_TYPE_SLAVE;
+    vcfg.xaddr = xaddr_;
+    vcfg.xmask = xmask_;
+    vcfg.vid = VENDOR_OPTIMITECH;
+    vcfg.did = OPTIMITECH_AXI2APB_BRIDGE;
     vb_rdata = r.pdata;
 
     switch (r.state.read()) {
@@ -235,6 +249,7 @@ void axi2apb::comb() {
         axi2apb_r_reset(v);
     }
 
+    o_cfg = vcfg;
     o_xslvo = vslvo;
     o_apbi = vapbi;
 }

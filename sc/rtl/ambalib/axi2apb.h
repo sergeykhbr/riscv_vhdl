@@ -24,6 +24,7 @@ SC_MODULE(axi2apb) {
  public:
     sc_in<bool> i_clk;                                      // CPU clock
     sc_in<bool> i_nrst;                                     // Reset: active LOW
+    sc_out<dev_config_type> o_cfg;                          // Slave config descriptor
     sc_in<axi4_slave_in_type> i_xslvi;                      // AXI4 Interconnect Bridge interface
     sc_out<axi4_slave_out_type> o_xslvo;                    // AXI4 Bridge to Interconnect interface
     sc_out<apb_in_type> o_apbi;                             // APB Bridge to Slave interface
@@ -35,12 +36,16 @@ SC_MODULE(axi2apb) {
     SC_HAS_PROCESS(axi2apb);
 
     axi2apb(sc_module_name name,
-            bool async_reset);
+            bool async_reset,
+            uint64_t xaddr,
+            uint64_t xmask);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
     bool async_reset_;
+    uint64_t xaddr_;
+    uint64_t xmask_;
 
     static const uint8_t State_Idle = 0;
     static const uint8_t State_w = 1;

@@ -267,10 +267,12 @@ template<int log2_fifosz>
 void apb_uart<log2_fifosz>::comb() {
     dev_config_type vcfg;
     sc_uint<32> vb_rdata;
+    sc_uint<log2_fifosz> vb_tx_wr_cnt_next;
     bool v_tx_fifo_full;
     bool v_tx_fifo_empty;
     sc_uint<8> vb_tx_fifo_rdata;
     bool v_tx_fifo_we;
+    sc_uint<log2_fifosz> vb_rx_wr_cnt_next;
     bool v_rx_fifo_full;
     bool v_rx_fifo_empty;
     sc_uint<8> vb_rx_fifo_rdata;
@@ -282,10 +284,12 @@ void apb_uart<log2_fifosz>::comb() {
 
     vcfg = dev_config_none;
     vb_rdata = 0;
+    vb_tx_wr_cnt_next = 0;
     v_tx_fifo_full = 0;
     v_tx_fifo_empty = 0;
     vb_tx_fifo_rdata = 0;
     v_tx_fifo_we = 0;
+    vb_rx_wr_cnt_next = 0;
     v_rx_fifo_full = 0;
     v_rx_fifo_empty = 0;
     vb_rx_fifo_rdata = 0;
@@ -343,6 +347,36 @@ void apb_uart<log2_fifosz>::comb() {
     vb_rx_fifo_rdata = r.rx_fifo[r.rx_rd_cnt];
     vb_tx_fifo_rdata = r.tx_fifo[r.tx_rd_cnt];
 
+    // Check FIFOs counters with thresholds:
+    if (r.tx_byte_cnt.read() < r.tx_irq_thresh.read()) {
+        v.tx_ip = r.tx_ie;
+    }
+
+    if (r.rx_byte_cnt.read() > r.rx_irq_thresh.read()) {
+        v.rx_ip = r.rx_ie;
+    }
+
+    // Transmitter's FIFO:
+    vb_tx_wr_cnt_next = (r.tx_wr_cnt.read() + 1);
+    if (vb_tx_wr_cnt_next == r.tx_rd_cnt.read()) {
+        v_tx_fifo_full = 1;
+    }
+
+    if (r.tx_rd_cnt.read() == r.tx_wr_cnt.read()) {
+        v_tx_fifo_empty = 1;
+        v.tx_byte_cnt = 0;
+    }
+    // Receiver's FIFO:
+    vb_rx_wr_cnt_next = (r.rx_wr_cnt.read() + 1);
+    if (vb_rx_wr_cnt_next == r.rx_rd_cnt.read()) {
+        v_rx_fifo_full = 1;
+    }
+
+    if (r.rx_rd_cnt.read() == r.rx_wr_cnt.read()) {
+        v_rx_fifo_empty = 1;
+        v.rx_byte_cnt = 0;
+    }
+
     // system bus clock scaler to baudrate:
     if (r.scaler.read().or_reduce() == 1) {
         if (r.scaler_cnt.read() == (r.scaler.read() - 1)) {
@@ -354,38 +388,11 @@ void apb_uart<log2_fifosz>::comb() {
             v.scaler_cnt = (r.scaler_cnt.read() + 1);
         }
 
-        if ((r.rx_state.read() == idle) && (i_rd.read() == 1) && (r.tx_state.read() == idle)) {
+        if (((r.rx_state.read() == idle) && (i_rd.read() == 1))
+                && ((r.tx_state.read() == idle) && (v_tx_fifo_empty == 1))) {
             v.scaler_cnt = 0;
             v.level = 1;
         }
-    }
-
-    // Check FIFOs counters with thresholds:
-    if (r.tx_byte_cnt.read() < r.tx_irq_thresh.read()) {
-        v.tx_ip = r.tx_ie;
-    }
-
-    if (r.rx_byte_cnt.read() > r.rx_irq_thresh.read()) {
-        v.rx_ip = r.rx_ie;
-    }
-
-    // Transmitter's FIFO:
-    if ((r.tx_wr_cnt.read() + 1) == r.tx_rd_cnt.read()) {
-        v_tx_fifo_full = 1;
-    }
-
-    if (r.tx_rd_cnt.read() == r.tx_wr_cnt.read()) {
-        v_tx_fifo_empty = 1;
-        v.tx_byte_cnt = 0;
-    }
-    // Receiver's FIFO:
-    if ((r.rx_wr_cnt.read() + 1) == r.rx_rd_cnt.read()) {
-        v_rx_fifo_full = 1;
-    }
-
-    if (r.rx_rd_cnt.read() == r.rx_wr_cnt.read()) {
-        v_rx_fifo_empty = 1;
-        v.rx_byte_cnt = 0;
     }
 
     // Transmitter's state machine:
@@ -613,7 +620,7 @@ void apb_uart<log2_fifosz>::comb() {
     if (!async_reset_ && i_nrst.read() == 0) {
         v.scaler = 0;
         v.scaler_cnt = 0;
-        v.level = 0;
+        v.level = 1;
         v.err_parity = 0;
         v.err_stopbit = 0;
         v.fwcpuid = 0;
@@ -648,7 +655,7 @@ void apb_uart<log2_fifosz>::comb() {
         v.tx_irq_thresh = 0;
         v.tx_frame_cnt = 0;
         v.tx_stop_cnt = 0;
-        v.tx_shift = 0;
+        v.tx_shift = ~0ul;
         v.tx_amo_guard = 0;
         v.resp_valid = 0;
         v.resp_rdata = 0;
@@ -665,7 +672,7 @@ void apb_uart<log2_fifosz>::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
         r.scaler = 0;
         r.scaler_cnt = 0;
-        r.level = 0;
+        r.level = 1;
         r.err_parity = 0;
         r.err_stopbit = 0;
         r.fwcpuid = 0;
@@ -700,7 +707,7 @@ void apb_uart<log2_fifosz>::registers() {
         r.tx_irq_thresh = 0;
         r.tx_frame_cnt = 0;
         r.tx_stop_cnt = 0;
-        r.tx_shift = 0;
+        r.tx_shift = ~0ul;
         r.tx_amo_guard = 0;
         r.resp_valid = 0;
         r.resp_rdata = 0;
