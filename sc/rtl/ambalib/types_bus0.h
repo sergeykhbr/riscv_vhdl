@@ -31,8 +31,8 @@ static const int CFG_BUS0_XSLV_BOOTROM = 0;
 static const int CFG_BUS0_XSLV_SRAM = 2;
 // External DDR
 static const int CFG_BUS0_XSLV_DDR = 3;
-// Configuration index of the UART module.
-static const int CFG_BUS0_XSLV_UART0 = 4;
+// Configuration index of the APB Bridge.
+static const int CFG_BUS0_XSLV_BUS1 = 4;
 // Configuration index of the GPIO (General Purpose In/Out) module.
 static const int CFG_BUS0_XSLV_GPIO = 5;
 // Configuration index of the Core Local Interrupt Controller module.
@@ -49,13 +49,12 @@ static const int CFG_BUS0_XSLV_TOTAL = 9;
 //          as an index in the vector array of AXI master bus.
 // 
 // Total number of CPU limited by config CFG_TOTAL_CPU_MAX
-static const int CFG_BUS0_XMST_CPU0 = 0;
+static const int CFG_BUS0_XMST_GROUP0 = 0;
 // DMA master interface generic index.
 static const int CFG_BUS0_XMST_DMA = 1;
 // Total Number of master devices on system bus.
 static const int CFG_BUS0_XMST_TOTAL = 2;
 
-typedef sc_vector<sc_signal<dev_config_type>> bus0_xslv_cfg_vector;
 typedef sc_vector<sc_signal<axi4_master_in_type>> bus0_xmst_in_vector;
 typedef sc_vector<sc_signal<axi4_master_out_type>> bus0_xmst_out_vector;
 typedef sc_vector<sc_signal<axi4_slave_in_type>> bus0_xslv_in_vector;

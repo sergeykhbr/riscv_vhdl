@@ -38,9 +38,25 @@ riscv_soc::riscv_soc(sc_module_name name)
     aximo("aximo", CFG_BUS0_XMST_TOTAL),
     axisi("axisi", CFG_BUS0_XSLV_TOTAL),
     axiso("axiso", CFG_BUS0_XSLV_TOTAL),
-    dev_pnp("dev_pnp", PNP_SLOTS_TOTAL) {
+    apbmi("apbmi", CFG_BUS1_PMST_TOTAL),
+    apbmo("apbmo", CFG_BUS1_PMST_TOTAL),
+    apbsi("apbsi", CFG_BUS1_PSLV_TOTAL),
+    apbso("apbso", CFG_BUS1_PSLV_TOTAL),
+    dev_pnp("dev_pnp", CFG_SOC_PNP_SLOTS_TOTAL) {
 
+    apbrdg0 = 0;
+    uart1 = 0;
     group0 = 0;
+
+    apbrdg0 = new axi2apb("apbrdg0", async_reset, CFG_SOC_MAP_UART1_XADDR, CFG_SOC_MAP_UART1_XMASK);
+    apbrdg0->i_clk(i_clk);
+    apbrdg0->i_nrst(w_sys_nrst);
+    apbrdg0->o_cfg(dev_pnp[CFG_SOC_PNP_0_XSLV_PBRIDGE0]);
+    apbrdg0->i_xslvi(axisi[CFG_BUS0_XSLV_BUS1]);
+    apbrdg0->o_xslvo(axiso[CFG_BUS0_XSLV_BUS1]);
+    apbrdg0->i_apbmi(apbmi[CFG_BUS1_PMST_BUS0]);
+    apbrdg0->o_apbmo(apbmo[CFG_BUS1_PMST_BUS0]);
+
 
     group0 = new Workgroup("group0", async_reset, CFG_CPU_NUM, CFG_L2CACHE_ENA);
     group0->i_cores_nrst(w_sys_nrst);
@@ -56,14 +72,25 @@ riscv_soc::riscv_soc(sc_module_name name)
     group0->i_meip(wb_plic_meip);
     group0->i_seip(wb_plic_seip);
     group0->i_mtimer(wb_clint_mtimer);
-    group0->o_xcfg(dev_pnp[CFG_BUS0_XMST_CPU0]);
+    group0->o_xcfg(dev_pnp[CFG_SOC_PNP_0_XMST_GROUP0]);
     group0->i_acpo(acpo);
     group0->o_acpi(acpi);
-    group0->i_msti(aximi[CFG_BUS0_XMST_CPU0]);
-    group0->o_msto(aximo[CFG_BUS0_XMST_CPU0]);
-    group0->i_dmi_apbi(apb_dmi_i);
-    group0->o_dmi_apbo(apb_dmi_o);
+    group0->i_msti(aximi[CFG_BUS0_XMST_GROUP0]);
+    group0->o_msto(aximo[CFG_BUS0_XMST_GROUP0]);
+    group0->i_dmi_apbi(apbsi[CFG_BUS1_PSLV_DMI]);
+    group0->o_dmi_apbo(apbso[CFG_BUS1_PSLV_DMI]);
     group0->o_dmreset(w_dmreset);
+
+
+    uart1 = new apb_uart<CFG_SOC_UART1_LOG2_FIFOSZ>("uart1", async_reset);
+    uart1->i_clk(i_clk);
+    uart1->i_nrst(w_sys_nrst);
+    uart1->i_apbi(apbsi[CFG_BUS1_PSLV_UART0]);
+    uart1->o_apbo(apbso[CFG_BUS1_PSLV_UART0]);
+    uart1->o_cfg(dev_pnp[CFG_SOC_PNP_1_PSLV_UART1]);
+    uart1->i_rd(i_uart1_rd);
+    uart1->o_td(o_uart1_td);
+    uart1->o_irq(w_irq_uart1);
 
 
 
@@ -80,8 +107,6 @@ riscv_soc::riscv_soc(sc_module_name name)
     sensitive << w_dmreset;
     sensitive << acpo;
     sensitive << acpi;
-    sensitive << apb_dmi_i;
-    sensitive << apb_dmi_o;
     for (int i = 0; i < CFG_BUS0_XMST_TOTAL; i++) {
         sensitive << aximi[i];
     }
@@ -94,7 +119,19 @@ riscv_soc::riscv_soc(sc_module_name name)
     for (int i = 0; i < CFG_BUS0_XSLV_TOTAL; i++) {
         sensitive << axiso[i];
     }
-    for (int i = 0; i < PNP_SLOTS_TOTAL; i++) {
+    for (int i = 0; i < CFG_BUS1_PMST_TOTAL; i++) {
+        sensitive << apbmi[i];
+    }
+    for (int i = 0; i < CFG_BUS1_PMST_TOTAL; i++) {
+        sensitive << apbmo[i];
+    }
+    for (int i = 0; i < CFG_BUS1_PSLV_TOTAL; i++) {
+        sensitive << apbsi[i];
+    }
+    for (int i = 0; i < CFG_BUS1_PSLV_TOTAL; i++) {
+        sensitive << apbso[i];
+    }
+    for (int i = 0; i < CFG_SOC_PNP_SLOTS_TOTAL; i++) {
         sensitive << dev_pnp[i];
     }
     sensitive << wb_clint_mtimer;
@@ -102,9 +139,16 @@ riscv_soc::riscv_soc(sc_module_name name)
     sensitive << wb_clint_mtip;
     sensitive << wb_plic_meip;
     sensitive << wb_plic_seip;
+    sensitive << w_irq_uart1;
 }
 
 riscv_soc::~riscv_soc() {
+    if (apbrdg0) {
+        delete apbrdg0;
+    }
+    if (uart1) {
+        delete uart1;
+    }
     if (group0) {
         delete group0;
     }
@@ -127,6 +171,12 @@ void riscv_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_uart1_td, o_uart1_td.name());
     }
 
+    if (apbrdg0) {
+        apbrdg0->generateVCD(i_vcd, o_vcd);
+    }
+    if (uart1) {
+        uart1->generateVCD(i_vcd, o_vcd);
+    }
     if (group0) {
         group0->generateVCD(i_vcd, o_vcd);
     }
@@ -145,6 +195,10 @@ void riscv_soc::comb() {
         vb_irq[i] = 0;
     }
 
+    // TODO: APB interconnect
+    apbsi[CFG_BUS1_PSLV_DMI] = apb_in_none;
+    apbsi[CFG_BUS1_PSLV_UART0] = apbmo[CFG_BUS1_PMST_BUS0];
+    apbmi[CFG_BUS1_PMST_BUS0] = apbso[CFG_BUS1_PSLV_UART0];
 }
 
 }  // namespace debugger

@@ -194,15 +194,6 @@ void CpuRiscV_RTL::createSystemC() {
     group0_->o_dmi_apbo(wb_dmi_apbo);
     group0_->o_dmreset(w_ndmreset);
 
-    bridgeapb0_ = new axi2apb("bridgeapb0",
-                              asyncReset_.to_bool());
-    bridgeapb0_->i_clk(wrapper_->o_clk);
-    bridgeapb0_->i_nrst(w_sys_nrst);
-    bridgeapb0_->i_xslvi(xslvi);
-    bridgeapb0_->o_xslvo(xslvo);
-    bridgeapb0_->o_apbi(apbi);
-    bridgeapb0_->i_apbo(apbo);
-
 
 #ifdef DBG_ICACHE_LRU_TB
     ICacheLru_tb *tb = new ICacheLru_tb("tb");
@@ -223,7 +214,6 @@ void CpuRiscV_RTL::deleteSystemC() {
     delete tapbb_;
     delete dmislv_;
     delete group0_;
-    delete bridgeapb0_;
 }
 
 void CpuRiscV_RTL::hapTriggered(EHapType type,

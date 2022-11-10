@@ -93,25 +93,32 @@ void apb_slv::comb() {
 
     switch (r.state.read()) {
     case State_Idle:
+        v.resp_valid = 0;
+        v.resp_err = 0;
         if (i_apbi.read().pselx == 1) {
-            v.state = State_access;
+            v.state = State_Request;
             v.req_valid = 1;
             v.req_addr = i_apbi.read().paddr;
             v.req_write = i_apbi.read().pwrite;
             v.req_wdata = i_apbi.read().pwdata;
         }
         break;
-    case State_access:
+    case State_Request:
+        // One clock wait state:
+        v.state = State_WaitResp;
+        break;
+    case State_WaitResp:
+        v.resp_valid = i_resp_valid;
         if (i_resp_valid.read() == 1) {
-            // One clock wait state:
-            v.resp_valid = 1;
             v.resp_rdata = i_resp_rdata;
             v.resp_err = i_resp_err;
+            v.state = State_Resp;
         }
-        if ((i_apbi.read().penable == 1) && (r.resp_valid.read() == 1)) {
+        break;
+    case State_Resp:
+        if (i_apbi.read().penable == 1) {
             v.state = State_Idle;
             v.resp_valid = 0;
-            v.resp_err = 0;
         }
         break;
     default:

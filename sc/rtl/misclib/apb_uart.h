@@ -344,8 +344,8 @@ void apb_uart<log2_fifosz>::comb() {
 
     vcfg.descrsize = PNP_CFG_DEV_DESCR_BYTES;
     vcfg.descrtype = PNP_CFG_TYPE_SLAVE;
-    vb_rx_fifo_rdata = r.rx_fifo[r.rx_rd_cnt];
-    vb_tx_fifo_rdata = r.tx_fifo[r.tx_rd_cnt];
+    vb_rx_fifo_rdata = r.rx_fifo[r.rx_rd_cnt.read().to_int()];
+    vb_tx_fifo_rdata = r.tx_fifo[r.tx_rd_cnt.read().to_int()];
 
     // Check FIFOs counters with thresholds:
     if (r.tx_byte_cnt.read() < r.tx_irq_thresh.read()) {
@@ -602,7 +602,7 @@ void apb_uart<log2_fifosz>::comb() {
     if (v_rx_fifo_we == 1) {
         v.rx_wr_cnt = (r.rx_wr_cnt.read() + 1);
         v.rx_byte_cnt = (r.rx_byte_cnt.read() + 1);
-        v.rx_fifo[r.rx_wr_cnt] = r.rx_shift;
+        v.rx_fifo[r.rx_wr_cnt.read().to_int()] = r.rx_shift.read()(7, 0);
     } else if (v_rx_fifo_re == 1) {
         v.rx_rd_cnt = (r.rx_rd_cnt.read() + 1);
         v.rx_byte_cnt = (r.rx_byte_cnt.read() - 1);
@@ -610,7 +610,7 @@ void apb_uart<log2_fifosz>::comb() {
     if (v_tx_fifo_we == 1) {
         v.tx_wr_cnt = (r.tx_wr_cnt.read() + 1);
         v.tx_byte_cnt = (r.tx_byte_cnt.read() + 1);
-        v.tx_fifo[r.tx_wr_cnt] = wb_req_wdata.read()(7, 0);
+        v.tx_fifo[r.tx_wr_cnt.read().to_int()] = wb_req_wdata.read()(7, 0);
     }
 
     v.resp_valid = w_req_valid;

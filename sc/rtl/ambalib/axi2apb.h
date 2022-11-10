@@ -27,8 +27,8 @@ SC_MODULE(axi2apb) {
     sc_out<dev_config_type> o_cfg;                          // Slave config descriptor
     sc_in<axi4_slave_in_type> i_xslvi;                      // AXI4 Interconnect Bridge interface
     sc_out<axi4_slave_out_type> o_xslvo;                    // AXI4 Bridge to Interconnect interface
-    sc_out<apb_in_type> o_apbi;                             // APB Bridge to Slave interface
-    sc_in<apb_out_type> i_apbo;                             // APB  Slave to Bridge interface
+    sc_in<apb_out_type> i_apbmi;                            // APB Slave to Bridge master-in/slave-out interface
+    sc_out<apb_in_type> o_apbmo;                            // APB Bridge to master-out/slave-in interface
 
     void comb();
     void registers();

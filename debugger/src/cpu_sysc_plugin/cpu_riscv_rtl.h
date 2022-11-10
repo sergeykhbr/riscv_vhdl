@@ -154,7 +154,6 @@ class CpuRiscV_RTL : public IService,
     TapBitBang *tapbb_;
     BusSlave *dmislv_;
     Workgroup *group0_;
-    axi2apb *bridgeapb0_;
 
     CmdBrRiscv *pcmd_br_;
     ICommand *pcmd_cpu_;

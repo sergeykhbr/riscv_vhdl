@@ -29,8 +29,8 @@ axi2apb::axi2apb(sc_module_name name,
     o_cfg("o_cfg"),
     i_xslvi("i_xslvi"),
     o_xslvo("o_xslvo"),
-    o_apbi("o_apbi"),
-    i_apbo("i_apbo") {
+    i_apbmi("i_apbmi"),
+    o_apbmo("o_apbmo") {
 
     async_reset_ = async_reset;
     xaddr_ = xaddr;
@@ -39,7 +39,7 @@ axi2apb::axi2apb(sc_module_name name,
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_xslvi;
-    sensitive << i_apbo;
+    sensitive << i_apbmi;
     sensitive << r.state;
     sensitive << r.paddr;
     sensitive << r.pdata;
@@ -64,8 +64,8 @@ void axi2apb::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_cfg, o_cfg.name());
         sc_trace(o_vcd, i_xslvi, i_xslvi.name());
         sc_trace(o_vcd, o_xslvo, o_xslvo.name());
-        sc_trace(o_vcd, o_apbi, o_apbi.name());
-        sc_trace(o_vcd, i_apbo, i_apbo.name());
+        sc_trace(o_vcd, i_apbmi, i_apbmi.name());
+        sc_trace(o_vcd, o_apbmo, o_apbmo.name());
         sc_trace(o_vcd, r.state, pn + ".r_state");
         sc_trace(o_vcd, r.paddr, pn + ".r_paddr");
         sc_trace(o_vcd, r.pdata, pn + ".r_pdata");
@@ -86,12 +86,12 @@ void axi2apb::comb() {
     dev_config_type vcfg;
     sc_uint<CFG_SYSBUS_DATA_BITS> vb_rdata;
     axi4_slave_out_type vslvo;
-    apb_in_type vapbi;
+    apb_in_type vapbmo;
 
     vcfg = dev_config_none;
     vb_rdata = 0;
     vslvo = axi4_slave_out_none;
-    vapbi = apb_in_none;
+    vapbmo = apb_in_none;
 
     v = r;
 
@@ -191,14 +191,15 @@ void axi2apb::comb() {
     case State_access:
         if (r.pwrite.read() == 0) {
             if (r.xsize.read().or_reduce() == 1) {
-                vb_rdata(63, 32) = i_apbo.read().prdata;
+                vb_rdata(63, 32) = i_apbmi.read().prdata;
             } else {
-                vb_rdata(31, 0) = i_apbo.read().prdata;
+                vb_rdata(31, 0) = i_apbmi.read().prdata;
             }
         }
-        v.pslverr = i_apbo.read().pslverr;
-        if (i_apbo.read().pready == 1) {
+        v.pslverr = i_apbmi.read().pslverr;
+        if (i_apbmi.read().pready == 1) {
             v.penable = 0;
+            v.pselx = 0;
             if (r.xsize.read().or_reduce() == 1) {
                 v.xsize = (r.xsize.read() - 1);
                 v.paddr = (r.paddr.read() + 4);
@@ -227,13 +228,13 @@ void axi2apb::comb() {
     }
 
     v.pdata = vb_rdata;
-    vapbi.paddr = r.paddr;
-    vapbi.pwrite = r.pwrite;
-    vapbi.pwdata = r.pdata.read()(31, 0);
-    vapbi.pstrb = r.pstrb.read()(3, 0);
-    vapbi.pselx = r.pselx;
-    vapbi.penable = r.penable;
-    vapbi.pprot = r.pprot;
+    vapbmo.paddr = r.paddr;
+    vapbmo.pwrite = r.pwrite;
+    vapbmo.pwdata = r.pdata.read()(31, 0);
+    vapbmo.pstrb = r.pstrb.read()(3, 0);
+    vapbmo.pselx = r.pselx;
+    vapbmo.penable = r.penable;
+    vapbmo.pprot = r.pprot;
 
     vslvo.r_data = r.pdata;
     vslvo.r_resp = (r.pslverr.read() << 1);
@@ -251,7 +252,7 @@ void axi2apb::comb() {
 
     o_cfg = vcfg;
     o_xslvo = vslvo;
-    o_apbi = vapbi;
+    o_apbmo = vapbmo;
 }
 
 void axi2apb::registers() {

@@ -48,7 +48,9 @@ SC_MODULE(apb_slv) {
     bool async_reset_;
 
     static const uint8_t State_Idle = 0;
-    static const uint8_t State_access = 1;
+    static const uint8_t State_Request = 1;
+    static const uint8_t State_WaitResp = 2;
+    static const uint8_t State_Resp = 3;
 
     struct apb_slv_registers {
         sc_signal<sc_uint<3>> state;
