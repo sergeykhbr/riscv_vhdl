@@ -211,7 +211,7 @@ void MemAccess::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void MemAccess::comb() {
-    sc_uint<CFG_CPU_ADDR_BITS> vb_req_addr;
+    sc_uint<RISCV_ARCH> vb_req_addr;
     sc_uint<64> vb_memop_wdata;
     sc_uint<8> vb_memop_wstrb;
     bool v_mem_valid;
@@ -219,7 +219,7 @@ void MemAccess::comb() {
     sc_uint<MemopType_Total> vb_mem_type;
     bool v_mem_sign_ext;
     sc_uint<2> vb_mem_sz;
-    sc_uint<CFG_CPU_ADDR_BITS> vb_mem_addr;
+    sc_uint<RISCV_ARCH> vb_mem_addr;
     sc_uint<64> vb_mem_rdata;
     bool v_queue_re;
     bool v_flushd;
@@ -234,7 +234,7 @@ void MemAccess::comb() {
     sc_uint<64> vb_mem_data_signed;
     sc_uint<RISCV_ARCH> vb_res_data;
     sc_uint<6> vb_res_addr;
-    sc_uint<CFG_CPU_ADDR_BITS> vb_e_pc;
+    sc_uint<RISCV_ARCH> vb_e_pc;
     sc_uint<32> vb_e_instr;
     bool v_memop_ready;
     bool v_o_wena;

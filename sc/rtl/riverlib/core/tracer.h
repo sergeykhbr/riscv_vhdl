@@ -27,7 +27,7 @@ SC_MODULE(Tracer) {
     sc_in<bool> i_nrst;                                     // Reset: active LOW
     sc_in<sc_uint<64>> i_dbg_executed_cnt;
     sc_in<bool> i_e_valid;
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_pc;
+    sc_in<sc_uint<RISCV_ARCH>> i_e_pc;
     sc_in<sc_uint<32>> i_e_instr;
     sc_in<bool> i_e_wena;
     sc_in<sc_uint<6>> i_e_waddr;
@@ -35,10 +35,10 @@ SC_MODULE(Tracer) {
     sc_in<bool> i_e_memop_valid;
     sc_in<sc_uint<MemopType_Total>> i_e_memop_type;
     sc_in<sc_uint<2>> i_e_memop_size;
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_memop_addr;
+    sc_in<sc_uint<RISCV_ARCH>> i_e_memop_addr;
     sc_in<sc_uint<RISCV_ARCH>> i_e_memop_wdata;
     sc_in<bool> i_e_flushd;
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_m_pc;               // executed memory/flush request only
+    sc_in<sc_uint<RISCV_ARCH>> i_m_pc;                      // executed memory/flush request only
     sc_in<bool> i_m_valid;                                  // memory/flush operation completed
     sc_in<bool> i_m_memop_ready;
     sc_in<bool> i_m_wena;

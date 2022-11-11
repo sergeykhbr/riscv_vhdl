@@ -57,14 +57,14 @@ void BpPreDecoder::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
 void BpPreDecoder::comb() {
     sc_uint<32> vb_tmp;
-    sc_uint<CFG_CPU_ADDR_BITS> vb_npc;
-    sc_uint<CFG_CPU_ADDR_BITS> vb_pc;
-    sc_uint<CFG_CPU_ADDR_BITS> vb_jal_off;
-    sc_uint<CFG_CPU_ADDR_BITS> vb_jal_addr;
-    sc_uint<CFG_CPU_ADDR_BITS> vb_branch_off;
-    sc_uint<CFG_CPU_ADDR_BITS> vb_branch_addr;
-    sc_uint<CFG_CPU_ADDR_BITS> vb_c_j_off;
-    sc_uint<CFG_CPU_ADDR_BITS> vb_c_j_addr;
+    sc_uint<RISCV_ARCH> vb_npc;
+    sc_uint<RISCV_ARCH> vb_pc;
+    sc_uint<RISCV_ARCH> vb_jal_off;
+    sc_uint<RISCV_ARCH> vb_jal_addr;
+    sc_uint<RISCV_ARCH> vb_branch_off;
+    sc_uint<RISCV_ARCH> vb_branch_addr;
+    sc_uint<RISCV_ARCH> vb_c_j_off;
+    sc_uint<RISCV_ARCH> vb_c_j_addr;
 
     vb_tmp = 0;
     vb_npc = 0;
@@ -81,9 +81,9 @@ void BpPreDecoder::comb() {
 
     // Unconditional jump "J"
     if (vb_tmp[31] == 1) {
-        vb_jal_off((CFG_CPU_ADDR_BITS - 1), 20) = ~0ull;
+        vb_jal_off((RISCV_ARCH - 1), 20) = ~0ull;
     } else {
-        vb_jal_off((CFG_CPU_ADDR_BITS - 1), 20) = 0;
+        vb_jal_off((RISCV_ARCH - 1), 20) = 0;
     }
     vb_jal_off(19, 12) = vb_tmp(19, 12);
     vb_jal_off[11] = vb_tmp[20];
@@ -99,9 +99,9 @@ void BpPreDecoder::comb() {
     // Conditional branches "BEQ", "BNE", "BLT", "BGE", "BLTU", "BGEU"
     // Only negative offset leads to predicted jumps
     if (vb_tmp[31] == 1) {
-        vb_branch_off((CFG_CPU_ADDR_BITS - 1), 12) = ~0ull;
+        vb_branch_off((RISCV_ARCH - 1), 12) = ~0ull;
     } else {
-        vb_branch_off((CFG_CPU_ADDR_BITS - 1), 12) = 0;
+        vb_branch_off((RISCV_ARCH - 1), 12) = 0;
     }
     vb_branch_off[11] = vb_tmp[7];
     vb_branch_off(10, 5) = vb_tmp(30, 25);
@@ -116,9 +116,9 @@ void BpPreDecoder::comb() {
 
     // Check Compressed "C_J" unconditional jump
     if (vb_tmp[12] == 1) {
-        vb_c_j_off((CFG_CPU_ADDR_BITS - 1), 11) = ~0ull;
+        vb_c_j_off((RISCV_ARCH - 1), 11) = ~0ull;
     } else {
-        vb_c_j_off((CFG_CPU_ADDR_BITS - 1), 11) = 0;
+        vb_c_j_off((RISCV_ARCH - 1), 11) = 0;
     }
     vb_c_j_off[10] = vb_tmp[8];
     vb_c_j_off(9, 8) = vb_tmp(10, 9);
@@ -148,7 +148,7 @@ void BpPreDecoder::comb() {
     } else if (v_c_j.read() == 1) {
         vb_npc = vb_c_j_addr;
     } else if (v_c_ret.read() == 1) {
-        vb_npc = i_ra.read()((CFG_CPU_ADDR_BITS - 1), 0);
+        vb_npc = i_ra.read()((RISCV_ARCH - 1), 0);
     } else {
         vb_npc = (vb_pc + 4);
     }

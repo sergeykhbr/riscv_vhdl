@@ -28,18 +28,18 @@ SC_MODULE(BranchPredictor) {
     sc_in<bool> i_nrst;                                     // Reset: active LOW
     sc_in<bool> i_flush_pipeline;                           // sync reset BTB
     sc_in<bool> i_resp_mem_valid;                           // Memory response from ICache is valid
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_resp_mem_addr;      // Memory response address
+    sc_in<sc_uint<RISCV_ARCH>> i_resp_mem_addr;             // Memory response address
     sc_in<sc_uint<64>> i_resp_mem_data;                     // Memory response value
     sc_in<bool> i_e_jmp;                                    // jump was executed
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_pc;               // Previous 'Executor' instruction
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_npc;              // Valid instruction value awaited by 'Executor'
+    sc_in<sc_uint<RISCV_ARCH>> i_e_pc;                      // Previous 'Executor' instruction
+    sc_in<sc_uint<RISCV_ARCH>> i_e_npc;                     // Valid instruction value awaited by 'Executor'
     sc_in<sc_uint<RISCV_ARCH>> i_ra;                        // Return address register value
     sc_out<bool> o_f_valid;                                 // Fetch request is valid
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_f_pc;              // Fetching instruction pointer
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_f_requested_pc;     // already requested but not accepted address
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_f_fetching_pc;      // currently memory address
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_f_fetched_pc;       // already requested and fetched address
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_d_pc;               // decoded instructions
+    sc_out<sc_uint<RISCV_ARCH>> o_f_pc;                     // Fetching instruction pointer
+    sc_in<sc_uint<RISCV_ARCH>> i_f_requested_pc;            // already requested but not accepted address
+    sc_in<sc_uint<RISCV_ARCH>> i_f_fetching_pc;             // currently memory address
+    sc_in<sc_uint<RISCV_ARCH>> i_f_fetched_pc;              // already requested and fetched address
+    sc_in<sc_uint<RISCV_ARCH>> i_d_pc;                      // decoded instructions
 
     void comb();
 
@@ -56,21 +56,21 @@ SC_MODULE(BranchPredictor) {
 
     struct PreDecType {
         sc_signal<bool> c_valid;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> addr;
+        sc_signal<sc_uint<RISCV_ARCH>> addr;
         sc_signal<sc_uint<32>> data;
         sc_signal<bool> jmp;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> npc;
+        sc_signal<sc_uint<RISCV_ARCH>> pc;
+        sc_signal<sc_uint<RISCV_ARCH>> npc;
     };
 
 
     PreDecType wb_pd[2];
     sc_signal<bool> w_btb_e;
     sc_signal<bool> w_btb_we;
-    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_btb_we_pc;
-    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_btb_we_npc;
-    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_start_pc;
-    sc_signal<sc_biguint<(CFG_BP_DEPTH * CFG_CPU_ADDR_BITS)>> wb_npc;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_btb_we_pc;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_btb_we_npc;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_start_pc;
+    sc_signal<sc_biguint<(CFG_BP_DEPTH * RISCV_ARCH)>> wb_npc;
     sc_signal<sc_uint<CFG_BP_DEPTH>> wb_bp_exec;            // Predicted value was jump-executed before
 
     BpBTB *btb;

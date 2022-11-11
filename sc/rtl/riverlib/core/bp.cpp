@@ -144,12 +144,12 @@ void BranchPredictor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void BranchPredictor::comb() {
-    sc_uint<CFG_CPU_ADDR_BITS> vb_addr[CFG_BP_DEPTH];
-    sc_uint<(CFG_CPU_ADDR_BITS - 2)> vb_piped[4];
-    sc_uint<CFG_CPU_ADDR_BITS> vb_fetch_npc;
+    sc_uint<RISCV_ARCH> vb_addr[CFG_BP_DEPTH];
+    sc_uint<(RISCV_ARCH - 2)> vb_piped[4];
+    sc_uint<RISCV_ARCH> vb_fetch_npc;
     bool v_btb_we;
-    sc_uint<CFG_CPU_ADDR_BITS> vb_btb_we_pc;
-    sc_uint<CFG_CPU_ADDR_BITS> vb_btb_we_npc;
+    sc_uint<RISCV_ARCH> vb_btb_we_pc;
+    sc_uint<RISCV_ARCH> vb_btb_we_npc;
     sc_uint<4> vb_hit;
     sc_uint<2> vb_ignore_pd;
 
@@ -168,18 +168,18 @@ void BranchPredictor::comb() {
 
     // Transform address into 2-dimesional array for convinience
     for (int i = 0; i < CFG_BP_DEPTH; i++) {
-        vb_addr[i] = wb_npc.read()((i * CFG_CPU_ADDR_BITS) + CFG_CPU_ADDR_BITS - 1, (i * CFG_CPU_ADDR_BITS));
+        vb_addr[i] = wb_npc.read()((i * RISCV_ARCH) + RISCV_ARCH - 1, (i * RISCV_ARCH));
     }
 
-    vb_piped[0] = i_d_pc.read()((CFG_CPU_ADDR_BITS - 1), 2);
-    vb_piped[1] = i_f_fetched_pc.read()((CFG_CPU_ADDR_BITS - 1), 2);
-    vb_piped[2] = i_f_fetching_pc.read()((CFG_CPU_ADDR_BITS - 1), 2);
-    vb_piped[3] = i_f_requested_pc.read()((CFG_CPU_ADDR_BITS - 1), 2);
+    vb_piped[0] = i_d_pc.read()((RISCV_ARCH - 1), 2);
+    vb_piped[1] = i_f_fetched_pc.read()((RISCV_ARCH - 1), 2);
+    vb_piped[2] = i_f_fetching_pc.read()((RISCV_ARCH - 1), 2);
+    vb_piped[3] = i_f_requested_pc.read()((RISCV_ARCH - 1), 2);
     // Check availablity of pc in pipeline
     vb_hit = 0;
     for (int n = 0; n < 4; n++) {
         for (int i = n; i < 4; i++) {
-            if (vb_addr[n]((CFG_CPU_ADDR_BITS - 1), 2) == vb_piped[i]) {
+            if (vb_addr[n]((RISCV_ARCH - 1), 2) == vb_piped[i]) {
                 vb_hit[n] = 1;
             }
         }
@@ -200,10 +200,10 @@ void BranchPredictor::comb() {
     }
     vb_ignore_pd = 0;
     for (int i = 0; i < 4; i++) {
-        if (wb_pd[0].npc.read()((CFG_CPU_ADDR_BITS - 1), 2) == vb_piped[i]) {
+        if (wb_pd[0].npc.read()((RISCV_ARCH - 1), 2) == vb_piped[i]) {
             vb_ignore_pd[0] = 1;
         }
-        if (wb_pd[1].npc.read()((CFG_CPU_ADDR_BITS - 1), 2) == vb_piped[i]) {
+        if (wb_pd[1].npc.read()((RISCV_ARCH - 1), 2) == vb_piped[i]) {
             vb_ignore_pd[1] = 1;
         }
     }
@@ -236,7 +236,7 @@ void BranchPredictor::comb() {
     wb_btb_we_npc = vb_btb_we_npc;
 
     o_f_valid = 1;
-    o_f_pc = (vb_fetch_npc((CFG_CPU_ADDR_BITS - 1), 2) << 2);
+    o_f_pc = (vb_fetch_npc((RISCV_ARCH - 1), 2) << 2);
 }
 
 }  // namespace debugger

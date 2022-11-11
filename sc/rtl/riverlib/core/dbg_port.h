@@ -28,7 +28,7 @@ SC_MODULE(DbgPort) {
     // "RIVER" Debug interface
     sc_in<bool> i_dport_req_valid;                          // Debug access from DSU is valid
     sc_in<sc_uint<DPortReq_Total>> i_dport_type;            // Debug access type
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_dport_addr;         // Debug address (register or memory)
+    sc_in<sc_uint<RISCV_ARCH>> i_dport_addr;                // Debug address (register or memory)
     sc_in<sc_uint<RISCV_ARCH>> i_dport_wdata;               // Write value
     sc_in<sc_uint<3>> i_dport_size;                         // reg/mem access size:0=1B;...,4=128B;
     sc_out<bool> o_dport_req_ready;
@@ -48,7 +48,7 @@ SC_MODULE(DbgPort) {
     sc_in<bool> i_csr_resp_exception;                       // Exception on CSR access
     sc_in<sc_biguint<(32 * CFG_PROGBUF_REG_TOTAL)>> i_progbuf;// progam buffer
     sc_out<bool> o_progbuf_ena;                             // Execution from the progbuffer is in progress
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_progbuf_pc;        // prog buffer instruction counter
+    sc_out<sc_uint<RISCV_ARCH>> o_progbuf_pc;               // prog buffer instruction counter
     sc_out<sc_uint<64>> o_progbuf_instr;                    // prog buffer instruction opcode
     sc_in<bool> i_csr_progbuf_end;                          // End of execution from progbuf
     sc_in<bool> i_csr_progbuf_error;                        // Exception is occured during progbuf execution
@@ -61,14 +61,14 @@ SC_MODULE(DbgPort) {
     sc_in<bool> i_mem_req_ready;                            // Type 2: memory request was accepted
     sc_in<bool> i_mem_req_error;                            // Type 2: memory request is invalid and cannot be processed
     sc_out<bool> o_mem_req_write;                           // Type 2: is write
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mem_req_addr;      // Type 2: Debug memory request
+    sc_out<sc_uint<RISCV_ARCH>> o_mem_req_addr;             // Type 2: Debug memory request
     sc_out<sc_uint<2>> o_mem_req_size;                      // Type 2: memory operation size: 0=1B; 1=2B; 2=4B; 3=8B
     sc_out<sc_uint<RISCV_ARCH>> o_mem_req_wdata;            // Type 2: memory write data
     sc_in<bool> i_mem_resp_valid;                           // Type 2: response is valid
     sc_in<bool> i_mem_resp_error;                           // Type 2: response error (MPU or unmapped access)
     sc_in<sc_uint<RISCV_ARCH>> i_mem_resp_rdata;            // Type 2: Memory response from memaccess module
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_pc;               // Instruction pointer
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_npc;              // Next Instruction pointer
+    sc_in<sc_uint<RISCV_ARCH>> i_e_pc;                      // Instruction pointer
+    sc_in<sc_uint<RISCV_ARCH>> i_e_npc;                     // Next Instruction pointer
     sc_in<bool> i_e_call;                                   // pseudo-instruction CALL
     sc_in<bool> i_e_ret;                                    // pseudo-instruction RET
     sc_in<bool> i_e_memop_valid;                            // Memory request from executor
@@ -103,7 +103,7 @@ SC_MODULE(DbgPort) {
 
     struct DbgPort_registers {
         sc_signal<bool> dport_write;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> dport_addr;
+        sc_signal<sc_uint<RISCV_ARCH>> dport_addr;
         sc_signal<sc_uint<RISCV_ARCH>> dport_wdata;
         sc_signal<sc_uint<RISCV_ARCH>> dport_rdata;
         sc_signal<sc_uint<2>> dport_size;
@@ -113,7 +113,7 @@ SC_MODULE(DbgPort) {
         sc_signal<bool> req_accepted;
         sc_signal<bool> resp_error;
         sc_signal<bool> progbuf_ena;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> progbuf_pc;
+        sc_signal<sc_uint<RISCV_ARCH>> progbuf_pc;
         sc_signal<sc_uint<64>> progbuf_instr;
     } v, r;
 
@@ -134,10 +134,10 @@ SC_MODULE(DbgPort) {
     }
 
     sc_signal<sc_uint<CFG_LOG2_STACK_TRACE_ADDR>> wb_stack_raddr;
-    sc_signal<sc_biguint<(2 * CFG_CPU_ADDR_BITS)>> wb_stack_rdata;
+    sc_signal<sc_biguint<(2 * RISCV_ARCH)>> wb_stack_rdata;
     sc_signal<bool> w_stack_we;
     sc_signal<sc_uint<CFG_LOG2_STACK_TRACE_ADDR>> wb_stack_waddr;
-    sc_signal<sc_biguint<(2 * CFG_CPU_ADDR_BITS)>> wb_stack_wdata;
+    sc_signal<sc_biguint<(2 * RISCV_ARCH)>> wb_stack_wdata;
 
     StackTraceBuffer *trbuf0;
 

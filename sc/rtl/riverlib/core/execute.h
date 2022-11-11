@@ -35,7 +35,7 @@ SC_MODULE(InstrExecute) {
     sc_in<sc_uint<6>> i_d_waddr;                            // rd address
     sc_in<sc_uint<12>> i_d_csr_addr;                        // decoded CSR address
     sc_in<sc_uint<RISCV_ARCH>> i_d_imm;                     // immediate value
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_d_pc;               // Instruction pointer on decoded instruction
+    sc_in<sc_uint<RISCV_ARCH>> i_d_pc;                      // Instruction pointer on decoded instruction
     sc_in<sc_uint<32>> i_d_instr;                           // Decoded instruction value
     sc_in<bool> i_d_progbuf_ena;                            // instruction from progbuf passed decoder
     sc_in<sc_uint<6>> i_wb_waddr;                           // write back address
@@ -62,7 +62,7 @@ SC_MODULE(InstrExecute) {
     sc_in<bool> i_page_fault_x;                             // IMMU execute page fault signal
     sc_in<bool> i_page_fault_r;                             // DMMU read access page fault
     sc_in<bool> i_page_fault_w;                             // DMMU write access page fault
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_mem_ex_addr;        // Memoryaccess: exception address
+    sc_in<sc_uint<RISCV_ARCH>> i_mem_ex_addr;               // Memoryaccess: exception address
     sc_in<sc_uint<IRQ_TOTAL>> i_irq_pending;                // Per Hart pending interrupts pins
     sc_in<bool> i_wakeup;                                   // There's pending bit even if interrupts globally disabled
     sc_in<bool> i_haltreq;                                  // halt request from debug unit
@@ -93,20 +93,20 @@ SC_MODULE(InstrExecute) {
     sc_out<bool> o_memop_sign_ext;                          // Load data with sign extending
     sc_out<sc_uint<MemopType_Total>> o_memop_type;          // [0]: 1=store/0=Load data
     sc_out<sc_uint<2>> o_memop_size;                        // 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_memop_memaddr;     // Memory access address
+    sc_out<sc_uint<RISCV_ARCH>> o_memop_memaddr;            // Memory access address
     sc_out<sc_uint<RISCV_ARCH>> o_memop_wdata;
     sc_in<bool> i_memop_ready;                              // memaccess is ready to accept memop on next clock
     sc_in<bool> i_memop_idle;                               // No memory operations in progress
     sc_in<bool> i_dbg_mem_req_valid;                        // Debug Request to memory is valid
     sc_in<bool> i_dbg_mem_req_write;                        // 0=read; 1=write
     sc_in<sc_uint<2>> i_dbg_mem_req_size;                   // 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_dbg_mem_req_addr;   // Memory access address
+    sc_in<sc_uint<RISCV_ARCH>> i_dbg_mem_req_addr;          // Memory access address
     sc_in<sc_uint<RISCV_ARCH>> i_dbg_mem_req_wdata;
     sc_out<bool> o_dbg_mem_req_ready;                       // Debug emmory request was accepted
     sc_out<bool> o_dbg_mem_req_error;                       // Debug memory reques misaliged
     sc_out<bool> o_valid;                                   // Output is valid
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_pc;                // Valid instruction pointer
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_npc;               // Next instruction pointer. Next decoded pc must match to this value or will be ignored.
+    sc_out<sc_uint<RISCV_ARCH>> o_pc;                       // Valid instruction pointer
+    sc_out<sc_uint<RISCV_ARCH>> o_npc;                      // Next instruction pointer. Next decoded pc must match to this value or will be ignored.
     sc_out<sc_uint<32>> o_instr;                            // Valid instruction value
     sc_out<bool> o_call;                                    // CALL pseudo instruction detected
     sc_out<bool> o_ret;                                     // RET pseudoinstruction detected (hw stack tracing)
@@ -174,7 +174,7 @@ SC_MODULE(InstrExecute) {
         sc_uint<6> radr2;
         sc_uint<6> waddr;
         sc_uint<RISCV_ARCH> imm;
-        sc_uint<CFG_CPU_ADDR_BITS> pc;
+        sc_uint<RISCV_ARCH> pc;
         sc_uint<32> instr;
         sc_uint<MemopType_Total> memop_type;
         bool memop_sign_ext;
@@ -192,9 +192,9 @@ SC_MODULE(InstrExecute) {
         sc_signal<sc_uint<4>> state;
         sc_signal<sc_uint<2>> csrstate;
         sc_signal<sc_uint<2>> amostate;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> npc;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> dnpc;
+        sc_signal<sc_uint<RISCV_ARCH>> pc;
+        sc_signal<sc_uint<RISCV_ARCH>> npc;
+        sc_signal<sc_uint<RISCV_ARCH>> dnpc;
         sc_signal<sc_uint<6>> radr1;
         sc_signal<sc_uint<6>> radr2;
         sc_signal<sc_uint<6>> waddr;
@@ -220,7 +220,7 @@ SC_MODULE(InstrExecute) {
         sc_signal<sc_uint<MemopType_Total>> memop_type;
         sc_signal<bool> memop_sign_ext;
         sc_signal<sc_uint<2>> memop_size;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> memop_memaddr;
+        sc_signal<sc_uint<RISCV_ARCH>> memop_memaddr;
         sc_signal<sc_uint<RISCV_ARCH>> memop_wdata;
         sc_signal<bool> unsigned_op;
         sc_signal<bool> rv32;
@@ -232,7 +232,7 @@ SC_MODULE(InstrExecute) {
         sc_signal<bool> mem_ex_store_fault;
         sc_signal<bool> page_fault_r;
         sc_signal<bool> page_fault_w;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mem_ex_addr;
+        sc_signal<sc_uint<RISCV_ARCH>> mem_ex_addr;
         sc_signal<sc_uint<RISCV_ARCH>> res_npc;
         sc_signal<sc_uint<RISCV_ARCH>> res_ra;
         sc_signal<sc_uint<RISCV_ARCH>> res_csr;

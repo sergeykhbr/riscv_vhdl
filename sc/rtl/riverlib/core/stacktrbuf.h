@@ -24,10 +24,10 @@ SC_MODULE(StackTraceBuffer) {
  public:
     sc_in<bool> i_clk;                                      // CPU clock
     sc_in<sc_uint<CFG_LOG2_STACK_TRACE_ADDR>> i_raddr;
-    sc_out<sc_biguint<(2 * CFG_CPU_ADDR_BITS)>> o_rdata;
+    sc_out<sc_biguint<(2 * RISCV_ARCH)>> o_rdata;
     sc_in<bool> i_we;
     sc_in<sc_uint<CFG_LOG2_STACK_TRACE_ADDR>> i_waddr;
-    sc_in<sc_biguint<(2 * CFG_CPU_ADDR_BITS)>> i_wdata;
+    sc_in<sc_biguint<(2 * RISCV_ARCH)>> i_wdata;
 
     void comb();
     void registers();
@@ -40,7 +40,7 @@ SC_MODULE(StackTraceBuffer) {
  private:
     struct StackTraceBuffer_registers {
         sc_signal<sc_uint<5>> raddr;
-        sc_signal<sc_biguint<(2 * CFG_CPU_ADDR_BITS)>> stackbuf[STACK_TRACE_BUF_SIZE];// [pc, npc]
+        sc_signal<sc_biguint<(2 * RISCV_ARCH)>> stackbuf[STACK_TRACE_BUF_SIZE];// [pc, npc]
     } v, r;
 
 

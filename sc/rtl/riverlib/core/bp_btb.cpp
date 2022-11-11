@@ -82,9 +82,9 @@ void BpBTB::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void BpBTB::comb() {
-    sc_biguint<(CFG_BP_DEPTH * CFG_CPU_ADDR_BITS)> vb_addr;
+    sc_biguint<(CFG_BP_DEPTH * RISCV_ARCH)> vb_addr;
     sc_uint<CFG_BP_DEPTH> vb_hit;
-    sc_uint<CFG_CPU_ADDR_BITS> t_addr;
+    sc_uint<RISCV_ARCH> t_addr;
     sc_uint<CFG_BTB_SIZE> vb_pc_equal;
     sc_uint<CFG_BTB_SIZE> vb_pc_nshift;
     sc_uint<CFG_BP_DEPTH> vb_bp_exec;
@@ -104,18 +104,18 @@ void BpBTB::comb() {
         v.btb[i].exec = r.btb[i].exec;
     }
 
-    vb_addr((CFG_CPU_ADDR_BITS - 1), 0) = i_bp_pc;
+    vb_addr((RISCV_ARCH - 1), 0) = i_bp_pc;
     vb_bp_exec[0] = i_e.read();
 
     for (int i = 1; i < CFG_BP_DEPTH; i++) {
-        t_addr = vb_addr(((i - 1) * CFG_CPU_ADDR_BITS) + CFG_CPU_ADDR_BITS - 1, ((i - 1) * CFG_CPU_ADDR_BITS));
+        t_addr = vb_addr(((i - 1) * RISCV_ARCH) + RISCV_ARCH - 1, ((i - 1) * RISCV_ARCH));
         for (int n = (CFG_BTB_SIZE - 1); n >= 0; n--) {
             if (t_addr == r.btb[n].pc) {
-                vb_addr((i * CFG_CPU_ADDR_BITS) + CFG_CPU_ADDR_BITS- 1, (i * CFG_CPU_ADDR_BITS)) = r.btb[n].npc;
+                vb_addr((i * RISCV_ARCH) + RISCV_ARCH- 1, (i * RISCV_ARCH)) = r.btb[n].npc;
                 vb_hit[i] = 1;
                 vb_bp_exec[i] = r.btb[n].exec;              // Used for: Do not override by pre-decoded jumps
             } else if (vb_hit[i] == 0) {
-                vb_addr((i * CFG_CPU_ADDR_BITS) + CFG_CPU_ADDR_BITS- 1, (i * CFG_CPU_ADDR_BITS)) = (t_addr + 4);
+                vb_addr((i * RISCV_ARCH) + RISCV_ARCH- 1, (i * RISCV_ARCH)) = (t_addr + 4);
             }
         }
     }
@@ -155,7 +155,7 @@ void BpBTB::comb() {
     }
 
     for (int i = 0; i < CFG_BP_DEPTH; i++) {
-        dbg_npc[i] = vb_addr((i * CFG_CPU_ADDR_BITS) + CFG_CPU_ADDR_BITS - 1, (i * CFG_CPU_ADDR_BITS)).to_uint64();
+        dbg_npc[i] = vb_addr((i * RISCV_ARCH) + RISCV_ARCH - 1, (i * RISCV_ARCH)).to_uint64();
     }
     o_bp_npc = vb_addr;
     o_bp_exec = vb_bp_exec;

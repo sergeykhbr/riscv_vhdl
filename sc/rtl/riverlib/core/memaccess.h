@@ -25,10 +25,10 @@ SC_MODULE(MemAccess) {
  public:
     sc_in<bool> i_clk;                                      // CPU clock
     sc_in<bool> i_nrst;                                     // Reset: active LOW
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_pc;               // Execution stage instruction pointer
+    sc_in<sc_uint<RISCV_ARCH>> i_e_pc;                      // Execution stage instruction pointer
     sc_in<sc_uint<32>> i_e_instr;                           // Execution stage instruction value
     sc_in<bool> i_flushd_valid;
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_flushd_addr;
+    sc_in<sc_uint<RISCV_ARCH>> i_flushd_addr;
     sc_out<bool> o_flushd;
     sc_in<bool> i_mmu_ena;                                  // MMU enabled
     sc_in<bool> i_mmu_sv39;                                 // MMU sv39 mode is enabled
@@ -44,7 +44,7 @@ SC_MODULE(MemAccess) {
     sc_in<bool> i_memop_sign_ext;                           // Load data with sign extending (if less than 8 Bytes)
     sc_in<sc_uint<MemopType_Total>> i_memop_type;           // [0] 1=store;0=Load data from memory and write to i_res_addr
     sc_in<sc_uint<2>> i_memop_size;                         // Encoded memory transaction size in bytes: 0=1B; 1=2B; 2=4B; 3=8B
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_memop_addr;         // Memory access address
+    sc_in<sc_uint<RISCV_ARCH>> i_memop_addr;                // Memory access address
     sc_out<bool> o_memop_ready;                             // Ready to accept memop request
     sc_out<bool> o_wb_wena;                                 // Write enable signal
     sc_out<sc_uint<6>> o_wb_waddr;                          // Output register address (0 = x0 = no write)
@@ -55,15 +55,15 @@ SC_MODULE(MemAccess) {
     sc_in<bool> i_mem_req_ready;                            // Data cache is ready to accept read/write request
     sc_out<bool> o_mem_valid;                               // Memory request is valid
     sc_out<sc_uint<MemopType_Total>> o_mem_type;            // Memory operation type
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mem_addr;          // Data path requested address
+    sc_out<sc_uint<RISCV_ARCH>> o_mem_addr;                 // Data path requested address
     sc_out<sc_uint<64>> o_mem_wdata;                        // Data path requested data (write transaction)
     sc_out<sc_uint<8>> o_mem_wstrb;                         // 8-bytes aligned strobs
     sc_out<sc_uint<2>> o_mem_size;                          // 1,2,4 or 8-bytes operation for uncached access
     sc_in<bool> i_mem_data_valid;                           // Data path memory response is valid
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_mem_data_addr;      // Data path memory response address
+    sc_in<sc_uint<RISCV_ARCH>> i_mem_data_addr;             // Data path memory response address
     sc_in<sc_uint<64>> i_mem_data;                          // Data path memory response value
     sc_out<bool> o_mem_resp_ready;                          // Pipeline is ready to accept memory operation response
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_pc;                // executed memory/flush request only
+    sc_out<sc_uint<RISCV_ARCH>> o_pc;                       // executed memory/flush request only
     sc_out<bool> o_valid;                                   // memory/flush operation completed
     sc_out<bool> o_idle;                                    // All memory operation completed
     sc_out<bool> o_debug_valid;                             // Debug request processed, response is valid
@@ -97,11 +97,11 @@ SC_MODULE(MemAccess) {
             + RISCV_ARCH  // vb_res_data
             + 6  // vb_res_addr
             + 32  // vb_e_instr
-            + CFG_CPU_ADDR_BITS  // vb_e_pc
+            + RISCV_ARCH  // vb_e_pc
             + 2  // vb_mem_sz
             + 1  // v_mem_sign_ext
             + MemopType_Total  // vb_mem_type
-            + CFG_CPU_ADDR_BITS  // vb_mem_addr
+            + RISCV_ARCH  // vb_mem_addr
     );
 
     struct MemAccess_registers {
@@ -110,20 +110,20 @@ SC_MODULE(MemAccess) {
         sc_signal<bool> mmu_sv39;
         sc_signal<bool> mmu_sv48;
         sc_signal<sc_uint<MemopType_Total>> memop_type;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> memop_addr;
+        sc_signal<sc_uint<RISCV_ARCH>> memop_addr;
         sc_signal<sc_uint<64>> memop_wdata;
         sc_signal<sc_uint<8>> memop_wstrb;
         sc_signal<bool> memop_sign_ext;
         sc_signal<sc_uint<2>> memop_size;
         sc_signal<bool> memop_debug;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> memop_res_pc;
+        sc_signal<sc_uint<RISCV_ARCH>> memop_res_pc;
         sc_signal<sc_uint<32>> memop_res_instr;
         sc_signal<sc_uint<6>> memop_res_addr;
         sc_signal<sc_uint<CFG_REG_TAG_WIDTH>> memop_res_wtag;
         sc_signal<sc_uint<RISCV_ARCH>> memop_res_data;
         sc_signal<bool> memop_res_wena;
         sc_signal<sc_uint<RISCV_ARCH>> hold_rdata;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
+        sc_signal<sc_uint<RISCV_ARCH>> pc;
         sc_signal<bool> valid;
     } v, r;
 

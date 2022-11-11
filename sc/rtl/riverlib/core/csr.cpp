@@ -354,7 +354,7 @@ void CsrRegs::comb() {
     bool v_flushmmu;
     bool v_flushpipeline;
     sc_uint<CFG_PMP_TBL_SIZE> vb_pmp_upd_ena;
-    sc_uint<CFG_CPU_ADDR_BITS> vb_pmp_napot_mask;
+    sc_uint<RISCV_ARCH> vb_pmp_napot_mask;
     bool v_napot_shift;
     int t_pmpdataidx;
     int t_pmpcfgidx;
@@ -559,7 +559,7 @@ void CsrRegs::comb() {
             v.cmd_data = ~0ull;                             // signal to executor to switch into Debug Mode and halt
         } else if (r.dcsr_ebreakm.read() == 1) {
             v.halt_cause = HALT_CAUSE_EBREAK;
-            v.dpc = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
+            v.dpc = r.cmd_data;
             v.cmd_data = ~0ull;                             // signal to executor to switch into Debug Mode and halt
         } else {
             vb_e_emux[EXCEPTION_Breakpoint] = 1;
@@ -688,7 +688,7 @@ void CsrRegs::comb() {
     } else if (r.cmd_addr.read() == 0x041) {                // uepc: [URW] User exception program counter
         vb_rdata = r.xmode[iU].xepc;
         if (v_csr_wena) {
-            v.xmode[iU].xepc = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
+            v.xmode[iU].xepc = r.cmd_data;
         }
     } else if (r.cmd_addr.read() == 0x042) {                // ucause: [URW] User trap cause
     } else if (r.cmd_addr.read() == 0x043) {                // utval: [URW] User bad address or instruction
@@ -808,7 +808,7 @@ void CsrRegs::comb() {
     } else if (r.cmd_addr.read() == 0x141) {                // sepc: [SRW] Supervisor exception program counter
         vb_rdata = r.xmode[iS].xepc;
         if (v_csr_wena) {
-            v.xmode[iS].xepc = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
+            v.xmode[iS].xepc = r.cmd_data;
         }
     } else if (r.cmd_addr.read() == 0x142) {                // scause: [SRW] Supervisor trap cause
         vb_rdata[63] = r.xmode[iS].xcause_irq;
@@ -991,7 +991,7 @@ void CsrRegs::comb() {
     } else if (r.cmd_addr.read() == 0x341) {                // mepc: [MRW] Machine program counter
         vb_rdata = r.xmode[iM].xepc;
         if (v_csr_wena) {
-            v.xmode[iM].xepc = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
+            v.xmode[iM].xepc = r.cmd_data;
         }
     } else if (r.cmd_addr.read() == 0x342) {                // mcause: [MRW] Machine trap cause
         vb_rdata[63] = r.xmode[iM].xcause_irq;
@@ -1029,7 +1029,7 @@ void CsrRegs::comb() {
     } else if ((r.cmd_addr.read() >= 0x3B0)
                 && (r.cmd_addr.read() <= 0x3EF)) {
         // pmpaddr0..63: [MRW] Physical memory protection address register
-        for (int i = 0; i < (CFG_CPU_ADDR_BITS - 2); i++) {
+        for (int i = 0; i < (RISCV_ARCH - 2); i++) {
             if ((r.cmd_data.read()[i] == 1) && (v_napot_shift == 0)) {
                 vb_pmp_napot_mask = ((vb_pmp_napot_mask << 1) | 1);
             } else {
@@ -1037,10 +1037,10 @@ void CsrRegs::comb() {
             }
         }
         if (t_pmpdataidx < CFG_PMP_TBL_SIZE) {
-            vb_rdata((CFG_CPU_ADDR_BITS - 3), 0) = r.pmp[t_pmpdataidx].addr.read()((CFG_CPU_ADDR_BITS - 1), 0);
+            vb_rdata((RISCV_ARCH - 3), 0) = r.pmp[t_pmpdataidx].addr;
             if ((v_csr_wena == 1)
                     && (r.pmp[t_pmpdataidx].cfg.read()[7] == 0)) {
-                v.pmp[t_pmpdataidx].addr = (r.cmd_data.read()((CFG_CPU_ADDR_BITS - 3), 0) << 2);
+                v.pmp[t_pmpdataidx].addr = (r.cmd_data.read()((RISCV_ARCH - 3), 0) << 2);
                 v.pmp[t_pmpdataidx].mask = vb_pmp_napot_mask;
             }
         }
@@ -1100,7 +1100,7 @@ void CsrRegs::comb() {
             vb_rdata = i_e_pc;
         }
         if (v_csr_wena == 1) {
-            v.dpc = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
+            v.dpc = r.cmd_data;
         }
     } else if (r.cmd_addr.read() == 0x7B2) {                // dscratch0: [DRW] Debug scratch register 0
         vb_rdata = r.dscratch0;
@@ -1115,12 +1115,12 @@ void CsrRegs::comb() {
     } else if (r.cmd_addr.read() == 0xBC0) {                // mstackovr: [MRW] Machine Stack Overflow
         vb_rdata = r.mstackovr;
         if (v_csr_wena == 1) {
-            v.mstackovr = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
+            v.mstackovr = r.cmd_data;
         }
     } else if (r.cmd_addr.read() == 0xBC1) {                // mstackund: [MRW] Machine Stack Underflow
         vb_rdata = r.mstackund;
         if (v_csr_wena == 1) {
-            v.mstackund = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
+            v.mstackund = r.cmd_data;
         }
     } else {
         // Not implemented CSR:
@@ -1249,12 +1249,12 @@ void CsrRegs::comb() {
     v.pmp_ena = ((!r.mode.read()[1]) | r.mprv.read());      // S,U mode or MPRV is set
 
     w_mstackovr = 0;
-    if ((r.mstackovr.read().or_reduce() == 1) && (i_sp.read()((CFG_CPU_ADDR_BITS - 1), 0) < r.mstackovr.read())) {
+    if ((r.mstackovr.read().or_reduce() == 1) && (i_sp.read() < r.mstackovr.read())) {
         w_mstackovr = 1;
         v.mstackovr = 0;
     }
     w_mstackund = 0;
-    if ((r.mstackund.read().or_reduce() == 1) && (i_sp.read()((CFG_CPU_ADDR_BITS - 1), 0) > r.mstackund.read())) {
+    if ((r.mstackund.read().or_reduce() == 1) && (i_sp.read() > r.mstackund.read())) {
         w_mstackund = 1;
         v.mstackund = 0;
     }
@@ -1384,7 +1384,7 @@ void CsrRegs::comb() {
     o_flushi_valid = v_flushi;
     o_flushmmu_valid = v_flushmmu;
     o_flushpipeline_valid = v_flushpipeline;
-    o_flush_addr = r.cmd_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
+    o_flush_addr = r.cmd_data;
 }
 
 void CsrRegs::registers() {

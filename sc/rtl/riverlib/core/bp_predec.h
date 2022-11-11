@@ -23,12 +23,12 @@ namespace debugger {
 SC_MODULE(BpPreDecoder) {
  public:
     sc_in<bool> i_c_valid;                                  // Use compressed for prediction
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_addr;               // Memory response address
+    sc_in<sc_uint<RISCV_ARCH>> i_addr;                      // Memory response address
     sc_in<sc_uint<32>> i_data;                              // Memory response value
     sc_in<sc_uint<RISCV_ARCH>> i_ra;                        // Return address register value
     sc_out<bool> o_jmp;                                     // Jump detected
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_pc;                // Fetching instruction pointer
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_npc;               // Fetching instruction pointer
+    sc_out<sc_uint<RISCV_ARCH>> o_pc;                       // Fetching instruction pointer
+    sc_out<sc_uint<RISCV_ARCH>> o_npc;                      // Fetching instruction pointer
 
     void comb();
 
@@ -39,7 +39,7 @@ SC_MODULE(BpPreDecoder) {
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
-    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> vb_npc;
+    sc_signal<sc_uint<RISCV_ARCH>> vb_npc;
     sc_signal<bool> v_jal;                                  // JAL instruction
     sc_signal<bool> v_branch;                               // One of branch instructions (only negative offset)
     sc_signal<bool> v_c_j;                                  // compressed J instruction

@@ -27,10 +27,10 @@ SC_MODULE(BpBTB) {
     sc_in<bool> i_flush_pipeline;                           // sync reset BTB
     sc_in<bool> i_e;                                        // executed jump
     sc_in<bool> i_we;                                       // Write enable into BTB
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_we_pc;              // Jump start instruction address
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_we_npc;             // Jump target address
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_bp_pc;              // Start address of the prediction sequence
-    sc_out<sc_biguint<(CFG_BP_DEPTH * CFG_CPU_ADDR_BITS)>> o_bp_npc;// Predicted sequence
+    sc_in<sc_uint<RISCV_ARCH>> i_we_pc;                     // Jump start instruction address
+    sc_in<sc_uint<RISCV_ARCH>> i_we_npc;                    // Jump target address
+    sc_in<sc_uint<RISCV_ARCH>> i_bp_pc;                     // Start address of the prediction sequence
+    sc_out<sc_biguint<(CFG_BP_DEPTH * RISCV_ARCH)>> o_bp_npc;// Predicted sequence
     sc_out<sc_uint<CFG_BP_DEPTH>> o_bp_exec;                // Predicted value was jump-executed before
 
     void comb();
@@ -47,8 +47,8 @@ SC_MODULE(BpBTB) {
     bool async_reset_;
 
     struct BtbEntryType {
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> npc;
+        sc_signal<sc_uint<RISCV_ARCH>> pc;
+        sc_signal<sc_uint<RISCV_ARCH>> npc;
         sc_signal<bool> exec;                               // 0=predec; 1=exec (high priority)
     };
 
@@ -57,7 +57,7 @@ SC_MODULE(BpBTB) {
         BtbEntryType btb[CFG_BTB_SIZE];
     } v, r;
 
-    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> dbg_npc[CFG_BP_DEPTH];
+    sc_signal<sc_uint<RISCV_ARCH>> dbg_npc[CFG_BP_DEPTH];
 
 
 };

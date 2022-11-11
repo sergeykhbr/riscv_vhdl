@@ -551,13 +551,13 @@ void InstrExecute::comb() {
     bool v_csr_resp_ready;
     sc_uint<RISCV_ARCH> vb_csr_cmd_wdata;
     sc_uint<RISCV_ARCH> vb_res;
-    sc_uint<CFG_CPU_ADDR_BITS> vb_prog_npc;
-    sc_uint<CFG_CPU_ADDR_BITS> vb_npc_incr;
+    sc_uint<RISCV_ARCH> vb_prog_npc;
+    sc_uint<RISCV_ARCH> vb_npc_incr;
     sc_uint<RISCV_ARCH> vb_off;
     sc_uint<RISCV_ARCH> vb_sub64;
-    sc_uint<CFG_CPU_ADDR_BITS> vb_memop_memaddr;
-    sc_uint<CFG_CPU_ADDR_BITS> vb_memop_memaddr_load;
-    sc_uint<CFG_CPU_ADDR_BITS> vb_memop_memaddr_store;
+    sc_uint<RISCV_ARCH> vb_memop_memaddr;
+    sc_uint<RISCV_ARCH> vb_memop_memaddr_load;
+    sc_uint<RISCV_ARCH> vb_memop_memaddr_store;
     sc_uint<RISCV_ARCH> vb_memop_wdata;
     sc_biguint<Instr_Total> wv;
     sc_uint<3> opcode_len;
@@ -595,7 +595,7 @@ void InstrExecute::comb() {
     bool v_halted;
     bool v_idle;
     input_mux_type mux;
-    sc_uint<CFG_CPU_ADDR_BITS> vb_o_npc;
+    sc_uint<RISCV_ARCH> vb_o_npc;
     int t_radr1;
     int t_radr2;
     int t_waddr;
@@ -775,8 +775,8 @@ void InstrExecute::comb() {
     }
     v.rdata1_amo = vb_rdata1_amo;
 
-    vb_memop_memaddr_load = (vb_rdata1((CFG_CPU_ADDR_BITS - 1), 0) + vb_rdata2((CFG_CPU_ADDR_BITS - 1), 0));
-    vb_memop_memaddr_store = (vb_rdata1((CFG_CPU_ADDR_BITS - 1), 0) + vb_off((CFG_CPU_ADDR_BITS - 1), 0));
+    vb_memop_memaddr_load = (vb_rdata1 + vb_rdata2);
+    vb_memop_memaddr_store = (vb_rdata1 + vb_off);
     if (mux.memop_type[MemopType_Store] == 0) {
         vb_memop_memaddr = vb_memop_memaddr_load;
     } else {
@@ -877,11 +877,11 @@ void InstrExecute::comb() {
     vb_npc_incr = (mux.pc + opcode_len);
 
     if (v_pc_branch == 1) {
-        vb_prog_npc = (mux.pc + vb_off((CFG_CPU_ADDR_BITS - 1), 0));
+        vb_prog_npc = (mux.pc + vb_off);
     } else if (wv[Instr_JAL] == 1) {
-        vb_prog_npc = (vb_rdata1((CFG_CPU_ADDR_BITS - 1), 0) + vb_off((CFG_CPU_ADDR_BITS - 1), 0));
+        vb_prog_npc = (vb_rdata1 + vb_off);
     } else if (wv[Instr_JALR] == 1) {
-        vb_prog_npc = (vb_rdata1((CFG_CPU_ADDR_BITS - 1), 0) + vb_rdata2((CFG_CPU_ADDR_BITS - 1), 0));
+        vb_prog_npc = (vb_rdata1 + vb_rdata2);
         vb_prog_npc[0] = 0;
     } else {
         vb_prog_npc = vb_npc_incr;
@@ -1214,7 +1214,7 @@ void InstrExecute::comb() {
                 v.state = State_WaitMulti;
             } else if (i_amo.read() == 1) {
                 v_memop_ena = 1;
-                vb_memop_memaddr = vb_rdata1((CFG_CPU_ADDR_BITS - 1), 0);
+                vb_memop_memaddr = vb_rdata1;
                 vb_memop_wdata = vb_rdata2;
                 v.state = State_Amo;
                 if (i_memop_ready.read() == 0) {
@@ -1281,7 +1281,7 @@ void InstrExecute::comb() {
                     } else {
                         v.state = State_Idle;
                         if (i_dbg_progbuf_ena.read() == 0) {
-                            v.npc = i_csr_resp_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
+                            v.npc = i_csr_resp_data;
                         }
                     }
                 } else if ((r.csr_req_type.read()[CsrReq_ExceptionBit]
@@ -1290,7 +1290,7 @@ void InstrExecute::comb() {
                     v.valid = wv[Instr_ECALL];              // No valid strob should be generated for all exceptions except ECALL
                     v.state = State_Idle;
                     if (i_dbg_progbuf_ena.read() == 0) {
-                        v.npc = i_csr_resp_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
+                        v.npc = i_csr_resp_data;
                     }
                 } else if (r.csr_req_type.read()[CsrReq_WfiBit] == 1) {
                     if (i_csr_resp_data.read()[0] == 1) {
@@ -1308,7 +1308,7 @@ void InstrExecute::comb() {
                     v.valid = 1;
                     v.state = State_Idle;
                     if (i_dbg_progbuf_ena.read() == 0) {
-                        v.npc = i_csr_resp_data.read()((CFG_CPU_ADDR_BITS - 1), 0);
+                        v.npc = i_csr_resp_data;
                     }
                 } else if (r.csr_req_rmw.read() == 1) {
                     v.csrstate = CsrState_Req;
@@ -1470,16 +1470,8 @@ void InstrExecute::comb() {
                 || wv[Instr_HRET]
                 || wv[Instr_SRET]
                 || wv[Instr_URET]);
-        if (vb_prog_npc[(CFG_CPU_ADDR_BITS - 1)] == 1) {
-            v.res_npc = (~0ull, vb_prog_npc);
-        } else {
-            v.res_npc = (0, vb_prog_npc);
-        }
-        if (vb_npc_incr[(CFG_CPU_ADDR_BITS - 1)] == 1) {
-            v.res_ra = (~0ull, vb_npc_incr);
-        } else {
-            v.res_ra = (0, vb_npc_incr);
-        }
+        v.res_npc = vb_prog_npc;
+        v.res_ra = vb_npc_incr;
 
         wb_select[Res_IMul].ena = vb_select[Res_IMul];
         wb_select[Res_IDiv].ena = vb_select[Res_IDiv];

@@ -25,25 +25,25 @@ SC_MODULE(InstrFetch) {
     sc_in<bool> i_clk;                                      // CPU clock
     sc_in<bool> i_nrst;                                     // Reset: active LOW
     sc_in<bool> i_bp_valid;
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_bp_pc;
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_requested_pc;
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_fetching_pc;
+    sc_in<sc_uint<RISCV_ARCH>> i_bp_pc;
+    sc_out<sc_uint<RISCV_ARCH>> o_requested_pc;
+    sc_out<sc_uint<RISCV_ARCH>> o_fetching_pc;
     sc_in<bool> i_mem_req_ready;
     sc_out<bool> o_mem_addr_valid;
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mem_addr;
+    sc_out<sc_uint<RISCV_ARCH>> o_mem_addr;
     sc_in<bool> i_mem_data_valid;
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_mem_data_addr;
+    sc_in<sc_uint<RISCV_ARCH>> i_mem_data_addr;
     sc_in<sc_uint<64>> i_mem_data;
     sc_in<bool> i_mem_load_fault;
     sc_in<bool> i_mem_page_fault_x;
     sc_out<bool> o_mem_resp_ready;
     sc_in<bool> i_flush_pipeline;                           // reset pipeline and cache
     sc_in<bool> i_progbuf_ena;                              // executing from prog buffer
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_progbuf_pc;         // progbuf counter
+    sc_in<sc_uint<RISCV_ARCH>> i_progbuf_pc;                // progbuf counter
     sc_in<sc_uint<64>> i_progbuf_instr;                     // progbuf instruction
     sc_out<bool> o_instr_load_fault;
     sc_out<bool> o_instr_page_fault_x;
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_pc;
+    sc_out<sc_uint<RISCV_ARCH>> o_pc;
     sc_out<sc_uint<64>> o_instr;
 
     void comb();
@@ -67,9 +67,9 @@ SC_MODULE(InstrFetch) {
         sc_signal<sc_uint<2>> state;
         sc_signal<bool> req_valid;
         sc_signal<bool> resp_ready;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_addr;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mem_resp_shadow;// the same as memory response but internal
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
+        sc_signal<sc_uint<RISCV_ARCH>> req_addr;
+        sc_signal<sc_uint<RISCV_ARCH>> mem_resp_shadow;     // the same as memory response but internal
+        sc_signal<sc_uint<RISCV_ARCH>> pc;
         sc_signal<sc_uint<64>> instr;
         sc_signal<bool> instr_load_fault;
         sc_signal<bool> instr_page_fault_x;

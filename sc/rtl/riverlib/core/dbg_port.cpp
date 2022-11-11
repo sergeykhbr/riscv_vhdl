@@ -343,9 +343,9 @@ void DbgPort::comb() {
         break;
     case reg_stktr_buf_dat:
         if (r.dport_addr.read()[0] == 0) {
-            vrdata((CFG_CPU_ADDR_BITS - 1), 0) = wb_stack_rdata.read()((CFG_CPU_ADDR_BITS - 1), 0);
+            vrdata = wb_stack_rdata.read()((RISCV_ARCH - 1), 0);
         } else {
-            vrdata((CFG_CPU_ADDR_BITS - 1), 0) = wb_stack_rdata.read()(((2 * CFG_CPU_ADDR_BITS) - 1), CFG_CPU_ADDR_BITS);
+            vrdata = wb_stack_rdata.read()(((2 * RISCV_ARCH) - 1), RISCV_ARCH);
         }
         v.dstate = wait_to_accept;
         break;

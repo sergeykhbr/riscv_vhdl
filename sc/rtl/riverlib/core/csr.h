@@ -35,7 +35,7 @@ SC_MODULE(CsrRegs) {
     sc_out<sc_uint<RISCV_ARCH>> o_resp_data;                // Responded CSR data
     sc_out<bool> o_resp_exception;                          // exception on CSR access
     sc_in<bool> i_e_halted;                                 // core is halted confirmation flag
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_e_pc;               // current latched instruction pointer in executor
+    sc_in<sc_uint<RISCV_ARCH>> i_e_pc;                      // current latched instruction pointer in executor
     sc_in<sc_uint<32>> i_e_instr;                           // current latched opcode in executor
     sc_in<sc_uint<IRQ_TOTAL>> i_irq_pending;                // Per Hart pending interrupts pins
     sc_out<sc_uint<IRQ_TOTAL>> o_irq_pending;               // Enabled and Unmasked interrupt pending bits
@@ -58,13 +58,13 @@ SC_MODULE(CsrRegs) {
     sc_out<bool> o_flushi_valid;                            // clear specified addr in ICache
     sc_out<bool> o_flushmmu_valid;                          // clear specific leaf entry in MMU
     sc_out<bool> o_flushpipeline_valid;                     // flush pipeline, must be don for fence.VMA and fence.i
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_flush_addr;        // Cache address to flush. All ones means flush all.
+    sc_out<sc_uint<RISCV_ARCH>> o_flush_addr;               // Cache address to flush. All ones means flush all.
     
     sc_out<bool> o_pmp_ena;                                 // PMP is active in S or U modes or if L/MPRV bit is set in M-mode
     sc_out<bool> o_pmp_we;                                  // write enable into PMP
     sc_out<sc_uint<CFG_PMP_TBL_WIDTH>> o_pmp_region;        // selected PMP region
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_pmp_start_addr;    // PMP region start address
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_pmp_end_addr;      // PMP region end address (inclusive)
+    sc_out<sc_uint<RISCV_ARCH>> o_pmp_start_addr;           // PMP region start address
+    sc_out<sc_uint<RISCV_ARCH>> o_pmp_end_addr;             // PMP region end address (inclusive)
     sc_out<sc_uint<CFG_PMP_FL_TOTAL>> o_pmp_flags;          // {ena, lock, r, w, x}
     
     sc_out<bool> o_mmu_ena;                                 // MMU enabled in U and S modes. Sv48 only.
@@ -115,7 +115,7 @@ SC_MODULE(CsrRegs) {
     static const uint8_t SATP_MODE_SV48 = 9;
 
     struct RegModeType {
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> xepc;
+        sc_signal<sc_uint<RISCV_ARCH>> xepc;
         sc_signal<sc_uint<2>> xpp;                          // Previous Privildge mode. If x is not implemented, then xPP mus be 0
         sc_signal<bool> xpie;                               // Previous Privildge mode global interrupt enable
         sc_signal<bool> xie;                                // Global interrupt enbale bit.
@@ -133,8 +133,8 @@ SC_MODULE(CsrRegs) {
 
     struct PmpItemType {
         sc_signal<sc_uint<8>> cfg;                          // pmpcfg bits without changes
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> addr;         // Maximal PMP address bits [55:2]
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mask;         // NAPOT mask formed from address
+        sc_signal<sc_uint<RISCV_ARCH>> addr;                // Maximal PMP address bits [55:2]
+        sc_signal<sc_uint<RISCV_ARCH>> mask;                // NAPOT mask formed from address
     };
 
 
@@ -156,8 +156,8 @@ SC_MODULE(CsrRegs) {
         sc_signal<sc_uint<64>> medeleg;
         sc_signal<sc_uint<IRQ_TOTAL>> mideleg;
         sc_signal<sc_uint<32>> mcountinhibit;               // When non zero stop specified performance counter
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mstackovr;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mstackund;
+        sc_signal<sc_uint<RISCV_ARCH>> mstackovr;
+        sc_signal<sc_uint<RISCV_ARCH>> mstackund;
         sc_signal<bool> mmu_ena;                            // Instruction MMU SV48 enabled in U- and S- modes
         sc_signal<sc_uint<44>> satp_ppn;                    // Physcal Page Number
         sc_signal<bool> satp_sv39;
@@ -172,12 +172,12 @@ SC_MODULE(CsrRegs) {
         sc_signal<bool> ex_fpu_overflow;                    // FPU Exception: overflow
         sc_signal<bool> ex_fpu_underflow;                   // FPU Exception: underflow
         sc_signal<bool> ex_fpu_inexact;                     // FPU Exception: inexact
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> trap_addr;
+        sc_signal<sc_uint<RISCV_ARCH>> trap_addr;
         sc_signal<sc_uint<64>> mcycle_cnt;                  // Cycle in clocks.
         sc_signal<sc_uint<64>> minstret_cnt;                // Number of the instructions the hart has retired
         sc_signal<sc_uint<RISCV_ARCH>> dscratch0;
         sc_signal<sc_uint<RISCV_ARCH>> dscratch1;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> dpc;
+        sc_signal<sc_uint<RISCV_ARCH>> dpc;
         sc_signal<sc_uint<3>> halt_cause;                   // 1=ebreak instruction; 2=breakpoint exception; 3=haltreq; 4=step
         sc_signal<bool> dcsr_ebreakm;                       // Enter or not into Debug Mode on EBREAK instruction
         sc_signal<bool> dcsr_stopcount;
@@ -191,8 +191,8 @@ SC_MODULE(CsrRegs) {
         sc_signal<bool> pmp_ena;
         sc_signal<bool> pmp_we;
         sc_signal<sc_uint<CFG_PMP_TBL_WIDTH>> pmp_region;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pmp_start_addr;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pmp_end_addr;
+        sc_signal<sc_uint<RISCV_ARCH>> pmp_start_addr;
+        sc_signal<sc_uint<RISCV_ARCH>> pmp_end_addr;
         sc_signal<sc_uint<CFG_PMP_FL_TOTAL>> pmp_flags;
     } v, r;
 

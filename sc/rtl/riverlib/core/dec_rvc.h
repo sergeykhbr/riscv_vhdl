@@ -26,7 +26,7 @@ SC_MODULE(DecoderRvc) {
     sc_in<bool> i_nrst;                                     // Reset: active LOW
     sc_in<bool> i_flush_pipeline;                           // reset pipeline and cache
     sc_in<bool> i_progbuf_ena;                              // executing from progbuf
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_f_pc;               // Fetched pc
+    sc_in<sc_uint<RISCV_ARCH>> i_f_pc;                      // Fetched pc
     sc_in<sc_uint<32>> i_f_instr;                           // Fetched instruction value
     sc_in<bool> i_instr_load_fault;                         // fault instruction's address
     sc_in<bool> i_instr_page_fault_x;                       // IMMU page fault signal
@@ -35,7 +35,7 @@ SC_MODULE(DecoderRvc) {
     sc_out<sc_uint<6>> o_waddr;                             // register bank output (rd)
     sc_out<sc_uint<12>> o_csr_addr;                         // CSR bank output
     sc_out<sc_uint<RISCV_ARCH>> o_imm;                      // immediate constant decoded from instruction
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_pc;                // Current instruction pointer value
+    sc_out<sc_uint<RISCV_ARCH>> o_pc;                       // Current instruction pointer value
     sc_out<sc_uint<32>> o_instr;                            // Current instruction value
     sc_out<bool> o_memop_store;                             // Store to memory operation
     sc_out<bool> o_memop_load;                              // Load from memoru operation
@@ -87,7 +87,7 @@ SC_MODULE(DecoderRvc) {
     static const uint8_t OPCODE_C_SDSP = 0x1E;
 
     struct DecoderRvc_registers {
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
+        sc_signal<sc_uint<RISCV_ARCH>> pc;
         sc_signal<sc_uint<ISA_Total>> isa_type;
         sc_signal<sc_biguint<Instr_Total>> instr_vec;
         sc_signal<sc_uint<16>> instr;

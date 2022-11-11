@@ -39,9 +39,9 @@ SC_MODULE(Processor) {
     // Control path:
     sc_in<bool> i_req_ctrl_ready;                           // ICache is ready to accept request
     sc_out<bool> o_req_ctrl_valid;                          // Request to ICache is valid
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_req_ctrl_addr;     // Requesting address to ICache
+    sc_out<sc_uint<RISCV_ARCH>> o_req_ctrl_addr;            // Requesting address to ICache
     sc_in<bool> i_resp_ctrl_valid;                          // ICache response is valid
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_resp_ctrl_addr;     // Response address must be equal to the latest request address
+    sc_in<sc_uint<RISCV_ARCH>> i_resp_ctrl_addr;            // Response address must be equal to the latest request address
     sc_in<sc_uint<64>> i_resp_ctrl_data;                    // Read value
     sc_in<bool> i_resp_ctrl_load_fault;
     sc_out<bool> o_resp_ctrl_ready;                         // Core is ready to accept response from ICache
@@ -49,14 +49,14 @@ SC_MODULE(Processor) {
     sc_in<bool> i_req_data_ready;                           // DCache is ready to accept request
     sc_out<bool> o_req_data_valid;                          // Request to DCache is valid
     sc_out<sc_uint<MemopType_Total>> o_req_data_type;       // Read/Write transaction plus additional flags
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_req_data_addr;     // Requesting address to DCache
+    sc_out<sc_uint<RISCV_ARCH>> o_req_data_addr;            // Requesting address to DCache
     sc_out<sc_uint<64>> o_req_data_wdata;                   // Writing value
     sc_out<sc_uint<8>> o_req_data_wstrb;                    // 8-bytes aligned strobs
     sc_out<sc_uint<2>> o_req_data_size;                     // memory operation 1,2,4 or 8 bytes
     sc_in<bool> i_resp_data_valid;                          // DCache response is valid
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_resp_data_addr;     // DCache response address must be equal to the latest request address
+    sc_in<sc_uint<RISCV_ARCH>> i_resp_data_addr;            // DCache response address must be equal to the latest request address
     sc_in<sc_uint<64>> i_resp_data_data;                    // Read value
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_resp_data_fault_addr;// write-error address (B-channel)
+    sc_in<sc_uint<RISCV_ARCH>> i_resp_data_fault_addr;      // write-error address (B-channel)
     sc_in<bool> i_resp_data_load_fault;                     // Bus response with SLVERR or DECERR on read
     sc_in<bool> i_resp_data_store_fault;                    // Bus response with SLVERR or DECERR on write
     sc_out<bool> o_resp_data_ready;                         // Core is ready to accept response from DCache
@@ -66,15 +66,15 @@ SC_MODULE(Processor) {
     sc_out<bool> o_pmp_ena;                                 // PMP is active in S or U modes or if L/MPRV bit is set in M-mode
     sc_out<bool> o_pmp_we;                                  // write enable into PMP
     sc_out<sc_uint<CFG_PMP_TBL_WIDTH>> o_pmp_region;        // selected PMP region
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_pmp_start_addr;    // PMP region start address
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_pmp_end_addr;      // PMP region end address (inclusive)
+    sc_out<sc_uint<RISCV_ARCH>> o_pmp_start_addr;           // PMP region start address
+    sc_out<sc_uint<RISCV_ARCH>> o_pmp_end_addr;             // PMP region end address (inclusive)
     sc_out<sc_uint<CFG_PMP_FL_TOTAL>> o_pmp_flags;          // {ena, lock, r, w, x}
     // Debug interface:
     sc_in<bool> i_haltreq;                                  // DMI: halt request from debug unit
     sc_in<bool> i_resumereq;                                // DMI: resume request from debug unit
     sc_in<bool> i_dport_req_valid;                          // Debug access from DSU is valid
     sc_in<sc_uint<DPortReq_Total>> i_dport_type;            // Debug access type
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_dport_addr;         // dport address
+    sc_in<sc_uint<RISCV_ARCH>> i_dport_addr;                // dport address
     sc_in<sc_uint<RISCV_ARCH>> i_dport_wdata;               // Write value
     sc_in<sc_uint<3>> i_dport_size;                         // reg/mem access size:0=1B;...,4=128B;
     sc_out<bool> o_dport_req_ready;
@@ -86,9 +86,9 @@ SC_MODULE(Processor) {
     sc_out<bool> o_halted;                                  // CPU halted via debug interface
     // Cache debug signals:
     sc_out<bool> o_flushi_valid;                            // Remove address from ICache is valid
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_flushi_addr;       // Address of instruction to remove from ICache
+    sc_out<sc_uint<RISCV_ARCH>> o_flushi_addr;              // Address of instruction to remove from ICache
     sc_out<bool> o_flushd_valid;                            // Remove address from D$ is valid
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_flushd_addr;       // Address of instruction to remove from D$
+    sc_out<sc_uint<RISCV_ARCH>> o_flushd_addr;              // Address of instruction to remove from D$
     sc_in<bool> i_flushd_end;
 
     void comb();
@@ -113,19 +113,19 @@ SC_MODULE(Processor) {
     struct FetchType {
         sc_signal<bool> instr_load_fault;
         sc_signal<bool> instr_page_fault_x;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> requested_pc; // requested but responded address
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> fetching_pc;  // receiving from cache before latch
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
+        sc_signal<sc_uint<RISCV_ARCH>> requested_pc;        // requested but responded address
+        sc_signal<sc_uint<RISCV_ARCH>> fetching_pc;         // receiving from cache before latch
+        sc_signal<sc_uint<RISCV_ARCH>> pc;
         sc_signal<sc_uint<64>> instr;
         sc_signal<bool> imem_req_valid;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> imem_req_addr;
+        sc_signal<sc_uint<RISCV_ARCH>> imem_req_addr;
         sc_signal<bool> imem_resp_ready;
     };
 
     struct MmuType {
         sc_signal<bool> req_ready;
         sc_signal<bool> valid;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> addr;
+        sc_signal<sc_uint<RISCV_ARCH>> addr;
         sc_signal<sc_uint<64>> data;
         sc_signal<bool> load_fault;
         sc_signal<bool> store_fault;
@@ -135,7 +135,7 @@ SC_MODULE(Processor) {
     };
 
     struct InstructionDecodeType {
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
+        sc_signal<sc_uint<RISCV_ARCH>> pc;
         sc_signal<sc_uint<32>> instr;
         sc_signal<bool> memop_store;
         sc_signal<bool> memop_load;
@@ -162,8 +162,8 @@ SC_MODULE(Processor) {
     struct ExecuteType {
         sc_signal<bool> valid;
         sc_signal<sc_uint<32>> instr;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> npc;
+        sc_signal<sc_uint<RISCV_ARCH>> pc;
+        sc_signal<sc_uint<RISCV_ARCH>> npc;
         sc_signal<sc_uint<6>> radr1;
         sc_signal<sc_uint<6>> radr2;
         sc_signal<bool> reg_wena;
@@ -180,7 +180,7 @@ SC_MODULE(Processor) {
         sc_signal<bool> memop_sign_ext;
         sc_signal<sc_uint<MemopType_Total>> memop_type;
         sc_signal<sc_uint<2>> memop_size;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> memop_addr;
+        sc_signal<sc_uint<RISCV_ARCH>> memop_addr;
         sc_signal<sc_uint<RISCV_ARCH>> memop_wdata;
         sc_signal<bool> call;                               // pseudo-instruction CALL
         sc_signal<bool> ret;                                // pseudo-instruction RET
@@ -193,7 +193,7 @@ SC_MODULE(Processor) {
     struct MemoryType {
         sc_signal<bool> memop_ready;
         sc_signal<bool> flushd;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> pc;
+        sc_signal<sc_uint<RISCV_ARCH>> pc;
         sc_signal<bool> valid;
         sc_signal<bool> idle;
         sc_signal<bool> debug_valid;
@@ -202,7 +202,7 @@ SC_MODULE(Processor) {
         sc_signal<bool> dmmu_sv48;
         sc_signal<bool> req_data_valid;
         sc_signal<sc_uint<MemopType_Total>> req_data_type;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_data_addr;
+        sc_signal<sc_uint<RISCV_ARCH>> req_data_addr;
         sc_signal<sc_uint<64>> req_data_wdata;
         sc_signal<sc_uint<8>> req_data_wstrb;
         sc_signal<sc_uint<2>> req_data_size;
@@ -264,7 +264,7 @@ SC_MODULE(Processor) {
         sc_signal<bool> flushi_valid;                       // clear specified addr in I$
         sc_signal<bool> flushmmu_valid;                     // clear specified leaf in xMMU
         sc_signal<bool> flushpipeline_valid;                // clear pipeline
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> flush_addr;
+        sc_signal<sc_uint<RISCV_ARCH>> flush_addr;
         sc_signal<sc_uint<64>> executed_cnt;                // Number of executed instruction
         sc_signal<sc_uint<IRQ_TOTAL>> irq_pending;
         sc_signal<bool> o_wakeup;                           // There's pending bit even if interrupts globally disabled
@@ -294,17 +294,17 @@ SC_MODULE(Processor) {
         sc_signal<bool> ireg_write;                         // Region 1: Integer registers bank write pulse
         sc_signal<bool> mem_req_valid;                      // Type 2: request is valid
         sc_signal<bool> mem_req_write;                      // Type 2: is write
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mem_req_addr; // Type 2: Debug memory request
+        sc_signal<sc_uint<RISCV_ARCH>> mem_req_addr;        // Type 2: Debug memory request
         sc_signal<sc_uint<2>> mem_req_size;                 // Type 2: memory operation size: 0=1B; 1=2B; 2=4B; 3=8B
         sc_signal<sc_uint<RISCV_ARCH>> mem_req_wdata;       // Type 2: memory write data
         sc_signal<bool> progbuf_ena;                        // execute instruction from progbuf
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> progbuf_pc;   // progbuf instruction counter
+        sc_signal<sc_uint<RISCV_ARCH>> progbuf_pc;          // progbuf instruction counter
         sc_signal<sc_uint<64>> progbuf_instr;               // progbuf instruction to execute
     };
 
     struct BranchPredictorType {
         sc_signal<bool> f_valid;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> f_pc;
+        sc_signal<sc_uint<RISCV_ARCH>> f_pc;
     };
 
     struct PipelineType {
