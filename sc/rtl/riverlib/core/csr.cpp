@@ -366,10 +366,10 @@ void CsrRegs::comb() {
     vb_xpp = 0;
     vb_pending = 0;
     vb_irq_ena = 0;
-    vb_e_emux = 0;
+    vb_e_emux = 0ull;
     vb_e_imux = 0;
     wb_trap_cause = 0;
-    vb_xtval = 0;
+    vb_xtval = 0ull;
     w_mstackovr = 0;
     w_mstackund = 0;
     v_csr_rena = 0;
@@ -383,8 +383,8 @@ void CsrRegs::comb() {
     v_resp_valid = 0;
     v_medeleg_ena = 0;
     v_mideleg_ena = 0;
-    vb_xtvec_off_ideleg = 0;
-    vb_xtvec_off_edeleg = 0;
+    vb_xtvec_off_ideleg = 0ull;
+    vb_xtvec_off_edeleg = 0ull;
     v_flushd = 0;
     v_flushi = 0;
     v_flushmmu = 0;

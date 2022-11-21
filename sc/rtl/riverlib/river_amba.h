@@ -143,7 +143,7 @@ SC_MODULE(RiverAmba) {
     sc_signal<bool> w_dporti_hartreset;
     sc_signal<bool> w_dporti_req_valid;
     sc_signal<sc_uint<DPortReq_Total>> wb_dporti_dtype;
-    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_dporti_addr;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_dporti_addr;
     sc_signal<sc_uint<RISCV_ARCH>> wb_dporti_wdata;
     sc_signal<sc_uint<3>> wb_dporti_size;
     sc_signal<bool> w_dporti_resp_ready;

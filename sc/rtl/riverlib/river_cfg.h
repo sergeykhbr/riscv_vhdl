@@ -27,7 +27,7 @@ static const bool CFG_TRACER_ENABLE = false;
 // Architectural size definition
 static const int RISCV_ARCH = 64;
 
-static const int CFG_CPU_ADDR_BITS = 64;
+static const int CFG_CPU_ADDR_BITS = 48;
 static const int CFG_CPU_ID_BITS = 1;
 static const int CFG_CPU_USER_BITS = 1;
 

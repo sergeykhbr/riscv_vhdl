@@ -285,10 +285,10 @@ void Mmu::comb() {
     vb_level3_off = 0;
     v_last_valid = 0;
     v_tlb_hit = 0;
-    vb_tlb_pa0 = 0;
-    vb_tlb_pa1 = 0;
-    vb_tlb_pa2 = 0;
-    vb_tlb_pa3 = 0;
+    vb_tlb_pa0 = 0ull;
+    vb_tlb_pa1 = 0ull;
+    vb_tlb_pa2 = 0ull;
+    vb_tlb_pa3 = 0ull;
     vb_tlb_pa_hit = 0;
     t_tlb_wdata = 0;
     t_idx_lsb = 0;

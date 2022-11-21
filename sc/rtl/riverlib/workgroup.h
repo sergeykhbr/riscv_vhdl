@@ -96,7 +96,7 @@ SC_MODULE(Workgroup) {
     sc_signal<bool> w_dmi_hartreset;
     sc_signal<bool> w_dmi_dport_req_valid;
     sc_signal<sc_uint<DPortReq_Total>> wb_dmi_dport_req_type;
-    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_dmi_dport_addr;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_dmi_dport_addr;
     sc_signal<sc_uint<RISCV_ARCH>> wb_dmi_dport_wdata;
     sc_signal<sc_uint<3>> wb_dmi_dport_size;
     sc_signal<bool> w_ic_dport_req_ready;

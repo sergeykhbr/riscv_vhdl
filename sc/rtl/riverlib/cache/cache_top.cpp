@@ -373,9 +373,9 @@ void CacheTop::comb() {
     sc_uint<RISCV_ARCH> vb_resp_ctrl_addr;
     sc_uint<RISCV_ARCH> vb_resp_data_addr;
 
-    vb_ctrl_bus = 0;
-    vb_data_bus = 0;
-    vb_queue_bus = 0;
+    vb_ctrl_bus = 0ull;
+    vb_data_bus = 0ull;
+    vb_queue_bus = 0ull;
     ctrl_path_id = 0;
     data_path_id = 0;
     v_queue_we = 0;
@@ -432,10 +432,10 @@ void CacheTop::comb() {
 
     wb_ctrl_resp_mem_data = i_resp_mem_data;
     wb_data_resp_mem_data = i_resp_mem_data;
-    v_req_mem_path_o = queue_rdata_o.read()[70];
-    vb_req_mem_type_o = queue_rdata_o.read()(69, 67);
-    vb_req_mem_size_o = queue_rdata_o.read()(66, 64);
-    vb_req_mem_addr_o = queue_rdata_o.read()(63, 0);
+    v_req_mem_path_o = queue_rdata_o.read()[54];
+    vb_req_mem_type_o = queue_rdata_o.read()(53, 51);
+    vb_req_mem_size_o = queue_rdata_o.read()(50, 48);
+    vb_req_mem_addr_o = queue_rdata_o.read()(47, 0);
 
     vb_resp_ctrl_addr((CFG_CPU_ADDR_BITS - 1), 0) = i.resp_addr;
     vb_resp_data_addr((CFG_CPU_ADDR_BITS - 1), 0) = d.resp_addr;

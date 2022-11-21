@@ -19,7 +19,7 @@
 
 namespace debugger {
 
-static const int CFG_SYSBUS_ADDR_BITS = 64;
+static const int CFG_SYSBUS_ADDR_BITS = 48;
 static const int CFG_LOG2_SYSBUS_DATA_BYTES = 3;
 static const int CFG_SYSBUS_ID_BITS = 5;
 static const int CFG_SYSBUS_USER_BITS = 1;
