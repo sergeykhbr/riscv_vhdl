@@ -84,8 +84,8 @@ void PMP::comb() {
     bool v_r;
     bool v_w;
     bool v_x;
-    sc_uint<CFG_CPU_ADDR_BITS> vb_start_addr;
-    sc_uint<CFG_CPU_ADDR_BITS> vb_end_addr;
+    sc_uint<RISCV_ARCH> vb_start_addr;
+    sc_uint<RISCV_ARCH> vb_end_addr;
     sc_uint<CFG_PMP_FL_TOTAL> vb_flags;
 
     v_r = 0;
@@ -116,16 +116,16 @@ void PMP::comb() {
     }
 
     for (int i = (CFG_PMP_TBL_SIZE - 1); i >= 0; i--) {
-        if ((i_iaddr.read() >= r.tbl[i].start_addr.read())
-                && (i_iaddr.read() <= r.tbl[i].end_addr.read())) {
+        if ((i_iaddr.read() >= r.tbl[i].start_addr.read()((CFG_CPU_ADDR_BITS - 1), 0))
+                && (i_iaddr.read() <= r.tbl[i].end_addr.read()((CFG_CPU_ADDR_BITS - 1), 0))) {
             if ((r.tbl[i].flags.read()[CFG_PMP_FL_V] == 1)
                     && (i_ena || r.tbl[i].flags.read()[CFG_PMP_FL_L])) {
                 v_x = r.tbl[i].flags.read()[CFG_PMP_FL_X];
             }
         }
 
-        if ((i_daddr.read() >= r.tbl[i].start_addr.read())
-                && (i_daddr.read() <= r.tbl[i].end_addr.read())) {
+        if ((i_daddr.read() >= r.tbl[i].start_addr.read()((CFG_CPU_ADDR_BITS - 1), 0))
+                && (i_daddr.read() <= r.tbl[i].end_addr.read()((CFG_CPU_ADDR_BITS - 1), 0))) {
             if ((r.tbl[i].flags.read()[CFG_PMP_FL_V] == 1)
                     && (i_ena || r.tbl[i].flags.read()[CFG_PMP_FL_L])) {
                 v_r = r.tbl[i].flags.read()[CFG_PMP_FL_R];

@@ -107,7 +107,7 @@ class dport_in_type {
     bool hartreset;
     bool req_valid;
     sc_uint<DPortReq_Total> dtype;
-    sc_uint<CFG_CPU_ADDR_BITS> addr;
+    sc_uint<RISCV_ARCH> addr;
     sc_uint<RISCV_ARCH> wdata;
     sc_uint<3> size;
     bool resp_ready;

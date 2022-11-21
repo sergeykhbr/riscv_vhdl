@@ -29,8 +29,8 @@ SC_MODULE(PMP) {
     sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_daddr;
     sc_in<bool> i_we;                                       // write enable into PMP
     sc_in<sc_uint<CFG_PMP_TBL_WIDTH>> i_region;             // selected PMP region
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_start_addr;         // PMP region start address
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_end_addr;           // PMP region end address (inclusive)
+    sc_in<sc_uint<RISCV_ARCH>> i_start_addr;                // PMP region start address
+    sc_in<sc_uint<RISCV_ARCH>> i_end_addr;                  // PMP region end address (inclusive)
     sc_in<sc_uint<CFG_PMP_FL_TOTAL>> i_flags;               // {ena, lock, r, w, x}
     sc_out<bool> o_r;
     sc_out<bool> o_w;
@@ -50,8 +50,8 @@ SC_MODULE(PMP) {
     bool async_reset_;
 
     struct PmpTableItemType {
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> start_addr;
-        sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> end_addr;
+        sc_signal<sc_uint<RISCV_ARCH>> start_addr;
+        sc_signal<sc_uint<RISCV_ARCH>> end_addr;
         sc_signal<sc_uint<CFG_PMP_FL_TOTAL>> flags;
     };
 

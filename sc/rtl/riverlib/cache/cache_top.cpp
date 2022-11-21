@@ -43,7 +43,6 @@ CacheTop::CacheTop(sc_module_name name,
     o_resp_data_valid("o_resp_data_valid"),
     o_resp_data_addr("o_resp_data_addr"),
     o_resp_data_data("o_resp_data_data"),
-    o_resp_data_fault_addr("o_resp_data_fault_addr"),
     o_resp_data_load_fault("o_resp_data_load_fault"),
     o_resp_data_store_fault("o_resp_data_store_fault"),
     i_resp_data_ready("i_resp_data_ready"),
@@ -92,10 +91,10 @@ CacheTop::CacheTop(sc_module_name name,
     i1->i_clk(i_clk);
     i1->i_nrst(i_nrst);
     i1->i_req_valid(i_req_ctrl_valid);
-    i1->i_req_addr(i_req_ctrl_addr);
+    i1->i_req_addr(wb_i_req_ctrl_addr);
     i1->o_req_ready(o_req_ctrl_ready);
     i1->o_resp_valid(o_resp_ctrl_valid);
-    i1->o_resp_addr(o_resp_ctrl_addr);
+    i1->o_resp_addr(i.resp_addr);
     i1->o_resp_data(o_resp_ctrl_data);
     i1->o_resp_load_fault(o_resp_ctrl_load_fault);
     i1->i_resp_ready(i_resp_ctrl_ready);
@@ -112,7 +111,7 @@ CacheTop::CacheTop(sc_module_name name,
     i1->o_mpu_addr(i.mpu_addr);
     i1->i_pma_cached(w_pma_icached);
     i1->i_pmp_x(w_pmp_x);
-    i1->i_flush_address(i_flushi_addr);
+    i1->i_flush_address(wb_i_flushi_addr);
     i1->i_flush_valid(i_flushi_valid);
 
 
@@ -121,15 +120,14 @@ CacheTop::CacheTop(sc_module_name name,
     d0->i_nrst(i_nrst);
     d0->i_req_valid(i_req_data_valid);
     d0->i_req_type(i_req_data_type);
-    d0->i_req_addr(i_req_data_addr);
+    d0->i_req_addr(wb_i_req_data_addr);
     d0->i_req_wdata(i_req_data_wdata);
     d0->i_req_wstrb(i_req_data_wstrb);
     d0->i_req_size(i_req_data_size);
     d0->o_req_ready(o_req_data_ready);
     d0->o_resp_valid(o_resp_data_valid);
-    d0->o_resp_addr(o_resp_data_addr);
+    d0->o_resp_addr(d.resp_addr);
     d0->o_resp_data(o_resp_data_data);
-    d0->o_resp_er_addr(o_resp_data_fault_addr);
     d0->o_resp_er_load_fault(o_resp_data_load_fault);
     d0->o_resp_er_store_fault(o_resp_data_store_fault);
     d0->i_resp_ready(i_resp_data_ready);
@@ -156,7 +154,7 @@ CacheTop::CacheTop(sc_module_name name,
     d0->o_resp_snoop_valid(o_resp_snoop_valid);
     d0->o_resp_snoop_data(o_resp_snoop_data);
     d0->o_resp_snoop_flags(o_resp_snoop_flags);
-    d0->i_flush_address(i_flushd_addr);
+    d0->i_flush_address(wb_i_flushd_addr);
     d0->i_flush_valid(i_flushd_valid);
     d0->o_flush_end(o_flushd_end);
 
@@ -230,6 +228,10 @@ CacheTop::CacheTop(sc_module_name name,
     sensitive << i_flushi_addr;
     sensitive << i_flushd_valid;
     sensitive << i_flushd_addr;
+    sensitive << wb_i_req_ctrl_addr;
+    sensitive << wb_i_req_data_addr;
+    sensitive << wb_i_flushi_addr;
+    sensitive << wb_i_flushd_addr;
     sensitive << i.req_mem_valid;
     sensitive << i.req_mem_type;
     sensitive << i.req_mem_size;
@@ -237,6 +239,7 @@ CacheTop::CacheTop(sc_module_name name,
     sensitive << i.req_mem_strob;
     sensitive << i.req_mem_wdata;
     sensitive << i.mpu_addr;
+    sensitive << i.resp_addr;
     sensitive << d.req_mem_valid;
     sensitive << d.req_mem_type;
     sensitive << d.req_mem_size;
@@ -244,6 +247,7 @@ CacheTop::CacheTop(sc_module_name name,
     sensitive << d.req_mem_strob;
     sensitive << d.req_mem_wdata;
     sensitive << d.mpu_addr;
+    sensitive << d.resp_addr;
     sensitive << w_ctrl_resp_mem_data_valid;
     sensitive << wb_ctrl_resp_mem_data;
     sensitive << w_ctrl_resp_mem_load_fault;
@@ -303,7 +307,6 @@ void CacheTop::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_resp_data_valid, o_resp_data_valid.name());
         sc_trace(o_vcd, o_resp_data_addr, o_resp_data_addr.name());
         sc_trace(o_vcd, o_resp_data_data, o_resp_data_data.name());
-        sc_trace(o_vcd, o_resp_data_fault_addr, o_resp_data_fault_addr.name());
         sc_trace(o_vcd, o_resp_data_load_fault, o_resp_data_load_fault.name());
         sc_trace(o_vcd, o_resp_data_store_fault, o_resp_data_store_fault.name());
         sc_trace(o_vcd, i_resp_data_ready, i_resp_data_ready.name());
@@ -367,6 +370,8 @@ void CacheTop::comb() {
     sc_uint<REQ_MEM_TYPE_BITS> vb_req_mem_type_o;
     sc_uint<3> vb_req_mem_size_o;
     sc_uint<CFG_CPU_ADDR_BITS> vb_req_mem_addr_o;
+    sc_uint<RISCV_ARCH> vb_resp_ctrl_addr;
+    sc_uint<RISCV_ARCH> vb_resp_data_addr;
 
     vb_ctrl_bus = 0;
     vb_data_bus = 0;
@@ -379,7 +384,13 @@ void CacheTop::comb() {
     vb_req_mem_type_o = 0;
     vb_req_mem_size_o = 0;
     vb_req_mem_addr_o = 0;
+    vb_resp_ctrl_addr = 0;
+    vb_resp_data_addr = 0;
 
+    wb_i_req_ctrl_addr = i_req_ctrl_addr.read()((CFG_CPU_ADDR_BITS - 1), 0);
+    wb_i_req_data_addr = i_req_data_addr.read()((CFG_CPU_ADDR_BITS - 1), 0);
+    wb_i_flushi_addr = i_flushi_addr.read()((CFG_CPU_ADDR_BITS - 1), 0);
+    wb_i_flushd_addr = i_flushd_addr.read()((CFG_CPU_ADDR_BITS - 1), 0);
     v_queue_re = i_req_mem_ready;
     v_queue_we = (i.req_mem_valid || d.req_mem_valid);
 
@@ -426,6 +437,17 @@ void CacheTop::comb() {
     vb_req_mem_size_o = queue_rdata_o.read()(66, 64);
     vb_req_mem_addr_o = queue_rdata_o.read()(63, 0);
 
+    vb_resp_ctrl_addr((CFG_CPU_ADDR_BITS - 1), 0) = i.resp_addr;
+    vb_resp_data_addr((CFG_CPU_ADDR_BITS - 1), 0) = d.resp_addr;
+    if (CFG_CPU_ADDR_BITS < RISCV_ARCH) {
+        if (i.resp_addr.read()[(CFG_CPU_ADDR_BITS - 1)] == 1) {
+            vb_resp_ctrl_addr((RISCV_ARCH - 1), CFG_CPU_ADDR_BITS) = ~0ull;
+        }
+        if (d.resp_addr.read()[(CFG_CPU_ADDR_BITS - 1)] == 1) {
+            vb_resp_data_addr((RISCV_ARCH - 1), CFG_CPU_ADDR_BITS) = ~0ull;
+        }
+    }
+
     o_req_mem_valid = queue_nempty_o;
     o_req_mem_path = v_req_mem_path_o;
     o_req_mem_type = vb_req_mem_type_o;
@@ -433,6 +455,8 @@ void CacheTop::comb() {
     o_req_mem_addr = vb_req_mem_addr_o;
     o_req_mem_strob = d.req_mem_strob;
     o_req_mem_data = d.req_mem_wdata;
+    o_resp_ctrl_addr = vb_resp_ctrl_addr;
+    o_resp_data_addr = vb_resp_data_addr;
 }
 
 }  // namespace debugger

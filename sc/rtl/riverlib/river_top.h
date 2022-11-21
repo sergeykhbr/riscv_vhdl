@@ -58,7 +58,7 @@ SC_MODULE(RiverTop) {
     sc_in<bool> i_resumereq;                                // DMI: resume request from debug unit
     sc_in<bool> i_dport_req_valid;                          // Debug access from DSU is valid
     sc_in<sc_uint<DPortReq_Total>> i_dport_type;            // Debug access type
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_dport_addr;         // dport address
+    sc_in<sc_uint<RISCV_ARCH>> i_dport_addr;                // dport address
     sc_in<sc_uint<RISCV_ARCH>> i_dport_wdata;               // Write value
     sc_in<sc_uint<3>> i_dport_size;                         // reg/mem access size:0=1B;...,4=128B;
     sc_out<bool> o_dport_req_ready;
@@ -93,9 +93,9 @@ SC_MODULE(RiverTop) {
     // Control path:
     sc_signal<bool> w_req_ctrl_ready;
     sc_signal<bool> w_req_ctrl_valid;
-    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_req_ctrl_addr;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_req_ctrl_addr;
     sc_signal<bool> w_resp_ctrl_valid;
-    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_resp_ctrl_addr;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_resp_ctrl_addr;
     sc_signal<sc_uint<64>> wb_resp_ctrl_data;
     sc_signal<bool> w_resp_ctrl_load_fault;
     sc_signal<bool> w_resp_ctrl_ready;
@@ -103,27 +103,26 @@ SC_MODULE(RiverTop) {
     sc_signal<bool> w_req_data_ready;
     sc_signal<bool> w_req_data_valid;
     sc_signal<sc_uint<MemopType_Total>> wb_req_data_type;
-    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_req_data_addr;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_req_data_addr;
     sc_signal<sc_uint<64>> wb_req_data_wdata;
     sc_signal<sc_uint<8>> wb_req_data_wstrb;
     sc_signal<sc_uint<2>> wb_req_data_size;
     sc_signal<bool> w_resp_data_valid;
-    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_resp_data_addr;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_resp_data_addr;
     sc_signal<sc_uint<64>> wb_resp_data_data;
     sc_signal<bool> w_resp_data_load_fault;
     sc_signal<bool> w_resp_data_store_fault;
-    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_resp_data_fault_addr;
     sc_signal<bool> w_resp_data_ready;
     sc_signal<bool> w_pmp_ena;
     sc_signal<bool> w_pmp_we;
     sc_signal<sc_uint<CFG_PMP_TBL_WIDTH>> wb_pmp_region;
-    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_pmp_start_addr;
-    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_pmp_end_addr;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_pmp_start_addr;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_pmp_end_addr;
     sc_signal<sc_uint<CFG_PMP_FL_TOTAL>> wb_pmp_flags;
     sc_signal<bool> w_flushi_valid;
-    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_flushi_addr;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_flushi_addr;
     sc_signal<bool> w_flushd_valid;
-    sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> wb_flushd_addr;
+    sc_signal<sc_uint<RISCV_ARCH>> wb_flushd_addr;
     sc_signal<bool> w_flushd_end;
 
     Processor *proc0;

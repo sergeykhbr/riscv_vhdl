@@ -48,7 +48,6 @@ Processor::Processor(sc_module_name name,
     i_resp_data_valid("i_resp_data_valid"),
     i_resp_data_addr("i_resp_data_addr"),
     i_resp_data_data("i_resp_data_data"),
-    i_resp_data_fault_addr("i_resp_data_fault_addr"),
     i_resp_data_load_fault("i_resp_data_load_fault"),
     i_resp_data_store_fault("i_resp_data_store_fault"),
     o_resp_data_ready("o_resp_data_ready"),
@@ -626,7 +625,6 @@ Processor::Processor(sc_module_name name,
     sensitive << i_resp_data_valid;
     sensitive << i_resp_data_addr;
     sensitive << i_resp_data_data;
-    sensitive << i_resp_data_fault_addr;
     sensitive << i_resp_data_load_fault;
     sensitive << i_resp_data_store_fault;
     sensitive << i_irq_pending;
@@ -912,7 +910,6 @@ void Processor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_resp_data_valid, i_resp_data_valid.name());
         sc_trace(o_vcd, i_resp_data_addr, i_resp_data_addr.name());
         sc_trace(o_vcd, i_resp_data_data, i_resp_data_data.name());
-        sc_trace(o_vcd, i_resp_data_fault_addr, i_resp_data_fault_addr.name());
         sc_trace(o_vcd, i_resp_data_load_fault, i_resp_data_load_fault.name());
         sc_trace(o_vcd, i_resp_data_store_fault, i_resp_data_store_fault.name());
         sc_trace(o_vcd, o_resp_data_ready, o_resp_data_ready.name());

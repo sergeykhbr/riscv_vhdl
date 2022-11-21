@@ -56,7 +56,6 @@ SC_MODULE(Processor) {
     sc_in<bool> i_resp_data_valid;                          // DCache response is valid
     sc_in<sc_uint<RISCV_ARCH>> i_resp_data_addr;            // DCache response address must be equal to the latest request address
     sc_in<sc_uint<64>> i_resp_data_data;                    // Read value
-    sc_in<sc_uint<RISCV_ARCH>> i_resp_data_fault_addr;      // write-error address (B-channel)
     sc_in<bool> i_resp_data_load_fault;                     // Bus response with SLVERR or DECERR on read
     sc_in<bool> i_resp_data_store_fault;                    // Bus response with SLVERR or DECERR on write
     sc_out<bool> o_resp_data_ready;                         // Core is ready to accept response from DCache

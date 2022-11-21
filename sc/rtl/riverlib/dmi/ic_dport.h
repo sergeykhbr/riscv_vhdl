@@ -33,7 +33,7 @@ SC_MODULE(ic_dport) {
     sc_in<bool> i_hartreset;                                // Reset currently selected hart
     sc_in<bool> i_dport_req_valid;                          // Debug access from DSU is valid
     sc_in<sc_uint<DPortReq_Total>> i_dport_req_type;        // Debug access types
-    sc_in<sc_uint<CFG_CPU_ADDR_BITS>> i_dport_addr;         // Register index
+    sc_in<sc_uint<RISCV_ARCH>> i_dport_addr;                // Register index
     sc_in<sc_uint<RISCV_ARCH>> i_dport_wdata;               // Write value
     sc_in<sc_uint<3>> i_dport_size;                         // 0=1B;1=2B;2=4B;3=8B;4=128B
     sc_out<bool> o_dport_req_ready;                         // Response is ready

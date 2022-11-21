@@ -36,7 +36,6 @@ SC_MODULE(DCacheLru) {
     sc_out<bool> o_resp_valid;
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_resp_addr;
     sc_out<sc_uint<64>> o_resp_data;
-    sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_resp_er_addr;
     sc_out<bool> o_resp_er_load_fault;
     sc_out<bool> o_resp_er_store_fault;
     sc_in<bool> i_resp_ready;

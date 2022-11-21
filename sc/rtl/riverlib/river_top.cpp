@@ -97,7 +97,6 @@ RiverTop::RiverTop(sc_module_name name,
     proc0->i_resp_data_valid(w_resp_data_valid);
     proc0->i_resp_data_addr(wb_resp_data_addr);
     proc0->i_resp_data_data(wb_resp_data_data);
-    proc0->i_resp_data_fault_addr(wb_resp_data_fault_addr);
     proc0->i_resp_data_load_fault(w_resp_data_load_fault);
     proc0->i_resp_data_store_fault(w_resp_data_store_fault);
     proc0->o_resp_data_ready(w_resp_data_ready);
@@ -150,7 +149,6 @@ RiverTop::RiverTop(sc_module_name name,
     cache0->o_resp_data_valid(w_resp_data_valid);
     cache0->o_resp_data_addr(wb_resp_data_addr);
     cache0->o_resp_data_data(wb_resp_data_data);
-    cache0->o_resp_data_fault_addr(wb_resp_data_fault_addr);
     cache0->o_resp_data_load_fault(w_resp_data_load_fault);
     cache0->o_resp_data_store_fault(w_resp_data_store_fault);
     cache0->i_resp_data_ready(w_resp_data_ready);
@@ -232,7 +230,6 @@ RiverTop::RiverTop(sc_module_name name,
     sensitive << wb_resp_data_data;
     sensitive << w_resp_data_load_fault;
     sensitive << w_resp_data_store_fault;
-    sensitive << wb_resp_data_fault_addr;
     sensitive << w_resp_data_ready;
     sensitive << w_pmp_ena;
     sensitive << w_pmp_we;
