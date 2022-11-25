@@ -82,6 +82,62 @@ static const uint8_t PNP_CFG_TYPE_SLAVE = 0x2;
 // @details Firmware uses this value instead of sizeof(slave_config_type).
 static const uint8_t PNP_CFG_DEV_DESCR_BYTES = 0x10;
 
+// @brief Map information for the memory mapped device.
+class mapinfo_type {
+ public:
+    mapinfo_type() {
+        // Base Address.
+        addr_start = 0;
+        // Maskable bits of the base address.
+        addr_end = 0;
+    }
+
+    mapinfo_type(uint64_t start, uint64_t end) {
+        // Base Address.
+        addr_start = start;
+        // Maskable bits of the base address.
+        addr_end = end;
+    }
+
+    inline bool operator == (const mapinfo_type &rhs) const {
+        bool ret = true;
+        ret = ret
+            && rhs.addr_start == addr_start
+            && rhs.addr_end == addr_end;
+        return ret;
+    }
+
+    inline mapinfo_type& operator = (const mapinfo_type &rhs) {
+        addr_start = rhs.addr_start;
+        addr_end = rhs.addr_end;
+        return *this;
+    }
+
+    inline friend void sc_trace(sc_trace_file *tf,
+                                const mapinfo_type&v,
+                                const std::string &NAME) {
+        sc_trace(tf, v.addr_start, NAME + "_addr_start");
+        sc_trace(tf, v.addr_end, NAME + "_addr_end");
+    }
+
+    inline friend ostream &operator << (ostream &os,
+                                        mapinfo_type const &v) {
+        os << "("
+        << v.addr_start << ","
+        << v.addr_end << ")";
+        return os;
+    }
+
+ public:
+    // Base Address.;
+    uint64_t addr_start;
+    // Maskable bits of the base address.;
+    uint64_t addr_end;
+};
+
+// @brief Empty entry value for the map info table
+static const mapinfo_type mapinfo_none;
+
 // @brief   Plug-n-play descriptor structure for connected device.
 // @details Each device must generates this datatype output that
 //          is connected directly to the 'pnp' slave module on system bus.
@@ -93,9 +149,9 @@ class dev_config_type {
         // Descriptor type.
         descrtype = PNP_CFG_TYPE_SLAVE;
         // Base Address.
-        xaddr = 0ull;
-        // Maskable bits of the base address.
-        xmask = 0ull;
+        addr_start = 0ull;
+        // End of the base address.
+        addr_end = 0ull;
         // Vendor ID.
         vid = VENDOR_GNSSSENSOR;
         // Device ID.
@@ -107,8 +163,8 @@ class dev_config_type {
         ret = ret
             && rhs.descrsize == descrsize
             && rhs.descrtype == descrtype
-            && rhs.xaddr == xaddr
-            && rhs.xmask == xmask
+            && rhs.addr_start == addr_start
+            && rhs.addr_end == addr_end
             && rhs.vid == vid
             && rhs.did == did;
         return ret;
@@ -117,8 +173,8 @@ class dev_config_type {
     inline dev_config_type& operator = (const dev_config_type &rhs) {
         descrsize = rhs.descrsize;
         descrtype = rhs.descrtype;
-        xaddr = rhs.xaddr;
-        xmask = rhs.xmask;
+        addr_start = rhs.addr_start;
+        addr_end = rhs.addr_end;
         vid = rhs.vid;
         did = rhs.did;
         return *this;
@@ -129,8 +185,8 @@ class dev_config_type {
                                 const std::string &NAME) {
         sc_trace(tf, v.descrsize, NAME + "_descrsize");
         sc_trace(tf, v.descrtype, NAME + "_descrtype");
-        sc_trace(tf, v.xaddr, NAME + "_xaddr");
-        sc_trace(tf, v.xmask, NAME + "_xmask");
+        sc_trace(tf, v.addr_start, NAME + "_addr_start");
+        sc_trace(tf, v.addr_end, NAME + "_addr_end");
         sc_trace(tf, v.vid, NAME + "_vid");
         sc_trace(tf, v.did, NAME + "_did");
     }
@@ -140,8 +196,8 @@ class dev_config_type {
         os << "("
         << v.descrsize << ","
         << v.descrtype << ","
-        << v.xaddr << ","
-        << v.xmask << ","
+        << v.addr_start << ","
+        << v.addr_end << ","
         << v.vid << ","
         << v.did << ")";
         return os;
@@ -153,9 +209,9 @@ class dev_config_type {
     // Descriptor type.;
     sc_uint<2> descrtype;
     // Base Address.;
-    sc_uint<CFG_SYSBUS_ADDR_BITS> xaddr;
-    // Maskable bits of the base address.;
-    sc_uint<CFG_SYSBUS_ADDR_BITS> xmask;
+    sc_uint<64> addr_start;
+    // End of the base address.;
+    sc_uint<64> addr_end;
     // Vendor ID.;
     sc_uint<16> vid;
     // Device ID.;
@@ -178,7 +234,7 @@ static sc_uint<XSIZE_TOTAL> XSizeToBytes(sc_uint<3> xsize) {
 // @brief Normal access success.
 // @details Indicates that a normal access has been
 // successful. Can also indicate an exclusive access has failed.
-static const uint8_t AXI_RESP_OKAY = 1;
+static const uint8_t AXI_RESP_OKAY = 0;
 // @brief Exclusive access okay.
 // @details Indicates that either the read or write
 // portion of an exclusive access has been successful.

@@ -190,7 +190,7 @@ void test_pmp() {
                 : [m1] "r" (-1U));
 
     if (wValue != ~0 || *pmp->p_r_only != W32_NO_INTERRUPT) {
-        printf_uart("FAIL(2), wValue=%08x, r_only=%08x\r\b", wValue, *pmp->p_r_only);
+        printf_uart("FAIL(2), wValue=%08x, r_only=%08x\r\n", wValue, *pmp->p_r_only);
         restore_state(pmp->mtvec, pmp->mstatus);
         return;
     }

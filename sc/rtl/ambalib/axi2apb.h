@@ -17,6 +17,7 @@
 
 #include <systemc.h>
 #include "types_amba.h"
+#include "axi_slv.h"
 
 namespace debugger {
 
@@ -24,6 +25,7 @@ SC_MODULE(axi2apb) {
  public:
     sc_in<bool> i_clk;                                      // CPU clock
     sc_in<bool> i_nrst;                                     // Reset: active LOW
+    sc_in<mapinfo_type> i_mapinfo;                          // Base address information from the interconnect port
     sc_out<dev_config_type> o_cfg;                          // Slave config descriptor
     sc_in<axi4_slave_in_type> i_xslvi;                      // AXI4 Interconnect Bridge interface
     sc_out<axi4_slave_out_type> o_xslvo;                    // AXI4 Bridge to Interconnect interface
@@ -36,29 +38,25 @@ SC_MODULE(axi2apb) {
     SC_HAS_PROCESS(axi2apb);
 
     axi2apb(sc_module_name name,
-            bool async_reset,
-            uint64_t xaddr,
-            uint64_t xmask);
+            bool async_reset);
+    virtual ~axi2apb();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
     bool async_reset_;
-    uint64_t xaddr_;
-    uint64_t xmask_;
 
     static const uint8_t State_Idle = 0;
-    static const uint8_t State_w = 1;
-    static const uint8_t State_b = 2;
-    static const uint8_t State_r = 3;
-    static const uint8_t State_setup = 4;
-    static const uint8_t State_access = 5;
-    static const uint8_t State_err = 6;
+    static const uint8_t State_setup = 1;
+    static const uint8_t State_access = 2;
+    static const uint8_t State_err = 3;
 
     struct axi2apb_registers {
         sc_signal<sc_uint<3>> state;
+        sc_signal<bool> pvalid;
         sc_signal<sc_uint<32>> paddr;
-        sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> pdata;
+        sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> pwdata;
+        sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> prdata;
         sc_signal<bool> pwrite;
         sc_signal<sc_uint<CFG_SYSBUS_DATA_BYTES>> pstrb;
         sc_signal<sc_uint<3>> pprot;
@@ -66,14 +64,14 @@ SC_MODULE(axi2apb) {
         sc_signal<bool> penable;
         sc_signal<bool> pslverr;
         sc_signal<sc_uint<8>> xsize;
-        sc_signal<sc_uint<CFG_SYSBUS_ID_BITS>> req_id;
-        sc_signal<sc_uint<CFG_SYSBUS_USER_BITS>> req_user;
     } v, r;
 
     void axi2apb_r_reset(axi2apb_registers &iv) {
         iv.state = State_Idle;
+        iv.pvalid = 0;
         iv.paddr = 0;
-        iv.pdata = 0ull;
+        iv.pwdata = 0ull;
+        iv.prdata = 0ull;
         iv.pwrite = 0;
         iv.pstrb = 0;
         iv.pprot = 0;
@@ -81,9 +79,17 @@ SC_MODULE(axi2apb) {
         iv.penable = 0;
         iv.pslverr = 0;
         iv.xsize = 0;
-        iv.req_id = 0;
-        iv.req_user = 0;
     }
+
+    sc_signal<bool> w_req_valid;
+    sc_signal<sc_uint<CFG_SYSBUS_ADDR_BITS>> wb_req_addr;
+    sc_signal<bool> w_req_write;
+    sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> wb_req_wdata;
+    sc_signal<sc_uint<CFG_SYSBUS_DATA_BYTES>> wb_req_wstrb;
+    sc_signal<bool> w_req_last;
+    sc_signal<bool> w_req_ready;
+
+    axi_slv *axi0;
 
 };
 

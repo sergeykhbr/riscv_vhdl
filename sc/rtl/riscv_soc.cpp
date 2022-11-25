@@ -34,6 +34,7 @@ riscv_soc::riscv_soc(sc_module_name name)
     o_jtag_vref("o_jtag_vref"),
     i_uart1_rd("i_uart1_rd"),
     o_uart1_td("o_uart1_td"),
+    bus0_mapinfo("bus0_mapinfo", CFG_BUS0_XSLV_TOTAL),
     aximi("aximi", CFG_BUS0_XMST_TOTAL),
     aximo("aximo", CFG_BUS0_XMST_TOTAL),
     axisi("axisi", CFG_BUS0_XSLV_TOTAL),
@@ -48,9 +49,10 @@ riscv_soc::riscv_soc(sc_module_name name)
     uart1 = 0;
     group0 = 0;
 
-    apbrdg0 = new axi2apb("apbrdg0", async_reset, CFG_SOC_MAP_UART1_XADDR, CFG_SOC_MAP_UART1_XMASK);
+    apbrdg0 = new axi2apb("apbrdg0", async_reset);
     apbrdg0->i_clk(i_clk);
     apbrdg0->i_nrst(w_sys_nrst);
+    apbrdg0->i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_BUS1]);
     apbrdg0->o_cfg(dev_pnp[CFG_SOC_PNP_0_XSLV_PBRIDGE0]);
     apbrdg0->i_xslvi(axisi[CFG_BUS0_XSLV_BUS1]);
     apbrdg0->o_xslvo(axiso[CFG_BUS0_XSLV_BUS1]);

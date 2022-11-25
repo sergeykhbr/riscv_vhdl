@@ -24,14 +24,17 @@ SC_MODULE(axi_slv) {
  public:
     sc_in<bool> i_clk;                                      // CPU clock
     sc_in<bool> i_nrst;                                     // Reset: active LOW
+    sc_in<mapinfo_type> i_mapinfo;                          // Base address information from the interconnect port
+    sc_out<dev_config_type> o_cfg;                          // Slave config descriptor
     sc_in<axi4_slave_in_type> i_xslvi;                      // AXI Slave input interface
     sc_out<axi4_slave_out_type> o_xslvo;                    // AXI Slave output interface
     sc_out<bool> o_req_valid;
     sc_out<sc_uint<CFG_SYSBUS_ADDR_BITS>> o_req_addr;
     sc_out<bool> o_req_write;
     sc_out<sc_uint<CFG_SYSBUS_DATA_BITS>> o_req_wdata;
-    sc_out<bool> o_req_burst;
+    sc_out<sc_uint<CFG_SYSBUS_DATA_BYTES>> o_req_wstrb;
     sc_out<bool> o_req_last;
+    sc_in<bool> i_req_ready;
     sc_in<bool> i_resp_valid;
     sc_in<sc_uint<CFG_SYSBUS_DATA_BITS>> i_resp_rdata;
     sc_in<bool> i_resp_err;
@@ -42,19 +45,23 @@ SC_MODULE(axi_slv) {
     SC_HAS_PROCESS(axi_slv);
 
     axi_slv(sc_module_name name,
-            bool async_reset);
+            bool async_reset,
+            uint32_t vid,
+            uint32_t did);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
     bool async_reset_;
+    uint32_t vid_;
+    uint32_t did_;
 
     static const uint8_t State_Idle = 0;
     static const uint8_t State_w = 1;
     static const uint8_t State_burst_w = 2;
     static const uint8_t State_last_w = 3;
-    static const uint8_t State_burst_r = 4;
-    static const uint8_t State_last_r = 5;
+    static const uint8_t State_addr_r = 4;
+    static const uint8_t State_data_r = 5;
     static const uint8_t State_b = 6;
 
     struct axi_slv_registers {
@@ -67,9 +74,11 @@ SC_MODULE(axi_slv) {
         sc_signal<sc_uint<8>> req_xsize;
         sc_signal<sc_uint<8>> req_len;
         sc_signal<sc_uint<CFG_SYSBUS_USER_BITS>> req_user;
-        sc_signal<bool> req_burst;
+        sc_signal<sc_uint<CFG_SYSBUS_ID_BITS>> req_id;
+        sc_signal<sc_uint<2>> req_burst;
         sc_signal<bool> req_last;
         sc_signal<bool> resp_valid;
+        sc_signal<bool> resp_last;
         sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> resp_rdata;
         sc_signal<bool> resp_err;
     } v, r;
@@ -84,9 +93,11 @@ SC_MODULE(axi_slv) {
         iv.req_xsize = 0;
         iv.req_len = 0;
         iv.req_user = 0;
+        iv.req_id = 0;
         iv.req_burst = 0;
         iv.req_last = 0;
         iv.resp_valid = 0;
+        iv.resp_last = 0;
         iv.resp_rdata = 0ull;
         iv.resp_err = 0;
     }

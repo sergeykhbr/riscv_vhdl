@@ -59,9 +59,6 @@ SC_MODULE(riscv_soc) {
  private:
     static const bool async_reset = CFG_ASYNC_RESET;
     
-    static const uint64_t CFG_SOC_MAP_UART1_XADDR = 0x10010;
-    static const uint64_t CFG_SOC_MAP_UART1_XMASK = ~0ull;
-    
     static const int CFG_SOC_PNP_0_XMST_GROUP0 = 0;
     static const int CFG_SOC_PNP_1_XMST_DMA0 = 1;
     static const int CFG_SOC_PNP_0_XSLV_PBRIDGE0 = 2;
@@ -77,6 +74,7 @@ SC_MODULE(riscv_soc) {
     sc_signal<bool> w_dmreset;                              // Reset request from workgroup debug interface
     sc_signal<axi4_master_out_type> acpo;
     sc_signal<axi4_master_in_type> acpi;
+    bus0_mapinfo_vector bus0_mapinfo;
     bus0_xmst_in_vector aximi;
     bus0_xmst_out_vector aximo;
     bus0_xslv_in_vector axisi;

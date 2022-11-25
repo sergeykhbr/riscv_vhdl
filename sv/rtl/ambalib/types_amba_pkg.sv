@@ -462,4 +462,15 @@ const apb_out_type apb_out_none = '{
     1'h0  // pslverr
 };
 
+// DELME::
+//! @brief Number of address bits used for device addressing.
+//! @details Default is 12 bits = 4 KB of address space minimum per each
+//!          mapped device.
+localparam int  CFG_SYSBUS_CFG_ADDR_BITS = CFG_SYSBUS_ADDR_BITS-12;
+//! @brief Global alignment is set 32 bits.
+localparam int CFG_ALIGN_BYTES         = 4;
+//! @brief  Number of parallel access to the atomic data.
+localparam int CFG_WORDS_ON_BUS        = CFG_SYSBUS_DATA_BYTES/CFG_ALIGN_BYTES;
+typedef logic [CFG_SYSBUS_ADDR_BITS-1 : 0] global_addr_array_type [0 : CFG_WORDS_ON_BUS-1];
+
 endpackage: types_amba_pkg

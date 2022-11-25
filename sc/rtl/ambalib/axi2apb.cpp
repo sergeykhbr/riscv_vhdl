@@ -20,12 +20,11 @@
 namespace debugger {
 
 axi2apb::axi2apb(sc_module_name name,
-                 bool async_reset,
-                 uint64_t xaddr,
-                 uint64_t xmask)
+                 bool async_reset)
     : sc_module(name),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
+    i_mapinfo("i_mapinfo"),
     o_cfg("o_cfg"),
     i_xslvi("i_xslvi"),
     o_xslvo("o_xslvo"),
@@ -33,16 +32,45 @@ axi2apb::axi2apb(sc_module_name name,
     o_apbmo("o_apbmo") {
 
     async_reset_ = async_reset;
-    xaddr_ = xaddr;
-    xmask_ = xmask;
+    axi0 = 0;
+
+    axi0 = new axi_slv("axi0", async_reset, VENDOR_OPTIMITECH, OPTIMITECH_AXI2APB_BRIDGE);
+    axi0->i_clk(i_clk);
+    axi0->i_nrst(i_nrst);
+    axi0->i_mapinfo(i_mapinfo);
+    axi0->o_cfg(o_cfg);
+    axi0->i_xslvi(i_xslvi);
+    axi0->o_xslvo(o_xslvo);
+    axi0->o_req_valid(w_req_valid);
+    axi0->o_req_addr(wb_req_addr);
+    axi0->o_req_write(w_req_write);
+    axi0->o_req_wdata(wb_req_wdata);
+    axi0->o_req_wstrb(wb_req_wstrb);
+    axi0->o_req_last(w_req_last);
+    axi0->i_req_ready(w_req_ready);
+    axi0->i_resp_valid(r.pvalid);
+    axi0->i_resp_rdata(r.prdata);
+    axi0->i_resp_err(r.pslverr);
+
+
 
     SC_METHOD(comb);
     sensitive << i_nrst;
+    sensitive << i_mapinfo;
     sensitive << i_xslvi;
     sensitive << i_apbmi;
+    sensitive << w_req_valid;
+    sensitive << wb_req_addr;
+    sensitive << w_req_write;
+    sensitive << wb_req_wdata;
+    sensitive << wb_req_wstrb;
+    sensitive << w_req_last;
+    sensitive << w_req_ready;
     sensitive << r.state;
+    sensitive << r.pvalid;
     sensitive << r.paddr;
-    sensitive << r.pdata;
+    sensitive << r.pwdata;
+    sensitive << r.prdata;
     sensitive << r.pwrite;
     sensitive << r.pstrb;
     sensitive << r.pprot;
@@ -50,25 +78,32 @@ axi2apb::axi2apb(sc_module_name name,
     sensitive << r.penable;
     sensitive << r.pslverr;
     sensitive << r.xsize;
-    sensitive << r.req_id;
-    sensitive << r.req_user;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
     sensitive << i_clk.pos();
 }
 
+axi2apb::~axi2apb() {
+    if (axi0) {
+        delete axi0;
+    }
+}
+
 void axi2apb::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     std::string pn(name());
     if (o_vcd) {
+        sc_trace(o_vcd, i_mapinfo, i_mapinfo.name());
         sc_trace(o_vcd, o_cfg, o_cfg.name());
         sc_trace(o_vcd, i_xslvi, i_xslvi.name());
         sc_trace(o_vcd, o_xslvo, o_xslvo.name());
         sc_trace(o_vcd, i_apbmi, i_apbmi.name());
         sc_trace(o_vcd, o_apbmo, o_apbmo.name());
         sc_trace(o_vcd, r.state, pn + ".r_state");
+        sc_trace(o_vcd, r.pvalid, pn + ".r_pvalid");
         sc_trace(o_vcd, r.paddr, pn + ".r_paddr");
-        sc_trace(o_vcd, r.pdata, pn + ".r_pdata");
+        sc_trace(o_vcd, r.pwdata, pn + ".r_pwdata");
+        sc_trace(o_vcd, r.prdata, pn + ".r_prdata");
         sc_trace(o_vcd, r.pwrite, pn + ".r_pwrite");
         sc_trace(o_vcd, r.pstrb, pn + ".r_pstrb");
         sc_trace(o_vcd, r.pprot, pn + ".r_pprot");
@@ -76,112 +111,42 @@ void axi2apb::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.penable, pn + ".r_penable");
         sc_trace(o_vcd, r.pslverr, pn + ".r_pslverr");
         sc_trace(o_vcd, r.xsize, pn + ".r_xsize");
-        sc_trace(o_vcd, r.req_id, pn + ".r_req_id");
-        sc_trace(o_vcd, r.req_user, pn + ".r_req_user");
     }
 
+    if (axi0) {
+        axi0->generateVCD(i_vcd, o_vcd);
+    }
 }
 
 void axi2apb::comb() {
-    dev_config_type vcfg;
-    sc_uint<CFG_SYSBUS_DATA_BITS> vb_rdata;
-    axi4_slave_out_type vslvo;
     apb_in_type vapbmo;
 
-    vcfg = dev_config_none;
-    vb_rdata = 0;
-    vslvo = axi4_slave_out_none;
     vapbmo = apb_in_none;
 
     v = r;
 
-    vcfg.descrsize = PNP_CFG_DEV_DESCR_BYTES;
-    vcfg.descrtype = PNP_CFG_TYPE_SLAVE;
-    vcfg.xaddr = xaddr_;
-    vcfg.xmask = xmask_;
-    vcfg.vid = VENDOR_OPTIMITECH;
-    vcfg.did = OPTIMITECH_AXI2APB_BRIDGE;
-    vb_rdata = r.pdata;
+    w_req_ready = 0;
+    v.pvalid = 0;
 
     switch (r.state.read()) {
     case State_Idle:
+        w_req_ready = 1;
         v.pslverr = 0;
         v.penable = 0;
         v.pselx = 0;
         v.xsize = 0;
-        vslvo.aw_ready = 1;
-        vslvo.w_ready = 1;                                  // AXILite support
-        vslvo.ar_ready = (!i_xslvi.read().aw_valid);
-        if (i_xslvi.read().aw_valid == 1) {
-            v.pwrite = 1;
-            v.paddr = (i_xslvi.read().aw_bits.addr(31, 2) << 2);
-            v.pprot = i_xslvi.read().aw_bits.prot;
-            v.req_id = i_xslvi.read().aw_id;
-            v.req_user = i_xslvi.read().aw_user;
-            if (i_xslvi.read().aw_bits.size >= 3) {
-                v.xsize = 1;
-                vb_rdata = i_xslvi.read().w_data;
-                v.pstrb = i_xslvi.read().w_strb;
-            } else if (i_xslvi.read().aw_bits.addr[2] == 0) {
-                vb_rdata = (0, i_xslvi.read().w_data(31, 0));
-                v.pstrb = (0, i_xslvi.read().w_strb(3, 0));
-            } else {
-                vb_rdata = (0, i_xslvi.read().w_data(63, 32));
-                v.pstrb = (0, i_xslvi.read().w_strb(7, 4));
-            }
-            if (i_xslvi.read().aw_bits.len.or_reduce() == 1) {
-                v.state = State_err;                        // Burst is not supported
-            } else if (i_xslvi.read().w_valid == 1) {
-                // AXILite support
-                v.state = State_setup;
-                v.pselx = 1;
-            } else {
-                v.state = State_w;
-            }
-        } else if (i_xslvi.read().ar_valid == 1) {
-            v.pwrite = 0;
+        if (w_req_valid.read() == 1) {
+            v.pwrite = w_req_write;
             v.pselx = 1;
-            v.paddr = (i_xslvi.read().ar_bits.addr(31, 2) << 2);
-            v.pprot = i_xslvi.read().ar_bits.prot;
-            v.req_id = i_xslvi.read().ar_id;
-            v.req_user = i_xslvi.read().ar_user;
-            if (i_xslvi.read().ar_bits.size >= 3) {
-                v.xsize = 1;
-            }
-            if (i_xslvi.read().ar_bits.len.or_reduce() == 1) {
-                v.state = State_err;                        // Burst is not supported
-            } else {
-                v.state = State_setup;
-            }
-        }
-        break;
-    case State_w:
-        vslvo.w_ready = 1;
-        v.pselx = 1;
-        if (r.xsize.read().or_reduce() == 1) {
-            vb_rdata = i_xslvi.read().w_data;
-            v.pstrb = i_xslvi.read().w_strb;
-        } else if (r.paddr.read()[2] == 0) {
-            vb_rdata = (0, i_xslvi.read().w_data(31, 0));
-            v.pstrb = (0, i_xslvi.read().w_strb(3, 0));
-        } else {
-            vb_rdata = (0, i_xslvi.read().w_data(63, 32));
-            v.pstrb = (0, i_xslvi.read().w_strb(7, 4));
-        }
-        if (i_xslvi.read().w_valid == 1) {
+            v.paddr = (wb_req_addr.read()(31, 2) << 2);
+            v.pprot = 0;
+            v.pwdata = wb_req_wdata;
+            v.pstrb = wb_req_wstrb;
             v.state = State_setup;
-        }
-        break;
-    case State_b:
-        vslvo.b_valid = 1;
-        if (i_xslvi.read().b_ready == 1) {
-            v.state = State_Idle;
-        }
-        break;
-    case State_r:
-        vslvo.r_valid = 1;
-        if (i_xslvi.read().r_ready == 1) {
-            v.state = State_Idle;
+            v.xsize = wb_req_wstrb.read().and_reduce();
+            if (w_req_last.read() == 1) {
+                v.state = State_err;                        // Burst is not supported
+            }
         }
         break;
     case State_setup:
@@ -189,69 +154,51 @@ void axi2apb::comb() {
         v.state = State_access;
         break;
     case State_access:
-        if (r.pwrite.read() == 0) {
-            if (r.xsize.read().or_reduce() == 1) {
-                vb_rdata(63, 32) = i_apbmi.read().prdata;
-            } else {
-                vb_rdata(31, 0) = i_apbmi.read().prdata;
-            }
-        }
         v.pslverr = i_apbmi.read().pslverr;
         if (i_apbmi.read().pready == 1) {
             v.penable = 0;
             v.pselx = 0;
+            if (r.paddr.read()[2] == 0) {
+                v.prdata = (r.prdata.read()(63, 32), i_apbmi.read().prdata);
+            } else {
+                v.prdata = (i_apbmi.read().prdata, r.prdata.read()(31, 0));
+            }
             if (r.xsize.read().or_reduce() == 1) {
                 v.xsize = (r.xsize.read() - 1);
                 v.paddr = (r.paddr.read() + 4);
-                v.pstrb = (0, r.pstrb.read()(7, 4));
-                if (r.pwrite.read() == 1) {
-                    vb_rdata = (0, r.pdata.read()(63, 32));
-                }
                 v.state = State_setup;
-            } else if (r.pwrite.read() == 1) {
-                v.state = State_b;
             } else {
-                v.state = State_r;
+                v.pvalid = 1;
+                v.state = State_Idle;
             }
         }
         break;
     default:
         // Burst transactions are not supported:
-        vb_rdata = ~0ull;
+        v.pvalid = 1;
+        v.prdata = ~0ull;
         v.pslverr = 1;
-        if (r.pwrite.read() == 1) {
-            v.state = State_b;
-        } else {
-            v.state = State_r;
-        }
+        v.state = State_Idle;
         break;
     }
 
-    v.pdata = vb_rdata;
     vapbmo.paddr = r.paddr;
     vapbmo.pwrite = r.pwrite;
-    vapbmo.pwdata = r.pdata.read()(31, 0);
-    vapbmo.pstrb = r.pstrb.read()(3, 0);
+    if (r.paddr.read()[2] == 0) {
+        vapbmo.pwdata = r.pwdata.read()(31, 0);
+        vapbmo.pstrb = r.pstrb.read()(3, 0);
+    } else {
+        vapbmo.pwdata = r.pwdata.read()(63, 32);
+        vapbmo.pstrb = r.pstrb.read()(7, 4);
+    }
     vapbmo.pselx = r.pselx;
     vapbmo.penable = r.penable;
     vapbmo.pprot = r.pprot;
-
-    vslvo.r_data = r.pdata;
-    vslvo.r_resp = (r.pslverr.read() << 1);
-    vslvo.r_id = r.req_id;
-    vslvo.r_user = r.req_user;
-    vslvo.r_last = 1;
-
-    vslvo.b_resp = (r.pslverr.read() << 1);
-    vslvo.b_id = r.req_id;
-    vslvo.b_user = r.req_user;
 
     if (!async_reset_ && i_nrst.read() == 0) {
         axi2apb_r_reset(v);
     }
 
-    o_cfg = vcfg;
-    o_xslvo = vslvo;
     o_apbmo = vapbmo;
 }
 
