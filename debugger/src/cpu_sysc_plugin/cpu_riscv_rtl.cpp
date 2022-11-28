@@ -185,11 +185,13 @@ void CpuRiscV_RTL::createSystemC() {
     group0_->i_meip(wb_meip);
     group0_->i_seip(wb_seip);
     group0_->i_mtimer(wb_mtimer);
-    group0_->o_xcfg(xcfg);
     group0_->i_acpo(acpo);
     group0_->o_acpi(acpi);
+    group0_->o_xmst_cfg(xcfg);
     group0_->i_msti(msti);
     group0_->o_msto(msto);
+    group0_->i_dmi_mapinfo(wb_dmi_mapinfo);
+    group0_->o_dmi_cfg(wb_dmi_cfg);
     group0_->i_dmi_apbi(wb_dmi_apbi);
     group0_->o_dmi_apbo(wb_dmi_apbo);
     group0_->o_dmreset(w_ndmreset);

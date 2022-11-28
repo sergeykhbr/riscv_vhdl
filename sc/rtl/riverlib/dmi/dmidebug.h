@@ -34,6 +34,8 @@ SC_MODULE(dmidebug) {
     sc_in<bool> i_tdi;                                      // Test Data Input
     sc_out<bool> o_tdo;                                     // Test Data Output
     // Bus interface (APB):
+    sc_in<mapinfo_type> i_mapinfo;                          // interconnect slot information
+    sc_out<dev_config_type> o_cfg;                          // Device descriptor
     sc_in<apb_in_type> i_apbi;                              // APB input interface
     sc_out<apb_out_type> o_apbo;                            // APB output interface
     // DMI interface:

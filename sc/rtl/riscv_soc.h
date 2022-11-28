@@ -17,9 +17,9 @@
 
 #include <systemc.h>
 #include "../prj/impl/asic_full/config_target.h"
+#include "ambalib/types_amba.h"
 #include "ambalib/types_bus0.h"
 #include "ambalib/types_bus1.h"
-#include "ambalib/types_amba.h"
 #include "riverlib/river_cfg.h"
 #include "riverlib/types_river.h"
 #include "riverlib/workgroup.h"
@@ -59,11 +59,19 @@ SC_MODULE(riscv_soc) {
  private:
     static const bool async_reset = CFG_ASYNC_RESET;
     
-    static const int CFG_SOC_PNP_0_XMST_GROUP0 = 0;
-    static const int CFG_SOC_PNP_1_XMST_DMA0 = 1;
-    static const int CFG_SOC_PNP_0_XSLV_PBRIDGE0 = 2;
-    static const int CFG_SOC_PNP_1_PSLV_UART1 = 3;
-    static const int CFG_SOC_PNP_SLOTS_TOTAL = ((CFG_BUS0_XMST_TOTAL + CFG_BUS0_XSLV_TOTAL) + CFG_BUS1_PSLV_TOTAL);
+    static const int SOC_PNP_XCTRL0 = 0;
+    static const int SOC_PNP_GROUP0 = 1;
+    static const int SOC_PNP_BOOTROM = 2;
+    static const int SOC_PNP_SRAM = 3;
+    static const int SOC_PNP_DDR = 4;
+    static const int SOC_PNP_GPIO = 5;
+    static const int SOC_PNP_CLINT = 6;
+    static const int SOC_PNP_PLIC = 7;
+    static const int SOC_PNP_PNP = 8;
+    static const int SOC_PNP_PBRIDGE0 = 9;
+    static const int SOC_PNP_DMI = 10;
+    static const int SOC_PNP_UART1 = 11;
+    static const int SOC_PNP_TOTAL = 12;
     
     static const int CFG_SOC_UART1_LOG2_FIFOSZ = 4;
 
@@ -79,6 +87,7 @@ SC_MODULE(riscv_soc) {
     bus0_xmst_out_vector aximo;
     bus0_xslv_in_vector axisi;
     bus0_xslv_out_vector axiso;
+    bus1_mapinfo_vector bus1_mapinfo;
     bus1_pmst_in_vector apbmi;
     bus1_pmst_out_vector apbmo;
     bus1_pslv_in_vector apbsi;

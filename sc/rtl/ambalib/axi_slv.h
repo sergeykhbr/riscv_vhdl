@@ -61,11 +61,13 @@ SC_MODULE(axi_slv) {
     static const uint8_t State_burst_w = 2;
     static const uint8_t State_last_w = 3;
     static const uint8_t State_addr_r = 4;
-    static const uint8_t State_data_r = 5;
-    static const uint8_t State_b = 6;
+    static const uint8_t State_addrdata_r = 5;
+    static const uint8_t State_data_r = 6;
+    static const uint8_t State_out_r = 7;
+    static const uint8_t State_b = 8;
 
     struct axi_slv_registers {
-        sc_signal<sc_uint<3>> state;
+        sc_signal<sc_uint<4>> state;
         sc_signal<bool> req_valid;
         sc_signal<sc_uint<CFG_SYSBUS_ADDR_BITS>> req_addr;
         sc_signal<bool> req_write;

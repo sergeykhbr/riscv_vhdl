@@ -49,7 +49,7 @@ SC_MODULE(axi2apb) {
     static const uint8_t State_Idle = 0;
     static const uint8_t State_setup = 1;
     static const uint8_t State_access = 2;
-    static const uint8_t State_err = 3;
+    static const uint8_t State_out = 3;
 
     struct axi2apb_registers {
         sc_signal<sc_uint<3>> state;

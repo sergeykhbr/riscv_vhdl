@@ -46,8 +46,8 @@ static const uint16_t RISCV_RIVER_WORKGROUP = 0x0506;
 static const uint16_t RISCV_WASSERFALL_DMI = 0x0507;
 // UART with DMA: Test Access Point (TAP)
 static const uint16_t GNSSSENSOR_UART_TAP = 0x050A;
-// JTAG Test Access Point (TAP)
-static const uint16_t GNSSSENSOR_JTAG_TAP = 0x050B;
+// JTAG Test Access Point (TAP) with DMI interface
+static const uint16_t OPTIMITECH_JTAG_DMI = 0x050B;
 
 // @name Slave Device IDs definition:
 // Empty slave slot device
@@ -70,6 +70,8 @@ static const uint16_t OPTIMITECH_CLINT = 0x0083;
 static const uint16_t OPTIMITECH_PLIC = 0x0084;
 // AXI to APB Brdige
 static const uint16_t OPTIMITECH_AXI2APB_BRIDGE = 0x0085;
+// AXI interconnect
+static const uint16_t OPTIMITECH_AXI_INTERCONNECT = 0x0086;
 
 // Plug'n'Play descriptor localparams.
 // Undefined type of the descriptor (empty device).
@@ -92,11 +94,10 @@ class mapinfo_type {
         addr_end = 0;
     }
 
-    mapinfo_type(uint64_t start, uint64_t end) {
-        // Base Address.
-        addr_start = start;
-        // Maskable bits of the base address.
-        addr_end = end;
+    mapinfo_type(uint64_t addr_start_,
+                 uint64_t addr_end_) {
+        addr_start = addr_start_;
+        addr_end = addr_end_;
     }
 
     inline bool operator == (const mapinfo_type &rhs) const {

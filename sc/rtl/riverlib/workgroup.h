@@ -45,14 +45,16 @@ SC_MODULE(Workgroup) {
     sc_in<sc_uint<CFG_CPU_MAX>> i_meip;
     sc_in<sc_uint<CFG_CPU_MAX>> i_seip;
     sc_in<sc_uint<64>> i_mtimer;                            // Read-only shadow value of memory-mapped mtimer register (see CLINT).
-    sc_out<dev_config_type> o_xcfg;
     // coherent port:
     sc_in<axi4_master_out_type> i_acpo;
     sc_out<axi4_master_in_type> o_acpi;
     // System bus port
+    sc_out<dev_config_type> o_xmst_cfg;                     // Workgroup master interface descriptor
     sc_in<axi4_master_in_type> i_msti;
     sc_out<axi4_master_out_type> o_msto;
     // APB debug access:
+    sc_in<mapinfo_type> i_dmi_mapinfo;                      // DMI APB itnerface mapping information
+    sc_out<dev_config_type> o_dmi_cfg;                      // DMI device descriptor
     sc_in<apb_in_type> i_dmi_apbi;
     sc_out<apb_out_type> o_dmi_apbo;
     sc_out<bool> o_dmreset;                                 // reset everything except DMI debug interface
@@ -106,7 +108,7 @@ SC_MODULE(Workgroup) {
     sc_signal<sc_uint<RISCV_ARCH>> wb_ic_dport_rdata;
     sc_signal<sc_biguint<(32 * CFG_PROGBUF_REG_TOTAL)>> wb_progbuf;
     sc_signal<bool> w_flush_l2;
-    dev_config_type wb_xcfg;
+    dev_config_type wb_xmst_cfg;
 
     dmidebug *dmi0;
     ic_dport *dport_ic0;

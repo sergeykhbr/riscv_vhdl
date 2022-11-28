@@ -27,9 +27,10 @@ SC_MODULE(apb_uart) {
  public:
     sc_in<bool> i_clk;                                      // CPU clock
     sc_in<bool> i_nrst;                                     // Reset: active LOW
+    sc_in<mapinfo_type> i_mapinfo;                          // interconnect slot information
+    sc_out<dev_config_type> o_cfg;                          // Device descriptor
     sc_in<apb_in_type> i_apbi;                              // APB  Slave to Bridge interface
     sc_out<apb_out_type> o_apbo;                            // APB Bridge to Slave interface
-    sc_out<dev_config_type> o_cfg;
     sc_in<bool> i_rd;
     sc_out<bool> o_td;
     sc_out<bool> o_irq;
@@ -112,9 +113,10 @@ apb_uart<log2_fifosz>::apb_uart(sc_module_name name,
     : sc_module(name),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
+    i_mapinfo("i_mapinfo"),
+    o_cfg("o_cfg"),
     i_apbi("i_apbi"),
     o_apbo("o_apbo"),
-    o_cfg("o_cfg"),
     i_rd("i_rd"),
     o_td("o_td"),
     o_irq("o_irq") {
@@ -122,9 +124,11 @@ apb_uart<log2_fifosz>::apb_uart(sc_module_name name,
     async_reset_ = async_reset;
     pslv0 = 0;
 
-    pslv0 = new apb_slv("pslv0", async_reset);
+    pslv0 = new apb_slv("pslv0", async_reset, VENDOR_OPTIMITECH, OPTIMITECH_UART);
     pslv0->i_clk(i_clk);
     pslv0->i_nrst(i_nrst);
+    pslv0->i_mapinfo(i_mapinfo);
+    pslv0->o_cfg(o_cfg);
     pslv0->i_apbi(i_apbi);
     pslv0->o_apbo(o_apbo);
     pslv0->o_req_valid(w_req_valid);
@@ -139,6 +143,7 @@ apb_uart<log2_fifosz>::apb_uart(sc_module_name name,
 
     SC_METHOD(comb);
     sensitive << i_nrst;
+    sensitive << i_mapinfo;
     sensitive << i_apbi;
     sensitive << i_rd;
     sensitive << w_req_valid;
@@ -204,9 +209,10 @@ template<int log2_fifosz>
 void apb_uart<log2_fifosz>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     std::string pn(name());
     if (o_vcd) {
+        sc_trace(o_vcd, i_mapinfo, i_mapinfo.name());
+        sc_trace(o_vcd, o_cfg, o_cfg.name());
         sc_trace(o_vcd, i_apbi, i_apbi.name());
         sc_trace(o_vcd, o_apbo, o_apbo.name());
-        sc_trace(o_vcd, o_cfg, o_cfg.name());
         sc_trace(o_vcd, i_rd, i_rd.name());
         sc_trace(o_vcd, o_td, o_td.name());
         sc_trace(o_vcd, o_irq, o_irq.name());
@@ -265,7 +271,6 @@ void apb_uart<log2_fifosz>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_v
 
 template<int log2_fifosz>
 void apb_uart<log2_fifosz>::comb() {
-    dev_config_type vcfg;
     sc_uint<32> vb_rdata;
     sc_uint<log2_fifosz> vb_tx_wr_cnt_next;
     bool v_tx_fifo_full;
@@ -282,7 +287,6 @@ void apb_uart<log2_fifosz>::comb() {
     bool v_posedge_flag;
     bool par;
 
-    vcfg = dev_config_none;
     vb_rdata = 0;
     vb_tx_wr_cnt_next = 0;
     v_tx_fifo_full = 0;
@@ -342,8 +346,6 @@ void apb_uart<log2_fifosz>::comb() {
     v.resp_rdata = r.resp_rdata;
     v.resp_err = r.resp_err;
 
-    vcfg.descrsize = PNP_CFG_DEV_DESCR_BYTES;
-    vcfg.descrtype = PNP_CFG_TYPE_SLAVE;
     vb_rx_fifo_rdata = r.rx_fifo[r.rx_rd_cnt.read().to_int()];
     vb_tx_fifo_rdata = r.tx_fifo[r.tx_rd_cnt.read().to_int()];
 
@@ -664,7 +666,6 @@ void apb_uart<log2_fifosz>::comb() {
 
     o_td = r.tx_shift.read()[0];
     o_irq = (r.tx_ip.read() | r.rx_ip.read());
-    o_cfg = vcfg;
 }
 
 template<int log2_fifosz>

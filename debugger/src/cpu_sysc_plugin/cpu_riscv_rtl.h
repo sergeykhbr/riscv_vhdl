@@ -133,9 +133,10 @@ class CpuRiscV_RTL : public IService,
     sc_signal<bool> w_tdi;
     sc_signal<bool> w_tdo;
 
+    sc_signal<mapinfo_type> wb_dmi_mapinfo;
+    sc_signal<dev_config_type> wb_dmi_cfg;
     sc_signal<apb_in_type> wb_dmi_apbi;
     sc_signal<apb_out_type> wb_dmi_apbo;
-
     
     sc_signal<axi4_l2_in_type> l2i;
     sc_signal<axi4_l2_out_type> l2o;

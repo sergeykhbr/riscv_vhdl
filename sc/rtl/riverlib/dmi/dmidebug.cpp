@@ -29,6 +29,8 @@ dmidebug::dmidebug(sc_module_name name,
     i_tms("i_tms"),
     i_tdi("i_tdi"),
     o_tdo("o_tdo"),
+    i_mapinfo("i_mapinfo"),
+    o_cfg("o_cfg"),
     i_apbi("i_apbi"),
     o_apbo("o_apbo"),
     o_ndmreset("o_ndmreset"),
@@ -99,6 +101,7 @@ dmidebug::dmidebug(sc_module_name name,
     sensitive << i_tck;
     sensitive << i_tms;
     sensitive << i_tdi;
+    sensitive << i_mapinfo;
     sensitive << i_apbi;
     sensitive << i_halted;
     sensitive << i_available;
@@ -185,6 +188,8 @@ void dmidebug::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_tms, i_tms.name());
         sc_trace(o_vcd, i_tdi, i_tdi.name());
         sc_trace(o_vcd, o_tdo, o_tdo.name());
+        sc_trace(o_vcd, i_mapinfo, i_mapinfo.name());
+        sc_trace(o_vcd, o_cfg, o_cfg.name());
         sc_trace(o_vcd, i_apbi, i_apbi.name());
         sc_trace(o_vcd, o_apbo, o_apbo.name());
         sc_trace(o_vcd, o_ndmreset, o_ndmreset.name());
@@ -257,6 +262,7 @@ void dmidebug::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void dmidebug::comb() {
+    dev_config_type vcfg;
     apb_out_type vapbo;
     sc_uint<DPortReq_Total> vb_req_type;
     sc_uint<32> vb_resp_data;
@@ -270,6 +276,7 @@ void dmidebug::comb() {
     sc_biguint<(32 * CFG_PROGBUF_REG_TOTAL)> t_progbuf;
     int t_idx;
 
+    vcfg = dev_config_none;
     vapbo = apb_out_none;
     vb_req_type = 0;
     vb_resp_data = 0;
@@ -284,6 +291,13 @@ void dmidebug::comb() {
     t_idx = 0;
 
     v = r;
+
+    vcfg.descrsize = PNP_CFG_DEV_DESCR_BYTES;
+    vcfg.descrtype = PNP_CFG_TYPE_SLAVE;
+    vcfg.addr_start = i_mapinfo.read().addr_start;
+    vcfg.addr_end = i_mapinfo.read().addr_end;
+    vcfg.vid = VENDOR_OPTIMITECH;
+    vcfg.did = OPTIMITECH_JTAG_DMI;
 
     vb_hartselnext = r.wdata.read()(((16 + CFG_LOG2_CPU_MAX) - 1), 16);
     hsel = r.hartsel.read().to_int();
@@ -688,6 +702,7 @@ void dmidebug::comb() {
     w_jtag_dmi_busy = 0;                                    // |r.dmstate
     w_jtag_dmi_error = 0;
 
+    o_cfg = vcfg;
     o_apbo = vapbo;
 }
 

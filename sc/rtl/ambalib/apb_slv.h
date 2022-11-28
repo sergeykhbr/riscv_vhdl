@@ -24,6 +24,8 @@ SC_MODULE(apb_slv) {
  public:
     sc_in<bool> i_clk;                                      // CPU clock
     sc_in<bool> i_nrst;                                     // Reset: active LOW
+    sc_in<mapinfo_type> i_mapinfo;                          // Base address information from the interconnect port
+    sc_out<dev_config_type> o_cfg;                          // Slave config descriptor
     sc_in<apb_in_type> i_apbi;                              // APB  Slave to Bridge interface
     sc_out<apb_out_type> o_apbo;                            // APB Bridge to Slave interface
     sc_out<bool> o_req_valid;
@@ -40,12 +42,16 @@ SC_MODULE(apb_slv) {
     SC_HAS_PROCESS(apb_slv);
 
     apb_slv(sc_module_name name,
-            bool async_reset);
+            bool async_reset,
+            uint32_t vid,
+            uint32_t did);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
     bool async_reset_;
+    uint32_t vid_;
+    uint32_t did_;
 
     static const uint8_t State_Idle = 0;
     static const uint8_t State_Request = 1;

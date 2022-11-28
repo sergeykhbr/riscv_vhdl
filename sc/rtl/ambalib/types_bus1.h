@@ -28,7 +28,7 @@ namespace debugger {
 // @brief Worjgroup DMI interface.
 static const int CFG_BUS1_PSLV_DMI = 0;
 // @brief UART0 APB device.
-static const int CFG_BUS1_PSLV_UART0 = 1;
+static const int CFG_BUS1_PSLV_UART1 = 1;
 // Total number of the APB slaves devices on Bus[1].
 static const int CFG_BUS1_PSLV_TOTAL = 2;
 
@@ -37,7 +37,7 @@ static const int CFG_BUS1_PSLV_TOTAL = 2;
 //          as an index in the vector array of APB master bus.
 // 
 // Bus[0] master interface
-static const int CFG_BUS1_PMST_BUS0 = 0;
+static const int CFG_BUS1_PMST_PARENT = 0;
 // Total Number of master devices that have access to APB Bus[1].
 static const int CFG_BUS1_PMST_TOTAL = 1;
 
@@ -45,6 +45,13 @@ typedef sc_vector<sc_signal<apb_in_type>> bus1_pslv_in_vector;
 typedef sc_vector<sc_signal<apb_out_type>> bus1_pslv_out_vector;
 typedef sc_vector<sc_signal<apb_out_type>> bus1_pmst_in_vector;
 typedef sc_vector<sc_signal<apb_in_type>> bus1_pmst_out_vector;
+typedef sc_vector<sc_signal<mapinfo_type>> bus1_mapinfo_vector;
+
+// Bus 1 device tree
+static const mapinfo_type CFG_BUS1_MAP[CFG_BUS1_PSLV_TOTAL] = {
+    {0x000001001E000, 0x000001001F000},                     // 0, dmi 4KB. TODO: change base address
+    {0x0000010010000, 0x0000010011000}                      // 1, uart1 4KB
+};
 
 }  // namespace debugger
 

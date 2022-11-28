@@ -45,7 +45,7 @@ static const int CFG_BUS0_XSLV_SRAM = 1;
 // External DDR
 static const int CFG_BUS0_XSLV_DDR = 2;
 // Configuration index of the APB Bridge.
-static const int CFG_BUS0_XSLV_BUS1 = 3;
+static const int CFG_BUS0_XSLV_PBRIDGE = 3;
 // Configuration index of the GPIO (General Purpose In/Out) module.
 static const int CFG_BUS0_XSLV_GPIO = 4;
 // Configuration index of the Core Local Interrupt Controller module.

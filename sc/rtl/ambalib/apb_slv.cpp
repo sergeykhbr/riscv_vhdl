@@ -20,10 +20,14 @@
 namespace debugger {
 
 apb_slv::apb_slv(sc_module_name name,
-                 bool async_reset)
+                 bool async_reset,
+                 uint32_t vid,
+                 uint32_t did)
     : sc_module(name),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
+    i_mapinfo("i_mapinfo"),
+    o_cfg("o_cfg"),
     i_apbi("i_apbi"),
     o_apbo("o_apbo"),
     o_req_valid("o_req_valid"),
@@ -35,9 +39,12 @@ apb_slv::apb_slv(sc_module_name name,
     i_resp_err("i_resp_err") {
 
     async_reset_ = async_reset;
+    vid_ = vid;
+    did_ = did;
 
     SC_METHOD(comb);
     sensitive << i_nrst;
+    sensitive << i_mapinfo;
     sensitive << i_apbi;
     sensitive << i_resp_valid;
     sensitive << i_resp_rdata;
@@ -59,6 +66,8 @@ apb_slv::apb_slv(sc_module_name name,
 void apb_slv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     std::string pn(name());
     if (o_vcd) {
+        sc_trace(o_vcd, i_mapinfo, i_mapinfo.name());
+        sc_trace(o_vcd, o_cfg, o_cfg.name());
         sc_trace(o_vcd, i_apbi, i_apbi.name());
         sc_trace(o_vcd, o_apbo, o_apbo.name());
         sc_trace(o_vcd, o_req_valid, o_req_valid.name());
@@ -82,12 +91,21 @@ void apb_slv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
 void apb_slv::comb() {
     sc_uint<32> vb_rdata;
+    dev_config_type vcfg;
     apb_out_type vapbo;
 
     vb_rdata = 0;
+    vcfg = dev_config_none;
     vapbo = apb_out_none;
 
     v = r;
+
+    vcfg.descrsize = PNP_CFG_DEV_DESCR_BYTES;
+    vcfg.descrtype = PNP_CFG_TYPE_SLAVE;
+    vcfg.addr_start = i_mapinfo.read().addr_start;
+    vcfg.addr_end = i_mapinfo.read().addr_end;
+    vcfg.vid = vid_;
+    vcfg.did = did_;
 
     v.req_valid = 0;
 
@@ -138,6 +156,7 @@ void apb_slv::comb() {
     vapbo.prdata = r.resp_rdata;
     vapbo.pslverr = r.resp_err;
     o_apbo = vapbo;
+    o_cfg = vcfg;
 }
 
 void apb_slv::registers() {

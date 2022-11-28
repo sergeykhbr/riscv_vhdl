@@ -144,8 +144,11 @@ void axi2apb::comb() {
             v.pstrb = wb_req_wstrb;
             v.state = State_setup;
             v.xsize = wb_req_wstrb.read().and_reduce();
-            if (w_req_last.read() == 1) {
-                v.state = State_err;                        // Burst is not supported
+            if (w_req_last.read() == 0) {
+                v.state = State_out;                        // Burst is not supported
+                v.pselx = 0;
+                v.pslverr = 1;
+                v.prdata = ~0ull;
             }
         }
         break;
@@ -158,6 +161,7 @@ void axi2apb::comb() {
         if (i_apbmi.read().pready == 1) {
             v.penable = 0;
             v.pselx = 0;
+            v.pwrite = 0;
             if (r.paddr.read()[2] == 0) {
                 v.prdata = (r.prdata.read()(63, 32), i_apbmi.read().prdata);
             } else {
@@ -169,16 +173,16 @@ void axi2apb::comb() {
                 v.state = State_setup;
             } else {
                 v.pvalid = 1;
-                v.state = State_Idle;
+                v.state = State_out;
             }
         }
         break;
-    default:
-        // Burst transactions are not supported:
-        v.pvalid = 1;
-        v.prdata = ~0ull;
-        v.pslverr = 1;
+    case State_out:
+        v.pvalid = 0;
+        v.pslverr = 0;
         v.state = State_Idle;
+        break;
+    default:
         break;
     }
 

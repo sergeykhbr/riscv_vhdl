@@ -238,33 +238,50 @@ void axi_slv::comb() {
         break;
     case State_addr_r:
         // Setup address:
-        v.resp_valid = 0;
         if (i_req_ready.read() == 1) {
             if (r.req_len.read().or_reduce() == 1) {
                 v.req_addr = (r.req_addr.read()((CFG_SYSBUS_ADDR_BITS - 1), 12), vb_req_addr_next);
                 v.req_len = (r.req_len.read() - 1);
             }
+            v.state = State_addrdata_r;
+        }
+        break;
+    case State_addrdata_r:
+        v.resp_valid = i_resp_valid;
+        v.resp_rdata = i_resp_rdata;
+        v.resp_err = i_resp_err;
+        if ((i_resp_valid.read() == 0) || (r.req_len.read().or_reduce() == 0)) {
+            v.req_valid = 0;
             v.state = State_data_r;
+        } else if (i_xslvi.read().r_ready == 0) {
+            // Bus is not ready to accept read data
+            v.req_valid = 0;
+            v.state = State_out_r;
+        } else if (i_req_ready.read() == 0) {
+            // Slave device is not ready to accept burst request
+            v.state = State_addr_r;
+        } else {
+            v.req_addr = (r.req_addr.read()((CFG_SYSBUS_ADDR_BITS - 1), 12), vb_req_addr_next);
+            v.req_len = (r.req_len.read() - 1);
         }
         break;
     case State_data_r:
         if (i_resp_valid.read() == 1) {
             v.resp_valid = 1;
-            v.resp_last = r.req_last;
             v.resp_rdata = i_resp_rdata;
             v.resp_err = i_resp_err;
+            v.resp_last = (!r.req_len.read().or_reduce());
+            v.state = State_out_r;
         }
-        if ((r.req_len.read().or_reduce() == 1) && (i_xslvi.read().r_ready == 1) && (i_resp_valid.read() == 1)) {
-            v.req_addr = (r.req_addr.read()((CFG_SYSBUS_ADDR_BITS - 1), 12), vb_req_addr_next);
-            v.req_len = (r.req_len.read() - 1);
-        }
-        if (i_req_ready.read() == 0) {
-            v.state = State_addr_r;
-        } else if (r.req_len.read().or_reduce() == 0) {
-            v.req_valid = 0;
-            if ((i_xslvi.read().r_ready == 1) && (r.resp_last.read() == 1)) {
-                v.resp_valid = 0;
-                v.resp_last = 0;
+        break;
+    case State_out_r:
+        if (i_xslvi.read().r_ready == 1) {
+            v.resp_valid = 0;
+            v.resp_last = 0;
+            if (r.req_len.read().or_reduce() == 1) {
+                v.req_valid = 1;
+                v.state = State_addr_r;
+            } else {
                 v.state = State_Idle;
             }
         }

@@ -37,11 +37,13 @@ Workgroup::Workgroup(sc_module_name name,
     i_meip("i_meip"),
     i_seip("i_seip"),
     i_mtimer("i_mtimer"),
-    o_xcfg("o_xcfg"),
     i_acpo("i_acpo"),
     o_acpi("o_acpi"),
+    o_xmst_cfg("o_xmst_cfg"),
     i_msti("i_msti"),
     o_msto("o_msto"),
+    i_dmi_mapinfo("i_dmi_mapinfo"),
+    o_dmi_cfg("o_dmi_cfg"),
     i_dmi_apbi("i_dmi_apbi"),
     o_dmi_apbo("o_dmi_apbo"),
     o_dmreset("o_dmreset"),
@@ -79,6 +81,8 @@ Workgroup::Workgroup(sc_module_name name,
     dmi0->i_tms(i_tms);
     dmi0->i_tdi(i_tdi);
     dmi0->o_tdo(o_tdo);
+    dmi0->i_mapinfo(i_dmi_mapinfo);
+    dmi0->o_cfg(o_dmi_cfg);
     dmi0->i_apbi(i_dmi_apbi);
     dmi0->o_apbo(o_dmi_apbo);
     dmi0->o_ndmreset(o_dmreset);
@@ -209,6 +213,7 @@ Workgroup::Workgroup(sc_module_name name,
     sensitive << i_mtimer;
     sensitive << i_acpo;
     sensitive << i_msti;
+    sensitive << i_dmi_mapinfo;
     sensitive << i_dmi_apbi;
     for (int i = 0; i < CFG_SLOT_L1_TOTAL; i++) {
         sensitive << coreo[i];
@@ -303,11 +308,13 @@ void Workgroup::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_meip, i_meip.name());
         sc_trace(o_vcd, i_seip, i_seip.name());
         sc_trace(o_vcd, i_mtimer, i_mtimer.name());
-        sc_trace(o_vcd, o_xcfg, o_xcfg.name());
         sc_trace(o_vcd, i_acpo, i_acpo.name());
         sc_trace(o_vcd, o_acpi, o_acpi.name());
+        sc_trace(o_vcd, o_xmst_cfg, o_xmst_cfg.name());
         sc_trace(o_vcd, i_msti, i_msti.name());
         sc_trace(o_vcd, o_msto, o_msto.name());
+        sc_trace(o_vcd, i_dmi_mapinfo, i_dmi_mapinfo.name());
+        sc_trace(o_vcd, o_dmi_cfg, o_dmi_cfg.name());
         sc_trace(o_vcd, i_dmi_apbi, i_dmi_apbi.name());
         sc_trace(o_vcd, o_dmi_apbo, o_dmi_apbo.name());
         sc_trace(o_vcd, o_dmreset, o_dmreset.name());
@@ -356,10 +363,10 @@ void Workgroup::comb() {
         vb_irq[i] = 0;
     }
 
-    wb_xcfg.descrsize = PNP_CFG_DEV_DESCR_BYTES;
-    wb_xcfg.descrtype = PNP_CFG_TYPE_MASTER;
-    wb_xcfg.vid = VENDOR_OPTIMITECH;
-    wb_xcfg.did = RISCV_RIVER_WORKGROUP;
+    wb_xmst_cfg.descrsize = PNP_CFG_DEV_DESCR_BYTES;
+    wb_xmst_cfg.descrtype = PNP_CFG_TYPE_MASTER;
+    wb_xmst_cfg.vid = VENDOR_OPTIMITECH;
+    wb_xmst_cfg.did = RISCV_RIVER_WORKGROUP;
 
     // Vector to signal conversion is neccessary to implement compatibility with SystemC:
     for (int i = 0; i < CFG_CPU_MAX; i++) {
@@ -375,7 +382,7 @@ void Workgroup::comb() {
     w_flush_l2 = v_flush_l2;
     wb_halted = vb_halted;
     wb_available = vb_available;
-    o_xcfg = wb_xcfg;
+    o_xmst_cfg = wb_xmst_cfg;
 }
 
 }  // namespace debugger
