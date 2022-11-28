@@ -32,11 +32,11 @@ localparam int QUEUE_WIDTH = (1  // memop_debug
         + RISCV_ARCH  // vb_res_data
         + 6  // vb_res_addr
         + 32  // vb_e_instr
-        + CFG_CPU_ADDR_BITS  // vb_e_pc
+        + RISCV_ARCH  // vb_e_pc
         + 2  // vb_mem_sz
         + 1  // v_mem_sign_ext
         + MemopType_Total  // vb_mem_type
-        + CFG_CPU_ADDR_BITS  // vb_mem_addr
+        + RISCV_ARCH  // vb_mem_addr
 );
 
 typedef struct {
@@ -45,20 +45,20 @@ typedef struct {
     logic mmu_sv39;
     logic mmu_sv48;
     logic [MemopType_Total-1:0] memop_type;
-    logic [CFG_CPU_ADDR_BITS-1:0] memop_addr;
+    logic [RISCV_ARCH-1:0] memop_addr;
     logic [63:0] memop_wdata;
     logic [7:0] memop_wstrb;
     logic memop_sign_ext;
     logic [1:0] memop_size;
     logic memop_debug;
-    logic [CFG_CPU_ADDR_BITS-1:0] memop_res_pc;
+    logic [RISCV_ARCH-1:0] memop_res_pc;
     logic [31:0] memop_res_instr;
     logic [5:0] memop_res_addr;
     logic [CFG_REG_TAG_WIDTH-1:0] memop_res_wtag;
     logic [RISCV_ARCH-1:0] memop_res_data;
     logic memop_res_wena;
     logic [RISCV_ARCH-1:0] hold_rdata;
-    logic [CFG_CPU_ADDR_BITS-1:0] pc;
+    logic [RISCV_ARCH-1:0] pc;
     logic valid;
 } MemAccess_registers;
 

@@ -76,7 +76,7 @@ typedef struct {
     logic [31:0] data3;
     logic [(32 * CFG_PROGBUF_REG_TOTAL)-1:0] progbuf_data;
     logic dport_req_valid;
-    logic [CFG_CPU_ADDR_BITS-1:0] dport_addr;
+    logic [RISCV_ARCH-1:0] dport_addr;
     logic [RISCV_ARCH-1:0] dport_wdata;
     logic [2:0] dport_size;
     logic dport_resp_ready;

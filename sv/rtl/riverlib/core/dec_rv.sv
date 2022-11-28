@@ -25,7 +25,7 @@ module DecoderRv #(
     input logic i_nrst,                                     // Reset: active LOW
     input logic i_flush_pipeline,                           // reset pipeline and cache
     input logic i_progbuf_ena,                              // executing from progbuf
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_f_pc,// Fetched pc
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_f_pc,     // Fetched pc
     input logic [31:0] i_f_instr,                           // Fetched instruction value
     input logic i_instr_load_fault,                         // fault instruction's address
     input logic i_instr_page_fault_x,                       // IMMU page fault signal
@@ -34,7 +34,7 @@ module DecoderRv #(
     output logic [5:0] o_waddr,                             // register bank output (rd)
     output logic [11:0] o_csr_addr,                         // CSR bank output
     output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_imm,     // immediate constant decoded from instruction
-    output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_pc,// Current instruction pointer value
+    output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_pc,      // Current instruction pointer value
     output logic [31:0] o_instr,                            // Current instruction value
     output logic o_memop_store,                             // Store to memory operation
     output logic o_memop_load,                              // Load from memoru operation

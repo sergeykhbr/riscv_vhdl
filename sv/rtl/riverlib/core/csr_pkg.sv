@@ -42,7 +42,7 @@ localparam bit [3:0] SATP_MODE_SV39 = 4'h8;                 // 39-bits Page mode
 localparam bit [3:0] SATP_MODE_SV48 = 4'h9;                 // 48-bits Page mode
 
 typedef struct {
-    logic [CFG_CPU_ADDR_BITS-1:0] xepc;
+    logic [RISCV_ARCH-1:0] xepc;
     logic [1:0] xpp;                                        // Previous Privildge mode. If x is not implemented, then xPP mus be 0
     logic xpie;                                             // Previous Privildge mode global interrupt enable
     logic xie;                                              // Global interrupt enbale bit.
@@ -60,8 +60,8 @@ typedef struct {
 
 typedef struct {
     logic [7:0] cfg;                                        // pmpcfg bits without changes
-    logic [CFG_CPU_ADDR_BITS-1:0] addr;                     // Maximal PMP address bits [55:2]
-    logic [CFG_CPU_ADDR_BITS-1:0] mask;                     // NAPOT mask formed from address
+    logic [RISCV_ARCH-1:0] addr;                            // Maximal PMP address bits [55:2]
+    logic [RISCV_ARCH-1:0] mask;                            // NAPOT mask formed from address
 } PmpItemType;
 
 
@@ -83,8 +83,8 @@ typedef struct {
     logic [63:0] medeleg;
     logic [IRQ_TOTAL-1:0] mideleg;
     logic [31:0] mcountinhibit;                             // When non zero stop specified performance counter
-    logic [CFG_CPU_ADDR_BITS-1:0] mstackovr;
-    logic [CFG_CPU_ADDR_BITS-1:0] mstackund;
+    logic [RISCV_ARCH-1:0] mstackovr;
+    logic [RISCV_ARCH-1:0] mstackund;
     logic mmu_ena;                                          // Instruction MMU SV48 enabled in U- and S- modes
     logic [43:0] satp_ppn;                                  // Physcal Page Number
     logic satp_sv39;
@@ -99,12 +99,12 @@ typedef struct {
     logic ex_fpu_overflow;                                  // FPU Exception: overflow
     logic ex_fpu_underflow;                                 // FPU Exception: underflow
     logic ex_fpu_inexact;                                   // FPU Exception: inexact
-    logic [CFG_CPU_ADDR_BITS-1:0] trap_addr;
+    logic [RISCV_ARCH-1:0] trap_addr;
     logic [63:0] mcycle_cnt;                                // Cycle in clocks.
     logic [63:0] minstret_cnt;                              // Number of the instructions the hart has retired
     logic [RISCV_ARCH-1:0] dscratch0;
     logic [RISCV_ARCH-1:0] dscratch1;
-    logic [CFG_CPU_ADDR_BITS-1:0] dpc;
+    logic [RISCV_ARCH-1:0] dpc;
     logic [2:0] halt_cause;                                 // 1=ebreak instruction; 2=breakpoint exception; 3=haltreq; 4=step
     logic dcsr_ebreakm;                                     // Enter or not into Debug Mode on EBREAK instruction
     logic dcsr_stopcount;
@@ -118,8 +118,8 @@ typedef struct {
     logic pmp_ena;
     logic pmp_we;
     logic [CFG_PMP_TBL_WIDTH-1:0] pmp_region;
-    logic [CFG_CPU_ADDR_BITS-1:0] pmp_start_addr;
-    logic [CFG_CPU_ADDR_BITS-1:0] pmp_end_addr;
+    logic [RISCV_ARCH-1:0] pmp_start_addr;
+    logic [RISCV_ARCH-1:0] pmp_end_addr;
     logic [CFG_PMP_FL_TOTAL-1:0] pmp_flags;
 } CsrRegs_registers;
 

@@ -29,9 +29,9 @@ module Processor #(
     // Control path:
     input logic i_req_ctrl_ready,                           // ICache is ready to accept request
     output logic o_req_ctrl_valid,                          // Request to ICache is valid
-    output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_req_ctrl_addr,// Requesting address to ICache
+    output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_req_ctrl_addr,// Requesting address to ICache
     input logic i_resp_ctrl_valid,                          // ICache response is valid
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_resp_ctrl_addr,// Response address must be equal to the latest request address
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_resp_ctrl_addr,// Response address must be equal to the latest request address
     input logic [63:0] i_resp_ctrl_data,                    // Read value
     input logic i_resp_ctrl_load_fault,
     output logic o_resp_ctrl_ready,                         // Core is ready to accept response from ICache
@@ -39,14 +39,13 @@ module Processor #(
     input logic i_req_data_ready,                           // DCache is ready to accept request
     output logic o_req_data_valid,                          // Request to DCache is valid
     output logic [river_cfg_pkg::MemopType_Total-1:0] o_req_data_type,// Read/Write transaction plus additional flags
-    output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_req_data_addr,// Requesting address to DCache
+    output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_req_data_addr,// Requesting address to DCache
     output logic [63:0] o_req_data_wdata,                   // Writing value
     output logic [7:0] o_req_data_wstrb,                    // 8-bytes aligned strobs
     output logic [1:0] o_req_data_size,                     // memory operation 1,2,4 or 8 bytes
     input logic i_resp_data_valid,                          // DCache response is valid
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_resp_data_addr,// DCache response address must be equal to the latest request address
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_resp_data_addr,// DCache response address must be equal to the latest request address
     input logic [63:0] i_resp_data_data,                    // Read value
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_resp_data_fault_addr,// write-error address (B-channel)
     input logic i_resp_data_load_fault,                     // Bus response with SLVERR or DECERR on read
     input logic i_resp_data_store_fault,                    // Bus response with SLVERR or DECERR on write
     output logic o_resp_data_ready,                         // Core is ready to accept response from DCache
@@ -56,15 +55,15 @@ module Processor #(
     output logic o_pmp_ena,                                 // PMP is active in S or U modes or if L/MPRV bit is set in M-mode
     output logic o_pmp_we,                                  // write enable into PMP
     output logic [river_cfg_pkg::CFG_PMP_TBL_WIDTH-1:0] o_pmp_region,// selected PMP region
-    output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_pmp_start_addr,// PMP region start address
-    output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_pmp_end_addr,// PMP region end address (inclusive)
+    output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_pmp_start_addr,// PMP region start address
+    output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_pmp_end_addr,// PMP region end address (inclusive)
     output logic [river_cfg_pkg::CFG_PMP_FL_TOTAL-1:0] o_pmp_flags,// {ena, lock, r, w, x}
     // Debug interface:
     input logic i_haltreq,                                  // DMI: halt request from debug unit
     input logic i_resumereq,                                // DMI: resume request from debug unit
     input logic i_dport_req_valid,                          // Debug access from DSU is valid
     input logic [river_cfg_pkg::DPortReq_Total-1:0] i_dport_type,// Debug access type
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_dport_addr,// dport address
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_dport_addr,// dport address
     input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_dport_wdata,// Write value
     input logic [2:0] i_dport_size,                         // reg/mem access size:0=1B;...,4=128B;
     output logic o_dport_req_ready,
@@ -76,9 +75,9 @@ module Processor #(
     output logic o_halted,                                  // CPU halted via debug interface
     // Cache debug signals:
     output logic o_flushi_valid,                            // Remove address from ICache is valid
-    output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_flushi_addr,// Address of instruction to remove from ICache
+    output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_flushi_addr,// Address of instruction to remove from ICache
     output logic o_flushd_valid,                            // Remove address from D$ is valid
-    output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_flushd_addr,// Address of instruction to remove from D$
+    output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_flushd_addr,// Address of instruction to remove from D$
     input logic i_flushd_end
 );
 
@@ -92,7 +91,6 @@ IntRegsType ireg;
 CsrType csr;
 DebugType dbg;
 BranchPredictorType bp;
-
 // csr bridge to executor unit
 logic iccsr_m0_req_ready;
 logic iccsr_m0_resp_valid;
@@ -110,7 +108,6 @@ logic [11:0] iccsr_s0_req_addr;
 logic [RISCV_ARCH-1:0] iccsr_s0_req_data;
 logic iccsr_s0_resp_ready;
 logic iccsr_s0_resp_exception;
-
 logic w_mem_resp_error;
 logic w_writeback_ready;
 logic w_reg_wena;

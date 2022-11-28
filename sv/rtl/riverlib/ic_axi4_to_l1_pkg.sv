@@ -16,7 +16,6 @@
 package ic_axi4_to_l1_pkg;
 
 import types_amba_pkg::*;
-import types_bus0_pkg::*;
 import river_cfg_pkg::*;
 import types_river_pkg::*;
 

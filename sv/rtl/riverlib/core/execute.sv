@@ -28,7 +28,7 @@ module InstrExecute #(
     input logic [5:0] i_d_waddr,                            // rd address
     input logic [11:0] i_d_csr_addr,                        // decoded CSR address
     input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_d_imm,    // immediate value
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_d_pc,// Instruction pointer on decoded instruction
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_d_pc,     // Instruction pointer on decoded instruction
     input logic [31:0] i_d_instr,                           // Decoded instruction value
     input logic i_d_progbuf_ena,                            // instruction from progbuf passed decoder
     input logic [5:0] i_wb_waddr,                           // write back address
@@ -55,7 +55,7 @@ module InstrExecute #(
     input logic i_page_fault_x,                             // IMMU execute page fault signal
     input logic i_page_fault_r,                             // DMMU read access page fault
     input logic i_page_fault_w,                             // DMMU write access page fault
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_mem_ex_addr,// Memoryaccess: exception address
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_mem_ex_addr,// Memoryaccess: exception address
     input logic [river_cfg_pkg::IRQ_TOTAL-1:0] i_irq_pending,// Per Hart pending interrupts pins
     input logic i_wakeup,                                   // There's pending bit even if interrupts globally disabled
     input logic i_haltreq,                                  // halt request from debug unit
@@ -86,20 +86,20 @@ module InstrExecute #(
     output logic o_memop_sign_ext,                          // Load data with sign extending
     output logic [river_cfg_pkg::MemopType_Total-1:0] o_memop_type,// [0]: 1=store/0=Load data
     output logic [1:0] o_memop_size,                        // 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
-    output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_memop_memaddr,// Memory access address
+    output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_memop_memaddr,// Memory access address
     output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_memop_wdata,
     input logic i_memop_ready,                              // memaccess is ready to accept memop on next clock
     input logic i_memop_idle,                               // No memory operations in progress
     input logic i_dbg_mem_req_valid,                        // Debug Request to memory is valid
     input logic i_dbg_mem_req_write,                        // 0=read; 1=write
     input logic [1:0] i_dbg_mem_req_size,                   // 0=1bytes; 1=2bytes; 2=4bytes; 3=8bytes
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_dbg_mem_req_addr,// Memory access address
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_dbg_mem_req_addr,// Memory access address
     input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_dbg_mem_req_wdata,
     output logic o_dbg_mem_req_ready,                       // Debug emmory request was accepted
     output logic o_dbg_mem_req_error,                       // Debug memory reques misaliged
     output logic o_valid,                                   // Output is valid
-    output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_pc,// Valid instruction pointer
-    output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_npc,// Next instruction pointer. Next decoded pc must match to this value or will be ignored.
+    output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_pc,      // Valid instruction pointer
+    output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_npc,     // Next instruction pointer. Next decoded pc must match to this value or will be ignored.
     output logic [31:0] o_instr,                            // Valid instruction value
     output logic o_call,                                    // CALL pseudo instruction detected
     output logic o_ret,                                     // RET pseudoinstruction detected (hw stack tracing)
@@ -265,13 +265,13 @@ begin: comb_proc
     logic v_csr_resp_ready;
     logic [RISCV_ARCH-1:0] vb_csr_cmd_wdata;
     logic [RISCV_ARCH-1:0] vb_res;
-    logic [CFG_CPU_ADDR_BITS-1:0] vb_prog_npc;
-    logic [CFG_CPU_ADDR_BITS-1:0] vb_npc_incr;
+    logic [RISCV_ARCH-1:0] vb_prog_npc;
+    logic [RISCV_ARCH-1:0] vb_npc_incr;
     logic [RISCV_ARCH-1:0] vb_off;
     logic [RISCV_ARCH-1:0] vb_sub64;
-    logic [CFG_CPU_ADDR_BITS-1:0] vb_memop_memaddr;
-    logic [CFG_CPU_ADDR_BITS-1:0] vb_memop_memaddr_load;
-    logic [CFG_CPU_ADDR_BITS-1:0] vb_memop_memaddr_store;
+    logic [RISCV_ARCH-1:0] vb_memop_memaddr;
+    logic [RISCV_ARCH-1:0] vb_memop_memaddr_load;
+    logic [RISCV_ARCH-1:0] vb_memop_memaddr_store;
     logic [RISCV_ARCH-1:0] vb_memop_wdata;
     logic [Instr_Total-1:0] wv;
     logic [2:0] opcode_len;
@@ -309,7 +309,7 @@ begin: comb_proc
     logic v_halted;
     logic v_idle;
     input_mux_type mux;
-    logic [CFG_CPU_ADDR_BITS-1:0] vb_o_npc;
+    logic [RISCV_ARCH-1:0] vb_o_npc;
     int t_radr1;
     int t_radr2;
     int t_waddr;
@@ -337,12 +337,12 @@ begin: comb_proc
     v_call = 0;
     v_ret = 0;
     v_pc_branch = 0;
-    v_eq = 0;
-    v_ge = 0;
-    v_geu = 0;
-    v_lt = 0;
-    v_ltu = 0;
-    v_neq = 0;
+    v_eq = 1'h0;
+    v_ge = 1'h0;
+    v_geu = 1'h0;
+    v_lt = 1'h0;
+    v_ltu = 1'h0;
+    v_neq = 1'h0;
     vb_rdata1 = 0;
     vb_rdata2 = 0;
     vb_rdata1_amo = 0;
@@ -358,7 +358,7 @@ begin: comb_proc
     v_instr_misaligned = 0;
     v_store_misaligned = 0;
     v_load_misaligned = 0;
-    v_debug_misaligned = 0;
+    v_debug_misaligned = 1'h0;
     v_csr_cmd_ena = 0;
     v_mem_ex = 0;
     vb_csr_cmd_addr = 0;
@@ -489,8 +489,8 @@ begin: comb_proc
     end
     v.rdata1_amo = vb_rdata1_amo;
 
-    vb_memop_memaddr_load = (vb_rdata1[(CFG_CPU_ADDR_BITS - 1): 0] + vb_rdata2[(CFG_CPU_ADDR_BITS - 1): 0]);
-    vb_memop_memaddr_store = (vb_rdata1[(CFG_CPU_ADDR_BITS - 1): 0] + vb_off[(CFG_CPU_ADDR_BITS - 1): 0]);
+    vb_memop_memaddr_load = (vb_rdata1 + vb_rdata2);
+    vb_memop_memaddr_store = (vb_rdata1 + vb_off);
     if (mux.memop_type[MemopType_Store] == 1'b0) begin
         vb_memop_memaddr = vb_memop_memaddr_load;
     end else begin
@@ -591,11 +591,11 @@ begin: comb_proc
     vb_npc_incr = (mux.pc + opcode_len);
 
     if (v_pc_branch == 1'b1) begin
-        vb_prog_npc = (mux.pc + vb_off[(CFG_CPU_ADDR_BITS - 1): 0]);
+        vb_prog_npc = (mux.pc + vb_off);
     end else if (wv[Instr_JAL] == 1'b1) begin
-        vb_prog_npc = (vb_rdata1[(CFG_CPU_ADDR_BITS - 1): 0] + vb_off[(CFG_CPU_ADDR_BITS - 1): 0]);
+        vb_prog_npc = (vb_rdata1 + vb_off);
     end else if (wv[Instr_JALR] == 1'b1) begin
-        vb_prog_npc = (vb_rdata1[(CFG_CPU_ADDR_BITS - 1): 0] + vb_rdata2[(CFG_CPU_ADDR_BITS - 1): 0]);
+        vb_prog_npc = (vb_rdata1 + vb_rdata2);
         vb_prog_npc[0] = 1'b0;
     end else begin
         vb_prog_npc = vb_npc_incr;
@@ -928,7 +928,7 @@ begin: comb_proc
                 v.state = State_WaitMulti;
             end else if (i_amo == 1'b1) begin
                 v_memop_ena = 1'b1;
-                vb_memop_memaddr = vb_rdata1[(CFG_CPU_ADDR_BITS - 1): 0];
+                vb_memop_memaddr = vb_rdata1;
                 vb_memop_wdata = vb_rdata2;
                 v.state = State_Amo;
                 if (i_memop_ready == 1'b0) begin
@@ -995,7 +995,7 @@ begin: comb_proc
                     end else begin
                         v.state = State_Idle;
                         if (i_dbg_progbuf_ena == 1'b0) begin
-                            v.npc = i_csr_resp_data[(CFG_CPU_ADDR_BITS - 1): 0];
+                            v.npc = i_csr_resp_data;
                         end
                     end
                 end else if ((r.csr_req_type[CsrReq_ExceptionBit]
@@ -1004,7 +1004,7 @@ begin: comb_proc
                     v.valid = wv[Instr_ECALL];              // No valid strob should be generated for all exceptions except ECALL
                     v.state = State_Idle;
                     if (i_dbg_progbuf_ena == 1'b0) begin
-                        v.npc = i_csr_resp_data[(CFG_CPU_ADDR_BITS - 1): 0];
+                        v.npc = i_csr_resp_data;
                     end
                 end else if (r.csr_req_type[CsrReq_WfiBit] == 1'b1) begin
                     if (i_csr_resp_data[0] == 1'b1) begin
@@ -1022,7 +1022,7 @@ begin: comb_proc
                     v.valid = 1'b1;
                     v.state = State_Idle;
                     if (i_dbg_progbuf_ena == 1'b0) begin
-                        v.npc = i_csr_resp_data[(CFG_CPU_ADDR_BITS - 1): 0];
+                        v.npc = i_csr_resp_data;
                     end
                 end else if (r.csr_req_rmw == 1'b1) begin
                     v.csrstate = CsrState_Req;
@@ -1184,16 +1184,8 @@ begin: comb_proc
                 || wv[Instr_HRET]
                 || wv[Instr_SRET]
                 || wv[Instr_URET]);
-        if (vb_prog_npc[(CFG_CPU_ADDR_BITS - 1)] == 1'b1) begin
-            v.res_npc = {'1, vb_prog_npc};
-        end else begin
-            v.res_npc = {'0, vb_prog_npc};
-        end
-        if (vb_npc_incr[(CFG_CPU_ADDR_BITS - 1)] == 1'b1) begin
-            v.res_ra = {'1, vb_npc_incr};
-        end else begin
-            v.res_ra = {'0, vb_npc_incr};
-        end
+        v.res_npc = vb_prog_npc;
+        v.res_ra = vb_npc_incr;
 
         wb_select[Res_IMul].ena = vb_select[Res_IMul];
         wb_select[Res_IDiv].ena = vb_select[Res_IDiv];

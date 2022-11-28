@@ -41,8 +41,8 @@ begin: comb_proc
     logic w_muxind_rdy;
 
     wb_bits = 0;
-    wb_divx3 = 0;
-    wb_divx2 = 0;
+    wb_divx3 = 55'h00000000000000;
+    wb_divx2 = 55'h00000000000000;
     wb_muxind = 0;
     w_muxind_rdy = 0;
 

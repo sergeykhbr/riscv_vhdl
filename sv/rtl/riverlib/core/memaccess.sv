@@ -22,10 +22,10 @@ module MemAccess #(
 (
     input logic i_clk,                                      // CPU clock
     input logic i_nrst,                                     // Reset: active LOW
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_e_pc,// Execution stage instruction pointer
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_e_pc,     // Execution stage instruction pointer
     input logic [31:0] i_e_instr,                           // Execution stage instruction value
     input logic i_flushd_valid,
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_flushd_addr,
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_flushd_addr,
     output logic o_flushd,
     input logic i_mmu_ena,                                  // MMU enabled
     input logic i_mmu_sv39,                                 // MMU sv39 mode is enabled
@@ -41,7 +41,7 @@ module MemAccess #(
     input logic i_memop_sign_ext,                           // Load data with sign extending (if less than 8 Bytes)
     input logic [river_cfg_pkg::MemopType_Total-1:0] i_memop_type,// [0] 1=store;0=Load data from memory and write to i_res_addr
     input logic [1:0] i_memop_size,                         // Encoded memory transaction size in bytes: 0=1B; 1=2B; 2=4B; 3=8B
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_memop_addr,// Memory access address
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_memop_addr,// Memory access address
     output logic o_memop_ready,                             // Ready to accept memop request
     output logic o_wb_wena,                                 // Write enable signal
     output logic [5:0] o_wb_waddr,                          // Output register address (0 = x0 = no write)
@@ -52,15 +52,15 @@ module MemAccess #(
     input logic i_mem_req_ready,                            // Data cache is ready to accept read/write request
     output logic o_mem_valid,                               // Memory request is valid
     output logic [river_cfg_pkg::MemopType_Total-1:0] o_mem_type,// Memory operation type
-    output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_mem_addr,// Data path requested address
+    output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_mem_addr,// Data path requested address
     output logic [63:0] o_mem_wdata,                        // Data path requested data (write transaction)
     output logic [7:0] o_mem_wstrb,                         // 8-bytes aligned strobs
     output logic [1:0] o_mem_size,                          // 1,2,4 or 8-bytes operation for uncached access
     input logic i_mem_data_valid,                           // Data path memory response is valid
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_mem_data_addr,// Data path memory response address
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_mem_data_addr,// Data path memory response address
     input logic [63:0] i_mem_data,                          // Data path memory response value
     output logic o_mem_resp_ready,                          // Pipeline is ready to accept memory operation response
-    output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_pc,// executed memory/flush request only
+    output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_pc,      // executed memory/flush request only
     output logic o_valid,                                   // memory/flush operation completed
     output logic o_idle,                                    // All memory operation completed
     output logic o_debug_valid                              // Debug request processed, response is valid
@@ -95,7 +95,7 @@ Queue #(
 always_comb
 begin: comb_proc
     MemAccess_registers v;
-    logic [CFG_CPU_ADDR_BITS-1:0] vb_req_addr;
+    logic [RISCV_ARCH-1:0] vb_req_addr;
     logic [63:0] vb_memop_wdata;
     logic [7:0] vb_memop_wstrb;
     logic v_mem_valid;
@@ -103,7 +103,7 @@ begin: comb_proc
     logic [MemopType_Total-1:0] vb_mem_type;
     logic v_mem_sign_ext;
     logic [1:0] vb_mem_sz;
-    logic [CFG_CPU_ADDR_BITS-1:0] vb_mem_addr;
+    logic [RISCV_ARCH-1:0] vb_mem_addr;
     logic [63:0] vb_mem_rdata;
     logic v_queue_re;
     logic v_flushd;
@@ -118,7 +118,7 @@ begin: comb_proc
     logic [63:0] vb_mem_data_signed;
     logic [RISCV_ARCH-1:0] vb_res_data;
     logic [5:0] vb_res_addr;
-    logic [CFG_CPU_ADDR_BITS-1:0] vb_e_pc;
+    logic [RISCV_ARCH-1:0] vb_e_pc;
     logic [31:0] vb_e_instr;
     logic v_memop_ready;
     logic v_o_wena;

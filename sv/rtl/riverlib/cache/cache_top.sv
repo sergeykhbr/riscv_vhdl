@@ -25,25 +25,24 @@ module CacheTop #(
     input logic i_nrst,                                     // Reset: active LOW
     // Control path:
     input logic i_req_ctrl_valid,                           // Control request from CPU Core is valid
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_req_ctrl_addr,// Control request address
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_req_ctrl_addr,// Control request address
     output logic o_req_ctrl_ready,                          // Control request from CPU Core is accepted
     output logic o_resp_ctrl_valid,                         // ICache response is valid and can be accepted
-    output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_resp_ctrl_addr,// ICache response address
+    output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_resp_ctrl_addr,// ICache response address
     output logic [63:0] o_resp_ctrl_data,                   // ICache read data
     output logic o_resp_ctrl_load_fault,                    // Bus response ERRSLV or ERRDEC on read
     input logic i_resp_ctrl_ready,                          // CPU Core is ready to accept ICache response
     // Data path:
     input logic i_req_data_valid,                           // Data path request from CPU Core is valid
     input logic [river_cfg_pkg::MemopType_Total-1:0] i_req_data_type,// Data write memopy operation flag
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_req_data_addr,// Memory operation address
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_req_data_addr,// Memory operation address
     input logic [63:0] i_req_data_wdata,                    // Memory operation write value
     input logic [7:0] i_req_data_wstrb,                     // 8-bytes aligned strob
     input logic [1:0] i_req_data_size,
     output logic o_req_data_ready,                          // Memory operation request accepted by DCache
     output logic o_resp_data_valid,                         // DCache response is ready
-    output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_resp_data_addr,// DCache response address
+    output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_resp_data_addr,// DCache response address
     output logic [63:0] o_resp_data_data,                   // DCache response read data
-    output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_resp_data_fault_addr,// AXI B-channel error
     output logic o_resp_data_load_fault,                    // Bus response ERRSLV or ERRDEC on read
     output logic o_resp_data_store_fault,                   // Bus response ERRSLV or ERRDEC on write
     input logic i_resp_data_ready,                          // CPU Core is ready to accept DCache repsonse
@@ -65,8 +64,8 @@ module CacheTop #(
     input logic i_pmp_ena,                                  // PMP is active in S or U modes or if L/MPRV bit is set in M-mode
     input logic i_pmp_we,                                   // write enable into PMP
     input logic [river_cfg_pkg::CFG_PMP_TBL_WIDTH-1:0] i_pmp_region,// selected PMP region
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_pmp_start_addr,// PMP region start address
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_pmp_end_addr,// PMP region end address (inclusive)
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_pmp_start_addr,// PMP region start address
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_pmp_end_addr,// PMP region end address (inclusive)
     input logic [river_cfg_pkg::CFG_PMP_FL_TOTAL-1:0] i_pmp_flags,// {ena, lock, r, w, x}
     // $D Snoop interface:
     input logic i_req_snoop_valid,
@@ -79,15 +78,19 @@ module CacheTop #(
     output logic [river_cfg_pkg::DTAG_FL_TOTAL-1:0] o_resp_snoop_flags,
     // Debug signals:
     input logic i_flushi_valid,                             // address to clear icache is valid
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_flushi_addr,// clear ICache address from debug interface
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_flushi_addr,// clear ICache address from debug interface
     input logic i_flushd_valid,
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_flushd_addr,
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_flushd_addr,
     output logic o_flushd_end
 );
 
 import river_cfg_pkg::*;
 import cache_top_pkg::*;
 
+logic [CFG_CPU_ADDR_BITS-1:0] wb_i_req_ctrl_addr;
+logic [CFG_CPU_ADDR_BITS-1:0] wb_i_req_data_addr;
+logic [CFG_CPU_ADDR_BITS-1:0] wb_i_flushi_addr;
+logic [CFG_CPU_ADDR_BITS-1:0] wb_i_flushd_addr;
 CacheOutputType i;
 CacheOutputType d;
 // Memory Control interface:
@@ -119,10 +122,10 @@ ICacheLru #(
     .i_clk(i_clk),
     .i_nrst(i_nrst),
     .i_req_valid(i_req_ctrl_valid),
-    .i_req_addr(i_req_ctrl_addr),
+    .i_req_addr(wb_i_req_ctrl_addr),
     .o_req_ready(o_req_ctrl_ready),
     .o_resp_valid(o_resp_ctrl_valid),
-    .o_resp_addr(o_resp_ctrl_addr),
+    .o_resp_addr(i.resp_addr),
     .o_resp_data(o_resp_ctrl_data),
     .o_resp_load_fault(o_resp_ctrl_load_fault),
     .i_resp_ready(i_resp_ctrl_ready),
@@ -139,7 +142,7 @@ ICacheLru #(
     .o_mpu_addr(i.mpu_addr),
     .i_pma_cached(w_pma_icached),
     .i_pmp_x(w_pmp_x),
-    .i_flush_address(i_flushi_addr),
+    .i_flush_address(wb_i_flushi_addr),
     .i_flush_valid(i_flushi_valid)
 );
 
@@ -152,15 +155,14 @@ DCacheLru #(
     .i_nrst(i_nrst),
     .i_req_valid(i_req_data_valid),
     .i_req_type(i_req_data_type),
-    .i_req_addr(i_req_data_addr),
+    .i_req_addr(wb_i_req_data_addr),
     .i_req_wdata(i_req_data_wdata),
     .i_req_wstrb(i_req_data_wstrb),
     .i_req_size(i_req_data_size),
     .o_req_ready(o_req_data_ready),
     .o_resp_valid(o_resp_data_valid),
-    .o_resp_addr(o_resp_data_addr),
+    .o_resp_addr(d.resp_addr),
     .o_resp_data(o_resp_data_data),
-    .o_resp_er_addr(o_resp_data_fault_addr),
     .o_resp_er_load_fault(o_resp_data_load_fault),
     .o_resp_er_store_fault(o_resp_data_store_fault),
     .i_resp_ready(i_resp_data_ready),
@@ -187,7 +189,7 @@ DCacheLru #(
     .o_resp_snoop_valid(o_resp_snoop_valid),
     .o_resp_snoop_data(o_resp_snoop_data),
     .o_resp_snoop_flags(o_resp_snoop_flags),
-    .i_flush_address(i_flushd_addr),
+    .i_flush_address(wb_i_flushd_addr),
     .i_flush_valid(i_flushd_valid),
     .o_flush_end(o_flushd_end)
 );
@@ -250,10 +252,12 @@ begin: comb_proc
     logic [REQ_MEM_TYPE_BITS-1:0] vb_req_mem_type_o;
     logic [2:0] vb_req_mem_size_o;
     logic [CFG_CPU_ADDR_BITS-1:0] vb_req_mem_addr_o;
+    logic [RISCV_ARCH-1:0] vb_resp_ctrl_addr;
+    logic [RISCV_ARCH-1:0] vb_resp_data_addr;
 
-    vb_ctrl_bus = 0;
-    vb_data_bus = 0;
-    vb_queue_bus = 0;
+    vb_ctrl_bus = 55'h00000000000000;
+    vb_data_bus = 55'h00000000000000;
+    vb_queue_bus = 55'h00000000000000;
     ctrl_path_id = 0;
     data_path_id = 0;
     v_queue_we = 0;
@@ -262,7 +266,13 @@ begin: comb_proc
     vb_req_mem_type_o = 0;
     vb_req_mem_size_o = 0;
     vb_req_mem_addr_o = 0;
+    vb_resp_ctrl_addr = 0;
+    vb_resp_data_addr = 0;
 
+    wb_i_req_ctrl_addr = i_req_ctrl_addr[(CFG_CPU_ADDR_BITS - 1): 0];
+    wb_i_req_data_addr = i_req_data_addr[(CFG_CPU_ADDR_BITS - 1): 0];
+    wb_i_flushi_addr = i_flushi_addr[(CFG_CPU_ADDR_BITS - 1): 0];
+    wb_i_flushd_addr = i_flushd_addr[(CFG_CPU_ADDR_BITS - 1): 0];
     v_queue_re = i_req_mem_ready;
     v_queue_we = (i.req_mem_valid || d.req_mem_valid);
 
@@ -304,10 +314,21 @@ begin: comb_proc
 
     wb_ctrl_resp_mem_data = i_resp_mem_data;
     wb_data_resp_mem_data = i_resp_mem_data;
-    v_req_mem_path_o = queue_rdata_o[70];
-    vb_req_mem_type_o = queue_rdata_o[69: 67];
-    vb_req_mem_size_o = queue_rdata_o[66: 64];
-    vb_req_mem_addr_o = queue_rdata_o[63: 0];
+    v_req_mem_path_o = queue_rdata_o[54];
+    vb_req_mem_type_o = queue_rdata_o[53: 51];
+    vb_req_mem_size_o = queue_rdata_o[50: 48];
+    vb_req_mem_addr_o = queue_rdata_o[47: 0];
+
+    vb_resp_ctrl_addr[(CFG_CPU_ADDR_BITS - 1): 0] = i.resp_addr;
+    vb_resp_data_addr[(CFG_CPU_ADDR_BITS - 1): 0] = d.resp_addr;
+    if (CFG_CPU_ADDR_BITS < RISCV_ARCH) begin
+        if (i.resp_addr[(CFG_CPU_ADDR_BITS - 1)] == 1'b1) begin
+            vb_resp_ctrl_addr[(RISCV_ARCH - 1): CFG_CPU_ADDR_BITS] = '1;
+        end
+        if (d.resp_addr[(CFG_CPU_ADDR_BITS - 1)] == 1'b1) begin
+            vb_resp_data_addr[(RISCV_ARCH - 1): CFG_CPU_ADDR_BITS] = '1;
+        end
+    end
 
     o_req_mem_valid = queue_nempty_o;
     o_req_mem_path = v_req_mem_path_o;
@@ -316,6 +337,8 @@ begin: comb_proc
     o_req_mem_addr = vb_req_mem_addr_o;
     o_req_mem_strob = d.req_mem_strob;
     o_req_mem_data = d.req_mem_wdata;
+    o_resp_ctrl_addr = vb_resp_ctrl_addr;
+    o_resp_data_addr = vb_resp_data_addr;
 end: comb_proc
 
 endmodule: CacheTop

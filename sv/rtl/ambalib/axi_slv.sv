@@ -1,317 +1,276 @@
+// 
+//  Copyright 2022 Sergey Khabarov, sergeykhbr@gmail.com
+// 
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+// 
+//      http://www.apache.org/licenses/LICENSE-2.0
+// 
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+// 
+
 `timescale 1ns/10ps
 
-module axi_slv
-#(
-    parameter async_reset = 0
+module axi_slv #(
+    parameter bit async_reset = 1'b0,
+    parameter int unsigned vid = 0,                         // Vendor ID
+    parameter int unsigned did = 0                          // Device ID
 )
 (
-    input i_clk,
-    input i_nrst,
-    input types_amba_pkg::axi4_slave_config_type i_xcfg,
-    input types_amba_pkg::axi4_slave_in_type i_xslvi,
-    output types_amba_pkg::axi4_slave_out_type o_xslvo,
-    input i_ready,
-    input [types_amba_pkg::CFG_SYSBUS_DATA_BITS-1 : 0] i_rdata,
-    output logic o_re,
-    output logic o_r32,
-    output types_amba_pkg::global_addr_array_type o_radr,
-    output types_amba_pkg::global_addr_array_type o_wadr,
-    output logic o_we,
-    output logic [types_amba_pkg::CFG_SYSBUS_DATA_BYTES-1 : 0] o_wstrb,
-    output logic [types_amba_pkg::CFG_SYSBUS_DATA_BITS-1 : 0] o_wdata
+    input logic i_clk,                                      // CPU clock
+    input logic i_nrst,                                     // Reset: active LOW
+    input types_amba_pkg::mapinfo_type i_mapinfo,           // Base address information from the interconnect port
+    output types_amba_pkg::dev_config_type o_cfg,           // Slave config descriptor
+    input types_amba_pkg::axi4_slave_in_type i_xslvi,       // AXI Slave input interface
+    output types_amba_pkg::axi4_slave_out_type o_xslvo,     // AXI Slave output interface
+    output logic o_req_valid,
+    output logic [types_amba_pkg::CFG_SYSBUS_ADDR_BITS-1:0] o_req_addr,
+    output logic o_req_write,
+    output logic [types_amba_pkg::CFG_SYSBUS_DATA_BITS-1:0] o_req_wdata,
+    output logic [types_amba_pkg::CFG_SYSBUS_DATA_BYTES-1:0] o_req_wstrb,
+    output logic o_req_last,
+    input logic i_req_ready,
+    input logic i_resp_valid,
+    input logic [types_amba_pkg::CFG_SYSBUS_DATA_BITS-1:0] i_resp_rdata,
+    input logic i_resp_err
 );
 
 import types_amba_pkg::*;
 import axi_slv_pkg::*;
 
-axi_slave_bank_type rin, r;
-
+axi_slv_registers r, rin;
 
 always_comb
-begin: main_proc
-    axi_slave_bank_type v;
-    logic [CFG_SYSBUS_ADDR_BITS-1 : 0] traddr;
-    logic [CFG_SYSBUS_ADDR_BITS-1 : 0] twaddr;
-    logic [CFG_SYSBUS_ADDR_BITS-1 : 0] v_raddr_bus;
-    logic [CFG_SYSBUS_ADDR_BITS-1 : 0] v_raddr_bus_nxt;
-    logic [CFG_SYSBUS_ADDR_BITS-1 : 0] v_raddr_burst_nxt;
-    logic [CFG_SYSBUS_ADDR_BITS-1 : 0] v_waddr_bus;
-    logic [CFG_SYSBUS_ADDR_BITS-1 : 0] v_waddr_burst_nxt;
-    logic v_re;
-    logic v_r32;
-    logic [CFG_SYSBUS_ADDR_BITS-1 : 0] v_radr;
-    logic [CFG_SYSBUS_DATA_BYTES-1 : 0] v_we;
-    logic [CFG_SYSBUS_DATA_BYTES-1 : 0] v_wstrb;
-    logic [CFG_SYSBUS_DATA_BITS-1 : 0] v_wdata;
-    logic v_aw_ready;
-    logic v_w_ready;
-    logic v_ar_ready;
-    logic v_r_valid;
-    logic v_r_last;
-    logic [CFG_SYSBUS_DATA_BITS-1 : 0] vb_r_data;
+begin: comb_proc
+    axi_slv_registers v;
+    logic [11:0] vb_req_addr_next;
+    logic v_req_last;
+    dev_config_type vcfg;
+    axi4_slave_out_type vxslvo;
+
+    vb_req_addr_next = 0;
+    v_req_last = 0;
+    vcfg = dev_config_none;
+    vxslvo = axi4_slave_out_none;
 
     v = r;
 
-    traddr = {(i_xslvi.ar_bits.addr[CFG_SYSBUS_ADDR_BITS-1 : 12] & (~ i_xcfg.xmask))
-                , i_xslvi.ar_bits.addr[11 : 0]};
+    vcfg.descrsize = PNP_CFG_DEV_DESCR_BYTES;
+    vcfg.descrtype = PNP_CFG_TYPE_SLAVE;
+    vcfg.addr_start = i_mapinfo.addr_start;
+    vcfg.addr_end = i_mapinfo.addr_end;
+    vcfg.vid = vid;
+    vcfg.did = did;
 
-    twaddr = {(i_xslvi.aw_bits.addr[CFG_SYSBUS_ADDR_BITS-1 : 12] & (~ i_xcfg.xmask))
-                , i_xslvi.aw_bits.addr[11 : 0]};
-
-    v_re      = 1'b0;
-    v_r32     = 1'b0;
-    v_radr[0] = '0;
-    v_radr[1] = '0;
-    vb_r_data = i_rdata;
-
-    v_raddr_bus = traddr;
-    v_raddr_bus_nxt[CFG_SYSBUS_ADDR_BITS-1 : 12] = traddr[CFG_SYSBUS_ADDR_BITS-1 : 12];
-    v_raddr_bus_nxt[11:0] = traddr[11:0] + XSizeToBytes(int'(i_xslvi.ar_bits.size));
-    v_waddr_bus = twaddr;
-
-
-    // Next burst read address 
-    v_raddr_burst_nxt[CFG_SYSBUS_ADDR_BITS-1 : 12] = r.raddr[CFG_SYSBUS_ADDR_BITS-1 : 12];
-    v_raddr_burst_nxt[11:0] = r.raddr[11:0] + r.rsize;
-    if (r.rburst == AXI_BURST_WRAP) begin
-        v_raddr_burst_nxt[CFG_SYSBUS_ADDR_BITS-1 : 5]
-              = r.raddr[CFG_SYSBUS_ADDR_BITS-1 : 5];
+    vb_req_addr_next = (r.req_addr[11: 0] + r.req_xsize);
+    if (r.req_burst == AXI_BURST_FIXED) begin
+        vb_req_addr_next = r.req_addr[11: 0];
+    end else if (r.req_burst == AXI_BURST_WRAP) begin
+        // Wrap suppported only 2, 4, 8 or 16 Bytes. See ARMDeveloper spec.
+        if (r.req_xsize == 2) begin
+            vb_req_addr_next[11: 1] = r.req_addr[11: 1];
+        end else if (r.req_xsize == 4) begin
+            vb_req_addr_next[11: 2] = r.req_addr[11: 2];
+        end else if (r.req_xsize == 8) begin
+            vb_req_addr_next[11: 3] = r.req_addr[11: 3];
+        end else if (r.req_xsize == 16) begin
+            vb_req_addr_next[11: 4] = r.req_addr[11: 4];
+        end else if (r.req_xsize == 32) begin
+            // Optional (not in ARM spec)
+            vb_req_addr_next[11: 5] = r.req_addr[11: 5];
+        end
     end
 
-    // Next burst write address 
-    v_waddr_burst_nxt[CFG_SYSBUS_ADDR_BITS-1 : 12] = r.waddr[CFG_SYSBUS_ADDR_BITS-1 : 12];
-    v_waddr_burst_nxt[11:0] = r.waddr[11:0] + r.wsize;
-    if (r.wburst == AXI_BURST_WRAP) begin
-        v_waddr_burst_nxt[CFG_SYSBUS_ADDR_BITS-1 : 5]
-              = r.waddr[CFG_SYSBUS_ADDR_BITS-1 : 5];
+    v_req_last = (~(|r.req_len));
+    v.req_last = v_req_last;
+
+    case (r.state)
+    State_Idle: begin
+        v.req_valid = 1'b0;
+        v.req_write = 1'b0;
+        v.resp_valid = 1'b0;
+        v.resp_last = 1'b0;
+        v.resp_err = 1'b0;
+        vxslvo.aw_ready = 1'b1;
+        vxslvo.w_ready = 1'b1;                              // No burst AXILite ready
+        vxslvo.ar_ready = (~i_xslvi.aw_valid);
+        if (i_xslvi.aw_valid == 1'b1) begin
+            v.req_addr = i_xslvi.aw_bits.addr;
+            v.req_xsize = XSizeToBytes(i_xslvi.aw_bits.size);
+            v.req_len = i_xslvi.aw_bits.len;
+            v.req_burst = i_xslvi.aw_bits.burst;
+            v.req_id = i_xslvi.aw_id;
+            v.req_user = i_xslvi.aw_user;
+            v.req_wdata = i_xslvi.w_data;                   // AXI Lite compatible
+            v.req_wstrb = i_xslvi.w_strb;
+            if (i_xslvi.w_valid == 1'b1) begin
+                // AXI Lite does not support burst transaction
+                v.state = State_last_w;
+                v.req_valid = 1'b1;
+                v.req_write = 1'b1;
+            end else begin
+                v.state = State_w;
+            end
+        end else if (i_xslvi.ar_valid == 1'b1) begin
+            v.req_valid = 1'b1;
+            v.req_addr = i_xslvi.ar_bits.addr;
+            v.req_xsize = XSizeToBytes(i_xslvi.ar_bits.size);
+            v.req_len = i_xslvi.ar_bits.len;
+            v.req_burst = i_xslvi.ar_bits.burst;
+            v.req_id = i_xslvi.ar_id;
+            v.req_user = i_xslvi.ar_user;
+            v.state = State_addr_r;
+        end
     end
-
-    v_we = '0;
-
-    v_ar_ready = 1'b0;
-    v_r_valid = 1'b0;
-    v_r_last = 1'b0;
-    v_aw_ready = 1'b0;
-    v_w_ready = 1'b0;
-
-    // Reading state machine:
-    case (r.rstate)
-    rwait: begin
-        v_ar_ready = 1'b1;
-        v_radr = v_raddr_bus;
-   
-        if (i_xslvi.ar_valid == 1'b1) begin
-            if (i_xslvi.aw_valid == 1'b0 && r.wstate == wwait) begin
-                v_re = 1'b1;
-                v.rstate = rtrans;
-                v.raddr = v_raddr_bus_nxt;
+    State_w: begin
+        vxslvo.w_ready = 1'b1;
+        v.req_wdata = i_xslvi.w_data;
+        v.req_wstrb = i_xslvi.w_strb;
+        if (i_xslvi.w_valid == 1'b1) begin
+            v.req_valid = 1'b1;
+            v.req_write = 1'b1;
+            if ((|r.req_len) == 1'b1) begin
+                v.state = State_burst_w;
             end else begin
-                v.rstate = rhold;
-                v.raddr = v_raddr_bus;
+                v.state = State_last_w;
             end
-
-            if (i_xslvi.ar_bits.size == 3'b010) begin
-                v_r32 = 1'b1;
+        end
+    end
+    State_burst_w: begin
+        v.req_valid = i_xslvi.w_valid;
+        vxslvo.w_ready = i_resp_valid;
+        if ((i_xslvi.w_valid == 1'b1) && (i_resp_valid == 1'b1)) begin
+            v.req_addr = {r.req_addr[(CFG_SYSBUS_ADDR_BITS - 1): 12], vb_req_addr_next};
+            v.req_wdata = i_xslvi.w_data;
+            v.req_wstrb = i_xslvi.w_strb;
+            if ((|r.req_len) == 1'b1) begin
+                v.req_len = (r.req_len - 1);
             end
-            v.rswap  = i_xslvi.ar_bits.addr[2];
-            v.rsize  = XSizeToBytes(int'(i_xslvi.ar_bits.size));
-            v.rburst = i_xslvi.ar_bits.burst;
-            v.rlen   = i_xslvi.ar_bits.len;
-            v.rid    = i_xslvi.ar_id;
-            v.rresp  = AXI_RESP_OKAY;
-            v.ruser  = i_xslvi.ar_user;
-            v.rskip = 1'b0;
-        end
-    end  // rwait
-
-    rhold: begin
-        v_radr = r.raddr;
-        if (r.rsize == 4) begin
-            v_r32 = 1'b1;
-        end
-        if (i_xslvi.aw_valid == 1'b0 && r.wstate == wwait) begin
-            v_re = 1'b1;
-            v.rstate = rtrans;
-            v.raddr = v_raddr_burst_nxt;
-        end
-    end   // rhold
-
-    rtrans: begin
-        v_r_valid = i_ready;
-        v_radr = r.raddr;
-        v_re = (|r.rlen);  // request next burst read address even if no ready data
-        v_r_last = ~v_re;
-        if (v.rsize == 4) begin
-            v_r32 = 1'b1;
-        end
-        if (r.rskip == 1'b1) begin
-            vb_r_data = r.skip_rdata;
-            if (i_xslvi.r_ready == 1'b1) begin
-               v.rskip = 1'b0;
+            if (r.req_len == 8'h01) begin
+                v.state = State_last_w;
             end
-        end else if (r.rswap == 1'b1) begin
-            vb_r_data = {i_rdata[63 : 32], i_rdata[63 : 32]};
         end
-
-        if (i_xslvi.r_ready == 1'b1 && i_ready == 1'b1) begin
-            v.rswap = r.raddr[2];
-            v.raddr = v_raddr_burst_nxt;
-            // End of transaction (or process another one):
-            if (r.rlen == 0) begin
-                v_ar_ready = 1'b1;
-                v_radr = v_raddr_bus;
-                if (i_xslvi.ar_valid == 1'b1) begin
-                    if (i_xslvi.aw_valid == 1'b0 && r.wstate == wwait) begin
-                        v_re = 1'b1;
-                        v.rstate = rtrans;
-                        v.raddr = v_raddr_bus_nxt;
-                    end else begin 
-                        v.rstate = rhold;
-                        v.raddr = v_raddr_bus;
-                    end
-
-                    if (i_xslvi.ar_bits.size == 3'b010) begin
-                        v_r32 = 1'b1;
-                    end
-                    v.rswap = i_xslvi.ar_bits.addr[2];
-                    v.rsize  = XSizeToBytes(int'(i_xslvi.ar_bits.size));
-                    v.rburst = i_xslvi.ar_bits.burst;
-                    v.rlen   = i_xslvi.ar_bits.len;
-                    v.rid    = i_xslvi.ar_id;
-                    v.rresp  = AXI_RESP_OKAY;
-                    v.ruser  = i_xslvi.ar_user;
-                end else begin
-                    v.rstate = rwait;
-                end
+    end
+    State_last_w: begin
+        // Wait cycle: w_ready is zero on the last write because it is laready accepted
+        if (i_resp_valid == 1'b1) begin
+            v.req_valid = 1'b0;
+            v.req_write = 1'b0;
+            v.resp_err = i_resp_err;
+            v.state = State_b;
+        end
+    end
+    State_b: begin
+        vxslvo.b_valid = 1'b1;
+        if (i_xslvi.b_ready == 1'b1) begin
+            v.state = State_Idle;
+        end
+    end
+    State_addr_r: begin
+        // Setup address:
+        if (i_req_ready == 1'b1) begin
+            if ((|r.req_len) == 1'b1) begin
+                v.req_addr = {r.req_addr[(CFG_SYSBUS_ADDR_BITS - 1): 12], vb_req_addr_next};
+                v.req_len = (r.req_len - 1);
+            end
+            v.state = State_addrdata_r;
+        end
+    end
+    State_addrdata_r: begin
+        v.resp_valid = i_resp_valid;
+        v.resp_rdata = i_resp_rdata;
+        v.resp_err = i_resp_err;
+        if ((i_resp_valid == 1'b0) || ((|r.req_len) == 1'b0)) begin
+            v.req_valid = 1'b0;
+            v.state = State_data_r;
+        end else if (i_xslvi.r_ready == 1'b0) begin
+            // Bus is not ready to accept read data
+            v.req_valid = 1'b0;
+            v.state = State_out_r;
+        end else if (i_req_ready == 1'b0) begin
+            // Slave device is not ready to accept burst request
+            v.state = State_addr_r;
+        end else begin
+            v.req_addr = {r.req_addr[(CFG_SYSBUS_ADDR_BITS - 1): 12], vb_req_addr_next};
+            v.req_len = (r.req_len - 1);
+        end
+    end
+    State_data_r: begin
+        if (i_resp_valid == 1'b1) begin
+            v.resp_valid = 1'b1;
+            v.resp_rdata = i_resp_rdata;
+            v.resp_err = i_resp_err;
+            v.resp_last = (~(|r.req_len));
+            v.state = State_out_r;
+        end
+    end
+    State_out_r: begin
+        if (i_xslvi.r_ready == 1'b1) begin
+            v.resp_valid = 1'b0;
+            v.resp_last = 1'b0;
+            if ((|r.req_len) == 1'b1) begin
+                v.req_valid = 1'b1;
+                v.state = State_addr_r;
             end else begin
-                v.rlen = r.rlen - 1;
+                v.state = State_Idle;
             end
-        end else if (i_xslvi.r_ready == 1'b0 && i_ready == 1'b1 && r.rskip == 1'b0) begin
-            v.rskip = 1'b1;
-            v.skip_rdata = vb_r_data;
         end
-    end   // rtrans
+    end
+    default: begin
+    end
     endcase
 
-    // Writing state machine:
-    case (r.wstate)
-    wwait: begin
-        if (r.rlen == 0 || r.rstate == rhold) begin
-            v_aw_ready = 1'b1;
-        end
-        if (i_xslvi.aw_valid == 1'b1 && (r.rlen == 0 || r.rstate == rhold)) begin
-            v.wstate = wtrans;
-            v.waddr  = v_waddr_bus;
-            v.wswap  = i_xslvi.aw_bits.addr[2];
-            v.wsize  = XSizeToBytes(int'(i_xslvi.aw_bits.size));
-            v.wburst = i_xslvi.aw_bits.burst;
-            v.wlen   = i_xslvi.aw_bits.len;
-            v.wid    = i_xslvi.aw_id;
-            v.wresp  = AXI_RESP_OKAY;
-            v.wuser  = i_xslvi.aw_user;
-        end
-    end  // wwait
-
-    wtrans: begin
-        v_we = '1;
-        v_w_ready = i_ready;
-        if (i_xslvi.w_valid == 1'b1 && i_ready == 1'b1) begin
-            v.wswap = r.waddr[2];
-            v.waddr = v_waddr_burst_nxt;
-            // End of transaction:
-            if (r.wlen == 0) begin
-                v.b_valid = 1'b1;
-                v_aw_ready = 1'b1;
-                if (i_xslvi.aw_valid == 1'b0) begin
-                    v.wstate = wwait;
-                end else begin
-                    v.waddr = v_waddr_bus;
-                    v.wswap  = i_xslvi.aw_bits.addr[2];
-                    v.wsize  = XSizeToBytes(int'(i_xslvi.aw_bits.size));
-                    v.wburst = i_xslvi.aw_bits.burst;
-                    v.wlen   = i_xslvi.aw_bits.len;
-                    v.wid    = i_xslvi.aw_id;
-                    v.wresp  = AXI_RESP_OKAY;
-                    v.wuser  = i_xslvi.aw_user;
-                end
-            end else begin
-                v.wlen = r.wlen - 1;
-            end
-        end
-    end  // wtrans
-    endcase
-
-    if ((i_xslvi.b_ready == 1'b1) && (r.b_valid == 1'b1))
-    begin
-        if ((r.wstate == wtrans) && (i_xslvi.w_valid == 1'b1) && (r.wlen == 0))
-        begin
-            v.b_valid = 1'b1;
-        end
-        else
-        begin
-            v.b_valid = 1'b0;
-        end
+    if (~async_reset && i_nrst == 1'b0) begin
+        v = axi_slv_r_reset;
     end
 
+    o_req_valid = r.req_valid;
+    o_req_last = v_req_last;
+    o_req_addr = r.req_addr;
+    o_req_write = r.req_write;
+    o_req_wdata = r.req_wdata;
+    o_req_wstrb = r.req_wstrb;
 
-    o_re    = v_re;
-    o_radr[0]  = {v_radr[CFG_SYSBUS_ADDR_BITS-1:3], 3'b000};
-    o_radr[1]  = {v_radr[CFG_SYSBUS_ADDR_BITS-1:3], 3'b100};
-    o_r32   = v_r32;
-    o_wadr[0]  = {r.waddr[CFG_SYSBUS_ADDR_BITS-1:3], 3'b000};
-    o_wadr[1]  = {r.waddr[CFG_SYSBUS_ADDR_BITS-1:3], 3'b100};
-    o_we    = i_xslvi.w_valid;
-    o_wdata = i_xslvi.w_data;
-    o_wstrb = i_xslvi.w_strb;
-
-
-    if ( !async_reset && (i_nrst == 1'b0))
-    begin
-        v = AXI_SLAVE_BANK_RESET();
-    end
+    vxslvo.b_id = r.req_id;
+    vxslvo.b_user = r.req_user;
+    vxslvo.b_resp = {r.resp_err, 1'h0};
+    vxslvo.r_valid = r.resp_valid;
+    vxslvo.r_id = r.req_id;
+    vxslvo.r_user = r.req_user;
+    vxslvo.r_resp = {r.resp_err, 1'h0};
+    vxslvo.r_data = r.resp_rdata;
+    vxslvo.r_last = r.resp_last;
+    o_xslvo = vxslvo;
+    o_cfg = vcfg;
 
     rin = v;
+end: comb_proc
 
-    o_xslvo.aw_ready = v_aw_ready;
-    o_xslvo.w_ready  = v_w_ready;
-    o_xslvo.ar_ready = v_ar_ready;
-    o_xslvo.r_valid  = v_r_valid;
-    o_xslvo.r_last   = v_r_last;
-    o_xslvo.r_data   = vb_r_data;
-    o_xslvo.r_id     = r.rid;
-    o_xslvo.r_resp   = r.rresp;
-    o_xslvo.r_user   = r.ruser;
+generate
+    if (async_reset) begin: async_rst_gen
 
-    // Write Handshaking:
-    o_xslvo.b_id    = r.wid;
-    o_xslvo.b_resp  = r.wresp;
-    o_xslvo.b_user  = r.wuser;
-    o_xslvo.b_valid = r.b_valid;
+        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+            if (i_nrst == 1'b0) begin
+                r <= axi_slv_r_reset;
+            end else begin
+                r <= rin;
+            end
+        end: rg_proc
 
-end: main_proc
 
-// registers
- generate
+    end: async_rst_gen
+    else begin: no_rst_gen
 
-    if (async_reset)
-        begin: async_rst_gen
-            always_ff @(posedge i_clk or negedge i_nrst)
-                begin: rg_proc
-                    if ( i_nrst == 1'b0 ) begin
-                        r <= AXI_SLAVE_BANK_RESET();
-                    end else begin
-                        r <= rin;
-                    end
-                end: rg_proc
-        end: async_rst_gen
-    else
-        begin: no_rst_gen
-            always_ff @(posedge i_clk)
-                begin: rg_proc
-                    r <= rin;
-                end: rg_proc
-        end: no_rst_gen
+        always_ff @(posedge i_clk) begin: rg_proc
+            r <= rin;
+        end: rg_proc
 
+    end: no_rst_gen
 endgenerate
 
 endmodule: axi_slv

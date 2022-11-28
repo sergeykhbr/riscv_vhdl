@@ -29,6 +29,8 @@ module dmidebug #(
     input logic i_tdi,                                      // Test Data Input
     output logic o_tdo,                                     // Test Data Output
     // Bus interface (APB):
+    input types_amba_pkg::mapinfo_type i_mapinfo,           // interconnect slot information
+    output types_amba_pkg::dev_config_type o_cfg,           // Device descriptor
     input types_amba_pkg::apb_in_type i_apbi,               // APB input interface
     output types_amba_pkg::apb_out_type o_apbo,             // APB output interface
     // DMI interface:
@@ -42,7 +44,7 @@ module dmidebug #(
     output logic o_hartreset,                               // Reset currently selected hart
     output logic o_dport_req_valid,                         // Debug access from DSU is valid
     output logic [river_cfg_pkg::DPortReq_Total-1:0] o_dport_req_type,// Debug access types
-    output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_dport_addr,// Register index
+    output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_dport_addr,// Register index
     output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_dport_wdata,// Write value
     output logic [2:0] o_dport_size,                        // 0=1B;1=2B;2=4B;3=8B;4=128B
     input logic i_dport_req_ready,                          // Response is ready
@@ -121,6 +123,7 @@ jtagcdc #(
 always_comb
 begin: comb_proc
     dmidebug_registers v;
+    dev_config_type vcfg;
     apb_out_type vapbo;
     logic [DPortReq_Total-1:0] vb_req_type;
     logic [31:0] vb_resp_data;
@@ -134,6 +137,7 @@ begin: comb_proc
     logic [(32 * CFG_PROGBUF_REG_TOTAL)-1:0] t_progbuf;
     int t_idx;
 
+    vcfg = dev_config_none;
     vapbo = apb_out_none;
     vb_req_type = 0;
     vb_resp_data = 0;
@@ -148,6 +152,13 @@ begin: comb_proc
     t_idx = 0;
 
     v = r;
+
+    vcfg.descrsize = PNP_CFG_DEV_DESCR_BYTES;
+    vcfg.descrtype = PNP_CFG_TYPE_SLAVE;
+    vcfg.addr_start = i_mapinfo.addr_start;
+    vcfg.addr_end = i_mapinfo.addr_end;
+    vcfg.vid = VENDOR_OPTIMITECH;
+    vcfg.did = OPTIMITECH_JTAG_DMI;
 
     vb_hartselnext = r.wdata[((16 + CFG_LOG2_CPU_MAX) - 1): 16];
     hsel = int'(r.hartsel);
@@ -552,6 +563,7 @@ begin: comb_proc
     w_jtag_dmi_busy = 1'b0;                                 // |r.dmstate
     w_jtag_dmi_error = 1'b0;
 
+    o_cfg = vcfg;
     o_apbo = vapbo;
 
     rin = v;

@@ -79,8 +79,8 @@ begin: comb_proc
     vb_a2 = 0;
     vb_rem = 0;
     vb_div = 0;
-    v_a1_m0 = 0;
-    v_a2_m1 = 0;
+    v_a1_m0 = 1'h0;
+    v_a2_m1 = 1'h0;
     v_ena = 0;
     t_divisor = 0;
 

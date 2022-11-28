@@ -32,7 +32,7 @@ localparam bit [3:0] wait_to_accept = 4'hb;
 
 typedef struct {
     logic dport_write;
-    logic [CFG_CPU_ADDR_BITS-1:0] dport_addr;
+    logic [RISCV_ARCH-1:0] dport_addr;
     logic [RISCV_ARCH-1:0] dport_wdata;
     logic [RISCV_ARCH-1:0] dport_rdata;
     logic [1:0] dport_size;
@@ -42,7 +42,7 @@ typedef struct {
     logic req_accepted;
     logic resp_error;
     logic progbuf_ena;
-    logic [CFG_CPU_ADDR_BITS-1:0] progbuf_pc;
+    logic [RISCV_ARCH-1:0] progbuf_pc;
     logic [63:0] progbuf_instr;
 } DbgPort_registers;
 

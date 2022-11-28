@@ -27,8 +27,8 @@ module PMP #(
     input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_daddr,
     input logic i_we,                                       // write enable into PMP
     input logic [river_cfg_pkg::CFG_PMP_TBL_WIDTH-1:0] i_region,// selected PMP region
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_start_addr,// PMP region start address
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_end_addr,// PMP region end address (inclusive)
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_start_addr,// PMP region start address
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_end_addr, // PMP region end address (inclusive)
     input logic [river_cfg_pkg::CFG_PMP_FL_TOTAL-1:0] i_flags,// {ena, lock, r, w, x}
     output logic o_r,
     output logic o_w,
@@ -46,8 +46,8 @@ begin: comb_proc
     logic v_r;
     logic v_w;
     logic v_x;
-    logic [CFG_CPU_ADDR_BITS-1:0] vb_start_addr;
-    logic [CFG_CPU_ADDR_BITS-1:0] vb_end_addr;
+    logic [RISCV_ARCH-1:0] vb_start_addr;
+    logic [RISCV_ARCH-1:0] vb_end_addr;
     logic [CFG_PMP_FL_TOTAL-1:0] vb_flags;
 
     v_r = 0;
@@ -78,16 +78,16 @@ begin: comb_proc
     end
 
     for (int i = (CFG_PMP_TBL_SIZE - 1); i >= 0; i--) begin
-        if ((i_iaddr >= r.tbl[i].start_addr)
-                && (i_iaddr <= r.tbl[i].end_addr)) begin
+        if ((i_iaddr >= r.tbl[i].start_addr[(CFG_CPU_ADDR_BITS - 1): 0])
+                && (i_iaddr <= r.tbl[i].end_addr[(CFG_CPU_ADDR_BITS - 1): 0])) begin
             if ((r.tbl[i].flags[CFG_PMP_FL_V] == 1'b1)
                     && (i_ena || r.tbl[i].flags[CFG_PMP_FL_L])) begin
                 v_x = r.tbl[i].flags[CFG_PMP_FL_X];
             end
         end
 
-        if ((i_daddr >= r.tbl[i].start_addr)
-                && (i_daddr <= r.tbl[i].end_addr)) begin
+        if ((i_daddr >= r.tbl[i].start_addr[(CFG_CPU_ADDR_BITS - 1): 0])
+                && (i_daddr <= r.tbl[i].end_addr[(CFG_CPU_ADDR_BITS - 1): 0])) begin
             if ((r.tbl[i].flags[CFG_PMP_FL_V] == 1'b1)
                     && (i_ena || r.tbl[i].flags[CFG_PMP_FL_L])) begin
                 v_r = r.tbl[i].flags[CFG_PMP_FL_R];

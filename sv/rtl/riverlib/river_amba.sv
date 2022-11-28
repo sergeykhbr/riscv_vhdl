@@ -70,7 +70,7 @@ logic w_dporti_resethaltreq;
 logic w_dporti_hartreset;
 logic w_dporti_req_valid;
 logic [DPortReq_Total-1:0] wb_dporti_dtype;
-logic [CFG_CPU_ADDR_BITS-1:0] wb_dporti_addr;
+logic [RISCV_ARCH-1:0] wb_dporti_addr;
 logic [RISCV_ARCH-1:0] wb_dporti_wdata;
 logic [2:0] wb_dporti_size;
 logic w_dporti_resp_ready;

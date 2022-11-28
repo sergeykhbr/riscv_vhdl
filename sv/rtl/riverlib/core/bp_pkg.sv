@@ -19,11 +19,11 @@ import river_cfg_pkg::*;
 
 typedef struct {
     logic c_valid;
-    logic [CFG_CPU_ADDR_BITS-1:0] addr;
+    logic [RISCV_ARCH-1:0] addr;
     logic [31:0] data;
     logic jmp;
-    logic [CFG_CPU_ADDR_BITS-1:0] pc;
-    logic [CFG_CPU_ADDR_BITS-1:0] npc;
+    logic [RISCV_ARCH-1:0] pc;
+    logic [RISCV_ARCH-1:0] npc;
 } PreDecType;
 
 

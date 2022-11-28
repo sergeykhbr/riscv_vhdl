@@ -57,8 +57,8 @@ begin: comb_proc
 
     v_ena = 0;
     mantA = 0;
-    expDif_gr = 0;
-    expDif_lt = 0;
+    expDif_gr = 1'h0;
+    expDif_lt = 1'h0;
     overflow = 0;
     underflow = 0;
     expDif = 0;

@@ -34,7 +34,6 @@ module DCacheLru #(
     output logic o_resp_valid,
     output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_resp_addr,
     output logic [63:0] o_resp_data,
-    output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_resp_er_addr,
     output logic o_resp_er_load_fault,
     output logic o_resp_er_store_fault,
     input logic i_resp_ready,
@@ -352,7 +351,7 @@ begin: comb_proc
                 // Uncached read/write
                 v.mem_addr = r.req_addr;
                 v.mem_wstrb = {'0, r.req_wstrb};
-                v.req_mem_size = {1'h0, i_req_size};
+                v.req_mem_size = r.req_size;
                 if (r.req_type[MemopType_Store] == 1'b1) begin
                     v.req_mem_type = WriteNoSnoop();
                 end else begin
@@ -618,7 +617,6 @@ begin: comb_proc
     o_resp_valid = v_resp_valid;
     o_resp_data = vb_resp_data;
     o_resp_addr = r.req_addr;
-    o_resp_er_addr = r.req_addr;
     o_resp_er_load_fault = v_resp_er_load_fault;
     o_resp_er_store_fault = v_resp_er_store_fault;
     o_mpu_addr = r.req_addr;

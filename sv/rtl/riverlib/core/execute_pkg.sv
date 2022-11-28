@@ -60,7 +60,7 @@ typedef struct {
     logic [5:0] radr2;
     logic [5:0] waddr;
     logic [RISCV_ARCH-1:0] imm;
-    logic [CFG_CPU_ADDR_BITS-1:0] pc;
+    logic [RISCV_ARCH-1:0] pc;
     logic [31:0] instr;
     logic [MemopType_Total-1:0] memop_type;
     logic memop_sign_ext;
@@ -78,9 +78,9 @@ typedef struct {
     logic [3:0] state;
     logic [1:0] csrstate;
     logic [1:0] amostate;
-    logic [CFG_CPU_ADDR_BITS-1:0] pc;
-    logic [CFG_CPU_ADDR_BITS-1:0] npc;
-    logic [CFG_CPU_ADDR_BITS-1:0] dnpc;
+    logic [RISCV_ARCH-1:0] pc;
+    logic [RISCV_ARCH-1:0] npc;
+    logic [RISCV_ARCH-1:0] dnpc;
     logic [5:0] radr1;
     logic [5:0] radr2;
     logic [5:0] waddr;
@@ -106,7 +106,7 @@ typedef struct {
     logic [MemopType_Total-1:0] memop_type;
     logic memop_sign_ext;
     logic [1:0] memop_size;
-    logic [CFG_CPU_ADDR_BITS-1:0] memop_memaddr;
+    logic [RISCV_ARCH-1:0] memop_memaddr;
     logic [RISCV_ARCH-1:0] memop_wdata;
     logic unsigned_op;
     logic rv32;
@@ -118,7 +118,7 @@ typedef struct {
     logic mem_ex_store_fault;
     logic page_fault_r;
     logic page_fault_w;
-    logic [CFG_CPU_ADDR_BITS-1:0] mem_ex_addr;
+    logic [RISCV_ARCH-1:0] mem_ex_addr;
     logic [RISCV_ARCH-1:0] res_npc;
     logic [RISCV_ARCH-1:0] res_ra;
     logic [RISCV_ARCH-1:0] res_csr;

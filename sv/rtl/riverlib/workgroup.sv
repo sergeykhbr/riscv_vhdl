@@ -35,14 +35,16 @@ module Workgroup #(
     input logic [river_cfg_pkg::CFG_CPU_MAX-1:0] i_meip,
     input logic [river_cfg_pkg::CFG_CPU_MAX-1:0] i_seip,
     input logic [63:0] i_mtimer,                            // Read-only shadow value of memory-mapped mtimer register (see CLINT).
-    output types_amba_pkg::axi4_master_config_type o_xcfg,
     // coherent port:
     input types_amba_pkg::axi4_master_out_type i_acpo,
     output types_amba_pkg::axi4_master_in_type o_acpi,
     // System bus port
+    output types_amba_pkg::dev_config_type o_xmst_cfg,      // Workgroup master interface descriptor
     input types_amba_pkg::axi4_master_in_type i_msti,
     output types_amba_pkg::axi4_master_out_type o_msto,
     // APB debug access:
+    input types_amba_pkg::mapinfo_type i_dmi_mapinfo,       // DMI APB itnerface mapping information
+    output types_amba_pkg::dev_config_type o_dmi_cfg,       // DMI device descriptor
     input types_amba_pkg::apb_in_type i_dmi_apbi,
     output types_amba_pkg::apb_out_type o_dmi_apbo,
     output logic o_dmreset                                  // reset everything except DMI debug interface
@@ -74,7 +76,7 @@ logic w_dmi_resethaltreq;
 logic w_dmi_hartreset;
 logic w_dmi_dport_req_valid;
 logic [DPortReq_Total-1:0] wb_dmi_dport_req_type;
-logic [CFG_CPU_ADDR_BITS-1:0] wb_dmi_dport_addr;
+logic [RISCV_ARCH-1:0] wb_dmi_dport_addr;
 logic [RISCV_ARCH-1:0] wb_dmi_dport_wdata;
 logic [2:0] wb_dmi_dport_size;
 logic w_ic_dport_req_ready;
@@ -84,7 +86,7 @@ logic w_ic_dport_resp_error;
 logic [RISCV_ARCH-1:0] wb_ic_dport_rdata;
 logic [(32 * CFG_PROGBUF_REG_TOTAL)-1:0] wb_progbuf;
 logic w_flush_l2;
-axi4_master_config_type wb_xcfg;
+dev_config_type wb_xmst_cfg;
 
 dmidebug #(
     .async_reset(async_reset)
@@ -96,6 +98,8 @@ dmidebug #(
     .i_tms(i_tms),
     .i_tdi(i_tdi),
     .o_tdo(o_tdo),
+    .i_mapinfo(i_dmi_mapinfo),
+    .o_cfg(o_dmi_cfg),
     .i_apbi(i_dmi_apbi),
     .o_apbo(o_dmi_apbo),
     .o_ndmreset(o_dmreset),
@@ -246,10 +250,10 @@ begin: comb_proc
         vb_irq[i] = 16'h0000;
     end
 
-    wb_xcfg.descrsize = PNP_CFG_MASTER_DESCR_BYTES;
-    wb_xcfg.descrtype = PNP_CFG_TYPE_MASTER;
-    wb_xcfg.vid = VENDOR_OPTIMITECH;
-    wb_xcfg.did = RISCV_RIVER_WORKGROUP;
+    wb_xmst_cfg.descrsize = PNP_CFG_DEV_DESCR_BYTES;
+    wb_xmst_cfg.descrtype = PNP_CFG_TYPE_MASTER;
+    wb_xmst_cfg.vid = VENDOR_OPTIMITECH;
+    wb_xmst_cfg.did = RISCV_RIVER_WORKGROUP;
 
     // Vector to signal conversion is neccessary to implement compatibility with SystemC:
     for (int i = 0; i < CFG_CPU_MAX; i++) begin
@@ -265,7 +269,7 @@ begin: comb_proc
     w_flush_l2 = v_flush_l2;
     wb_halted = vb_halted;
     wb_available = vb_available;
-    o_xcfg = wb_xcfg;
+    o_xmst_cfg = wb_xmst_cfg;
 end: comb_proc
 
 endmodule: Workgroup

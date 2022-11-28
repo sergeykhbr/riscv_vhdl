@@ -25,7 +25,7 @@ module DbgPort #(
     // "RIVER" Debug interface
     input logic i_dport_req_valid,                          // Debug access from DSU is valid
     input logic [river_cfg_pkg::DPortReq_Total-1:0] i_dport_type,// Debug access type
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_dport_addr,// Debug address (register or memory)
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_dport_addr,// Debug address (register or memory)
     input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_dport_wdata,// Write value
     input logic [2:0] i_dport_size,                         // reg/mem access size:0=1B;...,4=128B;
     output logic o_dport_req_ready,
@@ -45,7 +45,7 @@ module DbgPort #(
     input logic i_csr_resp_exception,                       // Exception on CSR access
     input logic [(32 * river_cfg_pkg::CFG_PROGBUF_REG_TOTAL)-1:0] i_progbuf,// progam buffer
     output logic o_progbuf_ena,                             // Execution from the progbuffer is in progress
-    output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_progbuf_pc,// prog buffer instruction counter
+    output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_progbuf_pc,// prog buffer instruction counter
     output logic [63:0] o_progbuf_instr,                    // prog buffer instruction opcode
     input logic i_csr_progbuf_end,                          // End of execution from progbuf
     input logic i_csr_progbuf_error,                        // Exception is occured during progbuf execution
@@ -58,14 +58,14 @@ module DbgPort #(
     input logic i_mem_req_ready,                            // Type 2: memory request was accepted
     input logic i_mem_req_error,                            // Type 2: memory request is invalid and cannot be processed
     output logic o_mem_req_write,                           // Type 2: is write
-    output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_mem_req_addr,// Type 2: Debug memory request
+    output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_mem_req_addr,// Type 2: Debug memory request
     output logic [1:0] o_mem_req_size,                      // Type 2: memory operation size: 0=1B; 1=2B; 2=4B; 3=8B
     output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_mem_req_wdata,// Type 2: memory write data
     input logic i_mem_resp_valid,                           // Type 2: response is valid
     input logic i_mem_resp_error,                           // Type 2: response error (MPU or unmapped access)
     input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_mem_resp_rdata,// Type 2: Memory response from memaccess module
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_e_pc,// Instruction pointer
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_e_npc,// Next Instruction pointer
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_e_pc,     // Instruction pointer
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_e_npc,    // Next Instruction pointer
     input logic i_e_call,                                   // pseudo-instruction CALL
     input logic i_e_ret,                                    // pseudo-instruction RET
     input logic i_e_memop_valid,                            // Memory request from executor
@@ -76,10 +76,10 @@ import river_cfg_pkg::*;
 import dbg_port_pkg::*;
 
 logic [CFG_LOG2_STACK_TRACE_ADDR-1:0] wb_stack_raddr;
-logic [(2 * CFG_CPU_ADDR_BITS)-1:0] wb_stack_rdata;
+logic [(2 * RISCV_ARCH)-1:0] wb_stack_rdata;
 logic w_stack_we;
 logic [CFG_LOG2_STACK_TRACE_ADDR-1:0] wb_stack_waddr;
-logic [(2 * CFG_CPU_ADDR_BITS)-1:0] wb_stack_wdata;
+logic [(2 * RISCV_ARCH)-1:0] wb_stack_wdata;
 DbgPort_registers r, rin;
 
 generate
@@ -230,9 +230,9 @@ begin: comb_proc
     end
     reg_stktr_buf_dat: begin
         if (r.dport_addr[0] == 1'b0) begin
-            vrdata[(CFG_CPU_ADDR_BITS - 1): 0] = wb_stack_rdata[(CFG_CPU_ADDR_BITS - 1): 0];
+            vrdata = wb_stack_rdata[(RISCV_ARCH - 1): 0];
         end else begin
-            vrdata[(CFG_CPU_ADDR_BITS - 1): 0] = wb_stack_rdata[((2 * CFG_CPU_ADDR_BITS) - 1): CFG_CPU_ADDR_BITS];
+            vrdata = wb_stack_rdata[((2 * RISCV_ARCH) - 1): RISCV_ARCH];
         end
         v.dstate = wait_to_accept;
     end

@@ -42,7 +42,6 @@ logic [2:0] wb_req_size;
 logic [2:0] wb_req_prot;
 logic [L1CACHE_LINE_BITS-1:0] wb_req_wdata;
 logic [L1CACHE_BYTES_PER_LINE-1:0] wb_req_wstrb;
-
 logic w_cache_valid;
 logic [L1CACHE_LINE_BITS-1:0] wb_cache_rdata;
 logic [1:0] wb_cache_status;

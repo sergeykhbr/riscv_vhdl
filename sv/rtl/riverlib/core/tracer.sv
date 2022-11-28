@@ -26,7 +26,7 @@ module Tracer #(
     input logic i_nrst,                                     // Reset: active LOW
     input logic [63:0] i_dbg_executed_cnt,
     input logic i_e_valid,
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_e_pc,
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_e_pc,
     input logic [31:0] i_e_instr,
     input logic i_e_wena,
     input logic [5:0] i_e_waddr,
@@ -34,10 +34,10 @@ module Tracer #(
     input logic i_e_memop_valid,
     input logic [river_cfg_pkg::MemopType_Total-1:0] i_e_memop_type,
     input logic [1:0] i_e_memop_size,
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_e_memop_addr,
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_e_memop_addr,
     input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_e_memop_wdata,
     input logic i_e_flushd,
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_m_pc,// executed memory/flush request only
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_m_pc,     // executed memory/flush request only
     input logic i_m_valid,                                  // memory/flush operation completed
     input logic i_m_memop_ready,
     input logic i_m_wena,

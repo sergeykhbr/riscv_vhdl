@@ -18,18 +18,18 @@
 
 module BpPreDecoder(
     input logic i_c_valid,                                  // Use compressed for prediction
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_addr,// Memory response address
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_addr,     // Memory response address
     input logic [31:0] i_data,                              // Memory response value
     input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_ra,       // Return address register value
     output logic o_jmp,                                     // Jump detected
-    output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_pc,// Fetching instruction pointer
-    output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_npc// Fetching instruction pointer
+    output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_pc,      // Fetching instruction pointer
+    output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_npc      // Fetching instruction pointer
 );
 
 import river_cfg_pkg::*;
 import bp_predec_pkg::*;
 
-logic [CFG_CPU_ADDR_BITS-1:0] vb_npc;
+logic [RISCV_ARCH-1:0] vb_npc;
 logic v_jal;                                                // JAL instruction
 logic v_branch;                                             // One of branch instructions (only negative offset)
 logic v_c_j;                                                // compressed J instruction
@@ -38,14 +38,14 @@ logic v_c_ret;                                              // compressed RET ps
 always_comb
 begin: comb_proc
     logic [31:0] vb_tmp;
-    logic [CFG_CPU_ADDR_BITS-1:0] vb_npc;
-    logic [CFG_CPU_ADDR_BITS-1:0] vb_pc;
-    logic [CFG_CPU_ADDR_BITS-1:0] vb_jal_off;
-    logic [CFG_CPU_ADDR_BITS-1:0] vb_jal_addr;
-    logic [CFG_CPU_ADDR_BITS-1:0] vb_branch_off;
-    logic [CFG_CPU_ADDR_BITS-1:0] vb_branch_addr;
-    logic [CFG_CPU_ADDR_BITS-1:0] vb_c_j_off;
-    logic [CFG_CPU_ADDR_BITS-1:0] vb_c_j_addr;
+    logic [RISCV_ARCH-1:0] vb_npc;
+    logic [RISCV_ARCH-1:0] vb_pc;
+    logic [RISCV_ARCH-1:0] vb_jal_off;
+    logic [RISCV_ARCH-1:0] vb_jal_addr;
+    logic [RISCV_ARCH-1:0] vb_branch_off;
+    logic [RISCV_ARCH-1:0] vb_branch_addr;
+    logic [RISCV_ARCH-1:0] vb_c_j_off;
+    logic [RISCV_ARCH-1:0] vb_c_j_addr;
 
     vb_tmp = 0;
     vb_npc = 0;
@@ -62,9 +62,9 @@ begin: comb_proc
 
     // Unconditional jump "J"
     if (vb_tmp[31] == 1'b1) begin
-        vb_jal_off[(CFG_CPU_ADDR_BITS - 1): 20] = '1;
+        vb_jal_off[(RISCV_ARCH - 1): 20] = '1;
     end else begin
-        vb_jal_off[(CFG_CPU_ADDR_BITS - 1): 20] = '0;
+        vb_jal_off[(RISCV_ARCH - 1): 20] = '0;
     end
     vb_jal_off[19: 12] = vb_tmp[19: 12];
     vb_jal_off[11] = vb_tmp[20];
@@ -80,9 +80,9 @@ begin: comb_proc
     // Conditional branches "BEQ", "BNE", "BLT", "BGE", "BLTU", "BGEU"
     // Only negative offset leads to predicted jumps
     if (vb_tmp[31] == 1'b1) begin
-        vb_branch_off[(CFG_CPU_ADDR_BITS - 1): 12] = '1;
+        vb_branch_off[(RISCV_ARCH - 1): 12] = '1;
     end else begin
-        vb_branch_off[(CFG_CPU_ADDR_BITS - 1): 12] = '0;
+        vb_branch_off[(RISCV_ARCH - 1): 12] = '0;
     end
     vb_branch_off[11] = vb_tmp[7];
     vb_branch_off[10: 5] = vb_tmp[30: 25];
@@ -97,9 +97,9 @@ begin: comb_proc
 
     // Check Compressed "C_J" unconditional jump
     if (vb_tmp[12] == 1'b1) begin
-        vb_c_j_off[(CFG_CPU_ADDR_BITS - 1): 11] = '1;
+        vb_c_j_off[(RISCV_ARCH - 1): 11] = '1;
     end else begin
-        vb_c_j_off[(CFG_CPU_ADDR_BITS - 1): 11] = '0;
+        vb_c_j_off[(RISCV_ARCH - 1): 11] = '0;
     end
     vb_c_j_off[10] = vb_tmp[8];
     vb_c_j_off[9: 8] = vb_tmp[10: 9];
@@ -129,7 +129,7 @@ begin: comb_proc
     end else if (v_c_j == 1'b1) begin
         vb_npc = vb_c_j_addr;
     end else if (v_c_ret == 1'b1) begin
-        vb_npc = i_ra[(CFG_CPU_ADDR_BITS - 1): 0];
+        vb_npc = i_ra[(RISCV_ARCH - 1): 0];
     end else begin
         vb_npc = (vb_pc + 4);
     end

@@ -23,25 +23,25 @@ module InstrFetch #(
     input logic i_clk,                                      // CPU clock
     input logic i_nrst,                                     // Reset: active LOW
     input logic i_bp_valid,
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_bp_pc,
-    output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_requested_pc,
-    output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_fetching_pc,
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_bp_pc,
+    output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_requested_pc,
+    output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_fetching_pc,
     input logic i_mem_req_ready,
     output logic o_mem_addr_valid,
-    output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_mem_addr,
+    output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_mem_addr,
     input logic i_mem_data_valid,
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_mem_data_addr,
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_mem_data_addr,
     input logic [63:0] i_mem_data,
     input logic i_mem_load_fault,
     input logic i_mem_page_fault_x,
     output logic o_mem_resp_ready,
     input logic i_flush_pipeline,                           // reset pipeline and cache
     input logic i_progbuf_ena,                              // executing from prog buffer
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_progbuf_pc,// progbuf counter
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_progbuf_pc,// progbuf counter
     input logic [63:0] i_progbuf_instr,                     // progbuf instruction
     output logic o_instr_load_fault,
     output logic o_instr_page_fault_x,
-    output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_pc,
+    output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_pc,
     output logic [63:0] o_instr
 );
 

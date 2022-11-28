@@ -157,10 +157,10 @@ begin: comb_proc
     vb_level3_off = 0;
     v_last_valid = 0;
     v_tlb_hit = 0;
-    vb_tlb_pa0 = 0;
-    vb_tlb_pa1 = 0;
-    vb_tlb_pa2 = 0;
-    vb_tlb_pa3 = 0;
+    vb_tlb_pa0 = 64'h0000000000000000;
+    vb_tlb_pa1 = 64'h0000000000000000;
+    vb_tlb_pa2 = 64'h0000000000000000;
+    vb_tlb_pa3 = 64'h0000000000000000;
     vb_tlb_pa_hit = 0;
     t_tlb_wdata = 0;
     t_idx_lsb = 0;

@@ -58,7 +58,7 @@ module RiverTop #(
     input logic i_resumereq,                                // DMI: resume request from debug unit
     input logic i_dport_req_valid,                          // Debug access from DSU is valid
     input logic [river_cfg_pkg::DPortReq_Total-1:0] i_dport_type,// Debug access type
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_dport_addr,// dport address
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_dport_addr,// dport address
     input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_dport_wdata,// Write value
     input logic [2:0] i_dport_size,                         // reg/mem access size:0=1B;...,4=128B;
     output logic o_dport_req_ready,
@@ -76,9 +76,9 @@ import river_top_pkg::*;
 // Control path:
 logic w_req_ctrl_ready;
 logic w_req_ctrl_valid;
-logic [CFG_CPU_ADDR_BITS-1:0] wb_req_ctrl_addr;
+logic [RISCV_ARCH-1:0] wb_req_ctrl_addr;
 logic w_resp_ctrl_valid;
-logic [CFG_CPU_ADDR_BITS-1:0] wb_resp_ctrl_addr;
+logic [RISCV_ARCH-1:0] wb_resp_ctrl_addr;
 logic [63:0] wb_resp_ctrl_data;
 logic w_resp_ctrl_load_fault;
 logic w_resp_ctrl_ready;
@@ -86,27 +86,26 @@ logic w_resp_ctrl_ready;
 logic w_req_data_ready;
 logic w_req_data_valid;
 logic [MemopType_Total-1:0] wb_req_data_type;
-logic [CFG_CPU_ADDR_BITS-1:0] wb_req_data_addr;
+logic [RISCV_ARCH-1:0] wb_req_data_addr;
 logic [63:0] wb_req_data_wdata;
 logic [7:0] wb_req_data_wstrb;
 logic [1:0] wb_req_data_size;
 logic w_resp_data_valid;
-logic [CFG_CPU_ADDR_BITS-1:0] wb_resp_data_addr;
+logic [RISCV_ARCH-1:0] wb_resp_data_addr;
 logic [63:0] wb_resp_data_data;
 logic w_resp_data_load_fault;
 logic w_resp_data_store_fault;
-logic [CFG_CPU_ADDR_BITS-1:0] wb_resp_data_fault_addr;
 logic w_resp_data_ready;
 logic w_pmp_ena;
 logic w_pmp_we;
 logic [CFG_PMP_TBL_WIDTH-1:0] wb_pmp_region;
-logic [CFG_CPU_ADDR_BITS-1:0] wb_pmp_start_addr;
-logic [CFG_CPU_ADDR_BITS-1:0] wb_pmp_end_addr;
+logic [RISCV_ARCH-1:0] wb_pmp_start_addr;
+logic [RISCV_ARCH-1:0] wb_pmp_end_addr;
 logic [CFG_PMP_FL_TOTAL-1:0] wb_pmp_flags;
 logic w_flushi_valid;
-logic [CFG_CPU_ADDR_BITS-1:0] wb_flushi_addr;
+logic [RISCV_ARCH-1:0] wb_flushi_addr;
 logic w_flushd_valid;
-logic [CFG_CPU_ADDR_BITS-1:0] wb_flushd_addr;
+logic [RISCV_ARCH-1:0] wb_flushd_addr;
 logic w_flushd_end;
 
 Processor #(
@@ -136,7 +135,6 @@ Processor #(
     .i_resp_data_valid(w_resp_data_valid),
     .i_resp_data_addr(wb_resp_data_addr),
     .i_resp_data_data(wb_resp_data_data),
-    .i_resp_data_fault_addr(wb_resp_data_fault_addr),
     .i_resp_data_load_fault(w_resp_data_load_fault),
     .i_resp_data_store_fault(w_resp_data_store_fault),
     .o_resp_data_ready(w_resp_data_ready),
@@ -193,7 +191,6 @@ CacheTop #(
     .o_resp_data_valid(w_resp_data_valid),
     .o_resp_data_addr(wb_resp_data_addr),
     .o_resp_data_data(wb_resp_data_data),
-    .o_resp_data_fault_addr(wb_resp_data_fault_addr),
     .o_resp_data_load_fault(w_resp_data_load_fault),
     .o_resp_data_store_fault(w_resp_data_store_fault),
     .i_resp_data_ready(w_resp_data_ready),

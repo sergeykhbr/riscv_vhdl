@@ -22,19 +22,19 @@ localparam string trace_file = "trace_river_sysc";
 typedef struct {
     logic instr_load_fault;
     logic instr_page_fault_x;
-    logic [CFG_CPU_ADDR_BITS-1:0] requested_pc;             // requested but responded address
-    logic [CFG_CPU_ADDR_BITS-1:0] fetching_pc;              // receiving from cache before latch
-    logic [CFG_CPU_ADDR_BITS-1:0] pc;
+    logic [RISCV_ARCH-1:0] requested_pc;                    // requested but responded address
+    logic [RISCV_ARCH-1:0] fetching_pc;                     // receiving from cache before latch
+    logic [RISCV_ARCH-1:0] pc;
     logic [63:0] instr;
     logic imem_req_valid;
-    logic [CFG_CPU_ADDR_BITS-1:0] imem_req_addr;
+    logic [RISCV_ARCH-1:0] imem_req_addr;
     logic imem_resp_ready;
 } FetchType;
 
 typedef struct {
     logic req_ready;
     logic valid;
-    logic [CFG_CPU_ADDR_BITS-1:0] addr;
+    logic [RISCV_ARCH-1:0] addr;
     logic [63:0] data;
     logic load_fault;
     logic store_fault;
@@ -44,7 +44,7 @@ typedef struct {
 } MmuType;
 
 typedef struct {
-    logic [CFG_CPU_ADDR_BITS-1:0] pc;
+    logic [RISCV_ARCH-1:0] pc;
     logic [31:0] instr;
     logic memop_store;
     logic memop_load;
@@ -71,8 +71,8 @@ typedef struct {
 typedef struct {
     logic valid;
     logic [31:0] instr;
-    logic [CFG_CPU_ADDR_BITS-1:0] pc;
-    logic [CFG_CPU_ADDR_BITS-1:0] npc;
+    logic [RISCV_ARCH-1:0] pc;
+    logic [RISCV_ARCH-1:0] npc;
     logic [5:0] radr1;
     logic [5:0] radr2;
     logic reg_wena;
@@ -89,7 +89,7 @@ typedef struct {
     logic memop_sign_ext;
     logic [MemopType_Total-1:0] memop_type;
     logic [1:0] memop_size;
-    logic [CFG_CPU_ADDR_BITS-1:0] memop_addr;
+    logic [RISCV_ARCH-1:0] memop_addr;
     logic [RISCV_ARCH-1:0] memop_wdata;
     logic call;                                             // pseudo-instruction CALL
     logic ret;                                              // pseudo-instruction RET
@@ -102,7 +102,7 @@ typedef struct {
 typedef struct {
     logic memop_ready;
     logic flushd;
-    logic [CFG_CPU_ADDR_BITS-1:0] pc;
+    logic [RISCV_ARCH-1:0] pc;
     logic valid;
     logic idle;
     logic debug_valid;
@@ -111,7 +111,7 @@ typedef struct {
     logic dmmu_sv48;
     logic req_data_valid;
     logic [MemopType_Total-1:0] req_data_type;
-    logic [CFG_CPU_ADDR_BITS-1:0] req_data_addr;
+    logic [RISCV_ARCH-1:0] req_data_addr;
     logic [63:0] req_data_wdata;
     logic [7:0] req_data_wstrb;
     logic [1:0] req_data_size;
@@ -173,7 +173,7 @@ typedef struct {
     logic flushi_valid;                                     // clear specified addr in I$
     logic flushmmu_valid;                                   // clear specified leaf in xMMU
     logic flushpipeline_valid;                              // clear pipeline
-    logic [CFG_CPU_ADDR_BITS-1:0] flush_addr;
+    logic [RISCV_ARCH-1:0] flush_addr;
     logic [63:0] executed_cnt;                              // Number of executed instruction
     logic [IRQ_TOTAL-1:0] irq_pending;
     logic o_wakeup;                                         // There's pending bit even if interrupts globally disabled
@@ -203,17 +203,17 @@ typedef struct {
     logic ireg_write;                                       // Region 1: Integer registers bank write pulse
     logic mem_req_valid;                                    // Type 2: request is valid
     logic mem_req_write;                                    // Type 2: is write
-    logic [CFG_CPU_ADDR_BITS-1:0] mem_req_addr;             // Type 2: Debug memory request
+    logic [RISCV_ARCH-1:0] mem_req_addr;                    // Type 2: Debug memory request
     logic [1:0] mem_req_size;                               // Type 2: memory operation size: 0=1B; 1=2B; 2=4B; 3=8B
     logic [RISCV_ARCH-1:0] mem_req_wdata;                   // Type 2: memory write data
     logic progbuf_ena;                                      // execute instruction from progbuf
-    logic [CFG_CPU_ADDR_BITS-1:0] progbuf_pc;               // progbuf instruction counter
+    logic [RISCV_ARCH-1:0] progbuf_pc;                      // progbuf instruction counter
     logic [63:0] progbuf_instr;                             // progbuf instruction to execute
 } DebugType;
 
 typedef struct {
     logic f_valid;
-    logic [CFG_CPU_ADDR_BITS-1:0] f_pc;
+    logic [RISCV_ARCH-1:0] f_pc;
 } BranchPredictorType;
 
 typedef struct {

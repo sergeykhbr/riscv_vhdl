@@ -146,7 +146,7 @@ begin: comb_proc
     v_invalidate = 0;
     v_flush_end = 0;
     v_line_cs_read = 0;
-    v_line_cs_write = 0;
+    v_line_cs_write = 1'h0;
     vb_line_addr = 0;
     vb_line_wdata = 0;
     vb_line_wstrb = 0;

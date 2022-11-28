@@ -24,7 +24,7 @@ localparam bit CFG_TRACER_ENABLE = 1'b0;
 // Architectural size definition
 localparam int RISCV_ARCH = 64;
 
-localparam int CFG_CPU_ADDR_BITS = 64;
+localparam int CFG_CPU_ADDR_BITS = 48;
 localparam int CFG_CPU_ID_BITS = 1;
 localparam int CFG_CPU_USER_BITS = 1;
 
@@ -37,7 +37,7 @@ localparam int CFG_CPU_MAX = (2**CFG_LOG2_CPU_MAX);
 localparam int CFG_SLOT_L1_TOTAL = (CFG_CPU_MAX + 1);
 
 // Power-on start address can be free changed
-localparam bit [CFG_CPU_ADDR_BITS-1:0] CFG_RESET_VECTOR = 64'h0000000000010000;
+localparam bit [CFG_CPU_ADDR_BITS-1:0] CFG_RESET_VECTOR = 48'h000000010000;
 
 // 
 // Branch Predictor Branch Target Buffer (BTB) size

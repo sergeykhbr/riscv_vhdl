@@ -18,8 +18,8 @@ package pmp_pkg;
 import river_cfg_pkg::*;
 
 typedef struct {
-    logic [CFG_CPU_ADDR_BITS-1:0] start_addr;
-    logic [CFG_CPU_ADDR_BITS-1:0] end_addr;
+    logic [RISCV_ARCH-1:0] start_addr;
+    logic [RISCV_ARCH-1:0] end_addr;
     logic [CFG_PMP_FL_TOTAL-1:0] flags;
 } PmpTableItemType;
 

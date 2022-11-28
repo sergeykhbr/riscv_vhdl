@@ -18,8 +18,8 @@ package bp_btb_pkg;
 import river_cfg_pkg::*;
 
 typedef struct {
-    logic [CFG_CPU_ADDR_BITS-1:0] pc;
-    logic [CFG_CPU_ADDR_BITS-1:0] npc;
+    logic [RISCV_ARCH-1:0] pc;
+    logic [RISCV_ARCH-1:0] npc;
     logic exec;                                             // 0=predec; 1=exec (high priority)
 } BtbEntryType;
 

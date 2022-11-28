@@ -36,7 +36,7 @@ localparam bit [4:0] OPCODE_JAL = 5'h1b;                    // 11011: JAL
 localparam bit [4:0] OPCODE_CSRR = 5'h1c;                   // 11100: CSRRC, CSRRCI, CSRRS, CSRRSI, CSRRW, CSRRWI, URET, SRET, HRET, MRET
 
 typedef struct {
-    logic [CFG_CPU_ADDR_BITS-1:0] pc;
+    logic [RISCV_ARCH-1:0] pc;
     logic [ISA_Total-1:0] isa_type;
     logic [Instr_Total-1:0] instr_vec;
     logic [31:0] instr;

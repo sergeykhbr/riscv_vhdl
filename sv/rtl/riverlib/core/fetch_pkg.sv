@@ -25,9 +25,9 @@ typedef struct {
     logic [1:0] state;
     logic req_valid;
     logic resp_ready;
-    logic [CFG_CPU_ADDR_BITS-1:0] req_addr;
-    logic [CFG_CPU_ADDR_BITS-1:0] mem_resp_shadow;          // the same as memory response but internal
-    logic [CFG_CPU_ADDR_BITS-1:0] pc;
+    logic [RISCV_ARCH-1:0] req_addr;
+    logic [RISCV_ARCH-1:0] mem_resp_shadow;                 // the same as memory response but internal
+    logic [RISCV_ARCH-1:0] pc;
     logic [63:0] instr;
     logic instr_load_fault;
     logic instr_page_fault_x;

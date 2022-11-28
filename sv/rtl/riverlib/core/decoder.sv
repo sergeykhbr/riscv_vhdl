@@ -23,11 +23,11 @@ module InstrDecoder #(
 (
     input logic i_clk,                                      // CPU clock
     input logic i_nrst,                                     // Reset: active LOW
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_f_pc,// Fetched pc
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_f_pc,     // Fetched pc
     input logic [63:0] i_f_instr,                           // Fetched instruction value
     input logic i_instr_load_fault,                         // fault instruction's address
     input logic i_instr_page_fault_x,                       // Instruction MMU page fault
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_e_npc,// executor expected instr pointer
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_e_npc,    // executor expected instr pointer
     output logic [5:0] o_radr1,                             // register bank address 1 (rs1)
     output logic [5:0] o_radr2,                             // register bank address 2 (rs2)
     output logic [5:0] o_waddr,                             // register bank output (rd)
@@ -35,7 +35,7 @@ module InstrDecoder #(
     output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_imm,     // immediate constant decoded from instruction
     input logic i_flush_pipeline,                           // reset pipeline and cache
     input logic i_progbuf_ena,                              // executing from progbuf
-    output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_pc,// Current instruction pointer value
+    output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_pc,      // Current instruction pointer value
     output logic [31:0] o_instr,                            // Current instruction value
     output logic o_memop_store,                             // Store to memory operation
     output logic o_memop_load,                              // Load from memoru operation
@@ -58,7 +58,7 @@ import river_cfg_pkg::*;
 import decoder_pkg::*;
 
 DecoderDataType wd[0: (FULL_DEC_DEPTH + DEC_BLOCK) - 1];
-logic [CFG_CPU_ADDR_BITS-1:0] wb_f_pc[0: DEC_NUM - 1];
+logic [RISCV_ARCH-1:0] wb_f_pc[0: DEC_NUM - 1];
 logic [31:0] wb_f_instr[0: DEC_NUM - 1];
 InstrDecoder_registers r, rin;
 

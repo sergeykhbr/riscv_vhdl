@@ -28,7 +28,7 @@ typedef struct {
     logic hartreset;
     logic req_valid;
     logic [DPortReq_Total-1:0] dtype;
-    logic [CFG_CPU_ADDR_BITS-1:0] addr;
+    logic [RISCV_ARCH-1:0] addr;
     logic [RISCV_ARCH-1:0] wdata;
     logic [2:0] size;
     logic resp_ready;

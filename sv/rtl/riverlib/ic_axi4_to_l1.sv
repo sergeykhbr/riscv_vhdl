@@ -52,7 +52,7 @@ begin: comb_proc
 
     vb_xmsti = axi4_master_in_none;
     vb_l1o = axi4_l1_out_none;
-    idx = 0;
+    idx = 2'h0;
     vb_req_xbytes = 0;
     vb_req_mask = 0;
     vb_r_data_modified = 0;

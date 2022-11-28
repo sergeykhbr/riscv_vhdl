@@ -34,7 +34,7 @@ module CsrRegs #(
     output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_resp_data,// Responded CSR data
     output logic o_resp_exception,                          // exception on CSR access
     input logic i_e_halted,                                 // core is halted confirmation flag
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_e_pc,// current latched instruction pointer in executor
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_e_pc,     // current latched instruction pointer in executor
     input logic [31:0] i_e_instr,                           // current latched opcode in executor
     input logic [river_cfg_pkg::IRQ_TOTAL-1:0] i_irq_pending,// Per Hart pending interrupts pins
     output logic [river_cfg_pkg::IRQ_TOTAL-1:0] o_irq_pending,// Enabled and Unmasked interrupt pending bits
@@ -57,13 +57,13 @@ module CsrRegs #(
     output logic o_flushi_valid,                            // clear specified addr in ICache
     output logic o_flushmmu_valid,                          // clear specific leaf entry in MMU
     output logic o_flushpipeline_valid,                     // flush pipeline, must be don for fence.VMA and fence.i
-    output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_flush_addr,// Cache address to flush. All ones means flush all.
+    output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_flush_addr,// Cache address to flush. All ones means flush all.
     
     output logic o_pmp_ena,                                 // PMP is active in S or U modes or if L/MPRV bit is set in M-mode
     output logic o_pmp_we,                                  // write enable into PMP
     output logic [river_cfg_pkg::CFG_PMP_TBL_WIDTH-1:0] o_pmp_region,// selected PMP region
-    output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_pmp_start_addr,// PMP region start address
-    output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_pmp_end_addr,// PMP region end address (inclusive)
+    output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_pmp_start_addr,// PMP region start address
+    output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_pmp_end_addr,// PMP region end address (inclusive)
     output logic [river_cfg_pkg::CFG_PMP_FL_TOTAL-1:0] o_pmp_flags,// {ena, lock, r, w, x}
     
     output logic o_mmu_ena,                                 // MMU enabled in U and S modes. Sv48 only.
@@ -114,7 +114,7 @@ begin: comb_proc
     logic v_flushmmu;
     logic v_flushpipeline;
     logic [CFG_PMP_TBL_SIZE-1:0] vb_pmp_upd_ena;
-    logic [CFG_CPU_ADDR_BITS-1:0] vb_pmp_napot_mask;
+    logic [RISCV_ARCH-1:0] vb_pmp_napot_mask;
     logic v_napot_shift;
     int t_pmpdataidx;
     int t_pmpcfgidx;
@@ -126,10 +126,10 @@ begin: comb_proc
     vb_xpp = 0;
     vb_pending = 0;
     vb_irq_ena = 0;
-    vb_e_emux = 0;
-    vb_e_imux = 0;
+    vb_e_emux = 64'h0000000000000000;
+    vb_e_imux = 16'h0000;
     wb_trap_cause = 0;
-    vb_xtval = 0;
+    vb_xtval = 64'h0000000000000000;
     w_mstackovr = 0;
     w_mstackund = 0;
     v_csr_rena = 0;
@@ -143,8 +143,8 @@ begin: comb_proc
     v_resp_valid = 0;
     v_medeleg_ena = 0;
     v_mideleg_ena = 0;
-    vb_xtvec_off_ideleg = 0;
-    vb_xtvec_off_edeleg = 0;
+    vb_xtvec_off_ideleg = 64'h0000000000000000;
+    vb_xtvec_off_edeleg = 64'h0000000000000000;
     v_flushd = 0;
     v_flushi = 0;
     v_flushmmu = 0;
@@ -319,7 +319,7 @@ begin: comb_proc
             v.cmd_data = '1;                                // signal to executor to switch into Debug Mode and halt
         end else if (r.dcsr_ebreakm == 1'b1) begin
             v.halt_cause = HALT_CAUSE_EBREAK;
-            v.dpc = r.cmd_data[(CFG_CPU_ADDR_BITS - 1): 0];
+            v.dpc = r.cmd_data;
             v.cmd_data = '1;                                // signal to executor to switch into Debug Mode and halt
         end else begin
             vb_e_emux[EXCEPTION_Breakpoint] = 1'b1;
@@ -448,7 +448,7 @@ begin: comb_proc
     end else if (r.cmd_addr == 12'h041) begin               // uepc: [URW] User exception program counter
         vb_rdata = r.xmode[iU].xepc;
         if (v_csr_wena) begin
-            v.xmode[iU].xepc = r.cmd_data[(CFG_CPU_ADDR_BITS - 1): 0];
+            v.xmode[iU].xepc = r.cmd_data;
         end
     end else if (r.cmd_addr == 12'h042) begin               // ucause: [URW] User trap cause
     end else if (r.cmd_addr == 12'h043) begin               // utval: [URW] User bad address or instruction
@@ -568,7 +568,7 @@ begin: comb_proc
     end else if (r.cmd_addr == 12'h141) begin               // sepc: [SRW] Supervisor exception program counter
         vb_rdata = r.xmode[iS].xepc;
         if (v_csr_wena) begin
-            v.xmode[iS].xepc = r.cmd_data[(CFG_CPU_ADDR_BITS - 1): 0];
+            v.xmode[iS].xepc = r.cmd_data;
         end
     end else if (r.cmd_addr == 12'h142) begin               // scause: [SRW] Supervisor trap cause
         vb_rdata[63] = r.xmode[iS].xcause_irq;
@@ -751,7 +751,7 @@ begin: comb_proc
     end else if (r.cmd_addr == 12'h341) begin               // mepc: [MRW] Machine program counter
         vb_rdata = r.xmode[iM].xepc;
         if (v_csr_wena) begin
-            v.xmode[iM].xepc = r.cmd_data[(CFG_CPU_ADDR_BITS - 1): 0];
+            v.xmode[iM].xepc = r.cmd_data;
         end
     end else if (r.cmd_addr == 12'h342) begin               // mcause: [MRW] Machine trap cause
         vb_rdata[63] = r.xmode[iM].xcause_irq;
@@ -789,7 +789,7 @@ begin: comb_proc
     end else if ((r.cmd_addr >= 12'h3b0)
                 && (r.cmd_addr <= 12'h3ef)) begin
         // pmpaddr0..63: [MRW] Physical memory protection address register
-        for (int i = 0; i < (CFG_CPU_ADDR_BITS - 2); i++) begin
+        for (int i = 0; i < (RISCV_ARCH - 2); i++) begin
             if ((r.cmd_data[i] == 1'b1) && (v_napot_shift == 1'b0)) begin
                 vb_pmp_napot_mask = {vb_pmp_napot_mask, 1'h1};
             end else begin
@@ -797,10 +797,10 @@ begin: comb_proc
             end
         end
         if (t_pmpdataidx < CFG_PMP_TBL_SIZE) begin
-            vb_rdata[(CFG_CPU_ADDR_BITS - 3): 0] = r.pmp[t_pmpdataidx].addr[(CFG_CPU_ADDR_BITS - 1): 0];
+            vb_rdata[(RISCV_ARCH - 3): 0] = r.pmp[t_pmpdataidx].addr;
             if ((v_csr_wena == 1'b1)
                     && (r.pmp[t_pmpdataidx].cfg[7] == 1'b0)) begin
-                v.pmp[t_pmpdataidx].addr = {r.cmd_data[(CFG_CPU_ADDR_BITS - 3): 0], 2'h0};
+                v.pmp[t_pmpdataidx].addr = {r.cmd_data[(RISCV_ARCH - 3): 0], 2'h0};
                 v.pmp[t_pmpdataidx].mask = vb_pmp_napot_mask;
             end
         end
@@ -860,7 +860,7 @@ begin: comb_proc
             vb_rdata = i_e_pc;
         end
         if (v_csr_wena == 1'b1) begin
-            v.dpc = r.cmd_data[(CFG_CPU_ADDR_BITS - 1): 0];
+            v.dpc = r.cmd_data;
         end
     end else if (r.cmd_addr == 12'h7b2) begin               // dscratch0: [DRW] Debug scratch register 0
         vb_rdata = r.dscratch0;
@@ -875,12 +875,12 @@ begin: comb_proc
     end else if (r.cmd_addr == 12'hbc0) begin               // mstackovr: [MRW] Machine Stack Overflow
         vb_rdata = r.mstackovr;
         if (v_csr_wena == 1'b1) begin
-            v.mstackovr = r.cmd_data[(CFG_CPU_ADDR_BITS - 1): 0];
+            v.mstackovr = r.cmd_data;
         end
     end else if (r.cmd_addr == 12'hbc1) begin               // mstackund: [MRW] Machine Stack Underflow
         vb_rdata = r.mstackund;
         if (v_csr_wena == 1'b1) begin
-            v.mstackund = r.cmd_data[(CFG_CPU_ADDR_BITS - 1): 0];
+            v.mstackund = r.cmd_data;
         end
     end else begin
         // Not implemented CSR:
@@ -1009,12 +1009,12 @@ begin: comb_proc
     v.pmp_ena = ((~r.mode[1]) | r.mprv);                    // S,U mode or MPRV is set
 
     w_mstackovr = 1'b0;
-    if (((|r.mstackovr) == 1'b1) && (i_sp[(CFG_CPU_ADDR_BITS - 1): 0] < r.mstackovr)) begin
+    if (((|r.mstackovr) == 1'b1) && (i_sp < r.mstackovr)) begin
         w_mstackovr = 1'b1;
         v.mstackovr = '0;
     end
     w_mstackund = 1'b0;
-    if (((|r.mstackund) == 1'b1) && (i_sp[(CFG_CPU_ADDR_BITS - 1): 0] > r.mstackund)) begin
+    if (((|r.mstackund) == 1'b1) && (i_sp > r.mstackund)) begin
         w_mstackund = 1'b1;
         v.mstackund = '0;
     end
@@ -1144,7 +1144,7 @@ begin: comb_proc
     o_flushi_valid = v_flushi;
     o_flushmmu_valid = v_flushmmu;
     o_flushpipeline_valid = v_flushpipeline;
-    o_flush_addr = r.cmd_data[(CFG_CPU_ADDR_BITS - 1): 0];
+    o_flush_addr = r.cmd_data;
 
     for (int i = 0; i < 4; i++) begin
         rin.xmode[i].xepc = v.xmode[i].xepc;

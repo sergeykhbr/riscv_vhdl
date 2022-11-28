@@ -17,7 +17,6 @@ package workgroup_pkg;
 
 import river_cfg_pkg::*;
 import types_amba_pkg::*;
-import types_bus0_pkg::*;
 import types_river_pkg::*;
 
 localparam int unsigned ACP_SLOT_IDX = CFG_CPU_MAX;

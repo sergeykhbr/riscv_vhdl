@@ -19,10 +19,10 @@
 module StackTraceBuffer(
     input logic i_clk,                                      // CPU clock
     input logic [river_cfg_pkg::CFG_LOG2_STACK_TRACE_ADDR-1:0] i_raddr,
-    output logic [(2 * river_cfg_pkg::CFG_CPU_ADDR_BITS)-1:0] o_rdata,
+    output logic [(2 * river_cfg_pkg::RISCV_ARCH)-1:0] o_rdata,
     input logic i_we,
     input logic [river_cfg_pkg::CFG_LOG2_STACK_TRACE_ADDR-1:0] i_waddr,
-    input logic [(2 * river_cfg_pkg::CFG_CPU_ADDR_BITS)-1:0] i_wdata
+    input logic [(2 * river_cfg_pkg::RISCV_ARCH)-1:0] i_wdata
 );
 
 import river_cfg_pkg::*;

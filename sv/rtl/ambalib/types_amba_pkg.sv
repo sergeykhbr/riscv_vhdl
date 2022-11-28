@@ -16,25 +16,13 @@
 package types_amba_pkg;
 
 
-localparam int CFG_SYSBUS_ADDR_BITS = 64;
+localparam int CFG_SYSBUS_ADDR_BITS = 48;
 localparam int CFG_LOG2_SYSBUS_DATA_BYTES = 3;
 localparam int CFG_SYSBUS_ID_BITS = 5;
 localparam int CFG_SYSBUS_USER_BITS = 1;
 
 localparam int CFG_SYSBUS_DATA_BYTES = (2**CFG_LOG2_SYSBUS_DATA_BYTES);
 localparam int CFG_SYSBUS_DATA_BITS = (8 * CFG_SYSBUS_DATA_BYTES);
-
-
-//! @brief Number of address bits used for device addressing.
-//! @details Default is 12 bits = 4 KB of address space minimum per each
-//!          mapped device.
-localparam int  CFG_SYSBUS_CFG_ADDR_BITS = CFG_SYSBUS_ADDR_BITS-12;
-//! @brief Global alignment is set 32 bits.
-localparam int CFG_ALIGN_BYTES         = 4;
-//! @brief  Number of parallel access to the atomic data.
-localparam int CFG_WORDS_ON_BUS        = CFG_SYSBUS_DATA_BYTES/CFG_ALIGN_BYTES;
-//! @}
-
 
 // @name Vendor IDs defintion.
 localparam bit [15:0] VENDOR_GNSSSENSOR = 16'h00f1;
@@ -55,8 +43,8 @@ localparam bit [15:0] RISCV_RIVER_WORKGROUP = 16'h0506;
 localparam bit [15:0] RISCV_WASSERFALL_DMI = 16'h0507;
 // UART with DMA: Test Access Point (TAP)
 localparam bit [15:0] GNSSSENSOR_UART_TAP = 16'h050a;
-// JTAG Test Access Point (TAP)
-localparam bit [15:0] GNSSSENSOR_JTAG_TAP = 16'h050b;
+// JTAG Test Access Point (TAP) with DMI interface
+localparam bit [15:0] OPTIMITECH_JTAG_DMI = 16'h050b;
 
 // @name Slave Device IDs definition:
 // Empty slave slot device
@@ -77,6 +65,10 @@ localparam bit [15:0] OPTIMITECH_UART = 16'h007a;
 localparam bit [15:0] OPTIMITECH_CLINT = 16'h0083;
 // External interrupt controller
 localparam bit [15:0] OPTIMITECH_PLIC = 16'h0084;
+// AXI to APB Brdige
+localparam bit [15:0] OPTIMITECH_AXI2APB_BRIDGE = 16'h0085;
+// AXI interconnect
+localparam bit [15:0] OPTIMITECH_AXI_INTERCONNECT = 16'h0086;
 
 // Plug'n'Play descriptor localparams.
 // Undefined type of the descriptor (empty device).
@@ -86,14 +78,25 @@ localparam bit [1:0] PNP_CFG_TYPE_MASTER = 2'h1;
 // AXI master device standard descriptor.
 localparam bit [1:0] PNP_CFG_TYPE_SLAVE = 2'h2;
 // @brief Size in bytes of the standard slave descriptor..
-// @details Firmware uses this value instead of sizeof(axi4_slave_config_type).
-localparam bit [7:0] PNP_CFG_SLAVE_DESCR_BYTES = 8'h10;
-// @brief Size in bytes of the standard master descriptor.
-// @details Firmware uses this value instead of sizeof(axi4_master_config_type).
-localparam bit [7:0] PNP_CFG_MASTER_DESCR_BYTES = 8'h08;
+// @details Firmware uses this value instead of sizeof(slave_config_type).
+localparam bit [7:0] PNP_CFG_DEV_DESCR_BYTES = 8'h10;
 
-// @brief   Plug-n-play descriptor structure for slave device.
-// @details Each slave device must generates this datatype output that
+// @brief Map information for the memory mapped device.
+typedef struct {
+    // Base Address.;
+    longint unsigned addr_start;
+    // Maskable bits of the base address.;
+    longint unsigned addr_end;
+} mapinfo_type;
+
+// @brief Empty entry value for the map info table
+const mapinfo_type mapinfo_none = '{
+    '0,  // addr_start
+    '0  // addr_end
+};
+
+// @brief   Plug-n-play descriptor structure for connected device.
+// @details Each device must generates this datatype output that
 //          is connected directly to the 'pnp' slave module on system bus.
 typedef struct {
     // Descriptor size in bytes.;
@@ -101,45 +104,23 @@ typedef struct {
     // Descriptor type.;
     logic [1:0] descrtype;
     // Base Address.;
-    logic [CFG_SYSBUS_ADDR_BITS-1:0] xaddr;
-    // Maskable bits of the base address.;
-    logic [CFG_SYSBUS_ADDR_BITS-1:0] xmask;
+    logic [63:0] addr_start;
+    // End of the base address.;
+    logic [63:0] addr_end;
     // Vendor ID.;
     logic [15:0] vid;
     // Device ID.;
     logic [15:0] did;
-} axi4_slave_config_type;
+} dev_config_type;
 
-// @brief Default slave config value.
-const axi4_slave_config_type axi4_slave_config_none = '{
-    PNP_CFG_SLAVE_DESCR_BYTES,  // descrsize
+// @brief Default config value for empty slot.
+const dev_config_type dev_config_none = '{
+    PNP_CFG_DEV_DESCR_BYTES,  // descrsize
     PNP_CFG_TYPE_SLAVE,  // descrtype
-    '0,  // xaddr
-    '0,  // xmask
+    '0,  // addr_start
+    '0,  // addr_end
     VENDOR_GNSSSENSOR,  // vid
     SLV_DID_EMPTY  // did
-};
-
-// @brief   Plug-n-play descriptor structure for master device.
-// @details Each slave device must generates this datatype output that
-//          is connected directly to the 'pnp' master module on system bus.
-typedef struct {
-    // Descriptor size in bytes.;
-    logic [7:0] descrsize;
-    // Descriptor type.;
-    logic [1:0] descrtype;
-    // Vendor ID.;
-    logic [15:0] vid;
-    // Device ID.;
-    logic [15:0] did;
-} axi4_master_config_type;
-
-// @brief Default master config value.
-const axi4_master_config_type axi4_master_config_none = '{
-    PNP_CFG_MASTER_DESCR_BYTES,  // descrsize
-    PNP_CFG_TYPE_MASTER,  // descrtype
-    VENDOR_GNSSSENSOR,  // vid
-    MST_DID_EMPTY  // did
 };
 
 // Burst length size decoder
@@ -157,7 +138,7 @@ endfunction: XSizeToBytes
 // @brief Normal access success.
 // @details Indicates that a normal access has been
 // successful. Can also indicate an exclusive access has failed.
-localparam bit [1:0] AXI_RESP_OKAY = 2'h1;
+localparam bit [1:0] AXI_RESP_OKAY = 2'h0;
 // @brief Exclusive access okay.
 // @details Indicates that either the read or write
 // portion of an exclusive access has been successful.
@@ -195,30 +176,29 @@ localparam bit [3:0] AWCACHE_DEVICE_NON_BUFFERABLE = 4'h0;
 localparam bit [3:0] AWCACHE_WRBACK_WRITE_ALLOCATE = 4'hf;
 
 // see table C3-7 Permitted read address control signal combinations
-//
+//  
 //    read  |  cached  |  unique  |
 //     0    |    0     |    *     |    ReadNoSnoop
 //     0    |    1     |    0     |    ReadShared
 //     0    |    1     |    1     |    ReadMakeUnique
-localparam bit [3:0] ARSNOOP_READ_NO_SNOOP     = 4'b0000;
-localparam bit [3:0] ARSNOOP_READ_SHARED       = 4'b0001;
-localparam bit [3:0] ARSNOOP_READ_MAKE_UNIQUE  = 4'b1100;
+localparam bit [3:0] ARSNOOP_READ_NO_SNOOP = 4'h0;
+localparam bit [3:0] ARSNOOP_READ_SHARED = 4'h1;
+localparam bit [3:0] ARSNOOP_READ_MAKE_UNIQUE = 4'hc;
 
 // see table C3-8 Permitted read address control signal combinations
-//
+//  
 //   write  |  cached  |  unique  |
 //     1    |    0     |    *     |    WriteNoSnoop
 //     1    |    1     |    1     |    WriteLineUnique
 //     1    |    1     |    0     |    WriteBack
-localparam bit [2:0] AWSNOOP_WRITE_NO_SNOOP    = 3'b000;
-localparam bit [2:0] AWSNOOP_WRITE_LINE_UNIQUE = 3'b001;
-localparam bit [2:0] AWSNOOP_WRITE_BACK        = 3'b011;
+localparam bit [2:0] AWSNOOP_WRITE_NO_SNOOP = 3'h0;
+localparam bit [2:0] AWSNOOP_WRITE_LINE_UNIQUE = 3'h1;
+localparam bit [2:0] AWSNOOP_WRITE_BACK = 3'h3;
 
 // see table C3-19
-localparam bit [3:0] AC_SNOOP_READ_UNIQUE   = 4'b0111;
-localparam bit [3:0] AC_SNOOP_MAKE_INVALID  = 4'b1101;
+localparam bit [3:0] AC_SNOOP_READ_UNIQUE = 4'h7;
+localparam bit [3:0] AC_SNOOP_MAKE_INVALID = 4'hd;
 
-//! @brief AMBA AXI4 compliant data structure.
 typedef struct {
     logic [CFG_SYSBUS_ADDR_BITS-1:0] addr;
     // @brief   Burst length.;
@@ -427,9 +407,6 @@ const axi4_slave_out_type axi4_slave_out_none = '{
 };
 
 
-typedef logic [CFG_SYSBUS_ADDR_BITS-1 : 0] global_addr_array_type [0 : CFG_WORDS_ON_BUS-1];
-
-
 typedef struct {
     logic [31:0] paddr;
     logic [2:0] pprot;
@@ -451,7 +428,7 @@ const apb_in_type apb_in_none = '{
 };
 
 typedef struct {
-    logic pready;
+    logic pready;                                           // when 1 it breaks callback to functional model
     logic [31:0] prdata;
     logic pslverr;
 } apb_out_type;
@@ -461,16 +438,5 @@ const apb_out_type apb_out_none = '{
     '0,  // prdata
     1'h0  // pslverr
 };
-
-// DELME::
-//! @brief Number of address bits used for device addressing.
-//! @details Default is 12 bits = 4 KB of address space minimum per each
-//!          mapped device.
-localparam int  CFG_SYSBUS_CFG_ADDR_BITS = CFG_SYSBUS_ADDR_BITS-12;
-//! @brief Global alignment is set 32 bits.
-localparam int CFG_ALIGN_BYTES         = 4;
-//! @brief  Number of parallel access to the atomic data.
-localparam int CFG_WORDS_ON_BUS        = CFG_SYSBUS_DATA_BYTES/CFG_ALIGN_BYTES;
-typedef logic [CFG_SYSBUS_ADDR_BITS-1 : 0] global_addr_array_type [0 : CFG_WORDS_ON_BUS-1];
 
 endpackage: types_amba_pkg

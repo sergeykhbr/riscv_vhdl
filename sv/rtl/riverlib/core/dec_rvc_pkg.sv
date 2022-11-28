@@ -38,7 +38,7 @@ localparam bit [4:0] OPCODE_C_BNEZ = 5'h1d;
 localparam bit [4:0] OPCODE_C_SDSP = 5'h1e;
 
 typedef struct {
-    logic [CFG_CPU_ADDR_BITS-1:0] pc;
+    logic [RISCV_ARCH-1:0] pc;
     logic [ISA_Total-1:0] isa_type;
     logic [Instr_Total-1:0] instr_vec;
     logic [15:0] instr;

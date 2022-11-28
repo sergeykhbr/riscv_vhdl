@@ -30,7 +30,7 @@ module ic_dport #(
     input logic i_hartreset,                                // Reset currently selected hart
     input logic i_dport_req_valid,                          // Debug access from DSU is valid
     input logic [river_cfg_pkg::DPortReq_Total-1:0] i_dport_req_type,// Debug access types
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_dport_addr,// Register index
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_dport_addr,// Register index
     input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_dport_wdata,// Write value
     input logic [2:0] i_dport_size,                         // 0=1B;1=2B;2=4B;3=8B;4=128B
     output logic o_dport_req_ready,                         // Response is ready

@@ -23,7 +23,7 @@ localparam int DEC_BLOCK = (2 * DEC_NUM);                   // 2 rv + 2 rvc
 localparam int FULL_DEC_DEPTH = (DEC_BLOCK * ((CFG_DEC_DEPTH - 1) + CFG_BP_DEPTH));
 
 typedef struct {
-    logic [CFG_CPU_ADDR_BITS-1:0] pc;
+    logic [RISCV_ARCH-1:0] pc;
     logic [ISA_Total-1:0] isa_type;
     logic [Instr_Total-1:0] instr_vec;
     logic [31:0] instr;

@@ -25,25 +25,25 @@ module BpBTB #(
     input logic i_flush_pipeline,                           // sync reset BTB
     input logic i_e,                                        // executed jump
     input logic i_we,                                       // Write enable into BTB
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_we_pc,// Jump start instruction address
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_we_npc,// Jump target address
-    input logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] i_bp_pc,// Start address of the prediction sequence
-    output logic [(river_cfg_pkg::CFG_BP_DEPTH * river_cfg_pkg::CFG_CPU_ADDR_BITS)-1:0] o_bp_npc,// Predicted sequence
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_we_pc,    // Jump start instruction address
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_we_npc,   // Jump target address
+    input logic [river_cfg_pkg::RISCV_ARCH-1:0] i_bp_pc,    // Start address of the prediction sequence
+    output logic [(river_cfg_pkg::CFG_BP_DEPTH * river_cfg_pkg::RISCV_ARCH)-1:0] o_bp_npc,// Predicted sequence
     output logic [river_cfg_pkg::CFG_BP_DEPTH-1:0] o_bp_exec// Predicted value was jump-executed before
 );
 
 import river_cfg_pkg::*;
 import bp_btb_pkg::*;
 
-logic [CFG_CPU_ADDR_BITS-1:0] dbg_npc[0: CFG_BP_DEPTH - 1];
+logic [RISCV_ARCH-1:0] dbg_npc[0: CFG_BP_DEPTH - 1];
 BpBTB_registers r, rin;
 
 always_comb
 begin: comb_proc
     BpBTB_registers v;
-    logic [(CFG_BP_DEPTH * CFG_CPU_ADDR_BITS)-1:0] vb_addr;
+    logic [(CFG_BP_DEPTH * RISCV_ARCH)-1:0] vb_addr;
     logic [CFG_BP_DEPTH-1:0] vb_hit;
-    logic [CFG_CPU_ADDR_BITS-1:0] t_addr;
+    logic [RISCV_ARCH-1:0] t_addr;
     logic [CFG_BTB_SIZE-1:0] vb_pc_equal;
     logic [CFG_BTB_SIZE-1:0] vb_pc_nshift;
     logic [CFG_BP_DEPTH-1:0] vb_bp_exec;
@@ -63,18 +63,18 @@ begin: comb_proc
         v.btb[i].exec = r.btb[i].exec;
     end
 
-    vb_addr[(CFG_CPU_ADDR_BITS - 1): 0] = i_bp_pc;
+    vb_addr[(RISCV_ARCH - 1): 0] = i_bp_pc;
     vb_bp_exec[0] = i_e;
 
     for (int i = 1; i < CFG_BP_DEPTH; i++) begin
-        t_addr = vb_addr[((i - 1) * CFG_CPU_ADDR_BITS) +: CFG_CPU_ADDR_BITS];
+        t_addr = vb_addr[((i - 1) * RISCV_ARCH) +: RISCV_ARCH];
         for (int n = (CFG_BTB_SIZE - 1); n >= 0; n--) begin
             if (t_addr == r.btb[n].pc) begin
-                vb_addr[(i * CFG_CPU_ADDR_BITS) +: CFG_CPU_ADDR_BITS] = r.btb[n].npc;
+                vb_addr[(i * RISCV_ARCH) +: RISCV_ARCH] = r.btb[n].npc;
                 vb_hit[i] = 1'h1;
                 vb_bp_exec[i] = r.btb[n].exec;              // Used for: Do not override by pre-decoded jumps
             end else if (vb_hit[i] == 1'b0) begin
-                vb_addr[(i * CFG_CPU_ADDR_BITS) +: CFG_CPU_ADDR_BITS] = (t_addr + 4);
+                vb_addr[(i * RISCV_ARCH) +: RISCV_ARCH] = (t_addr + 4);
             end
         end
     end
@@ -114,7 +114,7 @@ begin: comb_proc
     end
 
     for (int i = 0; i < CFG_BP_DEPTH; i++) begin
-        dbg_npc[i] = vb_addr[(i * CFG_CPU_ADDR_BITS) +: CFG_CPU_ADDR_BITS];
+        dbg_npc[i] = vb_addr[(i * RISCV_ARCH) +: RISCV_ARCH];
     end
     o_bp_npc = vb_addr;
     o_bp_exec = vb_bp_exec;
