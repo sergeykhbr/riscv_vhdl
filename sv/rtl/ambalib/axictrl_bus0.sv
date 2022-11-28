@@ -14,12 +14,13 @@
 //! limitations under the License.
 //!
 
-module axictrl_bus0
-#(parameter async_reset = 1)
+module axictrl_bus0 #(
+    parameter async_reset = 1
+)
 (
-  input                                         i_clk,
-  input                                         i_nrst,
-  input     types_bus0_pkg::bus0_xslv_cfg_vector      i_slvcfg,
+  input i_clk,
+  input i_nrst,
+  output types_amba_pkg::dev_config_type o_cfg,           // Device descriptor
   (* mark_debug = "true" *)
   input     types_bus0_pkg::bus0_xslv_out_vector      i_slvo,
   (* mark_debug = "true" *)
@@ -27,13 +28,12 @@ module axictrl_bus0
   (* mark_debug = "true" *)
   output    types_bus0_pkg::bus0_xslv_in_vector       o_slvi,
   (* mark_debug = "true" *)
-  output    types_bus0_pkg::bus0_xmst_in_vector       o_msti,
-  output logic [types_bus0_pkg::CFG_BUS0_XMST_TOTAL-1:0]    o_bus_util_w,
-  output logic [types_bus0_pkg::CFG_BUS0_XMST_TOTAL-1:0]    o_bus_util_r
+  output    types_bus0_pkg::bus0_xmst_in_vector o_msti,
+  output    types_bus0_pkg::bus0_mapinfo_vector o_mapinfo
 );
 
-import types_bus0_pkg::*;
 import types_amba_pkg::*;
+import types_bus0_pkg::*;
 
 typedef axi4_master_out_type nasti_master_out_vector_miss [0:CFG_BUS0_XMST_TOTAL];
 
@@ -59,18 +59,42 @@ const reg_type R_RESET = '{
 };
 
 reg_type rin, r;
-
+mapinfo_type def_mapinfo;
 axi4_slave_in_type defslv_i;
 axi4_slave_out_type defslv_o;
 
-  axi_defslv #(
-    .async_reset(async_reset)
-  ) xdef0 (
+logic w_def_req_valid;
+logic [CFG_SYSBUS_ADDR_BITS-1:0] wb_def_req_addr;
+logic w_def_req_write;
+logic [CFG_SYSBUS_DATA_BITS-1:0] wb_def_req_wdata;
+logic [CFG_SYSBUS_DATA_BYTES-1:0] wb_def_req_wstrb;
+logic w_def_req_last;
+
+assign def_mapinfo.addr_start = '0;
+assign def_mapinfo.addr_end = '0;
+
+axi_slv #(
+   .async_reset(async_reset),
+   .vid(VENDOR_OPTIMITECH),
+   .did(OPTIMITECH_AXI_INTERCONNECT)
+) xdef0 (
     .i_clk(i_clk),
     .i_nrst(i_nrst),
+    .i_mapinfo(def_mapinfo),
+    .o_cfg(o_cfg),
     .i_xslvi(defslv_i),
-    .o_xslvo(defslv_o)
-  );
+    .o_xslvo(defslv_o),
+    .o_req_valid(w_def_req_valid),
+    .o_req_addr(wb_def_req_addr),
+    .o_req_write(w_def_req_write),
+    .o_req_wdata(wb_def_req_wdata),
+    .o_req_wstrb(wb_def_req_wstrb),
+    .o_req_last(w_def_req_last),
+    .i_req_ready(1'b1),
+    .i_resp_valid(1'b1),
+    .i_resp_rdata('1),
+    .i_resp_err(1'd1)
+);
 
 
 always_comb begin: comblogic
@@ -95,10 +119,6 @@ always_comb begin: comblogic
     logic                                   r_busy;
     logic                                   b_fire;
     logic                                   b_busy;
-
-    // Bus statistic signals
-    logic [CFG_BUS0_XMST_TOTAL-1:0]         wb_bus_util_w;
-    logic [CFG_BUS0_XMST_TOTAL-1:0]         wb_bus_util_r;
 
     v = r;
 
@@ -132,14 +152,12 @@ always_comb begin: comblogic
 
     // select slave interface
     for(int s = 0; s <= CFG_BUS0_XSLV_TOTAL-1; s++) begin
-        if(i_slvcfg[s].xmask != 'h00000 &&
-           (vmsto[ar_midx].ar_bits.addr[CFG_SYSBUS_ADDR_BITS-1:12]
-            & i_slvcfg[s].xmask) == i_slvcfg[s].xaddr)
+        if(CFG_BUS0_MAP[s].addr_start[CFG_SYSBUS_ADDR_BITS-1:12] <= vmsto[ar_midx].ar_bits.addr[CFG_SYSBUS_ADDR_BITS-1:12]
+          && vmsto[ar_midx].ar_bits.addr[CFG_SYSBUS_ADDR_BITS-1:12] < CFG_BUS0_MAP[s].addr_end[CFG_SYSBUS_ADDR_BITS-1:12])
             ar_sidx = s;
 
-        if(i_slvcfg[s].xmask != 'h00000 &&
-           (vmsto[aw_midx].aw_bits.addr[CFG_SYSBUS_ADDR_BITS-1:12]
-            & i_slvcfg[s].xmask) == i_slvcfg[s].xaddr)
+        if(CFG_BUS0_MAP[s].addr_start[CFG_SYSBUS_ADDR_BITS-1:12] <= vmsto[aw_midx].aw_bits.addr[CFG_SYSBUS_ADDR_BITS-1:12]
+          && vmsto[aw_midx].aw_bits.addr[CFG_SYSBUS_ADDR_BITS-1:12] < CFG_BUS0_MAP[s].addr_end[CFG_SYSBUS_ADDR_BITS-1:12])
             aw_sidx = s;
     end
 
@@ -229,13 +247,6 @@ always_comb begin: comblogic
     vmsti[r.b_midx].b_user = vslvo[r.b_sidx].b_user;
     vslvi[r.b_sidx].b_ready = vmsto[r.b_midx].b_ready;
 
-    // Statistic
-    wb_bus_util_w = '0;
-    wb_bus_util_w[r.w_midx] = 1'b1;
-    wb_bus_util_r = '0;
-    wb_bus_util_r[r.r_midx] = 1'b1;
-
-
     if(!async_reset &&i_nrst == 1'b0)
         v = R_RESET;
 
@@ -249,13 +260,8 @@ always_comb begin: comblogic
 
     defslv_i = vslvi[CFG_BUS0_XSLV_TOTAL];
 
-    o_bus_util_w = wb_bus_util_w[CFG_BUS0_XMST_TOTAL-1:0];
-    o_bus_util_r = wb_bus_util_r[CFG_BUS0_XMST_TOTAL-1:0];
-
+    o_mapinfo = CFG_BUS0_MAP;
 end
-
-// assign o_bus_util_w = wb_bus_util_w[CFG_BUS0_XMST_TOTAL-1:0];
-// assign o_bus_util_r = wb_bus_util_r[CFG_BUS0_XMST_TOTAL-1:0];
 
 // registers
 generate

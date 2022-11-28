@@ -17,72 +17,63 @@
 module axi4_sram
 #(
     parameter int async_reset = 0,
-    parameter longint xaddr = 0,
-    parameter longint xmask = 'hfffff,
     parameter int abits = 17,
     parameter init_file = ""
 )
 (
-    input                                                   clk,
-    input                                                   nrst,
-    output    types_amba_pkg::axi4_slave_config_type              cfg,
-    input     types_amba_pkg::axi4_slave_in_type                  i,
-    output    types_amba_pkg::axi4_slave_out_type                 o
+    input clk,
+    input nrst,
+    input types_amba_pkg::mapinfo_type i_mapinfo,
+    output types_amba_pkg::dev_config_type cfg,
+    input types_amba_pkg::axi4_slave_in_type i,
+    output types_amba_pkg::axi4_slave_out_type o
 );
 
 import types_amba_pkg::*;
 
-const axi4_slave_config_type xconfig = '{
-    descrtype : PNP_CFG_TYPE_SLAVE,
-    descrsize : PNP_CFG_SLAVE_DESCR_BYTES,
-    xaddr     : xaddr[CFG_SYSBUS_CFG_ADDR_BITS-1:0],
-    xmask     : xmask[CFG_SYSBUS_CFG_ADDR_BITS-1:0],
-    vid       : VENDOR_GNSSSENSOR,
-    did       : OPTIMITECH_SRAM
-};
+logic w_req_valid;
+logic [CFG_SYSBUS_ADDR_BITS-1:0] wb_req_addr;
+logic w_req_write;
+logic [CFG_SYSBUS_DATA_BITS-1:0] wb_req_wdata;
+logic [CFG_SYSBUS_DATA_BYTES-1:0] wb_req_wstrb;
+logic w_req_last;
+logic [CFG_SYSBUS_DATA_BITS-1:0] wb_rdata;
 
-typedef struct {
-  global_addr_array_type                raddr;
-  logic                                 re;
-  global_addr_array_type                waddr;
-  logic                                 we;
-  logic [CFG_SYSBUS_DATA_BYTES-1:0]     wstrb;
-  logic [CFG_SYSBUS_DATA_BITS-1:0]      wdata;
-} ram_in_type;
-
-logic [CFG_SYSBUS_DATA_BITS-1:0]        rdata_mux;
-ram_in_type                             rami;
-
-assign cfg = xconfig;
-
-axi_slv #(.async_reset(async_reset)) axi0 (
+axi_slv #(
+    .async_reset(async_reset),
+    .vid(VENDOR_OPTIMITECH),
+    .did(OPTIMITECH_SRAM)
+) axi0 (
     .i_clk(clk),
     .i_nrst(nrst),
-    .i_xcfg(xconfig), 
+    .i_mapinfo(i_mapinfo),
+    .o_cfg(cfg),
     .i_xslvi(i),
     .o_xslvo(o),
-    .i_ready(1'b1),
-    .i_rdata(rdata_mux),
-    .o_re(rami.re),
-    .o_r32(),
-    .o_radr(rami.raddr),
-    .o_wadr(rami.waddr),
-    .o_we(rami.we),
-    .o_wstrb(rami.wstrb),
-    .o_wdata(rami.wdata)
+    .o_req_valid(w_req_valid),
+    .o_req_addr(wb_req_addr),
+    .o_req_write(w_req_write),
+    .o_req_wdata(wb_req_wdata),
+    .o_req_wstrb(wb_req_wstrb),
+    .o_req_last(w_req_last),
+    .i_req_ready(1'b1),
+    .i_resp_valid(1'b1),
+    .i_resp_rdata(wb_rdata),
+    .i_resp_err(1'd0)
 );
+
 
 srambytes_tech #(
     .abits(abits), 
+    .log2_dbytes(CFG_LOG2_SYSBUS_DATA_BYTES),
     .init_file(init_file)
 ) tech0 (
     .clk(clk),
-    .raddr(rami.raddr),
-    .rdata(rdata_mux),
-    .waddr(rami.waddr),
-    .we(rami.we),
-    .wstrb(rami.wstrb),
-    .wdata(rami.wdata)
+    .addr(wb_req_addr[abits-1:0]),
+    .rdata(wb_rdata),
+    .we(w_req_write),
+    .wstrb(wb_req_wstrb),
+    .wdata(wb_req_wdata)
 );
 
 endmodule

@@ -1,13 +1,13 @@
+// TODO: interrutps
 module axi4_gpio #(
   parameter bit async_reset = 0,
-  parameter longint xaddr = 0,
-  parameter longint xmask = 'hfffff,
   parameter integer width = 12
 )
 (
   input clk,
   input nrst,
-  output types_amba_pkg::axi4_slave_config_type cfg,
+  input types_amba_pkg::mapinfo_type i_mapinfo,
+  output types_amba_pkg::dev_config_type cfg,
   input types_amba_pkg::axi4_slave_in_type i,
   output types_amba_pkg::axi4_slave_out_type o,
   input logic [width-1:0] i_gpio,
@@ -17,102 +17,94 @@ module axi4_gpio #(
 );
 
   import types_amba_pkg::*;
+  import types_common::*;
 
-  const axi4_slave_config_type xconfig = '{
-     PNP_CFG_TYPE_SLAVE, //descrtype
-     PNP_CFG_SLAVE_DESCR_BYTES, //descrsize
-     xaddr, //xaddr
-     xmask, //xmask
-     VENDOR_GNSSSENSOR, //vid
-     OPTIMITECH_GPIO //did
-  };
 
   typedef struct {
-    logic [31 : 0] direction;
-    logic [31 : 0] iuser;
-    logic [31 : 0] ouser;
+    logic [width-1 : 0] direction;
+    logic [width-1 : 0] iuser;
+    logic [width-1 : 0] ouser;
+    logic [width-1 : 0] ie;
     logic [31 : 0] reg32_3;
-    global_addr_array_type raddr;
+    logic [63:0] rdata;
   } registers;
 
   const registers R_RESET = '{
-      '1, '0,
-      '0, '0,
-      {'0, '0}
+      '1,  // direction
+      '0,  // iuser
+      '0,  // ouser
+      '0,  // ie
+      '0,  // reg32_3
+      '0   // rdata
   };
 
   registers r, rin;
 
-  logic [CFG_SYSBUS_DATA_BITS-1 : 0] wb_dev_rdata;
-  global_addr_array_type wb_bus_raddr;
-  logic w_bus_re;
-  global_addr_array_type wb_bus_waddr;
-  logic w_bus_we;
-  logic [CFG_SYSBUS_DATA_BYTES-1 : 0] wb_bus_wstrb;
-  logic [CFG_SYSBUS_DATA_BITS-1 : 0] wb_bus_wdata;
+logic w_req_valid;
+logic [CFG_SYSBUS_ADDR_BITS-1:0] wb_req_addr;
+logic w_req_write;
+logic [CFG_SYSBUS_DATA_BITS-1:0] wb_req_wdata;
+logic [CFG_SYSBUS_DATA_BYTES-1:0] wb_req_wstrb;
+logic w_req_last;
 
 
-  axi_slv #(
-    .async_reset(async_reset)
-  ) axi0 (
+axi_slv #(
+   .async_reset(async_reset),
+   .vid(VENDOR_OPTIMITECH),
+   .did(OPTIMITECH_GPIO)
+) axi0 (
     .i_clk(clk),
     .i_nrst(nrst),
-    .i_xcfg(xconfig),
+    .i_mapinfo(i_mapinfo),
+    .o_cfg(cfg),
     .i_xslvi(i),
     .o_xslvo(o),
-    .i_ready(1'b1),
-    .i_rdata(wb_dev_rdata),
-    .o_re(w_bus_re),
-    .o_r32(),
-    .o_radr(wb_bus_raddr),
-    .o_wadr(wb_bus_waddr),
-    .o_we(w_bus_we),
-    .o_wstrb(wb_bus_wstrb),
-    .o_wdata(wb_bus_wdata)
-  );
+    .o_req_valid(w_req_valid),
+    .o_req_addr(wb_req_addr),
+    .o_req_write(w_req_write),
+    .o_req_wdata(wb_req_wdata),
+    .o_req_wstrb(wb_req_wstrb),
+    .o_req_last(w_req_last),
+    .i_req_ready(1'b1),
+    .i_resp_valid(1'b1),
+    .i_resp_rdata(r.rdata),
+    .i_resp_err(1'd0)
+);
 
 always_comb
   begin : main_proc
-
     registers v;
     logic [CFG_SYSBUS_DATA_BITS-1 : 0] vrdata;
-    logic [31 : 0] tmp;
 
     v = r;
+    vrdata = '0;
 
-    v.raddr = wb_bus_raddr;
+    case (wb_req_addr[11 : 3])
+    0: begin
+        vrdata[width-1:0] = r.direction;
+        vrdata[32+width-1:32] = r.iuser;  // [RO]
+        if (w_req_valid == 1'b1 && w_req_write == 1'b1) begin
+            if ((|wb_req_wstrb[3:0]) == 1'b1) begin
+                v.direction = wb_req_wdata[width-1:0];
+            end
+        end
+        end
+    1: begin
+        vrdata[width-1:0] = r.ouser;
+        vrdata[63:32] = r.reg32_3;
+        if (w_req_valid == 1'b1 && w_req_write == 1'b1) begin
+            if ((|wb_req_wstrb[3:0]) == 1'b1) begin
+                v.ouser = wb_req_wdata[width-1:0];
+            end
+            if ((|wb_req_wstrb[7:4]) == 1'b1) begin
+                v.reg32_3 = wb_req_wdata[63:32];
+            end
+        end
+        end
+    default: ;
+    endcase
 
-    for (int n = 0; n <= CFG_WORDS_ON_BUS-1; n++) begin
-      tmp = '0;
-
-      case (r.raddr[n][11 : 2])
-        0: tmp = r.direction;
-        1: tmp = r.iuser;
-        2: tmp = r.ouser;
-        3: tmp = r.reg32_3;
-        default: ;
-      endcase
-      vrdata[8*CFG_ALIGN_BYTES*n +: 8*CFG_ALIGN_BYTES] = tmp;
-    end
-
-
-    if (w_bus_we == 1'b1) begin
-
-       for (int n = 0; n <= CFG_WORDS_ON_BUS-1; n++) begin
-         tmp = wb_bus_wdata[32*n +: 32];
-
-         if (wb_bus_wstrb[CFG_ALIGN_BYTES*n +: CFG_ALIGN_BYTES] != 0) begin
-           case (wb_bus_waddr[n][11 : 2])
-             0: v.direction = tmp;
-             //1: v.iuser = tmp;  // [RO]
-             2: v.ouser = tmp;
-             3: v.reg32_3 = tmp;
-             default: ;
-           endcase
-         end
-       end
-    end
-
+    v.rdata = vrdata;
     v.iuser[width-1 : 0] = i_gpio;
 
     if (~async_reset & (nrst == 1'b0)) begin
@@ -120,14 +112,11 @@ always_comb
     end
 
     rin = v;
-    wb_dev_rdata = vrdata;
 
   end : main_proc
 
-  assign cfg = xconfig;
-
-  assign o_gpio = r.ouser[width-1 : 0];
-  assign o_gpio_dir = r.direction[width-1 : 0];
+  assign o_gpio = r.ouser;
+  assign o_gpio_dir = r.direction;
   assign o_irq = '0;
 
   // registers

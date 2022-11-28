@@ -3,9 +3,8 @@
 module axi4_pnp #(
 
     parameter async_reset = 1'b0,
-    parameter longint xaddr = 0,
-    parameter longint xmask = 'hfffff,
-    parameter logic [31 : 0] hw_id = 32'h20170101,
+    parameter int cfg_slots = 1,
+    parameter logic [31 : 0] hw_id = 32'h20221123,
     parameter logic [3 : 0] cpu_max = 4'd1,
     parameter logic l2cache_ena = 8'd1,
     parameter logic [7 : 0] plic_irq_max = 8'd127
@@ -14,9 +13,9 @@ module axi4_pnp #(
 
   input sys_clk,
   input nrst,
-  input types_bus0_pkg::bus0_xmst_cfg_vector mstcfg,
-  input types_bus0_pkg::bus0_xslv_cfg_vector slvcfg,
-  output types_amba_pkg::axi4_slave_config_type cfg,
+  input types_amba_pkg::mapinfo_type i_mapinfo,
+  input types_amba_pkg::dev_config_type i_cfg[0:cfg_slots-1],
+  output types_amba_pkg::dev_config_type o_cfg,
   input types_amba_pkg::axi4_slave_in_type i,
   output types_amba_pkg::axi4_slave_out_type o,
   output logic o_irq                            // self-test interrupt request on write into read only register
@@ -24,19 +23,11 @@ module axi4_pnp #(
 
   import types_amba_pkg::*;
   import types_bus0_pkg::*;
+  import types_misc::*;
+  import types_common::*;
 
-
-  const axi4_slave_config_type xconfig = '{
-     PNP_CFG_TYPE_SLAVE, //descrtype
-     PNP_CFG_SLAVE_DESCR_BYTES, // descrsize
-     xaddr, // xaddr
-     xmask, //xmask
-     VENDOR_GNSSSENSOR, //vid
-     OPTIMITECH_PNP //did
-  };
-
-  typedef logic [31 : 0] master_config_map [0 : 2*CFG_BUS0_XMST_TOTAL-1];
-  typedef logic [31 : 0] slave_config_map  [0 : 4*CFG_BUS0_XSLV_TOTAL-1];
+  // Descriptor size 4 x 64-bits word = 32 Bytes
+  typedef logic [63 : 0] config_map  [0 : 4*cfg_slots-1];
 
   typedef struct {
     logic [31 : 0] fw_id;
@@ -47,170 +38,131 @@ module axi4_pnp #(
     logic [63 : 0] fwdbg2;
     logic [63 : 0] fwdbg3;
     logic irq;
-    global_addr_array_type raddr;
+    logic [63 : 0] rdata;
   } registers;
 
   const registers R_RESET = '{
     '0, '0, '0,
     '0, '0, '0, '0,
     1'b0,
-    {'0, '0}
+    '0
   };
 
   registers r, rin;
 
-  logic [CFG_SYSBUS_DATA_BITS-1 : 0] wb_dev_rdata;
-  global_addr_array_type wb_bus_raddr;
-  logic w_bus_re;
-  global_addr_array_type wb_bus_waddr;
-  logic w_bus_we;
-  logic [CFG_SYSBUS_DATA_BYTES-1 : 0] wb_bus_wstrb;
-  logic [CFG_SYSBUS_DATA_BITS-1 : 0] wb_bus_wdata;
+logic w_req_valid;
+logic [CFG_SYSBUS_ADDR_BITS-1:0] wb_req_addr;
+logic w_req_write;
+logic [CFG_SYSBUS_DATA_BITS-1:0] wb_req_wdata;
+logic [CFG_SYSBUS_DATA_BYTES-1:0] wb_req_wstrb;
+logic w_req_last;
 
-  axi_slv #(
-    .async_reset(async_reset)
-  ) axi0 (
+axi_slv #(
+   .async_reset(async_reset),
+   .vid(VENDOR_OPTIMITECH),
+   .did(OPTIMITECH_PNP)
+) axi0 (
     .i_clk(sys_clk),
     .i_nrst(nrst),
-    .i_xcfg(xconfig),
+    .i_mapinfo(i_mapinfo),
+    .o_cfg(o_cfg),
     .i_xslvi(i),
     .o_xslvo(o),
-    .i_ready(1'b1),
-    .i_rdata(wb_dev_rdata),
-    .o_re(w_bus_re),
-    .o_r32(),
-    .o_radr(wb_bus_raddr),
-    .o_wadr(wb_bus_waddr),
-    .o_we(w_bus_we),
-    .o_wstrb(wb_bus_wstrb),
-    .o_wdata(wb_bus_wdata)
-  );
+    .o_req_valid(w_req_valid),
+    .o_req_addr(wb_req_addr),
+    .o_req_write(w_req_write),
+    .o_req_wdata(wb_req_wdata),
+    .o_req_wstrb(wb_req_wstrb),
+    .o_req_last(w_req_last),
+    .i_req_ready(1'b1),
+    .i_resp_valid(1'b1),
+    .i_resp_rdata(r.rdata),
+    .i_resp_err(1'd0)
+);
 
 
 always_comb
   begin : main_proc
     registers v;
-    master_config_map mstmap;
-    slave_config_map slvmap;
-    logic [9:0] raddr[0:CFG_WORDS_ON_BUS-1];
-    logic [9:0] waddr[0:CFG_WORDS_ON_BUS-1];
+    config_map cfgmap;
     logic [CFG_SYSBUS_DATA_BITS-1 : 0] vrdata;
-    logic [31 : 0] rtmp;
-    logic [31 : 0] wtmp;
 
     v = r;
 
     v.irq = 1'b0;
-    v.raddr = wb_bus_raddr;
-
-    for (int k = 0; k <= CFG_BUS0_XMST_TOTAL-1; k++) begin
-      mstmap[2*k]   = {2'b00, 20'h00000, mstcfg[k].descrtype, mstcfg[k].descrsize};
-      mstmap[2*k+1] = {mstcfg[k].vid, mstcfg[k].did};
-    end
-
-    for (int k = 0; k <= CFG_BUS0_XSLV_TOTAL-1; k++) begin
-      slvmap[4*k] = {8'h00,
-                     8'h00,
-                     6'b000000, slvcfg[k].descrtype,
-                     slvcfg[k].descrsize};
-      slvmap[4*k+1] = {slvcfg[k].vid, slvcfg[k].did};
-      slvmap[4*k+2] = {slvcfg[k].xmask, 12'h000};
-      slvmap[4*k+3] = {slvcfg[k].xaddr, 12'h000};
-    end
-
-
     vrdata = '0;
-    for (int n = 0; n <= CFG_WORDS_ON_BUS-1; n++) begin
-       waddr[n] = '0;                     // to avoid latches
-       raddr[n] = r.raddr[n][11 : 2];
 
-       rtmp = '0;
-       if (raddr[n] == 10'd0) begin
-          rtmp = hw_id;
-       end else if (raddr[n] == 10'd1) begin
-          rtmp = r.fw_id;
-       end else if (raddr[n] == 10'd2) begin
-          rtmp = {cpu_max[3:0],
+    for (int k = 0; k <= cfg_slots-1; k++) begin
+      cfgmap[4*k] = {i_cfg[k].vid, i_cfg[k].did,
+                     8'h00, 8'h00, 6'b000000, i_cfg[k].descrtype, i_cfg[k].descrsize};
+      cfgmap[4*k+1] = '0; // reserved
+      cfgmap[4*k+2] = i_cfg[k].addr_start;
+      cfgmap[4*k+3] = i_cfg[k].addr_end;
+    end
+
+
+    if (wb_req_addr[11:3] == 9'd0) begin
+        vrdata = {r.fw_id, hw_id};
+        if ((w_req_valid & w_req_write) == 1'b1) begin
+            if ((|wb_req_wstrb[3:0]) == 1'b1) begin
+                v.irq = 1'b1;
+            end
+            if ((|wb_req_wstrb[7:4]) == 1'b1) begin
+                v.fw_id = wb_req_wdata[63:32];
+            end
+        end
+    end else if (wb_req_addr[11:3] == 9'd1) begin
+        vrdata = {32'd0,
+                  cpu_max[3:0],
                   3'd0,    // reserved
                   l2cache_ena,
-                  CFG_BUS0_XMST_TOTAL[7:0],
-                  CFG_BUS0_XSLV_TOTAL[7:0],
+                  8'h0,
+                  cfg_slots[7:0],
                   plic_irq_max[7:0]};
-       end else if (raddr[n] == 10'd3) begin
-          ; // reserved
-       end else if (raddr[n] == 10'd4) begin
-          rtmp = r.idt[31 : 0];
-       end else if (raddr[n] == 10'd5) begin
-          rtmp = r.idt[63 : 32];
-       end else if (raddr[n] == 10'd6) begin
-          rtmp = r.malloc_addr[31 : 0];
-       end else if (raddr[n] == 10'd7) begin
-          rtmp = r.malloc_addr[63 : 32];
-       end else if (raddr[n] == 10'd8) begin
-          rtmp = r.malloc_size[31 : 0];
-       end else if (raddr[n] == 10'd9) begin
-          rtmp = r.malloc_size[63 : 32];
-       end else if (raddr[n] == 10'd10) begin
-          rtmp = r.fwdbg1[31 : 0];
-       end else if (raddr[n] == 10'd11) begin
-          rtmp = r.fwdbg1[63 : 32];
-       end else if (raddr[n] == 10'd12) begin
-          rtmp = r.fwdbg2[31 : 0];
-       end else if (raddr[n] == 10'd13) begin
-          rtmp = r.fwdbg2[63 : 32];
-       end else if (raddr[n] == 10'd14) begin
-          rtmp = r.fwdbg3[31 : 0];
-       end else if (raddr[n] == 10'd15) begin
-          rtmp = r.fwdbg3[63 : 32];
-       end else if ((int'(raddr[n]) >= 16) & (int'(raddr[n]) < 16+2*CFG_BUS0_XMST_TOTAL)) begin
-          rtmp = mstmap[int'(raddr[n]) - 16];
-       end else if ((int'(raddr[n]) >= 16+2*CFG_BUS0_XMST_TOTAL)
-                  & (int'(raddr[n]) < 16+2*CFG_BUS0_XMST_TOTAL+4*CFG_BUS0_XSLV_TOTAL)) begin
-          rtmp = slvmap[int'(raddr[n]) - 16 - 2*CFG_BUS0_XMST_TOTAL];
-       end
-
-       vrdata[32*n +: 32] = rtmp;
-    end //loop
-
-
-    if (w_bus_we == 1'b1) begin
-      for (int n = 0; n <= CFG_WORDS_ON_BUS-1; n++) begin
-         if (wb_bus_wstrb[CFG_ALIGN_BYTES*n +: CFG_ALIGN_BYTES] != 0) begin
-           waddr[n] = wb_bus_waddr[n][11 : 2];
-           wtmp  = wb_bus_wdata[32*n +: 32];
-
-           case (waddr[n])
-             10'd0: v.irq = 1'b1;
-             10'd1: v.fw_id = wtmp;
-             10'd4: v.idt[31 : 0] = wtmp;
-             10'd5: v.idt[63 : 32] = wtmp;
-             10'd6: v.malloc_addr[31 : 0] = wtmp;
-             10'd7: v.malloc_addr[63 : 32] = wtmp;
-             10'd8: v.malloc_size[31 : 0] = wtmp;
-             10'd9: v.malloc_size[63 : 32] = wtmp;
-             10'd10: v.fwdbg1[31 : 0] = wtmp;
-             10'd11: v.fwdbg1[63 : 32] = wtmp;
-             10'd12: v.fwdbg2[31 : 0]  = wtmp;
-             10'd13: v.fwdbg2[63 : 32] = wtmp;
-             10'd14: v.fwdbg3[31 : 0]  = wtmp;
-             10'd15: v.fwdbg3[63 : 32] = wtmp;
-             default: ;
-           endcase
-         end
-      end // loop
+    end else if (wb_req_addr[11:3] == 9'd2) begin
+        vrdata = r.idt;
+        if ((w_req_valid & w_req_write) == 1'b1) begin
+            v.idt = wb_req_wdata;
+        end
+    end else if (wb_req_addr[11:3] == 9'd3) begin
+        vrdata = r.malloc_addr;
+        if ((w_req_valid & w_req_write) == 1'b1) begin
+            v.malloc_addr = wb_req_wdata;
+        end
+    end else if (wb_req_addr[11:3] == 9'd4) begin
+        vrdata = r.malloc_size;
+        if ((w_req_valid & w_req_write) == 1'b1) begin
+            v.malloc_size = wb_req_wdata;
+        end
+    end else if (wb_req_addr[11:3] == 9'd5) begin
+        vrdata = r.fwdbg1;
+        if ((w_req_valid & w_req_write) == 1'b1) begin
+            v.fwdbg1 = wb_req_wdata;
+        end
+    end else if (wb_req_addr[11:3] == 9'd6) begin
+        vrdata = r.fwdbg2;
+        if ((w_req_valid & w_req_write) == 1'b1) begin
+            v.fwdbg2 = wb_req_wdata;
+        end
+    end else if (wb_req_addr[11:3] == 9'd7) begin
+        vrdata = r.fwdbg3;
+        if ((w_req_valid & w_req_write) == 1'b1) begin
+            v.fwdbg3 = wb_req_wdata;
+        end
+    end else if ((int'(wb_req_addr[11:3]) >= 8) & (int'(wb_req_addr[11:3]) < 8+4*cfg_slots)) begin
+        vrdata = cfgmap[int'(wb_req_addr[11:3]) - 8];
     end
+
+    v.rdata = vrdata;
 
     if (~async_reset & (nrst == 1'b0)) begin
         v = R_RESET;
     end
 
-    rin = v;
-    wb_dev_rdata = vrdata;
     o_irq = r.irq;
 
+    rin = v;
   end : main_proc
-
-  assign cfg = xconfig;
 
   generate
 
