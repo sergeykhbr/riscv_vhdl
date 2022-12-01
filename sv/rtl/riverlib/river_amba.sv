@@ -21,7 +21,11 @@ module RiverAmba #(
     parameter int unsigned hartid = 0,
     parameter bit fpu_ena = 1'b1,
     parameter bit coherence_ena = 1'b0,
-    parameter bit tracer_ena = 1'b1
+    parameter bit tracer_ena = 1'b1,
+    parameter int unsigned ilog2_nways = 2,                 // I$ Cache associativity. Default bits width = 2, means 4 ways
+    parameter int unsigned ilog2_lines_per_way = 7,         // I$ Cache length: 7=16KB; 8=32KB; ..
+    parameter int unsigned dlog2_nways = 2,                 // D$ Cache associativity. Default bits width = 2, means 4 ways
+    parameter int unsigned dlog2_lines_per_way = 7          // D$ Cache length: 7=16KB; 8=32KB; ..
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -119,7 +123,11 @@ RiverTop #(
     .hartid(hartid),
     .fpu_ena(fpu_ena),
     .coherence_ena(coherence_ena),
-    .tracer_ena(tracer_ena)
+    .tracer_ena(tracer_ena),
+    .ilog2_nways(ilog2_nways),
+    .ilog2_lines_per_way(ilog2_lines_per_way),
+    .dlog2_nways(dlog2_nways),
+    .dlog2_lines_per_way(dlog2_lines_per_way)
 ) river0 (
     .i_clk(i_clk),
     .i_nrst(i_nrst),

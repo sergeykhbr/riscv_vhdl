@@ -17,7 +17,9 @@
 `timescale 1ns/10ps
 
 module L2CacheLru #(
-    parameter bit async_reset = 1'b0
+    parameter bit async_reset = 1'b0,
+    parameter int unsigned waybits = 4,                     // Log2 of number of ways. Default 4: 16 ways
+    parameter int unsigned ibits = 9                        // Log2 of number of lines per way: 9=64KB (if bytes per line = 32 B)
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -55,6 +57,9 @@ module L2CacheLru #(
 
 import river_cfg_pkg::*;
 import l2cache_lru_pkg::*;
+
+localparam int ways = (2**waybits);
+localparam bit [31:0] FLUSH_ALL_VALUE = ((2**(ibits + waybits)) - 1);
 
 logic line_direct_access_i;
 logic line_invalidate_i;
@@ -162,7 +167,7 @@ begin: comb_proc
 
     vb_req_type = r.req_type;                               // systemc specific
     if (L2CACHE_LINE_BITS != L1CACHE_LINE_BITS) begin
-        ridx = int'(r.req_addr[(CFG_L2_LOG2_BYTES_PER_LINE - 1): (CFG_L2_LOG2_BYTES_PER_LINE - CFG_DLOG2_BYTES_PER_LINE)]);
+        ridx = int'(r.req_addr[(CFG_L2_LOG2_BYTES_PER_LINE - 1): (CFG_L2_LOG2_BYTES_PER_LINE - CFG_LOG2_L1CACHE_BYTES_PER_LINE)]);
     end
 
     vb_cached_data = line_rdata_o[(ridx * L1CACHE_LINE_BITS) +: L1CACHE_LINE_BITS];
@@ -176,7 +181,7 @@ begin: comb_proc
         v.req_flush = 1'b1;
         v.req_flush_all = i_flush_address[0];
         if (i_flush_address[0] == 1'b1) begin
-            v.req_flush_cnt = '1;
+            v.req_flush_cnt = FLUSH_ALL_VALUE;
             v.req_flush_addr = '0;
         end else begin
             v.req_flush_cnt = '0;
@@ -205,7 +210,7 @@ begin: comb_proc
     end
 
     // Flush counter when direct access
-    if (r.req_addr[(CFG_L2_LOG2_NWAYS - 1): 0] == (L2CACHE_WAYS - 1)) begin
+    if (r.req_addr[(waybits - 1): 0] == (ways - 1)) begin
         vb_addr_direct_next = ((r.req_addr + L2CACHE_BYTES_PER_LINE)
                 & (~LINE_BYTES_MASK));
     end else begin
@@ -428,6 +433,10 @@ begin: comb_proc
     end
     State_Reset: begin
         // Write clean line
+        if (r.req_flush == 1'b1) begin
+            v.req_flush = 1'b0;
+            v.flush_cnt = FLUSH_ALL_VALUE;                  // Init after power-on-reset
+        end
         v_direct_access = 1'b1;
         v_invalidate = 1'b1;                                // generate: wstrb='1; wflags='0
         v.state = State_ResetWrite;

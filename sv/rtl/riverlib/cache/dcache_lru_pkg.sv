@@ -18,10 +18,9 @@ package dcache_lru_pkg;
 import river_cfg_pkg::*;
 
 localparam int abus = CFG_CPU_ADDR_BITS;
-localparam int waybits = CFG_DLOG2_NWAYS;
-localparam int ibits = CFG_DLOG2_LINES_PER_WAY;
-localparam int lnbits = CFG_DLOG2_BYTES_PER_LINE;
+localparam int lnbits = CFG_LOG2_L1CACHE_BYTES_PER_LINE;
 localparam int flbits = DTAG_FL_TOTAL;
+// State machine states:
 localparam bit [3:0] State_Idle = 4'h0;
 localparam bit [3:0] State_CheckHit = 4'h1;
 localparam bit [3:0] State_TranslateAddress = 4'h2;
@@ -36,7 +35,8 @@ localparam bit [3:0] State_Reset = 4'ha;
 localparam bit [3:0] State_ResetWrite = 4'hb;
 localparam bit [3:0] State_SnoopSetupAddr = 4'hc;
 localparam bit [3:0] State_SnoopReadData = 4'hd;
-localparam bit [CFG_CPU_ADDR_BITS-1:0] LINE_BYTES_MASK = ((2**CFG_DLOG2_BYTES_PER_LINE) - 1);
+
+localparam bit [CFG_CPU_ADDR_BITS-1:0] LINE_BYTES_MASK = ((2**CFG_LOG2_L1CACHE_BYTES_PER_LINE) - 1);
 
 typedef struct {
     logic [MemopType_Total-1:0] req_type;
@@ -53,14 +53,14 @@ typedef struct {
     logic write_first;
     logic write_flush;
     logic write_share;
-    logic [DCACHE_BYTES_PER_LINE-1:0] mem_wstrb;
+    logic [L1CACHE_BYTES_PER_LINE-1:0] mem_wstrb;
     logic req_flush;                                        // init flush request
     logic req_flush_all;
     logic [CFG_CPU_ADDR_BITS-1:0] req_flush_addr;           // [0]=1 flush all
-    logic [(CFG_DLOG2_LINES_PER_WAY + CFG_DLOG2_NWAYS)-1:0] req_flush_cnt;
-    logic [(CFG_DLOG2_LINES_PER_WAY + CFG_DLOG2_NWAYS)-1:0] flush_cnt;
-    logic [DCACHE_LINE_BITS-1:0] cache_line_i;
-    logic [DCACHE_LINE_BITS-1:0] cache_line_o;
+    logic [31:0] req_flush_cnt;
+    logic [31:0] flush_cnt;
+    logic [L1CACHE_LINE_BITS-1:0] cache_line_i;
+    logic [L1CACHE_LINE_BITS-1:0] cache_line_o;
     logic [SNOOP_REQ_TYPE_BITS-1:0] req_snoop_type;
     logic snoop_flags_valid;
     logic snoop_restore_wait_resp;
@@ -84,11 +84,11 @@ const DCacheLru_registers DCacheLru_r_reset = '{
     1'b0,                               // write_flush
     1'b0,                               // write_share
     '0,                                 // mem_wstrb
-    1'b0,                               // req_flush
+    1'h1,                               // req_flush
     1'b0,                               // req_flush_all
     '0,                                 // req_flush_addr
     '0,                                 // req_flush_cnt
-    '1,                                 // flush_cnt
+    '0,                                 // flush_cnt
     '0,                                 // cache_line_i
     '0,                                 // cache_line_o
     '0,                                 // req_snoop_type

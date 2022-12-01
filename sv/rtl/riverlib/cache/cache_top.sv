@@ -18,7 +18,11 @@
 
 module CacheTop #(
     parameter bit async_reset = 1'b0,
-    parameter bit coherence_ena = 1'b0
+    parameter bit coherence_ena = 1'b0,
+    parameter int unsigned ilog2_nways = 2,                 // I$ Cache associativity. Default bits width = 2, means 4 ways
+    parameter int unsigned ilog2_lines_per_way = 7,         // I$ Cache length: 7=16KB; 8=32KB; ..
+    parameter int unsigned dlog2_nways = 2,                 // D$ Cache associativity. Default bits width = 2, means 4 ways
+    parameter int unsigned dlog2_lines_per_way = 7          // D$ Cache length: 7=16KB; 8=32KB; ..
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -95,12 +99,12 @@ CacheOutputType i;
 CacheOutputType d;
 // Memory Control interface:
 logic w_ctrl_resp_mem_data_valid;
-logic [ICACHE_LINE_BITS-1:0] wb_ctrl_resp_mem_data;
+logic [L1CACHE_LINE_BITS-1:0] wb_ctrl_resp_mem_data;
 logic w_ctrl_resp_mem_load_fault;
 logic w_ctrl_req_ready;
 // Memory Data interface:
 logic w_data_resp_mem_data_valid;
-logic [DCACHE_LINE_BITS-1:0] wb_data_resp_mem_data;
+logic [L1CACHE_LINE_BITS-1:0] wb_data_resp_mem_data;
 logic w_data_resp_mem_load_fault;
 logic w_data_req_ready;
 logic w_pma_icached;
@@ -117,7 +121,9 @@ logic queue_full_o;
 logic queue_nempty_o;
 
 ICacheLru #(
-    .async_reset(async_reset)
+    .async_reset(async_reset),
+    .waybits(ilog2_nways),
+    .ibits(ilog2_lines_per_way)
 ) i1 (
     .i_clk(i_clk),
     .i_nrst(i_nrst),
@@ -149,6 +155,8 @@ ICacheLru #(
 
 DCacheLru #(
     .async_reset(async_reset),
+    .waybits(dlog2_nways),
+    .ibits(dlog2_lines_per_way),
     .coherence_ena(coherence_ena)
 ) d0 (
     .i_clk(i_clk),

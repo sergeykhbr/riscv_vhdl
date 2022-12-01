@@ -17,7 +17,9 @@
 `timescale 1ns/10ps
 
 module L2Top #(
-    parameter bit async_reset = 1'b0
+    parameter bit async_reset = 1'b0,
+    parameter int unsigned waybits = 4,                     // Log2 of number of ways. Default 4: 16 ways
+    parameter int unsigned ibits = 9                        // Log2 of number of lines per way: 9=64KB (if bytes per line = 32 B)
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -88,7 +90,9 @@ L2Destination #(
 
 
 L2CacheLru #(
-    .async_reset(async_reset)
+    .async_reset(async_reset),
+    .waybits(waybits),
+    .ibits(ibits)
 ) cache0 (
     .i_clk(i_clk),
     .i_nrst(i_nrst),

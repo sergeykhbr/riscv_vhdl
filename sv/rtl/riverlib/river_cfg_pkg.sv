@@ -62,54 +62,21 @@ localparam int CFG_DSCRATCH_REG_TOTAL = 2;
 localparam int CFG_LOG2_STACK_TRACE_ADDR = 5;
 localparam int STACK_TRACE_BUF_SIZE = (2**CFG_LOG2_STACK_TRACE_ADDR);
 
-// 
-// ICacheLru config (16 KB by default)
-// 
-localparam int CFG_ILOG2_BYTES_PER_LINE = 5;                // [4:0] 32 Bytes = 4x8 B log2(Bytes per line)
-localparam int CFG_ILOG2_LINES_PER_WAY = 7;                 // 7=16KB; 8=32KB; ..
-localparam int CFG_ILOG2_NWAYS = 2;
-
-// Derivatives I$ constants:
-localparam int ICACHE_BYTES_PER_LINE = (2**CFG_ILOG2_BYTES_PER_LINE);
-localparam int ICACHE_LINES_PER_WAY = (2**CFG_ILOG2_LINES_PER_WAY);
-localparam int ICACHE_WAYS = (2**CFG_ILOG2_NWAYS);
-localparam int ICACHE_LINE_BITS = (8 * ICACHE_BYTES_PER_LINE);
-
-// Information: To define the CACHE SIZE in Bytes use the following:
-localparam int ICACHE_SIZE_BYTES = (ICACHE_WAYS * (ICACHE_LINES_PER_WAY * ICACHE_BYTES_PER_LINE));
-
-localparam int ITAG_FL_TOTAL = 1;
-
 
 // 
-// DCacheLru config (16 KB by default)
+// L1 cache common parameters (suppose I$ and D$ have the same size)
 // 
-localparam int CFG_DLOG2_BYTES_PER_LINE = 5;                // [4:0] 32 Bytes = 4x8 B log2(Bytes per line)
-localparam int CFG_DLOG2_LINES_PER_WAY = 7;                 // 7=16KB; 8=32KB; ..
-localparam int CFG_DLOG2_NWAYS = 2;
-
-// Derivatives D$ constants:
-localparam int DCACHE_BYTES_PER_LINE = (2**CFG_DLOG2_BYTES_PER_LINE);
-localparam int DCACHE_LINES_PER_WAY = (2**CFG_DLOG2_LINES_PER_WAY);
-localparam int DCACHE_WAYS = (2**CFG_DLOG2_NWAYS);
-
-localparam int DCACHE_LINE_BITS = (8 * DCACHE_BYTES_PER_LINE);
-
-// Information: To define the CACHE SIZE in Bytes use the following:
-localparam int DCACHE_SIZE_BYTES = (DCACHE_WAYS * (DCACHE_LINES_PER_WAY * DCACHE_BYTES_PER_LINE));
-
+localparam int CFG_LOG2_L1CACHE_BYTES_PER_LINE = 5;         // [4:0] 32 Bytes = 4x8 B log2(Bytes per line)
+localparam int L1CACHE_BYTES_PER_LINE = (2**CFG_LOG2_L1CACHE_BYTES_PER_LINE);
+localparam int L1CACHE_LINE_BITS = (8 * L1CACHE_BYTES_PER_LINE);
+// D-Cache flags:
 localparam int TAG_FL_VALID = 0;                            // always 0
 localparam int DTAG_FL_DIRTY = 1;
 localparam int DTAG_FL_SHARED = 2;
 localparam int DTAG_FL_RESERVED = 3;
 localparam int DTAG_FL_TOTAL = 4;
-
-
-// 
-// L1 cache common parameters (suppose I$ and D$ have the same size)
-// 
-localparam int L1CACHE_BYTES_PER_LINE = DCACHE_BYTES_PER_LINE;
-localparam int L1CACHE_LINE_BITS = (8 * DCACHE_BYTES_PER_LINE);
+// I-Cache flags:
+localparam int ITAG_FL_TOTAL = 1;
 
 localparam int SNOOP_REQ_TYPE_READDATA = 0;                 // 0=check flags; 1=data transfer
 localparam int SNOOP_REQ_TYPE_READCLEAN = 1;                // 0=do nothing; 1=read and invalidate line
@@ -120,16 +87,8 @@ localparam int SNOOP_REQ_TYPE_BITS = 2;
 // L2 cache config (River 16 KB, 2 ways by default, Wasserfall 64 KB, 4 ways)
 // 
 localparam int CFG_L2_LOG2_BYTES_PER_LINE = 5;              // [4:0] 32 Bytes = 4x8 B log2(Bytes per line)
-localparam int CFG_L2_LOG2_LINES_PER_WAY = 9;               // 7=16KB; 8=32KB; 9=64KB, ..
-localparam int CFG_L2_LOG2_NWAYS = 4;
-
-// Derivatives L2 constants:
 localparam int L2CACHE_BYTES_PER_LINE = (2**CFG_L2_LOG2_BYTES_PER_LINE);
-localparam int L2CACHE_LINES_PER_WAY = (2**CFG_L2_LOG2_LINES_PER_WAY);
-localparam int L2CACHE_WAYS = (2**CFG_L2_LOG2_NWAYS);
-
 localparam int L2CACHE_LINE_BITS = (8 * L2CACHE_BYTES_PER_LINE);
-localparam int L2CACHE_SIZE_BYTES = (L2CACHE_WAYS * (L2CACHE_LINES_PER_WAY * L2CACHE_BYTES_PER_LINE));
 
 localparam int L2TAG_FL_DIRTY = 1;
 localparam int L2TAG_FL_TOTAL = 2;

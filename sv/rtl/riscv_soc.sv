@@ -66,31 +66,14 @@ soc_pnp_vector dev_pnp;
 logic [63:0] wb_clint_mtimer;
 logic [CFG_CPU_MAX-1:0] wb_clint_msip;
 logic [CFG_CPU_MAX-1:0] wb_clint_mtip;
+logic [CFG_PLIC_CONTEXT_TOTAL-1:0] wb_plic_xeip;
 logic [CFG_CPU_MAX-1:0] wb_plic_meip;
 logic [CFG_CPU_MAX-1:0] wb_plic_seip;
 logic w_irq_uart1;
+logic [15:0] wb_irq_gpio;
+logic w_irq_pnp;
+logic [CFG_PLIC_IRQ_TOTAL-1:0] wb_ext_irqs;
 
-  logic [CFG_PLIC_CONTEXT_TOTAL-1:0] wb_plic_ip;
-
-  logic [15:0] wb_irq_gpio;
-  logic w_irq_pnp;
-  logic [CFG_PLIC_IRQ_TOTAL-1:0] irq_pins;
-
-
-  // Nullify emty AXI-slots:
-  assign aximo[CFG_BUS0_XMST_DMA] = axi4_master_out_none;
-  assign acpo = axi4_master_out_none;
-
-  assign o_jtag_vref = 1'b1;
-
-
-  // assign interrupts:
-  assign irq_pins[22:0] = '0;
-  assign irq_pins[38:23] = wb_irq_gpio;  // FU740: 16 bits, current 12-bits
-  assign irq_pins[39] = w_irq_uart1;
-  assign irq_pins[69:40] = '0;
-  assign irq_pins[70] = w_irq_pnp;
-  assign irq_pins[CFG_PLIC_IRQ_TOTAL-1:71] = '0;
 
 
   ////////////////////////////////////
@@ -256,11 +239,6 @@ apb_uart #(
 );
 
 
-// TODO: APB itnerconnect:
-assign apbsi[CFG_BUS1_PSLV_DMI] = apb_in_none;
-assign apbsi[CFG_BUS1_PSLV_UART1] = apbmo[CFG_BUS1_PMST_PARENT];
-assign apbmi[CFG_BUS1_PMST_PARENT] = apbso[CFG_BUS1_PSLV_UART1];
-
   ////////////////////////////////////
   //! @brief Core local interrupt controller (CLINT).
   //! @details Map address:
@@ -326,5 +304,33 @@ assign apbmi[CFG_BUS1_PMST_PARENT] = apbso[CFG_BUS1_PSLV_UART1];
     .o(axiso[CFG_BUS0_XSLV_PNP]),
     .o_irq(w_irq_pnp)
   );
+
+always_comb
+begin: comb_proc
+    logic [CFG_PLIC_IRQ_TOTAL-1:0] vb_ext_irqs;
+
+    vb_ext_irqs = 0;
+
+
+    // assign interrupts:
+    vb_ext_irqs[22: 0] = '0;
+    vb_ext_irqs[38: 23] = wb_irq_gpio;                      // FU740: 16 bits, current 12-bits
+    vb_ext_irqs[39] = w_irq_uart1;
+    vb_ext_irqs[69: 40] = '0;
+    vb_ext_irqs[70] = w_irq_pnp;
+    vb_ext_irqs[(CFG_PLIC_IRQ_TOTAL - 1): 71] = '0;
+    wb_ext_irqs = vb_ext_irqs;
+
+    o_jtag_vref = 1'b1;
+
+    // Nullify emty AXI-slots:
+    aximo[CFG_BUS0_XMST_DMA] = axi4_master_out_none;
+    acpo = axi4_master_out_none;
+    // TODO: APB interconnect
+    apbsi[CFG_BUS1_PSLV_DMI] = apb_in_none;
+    apbsi[CFG_BUS1_PSLV_UART1] = apbmo[CFG_BUS1_PMST_PARENT];
+    apbmi[CFG_BUS1_PMST_PARENT] = apbso[CFG_BUS1_PSLV_UART1];
+
+end: comb_proc
 
 endmodule

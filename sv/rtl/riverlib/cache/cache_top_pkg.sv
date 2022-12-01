@@ -30,8 +30,8 @@ typedef struct {
     logic [REQ_MEM_TYPE_BITS-1:0] req_mem_type;
     logic [2:0] req_mem_size;
     logic [CFG_CPU_ADDR_BITS-1:0] req_mem_addr;
-    logic [DCACHE_BYTES_PER_LINE-1:0] req_mem_strob;
-    logic [DCACHE_LINE_BITS-1:0] req_mem_wdata;
+    logic [L1CACHE_BYTES_PER_LINE-1:0] req_mem_strob;
+    logic [L1CACHE_LINE_BITS-1:0] req_mem_wdata;
     logic [CFG_CPU_ADDR_BITS-1:0] mpu_addr;
     logic [CFG_CPU_ADDR_BITS-1:0] resp_addr;
 } CacheOutputType;

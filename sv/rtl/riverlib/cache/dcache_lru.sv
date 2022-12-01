@@ -18,6 +18,8 @@
 
 module DCacheLru #(
     parameter bit async_reset = 1'b0,
+    parameter int unsigned waybits = 2,                     // Log2 of number of ways. Default 2: 4 ways
+    parameter int unsigned ibits = 7,                       // Log2 of number of lines per way: 7=16KB; 8=32KB; .. (if bytes per line = 32 B)
     parameter bit coherence_ena = 1'b0
 )
 (
@@ -43,10 +45,10 @@ module DCacheLru #(
     output logic [river_cfg_pkg::REQ_MEM_TYPE_BITS-1:0] o_req_mem_type,
     output logic [2:0] o_req_mem_size,
     output logic [river_cfg_pkg::CFG_CPU_ADDR_BITS-1:0] o_req_mem_addr,
-    output logic [river_cfg_pkg::DCACHE_BYTES_PER_LINE-1:0] o_req_mem_strob,
-    output logic [river_cfg_pkg::DCACHE_LINE_BITS-1:0] o_req_mem_data,
+    output logic [river_cfg_pkg::L1CACHE_BYTES_PER_LINE-1:0] o_req_mem_strob,
+    output logic [river_cfg_pkg::L1CACHE_LINE_BITS-1:0] o_req_mem_data,
     input logic i_mem_data_valid,
-    input logic [river_cfg_pkg::DCACHE_LINE_BITS-1:0] i_mem_data,
+    input logic [river_cfg_pkg::L1CACHE_LINE_BITS-1:0] i_mem_data,
     input logic i_mem_load_fault,
     input logic i_mem_store_fault,
     // Mpu interface
@@ -72,16 +74,19 @@ module DCacheLru #(
 import river_cfg_pkg::*;
 import dcache_lru_pkg::*;
 
+localparam int ways = (2**waybits);
+localparam bit [31:0] FLUSH_ALL_VALUE = ((2**(ibits + waybits)) - 1);
+
 logic line_direct_access_i;
 logic line_invalidate_i;
 logic line_re_i;
 logic line_we_i;
 logic [CFG_CPU_ADDR_BITS-1:0] line_addr_i;
-logic [DCACHE_LINE_BITS-1:0] line_wdata_i;
-logic [DCACHE_BYTES_PER_LINE-1:0] line_wstrb_i;
+logic [L1CACHE_LINE_BITS-1:0] line_wdata_i;
+logic [L1CACHE_BYTES_PER_LINE-1:0] line_wstrb_i;
 logic [DTAG_FL_TOTAL-1:0] line_wflags_i;
 logic [CFG_CPU_ADDR_BITS-1:0] line_raddr_o;
-logic [DCACHE_LINE_BITS-1:0] line_rdata_o;
+logic [L1CACHE_LINE_BITS-1:0] line_rdata_o;
 logic [DTAG_FL_TOTAL-1:0] line_rflags_o;
 logic line_hit_o;
 // Snoop signals:
@@ -122,11 +127,11 @@ TagMemNWay #(
 always_comb
 begin: comb_proc
     DCacheLru_registers v;
-    logic [DCACHE_LINE_BITS-1:0] vb_cache_line_i_modified;
-    logic [DCACHE_LINE_BITS-1:0] vb_line_rdata_o_modified;
-    logic [DCACHE_BYTES_PER_LINE-1:0] vb_line_rdata_o_wstrb;
+    logic [L1CACHE_LINE_BITS-1:0] vb_cache_line_i_modified;
+    logic [L1CACHE_LINE_BITS-1:0] vb_line_rdata_o_modified;
+    logic [L1CACHE_BYTES_PER_LINE-1:0] vb_line_rdata_o_wstrb;
     logic v_req_ready;
-    logic [DCACHE_LINE_BITS-1:0] t_cache_line_i;
+    logic [L1CACHE_LINE_BITS-1:0] t_cache_line_i;
     logic [63:0] vb_cached_data;
     logic [63:0] vb_uncached_data;
     logic v_resp_valid;
@@ -139,11 +144,11 @@ begin: comb_proc
     logic v_line_cs_read;
     logic v_line_cs_write;
     logic [CFG_CPU_ADDR_BITS-1:0] vb_line_addr;
-    logic [DCACHE_LINE_BITS-1:0] vb_line_wdata;
-    logic [DCACHE_BYTES_PER_LINE-1:0] vb_line_wstrb;
+    logic [L1CACHE_LINE_BITS-1:0] vb_line_wdata;
+    logic [L1CACHE_BYTES_PER_LINE-1:0] vb_line_wstrb;
     logic [63:0] vb_req_mask;
     logic [DTAG_FL_TOTAL-1:0] v_line_wflags;
-    logic [(CFG_DLOG2_BYTES_PER_LINE - 3)-1:0] ridx;
+    logic [(CFG_LOG2_L1CACHE_BYTES_PER_LINE - 3)-1:0] ridx;
     logic v_req_same_line;
     logic v_ready_next;
     logic v_req_snoop_ready;
@@ -186,12 +191,12 @@ begin: comb_proc
 
     t_req_type = r.req_type;
     v_resp_snoop_valid = r.snoop_flags_valid;
-    ridx = r.req_addr[(CFG_DLOG2_BYTES_PER_LINE - 1): 3];
+    ridx = r.req_addr[(CFG_LOG2_L1CACHE_BYTES_PER_LINE - 1): 3];
 
     vb_cached_data = line_rdata_o[(64 * int'(ridx)) +: 64];
     vb_uncached_data = r.cache_line_i[63: 0];
 
-    if (r.req_addr[(CFG_CPU_ADDR_BITS - 1): CFG_DLOG2_BYTES_PER_LINE] == i_req_addr[(CFG_CPU_ADDR_BITS - 1): CFG_DLOG2_BYTES_PER_LINE]) begin
+    if (r.req_addr[(CFG_CPU_ADDR_BITS - 1): CFG_LOG2_L1CACHE_BYTES_PER_LINE] == i_req_addr[(CFG_CPU_ADDR_BITS - 1): CFG_LOG2_L1CACHE_BYTES_PER_LINE]) begin
         v_req_same_line = 1'b1;
     end
 
@@ -199,7 +204,7 @@ begin: comb_proc
         v.req_flush = 1'b1;
         v.req_flush_all = i_flush_address[0];
         if (i_flush_address[0] == 1'b1) begin
-            v.req_flush_cnt = '1;
+            v.req_flush_cnt = FLUSH_ALL_VALUE;
             v.req_flush_addr = '0;
         end else begin
             v.req_flush_cnt = '0;
@@ -215,7 +220,7 @@ begin: comb_proc
 
     vb_line_rdata_o_modified = line_rdata_o;
     vb_cache_line_i_modified = r.cache_line_i;
-    for (int i = 0; i < (DCACHE_BYTES_PER_LINE / 8); i++) begin
+    for (int i = 0; i < (L1CACHE_BYTES_PER_LINE / 8); i++) begin
         if (i == int'(ridx)) begin
             vb_line_rdata_o_modified[(64 * i) +: 64] = ((vb_line_rdata_o_modified[(64 * i) +: 64]
                             & (~vb_req_mask))
@@ -228,8 +233,8 @@ begin: comb_proc
     end
 
     // Flush counter when direct access
-    if (r.req_addr[(CFG_DLOG2_NWAYS - 1): 0] == (DCACHE_WAYS - 1)) begin
-        vb_addr_direct_next = ((r.req_addr + DCACHE_BYTES_PER_LINE)
+    if (r.req_addr[(waybits - 1): 0] == (ways - 1)) begin
+        vb_addr_direct_next = ((r.req_addr + L1CACHE_BYTES_PER_LINE)
                 & (~LINE_BYTES_MASK));
     end else begin
         vb_addr_direct_next = (r.req_addr + 1);
@@ -328,23 +333,23 @@ begin: comb_proc
                 // Cached:
                 if (r.write_share == 1'b1) begin
                     v.req_mem_type = WriteLineUnique();
-                    v.mem_addr = {line_raddr_o[(CFG_CPU_ADDR_BITS - 1): CFG_DLOG2_BYTES_PER_LINE], {CFG_DLOG2_BYTES_PER_LINE{1'b0}}};
+                    v.mem_addr = {line_raddr_o[(CFG_CPU_ADDR_BITS - 1): CFG_LOG2_L1CACHE_BYTES_PER_LINE], {CFG_LOG2_L1CACHE_BYTES_PER_LINE{1'b0}}};
                 end else if ((line_rflags_o[TAG_FL_VALID] == 1'b1)
                             && (line_rflags_o[DTAG_FL_DIRTY] == 1'b1)) begin
                     v.write_first = 1'b1;
                     v.req_mem_type = WriteBack();
-                    v.mem_addr = {line_raddr_o[(CFG_CPU_ADDR_BITS - 1): CFG_DLOG2_BYTES_PER_LINE], {CFG_DLOG2_BYTES_PER_LINE{1'b0}}};
+                    v.mem_addr = {line_raddr_o[(CFG_CPU_ADDR_BITS - 1): CFG_LOG2_L1CACHE_BYTES_PER_LINE], {CFG_LOG2_L1CACHE_BYTES_PER_LINE{1'b0}}};
                 end else begin
                     // 1. Read -> Save cache
                     // 2. Read -> Modify -> Save cache
-                    v.mem_addr = {r.req_addr[(CFG_CPU_ADDR_BITS - 1): CFG_DLOG2_BYTES_PER_LINE], {CFG_DLOG2_BYTES_PER_LINE{1'b0}}};
+                    v.mem_addr = {r.req_addr[(CFG_CPU_ADDR_BITS - 1): CFG_LOG2_L1CACHE_BYTES_PER_LINE], {CFG_LOG2_L1CACHE_BYTES_PER_LINE{1'b0}}};
                     if (r.req_type[MemopType_Store] == 1'b1) begin
                         v.req_mem_type = ReadMakeUnique();
                     end else begin
                         v.req_mem_type = ReadShared();
                     end
                 end
-                v.req_mem_size = CFG_DLOG2_BYTES_PER_LINE;
+                v.req_mem_size = CFG_LOG2_L1CACHE_BYTES_PER_LINE;
                 v.mem_wstrb = '1;
                 v.cache_line_o = line_rdata_o;
             end else begin
@@ -442,7 +447,7 @@ begin: comb_proc
                 v.state = State_FlushAddr;
             end else if (r.write_first == 1'b1) begin
                 // Obsolete line was offloaded, now read new line
-                v.mem_addr = {r.req_addr[(CFG_CPU_ADDR_BITS - 1): CFG_DLOG2_BYTES_PER_LINE], {CFG_DLOG2_BYTES_PER_LINE{1'b0}}};
+                v.mem_addr = {r.req_addr[(CFG_CPU_ADDR_BITS - 1): CFG_LOG2_L1CACHE_BYTES_PER_LINE], {CFG_LOG2_L1CACHE_BYTES_PER_LINE{1'b0}}};
                 v.req_mem_valid = 1'b1;
                 v.write_first = 1'b0;
                 if (r.req_type[MemopType_Store] == 1'b1) begin
@@ -502,12 +507,16 @@ begin: comb_proc
             if (r.req_flush_all == 1'b1) begin
                 v.req_addr = vb_addr_direct_next;
             end else begin
-                v.req_addr = (r.req_addr + DCACHE_BYTES_PER_LINE);
+                v.req_addr = (r.req_addr + L1CACHE_BYTES_PER_LINE);
             end
         end
     end
     State_Reset: begin
         // Write clean line
+        if (r.req_flush == 1'b1) begin
+            v.req_flush = 1'b0;
+            v.flush_cnt = FLUSH_ALL_VALUE;                  // Init after power-on-reset
+        end
         v_direct_access = 1'b1;
         v_invalidate = 1'b1;                                // generate: wstrb='1; wflags='0
         v.state = State_ResetWrite;
@@ -575,7 +584,7 @@ begin: comb_proc
             v.req_flush = 1'b0;
             v.cache_line_i = '0;
             v.req_addr = (r.req_flush_addr & (~LINE_BYTES_MASK));
-            v.req_mem_size = CFG_DLOG2_BYTES_PER_LINE;
+            v.req_mem_size = CFG_LOG2_L1CACHE_BYTES_PER_LINE;
             v.flush_cnt = r.req_flush_cnt;
         end else begin
             v_req_ready = 1'b1;
