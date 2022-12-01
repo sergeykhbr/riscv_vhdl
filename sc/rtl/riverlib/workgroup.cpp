@@ -22,7 +22,13 @@ namespace debugger {
 Workgroup::Workgroup(sc_module_name name,
                      bool async_reset,
                      uint32_t cpu_num,
-                     uint32_t l2cache_ena)
+                     uint32_t ilog2_nways,
+                     uint32_t ilog2_lines_per_way,
+                     uint32_t dlog2_nways,
+                     uint32_t dlog2_lines_per_way,
+                     uint32_t l2cache_ena,
+                     uint32_t l2log2_nways,
+                     uint32_t l2log2_lines_per_way)
     : sc_module(name),
     i_cores_nrst("i_cores_nrst"),
     i_dmi_nrst("i_dmi_nrst"),
@@ -58,7 +64,13 @@ Workgroup::Workgroup(sc_module_name name,
 
     async_reset_ = async_reset;
     cpu_num_ = cpu_num;
+    ilog2_nways_ = ilog2_nways;
+    ilog2_lines_per_way_ = ilog2_lines_per_way;
+    dlog2_nways_ = dlog2_nways;
+    dlog2_lines_per_way_ = dlog2_lines_per_way;
     l2cache_ena_ = l2cache_ena;
+    l2log2_nways_ = l2log2_nways;
+    l2log2_lines_per_way_ = l2log2_lines_per_way;
     coherence_ena = ((cpu_num * l2cache_ena) > 1 ? 1: 0);
     dmi0 = 0;
     dport_ic0 = 0;
@@ -141,7 +153,7 @@ Workgroup::Workgroup(sc_module_name name,
     for (int i = 0; i < cpu_num_; i++) {
         char tstr[256];
         RISCV_sprintf(tstr, sizeof(tstr), "cpux%d", i);
-        cpux[i] = new RiverAmba(tstr, async_reset, i, CFG_HW_FPU_ENABLE, coherence_ena, CFG_TRACER_ENABLE);
+        cpux[i] = new RiverAmba(tstr, async_reset, i, CFG_HW_FPU_ENABLE, coherence_ena, CFG_TRACER_ENABLE, ilog2_nways, ilog2_lines_per_way, dlog2_nways, dlog2_lines_per_way);
         cpux[i]->i_clk(i_clk);
         cpux[i]->i_nrst(i_cores_nrst);
         cpux[i]->i_mtimer(i_mtimer);
@@ -169,7 +181,7 @@ Workgroup::Workgroup(sc_module_name name,
     // endgenerate
 
     if (l2cache_ena_ == 1) {
-        l2cache = new L2Top("l2cache", async_reset);
+        l2cache = new L2Top("l2cache", async_reset, l2log2_nways, l2log2_lines_per_way);
         l2cache->i_clk(i_clk);
         l2cache->i_nrst(i_cores_nrst);
         l2cache->i_l1o(coreo);

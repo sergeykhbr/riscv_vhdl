@@ -95,7 +95,11 @@ SC_MODULE(CacheTop) {
 
     CacheTop(sc_module_name name,
              bool async_reset,
-             bool coherence_ena);
+             bool coherence_ena,
+             uint32_t ilog2_nways,
+             uint32_t ilog2_lines_per_way,
+             uint32_t dlog2_nways,
+             uint32_t dlog2_lines_per_way);
     virtual ~CacheTop();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
@@ -103,6 +107,10 @@ SC_MODULE(CacheTop) {
  private:
     bool async_reset_;
     bool coherence_ena_;
+    uint32_t ilog2_nways_;
+    uint32_t ilog2_lines_per_way_;
+    uint32_t dlog2_nways_;
+    uint32_t dlog2_lines_per_way_;
 
     static const int DATA_PATH = 0;
     static const int CTRL_PATH = 1;
@@ -117,8 +125,8 @@ SC_MODULE(CacheTop) {
         sc_signal<sc_uint<REQ_MEM_TYPE_BITS>> req_mem_type;
         sc_signal<sc_uint<3>> req_mem_size;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_mem_addr;
-        sc_signal<sc_uint<DCACHE_BYTES_PER_LINE>> req_mem_strob;
-        sc_signal<sc_biguint<DCACHE_LINE_BITS>> req_mem_wdata;
+        sc_signal<sc_uint<L1CACHE_BYTES_PER_LINE>> req_mem_strob;
+        sc_signal<sc_biguint<L1CACHE_LINE_BITS>> req_mem_wdata;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> mpu_addr;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> resp_addr;
     };
@@ -132,12 +140,12 @@ SC_MODULE(CacheTop) {
     CacheOutputType d;
     // Memory Control interface:
     sc_signal<bool> w_ctrl_resp_mem_data_valid;
-    sc_signal<sc_biguint<ICACHE_LINE_BITS>> wb_ctrl_resp_mem_data;
+    sc_signal<sc_biguint<L1CACHE_LINE_BITS>> wb_ctrl_resp_mem_data;
     sc_signal<bool> w_ctrl_resp_mem_load_fault;
     sc_signal<bool> w_ctrl_req_ready;
     // Memory Data interface:
     sc_signal<bool> w_data_resp_mem_data_valid;
-    sc_signal<sc_biguint<DCACHE_LINE_BITS>> wb_data_resp_mem_data;
+    sc_signal<sc_biguint<L1CACHE_LINE_BITS>> wb_data_resp_mem_data;
     sc_signal<bool> w_data_resp_mem_load_fault;
     sc_signal<bool> w_data_req_ready;
     sc_signal<bool> w_pma_icached;

@@ -61,7 +61,7 @@ riscv_soc::riscv_soc(sc_module_name name)
     apbrdg0->o_apbmo(apbmo[CFG_BUS1_PMST_PARENT]);
 
 
-    group0 = new Workgroup("group0", async_reset, CFG_CPU_NUM, CFG_L2CACHE_ENA);
+    group0 = new Workgroup("group0", async_reset, CFG_CPU_NUM, CFG_ILOG2_NWAYS, CFG_ILOG2_LINES_PER_WAY, CFG_DLOG2_NWAYS, CFG_DLOG2_LINES_PER_WAY, CFG_L2CACHE_ENA, CFG_L2_LOG2_NWAYS, CFG_L2_LOG2_LINES_PER_WAY);
     group0->i_cores_nrst(w_sys_nrst);
     group0->i_dmi_nrst(w_dbg_nrst);
     group0->i_clk(i_clk);
@@ -149,9 +149,13 @@ riscv_soc::riscv_soc(sc_module_name name)
     sensitive << wb_clint_mtimer;
     sensitive << wb_clint_msip;
     sensitive << wb_clint_mtip;
+    sensitive << wb_plic_xeip;
     sensitive << wb_plic_meip;
     sensitive << wb_plic_seip;
     sensitive << w_irq_uart1;
+    sensitive << wb_irq_gpio;
+    sensitive << w_irq_pnp;
+    sensitive << wb_ext_irqs;
 }
 
 riscv_soc::~riscv_soc() {
@@ -195,18 +199,25 @@ void riscv_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void riscv_soc::comb() {
-    bool v_flush_l2;
-    sc_uint<CFG_CPU_MAX> vb_halted;
-    sc_uint<CFG_CPU_MAX> vb_available;
-    sc_uint<IRQ_TOTAL> vb_irq[CFG_CPU_MAX];
+    sc_biguint<CFG_PLIC_IRQ_TOTAL> vb_ext_irqs;
 
-    v_flush_l2 = 0;
-    vb_halted = 0;
-    vb_available = 0;
-    for (int i = 0; i < CFG_CPU_MAX; i++) {
-        vb_irq[i] = 0;
-    }
+    vb_ext_irqs = 0;
 
+
+    // assign interrupts:
+    vb_ext_irqs(22, 0) = 0;
+    vb_ext_irqs(38, 23) = wb_irq_gpio;                      // FU740: 16 bits, current 12-bits
+    vb_ext_irqs[39] = w_irq_uart1.read();
+    vb_ext_irqs(69, 40) = 0;
+    vb_ext_irqs[70] = w_irq_pnp.read();
+    vb_ext_irqs((CFG_PLIC_IRQ_TOTAL - 1), 71) = 0;
+    wb_ext_irqs = vb_ext_irqs;
+
+    o_jtag_vref = 1;
+
+    // Nullify emty AXI-slots:
+    aximo[CFG_BUS0_XMST_DMA] = axi4_master_out_none;
+    acpo = axi4_master_out_none;
     // TODO: APB interconnect
     apbsi[CFG_BUS1_PSLV_DMI] = apb_in_none;
     apbsi[CFG_BUS1_PSLV_UART1] = apbmo[CFG_BUS1_PMST_PARENT];

@@ -83,7 +83,7 @@ void ic_axi4_to_l1::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 void ic_axi4_to_l1::comb() {
     axi4_master_in_type vb_xmsti;
     axi4_l1_out_type vb_l1o;
-    sc_uint<(CFG_DLOG2_BYTES_PER_LINE - 3)> idx;            // request always 64 bits
+    sc_uint<(CFG_LOG2_L1CACHE_BYTES_PER_LINE - 3)> idx;     // request always 64 bits
     sc_uint<XSIZE_TOTAL> vb_req_xbytes;
     sc_uint<64> vb_req_mask;
     sc_biguint<L1CACHE_LINE_BITS> vb_r_data_modified;
@@ -107,7 +107,7 @@ void ic_axi4_to_l1::comb() {
     vb_l1o = axi4_l1_out_none;
     t_req_addr = r.req_addr;
 
-    idx = r.req_addr.read()((CFG_DLOG2_BYTES_PER_LINE - 1), 3);
+    idx = r.req_addr.read()((CFG_LOG2_L1CACHE_BYTES_PER_LINE - 1), 3);
     vb_req_xbytes = XSizeToBytes(r.req_size);
 
     vb_req_mask = 0;
@@ -164,9 +164,9 @@ void ic_axi4_to_l1::comb() {
         break;
     case ReadLineRequest:
         vb_l1o.ar_valid = 1;
-        vb_l1o.ar_bits.addr = (r.req_addr.read()((CFG_SYSBUS_ADDR_BITS - 1), CFG_DLOG2_BYTES_PER_LINE) << CFG_DLOG2_BYTES_PER_LINE);
+        vb_l1o.ar_bits.addr = (r.req_addr.read()((CFG_SYSBUS_ADDR_BITS - 1), CFG_LOG2_L1CACHE_BYTES_PER_LINE) << CFG_LOG2_L1CACHE_BYTES_PER_LINE);
         vb_l1o.ar_bits.cache = ARCACHE_WRBACK_READ_ALLOCATE;
-        vb_l1o.ar_bits.size = CFG_DLOG2_BYTES_PER_LINE;
+        vb_l1o.ar_bits.size = CFG_LOG2_L1CACHE_BYTES_PER_LINE;
         vb_l1o.ar_bits.len = 0;
         vb_l1o.ar_bits.prot = r.req_prot;
         vb_l1o.ar_snoop = ARSNOOP_READ_MAKE_UNIQUE;
@@ -192,9 +192,9 @@ void ic_axi4_to_l1::comb() {
         break;
     case WriteLineRequest:
         vb_l1o.aw_valid = 1;
-        vb_l1o.aw_bits.addr = (r.req_addr.read()((CFG_SYSBUS_ADDR_BITS - 1), CFG_DLOG2_BYTES_PER_LINE) << CFG_DLOG2_BYTES_PER_LINE);
+        vb_l1o.aw_bits.addr = (r.req_addr.read()((CFG_SYSBUS_ADDR_BITS - 1), CFG_LOG2_L1CACHE_BYTES_PER_LINE) << CFG_LOG2_L1CACHE_BYTES_PER_LINE);
         vb_l1o.aw_bits.cache = AWCACHE_DEVICE_NON_BUFFERABLE;
-        vb_l1o.aw_bits.size = CFG_DLOG2_BYTES_PER_LINE;
+        vb_l1o.aw_bits.size = CFG_LOG2_L1CACHE_BYTES_PER_LINE;
         vb_l1o.aw_bits.len = 0;
         vb_l1o.aw_bits.prot = r.req_prot;
         vb_l1o.aw_snoop = AWSNOOP_WRITE_NO_SNOOP;           // offloading non-cached always

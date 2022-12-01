@@ -96,9 +96,13 @@ SC_MODULE(riscv_soc) {
     sc_signal<sc_uint<64>> wb_clint_mtimer;
     sc_signal<sc_uint<CFG_CPU_MAX>> wb_clint_msip;
     sc_signal<sc_uint<CFG_CPU_MAX>> wb_clint_mtip;
+    sc_signal<sc_uint<CFG_PLIC_CONTEXT_TOTAL>> wb_plic_xeip;
     sc_signal<sc_uint<CFG_CPU_MAX>> wb_plic_meip;
     sc_signal<sc_uint<CFG_CPU_MAX>> wb_plic_seip;
     sc_signal<bool> w_irq_uart1;
+    sc_signal<sc_uint<16>> wb_irq_gpio;
+    sc_signal<bool> w_irq_pnp;
+    sc_signal<sc_biguint<CFG_PLIC_IRQ_TOTAL>> wb_ext_irqs;
 
     axi2apb *apbrdg0;
     apb_uart<CFG_SOC_UART1_LOG2_FIFOSZ> *uart1;

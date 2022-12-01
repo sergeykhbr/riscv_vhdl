@@ -45,10 +45,10 @@ SC_MODULE(DCacheLru) {
     sc_out<sc_uint<REQ_MEM_TYPE_BITS>> o_req_mem_type;
     sc_out<sc_uint<3>> o_req_mem_size;
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_req_mem_addr;
-    sc_out<sc_uint<DCACHE_BYTES_PER_LINE>> o_req_mem_strob;
-    sc_out<sc_biguint<DCACHE_LINE_BITS>> o_req_mem_data;
+    sc_out<sc_uint<L1CACHE_BYTES_PER_LINE>> o_req_mem_strob;
+    sc_out<sc_biguint<L1CACHE_LINE_BITS>> o_req_mem_data;
     sc_in<bool> i_mem_data_valid;
-    sc_in<sc_biguint<DCACHE_LINE_BITS>> i_mem_data;
+    sc_in<sc_biguint<L1CACHE_LINE_BITS>> i_mem_data;
     sc_in<bool> i_mem_load_fault;
     sc_in<bool> i_mem_store_fault;
     // Mpu interface
@@ -77,6 +77,8 @@ SC_MODULE(DCacheLru) {
 
     DCacheLru(sc_module_name name,
               bool async_reset,
+              uint32_t waybits,
+              uint32_t ibits,
               bool coherence_ena);
     virtual ~DCacheLru();
 
@@ -84,13 +86,16 @@ SC_MODULE(DCacheLru) {
 
  private:
     bool async_reset_;
+    uint32_t waybits_;
+    uint32_t ibits_;
     bool coherence_ena_;
+    int ways;
+    uint32_t FLUSH_ALL_VALUE;
 
     static const int abus = CFG_CPU_ADDR_BITS;
-    static const int waybits = CFG_DLOG2_NWAYS;
-    static const int ibits = CFG_DLOG2_LINES_PER_WAY;
-    static const int lnbits = CFG_DLOG2_BYTES_PER_LINE;
+    static const int lnbits = CFG_LOG2_L1CACHE_BYTES_PER_LINE;
     static const int flbits = DTAG_FL_TOTAL;
+    // State machine states:
     static const uint8_t State_Idle = 0;
     static const uint8_t State_CheckHit = 1;
     static const uint8_t State_TranslateAddress = 2;
@@ -105,7 +110,8 @@ SC_MODULE(DCacheLru) {
     static const uint8_t State_ResetWrite = 11;
     static const uint8_t State_SnoopSetupAddr = 12;
     static const uint8_t State_SnoopReadData = 13;
-    static const uint64_t LINE_BYTES_MASK = ((1 << CFG_DLOG2_BYTES_PER_LINE) - 1);
+    
+    static const uint64_t LINE_BYTES_MASK = ((1 << CFG_LOG2_L1CACHE_BYTES_PER_LINE) - 1);
 
     struct DCacheLru_registers {
         sc_signal<sc_uint<MemopType_Total>> req_type;
@@ -122,14 +128,14 @@ SC_MODULE(DCacheLru) {
         sc_signal<bool> write_first;
         sc_signal<bool> write_flush;
         sc_signal<bool> write_share;
-        sc_signal<sc_uint<DCACHE_BYTES_PER_LINE>> mem_wstrb;
+        sc_signal<sc_uint<L1CACHE_BYTES_PER_LINE>> mem_wstrb;
         sc_signal<bool> req_flush;                          // init flush request
         sc_signal<bool> req_flush_all;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_flush_addr;// [0]=1 flush all
-        sc_signal<sc_uint<(CFG_DLOG2_LINES_PER_WAY + CFG_DLOG2_NWAYS)>> req_flush_cnt;
-        sc_signal<sc_uint<(CFG_DLOG2_LINES_PER_WAY + CFG_DLOG2_NWAYS)>> flush_cnt;
-        sc_signal<sc_biguint<DCACHE_LINE_BITS>> cache_line_i;
-        sc_signal<sc_biguint<DCACHE_LINE_BITS>> cache_line_o;
+        sc_signal<sc_uint<32>> req_flush_cnt;
+        sc_signal<sc_uint<32>> flush_cnt;
+        sc_signal<sc_biguint<L1CACHE_LINE_BITS>> cache_line_i;
+        sc_signal<sc_biguint<L1CACHE_LINE_BITS>> cache_line_o;
         sc_signal<sc_uint<SNOOP_REQ_TYPE_BITS>> req_snoop_type;
         sc_signal<bool> snoop_flags_valid;
         sc_signal<bool> snoop_restore_wait_resp;
@@ -153,11 +159,11 @@ SC_MODULE(DCacheLru) {
         iv.write_flush = 0;
         iv.write_share = 0;
         iv.mem_wstrb = 0;
-        iv.req_flush = 0;
+        iv.req_flush = 1;
         iv.req_flush_all = 0;
         iv.req_flush_addr = 0ull;
         iv.req_flush_cnt = 0;
-        iv.flush_cnt = ~0ul;
+        iv.flush_cnt = 0;
         iv.cache_line_i = 0ull;
         iv.cache_line_o = 0ull;
         iv.req_snoop_type = 0;
@@ -172,11 +178,11 @@ SC_MODULE(DCacheLru) {
     sc_signal<bool> line_re_i;
     sc_signal<bool> line_we_i;
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> line_addr_i;
-    sc_signal<sc_biguint<DCACHE_LINE_BITS>> line_wdata_i;
-    sc_signal<sc_uint<DCACHE_BYTES_PER_LINE>> line_wstrb_i;
+    sc_signal<sc_biguint<L1CACHE_LINE_BITS>> line_wdata_i;
+    sc_signal<sc_uint<L1CACHE_BYTES_PER_LINE>> line_wstrb_i;
     sc_signal<sc_uint<DTAG_FL_TOTAL>> line_wflags_i;
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> line_raddr_o;
-    sc_signal<sc_biguint<DCACHE_LINE_BITS>> line_rdata_o;
+    sc_signal<sc_biguint<L1CACHE_LINE_BITS>> line_rdata_o;
     sc_signal<sc_uint<DTAG_FL_TOTAL>> line_rflags_o;
     sc_signal<bool> line_hit_o;
     // Snoop signals:
@@ -184,7 +190,7 @@ SC_MODULE(DCacheLru) {
     sc_signal<bool> line_snoop_ready_o;
     sc_signal<sc_uint<DTAG_FL_TOTAL>> line_snoop_flags_o;
 
-    TagMemNWay<abus, waybits, ibits, lnbits, flbits, 1> *mem0;
+    TagMemNWay<abus, 2, 7, lnbits, flbits, 1> *mem0;
 
 };
 

@@ -40,10 +40,10 @@ SC_MODULE(ICacheLru) {
     sc_out<sc_uint<REQ_MEM_TYPE_BITS>> o_req_mem_type;
     sc_out<sc_uint<3>> o_req_mem_size;
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_req_mem_addr;
-    sc_out<sc_uint<ICACHE_BYTES_PER_LINE>> o_req_mem_strob; // unused
-    sc_out<sc_biguint<ICACHE_LINE_BITS>> o_req_mem_data;
+    sc_out<sc_uint<L1CACHE_BYTES_PER_LINE>> o_req_mem_strob;// unused
+    sc_out<sc_biguint<L1CACHE_LINE_BITS>> o_req_mem_data;
     sc_in<bool> i_mem_data_valid;
-    sc_in<sc_biguint<ICACHE_LINE_BITS>> i_mem_data;
+    sc_in<sc_biguint<L1CACHE_LINE_BITS>> i_mem_data;
     sc_in<bool> i_mem_load_fault;
     // Mpu interface
     sc_out<sc_uint<CFG_CPU_ADDR_BITS>> o_mpu_addr;
@@ -59,19 +59,24 @@ SC_MODULE(ICacheLru) {
     SC_HAS_PROCESS(ICacheLru);
 
     ICacheLru(sc_module_name name,
-              bool async_reset);
+              bool async_reset,
+              uint32_t waybits,
+              uint32_t ibits);
     virtual ~ICacheLru();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
     bool async_reset_;
+    uint32_t waybits_;
+    uint32_t ibits_;
+    int ways;
+    uint32_t FLUSH_ALL_VALUE;
 
     static const int abus = CFG_CPU_ADDR_BITS;
-    static const int waybits = CFG_ILOG2_NWAYS;
-    static const int ibits = CFG_ILOG2_LINES_PER_WAY;
-    static const int lnbits = CFG_ILOG2_BYTES_PER_LINE;
+    static const int lnbits = CFG_LOG2_L1CACHE_BYTES_PER_LINE;
     static const int flbits = ITAG_FL_TOTAL;
+    // State machine states:
     static const uint8_t State_Idle = 0;
     static const uint8_t State_CheckHit = 1;
     static const uint8_t State_TranslateAddress = 2;
@@ -83,7 +88,8 @@ SC_MODULE(ICacheLru) {
     static const uint8_t State_FlushCheck = 9;
     static const uint8_t State_Reset = 10;
     static const uint8_t State_ResetWrite = 11;
-    static const uint64_t LINE_BYTES_MASK = ((1 << CFG_ILOG2_BYTES_PER_LINE) - 1);
+    
+    static const uint64_t LINE_BYTES_MASK = ((1 << CFG_LOG2_L1CACHE_BYTES_PER_LINE) - 1);
 
     struct ICacheLru_registers {
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_addr;
@@ -98,9 +104,9 @@ SC_MODULE(ICacheLru) {
         sc_signal<bool> req_flush;                          // init flush request
         sc_signal<bool> req_flush_all;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_flush_addr;// [0]=1 flush all
-        sc_signal<sc_uint<(CFG_ILOG2_LINES_PER_WAY + CFG_ILOG2_NWAYS)>> req_flush_cnt;
-        sc_signal<sc_uint<(CFG_ILOG2_LINES_PER_WAY + CFG_ILOG2_NWAYS)>> flush_cnt;
-        sc_signal<sc_biguint<ICACHE_LINE_BITS>> cache_line_i;
+        sc_signal<sc_uint<32>> req_flush_cnt;
+        sc_signal<sc_uint<32>> flush_cnt;
+        sc_signal<sc_biguint<L1CACHE_LINE_BITS>> cache_line_i;
     } v, r;
 
     void ICacheLru_r_reset(ICacheLru_registers &iv) {
@@ -113,11 +119,11 @@ SC_MODULE(ICacheLru) {
         iv.req_mem_type = 0;
         iv.req_mem_size = 0;
         iv.load_fault = 0;
-        iv.req_flush = 0;
+        iv.req_flush = 1;
         iv.req_flush_all = 0;
         iv.req_flush_addr = 0ull;
         iv.req_flush_cnt = 0;
-        iv.flush_cnt = ~0ul;
+        iv.flush_cnt = 0;
         iv.cache_line_i = 0ull;
     }
 
@@ -126,16 +132,16 @@ SC_MODULE(ICacheLru) {
     sc_signal<bool> line_re_i;
     sc_signal<bool> line_we_i;
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> line_addr_i;
-    sc_signal<sc_biguint<ICACHE_LINE_BITS>> line_wdata_i;
-    sc_signal<sc_uint<(1 << CFG_ILOG2_BYTES_PER_LINE)>> line_wstrb_i;
+    sc_signal<sc_biguint<L1CACHE_LINE_BITS>> line_wdata_i;
+    sc_signal<sc_uint<(1 << CFG_LOG2_L1CACHE_BYTES_PER_LINE)>> line_wstrb_i;
     sc_signal<sc_uint<ITAG_FL_TOTAL>> line_wflags_i;
     sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> line_raddr_o;
-    sc_signal<sc_biguint<(ICACHE_LINE_BITS + 32)>> line_rdata_o;
+    sc_signal<sc_biguint<(L1CACHE_LINE_BITS + 32)>> line_rdata_o;
     sc_signal<sc_uint<ITAG_FL_TOTAL>> line_rflags_o;
     sc_signal<bool> line_hit_o;
     sc_signal<bool> line_hit_next_o;
 
-    TagMemCoupled<abus, waybits, ibits, lnbits, flbits> *mem0;
+    TagMemCoupled<abus, 2, 7, lnbits, flbits> *mem0;
 
 };
 

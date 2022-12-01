@@ -171,7 +171,10 @@ void CpuRiscV_RTL::createSystemC() {
     group0_ = new Workgroup("group0",
                             asyncReset_.to_bool(),
                             cpuNum_.to_uint32(),
-                            l2CacheEnable_.to_uint32());
+                            2, 7,
+                            2, 7,
+                            l2CacheEnable_.to_uint32(),
+                            4, 9);
     group0_->i_cores_nrst(w_sys_nrst);
     group0_->i_dmi_nrst(w_dmi_nrst);
     group0_->i_clk(wrapper_->o_clk);

@@ -61,19 +61,24 @@ SC_MODULE(L2CacheLru) {
     SC_HAS_PROCESS(L2CacheLru);
 
     L2CacheLru(sc_module_name name,
-               bool async_reset);
+               bool async_reset,
+               uint32_t waybits,
+               uint32_t ibits);
     virtual ~L2CacheLru();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
     bool async_reset_;
+    uint32_t waybits_;
+    uint32_t ibits_;
+    int ways;
+    uint32_t FLUSH_ALL_VALUE;
 
     static const int abus = CFG_CPU_ADDR_BITS;
-    static const int waybits = CFG_L2_LOG2_NWAYS;
-    static const int ibits = CFG_L2_LOG2_LINES_PER_WAY;
     static const int lnbits = CFG_L2_LOG2_BYTES_PER_LINE;
     static const int flbits = L2TAG_FL_TOTAL;
+    // State machine states:
     static const uint8_t State_Idle = 0;
     static const uint8_t State_CheckHit = 1;
     static const uint8_t State_TranslateAddress = 2;
@@ -86,6 +91,7 @@ SC_MODULE(L2CacheLru) {
     static const uint8_t State_FlushCheck = 9;
     static const uint8_t State_Reset = 10;
     static const uint8_t State_ResetWrite = 11;
+    
     static const uint64_t LINE_BYTES_MASK = ((1 << CFG_L2_LOG2_BYTES_PER_LINE) - 1);
 
     struct L2CacheLru_registers {
@@ -106,8 +112,8 @@ SC_MODULE(L2CacheLru) {
         sc_signal<bool> req_flush;                          // init flush request
         sc_signal<bool> req_flush_all;
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_flush_addr;// [0]=1 flush all
-        sc_signal<sc_uint<(CFG_L2_LOG2_LINES_PER_WAY + CFG_L2_LOG2_NWAYS)>> req_flush_cnt;
-        sc_signal<sc_uint<(CFG_L2_LOG2_LINES_PER_WAY + CFG_L2_LOG2_NWAYS)>> flush_cnt;
+        sc_signal<sc_uint<32>> req_flush_cnt;
+        sc_signal<sc_uint<32>> flush_cnt;
         sc_signal<sc_biguint<L2CACHE_LINE_BITS>> cache_line_i;
         sc_signal<sc_biguint<L2CACHE_LINE_BITS>> cache_line_o;
     } v, r;
@@ -127,11 +133,11 @@ SC_MODULE(L2CacheLru) {
         iv.write_first = 0;
         iv.write_flush = 0;
         iv.mem_wstrb = 0;
-        iv.req_flush = 0;
+        iv.req_flush = 1;
         iv.req_flush_all = 0;
         iv.req_flush_addr = 0ull;
         iv.req_flush_cnt = 0;
-        iv.flush_cnt = ~0ul;
+        iv.flush_cnt = 0;
         iv.cache_line_i = 0ull;
         iv.cache_line_o = 0ull;
     }
@@ -153,7 +159,7 @@ SC_MODULE(L2CacheLru) {
     sc_signal<bool> line_snoop_ready_o;
     sc_signal<sc_uint<L2TAG_FL_TOTAL>> line_snoop_flags_o;
 
-    TagMemNWay<abus, waybits, ibits, lnbits, flbits, 0> *mem0;
+    TagMemNWay<abus, 4, 9, lnbits, flbits, 0> *mem0;
 
 };
 

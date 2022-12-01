@@ -37,13 +37,17 @@ SC_MODULE(L2Top) {
 
 
     L2Top(sc_module_name name,
-          bool async_reset);
+          bool async_reset,
+          uint32_t waybits,
+          uint32_t ibits);
     virtual ~L2Top();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
     bool async_reset_;
+    uint32_t waybits_;
+    uint32_t ibits_;
 
     sc_signal<bool> w_req_ready;
     sc_signal<bool> w_req_valid;

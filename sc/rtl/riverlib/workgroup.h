@@ -66,7 +66,13 @@ SC_MODULE(Workgroup) {
     Workgroup(sc_module_name name,
               bool async_reset,
               uint32_t cpu_num,
-              uint32_t l2cache_ena);
+              uint32_t ilog2_nways,
+              uint32_t ilog2_lines_per_way,
+              uint32_t dlog2_nways,
+              uint32_t dlog2_lines_per_way,
+              uint32_t l2cache_ena,
+              uint32_t l2log2_nways,
+              uint32_t l2log2_lines_per_way);
     virtual ~Workgroup();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
@@ -74,7 +80,13 @@ SC_MODULE(Workgroup) {
  private:
     bool async_reset_;
     uint32_t cpu_num_;
+    uint32_t ilog2_nways_;
+    uint32_t ilog2_lines_per_way_;
+    uint32_t dlog2_nways_;
+    uint32_t dlog2_lines_per_way_;
     uint32_t l2cache_ena_;
+    uint32_t l2log2_nways_;
+    uint32_t l2log2_lines_per_way_;
     bool coherence_ena;
 
     static const uint32_t ACP_SLOT_IDX = CFG_CPU_MAX;

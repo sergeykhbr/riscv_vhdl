@@ -65,54 +65,21 @@ static const int CFG_DSCRATCH_REG_TOTAL = 2;
 static const int CFG_LOG2_STACK_TRACE_ADDR = 5;
 static const int STACK_TRACE_BUF_SIZE = (1 << CFG_LOG2_STACK_TRACE_ADDR);
 
-// 
-// ICacheLru config (16 KB by default)
-// 
-static const int CFG_ILOG2_BYTES_PER_LINE = 5;              // [4:0] 32 Bytes = 4x8 B log2(Bytes per line)
-static const int CFG_ILOG2_LINES_PER_WAY = 7;               // 7=16KB; 8=32KB; ..
-static const int CFG_ILOG2_NWAYS = 2;
-
-// Derivatives I$ constants:
-static const int ICACHE_BYTES_PER_LINE = (1 << CFG_ILOG2_BYTES_PER_LINE);
-static const int ICACHE_LINES_PER_WAY = (1 << CFG_ILOG2_LINES_PER_WAY);
-static const int ICACHE_WAYS = (1 << CFG_ILOG2_NWAYS);
-static const int ICACHE_LINE_BITS = (8 * ICACHE_BYTES_PER_LINE);
-
-// Information: To define the CACHE SIZE in Bytes use the following:
-static const int ICACHE_SIZE_BYTES = (ICACHE_WAYS * (ICACHE_LINES_PER_WAY * ICACHE_BYTES_PER_LINE));
-
-static const int ITAG_FL_TOTAL = 1;
-
 
 // 
-// DCacheLru config (16 KB by default)
+// L1 cache common parameters (suppose I$ and D$ have the same size)
 // 
-static const int CFG_DLOG2_BYTES_PER_LINE = 5;              // [4:0] 32 Bytes = 4x8 B log2(Bytes per line)
-static const int CFG_DLOG2_LINES_PER_WAY = 7;               // 7=16KB; 8=32KB; ..
-static const int CFG_DLOG2_NWAYS = 2;
-
-// Derivatives D$ constants:
-static const int DCACHE_BYTES_PER_LINE = (1 << CFG_DLOG2_BYTES_PER_LINE);
-static const int DCACHE_LINES_PER_WAY = (1 << CFG_DLOG2_LINES_PER_WAY);
-static const int DCACHE_WAYS = (1 << CFG_DLOG2_NWAYS);
-
-static const int DCACHE_LINE_BITS = (8 * DCACHE_BYTES_PER_LINE);
-
-// Information: To define the CACHE SIZE in Bytes use the following:
-static const int DCACHE_SIZE_BYTES = (DCACHE_WAYS * (DCACHE_LINES_PER_WAY * DCACHE_BYTES_PER_LINE));
-
+static const int CFG_LOG2_L1CACHE_BYTES_PER_LINE = 5;       // [4:0] 32 Bytes = 4x8 B log2(Bytes per line)
+static const int L1CACHE_BYTES_PER_LINE = (1 << CFG_LOG2_L1CACHE_BYTES_PER_LINE);
+static const int L1CACHE_LINE_BITS = (8 * L1CACHE_BYTES_PER_LINE);
+// D-Cache flags:
 static const int TAG_FL_VALID = 0;                          // always 0
 static const int DTAG_FL_DIRTY = 1;
 static const int DTAG_FL_SHARED = 2;
 static const int DTAG_FL_RESERVED = 3;
 static const int DTAG_FL_TOTAL = 4;
-
-
-// 
-// L1 cache common parameters (suppose I$ and D$ have the same size)
-// 
-static const int L1CACHE_BYTES_PER_LINE = DCACHE_BYTES_PER_LINE;
-static const int L1CACHE_LINE_BITS = (8 * DCACHE_BYTES_PER_LINE);
+// I-Cache flags:
+static const int ITAG_FL_TOTAL = 1;
 
 static const int SNOOP_REQ_TYPE_READDATA = 0;               // 0=check flags; 1=data transfer
 static const int SNOOP_REQ_TYPE_READCLEAN = 1;              // 0=do nothing; 1=read and invalidate line
@@ -123,16 +90,8 @@ static const int SNOOP_REQ_TYPE_BITS = 2;
 // L2 cache config (River 16 KB, 2 ways by default, Wasserfall 64 KB, 4 ways)
 // 
 static const int CFG_L2_LOG2_BYTES_PER_LINE = 5;            // [4:0] 32 Bytes = 4x8 B log2(Bytes per line)
-static const int CFG_L2_LOG2_LINES_PER_WAY = 9;             // 7=16KB; 8=32KB; 9=64KB, ..
-static const int CFG_L2_LOG2_NWAYS = 4;
-
-// Derivatives L2 constants:
 static const int L2CACHE_BYTES_PER_LINE = (1 << CFG_L2_LOG2_BYTES_PER_LINE);
-static const int L2CACHE_LINES_PER_WAY = (1 << CFG_L2_LOG2_LINES_PER_WAY);
-static const int L2CACHE_WAYS = (1 << CFG_L2_LOG2_NWAYS);
-
 static const int L2CACHE_LINE_BITS = (8 * L2CACHE_BYTES_PER_LINE);
-static const int L2CACHE_SIZE_BYTES = (L2CACHE_WAYS * (L2CACHE_LINES_PER_WAY * L2CACHE_BYTES_PER_LINE));
 
 static const int L2TAG_FL_DIRTY = 1;
 static const int L2TAG_FL_TOTAL = 2;

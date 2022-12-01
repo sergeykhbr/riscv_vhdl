@@ -24,7 +24,11 @@ RiverTop::RiverTop(sc_module_name name,
                    uint32_t hartid,
                    bool fpu_ena,
                    bool coherence_ena,
-                   bool tracer_ena)
+                   bool tracer_ena,
+                   uint32_t ilog2_nways,
+                   uint32_t ilog2_lines_per_way,
+                   uint32_t dlog2_nways,
+                   uint32_t dlog2_lines_per_way)
     : sc_module(name),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
@@ -72,6 +76,10 @@ RiverTop::RiverTop(sc_module_name name,
     fpu_ena_ = fpu_ena;
     coherence_ena_ = coherence_ena;
     tracer_ena_ = tracer_ena;
+    ilog2_nways_ = ilog2_nways;
+    ilog2_lines_per_way_ = ilog2_lines_per_way;
+    dlog2_nways_ = dlog2_nways;
+    dlog2_lines_per_way_ = dlog2_lines_per_way;
     proc0 = 0;
     cache0 = 0;
 
@@ -128,7 +136,7 @@ RiverTop::RiverTop(sc_module_name name,
     proc0->i_flushd_end(w_flushd_end);
 
 
-    cache0 = new CacheTop("cache0", async_reset, coherence_ena);
+    cache0 = new CacheTop("cache0", async_reset, coherence_ena, ilog2_nways, ilog2_lines_per_way, dlog2_nways, dlog2_lines_per_way);
     cache0->i_clk(i_clk);
     cache0->i_nrst(i_nrst);
     cache0->i_req_ctrl_valid(w_req_ctrl_valid);

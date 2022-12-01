@@ -20,7 +20,9 @@
 namespace debugger {
 
 L2CacheLru::L2CacheLru(sc_module_name name,
-                       bool async_reset)
+                       bool async_reset,
+                       uint32_t waybits,
+                       uint32_t ibits)
     : sc_module(name),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
@@ -53,11 +55,15 @@ L2CacheLru::L2CacheLru(sc_module_name name,
     o_flush_end("o_flush_end") {
 
     async_reset_ = async_reset;
+    waybits_ = waybits;
+    ibits_ = ibits;
+    ways = (1 << waybits);
+    FLUSH_ALL_VALUE = ((1 << (ibits + waybits)) - 1);
     mem0 = 0;
 
     mem0 = new TagMemNWay<abus,
-                          waybits,
-                          ibits,
+                          4,
+                          9,
                           lnbits,
                           flbits,
                           0>("mem0", async_reset);
@@ -261,7 +267,7 @@ void L2CacheLru::comb() {
 
     vb_req_type = r.req_type;                               // systemc specific
     if (L2CACHE_LINE_BITS != L1CACHE_LINE_BITS) {
-        ridx = r.req_addr.read()((CFG_L2_LOG2_BYTES_PER_LINE - 1), (CFG_L2_LOG2_BYTES_PER_LINE - CFG_DLOG2_BYTES_PER_LINE)).to_int();
+        ridx = r.req_addr.read()((CFG_L2_LOG2_BYTES_PER_LINE - 1), (CFG_L2_LOG2_BYTES_PER_LINE - CFG_LOG2_L1CACHE_BYTES_PER_LINE)).to_int();
     }
 
     vb_cached_data = line_rdata_o.read()((ridx * L1CACHE_LINE_BITS) + L1CACHE_LINE_BITS - 1, (ridx * L1CACHE_LINE_BITS));
@@ -275,7 +281,7 @@ void L2CacheLru::comb() {
         v.req_flush = 1;
         v.req_flush_all = i_flush_address.read()[0];
         if (i_flush_address.read()[0] == 1) {
-            v.req_flush_cnt = ~0ull;
+            v.req_flush_cnt = FLUSH_ALL_VALUE;
             v.req_flush_addr = 0;
         } else {
             v.req_flush_cnt = 0;
@@ -304,7 +310,7 @@ void L2CacheLru::comb() {
     }
 
     // Flush counter when direct access
-    if (r.req_addr.read()((CFG_L2_LOG2_NWAYS - 1), 0) == (L2CACHE_WAYS - 1)) {
+    if (r.req_addr.read()((waybits_ - 1), 0) == (ways - 1)) {
         vb_addr_direct_next = ((r.req_addr.read() + L2CACHE_BYTES_PER_LINE)
                 & (~LINE_BYTES_MASK));
     } else {
@@ -527,6 +533,10 @@ void L2CacheLru::comb() {
         break;
     case State_Reset:
         // Write clean line
+        if (r.req_flush.read() == 1) {
+            v.req_flush = 0;
+            v.flush_cnt = FLUSH_ALL_VALUE;                  // Init after power-on-reset
+        }
         v_direct_access = 1;
         v_invalidate = 1;                                   // generate: wstrb='1; wflags='0
         v.state = State_ResetWrite;
