@@ -22,9 +22,10 @@ PNP::PNP(const char *name)  : IService(name) {
     iter_.buf = regs_.cfg_table;
     regs_.hwid = 0x20170313;
     regs_.fwid = 0;
-    regs_.tech.bits.cfg = 0;
-    regs_.tech.bits.mst_total = 0;
-    regs_.tech.bits.slv_total = 0;
+    regs_.cfg.val = 0;
+    regs_.cfg.bits.cpu_max = 1;
+    regs_.cfg.bits.cfg_slots = 0;       // master + slaves + IC
+    regs_.cfg.bits.l2cache_ena = 0;
 
     addMaster(0, VENDOR_GNSSSENSOR, RISCV_RIVER_CPU);
     addMaster(1, VENDOR_GNSSSENSOR, MST_DID_EMPTY);
@@ -48,31 +49,33 @@ PNP::~PNP() {
 }
 
 void PNP::addMaster(unsigned idx, unsigned vid, unsigned did) {
-    regs_.tech.bits.mst_total++;
-    iter_.item->mst.vid = vid;
-    iter_.item->mst.did = did;
-    iter_.item->mst.descr.bits.descrtype = PNP_CFG_TYPE_MASTER;
-    iter_.item->mst.descr.bits.descrsize = sizeof(MasterConfigType);
-    iter_.buf += sizeof(MasterConfigType);
+    regs_.cfg.bits.cfg_slots++;
+    iter_.item->vid = vid;
+    iter_.item->did = did;
+    iter_.item->descr.bits.descrtype = PNP_CFG_TYPE_MASTER;
+    iter_.item->descr.bits.descrsize = sizeof(DeviceDescriptorType);
+    iter_.item->addr_start = 0;
+    iter_.item->addr_end = 0;
+    iter_.buf += sizeof(DeviceDescriptorType);
+    iter_.item->descr.bits.descrtype = PNP_CFG_TYPE_INVALID;
 }
 
 void PNP::addSlave(uint64_t addr, uint64_t size, unsigned irq, unsigned vid, unsigned did) {
-    regs_.tech.bits.slv_total++;
-    iter_.item->slv.vid = vid;
-    iter_.item->slv.did = did;
-    iter_.item->slv.descr.bits.descrtype = PNP_CFG_TYPE_SLAVE;
-    iter_.item->slv.descr.bits.descrsize = sizeof(SlaveConfigType);
-    iter_.item->slv.descr.bits.bar_total = 1;
-    iter_.item->slv.descr.bits.irq_idx = irq;
-    iter_.item->slv.xaddr = static_cast<uint32_t>(addr);
-    iter_.item->slv.xmask = static_cast<uint32_t>(~(size - 1));
-    iter_.buf += sizeof(SlaveConfigType);
+    regs_.cfg.bits.cfg_slots++;
+    iter_.item->vid = vid;
+    iter_.item->did = did;
+    iter_.item->descr.bits.descrtype = PNP_CFG_TYPE_SLAVE;
+    iter_.item->descr.bits.descrsize = sizeof(DeviceDescriptorType);
+    iter_.item->addr_start = addr;
+    iter_.item->addr_end = addr + size;
+    iter_.buf += sizeof(DeviceDescriptorType);
+    iter_.item->descr.bits.descrtype = PNP_CFG_TYPE_INVALID;
 }
 
 void PNP::postinitService() {
-    regs_.tech.bits.cfg = static_cast<uint8_t>(cpu_max_.to_uint64() << 4);
-    regs_.tech.bits.cfg |= static_cast<uint8_t>(l2cache_ena_.to_uint64());
-    regs_.tech.bits.plic_irq_total =
+    regs_.cfg.bits.cpu_max = static_cast<uint8_t>(cpu_max_.to_uint64() << 4);
+    regs_.cfg.bits.l2cache_ena |= static_cast<uint8_t>(l2cache_ena_.to_uint64());
+    regs_.cfg.bits.plic_irq_total =
         static_cast<uint8_t>(irqId_.to_uint64());
 
     iirq_ = static_cast<IIrqController *>(RISCV_get_service_iface(

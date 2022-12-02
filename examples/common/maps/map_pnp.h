@@ -20,35 +20,25 @@
 #include <inttypes.h>
 
 #define DEV_NONE (~0ull)
+#define PNP_CFG_TYPE_INVALID 0
+#define PNP_CFG_TYPE_MASTER  1
+#define PNP_CFG_TYPE_SLAVE   2
 
-typedef struct master_cfg_bits_type {
+typedef struct dev_cfg_bits_type {
     uint32_t descrsize : 8;
     uint32_t descrtype : 2;
     uint32_t rsrv : 22;
     uint32_t did : 16;
     uint32_t vid : 16;
-} master_cfg_bits_type;
+    uint64_t reserved;
+    uint64_t addr_start;
+    uint64_t addr_end;
+} dev_cfg_bits_type;
 
-typedef union master_cfg_type {
-    master_cfg_bits_type u;
-    uint64_t v[1];
-} master_cfg_type;
-
-
-typedef struct slave_cfg_bits_type {
-    uint32_t descrsize : 8;
-    uint32_t descrtype : 2;
-    uint32_t rsrv : 22;
-    uint32_t did : 16;
-    uint32_t vid : 16;
-    uint32_t xmask;
-    uint32_t xaddr;
-} slave_cfg_bits_type;
-
-typedef union slave_cfg_type {
-    slave_cfg_bits_type u;
-    uint64_t v[2];
-} slave_cfg_type;
+typedef union dev_cfg_type {
+    dev_cfg_bits_type u;
+    uint64_t v[4];
+} dev_cfg_type;
 
 
 typedef struct pnp_map {
@@ -67,26 +57,20 @@ typedef struct pnp_map {
 
 
 static uint64_t get_dev_bar(pnp_map *pnp, uint16_t vid, uint16_t did) {
-    master_cfg_type mcfg;
-    slave_cfg_type scfg;
-    int slv_total = (pnp->cfg >> 8) & 0xFF;
-    int mst_total = (pnp->cfg >> 16) & 0xFF;
+    dev_cfg_type dcfg;
+    int slots_total = (pnp->cfg >> 8) & 0xFF;
     int off = 0;
 
     // skip all masters
-    for (int i = 0; i < mst_total; i++) {
-        mcfg.v[0] = *(uint64_t *)&pnp->cfg_table[off];
-        off += pnp->cfg_table[off];
-    }
-
-    for (int i = 0; i < slv_total; i++) {
-        scfg.v[0] = *(uint64_t *)&pnp->cfg_table[off];
-        scfg.v[1] = *(uint64_t *)&pnp->cfg_table[off + 8];
-
-        if (scfg.u.vid == vid && scfg.u.did == did) {
-            return scfg.u.xaddr;
+    for (int i = 0; i < slots_total; i++) {
+        dcfg = *(dev_cfg_type *)&pnp->cfg_table[off];
+        off += sizeof(dcfg);
+        if (dcfg.u.descrtype != PNP_CFG_TYPE_SLAVE) {
+            continue;
         }
-        off += pnp->cfg_table[off];
+        if (dcfg.u.vid == vid && dcfg.u.did == did) {
+            return dcfg.u.addr_start;
+        }
     }
 
     return DEV_NONE;

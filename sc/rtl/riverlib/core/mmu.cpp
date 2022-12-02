@@ -115,6 +115,7 @@ Mmu::Mmu(sc_module_name name,
     sensitive << r.req_wdata;
     sensitive << r.req_wstrb;
     sensitive << r.req_size;
+    sensitive << r.req_flush;
     sensitive << r.last_mmu_ena;
     sensitive << r.last_va;
     sensitive << r.last_pa;
@@ -194,6 +195,7 @@ void Mmu::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.req_wdata, pn + ".r_req_wdata");
         sc_trace(o_vcd, r.req_wstrb, pn + ".r_req_wstrb");
         sc_trace(o_vcd, r.req_size, pn + ".r_req_size");
+        sc_trace(o_vcd, r.req_flush, pn + ".r_req_flush");
         sc_trace(o_vcd, r.last_mmu_ena, pn + ".r_last_mmu_ena");
         sc_trace(o_vcd, r.last_va, pn + ".r_last_va");
         sc_trace(o_vcd, r.last_pa, pn + ".r_last_pa");
@@ -409,9 +411,10 @@ void Mmu::comb() {
             v.req_wstrb = i_core_req_wstrb;
             v.req_size = i_core_req_size;
         }
-        if (r.tlb_flush_cnt.read().or_reduce() == 1) {
-            v.state = FlushTlb;
+        if (r.req_flush.read() == 1) {
+            v.req_flush = 0;
             v.tlb_wdata = 0;
+            v.state = FlushTlb;
         } else if ((i_mmu_ena.read() == 0) || (v_va_ena == 0)) {// MMU disabled
             // Direct connection to Cache
             v_core_req_ready = i_mem_req_ready;
@@ -670,6 +673,7 @@ void Mmu::comb() {
 
     if (i_fence.read() == 1) {
         // Clear whole table ignoring i_fence_addr
+        v.req_flush = 1;
         v.tlb_flush_cnt = ~0ull;
         v.tlb_flush_adr = 0;
     }

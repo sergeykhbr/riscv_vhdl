@@ -65,10 +65,7 @@ private:
 
     PnpMapType pnp_;
     union DescriptorTableType {
-        union DescriptorItemType {
-            MasterConfigType mst;
-            SlaveConfigType slv;
-        } *item;
+        DeviceDescriptorType *item;
         uint8_t *buf;
     } iter_;
 };

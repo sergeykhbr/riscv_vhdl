@@ -108,6 +108,7 @@ SC_MODULE(Mmu) {
         sc_signal<sc_uint<64>> req_wdata;
         sc_signal<sc_uint<8>> req_wstrb;
         sc_signal<sc_uint<2>> req_size;
+        sc_signal<bool> req_flush;
         sc_signal<bool> last_mmu_ena;
         sc_signal<sc_uint<RISCV_ARCH>> last_va;
         sc_signal<sc_uint<52>> last_pa;
@@ -136,6 +137,7 @@ SC_MODULE(Mmu) {
         iv.req_wdata = 0ull;
         iv.req_wstrb = 0;
         iv.req_size = 0;
+        iv.req_flush = 0;
         iv.last_mmu_ena = 0;
         iv.last_va = ~0ull;
         iv.last_pa = ~0ull;

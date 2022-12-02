@@ -524,11 +524,13 @@ void CsrRegs::comb() {
                     v.fencestate = Fence_DataBarrier;
                 } else if (i_req_addr.read()[1] == 1) {
                     // FENCE.I
+                    v_flushmmu = 1;
                     v.fencestate = Fence_DataFlush;
                 } else if ((i_req_addr.read()[2] == 1)
                             && (!((r.tvm.read() == 1) && (r.mode.read()[1] == 0)))) {
                     // FENCE.VMA: is illegal in S-mode when TVM bit=1
-                    v.fencestate = Fence_MMU;
+                    v_flushmmu = 1;
+                    v.fencestate = Fence_End;
                 } else {
                     // Illegal fence
                     v.state = State_Response;
@@ -651,7 +653,6 @@ void CsrRegs::comb() {
         break;
     case Fence_DataFlush:
         v_flushd = 1;
-        v_flushmmu = 1;
         if (i_m_memop_ready.read() == 1) {
             v.fencestate = Fence_WaitDataFlushEnd;
         }
@@ -666,10 +667,6 @@ void CsrRegs::comb() {
         if (i_f_flush_ready.read() == 1) {
             v.fencestate = Fence_End;
         }
-        break;
-    case Fence_MMU:
-        v_flushmmu = 1;
-        v.fencestate = Fence_End;
         break;
     case Fence_End:
         v_flushpipeline = 1;

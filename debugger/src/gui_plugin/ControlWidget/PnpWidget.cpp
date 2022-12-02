@@ -26,8 +26,7 @@ enum EWName {
     WTarget_image,
     WHW_ID,
     WFW_ID,
-    WMasterTotal,
-    WSlaveTotal,
+    WDevicesTotal,
     W_Total
 };
 
@@ -128,31 +127,25 @@ void PnpWidget::slotUpdate() {
     RISCV_sprintf(tstr, sizeof(tstr), "FW_ID: 0x%08x", pnp_.fwid);
     getLabel(WFW_ID)->setText(QString(tstr));
     
-    RISCV_sprintf(tstr, sizeof(tstr), "MST Total: %d", pnp_.tech.bits.mst_total);
-    getLabel(WMasterTotal)->setText(QString(tstr));
-
-    RISCV_sprintf(tstr, sizeof(tstr), "SLV Total: %d", pnp_.tech.bits.slv_total);
-    getLabel(WSlaveTotal)->setText(QString(tstr));
+    RISCV_sprintf(tstr, sizeof(tstr), "DEV Total: %d", pnp_.cfg.bits.cfg_slots);
+    getLabel(WDevicesTotal)->setText(QString(tstr));
 
     /**
      * Lines with index 5 and 6 are empty.
      */
-    SlaveConfigType *pslv;
-    MasterConfigType *pmst;
+    DeviceDescriptorType *pdev;
     uint32_t adr1, adr2;
     uint64_t did;
     int i = 0;
     iter_.buf = pnp_.cfg_table;
-    while (iter_.item->slv.descr.bits.descrtype != PNP_CFG_TYPE_INVALID) {
-        if (iter_.item->slv.descr.bits.descrtype == PNP_CFG_TYPE_MASTER) {
-            pmst = &iter_.item->mst;
-            did = pmst->did;
+    while (iter_.item->descr.bits.descrtype != PNP_CFG_TYPE_INVALID) {
+        if (iter_.item->descr.bits.descrtype == PNP_CFG_TYPE_MASTER) {
+            did = pdev->did;
             RISCV_sprintf(tstr, sizeof(tstr), "mst: ", NULL);
         } else {
-            pslv = &iter_.item->slv;
-            adr1 = pslv->xaddr;
-            adr2 = adr1 + ~pslv->xmask;
-            did = pslv->did;
+            adr1 = pdev->addr_start;
+            adr2 = pdev->addr_end;
+            did = pdev->did;
             RISCV_sprintf(tstr, sizeof(tstr), "slv: 0x%08x .. 0x%08x", adr1, adr2);
         }
         if ((W_Total + 2*i) < mainLayout_->count()) {
@@ -236,7 +229,7 @@ void PnpWidget::slotUpdate() {
 
         h += 8 + fm.height();
         i++;
-        iter_.buf += iter_.item->mst.descr.bits.descrsize;
+        iter_.buf += iter_.item->descr.bits.descrsize;
     }
 
     parent_->resize(QSize(w, h));

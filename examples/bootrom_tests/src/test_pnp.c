@@ -119,45 +119,38 @@ static const char *get_device_name(uint16_t vid, uint16_t did)
 }
 
 void print_pnp() {
-    master_cfg_type mcfg;
-    slave_cfg_type scfg;
+    dev_cfg_type dcfg;
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
-    int slv_total = (pnp->cfg >> 8) & 0xFF;
-    int mst_total = (pnp->cfg >> 16) & 0xFF;
+    int slots_total = (pnp->cfg >> 8) & 0xFF;
     int off = 0;
     uint32_t xsize;
 
     printf_uart("\n# Plug'n'Play info:\r\n");
 
-    for (int i = 0; i < mst_total; i++) {
-        mcfg.v[0] = *(uint64_t *)&pnp->cfg_table[off];
+    for (int i = 0; i < slots_total; i++) {
+        dcfg = *(dev_cfg_type *)&pnp->cfg_table[off];
+        off += sizeof(dcfg);
 
-        printf_uart("# AXI4: mst%d: %s    %s\r\n", i, 
-                get_vendor_name(mcfg.u.vid),
-                get_device_name(mcfg.u.vid, mcfg.u.did));
-        off += pnp->cfg_table[off];
-    }
+        if (dcfg.u.descrtype == PNP_CFG_TYPE_MASTER) {
+            printf_uart("# AXI4: mst%d: %s    %s\r\n", i, 
+                    get_vendor_name(dcfg.u.vid),
+                    get_device_name(dcfg.u.vid, dcfg.u.did));
+        } else if (dcfg.u.descrtype == PNP_CFG_TYPE_SLAVE) {
+            printf_uart("# AXI4: slv%d: %s    %s\n", i, 
+                    get_vendor_name(dcfg.u.vid),
+                    get_device_name(dcfg.u.vid, dcfg.u.did));
 
-    for (int i = 0; i < slv_total; i++) {
-        scfg.v[0] = *(uint64_t *)&pnp->cfg_table[off];
-        scfg.v[1] = *(uint64_t *)&pnp->cfg_table[off + 8];
+            xsize = dcfg.u.addr_end - dcfg.u.addr_start;
 
-        printf_uart("# AXI4: slv%d: %s    %s\n", i, 
-                get_vendor_name(scfg.u.vid),
-                get_device_name(scfg.u.vid, scfg.u.did));
-
-        scfg.u.xmask ^= 0xFFFFFFFFul;
-        xsize = scfg.u.xmask + 1;
-
-        printf_uart("#    %08x...%08x, size = ",
-            scfg.u.xaddr, (scfg.u.xaddr + scfg.u.xmask));
-        if (xsize < 1024) {
-            printf_uart("%d bytes\n", (int)xsize);
-        } else if (xsize < 1024*1024) {
-            printf_uart("%d KB\n", (int)(xsize >> 10));
-        } else {
-            printf_uart("%d MB\n", (int)(xsize >> 20));
+            printf_uart("#    %016x...%016x, size = ",
+                dcfg.u.addr_start, (dcfg.u.addr_end - 1));
+            if (xsize < 1024) {
+                printf_uart("%d bytes\n", (int)xsize);
+            } else if (xsize < 1024*1024) {
+                printf_uart("%d KB\n", (int)(xsize >> 10));
+            } else {
+                printf_uart("%d MB\n", (int)(xsize >> 20));
+            }
         }
-        off += pnp->cfg_table[off];
     }
 }

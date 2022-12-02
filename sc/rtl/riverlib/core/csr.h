@@ -108,8 +108,7 @@ SC_MODULE(CsrRegs) {
     static const uint8_t Fence_DataFlush = 2;
     static const uint8_t Fence_WaitDataFlushEnd = 3;
     static const uint8_t Fence_FlushInstr = 4;
-    static const uint8_t Fence_MMU = 5;
-    static const uint8_t Fence_End = 6;
+    static const uint8_t Fence_End = 7;
     
     static const uint8_t SATP_MODE_SV39 = 8;
     static const uint8_t SATP_MODE_SV48 = 9;
