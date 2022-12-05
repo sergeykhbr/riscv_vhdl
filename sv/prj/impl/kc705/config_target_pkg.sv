@@ -20,8 +20,8 @@ package config_target_pkg;
   //! @brief   HEX-image for the initialization of the Boot ROM.
   //! @details This file is used by \e inferred ROM implementation.
   localparam CFG_SIM_BOOTROM_HEX =
-  //              {CFG_TOPDIR, "examples/bootrom_tests/linuxbuild/bin/bootrom_tests.hex"};
-              {CFG_TOPDIR, "examples/boot/linuxbuild/bin/bootimage.hex"};
+                {CFG_TOPDIR, "examples/bootrom_tests/linuxbuild/bin/bootrom_tests.hex"};
+  //            {CFG_TOPDIR, "examples/boot/linuxbuild/bin/bootimage.hex"};
 
   //! @brief   HEX-image for the initialization of the FwImage ROM.
   //! @details This file is used by \e inferred ROM implementation.

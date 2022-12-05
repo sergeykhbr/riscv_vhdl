@@ -196,7 +196,6 @@ void add_entry(mmu_type *mmu, char *table, unsigned level, uint64_t virtual, uin
             table = (char *) (pte & ~0xfff);
         }
         current_level--;
-        printf_uart("%s", " .");
     }
 }
 
@@ -209,7 +208,7 @@ int test_mmu()
 
     flush_tlb();  // Check sfence.vma
 
-    printf_uart("%s", "MMU.MPRV .");
+    printf_uart("%s", "MMU.MPRV . . . .");
 
     void *master_table = get_page(pages);
     setup_page_table(master_table, vms->levels-1, 0);

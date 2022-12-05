@@ -2,4 +2,7 @@ linuxbuild/obj
 *.elf
 *.dump
 *.lst
+*.err
+*_lo.hex
+*_hi.hex
 

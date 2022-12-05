@@ -15,7 +15,8 @@
 //!
 
 `ifndef SCLK_PERIOD
-  `define SCLK_PERIOD 25
+  // FPGA 200 MHz
+  `define SCLK_PERIOD 5ns
 `endif
 
 
@@ -24,10 +25,10 @@ module kc705_top_tb;
     parameter real HALF_PERIOD = `SCLK_PERIOD / 2.0;
 
     //! Input reset. Active HIGH.
-    logic                     i_rst;
+    logic i_rst;
     //! Differential clock (LVDS) positive/negaive signal.
-    wire                     i_sclk_p;
-    wire                     i_sclk_n;
+    wire i_sclk_p;
+    wire i_sclk_n;
     //! GPIO: [11:4] LEDs; [3:0] DIP switch
     wire [11:0] io_gpio;
     wire [11:0] io_gpio_in;
@@ -40,8 +41,8 @@ module kc705_top_tb;
     logic o_jtag_tdo;
     logic o_jtag_vref;
     //! UART1 signals:
-    logic                     i_uart1_rd;
-    logic                    o_uart1_td;
+    logic i_uart1_rd;
+    logic o_uart1_td;
     logic clk;
     int clk_cnt;
 
@@ -104,12 +105,8 @@ module kc705_top_tb;
   sim_uart_rx
   #(
     .p_inst_num(0),
-    `ifdef SIM_UART_SPEED
-      .p_uart_clk_half_period   (`SIM_UART_SPEED) // Set UART speed in Makefile
-    `else
 //      .p_uart_clk_half_period   (3.125ns)
       .p_uart_clk_half_period   (270.3125ns) // True 115200 UART speed
-    `endif
   ) UART_RX (
     .scaler  (32'd8),
     .rx      (o_uart1_td),

@@ -73,8 +73,6 @@ logic w_irq_uart1;
 logic [15:0] wb_irq_gpio;
 logic w_irq_pnp;
 logic [CFG_PLIC_IRQ_TOTAL-1:0] wb_ext_irqs;
-logic [CFG_PLIC_CONTEXT_TOTAL-1: 0] wb_plic_ip;
-
 
 
   ////////////////////////////////////
@@ -274,14 +272,14 @@ apb_uart #(
     .i_axi(axisi[CFG_BUS0_XSLV_PLIC]),
     .o_axi(axiso[CFG_BUS0_XSLV_PLIC]),
     .i_irq_request(wb_ext_irqs),  // [0] must be tight to GND
-    .o_ip(wb_plic_ip)
+    .o_ip(wb_plic_xeip)
   );
   // FU740 implements 5 cores (we implement only 4):
   //   Hart0 - M-mode only (S7 Core RV64IMAC)
   //   Hart1..4 - M+S modes (U74 Cores RV64GC)
   // Hart4 ignored
-  assign wb_plic_meip = {wb_plic_ip[5], wb_plic_ip[3], wb_plic_ip[1], wb_plic_ip[0]};
-  assign wb_plic_seip = {wb_plic_ip[6], wb_plic_ip[4], wb_plic_ip[2], 1'b0};
+  assign wb_plic_meip = {wb_plic_xeip[5], wb_plic_xeip[3], wb_plic_xeip[1], wb_plic_xeip[0]};
+  assign wb_plic_seip = {wb_plic_xeip[6], wb_plic_xeip[4], wb_plic_xeip[2], 1'b0};
 
   //! @brief Plug'n'Play controller of the current configuration with the
   //!        AXI4 interface.
