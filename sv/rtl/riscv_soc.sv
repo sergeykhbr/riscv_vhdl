@@ -73,6 +73,7 @@ logic w_irq_uart1;
 logic [15:0] wb_irq_gpio;
 logic w_irq_pnp;
 logic [CFG_PLIC_IRQ_TOTAL-1:0] wb_ext_irqs;
+logic [CFG_PLIC_CONTEXT_TOTAL-1: 0] wb_plic_ip;
 
 
 
@@ -257,7 +258,6 @@ apb_uart #(
     .o_mtip(wb_clint_mtip)
   );
 
-
   ////////////////////////////////////
   //! @brief External interrupt controller (PLIC).
   //! @details Map address:
@@ -273,7 +273,7 @@ apb_uart #(
     .o_cfg(dev_pnp[SOC_PNP_PLIC]),
     .i_axi(axisi[CFG_BUS0_XSLV_PLIC]),
     .o_axi(axiso[CFG_BUS0_XSLV_PLIC]),
-    .i_irq_request(irq_pins),  // [0] must be tight to GND
+    .i_irq_request(wb_ext_irqs),  // [0] must be tight to GND
     .o_ip(wb_plic_ip)
   );
   // FU740 implements 5 cores (we implement only 4):
@@ -309,7 +309,7 @@ always_comb
 begin: comb_proc
     logic [CFG_PLIC_IRQ_TOTAL-1:0] vb_ext_irqs;
 
-    vb_ext_irqs = 0;
+    vb_ext_irqs = '0;
 
 
     // assign interrupts:
@@ -321,7 +321,7 @@ begin: comb_proc
     vb_ext_irqs[(CFG_PLIC_IRQ_TOTAL - 1): 71] = '0;
     wb_ext_irqs = vb_ext_irqs;
 
-    o_jtag_vref = 1'b1;
+//    o_jtag_vref = 1'b1;
 
     // Nullify emty AXI-slots:
     aximo[CFG_BUS0_XMST_DMA] = axi4_master_out_none;
@@ -332,5 +332,6 @@ begin: comb_proc
     apbmi[CFG_BUS1_PMST_PARENT] = apbso[CFG_BUS1_PSLV_UART1];
 
 end: comb_proc
+assign o_jtag_vref = 1'b1;
 
 endmodule

@@ -23,8 +23,6 @@ module axi4_pnp #(
 
   import types_amba_pkg::*;
   import types_bus0_pkg::*;
-  import types_misc::*;
-  import types_common::*;
 
   // Descriptor size 4 x 64-bits word = 32 Bytes
   typedef logic [63 : 0] config_map  [0 : 4*cfg_slots-1];

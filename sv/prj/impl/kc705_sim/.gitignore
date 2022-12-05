@@ -1,0 +1,12 @@
+.simvision
+work
+ncsim.key
+xmsim.key
+*.log
+*.shm
+*.diag
+*.tmp
+*.err
+*.svcf
+restore.tcl*
+compare.tcl*

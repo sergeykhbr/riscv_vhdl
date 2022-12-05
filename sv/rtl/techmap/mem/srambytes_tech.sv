@@ -4,31 +4,28 @@
 //----------------------------------------------------------------------------
 
 module srambytes_tech #(
-    parameter integer abits    = 16,
+    parameter integer abits = 16,
+    parameter integer log2_dbytes = 3,  // 2^log2_dbytes = number of bytes on data bus
     parameter init_file = ""
 )
 (
     input clk,
-    input types_amba_pkg::global_addr_array_type raddr,
-    output logic [types_amba_pkg::CFG_SYSBUS_DATA_BITS-1 : 0] rdata,
-    input types_amba_pkg::global_addr_array_type waddr,
+    input logic [abits-1 : 0] addr,
+    output logic [8*(2**log2_dbytes)-1 : 0] rdata,
     input we,
-    input [types_amba_pkg::CFG_SYSBUS_DATA_BYTES-1 : 0] wstrb,
-    input [types_amba_pkg::CFG_SYSBUS_DATA_BITS-1 : 0] wdata
+    input [(2**log2_dbytes)-1 : 0] wstrb,
+    input [8*(2**log2_dbytes)-1 : 0] wdata
 );
 
-import types_amba_pkg::*;
 import config_target_pkg::*;
 
 //! reduced name of configuration constant:
 
-localparam integer dw = CFG_LOG2_SYSBUS_DATA_BYTES;
+localparam integer dbytes = (2**log2_dbytes);
+localparam integer dbits = 8*dbytes;
 
-typedef logic [abits-dw-1 : 0] local_addr_type [0 : CFG_SYSBUS_DATA_BYTES-1];
 
-local_addr_type address;
-
-logic [CFG_SYSBUS_DATA_BYTES-1 : 0] wr_ena;
+logic [dbytes-1 : 0] wr_ena;
 
 //! Instantiate component for RTL simulation
 
@@ -36,74 +33,45 @@ logic [CFG_SYSBUS_DATA_BYTES-1 : 0] wr_ena;
 
 generate
   
-   for (genvar n = 0; n <= CFG_SYSBUS_DATA_BYTES-1; n++) begin : rx
-
+   for (genvar n = 0; n <= dbytes-1; n++) begin : rx
       assign wr_ena[n] = we & wstrb[n];
-      assign address[n] = (we == 1) ? waddr[n / CFG_ALIGN_BYTES][abits-1 : dw] :
-                          raddr[n / CFG_ALIGN_BYTES][abits-1 : dw];
                   
       sram8_inferred_init #(
-          .abits(abits-dw),
+          .abits(abits-log2_dbytes),
           .byte_idx(n),
           .init_file(init_file)
       ) x0 (
           .clk(clk), 
-          .address(address[n]),
+          .address(addr[abits-1:log2_dbytes]),
           .rdata(rdata[8*n+:8]),
           .we(wr_ena[n]),
           .wdata(wdata[8*n+:8])
       );
-      
    end : rx
 
 endgenerate
 
 `elsif TARGET_KC705
 
-   for (genvar n = 0; n <= CFG_SYSBUS_DATA_BYTES-1; n++) begin : rx
-
+   for (genvar n = 0; n <= dbytes-1; n++) begin : rx
       assign wr_ena[n] = we & wstrb[n];
-      assign address[n] = (we == 1) ? waddr[n / CFG_ALIGN_BYTES][abits-1 : dw] :
-                          raddr[n / CFG_ALIGN_BYTES][abits-1 : dw];
-
-      sram8_inferred_init #(
-        .abits(abits-dw),
-        .byte_idx(n),
-        .init_file(init_file)
-      ) x0 (
-        .clk(clk),
-        .address(address[n]),
-        .rdata(rdata[8*n+:8]),
-        .we(wr_ena[n]),
-        .wdata(wdata[8*n+:8])
-      );
-      
-   end : rx
-
-`else
-
-generate
-
-   for (genvar n = 0; n <= CFG_SYSBUS_DATA_BYTES-1; n++) begin : rx
-
-      assign wr_ena[n] = we & wstrb[n];
-      assign address[n] = (we == 1) ? waddr[n / CFG_ALIGN_BYTES][abits-1 : dw] :
-                          raddr[n / CFG_ALIGN_BYTES][abits-1 : dw];
                   
-      sram8_inferred #(
-          .abits(abits-dw),
-          .byte_idx(n)
+      sram8_inferred_init #(
+          .abits(abits-log2_dbytes),
+          .byte_idx(n),
+          .init_file(init_file)
       ) x0 (
           .clk(clk), 
-          .address(address[n]),
+          .address(addr[abits-1:log2_dbytes]),
           .rdata(rdata[8*n+:8]),
           .we(wr_ena[n]),
           .wdata(wdata[8*n+:8])
       );
-      
    end : rx
-   
-endgenerate
+
+`else
+
+    initial $error("srambytes_tech target is not defined, check technology-dependent memories.");
 
 `endif
 

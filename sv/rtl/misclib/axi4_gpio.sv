@@ -17,7 +17,6 @@ module axi4_gpio #(
 );
 
   import types_amba_pkg::*;
-  import types_common::*;
 
 
   typedef struct {

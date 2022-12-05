@@ -1,0 +1,14 @@
+${RTL_HOME}/techmap/bufg/ibufg_tech.sv
+${RTL_HOME}/techmap/bufg/ibuf_tech.sv
+${RTL_HOME}/techmap/bufg/idsbuf_tech.sv
+${RTL_HOME}/techmap/bufg/igdsbuf_tech.sv
+${RTL_HOME}/techmap/bufg/iobuf_tech.sv
+${RTL_HOME}/techmap/bufg/obuf_tech.sv
+${RTL_HOME}/techmap/mem/ram_cache_bwe_tech.sv
+${RTL_HOME}/techmap/mem/ram_mmu_tech.sv
+${RTL_HOME}/techmap/mem/sram8_inferred_init.sv
+${RTL_HOME}/techmap/mem/srambytes_tech.sv
+${RTL_HOME}/techmap/mem/ram_tech.sv
+${RTL_HOME}/techmap/mem/rom_inferred_64.sv
+${RTL_HOME}/techmap/mem/rom_tech.sv
+${RTL_HOME}/techmap/pll/SysPLL_tech.sv

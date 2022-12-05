@@ -33,7 +33,6 @@ module clint #(
 
   
 import types_amba_pkg::*;
-import types_common::*;
 
 typedef struct {
     logic [cpu_total-1:0] msip;

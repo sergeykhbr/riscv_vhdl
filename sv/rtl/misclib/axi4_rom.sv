@@ -14,7 +14,6 @@ module axi4_rom #(
 );
  
 import types_amba_pkg::*;
-import types_common::*;
  
 // To avoid warning 'literal negative value' use -1048576 instead of 16#fff00000#
 //parameter integer size_4kbytes = ((~(xmask << 12)) + 1) >> 12; 

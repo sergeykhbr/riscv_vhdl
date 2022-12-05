@@ -3,69 +3,68 @@
 module rom_tech
 #(
     parameter abits = 12,
+    parameter integer log2_dbytes = 3,  // 2^log2_dbytes = number of bytes on data bus
     parameter sim_hexfile = ""
 )
 (
-    input                                                 clk,
-    input types_amba_pkg::global_addr_array_type                address,
-    output logic [types_amba_pkg::CFG_SYSBUS_DATA_BITS - 1 : 0] data
+    input clk,
+    input [abits-1: 0] address,
+    output logic [8*(2**log2_dbytes) - 1 : 0] data
 );
 
 import config_target_pkg::*;
 
+localparam integer dbytes = (2**log2_dbytes);
+localparam integer dbits = 8*dbytes;
+localparam int ROM_LENGTH = 2**(abits - log2_dbytes);
+
 `ifdef TARGET_INFERRED
 
-    rom_inferred
+    rom_inferred_64
     #(
-        .abits(abits),
+        .abits(abits-log2_dbytes),
 	.hex_filename(sim_hexfile)
     )
     ROM
     (
         .clk(clk),
-        .address(address),
+        .address(address[abits-1: log2_dbytes]),
         .data(data)
     );
 
 `elsif TARGET_KC705
 
-    rom_fpga_64
+    rom_inferred_64
     #(
-        .abits(abits),
-        .hex_filename(sim_hexfile)
+        .abits(abits-log2_dbytes),
+	.hex_filename(sim_hexfile)
     )
-    ROM64
+    ROM
     (
         .clk(clk),
-        .address_lo(address[0][31:0]),
-        .address_hi(address[1][31:0]),
-        .data_in(64'b0),
-        .en(1'b1),
-        .we(8'b0),
-        .data(data[63:0])
+        .address(address[abits-1: log2_dbytes]),
+        .data(data)
     );
 
 `else
     initial $error("INSTANCE macro is undefined, check technology-dependent memories.");
 
-`endif //WF_USE_INFERRED_ROMS
+`endif //target_...
 
 `ifdef DISPLAY_MEMORY_INSTANCE_INFORMATION
-
-localparam int ROM_LENGTH = 2**(abits - $clog2(types_amba_pkg::CFG_SYSBUS_DATA_BYTES));
 
 initial begin 
   $display("");
   $display("****************************************************");
   $display("rom_tech *******************************************");
-  $display("unique_tag = rom_tech_W%0d_D%0d_C%0d", (types_amba_pkg::CFG_SYSBUS_DATA_BITS), 2**abits, (2**abits)*(amba_pkg::CFG_SYSBUS_DATA_BITS));
+  $display("unique_tag = rom_tech_W%0d_D%0d_C%0d", (dbits), 2**abits, (2**abits)*(dbits));
   $display("****************************************************");
   $display("full path     =  %m");
   $display("abits         =  %d",abits);
   $display("Summary ********************************************");
-  $display("Width         =  %d",(types_amba_pkg::CFG_SYSBUS_DATA_BITS));
+  $display("Width         =  %d",(dbits));
   $display("Depth         =  %d",ROM_LENGTH);
-  $display("Capacity      =  %d bits",ROM_LENGTH*(types_amba_pkg::CFG_SYSBUS_DATA_BITS));  
+  $display("Capacity      =  %d bits",ROM_LENGTH*(dbits));  
   $display("****************************************************");
   $display("");
 end

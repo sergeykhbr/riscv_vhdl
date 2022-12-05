@@ -33,7 +33,6 @@ module plic #(
 
   
 import types_amba_pkg::*;
-import types_common::*;
 
 typedef struct {
     logic [3:0] priority_th;
