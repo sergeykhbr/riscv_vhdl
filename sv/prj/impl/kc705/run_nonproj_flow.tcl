@@ -101,11 +101,11 @@ source -notrace scripts/set_paths.tcl
 if {[string is true $load_files]} {
 	read_verilog -sv config_target_pkg.sv
 
-	set filelist_name ${LIST_ROOT}/ambalib;         source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
-	set filelist_name ${LIST_ROOT}/techmap;		source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
-	set filelist_name ${LIST_ROOT}/riverlib;       	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
-	set filelist_name ${LIST_ROOT}/misclib;    	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
-	set filelist_name ${LIST_ROOT}/riscv_soc;    	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
+	set filelist_name ${LIST_ROOT}/ambalib.f;       source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
+	set filelist_name ${LIST_ROOT}/techmap.f;	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
+	set filelist_name ${LIST_ROOT}/riverlib.f;     	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
+	set filelist_name ${LIST_ROOT}/misclib.f;    	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
+	set filelist_name ${LIST_ROOT}/riscv_soc.f;    	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
 	set filelist_name ${PRJ_ROOT}/kc705_top.f;  	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
 
 	# Apply Verilog Defines:
@@ -113,7 +113,7 @@ if {[string is true $load_files]} {
 }
 
 if {[string is true $load_constr]} {
-	read_xdc ./kc705.xdc
+	read_xdc ./kc705_top.xdc
 }
 
 #
@@ -268,7 +268,7 @@ if {$strategy == "basic"} {
 	report_power -file $outputDir/post_route_power.rpt
 	report_drc -file $outputDir/post_imp_drc.rpt
 	write_verilog -force $outputDir/bft_impl_netlist.v
-	write_xdc -no_fixed_only -force $outputDir/kc705.xdc
+	write_xdc -no_fixed_only -force $outputDir/kc705_top.xdc
 
 	#
 	# STEP#5: generate a bitstream

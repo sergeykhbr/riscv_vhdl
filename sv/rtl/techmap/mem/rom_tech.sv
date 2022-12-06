@@ -4,7 +4,7 @@ module rom_tech
 #(
     parameter abits = 12,
     parameter integer log2_dbytes = 3,  // 2^log2_dbytes = number of bytes on data bus
-    parameter sim_hexfile = ""
+    parameter filename = ""
 )
 (
     input clk,
@@ -18,12 +18,14 @@ localparam integer dbytes = (2**log2_dbytes);
 localparam integer dbits = 8*dbytes;
 localparam int ROM_LENGTH = 2**(abits - log2_dbytes);
 
+// TODO: check and generate dbits == 64, otherwise assert
+
 `ifdef TARGET_INFERRED
 
-    rom_inferred_64
+    rom_inferred_2x32
     #(
         .abits(abits-log2_dbytes),
-	.hex_filename(sim_hexfile)
+	.filename(filename)
     )
     ROM
     (
@@ -34,10 +36,10 @@ localparam int ROM_LENGTH = 2**(abits - log2_dbytes);
 
 `elsif TARGET_KC705
 
-    rom_inferred_64
+    rom_inferred_2x32
     #(
         .abits(abits-log2_dbytes),
-	.hex_filename(sim_hexfile)
+	.filename(filename)
     )
     ROM
     (

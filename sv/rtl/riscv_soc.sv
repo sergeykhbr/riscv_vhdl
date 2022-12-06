@@ -153,7 +153,7 @@ Workgroup #(
   axi4_rom #(
     .abits(16),
     .async_reset(CFG_ASYNC_RESET),
-    .sim_hexfile(CFG_SIM_BOOTROM_HEX)
+    .sim_hexfile(CFG_BOOTROM_FILE)
   ) boot0 (
     .clk(i_clk),
     .nrst(w_sys_nrst),

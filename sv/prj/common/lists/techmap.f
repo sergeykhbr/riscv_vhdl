@@ -9,6 +9,7 @@ ${RTL_HOME}/techmap/mem/ram_mmu_tech.sv
 ${RTL_HOME}/techmap/mem/sram8_inferred_init.sv
 ${RTL_HOME}/techmap/mem/srambytes_tech.sv
 ${RTL_HOME}/techmap/mem/ram_tech.sv
-${RTL_HOME}/techmap/mem/rom_inferred_64.sv
+${RTL_HOME}/techmap/mem/rom_inferred_32.sv
+${RTL_HOME}/techmap/mem/rom_inferred_2x32.sv
 ${RTL_HOME}/techmap/mem/rom_tech.sv
 ${RTL_HOME}/techmap/pll/SysPLL_tech.sv

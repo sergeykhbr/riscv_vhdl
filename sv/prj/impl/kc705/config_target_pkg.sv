@@ -19,17 +19,11 @@ package config_target_pkg;
 
   //! @brief   HEX-image for the initialization of the Boot ROM.
   //! @details This file is used by \e inferred ROM implementation.
-  localparam CFG_SIM_BOOTROM_HEX =
-                {CFG_TOPDIR, "examples/bootrom_tests/linuxbuild/bin/bootrom_tests.hex"};
-  //            {CFG_TOPDIR, "examples/boot/linuxbuild/bin/bootimage.hex"};
+  localparam CFG_BOOTROM_FILE =
+                {CFG_TOPDIR, "examples/bootrom_tests/linuxbuild/bin/bootrom_tests"};
+  //            {CFG_TOPDIR, "examples/boot/linuxbuild/bin/bootimage"};
+  localparam CFG_BOOTROM_FILE_HEX = {CFG_BOOTROM_FILE, ".hex"};
 
-  //! @brief   HEX-image for the initialization of the FwImage ROM.
-  //! @details This file is used by \e inferred ROM implementation.
-  localparam CFG_SIM_FWIMAGE_HEX =
-               {CFG_TOPDIR, "examples/riscv-tests/makefiles/bin/riscv-tests.hex"};
-//               {CFG_TOPDIR, "examples/dhrystone21/makefiles/bin/dhrystone21.hex"};
-//               {CFG_TOPDIR, "examples/zephyr/gcc711/zephyr.hex"};
-//               {CFG_TOPDIR, "examples/coremark/coremark.hex"};
 
   /// @brief Hardware SoC Identificator.
   ///

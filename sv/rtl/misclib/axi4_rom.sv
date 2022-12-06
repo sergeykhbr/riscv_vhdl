@@ -2,7 +2,7 @@ module axi4_rom #(
     parameter integer memtech = 0,
     parameter integer abits = 12,
     parameter bit async_reset = 0,
-    parameter sim_hexfile = ""
+    parameter filename = ""  // without '.hex' extension
 )
 (
     input clk,
@@ -53,7 +53,7 @@ axi_slv #(
 rom_tech #(
   .abits(abits),
   .log2_dbytes(CFG_LOG2_SYSBUS_DATA_BYTES),
-  .sim_hexfile(sim_hexfile)
+  .filename(filename)
 ) tech0 (
   .clk(clk),
   .address(wb_req_addr[abits-1: 0]),
