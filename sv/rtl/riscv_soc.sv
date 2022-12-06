@@ -153,7 +153,7 @@ Workgroup #(
   axi4_rom #(
     .abits(16),
     .async_reset(CFG_ASYNC_RESET),
-    .sim_hexfile(CFG_BOOTROM_FILE)
+    .filename(CFG_BOOTROM_FILE)
   ) boot0 (
     .clk(i_clk),
     .nrst(w_sys_nrst),
@@ -170,8 +170,7 @@ Workgroup #(
   //!          0x00000000_08000000..0x00000000_081fffff (2MB on FU740)
   axi4_sram #(
     .async_reset(CFG_ASYNC_RESET),
-    .abits((10 + $clog2(2048))),        // 2 MB address
-    .init_file(CFG_SIM_FWIMAGE_HEX)     // Initialization will work only in RTL simulation
+    .abits((10 + $clog2(2048)))        // 2 MB address
   ) sram0 (
     .clk(i_clk),
     .nrst(w_sys_nrst),

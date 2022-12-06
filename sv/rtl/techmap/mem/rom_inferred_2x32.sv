@@ -29,7 +29,7 @@ rom_inferred_32
 #(
     .abits(abits),
     .hex_filename(hexfile_hi)
-) w0 (
+) w1 (
     .clk(clk),
     .address(address),
     .data(data[63:32])

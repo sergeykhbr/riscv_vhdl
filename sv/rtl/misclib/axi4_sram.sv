@@ -17,8 +17,7 @@
 module axi4_sram
 #(
     parameter int async_reset = 0,
-    parameter int abits = 17,
-    parameter init_file = ""
+    parameter int abits = 17
 )
 (
     input clk,
@@ -65,8 +64,7 @@ axi_slv #(
 
 srambytes_tech #(
     .abits(abits), 
-    .log2_dbytes(CFG_LOG2_SYSBUS_DATA_BYTES),
-    .init_file(init_file)
+    .log2_dbytes(CFG_LOG2_SYSBUS_DATA_BYTES)
 ) tech0 (
     .clk(clk),
     .addr(wb_req_addr[abits-1:0]),
