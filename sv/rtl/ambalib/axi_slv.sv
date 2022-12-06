@@ -177,8 +177,10 @@ begin: comb_proc
             if ((|r.req_len) == 1'b1) begin
                 v.req_addr = {r.req_addr[(CFG_SYSBUS_ADDR_BITS - 1): 12], vb_req_addr_next};
                 v.req_len = (r.req_len - 1);
+                v.state = State_addrdata_r;
+            end else begin
+                v.state = State_data_r;
             end
-            v.state = State_addrdata_r;
         end
     end
     State_addrdata_r: begin
