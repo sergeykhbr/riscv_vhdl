@@ -43,12 +43,6 @@ localparam int CFG_BOOTROM_LOG2_SIZE = 16;                  // 16=64 KB (default
 //     - Change bootloader stack pointer if need less than 512 KB
 localparam int CFG_SRAM_LOG2_SIZE = 19;                     // 19=512 KB (KC705); 21=2 MB (ASIC); ..
 
-// Number of contexts in PLIC controller.
-// Example FU740: S7 Core0 (M) + 4xU74 Cores (M+S).
-localparam int CFG_PLIC_CONTEXT_TOTAL = 9;
-// Any number up to 1024. Zero interrupt must be 0.
-localparam int CFG_PLIC_IRQ_TOTAL = 73;
-
 
 localparam CFG_TOPDIR = "../../../../";
 //! @brief   HEX-image for the initialization of the Boot ROM.

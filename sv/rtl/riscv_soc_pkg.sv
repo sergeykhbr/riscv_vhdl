@@ -50,8 +50,6 @@ localparam int CFG_PLIC_IRQ_TOTAL = 73;
 
 // @brief UART fifo size. Default value =16 Bytes. But to improve systemc
 //        and rtl trace files comparision set it to big value, like 1024
-localparam int CFG_UART0_FIFO_SZ = 8;//1024;
-
 localparam int CFG_SOC_UART1_LOG2_FIFOSZ = 4;
 
 endpackage: riscv_soc_pkg
