@@ -1,35 +1,68 @@
-////////////////////////////////////////////////////////////////////////////-
-//! @file
-//! @author     Sergey Khabarov - sergeykhbr@gmail.com
-//////////////////////////////////////////////////////////////////////////////
+// 
+//  Copyright 2022 Sergey Khabarov, sergeykhbr@gmail.com
+// 
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+// 
+//      http://www.apache.org/licenses/LICENSE-2.0
+// 
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
 
 package config_target_pkg;
 
-//  `define TARGET_KC705
 
-  localparam bit CFG_ASYNC_RESET = 1'b0;
+localparam bit CFG_ASYNC_RESET = 0;
 
-  localparam CFG_TOPDIR = "../../../../";
+// @brief   Number of processors in a system
+// @details This value may be in a range 1 to CFG_TOTAL_CPU_MAX-1
+localparam int CFG_CPU_NUM = 1;
 
-  /// @brief   Number of processors in a system
-  /// @details This value may be in a range 1 to CFG_TOTAL_CPU_MAX-1
-  localparam int CFG_CPU_NUM = 1;
-  /// @brief Enable/disable L2 caching. L2 can be enabled even in 1 CPU config
-  localparam int CFG_L2CACHE_ENA = 1;
+// @brief Caches size parameters.
+// @note Caches line size configured in river_cfg file and affects L1 memory bus width.
+localparam int CFG_ILOG2_LINES_PER_WAY = 7;                 // I$ length: 7=16KB; 8=32KB; ..
+localparam int CFG_ILOG2_NWAYS = 2;                         // I$ associativity. Default bits width = 2, means 4 ways
 
-  //! @brief   HEX-image for the initialization of the Boot ROM.
-  //! @details This file is used by \e inferred ROM implementation.
-  localparam CFG_BOOTROM_FILE =
+localparam int CFG_DLOG2_LINES_PER_WAY = 7;                 // D$ length: 7=16KB; 8=32KB; ..
+localparam int CFG_DLOG2_NWAYS = 2;                         // D$ associativity. Default bits width = 2, means 4 ways
+
+// @brief Enable/disable L2 caching. L2 can be enabled even in 1 CPU config
+localparam int CFG_L2CACHE_ENA = 0;
+localparam int CFG_L2_LOG2_NWAYS = 4;
+localparam int CFG_L2_LOG2_LINES_PER_WAY = 9;               // 7=16KB; 8=32KB; 9=64KB, ..
+
+// Internal Boot ROM size:
+localparam int CFG_BOOTROM_LOG2_SIZE = 16;                  // 16=64 KB (default); 17=128KB; ..
+
+// Internal SRAM block:
+//     - Increase memory map if need > 2MB FU740
+//     - Change bootloader stack pointer if need less than 512 KB
+localparam int CFG_SRAM_LOG2_SIZE = 19;                     // 19=512 KB (KC705); 21=2 MB (ASIC); ..
+
+// Number of contexts in PLIC controller.
+// Example FU740: S7 Core0 (M) + 4xU74 Cores (M+S).
+localparam int CFG_PLIC_CONTEXT_TOTAL = 9;
+// Any number up to 1024. Zero interrupt must be 0.
+localparam int CFG_PLIC_IRQ_TOTAL = 73;
+
+
+localparam CFG_TOPDIR = "../../../../";
+//! @brief   HEX-image for the initialization of the Boot ROM.
+//! @details This file is used by \e inferred ROM implementation.
+localparam CFG_BOOTROM_FILE =
                 {CFG_TOPDIR, "examples/bootrom_tests/linuxbuild/bin/bootrom_tests"};
-  //            {CFG_TOPDIR, "examples/boot/linuxbuild/bin/bootimage"};
-  localparam CFG_BOOTROM_FILE_HEX = {CFG_BOOTROM_FILE, ".hex"};
+//            {CFG_TOPDIR, "examples/boot/linuxbuild/bin/bootimage"};
+localparam CFG_BOOTROM_FILE_HEX = {CFG_BOOTROM_FILE, ".hex"};
 
 
-  /// @brief Hardware SoC Identificator.
-  ///
-  /// @details Read Only unique platform identificator that could be
-  ///          read by firmware from the Plug'n'Play support module.
-  localparam bit [31:0] CFG_HW_ID = 32'h20221101;
-
+// @brief Hardware SoC Identificator.
+//
+// @details Read Only unique platform identificator that could be
+//          read by firmware from the Plug'n'Play support module.
+localparam bit [31:0] CFG_HW_ID = 32'h20221101;
 
 endpackage: config_target_pkg

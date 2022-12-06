@@ -119,7 +119,13 @@ axi2apb #(
 Workgroup #(
     .async_reset(async_reset),
     .cpu_num(CFG_CPU_NUM),
-    .l2cache_ena(CFG_L2CACHE_ENA)
+    .ilog2_nways(CFG_ILOG2_NWAYS),
+    .ilog2_lines_per_way(CFG_ILOG2_LINES_PER_WAY),
+    .dlog2_nways(CFG_DLOG2_NWAYS),
+    .dlog2_lines_per_way(CFG_DLOG2_LINES_PER_WAY),
+    .l2cache_ena(CFG_L2CACHE_ENA),
+    .l2log2_nways(CFG_L2_LOG2_NWAYS),
+    .l2log2_lines_per_way(CFG_L2_LOG2_LINES_PER_WAY)
 ) group0 (
     .i_cores_nrst(w_sys_nrst),
     .i_dmi_nrst(w_dbg_nrst),
@@ -151,7 +157,7 @@ Workgroup #(
   //! @details Map address:
   //!          0x00000000_00010000..0x00000000_0001ffff (64 KB total upto 0x0100_0000 on FU740)
   axi4_rom #(
-    .abits(16),
+    .abits(CFG_BOOTROM_LOG2_SIZE),
     .async_reset(CFG_ASYNC_RESET),
     .filename(CFG_BOOTROM_FILE)
   ) boot0 (
@@ -170,7 +176,7 @@ Workgroup #(
   //!          0x00000000_08000000..0x00000000_081fffff (2MB on FU740)
   axi4_sram #(
     .async_reset(CFG_ASYNC_RESET),
-    .abits((10 + $clog2(2048)))        // 2 MB address
+    .abits(CFG_SRAM_LOG2_SIZE)
   ) sram0 (
     .clk(i_clk),
     .nrst(w_sys_nrst),

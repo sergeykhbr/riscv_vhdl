@@ -284,11 +284,13 @@ begin: comb_proc
                     v.fencestate = Fence_DataBarrier;
                 end else if (i_req_addr[1] == 1'b1) begin
                     // FENCE.I
+                    v_flushmmu = 1'b1;
                     v.fencestate = Fence_DataFlush;
                 end else if ((i_req_addr[2] == 1'b1)
                             && (~((r.tvm == 1'b1) && (r.mode[1] == 1'b0)))) begin
                     // FENCE.VMA: is illegal in S-mode when TVM bit=1
-                    v.fencestate = Fence_MMU;
+                    v_flushmmu = 1'b1;
+                    v.fencestate = Fence_End;
                 end else begin
                     // Illegal fence
                     v.state = State_Response;
@@ -411,7 +413,6 @@ begin: comb_proc
     end
     Fence_DataFlush: begin
         v_flushd = 1'b1;
-        v_flushmmu = 1'b1;
         if (i_m_memop_ready == 1'b1) begin
             v.fencestate = Fence_WaitDataFlushEnd;
         end
@@ -426,10 +427,6 @@ begin: comb_proc
         if (i_f_flush_ready == 1'b1) begin
             v.fencestate = Fence_End;
         end
-    end
-    Fence_MMU: begin
-        v_flushmmu = 1'b1;
-        v.fencestate = Fence_End;
     end
     Fence_End: begin
         v_flushpipeline = 1'b1;

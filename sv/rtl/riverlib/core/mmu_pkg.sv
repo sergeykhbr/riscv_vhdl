@@ -46,6 +46,7 @@ typedef struct {
     logic [63:0] req_wdata;
     logic [7:0] req_wstrb;
     logic [1:0] req_size;
+    logic req_flush;
     logic last_mmu_ena;
     logic [RISCV_ARCH-1:0] last_va;
     logic [51:0] last_pa;
@@ -74,6 +75,7 @@ const Mmu_registers Mmu_r_reset = '{
     '0,                                 // req_wdata
     '0,                                 // req_wstrb
     '0,                                 // req_size
+    1'b0,                               // req_flush
     1'b0,                               // last_mmu_ena
     '1,                                 // last_va
     '1,                                 // last_pa

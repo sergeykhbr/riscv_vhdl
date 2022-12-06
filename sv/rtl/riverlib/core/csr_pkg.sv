@@ -35,8 +35,7 @@ localparam bit [2:0] Fence_DataBarrier = 3'h1;
 localparam bit [2:0] Fence_DataFlush = 3'h2;
 localparam bit [2:0] Fence_WaitDataFlushEnd = 3'h3;
 localparam bit [2:0] Fence_FlushInstr = 3'h4;
-localparam bit [2:0] Fence_MMU = 3'h5;
-localparam bit [2:0] Fence_End = 3'h6;
+localparam bit [2:0] Fence_End = 3'h7;
 
 localparam bit [3:0] SATP_MODE_SV39 = 4'h8;                 // 39-bits Page mode
 localparam bit [3:0] SATP_MODE_SV48 = 4'h9;                 // 48-bits Page mode

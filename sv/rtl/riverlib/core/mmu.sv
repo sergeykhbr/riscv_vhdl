@@ -281,9 +281,10 @@ begin: comb_proc
             v.req_wstrb = i_core_req_wstrb;
             v.req_size = i_core_req_size;
         end
-        if ((|r.tlb_flush_cnt) == 1'b1) begin
-            v.state = FlushTlb;
+        if (r.req_flush == 1'b1) begin
+            v.req_flush = 1'b0;
             v.tlb_wdata = '0;
+            v.state = FlushTlb;
         end else if ((i_mmu_ena == 1'b0) || (v_va_ena == 1'b0)) begin// MMU disabled
             // Direct connection to Cache
             v_core_req_ready = i_mem_req_ready;
@@ -542,6 +543,7 @@ begin: comb_proc
 
     if (i_fence == 1'b1) begin
         // Clear whole table ignoring i_fence_addr
+        v.req_flush = 1'b1;
         v.tlb_flush_cnt = '1;
         v.tlb_flush_adr = '0;
     end
