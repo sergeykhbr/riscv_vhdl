@@ -6,7 +6,6 @@ ${RTL_HOME}/techmap/bufg/iobuf_tech.sv
 ${RTL_HOME}/techmap/bufg/obuf_tech.sv
 ${RTL_HOME}/techmap/mem/ram_cache_bwe_tech.sv
 ${RTL_HOME}/techmap/mem/ram_mmu_tech.sv
-${RTL_HOME}/techmap/mem/sram8_inferred_init.sv
 ${RTL_HOME}/techmap/mem/srambytes_tech.sv
 ${RTL_HOME}/techmap/mem/ram_inferred.sv
 ${RTL_HOME}/techmap/mem/ram_fpga_distr.sv
