@@ -99,6 +99,9 @@ endgenerate
 always_comb
 begin: comb_proc
     DbgPort_registers v;
+    logic v_stack_we;
+    logic [CFG_LOG2_STACK_TRACE_ADDR-1:0] vb_stack_waddr;
+    logic [(2 * RISCV_ARCH)-1:0] vb_stack_wdata;
     logic v_csr_req_valid;
     logic v_csr_resp_ready;
     logic [CsrReq_TotalBits-1:0] vb_csr_req_type;
@@ -115,6 +118,9 @@ begin: comb_proc
     logic [63:0] vrdata;
     logic [4:0] t_idx;
 
+    v_stack_we = 0;
+    vb_stack_waddr = 0;
+    vb_stack_wdata = 0;
     v_csr_req_valid = 0;
     v_csr_resp_ready = 0;
     vb_csr_req_type = 0;
@@ -138,9 +144,9 @@ begin: comb_proc
 
     if (CFG_LOG2_STACK_TRACE_ADDR != 0) begin
         if ((i_e_call == 1'b1) && (r.stack_trace_cnt != (STACK_TRACE_BUF_SIZE - 1))) begin
-            w_stack_we = 1'b1;
-            wb_stack_waddr = r.stack_trace_cnt;
-            wb_stack_wdata = {i_e_npc, i_e_pc};
+            v_stack_we = 1'b1;
+            vb_stack_waddr = r.stack_trace_cnt;
+            vb_stack_wdata = {i_e_npc, i_e_pc};
             v.stack_trace_cnt = (r.stack_trace_cnt + 1);
         end else if ((i_e_ret == 1'b1) && ((|r.stack_trace_cnt) == 1'b1)) begin
             v.stack_trace_cnt = (r.stack_trace_cnt - 1);
@@ -298,6 +304,10 @@ begin: comb_proc
     if (~async_reset && i_nrst == 1'b0) begin
         v = DbgPort_r_reset;
     end
+
+    w_stack_we = v_stack_we;
+    wb_stack_waddr = vb_stack_waddr;
+    wb_stack_wdata = vb_stack_wdata;
 
     o_csr_req_valid = v_csr_req_valid;
     o_csr_req_type = vb_csr_req_type;

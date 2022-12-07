@@ -74,6 +74,10 @@ SC_MODULE(riscv_soc) {
     static const int SOC_PNP_TOTAL = 12;
     
     static const int CFG_SOC_UART1_LOG2_FIFOSZ = 4;
+    // Example FU740: S7 Core0 (M) + 4xU74 Cores (M+S).
+    static const int CFG_PLIC_CONTEXT_TOTAL = 9;
+    // Any number up to 1024. Zero interrupt must be 0.
+    static const int CFG_PLIC_IRQ_TOTAL = 73;
 
     typedef sc_vector<sc_signal<dev_config_type>> soc_pnp_vector;
 

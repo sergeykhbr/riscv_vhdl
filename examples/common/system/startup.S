@@ -116,7 +116,7 @@ reset_vector:
 
   # Task stack pointer (tp) uses the same value as sp.
 #define SRAM_BASE_ADDR  0x08000000
-#define SRAM_SIZE_BYTES (1<<19)
+#define SRAM_SIZE_BYTES (1<<18)
 #define STACK_PER_CORE_BYTES 4096
 #define CFG_CPU_MAX 4
 

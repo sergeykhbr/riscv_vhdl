@@ -212,6 +212,9 @@ void DbgPort::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void DbgPort::comb() {
+    bool v_stack_we;
+    sc_uint<CFG_LOG2_STACK_TRACE_ADDR> vb_stack_waddr;
+    sc_biguint<(2 * RISCV_ARCH)> vb_stack_wdata;
     bool v_csr_req_valid;
     bool v_csr_resp_ready;
     sc_uint<CsrReq_TotalBits> vb_csr_req_type;
@@ -228,6 +231,9 @@ void DbgPort::comb() {
     sc_uint<64> vrdata;
     sc_uint<5> t_idx;
 
+    v_stack_we = 0;
+    vb_stack_waddr = 0;
+    vb_stack_wdata = 0;
     v_csr_req_valid = 0;
     v_csr_resp_ready = 0;
     vb_csr_req_type = 0;
@@ -251,9 +257,9 @@ void DbgPort::comb() {
 
     if (CFG_LOG2_STACK_TRACE_ADDR != 0) {
         if ((i_e_call.read() == 1) && (r.stack_trace_cnt.read() != (STACK_TRACE_BUF_SIZE - 1))) {
-            w_stack_we = 1;
-            wb_stack_waddr = r.stack_trace_cnt;
-            wb_stack_wdata = (i_e_npc.read(), i_e_pc.read());
+            v_stack_we = 1;
+            vb_stack_waddr = r.stack_trace_cnt;
+            vb_stack_wdata = (i_e_npc.read(), i_e_pc.read());
             v.stack_trace_cnt = (r.stack_trace_cnt.read() + 1);
         } else if ((i_e_ret.read() == 1) && (r.stack_trace_cnt.read().or_reduce() == 1)) {
             v.stack_trace_cnt = (r.stack_trace_cnt.read() - 1);
@@ -411,6 +417,10 @@ void DbgPort::comb() {
     if (!async_reset_ && i_nrst.read() == 0) {
         DbgPort_r_reset(v);
     }
+
+    w_stack_we = v_stack_we;
+    wb_stack_waddr = vb_stack_waddr;
+    wb_stack_wdata = vb_stack_wdata;
 
     o_csr_req_valid = v_csr_req_valid;
     o_csr_req_type = vb_csr_req_type;

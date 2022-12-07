@@ -242,8 +242,10 @@ void axi_slv::comb() {
             if (r.req_len.read().or_reduce() == 1) {
                 v.req_addr = (r.req_addr.read()((CFG_SYSBUS_ADDR_BITS - 1), 12), vb_req_addr_next);
                 v.req_len = (r.req_len.read() - 1);
+                v.state = State_addrdata_r;
+            } else {
+                v.state = State_data_r;
             }
-            v.state = State_addrdata_r;
         }
         break;
     case State_addrdata_r:

@@ -38,11 +38,13 @@ static const int CFG_L2CACHE_ENA = 1;
 static const int CFG_L2_LOG2_NWAYS = 4;
 static const int CFG_L2_LOG2_LINES_PER_WAY = 9;             // 7=16KB; 8=32KB; 9=64KB, ..
 
-// Number of context in PLIC controller.
-// Example FU740: S7 Core0 (M) + 4xU74 Cores (M+S).
-static const int CFG_PLIC_CONTEXT_TOTAL = 9;
-// Any number up to 1024. Zero interrupt must be 0.
-static const int CFG_PLIC_IRQ_TOTAL = 73;
+// Internal Boot ROM size:
+static const int CFG_BOOTROM_LOG2_SIZE = 16;                // 16=64 KB (default); 17=128KB; ..
+
+// Internal SRAM block:
+//     - Increase memory map if need > 2MB FU740
+//     - Change bootloader stack pointer if need less than 512 KB
+static const int CFG_SRAM_LOG2_SIZE = 21;                   // 19=512 KB (KC705); 21=2 MB (ASIC); ..
 
 }  // namespace debugger
 
