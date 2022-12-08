@@ -77,10 +77,51 @@ module kc705_top
   logic             w_pll_lock;
 
   // DDR3 signals:
-  logic w_ddr3_sys_clk_p;
-  logic w_ddr3_sys_clk_n;
-  logic w_ddr3_tg_compare_error;
-  logic w_ddr3_init_calib_complete;
+  logic [4:0] wb_soc_ddr_awid;
+  logic [47:0] wb_soc_ddr_awaddr;
+  logic [7:0] wb_soc_ddr_awlen;
+  logic [2:0] wb_soc_ddr_awsize;
+  logic [1:0] wb_soc_ddr_awburst;
+  logic w_soc_ddr_awlock;
+  logic [3:0] wb_soc_ddr_awcache;
+  logic [2:0] wb_soc_ddr_awprot;
+  logic [3:0] wb_soc_ddr_awqos;
+  logic w_ddr_awvalid;
+  logic w_soc_ddr_awready;
+  logic [63:0] wb_soc_ddr_wdata;
+  logic [7:0] wb_soc_ddr_wstrb;
+  logic w_soc_ddr_wlast;
+  logic w_soc_ddr_wvalid;
+  logic w_ddr_wready;
+  logic w_soc_ddr_bready;
+  logic [4:0] wb_ddr_bid;
+  logic [1:0] wb_ddr_bresp;
+  logic w_ddr_bvalid;
+  logic [4:0] wb_soc_ddr_arid;
+  logic [47:0] wb_soc_ddr_araddr;
+  logic [7:0] wb_soc_ddr_arlen;
+  logic [2:0] wb_soc_ddr_arsize;
+  logic [1:0] wb_soc_ddr_arburst;
+  logic w_soc_ddr_arlock;
+  logic [3:0] wb_soc_ddr_arcache;
+  logic [2:0] wb_soc_ddr_arprot;
+  logic [3:0] wb_soc_ddr_arqos;
+  logic w_soc_ddr_arvalid;
+  logic w_ddr_arready;
+  logic w_soc_ddr_rready;
+  logic [4:0] wb_ddr_rid;
+  logic [63:0] wb_ddr_rdata;
+  logic [1:0] wb_ddr_rresp;
+  logic w_ddr_rlast;
+  logic w_ddr_rvalid;
+  logic w_ddr_ui_clk;
+  logic w_ddr_ui_rst;
+  logic w_ddr_mmcm_locked;
+  logic w_ddr_init_calib_complete;
+  logic [11:0] wb_ddr_device_temp;
+  logic w_ddr_app_sr_active;
+  logic w_ddr_app_ref_ack;
+  logic w_ddr_app_zq_ack;
 
 
   ibuf_tech irst0(.o(ib_rst),.i(i_rst));
@@ -130,7 +171,124 @@ module kc705_top
     .o_jtag_vref(ob_jtag_vref),
     //! UART1 signals:
     .i_uart1_rd(ib_uart1_rd),
-    .o_uart1_td(ob_uart1_td)
+    .o_uart1_td(ob_uart1_td),
+    // DDR signal:
+    .o_ddr_awid(wb_soc_ddr_awid),
+    .o_ddr_awaddr(wb_soc_ddr_awaddr),
+    .o_ddr_awlen(wb_soc_ddr_awlen),
+    .o_ddr_awsize(wb_soc_ddr_awsize),
+    .o_ddr_awburst(wb_soc_ddr_awburst),
+    .o_ddr_awlock(w_soc_ddr_awlock),
+    .o_ddr_awcache(wb_soc_ddr_awcache),
+    .o_ddr_awprot(wb_soc_ddr_awprot),
+    .o_ddr_awqos(wb_soc_ddr_awqos),
+    .o_ddr_awvalid(w_ddr_awvalid),
+    .i_ddr_awready(w_soc_ddr_awready),
+    .o_ddr_wdata(wb_soc_ddr_wdata),
+    .o_ddr_wstrb(wb_soc_ddr_wstrb),
+    .o_ddr_wlast(w_soc_ddr_wlast),
+    .o_ddr_wvalid(w_soc_ddr_wvalid),
+    .i_ddr_wready(w_ddr_wready),
+    .o_ddr_bready(w_soc_ddr_bready),
+    .i_ddr_bid(wb_ddr_bid),
+    .i_ddr_bresp(wb_ddr_bresp),
+    .i_ddr_bvalid(w_ddr_bvalid),
+    .o_ddr_arid(wb_soc_ddr_arid),
+    .o_ddr_araddr(wb_soc_ddr_araddr),
+    .o_ddr_arlen(wb_soc_ddr_arlen),
+    .o_ddr_arsize(wb_soc_ddr_arsize),
+    .o_ddr_arburst(wb_soc_ddr_arburst),
+    .o_ddr_arlock(w_soc_ddr_arlock),
+    .o_ddr_arcache(wb_soc_ddr_arcache),
+    .o_ddr_arprot(wb_soc_ddr_arprot),
+    .o_ddr_arqos(wb_soc_ddr_arqos),
+    .o_ddr_arvalid(w_soc_ddr_arvalid),
+    .i_ddr_arready(w_ddr_arready),
+    .o_rready(w_soc_ddr_rready),
+    .i_ddr_rid(wb_ddr_rid),
+    .i_ddr_rdata(wb_ddr_rdata),
+    .i_ddr_rresp(wb_ddr_rresp),
+    .i_ddr_rlast(w_ddr_rlast),
+    .i_ddr_rvalid(w_ddr_rvalid),
+    .i_ddr_ui_clk(w_ddr_ui_clk),
+    .i_ddr_ui_rst(w_ddr_ui_rst),
+    .i_ddr_mmcm_locked(w_ddr_mmcm_locked),
+    .i_ddr_init_calib_complete(w_ddr_init_calib_complete),
+    .i_ddr_device_temp(wb_ddr_device_temp),
+    .i_ddr_app_sr_active(w_ddr_app_sr_active),
+    .i_ddr_app_ref_ack(w_ddr_app_ref_ack),
+    .i_ddr_app_zq_ack(w_ddr_app_zq_ack)
+  );
+
+
+   mig_ddr3 mig0 (
+    .ddr3_dq(io_ddr3_dq),
+    .ddr3_dqs_n(io_ddr3_dqs_n),
+    .ddr3_dqs_p(io_ddr3_dqs_p),
+    .ddr3_addr(o_ddr3_addr),
+    .ddr3_ba(o_ddr3_ba),
+    .ddr3_ras_n(o_ddr3_ras_n),
+    .ddr3_cas_n(o_ddr3_cas_n),
+    .ddr3_we_n(o_ddr3_we_n),
+    .ddr3_reset_n(o_ddr3_reset_n),
+    .ddr3_ck_p(o_ddr3_ck_p),
+    .ddr3_ck_n(o_ddr3_ck_n),
+    .ddr3_cke(o_ddr3_cke),
+    .ddr3_cs_n(o_ddr3_cs_n),
+    .ddr3_dm(o_ddr3_dm),
+    .ddr3_odt(o_ddr3_odt),
+    .sys_clk_p(i_sclk_p),
+    .sys_clk_n(i_sclk_n),
+    .ui_clk(w_ddr_ui_clk),
+    .ui_clk_sync_rst(w_ddr_ui_rst),
+    .mmcm_locked(w_ddr_mmcm_locked),
+    .aresetn(w_pll_lock),
+    .app_sr_req(1'b0),
+    .app_ref_req(1'b0),
+    .app_zq_req(1'b0),
+    .app_sr_active(w_ddr_app_sr_active),
+    .app_ref_ack(w_ddr_app_ref_ack),
+    .app_zq_ack(w_ddr_app_zq_ack),
+    .s_axi_awid(wb_soc_ddr_awid),
+    .s_axi_awaddr(wb_soc_ddr_awaddr[29:0]),
+    .s_axi_awlen(wb_soc_ddr_awlen),
+    .s_axi_awsize(wb_soc_ddr_awsize),
+    .s_axi_awburst(wb_soc_ddr_awburst),
+    .s_axi_awlock(w_soc_ddr_awlock),
+    .s_axi_awcache(wb_soc_ddr_awcache),
+    .s_axi_awprot(wb_soc_ddr_awprot),
+    .s_axi_awqos(wb_soc_ddr_awqos),
+    .s_axi_awvalid(w_ddr_awvalid),
+    .s_axi_awready(w_soc_ddr_awready),
+    .s_axi_wdata(wb_soc_ddr_wdata),
+    .s_axi_wstrb(wb_soc_ddr_wstrb),
+    .s_axi_wlast(w_soc_ddr_wlast),
+    .s_axi_wvalid(w_soc_ddr_wvalid),
+    .s_axi_wready(w_ddr_wready),
+    .s_axi_bready(w_soc_ddr_bready),
+    .s_axi_bid(wb_ddr_bid),
+    .s_axi_bresp(wb_ddr_bresp),
+    .s_axi_bvalid(w_ddr_bvalid),
+    .s_axi_arid(wb_soc_ddr_arid),
+    .s_axi_araddr(wb_soc_ddr_araddr[29:0]),
+    .s_axi_arlen(wb_soc_ddr_arlen),
+    .s_axi_arsize(wb_soc_ddr_arsize),
+    .s_axi_arburst(wb_soc_ddr_arburst),
+    .s_axi_arlock(w_soc_ddr_arlock),
+    .s_axi_arcache(wb_soc_ddr_arcache),
+    .s_axi_arprot(wb_soc_ddr_arprot),
+    .s_axi_arqos(wb_soc_ddr_arqos),
+    .s_axi_arvalid(w_soc_ddr_arvalid),
+    .s_axi_arready(w_ddr_arready),
+    .s_axi_rready(w_soc_ddr_rready),
+    .s_axi_rid(wb_ddr_rid),
+    .s_axi_rdata(wb_ddr_rdata),
+    .s_axi_rresp(wb_ddr_rresp),
+    .s_axi_rlast(w_ddr_rlast),
+    .s_axi_rvalid(w_ddr_rvalid),
+    .init_calib_complete(w_ddr_init_calib_complete),
+    .device_temp(wb_ddr_device_temp),
+    .sys_rst(w_pll_lock)  // active LOW
   );
 
   

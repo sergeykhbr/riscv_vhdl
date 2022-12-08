@@ -34,7 +34,53 @@ module riscv_soc (
   output            o_jtag_vref,
   //! UART1 signals:
   input             i_uart1_rd,
-  output            o_uart1_td
+  output            o_uart1_td,
+  // DDR signal:
+  output [4:0] o_ddr_awid,
+  output [47:0] o_ddr_awaddr,
+  output [7:0] o_ddr_awlen,
+  output [2:0] o_ddr_awsize,
+  output [1:0] o_ddr_awburst,
+  output o_ddr_awlock,
+  output [3:0] o_ddr_awcache,
+  output [2:0] o_ddr_awprot,
+  output [3:0] o_ddr_awqos,
+  output o_ddr_awvalid,
+  input i_ddr_awready,
+  output [63:0] o_ddr_wdata,
+  output [7:0] o_ddr_wstrb,
+  output o_ddr_wlast,
+  output o_ddr_wvalid,
+  input i_ddr_wready,
+  output o_ddr_bready,
+  input [4:0] i_ddr_bid,
+  input [1:0] i_ddr_bresp,
+  input i_ddr_bvalid,
+  output [4:0] o_ddr_arid,
+  output [47:0] o_ddr_araddr,
+  output [7:0] o_ddr_arlen,
+  output [2:0] o_ddr_arsize,
+  output [1:0] o_ddr_arburst,
+  output o_ddr_arlock,
+  output [3:0] o_ddr_arcache,
+  output [2:0] o_ddr_arprot,
+  output [3:0] o_ddr_arqos,
+  output o_ddr_arvalid,
+  input i_ddr_arready,
+  output o_rready,
+  input [4:0] i_ddr_rid,
+  input [63:0] i_ddr_rdata,
+  input [1:0] i_ddr_rresp,
+  input i_ddr_rlast,
+  input i_ddr_rvalid,
+  input i_ddr_ui_clk,
+  input i_ddr_ui_rst,
+  input i_ddr_mmcm_locked,
+  input i_ddr_init_calib_complete,
+  input [11:0] i_ddr_device_temp,
+  input i_ddr_app_sr_active,
+  input i_ddr_app_ref_ack,
+  input i_ddr_app_zq_ack
 );
 
 import config_target_pkg::*;
@@ -336,5 +382,33 @@ begin: comb_proc
 
 end: comb_proc
 assign o_jtag_vref = 1'b1;
+
+
+assign o_ddr_awid = 0;
+assign o_ddr_awaddr = 0;
+assign o_ddr_awlen = 0;
+assign o_ddr_awsize = 0;
+assign o_ddr_awburst = 0;
+assign o_ddr_awlock = 0;
+assign o_ddr_awcache = 0;
+assign o_ddr_awprot = 0;
+assign o_ddr_awqos = 0;
+assign o_ddr_awvalid = 0;
+assign o_ddr_wdata = 0;
+assign o_ddr_wstrb = 0;
+assign o_ddr_wlast = 0;
+assign o_ddr_wvalid = 0;
+assign o_ddr_bready = 0;
+assign o_ddr_arid = 0;
+assign o_ddr_araddr = 0;
+assign o_ddr_arlen = 0;
+assign o_ddr_arsize = 0;
+assign o_ddr_arburst = 0;
+assign o_ddr_arlock = 0;
+assign o_ddr_arcache = 0;
+assign o_ddr_arprot = 0;
+assign o_ddr_arqos = 0;
+assign o_ddr_arvalid = 0;
+assign o_rready = 0;
 
 endmodule

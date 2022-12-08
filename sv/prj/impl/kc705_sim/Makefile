@@ -48,6 +48,7 @@ comp: prep clr_logs
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/ambalib.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/riverlib.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/techmap.f
+	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/techmap_ddr_kc705.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/misclib.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/riscv_soc.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ../kc705/kc705_top.f
@@ -77,6 +78,7 @@ mce_flow: prep clr_logs
 	-f ${LISTS_HOME}/ambalib.f \
 	-f ${LISTS_HOME}/riverlib.f \
 	-f ${LISTS_HOME}/techmap.f \
+	-f ${LISTS_HOME}/techmap_ddr_kc705.f \
 	-f ${LISTS_HOME}/misclib.f \
 	-f ${LISTS_HOME}/riscv_soc.f \
 	-f ../kc705/kc705_top.f \
