@@ -9,5 +9,6 @@ ${COMMON_HOME}/unisims/OBUF.v
 ${COMMON_HOME}/unisims/PLLE2_ADV.v
 ${VIPS_HOME}/uart/sim_uart_rx.sv
 ${VIPS_HOME}/uart/sim_uart_receiver.v
+${VIPS_HOME}/ddr3/ddr3_model.sv
 ${IMPL_ROOT}/kc705_sim/kc705_top_tb.sv
 

@@ -32,7 +32,23 @@ module kc705_top
     output                    o_jtag_vref,
     //! UART1 signals:
     input                     i_uart1_rd,
-    output                    o_uart1_td
+    output                    o_uart1_td,
+    // DDR3 signals:
+    output o_ddr3_reset_n,
+    output [0:0] o_ddr3_ck_n,
+    output [0:0] o_ddr3_ck_p,
+    output [0:0] o_ddr3_cke,
+    output [0:0] o_ddr3_cs_n,
+    output o_ddr3_ras_n,
+    output o_ddr3_cas_n,
+    output o_ddr3_we_n,
+    output [7:0] o_ddr3_dm,
+    output [2:0] o_ddr3_ba,
+    output [13:0] o_ddr3_addr,
+    inout [63:0] io_ddr3_dq,
+    inout [7:0] io_ddr3_dqs_n,
+    inout [7:0] io_ddr3_dqs_p,
+    output [0:0] o_ddr3_odt
 );
 
   logic             ib_rst;
@@ -59,6 +75,13 @@ module kc705_top
   logic             w_bus_nrst;
   logic             w_clk_bus;
   logic             w_pll_lock;
+
+  // DDR3 signals:
+  logic w_ddr3_sys_clk_p;
+  logic w_ddr3_sys_clk_n;
+  logic w_ddr3_tg_compare_error;
+  logic w_ddr3_init_calib_complete;
+
 
   ibuf_tech irst0(.o(ib_rst),.i(i_rst));
   
