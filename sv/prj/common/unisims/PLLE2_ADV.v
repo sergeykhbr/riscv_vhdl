@@ -2096,63 +2096,64 @@ module PLLE2_ADV #(
 
   always @(clkfb_frac_en or clkfbm1_f_div or  clkfbm1_div)
     if (clkfb_frac_en)
-        clkfbm1_div_t = clkfbm1_f_div;
+      clkfbm1_div_t = clkfbm1_f_div;
     else
-        clkfbm1_div_t = clkfbm1_div;
+      clkfbm1_div_t = clkfbm1_div;
 
   always @(period_avg or clkind_div or clkfbm1_div_t or clkinstopped_hold
-            or period_avg_stp or posedge rst_clkinstopped_rc)
-  if (period_avg > 0 ) begin
-    md_product = clkind_div * clkfbm1_div_t;
-    m_product = clkfbm1_div_t;
-    m_product2 = clkfbm1_div_t / 2;
-    period_fb = period_avg * clkind_div;
-    period_vco_tmp = period_fb / clkfbm1_div_t;
-    clkvco_pdrm =  (period_avg * clkind_div / clkfbm1_div_t) - period_vco_tmp;
-    period_vco_mf = period_avg * 8;
-    if (clkinstopped_hold == 1) begin
-      if (clkin_hold_f)
-        period_vco = (20000 * period_vco_tmp) / (20000 - period_vco_tmp);
+           or period_avg_stp or posedge rst_clkinstopped_rc)
+    if (period_avg > 0 ) begin
+      md_product = clkind_div * clkfbm1_div_t;
+      m_product = clkfbm1_div_t;
+      m_product2 = clkfbm1_div_t / 2;
+      period_fb = period_avg * clkind_div;
+      period_vco_tmp = $rtoi((period_fb*1.0) / clkfbm1_div_t);
+      
+      clkvco_pdrm =  (period_avg * clkind_div / clkfbm1_div_t) - period_vco_tmp;
+      period_vco_mf = period_avg * 8;
+      if (clkinstopped_hold == 1) begin
+        if (clkin_hold_f)
+          period_vco = (20000 * period_vco_tmp) / (20000 - period_vco_tmp);
+        else
+          period_vco = period_avg_stp * clkind_div /clkfbm1_div_t;
+      end
       else
-        period_vco = period_avg_stp * clkind_div /clkfbm1_div_t;
-    end
-    else
         period_vco = period_vco_tmp;
-    clkfbm1_div_t_int = $rtoi(clkfbm1_div_t);
-    period_vco_rm = period_fb % clkfbm1_div_t_int;
-    if (period_vco_rm > 1) begin
-      if (period_vco_rm > m_product2)  begin
-          period_vco_cmp_cnt = m_product / (m_product - period_vco_rm) - 1;
-          period_vco_cmp_flag = 2;
-      end
+        clkfbm1_div_t_int = $rtoi(clkfbm1_div_t);
+        period_vco_rm = period_fb % clkfbm1_div_t_int;
+        if (period_vco_rm > 1) begin
+          if (period_vco_rm > m_product2)  begin
+            period_vco_cmp_cnt = m_product / (m_product - period_vco_rm) - 1;
+            period_vco_cmp_flag = 2;
+          end
+          else begin
+            period_vco_cmp_cnt = (m_product / period_vco_rm) - 1;
+            period_vco_cmp_flag = 1;
+          end
+        end
       else begin
-         period_vco_cmp_cnt = (m_product / period_vco_rm) - 1;
-         period_vco_cmp_flag = 1;
+        period_vco_cmp_cnt = 0;
+        period_vco_cmp_flag = 0;
       end
-    end
-    else begin
-      period_vco_cmp_cnt = 0;
-      period_vco_cmp_flag = 0;
-    end
-    period_vco_half = period_vco /2;
-    period_vco_half_rm = period_vco - period_vco_half;
-    period_vco_half_rm1 = period_vco_half_rm + 1;
+      period_vco_half = period_vco /2;
+      period_vco_half_rm = period_vco - period_vco_half;
+      period_vco_half_rm1 = period_vco_half_rm + 1;
       period_vco_half_rm2 = period_vco_half_rm - 1;
-    period_vco_half1 = period_vco - period_vco_half + 1;
-    pll_locked_delay = period_fb * clkfbm1_div_t;
-    clkin_dly_t =  period_avg * (clkind_div + 1.25);
-    clkfb_dly_t = period_fb * 2.25 ;
-    period_vco1 = period_vco / 8;
-    period_vco2 = period_vco / 4;
-    period_vco3 = period_vco * 3/ 8;
-    period_vco4 = period_vco / 2;
-    period_vco5 = period_vco * 5 / 8;
-    period_vco6 = period_vco *3 / 4;
-    period_vco7 = period_vco * 7 / 8;
-    clk0_frac_ht = period_vco * clkout0_dly + (period_vco * clk0pm_sel_int) / 8;
-    clk0_frac_lt = period_vco * clkout5_dly + (period_vco * clk5pm_sel) / 8;
-    clkfb_frac_ht = period_vco * clkfbm1_dly + (period_vco * clkfbm1pm_sel_int) / 8;
-    clkfb_frac_lt = period_vco * clkout6_dly + (period_vco * clk6pm_sel) / 8;
+      period_vco_half1 = period_vco - period_vco_half + 1;
+      pll_locked_delay = period_fb * clkfbm1_div_t;
+      clkin_dly_t =  period_avg * (clkind_div + 1.25);
+      clkfb_dly_t = period_fb * 2.25 ;
+      period_vco1 = period_vco / 8;
+      period_vco2 = period_vco / 4;
+      period_vco3 = period_vco * 3/ 8;
+      period_vco4 = period_vco / 2;
+      period_vco5 = period_vco * 5 / 8;
+      period_vco6 = period_vco *3 / 4;
+      period_vco7 = period_vco * 7 / 8;
+      clk0_frac_ht = period_vco * clkout0_dly + (period_vco * clk0pm_sel_int) / 8;
+      clk0_frac_lt = period_vco * clkout5_dly + (period_vco * clk5pm_sel) / 8;
+      clkfb_frac_ht = period_vco * clkfbm1_dly + (period_vco * clkfbm1pm_sel_int) / 8;
+      clkfb_frac_lt = period_vco * clkout6_dly + (period_vco * clk6pm_sel) / 8;
   end
 
   always @(period_vco or ps_in_ps)
@@ -2309,17 +2310,17 @@ module PLLE2_ADV #(
         clkvco_lk_tmp <= 1;
         clkvco_rm_cnt = 0;
         clkout_en_t <= 0;
-  vcoflag = 0;
+        vcoflag = 0;
         if ( period_vco_cmp_flag == 1)  begin
           vcoflag = 1;
           for (ik2=1; ik2 < m_product; ik2=ik2+1) begin
                clkout_en_t <= ik2;
                #(period_vco_half) clkvco_lk_tmp <= 0;
                if ( clkvco_rm_cnt == 1)
-//                   #(period_vco_half1) clkvco_lk_tmp <= 1;
-                   #(period_vco_half_rm1) clkvco_lk_tmp <= 1;
+                 //  #(period_vco_half1) clkvco_lk_tmp <= 1;
+                 #(period_vco_half_rm1) clkvco_lk_tmp <= 1;
                else
-                   #(period_vco_half_rm) clkvco_lk_tmp <= 1;
+                 #(period_vco_half_rm) clkvco_lk_tmp <= 1;
 
                if ( clkvco_rm_cnt == period_vco_cmp_cnt)
                   clkvco_rm_cnt <= 0;

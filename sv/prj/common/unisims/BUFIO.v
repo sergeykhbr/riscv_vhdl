@@ -1,13 +1,13 @@
 ///////////////////////////////////////////////////////////////////////////////
-//  Copyright (c) 1995/2017 Xilinx, Inc.
+//  Copyright (c) 1995/2018 Xilinx, Inc.
 //  All Right Reserved.
 ///////////////////////////////////////////////////////////////////////////////
 //   ____  ____
 //  /   /\/   /
 // /___/  \  /     Vendor      : Xilinx
-// \   \   \/      Version     : 2018.1
+// \   \   \/      Version     : 2018.3
 //  \   \          Description : Xilinx Unified Simulation Library Component
-//  /   /                        General Clock Buffer with Clock Enable
+//  /   /                        Local Clock Buffer for I/O
 // /___/   /\      Filename    : BUFIO.v
 // \   \  /  \
 //  \___\/\___\
@@ -39,8 +39,6 @@ module BUFIO
 // define constants
   localparam MODULE_NAME = "BUFIO";
 
-  tri0 glblGSR = glbl.GSR;
-
 `ifdef XIL_TIMING
   reg notifier;
 `endif
@@ -61,6 +59,7 @@ module BUFIO
   endspecify
 `endif
 `endif
+
 endmodule
 
 `endcelldefine

@@ -6,7 +6,7 @@
 //  /   /\/   /
 // /___/  \  /    Vendor : Xilinx
 // \   \   \/     Version : 2015.4
-//  \   \         Description : Xilinx Formal Library Component
+//  \   \         Description : Xilinx Unified Simulation Library Component
 //  /   /                       Latch used as 2-input OR Gate
 // /___/   /\     Filename : OR2L.v
 // \   \  /  \
@@ -16,8 +16,9 @@
 // Revision:
 //    02/26/08 - Initial version.
 //    04/01/08 - Add GSR
+//    02/19/09 - 509139 - Order port name
 //    12/13/11 - 524859 - Added `celldefine and `endcelldefine
-//    08/30/13 - 683925 - add invertible pin support XEC.
+//    04/16/13 - 683925 - add invertible pin support.
 // End Revision
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -37,11 +38,25 @@ module OR2L #(
   input SRI
 );
   
+    tri0 GSR = glbl.GSR;
+
     wire SRI_in;
 
     assign SRI_in = IS_SRI_INVERTED ^ SRI;
 
-    assign O = DI || SRI_in;
+    assign O = ~GSR && (DI || SRI_in);
+
+`ifdef XIL_TIMING
+  reg notifier;
+
+  specify
+  (DI => O) = (0:0:0, 0:0:0);
+  (SRI => O) = (0:0:0, 0:0:0);
+    $width (negedge SRI, 0:0:0, 0, notifier);
+    $width (posedge SRI, 0:0:0, 0, notifier);
+    specparam PATHPULSE$ = 0;
+  endspecify
+`endif
 
 endmodule
 `endcelldefine

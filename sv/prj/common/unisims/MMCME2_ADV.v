@@ -2775,7 +2775,7 @@ end
     else
     clkvco_frac_en = 0;
     period_fb = period_avg * divclk_div;
-    period_vco_tmp = period_fb / clkfbout_f_div;
+    period_vco_tmp =  $rtoi((period_fb*1.0) / clkfbout_f_div);
     period_vco_rl = 1.0 * period_fb / clkfbout_f_div;
     period_vco_rl_half = period_vco_rl / 2.0;
     clkvco_pdrm =  (period_avg * divclk_div / clkfbout_f_div) - period_vco_tmp;
