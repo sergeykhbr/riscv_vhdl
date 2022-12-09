@@ -104,10 +104,8 @@ bus0_xmst_out_vector aximo;
 bus0_xslv_in_vector axisi;
 bus0_xslv_out_vector axiso;
 bus1_mapinfo_vector bus1_mapinfo;
-bus1_pmst_in_vector apbmi;
-bus1_pmst_out_vector apbmo;
-bus1_pslv_in_vector apbsi;
-bus1_pslv_out_vector apbso;
+bus1_apb_in_vector apbi;
+bus1_apb_out_vector apbo;
 soc_pnp_vector dev_pnp;
 logic [63:0] wb_clint_mtimer;
 logic [CFG_CPU_MAX-1:0] wb_clint_msip;
@@ -157,8 +155,9 @@ axi2apb #(
     .o_cfg(dev_pnp[SOC_PNP_PBRIDGE0]),
     .i_xslvi(axisi[CFG_BUS0_XSLV_PBRIDGE]),
     .o_xslvo(axiso[CFG_BUS0_XSLV_PBRIDGE]),
-    .i_apbmi(apbmi[CFG_BUS1_PMST_PARENT]),
-    .o_apbmo(apbmo[CFG_BUS1_PMST_PARENT])
+    .i_apbo(apbo),
+    .o_apbi(apbi),
+    .o_mapinfo(bus1_mapinfo)
 );
 
 
@@ -193,8 +192,8 @@ Workgroup #(
     .o_msto(aximo[CFG_BUS0_XMST_GROUP0]),
     .i_dmi_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_DMI]),
     .o_dmi_cfg(dev_pnp[SOC_PNP_DMI]),
-    .i_dmi_apbi(apbsi[CFG_BUS1_PSLV_DMI]),
-    .o_dmi_apbo(apbso[CFG_BUS1_PSLV_DMI]),
+    .i_dmi_apbi(apbi[CFG_BUS1_PSLV_DMI]),
+    .o_dmi_apbo(apbo[CFG_BUS1_PSLV_DMI]),
     .o_dmreset(w_dmreset)
 );
 
@@ -281,8 +280,8 @@ apb_uart #(
     .i_nrst(w_sys_nrst),
     .i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_UART1]),
     .o_cfg(dev_pnp[SOC_PNP_UART1]),
-    .i_apbi(apbsi[CFG_BUS1_PSLV_UART1]),
-    .o_apbo(apbso[CFG_BUS1_PSLV_UART1]),
+    .i_apbi(apbi[CFG_BUS1_PSLV_UART1]),
+    .o_apbo(apbo[CFG_BUS1_PSLV_UART1]),
     .i_rd(i_uart1_rd),
     .o_td(o_uart1_td),
     .o_irq(w_irq_uart1)
@@ -375,11 +374,6 @@ begin: comb_proc
     // Nullify emty AXI-slots:
     aximo[CFG_BUS0_XMST_DMA] = axi4_master_out_none;
     acpo = axi4_master_out_none;
-    // TODO: APB interconnect
-    apbsi[CFG_BUS1_PSLV_DMI] = apb_in_none;
-    apbsi[CFG_BUS1_PSLV_UART1] = apbmo[CFG_BUS1_PMST_PARENT];
-    apbmi[CFG_BUS1_PMST_PARENT] = apbso[CFG_BUS1_PSLV_UART1];
-
 end: comb_proc
 assign o_jtag_vref = 1'b1;
 

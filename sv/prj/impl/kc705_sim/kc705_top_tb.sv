@@ -27,10 +27,12 @@ module kc705_top_tb;
     localparam DDR3_CS_WIDTH              = 1;
     localparam DDR3_MEMORY_WIDTH          = 8;
     localparam DDR3_DQ_WIDTH              = 64;
+    localparam DDR3_DQS_WIDTH             = 8;
     localparam DDR3_NUM_COMP              = DDR3_DQ_WIDTH/DDR3_MEMORY_WIDTH;
 
     //! Input reset. Active HIGH.
     logic i_rst;
+    logic sys_rst_n;
     //! Differential clock (LVDS) positive/negaive signal.
     wire i_sclk_p;
     wire i_sclk_n;
@@ -64,6 +66,11 @@ module kc705_top_tb;
     wire [7:0] io_ddr3_dqs_p;
     wire [7:0] io_ddr3_dqs_n;
     wire [0:0] o_ddr3_odt;
+    wire o_ddr3_init_calib_complete;
+    // delayed
+    wire [DDR3_DQ_WIDTH-1:0]  wb_ddr3_dq_sdram;
+    wire [DDR3_DQS_WIDTH-1:0] wb_ddr3_dqs_p_sdram;
+    wire [DDR3_DQS_WIDTH-1:0] wb_ddr3_dqs_n_sdram;
 
 
     logic clk;
@@ -104,6 +111,7 @@ module kc705_top_tb;
     end
     clk_cnt <= clk_cnt + 1;
   end
+  assign sys_rst_n = ~i_rst;
 
   kc705_top tt(
     .i_rst (i_rst),
@@ -135,7 +143,8 @@ module kc705_top_tb;
     .io_ddr3_dq(io_ddr3_dq),
     .io_ddr3_dqs_p(io_ddr3_dqs_p),
     .io_ddr3_dqs_n(io_ddr3_dqs_n),
-    .o_ddr3_odt(o_ddr3_odt)
+    .o_ddr3_odt(o_ddr3_odt),
+    .o_ddr3_init_calib_complete(o_ddr3_init_calib_complete)
   );
 
   // Global signals for Xilinx unisim modules:
@@ -152,6 +161,63 @@ module kc705_top_tb;
     .rst_n   (~i_rst),
     .clk_in  (1'b0)
   );
+
+
+  //===========================================================================
+  // DDR3 env. simulation:
+  //===========================================================================
+  genvar dqwd;
+  generate
+    for (dqwd = 1; dqwd < DDR3_DQ_WIDTH; dqwd = dqwd+1) begin : dq_delay
+      WireDelay # (
+        .Delay_g    (0.00),
+        .Delay_rd   (0.00),
+        .ERR_INSERT ("OFF")
+       ) u_delay_dq (
+        .A             (io_ddr3_dq[dqwd]),
+        .B             (wb_ddr3_dq_sdram[dqwd]),
+        .reset         (sys_rst_n),
+        .phy_init_done (o_ddr3_init_calib_complete)
+       );
+    end
+    WireDelay # (
+      .Delay_g    (0.00),
+      .Delay_rd   (0.00),
+      .ERR_INSERT ("OFF")
+    ) u_delay_dq_0 (
+      .A             (io_ddr3_dq[0]),
+      .B             (wb_ddr3_dq_sdram[0]),
+      .reset         (sys_rst_n),
+      .phy_init_done (o_ddr3_init_calib_complete)
+    );
+  endgenerate
+
+  genvar dqswd;
+  generate
+    for (dqswd = 0; dqswd < DDR3_DQS_WIDTH; dqswd = dqswd+1) begin : dqs_delay
+      WireDelay # (
+        .Delay_g    (0.00),
+        .Delay_rd   (0.00),
+        .ERR_INSERT ("OFF")
+       ) u_delay_dqs_p (
+        .A             (io_ddr3_dqs_p[dqswd]),
+        .B             (wb_ddr3_dqs_p_sdram[dqswd]),
+        .reset         (sys_rst_n),
+        .phy_init_done (o_ddr3_init_calib_complete)
+       );
+
+      WireDelay # (
+        .Delay_g    (0.00),
+        .Delay_rd   (0.00),
+        .ERR_INSERT ("OFF")
+      ) u_delay_dqs_n (
+        .A             (io_ddr3_dqs_n[dqswd]),
+        .B             (wb_ddr3_dqs_n_sdram[dqswd]),
+        .reset         (sys_rst_n),
+        .phy_init_done (o_ddr3_init_calib_complete)
+       );
+    end
+  endgenerate
 
   genvar r,i;
   generate
@@ -170,9 +236,9 @@ module kc705_top_tb;
            .dm_tdqs (o_ddr3_dm[i]),
            .ba      (o_ddr3_ba), //[r]), // mirror_ca is disabled
            .addr    (o_ddr3_addr), //[r]), // mirror_ca is disabled
-           .dq      (io_ddr3_dq[DDR3_MEMORY_WIDTH*(i+1)-1:DDR3_MEMORY_WIDTH*(i)]),
-           .dqs     (io_ddr3_dqs_p[i]),
-           .dqs_n   (io_ddr3_dqs_n[i]),
+           .dq      (wb_ddr3_dq_sdram[DDR3_MEMORY_WIDTH*(i+1)-1:DDR3_MEMORY_WIDTH*(i)]),
+           .dqs     (wb_ddr3_dqs_p_sdram[i]),
+           .dqs_n   (wb_ddr3_dqs_n_sdram[i]),
            .tdqs_n  (),
            .odt     (o_ddr3_odt[((i*DDR3_MEMORY_WIDTH)/72)+(1*r)])
            );

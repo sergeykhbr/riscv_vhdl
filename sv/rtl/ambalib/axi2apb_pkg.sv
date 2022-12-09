@@ -16,6 +16,7 @@
 package axi2apb_pkg;
 
 import types_amba_pkg::*;
+import types_bus1_pkg::*;
 
 localparam bit [1:0] State_Idle = 2'h0;
 localparam bit [1:0] State_setup = 2'h1;
@@ -24,6 +25,7 @@ localparam bit [1:0] State_out = 2'h3;
 
 typedef struct {
     logic [2:0] state;
+    logic [1:0] selidx;
     logic pvalid;
     logic [31:0] paddr;
     logic [CFG_SYSBUS_DATA_BITS-1:0] pwdata;
@@ -39,6 +41,7 @@ typedef struct {
 
 const axi2apb_registers axi2apb_r_reset = '{
     State_Idle,                         // state
+    '0,                                 // selidx
     1'b0,                               // pvalid
     '0,                                 // paddr
     '0,                                 // pwdata

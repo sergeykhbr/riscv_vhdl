@@ -48,7 +48,8 @@ module kc705_top
     inout [63:0] io_ddr3_dq,
     inout [7:0] io_ddr3_dqs_n,
     inout [7:0] io_ddr3_dqs_p,
-    output [0:0] o_ddr3_odt
+    output [0:0] o_ddr3_odt,
+    output o_ddr3_init_calib_complete
 );
 
   logic             ib_rst;
@@ -154,6 +155,7 @@ module kc705_top
   );  
 
   assign w_ext_reset = ib_rst | ~w_pll_lock;
+  assign o_ddr3_init_calib_complete = w_ddr_init_calib_complete;
   
   riscv_soc soc0(
     .i_rst (w_ext_reset),

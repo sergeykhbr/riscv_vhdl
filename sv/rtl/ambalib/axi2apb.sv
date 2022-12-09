@@ -26,11 +26,13 @@ module axi2apb #(
     output types_amba_pkg::dev_config_type o_cfg,           // Slave config descriptor
     input types_amba_pkg::axi4_slave_in_type i_xslvi,       // AXI4 Interconnect Bridge interface
     output types_amba_pkg::axi4_slave_out_type o_xslvo,     // AXI4 Bridge to Interconnect interface
-    input types_amba_pkg::apb_out_type i_apbmi,             // APB Slave to Bridge master-in/slave-out interface
-    output types_amba_pkg::apb_in_type o_apbmo              // APB Bridge to master-out/slave-in interface
+    input types_bus1_pkg::bus1_apb_out_vector i_apbo,       // APB slaves output vector
+    output types_bus1_pkg::bus1_apb_in_vector o_apbi,       // APB slaves input vector
+    output types_bus1_pkg::bus1_mapinfo_vector o_mapinfo    // APB devices memory mapping information
 );
 
 import types_amba_pkg::*;
+import types_bus1_pkg::*;
 import axi2apb_pkg::*;
 
 logic w_req_valid;
@@ -69,12 +71,24 @@ axi_slv #(
 always_comb
 begin: comb_proc
     axi2apb_registers v;
-    apb_in_type vapbmo;
+    apb_in_type vapbi[0: CFG_BUS1_PSLV_TOTAL-1];
+    apb_out_type vapbo[0: (CFG_BUS1_PSLV_TOTAL + 1)-1];
 
-    vapbmo = apb_in_none;
-
+    for (int i = 0; i < CFG_BUS1_PSLV_TOTAL; i++) begin
+        vapbi[i] = apb_in_none;
+    end
+    for (int i = 0; i < (CFG_BUS1_PSLV_TOTAL + 1); i++) begin
+        vapbo[i] = apb_out_none;
+    end
     v = r;
 
+    for (int i = 0; i < CFG_BUS1_PSLV_TOTAL; i++) begin
+        vapbo[i] = i_apbo[i];                               // Cannot read vector item from port in systemc
+    end
+    // Unmapped default slave:
+    vapbo[CFG_BUS1_PSLV_TOTAL].pready = 1'h1;
+    vapbo[CFG_BUS1_PSLV_TOTAL].pslverr = 1'h1;
+    vapbo[CFG_BUS1_PSLV_TOTAL].prdata = '1;
     w_req_ready = 1'b0;
     v.pvalid = 1'b0;
 
@@ -85,6 +99,13 @@ begin: comb_proc
         v.penable = 1'b0;
         v.pselx = 1'b0;
         v.xsize = '0;
+        v.selidx = CFG_BUS1_PSLV_TOTAL;
+        for (int i = 0; i < CFG_BUS1_PSLV_TOTAL; i++) begin
+            if ((wb_req_addr >= CFG_BUS1_MAP[i].addr_start)
+                    && (wb_req_addr < CFG_BUS1_MAP[i].addr_end)) begin
+                v.selidx = i;
+            end
+        end
         if (w_req_valid == 1'b1) begin
             v.pwrite = w_req_write;
             v.pselx = 1'b1;
@@ -107,15 +128,15 @@ begin: comb_proc
         v.state = State_access;
     end
     State_access: begin
-        v.pslverr = i_apbmi.pslverr;
-        if (i_apbmi.pready == 1'b1) begin
+        v.pslverr = vapbo[r.selidx].pslverr;
+        if (vapbo[r.selidx].pready == 1'b1) begin
             v.penable = 1'b0;
             v.pselx = 1'b0;
             v.pwrite = 1'b0;
             if (r.paddr[2] == 1'b0) begin
-                v.prdata = {r.prdata[63: 32], i_apbmi.prdata};
+                v.prdata = {r.prdata[63: 32], vapbo[r.selidx].prdata};
             end else begin
-                v.prdata = {i_apbmi.prdata, r.prdata[31: 0]};
+                v.prdata = {vapbo[r.selidx].prdata, vapbo[r.selidx].prdata[31: 0]};
             end
             if ((|r.xsize) == 1'b1) begin
                 v.xsize = (r.xsize - 1);
@@ -136,24 +157,27 @@ begin: comb_proc
     end
     endcase
 
-    vapbmo.paddr = r.paddr;
-    vapbmo.pwrite = r.pwrite;
+    vapbi[r.selidx].paddr = r.paddr;
+    vapbi[r.selidx].pwrite = r.pwrite;
     if (r.paddr[2] == 1'b0) begin
-        vapbmo.pwdata = r.pwdata[31: 0];
-        vapbmo.pstrb = r.pstrb[3: 0];
+        vapbi[r.selidx].pwdata = r.pwdata[31: 0];
+        vapbi[r.selidx].pstrb = r.pstrb[3: 0];
     end else begin
-        vapbmo.pwdata = r.pwdata[63: 32];
-        vapbmo.pstrb = r.pstrb[7: 4];
+        vapbi[r.selidx].pwdata = r.pwdata[63: 32];
+        vapbi[r.selidx].pstrb = r.pstrb[7: 4];
     end
-    vapbmo.pselx = r.pselx;
-    vapbmo.penable = r.penable;
-    vapbmo.pprot = r.pprot;
+    vapbi[r.selidx].pselx = r.pselx;
+    vapbi[r.selidx].penable = r.penable;
+    vapbi[r.selidx].pprot = r.pprot;
 
     if (~async_reset && i_nrst == 1'b0) begin
         v = axi2apb_r_reset;
     end
 
-    o_apbmo = vapbmo;
+    for (int i = 0; i < CFG_BUS1_PSLV_TOTAL; i++) begin
+        o_apbi[i] = vapbi[i];
+        o_mapinfo[i] = CFG_BUS1_MAP[i];
+    end
 
     rin = v;
 end: comb_proc

@@ -29,19 +29,8 @@ localparam int CFG_BUS1_PSLV_UART1 = 1;
 // Total number of the APB slaves devices on Bus[1].
 localparam int CFG_BUS1_PSLV_TOTAL = 2;
 
-// @defgroup master_id_group APB masters generic IDs.
-// @details Each master must be assigned to a specific ID that used
-//          as an index in the vector array of APB master bus.
-// 
-// Bus[0] master interface
-localparam int CFG_BUS1_PMST_PARENT = 0;
-// Total Number of master devices that have access to APB Bus[1].
-localparam int CFG_BUS1_PMST_TOTAL = 1;
-
-typedef apb_in_type bus1_pslv_in_vector[0:CFG_BUS1_PSLV_TOTAL - 1];
-typedef apb_out_type bus1_pslv_out_vector[0:CFG_BUS1_PSLV_TOTAL - 1];
-typedef apb_out_type bus1_pmst_in_vector[0:CFG_BUS1_PMST_TOTAL - 1];
-typedef apb_in_type bus1_pmst_out_vector[0:CFG_BUS1_PMST_TOTAL - 1];
+typedef apb_in_type bus1_apb_in_vector[0:CFG_BUS1_PSLV_TOTAL - 1];
+typedef apb_out_type bus1_apb_out_vector[0:CFG_BUS1_PSLV_TOTAL - 1];
 typedef mapinfo_type bus1_mapinfo_vector[0:CFG_BUS1_PSLV_TOTAL - 1];
 
 // Bus 1 device tree

@@ -40,6 +40,7 @@ ${COMMON_HOME}/unisims/AND2B1L.v
 ${COMMON_HOME}/unisims/OR2L.v
 ${VIPS_HOME}/uart/sim_uart_rx.sv
 ${VIPS_HOME}/uart/sim_uart_receiver.v
+${VIPS_HOME}/ddr3/wiredly.v
 ${VIPS_HOME}/ddr3/ddr3_model.sv
 ${IMPL_ROOT}/kc705_sim/kc705_top_tb.sv
 
