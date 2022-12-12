@@ -24,7 +24,7 @@ GLOBAL_DEFINE+=+define+TARGET_KC705
 #================================================================================================
 
 #SRUN=@srun --pty -c 12 --exclude=node-b01,node-b02
-SRUN=@srun --pty -c 8
+SRUN=@srun --pty -c 4
 
 prep:
 	@mkdir -p work
