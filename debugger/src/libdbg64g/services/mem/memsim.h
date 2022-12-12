@@ -32,6 +32,8 @@ class MemorySim : public MemoryGeneric {
     static const int SYMB_IN_LINE = 16/2;
     bool chishex(int s);
     uint8_t chtohex(int s);
+    int readHexFile(const char *filename, uint8_t *buf, int bufsz);
+    int readBinFile(const char *filename, uint8_t *buf, int bufsz);
 
  private:
     AttributeType initFile_;

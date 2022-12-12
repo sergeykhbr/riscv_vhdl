@@ -46,59 +46,83 @@ void MemorySim::postinitService() {
         filename = spath + std::string(initFile_.to_string());
     }
 
-    FILE *fp = fopen(initFile_.to_string(), "r");
-    if (fp == NULL) {
-        for (uint64_t i = 0; i < length_.to_uint64()/4; i++) {
-            // NOP isntruction
-            reinterpret_cast<uint32_t *>(mem_)[i] = 0x00000013;  // intialize by NOPs
+    if (binaryFile_.to_bool()) {
+        readBinFile(initFile_.to_string(), mem_, length_.to_int());
+    } else if (strstr(initFile_.to_string(), ".hex")) {
+        readHexFile(initFile_.to_string(), mem_, length_.to_int());
+    } else {
+        uint8_t *tbuf = new uint8_t[length_.to_int()];
+        std::string lo = std::string(initFile_.to_string()) + "_lo.hex";
+        std::string hi = std::string(initFile_.to_string()) + "_hi.hex";
+        int sz = readHexFile(lo.c_str(), tbuf, length_.to_int());
+        readHexFile(hi.c_str(), &tbuf[sz], length_.to_int() - sz);
+
+        // Swap 32-bits words
+        uint32_t *lsb = reinterpret_cast<uint32_t *>(tbuf);
+        uint32_t *msb = reinterpret_cast<uint32_t *>(&tbuf[sz]);
+        uint32_t *dst = reinterpret_cast<uint32_t *>(mem_);
+        uint32_t t1;
+        for (int i = 0; i < sz/sizeof(uint32_t); i++) {
+            *dst++ = *lsb++;
+            *dst++ = *msb++;
         }
-        RISCV_error("Can't open '%s' file", initFile_.to_string());
-        return;
+        delete [] tbuf;
+    }
+}
+
+int MemorySim::readHexFile(const char *filename, uint8_t *buf, int bufsz) {
+    int ret = 0;
+    int rd_symb;
+    int linecnt = 0;
+    uint64_t lineval = 0;
+
+    FILE *fp = fopen(filename, "r");
+    if (fp == NULL) {
+        RISCV_error("Can't open '%s' file", filename);
+        return ret;
     }
 
-    if (binaryFile_.to_bool()) {
-        fseek(fp, 0, SEEK_END);
-        uint64_t fsz = ftell(fp);
-        if (fsz > length_.to_uint64()) {
-            fsz = length_.to_uint64();
+    while (!feof(fp)) {
+        rd_symb = fgetc(fp);
+        if (chishex(rd_symb)) {
+            lineval <<= 4;
+            lineval |=  chtohex(rd_symb);
+            linecnt++;
+            continue;
         }
-        fseek(fp, 0, SEEK_SET);
-        fread(mem_, 1, static_cast<size_t>(fsz), fp);
-    } else {
-        bool bhalf = false;
-        int rd_symb;
-        uint8_t symb;
-        int linecnt = 0;
-        int symbinline = SYMB_IN_LINE - 1;
-        while (!feof(fp)) {
-            rd_symb = fgetc(fp);
-            if (!chishex(rd_symb))
-                continue;
 
-            if (!bhalf) {
-                bhalf = true;
-                symb = chtohex(rd_symb) << 4;
-                continue;
-            } 
+        if ((ret + linecnt/2) > bufsz) {
+            RISCV_error("HEX file tries to write out "
+                        "of allocated array\n", NULL);
+            break;
+        } 
 
-            bhalf = false;
-            symb |= chtohex(rd_symb) & 0xf;
-
-            if ((SYMB_IN_LINE * linecnt + symbinline) >= 
-                        static_cast<int>(length_.to_uint64())) {
-                RISCV_error("HEX file tries to write out "
-                            "of allocated array\n", NULL);
-                break;
-            } 
-
-            mem_[SYMB_IN_LINE * linecnt + symbinline] = symb;
-            if (--symbinline < 0) {
-                linecnt++;
-                symbinline = SYMB_IN_LINE - 1;
-            }
-        }
+        memcpy(&buf[ret], &lineval, linecnt/2);
+        ret += linecnt/2;
+        linecnt = 0;
+        lineval = 0;
     }
     fclose(fp);
+    return ret;
+}
+
+int MemorySim::readBinFile(const char *filename, uint8_t *buf, int bufsz) {
+    int ret = 0;
+    FILE *fp = fopen(filename, "r");
+    if (fp == NULL) {
+        RISCV_error("Can't open '%s' file", filename);
+        return ret;
+    }
+    fseek(fp, 0, SEEK_END);
+    uint64_t fsz = ftell(fp);
+    if (fsz > bufsz) {
+        RISCV_error("File '%s' was trimmed", filename);
+        fsz = bufsz;
+    }
+    fseek(fp, 0, SEEK_SET);
+    ret = fread(mem_, 1, static_cast<size_t>(fsz), fp);
+    fclose(fp);
+    return ret;
 }
 
 bool MemorySim::chishex(int s) {
