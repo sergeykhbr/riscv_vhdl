@@ -41,7 +41,7 @@ localparam int CFG_BOOTROM_LOG2_SIZE = 16;                  // 16=64 KB (default
 // Internal SRAM block:
 //     - Increase memory map if need > 2MB FU740
 //     - Change bootloader stack pointer if need less than 512 KB
-localparam int CFG_SRAM_LOG2_SIZE = 19;                     // 19=512 KB (KC705); 21=2 MB (ASIC); ..
+localparam int CFG_SRAM_LOG2_SIZE = 18;                     // 19=512 KB (KC705); 21=2 MB (ASIC); ..
 
 
 localparam CFG_TOPDIR = "../../../../";
