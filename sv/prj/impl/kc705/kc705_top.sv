@@ -48,10 +48,10 @@ module kc705_top
     inout [63:0] io_ddr3_dq,
     inout [7:0] io_ddr3_dqs_n,
     inout [7:0] io_ddr3_dqs_p,
-    output [0:0] o_ddr3_odt,
-    output o_ddr3_init_calib_complete
+    output [0:0] o_ddr3_odt
 );
 
+  logic             o_ddr3_init_calib_complete;
   logic             ib_rst;
   logic             ib_clk_tcxo;
   logic             ib_sclk_n;  
@@ -86,17 +86,21 @@ module kc705_top
   logic w_soc_ddr_awlock;
   logic [3:0] wb_soc_ddr_awcache;
   logic [2:0] wb_soc_ddr_awprot;
+  logic [3:0] wb_soc_ddr_awregion;
   logic [3:0] wb_soc_ddr_awqos;
+  logic [0:0] w_soc_ddr_awuser;
   logic w_ddr_awvalid;
   logic w_soc_ddr_awready;
   logic [63:0] wb_soc_ddr_wdata;
   logic [7:0] wb_soc_ddr_wstrb;
+  logic [0:0] w_soc_ddr_wuser;
   logic w_soc_ddr_wlast;
   logic w_soc_ddr_wvalid;
   logic w_ddr_wready;
   logic w_soc_ddr_bready;
   logic [4:0] wb_ddr_bid;
   logic [1:0] wb_ddr_bresp;
+  logic [0:0] w_soc_ddr_buser;
   logic w_ddr_bvalid;
   logic [4:0] wb_soc_ddr_arid;
   logic [47:0] wb_soc_ddr_araddr;
@@ -106,13 +110,16 @@ module kc705_top
   logic w_soc_ddr_arlock;
   logic [3:0] wb_soc_ddr_arcache;
   logic [2:0] wb_soc_ddr_arprot;
+  logic [3:0] wb_soc_ddr_arregion;
   logic [3:0] wb_soc_ddr_arqos;
+  logic [0:0] w_soc_ddr_aruser;
   logic w_soc_ddr_arvalid;
   logic w_ddr_arready;
   logic w_soc_ddr_rready;
   logic [4:0] wb_ddr_rid;
   logic [63:0] wb_ddr_rdata;
   logic [1:0] wb_ddr_rresp;
+  logic [0:0] w_soc_ddr_ruser;
   logic w_ddr_rlast;
   logic w_ddr_rvalid;
   logic w_ddr_ui_clk;
@@ -183,17 +190,21 @@ module kc705_top
     .o_ddr_awlock(w_soc_ddr_awlock),
     .o_ddr_awcache(wb_soc_ddr_awcache),
     .o_ddr_awprot(wb_soc_ddr_awprot),
+    .o_ddr_awregion(wb_soc_ddr_awregion),
     .o_ddr_awqos(wb_soc_ddr_awqos),
+    .o_ddr_awuser(w_soc_ddr_awuser),
     .o_ddr_awvalid(w_ddr_awvalid),
     .i_ddr_awready(w_soc_ddr_awready),
     .o_ddr_wdata(wb_soc_ddr_wdata),
     .o_ddr_wstrb(wb_soc_ddr_wstrb),
+    .o_ddr_wuser(w_soc_ddr_wuser),
     .o_ddr_wlast(w_soc_ddr_wlast),
     .o_ddr_wvalid(w_soc_ddr_wvalid),
     .i_ddr_wready(w_ddr_wready),
     .o_ddr_bready(w_soc_ddr_bready),
     .i_ddr_bid(wb_ddr_bid),
     .i_ddr_bresp(wb_ddr_bresp),
+    .i_ddr_buser(w_ddr_buser),
     .i_ddr_bvalid(w_ddr_bvalid),
     .o_ddr_arid(wb_soc_ddr_arid),
     .o_ddr_araddr(wb_soc_ddr_araddr),
@@ -203,13 +214,16 @@ module kc705_top
     .o_ddr_arlock(w_soc_ddr_arlock),
     .o_ddr_arcache(wb_soc_ddr_arcache),
     .o_ddr_arprot(wb_soc_ddr_arprot),
+    .o_ddr_arregion(wb_soc_ddr_arregion),
     .o_ddr_arqos(wb_soc_ddr_arqos),
+    .o_ddr_aruser(w_soc_ddr_aruser),
     .o_ddr_arvalid(w_soc_ddr_arvalid),
     .i_ddr_arready(w_ddr_arready),
-    .o_rready(w_soc_ddr_rready),
+    .o_ddr_rready(w_soc_ddr_rready),
     .i_ddr_rid(wb_ddr_rid),
     .i_ddr_rdata(wb_ddr_rdata),
     .i_ddr_rresp(wb_ddr_rresp),
+    .i_ddr_ruser(w_ddr_ruser),
     .i_ddr_rlast(w_ddr_rlast),
     .i_ddr_rvalid(w_ddr_rvalid),
     .i_ddr_ui_clk(w_ddr_ui_clk),
@@ -221,7 +235,8 @@ module kc705_top
     .i_ddr_app_ref_ack(w_ddr_app_ref_ack),
     .i_ddr_app_zq_ack(w_ddr_app_zq_ack)
   );
-
+  assign w_ddr_ruser = '0;
+  assign w_ddr_buser = '0;
 
    mig_ddr3 mig0 (
     .ddr3_dq(io_ddr3_dq),

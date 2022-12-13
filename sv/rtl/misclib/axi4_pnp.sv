@@ -13,6 +13,7 @@ module axi4_pnp #(
 
   input sys_clk,
   input nrst,
+  input ddr_init_done,  // temporary while not moved into System Control Registers 
   input types_amba_pkg::mapinfo_type i_mapinfo,
   input types_amba_pkg::dev_config_type i_cfg[0:cfg_slots-1],
   output types_amba_pkg::dev_config_type o_cfg,
@@ -110,7 +111,7 @@ always_comb
             end
         end
     end else if (wb_req_addr[11:3] == 9'd1) begin
-        vrdata = {32'd0,
+        vrdata = {31'd0, ddr_init_done,
                   cpu_max[3:0],
                   3'd0,    // reserved
                   l2cache_ena,

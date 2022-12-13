@@ -28,7 +28,7 @@ void test_l2coherence(void) {
     uint32_t cohtestcnt = 0;
     uint32_t mod40;
 
-    pnp->fwdbg1 = &cohtestcnt;     // shared variable in local stack
+    pnp->fwdbg1 = (uint64_t)&cohtestcnt;     // shared variable in local stack
     pnp->fwdbg2 = fw_get_cpuid();  // to debug in RTL and see CPU index
 
     printf_uart("%s", "L2.Coherence . .");

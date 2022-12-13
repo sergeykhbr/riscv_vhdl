@@ -19,6 +19,8 @@
 #include "encoding.h"
 #include "fw_api.h"
 
+void isr_uart0_tx();
+
 void allocate_exception_table(void);
 void allocate_interrupt_table(void);
 void test_l2coherence(void);
@@ -124,6 +126,34 @@ int main() {
 
     // TODO: implement test console
     while (1) {
+        // Check DDR init done
+        if (pnp->rsrv1 & 1) {
+             uint64_t *ddr = (uint64_t *)0x80000000ull;
+             printf_uart("DDR Init . .%s\r\n", "DONE");
+             ddr[0] = 0x1122334455667788ull;
+             ddr[1] = 0xffeeddccbbaa9988ull;
+             ddr[1*1024*1024] = 0xabcdabcdaabbccddull;
+             ddr[2*1024*1024] = 0xabcdabcdaabbccddull;
+             ddr[3*1024*1024] = 0xabcdabcdaabbccddull;
+             ddr[4*1024*1024] = 0xabcdabcdaabbccddull;
+             ddr[5*1024*1024] = 0xabcdabcdaabbccddull;
+             ddr[6*1024*1024] = 0xabcdabcdaabbccddull;
+             ddr[7*1024*1024] = 0xabcdabcdaabbccddull;
+             ddr[8*1024*1024] = 0xabcdabcdaabbccddull;
+             ddr[9*1024*1024] = 0xabcdabcdaabbccddull;
+             ddr[10*1024*1024] = 0xabcdabcdaabbccddull;
+             ddr[11*1024*1024] = 0xabcdabcdaabbccddull;
+             ddr[12*1024*1024] = 0xabcdabcdaabbccddull;
+             ddr[13*1024*1024] = 0xabcdabcdaabbccddull;
+             ddr[14*1024*1024] = 0xabcdabcdaabbccddull;
+             ddr[15*1024*1024] = 0xabcdabcdaabbccddull;
+             ddr[16*1024*1024] = 0xabcdabcdaabbccddull;
+             ddr[17*1024*1024] = 0xabcdabcdaabbccddull;
+             printf_uart("DDR[0] . .0x%016xll\r\n", ddr[0]);
+             printf_uart("DDR[1] . .0x%016xll\r\n", ddr[1]);
+             printf_uart("DDR[1MB] . .0x%016xll\r\n", ddr[1024*1024]);
+        }
+
         // temporary put it here, while PLIC not fully ready
         isr_uart0_tx();
     }

@@ -228,7 +228,7 @@ int test_mmu()
     satp = read_csr(0x180);
     if (get_field(satp, SATP_MODE) != vms->mode) {
         printf_uart("%s", "FAIL,SATP_MODE\r\n");
-        return;
+        return -1;
     }
 
     setup_pmp();
@@ -243,21 +243,22 @@ int test_mmu()
     virtual[1] = 0x55667788;
     if (!(virtual[0] == 0xdeadbeef)) {
         printf_uart("%s", "FAIL2\r\n");
-        return;
+        return -2;
     }
     if (!(physical[0] == 0xdeadbeef)) {
         printf_uart("%s", "FAIL3\r\n");
-        return;
+        return -3;
     }
     if (!(virtual[1] == 0x55667788)) {
         printf_uart("%s", "FAIL4\r\n");
-        return;
+        return -4;
     }
     if (!(physical[1] == 0x55667788)) {
         printf_uart("%s", "FAIL5\r\n");
-        return;
+        return -5;
     }
 
     clear_csr(mstatus, MSTATUS_MPRV);
     printf_uart("%s", "PASS\r\n");
+    return 0;
 }
