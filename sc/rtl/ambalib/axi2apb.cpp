@@ -28,8 +28,9 @@ axi2apb::axi2apb(sc_module_name name,
     o_cfg("o_cfg"),
     i_xslvi("i_xslvi"),
     o_xslvo("o_xslvo"),
-    i_apbmi("i_apbmi"),
-    o_apbmo("o_apbmo") {
+    i_apbo("i_apbo", CFG_BUS1_PSLV_TOTAL),
+    o_apbi("o_apbi", CFG_BUS1_PSLV_TOTAL),
+    o_mapinfo("o_mapinfo", CFG_BUS1_PSLV_TOTAL) {
 
     async_reset_ = async_reset;
     axi0 = 0;
@@ -58,7 +59,9 @@ axi2apb::axi2apb(sc_module_name name,
     sensitive << i_nrst;
     sensitive << i_mapinfo;
     sensitive << i_xslvi;
-    sensitive << i_apbmi;
+    for (int i = 0; i < CFG_BUS1_PSLV_TOTAL; i++) {
+        sensitive << i_apbo[i];
+    }
     sensitive << w_req_valid;
     sensitive << wb_req_addr;
     sensitive << w_req_write;
@@ -67,6 +70,7 @@ axi2apb::axi2apb(sc_module_name name,
     sensitive << w_req_last;
     sensitive << w_req_ready;
     sensitive << r.state;
+    sensitive << r.selidx;
     sensitive << r.pvalid;
     sensitive << r.paddr;
     sensitive << r.pwdata;
@@ -97,9 +101,8 @@ void axi2apb::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_cfg, o_cfg.name());
         sc_trace(o_vcd, i_xslvi, i_xslvi.name());
         sc_trace(o_vcd, o_xslvo, o_xslvo.name());
-        sc_trace(o_vcd, i_apbmi, i_apbmi.name());
-        sc_trace(o_vcd, o_apbmo, o_apbmo.name());
         sc_trace(o_vcd, r.state, pn + ".r_state");
+        sc_trace(o_vcd, r.selidx, pn + ".r_selidx");
         sc_trace(o_vcd, r.pvalid, pn + ".r_pvalid");
         sc_trace(o_vcd, r.paddr, pn + ".r_paddr");
         sc_trace(o_vcd, r.pwdata, pn + ".r_pwdata");
@@ -119,12 +122,24 @@ void axi2apb::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void axi2apb::comb() {
-    apb_in_type vapbmo;
+    apb_in_type vapbi[CFG_BUS1_PSLV_TOTAL];
+    apb_out_type vapbo[(CFG_BUS1_PSLV_TOTAL + 1)];
 
-    vapbmo = apb_in_none;
-
+    for (int i = 0; i < CFG_BUS1_PSLV_TOTAL; i++) {
+        vapbi[i] = apb_in_none;
+    }
+    for (int i = 0; i < (CFG_BUS1_PSLV_TOTAL + 1); i++) {
+        vapbo[i] = apb_out_none;
+    }
     v = r;
 
+    for (int i = 0; i < CFG_BUS1_PSLV_TOTAL; i++) {
+        vapbo[i] = i_apbo[i];                               // Cannot read vector item from port in systemc
+    }
+    // Unmapped default slave:
+    vapbo[CFG_BUS1_PSLV_TOTAL].pready = 1;
+    vapbo[CFG_BUS1_PSLV_TOTAL].pslverr = 1;
+    vapbo[CFG_BUS1_PSLV_TOTAL].prdata = ~0ull;
     w_req_ready = 0;
     v.pvalid = 0;
 
@@ -135,6 +150,13 @@ void axi2apb::comb() {
         v.penable = 0;
         v.pselx = 0;
         v.xsize = 0;
+        v.selidx = CFG_BUS1_PSLV_TOTAL;
+        for (int i = 0; i < CFG_BUS1_PSLV_TOTAL; i++) {
+            if ((wb_req_addr.read() >= CFG_BUS1_MAP[i].addr_start)
+                    && (wb_req_addr.read() < CFG_BUS1_MAP[i].addr_end)) {
+                v.selidx = i;
+            }
+        }
         if (w_req_valid.read() == 1) {
             v.pwrite = w_req_write;
             v.pselx = 1;
@@ -157,15 +179,15 @@ void axi2apb::comb() {
         v.state = State_access;
         break;
     case State_access:
-        v.pslverr = i_apbmi.read().pslverr;
-        if (i_apbmi.read().pready == 1) {
+        v.pslverr = vapbo[r.selidx].pslverr;
+        if (vapbo[r.selidx].pready == 1) {
             v.penable = 0;
             v.pselx = 0;
             v.pwrite = 0;
             if (r.paddr.read()[2] == 0) {
-                v.prdata = (r.prdata.read()(63, 32), i_apbmi.read().prdata);
+                v.prdata = (r.prdata.read()(63, 32), vapbo[r.selidx].prdata);
             } else {
-                v.prdata = (i_apbmi.read().prdata, r.prdata.read()(31, 0));
+                v.prdata = (vapbo[r.selidx].prdata, vapbo[r.selidx].prdata(31, 0));
             }
             if (r.xsize.read().or_reduce() == 1) {
                 v.xsize = (r.xsize.read() - 1);
@@ -186,24 +208,27 @@ void axi2apb::comb() {
         break;
     }
 
-    vapbmo.paddr = r.paddr;
-    vapbmo.pwrite = r.pwrite;
+    vapbi[r.selidx].paddr = r.paddr;
+    vapbi[r.selidx].pwrite = r.pwrite;
     if (r.paddr.read()[2] == 0) {
-        vapbmo.pwdata = r.pwdata.read()(31, 0);
-        vapbmo.pstrb = r.pstrb.read()(3, 0);
+        vapbi[r.selidx].pwdata = r.pwdata.read()(31, 0);
+        vapbi[r.selidx].pstrb = r.pstrb.read()(3, 0);
     } else {
-        vapbmo.pwdata = r.pwdata.read()(63, 32);
-        vapbmo.pstrb = r.pstrb.read()(7, 4);
+        vapbi[r.selidx].pwdata = r.pwdata.read()(63, 32);
+        vapbi[r.selidx].pstrb = r.pstrb.read()(7, 4);
     }
-    vapbmo.pselx = r.pselx;
-    vapbmo.penable = r.penable;
-    vapbmo.pprot = r.pprot;
+    vapbi[r.selidx].pselx = r.pselx;
+    vapbi[r.selidx].penable = r.penable;
+    vapbi[r.selidx].pprot = r.pprot;
 
     if (!async_reset_ && i_nrst.read() == 0) {
         axi2apb_r_reset(v);
     }
 
-    o_apbmo = vapbmo;
+    for (int i = 0; i < CFG_BUS1_PSLV_TOTAL; i++) {
+        o_apbi[i] = vapbi[i];
+        o_mapinfo[i] = CFG_BUS1_MAP[i];
+    }
 }
 
 void axi2apb::registers() {

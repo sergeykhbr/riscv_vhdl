@@ -92,10 +92,8 @@ SC_MODULE(riscv_soc) {
     bus0_xslv_in_vector axisi;
     bus0_xslv_out_vector axiso;
     bus1_mapinfo_vector bus1_mapinfo;
-    bus1_pmst_in_vector apbmi;
-    bus1_pmst_out_vector apbmo;
-    bus1_pslv_in_vector apbsi;
-    bus1_pslv_out_vector apbso;
+    bus1_apb_in_vector apbi;
+    bus1_apb_out_vector apbo;
     soc_pnp_vector dev_pnp;
     sc_signal<sc_uint<64>> wb_clint_mtimer;
     sc_signal<sc_uint<CFG_CPU_MAX>> wb_clint_msip;

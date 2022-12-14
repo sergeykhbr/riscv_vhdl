@@ -212,6 +212,7 @@ void DbgPort::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void DbgPort::comb() {
+    sc_uint<CFG_LOG2_STACK_TRACE_ADDR> vb_stack_raddr;
     bool v_stack_we;
     sc_uint<CFG_LOG2_STACK_TRACE_ADDR> vb_stack_waddr;
     sc_biguint<(2 * RISCV_ARCH)> vb_stack_wdata;
@@ -231,6 +232,7 @@ void DbgPort::comb() {
     sc_uint<64> vrdata;
     sc_uint<5> t_idx;
 
+    vb_stack_raddr = 0;
     v_stack_we = 0;
     vb_stack_waddr = 0;
     vb_stack_wdata = 0;
@@ -344,7 +346,7 @@ void DbgPort::comb() {
         v.dstate = wait_to_accept;
         break;
     case reg_stktr_buf_adr:
-        wb_stack_raddr = r.dport_addr.read()(CFG_LOG2_STACK_TRACE_ADDR, 1);
+        vb_stack_raddr = r.dport_addr.read()(CFG_LOG2_STACK_TRACE_ADDR, 1);
         v.dstate = reg_stktr_buf_dat;
         break;
     case reg_stktr_buf_dat:
@@ -418,6 +420,7 @@ void DbgPort::comb() {
         DbgPort_r_reset(v);
     }
 
+    wb_stack_raddr = vb_stack_raddr;
     w_stack_we = v_stack_we;
     wb_stack_waddr = vb_stack_waddr;
     wb_stack_wdata = vb_stack_wdata;

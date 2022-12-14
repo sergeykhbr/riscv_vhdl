@@ -17,6 +17,7 @@
 
 #include <systemc.h>
 #include "types_amba.h"
+#include "types_bus1.h"
 #include "axi_slv.h"
 
 namespace debugger {
@@ -29,8 +30,9 @@ SC_MODULE(axi2apb) {
     sc_out<dev_config_type> o_cfg;                          // Slave config descriptor
     sc_in<axi4_slave_in_type> i_xslvi;                      // AXI4 Interconnect Bridge interface
     sc_out<axi4_slave_out_type> o_xslvo;                    // AXI4 Bridge to Interconnect interface
-    sc_in<apb_out_type> i_apbmi;                            // APB Slave to Bridge master-in/slave-out interface
-    sc_out<apb_in_type> o_apbmo;                            // APB Bridge to master-out/slave-in interface
+    sc_vector<sc_in<apb_out_type>> i_apbo;                  // APB slaves output vector
+    sc_vector<sc_out<apb_in_type>> o_apbi;                  // APB slaves input vector
+    sc_vector<sc_out<mapinfo_type>> o_mapinfo;              // APB devices memory mapping information
 
     void comb();
     void registers();
@@ -53,6 +55,7 @@ SC_MODULE(axi2apb) {
 
     struct axi2apb_registers {
         sc_signal<sc_uint<3>> state;
+        sc_signal<sc_uint<2>> selidx;
         sc_signal<bool> pvalid;
         sc_signal<sc_uint<32>> paddr;
         sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> pwdata;
@@ -68,6 +71,7 @@ SC_MODULE(axi2apb) {
 
     void axi2apb_r_reset(axi2apb_registers &iv) {
         iv.state = State_Idle;
+        iv.selidx = 0;
         iv.pvalid = 0;
         iv.paddr = 0;
         iv.pwdata = 0ull;

@@ -99,6 +99,7 @@ endgenerate
 always_comb
 begin: comb_proc
     DbgPort_registers v;
+    logic [CFG_LOG2_STACK_TRACE_ADDR-1:0] vb_stack_raddr;
     logic v_stack_we;
     logic [CFG_LOG2_STACK_TRACE_ADDR-1:0] vb_stack_waddr;
     logic [(2 * RISCV_ARCH)-1:0] vb_stack_wdata;
@@ -118,6 +119,7 @@ begin: comb_proc
     logic [63:0] vrdata;
     logic [4:0] t_idx;
 
+    vb_stack_raddr = 0;
     v_stack_we = 0;
     vb_stack_waddr = 0;
     vb_stack_wdata = 0;
@@ -231,7 +233,7 @@ begin: comb_proc
         v.dstate = wait_to_accept;
     end
     reg_stktr_buf_adr: begin
-        wb_stack_raddr = r.dport_addr[CFG_LOG2_STACK_TRACE_ADDR: 1];
+        vb_stack_raddr = r.dport_addr[CFG_LOG2_STACK_TRACE_ADDR: 1];
         v.dstate = reg_stktr_buf_dat;
     end
     reg_stktr_buf_dat: begin
@@ -305,6 +307,7 @@ begin: comb_proc
         v = DbgPort_r_reset;
     end
 
+    wb_stack_raddr = vb_stack_raddr;
     w_stack_we = v_stack_we;
     wb_stack_waddr = vb_stack_waddr;
     wb_stack_wdata = vb_stack_wdata;

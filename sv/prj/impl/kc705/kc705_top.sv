@@ -48,10 +48,10 @@ module kc705_top
     inout [63:0] io_ddr3_dq,
     inout [7:0] io_ddr3_dqs_n,
     inout [7:0] io_ddr3_dqs_p,
-    output [0:0] o_ddr3_odt
+    output [0:0] o_ddr3_odt,
+    output o_ddr3_init_calib_complete
 );
 
-  logic             o_ddr3_init_calib_complete;
   logic             ib_rst;
   logic             ib_clk_tcxo;
   logic             ib_sclk_n;  

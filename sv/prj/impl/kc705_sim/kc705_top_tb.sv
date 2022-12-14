@@ -66,6 +66,7 @@ module kc705_top_tb;
     wire [7:0] io_ddr3_dqs_p;
     wire [7:0] io_ddr3_dqs_n;
     wire [0:0] o_ddr3_odt;
+    wire o_ddr3_init_calib_complete;
     // delayed
     wire [DDR3_DQ_WIDTH-1:0]  wb_ddr3_dq_sdram;
     wire [DDR3_DQS_WIDTH-1:0] wb_ddr3_dqs_p_sdram;
@@ -142,7 +143,8 @@ module kc705_top_tb;
     .io_ddr3_dq(io_ddr3_dq),
     .io_ddr3_dqs_p(io_ddr3_dqs_p),
     .io_ddr3_dqs_n(io_ddr3_dqs_n),
-    .o_ddr3_odt(o_ddr3_odt)
+    .o_ddr3_odt(o_ddr3_odt),
+    .o_ddr3_init_calib_complete(o_ddr3_init_calib_complete)
   );
 
   // Global signals for Xilinx unisim modules:
@@ -167,57 +169,53 @@ module kc705_top_tb;
   genvar dqwd;
   generate
     for (dqwd = 1; dqwd < DDR3_DQ_WIDTH; dqwd = dqwd+1) begin : dq_delay
-//      WireDelay # (
-//        .Delay_g    (0.00),
-//        .Delay_rd   (0.00),
-//        .ERR_INSERT ("OFF")
-//       ) u_delay_dq (
-//        .A             (io_ddr3_dq[dqwd]),
-//        .B             (wb_ddr3_dq_sdram[dqwd]),
-//        .reset         (sys_rst_n),
-//        .phy_init_done (o_ddr3_init_calib_complete)
-//       );
-      assign wb_ddr3_dq_sdram[dqwd] = io_ddr3_dq[dqwd];
+      WireDelay # (
+        .Delay_g    (0.00),
+        .Delay_rd   (0.00),
+        .ERR_INSERT ("OFF")
+       ) u_delay_dq (
+        .A             (io_ddr3_dq[dqwd]),
+        .B             (wb_ddr3_dq_sdram[dqwd]),
+        .reset         (sys_rst_n),
+        .phy_init_done (o_ddr3_init_calib_complete)
+       );
     end
-//    WireDelay # (
-//      .Delay_g    (0.00),
-//      .Delay_rd   (0.00),
-//      .ERR_INSERT ("OFF")
-//    ) u_delay_dq_0 (
-//      .A             (io_ddr3_dq[0]),
-//      .B             (wb_ddr3_dq_sdram[0]),
-//      .reset         (sys_rst_n),
-//      .phy_init_done (o_ddr3_init_calib_complete)
-//    );
-      assign wb_ddr3_dq_sdram[0] = io_ddr3_dq[0];
+    WireDelay # (
+      .Delay_g    (0.00),
+      .Delay_rd   (0.00),
+      .ERR_INSERT ("OFF")
+    ) u_delay_dq_0 (
+      .A             (io_ddr3_dq[0]),
+      .B             (wb_ddr3_dq_sdram[0]),
+      .reset         (sys_rst_n),
+      .phy_init_done (o_ddr3_init_calib_complete)
+    );
   endgenerate
 
   genvar dqswd;
   generate
     for (dqswd = 0; dqswd < DDR3_DQS_WIDTH; dqswd = dqswd+1) begin : dqs_delay
-//      WireDelay # (
-//        .Delay_g    (0.00),
-//        .Delay_rd   (0.00),
-//        .ERR_INSERT ("OFF")
-//       ) u_delay_dqs_p (
-//        .A             (io_ddr3_dqs_p[dqswd]),
-//        .B             (wb_ddr3_dqs_p_sdram[dqswd]),
-//        .reset         (sys_rst_n),
-//        .phy_init_done (o_ddr3_init_calib_complete)
-//       );
-      assign wb_ddr3_dqs_p_sdram[dqswd] = io_ddr3_dqs_p[dqswd];
+      WireDelay # (
+        .Delay_g    (0.00),
+        .Delay_rd   (0.00),
+        .ERR_INSERT ("OFF")
+       ) u_delay_dqs_p (
+        .A             (io_ddr3_dqs_p[dqswd]),
+        .B             (wb_ddr3_dqs_p_sdram[dqswd]),
+        .reset         (sys_rst_n),
+        .phy_init_done (o_ddr3_init_calib_complete)
+       );
 
-//      WireDelay # (
-//        .Delay_g    (0.00),
-//        .Delay_rd   (0.00),
-//        .ERR_INSERT ("OFF")
-//      ) u_delay_dqs_n (
-//        .A             (io_ddr3_dqs_n[dqswd]),
-//        .B             (wb_ddr3_dqs_n_sdram[dqswd]),
-//        .reset         (sys_rst_n),
-//        .phy_init_done (o_ddr3_init_calib_complete)
-//       );
-       assign wb_ddr3_dqs_n_sdram[dqswd] = io_ddr3_dqs_n[dqswd];
+      WireDelay # (
+        .Delay_g    (0.00),
+        .Delay_rd   (0.00),
+        .ERR_INSERT ("OFF")
+      ) u_delay_dqs_n (
+        .A             (io_ddr3_dqs_n[dqswd]),
+        .B             (wb_ddr3_dqs_n_sdram[dqswd]),
+        .reset         (sys_rst_n),
+        .phy_init_done (o_ddr3_init_calib_complete)
+       );
     end
   endgenerate
 

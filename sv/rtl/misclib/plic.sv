@@ -179,7 +179,6 @@ always_comb begin : main_proc
         end
     end else if (wb_req_addr[21:12] >= 10'h200 && wb_req_addr[20:12] < ctxmax) begin
         // 0x200000,0x201000,...,0x4000000
-        rctx_idx = int'(wb_req_addr[20:12]);
         if (wb_req_addr[11:3] == 9'h000) begin
             // masking (disabling) all interrupt with <= priority
             vrdata[3:0] = r.ctx[rctx_idx].priority_th;
