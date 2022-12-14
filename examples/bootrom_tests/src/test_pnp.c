@@ -125,7 +125,7 @@ void print_pnp() {
     int off = 0;
     uint32_t xsize;
 
-    printf_uart("\n# Plug'n'Play info:\r\n");
+    printf_uart("\r\n# Plug'n'Play info:\r\n");
 
     for (int i = 0; i < slots_total; i++) {
         dcfg = *(dev_cfg_type *)&pnp->cfg_table[off];
@@ -136,20 +136,20 @@ void print_pnp() {
                     get_vendor_name(dcfg.u.vid),
                     get_device_name(dcfg.u.vid, dcfg.u.did));
         } else if (dcfg.u.descrtype == PNP_CFG_TYPE_SLAVE) {
-            printf_uart("# AXI4: slv%d: %s    %s\n", i, 
+            printf_uart("# AXI4: slv%d: %s    %s\r\n", i, 
                     get_vendor_name(dcfg.u.vid),
                     get_device_name(dcfg.u.vid, dcfg.u.did));
 
             xsize = dcfg.u.addr_end - dcfg.u.addr_start;
 
-            printf_uart("#    %016x...%016x, size = ",
+            printf_uart("#    %016xll...%016xll, size = ",
                 dcfg.u.addr_start, (dcfg.u.addr_end - 1));
             if (xsize < 1024) {
-                printf_uart("%d bytes\n", (int)xsize);
+                printf_uart("%d bytes\r\n", (int)xsize);
             } else if (xsize < 1024*1024) {
-                printf_uart("%d KB\n", (int)(xsize >> 10));
+                printf_uart("%d KB\r\n", (int)(xsize >> 10));
             } else {
-                printf_uart("%d MB\n", (int)(xsize >> 20));
+                printf_uart("%d MB\r\n", (int)(xsize >> 20));
             }
         }
     }
