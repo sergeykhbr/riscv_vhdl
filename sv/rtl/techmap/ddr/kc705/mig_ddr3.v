@@ -87,7 +87,8 @@ module mig_ddr3 (
   output [0:0]       ddr3_odt,
   // Inputs
   // Differential system clocks
-  input             sys_clk_i,
+  input             sys_clk_p,
+  input             sys_clk_n,
   // user interface signals
   output            ui_clk,
   output            ui_clk_sync_rst,
@@ -229,7 +230,8 @@ module mig_ddr3 (
     .s_axi_rvalid                   (s_axi_rvalid),
     .s_axi_rready                   (s_axi_rready),
     // System Clock Ports
-    .sys_clk_i                       (sys_clk_i),
+    .sys_clk_p                       (sys_clk_p),
+    .sys_clk_n                       (sys_clk_n),
        .device_temp            (device_temp),
        `ifdef SKIP_CALIB
        .calib_tap_req                    (calib_tap_req),

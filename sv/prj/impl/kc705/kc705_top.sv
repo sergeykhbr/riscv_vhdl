@@ -53,7 +53,8 @@ module kc705_top
 );
 
   logic             ib_rst;
-  logic             ib_clk_tcxo;
+  logic             ib_rstn;
+//  logic             ib_clk_tcxo;
   logic             ib_sclk_n;  
 
   logic [11:0]      ob_gpio_direction;
@@ -134,7 +135,7 @@ module kc705_top
 
   ibuf_tech irst0(.o(ib_rst),.i(i_rst));
   
-  idsbuf_tech iclk0(.clk_p(i_sclk_p), .clk_n(i_sclk_n), .o_clk(ib_clk_tcxo));
+//  idsbuf_tech iclk0(.clk_p(i_sclk_p), .clk_n(i_sclk_n), .o_clk(ib_clk_tcxo));
   
   ibuf_tech ird1(.o(ib_uart1_rd),.i(i_uart1_rd));
   obuf_tech otd1(.o(o_uart1_td),.i(ob_uart1_td));
@@ -156,11 +157,12 @@ module kc705_top
 
   SysPLL_tech pll0(
     .i_reset(ib_rst),
-    .i_clk_tcxo(ib_clk_tcxo),
+    .i_clk_tcxo(w_ddr_ui_clk),//ib_clk_tcxo),
     .o_clk_bus(w_clk_bus),
     .o_locked(w_pll_lock)
   );  
 
+  assign ib_rstn = ~ib_rst;
   assign w_ext_reset = ib_rst | ~w_pll_lock;
   assign o_ddr3_init_calib_complete = w_ddr_init_calib_complete;
   
@@ -254,11 +256,12 @@ module kc705_top
     .ddr3_cs_n(o_ddr3_cs_n),
     .ddr3_dm(o_ddr3_dm),
     .ddr3_odt(o_ddr3_odt),
-    .sys_clk_i(ib_clk_tcxo),
+    .sys_clk_p(i_sclk_p),
+    .sys_clk_n(i_sclk_n),
     .ui_clk(w_ddr_ui_clk),
     .ui_clk_sync_rst(w_ddr_ui_rst),
     .mmcm_locked(w_ddr_mmcm_locked),
-    .aresetn(w_pll_lock),
+    .aresetn(ib_rstn),
     .app_sr_req(1'b0),
     .app_ref_req(1'b0),
     .app_zq_req(1'b0),
@@ -304,7 +307,7 @@ module kc705_top
     .s_axi_rvalid(w_ddr_rvalid),
     .init_calib_complete(w_ddr_init_calib_complete),
     .device_temp(wb_ddr_device_temp),
-    .sys_rst(w_pll_lock)  // active LOW
+    .sys_rst(ib_rstn)  // active LOW
   );
 
   

@@ -209,8 +209,8 @@ module mig_ddr3_mig #
    parameter RTT_WR                = "OFF",
                                      // RTT_WR (ODT) (Mode Register 2).
                                      // # = "OFF" - Dynamic ODT off,
-                                     //   = "120" - RZQ/2,
-                                     //   = "60"  - RZQ/4,
+                                     //   = "120" - RZQ/2,
+                                     //   = "60"  - RZQ/4,
    parameter ADDR_CMD_MODE         = "1T" ,
                                      // # = "1T", "2T".
    parameter REG_CTRL              = "OFF",
@@ -422,7 +422,7 @@ module mig_ddr3_mig #
                                      // It is associated to a set of IODELAYs with
                                      // an IDELAYCTRL that have same IODELAY CONTROLLER
                                      // clock frequency (300MHz/400MHz).
-   parameter SYSCLK_TYPE           = "NO_BUFFER",
+   parameter SYSCLK_TYPE           = "DIFFERENTIAL",
                                      // System clock type DIFFERENTIAL, SINGLE_ENDED,
                                      // NO_BUFFER
    parameter REFCLK_TYPE           = "USE_SYSTEM_CLOCK",
@@ -596,7 +596,8 @@ module mig_ddr3_mig #
    // Inputs
    
    // Differential system clocks
-   input                                        sys_clk_i,
+   input                                        sys_clk_p,
+   input                                        sys_clk_n,
    
    
    // user interface signals
@@ -689,8 +690,8 @@ module mig_ddr3_mig #
 
   localparam BM_CNT_WIDTH = clogb2(nBANK_MACHS);
   localparam RANK_WIDTH = clogb2(RANKS);
-
-  localparam ECC_WIDTH = (ECC == "OFF")?
+
+  localparam ECC_WIDTH = (ECC == "OFF")?
                            0 : (DATA_WIDTH <= 4)?
                             4 : (DATA_WIDTH <= 10)?
                              5 : (DATA_WIDTH <= 26)?
@@ -773,7 +774,7 @@ module mig_ddr3_mig #
   // Interrupt output
   wire                              interrupt;
 
-  wire                              sys_clk_p;  wire                              sys_clk_n;
+  wire                              sys_clk_i;
   wire                              mmcm_clk;
   wire                              clk_ref_p;
   wire                              clk_ref_n;
@@ -866,7 +867,7 @@ module mig_ddr3_mig #
   assign ui_clk = clk;
   assign ui_clk_sync_rst = rst;
   
-  assign sys_clk_p = 1'b0;  assign sys_clk_n = 1'b0;
+  assign sys_clk_i = 1'b0;
   assign clk_ref_i = 1'b0;
   assign device_temp = device_temp_s;
       
@@ -1051,8 +1052,8 @@ module mig_ddr3_mig #
      .tPRDI                            (tPRDI),
      .tRAS                             (tRAS),
      .tRCD                             (tRCD),
-     .tREFI                            (tREFI),
-     .tRFC                             (tRFC),
+     .tREFI                            (tREFI),
+     .tRFC                             (tRFC),
      .tRP                              (tRP),
      .tRRD                             (tRRD),
      .tRTP                             (tRTP),
@@ -1207,8 +1208,8 @@ module mig_ddr3_mig #
        .calib_tap_val                    (8'b0),
        .calib_tap_load_done              (1'b0),
        `endif
-
-// Debug logic ports
+
+// Debug logic ports
        .dbg_idel_up_all                  (dbg_idel_up_all),
        .dbg_idel_down_all                (dbg_idel_down_all),
        .dbg_idel_up_cpt                  (dbg_idel_up_cpt),
