@@ -22,8 +22,8 @@ module cdc_axi_sync_tech
     output types_amba_pkg::axi4_slave_out_type o_xslvo,  // system clock
     input i_xmst_clk,
     input i_xmst_nrst,
-    input types_amba_pkg::axi4_master_out_type o_xmsto,  // ddr clock
-    output types_amba_pkg::axi4_master_in_type i_xmsti   // ddr clock
+    output types_amba_pkg::axi4_master_out_type o_xmsto,  // ddr clock
+    input types_amba_pkg::axi4_master_in_type i_xmsti   // ddr clock
 );
 
 import types_amba_pkg::*;

@@ -23,14 +23,14 @@ set_property PACKAGE_PIN AA28 [get_ports {io_gpio[2]}]
 set_property IOSTANDARD LVCMOS25 [get_ports {io_gpio[2]}]
 set_property PACKAGE_PIN Y28 [get_ports {io_gpio[3]}]
 set_property IOSTANDARD LVCMOS25 [get_ports {io_gpio[3]}]
+
+# LPC :
+set_property PACKAGE_PIN AG25 [get_ports {o_ddr3_init_calib_complete}]
+set_property IOSTANDARD LVCMOS25 [get_ports o_ddr3_init_calib_complete}]
+
 # User's LEDs:
-set_property PACKAGE_PIN AB8 [get_ports {o_ddr3_init_calib_complete}]
-set_property IOSTANDARD LVCMOS15 [get_ports o_ddr3_init_calib_complete}]
-#set_property PACKAGE_PIN AB8 [get_ports {io_gpio[4]}]
-#set_property IOSTANDARD LVCMOS15 [get_ports {io_gpio[4]}]
-# Rotary switch push for GPIO[4]
-set_property PACKAGE_PIN AA26 [get_ports {io_gpio[4]}]
-set_property IOSTANDARD LVCMOS25 [get_ports {io_gpio[4]}]
+set_property PACKAGE_PIN AB8 [get_ports {io_gpio[4]}]
+set_property IOSTANDARD LVCMOS15 [get_ports {io_gpio[4]}]
 set_property PACKAGE_PIN AA8 [get_ports {io_gpio[5]}]
 set_property IOSTANDARD LVCMOS15 [get_ports {io_gpio[5]}]
 set_property PACKAGE_PIN AC9 [get_ports {io_gpio[6]}]
