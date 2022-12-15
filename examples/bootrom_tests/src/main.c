@@ -107,7 +107,7 @@ int main() {
     if (bar != DEV_NONE) {
         led_set(0x07);
         test_gnss_ss(bar);
-        printf_uart("GNSS_SS BAR. . .0x%08x\r\n", bar);
+        printf_uart("GNSS_SS BAR. . .0x%016llx\r\n", bar);
     }
     led_set(0x08);
 
@@ -149,9 +149,9 @@ int main() {
              ddr[15*1024*1024] = 0xabcdabcdaabbccddull;
              ddr[16*1024*1024] = 0xabcdabcdaabbccddull;
              ddr[17*1024*1024] = 0xabcdabcdaabbccddull;
-             printf_uart("DDR[0] . .0x%016xll\r\n", ddr[0]);
-             printf_uart("DDR[1] . .0x%016xll\r\n", ddr[1]);
-             printf_uart("DDR[1MB] . .0x%016xll\r\n", ddr[1024*1024]);
+             printf_uart("DDR[0] . .0x%016llx\r\n", ddr[0]);
+             printf_uart("DDR[1] . .0x%016llx\r\n", ddr[1]);
+             printf_uart("DDR[1MB] . .0x%016llx\r\n", ddr[1024*1024]);
         }
 
         // temporary put it here, while PLIC not fully ready

@@ -142,7 +142,7 @@ void print_pnp() {
 
             xsize = dcfg.u.addr_end - dcfg.u.addr_start;
 
-            printf_uart("#    %016xll...%016xll, size = ",
+            printf_uart("#    %016llx...%016llx, size = ",
                 dcfg.u.addr_start, (dcfg.u.addr_end - 1));
             if (xsize < 1024) {
                 printf_uart("%d bytes\r\n", (int)xsize);
