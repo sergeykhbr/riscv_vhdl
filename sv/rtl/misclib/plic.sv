@@ -37,6 +37,9 @@ import types_amba_pkg::*;
 typedef struct {
     logic [3:0] priority_th;
     logic [1023:0] ie;       // interrupt enable per contet
+    logic [4*1024-1:0] ip_prio;   // interrupt pending priority per context
+    logic [15:0] prio_mask;       // pending interrupts priorites
+    logic [3:0] sel_prio;         // the most available priority
     logic [9:0] irq_idx;     // currently selected most prio irq
     logic [9:0] irq_prio;    // currently selected prio level
 } plic_context_type;
@@ -101,6 +104,9 @@ always_comb begin : main_proc
     for (int n = 0; n <= ctxmax-1; n++) begin
         v.ctx[n].priority_th = r.ctx[n].priority_th;
         v.ctx[n].ie = r.ctx[n].ie;
+        v.ctx[n].ip_prio = '0;
+        v.ctx[n].prio_mask = '0;
+        v.ctx[n].sel_prio = '0;
         v.ctx[n].irq_idx = r.ctx[n].irq_idx;
         v.ctx[n].irq_prio = r.ctx[n].irq_prio;
 
@@ -116,14 +122,31 @@ always_comb begin : main_proc
         end
     end
 
-    for (int i = 0; i <= irqmax-1; i++) begin
-        for (int n = 0; n <= ctxmax-1; n++) begin
+    for (int n = 0; n <= ctxmax-1; n++) begin
+        for (int i = 0; i <= irqmax-1; i++) begin
             if (r.pending[i] && r.ctx[n].ie[i]
-                && r.src_priority[4*i +: 4] > r.ctx[n].priority_th
-                && r.src_priority[4*i +: 4] > vb_irq_prio[n]) begin
+                && r.src_priority[4*i +: 4] > r.ctx[n].priority_th) begin
+                 v.ctx[n].ip_prio[4*i +: 4] = r.src_priority[4*i +: 4];
+                 v.ctx[n].prio_mask[int'(r.src_priority[4*i +: 4])] = 1'b1;
+            end
+        end
+    end
+
+    // Select max priority in each context
+    for (int n = 0; n <= ctxmax-1; n++) begin
+        for (int i = 0; i < 16; i++) begin
+            if (r.ctx[n].prio_mask[i] == 1'b1) begin
+                v.ctx[n].sel_prio = i;
+            end
+        end
+    end
+
+    for (int n = 0; n <= ctxmax-1; n++) begin
+        for (int i = 0; i <= irqmax-1; i++) begin
+            if ((|r.ctx[n].sel_prio) && r.ctx[n].ip_prio[4*i +: 4] == r.ctx[n].sel_prio) begin
                  // Most prio irq and prio level
                  vb_irq_idx[n] = i;
-                 vb_irq_prio[n] = r.src_priority[4*i +: 4];
+                 vb_irq_prio[n] = r.ctx[n].sel_prio;
             end
         end
     end
@@ -212,6 +235,9 @@ always_comb begin : main_proc
         for (int n = 0; n <= ctxmax-1; n++) begin
             v.ctx[n].priority_th[n] = '0;
             v.ctx[n].ie = '0;
+            v.ctx[n].ip_prio = '0;
+            v.ctx[n].prio_mask = '0;
+            v.ctx[n].sel_prio = '0;
             v.ctx[n].irq_idx = '0;
             v.ctx[n].irq_prio = '0;
         end
@@ -238,10 +264,13 @@ always_comb begin : main_proc
               r.ip <= '0;
               r.pending <= '0;
               for (int n = 0; n <= ctxmax-1; n++) begin
-                  r.ctx_priority_th[n] <= '0;
-                  r.ctx_ie[n] <= '0;
-                  r.irq_idx[n] <= '0;
-                  r.irq_prio[n] <= '0;
+                  r.ctx[n].priority_th <= '0;
+                  r.ctx[n].ie <= '0;
+                  r.ctx[n].ip_prio <= '0;
+                  r.ctx[n].prio_mask <= '0;
+                  r.ctx[n].sel_prio <= '0;
+                  r.ctx[n].irq_idx <= '0;
+                  r.ctx[n].irq_prio <= '0;
               end
           end else begin
               r <= rin;

@@ -26,7 +26,7 @@ set_property IOSTANDARD LVCMOS25 [get_ports {io_gpio[3]}]
 
 # LPC :
 set_property PACKAGE_PIN AG25 [get_ports {o_ddr3_init_calib_complete}]
-set_property IOSTANDARD LVCMOS25 [get_ports o_ddr3_init_calib_complete}]
+set_property IOSTANDARD LVCMOS25 [get_ports {o_ddr3_init_calib_complete}]
 
 # User's LEDs:
 set_property PACKAGE_PIN AB8 [get_ports {io_gpio[4]}]

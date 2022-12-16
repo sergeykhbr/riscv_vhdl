@@ -54,7 +54,7 @@ module kc705_top
 
   logic             ib_rst;
   logic             ib_rstn;
-//  logic             ib_clk_tcxo;
+  logic             ib_clk_tcxo;
   logic             ib_sclk_n;  
 
   logic [11:0]      ob_gpio_direction;
@@ -135,7 +135,7 @@ module kc705_top
 
   ibuf_tech irst0(.o(ib_rst),.i(i_rst));
   
-//  idsbuf_tech iclk0(.clk_p(i_sclk_p), .clk_n(i_sclk_n), .o_clk(ib_clk_tcxo));
+  idsbuf_tech iclk0(.clk_p(i_sclk_p), .clk_n(i_sclk_n), .o_clk(ib_clk_tcxo));
   
   ibuf_tech ird1(.o(ib_uart1_rd),.i(i_uart1_rd));
   obuf_tech otd1(.o(o_uart1_td),.i(ob_uart1_td));
@@ -157,7 +157,7 @@ module kc705_top
 
   SysPLL_tech pll0(
     .i_reset(ib_rst),
-    .i_clk_tcxo(w_ddr_ui_clk),//ib_clk_tcxo),
+    .i_clk_tcxo(ib_clk_tcxo),
     .o_clk_bus(w_clk_bus),
     .o_locked(w_pll_lock)
   );  
@@ -240,7 +240,20 @@ module kc705_top
   assign w_ddr_ruser = '0;
   assign w_ddr_buser = '0;
 
-   mig_ddr3 mig0 (
+   mig_ddr3 #(
+   parameter SYSCLK_TYPE           = "DIFFERENTIAL",
+                                     // System clock type DIFFERENTIAL, SINGLE_ENDED,
+                                     // NO_BUFFER
+   parameter SIM_BYPASS_INIT_CAL   = "OFF",
+                                     // # = "OFF" -  Complete memory init &
+                                     //              calibration sequence
+                                     // # = "SKIP" - Not supported
+                                     // # = "FAST" - Complete memory init & use
+                                     //              abbreviated calib sequence
+   parameter SIMULATION            = "FALSE"
+                                     // Should be TRUE during design simulations and
+                                     // FALSE during implementations
+  ) mig0 (
     .ddr3_dq(io_ddr3_dq),
     .ddr3_dqs_n(io_ddr3_dqs_n),
     .ddr3_dqs_p(io_ddr3_dqs_p),
@@ -258,6 +271,7 @@ module kc705_top
     .ddr3_odt(o_ddr3_odt),
     .sys_clk_p(i_sclk_p),
     .sys_clk_n(i_sclk_n),
+    .sys_clk_i(ib_clk_tcxo),
     .ui_clk(w_ddr_ui_clk),
     .ui_clk_sync_rst(w_ddr_ui_rst),
     .mmcm_locked(w_ddr_mmcm_locked),

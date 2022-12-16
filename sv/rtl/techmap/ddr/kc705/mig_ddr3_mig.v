@@ -597,7 +597,7 @@ module mig_ddr3_mig #
    
    // Differential system clocks
    input                                        sys_clk_p,
-   input                                        sys_clk_n,
+   input                                        sys_clk_n,   // Unbuffered system clock   input                                        sys_clk_i, 
    
    
    // user interface signals
@@ -706,7 +706,7 @@ module mig_ddr3_mig #
 
   localparam APP_DATA_WIDTH        = 2 * nCK_PER_CLK * PAYLOAD_WIDTH;
   localparam APP_MASK_WIDTH        = APP_DATA_WIDTH / 8;
-  localparam TEMP_MON_EN           = (SIMULATION == "FALSE") ? "ON" : "OFF";
+  localparam TEMP_MON_EN           = "ON";
                                                  // Enable or disable the temp monitor module
   localparam tTEMPSAMPLE           = 10000000;   // sample every 10 us
   localparam XADC_CLK_PERIOD       = 5000;       // Use 200 MHz IODELAYCTRL clock
@@ -774,7 +774,7 @@ module mig_ddr3_mig #
   // Interrupt output
   wire                              interrupt;
 
-  wire                              sys_clk_i;
+
   wire                              mmcm_clk;
   wire                              clk_ref_p;
   wire                              clk_ref_n;
@@ -867,7 +867,7 @@ module mig_ddr3_mig #
   assign ui_clk = clk;
   assign ui_clk_sync_rst = rst;
   
-  assign sys_clk_i = 1'b0;
+
   assign clk_ref_i = 1'b0;
   assign device_temp = device_temp_s;
       
