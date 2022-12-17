@@ -53,7 +53,6 @@ module kc705_top
 );
 
   logic             ib_rst;
-  logic             ib_rstn;
   logic             ib_clk_tcxo;
   logic             ib_sclk_n;  
 
@@ -71,7 +70,9 @@ module kc705_top
   logic             ob_jtag_vref;   
 
   logic             w_ext_reset;
-  logic             w_clk_bus;
+  logic             w_ext_resetn;
+  logic             w_clk_sys;
+  logic             w_clk_ddr;
   logic             w_pll_lock;
 
   // DDR3 signals:
@@ -154,17 +155,18 @@ module kc705_top
   SysPLL_tech pll0(
     .i_reset(ib_rst),
     .i_clk_tcxo(ib_clk_tcxo),
-    .o_clk_bus(w_clk_bus),
+    .o_clk_sys(w_clk_sys),
+    .o_clk_ddr(w_clk_ddr),
     .o_locked(w_pll_lock)
   );  
 
-  assign ib_rstn = ~ib_rst;
   assign w_ext_reset = ib_rst | ~w_pll_lock;
+  assign w_ext_resetn = ~w_ext_reset;
   assign o_ddr3_init_calib_complete = w_ddr_init_calib_complete;
   
   riscv_soc soc0(
     .i_rst (w_ext_reset),
-    .i_clk (w_clk_bus),
+    .i_clk (w_clk_sys),
     //! GPIO.
     .i_gpio (ib_gpio_ipins),
     .o_gpio (ob_gpio_opins),
@@ -260,11 +262,11 @@ module kc705_top
     .ddr3_odt(o_ddr3_odt),
     .sys_clk_p(i_sclk_p),
     .sys_clk_n(i_sclk_n),
-    .sys_clk_i(ib_clk_tcxo),
+    .sys_clk_i(w_clk_ddr),
     .ui_clk(w_ddr_ui_clk),
     .ui_clk_sync_rst(w_ddr_ui_rst),
     .mmcm_locked(w_ddr_mmcm_locked),
-    .aresetn(ib_rstn),
+    .aresetn(w_ext_resetn),
     .app_sr_req(1'b0),
     .app_ref_req(1'b0),
     .app_zq_req(1'b0),
@@ -310,7 +312,7 @@ module kc705_top
     .s_axi_rvalid(w_ddr_rvalid),
     .init_calib_complete(w_ddr_init_calib_complete),
     .device_temp(wb_ddr_device_temp),
-    .sys_rst(ib_rstn)  // active LOW
+    .sys_rst(w_ext_resetn)  // active LOW
   );
 
   

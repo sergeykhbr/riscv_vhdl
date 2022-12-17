@@ -12,7 +12,8 @@ module SysPLL_tech (
   //! Input clock from the external oscillator (default 200 MHz)
   input         i_clk_tcxo,
   //! System Bus clock 100MHz/40MHz (Virtex6/Spartan6)
-  output        o_clk_bus,
+  output        o_clk_sys, // 40 MHz
+  output        o_clk_ddr, // 200 MHz
   //! PLL locked status.
   output        o_locked
 );
@@ -21,19 +22,16 @@ import config_target_pkg::*;
 
 `ifdef TARGET_INFERRED
 
-    SysPLL_inferred pll0(.CLK_IN(i_clk_tcxo), .CLK_OUT1(o_clk_bus), .RESET(i_reset), .LOCKED(o_locked));
+    SysPLL_inferred pll0(.CLK_IN(i_clk_tcxo), .CLK_OUT1(o_clk_sys), .CLK_OUT2(o_clk_ddr), .RESET(i_reset), .LOCKED(o_locked));
 
 `elsif TARGET_KC705
 
-    SysPLL_kc705
-    #(
-      .o_clk_bus_buf ("BUF")
-    )
-    PLL_KC705
+    SysPLL_kc705 pll0
     (
       .i_reset     (i_reset),
       .i_clk_tcxo  (i_clk_tcxo),
-      .o_clk_bus   (o_clk_bus),
+      .o_clk_sys   (o_clk_sys),
+      .o_clk_ddr   (o_clk_ddr),
       .o_locked    (o_locked)
     );
        

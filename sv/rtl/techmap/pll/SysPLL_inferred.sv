@@ -15,12 +15,14 @@ module SysPLL_inferred(
   input     CLK_IN,
   // Clock out ports
   output    CLK_OUT1,
+  output    CLK_OUT2,
   // Status and control signals
   input     RESET,
   output    LOCKED
  );
 
   assign CLK_OUT1 = CLK_IN;
+  assign CLK_OUT2 = CLK_IN;
   assign LOCKED = ~RESET;
 
 endmodule

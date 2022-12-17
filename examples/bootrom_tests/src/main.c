@@ -129,7 +129,7 @@ int main() {
         // Check DDR init done
         if (pnp->rsrv1 & 1) {
              uint64_t *ddr = (uint64_t *)0x80000000ull;
-             printf_uart("DDR Init . .%s\r\n", "DONE");
+             print_uart("DDR Init . .DONE\r\n", 18);
              ddr[0] = 0x1122334455667788ull;
              ddr[1] = 0xffeeddccbbaa9988ull;
              ddr[1*1024*1024] = 0xabcdabcdaabbccddull;
