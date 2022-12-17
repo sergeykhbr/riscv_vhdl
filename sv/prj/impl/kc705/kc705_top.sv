@@ -71,10 +71,6 @@ module kc705_top
   logic             ob_jtag_vref;   
 
   logic             w_ext_reset;
-  logic             w_glob_rst;
-  logic             w_glob_nrst;
-  logic             w_soft_rst;
-  logic             w_bus_nrst;
   logic             w_clk_bus;
   logic             w_pll_lock;
 
@@ -241,18 +237,11 @@ module kc705_top
   assign w_ddr_buser = '0;
 
    mig_ddr3 #(
-   parameter SYSCLK_TYPE           = "DIFFERENTIAL",
-                                     // System clock type DIFFERENTIAL, SINGLE_ENDED,
-                                     // NO_BUFFER
-   parameter SIM_BYPASS_INIT_CAL   = "OFF",
-                                     // # = "OFF" -  Complete memory init &
-                                     //              calibration sequence
-                                     // # = "SKIP" - Not supported
-                                     // # = "FAST" - Complete memory init & use
-                                     //              abbreviated calib sequence
-   parameter SIMULATION            = "FALSE"
-                                     // Should be TRUE during design simulations and
-                                     // FALSE during implementations
+   .SYSCLK_TYPE("NO_BUFFER"), // "NO_BUFFER,"DIFFERENTIAL"
+//   .SIM_BYPASS_INIT_CAL("FAST"),  // "FAST"-for simulation true; "OFF"
+//   .SIMULATION("TRUE")
+   .SIM_BYPASS_INIT_CAL("OFF"),  // "FAST"-for simulation true; "OFF"
+   .SIMULATION("FALSE")
   ) mig0 (
     .ddr3_dq(io_ddr3_dq),
     .ddr3_dqs_n(io_ddr3_dqs_n),

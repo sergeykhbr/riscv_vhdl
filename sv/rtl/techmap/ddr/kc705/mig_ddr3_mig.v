@@ -209,8 +209,8 @@ module mig_ddr3_mig #
    parameter RTT_WR                = "OFF",
                                      // RTT_WR (ODT) (Mode Register 2).
                                      // # = "OFF" - Dynamic ODT off,
-                                     //   = "120" - RZQ/2,
-                                     //   = "60"  - RZQ/4,
+                                     //   = "120" - RZQ/2,
+                                     //   = "60"  - RZQ/4,
    parameter ADDR_CMD_MODE         = "1T" ,
                                      // # = "1T", "2T".
    parameter REG_CTRL              = "OFF",
@@ -597,7 +597,11 @@ module mig_ddr3_mig #
    
    // Differential system clocks
    input                                        sys_clk_p,
-   input                                        sys_clk_n,   // Unbuffered system clock   input                                        sys_clk_i, 
+   input                                        sys_clk_n,
+  // Unbuffered system clocks
+
+  input             sys_clk_i,
+
    
    
    // user interface signals
@@ -774,7 +778,6 @@ module mig_ddr3_mig #
   // Interrupt output
   wire                              interrupt;
 
-
   wire                              mmcm_clk;
   wire                              clk_ref_p;
   wire                              clk_ref_n;
@@ -867,7 +870,6 @@ module mig_ddr3_mig #
   assign ui_clk = clk;
   assign ui_clk_sync_rst = rst;
   
-
   assign clk_ref_i = 1'b0;
   assign device_temp = device_temp_s;
       
@@ -1208,8 +1210,8 @@ module mig_ddr3_mig #
        .calib_tap_val                    (8'b0),
        .calib_tap_load_done              (1'b0),
        `endif
-
-// Debug logic ports
+
+// Debug logic ports
        .dbg_idel_up_all                  (dbg_idel_up_all),
        .dbg_idel_down_all                (dbg_idel_down_all),
        .dbg_idel_up_cpt                  (dbg_idel_up_cpt),

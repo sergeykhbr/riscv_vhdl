@@ -67,7 +67,7 @@
 //`define SKIP_CALIB
 `timescale 1ps/1ps
 
-module mig_ddr3 #(   parameter SYSCLK_TYPE           = "DIFFERENTIAL",                                     // System clock type DIFFERENTIAL, SINGLE_ENDED,                                     // NO_BUFFER   parameter SIM_BYPASS_INIT_CAL   = "OFF",                                     // # = "OFF" -  Complete memory init &                                     //              calibration sequence                                     // # = "SKIP" - Not supported                                     // # = "FAST" - Complete memory init & use                                     //              abbreviated calib sequence   parameter SIMULATION            = "FALSE"                                     // Should be TRUE during design simulations and                                     // FALSE during implementations)(
+module mig_ddr3 #(    parameter SYSCLK_TYPE           = "DIFFERENTIAL",    parameter SIM_BYPASS_INIT_CAL   = "OFF",    parameter SIMULATION            = "FALSE")(
   // Inouts
   inout [63:0]       ddr3_dq,
   inout [7:0]        ddr3_dqs_n,
@@ -88,7 +88,11 @@ module mig_ddr3 #(   parameter SYSCLK_TYPE           = "DIFFERENTIAL",        
   // Inputs
   // Differential system clocks
   input             sys_clk_p,
-  input             sys_clk_n,  // Unbuffered input clock  input             sys_clk_i,
+  input             sys_clk_n,
+  // Unbuffered system clocks
+
+  input             sys_clk_i,
+
   // user interface signals
   output            ui_clk,
   output            ui_clk_sync_rst,
@@ -156,7 +160,7 @@ module mig_ddr3 #(   parameter SYSCLK_TYPE           = "DIFFERENTIAL",        
   );
 
 // Start of IP top instance
-  mig_ddr3_mig #(   .SYSCLK_TYPE(SYSCLK_TYPE),   .SIM_BYPASS_INIT_CAL(SIM_BYPASS_INIT_CAL),   .SIMULATION(SIMULATION)  ) u_mig_ddr3_mig (
+  mig_ddr3_mig #(    .SYSCLK_TYPE(SYSCLK_TYPE),    .SIM_BYPASS_INIT_CAL(SIM_BYPASS_INIT_CAL),    .SIMULATION(SIMULATION)  ) u_mig_ddr3_mig (
 
     // Memory interface ports
     .ddr3_addr                      (ddr3_addr),
@@ -231,7 +235,9 @@ module mig_ddr3 #(   parameter SYSCLK_TYPE           = "DIFFERENTIAL",        
     .s_axi_rready                   (s_axi_rready),
     // System Clock Ports
     .sys_clk_p                       (sys_clk_p),
-    .sys_clk_n                       (sys_clk_n),    .sys_clk_i                       (sys_clk_i),
+    .sys_clk_n                       (sys_clk_n),
+    .sys_clk_i                       (sys_clk_i),
+
        .device_temp            (device_temp),
        `ifdef SKIP_CALIB
        .calib_tap_req                    (calib_tap_req),
