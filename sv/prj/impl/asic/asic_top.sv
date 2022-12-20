@@ -38,7 +38,6 @@ module asic_top
   import types_amba_pkg::*;
 
   logic             ib_rst;
-  logic             ib_rstn;
   logic             ib_clk_tcxo;
   logic             ib_sclk_n;  
 
@@ -55,21 +54,29 @@ module asic_top
   logic             ob_jtag_tdo; 
   logic             ob_jtag_vref;   
 
-  logic             w_ext_reset;
-  logic             w_glob_rst;
-  logic             w_glob_nrst;
-  logic             w_soft_rst;
-  logic             w_bus_nrst;
-  logic             w_clk_sys;
-  logic             w_clk_ddr;
+  logic             w_sys_nrst;
+  logic             w_dbg_nrst;
+  logic             w_dmreset;
+  logic             w_sys_clk;
+  logic             w_ddr_clk;
   logic             w_pll_lock;
 
-  axi4_slave_in_type ddr_xslvi;
+  // DDR interface
+  const mapinfo_type ddr_mapinfo = '{'0, '0};
+  logic w_ddr3_init_calib_complete;
   axi4_slave_out_type ddr_xslvo;
+  axi4_slave_in_type ddr_xslvi;
+  apb_in_type ddr_apbi;
+  apb_out_type ddr_apbo;
+
+  // PRCI intefrace:
+  const mapinfo_type prci_mapinfo = '{'0, '0};
+  dev_config_type prci_dev_cfg;
+  apb_in_type prci_apbi;
+  apb_out_type prci_apbo;
   
 
   ibuf_tech irst0(.o(ib_rst),.i(i_rst));
-  assign ib_rstn = ib_rst;
   
   idsbuf_tech iclk0(.clk_p(i_sclk_p), .clk_n(i_sclk_n), .o_clk(ib_clk_tcxo));
   
@@ -91,19 +98,30 @@ module asic_top
   obuf_tech ojvrf0(.o(o_jtag_vref),.i(ob_jtag_vref)); 
   
 
-  SysPLL_tech pll0(
-    .i_reset(ib_rst),
-    .i_clk_tcxo(ib_clk_tcxo),
-    .o_clk_sys(w_clk_sys),
-    .o_clk_ddr(w_clk_ddr),
-    .o_locked(w_pll_lock)
-  );  
-
-  assign w_ext_reset = ib_rst | ~w_pll_lock;
+  //assign o_ddr3_init_calib_complete = w_ddr3_init_calib_complete;
+  
+  // PLL and Reset Control Interface:
+  apb_prci #(
+    .async_reset(1'b0)
+  ) prci0 (
+    .i_clk(ib_clk_tcxo),
+    .i_pwrreset(ib_rst),
+    .i_dmireset(w_dmreset),
+    .o_dbg_nrst(w_dbg_nrst),
+    .o_sys_nrst(w_sys_nrst),
+    .o_sys_clk(w_sys_clk),
+    .o_ddr_nrst(w_ddr_nrst),
+    .o_ddr_clk(w_ddr_clk),
+    .i_mapinfo(prci_mapinfo),
+    .o_cfg(prci_dev_cfg),
+    .i_apbi(prci_apbi),
+    .o_apbo(prci_apbo)
+  );
   
   riscv_soc soc0(
-    .i_rst (w_ext_reset),
-    .i_clk (w_clk_sys),
+    .i_sys_nrst (w_sys_nrst),
+    .i_sys_clk (w_sys_clk),
+    .i_dbg_nrst(w_dbg_nrst),
     //! GPIO.
     .i_gpio (ib_gpio_ipins),
     .o_gpio (ob_gpio_opins),
@@ -118,6 +136,10 @@ module asic_top
     //! UART1 signals:
     .i_uart1_rd(ib_uart1_rd),
     .o_uart1_td(ob_uart1_td),
+    // PRCI:
+    .o_dmreset(w_dmreset),
+    .o_prci_apbi(prci_apbi),
+    .i_prci_apbo(prci_apbo),
     // DDR:
   .o_ddr_awid(ddr_xslvi.aw_id),
   .o_ddr_awaddr(ddr_xslvi.aw_bits.addr),
@@ -164,7 +186,7 @@ module asic_top
   .i_ddr_rvalid(ddr_xslvo.r_valid),
   .o_ddr_rready(ddr_xslvi.r_ready),
   .i_ddr_ui_clk(ib_clk_tcxo),  // 200 MHz DDR clock (unused in inferred)
-  .i_ddr_ui_rst(ib_rstn),  // active LOW (unused in inferred actually)
+  .i_ddr_ui_rst(w_sys_nrst),  // active LOW (unused in inferred actually)
   .i_ddr_mmcm_locked(1'b1),
   .i_ddr_init_calib_complete(1'b1),
   .i_ddr_device_temp('0),
@@ -175,15 +197,13 @@ module asic_top
 
 
 
-  // TODO: better ddr functional model
-  const mapinfo_type ddr_mapinfo = '{'0, '0};
 
   axi4_sram #(
     .async_reset(0),
     .abits((10 + $clog2(512*1024)))      // 512MB address
   ) ddr0 (
     .clk(ib_clk_tcxo),
-    .nrst(ib_rstn),
+    .nrst(w_sys_nrst),
     .i_mapinfo(ddr_mapinfo),
     .cfg(),
     .i(ddr_xslvi),

@@ -19,8 +19,9 @@
 //! @details This module implements full SOC functionality and all IO signals
 //!          are available on FPGA/ASIC IO pins.
 module riscv_soc (
-  input             i_rst,
-  input             i_clk,
+  input             i_sys_nrst,
+  input             i_sys_clk,
+  input             i_dbg_nrst,
   //! GPIO.
   input [11:0]      i_gpio,
   output [11:0]     o_gpio,
@@ -35,6 +36,10 @@ module riscv_soc (
   //! UART1 signals:
   input             i_uart1_rd,
   output            o_uart1_td,
+  // PRCI:
+  output            o_dmreset,
+  output types_amba_pkg::apb_in_type o_prci_apbi,
+  input types_amba_pkg::apb_out_type i_prci_apbo,
   // DDR signal:
   output [4:0] o_ddr_awid,
   output [47:0] o_ddr_awaddr,
@@ -100,9 +105,6 @@ import workgroup_pkg::*;
 import riscv_soc_pkg::*;
 
 
-logic w_sys_nrst;                                           // System reset of whole system
-logic w_dbg_nrst;                                           // Reset workgroup debug interface
-logic w_dmreset;                                            // Reset request from workgroup debug interface
 logic w_ddr_ui_nrst;
 axi4_master_out_type acpo;
 axi4_master_in_type acpi;
@@ -129,23 +131,13 @@ logic w_irq_pnp;
 logic [CFG_PLIC_IRQ_TOTAL-1:0] wb_ext_irqs;
 
 
-  ////////////////////////////////////
-  //! @brief System Reset device instance.
-  reset_global rst0 (
-    .i_clk,
-    .i_pwrreset(i_rst),   // external button reset
-    .i_dmreset(w_dmreset),    // reset from DMI (debug) interface.
-    .o_sys_nrst(w_sys_nrst),   // reset whole system
-    .o_dbg_nrst(w_dbg_nrst)   // reset dmi interface
-  );
-
   //! @brief AXI4 controller.
   axictrl_bus0 #(
     .async_reset(CFG_ASYNC_RESET)
   )
    ctrl0 (
-    .i_clk(i_clk),
-    .i_nrst(w_sys_nrst),
+    .i_clk(i_sys_clk),
+    .i_nrst(i_sys_nrst),
     .o_cfg(dev_pnp[SOC_PNP_XCTRL0]),
     .i_slvo(axiso),
     .i_msto(aximo),
@@ -161,8 +153,8 @@ assign w_ddr_ui_nrst = ~i_ddr_ui_rst;
 axi2apb #(
     .async_reset(async_reset)
 ) apbrdg0 (
-    .i_clk(i_clk),
-    .i_nrst(w_sys_nrst),
+    .i_clk(i_sys_clk),
+    .i_nrst(i_sys_nrst),
     .i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_PBRIDGE]),
     .o_cfg(dev_pnp[SOC_PNP_PBRIDGE0]),
     .i_xslvi(axisi[CFG_BUS0_XSLV_PBRIDGE]),
@@ -184,9 +176,9 @@ Workgroup #(
     .l2log2_nways(CFG_L2_LOG2_NWAYS),
     .l2log2_lines_per_way(CFG_L2_LOG2_LINES_PER_WAY)
 ) group0 (
-    .i_cores_nrst(w_sys_nrst),
-    .i_dmi_nrst(w_dbg_nrst),
-    .i_clk(i_clk),
+    .i_cores_nrst(i_sys_nrst),
+    .i_dmi_nrst(i_dbg_nrst),
+    .i_clk(i_sys_clk),
     .i_trst(i_jtag_trst),
     .i_tck(i_jtag_tck),
     .i_tms(i_jtag_tms),
@@ -206,7 +198,7 @@ Workgroup #(
     .o_dmi_cfg(dev_pnp[SOC_PNP_DMI]),
     .i_dmi_apbi(apbi[CFG_BUS1_PSLV_DMI]),
     .o_dmi_apbo(apbo[CFG_BUS1_PSLV_DMI]),
-    .o_dmreset(w_dmreset)
+    .o_dmreset(o_dmreset)
 );
 
   ////////////////////////////////////
@@ -218,8 +210,8 @@ Workgroup #(
     .async_reset(CFG_ASYNC_RESET),
     .filename(CFG_BOOTROM_FILE)
   ) boot0 (
-    .clk(i_clk),
-    .nrst(w_sys_nrst),
+    .clk(i_sys_clk),
+    .nrst(i_sys_nrst),
     .i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_BOOTROM]),
     .cfg(dev_pnp[SOC_PNP_BOOTROM]),
     .i(axisi[CFG_BUS0_XSLV_BOOTROM]),
@@ -235,8 +227,8 @@ Workgroup #(
     .async_reset(CFG_ASYNC_RESET),
     .abits(CFG_SRAM_LOG2_SIZE)
   ) sram0 (
-    .clk(i_clk),
-    .nrst(w_sys_nrst),
+    .clk(i_sys_clk),
+    .nrst(i_sys_nrst),
     .i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_SRAM]),
     .cfg(dev_pnp[SOC_PNP_SRAM]),
     .i(axisi[CFG_BUS0_XSLV_SRAM]),
@@ -250,8 +242,8 @@ Workgroup #(
   clint #(
     .async_reset(CFG_ASYNC_RESET)
   ) clint0 (
-    .clk(i_clk),
-    .nrst(w_sys_nrst),
+    .clk(i_sys_clk),
+    .nrst(i_sys_nrst),
     .i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_CLINT]),
     .o_cfg(dev_pnp[SOC_PNP_CLINT]),
     .i_axi(axisi[CFG_BUS0_XSLV_CLINT]),
@@ -270,8 +262,8 @@ Workgroup #(
     .ctxmax(CFG_PLIC_CONTEXT_TOTAL),
     .irqmax(CFG_PLIC_IRQ_TOTAL)
   ) plic0 (
-    .clk(i_clk),
-    .nrst(w_sys_nrst),
+    .clk(i_sys_clk),
+    .nrst(i_sys_nrst),
     .i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_PLIC]),
     .o_cfg(dev_pnp[SOC_PNP_PLIC]),
     .i_axi(axisi[CFG_BUS0_XSLV_PLIC]),
@@ -295,8 +287,8 @@ assign dev_pnp[SOC_PNP_DDR] = dev_config_none;
 
 // TODO: move into interconnect
   cdc_axi_sync_tech u_cdc_ddr0 (
-    .i_xslv_clk(i_clk),
-    .i_xslv_nrst(w_sys_nrst),
+    .i_xslv_clk(i_sys_clk),
+    .i_xslv_nrst(i_sys_nrst),
     .i_xslvi(axisi[CFG_BUS0_XSLV_DDR]),
     .o_xslvo(axiso[CFG_BUS0_XSLV_DDR]),
     .i_xmst_clk(i_ddr_ui_clk),
@@ -350,18 +342,16 @@ assign dev_pnp[SOC_PNP_DDR] = dev_config_none;
   assign ddr_xmsti.r_valid = i_ddr_rvalid;
   assign o_ddr_rready = ddr_xmsto.r_ready;
 
-  ////////////////////////////////////
-  //! @brief Controller of the LEDs, DIPs and GPIO with the AXI4 interface.
-  //! @details Map address:
-  //!          0x00000000_10060000..0x00000000_10060fff (4 KB total)
-assign axiso[CFG_BUS0_XSLV_GPIO] = axi4_slave_out_none;
-
+////////////////////////////////////
+//! @brief Controller of the LEDs, DIPs and GPIO with the AXI4 interface.
+//! @details Map address:
+//!          0x00000000_10060000..0x00000000_10060fff (4 KB total)
 apb_uart #(
     .async_reset(async_reset),
     .log2_fifosz(CFG_SOC_UART1_LOG2_FIFOSZ)
 ) uart1 (
-    .i_clk(i_clk),
-    .i_nrst(w_sys_nrst),
+    .i_clk(i_sys_clk),
+    .i_nrst(i_sys_nrst),
     .i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_UART1]),
     .o_cfg(dev_pnp[SOC_PNP_UART1]),
     .i_apbi(apbi[CFG_BUS1_PSLV_UART1]),
@@ -371,16 +361,16 @@ apb_uart #(
     .o_irq(w_irq_uart1)
 );
 
-  ////////////////////////////////////
-  //! @brief Controller of the LEDs, DIPs and GPIO with the AXI4 interface.
-  //! @details Map address:
-  //!          0x00000000_10060000..0x00000000_10060fff (4 KB total)
-  apb_gpio  #(
+////////////////////////////////////
+//! @brief Controller of the LEDs, DIPs and GPIO with the AXI4 interface.
+//! @details Map address:
+//!          0x00000000_10060000..0x00000000_10060fff (4 KB total)
+apb_gpio  #(
     .async_reset(CFG_ASYNC_RESET),
     .width(12)
-  ) gpio0 (
-    .clk(i_clk),
-    .nrst(w_sys_nrst),
+) gpio0 (
+    .clk(i_sys_clk),
+    .nrst(i_sys_nrst),
     .i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_GPIO]),
     .cfg(dev_pnp[SOC_PNP_GPIO]),
     .i(apbi[CFG_BUS1_PSLV_GPIO]),
@@ -389,26 +379,24 @@ apb_uart #(
     .o_gpio(o_gpio),
     .o_gpio_dir(o_gpio_dir),
     .o_irq(wb_irq_gpio[11:0])
-  );
-  assign wb_irq_gpio[15:12] = '0;
+);
+assign wb_irq_gpio[15:12] = '0;
 
 
   //! @brief Plug'n'Play controller of the current configuration with the
   //!        AXI4 interface.
   //! @details Map address:
   //!          0x00000000_100ff000..0x00000000_100fffff (4 KB total)
-assign axiso[CFG_BUS0_XSLV_PNP] = axi4_slave_out_none;
-
-  apb_pnp #(
+apb_pnp #(
     .async_reset(CFG_ASYNC_RESET),
     .cfg_slots(SOC_PNP_TOTAL),
     .hw_id(CFG_HW_ID),
     .cpu_max(CFG_CPU_NUM[3:0]), //CFG_CPU_MAX[3:0]),
     .l2cache_ena(CFG_L2CACHE_ENA),
     .plic_irq_max(CFG_PLIC_IRQ_TOTAL[7:0])
-  ) pnp0 (
-    .sys_clk(i_clk),
-    .nrst(w_sys_nrst),
+) pnp0 (
+    .sys_clk(i_sys_clk),
+    .nrst(i_sys_nrst),
     .ddr_init_done(i_ddr_init_calib_complete),
     .i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_PNP]),
     .i_cfg(dev_pnp),
@@ -416,7 +404,7 @@ assign axiso[CFG_BUS0_XSLV_PNP] = axi4_slave_out_none;
     .i(apbi[CFG_BUS1_PSLV_PNP]),
     .o(apbo[CFG_BUS1_PSLV_PNP]),
     .o_irq(w_irq_pnp)
-  );
+);
 
 
 always_comb
@@ -440,6 +428,10 @@ begin: comb_proc
     // Nullify emty AXI-slots:
     aximo[CFG_BUS0_XMST_DMA] = axi4_master_out_none;
     acpo = axi4_master_out_none;
+
+    // PRCI:
+    o_prci_apbi = apbi[CFG_BUS1_PSLV_PRCI];
+    apbo[CFG_BUS1_PSLV_PRCI] = i_prci_apbo;
 end: comb_proc
 assign o_jtag_vref = 1'b1;
 
