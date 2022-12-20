@@ -14,7 +14,7 @@
 //! limitations under the License.
 //!
 
-module ddr_tech
+module ddr_inferred
 #(
     parameter int async_reset = 0,
     parameter SYSCLK_TYPE           = "DIFFERENTIAL",
@@ -36,72 +36,47 @@ module ddr_tech
     output types_amba_pkg::dev_config_type o_pcfg,
     input types_amba_pkg::apb_in_type i_apbi,
     output types_amba_pkg::apb_out_type o_apbo,
-    // to SOC:
+    // to debug PIN:
     output o_ui_nrst,  // xilinx generte ddr clock inside ddr controller
     output o_ui_clk,  // xilinx generte ddr clock inside ddr controller
-    // DDR signals:
-    output o_ddr3_reset_n,
-    output [0:0] o_ddr3_ck_n,
-    output [0:0] o_ddr3_ck_p,
-    output [0:0] o_ddr3_cke,
-    output [0:0] o_ddr3_cs_n,
-    output o_ddr3_ras_n,
-    output o_ddr3_cas_n,
-    output o_ddr3_we_n,
-    output [7:0] o_ddr3_dm,
-    output [2:0] o_ddr3_ba,
-    output [13:0] o_ddr3_addr,
-    inout [63:0] io_ddr3_dq,
-    inout [7:0] io_ddr3_dqs_n,
-    inout [7:0] io_ddr3_dqs_p,
-    output [0:0] o_ddr3_odt,
     output logic o_init_calib_done
 );
 
 import types_amba_pkg::*;
 
-axi4_slave_in_type wb_xslvi;  // remapped
-
-`ifdef TARGET_INFERRED
-  ddr_inferred #(
-    .async_reset(async_reset),
-    .SYSCLK_TYPE(SYSCLK_TYPE), // "NO_BUFFER,"DIFFERENTIAL"
-    .SIM_BYPASS_INIT_CAL(SIM_BYPASS_INIT_CAL),  // "FAST"-for simulation true; "OFF"
-    .SIMULATION(SIMULATION)
-  ) inf0 (
-    .i_apb_nrst(i_apb_nrst),
-    .i_apb_clk(i_apb_clk),
-    .i_xslv_nrst(i_xslv_nrst),
-    .i_xslv_clk(i_xslv_clk),
-    // AXI memory access (ddr clock)
-    .i_xmapinfo(i_xmapinfo),
-    .o_xcfg(o_xcfg),
-    .i_xslvi(wb_xslvi),
-    .o_xslvo(o_xslvo),
-    // APB control interface (sys clock):
-    .i_pmapinfo(i_pmapinfo),
-    .o_pcfg(o_pcfg),
+  apb_ddr #(
+    .async_reset(async_reset)
+  ) apb0 (
+    .i_clk(i_apb_clk),
+    .i_nrst(i_apb_nrst),
+    .i_mapinfo(i_pmapinfo),
+    .o_cfg(o_pcfg),
     .i_apbi(i_apbi),
     .o_apbo(o_apbo),
-    .o_ui_nrst(o_ui_nrst),
-    .o_ui_clk(o_ui_clk),
-    .o_init_calib_done(o_init_calib_done)
+    .i_pll_locked(1'b1),
+    .i_init_calib_done(1'b1),
+    .i_device_temp(12'h456),
+    .i_sr_active(1'b0),
+    .i_ref_ack(1'b0),
+    .i_zq_ack(1'b0)
   );
-`elsif TARGET_KC705
-`else
-    initial $error("INSTANCE macro is undefined, check technology-dependent memories.");
-`endif
 
+  // TODO: better ddr functional model
+  axi4_sram #(
+    .async_reset(async_reset),
+    .abits((10 + $clog2(512*1024)))      // 512MB address
+  ) mem0 (
+    .clk(i_xslv_clk),
+    .nrst(i_xslv_nrst),
+    .i_mapinfo(i_xmapinfo),
+    .cfg(),
+    .i(i_xslvi),
+    .o(o_xslvo)
+  );
 
-always_comb
-begin: comb_proc
-    axi4_slave_in_type vxslvi;
+  assign o_ui_nrst = i_xslv_nrst;
+  assign o_ui_clk = i_xslv_clk;
+  assign o_init_calib_done = 1'b1;
 
-    vxslvi = i_xslvi;
-    vxslvi.ar_bits.addr = i_xslvi.ar_bits.addr - i_xmapinfo.addr_start;
-    vxslvi.aw_bits.addr = i_xslvi.aw_bits.addr - i_xmapinfo.addr_start;
-
-    wb_xslvi = vxslvi;
-end: comb_proc
 
 endmodule

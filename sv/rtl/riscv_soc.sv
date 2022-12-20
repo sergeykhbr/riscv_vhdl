@@ -22,6 +22,8 @@ module riscv_soc (
   input             i_sys_nrst,
   input             i_sys_clk,
   input             i_dbg_nrst,
+  input             i_ddr_nrst,
+  input             i_ddr_clk,
   //! GPIO.
   input [11:0]      i_gpio,
   output [11:0]     o_gpio,
@@ -38,61 +40,17 @@ module riscv_soc (
   output            o_uart1_td,
   // PRCI:
   output            o_dmreset,
+  output types_amba_pkg::mapinfo_type o_prci_pmapinfo,
   output types_amba_pkg::apb_in_type o_prci_apbi,
   input types_amba_pkg::apb_out_type i_prci_apbo,
   // DDR signal:
-  output [4:0] o_ddr_awid,
-  output [47:0] o_ddr_awaddr,
-  output [7:0] o_ddr_awlen,
-  output [2:0] o_ddr_awsize,
-  output [1:0] o_ddr_awburst,
-  output o_ddr_awlock,
-  output [3:0] o_ddr_awcache,
-  output [2:0] o_ddr_awprot,
-  output [3:0] o_ddr_awregion,
-  output [3:0] o_ddr_awqos,
-  output [0:0] o_ddr_awuser,
-  output o_ddr_awvalid,
-  input i_ddr_awready,
-  output [63:0] o_ddr_wdata,
-  output [7:0] o_ddr_wstrb,
-  output [0:0] o_ddr_wuser,
-  output o_ddr_wlast,
-  output o_ddr_wvalid,
-  input i_ddr_wready,
-  output o_ddr_bready,
-  input [4:0] i_ddr_bid,
-  input [1:0] i_ddr_bresp,
-  input [0:0] i_ddr_buser,
-  input i_ddr_bvalid,
-  output [4:0] o_ddr_arid,
-  output [47:0] o_ddr_araddr,
-  output [7:0] o_ddr_arlen,
-  output [2:0] o_ddr_arsize,
-  output [1:0] o_ddr_arburst,
-  output o_ddr_arlock,
-  output [3:0] o_ddr_arcache,
-  output [2:0] o_ddr_arprot,
-  output [3:0] o_ddr_arregion,
-  output [3:0] o_ddr_arqos,
-  output [0:0] o_ddr_aruser,
-  output o_ddr_arvalid,
-  input i_ddr_arready,
-  output o_ddr_rready,
-  input [4:0] i_ddr_rid,
-  input [63:0] i_ddr_rdata,
-  input [1:0] i_ddr_rresp,
-  input i_ddr_rlast,
-  input [0:0] i_ddr_ruser,
-  input i_ddr_rvalid,
-  input i_ddr_ui_clk,
-  input i_ddr_ui_rst,
-  input i_ddr_mmcm_locked,
-  input i_ddr_init_calib_complete,
-  input [11:0] i_ddr_device_temp,
-  input i_ddr_app_sr_active,
-  input i_ddr_app_ref_ack,
-  input i_ddr_app_zq_ack
+  output types_amba_pkg::mapinfo_type o_ddr_pmapinfo,
+  output types_amba_pkg::apb_in_type o_ddr_apbi,
+  input types_amba_pkg::apb_out_type i_ddr_apbo,
+  output types_amba_pkg::mapinfo_type o_ddr_xmapinfo,
+  output types_amba_pkg::axi4_slave_in_type o_ddr_xslvi,
+  input types_amba_pkg::axi4_slave_out_type i_ddr_xslvo,
+  input i_ddr_init_calib_complete
 );
 
 import config_target_pkg::*;
@@ -105,7 +63,6 @@ import workgroup_pkg::*;
 import riscv_soc_pkg::*;
 
 
-logic w_ddr_ui_nrst;
 axi4_master_out_type acpo;
 axi4_master_in_type acpi;
 bus0_mapinfo_vector bus0_mapinfo;
@@ -117,8 +74,6 @@ bus1_mapinfo_vector bus1_mapinfo;
 bus1_apb_in_vector apbi;
 bus1_apb_out_vector apbo;
 soc_pnp_vector dev_pnp;
-axi4_master_out_type ddr_xmsto;
-axi4_master_in_type ddr_xmsti;
 logic [63:0] wb_clint_mtimer;
 logic [CFG_CPU_MAX-1:0] wb_clint_msip;
 logic [CFG_CPU_MAX-1:0] wb_clint_mtip;
@@ -131,11 +86,10 @@ logic w_irq_pnp;
 logic [CFG_PLIC_IRQ_TOTAL-1:0] wb_ext_irqs;
 
 
-  //! @brief AXI4 controller.
-  axictrl_bus0 #(
+//! @brief AXI4 controller.
+axictrl_bus0 #(
     .async_reset(CFG_ASYNC_RESET)
-  )
-   ctrl0 (
+) ctrl0 (
     .i_clk(i_sys_clk),
     .i_nrst(i_sys_nrst),
     .o_cfg(dev_pnp[SOC_PNP_XCTRL0]),
@@ -144,10 +98,7 @@ logic [CFG_PLIC_IRQ_TOTAL-1:0] wb_ext_irqs;
     .o_slvi(axisi),
     .o_msti(aximi),
     .o_mapinfo(bus0_mapinfo)
-  );
-
-assign w_ddr_ui_nrst = ~i_ddr_ui_rst;
-
+);
 
 /// AXI to APB bridge
 axi2apb #(
@@ -291,56 +242,12 @@ assign dev_pnp[SOC_PNP_DDR] = dev_config_none;
     .i_xslv_nrst(i_sys_nrst),
     .i_xslvi(axisi[CFG_BUS0_XSLV_DDR]),
     .o_xslvo(axiso[CFG_BUS0_XSLV_DDR]),
-    .i_xmst_clk(i_ddr_ui_clk),
-    .i_xmst_nrst(w_ddr_ui_nrst),
-    .o_xmsto(ddr_xmsto),
-    .i_xmsti(ddr_xmsti)
+    .i_xmst_clk(i_ddr_clk),
+    .i_xmst_nrst(i_ddr_nrst),
+    .o_xmsto(o_ddr_xslvi),
+    .i_xmsti(i_ddr_xslvo)
   );
 
-  assign o_ddr_awid = ddr_xmsto.aw_id;
-  assign o_ddr_awaddr = ddr_xmsto.aw_bits.addr - bus0_mapinfo[CFG_BUS0_XSLV_DDR].addr_start;
-  assign o_ddr_awlen = ddr_xmsto.aw_bits.len;
-  assign o_ddr_awsize = ddr_xmsto.aw_bits.size;
-  assign o_ddr_awburst = ddr_xmsto.aw_bits.burst;
-  assign o_ddr_awlock = ddr_xmsto.aw_bits.lock;
-  assign o_ddr_awcache = ddr_xmsto.aw_bits.cache;
-  assign o_ddr_awprot = ddr_xmsto.aw_bits.prot;
-  assign o_ddr_awregion = ddr_xmsto.aw_bits.region;
-  assign o_ddr_awqos = ddr_xmsto.aw_bits.qos;
-  assign o_ddr_awuser = ddr_xmsto.aw_user;
-  assign o_ddr_awvalid = ddr_xmsto.aw_valid;
-  assign ddr_xmsti.aw_ready = i_ddr_awready;
-  assign o_ddr_wdata = ddr_xmsto.w_data;
-  assign o_ddr_wstrb = ddr_xmsto.w_strb;
-  assign o_ddr_wlast = ddr_xmsto.w_last;
-  assign o_ddr_wuser = ddr_xmsto.w_user;
-  assign o_ddr_wvalid = ddr_xmsto.w_valid;
-  assign ddr_xmsti.w_ready = i_ddr_wready;
-  assign ddr_xmsti.b_id = i_ddr_bid;
-  assign ddr_xmsti.b_resp = i_ddr_bresp;
-  assign ddr_xmsti.b_user = i_ddr_buser;
-  assign ddr_xmsti.b_valid = i_ddr_bvalid;
-  assign o_ddr_bready = ddr_xmsto.b_ready;
-  assign o_ddr_arid = ddr_xmsto.ar_id;
-  assign o_ddr_araddr = ddr_xmsto.ar_bits.addr - bus0_mapinfo[CFG_BUS0_XSLV_DDR].addr_start;
-  assign o_ddr_arlen = ddr_xmsto.ar_bits.len;
-  assign o_ddr_arsize = ddr_xmsto.ar_bits.size;
-  assign o_ddr_arburst = ddr_xmsto.ar_bits.burst;
-  assign o_ddr_arlock = ddr_xmsto.ar_bits.lock;
-  assign o_ddr_arcache = ddr_xmsto.ar_bits.cache;
-  assign o_ddr_arprot = ddr_xmsto.ar_bits.prot;
-  assign o_ddr_arregion = ddr_xmsto.ar_bits.region;
-  assign o_ddr_arqos = ddr_xmsto.ar_bits.qos;
-  assign o_ddr_aruser = ddr_xmsto.ar_user;
-  assign o_ddr_arvalid = ddr_xmsto.ar_valid;
-  assign ddr_xmsti.ar_ready = i_ddr_arready;
-  assign ddr_xmsti.r_id = i_ddr_rid;
-  assign ddr_xmsti.r_data = i_ddr_rdata;
-  assign ddr_xmsti.r_resp = i_ddr_rresp;
-  assign ddr_xmsti.r_last = i_ddr_rlast;
-  assign ddr_xmsti.r_user = i_ddr_ruser;
-  assign ddr_xmsti.r_valid = i_ddr_rvalid;
-  assign o_ddr_rready = ddr_xmsto.r_ready;
 
 ////////////////////////////////////
 //! @brief Controller of the LEDs, DIPs and GPIO with the AXI4 interface.
@@ -432,6 +339,12 @@ begin: comb_proc
     // PRCI:
     o_prci_apbi = apbi[CFG_BUS1_PSLV_PRCI];
     apbo[CFG_BUS1_PSLV_PRCI] = i_prci_apbo;
+
+    // DDR:
+    o_ddr_xmapinfo = bus0_mapinfo[CFG_BUS0_XSLV_DDR];
+    o_ddr_pmapinfo = bus1_mapinfo[CFG_BUS1_PSLV_DDR];
+    o_ddr_apbi = apbi[CFG_BUS1_PSLV_DDR];
+    apbo[CFG_BUS1_PSLV_DDR] = i_ddr_apbo;
 end: comb_proc
 assign o_jtag_vref = 1'b1;
 

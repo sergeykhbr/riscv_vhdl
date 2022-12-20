@@ -36,6 +36,7 @@ module asic_top
 );
 
   import types_amba_pkg::*;
+  import config_target_pkg::*;
 
   logic             ib_rst;
   logic             ib_clk_tcxo;
@@ -62,15 +63,20 @@ module asic_top
   logic             w_pll_lock;
 
   // DDR interface
-  const mapinfo_type ddr_mapinfo = '{'0, '0};
-  logic w_ddr3_init_calib_complete;
+  mapinfo_type ddr_xmapinfo;
   axi4_slave_out_type ddr_xslvo;
   axi4_slave_in_type ddr_xslvi;
+
+  mapinfo_type ddr_pmapinfo;
   apb_in_type ddr_apbi;
   apb_out_type ddr_apbo;
 
+  logic w_ddr_ui_nrst;
+  logic w_ddr_ui_clk;
+  logic w_ddr3_init_calib_complete;
+
   // PRCI intefrace:
-  const mapinfo_type prci_mapinfo = '{'0, '0};
+  mapinfo_type prci_pmapinfo;
   dev_config_type prci_dev_cfg;
   apb_in_type prci_apbi;
   apb_out_type prci_apbo;
@@ -112,7 +118,7 @@ module asic_top
     .o_sys_clk(w_sys_clk),
     .o_ddr_nrst(w_ddr_nrst),
     .o_ddr_clk(w_ddr_clk),
-    .i_mapinfo(prci_mapinfo),
+    .i_mapinfo(prci_pmapinfo),
     .o_cfg(prci_dev_cfg),
     .i_apbi(prci_apbi),
     .o_apbo(prci_apbo)
@@ -122,6 +128,8 @@ module asic_top
     .i_sys_nrst (w_sys_nrst),
     .i_sys_clk (w_sys_clk),
     .i_dbg_nrst(w_dbg_nrst),
+    .i_ddr_nrst (w_ddr_ui_nrst),
+    .i_ddr_clk (w_ddr_ui_clk),
     //! GPIO.
     .i_gpio (ib_gpio_ipins),
     .o_gpio (ob_gpio_opins),
@@ -138,78 +146,63 @@ module asic_top
     .o_uart1_td(ob_uart1_td),
     // PRCI:
     .o_dmreset(w_dmreset),
+    .o_prci_pmapinfo(prci_pmapinfo),
     .o_prci_apbi(prci_apbi),
     .i_prci_apbo(prci_apbo),
     // DDR:
-  .o_ddr_awid(ddr_xslvi.aw_id),
-  .o_ddr_awaddr(ddr_xslvi.aw_bits.addr),
-  .o_ddr_awlen(ddr_xslvi.aw_bits.len),
-  .o_ddr_awsize(ddr_xslvi.aw_bits.size),
-  .o_ddr_awburst(ddr_xslvi.aw_bits.burst),
-  .o_ddr_awlock(ddr_xslvi.aw_bits.lock),
-  .o_ddr_awcache(ddr_xslvi.aw_bits.cache),
-  .o_ddr_awprot(ddr_xslvi.aw_bits.prot),
-  .o_ddr_awregion(ddr_xslvi.aw_bits.region),
-  .o_ddr_awqos(ddr_xslvi.aw_bits.qos),
-  .o_ddr_awuser(ddr_xslvi.aw_user),
-  .o_ddr_awvalid(ddr_xslvi.aw_valid),
-  .i_ddr_awready(ddr_xslvo.aw_ready),
-  .o_ddr_wdata(ddr_xslvi.w_data),
-  .o_ddr_wstrb(ddr_xslvi.w_strb),
-  .o_ddr_wlast(ddr_xslvi.w_last),
-  .o_ddr_wuser(ddr_xslvi.w_user),
-  .o_ddr_wvalid(ddr_xslvi.w_valid),
-  .i_ddr_wready(ddr_xslvo.w_ready),
-  .i_ddr_bid(ddr_xslvo.b_id),
-  .i_ddr_bresp(ddr_xslvo.b_resp),
-  .i_ddr_buser(ddr_xslvo.b_user),
-  .i_ddr_bvalid(ddr_xslvo.b_valid),
-  .o_ddr_bready(ddr_xslvi.b_ready),
-  .o_ddr_arid(ddr_xslvi.ar_id),
-  .o_ddr_araddr(ddr_xslvi.ar_bits.addr),
-  .o_ddr_arlen(ddr_xslvi.ar_bits.len),
-  .o_ddr_arsize(ddr_xslvi.ar_bits.size),
-  .o_ddr_arburst(ddr_xslvi.ar_bits.burst),
-  .o_ddr_arlock(ddr_xslvi.ar_bits.lock),
-  .o_ddr_arcache(ddr_xslvi.ar_bits.cache),
-  .o_ddr_arprot(ddr_xslvi.ar_bits.prot),
-  .o_ddr_arregion(ddr_xslvi.ar_bits.region),
-  .o_ddr_arqos(ddr_xslvi.ar_bits.qos),
-  .o_ddr_aruser(ddr_xslvi.ar_user),
-  .o_ddr_arvalid(ddr_xslvi.ar_valid),
-  .i_ddr_arready(ddr_xslvo.ar_ready),
-  .i_ddr_rid(ddr_xslvo.r_id),
-  .i_ddr_rdata(ddr_xslvo.r_data),
-  .i_ddr_rresp(ddr_xslvo.r_resp),
-  .i_ddr_rlast(ddr_xslvo.r_last),
-  .i_ddr_ruser(ddr_xslvo.r_user),
-  .i_ddr_rvalid(ddr_xslvo.r_valid),
-  .o_ddr_rready(ddr_xslvi.r_ready),
-  .i_ddr_ui_clk(ib_clk_tcxo),  // 200 MHz DDR clock (unused in inferred)
-  .i_ddr_ui_rst(w_sys_nrst),  // active LOW (unused in inferred actually)
-  .i_ddr_mmcm_locked(1'b1),
-  .i_ddr_init_calib_complete(1'b1),
-  .i_ddr_device_temp('0),
-  .i_ddr_app_sr_active(1'b0),
-  .i_ddr_app_ref_ack(1'b0),
-  .i_ddr_app_zq_ack(1'b0)
+    .o_ddr_pmapinfo(ddr_pmapinfo),
+    .o_ddr_apbi(ddr_apbi),
+    .i_ddr_apbo(ddr_apbo),
+    .o_ddr_xmapinfo(ddr_xmapinfo),
+    .o_ddr_xslvi(ddr_xslvi),
+    .i_ddr_xslvo(ddr_xslvo),
+    .i_ddr_init_calib_complete(w_ddr_init_calib_complete)
   );
 
 
-
-
-  axi4_sram #(
-    .async_reset(0),
-    .abits((10 + $clog2(512*1024)))      // 512MB address
-  ) ddr0 (
-    .clk(ib_clk_tcxo),
-    .nrst(w_sys_nrst),
-    .i_mapinfo(ddr_mapinfo),
-    .cfg(),
-    .i(ddr_xslvi),
-    .o(ddr_xslvo)
-  );
-
+ddr_tech #(
+    .async_reset(CFG_ASYNC_RESET),
+    .SYSCLK_TYPE("NO_BUFFER"), // "NO_BUFFER,"DIFFERENTIAL"
+    .SIM_BYPASS_INIT_CAL("FAST"),  // "FAST"-for simulation true; "OFF"
+    .SIMULATION("TRUE")
+//    .SIM_BYPASS_INIT_CAL("OFF"),  // "FAST"-for simulation true; "OFF"
+//    .SIMULATION("FALSE")
+) ddr0 (
+     // AXI memory access (ddr clock)
+    .i_xslv_nrst(w_sys_nrst),
+    .i_xslv_clk(ib_clk_tcxo),
+    .i_xmapinfo(ddr_xmapinfo),
+    .o_xcfg(),
+    .i_xslvi(ddr_xslvi),
+    .o_xslvo(ddr_xslvo),
+    // APB control interface (sys clock):
+    .i_apb_nrst(w_sys_nrst),
+    .i_apb_clk(w_sys_clk),
+    .i_pmapinfo(ddr_pmapinfo),
+    .o_pcfg(),
+    .i_apbi(ddr_apbi),
+    .o_apbo(ddr_apbo),
+    // to SOC:
+    .o_ui_nrst(w_ddr_ui_nrst),  // xilinx generte ddr clock inside ddr controller
+    .o_ui_clk(w_ddr_ui_clk),  // xilinx generte ddr clock inside ddr controller
+    // DDR signals:
+    .io_ddr3_dq(),
+    .io_ddr3_dqs_n(),
+    .io_ddr3_dqs_p(),
+    .o_ddr3_addr(),
+    .o_ddr3_ba(),
+    .o_ddr3_ras_n(),
+    .o_ddr3_cas_n(),
+    .o_ddr3_we_n(),
+    .o_ddr3_reset_n(),
+    .o_ddr3_ck_p(),
+    .o_ddr3_ck_n(),
+    .o_ddr3_cke(),
+    .o_ddr3_cs_n(),
+    .o_ddr3_dm(),
+    .o_ddr3_odt(),
+    .o_init_calib_done(w_ddr_init_calib_complete)
+);
 
   
 endmodule

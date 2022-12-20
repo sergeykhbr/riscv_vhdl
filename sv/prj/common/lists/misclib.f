@@ -1,5 +1,7 @@
 ${RTL_HOME}/misclib/apb_prci_pkg.sv
 ${RTL_HOME}/misclib/apb_prci.sv
+${RTL_HOME}/misclib/apb_ddr_pkg.sv
+${RTL_HOME}/misclib/apb_ddr.sv
 ${RTL_HOME}/misclib/apb_uart.sv
 ${RTL_HOME}/misclib/apb_gpio.sv
 ${RTL_HOME}/misclib/apb_pnp.sv

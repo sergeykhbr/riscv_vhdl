@@ -71,6 +71,8 @@ localparam bit [15:0] OPTIMITECH_AXI2APB_BRIDGE = 16'h0085;
 localparam bit [15:0] OPTIMITECH_AXI_INTERCONNECT = 16'h0086;
 // PLL and Reset Control Interface
 localparam bit [15:0] OPTIMITECH_PRCI = 16'h0087;
+// DDR controller status registers
+localparam bit [15:0] OPTIMITECH_DDRCTRL = 16'h0088;
 
 // Plug'n'Play descriptor localparams.
 // Undefined type of the descriptor (empty device).
