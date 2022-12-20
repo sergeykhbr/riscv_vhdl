@@ -60,7 +60,8 @@ module asic_top
   logic             w_glob_nrst;
   logic             w_soft_rst;
   logic             w_bus_nrst;
-  logic             w_clk_bus;
+  logic             w_clk_sys;
+  logic             w_clk_ddr;
   logic             w_pll_lock;
 
   axi4_slave_in_type ddr_xslvi;
@@ -93,7 +94,8 @@ module asic_top
   SysPLL_tech pll0(
     .i_reset(ib_rst),
     .i_clk_tcxo(ib_clk_tcxo),
-    .o_clk_bus(w_clk_bus),
+    .o_clk_sys(w_clk_sys),
+    .o_clk_ddr(w_clk_ddr),
     .o_locked(w_pll_lock)
   );  
 
@@ -101,7 +103,7 @@ module asic_top
   
   riscv_soc soc0(
     .i_rst (w_ext_reset),
-    .i_clk (w_clk_bus),
+    .i_clk (w_clk_sys),
     //! GPIO.
     .i_gpio (ib_gpio_ipins),
     .o_gpio (ob_gpio_opins),

@@ -25,7 +25,7 @@ localparam bit [1:0] State_out = 2'h3;
 
 typedef struct {
     logic [2:0] state;
-    logic [1:0] selidx;
+    logic [2:0] selidx;
     logic pvalid;
     logic [31:0] paddr;
     logic [CFG_SYSBUS_DATA_BITS-1:0] pwdata;

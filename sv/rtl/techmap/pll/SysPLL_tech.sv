@@ -22,11 +22,18 @@ import config_target_pkg::*;
 
 `ifdef TARGET_INFERRED
 
-    SysPLL_inferred pll0(.CLK_IN(i_clk_tcxo), .CLK_OUT1(o_clk_sys), .CLK_OUT2(o_clk_ddr), .RESET(i_reset), .LOCKED(o_locked));
+    SysPLL_inferred inf0
+    (
+        .CLK_IN(i_clk_tcxo),
+        .CLK_OUT1(o_clk_sys),
+        .CLK_OUT2(o_clk_ddr),
+        .RESET(i_reset),
+        .LOCKED(o_locked)
+    );
 
 `elsif TARGET_KC705
 
-    SysPLL_kc705 pll0
+    SysPLL_kc705 kc705
     (
       .i_reset     (i_reset),
       .i_clk_tcxo  (i_clk_tcxo),
