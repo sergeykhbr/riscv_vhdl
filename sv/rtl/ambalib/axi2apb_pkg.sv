@@ -25,7 +25,7 @@ localparam bit [1:0] State_out = 2'h3;
 
 typedef struct {
     logic [2:0] state;
-    logic [2:0] selidx;
+    logic [2:0] selidx;                                     // TODO: clog2 depending slaves number
     logic pvalid;
     logic [31:0] paddr;
     logic [CFG_SYSBUS_DATA_BITS-1:0] pwdata;
@@ -36,7 +36,7 @@ typedef struct {
     logic pselx;
     logic penable;
     logic pslverr;
-    logic [7:0] xsize;
+    logic [7:0] size;
 } axi2apb_registers;
 
 const axi2apb_registers axi2apb_r_reset = '{
@@ -52,7 +52,7 @@ const axi2apb_registers axi2apb_r_reset = '{
     1'b0,                               // pselx
     1'b0,                               // penable
     1'b0,                               // pslverr
-    '0                                  // xsize
+    '0                                  // size
 };
 
 endpackage: axi2apb_pkg

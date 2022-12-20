@@ -30,6 +30,7 @@ module axi_slv #(
     output types_amba_pkg::axi4_slave_out_type o_xslvo,     // AXI Slave output interface
     output logic o_req_valid,
     output logic [types_amba_pkg::CFG_SYSBUS_ADDR_BITS-1:0] o_req_addr,
+    output logic [7:0] o_req_size,
     output logic o_req_write,
     output logic [types_amba_pkg::CFG_SYSBUS_DATA_BITS-1:0] o_req_wdata,
     output logic [types_amba_pkg::CFG_SYSBUS_DATA_BYTES-1:0] o_req_wstrb,
@@ -179,6 +180,7 @@ begin: comb_proc
                 v.req_len = (r.req_len - 1);
                 v.state = State_addrdata_r;
             end else begin
+                v.req_valid = 1'b0;
                 v.state = State_data_r;
             end
         end
@@ -234,6 +236,7 @@ begin: comb_proc
     o_req_valid = r.req_valid;
     o_req_last = v_req_last;
     o_req_addr = r.req_addr;
+    o_req_size = r.req_xsize;
     o_req_write = r.req_write;
     o_req_wdata = r.req_wdata;
     o_req_wstrb = r.req_wstrb;

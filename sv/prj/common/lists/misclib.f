@@ -1,4 +1,6 @@
 ${RTL_HOME}/misclib/apb_uart.sv
+${RTL_HOME}/misclib/apb_gpio.sv
+${RTL_HOME}/misclib/apb_pnp.sv
 ${RTL_HOME}/misclib/axi4_gpio.sv
 ${RTL_HOME}/misclib/axi4_pnp.sv
 ${RTL_HOME}/misclib/axi4_rom.sv

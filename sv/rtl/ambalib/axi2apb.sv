@@ -37,6 +37,7 @@ import axi2apb_pkg::*;
 
 logic w_req_valid;
 logic [CFG_SYSBUS_ADDR_BITS-1:0] wb_req_addr;
+logic [7:0] wb_req_size;
 logic w_req_write;
 logic [CFG_SYSBUS_DATA_BITS-1:0] wb_req_wdata;
 logic [CFG_SYSBUS_DATA_BYTES-1:0] wb_req_wstrb;
@@ -57,6 +58,7 @@ axi_slv #(
     .o_xslvo(o_xslvo),
     .o_req_valid(w_req_valid),
     .o_req_addr(wb_req_addr),
+    .o_req_size(wb_req_size),
     .o_req_write(w_req_write),
     .o_req_wdata(wb_req_wdata),
     .o_req_wstrb(wb_req_wstrb),
@@ -98,7 +100,6 @@ begin: comb_proc
         v.pslverr = 1'b0;
         v.penable = 1'b0;
         v.pselx = 1'b0;
-        v.xsize = '0;
         v.selidx = CFG_BUS1_PSLV_TOTAL;
         for (int i = 0; i < CFG_BUS1_PSLV_TOTAL; i++) begin
             if ((wb_req_addr >= CFG_BUS1_MAP[i].addr_start)
@@ -111,10 +112,15 @@ begin: comb_proc
             v.pselx = 1'b1;
             v.paddr = {wb_req_addr[31: 2], 2'h0};
             v.pprot = '0;
-            v.pwdata = wb_req_wdata;
-            v.pstrb = wb_req_wstrb;
+            if (wb_req_addr[2] == 1'b1) begin
+                v.pwdata = {32'h00000000, wb_req_wdata[63: 32]};
+                v.pstrb = {4'h0, wb_req_wstrb[7: 4]};
+            end else begin
+                v.pwdata = wb_req_wdata;
+                v.pstrb = wb_req_wstrb;
+            end
             v.state = State_setup;
-            v.xsize = (&wb_req_wstrb);
+            v.size = wb_req_size;
             if (w_req_last == 1'b0) begin
                 v.state = State_out;                        // Burst is not supported
                 v.pselx = 1'b0;
@@ -131,20 +137,22 @@ begin: comb_proc
         v.pslverr = vapbo[r.selidx].pslverr;
         if (vapbo[r.selidx].pready == 1'b1) begin
             v.penable = 1'b0;
-            v.pselx = 1'b0;
-            v.pwrite = 1'b0;
             if (r.paddr[2] == 1'b0) begin
                 v.prdata = {r.prdata[63: 32], vapbo[r.selidx].prdata};
             end else begin
-                v.prdata = {vapbo[r.selidx].prdata, vapbo[r.selidx].prdata[31: 0]};
+                v.prdata = {vapbo[r.selidx].prdata, r.prdata[31: 0]};
             end
-            if ((|r.xsize) == 1'b1) begin
-                v.xsize = (r.xsize - 1);
+            if (r.size > 8'h04) begin
+                v.size = (r.size - 4);
                 v.paddr = (r.paddr + 4);
+                v.pwdata = {32'h00000000, wb_req_wdata[63: 32]};
+                v.pstrb = {4'h0, wb_req_wstrb[7: 4]};
                 v.state = State_setup;
             end else begin
                 v.pvalid = 1'b1;
                 v.state = State_out;
+                v.pselx = 1'b0;
+                v.pwrite = 1'b0;
             end
         end
     end
@@ -159,13 +167,8 @@ begin: comb_proc
 
     vapbi[r.selidx].paddr = r.paddr;
     vapbi[r.selidx].pwrite = r.pwrite;
-    if (r.paddr[2] == 1'b0) begin
-        vapbi[r.selidx].pwdata = r.pwdata[31: 0];
-        vapbi[r.selidx].pstrb = r.pstrb[3: 0];
-    end else begin
-        vapbi[r.selidx].pwdata = r.pwdata[63: 32];
-        vapbi[r.selidx].pstrb = r.pstrb[7: 4];
-    end
+    vapbi[r.selidx].pwdata = r.pwdata[31: 0];
+    vapbi[r.selidx].pstrb = r.pstrb[3: 0];
     vapbi[r.selidx].pselx = r.pselx;
     vapbi[r.selidx].penable = r.penable;
     vapbi[r.selidx].pprot = r.pprot;

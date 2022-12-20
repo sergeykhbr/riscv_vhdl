@@ -32,6 +32,7 @@ import types_amba_pkg::*;
 
 logic w_req_valid;
 logic [CFG_SYSBUS_ADDR_BITS-1:0] wb_req_addr;
+logic [7:0] wb_req_size;
 logic w_req_write;
 logic [CFG_SYSBUS_DATA_BITS-1:0] wb_req_wdata;
 logic [CFG_SYSBUS_DATA_BYTES-1:0] wb_req_wstrb;
@@ -51,6 +52,7 @@ axi_slv #(
     .o_xslvo(o),
     .o_req_valid(w_req_valid),
     .o_req_addr(wb_req_addr),
+    .o_req_size(wb_req_size),
     .o_req_write(w_req_write),
     .o_req_wdata(wb_req_wdata),
     .o_req_wstrb(wb_req_wstrb),

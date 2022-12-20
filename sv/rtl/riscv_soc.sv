@@ -243,23 +243,54 @@ Workgroup #(
     .o(axiso[CFG_BUS0_XSLV_SRAM])
   );
 
+  ////////////////////////////////////
+  //! @brief Core local interrupt controller (CLINT).
+  //! @details Map address:
+  //!          0x00000000_02000000..0x00000000_02000fff (64 KB total)
+  clint #(
+    .async_reset(CFG_ASYNC_RESET)
+  ) clint0 (
+    .clk(i_clk),
+    .nrst(w_sys_nrst),
+    .i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_CLINT]),
+    .o_cfg(dev_pnp[SOC_PNP_CLINT]),
+    .i_axi(axisi[CFG_BUS0_XSLV_CLINT]),
+    .o_axi(axiso[CFG_BUS0_XSLV_CLINT]),
+    .o_mtimer(wb_clint_mtimer),
+    .o_msip(wb_clint_msip),
+    .o_mtip(wb_clint_mtip)
+  );
+
+  ////////////////////////////////////
+  //! @brief External interrupt controller (PLIC).
+  //! @details Map address:
+  //!          0x00000000_0C000000..0x00000000_0fffffff (64 MB total)
+  plic #(
+    .async_reset(CFG_ASYNC_RESET),
+    .ctxmax(CFG_PLIC_CONTEXT_TOTAL),
+    .irqmax(CFG_PLIC_IRQ_TOTAL)
+  ) plic0 (
+    .clk(i_clk),
+    .nrst(w_sys_nrst),
+    .i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_PLIC]),
+    .o_cfg(dev_pnp[SOC_PNP_PLIC]),
+    .i_axi(axisi[CFG_BUS0_XSLV_PLIC]),
+    .o_axi(axiso[CFG_BUS0_XSLV_PLIC]),
+    .i_irq_request(wb_ext_irqs),  // [0] must be tight to GND
+    .o_ip(wb_plic_xeip)
+  );
+  // FU740 implements 5 cores (we implement only 4):
+  //   Hart0 - M-mode only (S7 Core RV64IMAC)
+  //   Hart1..4 - M+S modes (U74 Cores RV64GC)
+  // Hart4 ignored
+  assign wb_plic_meip = {wb_plic_xeip[5], wb_plic_xeip[3], wb_plic_xeip[1], wb_plic_xeip[0]};
+  assign wb_plic_seip = {wb_plic_xeip[6], wb_plic_xeip[4], wb_plic_xeip[2], 1'b0};
+
 
   ////////////////////////////////////
   //! External DDR module instance with the AXI4 interface.
   //! @details Map address:
   //!          0x00000000_80000000..0x00000000_7fffffff (2GB on FU740)
-//  axi4_sram #(
-//    .async_reset(CFG_ASYNC_RESET),
-//    .abits((10 + $clog2(512*1024))),      // 512MB address
-//    .init_file(CFG_SIM_DDR_INIT_HEX)     // Initialization will work only in RTL simulation
-//  ) ddr0 (
-//    .clk(i_clk),
-//    .nrst(w_sys_nrst),
-//    .i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_DDR]),
-//    .cfg(dev_pnp[SOC_PNP_DDR]),
-//    .i(axisi[CFG_BUS0_XSLV_DDR]),
-//    .o(axiso[CFG_BUS0_XSLV_DDR])
-//  );
 assign dev_pnp[SOC_PNP_DDR] = dev_config_none;
 
 // TODO: move into interconnect
@@ -323,22 +354,7 @@ assign dev_pnp[SOC_PNP_DDR] = dev_config_none;
   //! @brief Controller of the LEDs, DIPs and GPIO with the AXI4 interface.
   //! @details Map address:
   //!          0x00000000_10060000..0x00000000_10060fff (4 KB total)
-  axi4_gpio  #(
-    .async_reset(CFG_ASYNC_RESET),
-    .width(12)
-  ) gpio0 (
-    .clk(i_clk),
-    .nrst(w_sys_nrst),
-    .i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_GPIO]),
-    .cfg(dev_pnp[SOC_PNP_GPIO]),
-    .i(axisi[CFG_BUS0_XSLV_GPIO]),
-    .o(axiso[CFG_BUS0_XSLV_GPIO]),
-    .i_gpio(i_gpio),
-    .o_gpio(o_gpio),
-    .o_gpio_dir(o_gpio_dir),
-    .o_irq(wb_irq_gpio[11:0])
-  );
-  assign wb_irq_gpio[15:12] = '0;
+assign axiso[CFG_BUS0_XSLV_GPIO] = axi4_slave_out_none;
 
 apb_uart #(
     .async_reset(async_reset),
@@ -355,55 +371,35 @@ apb_uart #(
     .o_irq(w_irq_uart1)
 );
 
-
   ////////////////////////////////////
-  //! @brief Core local interrupt controller (CLINT).
+  //! @brief Controller of the LEDs, DIPs and GPIO with the AXI4 interface.
   //! @details Map address:
-  //!          0x00000000_02000000..0x00000000_02000fff (64 KB total)
-  clint #(
-    .async_reset(CFG_ASYNC_RESET)
-  ) clint0 (
-    .clk(i_clk),
-    .nrst(w_sys_nrst),
-    .i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_CLINT]),
-    .o_cfg(dev_pnp[SOC_PNP_CLINT]),
-    .i_axi(axisi[CFG_BUS0_XSLV_CLINT]),
-    .o_axi(axiso[CFG_BUS0_XSLV_CLINT]),
-    .o_mtimer(wb_clint_mtimer),
-    .o_msip(wb_clint_msip),
-    .o_mtip(wb_clint_mtip)
-  );
-
-  ////////////////////////////////////
-  //! @brief External interrupt controller (PLIC).
-  //! @details Map address:
-  //!          0x00000000_0C000000..0x00000000_0fffffff (64 MB total)
-  plic #(
+  //!          0x00000000_10060000..0x00000000_10060fff (4 KB total)
+  apb_gpio  #(
     .async_reset(CFG_ASYNC_RESET),
-    .ctxmax(CFG_PLIC_CONTEXT_TOTAL),
-    .irqmax(CFG_PLIC_IRQ_TOTAL)
-  ) plic0 (
+    .width(12)
+  ) gpio0 (
     .clk(i_clk),
     .nrst(w_sys_nrst),
-    .i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_PLIC]),
-    .o_cfg(dev_pnp[SOC_PNP_PLIC]),
-    .i_axi(axisi[CFG_BUS0_XSLV_PLIC]),
-    .o_axi(axiso[CFG_BUS0_XSLV_PLIC]),
-    .i_irq_request(wb_ext_irqs),  // [0] must be tight to GND
-    .o_ip(wb_plic_xeip)
+    .i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_GPIO]),
+    .cfg(dev_pnp[SOC_PNP_GPIO]),
+    .i(apbi[CFG_BUS1_PSLV_GPIO]),
+    .o(apbo[CFG_BUS1_PSLV_GPIO]),
+    .i_gpio(i_gpio),
+    .o_gpio(o_gpio),
+    .o_gpio_dir(o_gpio_dir),
+    .o_irq(wb_irq_gpio[11:0])
   );
-  // FU740 implements 5 cores (we implement only 4):
-  //   Hart0 - M-mode only (S7 Core RV64IMAC)
-  //   Hart1..4 - M+S modes (U74 Cores RV64GC)
-  // Hart4 ignored
-  assign wb_plic_meip = {wb_plic_xeip[5], wb_plic_xeip[3], wb_plic_xeip[1], wb_plic_xeip[0]};
-  assign wb_plic_seip = {wb_plic_xeip[6], wb_plic_xeip[4], wb_plic_xeip[2], 1'b0};
+  assign wb_irq_gpio[15:12] = '0;
+
 
   //! @brief Plug'n'Play controller of the current configuration with the
   //!        AXI4 interface.
   //! @details Map address:
   //!          0x00000000_100ff000..0x00000000_100fffff (4 KB total)
-  axi4_pnp #(
+assign axiso[CFG_BUS0_XSLV_PNP] = axi4_slave_out_none;
+
+  apb_pnp #(
     .async_reset(CFG_ASYNC_RESET),
     .cfg_slots(SOC_PNP_TOTAL),
     .hw_id(CFG_HW_ID),
@@ -414,13 +410,14 @@ apb_uart #(
     .sys_clk(i_clk),
     .nrst(w_sys_nrst),
     .ddr_init_done(i_ddr_init_calib_complete),
-    .i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_PNP]),
+    .i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_PNP]),
     .i_cfg(dev_pnp),
     .o_cfg(dev_pnp[SOC_PNP_PNP]),
-    .i(axisi[CFG_BUS0_XSLV_PNP]),
-    .o(axiso[CFG_BUS0_XSLV_PNP]),
+    .i(apbi[CFG_BUS1_PSLV_PNP]),
+    .o(apbo[CFG_BUS1_PSLV_PNP]),
     .o_irq(w_irq_pnp)
   );
+
 
 always_comb
 begin: comb_proc

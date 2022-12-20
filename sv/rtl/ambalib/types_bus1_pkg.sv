@@ -22,12 +22,20 @@ import types_amba_pkg::*;
 //          In current implementation it is used sequential indexing for it.
 //          Indexes are used to specify a device bus item in a vectors.
 
-// @brief Worjgroup DMI interface.
-localparam int CFG_BUS1_PSLV_DMI = 0;
 // @brief UART0 APB device.
-localparam int CFG_BUS1_PSLV_UART1 = 1;
+localparam int CFG_BUS1_PSLV_UART1 = 0;
+// @brief System status and control registers device.
+localparam int CFG_BUS1_PSLV_PRCI = 1;
+// @brief Worjgroup DMI interface.
+localparam int CFG_BUS1_PSLV_DMI = 2;
+// Configuration index of the GPIO (General Purpose In/Out) module.
+localparam int CFG_BUS1_PSLV_GPIO = 3;
+// @brief DDR control register.
+localparam int CFG_BUS1_PSLV_DDR = 4;
+// Configuration index of the Plug-n-Play module.
+localparam int CFG_BUS1_PSLV_PNP = 5;
 // Total number of the APB slaves devices on Bus[1].
-localparam int CFG_BUS1_PSLV_TOTAL = 2;
+localparam int CFG_BUS1_PSLV_TOTAL = 6;
 
 typedef apb_in_type bus1_apb_in_vector[0:CFG_BUS1_PSLV_TOTAL - 1];
 typedef apb_out_type bus1_apb_out_vector[0:CFG_BUS1_PSLV_TOTAL - 1];
@@ -35,8 +43,12 @@ typedef mapinfo_type bus1_mapinfo_vector[0:CFG_BUS1_PSLV_TOTAL - 1];
 
 // Bus 1 device tree
 const bus1_mapinfo_vector CFG_BUS1_MAP = '{
-    '{64'h000001001E000, 64'h000001001F000},                // 0, dmi 4KB. TODO: change base address
-    '{64'h0000010010000, 64'h0000010011000}                 // 1, uart1 4KB
+    '{64'h0000010010000, 64'h0000010011000},                // 0, uart1 4KB
+    '{64'h0000010011000, 64'h0000010012000},                // 1, PRCI 4KB
+    '{64'h000001001E000, 64'h000001001F000},                // 2, dmi 4KB. TODO: change base address
+    '{64'h0000010060000, 64'h0000010061000},                // 3, GPIO 4KB
+    '{64'h00000100C0000, 64'h00000100C1000},                // 4, DDR MGMT 4KB
+    '{64'h00000100ff000, 64'h0000010100000}                 // 5, Plug'n'Play 4KB
 };
 
 endpackage: types_bus1_pkg
