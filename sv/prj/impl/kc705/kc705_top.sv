@@ -212,7 +212,7 @@ ddr_tech #(
     .o_ddr3_ba(o_ddr3_ba),
     .o_ddr3_ras_n(o_ddr3_ras_n),
     .o_ddr3_cas_n(o_ddr3_cas_n),
-    .o_ddr3_we_n(o_ddr3_reset_n),
+    .o_ddr3_we_n(o_ddr3_we_n),
     .o_ddr3_reset_n(o_ddr3_reset_n),
     .o_ddr3_ck_p(o_ddr3_ck_p),
     .o_ddr3_ck_n(o_ddr3_ck_n),

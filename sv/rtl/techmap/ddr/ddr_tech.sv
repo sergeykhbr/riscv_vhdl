@@ -110,6 +110,22 @@ axi4_slave_in_type wb_xslvi;  // remapped
     .o_apbo(o_apbo),
     .o_ui_nrst(o_ui_nrst),
     .o_ui_clk(o_ui_clk),
+    // DDR signals:
+    .o_ddr3_reset_n(o_ddr3_reset_n),
+    .o_ddr3_ck_n(o_ddr3_ck_n),
+    .o_ddr3_ck_p(o_ddr3_ck_p),
+    .o_ddr3_cke(o_ddr3_cke),
+    .o_ddr3_cs_n(o_ddr3_cs_n),
+    .o_ddr3_ras_n(o_ddr3_ras_n),
+    .o_ddr3_cas_n(o_ddr3_cas_n),
+    .o_ddr3_we_n(o_ddr3_we_n),
+    .o_ddr3_dm(o_ddr3_dm),
+    .o_ddr3_ba(o_ddr3_ba),
+    .o_ddr3_addr(o_ddr3_addr),
+    .io_ddr3_dq(io_ddr3_dq),
+    .io_ddr3_dqs_n(io_ddr3_dqs_n),
+    .io_ddr3_dqs_p(io_ddr3_dqs_p),
+    .o_ddr3_odt(o_ddr3_odt),
     .o_init_calib_done(o_init_calib_done)
   );
 `else
