@@ -19,4 +19,5 @@ ${RTL_HOME}/techmap/cdc_axi_sync/kc705/axi_infrastructure_v1_1_vl_rfs.v
 ${RTL_HOME}/techmap/cdc_axi_sync/kc705/cdc_ddr.v
 ${RTL_HOME}/techmap/cdc_axi_sync/cdc_axi_sync_tech.v
 ${RTL_HOME}/techmap/ddr/ddr_inferred.sv
+${RTL_HOME}/techmap/ddr/ddr_kc705.sv
 ${RTL_HOME}/techmap/ddr/ddr_tech.sv

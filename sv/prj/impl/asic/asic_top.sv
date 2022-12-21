@@ -113,7 +113,7 @@ module asic_top
     .i_clk(ib_clk_tcxo),
     .i_pwrreset(ib_rst),
     .i_dmireset(w_dmreset),
-    .i_ddr_calib_done(w_ddr_init_calib_complete),
+    .i_ddr_calib_done(w_ddr3_init_calib_complete),
     .o_dbg_nrst(w_dbg_nrst),
     .o_sys_nrst(w_sys_nrst),
     .o_sys_clk(w_sys_clk),
@@ -201,7 +201,7 @@ ddr_tech #(
     .o_ddr3_cs_n(),
     .o_ddr3_dm(),
     .o_ddr3_odt(),
-    .o_init_calib_done(w_ddr_init_calib_complete)
+    .o_init_calib_done(w_ddr3_init_calib_complete)
 );
 
   

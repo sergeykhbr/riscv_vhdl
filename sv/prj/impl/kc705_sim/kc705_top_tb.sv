@@ -113,7 +113,10 @@ module kc705_top_tb;
   end
   assign sys_rst_n = ~i_rst;
 
-  kc705_top tt(
+  kc705_top #(
+    .SIM_BYPASS_INIT_CAL("FAST"),  // "FAST"-for simulation true; "OFF"
+    .SIMULATION("TRUE")
+  ) tt (
     .i_rst (i_rst),
     .i_sclk_p (i_sclk_p),
     .i_sclk_n (i_sclk_n),

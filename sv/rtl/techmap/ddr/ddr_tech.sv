@@ -88,6 +88,30 @@ axi4_slave_in_type wb_xslvi;  // remapped
     .o_init_calib_done(o_init_calib_done)
   );
 `elsif TARGET_KC705
+  ddr_kc705 #(
+    .async_reset(async_reset),
+    .SYSCLK_TYPE(SYSCLK_TYPE), // "NO_BUFFER,"DIFFERENTIAL"
+    .SIM_BYPASS_INIT_CAL(SIM_BYPASS_INIT_CAL),  // "FAST"-for simulation true; "OFF"
+    .SIMULATION(SIMULATION)
+  ) kc705 (
+    .i_apb_nrst(i_apb_nrst),
+    .i_apb_clk(i_apb_clk),
+    .i_xslv_nrst(i_xslv_nrst),
+    .i_xslv_clk(i_xslv_clk),
+    // AXI memory access (ddr clock)
+    .i_xmapinfo(i_xmapinfo),
+    .o_xcfg(o_xcfg),
+    .i_xslvi(wb_xslvi),
+    .o_xslvo(o_xslvo),
+    // APB control interface (sys clock):
+    .i_pmapinfo(i_pmapinfo),
+    .o_pcfg(o_pcfg),
+    .i_apbi(i_apbi),
+    .o_apbo(o_apbo),
+    .o_ui_nrst(o_ui_nrst),
+    .o_ui_clk(o_ui_clk),
+    .o_init_calib_done(o_init_calib_done)
+  );
 `else
     initial $error("INSTANCE macro is undefined, check technology-dependent memories.");
 `endif

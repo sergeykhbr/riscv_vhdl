@@ -142,7 +142,7 @@ bit w_ui_rst;
     .s_axi_bid(o_xslvo.b_id),
     .s_axi_bresp(o_xslvo.b_resp),
     .s_axi_bvalid(o_xslvo.b_valid),
-    .s_axi_arid(wi_xslvi.ar_id),
+    .s_axi_arid(i_xslvi.ar_id),
     .s_axi_araddr(i_xslvi.ar_bits.addr[29:0]),
     .s_axi_arlen(i_xslvi.ar_bits.len),
     .s_axi_arsize(i_xslvi.ar_bits.size),
@@ -151,7 +151,7 @@ bit w_ui_rst;
     .s_axi_arcache(i_xslvi.ar_bits.cache),
     .s_axi_arprot(i_xslvi.ar_bits.prot),
     .s_axi_arqos(i_xslvi.ar_bits.qos),
-    .s_axi_arvalid(i_xslvi.ar_bits.valid),
+    .s_axi_arvalid(i_xslvi.ar_valid),
     .s_axi_arready(o_xslvo.ar_ready),
     .s_axi_rready(i_xslvi.r_ready),
     .s_axi_rid(o_xslvo.r_id),
@@ -164,5 +164,8 @@ bit w_ui_rst;
     .sys_rst(i_xslv_nrst)  // active LOW. Connected to IODELAY
   );
 
+  // TODO: fix me with registers
+  assign o_xslvo.r_user = '0;
+  assign o_xslvo.b_user = '0;
 
 endmodule

@@ -14,7 +14,11 @@
 //! limitations under the License.
 //!
 
-module kc705_top
+module kc705_top #(
+    parameter SYSCLK_TYPE           = "NO_BUFFER",
+    parameter SIM_BYPASS_INIT_CAL   = "OFF",
+    parameter SIMULATION            = "FALSE"
+)
 ( 
     //! Input reset. Active HIGH.
     input                     i_rst,
@@ -52,6 +56,9 @@ module kc705_top
     output o_ddr3_init_calib_complete
 );
 
+  import types_amba_pkg::*;
+  import config_target_pkg::*;
+
   logic             ib_rst;
   logic             ib_clk_tcxo;
   logic             ib_sclk_n;  
@@ -69,65 +76,31 @@ module kc705_top
   logic             ob_jtag_tdo; 
   logic             ob_jtag_vref;   
 
-  logic             w_ext_reset;
-  logic             w_ext_resetn;
-  logic             w_clk_sys;
-  logic             w_clk_ddr;
+  logic             w_sys_nrst;
+  logic             w_dbg_nrst;
+  logic             w_dmreset;
+  logic             w_sys_clk;
+  logic             w_ddr_clk;
   logic             w_pll_lock;
 
-  // DDR3 signals:
-  logic [4:0] wb_soc_ddr_awid;
-  logic [47:0] wb_soc_ddr_awaddr;
-  logic [7:0] wb_soc_ddr_awlen;
-  logic [2:0] wb_soc_ddr_awsize;
-  logic [1:0] wb_soc_ddr_awburst;
-  logic w_soc_ddr_awlock;
-  logic [3:0] wb_soc_ddr_awcache;
-  logic [2:0] wb_soc_ddr_awprot;
-  logic [3:0] wb_soc_ddr_awregion;
-  logic [3:0] wb_soc_ddr_awqos;
-  logic [0:0] w_soc_ddr_awuser;
-  logic w_ddr_awvalid;
-  logic w_soc_ddr_awready;
-  logic [63:0] wb_soc_ddr_wdata;
-  logic [7:0] wb_soc_ddr_wstrb;
-  logic [0:0] w_soc_ddr_wuser;
-  logic w_soc_ddr_wlast;
-  logic w_soc_ddr_wvalid;
-  logic w_ddr_wready;
-  logic w_soc_ddr_bready;
-  logic [4:0] wb_ddr_bid;
-  logic [1:0] wb_ddr_bresp;
-  logic [0:0] w_soc_ddr_buser;
-  logic w_ddr_bvalid;
-  logic [4:0] wb_soc_ddr_arid;
-  logic [47:0] wb_soc_ddr_araddr;
-  logic [7:0] wb_soc_ddr_arlen;
-  logic [2:0] wb_soc_ddr_arsize;
-  logic [1:0] wb_soc_ddr_arburst;
-  logic w_soc_ddr_arlock;
-  logic [3:0] wb_soc_ddr_arcache;
-  logic [2:0] wb_soc_ddr_arprot;
-  logic [3:0] wb_soc_ddr_arregion;
-  logic [3:0] wb_soc_ddr_arqos;
-  logic [0:0] w_soc_ddr_aruser;
-  logic w_soc_ddr_arvalid;
-  logic w_ddr_arready;
-  logic w_soc_ddr_rready;
-  logic [4:0] wb_ddr_rid;
-  logic [63:0] wb_ddr_rdata;
-  logic [1:0] wb_ddr_rresp;
-  logic [0:0] w_soc_ddr_ruser;
-  logic w_ddr_rlast;
-  logic w_ddr_rvalid;
+  // DDR interface
+  mapinfo_type ddr_xmapinfo;
+  axi4_slave_out_type ddr_xslvo;
+  axi4_slave_in_type ddr_xslvi;
+
+  mapinfo_type ddr_pmapinfo;
+  apb_in_type ddr_apbi;
+  apb_out_type ddr_apbo;
+
+  logic w_ddr_ui_nrst;
   logic w_ddr_ui_clk;
-  logic w_ddr_ui_rst;
-  logic w_ddr_mmcm_locked;
-  logic w_ddr_init_calib_complete;
-  logic [11:0] wb_ddr_device_temp;
-  logic w_ddr_app_sr_active;
-  logic w_ddr_app_ref_ack;
-  logic w_ddr_app_zq_ack;
+  logic w_ddr3_init_calib_complete;
+
+  // PRCI intefrace:
+  mapinfo_type prci_pmapinfo;
+  dev_config_type prci_dev_cfg;
+  apb_in_type prci_apbi;
+  apb_out_type prci_apbo;
 
 
   ibuf_tech irst0(.o(ib_rst),.i(i_rst));
@@ -150,23 +123,36 @@ module kc705_top
   ibuf_tech ijtdi0(.o(ib_jtag_tdi),.i(i_jtag_tdi)); 
   obuf_tech ojtdo0(.o(o_jtag_tdo),.i(ob_jtag_tdo));   
   obuf_tech ojvrf0(.o(o_jtag_vref),.i(ob_jtag_vref)); 
+
+  assign o_ddr3_init_calib_complete = w_ddr3_init_calib_complete;
   
 
-  SysPLL_tech pll0(
-    .i_reset(ib_rst),
-    .i_clk_tcxo(ib_clk_tcxo),
-    .o_clk_sys(w_clk_sys),
-    .o_clk_ddr(w_clk_ddr),
-    .o_locked(w_pll_lock)
-  );  
+  // PLL and Reset Control Interface:
+  apb_prci #(
+    .async_reset(1'b0)
+  ) prci0 (
+    .i_clk(ib_clk_tcxo),
+    .i_pwrreset(ib_rst),
+    .i_dmireset(w_dmreset),
+    .i_ddr_calib_done(w_ddr3_init_calib_complete),
+    .o_dbg_nrst(w_dbg_nrst),
+    .o_sys_nrst(w_sys_nrst),
+    .o_sys_clk(w_sys_clk),
+    .o_ddr_nrst(w_ddr_nrst),
+    .o_ddr_clk(w_ddr_clk),
+    .i_mapinfo(prci_pmapinfo),
+    .o_cfg(prci_dev_cfg),
+    .i_apbi(prci_apbi),
+    .o_apbo(prci_apbo)
+  );
 
-  assign w_ext_reset = ib_rst | ~w_pll_lock;
-  assign w_ext_resetn = ~w_ext_reset;
-  assign o_ddr3_init_calib_complete = w_ddr_init_calib_complete;
-  
+ 
   riscv_soc soc0(
-    .i_rst (w_ext_reset),
-    .i_clk (w_clk_sys),
+    .i_sys_nrst (w_sys_nrst),
+    .i_sys_clk (w_sys_clk),
+    .i_dbg_nrst(w_dbg_nrst),
+    .i_ddr_nrst (w_ddr_ui_nrst),
+    .i_ddr_clk (w_ddr_ui_clk),
     //! GPIO.
     .i_gpio (ib_gpio_ipins),
     .o_gpio (ob_gpio_opins),
@@ -181,139 +167,61 @@ module kc705_top
     //! UART1 signals:
     .i_uart1_rd(ib_uart1_rd),
     .o_uart1_td(ob_uart1_td),
-    // DDR signal:
-    .o_ddr_awid(wb_soc_ddr_awid),
-    .o_ddr_awaddr(wb_soc_ddr_awaddr),
-    .o_ddr_awlen(wb_soc_ddr_awlen),
-    .o_ddr_awsize(wb_soc_ddr_awsize),
-    .o_ddr_awburst(wb_soc_ddr_awburst),
-    .o_ddr_awlock(w_soc_ddr_awlock),
-    .o_ddr_awcache(wb_soc_ddr_awcache),
-    .o_ddr_awprot(wb_soc_ddr_awprot),
-    .o_ddr_awregion(wb_soc_ddr_awregion),
-    .o_ddr_awqos(wb_soc_ddr_awqos),
-    .o_ddr_awuser(w_soc_ddr_awuser),
-    .o_ddr_awvalid(w_ddr_awvalid),
-    .i_ddr_awready(w_soc_ddr_awready),
-    .o_ddr_wdata(wb_soc_ddr_wdata),
-    .o_ddr_wstrb(wb_soc_ddr_wstrb),
-    .o_ddr_wuser(w_soc_ddr_wuser),
-    .o_ddr_wlast(w_soc_ddr_wlast),
-    .o_ddr_wvalid(w_soc_ddr_wvalid),
-    .i_ddr_wready(w_ddr_wready),
-    .o_ddr_bready(w_soc_ddr_bready),
-    .i_ddr_bid(wb_ddr_bid),
-    .i_ddr_bresp(wb_ddr_bresp),
-    .i_ddr_buser(w_ddr_buser),
-    .i_ddr_bvalid(w_ddr_bvalid),
-    .o_ddr_arid(wb_soc_ddr_arid),
-    .o_ddr_araddr(wb_soc_ddr_araddr),
-    .o_ddr_arlen(wb_soc_ddr_arlen),
-    .o_ddr_arsize(wb_soc_ddr_arsize),
-    .o_ddr_arburst(wb_soc_ddr_arburst),
-    .o_ddr_arlock(w_soc_ddr_arlock),
-    .o_ddr_arcache(wb_soc_ddr_arcache),
-    .o_ddr_arprot(wb_soc_ddr_arprot),
-    .o_ddr_arregion(wb_soc_ddr_arregion),
-    .o_ddr_arqos(wb_soc_ddr_arqos),
-    .o_ddr_aruser(w_soc_ddr_aruser),
-    .o_ddr_arvalid(w_soc_ddr_arvalid),
-    .i_ddr_arready(w_ddr_arready),
-    .o_ddr_rready(w_soc_ddr_rready),
-    .i_ddr_rid(wb_ddr_rid),
-    .i_ddr_rdata(wb_ddr_rdata),
-    .i_ddr_rresp(wb_ddr_rresp),
-    .i_ddr_ruser(w_ddr_ruser),
-    .i_ddr_rlast(w_ddr_rlast),
-    .i_ddr_rvalid(w_ddr_rvalid),
-    .i_ddr_ui_clk(w_ddr_ui_clk),
-    .i_ddr_ui_rst(w_ddr_ui_rst),
-    .i_ddr_mmcm_locked(w_ddr_mmcm_locked),
-    .i_ddr_init_calib_complete(w_ddr_init_calib_complete),
-    .i_ddr_device_temp(wb_ddr_device_temp),
-    .i_ddr_app_sr_active(w_ddr_app_sr_active),
-    .i_ddr_app_ref_ack(w_ddr_app_ref_ack),
-    .i_ddr_app_zq_ack(w_ddr_app_zq_ack)
+    // PRCI:
+    .o_dmreset(w_dmreset),
+    .o_prci_pmapinfo(prci_pmapinfo),
+    .o_prci_apbi(prci_apbi),
+    .i_prci_apbo(prci_apbo),
+    // DDR:
+    .o_ddr_pmapinfo(ddr_pmapinfo),
+    .o_ddr_apbi(ddr_apbi),
+    .i_ddr_apbo(ddr_apbo),
+    .o_ddr_xmapinfo(ddr_xmapinfo),
+    .o_ddr_xslvi(ddr_xslvi),
+    .i_ddr_xslvo(ddr_xslvo)
   );
-  assign w_ddr_ruser = '0;
-  assign w_ddr_buser = '0;
 
-   mig_ddr3 #(
-   .SYSCLK_TYPE("NO_BUFFER"), // "NO_BUFFER,"DIFFERENTIAL"
-//   .SIM_BYPASS_INIT_CAL("FAST"),  // "FAST"-for simulation true; "OFF"
-//   .SIMULATION("TRUE")
-   .SIM_BYPASS_INIT_CAL("OFF"),  // "FAST"-for simulation true; "OFF"
-   .SIMULATION("FALSE")
-  ) mig0 (
-    .ddr3_dq(io_ddr3_dq),
-    .ddr3_dqs_n(io_ddr3_dqs_n),
-    .ddr3_dqs_p(io_ddr3_dqs_p),
-    .ddr3_addr(o_ddr3_addr),
-    .ddr3_ba(o_ddr3_ba),
-    .ddr3_ras_n(o_ddr3_ras_n),
-    .ddr3_cas_n(o_ddr3_cas_n),
-    .ddr3_we_n(o_ddr3_we_n),
-    .ddr3_reset_n(o_ddr3_reset_n),
-    .ddr3_ck_p(o_ddr3_ck_p),
-    .ddr3_ck_n(o_ddr3_ck_n),
-    .ddr3_cke(o_ddr3_cke),
-    .ddr3_cs_n(o_ddr3_cs_n),
-    .ddr3_dm(o_ddr3_dm),
-    .ddr3_odt(o_ddr3_odt),
-    .sys_clk_p(i_sclk_p),
-    .sys_clk_n(i_sclk_n),
-    .sys_clk_i(w_clk_ddr),
-    .ui_clk(w_ddr_ui_clk),
-    .ui_clk_sync_rst(w_ddr_ui_rst),
-    .mmcm_locked(w_ddr_mmcm_locked),
-    .aresetn(w_ext_resetn),
-    .app_sr_req(1'b0),
-    .app_ref_req(1'b0),
-    .app_zq_req(1'b0),
-    .app_sr_active(w_ddr_app_sr_active),
-    .app_ref_ack(w_ddr_app_ref_ack),
-    .app_zq_ack(w_ddr_app_zq_ack),
-    .s_axi_awid(wb_soc_ddr_awid),
-    .s_axi_awaddr(wb_soc_ddr_awaddr[29:0]),
-    .s_axi_awlen(wb_soc_ddr_awlen),
-    .s_axi_awsize(wb_soc_ddr_awsize),
-    .s_axi_awburst(wb_soc_ddr_awburst),
-    .s_axi_awlock(w_soc_ddr_awlock),
-    .s_axi_awcache(wb_soc_ddr_awcache),
-    .s_axi_awprot(wb_soc_ddr_awprot),
-    .s_axi_awqos(wb_soc_ddr_awqos),
-    .s_axi_awvalid(w_ddr_awvalid),
-    .s_axi_awready(w_soc_ddr_awready),
-    .s_axi_wdata(wb_soc_ddr_wdata),
-    .s_axi_wstrb(wb_soc_ddr_wstrb),
-    .s_axi_wlast(w_soc_ddr_wlast),
-    .s_axi_wvalid(w_soc_ddr_wvalid),
-    .s_axi_wready(w_ddr_wready),
-    .s_axi_bready(w_soc_ddr_bready),
-    .s_axi_bid(wb_ddr_bid),
-    .s_axi_bresp(wb_ddr_bresp),
-    .s_axi_bvalid(w_ddr_bvalid),
-    .s_axi_arid(wb_soc_ddr_arid),
-    .s_axi_araddr(wb_soc_ddr_araddr[29:0]),
-    .s_axi_arlen(wb_soc_ddr_arlen),
-    .s_axi_arsize(wb_soc_ddr_arsize),
-    .s_axi_arburst(wb_soc_ddr_arburst),
-    .s_axi_arlock(w_soc_ddr_arlock),
-    .s_axi_arcache(wb_soc_ddr_arcache),
-    .s_axi_arprot(wb_soc_ddr_arprot),
-    .s_axi_arqos(wb_soc_ddr_arqos),
-    .s_axi_arvalid(w_soc_ddr_arvalid),
-    .s_axi_arready(w_ddr_arready),
-    .s_axi_rready(w_soc_ddr_rready),
-    .s_axi_rid(wb_ddr_rid),
-    .s_axi_rdata(wb_ddr_rdata),
-    .s_axi_rresp(wb_ddr_rresp),
-    .s_axi_rlast(w_ddr_rlast),
-    .s_axi_rvalid(w_ddr_rvalid),
-    .init_calib_complete(w_ddr_init_calib_complete),
-    .device_temp(wb_ddr_device_temp),
-    .sys_rst(w_ext_resetn)  // active LOW
-  );
+ddr_tech #(
+    .async_reset(CFG_ASYNC_RESET),
+    .SYSCLK_TYPE(SYSCLK_TYPE), // "NO_BUFFER,"DIFFERENTIAL"
+    .SIM_BYPASS_INIT_CAL(SIM_BYPASS_INIT_CAL),  // "FAST"-for simulation true; "OFF"
+    .SIMULATION(SIMULATION)
+) ddr0 (
+     // AXI memory access (ddr clock)
+    .i_xslv_nrst(w_sys_nrst),
+    .i_xslv_clk(ib_clk_tcxo),
+    .i_xmapinfo(ddr_xmapinfo),
+    .o_xcfg(),
+    .i_xslvi(ddr_xslvi),
+    .o_xslvo(ddr_xslvo),
+    // APB control interface (sys clock):
+    .i_apb_nrst(w_sys_nrst),
+    .i_apb_clk(w_sys_clk),
+    .i_pmapinfo(ddr_pmapinfo),
+    .o_pcfg(),
+    .i_apbi(ddr_apbi),
+    .o_apbo(ddr_apbo),
+    // to SOC:
+    .o_ui_nrst(w_ddr_ui_nrst),  // xilinx generte ddr clock inside ddr controller
+    .o_ui_clk(w_ddr_ui_clk),  // xilinx generte ddr clock inside ddr controller
+    // DDR signals:
+    .io_ddr3_dq(io_ddr3_dq),
+    .io_ddr3_dqs_n(io_ddr3_dqs_n),
+    .io_ddr3_dqs_p(io_ddr3_dqs_p),
+    .o_ddr3_addr(o_ddr3_addr),
+    .o_ddr3_ba(o_ddr3_ba),
+    .o_ddr3_ras_n(o_ddr3_ras_n),
+    .o_ddr3_cas_n(o_ddr3_cas_n),
+    .o_ddr3_we_n(o_ddr3_reset_n),
+    .o_ddr3_reset_n(o_ddr3_reset_n),
+    .o_ddr3_ck_p(o_ddr3_ck_p),
+    .o_ddr3_ck_n(o_ddr3_ck_n),
+    .o_ddr3_cke(o_ddr3_cke),
+    .o_ddr3_cs_n(o_ddr3_cs_n),
+    .o_ddr3_dm(o_ddr3_dm),
+    .o_ddr3_odt(o_ddr3_odt),
+    .o_init_calib_done(w_ddr3_init_calib_complete)
+);
 
   
 endmodule
