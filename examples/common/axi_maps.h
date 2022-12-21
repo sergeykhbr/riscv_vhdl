@@ -31,6 +31,7 @@
 #include "maps/map_plic.h"
 #include "maps/map_clint.h"
 #include "maps/map_mpu.h"
+#include "maps/map_prci.h"
 
 #define ADDR_BUS0_XSLV_CLINT        0x02000000 // Core-local interruptor (CLINT)
 #define ADDR_BUS0_XSLV_SRAM         0x08000000 // 0x0800_0000..0x081F_FFFF = L2 Cache Controller
@@ -38,6 +39,7 @@
 #define ADDR_BUS0_XSLV_PLIC         0x0C000000 // FU740 compatible
 #define ADDR_BUS0_XSLV_UART0        0x10010000 // 0x10000000: qemu, 0x10010000: FU740 compatible
 #define ADDR_BUS0_XSLV_UART1        0x10011000 // FU740 compatible
+#define ADDR_BUS0_XSLV_PRCI         0x10012000 // not compatible with FU740
 #define ADDR_BUS0_XSLV_QSPI2        0x10050000 // FU740 compatible
 #define ADDR_BUS0_XSLV_GPIO         0x10060000 // FU740 compatible
 #define ADDR_BUS0_XSLV_OTP          0x10070000

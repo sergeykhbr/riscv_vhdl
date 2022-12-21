@@ -13,7 +13,6 @@ module apb_pnp #(
 
   input sys_clk,
   input nrst,
-  input ddr_init_done,  // temporary while not moved into System Control Registers 
   input types_amba_pkg::mapinfo_type i_mapinfo,
   input types_amba_pkg::dev_config_type i_cfg[0:cfg_slots-1],
   output types_amba_pkg::dev_config_type o_cfg,
@@ -120,7 +119,7 @@ always_comb
                   cfg_slots[7:0],
                   plic_irq_max[7:0]};
     end else if (wb_req_addr[11:2] == 9'd3) begin
-        vrdata = {31'd0, ddr_init_done};
+        vrdata = '0;
     end else if (wb_req_addr[11:2] == 9'd4) begin
         vrdata = r.idt[31:0];
         if ((w_req_valid & w_req_write) == 1'b1) begin

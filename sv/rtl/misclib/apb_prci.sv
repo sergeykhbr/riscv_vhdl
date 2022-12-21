@@ -23,6 +23,7 @@ module apb_prci #(
     input logic i_clk,                                      // CPU clock
     input logic i_pwrreset,                                 // Power-on reset, external button. Active HIGH
     input logic i_dmireset,                                 // Debug reset: system reset except DMI interface
+    input logic i_ddr_calib_done,                           // DDR calibration passed
     output logic o_dbg_nrst,                                // Reset DMI. Active LOW
     output logic o_sys_nrst,                                // System reset except DMI. Active LOW
     output logic o_sys_clk,
@@ -99,6 +100,9 @@ begin: comb_proc
                 // todo:
             end
         end
+    end
+    10'h002: begin                                          // 0x08: ddr status
+        vb_rdata[0] = i_ddr_calib_done;
     end
     default: begin
     end

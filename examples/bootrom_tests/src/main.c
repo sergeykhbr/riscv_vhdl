@@ -45,6 +45,7 @@ int main() {
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
     gpio_map *gpio = (gpio_map *)ADDR_BUS0_XSLV_GPIO;
+    prci_map *prci = (prci_map *)ADDR_BUS0_XSLV_PRCI;
     uint64_t bar;
     uint32_t cpu_max;
 
@@ -127,7 +128,7 @@ int main() {
     // TODO: implement test console
     while (1) {
         // Check DDR init done
-        if (pnp->rsrv1 & 1) {
+        if (prci->ddr_status & PRCI_DDR_STATUS_CALIB_DONE) {
              uint64_t *ddr = (uint64_t *)0x80000000ull;
              print_uart("DDR Init . .DONE\r\n", 18);
              ddr[0] = 0x1122334455667788ull;

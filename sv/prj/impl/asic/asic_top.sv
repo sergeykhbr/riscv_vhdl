@@ -113,6 +113,7 @@ module asic_top
     .i_clk(ib_clk_tcxo),
     .i_pwrreset(ib_rst),
     .i_dmireset(w_dmreset),
+    .i_ddr_calib_done(w_ddr_init_calib_complete),
     .o_dbg_nrst(w_dbg_nrst),
     .o_sys_nrst(w_sys_nrst),
     .o_sys_clk(w_sys_clk),
@@ -155,8 +156,7 @@ module asic_top
     .i_ddr_apbo(ddr_apbo),
     .o_ddr_xmapinfo(ddr_xmapinfo),
     .o_ddr_xslvi(ddr_xslvi),
-    .i_ddr_xslvo(ddr_xslvo),
-    .i_ddr_init_calib_complete(w_ddr_init_calib_complete)
+    .i_ddr_xslvo(ddr_xslvo)
   );
 
 

@@ -5,8 +5,6 @@ ${RTL_HOME}/misclib/apb_ddr.sv
 ${RTL_HOME}/misclib/apb_uart.sv
 ${RTL_HOME}/misclib/apb_gpio.sv
 ${RTL_HOME}/misclib/apb_pnp.sv
-${RTL_HOME}/misclib/axi4_gpio.sv
-${RTL_HOME}/misclib/axi4_pnp.sv
 ${RTL_HOME}/misclib/axi4_rom.sv
 ${RTL_HOME}/misclib/axi4_sram.sv
 ${RTL_HOME}/misclib/reset_global.sv

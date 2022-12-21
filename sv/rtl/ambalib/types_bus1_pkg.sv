@@ -44,7 +44,7 @@ typedef mapinfo_type bus1_mapinfo_vector[0:CFG_BUS1_PSLV_TOTAL - 1];
 // Bus 1 device tree
 const bus1_mapinfo_vector CFG_BUS1_MAP = '{
     '{64'h0000010010000, 64'h0000010011000},                // 0, uart1 4KB
-    '{64'h0000010011000, 64'h0000010012000},                // 1, PRCI 4KB
+    '{64'h0000010012000, 64'h0000010013000},                // 1, PRCI 4KB
     '{64'h000001001E000, 64'h000001001F000},                // 2, dmi 4KB. TODO: change base address
     '{64'h0000010060000, 64'h0000010061000},                // 3, GPIO 4KB
     '{64'h00000100C0000, 64'h00000100C1000},                // 4, DDR MGMT 4KB

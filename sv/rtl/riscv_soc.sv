@@ -49,8 +49,7 @@ module riscv_soc (
   input types_amba_pkg::apb_out_type i_ddr_apbo,
   output types_amba_pkg::mapinfo_type o_ddr_xmapinfo,
   output types_amba_pkg::axi4_slave_in_type o_ddr_xslvi,
-  input types_amba_pkg::axi4_slave_out_type i_ddr_xslvo,
-  input i_ddr_init_calib_complete
+  input types_amba_pkg::axi4_slave_out_type i_ddr_xslvo
 );
 
 import config_target_pkg::*;
@@ -304,7 +303,6 @@ apb_pnp #(
 ) pnp0 (
     .sys_clk(i_sys_clk),
     .nrst(i_sys_nrst),
-    .ddr_init_done(i_ddr_init_calib_complete),
     .i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_PNP]),
     .i_cfg(dev_pnp),
     .o_cfg(dev_pnp[SOC_PNP_PNP]),
