@@ -82,10 +82,7 @@ set_property IOSTANDARD LVCMOS25 [get_ports o_uart1_td]
 ## Data Mask: 1
 ##################################################################################################
 
-set_property IO_BUFFER_TYPE NONE [get_ports {o_ddr3_ck_n[*]} ]
-set_property IO_BUFFER_TYPE NONE [get_ports {o_ddr3_ck_p[*]} ]
-          
-create_clock -period 5 [get_ports sys_clk_p]
+create_clock -period 5 [get_ports sys_clk_i]
           # Note: CLK_REF FALSE Constraint.
 # CLK_REF is a 200  MHz clock source used to drive IODELAY CTRL logic (via an
 # additional MMCM). This clock need not utilized CLOCK_DEDICADE_ROUTE (as they
@@ -859,6 +856,7 @@ set_property LOC OLOGIC_X1Y107 [get_cells  -hier -filter {NAME =~ */ddr_phy_4lan
 
 set_property LOC PLLE2_ADV_X1Y1 [get_cells -hier -filter {NAME =~ */u_ddr3_infrastructure/plle2_i}]
 set_property LOC MMCME2_ADV_X1Y1 [get_cells -hier -filter {NAME =~ */u_ddr3_infrastructure/gen_mmcm.mmcm_i}]
+set_property slave_banks {32 34} [get_iobanks 33]
           
 
 
@@ -878,7 +876,7 @@ set_multicycle_path -through [get_pins -filter {NAME =~ */OSERDESRST} -of [get_c
 #set_max_delay -datapath_only -from [get_cells -hier -filter {NAME =~ *temp_mon_enabled.u_tempmon/* && IS_SEQUENTIAL}] -to [get_cells -hier -filter {NAME =~ *temp_mon_enabled.u_tempmon/device_temp_sync_r1*}] 20
 set_max_delay -to [get_pins -hier -include_replicated_objects -filter {NAME =~ *temp_mon_enabled.u_tempmon/device_temp_sync_r1_reg[*]/D}] 20
 set_max_delay -from [get_cells -hier *rstdiv0_sync_r1_reg*] -to [get_pins -filter {NAME =~ */RESET} -of [get_cells -hier -filter {REF_NAME == PHY_CONTROL}]] -datapath_only 5
-#set_false_path -through [get_pins -hier -filter {NAME =~ */u_iodelay_ctrl/sys_rst}]
-set_false_path -through [get_nets -hier -filter {NAME =~ */u_iodelay_ctrl/sys_rst_i}]
+set_false_path -through [get_pins -hier -filter {NAME =~ */u_iodelay_ctrl/sys_rst}]
+#set_false_path -through [get_nets -hier -filter {NAME =~ */u_iodelay_ctrl/sys_rst_i}]
           
 set_max_delay -datapath_only -from [get_cells -hier -filter {NAME =~ *ddr3_infrastructure/rstdiv0_sync_r1_reg*}] -to [get_cells -hier -filter {NAME =~ *temp_mon_enabled.u_tempmon/xadc_supplied_temperature.rst_r1*}] 20
