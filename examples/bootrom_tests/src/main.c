@@ -34,6 +34,7 @@ void test_spiflash(uint64_t bar);
 void test_gnss_ss(uint64_t bar);
 int test_pmp();
 int test_mmu();
+int test_ddr();
 void print_pnp(void);
 int hwthread1(void);
 int hwthread2(void);
@@ -45,7 +46,6 @@ int main() {
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
     gpio_map *gpio = (gpio_map *)ADDR_BUS0_XSLV_GPIO;
-    prci_map *prci = (prci_map *)ADDR_BUS0_XSLV_PRCI;
     uint64_t bar;
     uint32_t cpu_max;
 
@@ -125,36 +125,10 @@ int main() {
 
     led_set(0x1F);
 
+    test_ddr();
+
     // TODO: implement test console
     while (1) {
-        // Check DDR init done
-        if (prci->ddr_status & PRCI_DDR_STATUS_CALIB_DONE) {
-             uint64_t *ddr = (uint64_t *)0x80000000ull;
-             print_uart("DDR Init . .DONE\r\n", 18);
-             ddr[0] = 0x1122334455667788ull;
-             ddr[1] = 0xffeeddccbbaa9988ull;
-             ddr[1*1024*1024] = 0xabcdabcdaabbccddull;
-             ddr[2*1024*1024] = 0xabcdabcdaabbccddull;
-             ddr[3*1024*1024] = 0xabcdabcdaabbccddull;
-             ddr[4*1024*1024] = 0xabcdabcdaabbccddull;
-             ddr[5*1024*1024] = 0xabcdabcdaabbccddull;
-             ddr[6*1024*1024] = 0xabcdabcdaabbccddull;
-             ddr[7*1024*1024] = 0xabcdabcdaabbccddull;
-             ddr[8*1024*1024] = 0xabcdabcdaabbccddull;
-             ddr[9*1024*1024] = 0xabcdabcdaabbccddull;
-             ddr[10*1024*1024] = 0xabcdabcdaabbccddull;
-             ddr[11*1024*1024] = 0xabcdabcdaabbccddull;
-             ddr[12*1024*1024] = 0xabcdabcdaabbccddull;
-             ddr[13*1024*1024] = 0xabcdabcdaabbccddull;
-             ddr[14*1024*1024] = 0xabcdabcdaabbccddull;
-             ddr[15*1024*1024] = 0xabcdabcdaabbccddull;
-             ddr[16*1024*1024] = 0xabcdabcdaabbccddull;
-             ddr[17*1024*1024] = 0xabcdabcdaabbccddull;
-             printf_uart("DDR[0] . .0x%016llx\r\n", ddr[0]);
-             printf_uart("DDR[1] . .0x%016llx\r\n", ddr[1]);
-             printf_uart("DDR[1MB] . .0x%016llx\r\n", ddr[1024*1024]);
-        }
-
         // temporary put it here, while PLIC not fully ready
         isr_uart0_tx();
     }

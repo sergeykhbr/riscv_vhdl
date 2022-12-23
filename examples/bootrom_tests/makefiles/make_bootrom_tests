@@ -58,6 +58,7 @@ SOURCES = startup \
 	test_l2coherence \
 	test_pmp \
 	test_mmu \
+	test_ddr \
 	hwthread1 \
 	hwthread2 \
 	hwthread3 \

@@ -85,7 +85,7 @@ bit w_ui_rst;
     .i_zq_ack(w_ddr_app_zq_ack)
   );
 
-  assign o_ui_nrst = w_ui_rst;
+  assign o_ui_nrst = ~w_ui_rst;
   assign o_init_calib_done = w_ddr_init_calib_complete;
 
 

@@ -39,7 +39,7 @@
 #define ADDR_BUS0_XSLV_PLIC         0x0C000000 // FU740 compatible
 #define ADDR_BUS0_XSLV_UART0        0x10010000 // 0x10000000: qemu, 0x10010000: FU740 compatible
 #define ADDR_BUS0_XSLV_UART1        0x10011000 // FU740 compatible
-#define ADDR_BUS0_XSLV_PRCI         0x10012000 // not compatible with FU740
+#define ADDR_BUS1_APB_PRCI          0x10012000 // not compatible with FU740
 #define ADDR_BUS0_XSLV_QSPI2        0x10050000 // FU740 compatible
 #define ADDR_BUS0_XSLV_GPIO         0x10060000 // FU740 compatible
 #define ADDR_BUS0_XSLV_OTP          0x10070000
@@ -49,6 +49,7 @@
 #define ADDR_BUS0_XSLV_GNSS_SS      0x100f1000 // Reserved region of FU740
 #define ADDR_BUS0_XSLV_FSE          0x100f2000 // Reserved region of FU740
 #define ADDR_BUS0_XSLV_PNP          0x100ff000 // Reserved region of FU740
+#define ADDR_BUS0_XSLV_DDR          0x0000000080000000ull // DDR memory banks
 
 // Hart irq bus
 #define HART_IRQ_SSIP 1
