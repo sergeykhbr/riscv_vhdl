@@ -30,6 +30,7 @@ SC_MODULE(axi_slv) {
     sc_out<axi4_slave_out_type> o_xslvo;                    // AXI Slave output interface
     sc_out<bool> o_req_valid;
     sc_out<sc_uint<CFG_SYSBUS_ADDR_BITS>> o_req_addr;
+    sc_out<sc_uint<8>> o_req_size;
     sc_out<bool> o_req_write;
     sc_out<sc_uint<CFG_SYSBUS_DATA_BITS>> o_req_wdata;
     sc_out<sc_uint<CFG_SYSBUS_DATA_BYTES>> o_req_wstrb;

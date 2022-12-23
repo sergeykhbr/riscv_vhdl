@@ -32,6 +32,7 @@ axi_slv::axi_slv(sc_module_name name,
     o_xslvo("o_xslvo"),
     o_req_valid("o_req_valid"),
     o_req_addr("o_req_addr"),
+    o_req_size("o_req_size"),
     o_req_write("o_req_write"),
     o_req_wdata("o_req_wdata"),
     o_req_wstrb("o_req_wstrb"),
@@ -84,6 +85,7 @@ void axi_slv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_xslvo, o_xslvo.name());
         sc_trace(o_vcd, o_req_valid, o_req_valid.name());
         sc_trace(o_vcd, o_req_addr, o_req_addr.name());
+        sc_trace(o_vcd, o_req_size, o_req_size.name());
         sc_trace(o_vcd, o_req_write, o_req_write.name());
         sc_trace(o_vcd, o_req_wdata, o_req_wdata.name());
         sc_trace(o_vcd, o_req_wstrb, o_req_wstrb.name());
@@ -244,6 +246,7 @@ void axi_slv::comb() {
                 v.req_len = (r.req_len.read() - 1);
                 v.state = State_addrdata_r;
             } else {
+                v.req_valid = 0;
                 v.state = State_data_r;
             }
         }
@@ -299,6 +302,7 @@ void axi_slv::comb() {
     o_req_valid = r.req_valid;
     o_req_last = v_req_last;
     o_req_addr = r.req_addr;
+    o_req_size = r.req_xsize;
     o_req_write = r.req_write;
     o_req_wdata = r.req_wdata;
     o_req_wstrb = r.req_wstrb;

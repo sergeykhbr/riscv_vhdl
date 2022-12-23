@@ -74,6 +74,30 @@ set_property IOSTANDARD LVCMOS25 [get_ports i_uart1_rd]
 set_property PACKAGE_PIN K24 [get_ports o_uart1_td]
 set_property IOSTANDARD LVCMOS25 [get_ports o_uart1_td]
 
+#SPI SD-card:
+# SIO connector CD_DAT3
+set_property PACKAGE_PIN AC21 [get_ports o_spi_cs]
+set_property IOSTANDARD LVCMOS25 [get_ports o_spi_cs]
+
+set_property PACKAGE_PIN AB23 [get_ports o_spi_sclk]
+set_property IOSTANDARD LVCMOS25 [get_ports o_spi_sclk]
+
+# SDIO connector CMD:
+set_property PACKAGE_PIN AB22 [get_ports o_spi_miso]
+set_property IOSTANDARD LVCMOS25 [get_ports o_spi_miso]
+
+# SDIO connector DAT0
+set_property PACKAGE_PIN AC20 [get_ports i_spi_miso]
+set_property IOSTANDARD LVCMOS25 [get_ports i_spi_miso]
+
+set_property PACKAGE_PIN AA21 [get_ports i_sd_detected]
+set_property IOSTANDARD LVCMOS25 [get_ports i_sd_detected]
+
+# write protect
+set_property PACKAGE_PIN Y21 [get_ports i_sd_protect]
+set_property IOSTANDARD LVCMOS25 [get_ports i_sd_protect]
+
+
 ##################################################################################################
 ## Controller 0
 ## Memory Device: DDR3_SDRAM->SODIMMs->MT8JTF12864HZ-1G6

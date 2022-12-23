@@ -40,22 +40,18 @@ static const int CFG_BUS0_XMST_TOTAL = 2;
 
 // @brief Configuration index of the Boot ROM module visible by the firmware.
 static const int CFG_BUS0_XSLV_BOOTROM = 0;
-// Configuration index of the SRAM module visible by the firmware.
-static const int CFG_BUS0_XSLV_SRAM = 1;
-// External DDR
-static const int CFG_BUS0_XSLV_DDR = 2;
-// Configuration index of the APB Bridge.
-static const int CFG_BUS0_XSLV_PBRIDGE = 3;
-// Configuration index of the GPIO (General Purpose In/Out) module.
-static const int CFG_BUS0_XSLV_GPIO = 4;
 // Configuration index of the Core Local Interrupt Controller module.
-static const int CFG_BUS0_XSLV_CLINT = 5;
+static const int CFG_BUS0_XSLV_CLINT = 1;
+// Configuration index of the SRAM module visible by the firmware.
+static const int CFG_BUS0_XSLV_SRAM = 2;
 // Configuration index of the External Controller module.
-static const int CFG_BUS0_XSLV_PLIC = 6;
-// Configuration index of the Plug-n-Play module.
-static const int CFG_BUS0_XSLV_PNP = 7;
+static const int CFG_BUS0_XSLV_PLIC = 3;
+// Configuration index of the APB Bridge.
+static const int CFG_BUS0_XSLV_PBRIDGE = 4;
+// External DDR
+static const int CFG_BUS0_XSLV_DDR = 5;
 // Total number of the slaves devices.
-static const int CFG_BUS0_XSLV_TOTAL = 8;
+static const int CFG_BUS0_XSLV_TOTAL = 6;
 
 typedef sc_vector<sc_signal<axi4_master_in_type>> bus0_xmst_in_vector;
 typedef sc_vector<sc_signal<axi4_master_out_type>> bus0_xmst_out_vector;
@@ -66,13 +62,11 @@ typedef sc_vector<sc_signal<mapinfo_type>> bus0_mapinfo_vector;
 // Bus 0 device tree
 static const mapinfo_type CFG_BUS0_MAP[CFG_BUS0_XSLV_TOTAL] = {
     {0x0000000010000, 0x0000000020000},                     // 0, bootrom
-    {0x0000008000000, 0x0000008200000},                     // 1, sram, 2MB
-    {0x0000080000000, 0x00000C0000000},                     // 2, ddr, 512 MB
-    {0x0000010010000, 0x0000010011000},                     // 3, APB bridge: uart1
-    {0x0000010060000, 0x0000010061000},                     // 4, gpio
-    {0x0000002000000, 0x0000002010000},                     // 5, clint
-    {0x000000C000000, 0x0000010000000},                     // 6, plic
-    {0x00000100ff000, 0x0000010100000}                      // 7, pnp
+    {0x0000002000000, 0x0000002010000},                     // 1, clint
+    {0x0000008000000, 0x0000008200000},                     // 2, sram, 2MB
+    {0x000000C000000, 0x0000010000000},                     // 3, plic
+    {0x0000010000000, 0x0000010100000},                     // 4, APB bridge: uart1
+    {0x0000080000000, 0x00000C0000000}                      // 5, ddr, 512 MB
 };
 
 }  // namespace debugger

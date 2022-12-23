@@ -44,6 +44,7 @@ axi2apb::axi2apb(sc_module_name name,
     axi0->o_xslvo(o_xslvo);
     axi0->o_req_valid(w_req_valid);
     axi0->o_req_addr(wb_req_addr);
+    axi0->o_req_size(wb_req_size);
     axi0->o_req_write(w_req_write);
     axi0->o_req_wdata(wb_req_wdata);
     axi0->o_req_wstrb(wb_req_wstrb);
@@ -64,6 +65,7 @@ axi2apb::axi2apb(sc_module_name name,
     }
     sensitive << w_req_valid;
     sensitive << wb_req_addr;
+    sensitive << wb_req_size;
     sensitive << w_req_write;
     sensitive << wb_req_wdata;
     sensitive << wb_req_wstrb;
@@ -81,7 +83,7 @@ axi2apb::axi2apb(sc_module_name name,
     sensitive << r.pselx;
     sensitive << r.penable;
     sensitive << r.pslverr;
-    sensitive << r.xsize;
+    sensitive << r.size;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -113,7 +115,7 @@ void axi2apb::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.pselx, pn + ".r_pselx");
         sc_trace(o_vcd, r.penable, pn + ".r_penable");
         sc_trace(o_vcd, r.pslverr, pn + ".r_pslverr");
-        sc_trace(o_vcd, r.xsize, pn + ".r_xsize");
+        sc_trace(o_vcd, r.size, pn + ".r_size");
     }
 
     if (axi0) {
@@ -122,15 +124,18 @@ void axi2apb::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void axi2apb::comb() {
+    int iselidx;
     apb_in_type vapbi[CFG_BUS1_PSLV_TOTAL];
     apb_out_type vapbo[(CFG_BUS1_PSLV_TOTAL + 1)];
 
+    iselidx = 0;
     for (int i = 0; i < CFG_BUS1_PSLV_TOTAL; i++) {
         vapbi[i] = apb_in_none;
     }
     for (int i = 0; i < (CFG_BUS1_PSLV_TOTAL + 1); i++) {
         vapbo[i] = apb_out_none;
     }
+
     v = r;
 
     for (int i = 0; i < CFG_BUS1_PSLV_TOTAL; i++) {
@@ -142,6 +147,7 @@ void axi2apb::comb() {
     vapbo[CFG_BUS1_PSLV_TOTAL].prdata = ~0ull;
     w_req_ready = 0;
     v.pvalid = 0;
+    iselidx = r.selidx.read().to_int();
 
     switch (r.state.read()) {
     case State_Idle:
@@ -149,7 +155,6 @@ void axi2apb::comb() {
         v.pslverr = 0;
         v.penable = 0;
         v.pselx = 0;
-        v.xsize = 0;
         v.selidx = CFG_BUS1_PSLV_TOTAL;
         for (int i = 0; i < CFG_BUS1_PSLV_TOTAL; i++) {
             if ((wb_req_addr.read() >= CFG_BUS1_MAP[i].addr_start)
@@ -162,10 +167,15 @@ void axi2apb::comb() {
             v.pselx = 1;
             v.paddr = (wb_req_addr.read()(31, 2) << 2);
             v.pprot = 0;
-            v.pwdata = wb_req_wdata;
-            v.pstrb = wb_req_wstrb;
+            if (wb_req_addr.read()[2] == 1) {
+                v.pwdata = (0, wb_req_wdata.read()(63, 32));
+                v.pstrb = (0, wb_req_wstrb.read()(7, 4));
+            } else {
+                v.pwdata = wb_req_wdata;
+                v.pstrb = wb_req_wstrb;
+            }
             v.state = State_setup;
-            v.xsize = wb_req_wstrb.read().and_reduce();
+            v.size = wb_req_size;
             if (w_req_last.read() == 0) {
                 v.state = State_out;                        // Burst is not supported
                 v.pselx = 0;
@@ -179,23 +189,25 @@ void axi2apb::comb() {
         v.state = State_access;
         break;
     case State_access:
-        v.pslverr = vapbo[r.selidx].pslverr;
-        if (vapbo[r.selidx].pready == 1) {
+        v.pslverr = vapbo[iselidx].pslverr;
+        if (vapbo[iselidx].pready == 1) {
             v.penable = 0;
-            v.pselx = 0;
-            v.pwrite = 0;
             if (r.paddr.read()[2] == 0) {
-                v.prdata = (r.prdata.read()(63, 32), vapbo[r.selidx].prdata);
+                v.prdata = (r.prdata.read()(63, 32), vapbo[iselidx].prdata);
             } else {
-                v.prdata = (vapbo[r.selidx].prdata, vapbo[r.selidx].prdata(31, 0));
+                v.prdata = (vapbo[iselidx].prdata, r.prdata.read()(31, 0));
             }
-            if (r.xsize.read().or_reduce() == 1) {
-                v.xsize = (r.xsize.read() - 1);
+            if (r.size.read() > 4) {
+                v.size = (r.size.read() - 4);
                 v.paddr = (r.paddr.read() + 4);
+                v.pwdata = (0, wb_req_wdata.read()(63, 32));
+                v.pstrb = (0, wb_req_wstrb.read()(7, 4));
                 v.state = State_setup;
             } else {
                 v.pvalid = 1;
                 v.state = State_out;
+                v.pselx = 0;
+                v.pwrite = 0;
             }
         }
         break;
@@ -208,18 +220,13 @@ void axi2apb::comb() {
         break;
     }
 
-    vapbi[r.selidx].paddr = r.paddr;
-    vapbi[r.selidx].pwrite = r.pwrite;
-    if (r.paddr.read()[2] == 0) {
-        vapbi[r.selidx].pwdata = r.pwdata.read()(31, 0);
-        vapbi[r.selidx].pstrb = r.pstrb.read()(3, 0);
-    } else {
-        vapbi[r.selidx].pwdata = r.pwdata.read()(63, 32);
-        vapbi[r.selidx].pstrb = r.pstrb.read()(7, 4);
-    }
-    vapbi[r.selidx].pselx = r.pselx;
-    vapbi[r.selidx].penable = r.penable;
-    vapbi[r.selidx].pprot = r.pprot;
+    vapbi[iselidx].paddr = r.paddr;
+    vapbi[iselidx].pwrite = r.pwrite;
+    vapbi[iselidx].pwdata = r.pwdata.read()(31, 0);
+    vapbi[iselidx].pstrb = r.pstrb.read()(3, 0);
+    vapbi[iselidx].pselx = r.pselx;
+    vapbi[iselidx].penable = r.penable;
+    vapbi[iselidx].pprot = r.pprot;
 
     if (!async_reset_ && i_nrst.read() == 0) {
         axi2apb_r_reset(v);

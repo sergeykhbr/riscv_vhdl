@@ -55,7 +55,7 @@ SC_MODULE(axi2apb) {
 
     struct axi2apb_registers {
         sc_signal<sc_uint<3>> state;
-        sc_signal<sc_uint<2>> selidx;
+        sc_signal<sc_uint<3>> selidx;                       // TODO: clog2 depending slaves number
         sc_signal<bool> pvalid;
         sc_signal<sc_uint<32>> paddr;
         sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> pwdata;
@@ -66,7 +66,7 @@ SC_MODULE(axi2apb) {
         sc_signal<bool> pselx;
         sc_signal<bool> penable;
         sc_signal<bool> pslverr;
-        sc_signal<sc_uint<8>> xsize;
+        sc_signal<sc_uint<8>> size;
     } v, r;
 
     void axi2apb_r_reset(axi2apb_registers &iv) {
@@ -82,11 +82,12 @@ SC_MODULE(axi2apb) {
         iv.pselx = 0;
         iv.penable = 0;
         iv.pslverr = 0;
-        iv.xsize = 0;
+        iv.size = 0;
     }
 
     sc_signal<bool> w_req_valid;
     sc_signal<sc_uint<CFG_SYSBUS_ADDR_BITS>> wb_req_addr;
+    sc_signal<sc_uint<8>> wb_req_size;
     sc_signal<bool> w_req_write;
     sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> wb_req_wdata;
     sc_signal<sc_uint<CFG_SYSBUS_DATA_BYTES>> wb_req_wstrb;

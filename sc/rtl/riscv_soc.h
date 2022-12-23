@@ -30,8 +30,11 @@ namespace debugger {
 
 SC_MODULE(riscv_soc) {
  public:
-    sc_in<bool> i_rst;                                      // System reset active HIGH
-    sc_in<bool> i_clk;                                      // CPU clock
+    sc_in<bool> i_sys_nrst;                                 // Power-on system reset active LOW
+    sc_in<bool> i_sys_clk;                                  // System/Bus clock
+    sc_in<bool> i_dbg_nrst;                                 // Reset from Debug interface (DMI). Reset everything except DMI
+    sc_in<bool> i_ddr_nrst;                                 // DDR related logic reset (AXI clock transformator)
+    sc_in<bool> i_ddr_clk;                                  // DDR memoru clock
     // GPIO signals:
     sc_in<sc_uint<12>> i_gpio;
     sc_out<sc_uint<12>> o_gpio;
@@ -46,6 +49,21 @@ SC_MODULE(riscv_soc) {
     // UART1 signals
     sc_in<bool> i_uart1_rd;
     sc_out<bool> o_uart1_td;
+    // PLL and Reset interfaces:
+    sc_out<bool> o_dmreset;                                 // Debug reset request. Everything except DMI.
+    sc_out<mapinfo_type> o_prci_pmapinfo;                   // PRCI mapping information
+    sc_out<dev_config_type> i_prci_pdevcfg;                 // PRCI device descriptor
+    sc_out<apb_in_type> o_prci_apbi;                        // APB: PLL and Reset configuration interface
+    sc_in<apb_out_type> i_prci_apbo;                        // APB: PLL and Reset configuration interface
+    // DDR interfaces:
+    sc_out<mapinfo_type> o_ddr_pmapinfo;                    // DDR configuration mapping information
+    sc_out<dev_config_type> i_ddr_pdevcfg;                  // DDR configuration device descriptor
+    sc_out<apb_in_type> o_ddr_apbi;                         // APB: DDR configuration interface
+    sc_in<apb_out_type> i_ddr_apbo;                         // APB: DDR configuration interface
+    sc_out<mapinfo_type> o_ddr_xmapinfo;                    // DDR memory bank mapping information
+    sc_out<dev_config_type> i_ddr_xdevcfg;                  // DDR memory bank descriptor
+    sc_out<axi4_slave_in_type> o_ddr_xslvi;                 // AXI DDR memory interface
+    sc_in<axi4_slave_out_type> i_ddr_xslvo;                 // AXI DDR memory interface
 
     void comb();
 
@@ -81,9 +99,6 @@ SC_MODULE(riscv_soc) {
 
     typedef sc_vector<sc_signal<dev_config_type>> soc_pnp_vector;
 
-    sc_signal<bool> w_sys_nrst;                             // System reset of whole system
-    sc_signal<bool> w_dbg_nrst;                             // Reset workgroup debug interface
-    sc_signal<bool> w_dmreset;                              // Reset request from workgroup debug interface
     sc_signal<axi4_master_out_type> acpo;
     sc_signal<axi4_master_in_type> acpi;
     bus0_mapinfo_vector bus0_mapinfo;

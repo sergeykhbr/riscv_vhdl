@@ -72,6 +72,10 @@ static const uint16_t OPTIMITECH_PLIC = 0x0084;
 static const uint16_t OPTIMITECH_AXI2APB_BRIDGE = 0x0085;
 // AXI interconnect
 static const uint16_t OPTIMITECH_AXI_INTERCONNECT = 0x0086;
+// APB PLL and Register Interface
+static const uint16_t OPTIMITECH_PRCI = 0x0087;
+// DDR controller status registers
+static const uint16_t OPTIMITECH_DDRCTRL = 0x0088;
 
 // Plug'n'Play descriptor localparams.
 // Undefined type of the descriptor (empty device).
