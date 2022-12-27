@@ -73,6 +73,11 @@ static const char *const XSLV_DEVICE_NAMES[] = {
     "ADC Recorder",             // 0x82
     "CLINT",                    // 0x83
     "PLIC"                      // 0x84
+    "AXI2APB Bridge",           // 0x85
+    "AXI Interconnect",         // 0x86
+    "PRCI",                     // 0x87
+    "DDR Controller",           // 0x88
+    "SPI Controller"            // 0x89
 };
 
 static const char *const MIKRON_SLV_DEVICE_NAMES[] = {
@@ -109,7 +114,7 @@ static const char *get_device_name(uint16_t vid, uint16_t did)
     if (did == SLV_DID_EMPTY) {
         return SLV_DID_EMPTY_NAME;
     }
-    if (did >= GNSS_SUB_SYSTEM && did <= OPTIMITECH_PLIC) {
+    if (did >= GNSS_SUB_SYSTEM && did <= DID_LAST) {
         return XSLV_DEVICE_NAMES[did - GNSS_SUB_SYSTEM];
     }
     if (did >= RISCV_CACHED_TILELINK && did <= GNSSSENSOR_JTAG_TAP) {

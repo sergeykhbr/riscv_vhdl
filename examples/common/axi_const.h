@@ -41,6 +41,12 @@ static const int AXI4_SYSTEM_CLOCK = 40000000;  /// 40 MHz
 #define GNSSSENSOR_RECORDER      0x0082
 #define OPTIMITECH_CLINT         0x0083     /// Core Local interrupt controller
 #define OPTIMITECH_PLIC          0x0084     /// External interrupt controller
+#define OPTIMITECH_AXI2APB_BRIDGE 0x0085    /// AXI to APB bridge
+#define OPTIMITECH_AXI_INTERCONNECT 0x0086  /// AXI inteconnect
+#define OPTIMITECH_PRCI          0x0087     /// PLL and Reset Control Registers
+#define OPTIMITECH_DDRCTRL       0x0088     /// DDR Controller registers
+#define OPTIMITECH_SPI           0x0089     /// SPI controller (SD-card in SPI mode)
+#define DID_LAST                 0x0089     /// The last Device ID index of the valid Device
 
 
 #define CFG_NASTI_MASTER_CACHED     0

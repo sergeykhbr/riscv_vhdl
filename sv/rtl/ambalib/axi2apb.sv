@@ -73,15 +73,18 @@ axi_slv #(
 always_comb
 begin: comb_proc
     axi2apb_registers v;
+    int iselidx;
     apb_in_type vapbi[0: CFG_BUS1_PSLV_TOTAL-1];
     apb_out_type vapbo[0: (CFG_BUS1_PSLV_TOTAL + 1)-1];
 
+    iselidx = 0;
     for (int i = 0; i < CFG_BUS1_PSLV_TOTAL; i++) begin
         vapbi[i] = apb_in_none;
     end
     for (int i = 0; i < (CFG_BUS1_PSLV_TOTAL + 1); i++) begin
         vapbo[i] = apb_out_none;
     end
+
     v = r;
 
     for (int i = 0; i < CFG_BUS1_PSLV_TOTAL; i++) begin
@@ -93,6 +96,7 @@ begin: comb_proc
     vapbo[CFG_BUS1_PSLV_TOTAL].prdata = '1;
     w_req_ready = 1'b0;
     v.pvalid = 1'b0;
+    iselidx = int'(r.selidx);
 
     case (r.state)
     State_Idle: begin
@@ -134,13 +138,13 @@ begin: comb_proc
         v.state = State_access;
     end
     State_access: begin
-        v.pslverr = vapbo[r.selidx].pslverr;
-        if (vapbo[r.selidx].pready == 1'b1) begin
+        v.pslverr = vapbo[iselidx].pslverr;
+        if (vapbo[iselidx].pready == 1'b1) begin
             v.penable = 1'b0;
             if (r.paddr[2] == 1'b0) begin
-                v.prdata = {r.prdata[63: 32], vapbo[r.selidx].prdata};
+                v.prdata = {r.prdata[63: 32], vapbo[iselidx].prdata};
             end else begin
-                v.prdata = {vapbo[r.selidx].prdata, r.prdata[31: 0]};
+                v.prdata = {vapbo[iselidx].prdata, r.prdata[31: 0]};
             end
             if (r.size > 8'h04) begin
                 v.size = (r.size - 4);
@@ -165,13 +169,13 @@ begin: comb_proc
     end
     endcase
 
-    vapbi[r.selidx].paddr = r.paddr;
-    vapbi[r.selidx].pwrite = r.pwrite;
-    vapbi[r.selidx].pwdata = r.pwdata[31: 0];
-    vapbi[r.selidx].pstrb = r.pstrb[3: 0];
-    vapbi[r.selidx].pselx = r.pselx;
-    vapbi[r.selidx].penable = r.penable;
-    vapbi[r.selidx].pprot = r.pprot;
+    vapbi[iselidx].paddr = r.paddr;
+    vapbi[iselidx].pwrite = r.pwrite;
+    vapbi[iselidx].pwdata = r.pwdata[31: 0];
+    vapbi[iselidx].pstrb = r.pstrb[3: 0];
+    vapbi[iselidx].pselx = r.pselx;
+    vapbi[iselidx].penable = r.penable;
+    vapbi[iselidx].pprot = r.pprot;
 
     if (~async_reset && i_nrst == 1'b0) begin
         v = axi2apb_r_reset;

@@ -37,19 +37,17 @@ localparam int SOC_PNP_PNP = 8;
 localparam int SOC_PNP_PBRIDGE0 = 9;
 localparam int SOC_PNP_DMI = 10;
 localparam int SOC_PNP_UART1 = 11;
-localparam int SOC_PNP_TOTAL = 12;
+localparam int SOC_PNP_SPI = 12;
+localparam int SOC_PNP_TOTAL = 13;
 
+localparam int CFG_SOC_UART1_LOG2_FIFOSZ = 4;
 
-typedef dev_config_type soc_pnp_vector[0:SOC_PNP_TOTAL - 1];
-
-// Number of context in PLIC controller. Some of CPU could contains
-// several contexts for machine and supervisor modes.
-localparam int CFG_PLIC_CONTEXT_TOTAL = 9; // FU740: S7 Core0 (M) + 4xU74 Cores (M+S)
+localparam int CFG_SOC_SPI0_LOG2_FIFOSZ = 9;
+// Example FU740: S7 Core0 (M) + 4xU74 Cores (M+S).
+localparam int CFG_PLIC_CONTEXT_TOTAL = 9;
 // Any number up to 1024. Zero interrupt must be 0.
 localparam int CFG_PLIC_IRQ_TOTAL = 73;
 
-// @brief UART fifo size. Default value =16 Bytes. But to improve systemc
-//        and rtl trace files comparision set it to big value, like 1024
-localparam int CFG_SOC_UART1_LOG2_FIFOSZ = 4;
+typedef dev_config_type soc_pnp_vector[0:SOC_PNP_TOTAL - 1];
 
 endpackage: riscv_soc_pkg

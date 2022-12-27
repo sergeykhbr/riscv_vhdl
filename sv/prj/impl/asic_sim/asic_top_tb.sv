@@ -43,6 +43,14 @@ module asic_top_tb;
     //! UART1 signals:
     logic                     i_uart1_rd;
     logic                    o_uart1_td;
+    // SPI SD-card signals:
+    logic o_spi_cs;
+    logic o_spi_sclk;
+    logic o_spi_miso;
+    logic i_spi_mosi;
+    logic i_sd_detected;
+    logic i_sd_protect;
+
     logic clk;
     int clk_cnt;
 
@@ -64,6 +72,9 @@ module asic_top_tb;
   assign i_sclk_p = clk;
   assign i_sclk_n = ~clk;
 
+  assign i_spi_mosi = 1'b1;
+  assign i_sd_detected = 1'b1;
+  assign i_sd_protect = 1'b0;
 
   // always_latch begin
 
@@ -96,7 +107,14 @@ module asic_top_tb;
     .o_jtag_vref(o_jtag_vref),
     //! UART1 signals:
     .i_uart1_rd(i_uart1_rd),
-    .o_uart1_td(o_uart1_td)
+    .o_uart1_td(o_uart1_td),
+    // SD-card SPI signals
+    .o_spi_cs(o_spi_cs),
+    .o_spi_sclk(o_spi_sclk),
+    .o_spi_miso(o_spi_miso),
+    .i_spi_mosi(i_spi_mosi),
+    .i_sd_detected(i_sd_detected),
+    .i_sd_protect(i_sd_protect)
   );
 
   `ifdef SIMULATION_WFSOC_FPGA

@@ -38,6 +38,13 @@ module riscv_soc (
   //! UART1 signals:
   input             i_uart1_rd,
   output            o_uart1_td,
+    // SPI SD-card signals:
+    output logic o_spi_cs,
+    output logic o_spi_sclk,
+    output logic o_spi_miso,
+    input logic i_spi_mosi,
+    input logic i_sd_detected,                              // SD-card detected
+    input logic i_sd_protect,                               // SD-card write protect
   // PRCI:
   output            o_dmreset,
   output types_amba_pkg::mapinfo_type o_prci_pmapinfo,
@@ -287,6 +294,27 @@ apb_gpio  #(
     .o_irq(wb_irq_gpio[11:0])
 );
 assign wb_irq_gpio[15:12] = '0;
+
+
+////////////////////////////////////
+//! @brief SD-card SPI controller.
+apb_spi #(
+    .async_reset(async_reset),
+    .log2_fifosz(CFG_SOC_SPI0_LOG2_FIFOSZ)
+) spi0 (
+    .i_clk(i_sys_clk),
+    .i_nrst(i_sys_nrst),
+    .i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_SPI]),
+    .o_cfg(dev_pnp[SOC_PNP_SPI]),
+    .i_apbi(apbi[CFG_BUS1_PSLV_SPI]),
+    .o_apbo(apbo[CFG_BUS1_PSLV_SPI]),
+    .o_cs(o_spi_cs),
+    .o_sclk(o_spi_sclk),
+    .o_miso(o_spi_miso),
+    .i_mosi(i_spi_mosi),
+    .i_detected(i_sd_detected),
+    .i_protect(i_sd_protect)
+);
 
 
   //! @brief Plug'n'Play controller of the current configuration with the

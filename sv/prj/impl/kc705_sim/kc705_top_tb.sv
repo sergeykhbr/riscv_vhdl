@@ -50,6 +50,13 @@ module kc705_top_tb;
     //! UART1 signals:
     logic i_uart1_rd;
     logic o_uart1_td;
+    // SPI SD-card signals:
+    logic o_spi_cs;
+    logic o_spi_sclk;
+    logic o_spi_miso;
+    logic i_spi_mosi;
+    logic i_sd_detected;
+    logic i_sd_protect;
     // ddr3
     wire o_ddr3_reset_n;
     wire [0:0] o_ddr3_ck_n;
@@ -91,6 +98,10 @@ module kc705_top_tb;
   // Tie high UART input pins:
   assign i_uart1_rd = 1'b1;
 
+  assign i_spi_mosi = 1'b1;
+  assign i_sd_detected = 1'b1;
+  assign i_sd_protect = 1'b0;
+
   assign i_sclk_p = clk;
   assign i_sclk_n = ~clk;
 
@@ -131,6 +142,13 @@ module kc705_top_tb;
     //! UART1 signals:
     .i_uart1_rd(i_uart1_rd),
     .o_uart1_td(o_uart1_td),
+    // SPI SD-card signals:
+    .o_spi_cs(o_spi_cs),
+    .o_spi_sclk(o_spi_sclk),
+    .o_spi_miso(o_spi_miso),
+    .i_spi_mosi(i_spi_mosi),
+    .i_sd_detected(i_sd_detected),
+    .i_sd_protect(i_sd_protect),
     // DDR signals:
     .o_ddr3_reset_n(o_ddr3_reset_n),
     .o_ddr3_ck_n(o_ddr3_ck_n),

@@ -32,7 +32,14 @@ module asic_top
     output                    o_jtag_vref,
     //! UART1 signals:
     input                     i_uart1_rd,
-    output                    o_uart1_td
+    output                    o_uart1_td,
+    // SPI SD-card signals:
+    output logic o_spi_cs,
+    output logic o_spi_sclk,
+    output logic o_spi_miso,
+    input logic i_spi_mosi,
+    input logic i_sd_detected,                              // SD-card detected
+    input logic i_sd_protect                                // SD-card write protect
 );
 
   import types_amba_pkg::*;
@@ -54,6 +61,13 @@ module asic_top
   logic             ib_jtag_tdi; 
   logic             ob_jtag_tdo; 
   logic             ob_jtag_vref;   
+  // SPI SD-card signals:
+  logic ob_spi_cs;
+  logic ob_spi_sclk;
+  logic ob_spi_miso;
+  logic ib_spi_mosi;
+  logic ib_sd_detected;
+  logic ib_sd_protect;
 
   logic             w_sys_nrst;
   logic             w_dbg_nrst;
@@ -103,6 +117,12 @@ module asic_top
   obuf_tech ojtdo0(.o(o_jtag_tdo),.i(ob_jtag_tdo));   
   obuf_tech ojvrf0(.o(o_jtag_vref),.i(ob_jtag_vref)); 
   
+  obuf_tech ocs0(.o(o_spi_cs),.i(ob_spi_cs)); 
+  obuf_tech osclk0(.o(o_spi_sclk),.i(ob_spi_sclk)); 
+  obuf_tech omiso0(.o(o_spi_miso),.i(ob_spi_miso)); 
+  ibuf_tech imosi0(.o(ib_spi_mosi),.i(i_spi_mosi));  
+  ibuf_tech isddet0(.o(ib_sd_detected),.i(i_sd_detected));  
+  ibuf_tech isdwp0(.o(ib_sd_protect),.i(i_sd_protect));  
 
   //assign o_ddr3_init_calib_complete = w_ddr3_init_calib_complete;
   
@@ -145,6 +165,13 @@ module asic_top
     //! UART1 signals:
     .i_uart1_rd(ib_uart1_rd),
     .o_uart1_td(ob_uart1_td),
+    // SPI SD-card signals:
+    .o_spi_cs(ob_spi_cs),
+    .o_spi_sclk(ob_spi_sclk),
+    .o_spi_miso(ob_spi_miso),
+    .i_spi_mosi(ib_spi_mosi),
+    .i_sd_detected(ib_sd_detected),
+    .i_sd_protect(ib_sd_protect),
     // PRCI:
     .o_dmreset(w_dmreset),
     .o_prci_pmapinfo(prci_pmapinfo),

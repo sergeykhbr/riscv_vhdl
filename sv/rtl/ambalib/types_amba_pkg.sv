@@ -69,10 +69,12 @@ localparam bit [15:0] OPTIMITECH_PLIC = 16'h0084;
 localparam bit [15:0] OPTIMITECH_AXI2APB_BRIDGE = 16'h0085;
 // AXI interconnect
 localparam bit [15:0] OPTIMITECH_AXI_INTERCONNECT = 16'h0086;
-// PLL and Reset Control Interface
+// APB PLL and Register Interface
 localparam bit [15:0] OPTIMITECH_PRCI = 16'h0087;
 // DDR controller status registers
 localparam bit [15:0] OPTIMITECH_DDRCTRL = 16'h0088;
+// SPI controller (SD-card in SPI mode)
+localparam bit [15:0] OPTIMITECH_SPI = 16'h0089;
 
 // Plug'n'Play descriptor localparams.
 // Undefined type of the descriptor (empty device).

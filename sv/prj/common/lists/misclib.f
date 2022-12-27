@@ -1,9 +1,11 @@
+${RTL_HOME}/misclib/sfifo.sv
 ${RTL_HOME}/misclib/apb_prci_pkg.sv
 ${RTL_HOME}/misclib/apb_prci.sv
 ${RTL_HOME}/misclib/apb_ddr_pkg.sv
 ${RTL_HOME}/misclib/apb_ddr.sv
 ${RTL_HOME}/misclib/apb_uart.sv
 ${RTL_HOME}/misclib/apb_gpio.sv
+${RTL_HOME}/misclib/apb_spi.sv
 ${RTL_HOME}/misclib/apb_pnp.sv
 ${RTL_HOME}/misclib/axi4_rom.sv
 ${RTL_HOME}/misclib/axi4_sram.sv
