@@ -43,7 +43,7 @@ module kc705_top #(
     output logic o_spi_miso,
     input logic i_spi_mosi,
     input logic i_sd_detected,                              // SD-card detected
-    input logic i_sd_protect                                // SD-card write protect
+    input logic i_sd_protect,                                // SD-card write protect
     // DDR3 signals:
     output o_ddr3_reset_n,
     output [0:0] o_ddr3_ck_n,
