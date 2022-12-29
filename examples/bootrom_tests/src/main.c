@@ -35,6 +35,7 @@ void test_gnss_ss(uint64_t bar);
 int test_pmp();
 int test_mmu();
 int test_ddr();
+int test_spi();
 void print_pnp(void);
 int hwthread1(void);
 int hwthread2(void);
@@ -76,6 +77,10 @@ int main() {
     uart_isr_init();   // enable printf_uart function and Tx irq=1
  
     led_set(0x01);
+
+#if 1
+    test_spi();
+#endif
 
     cpu_max = pnp->cfg >> 28;
 

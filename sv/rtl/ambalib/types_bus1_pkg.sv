@@ -28,10 +28,10 @@ localparam int CFG_BUS1_PSLV_UART1 = 0;
 localparam int CFG_BUS1_PSLV_PRCI = 1;
 // @brief Worjgroup DMI interface.
 localparam int CFG_BUS1_PSLV_DMI = 2;
-// Configuration index of the GPIO (General Purpose In/Out) module.
-localparam int CFG_BUS1_PSLV_GPIO = 3;
 // Configuration index of the SPI SD-card.
-localparam int CFG_BUS1_PSLV_SPI = 4;
+localparam int CFG_BUS1_PSLV_SPI = 3;
+// Configuration index of the GPIO (General Purpose In/Out) module.
+localparam int CFG_BUS1_PSLV_GPIO = 4;
 // @brief DDR control register.
 localparam int CFG_BUS1_PSLV_DDR = 5;
 // Configuration index of the Plug-n-Play module.

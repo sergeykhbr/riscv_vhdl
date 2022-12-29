@@ -59,6 +59,7 @@ SOURCES = startup \
 	test_pmp \
 	test_mmu \
 	test_ddr \
+	test_spi \
 	hwthread1 \
 	hwthread2 \
 	hwthread3 \

@@ -9,6 +9,5 @@ ${RTL_HOME}/misclib/apb_spi.sv
 ${RTL_HOME}/misclib/apb_pnp.sv
 ${RTL_HOME}/misclib/axi4_rom.sv
 ${RTL_HOME}/misclib/axi4_sram.sv
-${RTL_HOME}/misclib/reset_global.sv
 ${RTL_HOME}/misclib/clint.sv
 ${RTL_HOME}/misclib/plic.sv
