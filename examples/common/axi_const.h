@@ -46,7 +46,8 @@ static const int AXI4_SYSTEM_CLOCK = 40000000;  /// 40 MHz
 #define OPTIMITECH_PRCI          0x0087     /// PLL and Reset Control Registers
 #define OPTIMITECH_DDRCTRL       0x0088     /// DDR Controller registers
 #define OPTIMITECH_SPI           0x0089     /// SPI controller (SD-card in SPI mode)
-#define DID_LAST                 0x0089     /// The last Device ID index of the valid Device
+#define OPTIMITECH_RIVER_DMI     0x008a     /// Workgroup debug interface
+#define DID_LAST                 0x008a     /// The last Device ID index of the valid Device
 
 
 #define CFG_NASTI_MASTER_CACHED     0

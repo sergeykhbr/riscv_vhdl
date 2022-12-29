@@ -158,7 +158,7 @@ begin: comb_proc
     vcfg.addr_start = i_mapinfo.addr_start;
     vcfg.addr_end = i_mapinfo.addr_end;
     vcfg.vid = VENDOR_OPTIMITECH;
-    vcfg.did = OPTIMITECH_JTAG_DMI;
+    vcfg.did = OPTIMITECH_RIVER_DMI;
 
     vb_hartselnext = r.wdata[((16 + CFG_LOG2_CPU_MAX) - 1): 16];
     hsel = int'(r.hartsel);

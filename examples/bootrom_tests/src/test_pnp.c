@@ -72,12 +72,13 @@ static const char *const XSLV_DEVICE_NAMES[] = {
     "GP Timers",                // 0x81
     "ADC Recorder",             // 0x82
     "CLINT",                    // 0x83
-    "PLIC"                      // 0x84
+    "PLIC",                     // 0x84
     "AXI2APB Bridge",           // 0x85
     "AXI Interconnect",         // 0x86
     "PRCI",                     // 0x87
     "DDR Controller",           // 0x88
-    "SPI Controller"            // 0x89
+    "SPI Controller",           // 0x89
+    "Workgroup DMI"             // 0x8a
 };
 
 static const char *const MIKRON_SLV_DEVICE_NAMES[] = {

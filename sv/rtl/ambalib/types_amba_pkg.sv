@@ -39,8 +39,6 @@ localparam bit [15:0] GAISLER_ETH_EDCL_MASTER = 16'h0503;
 localparam bit [15:0] RISCV_RIVER_CPU = 16'h0505;
 // "Wasserfall" CPU Device ID.
 localparam bit [15:0] RISCV_RIVER_WORKGROUP = 16'h0506;
-// "Wasserfall" debug registers
-localparam bit [15:0] RISCV_WASSERFALL_DMI = 16'h0507;
 // UART with DMA: Test Access Point (TAP)
 localparam bit [15:0] GNSSSENSOR_UART_TAP = 16'h050a;
 // JTAG Test Access Point (TAP) with DMI interface
@@ -75,6 +73,8 @@ localparam bit [15:0] OPTIMITECH_PRCI = 16'h0087;
 localparam bit [15:0] OPTIMITECH_DDRCTRL = 16'h0088;
 // SPI controller (SD-card in SPI mode)
 localparam bit [15:0] OPTIMITECH_SPI = 16'h0089;
+// "RIVER" debug registers
+localparam bit [15:0] OPTIMITECH_RIVER_DMI = 16'h008a;
 
 // Plug'n'Play descriptor localparams.
 // Undefined type of the descriptor (empty device).
