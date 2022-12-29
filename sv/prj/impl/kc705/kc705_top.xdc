@@ -87,8 +87,8 @@ set_property PACKAGE_PIN AB22 [get_ports o_spi_miso]
 set_property IOSTANDARD LVCMOS25 [get_ports o_spi_miso]
 
 # SDIO connector DAT0
-set_property PACKAGE_PIN AC20 [get_ports i_spi_miso]
-set_property IOSTANDARD LVCMOS25 [get_ports i_spi_miso]
+set_property PACKAGE_PIN AC20 [get_ports i_spi_mosi]
+set_property IOSTANDARD LVCMOS25 [get_ports i_spi_mosi]
 
 set_property PACKAGE_PIN AA21 [get_ports i_sd_detected]
 set_property IOSTANDARD LVCMOS25 [get_ports i_sd_detected]
