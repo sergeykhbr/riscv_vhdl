@@ -19,6 +19,9 @@
 #include <axi_maps.h>
 #include "fw_api.h"
 
+#define CMD0 0
+#define CMD8 8
+
 static int32_t spi_is_idle() {
     qspi_map *qspi = (qspi_map *)ADDR_BUS1_APB_QSPI2;
 
@@ -38,6 +41,7 @@ static int32_t spi_send_cmd(uint8_t cmd, uint32_t payload) {
     qspi->txdata = (payload >> 24) & 0xFF;
 
     qspi->rsrv4 = (5 << 16) | (1 << 7);  // send cmd + 4 bytes + generate CRC7 byte
+    while (!spi_is_idle()) {}
     return 0;
 }
 
@@ -48,57 +52,52 @@ static int32_t spi_read(uint32_t bytes) {
     return 0;
 }
 
-int test_spi(void) {
-    qspi_map *qspi = (qspi_map *)ADDR_BUS1_APB_QSPI2;
+int output_rx_data() {
+    int ret = 0;
     uint32_t rdata;
-
-    qspi->sckdiv = 8;
-
-    spi_send_cmd(0x00, 0x0);
-#if 0
-    // CMD0
-    qspi->txdata = 0x40;
-    qspi->txdata = 0x00;
-    qspi->txdata = 0x00;
-    qspi->txdata = 0x00;
-    qspi->txdata = 0x00; // CRC7 0x95
-#endif
-#if 0
-    // CMD17
-    qspi->txdata = 0x51;
-    qspi->txdata = 0x00;
-    qspi->txdata = 0x00;
-    qspi->txdata = 0x00;
-    qspi->txdata = 0x00; // CRC7 0x55
-#endif
-#if 0
-    // response CMD17
-    qspi->txdata = 0x11;
-    qspi->txdata = 0x00;
-    qspi->txdata = 0x00;
-    qspi->txdata = 0x09;
-    qspi->txdata = 0x00; // CRC7 0x67
-#endif
-
-    printf_uart("%s", "CMD0: ");
-    while (!spi_is_idle()) {}
+    qspi_map *qspi = (qspi_map *)ADDR_BUS1_APB_QSPI2;
 
     rdata = qspi->rxdata;
     while ((rdata & QSPI_RXDATA_EMPTY) == 0) {
         printf_uart("%02x ", rdata & 0xFF);
         rdata = qspi->rxdata;
+        ret++;
     }
     printf_uart("%s", "\r\n");
+    return ret;
+}
+
+int test_spi(void) {
+    qspi_map *qspi = (qspi_map *)ADDR_BUS1_APB_QSPI2;
+    clint_map *clint = (clint_map *)ADDR_BUS0_XSLV_CLINT;
+
+    qspi->sckdiv = 8;    // half period
+    uint64_t t_start = clint->mtime;
+    // Wait 1000 periods of SPI clock:
+    while ((clint->mtime - t_start) < (16 * 1000)) {}
+
+
+    printf_uart("%s", "CMD0: ");
+    spi_send_cmd(CMD0, 0x0);
+    output_rx_data();
+    printf_uart("mosi,wp,cd: %x\r\n", qspi->rsrv4 & 0x7);
+
 
     printf_uart("%s", "R1: ");
     spi_read(1);
+    output_rx_data();
+    printf_uart("mosi,wp,cd: %x\r\n", qspi->rsrv4 & 0x7);
 
-    rdata = qspi->rxdata;
-    while ((rdata & QSPI_RXDATA_EMPTY) == 0) {
-        printf_uart("%02x ", rdata & 0xFF);
-        rdata = qspi->rxdata;
-    }
-    printf_uart("%s", "\r\n");
+    printf_uart("%s", "CMD8: ");
+    spi_send_cmd(CMD8, 0x0);
+    output_rx_data();
+    printf_uart("mosi,wp,cd: %x\r\n", qspi->rsrv4 & 0x7);
+
+
+    printf_uart("%s", "R1: ");
+    spi_read(1);
+    output_rx_data();
+    printf_uart("mosi,wp,cd: %x\r\n", qspi->rsrv4 & 0x7);
     return 0;
 }
 
