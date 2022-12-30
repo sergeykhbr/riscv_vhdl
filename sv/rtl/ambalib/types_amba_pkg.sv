@@ -41,8 +41,8 @@ localparam bit [15:0] RISCV_RIVER_CPU = 16'h0505;
 localparam bit [15:0] RISCV_RIVER_WORKGROUP = 16'h0506;
 // UART with DMA: Test Access Point (TAP)
 localparam bit [15:0] GNSSSENSOR_UART_TAP = 16'h050a;
-// JTAG Test Access Point (TAP) with DMI interface
-localparam bit [15:0] OPTIMITECH_JTAG_DMI = 16'h050b;
+// JTAG Test Access Point (TAP) with SBA interface (DMA without progbuf)
+localparam bit [15:0] OPTIMITECH_JTAG_SBA = 16'h050b;
 
 // @name Slave Device IDs definition:
 // Empty slave slot device
@@ -73,7 +73,7 @@ localparam bit [15:0] OPTIMITECH_PRCI = 16'h0087;
 localparam bit [15:0] OPTIMITECH_DDRCTRL = 16'h0088;
 // SPI controller (SD-card in SPI mode)
 localparam bit [15:0] OPTIMITECH_SPI = 16'h0089;
-// "RIVER" debug registers
+// RIVER debug registers:
 localparam bit [15:0] OPTIMITECH_RIVER_DMI = 16'h008a;
 
 // Plug'n'Play descriptor localparams.

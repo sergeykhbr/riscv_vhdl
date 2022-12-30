@@ -309,6 +309,7 @@ begin: comb_proc
     10'h011: begin                                          // 0x44: reserved 4 (txctrl)
         vb_rdata[0] = i_detected;                           // [0] sd card inserted
         vb_rdata[1] = i_protect;                            // [1] write protect
+        vb_rdata[2] = i_mosi;                               // [2] mosi data bit
         vb_rdata[5: 4] = r.state;                           // [5:4] state machine
         vb_rdata[7] = r.generate_crc;                       // [7] Compute and generate CRC as the last Tx byte
         vb_rdata[31: 16] = r.ena_byte_cnt;                  // [31:16] Number of bytes to transmit
