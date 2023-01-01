@@ -133,9 +133,28 @@ int main() {
     test_ddr();
 
     // TODO: implement test console
+    clint_map *clint = (clint_map *)ADDR_BUS0_XSLV_CLINT;
+    uint64_t t_start = clint->mtime;
+
     while (1) {
         // temporary put it here, while PLIC not fully ready
         isr_uart0_tx();
+
+        // 1 sec output
+        if ((clint->mtime - t_start) > SYS_HZ) {
+            t_start = clint->mtime;
+
+            qspi_map *qspi = (qspi_map *)ADDR_BUS1_APB_QSPI2;
+            printf_uart("mosi,wp,cd: %x\r\n", qspi->rsrv4 & 0xF);
+            printf_uart("gpio in: %x\r\n", gpio->input_val);
+
+            uint32_t outval = gpio->output_val >> 4;
+            outval = (outval << 1) | 0xFF;
+            if (outval == 0) {
+                outval = 0x1;
+            }
+            gpio->output_val = outval << 4;
+        }
     }
 
     // NEVER REACH THIS POINT

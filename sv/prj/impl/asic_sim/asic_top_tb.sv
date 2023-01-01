@@ -86,6 +86,7 @@ module asic_top_tb;
 
   always_ff@(posedge clk) begin
     if (clk_cnt <= 10) begin
+//    if (clk_cnt <= 10 || (clk_cnt > 1000010 && clk_cnt < 1000050)) begin
         i_rst <= 1'b1;
     end else begin
         i_rst <= 1'b0;
