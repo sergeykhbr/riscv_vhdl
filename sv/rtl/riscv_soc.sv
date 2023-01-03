@@ -282,12 +282,12 @@ apb_gpio  #(
     .async_reset(CFG_ASYNC_RESET),
     .width(12)
 ) gpio0 (
-    .clk(i_sys_clk),
-    .nrst(i_sys_nrst),
+    .i_clk(i_sys_clk),
+    .i_nrst(i_sys_nrst),
     .i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_GPIO]),
-    .cfg(dev_pnp[SOC_PNP_GPIO]),
-    .i(apbi[CFG_BUS1_PSLV_GPIO]),
-    .o(apbo[CFG_BUS1_PSLV_GPIO]),
+    .o_cfg(dev_pnp[SOC_PNP_GPIO]),
+    .i_apbi(apbi[CFG_BUS1_PSLV_GPIO]),
+    .o_apbo(apbo[CFG_BUS1_PSLV_GPIO]),
     .i_gpio(i_gpio),
     .o_gpio(o_gpio),
     .o_gpio_dir(o_gpio_dir),
