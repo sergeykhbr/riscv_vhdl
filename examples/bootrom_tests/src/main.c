@@ -148,12 +148,16 @@ int main() {
             printf_uart("mosi,wp,cd: %x\r\n", qspi->rsrv4 & 0xF);
             printf_uart("gpio in: %x\r\n", gpio->input_val);
 
-            uint32_t outval = gpio->output_val >> 4;
-            outval = (outval << 1) | 0xFF;
+            // GPIO[11:8] = output LED[7:4] switching ***1
+            // GPIO[7:4]  = output LED[3:0] status of DIP
+            // GPIO[3:0]  = input DIP
+            uint32_t outval = gpio->output_val >> 8;
+            outval = (outval << 1) & 0xF;
             if (outval == 0) {
                 outval = 0x1;
             }
-            gpio->output_val = outval << 4;
+            outval = (outval << 8) | (gpio->input_val << 4);
+            gpio->output_val = outval;
         }
     }
 
