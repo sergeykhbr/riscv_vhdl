@@ -42,12 +42,10 @@ static const uint16_t GAISLER_ETH_EDCL_MASTER = 0x0503;
 static const uint16_t RISCV_RIVER_CPU = 0x0505;
 // "Wasserfall" CPU Device ID.
 static const uint16_t RISCV_RIVER_WORKGROUP = 0x0506;
-// "Wasserfall" debug registers
-static const uint16_t RISCV_WASSERFALL_DMI = 0x0507;
 // UART with DMA: Test Access Point (TAP)
 static const uint16_t GNSSSENSOR_UART_TAP = 0x050A;
-// JTAG Test Access Point (TAP) with DMI interface
-static const uint16_t OPTIMITECH_JTAG_DMI = 0x050B;
+// JTAG Test Access Point (TAP) with SBA interface (DMA without progbuf)
+static const uint16_t OPTIMITECH_JTAG_SBA = 0x050B;
 
 // @name Slave Device IDs definition:
 // Empty slave slot device
@@ -76,6 +74,10 @@ static const uint16_t OPTIMITECH_AXI_INTERCONNECT = 0x0086;
 static const uint16_t OPTIMITECH_PRCI = 0x0087;
 // DDR controller status registers
 static const uint16_t OPTIMITECH_DDRCTRL = 0x0088;
+// SPI controller (SD-card in SPI mode)
+static const uint16_t OPTIMITECH_SPI = 0x0089;
+// RIVER debug registers:
+static const uint16_t OPTIMITECH_RIVER_DMI = 0x008a;
 
 // Plug'n'Play descriptor localparams.
 // Undefined type of the descriptor (empty device).

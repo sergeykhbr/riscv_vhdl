@@ -25,6 +25,8 @@
 #include "riverlib/workgroup.h"
 #include "ambalib/axi2apb.h"
 #include "misclib/apb_uart.h"
+#include "misclib/apb_gpio.h"
+#include "misclib/apb_spi.h"
 
 namespace debugger {
 
@@ -49,6 +51,13 @@ SC_MODULE(riscv_soc) {
     // UART1 signals
     sc_in<bool> i_uart1_rd;
     sc_out<bool> o_uart1_td;
+    // SPI SD-card signals:
+    sc_out<bool> o_spi_cs;
+    sc_out<bool> o_spi_sclk;
+    sc_out<bool> o_spi_miso;
+    sc_in<bool> i_spi_mosi;
+    sc_in<bool> i_sd_detected;                              // SD-card detected
+    sc_in<bool> i_sd_protect;                               // SD-card write protect
     // PLL and Reset interfaces:
     sc_out<bool> o_dmreset;                                 // Debug reset request. Everything except DMI.
     sc_out<mapinfo_type> o_prci_pmapinfo;                   // PRCI mapping information
@@ -89,9 +98,14 @@ SC_MODULE(riscv_soc) {
     static const int SOC_PNP_PBRIDGE0 = 9;
     static const int SOC_PNP_DMI = 10;
     static const int SOC_PNP_UART1 = 11;
-    static const int SOC_PNP_TOTAL = 12;
+    static const int SOC_PNP_SPI = 12;
+    static const int SOC_PNP_TOTAL = 13;
     
     static const int CFG_SOC_UART1_LOG2_FIFOSZ = 4;
+    
+    static const int CFG_SOC_GPIO0_WIDTH = 12;
+    
+    static const int CFG_SOC_SPI0_LOG2_FIFOSZ = 9;
     // Example FU740: S7 Core0 (M) + 4xU74 Cores (M+S).
     static const int CFG_PLIC_CONTEXT_TOTAL = 9;
     // Any number up to 1024. Zero interrupt must be 0.
@@ -117,12 +131,14 @@ SC_MODULE(riscv_soc) {
     sc_signal<sc_uint<CFG_CPU_MAX>> wb_plic_meip;
     sc_signal<sc_uint<CFG_CPU_MAX>> wb_plic_seip;
     sc_signal<bool> w_irq_uart1;
-    sc_signal<sc_uint<16>> wb_irq_gpio;
+    sc_signal<sc_uint<CFG_SOC_GPIO0_WIDTH>> wb_irq_gpio;
     sc_signal<bool> w_irq_pnp;
     sc_signal<sc_biguint<CFG_PLIC_IRQ_TOTAL>> wb_ext_irqs;
 
     axi2apb *apbrdg0;
     apb_uart<CFG_SOC_UART1_LOG2_FIFOSZ> *uart1;
+    apb_gpio<CFG_SOC_GPIO0_WIDTH> *gpio0;
+    apb_spi<CFG_SOC_SPI0_LOG2_FIFOSZ> *spi0;
     Workgroup *group0;
 
 };

@@ -37,6 +37,12 @@ riscv_soc::riscv_soc(sc_module_name name)
     o_jtag_vref("o_jtag_vref"),
     i_uart1_rd("i_uart1_rd"),
     o_uart1_td("o_uart1_td"),
+    o_spi_cs("o_spi_cs"),
+    o_spi_sclk("o_spi_sclk"),
+    o_spi_miso("o_spi_miso"),
+    i_spi_mosi("i_spi_mosi"),
+    i_sd_detected("i_sd_detected"),
+    i_sd_protect("i_sd_protect"),
     o_dmreset("o_dmreset"),
     o_prci_pmapinfo("o_prci_pmapinfo"),
     i_prci_pdevcfg("i_prci_pdevcfg"),
@@ -62,6 +68,8 @@ riscv_soc::riscv_soc(sc_module_name name)
 
     apbrdg0 = 0;
     uart1 = 0;
+    gpio0 = 0;
+    spi0 = 0;
     group0 = 0;
 
     apbrdg0 = new axi2apb("apbrdg0", async_reset);
@@ -114,6 +122,34 @@ riscv_soc::riscv_soc(sc_module_name name)
     uart1->o_irq(w_irq_uart1);
 
 
+    gpio0 = new apb_gpio<CFG_SOC_GPIO0_WIDTH>("gpio0", async_reset);
+    gpio0->i_clk(i_sys_clk);
+    gpio0->i_nrst(i_sys_nrst);
+    gpio0->i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_GPIO]);
+    gpio0->o_cfg(dev_pnp[SOC_PNP_GPIO]);
+    gpio0->i_apbi(apbi[CFG_BUS1_PSLV_GPIO]);
+    gpio0->o_apbo(apbo[CFG_BUS1_PSLV_GPIO]);
+    gpio0->i_gpio(i_gpio);
+    gpio0->o_gpio_dir(o_gpio_dir);
+    gpio0->o_gpio(o_gpio);
+    gpio0->o_irq(wb_irq_gpio);
+
+
+    spi0 = new apb_spi<CFG_SOC_SPI0_LOG2_FIFOSZ>("spi0", async_reset);
+    spi0->i_clk(i_sys_clk);
+    spi0->i_nrst(i_sys_nrst);
+    spi0->i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_SPI]);
+    spi0->o_cfg(dev_pnp[SOC_PNP_SPI]);
+    spi0->i_apbi(apbi[CFG_BUS1_PSLV_SPI]);
+    spi0->o_apbo(apbo[CFG_BUS1_PSLV_SPI]);
+    spi0->o_cs(o_spi_cs);
+    spi0->o_sclk(o_spi_sclk);
+    spi0->o_miso(o_spi_miso);
+    spi0->i_mosi(i_spi_mosi);
+    spi0->i_detected(i_sd_detected);
+    spi0->i_protect(i_sd_protect);
+
+
 
     SC_METHOD(comb);
     sensitive << i_sys_nrst;
@@ -127,6 +163,9 @@ riscv_soc::riscv_soc(sc_module_name name)
     sensitive << i_jtag_tms;
     sensitive << i_jtag_tdi;
     sensitive << i_uart1_rd;
+    sensitive << i_spi_mosi;
+    sensitive << i_sd_detected;
+    sensitive << i_sd_protect;
     sensitive << i_prci_apbo;
     sensitive << i_ddr_apbo;
     sensitive << i_ddr_xslvo;
@@ -178,6 +217,12 @@ riscv_soc::~riscv_soc() {
     if (uart1) {
         delete uart1;
     }
+    if (gpio0) {
+        delete gpio0;
+    }
+    if (spi0) {
+        delete spi0;
+    }
     if (group0) {
         delete group0;
     }
@@ -201,6 +246,12 @@ void riscv_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_jtag_vref, o_jtag_vref.name());
         sc_trace(o_vcd, i_uart1_rd, i_uart1_rd.name());
         sc_trace(o_vcd, o_uart1_td, o_uart1_td.name());
+        sc_trace(o_vcd, o_spi_cs, o_spi_cs.name());
+        sc_trace(o_vcd, o_spi_sclk, o_spi_sclk.name());
+        sc_trace(o_vcd, o_spi_miso, o_spi_miso.name());
+        sc_trace(o_vcd, i_spi_mosi, i_spi_mosi.name());
+        sc_trace(o_vcd, i_sd_detected, i_sd_detected.name());
+        sc_trace(o_vcd, i_sd_protect, i_sd_protect.name());
         sc_trace(o_vcd, o_dmreset, o_dmreset.name());
         sc_trace(o_vcd, o_prci_pmapinfo, o_prci_pmapinfo.name());
         sc_trace(o_vcd, i_prci_pdevcfg, i_prci_pdevcfg.name());
@@ -222,6 +273,12 @@ void riscv_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (uart1) {
         uart1->generateVCD(i_vcd, o_vcd);
     }
+    if (gpio0) {
+        gpio0->generateVCD(i_vcd, o_vcd);
+    }
+    if (spi0) {
+        spi0->generateVCD(i_vcd, o_vcd);
+    }
     if (group0) {
         group0->generateVCD(i_vcd, o_vcd);
     }
@@ -235,7 +292,7 @@ void riscv_soc::comb() {
 
     // assign interrupts:
     vb_ext_irqs(22, 0) = 0;
-    vb_ext_irqs(38, 23) = wb_irq_gpio;                      // FU740: 16 bits, current 12-bits
+    vb_ext_irqs(((23 + CFG_SOC_GPIO0_WIDTH) - 1), 23) = wb_irq_gpio;// FU740: 16 bits, current 12-bits
     vb_ext_irqs[39] = w_irq_uart1.read();
     vb_ext_irqs(69, 40) = 0;
     vb_ext_irqs[70] = w_irq_pnp.read();

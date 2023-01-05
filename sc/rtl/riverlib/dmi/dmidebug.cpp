@@ -297,7 +297,7 @@ void dmidebug::comb() {
     vcfg.addr_start = i_mapinfo.read().addr_start;
     vcfg.addr_end = i_mapinfo.read().addr_end;
     vcfg.vid = VENDOR_OPTIMITECH;
-    vcfg.did = OPTIMITECH_JTAG_DMI;
+    vcfg.did = OPTIMITECH_RIVER_DMI;
 
     vb_hartselnext = r.wdata.read()(((16 + CFG_LOG2_CPU_MAX) - 1), 16);
     hsel = r.hartsel.read().to_int();
