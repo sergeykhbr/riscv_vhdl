@@ -24,6 +24,7 @@
 #include "services/debug/codecov_generic.h"
 #include "services/debug/greth.h"
 #include "services/debug/dsu/dsu.h"
+#include "services/debug/jtag.h"
 #include "services/elfloader/elfreader.h"
 #include "services/exec/cmdexec.h"
 #include "services/mem/memlut.h"
@@ -88,6 +89,7 @@ extern "C" int RISCV_init() {
     REGISTER_CLASS_IDX(Greth, 17)
     REGISTER_CLASS_IDX(DSU, 18);
     REGISTER_CLASS_IDX(TcpJtagBitBangClient, 19);
+    REGISTER_CLASS_IDX(JTAG, 20);
 
     pcore_->load_plugins();
     return 0;

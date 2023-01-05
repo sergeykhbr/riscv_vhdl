@@ -16,6 +16,7 @@
 
 #include <string.h>
 #include "cmdexec.h"
+#include "cmd/cmd_init.h"
 #include "cmd/cmd_loadelf.h"
 #include "cmd/cmd_loadh86.h"
 #include "cmd/cmd_loadsrec.h"
@@ -39,6 +40,7 @@ CmdExecutor::CmdExecutor(const char *name)
     : IService(name) {
     registerInterface(static_cast<ICmdExecutor *>(this));
     registerAttribute("Bus", &bus_);
+    registerAttribute("Jtag", &jtag_);
     registerAttribute("DmiBAR", &dmibar_);
 
     cmds_.make_list(0);
@@ -62,8 +64,12 @@ void CmdExecutor::postinitService() {
     ibus_ = static_cast<IMemoryOperation *>
             (RISCV_get_service_iface(bus_.to_string(), IFACE_MEMORY_OPERATION));
 
+    ijtag_ = static_cast<IJtag *>
+            (RISCV_get_service_iface(jtag_.to_string(), IFACE_JTAG));
+
     // Core commands registration:
     ICommand *tcmd;
+    registerCommand(new CmdInit(ijtag_));
     registerCommand(new CmdCpi(dmibar_.to_uint64(), 0));
     registerCommand(new CmdCpuContext(dmibar_.to_uint64(), 0));
     registerCommand(tcmd = new CmdDisas(dmibar_.to_uint64(), 0));

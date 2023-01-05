@@ -57,6 +57,7 @@
           {'Name':'cmdexec0','Attr':[
                 ['LogLevel',4],
                 ['Bus','axi0'],
+                ['Jtag','jtag0'],
                 ['DmiBAR',0x1000]
                 ]}]},
     {'Class':'SimplePluginClass','Instances':[

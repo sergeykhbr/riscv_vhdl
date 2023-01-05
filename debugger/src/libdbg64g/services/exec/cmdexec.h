@@ -24,6 +24,7 @@
 #include "coreservices/iautocomplete.h"
 #include "coreservices/icommand.h"
 #include "coreservices/imemop.h"
+#include "coreservices/ijtag.h"
 #include <string>
 #include <stdarg.h>
 
@@ -55,10 +56,12 @@ class CmdExecutor : public IService,
 
  private:
     AttributeType bus_;
+    AttributeType jtag_;
     AttributeType dmibar_;
     AttributeType cmds_;
 
     IMemoryOperation *ibus_;
+    IJtag *ijtag_;
 
     mutex_def mutexExec_;
 
