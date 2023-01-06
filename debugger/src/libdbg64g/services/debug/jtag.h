@@ -33,13 +33,42 @@ class JTAG : public IService,
     virtual void postinitService();
 
     /** IJtag */
-    virtual void TestReset();
-    virtual uint64_t IR(uint64_t iscan, int sz);
-    virtual uint64_t DR(uint64_t dscan, int sz);
+    virtual void resetAsync();
+    virtual void resetSync();
+    virtual uint32_t scanIdCode();
+    virtual uint32_t scanDtmControl();
+    virtual uint64_t scanDmiBus();
+
+ private:
+    uint64_t scan(uint32_t ir, uint64_t dr, int drlen);
+    void initScanSequence(uint32_t ir);
+    void addToScanSequence(char tms, char tdo);
+    void transmitScanSequence();
 
  protected:
     AttributeType target_;
     IJtagTap *ibitbang_;
+
+    static const int SCAN_LENGTH_MAX = 4096;
+
+    static const int IRLEN = 5;
+    static const uint32_t IR_IDCODE = 0x01;
+    static const uint32_t IR_DTMCONTROL = 0x10;
+    static const uint32_t IR_DBUS = 0x11;
+    static const uint32_t IR_BYPASS = 0x1F;
+
+    char trst_;
+    char srst_;
+    struct jtag_out_type {
+        char tck;
+        char tms;
+        char tdo;
+    } out_[SCAN_LENGTH_MAX];
+    char tdi_[SCAN_LENGTH_MAX];
+    int scanSize_;
+    ETapState etapstate_;
+    uint32_t tapid_;
+    uint32_t ir_;
 };
 
 DECLARE_CLASS(JTAG)

@@ -43,7 +43,9 @@ int CmdInit::isValid(AttributeType *args) {
 }
 
 void CmdInit::exec(AttributeType *args, AttributeType *res) {
-    jtag_->IR(0xFFFFFFFFFFFFFFFFull, 7);
+    jtag_->resetAsync();
+    jtag_->resetSync();
+    jtag_->scanIdCode();
 }
 
 }  // namespace debugger

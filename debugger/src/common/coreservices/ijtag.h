@@ -32,17 +32,39 @@ static const char *const IJtag_brief =
 static const char *const IJtag_detail =
 "This interface is used for the emulating AR/DR scan requests.";
 
+
 class IJtag : public IFace {
  public:
     IJtag() : IFace(IFACE_JTAG) {}
+
+    enum ETapState {
+        RESET,
+        IDLE,
+        DRSCAN,
+        DRCAPTURE,
+        DRSHIFT,
+        DREXIT1,
+        DRPAUSE,
+        DREXIT2,
+        DRUPDATE,
+        IRSCAN,
+        IRCAPTURE,
+        IRSHIFT,
+        IREXIT1,
+        IRPAUSE,
+        IREXIT2,
+        IRUPDATE
+    };
 
     virtual const char *getBrief() { return IJtag_brief; }
 
     virtual const char *getDetail() { return IJtag_detail; }
 
-    virtual void TestReset() = 0;
-    virtual uint64_t IR(uint64_t iscan, int sz) = 0;
-    virtual uint64_t DR(uint64_t dscan, int sz) = 0;
+    virtual void resetAsync() = 0;
+    virtual void resetSync() = 0;
+    virtual uint32_t scanIdCode() = 0;
+    virtual uint32_t scanDtmControl() = 0;
+    virtual uint64_t scanDmiBus() = 0;
 };
 
 }  // namespace debugger

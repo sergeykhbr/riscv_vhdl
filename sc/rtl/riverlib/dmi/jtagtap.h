@@ -219,6 +219,7 @@ void jtagtap<idcode, abits, irlen>::comb() {
 
     switch (r.state.read()) {
     case RESET_TAP:
+        nv.ir = IR_IDCODE;
         if (i_tms.read() == 1) {
             v.state = RESET_TAP;
         } else {
