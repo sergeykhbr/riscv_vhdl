@@ -360,7 +360,7 @@ begin: comb_proc
         v = apb_spi_r_reset;
     end
 
-    o_sclk = r.level;
+    o_sclk = (r.level & r.cs);
     o_miso = r.tx_shift[7];
     o_cs = (~r.cs);
 
