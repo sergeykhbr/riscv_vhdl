@@ -20,12 +20,14 @@
 #include "fw_api.h"
 
 #define CMD0 0
+#define CMD1 1    // Card initialization
 #define CMD8 8
 #define CMD58 58
-#define ACMD41 41
 #define CMD12 12  // Stop transmission (for Multiple Block Read)
 #define CMD17 17  // Read Single Block 
 #define CMD18 18  // Multiple Read Operation
+#define ACMD41 41
+#define CMD55 55  // Next command is an application specific command ACMD
 #define DATA_START_BLOCK 0xFE     // for Single Block Read, Single Block Write and Multiple Block Read
 
 typedef enum ESdCardType {
@@ -137,9 +139,9 @@ ESdCardType spi_sd_card_init(SpiDriverDataType *p) {
     for (int i = 0; i < rdcnt; i++) {
         printf_uart("%02x ", p->rxbuf[i]);
     }
-    printf_uart("%s", "\r\n");
 
     R1 = get_r1_response(p);
+    printf_uart("R1: %02x\r\n", R1);
     
 
     // Interface Condition Command:
@@ -157,9 +159,9 @@ ESdCardType spi_sd_card_init(SpiDriverDataType *p) {
     for (int i = 0; i < rdcnt; i++) {
         printf_uart("%02x ", p->rxbuf[i]);
     }
-    printf_uart("%s", "\r\n");
 
     R1 = get_r1_response(p);
+    printf_uart("R1: %02x\r\n", R1);
 
     if (R1 == 0x01) {
        // SD-card ver 2 or higher
@@ -179,11 +181,10 @@ ESdCardType spi_sd_card_init(SpiDriverDataType *p) {
     for (int i = 0; i < rdcnt; i++) {
         printf_uart("%02x ", p->rxbuf[i]);
     }
-    printf_uart("%s", "\r\n");
 
     R1 = get_r1_response(p);
     R3 = get_r3_ocr(p);
-    printf_uart("R3: %02x %04x\r\n", R1, R3);
+    printf_uart("R3: %02x %08x\r\n", R1, R3);
     if (R1 != 0x01) {
        p->etype = SD_Unknown;
     }
@@ -197,15 +198,26 @@ ESdCardType spi_sd_card_init(SpiDriverDataType *p) {
     // Argument: none; Response R1
     watchdog = 0;
     do {
+        printf_uart("%s", "CMD55: ");
+        spi_send_cmd(p, CMD55, 0);
+        rdcnt = read_rx_fifo(p);
+        for (int i = 0; i < rdcnt; i++) {
+            printf_uart("%02x ", p->rxbuf[i]);
+        }
+        R1 = get_r1_response(p);
+        printf_uart("R1: %02x\r\n", R1);
+
         printf_uart("%s", "ACMD41: ");
         spi_send_cmd(p, ACMD41, (1 << 30));  // Support High Capacity cards
         rdcnt = read_rx_fifo(p);
         for (int i = 0; i < rdcnt; i++) {
             printf_uart("%02x ", p->rxbuf[i]);
         }
-
         R1 = get_r1_response(p);
         printf_uart("R1: %02x\r\n", R1);
+        if (R1 == 0x05) {
+           break;
+        }
 
         // The 'in idle state' bit in the R1 response of ACMD41 is used by the card 
         // to inform the host if initialization of ACMD41 is completed.
@@ -213,6 +225,23 @@ ESdCardType spi_sd_card_init(SpiDriverDataType *p) {
         //     Setting this bit to 0 indicates completion of initialization.
         // The host repeatedly issues ACMD41 until this bit is set to 0
     } while (((R1 & 0x1) != 0) && watchdog++ < 2);
+
+
+    if (R1 == 0x05) {
+        // ACMD41 is unsupported, use CMD1
+        watchdog = 0;
+        do {
+            printf_uart("%s", "CMD1: ");
+            spi_send_cmd(p, CMD1, (1 << 30));  // Support High Capacity cards
+            rdcnt = read_rx_fifo(p);
+             for (int i = 0; i < rdcnt; i++) {
+                printf_uart("%02x ", p->rxbuf[i]);
+            }
+            R1 = get_r1_response(p);
+            printf_uart("R1: %02x\r\n", R1);
+
+        } while (((R1 & 0x1) != 0) && watchdog++ < 2);
+    }
 
     // @warning: Card should return 'in_idle_state = 0', if watchdog then Not SD card
     if (p->etype == SD_Unknown || p->etype == SD_Ver1x) {
@@ -251,6 +280,7 @@ ESdCardType spi_sd_card_init(SpiDriverDataType *p) {
 int spi_sd_card_read(SpiDriverDataType *p, uint64_t addr, int sz) {
     uint32_t sd_addr;
     int block_size = 512;
+    int rdcnt;
     uint8_t R1;
 
     if (p->etype == SD_Ver2x_HighCapacity) {
@@ -260,19 +290,34 @@ int spi_sd_card_read(SpiDriverDataType *p, uint64_t addr, int sz) {
         // Block size could be changed from 512 if partial block is enabled
     }
 
+    printf_uart("%s", "CMD17: ");
     spi_send_cmd(p, CMD17, sd_addr);
-    read_rx_fifo(p);
-
+    rdcnt = read_rx_fifo(p);
+    for (int i = 0; i < rdcnt; i++) {
+        printf_uart("%02x ", p->rxbuf[i]);
+    }
     R1 = get_r1_response(p);
+    printf_uart("R1: %02x\r\n", R1);
+
     if (R1 != 0x01) {
         return 0;
     }
 
     // Check Data token:
-    spi_send_dummy(p, 1);
-    read_rx_fifo(p);
-    printf_uart("StartToken: %02x ", p->rxbuf[0]);
-    if (p->rxbuf[0] == DATA_START_BLOCK) {
+    int watchdog = 0;
+    uint8_t data_prefix = 0;
+    printf_uart("%s ", "StartToken: ");
+
+    do {
+        spi_send_dummy(p, 1);
+        read_rx_fifo(p);
+        data_prefix = p->rxbuf[0];
+        printf_uart("%02x ", data_prefix);
+    } while (data_prefix != DATA_START_BLOCK && watchdog++ < 5);
+    printf_uart("%s", "\r\n");
+
+    if (data_prefix == DATA_START_BLOCK) {
+        printf_uart("%s ", "DATA: ");
         spi_send_dummy(p, 512);
         read_rx_fifo(p);
 
@@ -282,12 +327,11 @@ int spi_sd_card_read(SpiDriverDataType *p, uint64_t addr, int sz) {
 
         spi_send_dummy(p, 2); // CRC15
         read_rx_fifo(p);
-        printf_uart(".. %02x%02x", p->rxbuf[0], p->rxbuf[1]);
+        printf_uart(".. %02x%02x\r\n", p->rxbuf[0], p->rxbuf[1]);
     } else {
         sz = 0;
     }
 
-    printf_uart("%s", "\r\n");
     return sz;
 }
 
