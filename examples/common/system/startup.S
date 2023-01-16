@@ -224,3 +224,10 @@ handle_exception:
   _restore_context(tp)
   csrr t5, mscratch;
   mret
+
+.section .dtb
+.align 3
+.global dtb_start, dtb_end
+dtb_start:
+.incbin "virt.dtb"
+dtb_end:

@@ -41,7 +41,9 @@ typedef struct SpiDriverDataType {
     qspi_map *map;
     ESdCardType etype;
     int rxcnt;
-    uint8_t rxbuf[512 + 4]; // data start byte + 512 data block + 2 x CRC15 + Dummy
+    uint8_t rxbuf[512]; // 512 data block
+    uint16_t crc16_rx;
+    uint16_t crc16_calculated;
 } SpiDriverDataType;
 
 static int32_t spi_is_idle(SpiDriverDataType *p) {
@@ -50,6 +52,10 @@ static int32_t spi_is_idle(SpiDriverDataType *p) {
         return 1;
     }
     return 0;
+}
+
+static void spi_init_crc15(SpiDriverDataType *p) {
+    p->map->crc16 = 0;
 }
 
 static int32_t spi_send_dummy(SpiDriverDataType *p, uint32_t cnt) {
@@ -93,6 +99,16 @@ int read_rx_fifo(SpiDriverDataType *p) {
         ret++;
     }
     p->rxcnt = 0;  // prepare for the next read
+    return ret;
+}
+
+int read_rx_crc16(SpiDriverDataType *p) {
+    int ret = 0;
+    p->crc16_rx = (uint8_t)(p->map->rxdata & 0xFF);
+    p->crc16_rx = (p->crc16_rx << 8) | (uint8_t)(p->map->rxdata & 0xFF);
+
+    // Expected CRC16:
+    p->crc16_calculated = (uint16_t)p->map->crc16;
     return ret;
 }
 
@@ -239,11 +255,14 @@ ESdCardType spi_sd_card_init(SpiDriverDataType *p) {
             }
             R1 = get_r1_response(p);
             printf_uart("R1: %02x\r\n", R1);
-
+            if (R1 == 0x01) {
+                // initialization in progress:
+                watchdog = 0;
+            }
         } while (((R1 & 0x1) != 0) && watchdog++ < 2);
     }
-
-    // @warning: Card should return 'in_idle_state = 0', if watchdog then Not SD card
+ 
+    // SD-card in Ready State: idle = 0
     if (p->etype == SD_Unknown || p->etype == SD_Ver1x) {
         return 0;
     }
@@ -259,14 +278,14 @@ ESdCardType spi_sd_card_init(SpiDriverDataType *p) {
     for (int i = 0; i < rdcnt; i++) {
         printf_uart("%02x ", p->rxbuf[i]);
     }
-    printf_uart("%s", "\r\n");
 
     R1 = get_r1_response(p);
     R3 = get_r3_ocr(p);
     HCS = (R3 >> 30) & 0x1;
     printf_uart("R3: %02x %04x HCS=%d\r\n", R1, R3, HCS);
 
-    if (R1 != 0x01) {
+    // R1=0: Ready State without errors:
+    if (R1 != 0x00) {
        p->etype = SD_Unknown;
     } else if (HCS) {
        p->etype = SD_Ver2x_HighCapacity;
@@ -277,33 +296,8 @@ ESdCardType spi_sd_card_init(SpiDriverDataType *p) {
     return 0;
 }
 
-int spi_sd_card_read(SpiDriverDataType *p, uint64_t addr, int sz) {
-    uint32_t sd_addr;
-    int block_size = 512;
-    int rdcnt;
-    uint8_t R1;
-
-    if (p->etype == SD_Ver2x_HighCapacity) {
-        sd_addr = (uint32_t)(addr >> 9);  // Data block is always 512 bytes
-    } else {
-        sd_addr = (uint32_t)addr;
-        // Block size could be changed from 512 if partial block is enabled
-    }
-
-    printf_uart("%s", "CMD17: ");
-    spi_send_cmd(p, CMD17, sd_addr);
-    rdcnt = read_rx_fifo(p);
-    for (int i = 0; i < rdcnt; i++) {
-        printf_uart("%02x ", p->rxbuf[i]);
-    }
-    R1 = get_r1_response(p);
-    printf_uart("R1: %02x\r\n", R1);
-
-    if (R1 != 0x01) {
-        return 0;
-    }
-
-    // Check Data token:
+int spi_sd_read_block(SpiDriverDataType *p) {
+   // Check Data token:
     int watchdog = 0;
     uint8_t data_prefix = 0;
     printf_uart("%s ", "StartToken: ");
@@ -316,23 +310,65 @@ int spi_sd_card_read(SpiDriverDataType *p, uint64_t addr, int sz) {
     } while (data_prefix != DATA_START_BLOCK && watchdog++ < 5);
     printf_uart("%s", "\r\n");
 
-    if (data_prefix == DATA_START_BLOCK) {
-        printf_uart("%s ", "DATA: ");
-        spi_send_dummy(p, 512);
-        read_rx_fifo(p);
-
-        for (int i = 0; i < 8; i++) {
-            printf_uart("%02x ", p->rxbuf[i]);
-        }
-
-        spi_send_dummy(p, 2); // CRC15
-        read_rx_fifo(p);
-        printf_uart(".. %02x%02x\r\n", p->rxbuf[0], p->rxbuf[1]);
-    } else {
-        sz = 0;
+    if (data_prefix != DATA_START_BLOCK) {
+        return 0;
     }
 
-    return sz;
+    spi_init_crc15(p);
+    spi_send_dummy(p, 512);
+    read_rx_fifo(p);
+
+    // CRC16
+    spi_send_dummy(p, 2);
+    read_rx_crc16(p);
+    return 512;
+}
+
+int spi_sd_card_memcpy(SpiDriverDataType *p, uint64_t src, uint64_t dst, int sz) {
+    uint32_t sd_addr;
+    int block_size = 512;
+    int rdcnt;
+    int bytes_copied = 0;
+    uint8_t R1;
+
+    if (p->etype == SD_Ver2x_HighCapacity) {
+        sd_addr = (uint32_t)(src >> 9);  // Data block is always 512 bytes
+    } else {
+        sd_addr = (uint32_t)src;
+        // Block size could be changed from 512 if partial block is enabled
+    }
+
+    printf_uart("%s", "CMD18: ");
+    spi_send_cmd(p, CMD18, sd_addr);
+    rdcnt = read_rx_fifo(p);
+    for (int i = 0; i < rdcnt; i++) {
+        printf_uart("%02x ", p->rxbuf[i]);
+    }
+    R1 = get_r1_response(p);
+    printf_uart("R1: %02x\r\n", R1);
+
+    // SD-card should be in Transfer State without errors:
+    if (R1 != 0x00) {
+        return 0;
+    }
+
+    while (bytes_copied < sz) {
+        if (spi_sd_read_block(p)) {
+            printf_uart("%s ", "DATA: ");
+            for (int i = 0; i < 8; i++) {
+                printf_uart("%02x ", p->rxbuf[i]);
+            }
+            printf_uart(".. %0x ?= %04x\r\n", p->crc16_rx, p->crc16_calculated);
+
+            memcpy((void *)dst, p->rxbuf, 512);
+            dst += 512;
+            bytes_copied += 512;
+        } else {
+            break;
+        }
+    }
+
+    return bytes_copied;
 }
 
 int test_spi(void) {
@@ -347,7 +383,7 @@ int test_spi(void) {
 
     spi_sd_card_init(p);
 
-    spi_sd_card_read(p, 1024, 512);
+    spi_sd_card_memcpy(p, 0, ADDR_BUS0_XSLV_DDR, 1024);
     return 0;
 }
 

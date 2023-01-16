@@ -25,7 +25,10 @@ SECTIONS
   }
 
   /* data segment */
-  .data : { *(.data) }
+  .data : {
+    *(.data)
+    *(.dtb)
+  }
 
   .sdata : {
     *(.srodata.cst16) *(.srodata.cst8) *(.srodata.cst4) *(.srodata.cst2) *(.srodata*)

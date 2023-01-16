@@ -57,7 +57,10 @@ typedef struct {
     logic [7:0] rx_shift;
     logic rx_ready;
     logic [6:0] crc7;
+    logic [15:0] crc16;
     logic [7:0] spi_resp;
+    logic [log2_fifosz-1:0] txmark;
+    logic [log2_fifosz-1:0] rxmark;
     logic resp_valid;
     logic [31:0] resp_rdata;
     logic resp_err;
@@ -77,7 +80,10 @@ const apb_spi_registers apb_spi_r_reset = '{
     '0,                                 // rx_shift
     1'b0,                               // rx_ready
     '0,                                 // crc7
+    '0,                                 // crc16
     '0,                                 // spi_resp
+    '0,                                 // txmark
+    '0,                                 // rxmark
     1'b0,                               // resp_valid
     '0,                                 // resp_rdata
     1'b0                                // resp_err
@@ -88,25 +94,17 @@ logic [31:0] wb_req_addr;
 logic w_req_write;
 logic [31:0] wb_req_wdata;
 // Rx FIFO signals:
-logic [log2_fifosz-1:0] wb_rxfifo_thresh;
 logic w_rxfifo_we;
 logic [7:0] wb_rxfifo_wdata;
 logic w_rxfifo_re;
 logic [7:0] wb_rxfifo_rdata;
-logic w_rxfifo_full;
-logic w_rxfifo_empty;
-logic w_rxfifo_less;
-logic w_rxfifo_greater;
+logic [log2_fifosz-1:0] wb_rxfifo_count;
 // Tx FIFO signals:
-logic [log2_fifosz-1:0] wb_txfifo_thresh;
 logic w_txfifo_we;
 logic [7:0] wb_txfifo_wdata;
 logic w_txfifo_re;
 logic [7:0] wb_txfifo_rdata;
-logic w_txfifo_full;
-logic w_txfifo_empty;
-logic w_txfifo_less;
-logic w_txfifo_greater;
+logic [log2_fifosz-1:0] wb_txfifo_count;
 apb_spi_registers r, rin;
 
 apb_slv #(
@@ -137,15 +135,11 @@ sfifo #(
 ) rxfifo (
     .i_clk(i_clk),
     .i_nrst(i_nrst),
-    .i_thresh(wb_rxfifo_thresh),
     .i_we(w_rxfifo_we),
     .i_wdata(wb_rxfifo_wdata),
     .i_re(w_rxfifo_re),
     .o_rdata(wb_rxfifo_rdata),
-    .o_full(w_rxfifo_full),
-    .o_empty(w_rxfifo_empty),
-    .o_less(w_rxfifo_less),
-    .o_greater(w_rxfifo_greater)
+    .o_count(wb_rxfifo_count)
 );
 
 
@@ -156,15 +150,11 @@ sfifo #(
 ) txfifo (
     .i_clk(i_clk),
     .i_nrst(i_nrst),
-    .i_thresh(wb_txfifo_thresh),
     .i_we(w_txfifo_we),
     .i_wdata(wb_txfifo_wdata),
     .i_re(w_txfifo_re),
     .o_rdata(wb_txfifo_rdata),
-    .o_full(w_txfifo_full),
-    .o_empty(w_txfifo_empty),
-    .o_less(w_txfifo_less),
-    .o_greater(w_txfifo_greater)
+    .o_count(wb_txfifo_count)
 );
 
 
@@ -180,7 +170,9 @@ begin: comb_proc
     logic v_rxfifo_we;
     logic [7:0] vb_rxfifo_wdata;
     logic v_inv7;
-    logic [6:0] vb_crc;
+    logic [6:0] vb_crc7;
+    logic v_inv16;
+    logic [15:0] vb_crc16;
     logic [31:0] vb_rdata;
 
     v_posedge = 0;
@@ -192,20 +184,40 @@ begin: comb_proc
     v_rxfifo_we = 0;
     vb_rxfifo_wdata = 0;
     v_inv7 = 0;
-    vb_crc = 0;
+    vb_crc7 = 0;
+    v_inv16 = 0;
+    vb_crc16 = 0;
     vb_rdata = 0;
 
     v = r;
 
     // CRC7 = x^7 + x^3 + 1
     v_inv7 = (r.crc7[6] ^ r.tx_shift[7]);
-    vb_crc[6] = r.crc7[5];
-    vb_crc[5] = r.crc7[4];
-    vb_crc[4] = r.crc7[3];
-    vb_crc[3] = (r.crc7[2] ^ v_inv7);
-    vb_crc[2] = r.crc7[1];
-    vb_crc[1] = r.crc7[0];
-    vb_crc[0] = v_inv7;
+    vb_crc7[6] = r.crc7[5];
+    vb_crc7[5] = r.crc7[4];
+    vb_crc7[4] = r.crc7[3];
+    vb_crc7[3] = (r.crc7[2] ^ v_inv7);
+    vb_crc7[2] = r.crc7[1];
+    vb_crc7[1] = r.crc7[0];
+    vb_crc7[0] = v_inv7;
+    // CRC16 = x^16 + x^12 + x^5 + 1
+    v_inv16 = (r.crc16[15] ^ i_mosi);
+    vb_crc16[15] = r.crc16[14];
+    vb_crc16[14] = r.crc16[13];
+    vb_crc16[13] = r.crc16[12];
+    vb_crc16[12] = (r.crc16[11] ^ v_inv16);
+    vb_crc16[11] = r.crc16[10];
+    vb_crc16[10] = r.crc16[9];
+    vb_crc16[9] = r.crc16[8];
+    vb_crc16[8] = r.crc16[7];
+    vb_crc16[7] = r.crc16[6];
+    vb_crc16[6] = r.crc16[5];
+    vb_crc16[5] = (r.crc16[4] ^ v_inv16);
+    vb_crc16[4] = r.crc16[3];
+    vb_crc16[3] = r.crc16[2];
+    vb_crc16[2] = r.crc16[1];
+    vb_crc16[1] = r.crc16[0];
+    vb_crc16[0] = v_inv16;
 
     // system bus clock scaler to baudrate:
     if ((|r.scaler) == 1'b1) begin
@@ -238,7 +250,8 @@ begin: comb_proc
 
         if (r.cs == 1'b1) begin
             v.rx_shift = {r.rx_shift[6: 0], i_mosi};
-            v.crc7 = vb_crc;
+            v.crc7 = vb_crc7;
+            v.crc16 = vb_crc16;
         end
     end
 
@@ -247,7 +260,8 @@ begin: comb_proc
     idle: begin
         if ((|r.ena_byte_cnt) == 1'b1) begin
             v_txfifo_re = 1'b1;
-            if (w_txfifo_empty == 1'b1) begin
+            if ((|wb_txfifo_count) == 1'b0) begin
+                // FIFO is empty:
                 v.tx_val = '1;
             end else begin
                 v.tx_val = wb_txfifo_rdata;
@@ -271,7 +285,8 @@ begin: comb_proc
         if (((|r.bit_cnt) == 1'b0) && (v_posedge == 1'b1)) begin
             if ((|r.ena_byte_cnt) == 1'b1) begin
                 v_txfifo_re = 1'b1;
-                if (w_txfifo_empty == 1'b1) begin
+                if ((|wb_txfifo_count) == 1'b0) begin
+                    // FIFO is empty:
                     v.tx_val = '1;
                 end else begin
                     v.tx_val = wb_txfifo_rdata;
@@ -279,7 +294,7 @@ begin: comb_proc
                 v.state = wait_edge;
                 v.ena_byte_cnt = (r.ena_byte_cnt - 1);
             end else if (r.generate_crc == 1'b1) begin
-                v.tx_val = {vb_crc, 1'h1};
+                v.tx_val = {vb_crc7, 1'h1};
                 v.generate_crc = 1'b0;
                 v.state = wait_edge;
             end else begin
@@ -319,7 +334,7 @@ begin: comb_proc
         end
     end
     10'h012: begin                                          // 0x48: Tx FIFO Data
-        vb_rdata[31] = w_txfifo_full;
+        vb_rdata[31] = (&wb_txfifo_count);
         if (w_req_valid == 1'b1) begin
             if (w_req_write == 1'b1) begin
                 v_txfifo_we = 1'h1;
@@ -329,7 +344,7 @@ begin: comb_proc
     end
     10'h013: begin                                          // 0x4C: Rx FIFO Data
         vb_rdata[7: 0] = wb_rxfifo_rdata;
-        vb_rdata[31] = w_rxfifo_empty;
+        vb_rdata[31] = (~(|wb_rxfifo_count));
         if (w_req_valid == 1'b1) begin
             if (w_req_write == 1'b1) begin
                 // do nothing:
@@ -338,16 +353,38 @@ begin: comb_proc
             end
         end
     end
+    10'h014: begin                                          // 0x50: Tx FIFO Watermark
+        vb_rdata[(log2_fifosz - 1): 0] = r.txmark;
+        if (w_req_valid == 1'b1) begin
+            if (w_req_write == 1'b1) begin
+                v.txmark = wb_req_wdata[(log2_fifosz - 1): 0];
+            end
+        end
+    end
+    10'h015: begin                                          // 0x54: Rx FIFO Watermark
+        vb_rdata[(log2_fifosz - 1): 0] = r.rxmark;
+        if (w_req_valid == 1'b1) begin
+            if (w_req_write == 1'b1) begin
+                v.rxmark = wb_req_wdata[(log2_fifosz - 1): 0];
+            end
+        end
+    end
+    10'h016: begin                                          // 0x58: CRC16 value (reserved FU740)
+        vb_rdata[15: 0] = r.crc16;
+        if (w_req_valid == 1'b1) begin
+            if (w_req_write == 1'b1) begin
+                v.crc16 = wb_req_wdata[15: 0];
+            end
+        end
+    end
     default: begin
     end
     endcase
 
-    wb_rxfifo_thresh = 0;
     w_rxfifo_we = v_rxfifo_we;
     wb_rxfifo_wdata = vb_rxfifo_wdata;
     w_rxfifo_re = v_rxfifo_re;
 
-    wb_txfifo_thresh = 0;
     w_txfifo_we = v_txfifo_we;
     wb_txfifo_wdata = vb_txfifo_wdata;
     w_txfifo_re = v_txfifo_re;

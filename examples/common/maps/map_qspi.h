@@ -38,7 +38,8 @@ typedef struct qspi_map {
     volatile uint32_t rxdata;            // [0x4C] Rx FIFO data
     volatile uint32_t txmark;            // [0x50] Tx FIFO watermark
     volatile uint32_t rxmark;            // [0x54] Rx FIFO watermark
-    volatile uint32_t rsrv5[2];          // [0x58,0x5C]
+    volatile uint32_t crc16;             // [0x58] CRC16 value (reserved FU740)
+    volatile uint32_t rsrv5;             // [0x5C]
     volatile uint32_t fctrl;             // [0x60] SPI flash interface control (available in direct-map only)
     volatile uint32_t ffmt;              // [0x64] SPI flash instruction format (available in direct-map only)
     volatile uint32_t rsrv6[2];          // [0x68,0x6C]

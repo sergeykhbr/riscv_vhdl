@@ -25,6 +25,7 @@ DIR_KEY=-B
 
 # include sub-folders list
 INCL_PATH=\
+	$(TOP_DIR)../common/system \
 	$(TOP_DIR)../common \
 	$(TOP_DIR)src
 

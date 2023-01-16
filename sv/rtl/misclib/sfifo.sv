@@ -24,15 +24,11 @@ module sfifo #(
 (
     input logic i_clk,                                      // CPU clock
     input logic i_nrst,                                     // Reset: active LOW
-    input logic [log2_depth-1:0] i_thresh,                  // Threshold to generate less/greater signals
     input logic i_we,
     input logic [dbits-1:0] i_wdata,
     input logic i_re,
     output logic [dbits-1:0] o_rdata,
-    output logic o_full,
-    output logic o_empty,
-    output logic o_less,
-    output logic o_greater
+    output logic [log2_depth-1:0] o_count                   // Number of words in FIFO
 );
 
 localparam int DEPTH = (2**log2_depth);
@@ -49,13 +45,9 @@ sfifo_registers r, rin;
 always_comb
 begin: comb_proc
     sfifo_registers v;
-    logic v_less;
-    logic v_greater;
     logic v_full;
     logic v_empty;
 
-    v_less = 0;
-    v_greater = 0;
     v_full = 0;
     v_empty = 0;
 
@@ -67,14 +59,7 @@ begin: comb_proc
     v.total_cnt = r.total_cnt;
 
 
-    // Check FIFOs counters with thresholds:
-    if (r.total_cnt < i_thresh) begin
-        v_less = 1'b1;
-    end
-
-    if (r.total_cnt > i_thresh) begin
-        v_greater = 1'b1;
-    end
+    // Check FIFO counter:
 
     if ((|r.total_cnt) == 1'b0) begin
         v_empty = 1'b1;
@@ -109,10 +94,7 @@ begin: comb_proc
     end
 
     o_rdata = r.databuf[int'(r.rd_cnt)];
-    o_full = v_full;
-    o_empty = v_empty;
-    o_less = v_less;
-    o_greater = v_greater;
+    o_count = r.total_cnt;
 
     for (int i = 0; i < DEPTH; i++) begin
         rin.databuf[i] = v.databuf[i];

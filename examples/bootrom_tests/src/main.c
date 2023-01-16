@@ -66,7 +66,7 @@ int main() {
         while (1) {}
     }
 
-    pnp->fwid = 0x20190516;
+    pnp->fwid = 0x20220116;
     gpio->input_en = 0x000f;
     gpio->output_en = 0xfff0;
     fw_malloc_init();
@@ -108,22 +108,6 @@ int main() {
     led_set(0x05);
     test_stackprotect();
 
-    bar = get_dev_bar(pnp, VENDOR_GNSSSENSOR, GNSS_SUB_SYSTEM);
-    led_set(0x06);
-    if (bar != DEV_NONE) {
-        led_set(0x07);
-        test_gnss_ss(bar);
-        printf_uart("GNSS_SS BAR. . .0x%016llx\r\n", bar);
-    }
-    led_set(0x08);
-
-    bar = get_dev_bar(pnp, VENDOR_GNSSSENSOR, GNSSSENSOR_SPI_FLASH);
-    led_set(0x09);
-    if (bar != DEV_NONE) {
-        led_set(0x0A);
-        printf_uart("SPI Flash BAR. .0x%08x\r\n", bar);
-    }
-    led_set(0x0B);
 
     led_set(0x55);
     print_pnp();
@@ -144,10 +128,6 @@ int main() {
         if ((clint->mtime - t_start) > SYS_HZ) {
             t_start = clint->mtime;
 
-            qspi_map *qspi = (qspi_map *)ADDR_BUS1_APB_QSPI2;
-            printf_uart("mosi,wp,cd: %x\r\n", qspi->rsrv4 & 0xF);
-            printf_uart("gpio in: %x\r\n", gpio->input_val);
-
             // GPIO[11:8] = output LED[7:4] switching ***1
             // GPIO[7:4]  = output LED[3:0] status of DIP
             // GPIO[3:0]  = input DIP
@@ -161,13 +141,24 @@ int main() {
         }
     }
 
-    // NEVER REACH THIS POINT
+    // Run BSL and Linux from DDR:
+    set_csr(mstatus, MSTATUS_MPP_M);          // run bbl-q and riscv-tests in machine mode
+    write_csr(mepc, ADDR_BUS0_XSLV_DDR);      // jump to ddr (bbl-q should be init)
 
+    // a0 = hart id
+    // a1 = fdt header
+    __asm__("csrr a0, mhartid");
+    __asm__("la a1, dtb_start");
+    __asm__("mret");
+
+#if 0
+    // NEVER REACH THIS POINT
     // jump to entry point in SRAM = 0x10000000
     //     'meps' - Machine Exception Program Coutner
     __asm__("lui t0, 0x10000");
     __asm__("csrw mepc, t0");
     __asm__("mret");
+#endif
 
     return 0;
 }
