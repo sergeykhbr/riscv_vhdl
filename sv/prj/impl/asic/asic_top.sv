@@ -36,8 +36,8 @@ module asic_top
     // SPI SD-card signals:
     output logic o_spi_cs,
     output logic o_spi_sclk,
-    output logic o_spi_miso,
-    input logic i_spi_mosi,
+    output logic o_spi_mosi,
+    input logic i_spi_miso,
     input logic i_sd_detected,                              // SD-card detected
     input logic i_sd_protect                                // SD-card write protect
 );
@@ -64,8 +64,8 @@ module asic_top
   // SPI SD-card signals:
   logic ob_spi_cs;
   logic ob_spi_sclk;
-  logic ob_spi_miso;
-  logic ib_spi_mosi;
+  logic ob_spi_mosi;
+  logic ib_spi_miso;
   logic ib_sd_detected;
   logic ib_sd_protect;
 
@@ -119,8 +119,8 @@ module asic_top
   
   obuf_tech ocs0(.o(o_spi_cs),.i(ob_spi_cs)); 
   obuf_tech osclk0(.o(o_spi_sclk),.i(ob_spi_sclk)); 
-  obuf_tech omiso0(.o(o_spi_miso),.i(ob_spi_miso)); 
-  ibuf_tech imosi0(.o(ib_spi_mosi),.i(i_spi_mosi));  
+  obuf_tech omosi0(.o(o_spi_mosi),.i(ob_spi_mosi)); 
+  ibuf_tech imiso0(.o(ib_spi_miso),.i(i_spi_miso));  
   ibuf_tech isddet0(.o(ib_sd_detected),.i(i_sd_detected));  
   ibuf_tech isdwp0(.o(ib_sd_protect),.i(i_sd_protect));  
 
@@ -168,8 +168,8 @@ module asic_top
     // SPI SD-card signals:
     .o_spi_cs(ob_spi_cs),
     .o_spi_sclk(ob_spi_sclk),
-    .o_spi_miso(ob_spi_miso),
-    .i_spi_mosi(ib_spi_mosi),
+    .o_spi_mosi(ob_spi_mosi),
+    .i_spi_miso(ib_spi_miso),
     .i_sd_detected(ib_sd_detected),
     .i_sd_protect(ib_sd_protect),
     // PRCI:

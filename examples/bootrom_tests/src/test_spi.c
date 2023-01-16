@@ -106,9 +106,6 @@ int read_rx_crc16(SpiDriverDataType *p) {
     int ret = 0;
     p->crc16_rx = (uint8_t)(p->map->rxdata & 0xFF);
     p->crc16_rx = (p->crc16_rx << 8) | (uint8_t)(p->map->rxdata & 0xFF);
-
-    // Expected CRC16:
-    p->crc16_calculated = (uint16_t)p->map->crc16;
     return ret;
 }
 
@@ -307,7 +304,7 @@ int spi_sd_read_block(SpiDriverDataType *p) {
         read_rx_fifo(p);
         data_prefix = p->rxbuf[0];
         printf_uart("%02x ", data_prefix);
-    } while (data_prefix != DATA_START_BLOCK && watchdog++ < 5);
+    } while (data_prefix != DATA_START_BLOCK && watchdog++ < 16);
     printf_uart("%s", "\r\n");
 
     if (data_prefix != DATA_START_BLOCK) {
@@ -317,6 +314,9 @@ int spi_sd_read_block(SpiDriverDataType *p) {
     spi_init_crc15(p);
     spi_send_dummy(p, 512);
     read_rx_fifo(p);
+
+    // Expected CRC16:
+    p->crc16_calculated = (uint16_t)p->map->crc16;
 
     // CRC16
     spi_send_dummy(p, 2);
@@ -330,6 +330,7 @@ int spi_sd_card_memcpy(SpiDriverDataType *p, uint64_t src, uint64_t dst, int sz)
     int rdcnt;
     int bytes_copied = 0;
     uint8_t R1;
+    prci_map *prci = (prci_map *)ADDR_BUS1_APB_PRCI;
 
     if (p->etype == SD_Ver2x_HighCapacity) {
         sd_addr = (uint32_t)(src >> 9);  // Data block is always 512 bytes
@@ -360,7 +361,9 @@ int spi_sd_card_memcpy(SpiDriverDataType *p, uint64_t src, uint64_t dst, int sz)
             }
             printf_uart(".. %0x ?= %04x\r\n", p->crc16_rx, p->crc16_calculated);
 
-            memcpy((void *)dst, p->rxbuf, 512);
+            if ((prci->ddr_status & PRCI_DDR_STATUS_CALIB_DONE) != 0) {
+                memcpy((void *)dst, p->rxbuf, 512);
+            }
             dst += 512;
             bytes_copied += 512;
         } else {

@@ -29,8 +29,8 @@ module apb_spi #(
     output types_amba_pkg::apb_out_type o_apbo,             // APB Bridge to Slave interface
     output logic o_cs,
     output logic o_sclk,
-    output logic o_miso,
-    input logic i_mosi,
+    output logic o_mosi,
+    input logic i_miso,
     input logic i_detected,
     input logic i_protect
 );
@@ -201,7 +201,7 @@ begin: comb_proc
     vb_crc7[1] = r.crc7[0];
     vb_crc7[0] = v_inv7;
     // CRC16 = x^16 + x^12 + x^5 + 1
-    v_inv16 = (r.crc16[15] ^ i_mosi);
+    v_inv16 = (r.crc16[15] ^ i_miso);
     vb_crc16[15] = r.crc16[14];
     vb_crc16[14] = r.crc16[13];
     vb_crc16[13] = r.crc16[12];
@@ -249,7 +249,7 @@ begin: comb_proc
         end
 
         if (r.cs == 1'b1) begin
-            v.rx_shift = {r.rx_shift[6: 0], i_mosi};
+            v.rx_shift = {r.rx_shift[6: 0], i_miso};
             v.crc7 = vb_crc7;
             v.crc16 = vb_crc16;
         end
@@ -324,7 +324,7 @@ begin: comb_proc
     10'h011: begin                                          // 0x44: reserved 4 (txctrl)
         vb_rdata[0] = i_detected;                           // [0] sd card inserted
         vb_rdata[1] = i_protect;                            // [1] write protect
-        vb_rdata[2] = i_mosi;                               // [2] mosi data bit
+        vb_rdata[2] = i_miso;                               // [2] miso data bit
         vb_rdata[5: 4] = r.state;                           // [5:4] state machine
         vb_rdata[7] = r.generate_crc;                       // [7] Compute and generate CRC as the last Tx byte
         vb_rdata[31: 16] = r.ena_byte_cnt;                  // [31:16] Number of bytes to transmit
@@ -398,7 +398,7 @@ begin: comb_proc
     end
 
     o_sclk = (r.level & r.cs);
-    o_miso = r.tx_shift[7];
+    o_mosi = r.tx_shift[7];
     o_cs = (~r.cs);
 
     rin = v;

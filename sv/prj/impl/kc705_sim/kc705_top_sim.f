@@ -52,6 +52,7 @@ ${COMMON_HOME}/unisims/SIP_PHASER_IN.v
 ${COMMON_HOME}/unisims/xil_phaser_in_mod0.v
 ${VIPS_HOME}/uart/sim_uart_rx.sv
 ${VIPS_HOME}/uart/sim_uart_receiver.v
+${VIPS_HOME}/sdcard/sd_hc.sv
 ${VIPS_HOME}/ddr3/wiredly.v
 ${VIPS_HOME}/ddr3/ddr3_model.sv
 ${IMPL_ROOT}/kc705_sim/kc705_top_tb.sv

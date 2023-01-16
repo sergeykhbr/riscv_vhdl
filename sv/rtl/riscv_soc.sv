@@ -41,8 +41,8 @@ module riscv_soc (
     // SPI SD-card signals:
     output logic o_spi_cs,
     output logic o_spi_sclk,
-    output logic o_spi_miso,
-    input logic i_spi_mosi,
+    output logic o_spi_mosi,                                // SPI: Master Output Slave Input
+    input logic i_spi_miso,                                 // SPI: Master Input Slave Output
     input logic i_sd_detected,                              // SD-card detected
     input logic i_sd_protect,                               // SD-card write protect
   // PRCI:
@@ -310,8 +310,8 @@ apb_spi #(
     .o_apbo(apbo[CFG_BUS1_PSLV_SPI]),
     .o_cs(o_spi_cs),
     .o_sclk(o_spi_sclk),
-    .o_miso(o_spi_miso),
-    .i_mosi(i_spi_mosi),
+    .o_mosi(o_spi_mosi),
+    .i_miso(i_spi_miso),
     .i_detected(i_sd_detected),
     .i_protect(i_sd_protect)
 );

@@ -46,8 +46,8 @@ module asic_top_tb;
     // SPI SD-card signals:
     logic o_spi_cs;
     logic o_spi_sclk;
-    logic o_spi_miso;
-    logic i_spi_mosi;
+    logic o_spi_mosi;
+    logic i_spi_miso;
     logic i_sd_detected;
     logic i_sd_protect;
 
@@ -72,7 +72,6 @@ module asic_top_tb;
   assign i_sclk_p = clk;
   assign i_sclk_n = ~clk;
 
-  assign i_spi_mosi = 1'b1;
   assign i_sd_detected = 1'b1;
   assign i_sd_protect = 1'b0;
 
@@ -112,8 +111,8 @@ module asic_top_tb;
     // SD-card SPI signals
     .o_spi_cs(o_spi_cs),
     .o_spi_sclk(o_spi_sclk),
-    .o_spi_miso(o_spi_miso),
-    .i_spi_mosi(i_spi_mosi),
+    .o_spi_mosi(o_spi_mosi),
+    .i_spi_miso(i_spi_miso),
     .i_sd_detected(i_sd_detected),
     .i_sd_protect(i_sd_protect)
   );
@@ -137,6 +136,16 @@ module asic_top_tb;
     .rx      (o_uart1_td),
     .rst_n   (~i_rst),
     .clk_in  (1'b0)
+  );
+
+  sd_hc #(
+    .half_period_clk(50ns), // 20 MHz = 50ns
+    .block_size(512)
+  ) SD0 (
+    .i_csn(o_spi_cs),
+    .i_sck(o_spi_sclk),
+    .i_mosi(o_spi_mosi),
+    .o_miso(i_spi_miso)
   );
 
 //tap_dpi #(
