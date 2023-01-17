@@ -26,15 +26,11 @@ SC_MODULE(sfifo) {
  public:
     sc_in<bool> i_clk;                                      // CPU clock
     sc_in<bool> i_nrst;                                     // Reset: active LOW
-    sc_in<sc_uint<log2_depth>> i_thresh;                    // Threshold to generate less/greater signals
     sc_in<bool> i_we;
     sc_in<sc_uint<dbits>> i_wdata;
     sc_in<bool> i_re;
     sc_out<sc_uint<dbits>> o_rdata;
-    sc_out<bool> o_full;
-    sc_out<bool> o_empty;
-    sc_out<bool> o_less;
-    sc_out<bool> o_greater;
+    sc_out<sc_uint<log2_depth>> o_count;                    // Number of words in FIFO
 
     void comb();
     void registers();
@@ -67,21 +63,16 @@ sfifo<dbits, log2_depth>::sfifo(sc_module_name name,
     : sc_module(name),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
-    i_thresh("i_thresh"),
     i_we("i_we"),
     i_wdata("i_wdata"),
     i_re("i_re"),
     o_rdata("o_rdata"),
-    o_full("o_full"),
-    o_empty("o_empty"),
-    o_less("o_less"),
-    o_greater("o_greater") {
+    o_count("o_count") {
 
     async_reset_ = async_reset;
 
     SC_METHOD(comb);
     sensitive << i_nrst;
-    sensitive << i_thresh;
     sensitive << i_we;
     sensitive << i_wdata;
     sensitive << i_re;
@@ -101,15 +92,11 @@ template<int dbits, int log2_depth>
 void sfifo<dbits, log2_depth>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     std::string pn(name());
     if (o_vcd) {
-        sc_trace(o_vcd, i_thresh, i_thresh.name());
         sc_trace(o_vcd, i_we, i_we.name());
         sc_trace(o_vcd, i_wdata, i_wdata.name());
         sc_trace(o_vcd, i_re, i_re.name());
         sc_trace(o_vcd, o_rdata, o_rdata.name());
-        sc_trace(o_vcd, o_full, o_full.name());
-        sc_trace(o_vcd, o_empty, o_empty.name());
-        sc_trace(o_vcd, o_less, o_less.name());
-        sc_trace(o_vcd, o_greater, o_greater.name());
+        sc_trace(o_vcd, o_count, o_count.name());
         for (int i = 0; i < DEPTH; i++) {
             char tstr[1024];
             RISCV_sprintf(tstr, sizeof(tstr), "%s.r_databuf%d", pn.c_str(), i);
@@ -124,13 +111,9 @@ void sfifo<dbits, log2_depth>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *
 
 template<int dbits, int log2_depth>
 void sfifo<dbits, log2_depth>::comb() {
-    bool v_less;
-    bool v_greater;
     bool v_full;
     bool v_empty;
 
-    v_less = 0;
-    v_greater = 0;
     v_full = 0;
     v_empty = 0;
 
@@ -142,14 +125,7 @@ void sfifo<dbits, log2_depth>::comb() {
     v.total_cnt = r.total_cnt;
 
 
-    // Check FIFOs counters with thresholds:
-    if (r.total_cnt.read() < i_thresh.read()) {
-        v_less = 1;
-    }
-
-    if (r.total_cnt.read() > i_thresh.read()) {
-        v_greater = 1;
-    }
+    // Check FIFO counter:
 
     if (r.total_cnt.read().or_reduce() == 0) {
         v_empty = 1;
@@ -184,10 +160,7 @@ void sfifo<dbits, log2_depth>::comb() {
     }
 
     o_rdata = r.databuf[r.rd_cnt.read().to_int()];
-    o_full = v_full;
-    o_empty = v_empty;
-    o_less = v_less;
-    o_greater = v_greater;
+    o_count = r.total_cnt;
 }
 
 template<int dbits, int log2_depth>

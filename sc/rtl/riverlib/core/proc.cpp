@@ -165,7 +165,8 @@ Processor::Processor(sc_module_name name,
     fetch0->o_instr(w.f.instr);
 
 
-    dec0 = new InstrDecoder("dec0", async_reset, fpu_ena);
+    dec0 = new InstrDecoder("dec0", async_reset,
+                             fpu_ena);
     dec0->i_clk(i_clk);
     dec0->i_nrst(i_nrst);
     dec0->i_f_pc(w.f.pc);
@@ -199,7 +200,8 @@ Processor::Processor(sc_module_name name,
     dec0->o_progbuf_ena(w.d.progbuf_ena);
 
 
-    exec0 = new InstrExecute("exec0", async_reset, fpu_ena);
+    exec0 = new InstrExecute("exec0", async_reset,
+                              fpu_ena);
     exec0->i_clk(i_clk);
     exec0->i_nrst(i_nrst);
     exec0->i_d_radr1(w.d.radr1);
@@ -480,7 +482,8 @@ Processor::Processor(sc_module_name name,
     iccsr0->i_s0_resp_exception(csr.resp_exception);
 
 
-    csr0 = new CsrRegs("csr0", async_reset, hartid);
+    csr0 = new CsrRegs("csr0", async_reset,
+                        hartid);
     csr0->i_clk(i_clk);
     csr0->i_nrst(i_nrst);
     csr0->i_sp(ireg.sp);
@@ -585,7 +588,9 @@ Processor::Processor(sc_module_name name,
 
     // generate
     if (tracer_ena_) {
-        trace0 = new Tracer("trace0", async_reset, hartid, trace_file);
+        trace0 = new Tracer("trace0", async_reset,
+                             hartid,
+                             trace_file);
         trace0->i_clk(i_clk);
         trace0->i_nrst(i_nrst);
         trace0->i_dbg_executed_cnt(csr.executed_cnt);

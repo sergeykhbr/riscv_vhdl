@@ -34,8 +34,8 @@ SC_MODULE(apb_spi) {
     sc_out<apb_out_type> o_apbo;                            // APB Bridge to Slave interface
     sc_out<bool> o_cs;
     sc_out<bool> o_sclk;
-    sc_out<bool> o_miso;
-    sc_in<bool> i_mosi;
+    sc_out<bool> o_mosi;
+    sc_in<bool> i_miso;
     sc_in<bool> i_detected;
     sc_in<bool> i_protect;
 
@@ -74,7 +74,10 @@ SC_MODULE(apb_spi) {
         sc_signal<sc_uint<8>> rx_shift;
         sc_signal<bool> rx_ready;
         sc_signal<sc_uint<7>> crc7;
+        sc_signal<sc_uint<16>> crc16;
         sc_signal<sc_uint<8>> spi_resp;
+        sc_signal<sc_uint<log2_fifosz>> txmark;
+        sc_signal<sc_uint<log2_fifosz>> rxmark;
         sc_signal<bool> resp_valid;
         sc_signal<sc_uint<32>> resp_rdata;
         sc_signal<bool> resp_err;
@@ -94,7 +97,10 @@ SC_MODULE(apb_spi) {
         iv.rx_shift = 0;
         iv.rx_ready = 0;
         iv.crc7 = 0;
+        iv.crc16 = 0;
         iv.spi_resp = 0;
+        iv.txmark = 0;
+        iv.rxmark = 0;
         iv.resp_valid = 0;
         iv.resp_rdata = 0;
         iv.resp_err = 0;
@@ -105,25 +111,17 @@ SC_MODULE(apb_spi) {
     sc_signal<bool> w_req_write;
     sc_signal<sc_uint<32>> wb_req_wdata;
     // Rx FIFO signals:
-    sc_signal<sc_uint<log2_fifosz>> wb_rxfifo_thresh;
     sc_signal<bool> w_rxfifo_we;
     sc_signal<sc_uint<8>> wb_rxfifo_wdata;
     sc_signal<bool> w_rxfifo_re;
     sc_signal<sc_uint<8>> wb_rxfifo_rdata;
-    sc_signal<bool> w_rxfifo_full;
-    sc_signal<bool> w_rxfifo_empty;
-    sc_signal<bool> w_rxfifo_less;
-    sc_signal<bool> w_rxfifo_greater;
+    sc_signal<sc_uint<log2_fifosz>> wb_rxfifo_count;
     // Tx FIFO signals:
-    sc_signal<sc_uint<log2_fifosz>> wb_txfifo_thresh;
     sc_signal<bool> w_txfifo_we;
     sc_signal<sc_uint<8>> wb_txfifo_wdata;
     sc_signal<bool> w_txfifo_re;
     sc_signal<sc_uint<8>> wb_txfifo_rdata;
-    sc_signal<bool> w_txfifo_full;
-    sc_signal<bool> w_txfifo_empty;
-    sc_signal<bool> w_txfifo_less;
-    sc_signal<bool> w_txfifo_greater;
+    sc_signal<sc_uint<log2_fifosz>> wb_txfifo_count;
 
     apb_slv *pslv0;
     sfifo<fifo_dbits, 9> *rxfifo;
@@ -143,8 +141,8 @@ apb_spi<log2_fifosz>::apb_spi(sc_module_name name,
     o_apbo("o_apbo"),
     o_cs("o_cs"),
     o_sclk("o_sclk"),
-    o_miso("o_miso"),
-    i_mosi("i_mosi"),
+    o_mosi("o_mosi"),
+    i_miso("i_miso"),
     i_detected("i_detected"),
     i_protect("i_protect") {
 
@@ -153,7 +151,9 @@ apb_spi<log2_fifosz>::apb_spi(sc_module_name name,
     rxfifo = 0;
     txfifo = 0;
 
-    pslv0 = new apb_slv("pslv0", async_reset, VENDOR_OPTIMITECH, OPTIMITECH_SPI);
+    pslv0 = new apb_slv("pslv0", async_reset,
+                         VENDOR_OPTIMITECH,
+                         OPTIMITECH_SPI);
     pslv0->i_clk(i_clk);
     pslv0->i_nrst(i_nrst);
     pslv0->i_mapinfo(i_mapinfo);
@@ -173,30 +173,22 @@ apb_spi<log2_fifosz>::apb_spi(sc_module_name name,
                        9>("rxfifo", async_reset);
     rxfifo->i_clk(i_clk);
     rxfifo->i_nrst(i_nrst);
-    rxfifo->i_thresh(wb_rxfifo_thresh);
     rxfifo->i_we(w_rxfifo_we);
     rxfifo->i_wdata(wb_rxfifo_wdata);
     rxfifo->i_re(w_rxfifo_re);
     rxfifo->o_rdata(wb_rxfifo_rdata);
-    rxfifo->o_full(w_rxfifo_full);
-    rxfifo->o_empty(w_rxfifo_empty);
-    rxfifo->o_less(w_rxfifo_less);
-    rxfifo->o_greater(w_rxfifo_greater);
+    rxfifo->o_count(wb_rxfifo_count);
 
 
     txfifo = new sfifo<fifo_dbits,
                        9>("txfifo", async_reset);
     txfifo->i_clk(i_clk);
     txfifo->i_nrst(i_nrst);
-    txfifo->i_thresh(wb_txfifo_thresh);
     txfifo->i_we(w_txfifo_we);
     txfifo->i_wdata(wb_txfifo_wdata);
     txfifo->i_re(w_txfifo_re);
     txfifo->o_rdata(wb_txfifo_rdata);
-    txfifo->o_full(w_txfifo_full);
-    txfifo->o_empty(w_txfifo_empty);
-    txfifo->o_less(w_txfifo_less);
-    txfifo->o_greater(w_txfifo_greater);
+    txfifo->o_count(wb_txfifo_count);
 
 
 
@@ -204,31 +196,23 @@ apb_spi<log2_fifosz>::apb_spi(sc_module_name name,
     sensitive << i_nrst;
     sensitive << i_mapinfo;
     sensitive << i_apbi;
-    sensitive << i_mosi;
+    sensitive << i_miso;
     sensitive << i_detected;
     sensitive << i_protect;
     sensitive << w_req_valid;
     sensitive << wb_req_addr;
     sensitive << w_req_write;
     sensitive << wb_req_wdata;
-    sensitive << wb_rxfifo_thresh;
     sensitive << w_rxfifo_we;
     sensitive << wb_rxfifo_wdata;
     sensitive << w_rxfifo_re;
     sensitive << wb_rxfifo_rdata;
-    sensitive << w_rxfifo_full;
-    sensitive << w_rxfifo_empty;
-    sensitive << w_rxfifo_less;
-    sensitive << w_rxfifo_greater;
-    sensitive << wb_txfifo_thresh;
+    sensitive << wb_rxfifo_count;
     sensitive << w_txfifo_we;
     sensitive << wb_txfifo_wdata;
     sensitive << w_txfifo_re;
     sensitive << wb_txfifo_rdata;
-    sensitive << w_txfifo_full;
-    sensitive << w_txfifo_empty;
-    sensitive << w_txfifo_less;
-    sensitive << w_txfifo_greater;
+    sensitive << wb_txfifo_count;
     sensitive << r.scaler;
     sensitive << r.scaler_cnt;
     sensitive << r.generate_crc;
@@ -242,7 +226,10 @@ apb_spi<log2_fifosz>::apb_spi(sc_module_name name,
     sensitive << r.rx_shift;
     sensitive << r.rx_ready;
     sensitive << r.crc7;
+    sensitive << r.crc16;
     sensitive << r.spi_resp;
+    sensitive << r.txmark;
+    sensitive << r.rxmark;
     sensitive << r.resp_valid;
     sensitive << r.resp_rdata;
     sensitive << r.resp_err;
@@ -275,8 +262,8 @@ void apb_spi<log2_fifosz>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vc
         sc_trace(o_vcd, o_apbo, o_apbo.name());
         sc_trace(o_vcd, o_cs, o_cs.name());
         sc_trace(o_vcd, o_sclk, o_sclk.name());
-        sc_trace(o_vcd, o_miso, o_miso.name());
-        sc_trace(o_vcd, i_mosi, i_mosi.name());
+        sc_trace(o_vcd, o_mosi, o_mosi.name());
+        sc_trace(o_vcd, i_miso, i_miso.name());
         sc_trace(o_vcd, i_detected, i_detected.name());
         sc_trace(o_vcd, i_protect, i_protect.name());
         sc_trace(o_vcd, r.scaler, pn + ".r_scaler");
@@ -292,7 +279,10 @@ void apb_spi<log2_fifosz>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vc
         sc_trace(o_vcd, r.rx_shift, pn + ".r_rx_shift");
         sc_trace(o_vcd, r.rx_ready, pn + ".r_rx_ready");
         sc_trace(o_vcd, r.crc7, pn + ".r_crc7");
+        sc_trace(o_vcd, r.crc16, pn + ".r_crc16");
         sc_trace(o_vcd, r.spi_resp, pn + ".r_spi_resp");
+        sc_trace(o_vcd, r.txmark, pn + ".r_txmark");
+        sc_trace(o_vcd, r.rxmark, pn + ".r_rxmark");
         sc_trace(o_vcd, r.resp_valid, pn + ".r_resp_valid");
         sc_trace(o_vcd, r.resp_rdata, pn + ".r_resp_rdata");
         sc_trace(o_vcd, r.resp_err, pn + ".r_resp_err");
@@ -320,7 +310,9 @@ void apb_spi<log2_fifosz>::comb() {
     bool v_rxfifo_we;
     sc_uint<8> vb_rxfifo_wdata;
     bool v_inv7;
-    sc_uint<7> vb_crc;
+    sc_uint<7> vb_crc7;
+    bool v_inv16;
+    sc_uint<16> vb_crc16;
     sc_uint<32> vb_rdata;
 
     v_posedge = 0;
@@ -332,20 +324,40 @@ void apb_spi<log2_fifosz>::comb() {
     v_rxfifo_we = 0;
     vb_rxfifo_wdata = 0;
     v_inv7 = 0;
-    vb_crc = 0;
+    vb_crc7 = 0;
+    v_inv16 = 0;
+    vb_crc16 = 0;
     vb_rdata = 0;
 
     v = r;
 
     // CRC7 = x^7 + x^3 + 1
     v_inv7 = (r.crc7.read()[6] ^ r.tx_shift.read()[7]);
-    vb_crc[6] = r.crc7.read()[5];
-    vb_crc[5] = r.crc7.read()[4];
-    vb_crc[4] = r.crc7.read()[3];
-    vb_crc[3] = (r.crc7.read()[2] ^ v_inv7);
-    vb_crc[2] = r.crc7.read()[1];
-    vb_crc[1] = r.crc7.read()[0];
-    vb_crc[0] = v_inv7;
+    vb_crc7[6] = r.crc7.read()[5];
+    vb_crc7[5] = r.crc7.read()[4];
+    vb_crc7[4] = r.crc7.read()[3];
+    vb_crc7[3] = (r.crc7.read()[2] ^ v_inv7);
+    vb_crc7[2] = r.crc7.read()[1];
+    vb_crc7[1] = r.crc7.read()[0];
+    vb_crc7[0] = v_inv7;
+    // CRC16 = x^16 + x^12 + x^5 + 1
+    v_inv16 = (r.crc16.read()[15] ^ i_miso.read());
+    vb_crc16[15] = r.crc16.read()[14];
+    vb_crc16[14] = r.crc16.read()[13];
+    vb_crc16[13] = r.crc16.read()[12];
+    vb_crc16[12] = (r.crc16.read()[11] ^ v_inv16);
+    vb_crc16[11] = r.crc16.read()[10];
+    vb_crc16[10] = r.crc16.read()[9];
+    vb_crc16[9] = r.crc16.read()[8];
+    vb_crc16[8] = r.crc16.read()[7];
+    vb_crc16[7] = r.crc16.read()[6];
+    vb_crc16[6] = r.crc16.read()[5];
+    vb_crc16[5] = (r.crc16.read()[4] ^ v_inv16);
+    vb_crc16[4] = r.crc16.read()[3];
+    vb_crc16[3] = r.crc16.read()[2];
+    vb_crc16[2] = r.crc16.read()[1];
+    vb_crc16[1] = r.crc16.read()[0];
+    vb_crc16[0] = v_inv16;
 
     // system bus clock scaler to baudrate:
     if (r.scaler.read().or_reduce() == 1) {
@@ -377,8 +389,9 @@ void apb_spi<log2_fifosz>::comb() {
         }
 
         if (r.cs.read() == 1) {
-            v.rx_shift = (r.rx_shift.read()(6, 0), i_mosi.read());
-            v.crc7 = vb_crc;
+            v.rx_shift = (r.rx_shift.read()(6, 0), i_miso.read());
+            v.crc7 = vb_crc7;
+            v.crc16 = vb_crc16;
         }
     }
 
@@ -387,7 +400,8 @@ void apb_spi<log2_fifosz>::comb() {
     case idle:
         if (r.ena_byte_cnt.read().or_reduce() == 1) {
             v_txfifo_re = 1;
-            if (w_txfifo_empty.read() == 1) {
+            if (wb_txfifo_count.read().or_reduce() == 0) {
+                // FIFO is empty:
                 v.tx_val = ~0ull;
             } else {
                 v.tx_val = wb_txfifo_rdata;
@@ -411,7 +425,8 @@ void apb_spi<log2_fifosz>::comb() {
         if ((r.bit_cnt.read().or_reduce() == 0) && (v_posedge == 1)) {
             if (r.ena_byte_cnt.read().or_reduce() == 1) {
                 v_txfifo_re = 1;
-                if (w_txfifo_empty.read() == 1) {
+                if (wb_txfifo_count.read().or_reduce() == 0) {
+                    // FIFO is empty:
                     v.tx_val = ~0ull;
                 } else {
                     v.tx_val = wb_txfifo_rdata;
@@ -419,7 +434,7 @@ void apb_spi<log2_fifosz>::comb() {
                 v.state = wait_edge;
                 v.ena_byte_cnt = (r.ena_byte_cnt.read() - 1);
             } else if (r.generate_crc.read() == 1) {
-                v.tx_val = ((vb_crc << 1) | 1);
+                v.tx_val = ((vb_crc7 << 1) | 1);
                 v.generate_crc = 0;
                 v.state = wait_edge;
             } else {
@@ -449,7 +464,7 @@ void apb_spi<log2_fifosz>::comb() {
     case 0x11:                                              // 0x44: reserved 4 (txctrl)
         vb_rdata[0] = i_detected.read();                    // [0] sd card inserted
         vb_rdata[1] = i_protect.read();                     // [1] write protect
-        vb_rdata[2] = i_mosi.read();                        // [2] mosi data bit
+        vb_rdata[2] = i_miso.read();                        // [2] miso data bit
         vb_rdata(5, 4) = r.state;                           // [5:4] state machine
         vb_rdata[7] = r.generate_crc.read();                // [7] Compute and generate CRC as the last Tx byte
         vb_rdata(31, 16) = r.ena_byte_cnt;                  // [31:16] Number of bytes to transmit
@@ -459,7 +474,7 @@ void apb_spi<log2_fifosz>::comb() {
         }
         break;
     case 0x12:                                              // 0x48: Tx FIFO Data
-        vb_rdata[31] = w_txfifo_full.read();
+        vb_rdata[31] = wb_txfifo_count.read().and_reduce();
         if (w_req_valid.read() == 1) {
             if (w_req_write.read() == 1) {
                 v_txfifo_we = 1;
@@ -469,7 +484,7 @@ void apb_spi<log2_fifosz>::comb() {
         break;
     case 0x13:                                              // 0x4C: Rx FIFO Data
         vb_rdata(7, 0) = wb_rxfifo_rdata;
-        vb_rdata[31] = w_rxfifo_empty.read();
+        vb_rdata[31] = (!wb_rxfifo_count.read().or_reduce());
         if (w_req_valid.read() == 1) {
             if (w_req_write.read() == 1) {
                 // do nothing:
@@ -478,16 +493,38 @@ void apb_spi<log2_fifosz>::comb() {
             }
         }
         break;
+    case 0x14:                                              // 0x50: Tx FIFO Watermark
+        vb_rdata((log2_fifosz - 1), 0) = r.txmark;
+        if (w_req_valid.read() == 1) {
+            if (w_req_write.read() == 1) {
+                v.txmark = wb_req_wdata.read()((log2_fifosz - 1), 0);
+            }
+        }
+        break;
+    case 0x15:                                              // 0x54: Rx FIFO Watermark
+        vb_rdata((log2_fifosz - 1), 0) = r.rxmark;
+        if (w_req_valid.read() == 1) {
+            if (w_req_write.read() == 1) {
+                v.rxmark = wb_req_wdata.read()((log2_fifosz - 1), 0);
+            }
+        }
+        break;
+    case 0x16:                                              // 0x58: CRC16 value (reserved FU740)
+        vb_rdata(15, 0) = r.crc16;
+        if (w_req_valid.read() == 1) {
+            if (w_req_write.read() == 1) {
+                v.crc16 = wb_req_wdata.read()(15, 0);
+            }
+        }
+        break;
     default:
         break;
     }
 
-    wb_rxfifo_thresh = 0;
     w_rxfifo_we = v_rxfifo_we;
     wb_rxfifo_wdata = vb_rxfifo_wdata;
     w_rxfifo_re = v_rxfifo_re;
 
-    wb_txfifo_thresh = 0;
     w_txfifo_we = v_txfifo_we;
     wb_txfifo_wdata = vb_txfifo_wdata;
     w_txfifo_re = v_txfifo_re;
@@ -500,8 +537,8 @@ void apb_spi<log2_fifosz>::comb() {
         apb_spi_r_reset(v);
     }
 
-    o_sclk = r.level;
-    o_miso = r.tx_shift.read()[7];
+    o_sclk = (r.level.read() & r.cs.read());
+    o_mosi = r.tx_shift.read()[7];
     o_cs = (!r.cs);
 }
 

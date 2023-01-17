@@ -101,7 +101,9 @@ apb_gpio<width>::apb_gpio(sc_module_name name,
     async_reset_ = async_reset;
     pslv0 = 0;
 
-    pslv0 = new apb_slv("pslv0", async_reset, VENDOR_OPTIMITECH, OPTIMITECH_GPIO);
+    pslv0 = new apb_slv("pslv0", async_reset,
+                         VENDOR_OPTIMITECH,
+                         OPTIMITECH_GPIO);
     pslv0->i_clk(i_clk);
     pslv0->i_nrst(i_nrst);
     pslv0->i_mapinfo(i_mapinfo);

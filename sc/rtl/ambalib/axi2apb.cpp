@@ -35,7 +35,9 @@ axi2apb::axi2apb(sc_module_name name,
     async_reset_ = async_reset;
     axi0 = 0;
 
-    axi0 = new axi_slv("axi0", async_reset, VENDOR_OPTIMITECH, OPTIMITECH_AXI2APB_BRIDGE);
+    axi0 = new axi_slv("axi0", async_reset,
+                        VENDOR_OPTIMITECH,
+                        OPTIMITECH_AXI2APB_BRIDGE);
     axi0->i_clk(i_clk);
     axi0->i_nrst(i_nrst);
     axi0->i_mapinfo(i_mapinfo);

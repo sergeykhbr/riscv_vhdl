@@ -50,6 +50,7 @@ SC_MODULE(apb_uart) {
     bool async_reset_;
 
     static const int fifosz = (1 << log2_fifosz);
+    static const int speedup_rate = 0;
     // Rx/Tx states
     static const uint8_t idle = 0;
     static const uint8_t startbit = 1;
@@ -124,7 +125,9 @@ apb_uart<log2_fifosz>::apb_uart(sc_module_name name,
     async_reset_ = async_reset;
     pslv0 = 0;
 
-    pslv0 = new apb_slv("pslv0", async_reset, VENDOR_OPTIMITECH, OPTIMITECH_UART);
+    pslv0 = new apb_slv("pslv0", async_reset,
+                         VENDOR_OPTIMITECH,
+                         OPTIMITECH_UART);
     pslv0->i_clk(i_clk);
     pslv0->i_nrst(i_nrst);
     pslv0->i_mapinfo(i_mapinfo);
@@ -585,7 +588,7 @@ void apb_uart<log2_fifosz>::comb() {
     case 6:                                                 // 0x18: scaler
         vb_rdata = r.scaler;
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
-            v.scaler = wb_req_wdata.read()(30, 0);
+            v.scaler = wb_req_wdata.read()(30, speedup_rate);
             v.scaler_cnt = 0;
         }
         break;

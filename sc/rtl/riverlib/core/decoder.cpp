@@ -67,7 +67,8 @@ InstrDecoder::InstrDecoder(sc_module_name name,
     for (int i = 0; i < DEC_NUM; i++) {
         char tstr[256];
         RISCV_sprintf(tstr, sizeof(tstr), "rv%d", i);
-        rv[i] = new DecoderRv(tstr, async_reset, fpu_ena);
+        rv[i] = new DecoderRv(tstr, async_reset,
+                               fpu_ena);
         rv[i]->i_clk(i_clk);
         rv[i]->i_nrst(i_nrst);
         rv[i]->i_flush_pipeline(i_flush_pipeline);

@@ -95,7 +95,9 @@ CacheTop::CacheTop(sc_module_name name,
     pmp0 = 0;
     queue0 = 0;
 
-    i1 = new ICacheLru("i1", async_reset, ilog2_nways, ilog2_lines_per_way);
+    i1 = new ICacheLru("i1", async_reset,
+                        ilog2_nways,
+                        ilog2_lines_per_way);
     i1->i_clk(i_clk);
     i1->i_nrst(i_nrst);
     i1->i_req_valid(i_req_ctrl_valid);
@@ -123,7 +125,10 @@ CacheTop::CacheTop(sc_module_name name,
     i1->i_flush_valid(i_flushi_valid);
 
 
-    d0 = new DCacheLru("d0", async_reset, dlog2_nways, dlog2_lines_per_way, coherence_ena);
+    d0 = new DCacheLru("d0", async_reset,
+                        dlog2_nways,
+                        dlog2_lines_per_way,
+                        coherence_ena);
     d0->i_clk(i_clk);
     d0->i_nrst(i_nrst);
     d0->i_req_valid(i_req_data_valid);
