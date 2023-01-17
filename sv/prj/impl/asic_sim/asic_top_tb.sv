@@ -125,12 +125,8 @@ module asic_top_tb;
   sim_uart_rx
   #(
     .p_inst_num(0),
-    `ifdef SIM_UART_SPEED
-      .p_uart_clk_half_period   (`SIM_UART_SPEED) // Set UART speed in Makefile
-    `else
 //      .p_uart_clk_half_period   (3.125ns)
-      .p_uart_clk_half_period   (270.3125ns) // True 115200 UART speed
-    `endif
+      .p_uart_clk_half_period   (270.3125ns / (2**config_target_pkg::CFG_UART_SPEED_UP_RATE)) // True 115200 UART speed
   ) UART_RX (
     .scaler  (32'd8),
     .rx      (o_uart1_td),

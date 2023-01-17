@@ -35,11 +35,13 @@ void test_gnss_ss(uint64_t bar);
 int test_pmp();
 int test_mmu();
 int test_ddr();
-int test_spi();
 void print_pnp(void);
 int hwthread1(void);
 int hwthread2(void);
 int hwthread3(void);
+
+ESdCardType spi_init();
+int spi_sd_card_memcpy(uint64_t src, uint64_t dst, int sz);
 
 
 int main() {
@@ -78,10 +80,6 @@ int main() {
  
     led_set(0x01);
 
-#if 1
-    test_spi();
-#endif
-
     cpu_max = pnp->cfg >> 28;
 
     printf_uart("HARTID . . . . .%d\r\n", fw_get_cpuid());
@@ -116,29 +114,22 @@ int main() {
 
     test_ddr();
 
-    // TODO: implement test console
-    clint_map *clint = (clint_map *)ADDR_BUS0_XSLV_CLINT;
-    uint64_t t_start = clint->mtime;
+    ESdCardType sdtype = spi_init();
+    if (sdtype != SD_Ver2x_HighCapacity) {
+        printf_uart("SPI.Init . . . .Wrong SD-card(%d)\r\n", sdtype);
+        while (1) {}
+    }
+    printf_uart("SPI.Init . . . .%s\r\n", "SDHC");
 
-    while (1) {
-        // temporary put it here, while PLIC not fully ready
-        isr_uart0_tx();
+    static const int BBL_IMAGE_SIZE = 10*1024*1024;  // actually ~8MB
 
-        // 1 sec output
-        if ((clint->mtime - t_start) > SYS_HZ) {
-            t_start = clint->mtime;
-
-            // GPIO[11:8] = output LED[7:4] switching ***1
-            // GPIO[7:4]  = output LED[3:0] status of DIP
-            // GPIO[3:0]  = input DIP
-            uint32_t outval = gpio->output_val >> 8;
-            outval = (outval << 1) & 0xF;
-            if (outval == 0) {
-                outval = 0x1;
-            }
-            outval = (outval << 8) | (gpio->input_val << 4);
-            gpio->output_val = outval;
-        }
+    int copied = spi_sd_card_memcpy(0, ADDR_BUS0_XSLV_DDR, BBL_IMAGE_SIZE);
+    printf_uart("%s", "SBL.Linux. . . .");
+    if (copied < BBL_IMAGE_SIZE) {
+        printf_uart("%s\r\n", "Failed");
+        while (1) {}
+    } else {
+        printf_uart("%d B copied\r\n", copied);
     }
 
     // Run BSL and Linux from DDR:
@@ -147,6 +138,7 @@ int main() {
 
     // a0 = hart id
     // a1 = fdt header
+    __asm__("fence.i");
     __asm__("csrr a0, mhartid");
     __asm__("la a1, dtb_start");
     __asm__("mret");

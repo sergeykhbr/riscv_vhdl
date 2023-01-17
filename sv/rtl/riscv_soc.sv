@@ -261,7 +261,8 @@ assign dev_pnp[SOC_PNP_DDR] = dev_config_none;
 //!          0x00000000_10060000..0x00000000_10060fff (4 KB total)
 apb_uart #(
     .async_reset(async_reset),
-    .log2_fifosz(CFG_SOC_UART1_LOG2_FIFOSZ)
+    .log2_fifosz(CFG_SOC_UART1_LOG2_FIFOSZ),
+    .speedup_rate(CFG_UART_SPEED_UP_RATE)
 ) uart1 (
     .i_clk(i_sys_clk),
     .i_nrst(i_sys_nrst),

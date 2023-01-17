@@ -20,8 +20,12 @@
 #include <axi_maps.h>
 #include "fw_api.h"
 
+//#define UART_BUF_ENABLE
+
 static const char UART0_NAME[8] = "uart0";
+#ifdef UART_BUF_ENABLE
 static const int UART_BUF_SZ = 4096;
+#endif
 
 typedef void (*f_putch)(int, void**);
 
@@ -34,6 +38,7 @@ typedef struct uart_data_type {
     volatile int rdcnt;
 } uart_data_type;
 
+#ifdef UART_BUF_ENABLE
 static int buf_total(uart_data_type *p) {
     int total = p->wrcnt - p->rdcnt;
     if (total <= 0) {
@@ -58,12 +63,14 @@ void buf_put(uart_data_type *p, char s) {
         p->wrcnt = 0;
     }
 }
+#endif
 
 void isr_uart0_tx() {
     uart_data_type *pdata = fw_get_ram_data(UART0_NAME);
     uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
+#ifdef UART_BUF_ENABLE    
     uart_txdata_type txdata;
-    
+
     while (buf_total(pdata)) {
         txdata.v = uart->txdata;
         if (txdata.b.full) {
@@ -71,12 +78,15 @@ void isr_uart0_tx() {
         }
         uart->txdata = buf_get(pdata);
     }
+#endif
 }
 
+#ifdef UART_BUF_ENABLE    
 int uart_tx_nempty() {
     uart_data_type *pdata = fw_get_ram_data(UART0_NAME);
     return buf_total(pdata);
 }
+#endif
 
 void uart_isr_init(void) {
     uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
@@ -85,9 +95,15 @@ void uart_isr_init(void) {
     register_ext_interrupt_handler(CFG_IRQ_UART0, isr_uart0_tx);
 
     pdata = fw_malloc(sizeof(uart_data_type));
+#ifdef UART_BUF_ENABLE    
     pdata->fifo = fw_malloc(UART_BUF_SZ);
     pdata->wrcnt = 1;
     pdata->rdcnt = 0;
+#else
+    pdata->fifo = 0;
+    pdata->wrcnt = 0;
+    pdata->rdcnt = 0;
+#endif
     fw_register_ram_data(UART0_NAME, pdata);
 
     // scaler is enabled in SRAM self test, duplicate it here
@@ -96,8 +112,10 @@ void uart_isr_init(void) {
     uart->rxctrl = 0x1;  // rxen=1
     uart_irq_type ie;
     ie.v = 0;
+#ifdef UART_BUF_ENABLE    
     ie.b.txwm = 1;
     ie.b.rxwm = 0;
+#endif
     uart->ie = ie.v;
 
     fw_enable_plic_irq(CTX_CPU0_M_MODE, CFG_IRQ_UART0);
@@ -341,8 +359,19 @@ void print_uart_hex(uint64_t val) {
 
 #undef putchar
 int putchar(int ch) {
+#ifdef UART_BUF_ENABLE    
     uart_data_type *p = fw_get_ram_data(UART0_NAME);
     buf_put(p, ch);
+#else
+    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
+    uart_txdata_type txdata;
+
+    // No need to lock UART because we transmit only one symbol
+    do {
+        txdata.v = uart->txdata;
+    } while (txdata.b.full);
+    uart->txdata = ch;
+#endif
     return 0;
 }
 
@@ -365,12 +394,14 @@ void printf_uart(const char *fmt, ... ) {
 
     va_end(arg);
 
+#ifdef UART_BUF_ENABLE    
     uart_txdata_type txdata;
     txdata.v = uart->txdata;
     while (!txdata.b.full && buf_total(pdata)){
         uart->txdata = buf_get(pdata);
         txdata.v = uart->txdata;
     }
+#endif
     // free UART lock
     uart->fwcpuid = 0;
 }

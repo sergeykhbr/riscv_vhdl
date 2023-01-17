@@ -30,13 +30,6 @@
 #define CMD55 55  // Next command is an application specific command ACMD
 #define DATA_START_BLOCK 0xFE     // for Single Block Read, Single Block Write and Multiple Block Read
 
-typedef enum ESdCardType {
-    SD_Unknown,
-    SD_Ver1x,
-    SD_Ver2x_StandardCapacity,
-    SD_Ver2x_HighCapacity,
-} ESdCardType;
-
 typedef struct SpiDriverDataType {
     qspi_map *map;
     ESdCardType etype;
@@ -231,6 +224,10 @@ ESdCardType spi_sd_card_init(SpiDriverDataType *p) {
         if (R1 == 0x05) {
            break;
         }
+        if (R1 == 0x01) {
+            // initialization in progress:
+            watchdog = 0;
+        }
 
         // The 'in idle state' bit in the R1 response of ACMD41 is used by the card 
         // to inform the host if initialization of ACMD41 is completed.
@@ -261,7 +258,7 @@ ESdCardType spi_sd_card_init(SpiDriverDataType *p) {
  
     // SD-card in Ready State: idle = 0
     if (p->etype == SD_Unknown || p->etype == SD_Ver1x) {
-        return 0;
+        return p->etype;
     }
 
 
@@ -290,7 +287,7 @@ ESdCardType spi_sd_card_init(SpiDriverDataType *p) {
        p->etype = SD_Ver2x_StandardCapacity;
     }
 
-    return 0;
+    return p->etype;
 }
 
 int spi_sd_read_block(SpiDriverDataType *p) {
@@ -304,7 +301,7 @@ int spi_sd_read_block(SpiDriverDataType *p) {
         read_rx_fifo(p);
         data_prefix = p->rxbuf[0];
         printf_uart("%02x ", data_prefix);
-    } while (data_prefix != DATA_START_BLOCK && watchdog++ < 16);
+    } while (data_prefix != DATA_START_BLOCK && watchdog++ < 1024);
     printf_uart("%s", "\r\n");
 
     if (data_prefix != DATA_START_BLOCK) {
@@ -324,13 +321,14 @@ int spi_sd_read_block(SpiDriverDataType *p) {
     return 512;
 }
 
-int spi_sd_card_memcpy(SpiDriverDataType *p, uint64_t src, uint64_t dst, int sz) {
+int spi_sd_card_memcpy(uint64_t src, uint64_t dst, int sz) {
     uint32_t sd_addr;
     int block_size = 512;
     int rdcnt;
     int bytes_copied = 0;
     uint8_t R1;
     prci_map *prci = (prci_map *)ADDR_BUS1_APB_PRCI;
+    SpiDriverDataType *p = (SpiDriverDataType *)fw_get_ram_data("spi");
 
     if (p->etype == SD_Ver2x_HighCapacity) {
         sd_addr = (uint32_t)(src >> 9);  // Data block is always 512 bytes
@@ -374,7 +372,7 @@ int spi_sd_card_memcpy(SpiDriverDataType *p, uint64_t src, uint64_t dst, int sz)
     return bytes_copied;
 }
 
-int test_spi(void) {
+ESdCardType spi_init(void) {
     int watchdog;
 
     SpiDriverDataType *p = (SpiDriverDataType *)fw_malloc(sizeof(SpiDriverDataType));
@@ -383,10 +381,7 @@ int test_spi(void) {
     p->map->sckdiv = 8;    // half period
 
     fw_register_ram_data("spi", p);
-
-    spi_sd_card_init(p);
-
-    spi_sd_card_memcpy(p, 0, ADDR_BUS0_XSLV_DDR, 1024);
-    return 0;
+   
+    return spi_sd_card_init(p);
 }
 

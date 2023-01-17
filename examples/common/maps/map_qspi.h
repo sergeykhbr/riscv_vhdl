@@ -18,6 +18,14 @@
 
 #include <inttypes.h>
 
+typedef enum ESdCardType {
+    SD_Unknown,
+    SD_Ver1x,
+    SD_Ver2x_StandardCapacity,
+    SD_Ver2x_HighCapacity,
+} ESdCardType;
+
+
 #define QSPI_RXDATA_EMPTY (0x1 << 31)
 #define QSPI_TXDATA_FULL  (0x1 << 31)
 

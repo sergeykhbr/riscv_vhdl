@@ -120,7 +120,7 @@ begin: comb_proc
         v.rx_shift = {r.rx_shift[54:0], i_mosi};
         if (r.sdstate == SD_STATE_DATA) begin
             // 4 dummy + prefix + 512 + 2 CRC + 1 dummy
-            if (r.data_bitcnt < 8*(8 + 512)) begin
+            if (r.data_bitcnt < (8*(7 + 512) - 1)) begin
                 v.data_bitcnt = r.data_bitcnt + 1;
             end else begin
                 v.data_bitcnt = '0; 
