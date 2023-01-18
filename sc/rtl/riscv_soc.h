@@ -54,8 +54,8 @@ SC_MODULE(riscv_soc) {
     // SPI SD-card signals:
     sc_out<bool> o_spi_cs;
     sc_out<bool> o_spi_sclk;
-    sc_out<bool> o_spi_miso;
-    sc_in<bool> i_spi_mosi;
+    sc_out<bool> o_spi_mosi;                                // SPI: Master Output Slave Input
+    sc_in<bool> i_spi_miso;                                 // SPI: Master Input Slave Output
     sc_in<bool> i_sd_detected;                              // SD-card detected
     sc_in<bool> i_sd_protect;                               // SD-card write protect
     // PLL and Reset interfaces:

@@ -39,8 +39,8 @@ riscv_soc::riscv_soc(sc_module_name name)
     o_uart1_td("o_uart1_td"),
     o_spi_cs("o_spi_cs"),
     o_spi_sclk("o_spi_sclk"),
-    o_spi_miso("o_spi_miso"),
-    i_spi_mosi("i_spi_mosi"),
+    o_spi_mosi("o_spi_mosi"),
+    i_spi_miso("i_spi_miso"),
     i_sd_detected("i_sd_detected"),
     i_sd_protect("i_sd_protect"),
     o_dmreset("o_dmreset"),
@@ -84,7 +84,15 @@ riscv_soc::riscv_soc(sc_module_name name)
     apbrdg0->o_mapinfo(bus1_mapinfo);
 
 
-    group0 = new Workgroup("group0", async_reset, CFG_CPU_NUM, CFG_ILOG2_NWAYS, CFG_ILOG2_LINES_PER_WAY, CFG_DLOG2_NWAYS, CFG_DLOG2_LINES_PER_WAY, CFG_L2CACHE_ENA, CFG_L2_LOG2_NWAYS, CFG_L2_LOG2_LINES_PER_WAY);
+    group0 = new Workgroup("group0", async_reset,
+                            CFG_CPU_NUM,
+                            CFG_ILOG2_NWAYS,
+                            CFG_ILOG2_LINES_PER_WAY,
+                            CFG_DLOG2_NWAYS,
+                            CFG_DLOG2_LINES_PER_WAY,
+                            CFG_L2CACHE_ENA,
+                            CFG_L2_LOG2_NWAYS,
+                            CFG_L2_LOG2_LINES_PER_WAY);
     group0->i_cores_nrst(i_sys_nrst);
     group0->i_dmi_nrst(i_dbg_nrst);
     group0->i_clk(i_sys_clk);
@@ -144,8 +152,8 @@ riscv_soc::riscv_soc(sc_module_name name)
     spi0->o_apbo(apbo[CFG_BUS1_PSLV_SPI]);
     spi0->o_cs(o_spi_cs);
     spi0->o_sclk(o_spi_sclk);
-    spi0->o_miso(o_spi_miso);
-    spi0->i_mosi(i_spi_mosi);
+    spi0->o_mosi(o_spi_mosi);
+    spi0->i_miso(i_spi_miso);
     spi0->i_detected(i_sd_detected);
     spi0->i_protect(i_sd_protect);
 
@@ -163,7 +171,7 @@ riscv_soc::riscv_soc(sc_module_name name)
     sensitive << i_jtag_tms;
     sensitive << i_jtag_tdi;
     sensitive << i_uart1_rd;
-    sensitive << i_spi_mosi;
+    sensitive << i_spi_miso;
     sensitive << i_sd_detected;
     sensitive << i_sd_protect;
     sensitive << i_prci_apbo;
@@ -248,8 +256,8 @@ void riscv_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_uart1_td, o_uart1_td.name());
         sc_trace(o_vcd, o_spi_cs, o_spi_cs.name());
         sc_trace(o_vcd, o_spi_sclk, o_spi_sclk.name());
-        sc_trace(o_vcd, o_spi_miso, o_spi_miso.name());
-        sc_trace(o_vcd, i_spi_mosi, i_spi_mosi.name());
+        sc_trace(o_vcd, o_spi_mosi, o_spi_mosi.name());
+        sc_trace(o_vcd, i_spi_miso, i_spi_miso.name());
         sc_trace(o_vcd, i_sd_detected, i_sd_detected.name());
         sc_trace(o_vcd, i_sd_protect, i_sd_protect.name());
         sc_trace(o_vcd, o_dmreset, o_dmreset.name());

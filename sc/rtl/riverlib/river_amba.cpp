@@ -54,7 +54,15 @@ RiverAmba::RiverAmba(sc_module_name name,
     dlog2_lines_per_way_ = dlog2_lines_per_way;
     river0 = 0;
 
-    river0 = new RiverTop("river0", async_reset, hartid, fpu_ena, coherence_ena, tracer_ena, ilog2_nways, ilog2_lines_per_way, dlog2_nways, dlog2_lines_per_way);
+    river0 = new RiverTop("river0", async_reset,
+                           hartid,
+                           fpu_ena,
+                           coherence_ena,
+                           tracer_ena,
+                           ilog2_nways,
+                           ilog2_lines_per_way,
+                           dlog2_nways,
+                           dlog2_lines_per_way);
     river0->i_clk(i_clk);
     river0->i_nrst(i_nrst);
     river0->i_mtimer(i_mtimer);

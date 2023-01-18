@@ -83,7 +83,10 @@ RiverTop::RiverTop(sc_module_name name,
     proc0 = 0;
     cache0 = 0;
 
-    proc0 = new Processor("proc0", async_reset, hartid, fpu_ena, tracer_ena);
+    proc0 = new Processor("proc0", async_reset,
+                           hartid,
+                           fpu_ena,
+                           tracer_ena);
     proc0->i_clk(i_clk);
     proc0->i_nrst(i_nrst);
     proc0->i_mtimer(i_mtimer);
@@ -136,7 +139,12 @@ RiverTop::RiverTop(sc_module_name name,
     proc0->i_flushd_end(w_flushd_end);
 
 
-    cache0 = new CacheTop("cache0", async_reset, coherence_ena, ilog2_nways, ilog2_lines_per_way, dlog2_nways, dlog2_lines_per_way);
+    cache0 = new CacheTop("cache0", async_reset,
+                           coherence_ena,
+                           ilog2_nways,
+                           ilog2_lines_per_way,
+                           dlog2_nways,
+                           dlog2_lines_per_way);
     cache0->i_clk(i_clk);
     cache0->i_nrst(i_nrst);
     cache0->i_req_ctrl_valid(w_req_ctrl_valid);

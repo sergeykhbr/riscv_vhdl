@@ -60,7 +60,9 @@ L2Top::L2Top(sc_module_name name,
     dst0->o_req_wstrb(wb_req_wstrb);
 
 
-    cache0 = new L2CacheLru("cache0", async_reset, waybits, ibits);
+    cache0 = new L2CacheLru("cache0", async_reset,
+                             waybits,
+                             ibits);
     cache0->i_clk(i_clk);
     cache0->i_nrst(i_nrst);
     cache0->i_req_valid(w_req_valid);
