@@ -135,7 +135,7 @@ begin: comb_proc
                 v.tx_shift = 40'hFEFFFFFFFF;
             end else if (r.data_bitcnt[17:3] >= 5 && r.data_bitcnt[17:3] < (512 + 5)) begin
                 // Data Block
-                v.tx_shift = '1;
+                v.tx_shift = {(r.data_bitcnt[10:3] - 8'd5), 32'hFFFFFFFF};
             end else if (r.data_bitcnt[17:3] == (512 + 5)) begin
                 // CRC
                 v.tx_shift = {16'h1122, 24'hFFFFFF};

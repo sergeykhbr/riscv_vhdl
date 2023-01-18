@@ -5,7 +5,8 @@
 
 module srambytes_tech #(
     parameter integer abits = 16,
-    parameter integer log2_dbytes = 3  // 2^log2_dbytes = number of bytes on data bus
+    parameter integer log2_dbytes = 3,  // 2^log2_dbytes = number of bytes on data bus
+    parameter init_file = ""
 )
 (
     input clk,
@@ -25,9 +26,7 @@ localparam integer dbits = 8*dbytes;
 
 logic [dbytes-1 : 0] wr_ena;
 
-
-generate
-  
+generate if (init_file == "") begin : i1
    for (genvar n = 0; n <= dbytes-1; n++) begin : rx
       assign wr_ena[n] = we & wstrb[n];
                   
@@ -42,7 +41,26 @@ generate
           .i_wdata(wdata[8*n+:8])
       );
    end : rx
+  end : i1
+endgenerate
 
+generate if (init_file != "") begin : i2
+   for (genvar n = 0; n <= dbytes-1; n++) begin : rx
+      assign wr_ena[n] = we & wstrb[n];
+                  
+      sram8_inferred_init #(
+          .abits(abits-log2_dbytes),
+          .byte_idx(n),
+          .init_file(init_file)
+      ) x0 (
+          .clk(clk), 
+          .address(addr[abits-1:log2_dbytes]),
+          .rdata(rdata[8*n+:8]),
+          .we(wr_ena[n]),
+          .wdata(wdata[8*n+:8])
+      );
+   end : rx
+  end : i2
 endgenerate
 
 endmodule

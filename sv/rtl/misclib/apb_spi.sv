@@ -98,13 +98,13 @@ logic w_rxfifo_we;
 logic [7:0] wb_rxfifo_wdata;
 logic w_rxfifo_re;
 logic [7:0] wb_rxfifo_rdata;
-logic [log2_fifosz-1:0] wb_rxfifo_count;
+logic [log2_fifosz:0] wb_rxfifo_count;
 // Tx FIFO signals:
 logic w_txfifo_we;
 logic [7:0] wb_txfifo_wdata;
 logic w_txfifo_re;
 logic [7:0] wb_txfifo_rdata;
-logic [log2_fifosz-1:0] wb_txfifo_count;
+logic [log2_fifosz:0] wb_txfifo_count;
 apb_spi_registers r, rin;
 
 apb_slv #(

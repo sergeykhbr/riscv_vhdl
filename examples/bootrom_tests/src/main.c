@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
 #include "encoding.h"
 #include "fw_api.h"
 
-void isr_uart0_tx();
+#define PRINT_DDR_IMAGE
 
 void allocate_exception_table(void);
 void allocate_interrupt_table(void);
@@ -139,18 +139,19 @@ int main() {
     // a0 = hart id
     // a1 = fdt header
     __asm__("fence.i");
+
+#ifdef PRINT_DDR_IMAGE
+   printf_uart("%s\r\n", "Verif:");
+   uint64_t *verif = (uint64_t *)ADDR_BUS0_XSLV_DDR;
+   for (int i = 0; i < BBL_IMAGE_SIZE/sizeof(uint64_t); i++) {
+        printf_uart("%016llx\r\n", verif[i]);
+   }
+#endif
+
     __asm__("csrr a0, mhartid");
     __asm__("la a1, dtb_start");
     __asm__("mret");
 
-#if 0
     // NEVER REACH THIS POINT
-    // jump to entry point in SRAM = 0x10000000
-    //     'meps' - Machine Exception Program Coutner
-    __asm__("lui t0, 0x10000");
-    __asm__("csrw mepc, t0");
-    __asm__("mret");
-#endif
-
     return 0;
 }

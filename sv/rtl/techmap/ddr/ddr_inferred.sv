@@ -44,6 +44,9 @@ module ddr_inferred
 
 import types_amba_pkg::*;
 
+localparam SIM_DDRINIT_FILE_HEX = "../../../../examples/bbl-q/bbl-q-noprintf.hex";
+
+
   apb_ddr #(
     .async_reset(async_reset)
   ) apb0 (
@@ -64,7 +67,8 @@ import types_amba_pkg::*;
   // TODO: better ddr functional model
   axi4_sram #(
     .async_reset(async_reset),
-    .abits((10 + $clog2(512*1024)))      // 512MB address
+    .abits((10 + $clog2(512*1024))),      // 512MB address
+    .init_file(SIM_DDRINIT_FILE_HEX)
   ) mem0 (
     .clk(i_xslv_clk),
     .nrst(i_xslv_nrst),
