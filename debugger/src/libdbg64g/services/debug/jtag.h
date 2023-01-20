@@ -42,8 +42,11 @@ class JTAG : public IService,
  private:
     uint64_t scan(uint32_t ir, uint64_t dr, int drlen);
     void initScanSequence(uint32_t ir);
-    void addToScanSequence(char tms, char tdo);
+    void addToScanSequence(char tms, char tdo, ETapState nextstate);
+    void endScanSequenceToIdle();
+
     void transmitScanSequence();
+    uint32_t getRxData();
 
  protected:
     AttributeType target_;
@@ -63,12 +66,14 @@ class JTAG : public IService,
         char tck;
         char tms;
         char tdo;
+        ETapState state;
     } out_[SCAN_LENGTH_MAX];
     char tdi_[SCAN_LENGTH_MAX];
     int scanSize_;
     ETapState etapstate_;
     uint32_t tapid_;
     uint32_t ir_;
+    uint32_t drshift_;
 };
 
 DECLARE_CLASS(JTAG)

@@ -59,26 +59,26 @@ void JTAG::resetAsync() {
 void JTAG::resetSync() {
     scanSize_ = 0;
     for (int i = 0; i < 10; i++) {
-        addToScanSequence(1, 1);
+        addToScanSequence(1, 1, IJtag::RESET);
     }
     ir_ = IR_IDCODE;
-    etapstate_ = IJtag::RESET;
 
     // IDLE state
-    addToScanSequence(0, 1);
+    addToScanSequence(0, 1, IJtag::IDLE);
     transmitScanSequence();
-    etapstate_ = IJtag::IDLE;
 }
 
 uint32_t JTAG::scanIdCode() {
     uint32_t ret = 0;
 
     scan(IR_IDCODE, 0xFFFFFFFFFFFFFFFFull, 32);
+    ret = getRxData();
+    RISCV_info("TAP id = %08x", ret);
 
-    for (int i = 0; i < 32; i++) {
-        ret |= (static_cast<uint32_t>(tdi_[i]) << i);
-    }
-    RISCV_info("dr = %08x", ret);
+    scan(IR_DTMCONTROL, 0, 32);
+    ret = getRxData();
+    RISCV_info("DTM = %08x: ver:%d, abits:%d, stat:%d",
+            ret, (ret >> 0) & 0xF, (ret >> 4) & 0x3F, (ret >> 10) & 0x3);
     return ret;
 }
 
@@ -93,16 +93,15 @@ uint64_t JTAG::scanDmiBus() {
 
 
 uint64_t JTAG::scan(uint32_t ir, uint64_t dr, int drlen) {
-    char tms = 0;
     initScanSequence(ir);
-
     for (int i = 0; i < drlen; i++) {
-        tms = i == drlen - 1 ? 1: 0;
-        addToScanSequence(tms, static_cast<char>((dr >> i) & 0x1));
+        if (i == drlen - 1) {
+            addToScanSequence(1, static_cast<char>((dr >> i) & 0x1), IJtag::DREXIT1);
+        } else {
+            addToScanSequence(0, static_cast<char>((dr >> i) & 0x1), IJtag::DRSHIFT);
+        }
     }
-
-    addToScanSequence(1, 1);    // DREXIT1 -> DRUPDATE
-    addToScanSequence(0, 1);    // DRUPDATE -> Idle
+    endScanSequenceToIdle();
 
     transmitScanSequence();
     return 0;
@@ -111,40 +110,64 @@ uint64_t JTAG::scan(uint32_t ir, uint64_t dr, int drlen) {
 
 void JTAG::initScanSequence(uint32_t ir) {
     scanSize_ = 0;
-    addToScanSequence(1, 1);    // Idle -> DRSELECT
+    addToScanSequence(1, 1, IJtag::DRSCAN);    // Idle -> DRSELECT
 
     // Need to capture IR first if this is another IR request
     if (ir_ != ir) {
         ir_ = ir;
-        addToScanSequence(1, 1);    // DRSELECT -> IRSELECT
-        addToScanSequence(0, 1);    // IRSELECT -> IRCAPTURE
-        addToScanSequence(0, 1);    // IRCAPTURE -> IRSHIFT
-        char tms = 0;
+        addToScanSequence(1, 1, IJtag::IRSCAN);     // DRSELECT -> IRSELECT
+        addToScanSequence(0, 1, IJtag::IRCAPTURE);  // IRSELECT -> IRCAPTURE
+        addToScanSequence(0, 1, IJtag::IRSHIFT);    // IRCAPTURE -> IRSHIFT
         for (int i = 0; i < IRLEN; i++) {
-            tms = i == IRLEN - 1 ? 1: 0;
-            addToScanSequence(tms, ir & 1);
+            if (i == IRLEN - 1) {
+                addToScanSequence(1, ir & 1, IJtag::IREXIT1);
+            } else {
+                addToScanSequence(0, ir & 1, IJtag::IRSHIFT);
+            }
             ir >>= 1;
         }
-        addToScanSequence(1, 1);    // IREXIT1 -> IRUPDATE
-        addToScanSequence(1, 1);    // IRUPDATE -> DRSELECT
+        addToScanSequence(1, 1, IJtag::IRUPDATE);    // IREXIT1 -> IRUPDATE
+        addToScanSequence(1, 1, IJtag::DRSCAN);    // IRUPDATE -> DRSELECT
     }
-    addToScanSequence(0, 1);    // DRSELECT -> DRCAPTURE
-    addToScanSequence(0, 1);    // DRCAPTURE -> DRSHIFT
+    addToScanSequence(0, 1, IJtag::DRCAPTURE);    // DRSELECT -> DRCAPTURE
+    addToScanSequence(0, 1, IJtag::DRSHIFT);    // DRCAPTURE -> DRSHIFT
 }
 
-void JTAG::addToScanSequence(char tms, char tdo) {
+void JTAG::addToScanSequence(char tms, char tdo, ETapState nextstate) {
     out_[scanSize_].tms = tms;
     out_[scanSize_].tdo = tdo;
+    out_[scanSize_].state = etapstate_;
+    // TODO: acceptance of the next state
+    etapstate_ = nextstate;
+
     ++scanSize_;
 }
 
+void JTAG::endScanSequenceToIdle() {
+    addToScanSequence(1, 1, IJtag::DRUPDATE);    // DREXIT1 -> DRUPDATE
+    addToScanSequence(0, 1, IJtag::IDLE);        // DRUPDATE -> Idle
+}
+
 void JTAG::transmitScanSequence() {
+    drshift_ = 0;
     for (int i = 0; i < scanSize_; i++) {
         ibitbang_->setPins(0, out_[i].tms, out_[i].tdo);
-        ibitbang_->setPins(1, out_[i].tms, out_[i].tdo);
         tdi_[i] = ibitbang_->getTDO();
+        if (out_[i].state == DRSHIFT) {
+            drshift_ = (drshift_ >> 1) | (static_cast<uint32_t>(tdi_[i]) << 31);
+        }
+        ibitbang_->setPins(1, out_[i].tms, out_[i].tdo);
     }
     ibitbang_->setPins(1, 0, 1);
+}
+
+uint32_t JTAG::getRxData() {
+    uint32_t ret = 0;
+    for (int i = 0; i < 32; i++) {
+        ret |= (static_cast<uint32_t>(tdi_[i + 3]) << i);
+    }
+    ret = drshift_;
+    return ret;
 }
 
 }  // namespace debugger
