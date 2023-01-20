@@ -123,7 +123,7 @@ int main() {
     }
     printf_uart("SPI.Init . . . .%s\r\n", "SDHC");
 
-    static const int BBL_IMAGE_SIZE = 1024;//10*1024*1024;  // actually ~8MB
+    static const int BBL_IMAGE_SIZE = 10*1024*1024;  // actually ~8MB
 
     printf_uart("%s", "Copy BBL . . . .");
     int copied = spi_sd_card_memcpy(0, ADDR_BUS0_XSLV_DDR, BBL_IMAGE_SIZE);
