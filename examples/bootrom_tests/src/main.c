@@ -19,7 +19,7 @@
 #include "encoding.h"
 #include "fw_api.h"
 
-#define PRINT_DDR_IMAGE
+//#define PRINT_DDR_IMAGE
 
 void allocate_exception_table(void);
 void allocate_interrupt_table(void);
@@ -80,6 +80,7 @@ int main() {
  
     led_set(0x01);
 
+#if 1
     cpu_max = pnp->cfg >> 28;
 
     printf_uart("HARTID . . . . .%d\r\n", fw_get_cpuid());
@@ -113,6 +114,7 @@ int main() {
     led_set(0x1F);
 
     test_ddr();
+#endif
 
     ESdCardType sdtype = spi_init();
     if (sdtype != SD_Ver2x_HighCapacity) {
@@ -121,10 +123,10 @@ int main() {
     }
     printf_uart("SPI.Init . . . .%s\r\n", "SDHC");
 
-    static const int BBL_IMAGE_SIZE = 10*1024*1024;  // actually ~8MB
+    static const int BBL_IMAGE_SIZE = 1024;//10*1024*1024;  // actually ~8MB
 
+    printf_uart("%s", "Copy BBL . . . .");
     int copied = spi_sd_card_memcpy(0, ADDR_BUS0_XSLV_DDR, BBL_IMAGE_SIZE);
-    printf_uart("%s", "SBL.Linux. . . .");
     if (copied < BBL_IMAGE_SIZE) {
         printf_uart("%s\r\n", "Failed");
         while (1) {}

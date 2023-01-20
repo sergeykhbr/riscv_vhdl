@@ -19,6 +19,8 @@
 #include <axi_maps.h>
 #include "fw_api.h"
 
+//#define DEBUG_DATA_BLOCK
+
 #define CMD0 0
 #define CMD1 1    // Card initialization
 #define CMD8 8
@@ -294,15 +296,21 @@ int spi_sd_read_block(SpiDriverDataType *p) {
    // Check Data token:
     int watchdog = 0;
     uint8_t data_prefix = 0;
+#ifdef DEBUG_DATA_BLOCK
     printf_uart("%s ", "StartToken: ");
+#endif
 
     do {
         spi_send_dummy(p, 1);
         read_rx_fifo(p);
         data_prefix = p->rxbuf[0];
+#ifdef DEBUG_DATA_BLOCK
         printf_uart("%02x ", data_prefix);
+#endif
     } while (data_prefix != DATA_START_BLOCK && watchdog++ < 1024);
+#ifdef DEBUG_DATA_BLOCK
     printf_uart("%s", "\r\n");
+#endif
 
     if (data_prefix != DATA_START_BLOCK) {
         return 0;
@@ -337,27 +345,40 @@ int spi_sd_card_memcpy(uint64_t src, uint64_t dst, int sz) {
         // Block size could be changed from 512 if partial block is enabled
     }
 
+#ifdef DEBUG_DATA_BLOCK
     printf_uart("%s", "CMD18: ");
+#endif
     spi_send_cmd(p, CMD18, sd_addr);
     rdcnt = read_rx_fifo(p);
+#ifdef DEBUG_DATA_BLOCK
     for (int i = 0; i < rdcnt; i++) {
         printf_uart("%02x ", p->rxbuf[i]);
     }
+#endif
     R1 = get_r1_response(p);
+#ifdef DEBUG_DATA_BLOCK
     printf_uart("R1: %02x\r\n", R1);
+#endif
 
     // SD-card should be in Transfer State without errors:
     if (R1 != 0x00) {
+        printf_uart("CMD18 failed src=0x%llx R1: %02x\r\n", (uint64_t)src, R1);
         return 0;
     }
 
     while (bytes_copied < sz) {
         if (spi_sd_read_block(p)) {
+#ifdef DEBUG_DATA_BLOCK
             printf_uart("%s ", "DATA: ");
             for (int i = 0; i < 8; i++) {
                 printf_uart("%02x ", p->rxbuf[i]);
             }
             printf_uart(".. %0x ?= %04x\r\n", p->crc16_rx, p->crc16_calculated);
+#endif
+            if (p->crc16_rx != p->crc16_calculated) {
+                printf_uart("src=0x%llx CRC failed: %04x != %04x\r\n", 
+                           (uint64_t)src, p->crc16_rx, p->crc16_calculated);
+            }
 
             if ((prci->ddr_status & PRCI_DDR_STATUS_CALIB_DONE) != 0) {
                 memcpy((void *)dst, p->rxbuf, 512);
@@ -365,6 +386,7 @@ int spi_sd_card_memcpy(uint64_t src, uint64_t dst, int sz) {
             dst += 512;
             bytes_copied += 512;
         } else {
+            printf_uart("Data block prefix not found src=0x%llx\r\n", (uint64_t)src);
             break;
         }
     }
