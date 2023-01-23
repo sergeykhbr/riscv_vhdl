@@ -72,22 +72,37 @@ uint32_t JTAG::scanIdCode() {
     uint32_t ret = 0;
 
     scan(IR_IDCODE, 0xFFFFFFFFFFFFFFFFull, 32);
-    ret = getRxData();
+    ret = static_cast<uint32_t>(getRxData());
     RISCV_info("TAP id = %08x", ret);
-
-    scan(IR_DTMCONTROL, 0, 32);
-    ret = getRxData();
-    RISCV_info("DTM = %08x: ver:%d, abits:%d, stat:%d",
-            ret, (ret >> 0) & 0xF, (ret >> 4) & 0x3F, (ret >> 10) & 0x3);
     return ret;
 }
 
-uint32_t JTAG::scanDtmControl() {
-    return 0;
+IJtag::DtmControlType JTAG::scanDtmControl() {
+    DtmControlType ret = {0};
+    scan(IR_DTMCONTROL, 0, 32);
+    ret.u32 = static_cast<uint32_t>(getRxData());
+    RISCV_info("DTM = %08x: ver:%d, abits:%d, stat:%d",
+            ret.u32, ret.bits.version, ret.bits.abits, ret.bits.stat);
+    return ret;
 }
 
-uint64_t JTAG::scanDmiBus() {
-    return 0;
+uint32_t JTAG::scanDmiBus(uint32_t addr, uint32_t data, IJtag::EDmiOperation op) {
+    DmiRegisterType ret;
+    uint64_t dr = addr;
+    dr = (dr << 32) | data;
+    dr = (dr << 2) | op;
+    scan(IR_DBUS, dr, 34 + ABITS);
+
+    // Do the same but with rena=0 and wena=0
+    dr = static_cast<uint64_t>(addr) << 34;
+    scan(IR_DBUS, dr, 34 + ABITS);
+    ret.u64 = getRxData();
+
+    RISCV_info("DBUS [%02x] %08x, stat:%d",
+            static_cast<uint32_t>(ret.bits.addr),
+            static_cast<uint32_t>(ret.bits.data),
+            static_cast<uint32_t>(ret.bits.status));
+    return static_cast<uint32_t>(ret.bits.data);
 }
 
 
@@ -154,20 +169,20 @@ void JTAG::transmitScanSequence() {
         ibitbang_->setPins(0, out_[i].tms, out_[i].tdo);
         tdi_[i] = ibitbang_->getTDO();
         if (out_[i].state == DRSHIFT) {
-            drshift_ = (drshift_ >> 1) | (static_cast<uint32_t>(tdi_[i]) << 31);
+            drshift_ >>= 1;
+            if (ir_ == IJtag::IR_DBUS) {
+                drshift_ |= static_cast<uint64_t>(tdi_[i]) << (ABITS + 33);
+            } else {
+                drshift_ |= static_cast<uint64_t>(tdi_[i]) << 31;
+            }
         }
         ibitbang_->setPins(1, out_[i].tms, out_[i].tdo);
     }
     ibitbang_->setPins(1, 0, 1);
 }
 
-uint32_t JTAG::getRxData() {
-    uint32_t ret = 0;
-    for (int i = 0; i < 32; i++) {
-        ret |= (static_cast<uint32_t>(tdi_[i + 3]) << i);
-    }
-    ret = drshift_;
-    return ret;
+uint64_t JTAG::getRxData() {
+    return drshift_;
 }
 
 }  // namespace debugger

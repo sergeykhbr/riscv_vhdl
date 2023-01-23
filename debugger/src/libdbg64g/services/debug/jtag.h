@@ -36,8 +36,8 @@ class JTAG : public IService,
     virtual void resetAsync();
     virtual void resetSync();
     virtual uint32_t scanIdCode();
-    virtual uint32_t scanDtmControl();
-    virtual uint64_t scanDmiBus();
+    virtual IJtag::DtmControlType scanDtmControl();
+    virtual uint32_t scanDmiBus(uint32_t addr, uint32_t data, IJtag::EDmiOperation op);
 
  private:
     uint64_t scan(uint32_t ir, uint64_t dr, int drlen);
@@ -46,7 +46,7 @@ class JTAG : public IService,
     void endScanSequenceToIdle();
 
     void transmitScanSequence();
-    uint32_t getRxData();
+    uint64_t getRxData();
 
  protected:
     AttributeType target_;
@@ -55,10 +55,7 @@ class JTAG : public IService,
     static const int SCAN_LENGTH_MAX = 4096;
 
     static const int IRLEN = 5;
-    static const uint32_t IR_IDCODE = 0x01;
-    static const uint32_t IR_DTMCONTROL = 0x10;
-    static const uint32_t IR_DBUS = 0x11;
-    static const uint32_t IR_BYPASS = 0x1F;
+    static const int ABITS = 7;     // should be checked in dtmconctrol register
 
     char trst_;
     char srst_;
@@ -73,7 +70,7 @@ class JTAG : public IService,
     ETapState etapstate_;
     uint32_t tapid_;
     uint32_t ir_;
-    uint32_t drshift_;
+    uint64_t drshift_;
 };
 
 DECLARE_CLASS(JTAG)

@@ -46,6 +46,10 @@ void CmdInit::exec(AttributeType *args, AttributeType *res) {
     jtag_->resetAsync();
     jtag_->resetSync();
     jtag_->scanIdCode();
+    jtag_->scanDtmControl();
+    jtag_->scanDmiBus(0x10, 0, IJtag::DmiOp_Read);
+    jtag_->scanDmiBus(0x11, 0, IJtag::DmiOp_Read);
+    jtag_->scanDmiBus(0x10, 0, IJtag::DmiOp_Read);
 }
 
 }  // namespace debugger

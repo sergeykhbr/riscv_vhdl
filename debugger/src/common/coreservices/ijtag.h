@@ -56,6 +56,37 @@ class IJtag : public IFace {
         IRUPDATE
     };
 
+    static const uint32_t IR_IDCODE = 0x01;
+    static const uint32_t IR_DTMCONTROL = 0x10;
+    static const uint32_t IR_DBUS = 0x11;
+    static const uint32_t IR_BYPASS = 0x1F;
+
+    union DtmControlType {
+        uint32_t u32;
+        struct bits_type {
+            uint32_t version : 4;   // [3:0]
+            uint32_t abits : 6;     // [9:4]
+            uint32_t stat : 2;      // [11:10]
+            uint32_t rsrv : 20;
+        } bits;
+    };
+
+    union DmiRegisterType {
+        uint64_t u64;
+        struct bits_type {
+            uint64_t status : 2;    // [1:0] status on read. On write [0]=rena, [1]=wena
+            uint64_t data : 32;     // [33:2]
+            uint64_t addr : 7;      // [34+abits-1:34]
+        } bits;
+    };
+
+    enum EDmiOperation {
+        DmiOp_None,
+        DmiOp_Read,
+        DmiOp_Write,
+        DmiOp_ReadWrite,
+    };
+
     virtual const char *getBrief() { return IJtag_brief; }
 
     virtual const char *getDetail() { return IJtag_detail; }
@@ -63,8 +94,8 @@ class IJtag : public IFace {
     virtual void resetAsync() = 0;
     virtual void resetSync() = 0;
     virtual uint32_t scanIdCode() = 0;
-    virtual uint32_t scanDtmControl() = 0;
-    virtual uint64_t scanDmiBus() = 0;
+    virtual DtmControlType scanDtmControl() = 0;
+    virtual uint32_t scanDmiBus(uint32_t addr, uint32_t data, EDmiOperation op) = 0;
 };
 
 }  // namespace debugger
