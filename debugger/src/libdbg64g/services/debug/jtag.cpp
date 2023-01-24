@@ -77,25 +77,25 @@ uint32_t JTAG::scanIdCode() {
     return ret;
 }
 
-IJtag::DtmControlType JTAG::scanDtmControl() {
-    DtmControlType ret = {0};
-    scan(IR_DTMCONTROL, 0, 32);
+IJtag::DtmcsType JTAG::scanDtmcs() {
+    DtmcsType ret = {0};
+    scan(IR_DTMCS, 0, 32);
     ret.u32 = static_cast<uint32_t>(getRxData());
     RISCV_info("DTM = %08x: ver:%d, abits:%d, stat:%d",
-            ret.u32, ret.bits.version, ret.bits.abits, ret.bits.stat);
+            ret.u32, ret.bits.version, ret.bits.abits, ret.bits.dmistat);
     return ret;
 }
 
-uint32_t JTAG::scanDmiBus(uint32_t addr, uint32_t data, IJtag::EDmiOperation op) {
-    DmiRegisterType ret;
+uint32_t JTAG::scanDmi(uint32_t addr, uint32_t data, IJtag::EDmiOperation op) {
+    DmiType ret;
     uint64_t dr = addr;
     dr = (dr << 32) | data;
     dr = (dr << 2) | op;
-    scan(IR_DBUS, dr, 34 + ABITS);
+    scan(IR_DMI, dr, 34 + ABITS);
 
     // Do the same but with rena=0 and wena=0
     dr = static_cast<uint64_t>(addr) << 34;
-    scan(IR_DBUS, dr, 34 + ABITS);
+    scan(IR_DMI, dr, 34 + ABITS);
     ret.u64 = getRxData();
 
     RISCV_info("DBUS [%02x] %08x, stat:%d",
@@ -170,7 +170,7 @@ void JTAG::transmitScanSequence() {
         tdi_[i] = ibitbang_->getTDO();
         if (out_[i].state == DRSHIFT) {
             drshift_ >>= 1;
-            if (ir_ == IJtag::IR_DBUS) {
+            if (ir_ == IJtag::IR_DMI) {
                 drshift_ |= static_cast<uint64_t>(tdi_[i]) << (ABITS + 33);
             } else {
                 drshift_ |= static_cast<uint64_t>(tdi_[i]) << 31;

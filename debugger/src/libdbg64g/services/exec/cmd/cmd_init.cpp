@@ -43,13 +43,26 @@ int CmdInit::isValid(AttributeType *args) {
 }
 
 void CmdInit::exec(AttributeType *args, AttributeType *res) {
+    IJtag::dmi_dmstatus_type dmstatus;
     jtag_->resetAsync();
     jtag_->resetSync();
     jtag_->scanIdCode();
-    jtag_->scanDtmControl();
-    jtag_->scanDmiBus(0x10, 0, IJtag::DmiOp_Read);
-    jtag_->scanDmiBus(0x11, 0, IJtag::DmiOp_Read);
-    jtag_->scanDmiBus(0x10, 0, IJtag::DmiOp_Read);
+    jtag_->scanDtmcs();
+    jtag_->scanDmi(IJtag::DMI_DMCONTROL, 0, IJtag::DmiOp_Read);
+    dmstatus.u32 = jtag_->scanDmi(IJtag::DMI_DMSTATUS, 0, IJtag::DmiOp_Read);
+    jtag_->scanDmi(IJtag::DMI_DMCONTROL, 0, IJtag::DmiOp_Read);
+
+    // Halt command:
+    // dmcontrol: haltreq dmactive
+    uint32_t dr = 0x80000001;
+    jtag_->scanDmi(IJtag::DMI_DMCONTROL, dr, IJtag::DmiOp_Write);
+
+    // dmstatus: allresumeack anyresumeack allhalted anyhalted authenticated hasresethaltreq version=2
+    dmstatus.u32 = jtag_->scanDmi(IJtag::DMI_DMSTATUS, 0, IJtag::DmiOp_Read);
+
+    // dmcontrol: dmactive
+    dr = 0x00000001;
+    jtag_->scanDmi(IJtag::DMI_DMCONTROL, dr, IJtag::DmiOp_Write);
 }
 
 }  // namespace debugger

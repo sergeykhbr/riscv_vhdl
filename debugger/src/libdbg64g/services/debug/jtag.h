@@ -36,8 +36,8 @@ class JTAG : public IService,
     virtual void resetAsync();
     virtual void resetSync();
     virtual uint32_t scanIdCode();
-    virtual IJtag::DtmControlType scanDtmControl();
-    virtual uint32_t scanDmiBus(uint32_t addr, uint32_t data, IJtag::EDmiOperation op);
+    virtual IJtag::DtmcsType scanDtmcs();
+    virtual uint32_t scanDmi(uint32_t addr, uint32_t data, IJtag::EDmiOperation op);
 
  private:
     uint64_t scan(uint32_t ir, uint64_t dr, int drlen);
