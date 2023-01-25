@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,8 +14,7 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_SRC_COMMON_GENERIC_CMD_REGS_GENERIC_H__
-#define __DEBUGGER_SRC_COMMON_GENERIC_CMD_REGS_GENERIC_H__
+#pragma once
 
 #include "api_core.h"
 #include "coreservices/icommand.h"
@@ -24,7 +23,7 @@ namespace debugger {
 
 class CmdRegsGeneric : public ICommand  {
  public:
-    CmdRegsGeneric(uint64_t dmibar, ITap *tap);
+    CmdRegsGeneric(IJtag *ijtag);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);
@@ -37,4 +36,3 @@ class CmdRegsGeneric : public ICommand  {
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_SRC_COMMON_GENERIC_CMD_REGS_GENERIC_H__

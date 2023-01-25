@@ -93,37 +93,6 @@ class IJtag : public IFace {
         DmiOp_ReadWrite,
     };
 
-    // Abstract command:
-    union CommandType {
-        uint32_t u32;
-        struct regaccess_type {
-            uint32_t regno : 16;                // [15:0]
-            uint32_t write : 1;                 // [16]
-            uint32_t transfer : 1;              // [17]
-            uint32_t postexec : 1;              // [18]
-            uint32_t aarpostincrement : 1;      // [19]
-            uint32_t aarsize : 3;               // [22:20]
-            uint32_t rsrv23 : 1;                // [23]
-            uint32_t cmdtype : 8;               // [31:24], type 0
-        } regaccess;
-
-        struct quickaccess_type {
-            uint32_t zero23_0 : 24;             // [23:0] zeros
-            uint32_t cmdtype : 8;               // [31:24], type 1
-        } quickaccess;
-
-        struct memaccess_type {
-            uint32_t rsrv13_0 : 14;             // [13:0]
-            uint32_t target_specific : 2;       // [15:14]
-            uint32_t write : 1;                 // [16]
-            uint32_t rsrv18_17 : 2;             // [18:17]
-            uint32_t aampostincrement : 1;      // [19]
-            uint32_t aamsize : 3;               // [22:20]
-            uint32_t aamvirtual : 1;            // [23]
-            uint32_t cmdtype : 8;               // [31:24], type = 2
-        } memaccess;
-    };
-
     // Debug Module Debug Bus Registers:
     static const uint32_t DMI_ABSTRACT_DATA0 = 0x04;
     static const uint32_t DMI_ABSTRACT_DATA1 = 0x05;
@@ -204,9 +173,9 @@ class IJtag : public IFace {
     union dmi_dmstatus_type {
         uint32_t u32;
         struct bits_type {
-            uint32_t version : 4;           // [3:0]
+            uint32_t version : 4;           // [3:0] R. 0=none; 1=0.11; 2=0.13; 3=1.0; 15=custom
             uint32_t confstrptrvalid : 1;   // [4]
-            uint32_t hasresethalreq : 1;    // [5]
+            uint32_t hasresethalreq : 1;    // [5] R. 1 if DM supports Halt-on-reset
             uint32_t authbusy : 1;          // [6]
             uint32_t authenticated : 1;     // [7]
             uint32_t anyhalted : 1;         // [8]
@@ -228,6 +197,77 @@ class IJtag : public IFace {
             uint32_t rsrv31_25 : 7;         // [31:25]
         } bits;
     };
+
+    // Dub Module Control (dmcontrol, at 0x10)
+    union dmi_dmcontrol_type {
+        uint32_t u32;
+        struct bits_type {
+            uint32_t dmactive : 1;          // [0] RW. 1(active)=Function normally. 0(inactive). Only dmactive can be written.
+            uint32_t ndmreset : 1;          // [1] RW. Reset all hardware except DM
+            uint32_t clrresethaltreq : 1;   // [2] W1.Clear Halt-on-reset
+            uint32_t setresethaltreq : 1;   // [3] W1. Set Halt-on-reset for sleceted harts
+            uint32_t clrkeepalive : 1;      // [4] W1. Clears keepalive. Writes apply to the new of hartsel and hasel
+            uint32_t setkeepalive : 1;      // [5] W1. Set keepalive for all selected harts unless clrkeepalive set to 1. Apply to the new hartsel.
+            uint32_t hartselhi : 10;        // [15:6] WARL.
+            uint32_t hartsello : 10;        // [25:16] WARL.
+            uint32_t hasel : 1;             // [26] WARL. Definition of currently selected hartss: 0(single); 1(multiple)
+            uint32_t ackunavail : 1;        // [27] W1. 0(nop)=No effect; 1(ack)=clears unavail for any selected harts
+            uint32_t ackhavereset : 1;      // [28] WARL. 0(nop)=No effect; 1(ack)=Clears havereset for any selected harts.
+            uint32_t hartreset : 1;         // [29] WARL. Reset select harts. Debugger writes 1 and then 0
+            uint32_t resumereq : 1;         // [30] W1. Resume once if the halted. It clears resume ack bit. Ignored if haltreq=1
+            uint32_t haltreq : 1;           // [31] WARZ. 1 set halt request
+        } bits;
+    };
+
+    // Abstract Control and Status (abstractcs, at 0x16)
+    union dmi_abstractcs_type {
+        uint32_t u32;
+        struct bits_type {
+            uint32_t datacount : 4;         // [3:0] R. Number of implemented data registers
+            uint32_t rsrv7_4 : 4;           // [7:4]
+            uint32_t cmderr : 3;            // [10:8] R/W1C. Write 1 clears bits. 0=No errors; 1=Buse; 2=not supported; 3=exception; 4=halt/resume; 5=bus; 6=reserved; 7=other
+            uint32_t relaxedpriv : 1;       // [11] WARL. 0=Full permission check; 1=Relaxed permission checks applied
+            uint32_t busy : 1;              // [12] R. 0=Ready; 1=Busy
+            uint32_t rsrv23_13 : 11;        // [23:13]
+            uint32_t progbufsize : 5;       // [28:24] R. Size of Program Buffer. Valid size are 0-16
+            uint32_t rsrv31_29 : 3;
+        } bits;
+    };
+
+    // Abstract command (command, at 0x17):
+    union dmi_command_type {
+        uint32_t u32;
+        struct regaccess_type {
+            uint32_t regno : 16;                // [15:0]
+            uint32_t write : 1;                 // [16]
+            uint32_t transfer : 1;              // [17]
+            uint32_t postexec : 1;              // [18]
+            uint32_t aarpostincrement : 1;      // [19]
+            uint32_t aarsize : 3;               // [22:20]
+            uint32_t rsrv23 : 1;                // [23]
+            uint32_t cmdtype : 8;               // [31:24], type 0
+        } regaccess;
+
+        struct quickaccess_type {
+            uint32_t zero23_0 : 24;             // [23:0] zeros
+            uint32_t cmdtype : 8;               // [31:24], type 1
+        } quickaccess;
+
+        struct memaccess_type {
+            uint32_t rsrv13_0 : 14;             // [13:0]
+            uint32_t target_specific : 2;       // [15:14]
+            uint32_t write : 1;                 // [16]
+            uint32_t rsrv18_17 : 2;             // [18:17]
+            uint32_t aampostincrement : 1;      // [19]
+            uint32_t aamsize : 3;               // [22:20]
+            uint32_t aamvirtual : 1;            // [23]
+            uint32_t cmdtype : 8;               // [31:24], type = 2
+        } memaccess;
+    };
+
+    static const uint32_t CMD_AAxSIZE_32BITS = 0x2;
+    static const uint32_t CMD_AAxSIZE_64BITS = 0x3;
+    static const uint32_t CMD_AAxSIZE_128BITS = 0x4;
 
     virtual const char *getBrief() { return IJtag_brief; }
 

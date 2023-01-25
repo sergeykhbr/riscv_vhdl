@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,14 +17,13 @@
 #pragma once
 
 #include "api_core.h"
-#include "coreservices/itap.h"
 #include "coreservices/icommand.h"
 
 namespace debugger {
 
-class CmdDsuStatus : public ICommand  {
+class CmdIsRunning : public ICommand  {
  public:
-    explicit CmdDsuStatus(uint64_t dmibar, ITap *tap);
+    explicit CmdIsRunning(IJtag *itap);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);
@@ -32,3 +31,4 @@ class CmdDsuStatus : public ICommand  {
 };
 
 }  // namespace debugger
+

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,23 +16,22 @@
 
 #include <ihap.h>
 #include <iservice.h>
-#include "coreservices/icpuriscv.h"
-#include "cmd_dsu_run.h"
-#include "debug/dsumap.h"
-#include "debug/dmi_regs.h"
+#include <riscv-isa.h>
+#include "cmd_resume.h"
 
 namespace debugger {
 
-CmdDsuRun::CmdDsuRun(uint64_t dmibar, ITap *tap)
-    : ICommand ("run", dmibar, tap) {
+CmdResume::CmdResume(IJtag *ijtag)
+    : ICommand ("resume", ijtag) {
 
     briefDescr_.make_string("Run simulation for a specify number of steps\"");
     detailedDescr_.make_string(
         "Description:\n"
         "    Run simulation for a specified number of steps.\n"
         "Usage:\n"
-        "    run <N steps>\n"
+        "    resume <N steps>\n"
         "Example:\n"
+        "    resume\n"
         "    run\n"
         "    go 1000\n"
         "    c 1\n");
@@ -48,9 +47,10 @@ CmdDsuRun::CmdDsuRun(uint64_t dmibar, ITap *tap)
 }
 
 
-int CmdDsuRun::isValid(AttributeType *args) {
+int CmdResume::isValid(AttributeType *args) {
     AttributeType &name = (*args)[0u];
     if (!cmdName_.is_equal(name.to_string())
+        && !name.is_equal("run")
         && !name.is_equal("c")
         && !name.is_equal("go")) {
         return CMD_INVALID;
@@ -61,9 +61,86 @@ int CmdDsuRun::isValid(AttributeType *args) {
     return CMD_WRONG_ARGS;
 }
 
-void CmdDsuRun::exec(AttributeType *args, AttributeType *res) {
+void CmdResume::exec(AttributeType *args, AttributeType *res) {
+    IJtag::dmi_dmstatus_type dmstatus;
+    IJtag::dmi_dmcontrol_type dmcontrol;
+    IJtag::dmi_command_type command;
+    IJtag::dmi_abstractcs_type abstractcs;
+    csr_dcsr_type dcsr;
+    int watchdog = 0;
     res->attr_free();
     res->make_nil();
+
+    // TODO: write breakpoints
+
+    // Flush everything:
+    ijtag_->scanDmi(IJtag::DMI_PROGBUF0, OPCODE_FENCE_I, IJtag::DmiOp_Write);
+    ijtag_->scanDmi(IJtag::DMI_PROGBUF1, OPCODE_FENCE, IJtag::DmiOp_Write);
+    ijtag_->scanDmi(IJtag::DMI_PROGBUF2, OPCODE_EBREAK, IJtag::DmiOp_Write);
+
+    command.u32 = 0;
+    command.regaccess.cmdtype = 0;
+    command.regaccess.aarsize = IJtag::CMD_AAxSIZE_32BITS;
+    command.regaccess.postexec = 1;
+    command.regaccess.regno = 0x1000;
+    ijtag_->scanDmi(IJtag::DMI_COMMAND, command.u32, IJtag::DmiOp_Write);
+    do {
+        abstractcs.u32 = ijtag_->scanDmi(IJtag::DMI_ABSTRACTCS, 0, IJtag::DmiOp_Read);
+    } while (abstractcs.bits.busy == 1);
+
+    // Read and write back the CSR register DCSR with the bits: ebreakm, ebreaks, ebreaku:
+    command.u32 = 0;
+    command.regaccess.cmdtype = 0;
+    command.regaccess.aarsize = IJtag::CMD_AAxSIZE_64BITS;
+    command.regaccess.transfer = 1;
+    command.regaccess.regno = 0x7b0;        // DCSR
+    ijtag_->scanDmi(IJtag::DMI_COMMAND, command.u32, IJtag::DmiOp_Write);
+    do {
+        abstractcs.u32 = ijtag_->scanDmi(IJtag::DMI_ABSTRACTCS, 0, IJtag::DmiOp_Read);
+    } while (abstractcs.bits.busy == 1);
+
+    dcsr.u32[0] = ijtag_->scanDmi(IJtag::DMI_ABSTRACT_DATA0, 0, IJtag::DmiOp_Read);
+    dcsr.u32[1] = ijtag_->scanDmi(IJtag::DMI_ABSTRACT_DATA1, 0, IJtag::DmiOp_Read);
+    dcsr.bits.ebreakm = 1;
+    dcsr.bits.ebreaks = 1;
+    dcsr.bits.ebreaku = 1;
+    ijtag_->scanDmi(IJtag::DMI_ABSTRACT_DATA0, dcsr.u32[0], IJtag::DmiOp_Write);
+
+    command.u32 = 0;
+    command.regaccess.cmdtype = 0;
+    command.regaccess.aarsize = IJtag::CMD_AAxSIZE_64BITS;
+    command.regaccess.transfer = 1;
+    command.regaccess.write = 1;
+    command.regaccess.regno = 0x7b0;        // DCSR
+    ijtag_->scanDmi(IJtag::DMI_COMMAND, command.u32, IJtag::DmiOp_Write);
+    do {
+        abstractcs.u32 = ijtag_->scanDmi(IJtag::DMI_ABSTRACTCS, 0, IJtag::DmiOp_Read);
+    } while (abstractcs.bits.busy == 1);
+
+
+    // set resume request:
+    dmcontrol.u32 = 0;
+    dmcontrol.bits.dmactive = 1;
+    dmcontrol.bits.resumereq = 1;
+    ijtag_->scanDmi(IJtag::DMI_DMCONTROL, dmcontrol.u32, IJtag::DmiOp_Write);
+
+    // All harts should run:
+    dmstatus.u32 = 0;
+    do {
+        dmstatus.u32 = ijtag_->scanDmi(IJtag::DMI_DMSTATUS, 0, IJtag::DmiOp_Read);
+    } while (dmstatus.bits.allrunning == 0 && watchdog++ < 5);
+
+    // clear resume request
+    dmcontrol.u32 = 0;
+    dmcontrol.bits.dmactive = 1;
+    ijtag_->scanDmi(IJtag::DMI_DMCONTROL, dmcontrol.u32, IJtag::DmiOp_Write);
+
+    if (dmstatus.bits.allrunning == 0) {
+        generateError(res, "Cannot resume selected harts");
+    } else if (dmstatus.bits.allresumeack == 0 && dmstatus.bits.allrunning == 1) {
+        generateError(res, "All harts are already running");
+    }
+
     /*CrGenericRuncontrolType runctrl;
     CrGenericDebugControlType dcs;
     uint64_t addr_runcontrol = -1;//DSUREGBASE(csr[CSR_runcontrol]);
@@ -103,7 +180,8 @@ void CmdDsuRun::exec(AttributeType *args, AttributeType *res) {
     RISCV_trigger_hap(HAP_Resume, 0, "Resume command processed");
 }
 
-uint64_t CmdDsuRun::checkSwBreakpoint() {
+uint64_t CmdResume::checkSwBreakpoint() {
+#if 0
     uint64_t addr_dpc = DSUREGBASE(csr[ICpuRiscV::CSR_dpc]);
     //uint64_t addr_dcsr = DSUREGBASE(csr[CSR_dcsr]);
     //uint64_t addr_runcontrol = -1;//DSUREGBASE(csr[CSR_runcontrol]);
@@ -146,9 +224,12 @@ uint64_t CmdDsuRun::checkSwBreakpoint() {
         }
     }
     return steps.val;
+#endif
+    return 0;
 }
 
-void CmdDsuRun::writeBreakpoints() {
+void CmdResume::writeBreakpoints() {
+#if 0
     uint64_t br_addr;
     uint64_t br_flags;
     uint32_t br_oplen;
@@ -173,6 +254,7 @@ void CmdDsuRun::writeBreakpoints() {
             tap_->write(addr_flushi, 8, data.buf);
         }
     }
+#endif
 }
 
 

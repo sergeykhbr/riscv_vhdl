@@ -51,8 +51,6 @@ void CpuMonitor::postinitService() {
         return;
     }
 
-    haltsum_ = getStatus();
-
     if (!run()) {
         RISCV_error("Can't create thread.", NULL);
         return;
@@ -81,9 +79,8 @@ void CpuMonitor::busyLoop() {
     RISCV_event_wait(&config_done_);
 
     while (isEnabled()) {
-        RISCV_sleep_ms(pollingMs_.to_int());
-
         status = getStatus();
+        RISCV_sleep_ms(pollingMs_.to_int());
 
         RISCV_mutex_lock(&mutex_resume_);
         mask = 1ull << (hartsel_ & 0x3f);

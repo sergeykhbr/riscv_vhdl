@@ -18,15 +18,15 @@
 
 namespace debugger {
 
-CmdInit::CmdInit(IJtag *itap) 
-    : ICommand ("init", 0, 0),
-    jtag_(itap) {
+CmdInit::CmdInit(IJtag *ijtag) 
+    : ICommand ("init", ijtag) {
 
     briefDescr_.make_string("Read platform configuration and capabilities");
     detailedDescr_.make_string(
         "Description:\n"
         "    See RISC-V Debug specification to clarify OpenOCD initialization sequence\n"
         "Output format:\n"
+        "   JSON dictionary with the read information {'codeid':0x11223344,....}\n"
         "Example:\n"
         "    init\n");
 
@@ -43,26 +43,61 @@ int CmdInit::isValid(AttributeType *args) {
 }
 
 void CmdInit::exec(AttributeType *args, AttributeType *res) {
-    IJtag::dmi_dmstatus_type dmstatus;
-    jtag_->resetAsync();
-    jtag_->resetSync();
-    jtag_->scanIdCode();
-    jtag_->scanDtmcs();
-    jtag_->scanDmi(IJtag::DMI_DMCONTROL, 0, IJtag::DmiOp_Read);
-    dmstatus.u32 = jtag_->scanDmi(IJtag::DMI_DMSTATUS, 0, IJtag::DmiOp_Read);
-    jtag_->scanDmi(IJtag::DMI_DMCONTROL, 0, IJtag::DmiOp_Read);
+    IJtag::DtmcsType dtmcs;
+    IJtag::dmi_abstractcs_type abstractcs;
+    IJtag::dmi_dmcontrol_type dmcontrol;
+    uint32_t hartsnum;
+    res->make_dict();
+    ijtag_->resetAsync();
+    ijtag_->resetSync();
+    (*res)["idcode"].make_uint64(ijtag_->scanIdCode());
 
-    // Halt command:
-    // dmcontrol: haltreq dmactive
-    uint32_t dr = 0x80000001;
-    jtag_->scanDmi(IJtag::DMI_DMCONTROL, dr, IJtag::DmiOp_Write);
+    dtmcs = ijtag_->scanDtmcs();
+    if (dtmcs.bits.version == 0) {
+        (*res)["version"].make_string("0.11");
+    } else if (dtmcs.bits.version == 1) {
+        (*res)["version"].make_string("0.13 and 1.0");
+    } else {
+        (*res)["version"].make_string("unknown");
+    }
+    (*res)["abits"].make_uint64(dtmcs.bits.abits);
 
-    // dmstatus: allresumeack anyresumeack allhalted anyhalted authenticated hasresethaltreq version=2
-    dmstatus.u32 = jtag_->scanDmi(IJtag::DMI_DMSTATUS, 0, IJtag::DmiOp_Read);
 
-    // dmcontrol: dmactive
-    dr = 0x00000001;
-    jtag_->scanDmi(IJtag::DMI_DMCONTROL, dr, IJtag::DmiOp_Write);
+    // Reset TAP setting dmactive to 0 -> 1
+    dmcontrol.u32 = 0;
+    ijtag_->scanDmi(IJtag::DMI_DMCONTROL, dmcontrol.u32, IJtag::DmiOp_Write);
+    dmcontrol.bits.dmactive = 1;
+    ijtag_->scanDmi(IJtag::DMI_DMCONTROL, dmcontrol.u32, IJtag::DmiOp_Write);
+
+    // Read Prog Buffer size and number of Abstract Data registers
+    abstractcs.u32 = ijtag_->scanDmi(IJtag::DMI_ABSTRACTCS, 0, IJtag::DmiOp_Read);
+    (*res)["datacount"].make_uint64(abstractcs.bits.datacount);
+    (*res)["progbufsize"].make_uint64(abstractcs.bits.progbufsize);
+
+    // Read number of Harts:
+    dmcontrol.bits.hartsello = 0x3FF;
+    dmcontrol.bits.hartselhi = 0x3FF;
+    ijtag_->scanDmi(IJtag::DMI_DMCONTROL, dmcontrol.u32, IJtag::DmiOp_Write);
+    dmcontrol.u32 = ijtag_->scanDmi(IJtag::DMI_DMCONTROL, 0, IJtag::DmiOp_Read);
+    hartsnum = dmcontrol.bits.hartsello + 1;
+    (*res)["hartsnum"].make_uint64(hartsnum);
+    (*res)["hart"].make_list(hartsnum);
+
+    // Select hart:
+    for (unsigned i = 0; i < hartsnum; i++) {
+        AttributeType &hartinfo = (*res)["hart"][i];
+        hartinfo.make_dict();
+        dmcontrol.bits.hartsello = i;
+        dmcontrol.bits.hartselhi = i >> 10;
+        ijtag_->scanDmi(IJtag::DMI_DMCONTROL, dmcontrol.u32, IJtag::DmiOp_Write);
+        hartinfo["type"].make_string("rv64");
+        hartinfo["misa"].make_uint64(0x10110d);
+    }
+
+    // Select hart0:
+    dmcontrol.bits.hartsello = 0x0;
+    dmcontrol.bits.hartselhi = 0x0;
+    ijtag_->scanDmi(IJtag::DMI_DMCONTROL, dmcontrol.u32, IJtag::DmiOp_Write);
 }
 
 }  // namespace debugger

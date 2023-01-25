@@ -17,6 +17,10 @@
 #include <string.h>
 #include "cmdexec.h"
 #include "cmd/cmd_init.h"
+#include "cmd/cmd_halt.h"
+#include "cmd/cmd_resume.h"
+#include "cmd/cmd_isrunning.h"
+#include "cmd/cmd_status.h"
 #include "cmd/cmd_loadelf.h"
 #include "cmd/cmd_loadh86.h"
 #include "cmd/cmd_loadsrec.h"
@@ -70,6 +74,10 @@ void CmdExecutor::postinitService() {
     // Core commands registration:
     ICommand *tcmd;
     registerCommand(new CmdInit(ijtag_));
+    registerCommand(new CmdHalt(ijtag_));
+    registerCommand(new CmdResume(ijtag_));
+    registerCommand(new CmdIsRunning(ijtag_));
+    registerCommand(new CmdStatus(ijtag_));
     registerCommand(new CmdCpi(dmibar_.to_uint64(), 0));
     registerCommand(new CmdCpuContext(dmibar_.to_uint64(), 0));
     registerCommand(tcmd = new CmdDisas(dmibar_.to_uint64(), 0));

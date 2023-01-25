@@ -17,21 +17,17 @@
 #pragma once
 
 #include "api_core.h"
-#include "coreservices/ijtag.h"
 #include "coreservices/icommand.h"
 
 namespace debugger {
 
 class CmdInit : public ICommand  {
  public:
-    explicit CmdInit(IJtag *itap);
+    explicit CmdInit(IJtag *ijtag);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);
     virtual void exec(AttributeType *args, AttributeType *res);
-
- private:
-    IJtag *jtag_;
 };
 
 }  // namespace debugger

@@ -73,7 +73,7 @@ uint32_t JTAG::scanIdCode() {
 
     scan(IR_IDCODE, 0xFFFFFFFFFFFFFFFFull, 32);
     ret = static_cast<uint32_t>(getRxData());
-    RISCV_info("TAP id = %08x", ret);
+    RISCV_debug("TAP id = %08x", ret);
     return ret;
 }
 
@@ -81,7 +81,7 @@ IJtag::DtmcsType JTAG::scanDtmcs() {
     DtmcsType ret = {0};
     scan(IR_DTMCS, 0, 32);
     ret.u32 = static_cast<uint32_t>(getRxData());
-    RISCV_info("DTM = %08x: ver:%d, abits:%d, stat:%d",
+    RISCV_debug("DTMCS = %08x: ver:%d, abits:%d, stat:%d",
             ret.u32, ret.bits.version, ret.bits.abits, ret.bits.dmistat);
     return ret;
 }
@@ -98,7 +98,7 @@ uint32_t JTAG::scanDmi(uint32_t addr, uint32_t data, IJtag::EDmiOperation op) {
     scan(IR_DMI, dr, 34 + ABITS);
     ret.u64 = getRxData();
 
-    RISCV_info("DBUS [%02x] %08x, stat:%d",
+    RISCV_debug("DMI [%02x] %08x, stat:%d",
             static_cast<uint32_t>(ret.bits.addr),
             static_cast<uint32_t>(ret.bits.data),
             static_cast<uint32_t>(ret.bits.status));

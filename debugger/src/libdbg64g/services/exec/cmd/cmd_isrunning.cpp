@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,13 +14,12 @@
  *  limitations under the License.
  */
 
-#include "cmd_dsu_isrunning.h"
-#include "debug/dsumap.h"
+#include "cmd_isrunning.h"
 
 namespace debugger {
 
-CmdDsuIsRunning::CmdDsuIsRunning(uint64_t dmibar, ITap *tap)
-    : ICommand ("isrunning", dmibar, tap) {
+CmdIsRunning::CmdIsRunning(IJtag *ijtag)
+    : ICommand ("isrunning", ijtag) {
 
     briefDescr_.make_string("Check target's status");
     detailedDescr_.make_string(
@@ -30,7 +29,7 @@ CmdDsuIsRunning::CmdDsuIsRunning(uint64_t dmibar, ITap *tap)
         "    isrunning\n");
 }
 
-int CmdDsuIsRunning::isValid(AttributeType *args) {
+int CmdIsRunning::isValid(AttributeType *args) {
     if (!cmdName_.is_equal((*args)[0u].to_string())) {
         return CMD_INVALID;
     }
@@ -40,13 +39,13 @@ int CmdDsuIsRunning::isValid(AttributeType *args) {
     return CMD_VALID;
 }
 
-void CmdDsuIsRunning::exec(AttributeType *args, AttributeType *res) {
+void CmdIsRunning::exec(AttributeType *args, AttributeType *res) {
+    IJtag::dmi_dmstatus_type dmstatus;
     res->make_boolean(false);
 
-    Reg64Type t1;
-    uint64_t addr = DSUREGBASE(ulocal.v.dmstatus);
-    tap_->read(addr, 8, t1.buf);
-    if (t1.bits.b11) {      // allrunning
+    dmstatus.u32 = ijtag_->scanDmi(IJtag::DMI_DMSTATUS, 0, IJtag::DmiOp_Read);
+
+    if (dmstatus.bits.allhalted) {
         res->make_boolean(false);
     } else {
         res->make_boolean(true);

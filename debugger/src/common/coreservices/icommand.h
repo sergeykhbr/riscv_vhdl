@@ -20,6 +20,7 @@
 #include <iface.h>
 #include <attribute.h>
 #include "coreservices/itap.h"
+#include "coreservices/ijtag.h"
 #include "coreservices/imemop.h"
 
 namespace debugger {
@@ -36,6 +37,9 @@ class ICommand : public IFace {
  public:
     ICommand(const char *name, uint64_t dmibar, ITap *tap)
         : IFace(IFACE_COMMAND), tap_(tap), ibus_(0), dmibar_(dmibar) {
+        cmdName_.make_string(name);
+    }
+    ICommand(const char *name, IJtag *ijtag) : IFace(IFACE_COMMAND), ijtag_(ijtag) {
         cmdName_.make_string(name);
     }
 
@@ -124,6 +128,7 @@ class ICommand : public IFace {
     AttributeType briefDescr_;
     AttributeType detailedDescr_;
     ITap *tap_;
+    IJtag *ijtag_;
     IMemoryOperation *ibus_;
     uint64_t dmibar_; 
 

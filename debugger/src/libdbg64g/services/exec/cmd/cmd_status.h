@@ -12,35 +12,22 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- *
- * @details    Read CPU dport registers: clock counter and per
- *             master counters with read/write transactions to compute
- *             utilization characteristic.
  */
 
 #pragma once
 
 #include "api_core.h"
-#include "coreservices/itap.h"
 #include "coreservices/icommand.h"
-#include "debug/dsumap.h"
 
 namespace debugger {
 
-class CmdDsuBusUtil : public ICommand  {
+class CmdStatus : public ICommand  {
  public:
-    explicit CmdDsuBusUtil(uint64_t dmibar, ITap *tap);
+    explicit CmdStatus(IJtag *ijtag);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);
     virtual void exec(AttributeType *args, AttributeType *res);
-
- private:
-    uint64_t clock_cnt_z_;
-    DsuMapType::local_regs_type::local_region_type::mst_bus_util_type
-    bus_util_z_[32];
-    uint32_t mst_total_;
 };
 
 }  // namespace debugger
-

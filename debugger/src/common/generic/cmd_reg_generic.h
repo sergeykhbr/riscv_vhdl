@@ -14,8 +14,7 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_SRC_COMMON_GENERIC_CMD_REG_GENERIC_H__
-#define __DEBUGGER_SRC_COMMON_GENERIC_CMD_REG_GENERIC_H__
+#pragma once
 
 #include "api_core.h"
 #include "coreservices/icommand.h"
@@ -36,5 +35,3 @@ class CmdRegGeneric : public ICommand  {
 };
 
 }  // namespace debugger
-
-#endif  // __DEBUGGER_SRC_COMMON_GENERIC_CMD_REG_GENERIC_H__

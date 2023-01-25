@@ -351,6 +351,31 @@ union csr_fcsr_type {
     uint64_t value;
 };
 
+// Debug Control and Status (dcsr, at 0x7b0)
+union csr_dcsr_type {
+    uint64_t u64;
+    uint32_t u32[2];
+    struct bits_type {
+        uint64_t prv : 2;       // [1:0] Operational mode when Debug mode was entered
+        uint64_t step : 1;      // [2] RW. Execute a single instruction
+        uint64_t nmip : 1;      // [3] R. NMI pending bit for the hart
+        uint64_t mprven : 1;    // [4] WARL. 0(disabled) MPRV in mstatus is ignored in Debug mode. 1(enabled)
+        uint64_t v : 1;         // [5] WARL. Extends the prv mode. 0 when virtualization is not supported
+        uint64_t cause : 3;     // [8:6] R. 1=ebreak; 2=trigger; 3=haltreq; 4=step; 5=resethaltreq; 6=group, was halted because it is part of the group
+        uint64_t stoptime : 1;  // [9] WARL. 0(normal)=time continues to reflect mtime; 1(freez)=time is frozen at the Debug mode
+        uint64_t stopcount : 1; // [10] WARL. 0(normal)=increment counters as usual; 1(freez)=don't increment any hart-local counters
+        uint64_t stepie : 1;    // [11] WARL. 0=interrupts disabled (including NMI); 1=interrupts enabled
+        uint64_t ebreaku : 1;   // [12] WARL. 0(exception): ebreak instruction in U-mode behave as in Priv spec. 1(debug mode): ebreak instr. in U-mode enter Debug Mode
+        uint64_t ebreaks : 1;   // [13] WARL. 0(exception): ebreak instruction in S-mode behave as in Priv spec. 1(debug mode): ebreak instr. in S-mode enter Debug Mode
+        uint64_t rsrv14 : 1;    // [14]
+        uint64_t ebreakm : 1;   // [15] RWL. 0(exception): ebreak instruction in M-mode behave as in Priv spec. 1(debug mode): ebreak instr. in M-mode enter Debug Mode
+        uint64_t ebreakvu : 1;  // [16] WARL. 0(exception): ebreak instruction in VU-mode behave as in Priv spec. 1(debug mode): ebreak instr. in VU-mode enter Debug Mode
+        uint64_t ebreakvs : 1;  // [17] WARL. 0(exception): ebreak instruction in VS-mode behave as in Priv spec. 1(debug mode): ebreak instr. in VS-mode enter Debug Mode
+        uint64_t rsrv27_18 : 10;// [27:18]
+        uint64_t debugver : 4;  // [31:28] R. 0=no debug support; 4=(1.0)
+    } bits;
+};
+
 // Trigger Data1
 union TriggerData1Type {
     uint64_t val;

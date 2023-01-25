@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,18 +17,30 @@
 #pragma once
 
 #include "api_core.h"
-#include "coreservices/itap.h"
 #include "coreservices/icommand.h"
+#include "coreservices/isrccode.h"
 
 namespace debugger {
 
-class CmdDsuIsRunning : public ICommand  {
+class CmdResume : public ICommand  {
  public:
-    explicit CmdDsuIsRunning(uint64_t dmibar, ITap *tap);
+    explicit CmdResume(IJtag *ijtag);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);
     virtual void exec(AttributeType *args, AttributeType *res);
+
+ protected:
+    uint64_t checkSwBreakpoint();
+    void writeBreakpoints();
+
+ protected:
+    static const uint32_t OPCODE_FENCE = 0x0000000f;
+    static const uint32_t OPCODE_FENCE_I = 0x0000100f;
+    static const uint32_t OPCODE_EBREAK = 0x00100073;
+
+    AttributeType brList_;
+    ISourceCode *isrc_;
 };
 
 }  // namespace debugger

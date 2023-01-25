@@ -50,7 +50,7 @@ void CpuCortex_Functional::postinitService() {
     pcmd_reg_ = new CmdRegArm(dmibar_.to_uint64(), 0);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_reg_));
 
-    pcmd_regs_ = new CmdRegsArm(dmibar_.to_uint64(), 0);
+    pcmd_regs_ = new CmdRegsArm(0);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_regs_));
 
     if (defaultMode_.is_equal("Thumb")) {

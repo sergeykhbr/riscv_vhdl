@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,13 +14,12 @@
  *  limitations under the License.
  */
 
-#include "cmd_dsu_status.h"
-#include "debug/dsumap.h"
+#include "cmd_status.h"
 
 namespace debugger {
 
-CmdDsuStatus::CmdDsuStatus(uint64_t dmibar, ITap *tap)
-    : ICommand("status", dmibar, tap) {
+CmdStatus::CmdStatus(IJtag *ijtag)
+    : ICommand("status", ijtag) {
 
     briefDescr_.make_string("Read target's status register throught the DSU registers");
     detailedDescr_.make_string(
@@ -32,7 +31,7 @@ CmdDsuStatus::CmdDsuStatus(uint64_t dmibar, ITap *tap)
         "    status\n");
 }
 
-int CmdDsuStatus::isValid(AttributeType *args) {
+int CmdStatus::isValid(AttributeType *args) {
     if (!cmdName_.is_equal((*args)[0u].to_string())) {
         return CMD_INVALID;
     }
@@ -42,16 +41,11 @@ int CmdDsuStatus::isValid(AttributeType *args) {
     return CMD_WRONG_ARGS;
 }
 
-void CmdDsuStatus::exec(AttributeType *args, AttributeType *res) {
+void CmdStatus::exec(AttributeType *args, AttributeType *res) {
     res->attr_free();
     res->make_nil();
 
-    Reg64Type t1;
-    uint64_t addr = DSUREGBASE(ulocal.v.haltsum0);
-    if (tap_->read(addr, 8, t1.buf) == TAP_ERROR) {
-        return;
-    }
-    res->make_uint64(t1.val);
+    res->make_uint64(ijtag_->scanDmi(IJtag::DMI_HALTSUM0, 0, IJtag::DmiOp_Read));
 }
 
 }  // namespace debugger

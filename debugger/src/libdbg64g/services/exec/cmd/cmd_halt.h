@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,25 +18,16 @@
 
 #include "api_core.h"
 #include "coreservices/icommand.h"
-#include "coreservices/isrccode.h"
 
 namespace debugger {
 
-class CmdDsuRun : public ICommand  {
+class CmdHalt : public ICommand  {
  public:
-    explicit CmdDsuRun(uint64_t dmibar, ITap *tap);
+    explicit CmdHalt(IJtag *ijtag);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);
     virtual void exec(AttributeType *args, AttributeType *res);
-
- protected:
-    uint64_t checkSwBreakpoint();
-    void writeBreakpoints();
-
- protected:
-    AttributeType brList_;
-    ISourceCode *isrc_;
 };
 
 }  // namespace debugger

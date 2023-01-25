@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,13 +14,12 @@
  *  limitations under the License.
  */
 
-#include "cmd_dsu_halt.h"
-#include "debug/dsumap.h"
+#include "cmd_halt.h"
 
 namespace debugger {
 
-CmdDsuHalt::CmdDsuHalt(uint64_t dmibar, ITap *tap)
-    : ICommand("halt", dmibar, tap) {
+CmdHalt::CmdHalt(IJtag *ijtag)
+    : ICommand("halt", ijtag) {
 
     briefDescr_.make_string("Stop simulation");
     detailedDescr_.make_string(
@@ -33,7 +32,7 @@ CmdDsuHalt::CmdDsuHalt(uint64_t dmibar, ITap *tap)
 }
 
 
-int CmdDsuHalt::isValid(AttributeType *args) {
+int CmdHalt::isValid(AttributeType *args) {
     AttributeType &name = (*args)[0u];
     if (!cmdName_.is_equal(name.to_string())
         && !name.is_equal("break")
@@ -47,14 +46,33 @@ int CmdDsuHalt::isValid(AttributeType *args) {
     return CMD_VALID;
 }
 
-void CmdDsuHalt::exec(AttributeType *args, AttributeType *res) {
+void CmdHalt::exec(AttributeType *args, AttributeType *res) {
+    IJtag::dmi_dmstatus_type dmstatus;
+    IJtag::dmi_dmcontrol_type dmcontrol;
+    int watchdog = 0;
     res->attr_free();
     res->make_nil();
-    //CrGenericRuncontrolType runctrl;
-    //uint64_t addr_dmcontrol = -1;//DSUREGBASE(csr[CSR_runcontrol]);
-    //runctrl.val = 0;
-    //runctrl.bits.req_halt = 1;
-    //tap_->write(addr_dmcontrol, 8, runctrl.u8);
+
+    // set halt request:
+    dmcontrol.u32 = 0;
+    dmcontrol.bits.dmactive = 1;
+    dmcontrol.bits.haltreq = 1;
+    ijtag_->scanDmi(IJtag::DMI_DMCONTROL, dmcontrol.u32, IJtag::DmiOp_Write);
+
+    // dmstatus: allresumeack anyresumeack allhalted anyhalted authenticated hasresethaltreq version=2
+    dmstatus.u32 = 0;
+    do {
+        dmstatus.u32 = ijtag_->scanDmi(IJtag::DMI_DMSTATUS, 0, IJtag::DmiOp_Read);
+    } while (dmstatus.bits.allhalted == 0 && watchdog++ < 5);
+
+    // clear halt request
+    dmcontrol.u32 = 0;
+    dmcontrol.bits.dmactive = 1;
+    ijtag_->scanDmi(IJtag::DMI_DMCONTROL, dmcontrol.u32, IJtag::DmiOp_Write);
+
+    if (dmstatus.bits.allhalted == 0) {
+        generateError(res, "Cannot halt selected harts");
+    }
 }
 
 }  // namespace debugger

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@
 
 namespace debugger {
 
-CmdRegsGeneric::CmdRegsGeneric(uint64_t dmibar, ITap *tap)
-    : ICommand ("regs", dmibar, tap) {
+CmdRegsGeneric::CmdRegsGeneric(IJtag *ijtag)
+    : ICommand ("regs", ijtag) {
 
     briefDescr_.make_string("List of Core's registers values");
     detailedDescr_.make_string(

@@ -14,8 +14,7 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_SRC_CPU_ARM_PLUGIN_CMDS_CMD_REGS_ARM7_H__
-#define __DEBUGGER_SRC_CPU_ARM_PLUGIN_CMDS_CMD_REGS_ARM7_H__
+#pragma once
 
 #include "generic/cmd_regs_generic.h"
 #include "../arm-isa.h"
@@ -24,7 +23,7 @@ namespace debugger {
 
 class CmdRegsArm : public CmdRegsGeneric {
  public:
-    explicit CmdRegsArm(uint64_t dmibar, ITap *tap) : CmdRegsGeneric(dmibar, tap) {}
+    explicit CmdRegsArm(IJtag *jtag) : CmdRegsGeneric(jtag) {}
 
  protected:
     virtual const ECpuRegMapping *getpMappedReg() {
@@ -33,5 +32,3 @@ class CmdRegsArm : public CmdRegsGeneric {
 };
 
 }  // namespace debugger
-
-#endif  // __DEBUGGER_SRC_CPU_ARM_PLUGIN_CMDS_CMD_REGS_ARM7_H__
