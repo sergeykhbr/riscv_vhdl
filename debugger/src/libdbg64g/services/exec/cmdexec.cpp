@@ -37,6 +37,7 @@
 #include "cmd/cmd_loadbin.h"
 #include "cmd/cmd_elf2raw.h"
 #include "cmd/cmd_cpucontext.h"
+#include "cmd/cmd_reg.h"
 
 namespace debugger {
 
@@ -78,6 +79,7 @@ void CmdExecutor::postinitService() {
     registerCommand(new CmdResume(ijtag_));
     registerCommand(new CmdIsRunning(ijtag_));
     registerCommand(new CmdStatus(ijtag_));
+    registerCommand(new CmdReg(ijtag_));
     registerCommand(new CmdCpi(dmibar_.to_uint64(), 0));
     registerCommand(new CmdCpuContext(dmibar_.to_uint64(), 0));
     registerCommand(tcmd = new CmdDisas(dmibar_.to_uint64(), 0));

@@ -14,28 +14,66 @@
  *  limitations under the License.
  */
 
-#include "cmd_regs_generic.h"
+#include "cmd_reg.h"
+#include "riscv-isa.h"
 
 namespace debugger {
 
-CmdRegsGeneric::CmdRegsGeneric(IJtag *ijtag)
-    : ICommand ("regs", ijtag) {
+static const ECpuRegMapping RISCV_INTEGER_REG_MAP[] = {
+    {"npc",   8, 0x7b1}, //CSR_dpc},
+    {"ra",    8, 0x1001},
+    {"sp",    8, 0x1002},
+    {"gp",    8, 0x1003},
+    {"tp",    8, 0x1004},
+    {"t0",    8, 0x1005},
+    {"t1",    8, 0x1006},
+    {"t2",    8, 0x1007},
+    {"s0",    8, 0x1008},
+    {"s1",    8, 0x1009},
+    {"a0",    8, 0x100A},
+    {"a1",    8, 0x100B},
+    {"a2",    8, 0x100C},
+    {"a3",    8, 0x100D},
+    {"a4",    8, 0x100E},
+    {"a5",    8, 0x100F},
+    {"a6",    8, 0x1010},
+    {"a7",    8, 0x1011},
+    {"s2",    8, 0x1012},
+    {"s3",    8, 0x1013},
+    {"s4",    8, 0x1014},
+    {"s5",    8, 0x1015},
+    {"s6",    8, 0x1016},
+    {"s7",    8, 0x1017},
+    {"s8",    8, 0x1018},
+    {"s9",    8, 0x1019},
+    {"s10",   8, 0x101A},
+    {"s11",   8, 0x101B},
+    {"t3",    8, 0x101C},
+    {"t4",    8, 0x101D},
+    {"t5",    8, 0x101E},
+    {"t6",    8, 0x101F},
+    {"",      0, 0}
+};
 
-    briefDescr_.make_string("List of Core's registers values");
+
+CmdReg::CmdReg(IJtag *ijtag)
+    : ICommand ("reg", ijtag) {
+
+    briefDescr_.make_string("CPU registers information values");
     detailedDescr_.make_string(
         "Description:\n"
-        "    Print values of CPU's registers.\n"
+        "    Print values of CPU registers.\n"
         "Return:\n"
         "    Dictionary if no names specified, list of int64_t otherwise.\n"
         "Usage:\n"
-        "    regs\n"
-        "    regs name1 name2 ..\n"
+        "    reg\n"
+        "    reg name1 name2 ..\n"
         "Example:\n"
-        "    regs\n"
-        "    regs a0 s0 sp\n");
+        "    reg\n"
+        "    reg a0 s0 sp\n");
 }
 
-int CmdRegsGeneric::isValid(AttributeType *args) {
+int CmdReg::isValid(AttributeType *args) {
     if (!cmdName_.is_equal((*args)[0u].to_string())) {
         return CMD_INVALID;
     } 
@@ -45,7 +83,7 @@ int CmdRegsGeneric::isValid(AttributeType *args) {
     return CMD_WRONG_ARGS;
 }
 
-void CmdRegsGeneric::exec(AttributeType *args, AttributeType *res) {
+void CmdReg::exec(AttributeType *args, AttributeType *res) {
     IJtag::dmi_abstractcs_type abstractcs;
     IJtag::dmi_command_type command;
 
@@ -82,7 +120,7 @@ void CmdRegsGeneric::exec(AttributeType *args, AttributeType *res) {
     }
 }
 
-uint64_t CmdRegsGeneric::reg2addr(const char *name) {
+uint64_t CmdReg::reg2addr(const char *name) {
     const ECpuRegMapping  *preg = getpMappedReg();
     while (preg->name[0]) {
         if (strcmp(name, preg->name) == 0) {
@@ -91,6 +129,10 @@ uint64_t CmdRegsGeneric::reg2addr(const char *name) {
         preg++;
     }
     return REG_ADDR_ERROR;
+}
+
+const ECpuRegMapping *CmdReg::getpMappedReg() {
+    return RISCV_INTEGER_REG_MAP;
 }
 
 }  // namespace debugger
