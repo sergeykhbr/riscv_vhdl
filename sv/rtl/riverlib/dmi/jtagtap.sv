@@ -137,6 +137,7 @@ begin: comb_proc
 
     case (r.state)
     RESET_TAP: begin
+        nv.ir = IR_IDCODE;
         if (i_tms == 1'b1) begin
             v.state = RESET_TAP;
         end else begin

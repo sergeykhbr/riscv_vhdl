@@ -42,6 +42,7 @@ L2Top::L2Top(sc_module_name name,
     wb_flush_address = ~0ull;
 
 
+
     dst0 = new L2Destination("dst0", async_reset);
     dst0->i_clk(i_clk);
     dst0->i_nrst(i_nrst);

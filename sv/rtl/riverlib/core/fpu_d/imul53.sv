@@ -33,7 +33,18 @@ module imul53 #(
 
 import imul53_pkg::*;
 
+logic [104:0] wb_sumInv;
+logic [6:0] wb_lshift;
 imul53_registers r, rin;
+
+zeroenc #(
+    .iwidth(105),
+    .shiftwidth(7)
+) enc0 (
+    .i_value(wb_sumInv),
+    .o_shift(wb_lshift)
+);
+
 
 always_comb
 begin: comb_proc
@@ -43,8 +54,6 @@ begin: comb_proc
     logic [56:0] vb_sel;
     logic [6:0] vb_shift;
     logic [104:0] vb_sumInv;
-    logic [6:0] vb_lshift_p1;
-    logic [6:0] vb_lshift_p2;
 
     v_ena = 0;
     for (int i = 0; i < 17; i++) begin
@@ -53,8 +62,6 @@ begin: comb_proc
     vb_sel = 0;
     vb_shift = 0;
     vb_sumInv = 0;
-    vb_lshift_p1 = 0;
-    vb_lshift_p2 = 0;
 
     v = r;
 
@@ -150,29 +157,15 @@ begin: comb_proc
     for (int i = 0; i < 104; i++) begin
         vb_sumInv[(i + 1)] = r.sum[(103 - i)];
     end
-
-    for (int i = 0; i < 64; i++) begin
-        if (((|vb_lshift_p1) == 1'b0) && (vb_sumInv[i] == 1'b1)) begin
-            vb_lshift_p1 = i;
-        end
-    end
-
-    for (int i = 0; i < 41; i++) begin
-        if (((|vb_lshift_p2) == 1'b0) && (vb_sumInv[(64 + i)] == 1'b1)) begin
-            vb_lshift_p2 = i;
-            vb_lshift_p2[6] = 1'h1;
-        end
-    end
+    wb_sumInv = vb_sumInv;
 
     if (r.sum[105] == 1'b1) begin
         vb_shift = '1;
         v.overflow = 1'b1;
     end else if (r.sum[104] == 1'b1) begin
         vb_shift = '0;
-    end else if ((|vb_lshift_p1) == 1'b1) begin
-        vb_shift = vb_lshift_p1;
     end else begin
-        vb_shift = vb_lshift_p2;
+        vb_shift = wb_lshift;
     end
 
     if (r.delay[14] == 1'b1) begin

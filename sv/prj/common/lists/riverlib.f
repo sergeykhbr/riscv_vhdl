@@ -45,6 +45,7 @@ ${RTL_HOME}/riverlib/core/arith/shift.sv
 ${RTL_HOME}/riverlib/core/arith/alu_logic.sv
 ${RTL_HOME}/riverlib/core/arith/int_addsub.sv
 ${RTL_HOME}/riverlib/core/fpu_d/divstage53.sv
+${RTL_HOME}/riverlib/core/fpu_d/zeroenc.sv
 ${RTL_HOME}/riverlib/core/fpu_d/imul53.sv
 ${RTL_HOME}/riverlib/core/fpu_d/fmul_d.sv
 ${RTL_HOME}/riverlib/core/fpu_d/d2l_d.sv

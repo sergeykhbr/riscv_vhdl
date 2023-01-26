@@ -33,12 +33,22 @@ imul53::imul53(sc_module_name name,
     o_overflow("o_overflow") {
 
     async_reset_ = async_reset;
+    enc0 = 0;
+
+    enc0 = new zeroenc<105,
+                       7>("enc0");
+    enc0->i_value(wb_sumInv);
+    enc0->o_shift(wb_lshift);
+
+
 
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_ena;
     sensitive << i_a;
     sensitive << i_b;
+    sensitive << wb_sumInv;
+    sensitive << wb_lshift;
     sensitive << r.delay;
     sensitive << r.shift;
     sensitive << r.accum_ena;
@@ -49,6 +59,12 @@ imul53::imul53(sc_module_name name,
     SC_METHOD(registers);
     sensitive << i_nrst;
     sensitive << i_clk.pos();
+}
+
+imul53::~imul53() {
+    if (enc0) {
+        delete enc0;
+    }
 }
 
 void imul53::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
@@ -69,6 +85,9 @@ void imul53::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.overflow, pn + ".r_overflow");
     }
 
+    if (enc0) {
+        enc0->generateVCD(i_vcd, o_vcd);
+    }
 }
 
 void imul53::comb() {
@@ -77,8 +96,6 @@ void imul53::comb() {
     sc_uint<57> vb_sel;
     sc_uint<7> vb_shift;
     sc_biguint<105> vb_sumInv;
-    sc_uint<7> vb_lshift_p1;
-    sc_uint<7> vb_lshift_p2;
 
     v_ena = 0;
     for (int i = 0; i < 17; i++) {
@@ -87,8 +104,6 @@ void imul53::comb() {
     vb_sel = 0;
     vb_shift = 0;
     vb_sumInv = 0;
-    vb_lshift_p1 = 0;
-    vb_lshift_p2 = 0;
 
     v = r;
 
@@ -184,29 +199,15 @@ void imul53::comb() {
     for (int i = 0; i < 104; i++) {
         vb_sumInv[(i + 1)] = r.sum.read()[(103 - i)];
     }
-
-    for (int i = 0; i < 64; i++) {
-        if ((vb_lshift_p1.or_reduce() == 0) && (vb_sumInv[i] == 1)) {
-            vb_lshift_p1 = i;
-        }
-    }
-
-    for (int i = 0; i < 41; i++) {
-        if ((vb_lshift_p2.or_reduce() == 0) && (vb_sumInv[(64 + i)] == 1)) {
-            vb_lshift_p2 = i;
-            vb_lshift_p2[6] = 1;
-        }
-    }
+    wb_sumInv = vb_sumInv;
 
     if (r.sum.read()[105] == 1) {
         vb_shift = ~0ull;
         v.overflow = 1;
     } else if (r.sum.read()[104] == 1) {
         vb_shift = 0;
-    } else if (vb_lshift_p1.or_reduce() == 1) {
-        vb_shift = vb_lshift_p1;
     } else {
-        vb_shift = vb_lshift_p2;
+        vb_shift = wb_lshift;
     }
 
     if (r.delay.read()[14] == 1) {

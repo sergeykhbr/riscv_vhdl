@@ -16,6 +16,7 @@
 #pragma once
 
 #include <systemc.h>
+#include "zeroenc.h"
 
 namespace debugger {
 
@@ -38,6 +39,7 @@ SC_MODULE(imul53) {
 
     imul53(sc_module_name name,
            bool async_reset);
+    virtual ~imul53();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -61,6 +63,11 @@ SC_MODULE(imul53) {
         iv.sum = 0ull;
         iv.overflow = 0;
     }
+
+    sc_signal<sc_biguint<105>> wb_sumInv;
+    sc_signal<sc_uint<7>> wb_lshift;
+
+    zeroenc<105, 7> *enc0;
 
 };
 
