@@ -21,8 +21,6 @@
 #include "coreservices/icmdexec.h"
 #include "coreservices/itap.h"
 #include "generic/cpu_generic.h"
-#include "generic/cmd_br_generic.h"
-#include "cmds/cmd_br_riscv.h"
 
 namespace debugger {
 
@@ -40,9 +38,6 @@ class CpuStubRiscVFpga : public IService {
     AttributeType tap_;
 
     ICmdExecutor *icmdexec_;
-    ITap *itap_;
-
-    CmdBrRiscv *pcmd_br_;
 };
 
 DECLARE_CLASS(CpuStubRiscVFpga)

@@ -22,7 +22,7 @@
 #include "coreservices/idmi.h"
 #include "coreservices/idport.h"
 #include "generic/rmembank_gen1.h"
-#include "debug/dmi_regs.h"
+#include "dmifunc_regs.h"
 
 namespace debugger {
 

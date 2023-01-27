@@ -15,7 +15,7 @@
  */
 
 #include <api_core.h>
-#include "dmi_regs.h"
+#include "dmifunc_regs.h"
 
 namespace debugger {
 

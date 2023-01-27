@@ -17,7 +17,6 @@
 #include <api_core.h>
 #include "cpu_arm7_func.h"
 #include "srcproc/thumb_disasm.h"
-#include "debug/dmi_regs.h"
 
 namespace debugger {
 
@@ -44,14 +43,14 @@ void CpuCortex_Functional::postinitService() {
 
     CpuGeneric::postinitService();
 
-    pcmd_br_ = new CmdBrArm(dmibar_.to_uint64(), 0);
+    /*pcmd_br_ = new CmdBrArm(dmibar_.to_uint64(), 0);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_br_));
 
     pcmd_reg_ = new CmdRegArm(dmibar_.to_uint64(), 0);
     icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_reg_));
 
     pcmd_regs_ = new CmdRegsArm(0);
-    icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_regs_));
+    icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_regs_));*/
 
     if (defaultMode_.is_equal("Thumb")) {
         setInstrMode(THUMB_mode);
@@ -61,12 +60,12 @@ void CpuCortex_Functional::postinitService() {
 void CpuCortex_Functional::predeleteService() {
     CpuGeneric::predeleteService();
 
-    icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_br_));
+    /*icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_br_));
     icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_reg_));
     icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_regs_));
     delete pcmd_br_;
     delete pcmd_reg_;
-    delete pcmd_regs_;
+    delete pcmd_regs_;*/
 }
 
 /** HAP_ConfigDone */

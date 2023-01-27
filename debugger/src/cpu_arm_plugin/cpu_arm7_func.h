@@ -114,9 +114,9 @@ class CpuCortex_Functional : public CpuGeneric,
 
     char errmsg_[256];
 
-    CmdBrArm *pcmd_br_;
-    CmdRegArm *pcmd_reg_;
-    CmdRegsArm *pcmd_regs_;
+    //CmdBrArm *pcmd_br_;
+    //CmdRegArm *pcmd_reg_;
+    //CmdRegsArm *pcmd_regs_;
 
     // CPSR contains fields IT[7:0]
     //     IT[7:5] = cond_base, when IT Block enabled, 4'b0000 otherwise

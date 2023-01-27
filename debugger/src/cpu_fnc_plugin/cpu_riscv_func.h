@@ -20,8 +20,6 @@
 #include <riscv-isa.h>
 #include "instructions.h"
 #include "generic/cpu_generic.h"
-#include "generic/cmd_br_generic.h"
-#include "cmds/cmd_br_riscv.h"
 #include "coreservices/icpuriscv.h"
 #include "coreservices/iirq.h"
 
@@ -127,9 +125,6 @@ class CpuRiver_Functional : public CpuGeneric,
 
     IIrqController *iirqloc_;
     IIrqController *iirqext_;
-
-    CmdBrRiscv *pcmd_br_;
-    ICommand *pcmd_cpu_;
 
     uint64_t mmuReservatedAddr_;
     int mmuReservedAddrWatchdog_;   // not exceed 64 instructions between LR/SC

@@ -17,7 +17,7 @@
 #ifndef __DEBUGGER_CMD_BR_H__
 #define __DEBUGGER_CMD_BR_H__
 
-#include "generic/cmd_br_generic.h"
+/*#include "generic/cmd_br_generic.h"
 
 namespace debugger {
 
@@ -29,6 +29,7 @@ class CmdBrArm : public CmdBrGeneric  {
     virtual void getSwBreakpointInstr(Reg64Type *instr, uint32_t *len);
 };
 
-}  // namespace debugger
 
+}  // namespace debugger
+*/
 #endif  // __DEBUGGER_CMD_LOG_H__

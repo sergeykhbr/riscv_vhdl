@@ -20,7 +20,7 @@
 namespace debugger {
 
 static const ECpuRegMapping RISCV_INTEGER_REG_MAP[] = {
-    {"npc",   8, 0x7b1}, //CSR_dpc},
+    {"pc",    8, 0x7b1}, //CSR_dpc},
     {"ra",    8, 0x1001},
     {"sp",    8, 0x1002},
     {"gp",    8, 0x1003},
@@ -59,18 +59,22 @@ static const ECpuRegMapping RISCV_INTEGER_REG_MAP[] = {
 CmdReg::CmdReg(IJtag *ijtag)
     : ICommand ("reg", ijtag) {
 
-    briefDescr_.make_string("CPU registers information values");
+    briefDescr_.make_string("Read or modify CPU registers values");
     detailedDescr_.make_string(
         "Description:\n"
-        "    Print values of CPU registers.\n"
+        "    Print values of CPU registers if no arguments are provided. Otherwise,\n"
+        "    read or write specified registers.\n"
         "Return:\n"
-        "    Dictionary if no names specified, list of int64_t otherwise.\n"
+        "    Dictionary format: {'name1':rdval1, 'name2':rdval2, ..}.\n"
         "Usage:\n"
         "    reg\n"
         "    reg name1 name2 ..\n"
+        "    reg name1 value1 name2 value2 ..\n"
         "Example:\n"
         "    reg\n"
-        "    reg a0 s0 sp\n");
+        "    reg a0 s0 sp\n"
+        "    reg pc 0x1000\n"
+        "    reg ra 0x200 pc 0x1000\n");
 }
 
 int CmdReg::isValid(AttributeType *args) {
@@ -84,40 +88,93 @@ int CmdReg::isValid(AttributeType *args) {
 }
 
 void CmdReg::exec(AttributeType *args, AttributeType *res) {
-    IJtag::dmi_abstractcs_type abstractcs;
-    IJtag::dmi_command_type command;
-
     Reg64Type u;
-    if (args->size() != 1) {
-        res->make_list(args->size() - 1);
-        for (unsigned i = 1; i < args->size(); i++) {
-            const char *name = (*args)[i].to_string();
-            tap_->read(reg2addr(name), 8, u.buf);
-            (*res)[i - 1].make_uint64(u.val);
+    res->make_dict();
+
+    if (args->size() == 1) {
+        // Read Integer registers
+        const ECpuRegMapping *preg = getpMappedReg();
+        while (preg->name[0]) {
+            if (get_reg(preg->name, &u)) {
+                generateError(res, "Cannot read registers");
+                break;
+            }
+            (*res)[preg->name].make_uint64(u.val);
+            preg++;
         }
         return;
     }
 
+    const char *regname;
+    int err;
+    for (unsigned i = 1; i < args->size(); i++) {
+        regname = (*args)[i].to_string();
+
+        if ((i + 1) < args->size() && (*args)[i+1].is_integer()) {
+            u.val = (*args)[i+1].to_uint64();
+            err = set_reg(regname, &u);
+            i++;
+        } else {
+            err = get_reg(regname, &u);
+            (*res)[regname].make_uint64(u.val);
+        }
+
+        if (err) {
+            generateError(res, "Cannot read registers");
+            break;
+        }
+    }
+}
+
+uint32_t CmdReg::get_reg(const char *regname, Reg64Type *res) {
+    IJtag::dmi_abstractcs_type abstractcs;
+    IJtag::dmi_command_type command;
+
     command.u32 = 0;
     command.regaccess.cmdtype = 0;
-    command.regaccess.aarsize = IJtag::CMD_AAxSIZE_64BITS;
+    command.regaccess.aarsize = regsize(regname);
     command.regaccess.transfer = 1;
+    command.regaccess.aarpostincrement = 1;
+    command.regaccess.regno = reg2addr(regname);
 
-    const ECpuRegMapping *preg = getpMappedReg();
-    res->make_dict();
-    while (preg->name[0]) {
-        command.regaccess.regno = preg->offset;
-        ijtag_->scanDmi(IJtag::DMI_COMMAND, command.u32, IJtag::DmiOp_Write);
-        do {
-            abstractcs.u32 = ijtag_->scanDmi(IJtag::DMI_ABSTRACTCS, 0, IJtag::DmiOp_Read);
-        } while (abstractcs.bits.busy == 1);
+    ijtag_->scanDmi(IJtag::DMI_COMMAND, command.u32, IJtag::DmiOp_Write);
+    do {
+        abstractcs.u32 = ijtag_->scanDmi(IJtag::DMI_ABSTRACTCS, 0, IJtag::DmiOp_Read);
+    } while (abstractcs.bits.busy == 1);
 
-        u.buf32[0] = ijtag_->scanDmi(IJtag::DMI_ABSTRACT_DATA0, 0, IJtag::DmiOp_Read);
-        u.buf32[1] = ijtag_->scanDmi(IJtag::DMI_ABSTRACT_DATA1, 0, IJtag::DmiOp_Read);
-
-        (*res)[preg->name].make_uint64(u.val);
-        preg++;
+    if (command.regaccess.aarpostincrement) {
+        command.regaccess.regno++;
     }
+
+    res->buf32[0] = ijtag_->scanDmi(IJtag::DMI_ABSTRACT_DATA0, 0, IJtag::DmiOp_Read);
+    res->buf32[1] = ijtag_->scanDmi(IJtag::DMI_ABSTRACT_DATA1, 0, IJtag::DmiOp_Read);
+    return abstractcs.bits.cmderr;
+}
+
+uint32_t CmdReg::set_reg(const char *regname, Reg64Type *val) {
+    IJtag::dmi_abstractcs_type abstractcs;
+    IJtag::dmi_command_type command;
+
+    ijtag_->scanDmi(IJtag::DMI_ABSTRACT_DATA0, val->buf32[0], IJtag::DmiOp_Write);
+    ijtag_->scanDmi(IJtag::DMI_ABSTRACT_DATA1, val->buf32[1], IJtag::DmiOp_Write);
+
+    command.u32 = 0;
+    command.regaccess.cmdtype = 0;
+    command.regaccess.aarsize = regsize(regname);
+    command.regaccess.write = 1;
+    command.regaccess.transfer = 1;
+    command.regaccess.aarpostincrement = 1;
+    command.regaccess.regno = reg2addr(regname);
+
+    ijtag_->scanDmi(IJtag::DMI_COMMAND, command.u32, IJtag::DmiOp_Write);
+    do {
+        abstractcs.u32 = ijtag_->scanDmi(IJtag::DMI_ABSTRACTCS, 0, IJtag::DmiOp_Read);
+    } while (abstractcs.bits.busy == 1);
+
+    if (command.regaccess.aarpostincrement) {
+        command.regaccess.regno++;
+    }
+    return abstractcs.bits.cmderr;
 }
 
 uint64_t CmdReg::reg2addr(const char *name) {

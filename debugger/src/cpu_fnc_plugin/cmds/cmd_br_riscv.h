@@ -17,7 +17,7 @@
 #ifndef __DEBUGGER_SRC_CPU_FNC_PLUGIN_CMDS_CMD_BR_RISCV_H__
 #define __DEBUGGER_SRC_CPU_FNC_PLUGIN_CMDS_CMD_BR_RISCV_H__
 
-#include "generic/cmd_br_generic.h"
+/*#include "generic/cmd_br_generic.h"
 
 namespace debugger {
 
@@ -30,5 +30,5 @@ class CmdBrRiscv : public CmdBrGeneric {
 };
 
 }  // namespace debugger
-
+*/
 #endif  // __DEBUGGER_SRC_CPU_FNC_PLUGIN_CMDS_CMD_BR_RISCV_H__

@@ -16,7 +16,7 @@
 
 #include "cmd_br_riscv.h"
 
-namespace debugger {
+/*namespace debugger {
 
 CmdBrRiscv::CmdBrRiscv(uint64_t dmibar, ITap *tap)
     : CmdBrGeneric(dmibar, tap) {
@@ -33,3 +33,4 @@ void CmdBrRiscv::getSwBreakpointInstr(Reg64Type *instr, uint32_t *len) {
 }
 
 }  // namespace debugger
+*/

@@ -18,7 +18,7 @@
 
 namespace debugger {
 
-CmdBrArm::CmdBrArm(uint64_t dmibar, ITap *tap) : CmdBrGeneric(dmibar, tap) {
+/*CmdBrArm::CmdBrArm(uint64_t dmibar, ITap *tap) : CmdBrGeneric(dmibar, tap) {
 }
 
 void CmdBrArm::getSwBreakpointInstr(Reg64Type *instr, uint32_t *len) {
@@ -27,5 +27,5 @@ void CmdBrArm::getSwBreakpointInstr(Reg64Type *instr, uint32_t *len) {
     instr->buf32[0] = 0xBE00;  // SWI
     *len = 2;
 }
-
+*/
 }  // namespace debugger

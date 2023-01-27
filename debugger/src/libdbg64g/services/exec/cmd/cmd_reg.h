@@ -31,7 +31,11 @@ class CmdReg : public ICommand  {
 
  protected:
     virtual uint64_t reg2addr(const char *name);
+    virtual uint32_t regsize(const char *name) { return IJtag::CMD_AAxSIZE_64BITS; }
     virtual const ECpuRegMapping *getpMappedReg();
+
+    uint32_t get_reg(const char *regname, Reg64Type *res);
+    uint32_t set_reg(const char *regname, Reg64Type *val);
 };
 
 }  // namespace debugger

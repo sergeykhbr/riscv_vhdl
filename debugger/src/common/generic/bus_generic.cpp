@@ -16,22 +16,16 @@
 
 #include <api_core.h>
 #include "bus_generic.h"
-#include "debug/dsumap.h"
 
 namespace debugger {
 
 BusGeneric::BusGeneric(const char *name) : IService(name),
-    IHap(HAP_ConfigDone),
-    busUtil_(static_cast<IService *>(this), "bus_util",
-            DSUREG(ulocal.v.bus_util[0]),
-            sizeof(DsuMapType::local_regs_type::\
-                   local_region_type::mst_bus_util_type)) {
+    IHap(HAP_ConfigDone) {
     registerInterface(static_cast<IMemoryOperation *>(this));
     registerAttribute("AddrWidth", &addrWidth_);
     RISCV_mutex_init(&mutexBAccess_);
     RISCV_mutex_init(&mutexNBAccess_);
     RISCV_register_hap(static_cast<IHap *>(this));
-    busUtil_.setPriority(10);     // Overmap DSU registers
     imaphash_ = 0;
 
     memset(imemtbl_, 0, sizeof(imemtbl_));
@@ -116,15 +110,6 @@ ETransStatus BusGeneric::b_transport(Axi4TransactionType *trans) {
             trans->addr,
             trans->rpayload.b32[1], trans->rpayload.b32[0]);
     }
-
-    // Update Bus utilization counters:
-    if (trans->source_idx >= 0 && trans->source_idx < 8) {
-        if (trans->action == MemAction_Read) {
-            busUtil_.getpR64()[2*trans->source_idx + 1]++;
-        } else if (trans->action == MemAction_Write) {
-            busUtil_.getpR64()[2*trans->source_idx]++;
-        }
-    }
     RISCV_mutex_unlock(&mutexBAccess_);
     return ret;
 }
@@ -150,15 +135,6 @@ ETransStatus BusGeneric::nb_transport(Axi4TransactionType *trans,
         memdev->nb_transport(trans, cb);
         RISCV_debug("Non-blocking request to [%08" RV_PRI64 "x]",
                     trans->addr);
-    }
-
-    // Update Bus utilization counters:
-    if (trans->source_idx >= 0 && trans->source_idx < 8) {
-        if (trans->action == MemAction_Read) {
-            busUtil_.getpR64()[2*trans->source_idx + 1]++;
-        } else if (trans->action == MemAction_Write) {
-            busUtil_.getpR64()[2*trans->source_idx]++;
-        }
     }
     RISCV_mutex_unlock(&mutexNBAccess_);
     return ret;

@@ -17,8 +17,6 @@
 #include <api_core.h>
 #include "cpu_riscv_func.h"
 #include "generic/riscv_disasm.h"
-#include "generic/dmi/cmd_dmi_cpu.h"
-#include "debug/dmi_regs.h"
 
 namespace debugger {
 
@@ -79,23 +77,10 @@ void CpuRiver_Functional::postinitService() {
         RISCV_error("Interface IIrqController in %s not found",
                     clint_.to_string());
     }
-
-    pcmd_br_ = new CmdBrRiscv(dmibar_.to_uint64(), 0);
-    icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_br_));
-
-    pcmd_cpu_ = new CmdDmiCpuRiscV(static_cast<IService *>(this));
-    pcmd_cpu_->enableDMA(isysbus_, dmibar_.to_uint64());
-    icmdexec_->registerCommand(pcmd_cpu_);
-
 }
 
 void CpuRiver_Functional::predeleteService() {
     CpuGeneric::predeleteService();
-
-    icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_br_));
-    icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_cpu_));
-    delete pcmd_br_;
-    delete pcmd_cpu_;
 }
 
 unsigned CpuRiver_Functional::addSupportedInstruction(
@@ -132,8 +117,8 @@ void CpuRiver_Functional::handleException(int e) {
         writeCSR(CSR_mcause, mcause.value);
     }
 
-    DCSR_TYPE::ValueType dcsr;
-    dcsr.val = static_cast<uint32_t>(readCSR(CSR_dcsr));
+    csr_dcsr_type dcsr;
+    dcsr.u64 = static_cast<uint32_t>(readCSR(CSR_dcsr));
     if (e == EXCEPTION_Breakpoint && dcsr.bits.ebreakm == 1) {
         setNPC(getPC());
         halt(HALT_CAUSE_EBREAK, "EBREAK Breakpoint");
@@ -318,16 +303,16 @@ void CpuRiver_Functional::traceOutput() {
 }
 
 bool CpuRiver_Functional::isStepEnabled() {
-    DCSR_TYPE::ValueType dcsr;
-    dcsr.val = static_cast<uint32_t>(readCSR(CSR_dcsr));
+    csr_dcsr_type dcsr;
+    dcsr.u64 = static_cast<uint32_t>(readCSR(CSR_dcsr));
     return dcsr.bits.step;
 }
 
 void CpuRiver_Functional::enterDebugMode(uint64_t v, uint32_t cause) {
-    DCSR_TYPE::ValueType dcsr;
-    dcsr.val = static_cast<uint32_t>(readCSR(CSR_dcsr));
+    csr_dcsr_type dcsr;
+    dcsr.u64 = static_cast<uint32_t>(readCSR(CSR_dcsr));
     dcsr.bits.cause = cause;
-    writeCSR(CSR_dcsr, dcsr.val);
+    writeCSR(CSR_dcsr, dcsr.u64);
     writeCSR(CSR_dpc, v);
 }
 

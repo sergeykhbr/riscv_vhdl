@@ -400,7 +400,7 @@ ESdCardType spi_init(void) {
     SpiDriverDataType *p = (SpiDriverDataType *)fw_malloc(sizeof(SpiDriverDataType));
     memset(p, 0, sizeof(SpiDriverDataType));
     p->map = (qspi_map *)ADDR_BUS1_APB_QSPI2;
-    p->map->sckdiv = 8;    // half period
+    p->map->sckdiv = 2;    // half period
 
     fw_register_ram_data("spi", p);
    

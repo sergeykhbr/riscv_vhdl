@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,23 +14,21 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_SRC_COMMON_DEBUG_CMD_BR_GENERIC_H__
-#define __DEBUGGER_SRC_COMMON_DEBUG_CMD_BR_GENERIC_H__
+#pragma once
 
 #include <api_core.h>
 #include <iservice.h>
 #include <ihap.h>
-#include "coreservices/itap.h"
 #include "coreservices/icommand.h"
 #include "coreservices/isrccode.h"
 
 namespace debugger {
 
-class CmdBrGeneric : public ICommand,
-                     public IHap  {
+class CmdBr : public ICommand,
+              public IHap  {
  public:
-    explicit CmdBrGeneric(uint64_t dmibar, ITap *tap);
-    virtual ~CmdBrGeneric();
+    explicit CmdBr(IService *parent, IJtag *ijtag);
+    virtual ~CmdBr();
 
     /** ICommand */
     virtual int isValid(AttributeType *args);
@@ -57,4 +55,3 @@ class CmdBrGeneric : public ICommand,
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_SRC_COMMON_DEBUG_CMD_BR_GENERIC_H__

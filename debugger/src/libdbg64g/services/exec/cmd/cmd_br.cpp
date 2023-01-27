@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,14 +14,12 @@
  *  limitations under the License.
  */
 
-#include "cmd_br_generic.h"
-#include "debug/dsumap.h"
-#include "debug/dmi_regs.h"
+#include "cmd_br.h"
 
 namespace debugger {
 
-CmdBrGeneric::CmdBrGeneric(uint64_t dmibar, ITap *tap) :
-    ICommand ("br", dmibar, tap),
+CmdBr::CmdBr(IService *parent, IJtag *ijtag) :
+    ICommand ("br", ijtag),
     IHap(HAP_Halt) {
 
     briefDescr_.make_string("Add or remove breakpoint.");
@@ -60,11 +58,11 @@ CmdBrGeneric::CmdBrGeneric(uint64_t dmibar, ITap *tap) :
     RISCV_event_create(&eventHalted_, "CmDrGeneric_halted");
 }
 
-CmdBrGeneric::~CmdBrGeneric() {
+CmdBr::~CmdBr() {
     RISCV_event_close(&eventHalted_);
 }
 
-int CmdBrGeneric::isValid(AttributeType *args) {
+int CmdBr::isValid(AttributeType *args) {
     if (!cmdName_.is_equal((*args)[0u].to_string())) {
         return CMD_INVALID;
     }
@@ -74,7 +72,7 @@ int CmdBrGeneric::isValid(AttributeType *args) {
     return CMD_WRONG_ARGS;
 }
 
-void CmdBrGeneric::exec(AttributeType *args, AttributeType *res) {
+void CmdBr::exec(AttributeType *args, AttributeType *res) {
     res->attr_free();
     res->make_nil();
     if (!isrc_) {
@@ -151,11 +149,12 @@ void CmdBrGeneric::exec(AttributeType *args, AttributeType *res) {
     }
 }
 
-bool CmdBrGeneric::isHalted() {
-    DMSTATUS_TYPE::ValueType dmstatus;
+bool CmdBr::isHalted() {
+    /*DMSTATUS_TYPE::ValueType dmstatus;
     uint64_t addr_dmstatus = DSUREGBASE(ulocal.v.dmstatus);
     tap_->read(addr_dmstatus, 8, dmstatus.u8);
-    return dmstatus.bits.allhalted ? true: false;
+    return dmstatus.bits.allhalted ? true: false;*/
+    return true;
 }
 
 }  // namespace debugger

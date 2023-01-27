@@ -35,20 +35,9 @@ void CpuStubRiscVFpga::postinitService() {
         return;
     }
 
-    itap_ = static_cast<ITap *>(
-       RISCV_get_service_iface(tap_.to_string(), IFACE_TAP));
-    if (!itap_) {
-        RISCV_error("ITap interface '%s' not found", tap_.to_string());
-        return;
-    }
-
-    pcmd_br_ = new CmdBrRiscv(dmibar_.to_uint64(), itap_);
-    icmdexec_->registerCommand(static_cast<ICommand *>(pcmd_br_));
 }
 
 void CpuStubRiscVFpga::predeleteService() {
-    icmdexec_->unregisterCommand(static_cast<ICommand *>(pcmd_br_));
-    delete pcmd_br_;
 }
 
 }  // namespace debugger

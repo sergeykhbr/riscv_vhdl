@@ -16,6 +16,7 @@
 
 #pragma once
 
+/*
 #include "generic/cmd_regs_generic.h"
 #include "../arm-isa.h"
 
@@ -32,3 +33,4 @@ class CmdRegsArm : public CmdRegsGeneric {
 };
 
 }  // namespace debugger
+*/

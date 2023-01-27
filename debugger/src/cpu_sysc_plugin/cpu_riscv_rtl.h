@@ -155,9 +155,6 @@ class CpuRiscV_RTL : public IService,
     TapBitBang *tapbb_;
     BusSlave *dmislv_;
     Workgroup *group0_;
-
-    CmdBrRiscv *pcmd_br_;
-    ICommand *pcmd_cpu_;
 };
 
 DECLARE_CLASS(CpuRiscV_RTL)

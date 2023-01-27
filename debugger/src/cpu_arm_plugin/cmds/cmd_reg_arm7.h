@@ -17,7 +17,7 @@
 #ifndef __DEBUGGER_SRC_CPU_ARM_PLUGIN_CMDS_CMD_REG_ARM7_H__
 #define __DEBUGGER_SRC_CPU_ARM_PLUGIN_CMDS_CMD_REG_ARM7_H__
 
-#include "generic/cmd_reg_generic.h"
+/*#include "generic/cmd_reg_generic.h"
 #include "../arm-isa.h"
 
 namespace debugger {
@@ -33,5 +33,5 @@ class CmdRegArm : public CmdRegGeneric  {
 };
 
 }  // namespace debugger
-
+*/
 #endif  // __DEBUGGER_SRC_CPU_ARM_PLUGIN_CMDS_CMD_REG_ARM7_H__

@@ -59,7 +59,6 @@ class BusGeneric : public IService,
     Axi4TransactionType b_tr_;
     Axi4TransactionType nb_tr_;
 
-    GenericReg64Bank busUtil_;    // per master read/write access statistic
     IMemoryOperation **imaphash_;
 
     struct HashTableItemType {
