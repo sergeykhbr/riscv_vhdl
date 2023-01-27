@@ -150,7 +150,9 @@ void DoubleMul::comb() {
     bool nanB;
     bool mantZeroA;
     bool mantZeroB;
-    sc_uint<64> res;
+    bool v_res_sign;
+    sc_uint<11> vb_res_exp;
+    sc_uint<52> vb_res_mant;
 
     vb_ena = 0;
     signA = 0;
@@ -176,7 +178,9 @@ void DoubleMul::comb() {
     nanB = 0;
     mantZeroA = 0;
     mantZeroB = 0;
-    res = 0;
+    v_res_sign = 0;
+    vb_res_exp = 0;
+    vb_res_mant = 0;
 
     v = r;
 
@@ -325,46 +329,44 @@ void DoubleMul::comb() {
 
     // Result multiplexers:
     if ((nanA && mantZeroA && r.zeroB) || (nanB && mantZeroB && r.zeroA)) {
-        res[63] = 1;
+        v_res_sign = 1;
     } else if ((nanA && (!mantZeroA)) == 1) {
         // when both values are NaN, value B has higher priority if sign=1
-        res[63] = (signA || (nanA && signB));
+        v_res_sign = (signA || (nanA && signB));
     } else if ((nanB && (!mantZeroB)) == 1) {
-        res[63] = signB;
+        v_res_sign = signB;
     } else {
-        res[63] = (r.a.read()[63] ^ r.b.read()[63]);
+        v_res_sign = (r.a.read()[63] ^ r.b.read()[63]);
     }
 
     if (nanA == 1) {
-        res(62, 52) = r.a.read()(62, 52);
+        vb_res_exp = r.a.read()(62, 52);
     } else if (nanB == 1) {
-        res(62, 52) = r.b.read()(62, 52);
+        vb_res_exp = r.b.read()(62, 52);
     } else if ((r.expAlign.read()[11] || r.zeroA || r.zeroB) == 1) {
-        res(62, 52) = 0;
+        vb_res_exp = 0;
     } else if (r.overflow.read() == 1) {
-        res(62, 52) = ~0ull;
+        vb_res_exp = ~0ull;
     } else {
-        res(62, 52) = (r.expAlign.read()(10, 0)
+        vb_res_exp = (r.expAlign.read()(10, 0)
                 + (mantOnes && rndBit && (!r.overflow)));
     }
 
     if ((nanA && mantZeroA && (!mantZeroB))
             || (nanB && mantZeroB && (!mantZeroA))
             || ((!nanA) && (!nanB) && r.overflow)) {
-        res(51, 0) = 0;
+        vb_res_mant = 0;
     } else if ((nanA && (!(nanB && signB))) == 1) {
         // when both values are NaN, value B has higher priority if sign=1
-        res[51] = 1;
-        res(50, 0) = r.a.read()(50, 0);
+        vb_res_mant = (1, r.a.read()(50, 0));
     } else if (nanB == 1) {
-        res[51] = 1;
-        res(50, 0) = r.b.read()(50, 0);
+        vb_res_mant = (1, r.b.read()(50, 0));
     } else {
-        res(51, 0) = (mantShort(51, 0) + rndBit);
+        vb_res_mant = (mantShort(51, 0) + rndBit);
     }
 
     if (r.ena.read()[3] == 1) {
-        v.result = res;
+        v.result = (v_res_sign, vb_res_exp, vb_res_mant);
         v.illegal_op = (nanA || nanB);
         v.busy = 0;
     }

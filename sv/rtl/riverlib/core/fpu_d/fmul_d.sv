@@ -83,7 +83,9 @@ begin: comb_proc
     logic nanB;
     logic mantZeroA;
     logic mantZeroB;
-    logic [63:0] res;
+    logic v_res_sign;
+    logic [10:0] vb_res_exp;
+    logic [51:0] vb_res_mant;
 
     vb_ena = 0;
     signA = 0;
@@ -109,7 +111,9 @@ begin: comb_proc
     nanB = 0;
     mantZeroA = 0;
     mantZeroB = 0;
-    res = 0;
+    v_res_sign = 0;
+    vb_res_exp = 0;
+    vb_res_mant = 0;
 
     v = r;
 
@@ -258,46 +262,44 @@ begin: comb_proc
 
     // Result multiplexers:
     if ((nanA && mantZeroA && r.zeroB) || (nanB && mantZeroB && r.zeroA)) begin
-        res[63] = 1'h1;
+        v_res_sign = 1'h1;
     end else if ((nanA && (~mantZeroA)) == 1'b1) begin
         // when both values are NaN, value B has higher priority if sign=1
-        res[63] = (signA || (nanA && signB));
+        v_res_sign = (signA || (nanA && signB));
     end else if ((nanB && (~mantZeroB)) == 1'b1) begin
-        res[63] = signB;
+        v_res_sign = signB;
     end else begin
-        res[63] = (r.a[63] ^ r.b[63]);
+        v_res_sign = (r.a[63] ^ r.b[63]);
     end
 
     if (nanA == 1'b1) begin
-        res[62: 52] = r.a[62: 52];
+        vb_res_exp = r.a[62: 52];
     end else if (nanB == 1'b1) begin
-        res[62: 52] = r.b[62: 52];
+        vb_res_exp = r.b[62: 52];
     end else if ((r.expAlign[11] || r.zeroA || r.zeroB) == 1'b1) begin
-        res[62: 52] = '0;
+        vb_res_exp = '0;
     end else if (r.overflow == 1'b1) begin
-        res[62: 52] = '1;
+        vb_res_exp = '1;
     end else begin
-        res[62: 52] = (r.expAlign[10: 0]
+        vb_res_exp = (r.expAlign[10: 0]
                 + (mantOnes && rndBit && (~r.overflow)));
     end
 
     if ((nanA && mantZeroA && (~mantZeroB))
             || (nanB && mantZeroB && (~mantZeroA))
             || ((~nanA) && (~nanB) && r.overflow)) begin
-        res[51: 0] = '0;
+        vb_res_mant = '0;
     end else if ((nanA && (~(nanB && signB))) == 1'b1) begin
         // when both values are NaN, value B has higher priority if sign=1
-        res[51] = 1'h1;
-        res[50: 0] = r.a[50: 0];
+        vb_res_mant = {1'h1, r.a[50: 0]};
     end else if (nanB == 1'b1) begin
-        res[51] = 1'h1;
-        res[50: 0] = r.b[50: 0];
+        vb_res_mant = {1'h1, r.b[50: 0]};
     end else begin
-        res[51: 0] = (mantShort[51: 0] + rndBit);
+        vb_res_mant = (mantShort[51: 0] + rndBit);
     end
 
     if (r.ena[3] == 1'b1) begin
-        v.result = res;
+        v.result = {v_res_sign, vb_res_exp, vb_res_mant};
         v.illegal_op = (nanA || nanB);
         v.busy = 1'b0;
     end
