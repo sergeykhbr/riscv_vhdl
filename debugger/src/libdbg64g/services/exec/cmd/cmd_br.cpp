@@ -18,8 +18,8 @@
 
 namespace debugger {
 
-CmdBr::CmdBr(IService *parent, IJtag *ijtag) :
-    ICommand ("br", ijtag),
+CmdBr::CmdBr(IService *parent) :
+    ICommand (parent, "br"),
     IHap(HAP_Halt) {
 
     briefDescr_.make_string("Add or remove breakpoint.");
@@ -125,7 +125,7 @@ void CmdBr::exec(AttributeType *args, AttributeType *res) {
         uint32_t brlen;
 
         memdata.val = 0;
-        tap_->read(braddr.val, 4, memdata.buf);
+        //tap_->read(braddr.val, 4, memdata.buf);
 
         brdata = memdata;
         getSwBreakpointInstr(&brdata, &brlen);

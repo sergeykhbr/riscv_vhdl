@@ -29,7 +29,6 @@
 #include "coreservices/ireset.h"
 #include "coreservices/isrccode.h"
 #include "coreservices/icmdexec.h"
-#include "coreservices/itap.h"
 #include "coreservices/icoveragetracker.h"
 #include "generic/mapreg.h"
 #include <riscv-isa.h>

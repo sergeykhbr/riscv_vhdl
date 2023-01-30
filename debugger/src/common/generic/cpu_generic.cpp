@@ -16,7 +16,6 @@
 
 #include <api_core.h>
 #include "cpu_generic.h"
-#include "debug/dmi_regs.h"
 
 namespace debugger {
 

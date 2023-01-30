@@ -20,7 +20,7 @@
 namespace debugger {
 
 ICacheFunctional::ICacheFunctional(const char *name) : IService(name),
-    ICommand(name, 0, 0) {
+    ICommand(this, name) {
     registerInterface(static_cast<IMemoryOperation *>(this));
     registerAttribute("SysBus", &sysBus_);
     registerAttribute("CmdExecutor", &cmdexec_);

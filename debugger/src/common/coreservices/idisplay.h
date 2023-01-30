@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,8 +14,7 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_PLUGIN_IDISPLAY_H__
-#define __DEBUGGER_PLUGIN_IDISPLAY_H__
+#pragma once
 
 #include <iface.h>
 #include <inttypes.h>
@@ -26,9 +25,8 @@ namespace debugger {
 
 class GenericDisplayCmdType : public ICommand {
  public:
-    GenericDisplayCmdType(IService *parent, uint64_t dmibar, const char *name)
-        : ICommand(name, dmibar, 0) {
-        parent_ = parent;
+    GenericDisplayCmdType(IService *parent, const char *name)
+        : ICommand(parent, name) {
         briefDescr_.make_string("Display controller management command.");
         detailedDescr_.make_string(
             "Description:\n"
@@ -95,11 +93,6 @@ class GenericDisplayCmdType : public ICommand {
         }
         delete [] frameTempProxy_;
     }
- protected:
-    IService *parent_;
 };
 
-
 }  // namespace debugger
-
-#endif  // __DEBUGGER_PLUGIN_IDISPLAY_H__

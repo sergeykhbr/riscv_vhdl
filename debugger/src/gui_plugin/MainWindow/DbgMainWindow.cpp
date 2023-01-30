@@ -15,7 +15,6 @@
  */
 
 #include "DbgMainWindow.h"
-#include "debug/dsumap.h"
 #include "ControlWidget/PnpWidget.h"
 #include "CpuWidgets/RegsViewWidget.h"
 #include "CpuWidgets/AsmViewWidget.h"

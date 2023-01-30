@@ -19,7 +19,6 @@
 
 #include <iservice.h>
 #include "coreservices/icmdexec.h"
-#include "coreservices/itap.h"
 #include "generic/cpu_generic.h"
 
 namespace debugger {

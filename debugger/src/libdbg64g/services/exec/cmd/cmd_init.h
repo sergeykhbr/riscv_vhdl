@@ -21,9 +21,9 @@
 
 namespace debugger {
 
-class CmdInit : public ICommand  {
+class CmdInit : public ICommandRiscv {
  public:
-    explicit CmdInit(IJtag *ijtag);
+    explicit CmdInit(IService *parent, IJtag *ijtag);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);

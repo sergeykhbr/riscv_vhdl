@@ -20,7 +20,6 @@
 #include "iclass.h"
 #include "iservice.h"
 #include "coreservices/icmdexec.h"
-#include "coreservices/itap.h"
 #include "coreservices/iautocomplete.h"
 #include "coreservices/icommand.h"
 #include "coreservices/imemop.h"

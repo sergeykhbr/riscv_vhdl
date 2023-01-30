@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@
 
 namespace debugger {
 
-CmdRead::CmdRead(uint64_t dmibar, ITap *tap)
-    : ICommand("read", dmibar, tap) {
+CmdRead::CmdRead(IService *parent, IJtag *ijtag)
+    : ICommandRiscv(parent, "read", ijtag) {
 
     briefDescr_.make_string("Read memory");
     detailedDescr_.make_string(
@@ -58,8 +58,8 @@ void CmdRead::exec(AttributeType *args, AttributeType *res) {
         rdData_.make_data(4 * bytes);
     }
 
-    if (dma_read(addr, bytes, rdData_.data()) == TRANS_ERROR) {
-        res->make_nil();
+    if (read_memory(addr, bytes, rdData_.data())) {
+        generateError(res, "Cannot read memory");
         return;
     }
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 #include "iservice.h"
 #include "cmd_loadh86.h"
-#include "debug/dsumap.h"
 #include <iostream>
 
 namespace debugger {
@@ -24,8 +23,8 @@ namespace debugger {
 //char bindata[1 << 24] = {0};
 //char flgdata[1 << 24] = {0};
 
-CmdLoadH86::CmdLoadH86(uint64_t dmibar, ITap *tap)
-    : ICommand("loadh86", dmibar, tap) {
+CmdLoadH86::CmdLoadH86(IService *parent, IJtag *ijtag)
+    : ICommandRiscv(parent, "loadh86", ijtag) {
 
     briefDescr_.make_string("Load Intel HEX file");
     detailedDescr_.make_string(
@@ -85,12 +84,11 @@ void CmdLoadH86::exec(AttributeType *args, AttributeType *res) {
         binFileBuf = new uint8_t[binFileSz];
     }
 
-    Reg64Type t1;
-    t1.val = 0;
-    t1.bits.b1 = 1; // ndmreset
-    uint64_t addr = DSUREGBASE(ulocal.v.dmcontrol);
+    IJtag::dmi_dmcontrol_type dmcontrol;
+    dmcontrol.u32 = 0;
+    dmcontrol.bits.ndmreset = 1;
     if (binFileBuf == 0) {
-        tap_->write(addr, 8, t1.buf);
+        write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
     }
 
     while (code != -1) {
@@ -98,7 +96,7 @@ void CmdLoadH86::exec(AttributeType *args, AttributeType *res) {
         switch (code) {
         case 0:
             if (binFileBuf == 0) {
-                tap_->write(sec_addr, sec_sz, sec_data);
+                write_memory(sec_addr, sec_sz, sec_data);
                 //memcpy(&bindata[sec_addr & 0xFFFFFF], sec_data, sec_sz);
                 //memset(&flgdata[sec_addr & 0xFFFFFF], 0xff, sec_sz);
             } else if ((sec_addr + sec_sz) <= binFileSz) {

@@ -26,20 +26,6 @@
 
 namespace debugger {
 
-class CmdDpi : public ICommand  {
- public:
-    CmdDpi(IService *parent, uint64_t dmibar);
-
-    /** ICommand */
-    virtual int isValid(AttributeType *args);
-    virtual void exec(AttributeType *args, AttributeType *res);
-
- private:
-    IService *parent_;
-};
-
-
-
 class DpiClient : public IService,
                   public IThread,
                   public IDpi,
@@ -94,7 +80,6 @@ class DpiClient : public IService,
     AttributeType respHartBeat_;
 
     ICmdExecutor *iexec_;
-    CmdDpi cmd_;
 
     struct sockaddr_in sockaddr_ipv4_;
     socket_def hsock_;

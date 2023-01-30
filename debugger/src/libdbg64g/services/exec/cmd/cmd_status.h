@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@
 
 namespace debugger {
 
-class CmdStatus : public ICommand  {
+class CmdStatus : public ICommandRiscv {
  public:
-    explicit CmdStatus(IJtag *ijtag);
+    explicit CmdStatus(IService *parent, IJtag *ijtag);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);

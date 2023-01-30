@@ -23,7 +23,7 @@
 namespace debugger {
 
 void ST7789VCmdType::getFrame(AttributeType *res, bool diff) {
-    ST7789V *p = static_cast<ST7789V *>(parent_);
+    ST7789V *p = static_cast<ST7789V *>(cmdParent_);
     int t1 = p->last_modified_pixel_;
     //if (diff && t1 == last_pixel_) {
     //    res->make_nil();
@@ -70,7 +70,6 @@ void ST7789V::postinitService() {
         return;
     }
     pcmd_ = new ST7789VCmdType(static_cast<IService *>(this),
-                               0, 
                                getObjName());
     iexec_->registerCommand(static_cast<ICommand *>(pcmd_));
 

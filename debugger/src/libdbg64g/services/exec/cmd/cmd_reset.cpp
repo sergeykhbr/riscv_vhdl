@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,12 +15,11 @@
  */
 
 #include "cmd_reset.h"
-#include "debug/dsumap.h"
 
 namespace debugger {
 
-CmdReset::CmdReset(uint64_t dmibar, ITap *tap)
-    : ICommand("reset", dmibar, tap) {
+CmdReset::CmdReset(IService *parent, IJtag *ijtag)
+    : ICommandRiscv(parent, "reset", ijtag) {
 
     briefDescr_.make_string("Reset, Un-reset or Reboot target");
     detailedDescr_.make_string(
@@ -49,20 +48,20 @@ void CmdReset::exec(AttributeType *args, AttributeType *res) {
     res->attr_free();
     res->make_nil();
 
-    Reg64Type rst;
-    rst.val = 0;
-    uint64_t dmcontrol_addr = DSUREGBASE(ulocal.v.dmcontrol);
+    IJtag::dmi_dmcontrol_type dmcontrol;
+    dmcontrol.u32 = 0;
+    dmcontrol.bits.ndmreset = 1;
 
     if (args->size() == 2) {
-        rst.bits.b1 = (*args)[1].to_uint64();       // [1] ndmreset
-        tap_->write(dmcontrol_addr, 8, rst.buf);
+        dmcontrol.bits.ndmreset = (*args)[1].to_uint64();       // [1] ndmreset
+        write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
     } else {
         // Reboot
-        rst.bits.b1 = 1;
-        tap_->write(dmcontrol_addr, 8, rst.buf);
+        dmcontrol.bits.ndmreset = 1;
+        write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
         RISCV_sleep_ms(10);
-        rst.bits.b1 = 0;
-        tap_->write(dmcontrol_addr, 8, rst.buf);
+        dmcontrol.bits.ndmreset = 0;
+        write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
     }
 }
 

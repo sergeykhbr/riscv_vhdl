@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,18 +14,16 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_SERVICES_EXEC_CMD_LOADBIN_H__
-#define __DEBUGGER_SERVICES_EXEC_CMD_LOADBIN_H__
+#pragma once
 
 #include "api_core.h"
-#include "coreservices/itap.h"
 #include "coreservices/icommand.h"
 
 namespace debugger {
 
-class CmdLoadBin : public ICommand  {
+class CmdLoadBin : public ICommandRiscv {
  public:
-    explicit CmdLoadBin(uint64_t dmibar, ITap *tap);
+    explicit CmdLoadBin(IService *parent, IJtag *ijtag);
 
     /** ICommand interface */
     virtual int isValid(AttributeType *args);
@@ -34,4 +32,3 @@ class CmdLoadBin : public ICommand  {
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_SERVICES_EXEC_CMD_LOADBIN_H__

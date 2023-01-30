@@ -21,9 +21,8 @@
 
 namespace debugger {
 
-KeyGeneric::KeyGeneric(IService *parent, uint64_t dmibar, const char *name)
-    : ICommand(name, dmibar, 0) {
-    parent_ = parent;
+KeyGeneric::KeyGeneric(IService *parent, const char *name)
+    : ICommand(parent, name) {
     keyName_.make_string(name);
     pressed_ = false;
     power_on_ = false;
@@ -71,7 +70,7 @@ void KeyGeneric::reset(IFace *isource) {
 
 void KeyGeneric::press() {
     pressed_ = true;
-    ikb_ = static_cast<IKeyboard *>(parent_->getInterface(IFACE_KEYBOARD));
+    ikb_ = static_cast<IKeyboard *>(cmdParent_->getInterface(IFACE_KEYBOARD));
     ikb_->keyPress(keyName_.to_string());
     RISCV_info("%s pressed", keyName_.to_string());
 
@@ -89,7 +88,7 @@ void KeyGeneric::press() {
 
 void KeyGeneric::release() {
     pressed_ = false;
-    ikb_ = static_cast<IKeyboard *>(parent_->getInterface(IFACE_KEYBOARD));
+    ikb_ = static_cast<IKeyboard *>(cmdParent_->getInterface(IFACE_KEYBOARD));
     ikb_->keyRelease(keyName_.to_string());
     RISCV_info("%s released", keyName_.to_string());
 }
@@ -104,7 +103,7 @@ void KeyGeneric8::postinit() {
         return;
     }
     iport_->registerPortListener(static_cast<IIOPortListener8 *>(this));
-    ikb_ = static_cast<IKeyboard *>(parent_->getInterface(IFACE_KEYBOARD));
+    ikb_ = static_cast<IKeyboard *>(cmdParent_->getInterface(IFACE_KEYBOARD));
 }
 
 void KeyGeneric8::readData(uint8_t *val, uint8_t mask) {
@@ -147,7 +146,7 @@ void KeyGeneric32::postinit() {
         return;
     }
     iport_->registerPortListener(static_cast<IIOPortListener32 *>(this));
-    ikb_ = static_cast<IKeyboard *>(parent_->getInterface(IFACE_KEYBOARD));
+    ikb_ = static_cast<IKeyboard *>(cmdParent_->getInterface(IFACE_KEYBOARD));
 }
 
 void KeyGeneric32::readData(uint32_t *val, uint32_t mask) {

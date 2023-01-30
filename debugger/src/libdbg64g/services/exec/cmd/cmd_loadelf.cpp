@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,12 +17,11 @@
 #include "iservice.h"
 #include "cmd_loadelf.h"
 #include "coreservices/ielfreader.h"
-#include "debug/dsumap.h"
 
 namespace debugger {
 
-CmdLoadElf::CmdLoadElf(uint64_t dmibar, ITap *tap)
-    : ICommand("loadelf", dmibar, tap) {
+CmdLoadElf::CmdLoadElf(IService *parent, IJtag *ijtag)
+    : ICommandRiscv(parent, "loadelf", ijtag) {
 
     briefDescr_.make_string("Load ELF-file");
     detailedDescr_.make_string(
@@ -76,18 +75,17 @@ void CmdLoadElf::exec(AttributeType *args, AttributeType *res) {
         return;
     }
 
-    Reg64Type t1;
-    t1.val = 0;
-    t1.bits.b1 = 1; // ndmreset
-    uint64_t addr = DSUREGBASE(ulocal.v.dmcontrol);
-    tap_->write(addr, 8, t1.buf);
+    IJtag::dmi_dmcontrol_type dmcontrol;
+    dmcontrol.u32 = 0;
+    dmcontrol.bits.ndmreset = 1;
+    write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
 
     uint64_t sec_addr;
     int sec_sz;
     for (unsigned i = 0; i < elf->loadableSectionTotal(); i++) {
         sec_addr = elf->sectionAddress(i);
         sec_sz = static_cast<int>(elf->sectionSize(i));
-        tap_->write(sec_addr, sec_sz, elf->sectionData(i));
+        write_memory(sec_addr, sec_sz, elf->sectionData(i));
     }
 
     //soft_reset = 0;

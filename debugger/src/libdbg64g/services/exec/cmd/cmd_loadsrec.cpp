@@ -16,7 +16,6 @@
 
 #include "iservice.h"
 #include "cmd_loadsrec.h"
-#include "debug/dsumap.h"
 #include <iostream>
 
 namespace debugger {
@@ -86,8 +85,8 @@ void print_flash_usage() {
 }
 #endif
 
-CmdLoadSrec::CmdLoadSrec(uint64_t dmibar, ITap *tap)
-    : ICommand("loadsrec", dmibar, tap) {
+CmdLoadSrec::CmdLoadSrec(IService *parent, IJtag *ijtag)
+    : ICommandRiscv(parent, "loadsrec", ijtag) {
 
     briefDescr_.make_string("Load SREC-file");
     detailedDescr_.make_string(
@@ -128,17 +127,16 @@ void CmdLoadSrec::exec(AttributeType *args, AttributeType *res) {
 
     int off = check_header(image);
 
-    Reg64Type t1;
-    t1.val = 0;
-    t1.bits.b1 = 1; // ndmreset
-    uint64_t addr = DSUREGBASE(ulocal.v.dmcontrol);
-    tap_->write(addr, 8, t1.buf);
+    IJtag::dmi_dmcontrol_type dmcontrol;
+    dmcontrol.u32 = 0;
+    dmcontrol.bits.ndmreset = 1;
+    write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
 
     uint64_t sec_addr;
     int sec_sz;
     uint8_t sec_data[1024];
     while ((off = readline(image, off, sec_addr, sec_sz, sec_data)) != 0) {
-        tap_->write(sec_addr, sec_sz, sec_data);
+        write_memory(sec_addr, sec_sz, sec_data);
 #ifdef SHOW_USAGE_INFO
         mark_addr(sec_addr, sec_sz);
 #endif

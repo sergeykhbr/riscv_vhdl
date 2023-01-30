@@ -22,9 +22,9 @@
 
 namespace debugger {
 
-class CmdResume : public ICommand  {
+class CmdResume : public ICommandRiscv {
  public:
-    explicit CmdResume(IJtag *ijtag);
+    explicit CmdResume(IService *parent, IJtag *ijtag);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);

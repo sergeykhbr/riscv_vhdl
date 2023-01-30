@@ -18,8 +18,8 @@
 
 namespace debugger {
 
-CmdHalt::CmdHalt(IJtag *ijtag)
-    : ICommand("halt", ijtag) {
+CmdHalt::CmdHalt(IService *parent, IJtag *ijtag)
+    : ICommandRiscv(parent, "halt", ijtag) {
 
     briefDescr_.make_string("Stop simulation");
     detailedDescr_.make_string(
@@ -57,18 +57,18 @@ void CmdHalt::exec(AttributeType *args, AttributeType *res) {
     dmcontrol.u32 = 0;
     dmcontrol.bits.dmactive = 1;
     dmcontrol.bits.haltreq = 1;
-    ijtag_->scanDmi(IJtag::DMI_DMCONTROL, dmcontrol.u32, IJtag::DmiOp_Write);
+    write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
 
     // dmstatus: allresumeack anyresumeack allhalted anyhalted authenticated hasresethaltreq version=2
     dmstatus.u32 = 0;
     do {
-        dmstatus.u32 = ijtag_->scanDmi(IJtag::DMI_DMSTATUS, 0, IJtag::DmiOp_Read);
+        dmstatus.u32 = read_dmi(IJtag::DMI_DMSTATUS);
     } while (dmstatus.bits.allhalted == 0 && watchdog++ < 5);
 
     // clear halt request
     dmcontrol.u32 = 0;
     dmcontrol.bits.dmactive = 1;
-    ijtag_->scanDmi(IJtag::DMI_DMCONTROL, dmcontrol.u32, IJtag::DmiOp_Write);
+    write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
 
     if (dmstatus.bits.allhalted == 0) {
         generateError(res, "Cannot halt selected harts");

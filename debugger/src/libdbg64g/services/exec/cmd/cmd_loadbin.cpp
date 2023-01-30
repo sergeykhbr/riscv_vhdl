@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@
 
 namespace debugger {
 
-CmdLoadBin::CmdLoadBin(uint64_t dmibar, ITap *tap)
-    : ICommand("loadbin", dmibar, tap) {
+CmdLoadBin::CmdLoadBin(IService *parent, IJtag *ijtag)
+    : ICommandRiscv(parent, "loadbin", ijtag) {
 
     briefDescr_.make_string("Load binary file");
     detailedDescr_.make_string(
@@ -62,7 +62,7 @@ void CmdLoadBin::exec(AttributeType *args, AttributeType *res) {
     fclose(fp);
 
     uint64_t addr = (*args)[2].to_uint64();
-    tap_->write(addr, sz, image);
+    write_memory(addr, sz, image);
     delete [] image;
 }
 

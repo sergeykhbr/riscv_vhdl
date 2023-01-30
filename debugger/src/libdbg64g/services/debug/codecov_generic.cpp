@@ -26,7 +26,7 @@ int CoverageCmdType::isValid(AttributeType *args) {
 }
 
 void CoverageCmdType::exec(AttributeType *args, AttributeType *res) {
-    GenericCodeCoverage *p = static_cast<GenericCodeCoverage *>(parent_);
+    GenericCodeCoverage *p = static_cast<GenericCodeCoverage *>(cmdParent_);
     if (args->size() == 2 && (*args)[1].is_string()) {
         if ((*args)[1].is_equal("detailed")) {
             p->getCoverageDetailed(res);
@@ -63,7 +63,7 @@ void GenericCodeCoverage::postinitService() {
         return;
     }
 
-    pcmd_ = new CoverageCmdType(static_cast<IService *>(this), 0);
+    pcmd_ = new CoverageCmdType(static_cast<IService *>(this));
     iexec_->registerCommand(static_cast<ICommand *>(pcmd_));
 
     // Compute Total regions size

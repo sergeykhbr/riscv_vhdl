@@ -74,31 +74,28 @@ void CmdExecutor::postinitService() {
 
     // Core commands registration:
     ICommand *tcmd;
-    registerCommand(new CmdInit(ijtag_));
-    registerCommand(new CmdHalt(ijtag_));
-    registerCommand(new CmdResume(ijtag_));
-    registerCommand(new CmdIsRunning(ijtag_));
-    registerCommand(new CmdStatus(ijtag_));
-    registerCommand(new CmdReg(ijtag_));
-    registerCommand(new CmdCpi(dmibar_.to_uint64(), 0));
-    registerCommand(new CmdCpuContext(dmibar_.to_uint64(), 0));
-    registerCommand(tcmd = new CmdDisas(dmibar_.to_uint64(), 0));
-    tcmd->enableDMA(ibus_, dmibar_.to_uint64());
-    registerCommand(new CmdElf2Raw(dmibar_.to_uint64(), 0));
-    registerCommand(new CmdExit(dmibar_.to_uint64(), 0));
-    registerCommand(new CmdLoadBin(dmibar_.to_uint64(), 0));
-    registerCommand(new CmdLoadElf(dmibar_.to_uint64(), 0));
-    registerCommand(new CmdLoadH86(dmibar_.to_uint64(), 0));
-    registerCommand(new CmdLoadSrec(dmibar_.to_uint64(), 0));
-    registerCommand(new CmdLog(dmibar_.to_uint64(), 0));
-    registerCommand(new CmdMemDump(dmibar_.to_uint64(), 0));
-    registerCommand(tcmd = new CmdRead(dmibar_.to_uint64(), 0));
-    tcmd->enableDMA(ibus_, dmibar_.to_uint64());
-    registerCommand(new CmdReset(dmibar_.to_uint64(), 0));
-    registerCommand(new CmdStack(dmibar_.to_uint64(), 0));
-    registerCommand(new CmdSymb(dmibar_.to_uint64(), 0));
-    registerCommand(tcmd = new CmdWrite(dmibar_.to_uint64(), 0));
-    tcmd->enableDMA(ibus_, dmibar_.to_uint64());
+    registerCommand(new CmdInit(this, ijtag_));
+    registerCommand(new CmdHalt(this, ijtag_));
+    registerCommand(new CmdResume(this, ijtag_));
+    registerCommand(new CmdIsRunning(this, ijtag_));
+    registerCommand(new CmdStatus(this, ijtag_));
+    registerCommand(new CmdReg(this, ijtag_));
+    registerCommand(new CmdCpi(this, ijtag_));
+    registerCommand(new CmdCpuContext(this, ijtag_));
+    registerCommand(tcmd = new CmdDisas(this, ijtag_));
+    registerCommand(new CmdElf2Raw(this));
+    registerCommand(new CmdExit(this));
+    registerCommand(new CmdLoadBin(this, ijtag_));
+    registerCommand(new CmdLoadElf(this, ijtag_));
+    registerCommand(new CmdLoadH86(this, ijtag_));
+    registerCommand(new CmdLoadSrec(this, ijtag_));
+    registerCommand(new CmdLog(this));
+    registerCommand(new CmdMemDump(this, ijtag_));
+    registerCommand(tcmd = new CmdRead(this, ijtag_));
+    registerCommand(new CmdReset(this, ijtag_));
+    registerCommand(new CmdStack(this, ijtag_));
+    registerCommand(new CmdSymb(this));
+    registerCommand(tcmd = new CmdWrite(this, ijtag_));
 }
 
 void CmdExecutor::registerCommand(ICommand *icmd) {

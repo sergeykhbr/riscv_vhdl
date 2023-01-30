@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,8 +14,7 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_SOCSIM_PLUGIN_UART_H__
-#define __DEBUGGER_SOCSIM_PLUGIN_UART_H__
+#pragma once
 
 #include "iclass.h"
 #include "iservice.h"
@@ -34,8 +33,7 @@ namespace debugger {
 class UartCmdType : public ICommand {
  public:
     UartCmdType(IService *parent, uint64_t dmibar, const char *name)
-        : ICommand(name, dmibar, 0) {
-        parent_ = parent;
+        : ICommand(parent, name) {
         iserial_ = static_cast<ISerial *>(parent->getInterface(IFACE_SERIAL));
         briefDescr_.make_string("Access to external Serial port from console.");
         detailedDescr_.make_string(
@@ -49,7 +47,7 @@ class UartCmdType : public ICommand {
 
     /** ICommand */
     virtual int isValid(AttributeType *args) {
-        if (!iserial_ || !(*args)[0u].is_equal(parent_->getObjName())) {
+        if (!iserial_ || !(*args)[0u].is_equal(cmdParent_->getObjName())) {
             return CMD_INVALID;
         }
         return CMD_VALID;
@@ -65,7 +63,6 @@ class UartCmdType : public ICommand {
     }
 
  private:
-    IService *parent_;
     ISerial *iserial_;
 };
 
@@ -263,5 +260,3 @@ class UART : public RegMemBankGeneric,
 DECLARE_CLASS(UART)
 
 }  // namespace debugger
-
-#endif  // __DEBUGGER_SOCSIM_PLUGIN_UART_H__

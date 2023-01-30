@@ -35,8 +35,8 @@ static const int ST7789V_HEIGHT = 240;
 
 class ST7789VCmdType : public GenericDisplayCmdType {
  public:
-    ST7789VCmdType(IService *parent, uint64_t dmibar, const char *name)
-        : GenericDisplayCmdType(parent, dmibar, name), last_pixel_(-1) {}
+    ST7789VCmdType(IService *parent, const char *name)
+        : GenericDisplayCmdType(parent, name), last_pixel_(-1) {}
 
  protected:
     virtual int getWidth() { return ST7789V_WIDTH; }

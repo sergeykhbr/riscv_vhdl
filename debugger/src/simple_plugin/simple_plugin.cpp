@@ -25,9 +25,10 @@
 
 namespace debugger {
 
-class CmdDemo : public ICommand  {
+class CmdDemo : public ICommandRiscv {
  public:
-    CmdDemo(uint64_t dmibar, ITap *tap) : ICommand ("democmd", dmibar, tap) {
+    CmdDemo(IService *parent, IJtag *ijtag)
+        : ICommandRiscv(parent, "democmd", ijtag) {
 
         briefDescr_.make_string("Example of custom command implementation");
         detailedDescr_.make_string(
@@ -46,7 +47,7 @@ class CmdDemo : public ICommand  {
     }
     virtual void exec(AttributeType *args, AttributeType *res) {
         Reg64Type t1;
-        tap_->read(0xFFFFF000, 4, t1.buf);
+        read_memory(0xFFFFF000, 4, t1.buf);
         res->make_list(2);
         (*res)[0u].make_string("Reading 0xfffff000");
         (*res)[1].make_uint64(t1.buf32[0]);
@@ -69,9 +70,9 @@ class SimplePlugin : public IService,
     virtual void postinitService() {
         RISCV_printf(this, LOG_INFO, "Plugin post-init example: attr1_='%s'",
                                         attr1_.to_string());
-        AttributeType taplist, execlist;
-        RISCV_get_services_with_iface(IFACE_TAP, &taplist);
-        if (taplist.size() == 0) {
+        AttributeType jtaglist, execlist;
+        RISCV_get_services_with_iface(IFACE_JTAG, &jtaglist);
+        if (jtaglist.size() == 0) {
             return;
         }
         RISCV_get_services_with_iface(IFACE_CMD_EXECUTOR, &execlist);
@@ -79,13 +80,13 @@ class SimplePlugin : public IService,
             return;
         }
         IService *iserv;
-        iserv = static_cast<IService *>(taplist[0u].to_iface());
-        ITap * itap = static_cast<ITap *>(iserv->getInterface(IFACE_TAP));
+        iserv = static_cast<IService *>(jtaglist[0u].to_iface());
+        IJtag * ijtag = static_cast<IJtag *>(iserv->getInterface(IFACE_JTAG));
 
         iserv = static_cast<IService *>(execlist[0u].to_iface());
         exec_ = static_cast<ICmdExecutor *>(
             iserv->getInterface(IFACE_CMD_EXECUTOR));
-        pcmd_ = new CmdDemo(0, itap);
+        pcmd_ = new CmdDemo(this, ijtag);
         exec_->registerCommand(pcmd_);
     }
     virtual void predeleteService() {

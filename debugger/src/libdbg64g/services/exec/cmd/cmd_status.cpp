@@ -18,8 +18,8 @@
 
 namespace debugger {
 
-CmdStatus::CmdStatus(IJtag *ijtag)
-    : ICommand("status", ijtag) {
+CmdStatus::CmdStatus(IService *parent, IJtag *ijtag)
+    : ICommandRiscv(parent, "status", ijtag) {
 
     briefDescr_.make_string("Read target's status register throught the DSU registers");
     detailedDescr_.make_string(
@@ -45,7 +45,7 @@ void CmdStatus::exec(AttributeType *args, AttributeType *res) {
     res->attr_free();
     res->make_nil();
 
-    res->make_uint64(ijtag_->scanDmi(IJtag::DMI_HALTSUM0, 0, IJtag::DmiOp_Read));
+    res->make_uint64(read_dmi(IJtag::DMI_HALTSUM0));
 }
 
 }  // namespace debugger

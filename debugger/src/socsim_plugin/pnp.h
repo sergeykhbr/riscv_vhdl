@@ -5,14 +5,12 @@
  * @brief      Plug'n'Play device functional model.
  */
 
-#ifndef __DEBUGGER_SOCSIM_PLUGIN_PNP_H__
-#define __DEBUGGER_SOCSIM_PLUGIN_PNP_H__
+#pragma once
 
 #include "iclass.h"
 #include "iservice.h"
 #include "coreservices/imemop.h"
 #include "coreservices/iirq.h"
-#include "debug/dsumap.h"
 #include "periphmap.h"
 
 namespace debugger {
@@ -51,5 +49,3 @@ private:
 DECLARE_CLASS(PNP)
 
 }  // namespace debugger
-
-#endif  // __DEBUGGER_SOCSIM_PLUGIN_PNP_H__

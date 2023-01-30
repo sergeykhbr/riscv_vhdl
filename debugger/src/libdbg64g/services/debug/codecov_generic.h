@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -26,9 +26,7 @@ namespace debugger {
 
 class CoverageCmdType : public ICommand {
  public:
-    CoverageCmdType(IService *parent, uint64_t dmibar)
-        : ICommand("coverage", dmibar,  0) {
-        parent_ = parent;
+    CoverageCmdType(IService *parent) : ICommand(parent, "coverage") {
         briefDescr_.make_string("Get code usage information.");
         detailedDescr_.make_string(
             "Description:\n"
@@ -49,9 +47,6 @@ class CoverageCmdType : public ICommand {
     /** ICommand */
     virtual int isValid(AttributeType *args);
     virtual void exec(AttributeType *args, AttributeType *res);
-
- private:
-    IService *parent_;
 };
 
 

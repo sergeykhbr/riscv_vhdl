@@ -27,7 +27,7 @@ namespace debugger {
 class CmdBr : public ICommand,
               public IHap  {
  public:
-    explicit CmdBr(IService *parent, IJtag *ijtag);
+    explicit CmdBr(IService *parent);
     virtual ~CmdBr();
 
     /** ICommand */

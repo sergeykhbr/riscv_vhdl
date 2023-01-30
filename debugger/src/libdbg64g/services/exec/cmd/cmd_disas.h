@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,20 +14,18 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_CMD_DISAS_H__
-#define __DEBUGGER_CMD_DISAS_H__
+#pragma once
 
 #include "api_core.h"
 #include "iservice.h"
-#include "coreservices/itap.h"
 #include "coreservices/icommand.h"
 #include "coreservices/isrccode.h"
 
 namespace debugger {
 
-class CmdDisas : public ICommand  {
+class CmdDisas : public ICommandRiscv {
  public:
-    explicit CmdDisas(uint64_t dmibar, ITap *tap);
+    explicit CmdDisas(IService *parent, IJtag *ijtag);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);
@@ -41,5 +39,3 @@ class CmdDisas : public ICommand  {
 };
 
 }  // namespace debugger
-
-#endif  // __DEBUGGER_CMD_DISAS_H__

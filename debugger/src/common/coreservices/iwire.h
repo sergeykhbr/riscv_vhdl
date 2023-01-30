@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,8 +14,7 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_COMMON_CORESERVICES_IWIRE_H__
-#define __DEBUGGER_COMMON_CORESERVICES_IWIRE_H__
+#pragma once
 
 #include <inttypes.h>
 #include <iface.h>
@@ -67,9 +66,8 @@ class GenericWireAttribute : public AttributeType,
 
 class WireCmdType : public ICommand {
  public:
-    WireCmdType(IService *parent, uint64_t dmibar, const char *name)
-        : ICommand(name, dmibar, 0) {
-        parent_ = parent;
+    WireCmdType(IService *parent, const char *name)
+        : ICommand(parent, name) {
         iwire_ = static_cast<IWire *>(parent->getInterface(IFACE_WIRE));
         briefDescr_.make_string("Generic Wire instance management command.");
         detailedDescr_.make_string(
@@ -85,7 +83,7 @@ class WireCmdType : public ICommand {
 
     /** ICommand */
     virtual int isValid(AttributeType *args) {
-        if (!iwire_ || !(*args)[0u].is_equal(parent_->getObjName())) {
+        if (!iwire_ || !(*args)[0u].is_equal(cmdParent_->getObjName())) {
             return CMD_INVALID;
         }
         return CMD_VALID;
@@ -101,10 +99,7 @@ class WireCmdType : public ICommand {
     }
 
  private:
-    IService *parent_;
     IWire *iwire_;
 };
 
 }  // namespace debugger
-
-#endif  // __DEBUGGER_COMMON_CORESERVICES_IWIRE_H__

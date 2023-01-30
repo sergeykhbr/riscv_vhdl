@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,13 +15,12 @@
  */
 
 #include "cmd_cpi.h"
-#include "debug/dsumap.h"
 #include "coreservices/icpuriscv.h"
 
 namespace debugger {
 
-CmdCpi::CmdCpi(uint64_t dmibar, ITap *tap) 
-    : ICommand ("cpi", dmibar, tap) {
+CmdCpi::CmdCpi(IService *parent, IJtag *ijtag) 
+    : ICommandRiscv(parent, "cpi", ijtag) {
 
     briefDescr_.make_string("Compute Clocks Per Instruction (CPI) rate");
     detailedDescr_.make_string(
@@ -54,32 +53,35 @@ int CmdCpi::isValid(AttributeType *args) {
 }
 
 void CmdCpi::exec(AttributeType *args, AttributeType *res) {
+    Reg64Type user_cycle;
+    Reg64Type user_insret;
+    uint64_t d1, d2;
+    uint32_t err;
+
     res->make_list(5);
     (*res)[0u].make_uint64(0);
     (*res)[1].make_uint64(0);
 
-    struct CpiRegsType {
-        Reg64Type user_cycle;
-        Reg64Type user_timer;
-        Reg64Type user_insret;
-    };
-    union CpiRegionType {
-        CpiRegsType regs;
-        uint8_t buf[sizeof(CpiRegsType)];
-    } t1;
-    uint64_t addr_user_timers = DSUREGBASE(csr[ICpuRiscV::CSR_cycle]);
-    uint64_t d1, d2;
-    tap_->read(addr_user_timers, 3*8, t1.buf);
+    err = get_reg("cycle", &user_cycle);
+    if (err) {
+        generateError(res, "cannot read CSR_cycle register");
+        return;
+    }
+    err = get_reg("insret", &user_insret);
+    if (err) {
+        generateError(res, "cannot read CSR_insret register");
+        return;
+    }
 
-    d1 = t1.regs.user_cycle.val - clockCnt_z;
-    d2 = t1.regs.user_insret.val - stepCnt_z;
+    d1 = user_cycle.val - clockCnt_z;
+    d2 = user_insret.val - stepCnt_z;
 
-    (*res)[0u].make_uint64(t1.regs.user_cycle.val);
-    (*res)[1].make_uint64(t1.regs.user_insret.val);
+    (*res)[0u].make_uint64(user_cycle.val);
+    (*res)[1].make_uint64(user_insret.val);
     (*res)[2].make_uint64(d1);
     (*res)[3].make_uint64(d2);
     if (d2 == 0) {
-        if (t1.regs.user_insret.val == 0) {
+        if (user_insret.val == 0) {
             (*res)[4].make_floating(0);
         } else {
             (*res)[4].make_floating(1.0);
@@ -89,8 +91,8 @@ void CmdCpi::exec(AttributeType *args, AttributeType *res) {
             static_cast<double>(d1) / static_cast<double>(d2));
     }
 
-    clockCnt_z = t1.regs.user_cycle.val;
-    stepCnt_z = t1.regs.user_insret.val;
+    clockCnt_z = user_cycle.val;
+    stepCnt_z = user_insret.val;
 }
 
 }  // namespace debugger

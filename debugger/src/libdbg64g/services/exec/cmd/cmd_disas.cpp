@@ -19,7 +19,8 @@
 
 namespace debugger {
 
-CmdDisas::CmdDisas(uint64_t dmibar, ITap *tap) : ICommand ("disas", dmibar, tap) {
+CmdDisas::CmdDisas(IService *parent, IJtag *ijtag)
+    : ICommandRiscv(parent, "disas", ijtag) {
 
     briefDescr_.make_string("Disassemble block of data.");
     detailedDescr_.make_string(
@@ -75,8 +76,8 @@ void CmdDisas::exec(AttributeType *args, AttributeType *res) {
         uint32_t sz = (*args)[2].to_uint32();
         membuf.make_data(sz);
         mem_data = &membuf;
-        if (dma_read(addr, sz, membuf.data()) == TRANS_ERROR) {
-            res->make_nil();
+        if (read_memory(addr, sz, membuf.data())) {
+            generateError(res, "Cannot read memory");
             return;
         }
     } else {

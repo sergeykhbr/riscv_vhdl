@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,18 +17,17 @@
 #include "cmd_stack.h"
 #include "iservice.h"
 #include "coreservices/isrccode.h"
-#include "debug/dsumap.h"
 
 namespace debugger {
 
-CmdStack::CmdStack(uint64_t dmibar, ITap *tap)
-    : ICommand("stack", dmibar, tap) {
+CmdStack::CmdStack(IService *parent, IJtag *ijtag)
+    : ICommandRiscv(parent, "stack", ijtag) {
 
     briefDescr_.make_string("Read CPU Stack Trace buffer");
     detailedDescr_.make_string(
         "Description:\n"
         "    Read CPU stack trace buffer. Buffer's size is defined\n"
-        "    by VHDL configuration parameter:\n"
+        "    by RTL configuration parameter:\n"
         "Usage:\n"
         "    stack <depth>\n"
         "Example:\n"
@@ -48,15 +47,14 @@ int CmdStack::isValid(AttributeType *args) {
 }
 
 void CmdStack::exec(AttributeType *args, AttributeType *res) {
+    Reg64Type stktr_cnt;
+    uint32_t addr;
     res->make_list(0);
 
-    Reg64Type t1;
-    uint64_t addr = DSUREGBASE(ureg.v.stack_trace_cnt);
-    t1.val = 0;
-    tap_->read(addr, 8, t1.buf);
+    get_reg("stktr_cnt", &stktr_cnt);
 
-    addr = DSUREGBASE(ureg.v.stack_trace_buf[0]);
-    unsigned trace_sz = t1.buf32[0];
+    addr = reg2addr("stktr_buf");
+    unsigned trace_sz = stktr_cnt.buf32[0];
     if (args->size() == 2 && args[1].to_uint64() < trace_sz) {
         addr += 8 * (trace_sz - args[1].to_uint32());
         trace_sz = args[1].to_uint32();
@@ -66,12 +64,9 @@ void CmdStack::exec(AttributeType *args, AttributeType *res) {
         return;
     }
 
-    AttributeType tbuf, lstServ;
-    uint64_t *p_data;
+    AttributeType lstServ;
     ISourceCode *isrc = 0;
-    uint64_t from_addr, to_addr;
-    tbuf.make_data(16*trace_sz);
-    tap_->read(addr, tbuf.size(), tbuf.data());
+    Reg64Type from_addr, to_addr;
 
     RISCV_get_services_with_iface(IFACE_SOURCE_CODE, &lstServ);
     if (lstServ.size() > 0) {
@@ -80,20 +75,20 @@ void CmdStack::exec(AttributeType *args, AttributeType *res) {
                 iserv->getInterface(IFACE_SOURCE_CODE));
     }
 
-    res->make_list(t1.buf32[0]);
-    p_data = reinterpret_cast<uint64_t *>(tbuf.data());
+    res->make_list(stktr_cnt.buf32[0]);
     for (unsigned i = 0; i < trace_sz; i++) {
         AttributeType &item = (*res)[i];
-        from_addr = p_data[2*(trace_sz - i) - 2];
-        to_addr = p_data[2*(trace_sz - i) - 1];
+        get_reg(addr, 8, &from_addr);
+        get_reg(addr + 1, 8, &to_addr);
         // [from, ['symb_name',symb_offset], to, ['symb_name',symb_offset]]
         item.make_list(4);
-        item[0u].make_uint64(from_addr);
-        item[2].make_uint64(to_addr);
+        item[0u].make_uint64(from_addr.val);
+        item[2].make_uint64(to_addr.val);
         if (isrc) {
-            isrc->addressToSymbol(from_addr, &item[1]);
-            isrc->addressToSymbol(to_addr, &item[3]);
+            isrc->addressToSymbol(from_addr.val, &item[1]);
+            isrc->addressToSymbol(to_addr.val, &item[3]);
         }
+        addr += 2;
     }
 }
 

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,13 +16,11 @@
 
 #include <ihap.h>
 #include "cmd_cpucontext.h"
-#include "debug/dsumap.h"
-#include "debug/dmi_regs.h"
 
 namespace debugger {
 
-CmdCpuContext::CmdCpuContext(uint64_t dmibar, ITap *tap) :
-    ICommand ("cpucontext", dmibar, tap) {
+CmdCpuContext::CmdCpuContext(IService *parent, IJtag *ijtag) :
+    ICommandRiscv(parent, "cpucontext", ijtag) {
     briefDescr_.make_string("Switch CPU context in multicore configuration.");
     detailedDescr_.make_string(
         "Description:\n"
@@ -46,15 +44,13 @@ int CmdCpuContext::isValid(AttributeType *args) {
 }
 
 void CmdCpuContext::exec(AttributeType *args, AttributeType *res) {
+    IJtag::dmi_dmcontrol_type dmcontrol;
+    uint64_t hartsel;
     res->attr_free();
     res->make_nil();
 
-    uint64_t addr = DSUREGBASE(ulocal.v.dmcontrol);
-    DMCONTROL_TYPE::ValueType dmcontrol;
-    uint64_t hartsel;
-
     if (args->size() == 1) {
-        tap_->read(addr, 8, dmcontrol.u8);
+        dmcontrol.u32 = read_dmi(IJtag::DMI_DMCONTROL);
         hartsel = dmcontrol.bits.hartselhi;
         hartsel = (hartsel << 10) | dmcontrol.bits.hartsello;
         res->make_uint64(hartsel);
@@ -62,10 +58,10 @@ void CmdCpuContext::exec(AttributeType *args, AttributeType *res) {
     }
     hartsel = (*args)[1].to_uint64();
     
-    dmcontrol.val =0;
+    dmcontrol.u32 = 0;
     dmcontrol.bits.hartsello = hartsel;
     dmcontrol.bits.hartselhi = hartsel >> 10;
-    tap_->write(addr, 8, dmcontrol.u8);
+    write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
 
     RISCV_trigger_hap(HAP_CpuContextChanged, hartsel, "CPU context changed");
 }

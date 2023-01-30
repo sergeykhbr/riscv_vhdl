@@ -23,7 +23,7 @@
 namespace debugger {
 
 int FpuCmdType::isValid(AttributeType *args) {
-    if (!(*args)[0u].is_equal(parent_->getObjName())) {
+    if (!(*args)[0u].is_equal(cmdParent_->getObjName())) {
         return CMD_INVALID;
     }
     if (args->size() < 3) {
@@ -33,7 +33,7 @@ int FpuCmdType::isValid(AttributeType *args) {
 }
 
 void FpuCmdType::exec(AttributeType *args, AttributeType *res) {
-    FpuFunctional *p = static_cast<FpuFunctional *>(parent_);
+    FpuFunctional *p = static_cast<FpuFunctional *>(cmdParent_);
     res->make_nil();
     if ((*args)[1].is_equal("test")) {
         if ((*args)[2].is_equal("all")) {

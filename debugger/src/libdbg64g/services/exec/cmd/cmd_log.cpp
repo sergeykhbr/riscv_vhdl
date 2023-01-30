@@ -18,8 +18,7 @@
 
 namespace debugger {
 
-CmdLog::CmdLog(uint64_t dmibar, ITap *tap)
-    : ICommand("log", dmibar, tap) {
+CmdLog::CmdLog(IService *parent) : ICommand(parent, "log") {
 
     briefDescr_.make_string("Enable log-file");
     detailedDescr_.make_string(

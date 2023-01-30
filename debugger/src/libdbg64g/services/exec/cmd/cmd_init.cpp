@@ -18,8 +18,8 @@
 
 namespace debugger {
 
-CmdInit::CmdInit(IJtag *ijtag) 
-    : ICommand ("init", ijtag) {
+CmdInit::CmdInit(IService *parent, IJtag *ijtag) 
+    : ICommandRiscv(parent, "init", ijtag) {
 
     briefDescr_.make_string("Read platform configuration and capabilities");
     detailedDescr_.make_string(
@@ -65,20 +65,20 @@ void CmdInit::exec(AttributeType *args, AttributeType *res) {
 
     // Reset TAP setting dmactive to 0 -> 1
     dmcontrol.u32 = 0;
-    ijtag_->scanDmi(IJtag::DMI_DMCONTROL, dmcontrol.u32, IJtag::DmiOp_Write);
+    write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
     dmcontrol.bits.dmactive = 1;
-    ijtag_->scanDmi(IJtag::DMI_DMCONTROL, dmcontrol.u32, IJtag::DmiOp_Write);
+    write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
 
     // Read Prog Buffer size and number of Abstract Data registers
-    abstractcs.u32 = ijtag_->scanDmi(IJtag::DMI_ABSTRACTCS, 0, IJtag::DmiOp_Read);
+    abstractcs.u32 = read_dmi(IJtag::DMI_ABSTRACTCS);
     (*res)["datacount"].make_uint64(abstractcs.bits.datacount);
     (*res)["progbufsize"].make_uint64(abstractcs.bits.progbufsize);
 
     // Read number of Harts:
     dmcontrol.bits.hartsello = 0x3FF;
     dmcontrol.bits.hartselhi = 0x3FF;
-    ijtag_->scanDmi(IJtag::DMI_DMCONTROL, dmcontrol.u32, IJtag::DmiOp_Write);
-    dmcontrol.u32 = ijtag_->scanDmi(IJtag::DMI_DMCONTROL, 0, IJtag::DmiOp_Read);
+    write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
+    dmcontrol.u32 = read_dmi(IJtag::DMI_DMCONTROL);
     hartsnum = dmcontrol.bits.hartsello + 1;
     (*res)["hartsnum"].make_uint64(hartsnum);
     (*res)["hart"].make_list(hartsnum);
@@ -89,7 +89,7 @@ void CmdInit::exec(AttributeType *args, AttributeType *res) {
         hartinfo.make_dict();
         dmcontrol.bits.hartsello = i;
         dmcontrol.bits.hartselhi = i >> 10;
-        ijtag_->scanDmi(IJtag::DMI_DMCONTROL, dmcontrol.u32, IJtag::DmiOp_Write);
+        write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
         hartinfo["type"].make_string("rv64");
         hartinfo["misa"].make_uint64(0x10110d);
     }
@@ -97,7 +97,7 @@ void CmdInit::exec(AttributeType *args, AttributeType *res) {
     // Select hart0:
     dmcontrol.bits.hartsello = 0x0;
     dmcontrol.bits.hartselhi = 0x0;
-    ijtag_->scanDmi(IJtag::DMI_DMCONTROL, dmcontrol.u32, IJtag::DmiOp_Write);
+    write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
 }
 
 }  // namespace debugger

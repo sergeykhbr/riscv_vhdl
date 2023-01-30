@@ -28,7 +28,7 @@ namespace debugger {
 class KeyGeneric : public ICommand,
                    public IResetListener {
  public:
-    KeyGeneric(IService *parent, uint64_t dmibar, const char *keyname);
+    KeyGeneric(IService *parent, const char *keyname);
 
  public:
     /** ICommand */
@@ -40,7 +40,7 @@ class KeyGeneric : public ICommand,
 
  protected:
     IFace *getInterface(const char *name) {
-        return parent_->getInterface(name);
+        return cmdParent_->getInterface(name);
     }
 
     // Common
@@ -51,7 +51,6 @@ class KeyGeneric : public ICommand,
     bool pressed_;
     bool power_on_;
     AttributeType keyName_;
-    IService *parent_;
     IKeyboard *ikb_;
 };
 
@@ -59,7 +58,7 @@ class KeyGeneric8 : public KeyGeneric,
                     public IIOPortListener8 {
  public:
     explicit KeyGeneric8(IService *parent, AttributeType &cfg) :
-        KeyGeneric(parent, 0, cfg[0u].to_string()) {
+        KeyGeneric(parent, cfg[0u].to_string()) {
         inverse_ = cfg[1].to_bool();
         port_ = cfg[2];
         row_ = cfg[3].to_int();
@@ -84,7 +83,7 @@ class KeyGeneric32 : public KeyGeneric,
                      public IIOPortListener32 {
  public:
     KeyGeneric32(IService *parent, AttributeType &cfg) :
-        KeyGeneric(parent, 0, cfg[0u].to_string()) {
+        KeyGeneric(parent, cfg[0u].to_string()) {
         inverse_ = cfg[1].to_bool();
         port_ = cfg[2];
         row_ = cfg[3].to_int();
@@ -107,7 +106,7 @@ class KeyGeneric32 : public KeyGeneric,
 
 class KeyPOW : public KeyGeneric {
  public:
-    KeyPOW(IService *parent, const char *name) : KeyGeneric(parent, 0, name) {
+    KeyPOW(IService *parent, const char *name) : KeyGeneric(parent, name) {
         power_on_ = true;
     }
 };

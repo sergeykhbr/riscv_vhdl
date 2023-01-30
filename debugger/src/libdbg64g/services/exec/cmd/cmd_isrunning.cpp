@@ -18,8 +18,8 @@
 
 namespace debugger {
 
-CmdIsRunning::CmdIsRunning(IJtag *ijtag)
-    : ICommand ("isrunning", ijtag) {
+CmdIsRunning::CmdIsRunning(IService *parent, IJtag *ijtag)
+    : ICommandRiscv(parent, "isrunning", ijtag) {
 
     briefDescr_.make_string("Check target's status");
     detailedDescr_.make_string(
@@ -43,7 +43,7 @@ void CmdIsRunning::exec(AttributeType *args, AttributeType *res) {
     IJtag::dmi_dmstatus_type dmstatus;
     res->make_boolean(false);
 
-    dmstatus.u32 = ijtag_->scanDmi(IJtag::DMI_DMSTATUS, 0, IJtag::DmiOp_Read);
+    dmstatus.u32 = read_dmi(IJtag::DMI_DMSTATUS);
 
     if (dmstatus.bits.allhalted) {
         res->make_boolean(false);

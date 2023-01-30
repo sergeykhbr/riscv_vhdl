@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@
 
 namespace debugger {
 
-CmdElf2Raw::CmdElf2Raw(uint64_t dmibar, ITap *tap)
-    : ICommand("elf2raw", dmibar, tap) {
+CmdElf2Raw::CmdElf2Raw(IService *parent)
+    : ICommand(parent, "elf2raw") {
 
     briefDescr_.make_string("Load ELF-file");
     detailedDescr_.make_string(

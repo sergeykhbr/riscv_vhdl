@@ -41,9 +41,8 @@ class ISensor : public IFace {
 
 class SensorCmdType : public ICommand {
  public:
-    SensorCmdType(IService *parent, uint64_t dmibar, const char *name)
-        : ICommand(name, dmibar, 0) {
-        parent_ = parent;
+    SensorCmdType(IService *parent, const char *name)
+        : ICommand(parent, name) {
         isen_ = static_cast<ISensor *>(parent->getInterface(IFACE_SENSOR));
         briefDescr_.make_string("Generic Sensor instance management command.");
         detailedDescr_.make_string(
@@ -61,7 +60,7 @@ class SensorCmdType : public ICommand {
 
     /** ICommand */
     virtual int isValid(AttributeType *args) {
-        if (!isen_ || !(*args)[0u].is_equal(parent_->getObjName())) {
+        if (!isen_ || !(*args)[0u].is_equal(cmdParent_->getObjName())) {
             return CMD_INVALID;
         }
         return CMD_VALID;
@@ -83,7 +82,6 @@ class SensorCmdType : public ICommand {
     }
 
  protected:
-    IService *parent_;
     ISensor *isen_;
 };
 

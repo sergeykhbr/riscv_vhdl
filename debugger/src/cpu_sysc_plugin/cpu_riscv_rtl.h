@@ -34,7 +34,6 @@
 #include "coreservices/imemop.h"
 #include "coreservices/iclock.h"
 #include "coreservices/icmdexec.h"
-#include "coreservices/itap.h"
 #include "coreservices/iirq.h"
 #include "cmds/cmd_br_riscv.h"
 #include "rtl_wrapper.h"

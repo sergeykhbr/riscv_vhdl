@@ -26,8 +26,7 @@ namespace debugger {
 
 class FpuCmdType : public ICommand {
  public:
-    FpuCmdType(IService *parent, const char *name) : ICommand(name, 0, 0) {
-        parent_ = parent;
+    FpuCmdType(IService *parent, const char *name) : ICommand(parent, name) {
         briefDescr_.make_string("Test environment for FPU model.");
         detailedDescr_.make_string(
             "Test supported:\n"
@@ -40,9 +39,6 @@ class FpuCmdType : public ICommand {
     /** ICommand */
     virtual int isValid(AttributeType *args);
     virtual void exec(AttributeType *args, AttributeType *res);
-
- private:
-    IService *parent_;
 };
 
 class FpuFunctional : public IService {

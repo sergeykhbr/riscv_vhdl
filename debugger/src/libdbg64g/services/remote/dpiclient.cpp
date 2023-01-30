@@ -26,63 +26,7 @@ enum EDpiResponseList {
 };
 
 
-CmdDpi::CmdDpi(IService *parent, uint64_t dmibar)
-    : ICommand("dpi", dmibar, 0) {
-    parent_ = parent;
-    briefDescr_.make_string(
-    "Access to RTL simulation via TCP and DPI interface");
-    detailedDescr_.make_string(
-        "Description:\n"
-        "    This command is used to get time information from external\n"
-        "    RTL simulator or manulally forms AXI4 transactions for a debug\n"
-        "    purposes.\n"
-        "Example:\n"
-        "    dpi time\n"
-        "    dpi time sec\n"
-        "    dpi axi4 read 8 0x1000\n"
-        "    dpi axi4 write 8 0x1000 0xcafef00d\n"
-        );
-}
-
-int CmdDpi::isValid(AttributeType *args) {
-    if (!(*args)[0u].is_equal(cmdName_.to_string())) {
-        return CMD_INVALID;
-    }
-    if (!args->is_list() || args->size() < 2) {
-        return CMD_WRONG_ARGS;
-    }
-    return CMD_VALID;
-}
-
-void CmdDpi::exec(AttributeType *args, AttributeType *res) {
-    DpiClient *p = static_cast<DpiClient *>(parent_);
-    if ((*args)[1].is_equal("axi4")) {
-        if ((args->size() >= 5) && (*args)[2].is_equal("read")) {
-            uint64_t rdata = 0;
-            p->axi4_read((*args)[4].to_uint64(),
-                         (*args)[3].to_uint32(),
-                         &rdata);
-            res->make_uint64(rdata);
-        } else if ((args->size() >= 6) && (*args)[2].is_equal("write")) {
-            p->axi4_write((*args)[4].to_uint64(),
-                (*args)[3].to_uint32(),
-                (*args)[5].to_uint64());
-        }
-    } else if ((*args)[1].is_equal("time")) {
-        double tm = p->getHartBeatTime();
-        if (args->size() > 2 && (*args)[2].is_equal("sec")) {
-            tm /= 1000000000.0;     // ns to sec
-        }
-        res->make_floating(tm);
-    }
-    else if ((*args)[1].is_equal("clkcnt")) {
-        res->make_uint64(p->getHartBeatClkcnt());
-    }
-}
-
-
-DpiClient::DpiClient(const char *name) : IService(name),
-    cmd_(static_cast<IService *>(this), 0) {
+DpiClient::DpiClient(const char *name) : IService(name) {
     registerInterface(static_cast<IThread *>(this));
     registerInterface(static_cast<IDpi *>(this));
     registerInterface(static_cast<ITap *>(this));
@@ -117,8 +61,6 @@ void DpiClient::postinitService() {
     if (!iexec_) {
         RISCV_error("Can't get ICmdExecutor interface %s",
                     cmdexec_.to_string());
-    } else {
-        iexec_->registerCommand(&cmd_);
     }
 
     if (isEnable_.to_bool()) {
@@ -130,9 +72,6 @@ void DpiClient::postinitService() {
 }
 
 void DpiClient::predeleteService() {
-    if (iexec_) {
-        iexec_->unregisterCommand(&cmd_);
-    }
 }
 
 void DpiClient::busyLoop() {

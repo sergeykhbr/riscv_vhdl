@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,18 +14,16 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_CMD_LOADSREC_H__
-#define __DEBUGGER_CMD_LOADSREC_H__
+#pragma once
 
 #include "api_core.h"
-#include "coreservices/itap.h"
 #include "coreservices/icommand.h"
 
 namespace debugger {
 
-class CmdLoadSrec : public ICommand  {
+class CmdLoadSrec : public ICommandRiscv {
  public:
-    explicit CmdLoadSrec(uint64_t dmibar, ITap *tap);
+    explicit CmdLoadSrec(IService *parent, IJtag *ijtag);
 
     /** ICommand interface */
     virtual int isValid(AttributeType *args);
@@ -43,5 +41,3 @@ class CmdLoadSrec : public ICommand  {
 };
 
 }  // namespace debugger
-
-#endif  // __DEBUGGER_CMD_LOADSREC_H__

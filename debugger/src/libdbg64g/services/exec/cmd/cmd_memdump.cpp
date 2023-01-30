@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@
 
 namespace debugger {
 
-CmdMemDump::CmdMemDump(uint64_t dmibar, ITap *tap)
-    :ICommand ("memdump", dmibar, tap) {
+CmdMemDump::CmdMemDump(IService *parent, IJtag *ijtag)
+    : ICommandRiscv(parent, "memdump", ijtag) {
 
     briefDescr_.make_string("Dump memory to file");
     detailedDescr_.make_string(
@@ -60,7 +60,7 @@ void CmdMemDump::exec(AttributeType *args, AttributeType *res) {
     int len = static_cast<int>((*args)[2].to_uint64());
     res->make_data(len);
 
-    tap_->read(addr, len, res->data());
+    read_memory(addr, len, res->data());
     uint8_t *dumpbuf = res->data();
 
     if (args->size() == 5 && (*args)[4].is_equal("hex")) {

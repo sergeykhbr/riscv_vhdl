@@ -25,7 +25,7 @@ namespace debugger {
 
 class CmdLog : public ICommand  {
  public:
-    explicit CmdLog(uint64_t dmibar, ITap *tap);
+    explicit CmdLog(IService *parent);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);

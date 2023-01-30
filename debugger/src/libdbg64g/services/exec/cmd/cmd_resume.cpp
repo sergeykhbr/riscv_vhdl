@@ -21,8 +21,8 @@
 
 namespace debugger {
 
-CmdResume::CmdResume(IJtag *ijtag)
-    : ICommand ("resume", ijtag) {
+CmdResume::CmdResume(IService *parent, IJtag *ijtag)
+    : ICommandRiscv(parent, "resume", ijtag) {
 
     briefDescr_.make_string("Run simulation for a specify number of steps\"");
     detailedDescr_.make_string(
@@ -65,7 +65,6 @@ void CmdResume::exec(AttributeType *args, AttributeType *res) {
     IJtag::dmi_dmstatus_type dmstatus;
     IJtag::dmi_dmcontrol_type dmcontrol;
     IJtag::dmi_command_type command;
-    IJtag::dmi_abstractcs_type abstractcs;
     csr_dcsr_type dcsr;
     int watchdog = 0;
     res->attr_free();
@@ -74,66 +73,60 @@ void CmdResume::exec(AttributeType *args, AttributeType *res) {
     // TODO: write breakpoints
 
     // Flush everything:
-    ijtag_->scanDmi(IJtag::DMI_PROGBUF0, OPCODE_FENCE_I, IJtag::DmiOp_Write);
-    ijtag_->scanDmi(IJtag::DMI_PROGBUF1, OPCODE_FENCE, IJtag::DmiOp_Write);
-    ijtag_->scanDmi(IJtag::DMI_PROGBUF2, OPCODE_EBREAK, IJtag::DmiOp_Write);
+    write_dmi(IJtag::DMI_PROGBUF0, OPCODE_FENCE_I);
+    write_dmi(IJtag::DMI_PROGBUF1, OPCODE_FENCE);
+    write_dmi(IJtag::DMI_PROGBUF2, OPCODE_EBREAK);
 
     command.u32 = 0;
     command.regaccess.cmdtype = 0;
     command.regaccess.aarsize = IJtag::CMD_AAxSIZE_32BITS;
     command.regaccess.postexec = 1;
-    command.regaccess.regno = 0x1000;
-    ijtag_->scanDmi(IJtag::DMI_COMMAND, command.u32, IJtag::DmiOp_Write);
-    do {
-        abstractcs.u32 = ijtag_->scanDmi(IJtag::DMI_ABSTRACTCS, 0, IJtag::DmiOp_Read);
-    } while (abstractcs.bits.busy == 1);
+    command.regaccess.regno = reg2addr("r0");
+    write_dmi(IJtag::DMI_COMMAND, command.u32);
+    wait_dmi();
 
     // Read and write back the CSR register DCSR with the bits: ebreakm, ebreaks, ebreaku:
     command.u32 = 0;
     command.regaccess.cmdtype = 0;
     command.regaccess.aarsize = IJtag::CMD_AAxSIZE_64BITS;
     command.regaccess.transfer = 1;
-    command.regaccess.regno = 0x7b0;        // DCSR
-    ijtag_->scanDmi(IJtag::DMI_COMMAND, command.u32, IJtag::DmiOp_Write);
-    do {
-        abstractcs.u32 = ijtag_->scanDmi(IJtag::DMI_ABSTRACTCS, 0, IJtag::DmiOp_Read);
-    } while (abstractcs.bits.busy == 1);
+    command.regaccess.regno = reg2addr("dcsr");
+    write_dmi(IJtag::DMI_COMMAND, command.u32);
+    wait_dmi();
 
-    dcsr.u32[0] = ijtag_->scanDmi(IJtag::DMI_ABSTRACT_DATA0, 0, IJtag::DmiOp_Read);
-    dcsr.u32[1] = ijtag_->scanDmi(IJtag::DMI_ABSTRACT_DATA1, 0, IJtag::DmiOp_Read);
+    dcsr.u32[0] = read_dmi(IJtag::DMI_ABSTRACT_DATA0);
+    dcsr.u32[1] = read_dmi(IJtag::DMI_ABSTRACT_DATA1);
     dcsr.bits.ebreakm = 1;
     dcsr.bits.ebreaks = 1;
     dcsr.bits.ebreaku = 1;
-    ijtag_->scanDmi(IJtag::DMI_ABSTRACT_DATA0, dcsr.u32[0], IJtag::DmiOp_Write);
+    write_dmi(IJtag::DMI_ABSTRACT_DATA0, dcsr.u32[0]);
 
     command.u32 = 0;
     command.regaccess.cmdtype = 0;
     command.regaccess.aarsize = IJtag::CMD_AAxSIZE_64BITS;
     command.regaccess.transfer = 1;
     command.regaccess.write = 1;
-    command.regaccess.regno = 0x7b0;        // DCSR
-    ijtag_->scanDmi(IJtag::DMI_COMMAND, command.u32, IJtag::DmiOp_Write);
-    do {
-        abstractcs.u32 = ijtag_->scanDmi(IJtag::DMI_ABSTRACTCS, 0, IJtag::DmiOp_Read);
-    } while (abstractcs.bits.busy == 1);
+    command.regaccess.regno = reg2addr("dcsr");
+    write_dmi(IJtag::DMI_COMMAND, command.u32);
+    wait_dmi();
 
 
     // set resume request:
     dmcontrol.u32 = 0;
     dmcontrol.bits.dmactive = 1;
     dmcontrol.bits.resumereq = 1;
-    ijtag_->scanDmi(IJtag::DMI_DMCONTROL, dmcontrol.u32, IJtag::DmiOp_Write);
+    write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
 
     // All harts should run:
     dmstatus.u32 = 0;
     do {
-        dmstatus.u32 = ijtag_->scanDmi(IJtag::DMI_DMSTATUS, 0, IJtag::DmiOp_Read);
+        dmstatus.u32 = read_dmi(IJtag::DMI_DMSTATUS);
     } while (dmstatus.bits.allrunning == 0 && watchdog++ < 5);
 
     // clear resume request
     dmcontrol.u32 = 0;
     dmcontrol.bits.dmactive = 1;
-    ijtag_->scanDmi(IJtag::DMI_DMCONTROL, dmcontrol.u32, IJtag::DmiOp_Write);
+    write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
 
     if (dmstatus.bits.allrunning == 0) {
         generateError(res, "Cannot resume selected harts");
