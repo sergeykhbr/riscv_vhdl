@@ -141,15 +141,18 @@ ESdCardType spi_sd_card_init(SpiDriverDataType *p) {
     printf_uart("%s", "\r\n");
 
     // Reset SD-card
-    printf_uart("%s", "CMD0: ");
-    spi_send_cmd(p, CMD0, 0x0);
-    rdcnt = read_rx_fifo(p);
-    for (int i = 0; i < rdcnt; i++) {
-        printf_uart("%02x ", p->rxbuf[i]);
-    }
+    R1 = 0;
+    do {
+        printf_uart("%s", "CMD0: ");
+        spi_send_cmd(p, CMD0, 0x0);
+        rdcnt = read_rx_fifo(p);
+        for (int i = 0; i < rdcnt; i++) {
+            printf_uart("%02x ", p->rxbuf[i]);
+        }
 
-    R1 = get_r1_response(p);
-    printf_uart("R1: %02x\r\n", R1);
+        R1 = get_r1_response(p);
+        printf_uart("R1: %02x\r\n", R1);
+    } while (R1 != 0x01);
     
 
     // Interface Condition Command:
@@ -391,6 +394,22 @@ int spi_sd_card_memcpy(uint64_t src, uint64_t dst, int sz) {
         }
     }
 
+    // Stop Data block
+#ifdef DEBUG_DATA_BLOCK
+    printf_uart("%s", "CMD12: ");
+#endif
+    spi_send_cmd(p, CMD12, sd_addr);
+    rdcnt = read_rx_fifo(p);
+#ifdef DEBUG_DATA_BLOCK
+    for (int i = 0; i < rdcnt; i++) {
+        printf_uart("%02x ", p->rxbuf[i]);
+    }
+#endif
+    R1 = get_r1_response(p);
+#ifdef DEBUG_DATA_BLOCK
+    printf_uart("R1: %02x\r\n", R1);
+#endif
+
     return bytes_copied;
 }
 
@@ -400,7 +419,7 @@ ESdCardType spi_init(void) {
     SpiDriverDataType *p = (SpiDriverDataType *)fw_malloc(sizeof(SpiDriverDataType));
     memset(p, 0, sizeof(SpiDriverDataType));
     p->map = (qspi_map *)ADDR_BUS1_APB_QSPI2;
-    p->map->sckdiv = 2;    // half period
+    p->map->sckdiv = 8;    // half period
 
     fw_register_ram_data("spi", p);
    
