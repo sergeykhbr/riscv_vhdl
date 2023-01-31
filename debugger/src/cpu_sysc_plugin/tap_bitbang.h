@@ -17,13 +17,13 @@
 #pragma once
 
 #include "api_core.h"
-#include "coreservices/ijtagtap.h"
+#include "coreservices/ijtagbitbang.h"
 #include <systemc.h>
 
 namespace debugger {
 
 class TapBitBang : public sc_module,
-                   public IJtagTap {
+                   public IJtagBitBang {
  public:
     sc_in<bool> i_clk;   // system clock
     sc_out<bool> o_trst; // Must be open-train, pullup

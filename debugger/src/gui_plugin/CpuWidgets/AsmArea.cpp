@@ -93,7 +93,7 @@ AsmArea::AsmArea(IGui *gui, QWidget *parent, uint64_t fixaddr)
 
     RISCV_mutex_init(&mutexAsmGaurd_);
 
-    reqNpc_.make_string("core0 reg npc");
+    reqNpc_.make_string("reg pc");
 }
 
 AsmArea::~AsmArea() {

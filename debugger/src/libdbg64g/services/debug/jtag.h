@@ -19,7 +19,7 @@
 #include <iclass.h>
 #include <iservice.h>
 #include "coreservices/ijtag.h"
-#include "coreservices/ijtagtap.h"
+#include "coreservices/ijtagbitbang.h"
 
 namespace debugger {
 
@@ -30,7 +30,7 @@ class JTAG : public IService,
     virtual ~JTAG();
 
     /** IService interface */
-    virtual void postinitService();
+    virtual void postinitService() override;
 
     /** IJtag */
     virtual void resetAsync();
@@ -49,8 +49,8 @@ class JTAG : public IService,
     uint64_t getRxData();
 
  protected:
-    AttributeType target_;
-    IJtagTap *ibitbang_;
+    AttributeType targetBitBang_;
+    IJtagBitBang *ibb_;
 
     static const int SCAN_LENGTH_MAX = 4096;
 

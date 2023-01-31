@@ -16,16 +16,19 @@
 
 #include "dtmfunc.h"
 #include <riscv-isa.h>
+#include "coreservices/ijtag.h"
 
 namespace debugger {
 
 DtmFunctional::DtmFunctional(const char * name)
     : IService(name) {
-    registerInterface(static_cast<IJtagTap *>(this));
+    registerInterface(static_cast<IJtagBitBang *>(this));
 
-    registerAttribute("SysBus", &sysbus_);
-    registerAttribute("DmiBAR", &dmibar_);
-    registerAttribute("SysBusMasterID", &busid_);
+    registerAttribute("Version", &version_);
+    registerAttribute("IdCode", &idcode_);
+    registerAttribute("irlen", &irlen_);
+    registerAttribute("abits", &abits_);
+    registerAttribute("Dmi", &dmi_);
 
     estate_ = RESET_TAP;
     ir_ = IR_IDCODE;
@@ -33,30 +36,31 @@ DtmFunctional::DtmFunctional(const char * name)
     dr_length_ = 0;
     bypass_ = 0;
     dmi_addr_ = 0;
-    memset(&trans_, 0, sizeof(trans_));
+    dmi_data_ = 0;
 }
 
 DtmFunctional::~DtmFunctional() {
 }
 
 void DtmFunctional::postinitService() {
-    ibus_ = static_cast<IMemoryOperation *>(
-        RISCV_get_service_iface(sysbus_.to_string(), IFACE_MEMORY_OPERATION));
+    idmi_ = static_cast<IDmi *>(
+        RISCV_get_service_iface(dmi_.to_string(), IFACE_DMI));
 
-    if (!ibus_) {
-        RISCV_error("Cannot get IMemoryOperation interface at %s",
-                    sysbus_.to_string());
+    if (!idmi_) {
+        RISCV_error("Cannot get IDmi interface at %s",
+                    dmi_.to_string());
     }
 }
 
 void DtmFunctional::resetTAP(char trst, char srst) {
-    estate_ = RESET_TAP;
-    ir_ = IR_IDCODE;
+    if (trst == 1) {
+        estate_ = RESET_TAP;
+        ir_ = IR_IDCODE;
+    }
 }
 
 void DtmFunctional::setPins(char tck, char tms, char tdi) {
     bool tck_posedge = false;
-    uint64_t stat = DMISTAT_SUCCESS;
 
     if (!tck_ && tck) {
         tck_posedge = true;
@@ -70,20 +74,29 @@ void DtmFunctional::setPins(char tck, char tms, char tdi) {
     }
 
     switch (estate_) {
+    case RESET_TAP:
+        ir_ = IR_IDCODE;
+        break;
     case CAPTURE_DR:
         if (ir_ == IR_IDCODE) {
-            dr_ = idcode;
+            dr_ = idcode_.to_uint32();
             dr_length_ = 32;
         } else if (ir_ == IR_DTMCONTROL) {
-            dr_ = 0x1;      // version
-            dr_ |= abits << 4;    // the size of the address
-            dr_ |= stat << 10;
+            IJtag::DtmcsType dtmcs;
+            dtmcs.u32 = 0;
+            dtmcs.bits.version = version_.to_uint32();
+            dtmcs.bits.abits = abits_.to_uint32();
+            dtmcs.bits.dmistat = idmi_->dmi_status();
+            dr_ = dtmcs.u32;
             dr_length_ = 32;
         } else if (ir_ == IR_DBUS) {
-            dr_ = stat;
-            dr_ |= (trans_.rpayload.b64[0] << 2);
-            dr_ |= dmi_addr_ << 34;
-            dr_length_ = abits + 34;
+            IJtag::DmiType dmi;
+            dmi.u64 = 0;
+            dmi.bits.status = dmi_status_;
+            dmi.bits.data = dmi_data_;
+            dmi.bits.addr = dmi_addr_;
+            dr_ = dmi.u64;
+            dr_length_ = abits_.to_int() + 34;
         } else if (ir_ == IR_BYPASS) {
             dr_ = bypass_;
             dr_length_ = 1;
@@ -95,54 +108,45 @@ void DtmFunctional::setPins(char tck, char tms, char tdi) {
         break;
     case UPDATE_DR:
         if (ir_ == IR_DTMCONTROL) {
-            //v_dmi_reset = r.dr.read()[DTMCONTROL_DMIRESET];
-            //v_dmi_hardreset = r.dr.read()[DTMCONTROL_DMIHARDRESET];
+            IJtag::DtmcsType dtmcs;
+            dtmcs.u32 = static_cast<uint32_t>(dr_);
+
+            if (dtmcs.bits.dmireset) {      // W1: Only 1 takes effect
+                idmi_->dtm_dmireset();
+            }
+            if (dtmcs.bits.dmihardreset) {  // W1: Only 1 takes effect
+                idmi_->dtm_dmihardreset();
+            }
         } else if (ir_ == IR_BYPASS) {
             bypass_ = dr_ & 0x1;
         } else if (ir_ == IR_DBUS) {
-            dmi_addr_ = (dr_ >> 34) & ((1ull << abits) - 1);
-            trans_.rpayload.b64[0] = (dr_ >> 2) & 0xFFFFFFFFul;
-            if (dr_ & 0x3) {        // read | write
-                if ((dr_ >> 1) & 0x1) {
-                    trans_.action = MemAction_Write;
-                    if (dmi_addr_ == 0x10) {
-                        uint32_t selhart = (trans_.rpayload.b32[0] >> 6) & 0x3FF;
-                        selhart =  (selhart << 10) | ((trans_.rpayload.b32[0] >> 16) & 0x3FF);
-                        RISCV_debug("DMI: [0x%02x] <= %08x, Select hart 0x%x",
-                                     dmi_addr_, trans_.rpayload.b32[0], selhart);
-                    } else {
-                        RISCV_debug("DMI: [0x%02x] <= %08x",
-                                     dmi_addr_, trans_.rpayload.b32[0]);
-                    }
-                } else {
-                    trans_.action = MemAction_Read;
-                }
-                trans_.source_idx = busid_.to_int();
-                trans_.addr = dmibar_.to_uint64() + (dmi_addr_ << 2);
-                trans_.xsize = 4;
-                trans_.wstrb = (1u << trans_.xsize) - 1;
-                trans_.wpayload.b64[0] = trans_.rpayload.b64[0];
-                ibus_->b_transport(&trans_);
-
-                if (trans_.action == MemAction_Read && dmi_addr_ != 0x11) {
-                    // Exclude polling DMI status from the debug output
-                    RISCV_debug("DMI: [0x%02x] => %08x",
-                                 dmi_addr_, trans_.rpayload.b32[0]);
-                }
+            IJtag::DmiType dmi;
+            dmi.u64 = dr_;
+            dmi_addr_ = static_cast<uint32_t>(dmi.bits.addr);
+            dmi_data_ = static_cast<uint32_t>(dmi.bits.data);
+            if (dr_ & 0x2) {
+                RISCV_debug("DMI: [0x%02x] <= %08x", dmi_addr_, dmi_data_);
+                dmi_status_ = idmi_->dmi_write(dmi_addr_, dmi_data_);
+            } else if (dr_ & 0x1) {
+                dmi_status_ = idmi_->dmi_read(dmi_addr_, &dmi_data_);
+                RISCV_debug("DMI: [0x%02x] => %08x", dmi_addr_, dmi_data_);
+            } else {
+                // Ignore. Empty request
+                dmi_status_ = 0;
             }
         }
         break;
     case CAPTURE_IR:
-        dr_ = ir_ & ((1ul << irlen) - 1);
+        dr_ = ir_ & ((1ul << irlen_.to_int()) - 1);
         dr_ = (dr_ >> 2) << 2;
         dr_ |= 0x1;
         break;
     case SHIFT_IR:
         dr_ >>= 1;
-        dr_ |= (tdi_ << (irlen - 1));
+        dr_ |= (tdi_ << (irlen_.to_int() - 1));
         break;
     case UPDATE_IR:
-        ir_ = dr_ & ((1ull << irlen) - 1);
+        ir_ = dr_ & ((1ull << irlen_.to_int()) - 1);
         break;
     default:;
     }

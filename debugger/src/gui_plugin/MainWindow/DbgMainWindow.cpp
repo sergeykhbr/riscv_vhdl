@@ -56,10 +56,10 @@ DbgMainWindow::DbgMainWindow(IGui *igui) : QMainWindow() {
     listConsoleListeners_.make_list(0);
     /** Console commands used by main window: */
     cmdStatus_.make_string("status");
-    cmdRun_.make_string("core0 go");
-    cmdHalt_.make_string("core0 halt");
-    cmdStep_.make_string("core0 step");
-    cmdSteps_.make_string("core0 reg steps");
+    cmdRun_.make_string("go");
+    cmdHalt_.make_string("halt");
+    cmdStep_.make_string("step");
+    cmdSteps_.make_string("reg insret");
  
     createActions();
     createMenus();

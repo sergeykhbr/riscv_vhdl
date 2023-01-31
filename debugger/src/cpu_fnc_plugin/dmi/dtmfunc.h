@@ -19,14 +19,14 @@
 #include "api_core.h"
 #include "iclass.h"
 #include "iservice.h"
-#include "coreservices/imemop.h"
 #include "coreservices/ireset.h"
-#include "coreservices/ijtagtap.h"
+#include "coreservices/ijtagbitbang.h"
+#include "coreservices/idmi.h"
 
 namespace debugger {
 
 class DtmFunctional : public IService,
-                      public IJtagTap {
+                      public IJtagBitBang {
 
  public:
     explicit DtmFunctional(const char* name);
@@ -40,13 +40,14 @@ class DtmFunctional : public IService,
     virtual void setPins(char tck, char tms, char tdi);
     virtual bool getTDO();
 
-
  private:
-    AttributeType sysbus_;
-    AttributeType dmibar_;
-    AttributeType busid_;
+    AttributeType version_;
+    AttributeType idcode_;
+    AttributeType irlen_;
+    AttributeType abits_;
+    AttributeType dmi_;
 
-    IMemoryOperation *ibus_;
+    IDmi *idmi_;
 
     char tck_;
     char tms_;
@@ -97,16 +98,6 @@ class DtmFunctional : public IService,
       IR_BYPASS=0x1f
     };
 
-    static const uint64_t DMISTAT_SUCCESS           = 0;
-    static const uint64_t DMISTAT_RESERVED          = 1;
-    static const uint64_t DMISTAT_FAILED            = 2;
-    static const uint64_t DMISTAT_BUSY              = 3;
-
-    static const int idcode = 0x10e31913;
-    static const int abits = 7;
-    static const int drlen = abits + 32 + 2;
-    static const int irlen = 5;
-
 
     jtag_state_t estate_;
     uint64_t dr_;
@@ -114,8 +105,9 @@ class DtmFunctional : public IService,
     uint64_t bypass_;
     int dr_length_;
 
-    uint64_t dmi_addr_;
-    Axi4TransactionType trans_;
+    uint32_t dmi_addr_;
+    uint32_t dmi_data_;
+    uint32_t dmi_status_;
 };
 
 DECLARE_CLASS(DtmFunctional)

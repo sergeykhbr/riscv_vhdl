@@ -33,16 +33,16 @@ TcpJtagBitBangClient::~TcpJtagBitBangClient() {
 
 void TcpJtagBitBangClient::postinitService() {
     if (jtagtap_.is_list()) {
-        itap_ = static_cast<IJtagTap *>(
+        ijtagbb_ = static_cast<IJtagBitBang *>(
             RISCV_get_service_port_iface(jtagtap_[0u].to_string(),
                                          jtagtap_[1].to_string(),
-                                         IFACE_JTAG_TAP));
+                                         IFACE_JTAG_BITBANG));
     } else {
-        itap_ = static_cast<IJtagTap *>(
-            RISCV_get_service_iface(jtagtap_.to_string(), IFACE_JTAG_TAP));
+        ijtagbb_ = static_cast<IJtagBitBang *>(
+            RISCV_get_service_iface(jtagtap_.to_string(), IFACE_JTAG_BITBANG));
     }
-    if (!itap_) {
-        RISCV_error("IJtagTap interface '%s' not found", 
+    if (!ijtagbb_) {
+        RISCV_error("IJtagBitBang interface '%s' not found", 
                     jtagtap_.to_string());
         return;
     }
@@ -76,43 +76,43 @@ void TcpJtagBitBangClient::busyLoop() {
                 RISCV_debug("%s", "Blink off");
                 break;
             case 'r':
-                itap_->resetTAP(0, 0);
+                ijtagbb_->resetTAP(0, 0);
                 break;
             case 's':
-                itap_->resetTAP(0, 1);
+                ijtagbb_->resetTAP(0, 1);
                 break;
             case 't':
-                itap_->resetTAP(1, 0);
+                ijtagbb_->resetTAP(1, 0);
                 break;
             case 'u':
-                itap_->resetTAP(1, 1);
+                ijtagbb_->resetTAP(1, 1);
                 break;
             case '0':
-                itap_->setPins(0, 0, 0);
+                ijtagbb_->setPins(0, 0, 0);
                 break;
             case '1':
-                itap_->setPins(0, 0, 1);
+                ijtagbb_->setPins(0, 0, 1);
                 break;
             case '2':
-                itap_->setPins(0, 1, 0);
+                ijtagbb_->setPins(0, 1, 0);
                 break;
             case '3':
-                itap_->setPins(0, 1, 1);
+                ijtagbb_->setPins(0, 1, 1);
                 break;
             case '4':
-                itap_->setPins(1, 0, 0);
+                ijtagbb_->setPins(1, 0, 0);
                 break;
             case '5':
-                itap_->setPins(1, 0, 1);
+                ijtagbb_->setPins(1, 0, 1);
                 break;
             case '6':
-                itap_->setPins(1, 1, 0);
+                ijtagbb_->setPins(1, 1, 0);
                 break;
             case '7':
-                itap_->setPins(1, 1, 1);
+                ijtagbb_->setPins(1, 1, 1);
                 break;
             case 'R':
-                txbuf_[tsz++] = itap_->getTDO() ? '1' : '0';
+                txbuf_[tsz++] = ijtagbb_->getTDO() ? '1' : '0';
                 break;
             case 'Q':
                 quit = true;

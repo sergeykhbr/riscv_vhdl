@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -12,8 +12,6 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- *
- * @brief      General interface of the hardware access.
  */
 
 #pragma once
@@ -24,22 +22,22 @@
 
 namespace debugger {
 
-static const char *const IFACE_JTAG_TAP = "IJtagTap";
+static const char *const IFACE_JTAG_BITBANG = "IJtagBitBang";
 
-static const char *const IJtagTap_brief =
-"Test Access Point (TAP) pin compatible interface.";
+static const char *const IJtagBitBang_brief =
+"JTAG Bit Bang interface.";
 
-static const char *const IJtagTap_detail =
+static const char *const IJtagBitBang_detail =
 "This interface is used for the bitbang access to the simulated "
 "hardware from the OpenOCD utility.";
 
-class IJtagTap : public IFace {
+class IJtagBitBang : public IFace {
  public:
-    IJtagTap() : IFace(IFACE_JTAG_TAP) {}
+    IJtagBitBang() : IFace(IFACE_JTAG_BITBANG) {}
 
-    virtual const char *getBrief() { return IJtagTap_brief; }
+    virtual const char *getBrief() { return IJtagBitBang_brief; }
 
-    virtual const char *getDetail() { return IJtagTap_detail; }
+    virtual const char *getDetail() { return IJtagBitBang_detail; }
 
     virtual void resetTAP(char trst, char srst) = 0;
     virtual void setPins(char tck, char tms, char tdi) = 0;

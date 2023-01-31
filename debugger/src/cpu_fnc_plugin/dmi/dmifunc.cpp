@@ -16,22 +16,13 @@
 
 #include "dmifunc.h"
 #include <riscv-isa.h>
+#include "coreservices/ijtag.h"
 
 namespace debugger {
 
 DmiFunctional::DmiFunctional(const char *name)
-    : RegMemBankGeneric(name),
-    databuf(this, "databuf", 0x04*sizeof(uint32_t)),
-    dmcontrol(this, "dmcontrol", 0x10*sizeof(uint32_t)),
-    dmstatus(this, "dmstatus", 0x11*sizeof(uint32_t)),
-    hartinfo(this, "hartinfo", 0x12*sizeof(uint32_t)),
-    abstractcs(this, "abstractcs", 0x16*sizeof(uint32_t)),
-    command(this, "command", 0x17*sizeof(uint32_t)),
-    abstractauto(this, "abstractauto", 0x18*sizeof(uint32_t)),
-    progbuf(this, "progbuf", 0x20*sizeof(uint32_t)),
-    sbcs(this, "sbcs", 0x38*sizeof(uint32_t)),
-    haltsum0(this, "haltsum0", 0x40*sizeof(uint32_t)) {
-
+    : IService(name) {
+    registerInterface(static_cast<IMemoryOperation *>(this));
     registerInterface(static_cast<IDmi *>(this));
 
     registerAttribute("SysBus", &sysbus_);
@@ -42,6 +33,8 @@ DmiFunctional::DmiFunctional(const char *name)
     registerAttribute("HartList", &hartlist_);
 
     phartdata_ = 0;
+    hartsel_ = 0;
+    arg0_.val = 0;
 }
 
 DmiFunctional::~DmiFunctional() {
@@ -51,12 +44,6 @@ DmiFunctional::~DmiFunctional() {
 }
 
 void DmiFunctional::postinitService() {
-    RegMemBankGeneric::postinitService();
-
-    // Will be mapped with the changed size by hap trigger handler
-    databuf.setRegTotal(dataregTotal_.to_int());
-    progbuf.setRegTotal(progbufTotal_.to_int());
-
     ibus_ = static_cast<IMemoryOperation *>(
             RISCV_get_service_iface(sysbus_.to_string(),
                                     IFACE_MEMORY_OPERATION));
@@ -81,52 +68,109 @@ void DmiFunctional::postinitService() {
     }
 }
 
-void DmiFunctional::readTransfer(uint32_t regno, uint32_t size) {
-    IDPort *idport = phartdata_[getHartSelected()].idport;
-    uint64_t rdata = 0;
-    rdata = idport->readRegDbg(regno);
-    switch (size) {
-    case 0:
-        rdata &= 0xFFull;
-        databuf.getp()[0].val = static_cast<uint32_t>(rdata);
-        break;
-    case 1:
-        rdata &= 0xFFFFull;
-        databuf.getp()[0].val = static_cast<uint32_t>(rdata);
-        break;
-    case 2:
-        rdata &= 0xFFFFFFFFull;
-        databuf.getp()[0].val = static_cast<uint32_t>(rdata);
-        break;
-    default:
-        databuf.getp()[0].val = static_cast<uint32_t>(rdata);
-        databuf.getp()[1].val = static_cast<uint32_t>(rdata >> 32);
+ETransStatus DmiFunctional::b_transport(Axi4TransactionType *trans) {
+    uint32_t off = static_cast<uint32_t>(trans->addr - getBaseAddress()) >> 2;
+    if (trans->xsize != 4 || (trans->addr & 0x3) != 0) {
+        return TRANS_ERROR;
     }
+    if (trans->action == MemAction_Write) {
+        dmi_write(off, trans->wpayload.b32[0]);
+    } else {
+        dmi_read(off, &trans->rpayload.b32[0]);
+    }
+    return TRANS_OK;
 }
 
-void DmiFunctional::writeTransfer(uint32_t regno, uint32_t size) {
-    IDPort *idport = phartdata_[getHartSelected()].idport;
-    uint64_t arg0 = databuf.getp()[1].val;
-    arg0 = (arg0 << 32) | databuf.getp()[0].val;
-    if (size == 2) {
-        arg0 &= 0xFFFFFFFFull;
+uint32_t DmiFunctional::dmi_read(uint32_t addr, uint32_t *rdata) {
+    uint32_t ret = DMI_STAT_SUCCESS;
+    if (addr == IJtag::DMI_DMSTATUS) {
+        IJtag::dmi_dmstatus_type dmstatus;
+        dmstatus.u32 = 0;
+        dmstatus.bits.version = 1;
+        dmstatus.bits.allhalted = 1;
+        dmstatus.bits.anyhalted = 0;
+        dmstatus.bits.allrunning = 1;
+        dmstatus.bits.anyrunning = 0;
+        for (unsigned i = 0; i < hartlist_.size(); i++) {
+            if (phartdata_[i].idport->isHalted()) {
+                dmstatus.bits.allrunning = 0;
+                dmstatus.bits.allhalted = 1;
+            } else {
+                dmstatus.bits.allhalted = 0;
+                dmstatus.bits.anyrunning = 1;
+            }
+        }
+
+        *rdata = dmstatus.u32;
+    } else if (addr == IJtag::DMI_DMCONTROL) {
+        IJtag::dmi_dmcontrol_type dmcontrol;
+        dmcontrol.u32 = 0;
+        dmcontrol.bits.dmactive = 1;
+        dmcontrol.bits.hartselhi = hartsel_ >> 10;
+        dmcontrol.bits.hartsello = hartsel_;
+        *rdata = dmcontrol.u32;
+    } else if (addr == IJtag::DMI_ABSTRACTCS) {
+        IJtag::dmi_abstractcs_type abstractcs;
+        abstractcs.u32 = 0;
+        abstractcs.bits.datacount = 2;
+        abstractcs.bits.progbufsize = 16;
+        abstractcs.bits.cmderr = 0;
+        *rdata = abstractcs.u32;
+    } else if (addr == IJtag::DMI_ABSTRACT_DATA0) {
+        *rdata = arg0_.buf32[0];
+    } else if (addr == IJtag::DMI_ABSTRACT_DATA1) {
+        *rdata = arg0_.buf32[1];
+    } else if (addr == IJtag::DMI_HALTSUM0) {
+        *rdata = 0;
+        for (unsigned i = 0; i < hartlist_.size(); i++) {
+            if (phartdata_[i].idport->isHalted()) {
+                *rdata |= 1u << i;
+            }
+        }
+    } else {
+        RISCV_info("Unimplemented DMI read request at %02x", addr);
+        ret = DMI_STAT_FAILED;
     }
-    idport->writeRegDbg(regno, arg0);
+    return ret;
 }
 
-void DmiFunctional::executeProgbuf() {
-    IDPort *idport = phartdata_[getHartSelected()].idport;
-    if (idport->executeProgbuf(progbuf.getpR32())) {
-        // error
-        // TODO:
-    }
-}
-
-bool DmiFunctional::isCommandBusy() {
-    IDPort *idport = phartdata_[getHartSelected()].idport;
-    bool ret = false;
-    if (idport) {
-        ret = idport->isExecutingProgbuf();
+uint32_t DmiFunctional::dmi_write(uint32_t addr, uint32_t wdata) {
+    uint32_t ret = DMI_STAT_SUCCESS;
+    if (addr == IJtag::DMI_DMCONTROL) {
+        IDPort *idport;
+        IJtag::dmi_dmcontrol_type dmcontrol;
+        dmcontrol.u32 = wdata;
+        hartsel_ = dmcontrol.bits.hartselhi;
+        hartsel_ = (hartsel_ << 10) | dmcontrol.bits.hartsello;
+        if (hartsel_ >= hartlist_.size()) {
+            hartsel_ = hartlist_.size() - 1;
+        }
+        idport = phartdata_[hartsel_].idport;
+        if (dmcontrol.bits.haltreq) {
+            idport->haltreq();
+        } else if (dmcontrol.bits.resumereq) {
+            idport->resumereq();
+            phartdata_[hartsel_].resumeack = 1;     // FIXME: should be callback from CPU when hart is really running
+        }
+    } else if (addr == IJtag::DMI_COMMAND) {
+        IJtag::dmi_command_type command;
+        IDPort *idport = phartdata_[hartsel_].idport;
+        command.u32 = wdata;
+        if (command.regaccess.cmdtype == 0) {
+            //idport->
+        } else if (command.quickaccess.cmdtype == 1) {
+        } else if (command.memaccess.cmdtype == 2) {
+        } else {
+            RISCV_info("Wrong command type at %02x", command.regaccess.cmdtype);
+            ret = DMI_STAT_FAILED;
+        }
+    } else if (addr == IJtag::DMI_ABSTRACT_DATA0) {
+        arg0_.buf32[0] = wdata;
+    } else if (addr == IJtag::DMI_ABSTRACT_DATA1) {
+        arg0_.buf32[1] = wdata;
+    } else {
+        RISCV_info("Unimplemented DMI write request at %02x", addr);
+        ret = DMI_STAT_FAILED;
     }
     return ret;
 }

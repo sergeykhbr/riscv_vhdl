@@ -20,7 +20,7 @@
 #include <iservice.h>
 #include "tcpcmd_gen.h"
 #include "coreservices/ithread.h"
-#include "coreservices/ijtagtap.h"
+#include "coreservices/ijtagbitbang.h"
 
 namespace debugger {
 
@@ -48,7 +48,7 @@ class TcpJtagBitBangClient : public IService,
     AttributeType isEnable_;
     AttributeType jtagtap_;
 
-    IJtagTap *itap_;
+    IJtagBitBang *ijtagbb_;
 
     socket_def hsock_;
     mutex_def mutexTx_;

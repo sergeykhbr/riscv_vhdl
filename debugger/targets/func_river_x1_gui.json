@@ -2,7 +2,7 @@
   'GlobalSettings':{
     'SimEnable':true,
     'GUI':true,
-    'InitCommands':[
+    'InitCommands':['init'
                    ],
     'Description':'Functional simulation of the RISC-V Single Core River CPU'
   },
@@ -84,10 +84,12 @@
                 ]}]},
     {'Class':'DtmFunctionalClass','Instances':[
           {'Name':'dtm0','Attr':[
-                ['LogLevel',4],
-                ['SysBus','axi0'],
-                ['SysBusMasterID',3,'Used to gather Bus statistic'],
-                ['DmiBAR',0x1000,'Base address of the DMI module'],
+                ['LogLevel',3],
+                ['Version',1,'Field in dtmcs register'],
+                ['IdCode',0x10e31913,'TAP ID'],
+                ['irlen',5,'IR length'],
+                ['abits',7,'Field in dtmcs register'],
+                ['Dmi','dmi0'],
                 ]}]},
 
     {'Class':'BusGenericClass','Instances':[
@@ -101,8 +103,8 @@
                 ]}]},
     {'Class':'JTAGClass','Instances':[
           {'Name':'jtag0','Attr':[
-                ['LogLevel',4],
-                ['Target',['core0','tap']],
+                ['LogLevel',3],
+                ['TargetBitBang','dtm0'],
           ]}]},
   ]
 }

@@ -21,8 +21,8 @@ namespace debugger {
 
 JTAG::JTAG(const char *name) : IService(name) {
     registerInterface(static_cast<IJtag *>(this));
-    registerAttribute("Target", &target_);
-    ibitbang_ = 0;
+    registerAttribute("TargetBitBang", &targetBitBang_);
+    ibb_ = 0;
     trst_ = 0;
     srst_ = 0;
     memset(out_, 0, sizeof(out_));
@@ -36,24 +36,28 @@ JTAG::~JTAG() {
 }
 
 void JTAG::postinitService() {
-    if (target_.is_list() && target_.size() == 2) {
-        ibitbang_ = static_cast<IJtagTap *>(
-            RISCV_get_service_port_iface(target_[0u].to_string(),
-                                         target_[1].to_string(),
-                                         IFACE_JTAG_TAP));
+    if (targetBitBang_.is_list() && targetBitBang_.size() == 2) {
+        ibb_ = static_cast<IJtagBitBang *>(
+            RISCV_get_service_port_iface(targetBitBang_[0u].to_string(),
+                                         targetBitBang_[1].to_string(),
+                                         IFACE_JTAG_BITBANG));
+    } else {
+        ibb_ = static_cast<IJtagBitBang *>(
+            RISCV_get_service_iface(targetBitBang_.to_string(),
+                                    IFACE_JTAG_BITBANG));
     }
-    if (ibitbang_ == 0) {
-        RISCV_error("Cannot get IJtagTap interface");
+    if (ibb_ == 0) {
+        RISCV_error("Cannot get IJtagBitBang interface");
     }
 }
 
 void JTAG::resetAsync() {
     srst_ = 1;
     trst_ = 1;
-    ibitbang_->resetTAP(trst_, srst_);
+    ibb_->resetTAP(trst_, srst_);
     srst_ = 0;
     trst_ = 0;
-    ibitbang_->resetTAP(trst_, srst_);
+    ibb_->resetTAP(trst_, srst_);
 }
 
 void JTAG::resetSync() {
@@ -166,8 +170,8 @@ void JTAG::endScanSequenceToIdle() {
 void JTAG::transmitScanSequence() {
     drshift_ = 0;
     for (int i = 0; i < scanSize_; i++) {
-        ibitbang_->setPins(0, out_[i].tms, out_[i].tdo);
-        tdi_[i] = ibitbang_->getTDO();
+        ibb_->setPins(0, out_[i].tms, out_[i].tdo);
+        tdi_[i] = ibb_->getTDO();
         if (out_[i].state == DRSHIFT) {
             drshift_ >>= 1;
             if (ir_ == IJtag::IR_DMI) {
@@ -176,9 +180,9 @@ void JTAG::transmitScanSequence() {
                 drshift_ |= static_cast<uint64_t>(tdi_[i]) << 31;
             }
         }
-        ibitbang_->setPins(1, out_[i].tms, out_[i].tdo);
+        ibb_->setPins(1, out_[i].tms, out_[i].tdo);
     }
-    ibitbang_->setPins(1, 0, 1);
+    ibb_->setPins(1, 0, 1);
 }
 
 uint64_t JTAG::getRxData() {

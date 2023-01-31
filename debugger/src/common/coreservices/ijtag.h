@@ -71,7 +71,7 @@ class IJtag : public IFace {
             uint32_t idle : 3;      // [14:12] R: 0=it is not necessary to enter Run-Test/Idle at all;
             uint32_t rsrv15 : 1;    // [15]
             uint32_t dmireset : 1;          // [16] W1: Clears sticky error state, but does not affect DMI transaction
-            uint32_t dmihardreset : 1;      // [17] W1:
+            uint32_t dmihardreset : 1;      // [17] W1: Only 1 takes effect
             uint32_t rsrv31_18 : 14;        // [31:18]
         } bits;
     };
@@ -225,7 +225,7 @@ class IJtag : public IFace {
         struct bits_type {
             uint32_t datacount : 4;         // [3:0] R. Number of implemented data registers
             uint32_t rsrv7_4 : 4;           // [7:4]
-            uint32_t cmderr : 3;            // [10:8] R/W1C. Write 1 clears bits. 0=No errors; 1=Buse; 2=not supported; 3=exception; 4=halt/resume; 5=bus; 6=reserved; 7=other
+            uint32_t cmderr : 3;            // [10:8] R/W1C. Write 1 clears bits. 0=No errors; 1=Busy; 2=not supported; 3=exception; 4=halt/resume; 5=bus; 6=reserved; 7=other
             uint32_t relaxedpriv : 1;       // [11] WARL. 0=Full permission check; 1=Relaxed permission checks applied
             uint32_t busy : 1;              // [12] R. 0=Ready; 1=Busy
             uint32_t rsrv23_13 : 11;        // [23:13]

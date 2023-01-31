@@ -114,11 +114,11 @@ class ICommandRiscv : public ICommand {
             {"t6",    8, 0x101F},
             {"stktr_cnt",   8, 0xC040},     // Non-standart extension. Stack trace counter
             {"stktr_buf",   8, 0xC080},     // Non-standart extension. Stack trace buffer
-            0
+            {"",            0, 0}
         };
         const ECpuRegMapping *preg = &RISCV_REG_MAP[0];
 
-        while (preg) {
+        while (preg->name[0]) {
             if (strcmp(name, preg->name) == 0) {
                 return preg->offset;
             }
@@ -175,7 +175,7 @@ class ICommandRiscv : public ICommand {
     }
 
     virtual uint32_t get_reg(const char *regname, Reg64Type *res) {
-        return get_reg(regsize(regname), reg2addr(regname), res);
+        return get_reg(reg2addr(regname), regsize(regname), res);
     }
 
     virtual uint32_t set_reg(const char *regname, Reg64Type *val) {

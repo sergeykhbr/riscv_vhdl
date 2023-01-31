@@ -57,7 +57,7 @@ RegSetView::RegSetView(IGui *igui, QWidget *parent, int cpucontext)
         return;
     }
 
-    QString qstrReg = tr("core0 regs ");
+    QString qstrReg = tr("regs ");
     int respidx = 0;
 
     for (unsigned row = 0; row < reglist.size(); row++) {

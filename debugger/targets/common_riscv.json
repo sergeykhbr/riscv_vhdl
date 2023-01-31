@@ -2,7 +2,7 @@
                 {'Name':'gui0','Attr':[
                 ['LogLevel',4],
                 ['WidgetsConfig',{
-                  'OpenViews':['UartQMdiSubWindow','AsmQMdiSubWindow'],
+                  'OpenViews':['UartQMdiSubWindow'],
                   'Serial':'port1',
                   'AutoComplete':'autocmd0',
                   'AddrPNP':0x100ff000,

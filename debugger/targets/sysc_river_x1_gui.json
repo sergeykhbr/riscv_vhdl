@@ -52,7 +52,7 @@
     {'Class':'JTAGClass','Instances':[
           {'Name':'jtag0','Attr':[
                 ['LogLevel',3],
-                ['Target',['core0','tap']],
+                ['TargetBitBang',['core0','tap']],
           ]}]},
   ]
 }

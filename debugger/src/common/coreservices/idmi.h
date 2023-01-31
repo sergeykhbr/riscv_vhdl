@@ -33,43 +33,23 @@ enum ECmdErrType {
     CMDERR_OTHERS = 7,
 };
 
+enum EDmistatus {
+    DMI_STAT_SUCCESS = 0,
+    DMI_STAT_RESERVED = 1,
+    DMI_STAT_FAILED = 2,
+    DMI_STAT_BUSY = 3
+};
+
 
 class IDmi : public IFace {
  public:
     IDmi() : IFace(IFACE_DMI) {}
 
-    // Must be 2*n value
-    virtual int getCpuMax() = 0;
-    virtual int getRegTotal() = 0;
-    virtual int getProgbufTotal() = 0;
-    virtual uint32_t getHartSelected() = 0;
-    // Returns resumeack on success
-    virtual void set_resumereq(uint32_t hartsel) = 0;
-    virtual bool get_resumeack(uint32_t hartsel) = 0;
-    virtual void set_haltreq(uint32_t hartsel) = 0;
-    virtual void set_hartreset(uint32_t hartsel) = 0;
-    virtual void clear_hartreset(uint32_t hartsel) = 0;
-    // Halt on reset request
-    virtual void set_resethaltreq(uint32_t hartsel) = 0;
-    virtual void clear_resethaltreq(uint32_t hartsel) = 0;
-    // Full system reset
-    virtual void set_ndmreset() = 0;
-    virtual void clear_ndmreset() = 0;
-
-    virtual void set_cmderr(ECmdErrType cmderr) = 0;
-    virtual ECmdErrType get_cmderr() = 0;
-
-    virtual bool isHalted(uint32_t hartsel) = 0;
-    virtual bool isAvailable(uint32_t hartsel) = 0;
-
-    virtual void readTransfer(uint32_t regno, uint32_t size) = 0;
-    virtual void writeTransfer(uint32_t regno, uint32_t size) = 0;
-    virtual bool isAutoexecData(int idx) = 0;
-    virtual bool isAutoexecProgbuf(int idx) = 0;
-    virtual void executeProgbuf() = 0;
-    virtual bool isCommandBusy() = 0;
-
-    virtual bool isSbaBusy() = 0;
+    virtual void dtm_dmireset() = 0;
+    virtual void dtm_dmihardreset() = 0;
+    virtual uint32_t dmi_read(uint32_t addr, uint32_t *rdata) = 0;
+    virtual uint32_t dmi_write(uint32_t addr, uint32_t wdata) = 0;
+    virtual EDmistatus dmi_status() = 0;
 };
 
 }  // namespace debugger

@@ -141,7 +141,7 @@ void CpuRiscV_RTL::createSystemC() {
     wrapper_->i_ndmreset(w_ndmreset);
 
     tapbb_ = new TapBitBang("tapbb");
-    registerPortInterface("tap", static_cast<IJtagTap *>(tapbb_));
+    registerPortInterface("tap", static_cast<IJtagBitBang *>(tapbb_));
     tapbb_->i_clk(wrapper_->o_clk);
     tapbb_->o_trst(w_trst);
     tapbb_->o_tck(w_tck);
