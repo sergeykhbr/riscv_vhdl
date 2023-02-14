@@ -30,9 +30,11 @@ CpuRiver_Functional::CpuRiver_Functional(const char *name) :
     registerAttribute("ListExtISA", &listExtISA_);
     registerAttribute("CLINT", &clint_);
     registerAttribute("PLIC", &plic_);
+    registerAttribute("PmpTotal", &pmpTotal_);
 
     mmuReservatedAddr_ = 0;
     mmuReservedAddrWatchdog_ = 0;
+    memset(pmpTable_, 0, sizeof(pmpTable_));
 }
 
 CpuRiver_Functional::~CpuRiver_Functional() {
@@ -344,60 +346,44 @@ void CpuRiver_Functional::writeRegDbg(uint32_t regno, uint64_t val) {
 uint64_t CpuRiver_Functional::readCSR(uint32_t regno) {
     uint64_t ret = 0;
     uint64_t trigidx;
-    bool rd_access = true;;
-    switch (regno) {
-    case CSR_mcycle:
-    case CSR_minsret:
-    case CSR_cycle:
-    case CSR_time:
-    case CSR_insret:
+    if (regno == CSR_mcycle) {
         ret = step_cnt_;
-        rd_access = false;
-        break;
-    case CSR_dpc:
+    } else if (regno == CSR_minsret) {
+        ret = step_cnt_;
+    } else if (regno == CSR_cycle) {
+        ret = step_cnt_;
+    } else if (regno == CSR_time) {
+        ret = step_cnt_;
+    } else if (regno == CSR_insret) {
+        ret = step_cnt_;
+    } else if (regno == CSR_dpc) {
         if (!isHalted()) {
             ret = getNPC();
-            rd_access = false;
-        }
-        break;
-    case CSR_tdata1:
+            }
+    } else if (regno == CSR_tdata1) {
         trigidx = readCSR(CSR_tselect);
         ret = ptriggers_[trigidx].data1.val;
-        rd_access = false;
-        break;
-    case CSR_tdata2:
+    } else if (regno == CSR_tdata2) {
         trigidx = readCSR(CSR_tselect);
         ret = ptriggers_[trigidx].data2;
-        rd_access = false;
-        break;
-    case CSR_textra:
+    } else if (regno == CSR_textra) {
         trigidx = readCSR(CSR_tselect);
         ret = ptriggers_[trigidx].extra;
-        rd_access = false;
-        break;
-    case CSR_tinfo:
+    } else if (regno == CSR_tinfo) {
         // RO: list of supported triggers
         ret = (1ull << TriggerType_AddrDataMatch)
             | (1ull << TriggerType_InstrCountMatch)
             | (1ull << TriggerType_Inetrrupt)
             | (1ull << TriggerType_Exception);
-        rd_access = false;
-        break;
-    case CSR_mip:
-        {
-            int hartid = hartid_.to_int();
-            csr_mip_type mip;
-            mip.value = 0;
-            mip.bits.MSIP = iirqloc_->getPendingRequest(2*hartid);
-            mip.bits.MTIP = iirqloc_->getPendingRequest(2*hartid + 1);
-            mip.bits.MEIP = iirqext_->getPendingRequest(hartid) != IRQ_REQUEST_NONE;
-            ret = mip.value;
-            rd_access = false;
-        }
-        break;
-    default:;
-    }
-    if (rd_access) {
+    } else if (regno == CSR_mip) {
+        int hartid = hartid_.to_int();
+        csr_mip_type mip;
+        mip.value = 0;
+        mip.bits.MSIP = iirqloc_->getPendingRequest(2*hartid);
+        mip.bits.MTIP = iirqloc_->getPendingRequest(2*hartid + 1);
+        mip.bits.MEIP = iirqext_->getPendingRequest(hartid) != IRQ_REQUEST_NONE;
+        ret = mip.value;
+    } else {
         RISCV_mutex_lock(&mutex_csr_);
         ret = portCSR_.read(regno).val;
         RISCV_mutex_unlock(&mutex_csr_);
@@ -408,30 +394,33 @@ uint64_t CpuRiver_Functional::readCSR(uint32_t regno) {
 void CpuRiver_Functional::writeCSR(uint32_t regno, uint64_t val) {
     bool wr_access = true;
     uint64_t trigidx;
-    switch (regno) {
     // Read-Only registers
-    case CSR_misa:
-    case CSR_mvendorid:
-    case CSR_marchid:
-    case CSR_mimplementationid:
-    case CSR_mhartid:
-        wr_access = false;
-        break;
-    // read only timers:
-    case CSR_mcycle:
-    case CSR_minsret:
-    case CSR_cycle:
-    case CSR_time:
-    case CSR_insret:
-        wr_access = false;
-        break;
-    case CSR_tselect:
+    if (regno == CSR_misa) {
+        wr_access = false;  // RO
+    } else if (regno == CSR_mvendorid) {
+        wr_access = false;  // RO
+    } else if (regno == CSR_marchid) {
+        wr_access = false;  // RO
+    } else if (regno == CSR_mimplementationid) {
+        wr_access = false;  // RO
+    } else if (regno == CSR_mhartid) {
+        wr_access = false;  // RO
+    } else if (regno == CSR_mcycle) {
+        wr_access = false;  // RO
+    } else if (regno == CSR_minsret) {
+        wr_access = false;  // RO
+    } else if (regno == CSR_cycle) {
+        wr_access = false;  // RO
+    } else if (regno == CSR_time) {
+        wr_access = false;  // RO
+    } else if (regno == CSR_insret) {
+        wr_access = false;  // RO
+    } else if (regno == CSR_tselect) {
         if (val > triggersTotal_.to_uint64()) {
             val = triggersTotal_.to_uint64();
             RISCV_debug("Select trigger %d", static_cast<int>(val));
         }
-        break;
-    case CSR_tdata1:
+    } else if (regno == CSR_tdata1) {
         trigidx = readCSR(CSR_tselect);
         TriggerData1Type tdata1;
         tdata1.val = val;
@@ -443,28 +432,63 @@ void CpuRiver_Functional::writeCSR(uint32_t regno, uint64_t val) {
         RISCV_info("[tdata1] <= %016" RV_PRI64 "x, type=%d",
             val, static_cast<uint32_t>(tdata1.bitsdef.type));
         val = tdata1.val;
-        break;
-    case CSR_tdata2:
+    } else if (regno == CSR_tdata2) {
         trigidx = readCSR(CSR_tselect);
         ptriggers_[trigidx].data2 = val;
         RISCV_info("[tdata2] <= %016" RV_PRI64 "x", val);
-        break;
-    case CSR_textra:
+    } else if (regno == CSR_textra) {
         trigidx = readCSR(CSR_tselect);
         ptriggers_[trigidx].extra = val;
         RISCV_info("[textra] <= %016" RV_PRI64 "x", val);
-        break;
-    case CSR_flushi:
+    } else if (regno == CSR_flushi) {
         flush(val);
-        break;
-    case CSR_satp:
+    } else if (regno >= CSR_pmpcfg0 && regno <= CSR_pmpcfg15) {
+        // Physical memory protection configuration:
+        unsigned pmpidx = 8 * (regno - (CSR_pmpcfg0 & ~0x1));
+        unsigned pmptot = 8;
+        unsigned pmpcfg;
+        unsigned A, RWX, L;
+        if (CSR_pmpcfg0 & 0x1) {
+            pmptot = 4;
+            pmpidx += 4;
+        }
+        for (unsigned i = 0; i < pmptot; i++) {
+            pmpcfg = static_cast<unsigned>((val >> (8 * i)) & 0xFF);
+            RWX = pmpcfg & 0x7;
+            A = (pmpcfg >> 3) & 0x3;
+            L = (pmpcfg >> 7) & 0x1;
+            uint64_t startaddr = 0;
+            uint64_t endaddr = ~0ull;
+            if (A == 0x0) {
+                disablePmp(pmpidx + i);
+            } else if (A == 1) {
+                endaddr = portCSR_.read(CSR_pmpaddr0 + pmpidx).val;
+                if (pmpidx) {
+                    startaddr = portCSR_.read(CSR_pmpaddr0 + pmpidx - 1).val;
+                }
+                enablePmp(pmpidx + i, startaddr, endaddr, RWX, L);
+            } else if (A == 2) {
+                startaddr = portCSR_.read(CSR_pmpaddr0 + pmpidx).val;
+                endaddr = startaddr + 4;
+                enablePmp(pmpidx + i, startaddr, endaddr, RWX, L);
+            } else if (A == 3) {
+                startaddr = portCSR_.read(CSR_pmpaddr0 + pmpidx).val;
+                uint64_t bitidx = 0x1ull;
+                while ((startaddr & bitidx) && bitidx) {
+                    startaddr &= ~bitidx;
+                    bitidx <<= 1;
+                }
+                endaddr = startaddr + 8 * bitidx;
+                enablePmp(pmpidx + i, startaddr, endaddr, RWX, L);
+            }
+        }
+    } else if (regno == CSR_satp) {
         if ((val >> 60) & 0xf) {
             RISCV_error(
                 "[satp] <= %016" RV_PRI64 "x. Paging not supported", val);
         }
-        break;
-    default:;
     }
+
     if (wr_access) {
         RISCV_mutex_lock(&mutex_csr_);
         portCSR_.write(regno, val);
@@ -472,6 +496,56 @@ void CpuRiver_Functional::writeCSR(uint32_t regno, uint64_t val) {
     }
 }
 
+void CpuRiver_Functional::disablePmp(uint32_t pmpidx) {
+    pmpTable_[pmpidx].ena = false;
+}
+
+void CpuRiver_Functional::enablePmp(uint32_t pmpidx,
+                                    uint64_t startadr,
+                                    uint64_t endadr,
+                                    uint32_t rwx,
+                                    uint32_t lock) {
+    pmpTable_[pmpidx].ena = true;
+    pmpTable_[pmpidx].startadr = startadr;
+    pmpTable_[pmpidx].endadr = endadr;
+    if (rwx & 0x1) {
+        pmpTable_[pmpidx].R = true;
+    } else {
+        pmpTable_[pmpidx].R = false;
+    }
+
+    if (rwx & 0x2) {
+        pmpTable_[pmpidx].W = true;
+    } else {
+        pmpTable_[pmpidx].W = false;
+    }
+
+    if (rwx & 0x4) {
+        pmpTable_[pmpidx].X = true;
+    } else {
+        pmpTable_[pmpidx].X = false;
+    }
+    pmpTable_[pmpidx].L = lock ? true: false;
+}
+
+bool CpuRiver_Functional::checkPmp(uint64_t adr, bool r, bool w, bool x) {
+    bool allow = false;
+    for (unsigned i = 0; i < pmpTotal_.to_uint32(); i++) {
+        if (!pmpTable_[i].ena) {
+            continue;
+        }
+        if (r && pmpTable_[i].R) {
+            allow = true;
+        }
+        if (w && pmpTable_[i].W) {
+            allow = true;
+        }
+        if (x && pmpTable_[i].X) {
+            allow = true;
+        }
+    }
+    return allow;
+}
 
 }  // namespace debugger
 

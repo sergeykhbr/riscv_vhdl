@@ -72,6 +72,7 @@ class CpuGeneric : public IService,
     virtual void halt(uint32_t cause, const char *descr);
     virtual void flush(uint64_t addr);
     virtual void doNotCache(uint64_t addr) { do_not_cache_ = true; }
+    virtual bool check_mpu(uint64_t addr, uint32_t sz, const char *rwx);
 
     /** IDPort interface */
     virtual void resumereq() {resumereq_ = true; }

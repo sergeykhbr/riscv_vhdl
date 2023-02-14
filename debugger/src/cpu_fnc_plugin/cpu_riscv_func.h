@@ -110,6 +110,13 @@ class CpuRiver_Functional : public CpuGeneric,
 
  private:
     void switchContext(uint32_t prvnxt);
+    void disablePmp(uint32_t pmpidx);
+    void enablePmp(uint32_t pmpidx,
+                    uint64_t startadr,
+                    uint64_t endadr,
+                    uint32_t rwx,
+                    uint32_t lock);
+    bool checkPmp(uint64_t adr, bool r, bool w, bool x);
 
  private:
     AttributeType vendorid_;
@@ -119,6 +126,7 @@ class CpuRiver_Functional : public CpuGeneric,
     AttributeType listExtISA_;
     AttributeType clint_;       // Core-local interruptor
     AttributeType plic_;        // External interrupt controller
+    AttributeType pmpTotal_;    // Total number of enabled PMP regions < 64
 
     static const int INSTR_HASH_TABLE_SIZE = 1 << 6;
     AttributeType listInstr_[INSTR_HASH_TABLE_SIZE];
@@ -128,6 +136,17 @@ class CpuRiver_Functional : public CpuGeneric,
 
     uint64_t mmuReservatedAddr_;
     int mmuReservedAddrWatchdog_;   // not exceed 64 instructions between LR/SC
+
+    static const int PMP_ENTRIES_MAX = 64;
+    struct PmpEntryType {
+        bool ena;
+        uint64_t startadr;
+        uint64_t endadr;
+        bool R;
+        bool W;
+        bool X;
+        bool L;
+    } pmpTable_[PMP_ENTRIES_MAX];
 };
 
 DECLARE_CLASS(CpuRiver_Functional)

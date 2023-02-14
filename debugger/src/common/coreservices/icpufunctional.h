@@ -81,6 +81,7 @@ class ICpuFunctional : public IFace {
     virtual void halt(uint32_t cause, const char *descr) = 0;
     virtual void flush(uint64_t addr) = 0;
     virtual void doNotCache(uint64_t addr) = 0;
+    virtual bool check_mpu(uint64_t addr, uint32_t sz, const char *rwx) = 0;
 
   protected:
     virtual uint64_t getResetAddress() = 0;

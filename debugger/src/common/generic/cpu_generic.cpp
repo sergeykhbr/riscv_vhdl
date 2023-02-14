@@ -278,6 +278,7 @@ void CpuGeneric::updateQueue() {
 }
 
 void CpuGeneric::fetchILine() {
+    bool generate_trap = false;
     fetch_addr_ = fetchingAddress();
     cachable_pc_ = false;
     instr_ = 0;
@@ -295,21 +296,26 @@ void CpuGeneric::fetchILine() {
         instr_ = icache_[cache_offset_].instr;
         cacheline_[0].buf32[0] = icache_[cache_offset_].buf;  // for tracer
     }
-    
 
-    if (!instr_) {
+    if (check_mpu(fetch_addr_, 4, "x")) {
+        generate_trap = true;
+    } else if (!instr_) {
         trans_.action = MemAction_Read;
-        trans_.addr = getPC();
+        trans_.addr = fetch_addr_;
         trans_.xsize = 4;
         trans_.wstrb = 0;
         if (dma_memop(&trans_) == TRANS_ERROR) {
-            generateExceptionLoadInstruction(trans_.addr);
-            handleTrap();
-            setPC(getNPC());
-            fetchILine();
+            generate_trap = true;
         } else {
             cacheline_[0].val = trans_.rpayload.b64[0];
         }
+    }
+
+    if (generate_trap) {
+        generateExceptionLoadInstruction(trans_.addr);
+        handleTrap();
+        setPC(getNPC());
+        fetchILine();
     }
 }
 
@@ -341,6 +347,11 @@ void CpuGeneric::flush(uint64_t addr) {
             icache_[addr - CACHE_BASE_ADDR_].instr = 0;
         }
     }
+}
+
+/// @ret false on success (no limitation on access), true otherwise.
+bool CpuGeneric::check_mpu(uint64_t addr, uint32_t sz, const char *rwx) {
+    return false;
 }
 
 void CpuGeneric::trackContextStart() {

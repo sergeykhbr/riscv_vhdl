@@ -231,6 +231,11 @@ public:
     static const uint16_t CSR_mtval          = 0x343;
     /** Machine interrupt pending */
     static const uint16_t CSR_mip            = 0x344;
+    /** Physical memory protection */
+    static const uint16_t CSR_pmpcfg0        = 0x3A0;
+    static const uint16_t CSR_pmpcfg15       = 0x3AF;
+    static const uint16_t CSR_pmpaddr0       = 0x3B0;
+    static const uint16_t CSR_pmpaddr63      = 0x3EF;
     // Software reset.
     static const uint16_t CSR_mreset         = 0x782;
     // Trigger select
