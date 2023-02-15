@@ -64,7 +64,7 @@ class CpuGeneric : public IService,
     virtual void popStackTrace();
     virtual uint64_t getPrvLevel() { return cur_prv_level; }
     virtual void setPrvLevel(uint64_t lvl) { cur_prv_level = lvl; }
-    virtual ETransStatus dma_memop(Axi4TransactionType *tr);
+    virtual ETransStatus dma_memop(Axi4TransactionType *tr, int flags=0);
     virtual void generateException(int e, uint64_t arg) { exceptions_ |= 1ull << e; }
     virtual void generateExceptionLoadInstruction(uint64_t addr) {}
     virtual bool isOn() { return estate_ != CORE_OFF; }
@@ -72,7 +72,8 @@ class CpuGeneric : public IService,
     virtual void halt(uint32_t cause, const char *descr);
     virtual void flush(uint64_t addr);
     virtual void doNotCache(uint64_t addr) { do_not_cache_ = true; }
-    virtual bool check_mpu(uint64_t addr, uint32_t sz, const char *rwx);
+    virtual bool isMpuEnabled() { return false; }
+    virtual bool checkMpu(uint64_t addr, uint32_t sz, const char *rwx) { return true; }
 
     /** IDPort interface */
     virtual void resumereq() {resumereq_ = true; }

@@ -214,15 +214,6 @@ public:
         uint64_t xepc = (ICpuRiscV::PRV_U << 8) + 0x41;
         icpu_->setBranch(icpu_->readCSR(static_cast<uint32_t>(xepc)));
 
-        bool is_N_extension = false;
-        if (is_N_extension) {
-            mstatus.bits.UIE = mstatus.bits.UPIE;
-            mstatus.bits.UPIE = 1;
-            // User mode not changed.
-        } else {
-            mstatus.bits.UIE = 0;
-            mstatus.bits.UPIE = 0;
-        }
         icpu_->setPrvLevel(ICpuRiscV::PRV_U);
         icpu_->writeCSR(ICpuRiscV::CSR_mstatus, mstatus.value);
         return 4;
@@ -267,22 +258,7 @@ public:
         RiscvInstruction(icpu, "HRET", "00100000001000000000000001110011") {}
 
     virtual int exec(Reg64Type *payload) {
-        if (icpu_->getPrvLevel() != ICpuRiscV::PRV_H) {
-            icpu_->generateException(ICpuRiscV::EXCEPTION_InstrIllegal, icpu_->getPC());
-            return 4;
-        }
-        csr_mstatus_type mstatus;
-        mstatus.value = icpu_->readCSR(ICpuRiscV::CSR_mstatus);
-
-        uint64_t xepc = (ICpuRiscV::PRV_H << 8) + 0x41;
-        icpu_->setBranch(icpu_->readCSR(static_cast<uint32_t>(xepc)));
-
-        mstatus.bits.HIE = mstatus.bits.HPIE;
-        mstatus.bits.HPIE = 1;
-        icpu_->setPrvLevel(mstatus.bits.HPP);
-        mstatus.bits.HPP = ICpuRiscV::PRV_U;
-            
-        icpu_->writeCSR(ICpuRiscV::CSR_mstatus, mstatus.value);
+        icpu_->generateException(ICpuRiscV::EXCEPTION_InstrIllegal, icpu_->getPC());
         return 4;
     }
 };
@@ -309,7 +285,7 @@ public:
         mstatus.bits.MIE = mstatus.bits.MPIE;
         mstatus.bits.MPIE = 1;
         icpu_->setPrvLevel(mstatus.bits.MPP);
-        mstatus.bits.MPP = ICpuRiscV::PRV_U;
+        mstatus.bits.MPP = ICpuRiscV::PRV_U;    // least-privileged supported mode
 
         icpu_->writeCSR(ICpuRiscV::CSR_mstatus, mstatus.value);
         return 4;

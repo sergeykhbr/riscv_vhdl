@@ -261,34 +261,36 @@ union ISA_CJ_type {
 
 union csr_mstatus_type {
     struct bits_type {
-        uint64_t UIE    : 1;    // [0]: User level interrupts ena for current
-                                //      priv. mode
+        uint64_t rsrv0  : 1;    // [0]: 
         uint64_t SIE    : 1;    // [1]: Super-User level interrupts ena for
                                 //      current priv. mode
-        uint64_t HIE    : 1;    // [2]: Hypervisor level interrupts ena for
-                                //      current priv. mode
+        uint64_t rsrv2  : 1;    // [2]
         uint64_t MIE    : 1;    // [3]: Machine level interrupts ena for
                                 //      current priv. mode
-        uint64_t UPIE   : 1;    // [4]: User level interrupts ena previous
-                                //      value (before interrupt)
+        uint64_t rsrv4  : 1;    // [4]: 
         uint64_t SPIE   : 1;    // [5]: Super-User level interrupts ena
                                 //      previous value (before interrupt)
-        uint64_t HPIE   : 1;    // [6]: Hypervisor level interrupts ena
-                                //      previous value (before interrupt)
+        uint64_t UBE    : 1;    // [6]: 
         uint64_t MPIE   : 1;    // [7]: Machine level interrupts ena previous
                                 //      value (before interrupt)
         uint64_t SPP    : 1;    // [8]: One bit wide. Supper-user previously
                                 //      priviledged level
-        uint64_t HPP    : 2;    // [10:9]: the Hypervisor previous priv mode
-        uint64_t MPP    : 2;    // [12:11]: the Machine previous priv mode
+        uint64_t VS     : 2;    // [10:9]: the Hypervisor previous priv mode
+        uint64_t MPP    : 2;    // [12:11]: WARL Machine previous priv mode
         uint64_t FS     : 2;    // [14:13]: RW: FPU context status
         uint64_t XS     : 2;    // [16:15]: RW: extension context status
         uint64_t MPRV   : 1;    // [17] Memory privilege bit
-        uint64_t PUM    : 1;    // [18]
+        uint64_t SUM    : 1;    // [18]
         uint64_t MXR    : 1;    // [19]
-        uint64_t rsrv1  : 4;    // [23:20]
-        uint64_t VM     : 5;    // [28:24] Virtualization management field
-        uint64_t rsv2 : 64-30;  // [62:29]
+        uint64_t TVM    : 1;    // [20]
+        uint64_t TW     : 1;    // [21]
+        uint64_t TSR    : 1;    // [22]
+        uint64_t rsrv31_23 : 9; // [31:23]
+        uint64_t UXL    : 2;    // [33:32]
+        uint64_t SXL    : 2;    // [35:34]
+        uint64_t SBE    : 1;    // [36]
+        uint64_t MBE    : 1;    // [37]
+        uint64_t rsv62_38 : 25; // [62:38]
         uint64_t SD     : 1;    // RO: [63] Bit summarizes FS/XS bits
     } bits;
     uint64_t value;

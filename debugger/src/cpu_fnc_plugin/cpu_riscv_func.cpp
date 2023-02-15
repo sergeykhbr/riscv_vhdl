@@ -34,7 +34,7 @@ CpuRiver_Functional::CpuRiver_Functional(const char *name) :
 
     mmuReservatedAddr_ = 0;
     mmuReservedAddrWatchdog_ = 0;
-    memset(pmpTable_, 0, sizeof(pmpTable_));
+    memset(&pmpTable_, 0, sizeof(pmpTable_));
 }
 
 CpuRiver_Functional::~CpuRiver_Functional() {
@@ -444,6 +444,7 @@ void CpuRiver_Functional::writeCSR(uint32_t regno, uint64_t val) {
         flush(val);
     } else if (regno >= CSR_pmpcfg0 && regno <= CSR_pmpcfg15) {
         // Physical memory protection configuration:
+        uint64_t mask54 = (1ull << 54) - 1;
         unsigned pmpidx = 8 * (regno - (CSR_pmpcfg0 & ~0x1));
         unsigned pmptot = 8;
         unsigned pmpcfg;
@@ -458,27 +459,35 @@ void CpuRiver_Functional::writeCSR(uint32_t regno, uint64_t val) {
             A = (pmpcfg >> 3) & 0x3;
             L = (pmpcfg >> 7) & 0x1;
             uint64_t startaddr = 0;
-            uint64_t endaddr = ~0ull;
+            uint64_t endaddr = (mask54 << 2) | 0x3;
             if (A == 0x0) {
                 disablePmp(pmpidx + i);
             } else if (A == 1) {
-                endaddr = portCSR_.read(CSR_pmpaddr0 + pmpidx).val;
+                // TOR: Top of region
+                endaddr = (portCSR_.read(CSR_pmpaddr0 + pmpidx + i).val & mask54) - 1;
                 if (pmpidx) {
-                    startaddr = portCSR_.read(CSR_pmpaddr0 + pmpidx - 1).val;
+                    startaddr = portCSR_.read(CSR_pmpaddr0 + pmpidx + i - 1).val & mask54;
                 }
                 enablePmp(pmpidx + i, startaddr, endaddr, RWX, L);
             } else if (A == 2) {
-                startaddr = portCSR_.read(CSR_pmpaddr0 + pmpidx).val;
-                endaddr = startaddr + 4;
+                startaddr = (portCSR_.read(CSR_pmpaddr0 + pmpidx + i).val & mask54) << 2;
+                endaddr = startaddr + 3;
                 enablePmp(pmpidx + i, startaddr, endaddr, RWX, L);
             } else if (A == 3) {
-                startaddr = portCSR_.read(CSR_pmpaddr0 + pmpidx).val;
-                uint64_t bitidx = 0x1ull;
-                while ((startaddr & bitidx) && bitidx) {
-                    startaddr &= ~bitidx;
-                    bitidx <<= 1;
+                startaddr = portCSR_.read(CSR_pmpaddr0 + pmpidx + i).val & mask54;
+                if (startaddr == mask54) {
+                    // Full memory region
+                    startaddr = 0;
+                    endaddr = ~0ull;
+                } else {
+                    uint64_t bitidx = 0x1ull;
+                    while ((startaddr & bitidx) && bitidx) {
+                        startaddr &= ~bitidx;
+                        bitidx <<= 1;
+                    }
+                    startaddr <<= 2;
+                    endaddr = startaddr + 8 * bitidx - 1;
                 }
-                endaddr = startaddr + 8 * bitidx;
                 enablePmp(pmpidx + i, startaddr, endaddr, RWX, L);
             }
         }
@@ -497,7 +506,7 @@ void CpuRiver_Functional::writeCSR(uint32_t regno, uint64_t val) {
 }
 
 void CpuRiver_Functional::disablePmp(uint32_t pmpidx) {
-    pmpTable_[pmpidx].ena = false;
+    pmpTable_.ena &= ~(1ull << pmpidx);
 }
 
 void CpuRiver_Functional::enablePmp(uint32_t pmpidx,
@@ -505,44 +514,65 @@ void CpuRiver_Functional::enablePmp(uint32_t pmpidx,
                                     uint64_t endadr,
                                     uint32_t rwx,
                                     uint32_t lock) {
-    pmpTable_[pmpidx].ena = true;
-    pmpTable_[pmpidx].startadr = startadr;
-    pmpTable_[pmpidx].endadr = endadr;
+    pmpTable_.ena |= 1ull << pmpidx;
+    pmpTable_.startadr[pmpidx] = startadr;
+    pmpTable_.endadr[pmpidx] = endadr;
+
+    pmpTable_.R &= ~(1ull << pmpidx);
     if (rwx & 0x1) {
-        pmpTable_[pmpidx].R = true;
-    } else {
-        pmpTable_[pmpidx].R = false;
+        pmpTable_.R |= (1ull << pmpidx);
     }
 
+    pmpTable_.W &= ~(1ull << pmpidx);
     if (rwx & 0x2) {
-        pmpTable_[pmpidx].W = true;
-    } else {
-        pmpTable_[pmpidx].W = false;
+        pmpTable_.W |= (1ull << pmpidx);
     }
 
+    pmpTable_.X &= ~(1ull << pmpidx);
     if (rwx & 0x4) {
-        pmpTable_[pmpidx].X = true;
-    } else {
-        pmpTable_[pmpidx].X = false;
+        pmpTable_.X |= (1ull << pmpidx);
     }
-    pmpTable_[pmpidx].L = lock ? true: false;
+
+    pmpTable_.L &= ~(1ull << pmpidx);
+    if (lock) {
+        pmpTable_.L |= (1ull << pmpidx);
+    }
 }
 
-bool CpuRiver_Functional::checkPmp(uint64_t adr, bool r, bool w, bool x) {
+// PMP is active for S,U modes or in M-mode when L-bit is set (or MSTATUS.MPRV=1):
+bool CpuRiver_Functional::isMpuEnabled() {
+    uint64_t prv = getPrvLevel();
+    if (prv != PRV_M) {
+        return true;
+    }
+    csr_mstatus_type mstatus;
+    mstatus.value = readCSR(CSR_mstatus);
+    if (mstatus.bits.MPRV && (mstatus.bits.MPP != PRV_M)) {
+        return true;
+    }
+    return false;
+}
+
+bool CpuRiver_Functional::checkMpu(uint64_t adr, uint32_t size, const char *rwx) {
     bool allow = false;
-    for (unsigned i = 0; i < pmpTotal_.to_uint32(); i++) {
-        if (!pmpTable_[i].ena) {
+
+    for (int i = 0; i < pmpTotal_.to_int(); i++) {
+        if ((pmpTable_.ena & (1ull << i)) == 0) {
             continue;
         }
-        if (r && pmpTable_[i].R) {
+        if (adr < pmpTable_.startadr[i] || adr > pmpTable_.endadr[i]) {
+            continue;
+        }
+        if (rwx[0] == 'x' && (pmpTable_.X & (1ull << i))) {
             allow = true;
         }
-        if (w && pmpTable_[i].W) {
+        if (rwx[0] == 'r' && (pmpTable_.R & (1ull << i))) {
             allow = true;
         }
-        if (x && pmpTable_[i].X) {
+        if (rwx[0] == 'w' && (pmpTable_.W & (1ull << i))) {
             allow = true;
         }
+        break;  // Lower region has higher privilege
     }
     return allow;
 }

@@ -54,6 +54,9 @@ class CpuRiver_Functional : public CpuGeneric,
     virtual void generateExceptionLoadInstruction(uint64_t addr) override {
         generateException(EXCEPTION_InstrFault, addr);
     }
+    virtual bool isMpuEnabled() override;
+    virtual bool checkMpu(uint64_t addr, uint32_t sz, const char *rwx) override;
+
 
     /** DPort interface */
     virtual uint64_t readRegDbg(uint32_t regno) override;
@@ -116,7 +119,6 @@ class CpuRiver_Functional : public CpuGeneric,
                     uint64_t endadr,
                     uint32_t rwx,
                     uint32_t lock);
-    bool checkPmp(uint64_t adr, bool r, bool w, bool x);
 
  private:
     AttributeType vendorid_;
@@ -137,16 +139,16 @@ class CpuRiver_Functional : public CpuGeneric,
     uint64_t mmuReservatedAddr_;
     int mmuReservedAddrWatchdog_;   // not exceed 64 instructions between LR/SC
 
-    static const int PMP_ENTRIES_MAX = 64;
+    static const int PMP_ENTRIES_MAX = 64;  // limited by RISC-V specification
     struct PmpEntryType {
-        bool ena;
-        uint64_t startadr;
-        uint64_t endadr;
-        bool R;
-        bool W;
-        bool X;
-        bool L;
-    } pmpTable_[PMP_ENTRIES_MAX];
+        uint64_t ena;   // 1-bit per region
+        uint64_t startadr[PMP_ENTRIES_MAX];
+        uint64_t endadr[PMP_ENTRIES_MAX];
+        uint64_t R;     // 'r' attribute. 1-bit per region
+        uint64_t W;
+        uint64_t X;
+        uint64_t L;
+    } pmpTable_;
 };
 
 DECLARE_CLASS(CpuRiver_Functional)

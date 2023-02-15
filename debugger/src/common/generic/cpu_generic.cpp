@@ -297,18 +297,14 @@ void CpuGeneric::fetchILine() {
         cacheline_[0].buf32[0] = icache_[cache_offset_].buf;  // for tracer
     }
 
-    if (check_mpu(fetch_addr_, 4, "x")) {
+    trans_.action = MemAction_Read;
+    trans_.addr = fetch_addr_;
+    trans_.xsize = 4;
+    trans_.wstrb = 0;
+    if (dma_memop(&trans_, 1) == TRANS_ERROR) {     // x-flag
         generate_trap = true;
-    } else if (!instr_) {
-        trans_.action = MemAction_Read;
-        trans_.addr = fetch_addr_;
-        trans_.xsize = 4;
-        trans_.wstrb = 0;
-        if (dma_memop(&trans_) == TRANS_ERROR) {
-            generate_trap = true;
-        } else {
-            cacheline_[0].val = trans_.rpayload.b64[0];
-        }
+    } else {
+        cacheline_[0].val = trans_.rpayload.b64[0];
     }
 
     if (generate_trap) {
@@ -347,11 +343,6 @@ void CpuGeneric::flush(uint64_t addr) {
             icache_[addr - CACHE_BASE_ADDR_].instr = 0;
         }
     }
-}
-
-/// @ret false on success (no limitation on access), true otherwise.
-bool CpuGeneric::check_mpu(uint64_t addr, uint32_t sz, const char *rwx) {
-    return false;
 }
 
 void CpuGeneric::trackContextStart() {
@@ -450,9 +441,24 @@ void CpuGeneric::popStackTrace() {
     }
 }
 
-ETransStatus CpuGeneric::dma_memop(Axi4TransactionType *tr) {
+ETransStatus CpuGeneric::dma_memop(Axi4TransactionType *tr, int flags) {
     ETransStatus ret = TRANS_OK;
     tr->source_idx = sysBusMasterID_.to_int();
+    if (isMpuEnabled()) {
+        if (flags & 0x1) {
+            if (!checkMpu(tr->addr, tr->xsize, "x")) {
+                return TRANS_ERROR;
+            }
+        } else if (tr->action == MemAction_Write) {
+            if (!checkMpu(tr->addr, tr->xsize, "w")) {
+                return TRANS_ERROR;
+            }
+        } else {
+            if (!checkMpu(tr->addr, tr->xsize, "r")) {
+                return TRANS_ERROR;
+            }
+        }
+    }
     if (tr->xsize <= sysBusWidthBytes_.to_uint32()) {
         ret = isysbus_->b_transport(tr);
     } else {
