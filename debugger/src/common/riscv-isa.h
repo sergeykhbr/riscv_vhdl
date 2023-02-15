@@ -22,8 +22,6 @@
 
 namespace debugger {
 
-#define UPDT2
-
 union ISA_R_type {
     struct bits_type {
         uint32_t opcode : 7;  // [6:0]
@@ -431,6 +429,22 @@ union TriggerData1Type {
         uint64_t dmode : 1;     // [59]
         uint64_t type : 4;      // [63:60]
     } itrigger_bits;
+};
+
+static const uint64_t SATP_MODE_OFF  = 0ull;
+static const uint64_t SATP_MODE_SV32 = 1ull;
+static const uint64_t SATP_MODE_SV39 = 8ull;
+static const uint64_t SATP_MODE_SV48 = 9ull;
+static const uint64_t SATP_MODE_SV57 = 10ull;
+static const uint64_t SATP_MODE_SV64 = 11ull;
+
+union csr_satp_type {
+    uint64_t u64;
+    struct bits_type {
+        uint64_t ppn : 44;  // [43:0] WARL
+        uint64_t asid : 9;  // [59:44] WARL
+        uint64_t mode : 4;  // [63:60] WARL
+    } bits;
 };
 
 

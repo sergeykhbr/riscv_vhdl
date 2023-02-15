@@ -74,6 +74,9 @@ class CpuGeneric : public IService,
     virtual void doNotCache(uint64_t addr) { do_not_cache_ = true; }
     virtual bool isMpuEnabled() { return false; }
     virtual bool checkMpu(uint64_t addr, uint32_t sz, const char *rwx) { return true; }
+    virtual bool isMmuEnabled() { return false; }
+    virtual uint64_t translateMmu(uint64_t addr) { return addr; }
+    virtual void flushMmu() {}
 
     /** IDPort interface */
     virtual void resumereq() {resumereq_ = true; }

@@ -492,9 +492,14 @@ void CpuRiver_Functional::writeCSR(uint32_t regno, uint64_t val) {
             }
         }
     } else if (regno == CSR_satp) {
-        if ((val >> 60) & 0xf) {
+        csr_satp_type satp;
+        satp.u64 = val;
+        if (satp.bits.mode != SATP_MODE_OFF
+            && satp.bits.mode != SATP_MODE_SV39
+            && satp.bits.mode != SATP_MODE_SV48) {
             RISCV_error(
-                "[satp] <= %016" RV_PRI64 "x. Paging not supported", val);
+                "[satp] <= %016" RV_PRI64 "x. Paging mode %x not supported",
+                val, satp.bits.mode);
         }
     }
 
@@ -575,6 +580,33 @@ bool CpuRiver_Functional::checkMpu(uint64_t adr, uint32_t size, const char *rwx)
         break;  // Lower region has higher privilege
     }
     return allow;
+}
+
+bool CpuRiver_Functional::isMmuEnabled() {
+    csr_satp_type satp;
+    uint64_t prv = getPrvLevel();
+    satp.u64 = readCSR(CSR_satp);
+    if (prv != PRV_M && satp.bits.mode) {
+        return true;
+    }
+    csr_mstatus_type mstatus;
+    mstatus.value = readCSR(CSR_mstatus);
+    if (mstatus.bits.MPRV && (mstatus.bits.MPP != PRV_M) && satp.bits.mode) {
+        return true;
+    }
+    return false;
+}
+
+uint64_t CpuRiver_Functional::translateMmu(uint64_t va) {
+    uint64_t pa = va;
+    if ((va >> 48) != 0xFFFF) {
+        // Non-virtual address
+        return pa;
+    }
+    return pa;
+}
+
+void CpuRiver_Functional::flushMmu() {
 }
 
 }  // namespace debugger

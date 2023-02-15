@@ -324,6 +324,21 @@ public:
 };
 
 /**
+ * @brief SFENCE_VMA
+ *
+ */
+class SFENCE_VMA : public RiscvInstruction {
+public:
+    SFENCE_VMA(CpuRiver_Functional *icpu) :
+        RiscvInstruction(icpu, "SFENCE_VMA", "0001001??????????000000001110011") {}
+
+    virtual int exec(Reg64Type *payload) {
+        icpu_->flushMmu();
+        return 4;
+    }
+};
+
+/**
  * @brief EBREAK (breakpoint instruction)
  *
  * The EBREAK instruction is used by debuggers to cause control to be
@@ -382,13 +397,13 @@ void CpuRiver_Functional::addIsaPrivilegedRV64I() {
     addSupportedInstruction(new MRET(this));
     addSupportedInstruction(new FENCE(this));
     addSupportedInstruction(new FENCE_I(this));
+    addSupportedInstruction(new SFENCE_VMA(this));
     addSupportedInstruction(new ECALL(this));
     addSupportedInstruction(new EBREAK(this));
 
     // TODO:
     /*
   def DRET               = BitPat("b01111011001000000000000001110011")
-  def SFENCE_VMA         = BitPat("b0001001??????????000000001110011")
   def WFI                = BitPat("b00010000010100000000000001110011")  // wait for interrupt
 
     def RDCYCLE            = BitPat("b11000000000000000010?????1110011")

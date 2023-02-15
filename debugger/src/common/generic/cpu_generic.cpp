@@ -444,6 +444,9 @@ void CpuGeneric::popStackTrace() {
 ETransStatus CpuGeneric::dma_memop(Axi4TransactionType *tr, int flags) {
     ETransStatus ret = TRANS_OK;
     tr->source_idx = sysBusMasterID_.to_int();
+    if (isMmuEnabled()) {
+        tr->addr = translateMmu(tr->addr);
+    }
     if (isMpuEnabled()) {
         if (flags & 0x1) {
             if (!checkMpu(tr->addr, tr->xsize, "x")) {

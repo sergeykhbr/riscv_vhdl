@@ -56,6 +56,9 @@ class CpuRiver_Functional : public CpuGeneric,
     }
     virtual bool isMpuEnabled() override;
     virtual bool checkMpu(uint64_t addr, uint32_t sz, const char *rwx) override;
+    virtual bool isMmuEnabled() override;
+    virtual uint64_t translateMmu(uint64_t addr) override;
+    virtual void flushMmu() override;
 
 
     /** DPort interface */
