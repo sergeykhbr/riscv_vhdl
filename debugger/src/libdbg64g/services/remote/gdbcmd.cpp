@@ -278,7 +278,7 @@ void GdbCommands::handleGetRegisters() {
     AttributeType res;
 
     if (iexec_) {
-        iexec_->exec("regs", &res, false);
+        iexec_->exec("reg", &res, false);
     }
     appendRegValue(resp, res["r0"].to_uint32());
     appendRegValue(resp, res["r1"].to_uint32());
@@ -374,7 +374,7 @@ void GdbCommands::handleReadRegister() {
 
     AttributeType res;
     if (iexec_) {
-        iexec_->exec("regs", &res, false);
+        iexec_->exec("reg", &res, false);
     }
 
     char resp[256] = "\0";

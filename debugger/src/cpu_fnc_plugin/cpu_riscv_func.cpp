@@ -359,7 +359,9 @@ uint64_t CpuRiver_Functional::readCSR(uint32_t regno) {
     } else if (regno == CSR_dpc) {
         if (!isHalted()) {
             ret = getNPC();
-            }
+        } else {
+            ret = portCSR_.read(regno).val;
+        }
     } else if (regno == CSR_tdata1) {
         trigidx = readCSR(CSR_tselect);
         ret = ptriggers_[trigidx].data1.val;

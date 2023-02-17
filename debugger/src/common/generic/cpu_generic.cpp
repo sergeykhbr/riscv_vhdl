@@ -53,6 +53,8 @@ CpuGeneric::CpuGeneric(const char *name)
     char tstr[256];
     RISCV_sprintf(tstr, sizeof(tstr), "eventConfigDone_%s", name);
     RISCV_event_create(&eventConfigDone_, tstr);
+    RISCV_sprintf(tstr, sizeof(tstr), "eventDbgRequest_%s", name);
+    RISCV_event_create(&eventDbgRequest_, tstr);
     RISCV_mutex_init(&mutex_csr_);
     RISCV_register_hap(static_cast<IHap *>(this));
 
@@ -91,6 +93,7 @@ CpuGeneric::CpuGeneric(const char *name)
 CpuGeneric::~CpuGeneric() {
     RISCV_set_default_clock(0);
     RISCV_event_close(&eventConfigDone_);
+    RISCV_event_close(&eventDbgRequest_);
     RISCV_mutex_destroy(&mutex_csr_);
     if (icache_) {
         delete [] icache_;
@@ -685,6 +688,8 @@ bool CpuGeneric::executeProgbuf(uint32_t *progbuf) {
     }
     progbuf_ = progbuf;
     procbufexecreq_ = true;
+    RISCV_event_clear(&eventDbgRequest_);
+    RISCV_event_wait(&eventDbgRequest_);
     return false;
 }
 
@@ -701,6 +706,7 @@ void CpuGeneric::exitProgbufExec() {
     PC_ = &ctxregs_[Ctx_Normal].pc.val;
     NPC_ = &ctxregs_[Ctx_Normal].npc.val;
     RISCV_info("%s", "Ending executing progbuf");
+    RISCV_event_set(&eventDbgRequest_);
 }
 
 

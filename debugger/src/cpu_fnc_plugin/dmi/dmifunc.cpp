@@ -16,7 +16,6 @@
 
 #include "dmifunc.h"
 #include <riscv-isa.h>
-#include "coreservices/ijtag.h"
 
 namespace debugger {
 
@@ -35,6 +34,12 @@ DmiFunctional::DmiFunctional(const char *name)
     phartdata_ = 0;
     hartsel_ = 0;
     arg0_.val = 0;
+    arg1_.val = 0;
+    arg2_.val = 0;
+    autoexecdata_ = 0;
+    autoexecprogbuf_ = 0;
+    command_.u32 = 0;
+    memset(progbuf_, 0, sizeof(progbuf_));
 }
 
 DmiFunctional::~DmiFunctional() {
@@ -91,6 +96,8 @@ uint32_t DmiFunctional::dmi_read(uint32_t addr, uint32_t *rdata) {
         dmstatus.bits.anyhalted = 0;
         dmstatus.bits.allrunning = 1;
         dmstatus.bits.anyrunning = 0;
+        dmstatus.bits.allresumeack = 1;
+        dmstatus.bits.anyresumeack = 0;
         for (unsigned i = 0; i < hartlist_.size(); i++) {
             if (phartdata_[i].idport->isHalted()) {
                 dmstatus.bits.allrunning = 0;
@@ -98,6 +105,11 @@ uint32_t DmiFunctional::dmi_read(uint32_t addr, uint32_t *rdata) {
             } else {
                 dmstatus.bits.allhalted = 0;
                 dmstatus.bits.anyrunning = 1;
+            }
+            if (phartdata_[i].resumeack == 0) {
+                dmstatus.bits.allresumeack = 0;
+            } else {
+                dmstatus.bits.anyresumeack = 1;
             }
         }
 
@@ -118,8 +130,39 @@ uint32_t DmiFunctional::dmi_read(uint32_t addr, uint32_t *rdata) {
         *rdata = abstractcs.u32;
     } else if (addr == IJtag::DMI_ABSTRACT_DATA0) {
         *rdata = arg0_.buf32[0];
+        if (autoexecdata_ & (0x1 << 0)) {
+            ret = executeCommand();
+        }
     } else if (addr == IJtag::DMI_ABSTRACT_DATA1) {
         *rdata = arg0_.buf32[1];
+        if (autoexecdata_ & (0x1 << 1)) {
+            ret = executeCommand();
+        }
+    } else if (addr == IJtag::DMI_ABSTRACT_DATA2) {
+        *rdata = arg1_.buf32[0];
+        if (autoexecdata_ & (0x1 << 2)) {
+            ret = executeCommand();
+        }
+    } else if (addr == IJtag::DMI_ABSTRACT_DATA3) {
+        *rdata = arg1_.buf32[1];
+        if (autoexecdata_ & (0x1 << 3)) {
+            ret = executeCommand();
+        }
+    } else if (addr == IJtag::DMI_ABSTRACT_DATA4) {
+        *rdata = arg2_.buf32[0];
+        if (autoexecdata_ & (0x1 << 4)) {
+            ret = executeCommand();
+        }
+    } else if (addr == IJtag::DMI_ABSTRACT_DATA5) {
+        *rdata = arg2_.buf32[1];
+        if (autoexecdata_ & (0x1 << 5)) {
+            ret = executeCommand();
+        }
+    } else if (addr >= IJtag::DMI_PROGBUF0 && 
+               addr < (IJtag::DMI_PROGBUF0 + progbufTotal_.to_uint32())) {
+        *rdata = progbuf_[addr - IJtag::DMI_PROGBUF0];
+    } else if (addr == IJtag::DMI_ABSTRACTAUTO) {
+        *rdata = autoexecdata_ | (autoexecprogbuf_ << 16);
     } else if (addr == IJtag::DMI_HALTSUM0) {
         *rdata = 0;
         for (unsigned i = 0; i < hartlist_.size(); i++) {
@@ -153,26 +196,74 @@ uint32_t DmiFunctional::dmi_write(uint32_t addr, uint32_t wdata) {
             phartdata_[hartsel_].resumeack = 1;     // FIXME: should be callback from CPU when hart is really running
         }
     } else if (addr == IJtag::DMI_COMMAND) {
-        IJtag::dmi_command_type command;
-        IDPort *idport = phartdata_[hartsel_].idport;
-        command.u32 = wdata;
-        if (command.regaccess.cmdtype == 0) {
-            //idport->
-        } else if (command.quickaccess.cmdtype == 1) {
-        } else if (command.memaccess.cmdtype == 2) {
-        } else {
-            RISCV_info("Wrong command type at %02x", command.regaccess.cmdtype);
-            ret = DMI_STAT_FAILED;
-        }
+        command_.u32 = wdata;
+        ret = executeCommand();
     } else if (addr == IJtag::DMI_ABSTRACT_DATA0) {
         arg0_.buf32[0] = wdata;
+        if (autoexecdata_ & (0x1 << 0)) {
+            ret = executeCommand();
+        }
     } else if (addr == IJtag::DMI_ABSTRACT_DATA1) {
         arg0_.buf32[1] = wdata;
+        if (autoexecdata_ & (0x1 << 1)) {
+            ret = executeCommand();
+        }
+    } else if (addr == IJtag::DMI_ABSTRACT_DATA2) {
+        arg1_.buf32[0] = wdata;
+        if (autoexecdata_ & (0x1 << 2)) {
+            ret = executeCommand();
+        }
+    } else if (addr == IJtag::DMI_ABSTRACT_DATA3) {
+        arg1_.buf32[1] = wdata;
+        if (autoexecdata_ & (0x1 << 3)) {
+            ret = executeCommand();
+        }
+    } else if (addr == IJtag::DMI_ABSTRACT_DATA4) {
+        arg2_.buf32[0] = wdata;
+        if (autoexecdata_ & (0x1 << 4)) {
+            ret = executeCommand();
+        }
+    } else if (addr == IJtag::DMI_ABSTRACT_DATA5) {
+        arg2_.buf32[1] = wdata;
+        if (autoexecdata_ & (0x1 << 5)) {
+            ret = executeCommand();
+        }
+    } else if (addr >= IJtag::DMI_PROGBUF0 && 
+               addr < (IJtag::DMI_PROGBUF0 + progbufTotal_.to_uint32())) {
+        progbuf_[addr - IJtag::DMI_PROGBUF0] = wdata;
+    } else if (addr == IJtag::DMI_ABSTRACTAUTO) {
+        autoexecdata_ = wdata & ((1ul << dataregTotal_.to_int()) - 1);
+        autoexecprogbuf_ = (wdata >> 16) & ((1ul << progbufTotal_.to_int()) - 1);
     } else {
         RISCV_info("Unimplemented DMI write request at %02x", addr);
         ret = DMI_STAT_FAILED;
     }
     return ret;
+}
+
+uint32_t DmiFunctional::executeCommand() {
+    IDPort *idport = phartdata_[hartsel_].idport;
+    if (command_.regaccess.cmdtype == 0) {
+        if (command_.regaccess.transfer) {
+            if (command_.regaccess.write) {
+                idport->writeRegDbg(command_.regaccess.regno, arg0_.val);
+            } else {
+                arg0_.val = idport->readRegDbg(command_.regaccess.regno);
+            }
+        }
+        if (command_.regaccess.postexec) {
+            idport->executeProgbuf(progbuf_);
+        }
+        if (command_.regaccess.aarpostincrement) {
+            command_.regaccess.regno++;
+        }
+    } else if (command_.quickaccess.cmdtype == 1) {
+    } else if (command_.memaccess.cmdtype == 2) {
+    } else {
+        RISCV_info("Wrong command type at %02x", command_.regaccess.cmdtype);
+        return DMI_STAT_FAILED;
+    }
+    return DMI_STAT_SUCCESS;
 }
 
 }  // namespace debugger

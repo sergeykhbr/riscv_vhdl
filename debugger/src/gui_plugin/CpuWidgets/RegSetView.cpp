@@ -57,8 +57,7 @@ RegSetView::RegSetView(IGui *igui, QWidget *parent, int cpucontext)
         return;
     }
 
-    QString qstrReg = tr("regs ");
-    int respidx = 0;
+    QString qstrReg = tr("reg ");
 
     for (unsigned row = 0; row < reglist.size(); row++) {
         const AttributeType &rowcfg = reglist[row];
@@ -68,7 +67,7 @@ RegSetView::RegSetView(IGui *igui, QWidget *parent, int cpucontext)
                 continue;
             }
             qstrReg += QString(regname.to_string()) + tr(" ");
-            addRegWidget(row, col, regwidth.to_int(), regname.to_string(), respidx++);
+            addRegWidget(row, col, regwidth.to_int(), regname.to_string());
         }
     }
     cmdReg_.make_string(qstrReg.toLatin1());
@@ -130,11 +129,10 @@ void RegSetView::slotContextSwitchConfirmed() {
 }
 
 void RegSetView::addRegWidget(int row, int col, int bytes,
-                                  const char *name,
-                                  int respidx) {
+                                  const char *name) {
     QLabel *label = new QLabel(this);
     QWidget *pnew;
-    pnew = new RegWidget(name, bytes, this, respidx);
+    pnew = new RegWidget(name, bytes, this);
     label->setText(tr(name));
     /*
     QSizePolicy labelSizePolicy(QSizePolicy::Preferred, 

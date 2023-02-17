@@ -79,9 +79,11 @@ class CpuGeneric : public IService,
     virtual void flushMmu() {}
 
     /** IDPort interface */
-    virtual void resumereq() {resumereq_ = true; }
+    virtual void resumereq() { resumereq_ = true; }
     virtual void haltreq() { haltreq_ = true; }
-    virtual bool isHalted() { return estate_ == CORE_Halted; }
+    virtual bool isHalted() {
+        return estate_ == CORE_OFF || estate_ == CORE_Halted;
+    }
     virtual uint64_t readRegDbg(uint32_t regno) { return 0; }
     virtual void writeRegDbg(uint32_t regno, uint64_t val) {}
     virtual bool executeProgbuf(uint32_t *progbuf);
@@ -224,6 +226,7 @@ class CpuGeneric : public IService,
 
     mutex_def mutex_csr_;
     event_def eventConfigDone_;
+    event_def eventDbgRequest_;
     ClockAsyncTQueueType queue_;
 
     enum ECoreState {

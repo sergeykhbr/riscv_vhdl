@@ -18,8 +18,10 @@
 #include "riscv-isa.h"
 
 namespace debugger {
-
-static const char *RISCV_INTEGER_REGLIST[] = {
+struct reg_default_list_type {
+    char name[8];
+};
+static const reg_default_list_type RISCV_INTEGER_REGLIST[] = {
     "pc", "ra", "sp", "gp", "tp", "t0", "t1", "t2",
     "s0", "s1", "a0", "a1", "a2", "a3", "a4", "a5",
     "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7",
@@ -64,13 +66,13 @@ void CmdReg::exec(AttributeType *args, AttributeType *res) {
 
     if (args->size() == 1) {
         // Read Integer registers
-        const char *preg = RISCV_INTEGER_REGLIST[0];
-        while (preg) {
-            if (get_reg(preg, &u)) {
+        const reg_default_list_type *preg = RISCV_INTEGER_REGLIST;
+        while (*preg->name) {
+            if (get_reg(preg->name, &u)) {
                 generateError(res, "Cannot read registers");
                 break;
             }
-            (*res)[preg].make_uint64(u.val);
+            (*res)[preg->name].make_uint64(u.val);
             preg++;
         }
         return;

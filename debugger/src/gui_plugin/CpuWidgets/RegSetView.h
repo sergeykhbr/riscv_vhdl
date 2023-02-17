@@ -52,7 +52,7 @@ class RegSetView : public QWidget,
     void slotContextSwitchConfirmed();
 
  private:
-    void addRegWidget(int row, int col, int bytes, const char *name, int respidx);
+    void addRegWidget(int row, int col, int bytes, const char *name);
 
  private:
     //AttributeType cmdRegs_;

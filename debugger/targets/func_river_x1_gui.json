@@ -71,17 +71,7 @@
                 ['DataregTotal',6, 'arg0 and arg1 64-bits data registers'],
                 ['ProgbufTotal',16, 'Maximal size 16x32-bits registers'],
                 ['HartList',['core0'], 'Connected cores, other slots will be seen as unavailable'],
-                ['MapList',[['dmi0','databuf'],          
-                            ['dmi0','dmcontrol'],
-                            ['dmi0','dmstatus'],
-                            ['dmi0','hartinfo'],
-                            ['dmi0','abstractcs'],
-                            ['dmi0','command'],
-                            ['dmi0','abstractauto'],
-                            ['dmi0','progbuf'],
-                            ['dmi0','sbcs'],
-                            ['dmi0','haltsum0'],
-                           ]]
+                ['MapList',[]]
                 ]}]},
     {'Class':'DtmFunctionalClass','Instances':[
           {'Name':'dtm0','Attr':[

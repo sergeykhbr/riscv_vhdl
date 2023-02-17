@@ -23,6 +23,7 @@
 #include "coreservices/idmi.h"
 #include "coreservices/idport.h"
 #include "coreservices/imemop.h"
+#include "coreservices/ijtag.h"
 
 namespace debugger {
 
@@ -47,6 +48,9 @@ class DmiFunctional : public IService,
     virtual EDmistatus dmi_status() { return DMI_STAT_SUCCESS; }
 
  private:
+    uint32_t executeCommand();
+
+ private:
     AttributeType sysbus_;
     AttributeType busid_;
     AttributeType cpumax_;
@@ -63,6 +67,12 @@ class DmiFunctional : public IService,
 
     uint32_t hartsel_;
     Reg64Type arg0_;
+    Reg64Type arg1_;
+    Reg64Type arg2_;
+    IJtag::dmi_command_type command_;
+    uint32_t autoexecdata_;
+    uint32_t autoexecprogbuf_;
+    uint32_t progbuf_[32];
 };
 
 DECLARE_CLASS(DmiFunctional)
