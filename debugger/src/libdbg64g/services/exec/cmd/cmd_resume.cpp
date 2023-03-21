@@ -67,8 +67,13 @@ void CmdResume::exec(AttributeType *args, AttributeType *res) {
     IJtag::dmi_command_type command;
     csr_dcsr_type dcsr;
     int watchdog = 0;
+    uint32_t stepcnt = 0;
     res->attr_free();
     res->make_nil();
+
+    if (args->size() == 2 && (*args)[1].is_integer()) {
+        stepcnt = (*args)[1].to_uint32();
+    }
 
     // TODO: write breakpoints
 
@@ -99,6 +104,10 @@ void CmdResume::exec(AttributeType *args, AttributeType *res) {
     dcsr.bits.ebreakm = 1;
     dcsr.bits.ebreaks = 1;
     dcsr.bits.ebreaku = 1;
+    dcsr.bits.step = 0;
+    if (stepcnt) {
+        dcsr.bits.step = 1;
+    }
     write_dmi(IJtag::DMI_ABSTRACT_DATA0, dcsr.u32[0]);
 
     command.u32 = 0;
@@ -112,27 +121,33 @@ void CmdResume::exec(AttributeType *args, AttributeType *res) {
 
 
     // set resume request:
-    dmcontrol.u32 = 0;
-    dmcontrol.bits.dmactive = 1;
-    dmcontrol.bits.resumereq = 1;
-    write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
-
-    // All harts should run:
-    dmstatus.u32 = 0;
     do {
-        dmstatus.u32 = read_dmi(IJtag::DMI_DMSTATUS);
-    } while (dmstatus.bits.allrunning == 0 && watchdog++ < 5);
+        dmcontrol.u32 = 0;
+        dmcontrol.bits.dmactive = 1;
+        dmcontrol.bits.resumereq = 1;
+        write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
+
+        // All harts should run:
+        dmstatus.u32 = 0;
+        do {
+            dmstatus.u32 = read_dmi(IJtag::DMI_DMSTATUS);
+        } while (dmstatus.bits.allresumeack == 0 && watchdog++ < 5);
+
+        if (dmstatus.bits.allresumeack == 0 && dmstatus.bits.allrunning == 1) {
+            generateError(res, "All harts are already running");
+            break;
+        }
+
+        if (stepcnt) {
+            stepcnt--;
+        }
+    } while (stepcnt);
 
     // clear resume request
     dmcontrol.u32 = 0;
     dmcontrol.bits.dmactive = 1;
     write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
 
-    if (dmstatus.bits.allrunning == 0) {
-        generateError(res, "Cannot resume selected harts");
-    } else if (dmstatus.bits.allresumeack == 0 && dmstatus.bits.allrunning == 1) {
-        generateError(res, "All harts are already running");
-    }
 
     /*CrGenericRuncontrolType runctrl;
     CrGenericDebugControlType dcs;

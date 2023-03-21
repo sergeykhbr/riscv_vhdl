@@ -264,7 +264,7 @@ bool CpuGeneric::updateState() {
         break;
     default:;
     }
-    if (upd) {
+    if (upd && estate_ != CORE_ProgbufExec) {
         step_cnt_++;
     }
     return upd;
