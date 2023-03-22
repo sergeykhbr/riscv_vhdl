@@ -37,7 +37,9 @@
 
     {'Class':'RiscvSourceServiceClass','Instances':[
           {'Name':'src0','Attr':[
-                ['LogLevel',4]]}]},
+                ['LogLevel',4],
+                ['CmdExecutor','cmdexec0'],
+                ]}]},
 
     {'Class':'MemorySimClass','Instances':[
           {'Name':'bootrom0','Attr':[

@@ -31,10 +31,6 @@ class CmdResume : public ICommandRiscv {
     virtual void exec(AttributeType *args, AttributeType *res);
 
  protected:
-    uint64_t checkSwBreakpoint();
-    void writeBreakpoints();
-
- protected:
     static const uint32_t OPCODE_FENCE = 0x0000000f;
     static const uint32_t OPCODE_FENCE_I = 0x0000100f;
     static const uint32_t OPCODE_EBREAK = 0x00100073;

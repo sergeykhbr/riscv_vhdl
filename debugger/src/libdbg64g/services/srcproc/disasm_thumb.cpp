@@ -15,8 +15,7 @@
  */
 
 #include <api_core.h>
-#include "thumb_disasm.h"
-#include "../arm-isa.h"
+#include <arm-isa.h>
 
 namespace debugger {
 

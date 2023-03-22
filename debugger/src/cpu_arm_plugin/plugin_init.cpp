@@ -15,7 +15,6 @@
  */
 
 #include "cpu_arm7_func.h"
-#include "srcproc/srcproc.h"
 #include "stm32l4/stm32l4_rcc.h"
 #include "stm32l4/stm32l4_gpio.h"
 #include "stm32l4/stm32l4_systick.h"
@@ -27,7 +26,6 @@ namespace debugger {
 
 extern "C" void plugin_init(void) {
     REGISTER_CLASS_IDX(CpuCortex_Functional, 1);
-    REGISTER_CLASS_IDX(ArmSourceService, 2);
 
     // Move into separate library stm32:
     REGISTER_CLASS_IDX(STM32L4_RCC, 3);

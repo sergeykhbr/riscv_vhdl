@@ -91,7 +91,7 @@ void CmdDisas::exec(AttributeType *args, AttributeType *res) {
         do_format = true;
     }
 
-    isrc_->disasm(addr, mem_data, asm_data);
+    isrc_->disasm(getMode(), addr, mem_data, asm_data);
 
     if (do_format) {
         format(asm_data, res);

@@ -93,46 +93,31 @@ class ISourceCode : public IFace {
      *
      * @return disassembled instruction length
      */
-    virtual int disasm(uint64_t pc,
-                       uint8_t *data,
-                       int offset,
-                       AttributeType *mnemonic,
-                       AttributeType *comment) = 0;
-    virtual void disasm(uint64_t pc,
+    virtual void disasm(int mode,
+                       uint64_t pc,
                        AttributeType *idata,
                        AttributeType *asmlist) = 0;
 
 
-    /** Register breakpoint at specified address.
+    /** Add breakpoint at specified address.
      *
      * @param[in] addr  Breakpoint location
-     * @param[in] instr Current instruction value at specified address.
-     *                  For HW breakpoint may have any value so that memory
-     *                  won't be modified.
-     * @param[in] hw    Breakpoint flags
-     * @param[in] instr Original opcode before EBREAK instruction injection.
-     * @param[in] opcode Software breakpoint opcode
-     * @param[in] oplen Original opcode length, typical 2 or 4 bytes.
+     * @param[in] flags Hardware Breakpoint and others if needed
      */
-    virtual void registerBreakpoint(uint64_t addr, uint64_t flags,
-                                    uint32_t instr, uint32_t opcode,
-                                    uint32_t oplen) = 0;
+    virtual void addBreakpoint(uint64_t addr, uint64_t flags) = 0;
 
-    /** Unregister breakpoint at specified address.
+    /** Remove breakpoint at specified address.
      *
      * @param[in]  addr  Breakpoint location
      * @return 0 if no errors
      */
-    virtual int unregisterBreakpoint(uint64_t addr) = 0;
+    virtual int removeBreakpoint(uint64_t addr) = 0;
 
     /** Get list of breakpoints.
      *
      * @param[out] lst Breakpoint list.
      */
     virtual void getBreakpointList(AttributeType *list) = 0;
-
-    /** Check specified address on breakpoint */
-    virtual bool isBreakpoint(uint64_t addr) = 0;
 };
 
 }  // namespace debugger

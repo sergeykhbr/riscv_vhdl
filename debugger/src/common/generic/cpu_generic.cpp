@@ -72,7 +72,13 @@ CpuGeneric::CpuGeneric(const char *name)
 
     ptriggers_ = 0;
     trace_file_ = 0;
-    memset(&trace_data_, 0, sizeof(trace_data_));
+    trace_data_.step_cnt = 0;
+    trace_data_.pc = 0;
+    trace_data_.instrbuf.make_data(8);
+    trace_data_.asmlist.make_list(1);
+    memset(&trace_data_.action, 0, sizeof(trace_data_.action));
+    trace_data_.action_cnt = 0;
+
     icache_ = 0;
     memcache_sz_ = 0;
     fetch_addr_ = 0;
@@ -355,7 +361,7 @@ void CpuGeneric::trackContextStart() {
     trace_data_.action_cnt = 0;
     trace_data_.step_cnt = step_cnt_;
     trace_data_.pc = getPC();
-    trace_data_.instr = cacheline_[0].buf32[0];
+    memcpy(trace_data_.instrbuf.data(), cacheline_[0].buf32, sizeof(uint32_t));
 }
 
 void CpuGeneric::trackContextEnd() {

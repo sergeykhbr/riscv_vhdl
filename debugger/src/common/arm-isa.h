@@ -608,9 +608,51 @@ enum EIsaArmV7 {
     ARMV7_Total
 };
 
-EIsaArmV7 decoder_arm(uint32_t ti, char *errmsg, size_t errsz);
-EIsaArmV7 decoder_thumb(uint32_t ti, uint32_t *tio,
-                        char *errmsg, size_t errsz);
+enum EArmInstructionModes {
+    ARM_mode,
+    THUMB_mode,
+    Jazelle_mode,
+    ArmInstrModes_Total = 4
+};
+
+enum EArmCoreModes {
+    ArmUser_mode = 0x10,
+    ArmFIQ_mode = 0x11,
+    ArmIRQ_mode = 0x12,
+    ArmSupervisor_mode = 0x13,
+    ArmAbort_mode = 0x17,
+    ArmUndefined_mode = 0x1B,
+    ArmSystem_mode = 0x1F,
+    ArmCoreModes_Total = 32
+};
+
+enum EArmM4Modes {
+    ArmM4_MainMode,
+    ArmM4_HandlerMode,
+    ArmM4_ThreadMode,
+};
+
+enum SRType {
+    SRType_None,
+    SRType_LSL,
+    SRType_LSR,
+    SRType_ASR,
+    SRType_ROR,
+    SRType_RRX
+};
+
+/**
+    0xFFFFFFF1 Return to Handler mode. Use MSP and return to MSP
+    0xFFFFFFF9 Return to Thread mode. Use MSP and return to MSP
+    0xFFFFFFFD Return to Thread mode. Use PSP and return to PSP
+ */
+union ARM_EXC_RETURN {
+    uint32_t v;
+    struct bits_type {
+        uint32_t code : 5;      // [4:0]
+        uint32_t ones : 27;     // [31:5] = `1
+    } b;
+};
 
 /** Internal simulation bits only */
 static const uint64_t Interrupt_SoftwareIdx = 0;

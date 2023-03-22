@@ -18,14 +18,12 @@
 
 #include <api_core.h>
 #include <iservice.h>
-#include <ihap.h>
 #include "coreservices/icommand.h"
 #include "coreservices/isrccode.h"
 
 namespace debugger {
 
-class CmdBr : public ICommand,
-              public IHap  {
+class CmdBr : public ICommand {
  public:
     explicit CmdBr(IService *parent);
     virtual ~CmdBr();
@@ -34,15 +32,7 @@ class CmdBr : public ICommand,
     virtual int isValid(AttributeType *args);
     virtual void exec(AttributeType *args, AttributeType *res);
 
-    /** IHap */
-    virtual void hapTriggered(EHapType type,
-                              uint64_t param,
-                              const char *descr) {
-        RISCV_event_set(&eventHalted_);
-    }
-
  protected:
-    virtual bool isHalted();
     virtual bool isHardware(uint64_t flags) {
         return (flags & BreakFlag_HW) ? true: false;
     }
@@ -50,7 +40,22 @@ class CmdBr : public ICommand,
 
  protected:
     ISourceCode *isrc_;
-    event_def eventHalted_;
+};
+
+class CmdBrRiscv : public CmdBr {
+ public:
+    explicit CmdBrRiscv(IService *parent) : CmdBr(parent) {}
+
+ protected:
+    virtual void CmdBrRiscv::getSwBreakpointInstr(Reg64Type *instr, uint32_t *len) {
+        if ((instr->val & 0x3) == 0x3) {
+            instr->buf32[0] = 0x00100073;  // EBREAK instruction
+		    *len = 4;
+        } else {
+            instr->buf16[0] = 0x9002;      // C.EBREAK instruction
+		    *len = 2;
+        }
+    }
 };
 
 }  // namespace debugger

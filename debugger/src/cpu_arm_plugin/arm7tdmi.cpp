@@ -20,32 +20,32 @@
 
 namespace debugger {
 
-static const uint64_t PREFETCH_OFFSET[InstrModes_Total] = {
+static const uint64_t PREFETCH_OFFSET[ArmInstrModes_Total] = {
     8,
     4
 };
 
 // PC offset computation in different modes
-static const uint64_t PC_SHIFT[InstrModes_Total] = {
+static const uint64_t PC_SHIFT[ArmInstrModes_Total] = {
     2,
     1
 };
 
 // Target Bit[0]: 0 = ARM mode; 1= Thumb mode
-static const uint64_t LR_LSB[InstrModes_Total] = {
+static const uint64_t LR_LSB[ArmInstrModes_Total] = {
     0,
     1
 };
 
 // PC masking bits on branch
-static const uint64_t PC_MASK[InstrModes_Total] = {
+static const uint64_t PC_MASK[ArmInstrModes_Total] = {
     0xFFFFFFFC,
     0xFFFFFFFE
 };
 
 // Default instruction length in bytes: 4 = ARM mode; 2= Thumb mode
 // Some instructions (BL) in Thumb mode could be 4 bytes length
-static const int INSTR_LEN[InstrModes_Total] = {
+static const int INSTR_LEN[ArmInstrModes_Total] = {
     4,
     2
 };
@@ -983,7 +983,7 @@ class BLX : public ArmInstruction {
         R[Reg_pc] = off;                             // ARMv5T
         icpu_->setBranch(off);
         icpu_->pushStackTrace();
-        icpu_->setInstrMode(static_cast<EInstructionModes>(modenxt));
+        icpu_->setInstrMode(static_cast<EArmInstructionModes>(modenxt));
         return INSTR_LEN[mode];
     }
 };
@@ -1011,7 +1011,7 @@ class BX : public ArmInstruction {
         if ((u.bits.offset & 0xf) == Reg_lr) {
             icpu_->popStackTrace();
         }
-        icpu_->setInstrMode(static_cast<EInstructionModes>(modenxt));
+        icpu_->setInstrMode(static_cast<EArmInstructionModes>(modenxt));
         return INSTR_LEN[mode];
     }
 };

@@ -51,12 +51,12 @@ class CpuCortex_Functional : public CpuGeneric,
     virtual uint64_t getIrqAddress(int idx) { return 0; }
 
     /** ICpuArm */
-    virtual void setInstrMode(EInstructionModes mode) {
-        const uint32_t MODE[InstrModes_Total] = {0u, 1u};
+    virtual void setInstrMode(EArmInstructionModes mode) {
+        const uint32_t MODE[ArmInstrModes_Total] = {0u, 1u};
         p_psr_->u.T = MODE[mode];
     }
-    virtual EInstructionModes getInstrMode() {
-        const EInstructionModes MODE[2] = {ARM_mode, THUMB_mode};
+    virtual EArmInstructionModes getInstrMode() {
+        const EArmInstructionModes MODE[2] = {ARM_mode, THUMB_mode};
         return MODE[p_psr_->u.T];
     }
     virtual uint32_t getZ() { return p_psr_->u.Z; }

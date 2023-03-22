@@ -265,15 +265,16 @@ void CpuRiver_Functional::trackContextStart() {
 void CpuRiver_Functional::traceOutput() {
     char tstr[1024];
 
-    riscv_disassembler(trace_data_.instr,
-                       trace_data_.disasm,
-                       sizeof(trace_data_.disasm));
+    isrc_->disasm(0,
+                  trace_data_.pc,
+                  &trace_data_.instrbuf,
+                  &trace_data_.asmlist);
 
     RISCV_sprintf(tstr, sizeof(tstr),
         "%9" RV_PRI64 "d: %08" RV_PRI64 "x: %s \r\n",
             trace_data_.step_cnt,
             trace_data_.pc,
-            trace_data_.disasm);
+            trace_data_.asmlist[0u].to_string());
     (*trace_file_) << tstr;
 
 

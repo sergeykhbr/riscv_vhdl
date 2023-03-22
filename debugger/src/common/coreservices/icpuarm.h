@@ -13,73 +13,22 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+#pragma once
 
-#ifndef __DEBUGGER_SRC_COMMON_CORESERVICES_ICPUARM_H__
-#define __DEBUGGER_SRC_COMMON_CORESERVICES_ICPUARM_H__
-
-#include "iface.h"
+#include <iface.h>
 #include <inttypes.h>
+#include <arm-isa.h>
 
 namespace debugger {
 
 static const char *const IFACE_CPU_ARM = "ICpuArm";
 
-/** Signal types */
-//static const int CPU_SIGNAL_RESET   = 0;
-//static const int CPU_SIGNAL_EXT_IRQ = 1;
-
-enum EInstructionModes {
-    ARM_mode,
-    THUMB_mode,
-    Jazelle_mode,
-    InstrModes_Total = 4
-};
-
-enum ECoreModes {
-    User_mode = 0x10,
-    FIQ_mode = 0x11,
-    IRQ_mode = 0x12,
-    Supervisor_mode = 0x13,
-    Abort_mode = 0x17,
-    Undefined_mode = 0x1B,
-    System_mode = 0x1F,
-    CoreModes_Total = 32
-};
-
-enum EM4Modes {
-    M4_MainMode,
-    M4_HandlerMode,
-    M4_ThreadMode,
-};
-
-enum SRType {
-    SRType_None,
-    SRType_LSL,
-    SRType_LSR,
-    SRType_ASR,
-    SRType_ROR,
-    SRType_RRX
-};
-
-/**
-    0xFFFFFFF1 Return to Handler mode. Use MSP and return to MSP
-    0xFFFFFFF9 Return to Thread mode. Use MSP and return to MSP
-    0xFFFFFFFD Return to Thread mode. Use PSP and return to PSP
- */
-union EXC_RETURN {
-    uint32_t v;
-    struct bits_type {
-        uint32_t code : 5;      // [4:0]
-        uint32_t ones : 27;     // [31:5] = `1
-    } b;
-};
-
 class ICpuArm : public IFace {
  public:
     ICpuArm() : IFace(IFACE_CPU_ARM) {}
 
-    virtual void setInstrMode(EInstructionModes mode) = 0;
-    virtual EInstructionModes getInstrMode() = 0;
+    virtual void setInstrMode(EArmInstructionModes mode) = 0;
+    virtual EArmInstructionModes getInstrMode() = 0;
 
     /** Zero flag */
     virtual uint32_t getZ() = 0;
@@ -125,5 +74,4 @@ class ICpuArm : public IFace {
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_SRC_COMMON_CORESERVICES_ICPUARM_H__
 

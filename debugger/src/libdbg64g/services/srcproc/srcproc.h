@@ -19,25 +19,29 @@
 
 #include <iclass.h>
 #include <iservice.h>
+#include <ihap.h>
 #include "coreservices/isrccode.h"
+#include "coreservices/icmdexec.h"
+#include "cmd_br.h"
 
 namespace debugger {
 
-typedef int (*disasm_opcode_f)(ISourceCode *isrc, uint64_t pc, uint32_t code,
-                              AttributeType *mnemonic, AttributeType *comment);
-
-typedef int (*disasm_opcode16_f)(ISourceCode *isrc, uint64_t pc,
-                                Reg16Type code, AttributeType *mnemonic,
-                                AttributeType *comment);
-
 class RiscvSourceService : public IService,
+                           public IHap,
                            public ISourceCode {
 public:
     explicit RiscvSourceService(const char *name);
     virtual ~RiscvSourceService();
 
     /** IService interface */
-    virtual void postinitService();
+    virtual void postinitService() override;
+    virtual void predeleteService() override;
+
+    /** IHap interface */
+    virtual void hapTriggered(EHapType type,
+                              uint64_t param,
+                              const char *descr);
+
 
     /** ISourceCode interface */
     virtual void addFileSymbol(const char *name, uint64_t addr, int sz);
@@ -58,28 +62,26 @@ public:
 
     virtual int symbol2Address(const char *name, uint64_t *addr);
 
-    virtual int disasm(uint64_t pc,
-                       uint8_t *data,
-                       int offset,
-                       AttributeType *mnemonic,
-                       AttributeType *comment);
-    virtual void disasm(uint64_t pc,
-                       AttributeType *idata,
-                       AttributeType *asmlist);
+    virtual void disasm(int mode,
+                        uint64_t pc,
+                        AttributeType *idata,
+                        AttributeType *asmlist);
 
-    virtual void registerBreakpoint(uint64_t addr, uint64_t flags,
-                                    uint32_t instr, uint32_t opcode,
-                                    uint32_t oplen);
+    virtual void addBreakpoint(uint64_t addr, uint64_t flags);
 
-    virtual int unregisterBreakpoint(uint64_t addr);
+    virtual int removeBreakpoint(uint64_t addr);
 
     virtual void getBreakpointList(AttributeType *list);
 
     virtual bool isBreakpoint(uint64_t addr);
 
 private:
-    disasm_opcode_f tblOpcode1_[32];
-    disasm_opcode16_f tblCompressed_[32];
+    AttributeType cmdexec_;
+
+    ICmdExecutor *icmdexec_;
+
+    CmdBrRiscv *pcmdBr_;
+
     AttributeType brList_;
     AttributeType symbolListSortByName_;
     AttributeType symbolListSortByAddr_;

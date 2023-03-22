@@ -16,9 +16,13 @@
 
 #include <api_core.h>
 #include "cpu_arm7_func.h"
-#include "srcproc/thumb_disasm.h"
 
 namespace debugger {
+
+EIsaArmV7 decoder_arm(uint32_t ti, char *errmsg, size_t errsz);
+EIsaArmV7 decoder_thumb(uint32_t ti, uint32_t *tio,
+                        char *errmsg, size_t errsz);
+
 
 CpuCortex_Functional::CpuCortex_Functional(const char *name) :
     CpuGeneric(name) {
@@ -347,16 +351,16 @@ void CpuCortex_Functional::traceOutput() {
     char tstr[1024];
     trace_action_type *pa;
 
-    disasm_thumb(trace_data_.pc,
-                 trace_data_.instr,
-                 trace_data_.disasm,
-                 sizeof(trace_data_.disasm));
+    isrc_->disasm(THUMB_mode,
+                trace_data_.pc,
+                 &trace_data_.instrbuf,
+                 &trace_data_.asmlist);
 
     RISCV_sprintf(tstr, sizeof(tstr),
         "%9" RV_PRI64 "d: %08" RV_PRI64 "x: %s \n",
             trace_data_.step_cnt - 1,
             trace_data_.pc,
-            trace_data_.disasm);
+            trace_data_.asmlist[0u].to_string());
     (*trace_file_) << tstr;
 
     for (int i = 0; i < trace_data_.action_cnt; i++) {

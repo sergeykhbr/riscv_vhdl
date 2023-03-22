@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,19 +14,29 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_SRC_CPU_ARM_PLUGIN_SRCPROC_THUMB_DISASM_H__
-#define __DEBUGGER_SRC_CPU_ARM_PLUGIN_SRCPROC_THUMB_DISASM_H__
+#pragma once
 
-#include <inttypes.h>
-#include "../arm-isa.h"
+#include "api_core.h"
+#include "iservice.h"
+#include "coreservices/icommand.h"
+#include "coreservices/isrccode.h"
 
 namespace debugger {
 
-int disasm_thumb(uint64_t pc,
-                 uint32_t ti,
-                 char *disasm,
-                 size_t sz);
+class CmdDisas : public ICommandRiscv {
+ public:
+    explicit CmdDisas(IService *parent, IJtag *ijtag);
+
+    /** ICommand */
+    virtual int isValid(AttributeType *args);
+    virtual void exec(AttributeType *args, AttributeType *res);
+
+ private:
+    int getMode() { return 0; }
+    void format(AttributeType *asmbuf, AttributeType *fmtstr);
+
+ private:
+    ISourceCode *isrc_;
+};
 
 }  // namespace debugger
-
-#endif  // __DEBUGGER_SRC_CPU_ARM_PLUGIN_SRCPROC_THUMB_DISASM_H__

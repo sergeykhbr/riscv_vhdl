@@ -266,8 +266,8 @@ class CpuGeneric : public IService,
     struct trace_type {
         uint64_t step_cnt;
         uint64_t pc;
-        uint32_t instr;
-        char disasm[256];
+        AttributeType instrbuf;
+        AttributeType asmlist;
         // 1 instruction several actions
         trace_action_type action[64];
         int action_cnt;

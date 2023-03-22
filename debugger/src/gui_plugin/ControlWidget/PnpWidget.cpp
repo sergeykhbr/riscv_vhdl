@@ -139,6 +139,7 @@ void PnpWidget::slotUpdate() {
     int i = 0;
     iter_.buf = pnp_.cfg_table;
     while (iter_.item->descr.bits.descrtype != PNP_CFG_TYPE_INVALID) {
+        pdev = iter_.item;
         if (iter_.item->descr.bits.descrtype == PNP_CFG_TYPE_MASTER) {
             did = pdev->did;
             RISCV_sprintf(tstr, sizeof(tstr), "mst: ", NULL);

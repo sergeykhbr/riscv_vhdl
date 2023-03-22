@@ -14,323 +14,175 @@
  *  limitations under the License.
  */
 
-#include "srcproc.h"
-#include <iostream>
 #include <riscv-isa.h>
+#include <attribute.h>
+#include <api_core.h>
 #include "coreservices/icpuriscv.h"
+#include <inttypes.h>
+#include <iostream>
 
 namespace debugger {
-
-/** Class registration in the Core */
-enum ESymbInfo {
-    SymbInfo_Name,
-    SymbInfo_Address,
-    SymbInfo_Total,
-};
 
 static const char *const *RN = RISCV_IREGS_NAMES;
 static const char *const *RF = &RISCV_IREGS_NAMES[ICpuRiscV::RegFpu_Offset];
 
-int opcode_0x00(ISourceCode *isrc, uint64_t pc, uint32_t code,
+typedef int (*disasm_opcode_f)(uint64_t pc, uint32_t code,
+                              AttributeType *mnemonic, AttributeType *comment);
+
+typedef int (*disasm_opcode16_f)(uint64_t pc,
+                                Reg16Type code, AttributeType *mnemonic,
+                                AttributeType *comment);
+
+int opcode_0x00(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
-int opcode_0x01(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x01(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
-int opcode_0x03(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x03(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
-int opcode_0x04(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x04(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
-int opcode_0x05(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x05(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
-int opcode_0x06(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x06(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
-int opcode_0x08(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x08(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
-int opcode_0x09(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x09(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
-int opcode_0x0B(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x0B(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
-int opcode_0x0C(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x0C(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
-int opcode_0x0D(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x0D(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
-int opcode_0x0E(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x0E(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
-int opcode_0x14(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x14(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
-int opcode_0x18(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x18(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
-int opcode_0x19(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x19(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
-int opcode_0x1B(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x1B(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
-int opcode_0x1C(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x1C(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment);
 
-int C_ADDI16SP_LUI(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_ADDI16SP_LUI(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment);
-int C_ADDI4SPN(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_ADDI4SPN(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment);
-int C_BEQZ(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_BEQZ(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment);
-int C_BNEZ(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_BNEZ(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment);
-int C_J(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_J(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment);
-int C_JAL_ADDIW(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_JAL_ADDIW(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment);
-int C_JR_MV_EBREAK_JALR_ADD(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_JR_MV_EBREAK_JALR_ADD(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment);
-int C_LD(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_LD(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment);
-int C_LI(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_LI(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment);
-int C_LDSP(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_LDSP(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment);
-int C_LW(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_LW(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment);
-int C_LWSP(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_LWSP(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment);
-int C_MATH(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_MATH(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment);
-int C_NOP_ADDI(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_NOP_ADDI(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment);
-int C_SD(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_SD(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment);
-int C_SDSP(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_SDSP(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment);
-int C_SLLI(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_SLLI(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment);
-int C_SW(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_SW(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment);
-int C_SWSP(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_SWSP(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment);
 
 
-RiscvSourceService::RiscvSourceService(const char *name) : IService(name) {
-    registerInterface(static_cast<ISourceCode *>(this));
-    memset(tblOpcode1_, 0, sizeof(tblOpcode1_));
-    tblOpcode1_[0x00] = &opcode_0x00;
-    tblOpcode1_[0x01] = &opcode_0x01;
-    tblOpcode1_[0x03] = &opcode_0x03;
-    tblOpcode1_[0x04] = &opcode_0x04;
-    tblOpcode1_[0x05] = &opcode_0x05;
-    tblOpcode1_[0x06] = &opcode_0x06;
-    tblOpcode1_[0x08] = &opcode_0x08;
-    tblOpcode1_[0x09] = &opcode_0x09;
-    tblOpcode1_[0x0B] = &opcode_0x0B;
-    tblOpcode1_[0x0C] = &opcode_0x0C;
-    tblOpcode1_[0x0D] = &opcode_0x0D;
-    tblOpcode1_[0x0E] = &opcode_0x0E;
-    tblOpcode1_[0x14] = &opcode_0x14;
-    tblOpcode1_[0x18] = &opcode_0x18;
-    tblOpcode1_[0x19] = &opcode_0x19;
-    tblOpcode1_[0x1B] = &opcode_0x1B;
-    tblOpcode1_[0x1C] = &opcode_0x1C;
+static const disasm_opcode_f tblOpcode1_[32] = {
+    &opcode_0x00, // 0
+    &opcode_0x01, // 1
+    0, // 2
+    &opcode_0x03, // 3
+    &opcode_0x04, // 4
+    &opcode_0x05, // 5
+    &opcode_0x06, // 6
+    0, // 7
+    &opcode_0x08, // 8
+    &opcode_0x09, // 9
+    0, // 0x0A
+    &opcode_0x0B, // 0x0B
+    &opcode_0x0C, // 0x0C
+    &opcode_0x0D, // 0x0D
+    &opcode_0x0E, // 0x0E
+    0, // 0x0F
+    0, // 0x10
+    0, // 0x11
+    0, // 0x12
+    0, // 0x13
+    &opcode_0x14, // 0x14
+    0, // 0x15
+    0, // 0x16
+    0, // 0x17
+    &opcode_0x18, // 0x18
+    &opcode_0x19, // 0x19
+    0, // 0x1A
+    &opcode_0x1B, // 0x1B
+    &opcode_0x1C, // 0x1C
+    0, // 0x1D
+    0, // 0x1E
+    0 // 0x1F
+};
 
-    memset(tblCompressed_, 0, sizeof(tblCompressed_));
-    // page 82, table 12.5 " RISC-V spec. v2.2"
-    // Compute index as hash = {[15:13],[1:0]}
-    tblCompressed_[0x00] = &C_ADDI4SPN;
-    tblCompressed_[0x01] = &C_NOP_ADDI;
-    tblCompressed_[0x02] = &C_SLLI;
-    tblCompressed_[0x05] = &C_JAL_ADDIW;
-    tblCompressed_[0x08] = &C_LW;
-    tblCompressed_[0x09] = &C_LI;
-    tblCompressed_[0x0A] = &C_LWSP;
-    tblCompressed_[0x0C] = &C_LD;
-    tblCompressed_[0x0D] = &C_ADDI16SP_LUI;
-    tblCompressed_[0x0E] = &C_LDSP;
-    tblCompressed_[0x11] = &C_MATH;
-    tblCompressed_[0x12] = &C_JR_MV_EBREAK_JALR_ADD;
-    tblCompressed_[0x15] = &C_J;
-    tblCompressed_[0x18] = &C_SW;
-    tblCompressed_[0x19] = &C_BEQZ;
-    tblCompressed_[0x1A] = &C_SWSP;
-    tblCompressed_[0x1C] = &C_SD;
-    tblCompressed_[0x1D] = &C_BNEZ;
-    tblCompressed_[0x1E] = &C_SDSP;
+static const disasm_opcode16_f tblCompressed_[32] = {
+    &C_ADDI4SPN, // 0x00
+    &C_NOP_ADDI, // 0x01
+    &C_SLLI, // 0x02
+    0, // 0x03
+    0, // 0x04
+    &C_JAL_ADDIW, // 0x05
+    0, // 0x06
+    0, // 0x07
+    &C_LW, // 0x08
+    &C_LI, // 0x09
+    &C_LWSP, // 0x0A
+    0, // 0x0B
+    &C_LD, // 0x0C
+    &C_ADDI16SP_LUI, // 0x0D
+    &C_LDSP, // 0x0E
+    0, // 0x0F
+    0, // 0x10
+    &C_MATH, // 0x11
+    &C_JR_MV_EBREAK_JALR_ADD, // 0x12
+    0, // 0x13
+    0, // 0x14
+    &C_J, // 0x15
+    0, // 0x16
+    0, // 0x17
+    &C_SW, // 0x18
+    &C_BEQZ, // 0x19
+    &C_SWSP, // 0x1A
+    0, // 0x1B
+    &C_SD, // 0x1C
+    &C_BNEZ, // 0x1D
+    &C_SDSP, // 0x1E
+    0 // 0x1F
+};
 
-    brList_.make_list(0);
-    symbolListSortByName_.make_list(0);
-    symbolListSortByAddr_.make_list(0);
-}
-
-RiscvSourceService::~RiscvSourceService() {
-}
-
-void RiscvSourceService::postinitService() {
-}
-
-void RiscvSourceService::addFileSymbol(const char *name, uint64_t addr,
-                                       int sz) {
-    AttributeType symb(Attr_List);
-    symb.make_list(Symbol_Total);
-    symb[Symbol_Name].make_string(name);
-    symb[Symbol_Addr].make_uint64(addr);
-    symb[Symbol_Size].make_int64(sz);
-
-    symbolListSortByName_.add_to_list(&symb);
-    symbolListSortByName_.sort(Symbol_Name);
-
-    symbolListSortByAddr_.add_to_list(&symb);
-    symbolListSortByAddr_.sort(Symbol_Addr);
-}
-
-void RiscvSourceService::addFunctionSymbol(const char *name,
-                                      uint64_t addr, int sz) {
-    addFileSymbol(name, addr, sz);
-}
-
-void RiscvSourceService::addDataSymbol(const char *name, uint64_t addr,
-                                       int sz) {
-    addFileSymbol(name, addr, sz);
-}
-
-void RiscvSourceService::clearSymbols() {
-    symbolListSortByName_.make_list(0);
-    symbolListSortByAddr_.make_list(0);
-}
-
-void RiscvSourceService::addSymbols(AttributeType *list) {
-    for (unsigned i = 0; i < list->size(); i++) {
-        AttributeType &item = (*list)[i];
-        symbolListSortByName_.add_to_list(&item);
-        symbolListSortByAddr_.add_to_list(&item);
-    }
-    symbolListSortByName_.sort(Symbol_Name);
-    symbolListSortByAddr_.sort(Symbol_Addr);
-}
-
-void RiscvSourceService::addressToSymbol(uint64_t addr, AttributeType *info) {
-    uint64_t sadr, send;
-    int sz = static_cast<int>(symbolListSortByAddr_.size());
-
-    info->make_list(SymbInfo_Total);
-    (*info)[SymbInfo_Name].make_string("");
-    (*info)[SymbInfo_Address].make_uint64(0);
-    if (sz == 0) {
-        return;
-    }
-    sadr = symbolListSortByAddr_[0u][Symbol_Addr].to_uint64();
-    if (addr < sadr) {
-        return;
-    }
-
-    bool search = true;
-    int dist, pos = sz / 2;
-    dist = pos;
-    while (search) {
-        AttributeType &symb = symbolListSortByAddr_[pos];
-        sadr = symb[Symbol_Addr].to_uint64();
-        if (pos < static_cast<int>(symbolListSortByAddr_.size()) - 1) {
-            send = symbolListSortByAddr_[pos + 1][Symbol_Addr].to_uint64();
-        } else {
-            send = sadr + symb[Symbol_Size].to_uint64();
-        }
-        if (sadr <= addr && addr < send) {
-            (*info)[SymbInfo_Name] = symb[Symbol_Name];
-            (*info)[SymbInfo_Address].make_uint64(addr - sadr);
-            return;
-        }
-        
-        if (addr < sadr) {
-            if (dist == 0 || pos == 0) {
-                search = false;
-            } else if (dist == 1) {
-                dist = 0;
-                pos--;
-            } else {
-                int incr = dist / 2;
-                pos -= incr;
-                dist = (dist / 2) + (dist & 0x1);
-                if (pos < 0) {
-                    pos = 0;
-                }
-            }
-        } else {
-            if (dist == 0 || pos == (sz - 1)) {
-                search = false;
-            } else if (dist == 1) {
-                dist = 0;
-                pos++;
-            } else {
-                int incr = dist / 2;
-                pos += incr;
-                dist = (dist / 2) + (dist & 0x1);
-                if (pos >= sz) {
-                    pos = sz - 1;
-                }
-            }
-        }
-    }
-}
-
-int RiscvSourceService::symbol2Address(const char *name, uint64_t *addr) {
-    for (unsigned i = 0; i < symbolListSortByName_.size(); i++) {
-        AttributeType &item = symbolListSortByName_[i];
-        if (item[Symbol_Name].is_equal(name)) {
-            *addr = item[Symbol_Addr].to_uint64();
-            return 0;
-        }
-    }
-    return -1;
-}
-
-void RiscvSourceService::registerBreakpoint(uint64_t addr,
-                                            uint64_t flags,
-                                            uint32_t instr,
-                                            uint32_t opcode,
-                                            uint32_t oplen) {
-    AttributeType item;
-    item.make_list(BrkList_Total);
-    item[BrkList_address].make_uint64(addr);
-    item[BrkList_flags].make_uint64(flags);
-    item[BrkList_instr].make_uint64(instr);
-    item[BrkList_opcode].make_uint64(opcode);
-    item[BrkList_oplen].make_int64(oplen);
-
-    bool not_found = true;
-    for (unsigned i = 0; i < brList_.size(); i++) {
-        AttributeType &br = brList_[i];
-        if (addr == br[BrkList_address].to_uint64()) {
-            not_found = false;
-        }
-    }
-    if (not_found) {
-        brList_.add_to_list(&item);
-    }
-}
-
-int RiscvSourceService::unregisterBreakpoint(uint64_t addr) {
-    for (unsigned i = 0; i < brList_.size(); i++) {
-        AttributeType &br = brList_[i];
-        if (addr == br[BrkList_address].to_uint64()) {
-            brList_.remove_from_list(i);
-            return 0;
-        }
-    }
-    return 1;
-}
-
-void RiscvSourceService::getBreakpointList(AttributeType *list) {
-    list->clone(&brList_);
-}
-
-bool RiscvSourceService::isBreakpoint(uint64_t addr) {
-    for (unsigned i = 0; i < brList_.size(); i++) {
-        uint64_t bradr = brList_[i][BrkList_address].to_uint64();
-        if (addr == bradr) {
-            return true;
-        }
-    }
-    return false;
-}
-
-int RiscvSourceService::disasm(uint64_t pc,
-                       uint8_t *data,
-                       int offset,
-                       AttributeType *mnemonic,
-                       AttributeType *comment) {
+int disasm_riscv(uint64_t pc,
+                uint8_t *data,
+                int offset,
+                AttributeType *mnemonic,
+                AttributeType *comment) {
     int oplen;
     if ((data[offset] & 0x3) < 3) {
         Reg16Type val;
@@ -339,8 +191,7 @@ int RiscvSourceService::disasm(uint64_t pc,
         hash = ((val.word >> 11) & 0x1C) | (val.word & 0x3);
         oplen = 2;
         if (tblCompressed_[hash]) {
-            return tblCompressed_[hash](static_cast<ISourceCode *>(this),
-                                        pc + static_cast<uint64_t>(offset),
+            return tblCompressed_[hash](pc + static_cast<uint64_t>(offset),
                                         val,
                                         mnemonic,
                                         comment);
@@ -350,8 +201,7 @@ int RiscvSourceService::disasm(uint64_t pc,
         uint32_t opcode1 = (val >> 2) & 0x1f;
         oplen = 4;
         if (tblOpcode1_[opcode1]) {
-            return tblOpcode1_[opcode1](static_cast<ISourceCode *>(this),
-                                        pc + static_cast<uint64_t>(offset),
+            return tblOpcode1_[opcode1](pc + static_cast<uint64_t>(offset),
                                         val,
                                         mnemonic,
                                         comment);
@@ -363,66 +213,8 @@ int RiscvSourceService::disasm(uint64_t pc,
     return oplen;
 }
 
-void RiscvSourceService::disasm(uint64_t pc,
-                          AttributeType *idata,
-                          AttributeType *asmlist) {
-    asmlist->make_list(0);
-    if (!idata->is_data()) {
-        return;
-    }
-    uint8_t *data = idata->data();
 
-    AttributeType asm_item, symb_item, info;
-    asm_item.make_list(ASM_Total);
-    symb_item.make_list(3);
-    asm_item[ASM_list_type].make_int64(AsmList_disasm);
-    symb_item[ASM_list_type].make_int64(AsmList_symbol);
-    uint64_t off = 0;
-    Reg64Type code;
-    int codesz;
-
-    while (static_cast<unsigned>(off) < idata->size()) {
-        code.val = *reinterpret_cast<uint32_t*>(&data[off]);
-
-        addressToSymbol(pc + off, &info);
-        if (info[SymbInfo_Name].size() != 0 && 
-            info[SymbInfo_Address].to_int() == 0) {
-            symb_item[1].make_uint64(pc + off);
-            symb_item[2].make_string(info[SymbInfo_Name].to_string());
-            asmlist->add_to_list(&symb_item);
-        }
-        asm_item[ASM_addrline].make_uint64(pc + off);
-        asm_item[ASM_breakpoint].make_boolean(false);
-        asm_item[ASM_label].make_string("");
-
-        if (isBreakpoint(pc + off)) {
-            asm_item[ASM_breakpoint].make_boolean(true);
-        }
-        codesz = disasm(pc + off,
-                        code.buf,
-                        0,
-                        &asm_item[ASM_mnemonic],
-                        &asm_item[ASM_comment]);
-
-#if 1
-        uint64_t swap = code.val;
-        if (codesz == 2) {
-            swap = code.buf16[0];
-        }
-#else
-        uint64_t swap = 0;
-        for (int i = 0; i < codesz; i++) {
-            swap = (swap << 8) | code.buf[i];
-        }
-#endif
-        asm_item[ASM_code].make_uint64(swap);
-        asm_item[ASM_codesize].make_uint64(codesz);
-        asmlist->add_to_list(&asm_item);
-        off += codesz;
-    }
-}
-
-int opcode_0x00(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x00(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -467,7 +259,7 @@ int opcode_0x00(ISourceCode *isrc, uint64_t pc, uint32_t code,
     return 4;
 }
 
-int opcode_0x01(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x01(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -488,7 +280,7 @@ int opcode_0x01(ISourceCode *isrc, uint64_t pc, uint32_t code,
     return 4;
 }
 
-int opcode_0x03(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x03(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -509,7 +301,7 @@ int opcode_0x03(ISourceCode *isrc, uint64_t pc, uint32_t code,
     return 4;
 }
 
-int opcode_0x04(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x04(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -571,7 +363,7 @@ int opcode_0x04(ISourceCode *isrc, uint64_t pc, uint32_t code,
     return 4;
 }
 
-int opcode_0x05(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x05(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -590,7 +382,7 @@ int opcode_0x05(ISourceCode *isrc, uint64_t pc, uint32_t code,
     return 4;
 }
 
-int opcode_0x06(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x06(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -624,7 +416,7 @@ int opcode_0x06(ISourceCode *isrc, uint64_t pc, uint32_t code,
     return 4;
 }
 
-int opcode_0x08(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x08(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -659,7 +451,7 @@ int opcode_0x08(ISourceCode *isrc, uint64_t pc, uint32_t code,
     return 4;
 }
 
-int opcode_0x09(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x09(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -683,7 +475,7 @@ int opcode_0x09(ISourceCode *isrc, uint64_t pc, uint32_t code,
 }
 
 // Atomic Memory Operations (AMO)
-int opcode_0x0B(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x0B(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -786,7 +578,7 @@ int opcode_0x0B(ISourceCode *isrc, uint64_t pc, uint32_t code,
     return 4;
 }
 
-int opcode_0x0C(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x0C(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -863,7 +655,7 @@ int opcode_0x0C(ISourceCode *isrc, uint64_t pc, uint32_t code,
     return 4;
 }
 
-int opcode_0x0D(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x0D(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -876,7 +668,7 @@ int opcode_0x0D(ISourceCode *isrc, uint64_t pc, uint32_t code,
     return 4;
 }
 
-int opcode_0x0E(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x0E(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -937,7 +729,7 @@ int opcode_0x0E(ISourceCode *isrc, uint64_t pc, uint32_t code,
     return 4;
 }
 
-int opcode_0x14(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x14(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -1038,7 +830,7 @@ int opcode_0x14(ISourceCode *isrc, uint64_t pc, uint32_t code,
     return 4;
 }
 
-int opcode_0x18(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x18(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -1110,7 +902,7 @@ int opcode_0x18(ISourceCode *isrc, uint64_t pc, uint32_t code,
     default:;
     }
 
-    if (isrc) {
+    /*if (isrc) {
         AttributeType info;
         isrc->addressToSymbol(imm64, &info);
         if (info[0u].size()) {
@@ -1122,13 +914,13 @@ int opcode_0x18(ISourceCode *isrc, uint64_t pc, uint32_t code,
                         info[0u].to_string(), info[1].to_uint32());
             }
         }
-    }
+    }*/
     mnemonic->make_string(tstr);
     comment->make_string(tcomm);
     return 4;
 }
 
-int opcode_0x19(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x19(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -1156,7 +948,7 @@ int opcode_0x19(ISourceCode *isrc, uint64_t pc, uint32_t code,
     return 4;
 }
 
-int opcode_0x1B(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x1B(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -1179,7 +971,7 @@ int opcode_0x1B(ISourceCode *isrc, uint64_t pc, uint32_t code,
             pc + imm64);
     }
 
-    if (isrc) {
+    /*if (isrc) {
         AttributeType info;
         isrc->addressToSymbol(pc + imm64, &info);
         if (info[0u].size()) {
@@ -1191,13 +983,13 @@ int opcode_0x1B(ISourceCode *isrc, uint64_t pc, uint32_t code,
                         info[0u].to_string(), info[1].to_uint32());
             }
         }
-    }
+    }*/
     mnemonic->make_string(tstr);
     comment->make_string(tcomm);
     return 4;
 }
 
-int opcode_0x1C(ISourceCode *isrc, uint64_t pc, uint32_t code,
+int opcode_0x1C(uint64_t pc, uint32_t code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -1293,7 +1085,7 @@ int opcode_0x1C(ISourceCode *isrc, uint64_t pc, uint32_t code,
 /**
  * C-extension  disassembler
  */
-int C_JR_MV_EBREAK_JALR_ADD(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_JR_MV_EBREAK_JALR_ADD(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -1328,7 +1120,7 @@ int C_JR_MV_EBREAK_JALR_ADD(ISourceCode *isrc, uint64_t pc, Reg16Type code,
     return 2;
 }
 
-int C_NOP_ADDI(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_NOP_ADDI(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128];
     char tcomm[128] = "";
@@ -1350,7 +1142,7 @@ int C_NOP_ADDI(ISourceCode *isrc, uint64_t pc, Reg16Type code,
     return 2;
 }
 
-int C_ADDI16SP_LUI(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_ADDI16SP_LUI(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128];
     char tcomm[128] = "";
@@ -1381,7 +1173,7 @@ int C_ADDI16SP_LUI(ISourceCode *isrc, uint64_t pc, Reg16Type code,
     return 2;
 }
 
-int C_ADDI4SPN(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_ADDI4SPN(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimp";
     char tcomm[128] = "";
@@ -1400,7 +1192,7 @@ int C_ADDI4SPN(ISourceCode *isrc, uint64_t pc, Reg16Type code,
     return 2;
 }
 
-int C_JAL_ADDIW(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_JAL_ADDIW(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128];
     char tcomm[128] = "";
@@ -1419,7 +1211,7 @@ int C_JAL_ADDIW(ISourceCode *isrc, uint64_t pc, Reg16Type code,
     return 2;
 }
 
-int C_LD(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_LD(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128];
     char tcomm[128] = "";
@@ -1436,7 +1228,7 @@ int C_LD(ISourceCode *isrc, uint64_t pc, Reg16Type code,
     return 2;
 }
 
-int C_LDSP(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_LDSP(uint64_t pc, Reg16Type code,
            AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128];
     char tcomm[128] = "";
@@ -1454,7 +1246,7 @@ int C_LDSP(ISourceCode *isrc, uint64_t pc, Reg16Type code,
     return 2;
 }
 
-int C_LI(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_LI(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128];
     char tcomm[128] = "";
@@ -1473,7 +1265,7 @@ int C_LI(ISourceCode *isrc, uint64_t pc, Reg16Type code,
     return 2;
 }
 
-int C_LW(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_LW(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128];
     char tcomm[128] = "";
@@ -1490,7 +1282,7 @@ int C_LW(ISourceCode *isrc, uint64_t pc, Reg16Type code,
     return 2;
 }
 
-int C_LWSP(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_LWSP(uint64_t pc, Reg16Type code,
            AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128];
     char tcomm[128] = "";
@@ -1508,7 +1300,7 @@ int C_LWSP(ISourceCode *isrc, uint64_t pc, Reg16Type code,
     return 2;
 }
 
-int C_MATH(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_MATH(uint64_t pc, Reg16Type code,
            AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128] = "unimpl";
     char tcomm[128] = "";
@@ -1567,7 +1359,7 @@ int C_MATH(ISourceCode *isrc, uint64_t pc, Reg16Type code,
     return 2;
 }
 
-int C_J(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_J(uint64_t pc, Reg16Type code,
         AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128];
     char tcomm[128] = "";
@@ -1588,7 +1380,7 @@ int C_J(ISourceCode *isrc, uint64_t pc, Reg16Type code,
     return 2;
 }
 
-int C_SD(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_SD(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128];
     char tcomm[128] = "";
@@ -1605,7 +1397,7 @@ int C_SD(ISourceCode *isrc, uint64_t pc, Reg16Type code,
     return 2;
 }
 
-int C_SDSP(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_SDSP(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128];
     char tcomm[128] = "";
@@ -1622,7 +1414,7 @@ int C_SDSP(ISourceCode *isrc, uint64_t pc, Reg16Type code,
     return 2;
 }
 
-int C_SW(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_SW(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128];
     char tcomm[128] = "";
@@ -1639,7 +1431,7 @@ int C_SW(ISourceCode *isrc, uint64_t pc, Reg16Type code,
     return 2;
 }
 
-int C_SWSP(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_SWSP(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128];
     char tcomm[128] = "";
@@ -1656,7 +1448,7 @@ int C_SWSP(ISourceCode *isrc, uint64_t pc, Reg16Type code,
     return 2;
 }
 
-int C_BEQZ(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_BEQZ(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128];
     char tcomm[128] = "";
@@ -1677,7 +1469,7 @@ int C_BEQZ(ISourceCode *isrc, uint64_t pc, Reg16Type code,
     return 2;
 }
 
-int C_BNEZ(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_BNEZ(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128];
     char tcomm[128] = "";
@@ -1698,7 +1490,7 @@ int C_BNEZ(ISourceCode *isrc, uint64_t pc, Reg16Type code,
     return 2;
 }
 
-int C_SLLI(ISourceCode *isrc, uint64_t pc, Reg16Type code,
+int C_SLLI(uint64_t pc, Reg16Type code,
                 AttributeType *mnemonic, AttributeType *comment) {
     char tstr[128];
     char tcomm[128] = "";

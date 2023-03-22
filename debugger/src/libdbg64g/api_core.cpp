@@ -36,6 +36,7 @@
 #include "services/comport/comport.h"
 #include "services/console/autocompleter.h"
 #include "services/console/console.h"
+#include "services/srcproc/srcproc.h"
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
@@ -88,6 +89,7 @@ extern "C" int RISCV_init() {
     REGISTER_CLASS_IDX(Greth, 17)
     REGISTER_CLASS_IDX(TcpJtagBitBangClient, 18);
     REGISTER_CLASS_IDX(JTAG, 19);
+    REGISTER_CLASS_IDX(RiscvSourceService, 20);
 
     pcore_->load_plugins();
     return 0;

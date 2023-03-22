@@ -71,11 +71,18 @@ void CmdResume::exec(AttributeType *args, AttributeType *res) {
     res->attr_free();
     res->make_nil();
 
+    dmstatus.u32 = read_dmi(IJtag::DMI_DMSTATUS);
+    if (dmstatus.bits.allhalted == 0) {
+        generateError(res, "Already running");
+        return;
+    }
+
     if (args->size() == 2 && (*args)[1].is_integer()) {
         stepcnt = (*args)[1].to_uint32();
     }
 
-    // TODO: write breakpoints
+    // Write breakpoints and do other stuffs
+    RISCV_trigger_hap(HAP_Resume, 0, "Resume command received");
 
     // Flush everything:
     write_dmi(IJtag::DMI_PROGBUF0, OPCODE_FENCE_I);
@@ -147,49 +154,10 @@ void CmdResume::exec(AttributeType *args, AttributeType *res) {
     dmcontrol.u32 = 0;
     dmcontrol.bits.dmactive = 1;
     write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
-
-
-    /*CrGenericRuncontrolType runctrl;
-    CrGenericDebugControlType dcs;
-    uint64_t addr_runcontrol = -1;//DSUREGBASE(csr[CSR_runcontrol]);
-    uint64_t addr_dcsr = DSUREGBASE(csr[CSR_dcsr]);
-    //uint64_t addr_step_cnt = DSUREGBASE(csr[CSR_insperstep]);
-    uint64_t steps_skipped = 0;
-
-    isrc_->getBreakpointList(&brList_);
-    if (brList_.size()) {
-        // Skip breakpoint if npc points to ebreak
-        steps_skipped = checkSwBreakpoint();
-        // Write all breakpoints before resuming
-        writeBreakpoints();
-    }
-
-    if (args->size() == 2) {
-        Reg64Type step_cnt;
-        step_cnt.val = (*args)[1].to_uint64() - steps_skipped;
-        if (step_cnt.val)  {
-            //tap_->write(addr_step_cnt, 8, step_cnt.buf);
-
-            dcs.val = 0;                // disable step mode
-            dcs.bits.step = 1;
-            dcs.bits.ebreakm = 1;       // openocd do the same for m,h,s,u
-            tap_->write(addr_dcsr, 8, dcs.u8);
-
-            runctrl.val = 0;
-            runctrl.bits.req_resume = 1;
-            tap_->write(addr_runcontrol, 8, runctrl.u8);
-        }
-    } else {
-        runctrl.val = 0;
-        runctrl.bits.req_resume = 1;
-        tap_->write(addr_runcontrol, 8, runctrl.u8);
-    }*/
-
-    RISCV_trigger_hap(HAP_Resume, 0, "Resume command processed");
 }
 
-uint64_t CmdResume::checkSwBreakpoint() {
 #if 0
+uint64_t CmdResume::checkSwBreakpoint() {
     uint64_t addr_dpc = DSUREGBASE(csr[ICpuRiscV::CSR_dpc]);
     //uint64_t addr_dcsr = DSUREGBASE(csr[CSR_dcsr]);
     //uint64_t addr_runcontrol = -1;//DSUREGBASE(csr[CSR_runcontrol]);
@@ -232,12 +200,9 @@ uint64_t CmdResume::checkSwBreakpoint() {
         }
     }
     return steps.val;
-#endif
-    return 0;
 }
 
 void CmdResume::writeBreakpoints() {
-#if 0
     uint64_t br_addr;
     uint64_t br_flags;
     uint32_t br_oplen;
@@ -262,8 +227,7 @@ void CmdResume::writeBreakpoints() {
             tap_->write(addr_flushi, 8, data.buf);
         }
     }
-#endif
 }
-
+#endif
 
 }  // namespace debugger

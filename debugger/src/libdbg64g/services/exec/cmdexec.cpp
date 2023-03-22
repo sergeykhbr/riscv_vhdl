@@ -31,9 +31,6 @@
 #include "cmd/cmd_memdump.h"
 #include "cmd/cmd_cpi.h"
 #include "cmd/cmd_reset.h"
-#include "cmd/cmd_disas.h"
-#include "cmd/cmd_symb.h"
-#include "cmd/cmd_stack.h"
 #include "cmd/cmd_loadbin.h"
 #include "cmd/cmd_elf2raw.h"
 #include "cmd/cmd_cpucontext.h"
@@ -82,7 +79,6 @@ void CmdExecutor::postinitService() {
     registerCommand(new CmdReg(this, ijtag_));
     registerCommand(new CmdCpi(this, ijtag_));
     registerCommand(new CmdCpuContext(this, ijtag_));
-    registerCommand(tcmd = new CmdDisas(this, ijtag_));
     registerCommand(new CmdElf2Raw(this));
     registerCommand(new CmdExit(this));
     registerCommand(new CmdLoadBin(this, ijtag_));
@@ -93,8 +89,6 @@ void CmdExecutor::postinitService() {
     registerCommand(new CmdMemDump(this, ijtag_));
     registerCommand(tcmd = new CmdRead(this, ijtag_));
     registerCommand(new CmdReset(this, ijtag_));
-    registerCommand(new CmdStack(this, ijtag_));
-    registerCommand(new CmdSymb(this));
     registerCommand(tcmd = new CmdWrite(this, ijtag_));
 }
 
