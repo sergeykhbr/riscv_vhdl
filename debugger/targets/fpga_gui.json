@@ -32,7 +32,7 @@
                                      ['t3', 's8',  ''],
                                      ['t4', 's9',  ''],
                                      ['t5', 's10', ''],
-                                     ['t6', 's11', 'npc']],
+                                     ['t6', 's11', 'pc']],
                           'RegWidthBytes':8},
                          {'RegList':[],
                           'RegWidthBytes':8}],

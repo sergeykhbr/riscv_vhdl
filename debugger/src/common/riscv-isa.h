@@ -489,8 +489,8 @@ static const char *const RISCV_IREGS_NAMES[] = {
 };
 
 static const ECpuRegMapping RISCV_DEBUG_REG_MAP[] = {
-    {"npc",   8, 0x7b1}, //CSR_dpc},
-    {"steps", 8, 0xC02}, //CSR_insret},
+    {"pc",   8, 0x7b1}, //CSR_dpc},
+    {"insret", 8, 0xC02}, //CSR_insret},
     {"zero",  8, 0x1000},
     {"ra",    8, 0x1001},
     {"sp",    8, 0x1002},

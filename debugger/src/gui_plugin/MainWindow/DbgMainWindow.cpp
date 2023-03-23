@@ -130,7 +130,7 @@ void DbgMainWindow::handleResponse(const char *cmd) {
         }
     } else if (strcmp(cmd, cmdSteps_.to_string()) == 0) {
         double tsec =
-            static_cast<double>(respSteps_.to_uint64()) / stepToSecHz_;
+            static_cast<double>(respSteps_["insret"].to_uint64()) / stepToSecHz_;
         emit signalSimulationTime(tsec);
     }
 }
