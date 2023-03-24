@@ -13,7 +13,7 @@
 
     {'Class':'TcpServerClass','Instances':[
           {'Name':'jtagbb','Attr':[
-                ['LogLevel',4],
+                ['LogLevel',3],
                 ['Enable',true],
                 ['Timeout',500],
                 ['BlockingMode',true],

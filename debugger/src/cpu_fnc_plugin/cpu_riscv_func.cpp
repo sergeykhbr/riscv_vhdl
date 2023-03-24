@@ -208,13 +208,14 @@ void CpuRiver_Functional::switchContext(uint32_t prvnxt) {
 void CpuRiver_Functional::reset(IFace *isource) {
     CpuGeneric::reset(isource);
     portRegs_.reset();
-    uint64_t misa = readCSR(CSR_misa);
-    portCSR_.reset();
+    //uint64_t misa = readCSR(CSR_misa);
+    //portCSR_.reset();
+    // TODO: reset each register separetly!!!
     writeCSR(CSR_mvendorid, vendorid_.to_uint64());
     writeCSR(CSR_mimplementationid, implementationid_.to_uint64());
     writeCSR(CSR_mhartid, hartid_.to_uint64());
     writeCSR(CSR_mtvec, 0);
-    writeCSR(CSR_misa, misa);
+    //writeCSR(CSR_misa, misa);
     writeCSR(CSR_dpc, getResetAddress());
 
     cur_prv_level = PRV_M;           // Current privilege level

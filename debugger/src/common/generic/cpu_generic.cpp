@@ -69,6 +69,7 @@ CpuGeneric::CpuGeneric(const char *name)
     haltreq_ = false;
     procbufexecreq_ = false;
     resumereq_ = false;
+    resumeack_ = false;
 
     ptriggers_ = 0;
     trace_file_ = 0;
@@ -247,6 +248,7 @@ bool CpuGeneric::updateState() {
             procbufexecreq_ = false;
         } else if (resumereq_) {
             resumereq_ = false;
+            resumeack_ = true;
             upd = true;
             resume();
         } else {

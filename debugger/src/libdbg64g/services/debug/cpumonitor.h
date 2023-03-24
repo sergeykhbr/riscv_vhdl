@@ -20,8 +20,10 @@
 #include "iservice.h"
 #include "ihap.h"
 #include "coreservices/ithread.h"
+#include "coreservices/ijtag.h"
 #include "coreservices/icmdexec.h"
 #include <string>
+#include "../exec/cmd/cmd_init.h"
 
 namespace debugger {
 
@@ -34,6 +36,7 @@ class CpuMonitor : public IService,
 
     /** IService interface */
     virtual void postinitService() override;
+    virtual void predeleteService() override;
 
     /** IHap */
     virtual void hapTriggered(EHapType type, uint64_t param,
@@ -47,14 +50,19 @@ class CpuMonitor : public IService,
     void removeBreakpoints();
 
  private:
+    AttributeType isEnable_;
+    AttributeType jtag_;
     AttributeType cmdexec_;
     AttributeType pollingMs_;
+    AttributeType initResponse_;
     AttributeType statusResponse_;
     AttributeType npcResponse_;
     AttributeType brList_;
     AttributeType writeMemResp_;
  
+    IJtag *ijtag_;
     ICmdExecutor *icmdexec_;
+    CmdInit *pcmdInit_;
 
     event_def config_done_;
     mutex_def mutex_resume_;

@@ -30,20 +30,11 @@ class IDPort : public IFace {
     virtual void resumereq() = 0;
     virtual void haltreq() = 0;
     virtual bool isHalted() = 0;
-#if 1
+    virtual bool isResumeAck() = 0;
+
     virtual uint64_t readRegDbg(uint32_t regno) = 0;
     virtual void writeRegDbg(uint32_t regno, uint64_t val) = 0;
-#else
-    // Read/Write Control Status Registers
-    virtual uint64_t readCSR(uint32_t regno) = 0;
-    virtual void writeCSR(uint32_t regno, uint64_t val) = 0;
-    // Read/Write General Purpose Registers + FPU registers
-    virtual uint64_t readGPR(uint32_t regno) = 0;
-    virtual void writeGPR(uint32_t regno, uint64_t val) = 0;
-    // Read/Write Non-standard extension registers
-    virtual uint64_t readNonStandardReg(uint32_t regno) = 0;
-    virtual void writeNonStandardReg(uint32_t regno, uint64_t val) = 0;
-#endif
+
     virtual bool executeProgbuf(uint32_t *progbuf) = 0;
     virtual bool isExecutingProgbuf() = 0;
     virtual void setResetPin(bool val) = 0;

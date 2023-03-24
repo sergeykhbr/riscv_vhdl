@@ -16,7 +16,6 @@
 
 #include <string.h>
 #include "cmdexec.h"
-#include "cmd/cmd_init.h"
 #include "cmd/cmd_halt.h"
 #include "cmd/cmd_resume.h"
 #include "cmd/cmd_isrunning.h"
@@ -43,7 +42,6 @@ CmdExecutor::CmdExecutor(const char *name)
     registerInterface(static_cast<ICmdExecutor *>(this));
     registerAttribute("Bus", &bus_);
     registerAttribute("Jtag", &jtag_);
-    registerAttribute("DmiBAR", &dmibar_);
 
     cmds_.make_list(0);
 
@@ -71,7 +69,6 @@ void CmdExecutor::postinitService() {
 
     // Core commands registration:
     ICommand *tcmd;
-    registerCommand(new CmdInit(this, ijtag_));
     registerCommand(new CmdHalt(this, ijtag_));
     registerCommand(new CmdResume(this, ijtag_));
     registerCommand(new CmdIsRunning(this, ijtag_));

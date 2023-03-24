@@ -62,7 +62,6 @@ class DmiFunctional : public IService,
 
     struct HartDataType {
         IDPort *idport; // if 0, hart is not available
-        bool resumeack;
     } *phartdata_;
 
     uint32_t hartsel_;

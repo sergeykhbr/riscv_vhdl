@@ -79,10 +79,18 @@ class CpuGeneric : public IService,
     virtual void flushMmu() {}
 
     /** IDPort interface */
-    virtual void resumereq() { resumereq_ = true; }
-    virtual void haltreq() { haltreq_ = true; }
+    virtual void resumereq() {
+        resumereq_ = true;
+        resumeack_ = false;
+    }
+    virtual void haltreq() {
+        haltreq_ = true;
+    }
     virtual bool isHalted() {
         return estate_ == CORE_OFF || estate_ == CORE_Halted;
+    }
+    virtual bool isResumeAck() {
+        return resumeack_;
     }
     virtual uint64_t readRegDbg(uint32_t regno) { return 0; }
     virtual void writeRegDbg(uint32_t regno, uint64_t val) {}
@@ -205,6 +213,7 @@ class CpuGeneric : public IService,
 
     uint64_t step_cnt_;
     volatile bool resumereq_;
+    volatile bool resumeack_;
     volatile bool haltreq_;
     volatile bool procbufexecreq_;
     bool branch_;

@@ -418,11 +418,8 @@ void CpuRiver_Functional::addIsaPrivilegedRV64I() {
      * The 'U', 'S', and 'H' bits will be set if there is support for 
      * user, supervisor, and hypervisor privilege modes respectively.
      */
-    uint64_t isa = readCSR(CSR_misa);
-    isa |= (1LL << ('U' - 'A'));
-    isa |= (1LL << ('S' - 'A'));
-    isa |= (1LL << ('H' - 'A'));
-    writeCSR(CSR_misa, isa);
+    portCSR_.write(CSR_misa, portCSR_.read(CSR_misa).val | (1LL << ('U' - 'A')));
+    portCSR_.write(CSR_misa, portCSR_.read(CSR_misa).val | (1LL << ('S' - 'A')));
 }
 
 }  // namespace debugger

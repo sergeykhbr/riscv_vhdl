@@ -58,7 +58,6 @@
                 ['LogLevel',4],
                 ['Bus','axi0'],
                 ['Jtag','jtag0'],
-                ['DmiBAR',0x1000]
                 ]}]},
     {'Class':'SimplePluginClass','Instances':[
           {'Name':'example0','Attr':[
@@ -69,8 +68,10 @@
                 ['ObjDescription','This object is polling DMI haltsum0 register and detects halted CPU.
                                   Main purpose of this polling to add breakpoins on resume and remove
                                   them on halt events'],
+                ['Enable',true, 'Set to false to disable monitor. Useful when OpenOCD is used'],
                 ['LogLevel',1],
                 ['PollingMs',100],
+                ['Jtag','jtag0'],
                 ['CmdExecutor','cmdexec0']
                 ]}]},
     {'Class':'MemorySimClass','Instances':[

@@ -129,9 +129,13 @@ void DbgMainWindow::handleResponse(const char *cmd) {
             emit signalTargetStateChanged(halted == 0);
         }
     } else if (strcmp(cmd, cmdSteps_.to_string()) == 0) {
-        double tsec =
-            static_cast<double>(respSteps_["insret"].to_uint64()) / stepToSecHz_;
-        emit signalSimulationTime(tsec);
+        if (respSteps_.is_dict()) {
+            double tsec = static_cast<double>(
+                respSteps_["insret"].to_uint64()) / stepToSecHz_;
+            emit signalSimulationTime(tsec);
+        } else {
+            bool err = true;
+        }
     }
 }
 

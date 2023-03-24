@@ -1346,7 +1346,7 @@ void CpuRiver_Functional::addIsaUserRV64I() {
      */
     uint64_t isa = 0x8000000000000000LL;
     isa |= (1LL << ('I' - 'A'));
-    writeCSR(CSR_misa, isa);
+    portCSR_.write(CSR_misa, portCSR_.read(CSR_misa).val | isa);
 }
 
 }  // namespace debugger

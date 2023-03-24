@@ -668,8 +668,7 @@ void CpuRiver_Functional::addIsaExtensionM() {
     addSupportedInstruction(new REMW(this));
     addSupportedInstruction(new REMUW(this));
 
-    uint64_t isa = readCSR(CSR_misa);
-    writeCSR(CSR_misa, isa | (1LL << ('M' - 'A')));
+    portCSR_.write(CSR_misa, portCSR_.read(CSR_misa).val | (1LL << ('M' - 'A')));
 }
 
 }  // namespace debugger

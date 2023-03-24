@@ -435,7 +435,7 @@ void dmidebug::comb() {
             vb_resp_data[8] = (i_halted.read()[hsel] && i_available.read()[hsel]);// anyhalted:
             vb_resp_data[7] = 1;                            // authenticated:
             vb_resp_data[5] = 1;                            // hasresethaltreq
-            vb_resp_data(3, 0) = 2;                         // version: dbg spec v0.13
+            vb_resp_data(3, 0) = 2;                         // version: dbg spec 2=v0.13; 3=v1.0
         } else if (r.regidx.read() == 0x12) {               // hartinfo
             // Not available core should returns 0
             if (i_available.read()[hsel] == 1) {

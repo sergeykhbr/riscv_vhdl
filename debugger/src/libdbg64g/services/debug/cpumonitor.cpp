@@ -27,6 +27,8 @@ CpuMonitor::CpuMonitor(const char *name)
     : IService(name), IHap(HAP_All) {
     registerInterface(static_cast<IThread *>(this));
     registerInterface(static_cast<IHap *>(this));
+    registerAttribute("Enable", &isEnable_);
+    registerAttribute("Jtag", &jtag_);
     registerAttribute("CmdExecutor", &cmdexec_);
     registerAttribute("PollingMs", &pollingMs_);
 
@@ -34,6 +36,9 @@ CpuMonitor::CpuMonitor(const char *name)
     RISCV_mutex_init(&mutex_resume_);
     RISCV_register_hap(static_cast<IHap *>(this));
     hartsel_ = 0;
+    isEnable_.make_boolean(true);
+    pcmdInit_ = 0;
+    initResponse_.make_dict();
 }
 
 CpuMonitor::~CpuMonitor() {
@@ -42,17 +47,32 @@ CpuMonitor::~CpuMonitor() {
 }
 
 void CpuMonitor::postinitService() {
+    ijtag_ = static_cast<IJtag *>
+            (RISCV_get_service_iface(jtag_.to_string(), IFACE_JTAG));
+
     icmdexec_ = static_cast<ICmdExecutor *>(
        RISCV_get_service_iface(cmdexec_.to_string(), IFACE_CMD_EXECUTOR));
     if (!icmdexec_) {
         RISCV_error("ICmdExecutor interface '%s' not found", 
                     cmdexec_.to_string());
         return;
+    } else {
+        pcmdInit_ = new CmdInit(this, ijtag_);
+        icmdexec_->registerCommand(pcmdInit_);
     }
 
-    if (!run()) {
-        RISCV_error("Can't create thread.", NULL);
-        return;
+    if (isEnable_.to_bool()) {
+        if (!run()) {
+            RISCV_error("Can't create thread.", NULL);
+            return;
+        }
+    }
+}
+
+void CpuMonitor::predeleteService() {
+    if (icmdexec_) {
+        icmdexec_->unregisterCommand(pcmdInit_);
+        delete pcmdInit_;
     }
 }
 

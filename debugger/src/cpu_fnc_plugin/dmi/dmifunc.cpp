@@ -88,10 +88,18 @@ ETransStatus DmiFunctional::b_transport(Axi4TransactionType *trans) {
 
 uint32_t DmiFunctional::dmi_read(uint32_t addr, uint32_t *rdata) {
     uint32_t ret = DMI_STAT_SUCCESS;
-    if (addr == IJtag::DMI_DMSTATUS) {
+    if (addr == IJtag::DMI_DMCONTROL) {
+        IJtag::dmi_dmcontrol_type dmcontrol;
+        dmcontrol.u32 = 0;
+        dmcontrol.bits.dmactive = 1;
+        dmcontrol.bits.hartselhi = hartsel_ >> 10;
+        dmcontrol.bits.hartsello = hartsel_;
+        *rdata = dmcontrol.u32;
+    } else if (addr == IJtag::DMI_DMSTATUS) {
         IJtag::dmi_dmstatus_type dmstatus;
         dmstatus.u32 = 0;
-        dmstatus.bits.version = 1;
+        dmstatus.bits.version = 2;  // 2=ver 0.13; 3=ver 1.0
+        dmstatus.bits.authenticated = 1;
         dmstatus.bits.allhalted = 1;
         dmstatus.bits.anyhalted = 0;
         dmstatus.bits.allrunning = 1;
@@ -106,7 +114,7 @@ uint32_t DmiFunctional::dmi_read(uint32_t addr, uint32_t *rdata) {
                 dmstatus.bits.allhalted = 0;
                 dmstatus.bits.anyrunning = 1;
             }
-            if (phartdata_[i].resumeack == 0) {
+            if (phartdata_[i].idport->isResumeAck() == 0) {
                 dmstatus.bits.allresumeack = 0;
             } else {
                 dmstatus.bits.anyresumeack = 1;
@@ -114,13 +122,9 @@ uint32_t DmiFunctional::dmi_read(uint32_t addr, uint32_t *rdata) {
         }
 
         *rdata = dmstatus.u32;
-    } else if (addr == IJtag::DMI_DMCONTROL) {
-        IJtag::dmi_dmcontrol_type dmcontrol;
-        dmcontrol.u32 = 0;
-        dmcontrol.bits.dmactive = 1;
-        dmcontrol.bits.hartselhi = hartsel_ >> 10;
-        dmcontrol.bits.hartsello = hartsel_;
-        *rdata = dmcontrol.u32;
+    } else if (addr == IJtag::DMI_HARTINFO) {
+        *rdata = 0;
+        *rdata |= (2 << 20);// nscratch
     } else if (addr == IJtag::DMI_ABSTRACTCS) {
         IJtag::dmi_abstractcs_type abstractcs;
         abstractcs.u32 = 0;
@@ -170,6 +174,8 @@ uint32_t DmiFunctional::dmi_read(uint32_t addr, uint32_t *rdata) {
                 *rdata |= 1u << i;
             }
         }
+    } else if (addr == IJtag::DMI_SBCS) {
+        *rdata = 0;
     } else {
         RISCV_info("Unimplemented DMI read request at %02x", addr);
         ret = DMI_STAT_FAILED;
@@ -193,7 +199,6 @@ uint32_t DmiFunctional::dmi_write(uint32_t addr, uint32_t wdata) {
             idport->haltreq();
         } else if (dmcontrol.bits.resumereq) {
             idport->resumereq();
-            phartdata_[hartsel_].resumeack = 1;     // FIXME: should be callback from CPU when hart is really running
         }
     } else if (addr == IJtag::DMI_COMMAND) {
         command_.u32 = wdata;
