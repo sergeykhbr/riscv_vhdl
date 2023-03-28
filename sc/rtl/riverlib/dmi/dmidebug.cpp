@@ -72,7 +72,6 @@ dmidebug::dmidebug(sc_module_name name,
     tap->i_dmi_resp_data(wb_jtag_dmi_resp_data);
     tap->i_dmi_busy(w_jtag_dmi_busy);
     tap->i_dmi_error(w_jtag_dmi_error);
-    tap->o_dmi_reset(w_tap_dmi_reset);
     tap->o_dmi_hardreset(w_tap_dmi_hardreset);
 
 
@@ -83,14 +82,12 @@ dmidebug::dmidebug(sc_module_name name,
     cdc->i_dmi_req_write(w_tap_dmi_req_write);
     cdc->i_dmi_req_addr(wb_tap_dmi_req_addr);
     cdc->i_dmi_req_data(wb_tap_dmi_req_data);
-    cdc->i_dmi_reset(w_tap_dmi_reset);
     cdc->i_dmi_hardreset(w_tap_dmi_hardreset);
     cdc->i_dmi_req_ready(w_cdc_dmi_req_ready);
     cdc->o_dmi_req_valid(w_cdc_dmi_req_valid);
     cdc->o_dmi_req_write(w_cdc_dmi_req_write);
     cdc->o_dmi_req_addr(wb_cdc_dmi_req_addr);
     cdc->o_dmi_req_data(wb_cdc_dmi_req_data);
-    cdc->o_dmi_reset(w_cdc_dmi_reset);
     cdc->o_dmi_hardreset(w_cdc_dmi_hardreset);
 
 
@@ -113,14 +110,12 @@ dmidebug::dmidebug(sc_module_name name,
     sensitive << w_tap_dmi_req_write;
     sensitive << wb_tap_dmi_req_addr;
     sensitive << wb_tap_dmi_req_data;
-    sensitive << w_tap_dmi_reset;
     sensitive << w_tap_dmi_hardreset;
     sensitive << w_cdc_dmi_req_valid;
     sensitive << w_cdc_dmi_req_ready;
     sensitive << w_cdc_dmi_req_write;
     sensitive << wb_cdc_dmi_req_addr;
     sensitive << wb_cdc_dmi_req_data;
-    sensitive << w_cdc_dmi_reset;
     sensitive << w_cdc_dmi_hardreset;
     sensitive << wb_jtag_dmi_resp_data;
     sensitive << w_jtag_dmi_busy;
@@ -435,7 +430,7 @@ void dmidebug::comb() {
             vb_resp_data[8] = (i_halted.read()[hsel] && i_available.read()[hsel]);// anyhalted:
             vb_resp_data[7] = 1;                            // authenticated:
             vb_resp_data[5] = 1;                            // hasresethaltreq
-            vb_resp_data(3, 0) = 2;                         // version: dbg spec 2=v0.13; 3=v1.0
+            vb_resp_data(3, 0) = 2;                         // version: dbg spec v0.13
         } else if (r.regidx.read() == 0x12) {               // hartinfo
             // Not available core should returns 0
             if (i_available.read()[hsel] == 1) {
@@ -449,7 +444,7 @@ void dmidebug::comb() {
             vb_resp_data[12] = v_cmd_busy;                  // busy
             vb_resp_data(10, 8) = r.cmderr;
             vb_resp_data(3, 0) = CFG_DATA_REG_TOTAL;
-            if ((r.regwr.read() == 1) && (r.wdata.read()(10, 8).or_reduce() == 1)) {
+            if ((r.regwr.read() == 1) && (r.wdata.read()(10, 8) == 1)) {
                 v.cmderr = CMDERR_NONE;
             }
         } else if (r.regidx.read() == 0x17) {               // command
@@ -679,7 +674,7 @@ void dmidebug::comb() {
     vb_req_type[DPortReq_MemVirtual] = r.aamvirtual.read();
     vb_req_type[DPortReq_Progexec] = r.cmd_progexec.read();
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((!async_reset_ && i_nrst.read() == 0) || (w_cdc_dmi_hardreset.read() == 1)) {
         dmidebug_r_reset(v);
     }
 
@@ -699,7 +694,9 @@ void dmidebug::comb() {
 
     w_cdc_dmi_req_ready = v_cdc_dmi_req_ready;
     wb_jtag_dmi_resp_data = r.jtag_resp_data;
-    w_jtag_dmi_busy = 0;                                    // |r.dmstate
+    w_jtag_dmi_busy = r.dmstate;
+    // There are no specified cases in which the DM would respond with an error,
+    // and DMI is not required to support returning errors.
     w_jtag_dmi_error = 0;
 
     o_cfg = vcfg;

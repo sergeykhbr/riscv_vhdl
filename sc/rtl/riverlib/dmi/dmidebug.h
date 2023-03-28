@@ -185,14 +185,12 @@ SC_MODULE(dmidebug) {
     sc_signal<bool> w_tap_dmi_req_write;
     sc_signal<sc_uint<7>> wb_tap_dmi_req_addr;
     sc_signal<sc_uint<32>> wb_tap_dmi_req_data;
-    sc_signal<bool> w_tap_dmi_reset;
     sc_signal<bool> w_tap_dmi_hardreset;
     sc_signal<bool> w_cdc_dmi_req_valid;
     sc_signal<bool> w_cdc_dmi_req_ready;
     sc_signal<bool> w_cdc_dmi_req_write;
     sc_signal<sc_uint<7>> wb_cdc_dmi_req_addr;
     sc_signal<sc_uint<32>> wb_cdc_dmi_req_data;
-    sc_signal<bool> w_cdc_dmi_reset;
     sc_signal<bool> w_cdc_dmi_hardreset;
     sc_signal<sc_uint<32>> wb_jtag_dmi_resp_data;
     sc_signal<bool> w_jtag_dmi_busy;

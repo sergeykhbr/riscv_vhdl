@@ -30,7 +30,7 @@ SC_MODULE(sfifo) {
     sc_in<sc_uint<dbits>> i_wdata;
     sc_in<bool> i_re;
     sc_out<sc_uint<dbits>> o_rdata;
-    sc_out<sc_uint<log2_depth>> o_count;                    // Number of words in FIFO
+    sc_out<sc_uint<(log2_depth + 1)>> o_count;              // Number of words in FIFO
 
     void comb();
     void registers();
@@ -51,7 +51,7 @@ SC_MODULE(sfifo) {
         sc_signal<sc_uint<dbits>> databuf[DEPTH];
         sc_signal<sc_uint<log2_depth>> wr_cnt;
         sc_signal<sc_uint<log2_depth>> rd_cnt;
-        sc_signal<sc_uint<log2_depth>> total_cnt;
+        sc_signal<sc_uint<(log2_depth + 1)>> total_cnt;
     } v, r;
 
 
@@ -131,9 +131,7 @@ void sfifo<dbits, log2_depth>::comb() {
         v_empty = 1;
     }
 
-    if (r.total_cnt.read() == (DEPTH - 1)) {
-        v_full = 1;
-    }
+    v_full = r.total_cnt.read()[log2_depth];
 
     if ((i_we.read() == 1) && ((v_full == 0) || (i_re.read() == 1))) {
         v.wr_cnt = (r.wr_cnt.read() + 1);

@@ -28,14 +28,12 @@ jtagcdc::jtagcdc(sc_module_name name,
     i_dmi_req_write("i_dmi_req_write"),
     i_dmi_req_addr("i_dmi_req_addr"),
     i_dmi_req_data("i_dmi_req_data"),
-    i_dmi_reset("i_dmi_reset"),
     i_dmi_hardreset("i_dmi_hardreset"),
     i_dmi_req_ready("i_dmi_req_ready"),
     o_dmi_req_valid("o_dmi_req_valid"),
     o_dmi_req_write("o_dmi_req_write"),
     o_dmi_req_addr("o_dmi_req_addr"),
     o_dmi_req_data("o_dmi_req_data"),
-    o_dmi_reset("o_dmi_reset"),
     o_dmi_hardreset("o_dmi_hardreset") {
 
     async_reset_ = async_reset;
@@ -46,7 +44,6 @@ jtagcdc::jtagcdc(sc_module_name name,
     sensitive << i_dmi_req_write;
     sensitive << i_dmi_req_addr;
     sensitive << i_dmi_req_data;
-    sensitive << i_dmi_reset;
     sensitive << i_dmi_hardreset;
     sensitive << i_dmi_req_ready;
     sensitive << r.l1;
@@ -71,14 +68,12 @@ void jtagcdc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_dmi_req_write, i_dmi_req_write.name());
         sc_trace(o_vcd, i_dmi_req_addr, i_dmi_req_addr.name());
         sc_trace(o_vcd, i_dmi_req_data, i_dmi_req_data.name());
-        sc_trace(o_vcd, i_dmi_reset, i_dmi_reset.name());
         sc_trace(o_vcd, i_dmi_hardreset, i_dmi_hardreset.name());
         sc_trace(o_vcd, i_dmi_req_ready, i_dmi_req_ready.name());
         sc_trace(o_vcd, o_dmi_req_valid, o_dmi_req_valid.name());
         sc_trace(o_vcd, o_dmi_req_write, o_dmi_req_write.name());
         sc_trace(o_vcd, o_dmi_req_addr, o_dmi_req_addr.name());
         sc_trace(o_vcd, o_dmi_req_data, o_dmi_req_data.name());
-        sc_trace(o_vcd, o_dmi_reset, o_dmi_reset.name());
         sc_trace(o_vcd, o_dmi_hardreset, o_dmi_hardreset.name());
         sc_trace(o_vcd, r.l1, pn + ".r_l1");
         sc_trace(o_vcd, r.l2, pn + ".r_l2");
@@ -101,11 +96,11 @@ void jtagcdc::comb() {
     v = r;
 
     vb_bus = (i_dmi_hardreset,
-            i_dmi_reset,
             i_dmi_req_addr,
             i_dmi_req_data,
             i_dmi_req_write,
-            i_dmi_req_valid);
+            i_dmi_req_valid,
+            i_dmi_hardreset);
 
     v.l1 = vb_bus;
     v.l2 = r.l1;
@@ -134,7 +129,6 @@ void jtagcdc::comb() {
     o_dmi_req_write = r.req_write;
     o_dmi_req_data = r.req_data;
     o_dmi_req_addr = r.req_addr;
-    o_dmi_reset = r.req_reset;
     o_dmi_hardreset = r.req_hardreset;
 }
 

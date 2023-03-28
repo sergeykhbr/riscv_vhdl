@@ -115,13 +115,13 @@ SC_MODULE(apb_spi) {
     sc_signal<sc_uint<8>> wb_rxfifo_wdata;
     sc_signal<bool> w_rxfifo_re;
     sc_signal<sc_uint<8>> wb_rxfifo_rdata;
-    sc_signal<sc_uint<log2_fifosz>> wb_rxfifo_count;
+    sc_signal<sc_uint<(log2_fifosz + 1)>> wb_rxfifo_count;
     // Tx FIFO signals:
     sc_signal<bool> w_txfifo_we;
     sc_signal<sc_uint<8>> wb_txfifo_wdata;
     sc_signal<bool> w_txfifo_re;
     sc_signal<sc_uint<8>> wb_txfifo_rdata;
-    sc_signal<sc_uint<log2_fifosz>> wb_txfifo_count;
+    sc_signal<sc_uint<(log2_fifosz + 1)>> wb_txfifo_count;
 
     apb_slv *pslv0;
     sfifo<fifo_dbits, 9> *rxfifo;

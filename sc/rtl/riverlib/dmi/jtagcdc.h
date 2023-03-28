@@ -28,7 +28,6 @@ SC_MODULE(jtagcdc) {
     sc_in<bool> i_dmi_req_write;
     sc_in<sc_uint<7>> i_dmi_req_addr;
     sc_in<sc_uint<32>> i_dmi_req_data;
-    sc_in<bool> i_dmi_reset;
     sc_in<bool> i_dmi_hardreset;
     // system clock
     sc_in<bool> i_dmi_req_ready;
@@ -36,7 +35,6 @@ SC_MODULE(jtagcdc) {
     sc_out<bool> o_dmi_req_write;
     sc_out<sc_uint<7>> o_dmi_req_addr;
     sc_out<sc_uint<32>> o_dmi_req_data;
-    sc_out<bool> o_dmi_reset;
     sc_out<bool> o_dmi_hardreset;
 
     void comb();
@@ -53,11 +51,11 @@ SC_MODULE(jtagcdc) {
     bool async_reset_;
 
     static const int CDC_REG_WIDTH = (1  // i_dmi_hardreset
-            + 1  // i_dmi_reset
             + 7  // i_dmi_req_addr
             + 32  // i_dmi_req_data
             + 1  // i_dmi_req_write
             + 1  // i_dmi_req_valid
+            + 1  // i_dmi_hardreset
     );
 
     struct jtagcdc_registers {

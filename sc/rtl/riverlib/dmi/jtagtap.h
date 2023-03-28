@@ -37,7 +37,6 @@ SC_MODULE(jtagtap) {
     sc_in<sc_uint<32>> i_dmi_resp_data;
     sc_in<bool> i_dmi_busy;
     sc_in<bool> i_dmi_error;
-    sc_out<bool> o_dmi_reset;
     sc_out<bool> o_dmi_hardreset;
 
     void comb();
@@ -89,6 +88,7 @@ SC_MODULE(jtagtap) {
         sc_signal<sc_uint<drlen>> dr;
         sc_signal<bool> bypass;
         sc_signal<sc_uint<32>> datacnt;
+        sc_signal<sc_uint<2>> err_sticky;
     } v, r;
 
     void jtagtap_r_reset(jtagtap_registers &iv) {
@@ -97,6 +97,7 @@ SC_MODULE(jtagtap) {
         iv.dr = idcode;
         iv.bypass = 0;
         iv.datacnt = 0;
+        iv.err_sticky = 0;
     }
 
     struct jtagtap_nregisters {
@@ -126,7 +127,6 @@ jtagtap<idcode, abits, irlen>::jtagtap(sc_module_name name)
     i_dmi_resp_data("i_dmi_resp_data"),
     i_dmi_busy("i_dmi_busy"),
     i_dmi_error("i_dmi_error"),
-    o_dmi_reset("o_dmi_reset"),
     o_dmi_hardreset("o_dmi_hardreset") {
 
 
@@ -143,6 +143,7 @@ jtagtap<idcode, abits, irlen>::jtagtap(sc_module_name name)
     sensitive << r.dr;
     sensitive << r.bypass;
     sensitive << r.datacnt;
+    sensitive << r.err_sticky;
     sensitive << nr.ir;
     sensitive << nr.dmi_addr;
 
@@ -171,13 +172,13 @@ void jtagtap<idcode, abits, irlen>::generateVCD(sc_trace_file *i_vcd, sc_trace_f
         sc_trace(o_vcd, i_dmi_resp_data, i_dmi_resp_data.name());
         sc_trace(o_vcd, i_dmi_busy, i_dmi_busy.name());
         sc_trace(o_vcd, i_dmi_error, i_dmi_error.name());
-        sc_trace(o_vcd, o_dmi_reset, o_dmi_reset.name());
         sc_trace(o_vcd, o_dmi_hardreset, o_dmi_hardreset.name());
         sc_trace(o_vcd, r.state, pn + ".r_state");
         sc_trace(o_vcd, r.dr_length, pn + ".r_dr_length");
         sc_trace(o_vcd, r.dr, pn + ".r_dr");
         sc_trace(o_vcd, r.bypass, pn + ".r_bypass");
         sc_trace(o_vcd, r.datacnt, pn + ".r_datacnt");
+        sc_trace(o_vcd, r.err_sticky, pn + ".r_err_sticky");
         sc_trace(o_vcd, nr.ir, pn + ".nr_ir");
         sc_trace(o_vcd, nr.dmi_addr, pn + ".nr_dmi_addr");
     }
@@ -187,35 +188,26 @@ void jtagtap<idcode, abits, irlen>::generateVCD(sc_trace_file *i_vcd, sc_trace_f
 template<uint32_t idcode, int abits, int irlen>
 void jtagtap<idcode, abits, irlen>::comb() {
     sc_uint<drlen> vb_dr;
-    sc_uint<2> vb_stat;
     bool v_dmi_req_valid;
     bool v_dmi_req_write;
     sc_uint<32> vb_dmi_req_data;
     sc_uint<abits> vb_dmi_req_addr;
-    bool v_dmi_reset;
+    sc_uint<2> vb_err_sticky;
     bool v_dmi_hardreset;
 
     vb_dr = 0;
-    vb_stat = 0;
     v_dmi_req_valid = 0;
     v_dmi_req_write = 0;
     vb_dmi_req_data = 0;
     vb_dmi_req_addr = 0;
-    v_dmi_reset = 0;
+    vb_err_sticky = 0;
     v_dmi_hardreset = 0;
 
     v = r;
     nv = nr;
 
     vb_dr = r.dr;
-
-    if (i_dmi_busy.read() == 1) {
-        vb_stat = DMISTAT_BUSY;
-    } else if (i_dmi_error.read() == 1) {
-        vb_stat = DMISTAT_FAILED;
-    } else {
-        vb_stat = DMISTAT_SUCCESS;
-    }
+    vb_err_sticky = r.err_sticky;
 
     switch (r.state.read()) {
     case RESET_TAP:
@@ -253,10 +245,15 @@ void jtagtap<idcode, abits, irlen>::comb() {
             vb_dr(31, 0) = 0;
             vb_dr(3, 0) = 0x1;                              // version
             vb_dr(9, 4) = abits;                            // the size of the address
-            vb_dr(11, 10) = vb_stat;
+            vb_dr(11, 10) = r.err_sticky;
             v.dr_length = 32;
         } else if (nr.ir.read() == IR_DBUS) {
-            vb_dr(1, 0) = vb_stat;
+            if (i_dmi_error.read() == 1) {
+                vb_err_sticky = DMISTAT_FAILED;
+                vb_dr(1, 0) = DMISTAT_FAILED;
+            } else {
+                vb_dr(1, 0) = r.err_sticky;
+            }
             vb_dr(33, 2) = i_dmi_resp_data;
             vb_dr(((34 + abits) - 1), 34) = nr.dmi_addr;
             v.dr_length = (abits + 34);
@@ -309,12 +306,20 @@ void jtagtap<idcode, abits, irlen>::comb() {
             v.state = IDLE;
         }
         if (nr.ir.read() == IR_DTMCONTROL) {
-            v_dmi_reset = r.dr.read()[DTMCONTROL_DMIRESET];
             v_dmi_hardreset = r.dr.read()[DTMCONTROL_DMIHARDRESET];
+            if (r.dr.read()[DTMCONTROL_DMIRESET] == 1) {
+                vb_err_sticky = DMISTAT_SUCCESS;
+            }
         } else if (nr.ir.read() == IR_BYPASS) {
             v.bypass = r.dr.read()[0];
         } else if (nr.ir.read() == IR_DBUS) {
-            v_dmi_req_valid = r.dr.read()(1, 0).or_reduce();
+            if (r.err_sticky.read() != DMISTAT_SUCCESS) {
+                // This operation should never result in a busy or error response.
+            } else if (i_dmi_busy.read() == 1) {
+                vb_err_sticky = DMISTAT_BUSY;
+            } else {
+                v_dmi_req_valid = r.dr.read()(1, 0).or_reduce();
+            }
             v_dmi_req_write = r.dr.read()[1];
             vb_dmi_req_data = r.dr.read()(33, 2);
             vb_dmi_req_addr = r.dr.read()(((34 + abits) - 1), 34);
@@ -380,13 +385,13 @@ void jtagtap<idcode, abits, irlen>::comb() {
         break;
     }
     v.dr = vb_dr;
+    v.err_sticky = vb_err_sticky;
 
     o_tdo = r.dr.read()[0];
     o_dmi_req_valid = v_dmi_req_valid;
     o_dmi_req_write = v_dmi_req_write;
     o_dmi_req_data = vb_dmi_req_data;
     o_dmi_req_addr = vb_dmi_req_addr;
-    o_dmi_reset = v_dmi_reset;
     o_dmi_hardreset = v_dmi_hardreset;
 }
 
