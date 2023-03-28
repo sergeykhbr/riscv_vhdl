@@ -689,6 +689,23 @@ bool CpuGeneric::isTriggerInstruction() {
     return fire;
 }
 
+int CpuGeneric::resumereq() {
+    if (!isHalted()) {
+        return 1;
+    }
+    resumereq_ = true;
+    resumeack_ = false;
+    return 0;
+}
+
+int CpuGeneric::haltreq() {
+    if (isHalted()) {
+        return 1;
+    }
+    haltreq_ = true;
+    return 0;
+}
+
 
 bool CpuGeneric::executeProgbuf(uint32_t *progbuf) {
     if (!isHalted()) {

@@ -39,6 +39,7 @@ DmiFunctional::DmiFunctional(const char *name)
     autoexecdata_ = 0;
     autoexecprogbuf_ = 0;
     command_.u32 = 0;
+    cmderr_ = 0;
     memset(progbuf_, 0, sizeof(progbuf_));
 }
 
@@ -86,8 +87,7 @@ ETransStatus DmiFunctional::b_transport(Axi4TransactionType *trans) {
     return TRANS_OK;
 }
 
-uint32_t DmiFunctional::dmi_read(uint32_t addr, uint32_t *rdata) {
-    uint32_t ret = DMI_STAT_SUCCESS;
+void DmiFunctional::dmi_read(uint32_t addr, uint32_t *rdata) {
     if (addr == IJtag::DMI_DMCONTROL) {
         IJtag::dmi_dmcontrol_type dmcontrol;
         dmcontrol.u32 = 0;
@@ -130,37 +130,37 @@ uint32_t DmiFunctional::dmi_read(uint32_t addr, uint32_t *rdata) {
         abstractcs.u32 = 0;
         abstractcs.bits.datacount = 2;
         abstractcs.bits.progbufsize = 16;
-        abstractcs.bits.cmderr = 0;
+        abstractcs.bits.cmderr = cmderr_;
         *rdata = abstractcs.u32;
     } else if (addr == IJtag::DMI_ABSTRACT_DATA0) {
         *rdata = arg0_.buf32[0];
         if (autoexecdata_ & (0x1 << 0)) {
-            ret = executeCommand();
+            executeCommand();
         }
     } else if (addr == IJtag::DMI_ABSTRACT_DATA1) {
         *rdata = arg0_.buf32[1];
         if (autoexecdata_ & (0x1 << 1)) {
-            ret = executeCommand();
+            executeCommand();
         }
     } else if (addr == IJtag::DMI_ABSTRACT_DATA2) {
         *rdata = arg1_.buf32[0];
         if (autoexecdata_ & (0x1 << 2)) {
-            ret = executeCommand();
+            executeCommand();
         }
     } else if (addr == IJtag::DMI_ABSTRACT_DATA3) {
         *rdata = arg1_.buf32[1];
         if (autoexecdata_ & (0x1 << 3)) {
-            ret = executeCommand();
+            executeCommand();
         }
     } else if (addr == IJtag::DMI_ABSTRACT_DATA4) {
         *rdata = arg2_.buf32[0];
         if (autoexecdata_ & (0x1 << 4)) {
-            ret = executeCommand();
+            executeCommand();
         }
     } else if (addr == IJtag::DMI_ABSTRACT_DATA5) {
         *rdata = arg2_.buf32[1];
         if (autoexecdata_ & (0x1 << 5)) {
-            ret = executeCommand();
+            executeCommand();
         }
     } else if (addr >= IJtag::DMI_PROGBUF0 && 
                addr < (IJtag::DMI_PROGBUF0 + progbufTotal_.to_uint32())) {
@@ -178,16 +178,14 @@ uint32_t DmiFunctional::dmi_read(uint32_t addr, uint32_t *rdata) {
         *rdata = 0;
     } else {
         RISCV_info("Unimplemented DMI read request at %02x", addr);
-        ret = DMI_STAT_FAILED;
     }
-    return ret;
 }
 
-uint32_t DmiFunctional::dmi_write(uint32_t addr, uint32_t wdata) {
-    uint32_t ret = DMI_STAT_SUCCESS;
+void DmiFunctional::dmi_write(uint32_t addr, uint32_t wdata) {
     if (addr == IJtag::DMI_DMCONTROL) {
         IDPort *idport;
         IJtag::dmi_dmcontrol_type dmcontrol;
+        int errcode = 0;
         dmcontrol.u32 = wdata;
         hartsel_ = dmcontrol.bits.hartselhi;
         hartsel_ = (hartsel_ << 10) | dmcontrol.bits.hartsello;
@@ -195,43 +193,54 @@ uint32_t DmiFunctional::dmi_write(uint32_t addr, uint32_t wdata) {
             hartsel_ = hartlist_.size() - 1;
         }
         idport = phartdata_[hartsel_].idport;
-        if (dmcontrol.bits.haltreq) {
-            idport->haltreq();
+        if (cmderr_) {
+            RISCV_info("Cannot execute DMI, cmderr is non-zero: %02x", cmderr_);
+        } else if (dmcontrol.bits.haltreq) {
+            errcode = idport->haltreq();
         } else if (dmcontrol.bits.resumereq) {
-            idport->resumereq();
+            errcode = idport->resumereq();
+        }
+        if (errcode) {
+            cmderr_ = IJtag::DMI_ABSTRACTCS_CMDERR_HALTRESUME;
+        }
+    } else if (addr == IJtag::DMI_ABSTRACTCS) {
+        IJtag::dmi_abstractcs_type abstractcs;
+        abstractcs.u32 = wdata;
+        if (abstractcs.bits.cmderr == 1) {
+            cmderr_ = IJtag::DMI_ABSTRACTCS_CMDERR_NONE;
         }
     } else if (addr == IJtag::DMI_COMMAND) {
         command_.u32 = wdata;
-        ret = executeCommand();
+        executeCommand();
     } else if (addr == IJtag::DMI_ABSTRACT_DATA0) {
         arg0_.buf32[0] = wdata;
         if (autoexecdata_ & (0x1 << 0)) {
-            ret = executeCommand();
+            executeCommand();
         }
     } else if (addr == IJtag::DMI_ABSTRACT_DATA1) {
         arg0_.buf32[1] = wdata;
         if (autoexecdata_ & (0x1 << 1)) {
-            ret = executeCommand();
+            executeCommand();
         }
     } else if (addr == IJtag::DMI_ABSTRACT_DATA2) {
         arg1_.buf32[0] = wdata;
         if (autoexecdata_ & (0x1 << 2)) {
-            ret = executeCommand();
+            executeCommand();
         }
     } else if (addr == IJtag::DMI_ABSTRACT_DATA3) {
         arg1_.buf32[1] = wdata;
         if (autoexecdata_ & (0x1 << 3)) {
-            ret = executeCommand();
+            executeCommand();
         }
     } else if (addr == IJtag::DMI_ABSTRACT_DATA4) {
         arg2_.buf32[0] = wdata;
         if (autoexecdata_ & (0x1 << 4)) {
-            ret = executeCommand();
+            executeCommand();
         }
     } else if (addr == IJtag::DMI_ABSTRACT_DATA5) {
         arg2_.buf32[1] = wdata;
         if (autoexecdata_ & (0x1 << 5)) {
-            ret = executeCommand();
+            executeCommand();
         }
     } else if (addr >= IJtag::DMI_PROGBUF0 && 
                addr < (IJtag::DMI_PROGBUF0 + progbufTotal_.to_uint32())) {
@@ -241,34 +250,57 @@ uint32_t DmiFunctional::dmi_write(uint32_t addr, uint32_t wdata) {
         autoexecprogbuf_ = (wdata >> 16) & ((1ul << progbufTotal_.to_int()) - 1);
     } else {
         RISCV_info("Unimplemented DMI write request at %02x", addr);
-        ret = DMI_STAT_FAILED;
     }
-    return ret;
 }
 
-uint32_t DmiFunctional::executeCommand() {
+void DmiFunctional::executeCommand() {
     IDPort *idport = phartdata_[hartsel_].idport;
+    if (cmderr_ != IJtag::DMI_ABSTRACTCS_CMDERR_NONE) {
+        RISCV_info("Cannot execute DMI, cmderr is non-zero: %02x", cmderr_);
+        return;
+    }
+
     if (command_.regaccess.cmdtype == 0) {
+        int errcode = 0;
         if (command_.regaccess.transfer) {
             if (command_.regaccess.write) {
-                idport->writeRegDbg(command_.regaccess.regno, arg0_.val);
+                errcode = idport->dportWriteReg(command_.regaccess.regno, arg0_.val);
             } else {
-                arg0_.val = idport->readRegDbg(command_.regaccess.regno);
+                errcode = idport->dportReadReg(command_.regaccess.regno, &arg0_.val);
             }
         }
-        if (command_.regaccess.postexec) {
-            idport->executeProgbuf(progbuf_);
+        if (errcode) {
+            cmderr_ = IJtag::DMI_ABSTRACTCS_CMDERR_EXCEPTION;
+            RISCV_info("Exception on access to register: %04x", command_.regaccess.regno);
+        } else if (command_.regaccess.postexec) {
+            errcode = idport->executeProgbuf(progbuf_);
         }
-        if (command_.regaccess.aarpostincrement) {
+        if (errcode) {
+            cmderr_ = IJtag::DMI_ABSTRACTCS_CMDERR_EXCEPTION;
+            RISCV_info("Exception on exec. probug, cmderr is non-zero: %02x", cmderr_);
+        } else if (command_.regaccess.aarpostincrement) {
             command_.regaccess.regno++;
         }
     } else if (command_.quickaccess.cmdtype == 1) {
     } else if (command_.memaccess.cmdtype == 2) {
+        uint32_t memsz = 8 << command_.memaccess.aamsize;
+        int errcode;
+        if (command_.memaccess.write) {
+            errcode = idport->dportWriteMem(arg1_.val,
+                    command_.memaccess.aamvirtual, memsz, arg0_.val);
+        } else {
+            errcode = idport->dportReadMem(arg1_.val,
+                    command_.memaccess.aamvirtual, memsz, &arg0_.val);
+        }
+        if (errcode) {
+            cmderr_ = IJtag::DMI_ABSTRACTCS_CMDERR_EXCEPTION;
+            RISCV_info("Exception on memory access to %08x", arg1_.val);
+        } else if (command_.memaccess.aampostincrement) {
+            arg1_.val += memsz;
+        }
     } else {
         RISCV_info("Wrong command type at %02x", command_.regaccess.cmdtype);
-        return DMI_STAT_FAILED;
     }
-    return DMI_STAT_SUCCESS;
 }
 
 }  // namespace debugger

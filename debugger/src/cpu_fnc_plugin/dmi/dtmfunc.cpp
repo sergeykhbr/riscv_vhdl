@@ -107,18 +107,20 @@ void DtmFunctional::setPins(char tck, char tms, char tdi) {
         dr_ |= (static_cast<uint64_t>(tdi_) << (dr_length_ - 1));
         break;
     case UPDATE_DR:
-        if (ir_ == IR_DTMCONTROL) {
+        if (ir_ == IR_BYPASS) {
+            bypass_ = dr_ & 0x1;
+        } else if (ir_ == IR_DTMCONTROL) {
             IJtag::DtmcsType dtmcs;
             dtmcs.u32 = static_cast<uint32_t>(dr_);
 
-            if (dtmcs.bits.dmireset) {      // W1: Only 1 takes effect
-                idmi_->dtm_dmireset();
-            }
             if (dtmcs.bits.dmihardreset) {  // W1: Only 1 takes effect
                 idmi_->dtm_dmihardreset();
             }
-        } else if (ir_ == IR_BYPASS) {
-            bypass_ = dr_ & 0x1;
+            if (dtmcs.bits.dmireset) {      // W1: Only 1 takes effect
+                // Writing 1 to this bit clears the sticky error state,
+                // but does not affect outstanding DMI transactions
+                dmi_status_ = 0;
+            }
         } else if (ir_ == IR_DBUS) {
             IJtag::DmiType dmi;
             dmi.u64 = dr_;
@@ -126,14 +128,12 @@ void DtmFunctional::setPins(char tck, char tms, char tdi) {
             dmi_data_ = static_cast<uint32_t>(dmi.bits.data);
             if (dr_ & 0x2) {
                 RISCV_debug("DMI: [0x%02x] <= %08x", dmi_addr_, dmi_data_);
-                dmi_status_ = idmi_->dmi_write(dmi_addr_, dmi_data_);
+                idmi_->dmi_write(dmi_addr_, dmi_data_);
             } else if (dr_ & 0x1) {
-                dmi_status_ = idmi_->dmi_read(dmi_addr_, &dmi_data_);
+                idmi_->dmi_read(dmi_addr_, &dmi_data_);
                 RISCV_debug("DMI: [0x%02x] => %08x", dmi_addr_, dmi_data_);
-            } else {
-                // Ignore. Empty request
-                dmi_status_ = 0;
             }
+            dmi_status_ = idmi_->dmi_status();
         }
         break;
     case CAPTURE_IR:

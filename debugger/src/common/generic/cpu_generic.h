@@ -79,21 +79,18 @@ class CpuGeneric : public IService,
     virtual void flushMmu() {}
 
     /** IDPort interface */
-    virtual void resumereq() {
-        resumereq_ = true;
-        resumeack_ = false;
-    }
-    virtual void haltreq() {
-        haltreq_ = true;
-    }
+    virtual int resumereq();
+    virtual int haltreq();
     virtual bool isHalted() {
         return estate_ == CORE_OFF || estate_ == CORE_Halted;
     }
     virtual bool isResumeAck() {
         return resumeack_;
     }
-    virtual uint64_t readRegDbg(uint32_t regno) { return 0; }
-    virtual void writeRegDbg(uint32_t regno, uint64_t val) {}
+    virtual int dportReadReg(uint32_t regno, uint64_t *val) { return -1; }
+    virtual int dportWriteReg(uint32_t regno, uint64_t val) { return -1; }
+    virtual int dportReadMem(uint64_t addr, uint32_t virt, uint32_t sz, uint64_t *payload) { return -1; }
+    virtual int dportWriteMem(uint64_t addr, uint32_t virt, uint32_t sz, uint64_t payload) { return -1; }
     virtual bool executeProgbuf(uint32_t *progbuf);
     virtual bool isExecutingProgbuf() { return estate_ == CORE_ProgbufExec; }
     virtual void setResetPin(bool val) {}

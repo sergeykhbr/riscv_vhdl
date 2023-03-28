@@ -27,13 +27,16 @@ class IDPort : public IFace {
  public:
     IDPort() : IFace(IFACE_DPORT) {}
 
-    virtual void resumereq() = 0;
-    virtual void haltreq() = 0;
+    virtual int resumereq() = 0;
+    virtual int haltreq() = 0;
     virtual bool isHalted() = 0;
     virtual bool isResumeAck() = 0;
 
-    virtual uint64_t readRegDbg(uint32_t regno) = 0;
-    virtual void writeRegDbg(uint32_t regno, uint64_t val) = 0;
+    virtual int dportReadReg(uint32_t regno, uint64_t *val) = 0;
+    virtual int dportWriteReg(uint32_t regno, uint64_t val) = 0;
+
+    virtual int dportReadMem(uint64_t addr, uint32_t virt, uint32_t sz, uint64_t *payload) = 0;
+    virtual int dportWriteMem(uint64_t addr, uint32_t virt, uint32_t sz, uint64_t payload) = 0;
 
     virtual bool executeProgbuf(uint32_t *progbuf) = 0;
     virtual bool isExecutingProgbuf() = 0;

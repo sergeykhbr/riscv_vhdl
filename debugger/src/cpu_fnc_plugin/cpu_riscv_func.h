@@ -62,8 +62,10 @@ class CpuRiver_Functional : public CpuGeneric,
 
 
     /** DPort interface */
-    virtual uint64_t readRegDbg(uint32_t regno) override;
-    virtual void writeRegDbg(uint32_t regno, uint64_t val) override;
+    virtual int dportReadReg(uint32_t regno, uint64_t *val) override;
+    virtual int dportWriteReg(uint32_t regno, uint64_t val) override;
+    virtual int dportReadMem(uint64_t addr, uint32_t virt, uint32_t sz, uint64_t *payload) override;
+    virtual int dportWriteMem(uint64_t addr, uint32_t virt, uint32_t sz, uint64_t payload) override;
 
     /** ICpuRiscV interface */
     virtual uint64_t readCSR(uint32_t idx);

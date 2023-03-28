@@ -23,21 +23,17 @@ namespace debugger {
 
 static const char *const IFACE_DMI = "IDmi";
 
-enum ECmdErrType {
-    CMDERR_NONE = 0,
-    CMDERR_BUSY = 1,
-    CMDERR_NOTSUPPROTED = 2,
-    CMDERR_EXCEPTION = 3,
-    CMDERR_WRONGSTATE = 4,
-    CMDERR_BUSERROR = 5,
-    CMDERR_OTHERS = 7,
-};
-
 enum EDmistatus {
-    DMI_STAT_SUCCESS = 0,
+    DMI_STAT_SUCCESS = 0,       //   Previous operation successfull
     DMI_STAT_RESERVED = 1,
-    DMI_STAT_FAILED = 2,
-    DMI_STAT_BUSY = 3
+    DMI_STAT_FAILED = 2,        //   This indicates that the DM itself responded with
+                                // an error. There are no specified cases in which
+                                // the DM would respond with an error, and DMI is
+                                // not required to support returning errors.
+    DMI_STAT_BUSY = 3           //   If a debugger sees this status, it needs to
+                                // give the target more TCK edges between UpdateDR 
+                                // and Capture-DR. The simplest way to do that
+                                // is to add extra transitions in Run-Test/Idle.
 };
 
 
@@ -45,10 +41,9 @@ class IDmi : public IFace {
  public:
     IDmi() : IFace(IFACE_DMI) {}
 
-    virtual void dtm_dmireset() = 0;
     virtual void dtm_dmihardreset() = 0;
-    virtual uint32_t dmi_read(uint32_t addr, uint32_t *rdata) = 0;
-    virtual uint32_t dmi_write(uint32_t addr, uint32_t wdata) = 0;
+    virtual void dmi_read(uint32_t addr, uint32_t *rdata) = 0;
+    virtual void dmi_write(uint32_t addr, uint32_t wdata) = 0;
     virtual EDmistatus dmi_status() = 0;
 };
 

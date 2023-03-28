@@ -234,6 +234,13 @@ class IJtag : public IFace {
         } bits;
     };
 
+    static const uint32_t DMI_ABSTRACTCS_CMDERR_NONE = 0;
+    static const uint32_t DMI_ABSTRACTCS_CMDERR_BUSY = 1;
+    static const uint32_t DMI_ABSTRACTCS_CMDERR_NOT_SUPPORTED = 2;
+    static const uint32_t DMI_ABSTRACTCS_CMDERR_EXCEPTION = 3;
+    static const uint32_t DMI_ABSTRACTCS_CMDERR_HALTRESUME = 4;
+    static const uint32_t DMI_ABSTRACTCS_CMDERR_BUS = 5;
+
     // Abstract command (command, at 0x17):
     union dmi_command_type {
         uint32_t u32;

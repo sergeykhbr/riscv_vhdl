@@ -321,20 +321,22 @@ void CpuRiver_Functional::enterDebugMode(uint64_t v, uint32_t cause) {
 }
 
 
-uint64_t CpuRiver_Functional::readRegDbg(uint32_t regno) {
-    uint64_t rdata = 0;
+int CpuRiver_Functional::dportReadReg(uint32_t regno, uint64_t *val) {
+    *val = 0;
     uint32_t region = regno >> 12;
     if (region == 0) {
-        rdata = readCSR(regno);
+        *val = readCSR(regno);
     } else if (region == 1) {
-        rdata = readGPR(regno & 0x3F);
+        *val = readGPR(regno & 0x3F);
     } else if (region == 0xc) {
-        rdata = readNonStandardReg(regno & 0xFFF);
+        *val = readNonStandardReg(regno & 0xFFF);
+    } else {
+        return -1;
     }
-    return rdata;
+    return 0;
 }
 
-void CpuRiver_Functional::writeRegDbg(uint32_t regno, uint64_t val) {
+int CpuRiver_Functional::dportWriteReg(uint32_t regno, uint64_t val) {
     uint32_t region = regno >> 12;
     if (region == 0) {
         writeCSR(regno, val);
@@ -342,8 +344,47 @@ void CpuRiver_Functional::writeRegDbg(uint32_t regno, uint64_t val) {
         writeGPR(regno & 0x3F, val);
     } else if (region == 0xc) {
         writeNonStandardReg(regno & 0xFFF, val);
+    } else {
+        return -1;
     }
+    return 0;
 }
+
+int CpuRiver_Functional::dportReadMem(uint64_t addr, uint32_t virt,
+                                      uint32_t sz, uint64_t *payload) {
+    Axi4TransactionType tr;
+    tr.action = MemAction_Read;
+    tr.source_idx = sysBusMasterID_.to_int();
+    tr.addr = addr;
+    //if (virt) {
+    //    tr.addr = va2pa(addr);
+    //}
+    tr.xsize = sz;
+    if (dma_memop(&tr) != TRANS_OK) {
+        return -1;
+    }
+    memcpy(payload, tr.rpayload.b8, sz);
+    return 0;
+}
+
+int CpuRiver_Functional::dportWriteMem(uint64_t addr, uint32_t virt,
+                                       uint32_t sz, uint64_t payload) {
+    Axi4TransactionType tr;
+    tr.action = MemAction_Write;
+    tr.source_idx = sysBusMasterID_.to_int();
+    tr.addr = addr;
+    //if (virt) {
+    //    tr.addr = va2pa(addr);
+    //}
+    tr.xsize = sz;
+    tr.wstrb = (1 << sz) - 1;
+    tr.wpayload.b64[0] = payload;
+    if (dma_memop(&tr) != TRANS_OK) {
+        return -1;
+    }
+    return 0;
+}
+
 
 uint64_t CpuRiver_Functional::readCSR(uint32_t regno) {
     uint64_t ret = 0;

@@ -41,14 +41,13 @@ class DmiFunctional : public IService,
     virtual ETransStatus b_transport(Axi4TransactionType *trans);
 
     /** IDmi interface */
-    virtual void dtm_dmireset() {}
     virtual void dtm_dmihardreset() {}
-    virtual uint32_t dmi_read(uint32_t addr, uint32_t *rdata);
-    virtual uint32_t dmi_write(uint32_t addr, uint32_t wdata);
+    virtual void dmi_read(uint32_t addr, uint32_t *rdata);
+    virtual void dmi_write(uint32_t addr, uint32_t wdata);
     virtual EDmistatus dmi_status() { return DMI_STAT_SUCCESS; }
 
  private:
-    uint32_t executeCommand();
+    void executeCommand();
 
  private:
     AttributeType sysbus_;
@@ -72,6 +71,7 @@ class DmiFunctional : public IService,
     uint32_t autoexecdata_;
     uint32_t autoexecprogbuf_;
     uint32_t progbuf_[32];
+    uint32_t cmderr_;
 };
 
 DECLARE_CLASS(DmiFunctional)
