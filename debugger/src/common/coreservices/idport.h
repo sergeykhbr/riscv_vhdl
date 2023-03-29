@@ -31,6 +31,8 @@ class IDPort : public IFace {
     virtual int haltreq() = 0;
     virtual bool isHalted() = 0;
     virtual bool isResumeAck() = 0;
+    virtual void setHaltOnReset() = 0;
+    virtual void clrHaltOnReset() = 0;
 
     virtual int dportReadReg(uint32_t regno, uint64_t *val) = 0;
     virtual int dportWriteReg(uint32_t regno, uint64_t val) = 0;

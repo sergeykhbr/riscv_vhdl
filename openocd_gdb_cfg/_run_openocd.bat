@@ -1,1 +1,1 @@
-openocd.exe -f bitbang.cfg
+openocd.exe -f bitbang_gdb.cfg

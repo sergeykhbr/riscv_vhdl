@@ -127,12 +127,99 @@ class ICommandRiscv : public ICommand {
         return REG_ADDR_ERROR;
     }
 
+    virtual uint32_t clear_cmderr() {
+        IJtag::dmi_abstractcs_type abstractcs;
+        abstractcs.u32 = 0;
+        abstractcs.bits.cmderr = 1;     // W1C bit to clear sticky cmderr
+        return write_dmi(IJtag::DMI_ABSTRACTCS, abstractcs.u32);
+    }
+
+    virtual uint32_t bytesz2cmdsz(size_t sz) {
+        if (sz >= 8) {
+            return 3;
+        } else if (sz >= 4) {
+            return 2;
+        } else if (sz >= 2) {
+            return 1;
+        }
+        return 0;
+    }
+
     virtual uint32_t read_memory(uint64_t addr, size_t sz, uint8_t *obuf) {
-        return -1;
+        IJtag::dmi_command_type command;
+        Reg64Type r64;
+        uint32_t cmderr;
+        uint32_t tsz;
+
+        r64.val = addr;
+        write_dmi(IJtag::DMI_ABSTRACT_DATA2, r64.buf32[0]);
+        write_dmi(IJtag::DMI_ABSTRACT_DATA3, r64.buf32[1]);
+
+        command.u32 = 0;
+        command.memaccess.cmdtype = 2;      // abstract memory command
+        command.memaccess.aamvirtual = 0;
+        command.memaccess.aampostincrement = 1;
+        command.memaccess.write = 0;
+        do {
+            command.memaccess.aamsize = bytesz2cmdsz(sz);      // 0=8B; 1=16B; 2=32B; 3=64B
+            tsz = (1 << command.memaccess.aamsize);
+
+            write_dmi(IJtag::DMI_COMMAND, command.u32);
+            cmderr = wait_dmi();
+
+            if (cmderr) {
+                clear_cmderr();
+                return cmderr;
+            }
+
+            r64.buf32[0] = read_dmi(IJtag::DMI_ABSTRACT_DATA0);
+            if (tsz > 4) {
+                r64.buf32[1] = read_dmi(IJtag::DMI_ABSTRACT_DATA1);
+            }
+            memcpy(obuf, r64.buf, tsz);
+            sz -= tsz;
+            obuf += tsz;
+        } while (sz);
+        return 0;
     }
 
     virtual uint32_t write_memory(uint64_t addr, size_t sz, uint8_t *ibuf) {
-        return -1;
+        IJtag::dmi_command_type command;
+        Reg64Type r64;
+        uint32_t cmderr;
+        uint32_t tsz;
+
+        r64.val = addr;
+        write_dmi(IJtag::DMI_ABSTRACT_DATA2, r64.buf32[0]);
+        write_dmi(IJtag::DMI_ABSTRACT_DATA3, r64.buf32[1]);
+
+        command.u32 = 0;
+        command.memaccess.cmdtype = 2;      // abstract memory command
+        command.memaccess.aamvirtual = 0;
+        command.memaccess.aampostincrement = 1;
+        command.memaccess.write = 1;
+        do {
+            command.memaccess.aamsize = bytesz2cmdsz(sz);      // 0=8B; 1=16B; 2=32B; 3=64B
+            tsz = (1 << command.memaccess.aamsize);
+
+            memcpy(r64.buf, ibuf, tsz);
+            write_dmi(IJtag::DMI_ABSTRACT_DATA0, r64.buf32[0]);
+            if (tsz > 4) {
+                write_dmi(IJtag::DMI_ABSTRACT_DATA1, r64.buf32[1]);
+            }
+
+            write_dmi(IJtag::DMI_COMMAND, command.u32);
+            cmderr = wait_dmi();
+
+            if (cmderr) {
+                clear_cmderr();
+                return cmderr;
+            }
+
+            sz -= tsz;
+            ibuf += tsz;
+        } while (sz);
+        return 0;
     }
 
     virtual uint32_t read_dmi(uint32_t addr) {

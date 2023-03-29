@@ -48,6 +48,10 @@ class DmiFunctional : public IService,
 
  private:
     void executeCommand();
+    void setCmdErr(uint32_t v) {
+        cmderr_ = v;
+    }
+    uint32_t getCmdErr() { return cmderr_; }
 
  private:
     AttributeType sysbus_;
@@ -63,6 +67,7 @@ class DmiFunctional : public IService,
         IDPort *idport; // if 0, hart is not available
     } *phartdata_;
 
+    uint32_t ndmreset_; // Reset signal from DM to the rest of the hardware. Default=0, Active=1
     uint32_t hartsel_;
     Reg64Type arg0_;
     Reg64Type arg1_;

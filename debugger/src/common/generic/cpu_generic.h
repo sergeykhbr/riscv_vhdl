@@ -87,6 +87,8 @@ class CpuGeneric : public IService,
     virtual bool isResumeAck() {
         return resumeack_;
     }
+    virtual void setHaltOnReset() { resetState_.make_string("Halted"); }
+    virtual void clrHaltOnReset() { resetState_.make_string("Run"); }
     virtual int dportReadReg(uint32_t regno, uint64_t *val) { return -1; }
     virtual int dportWriteReg(uint32_t regno, uint64_t val) { return -1; }
     virtual int dportReadMem(uint64_t addr, uint32_t virt, uint32_t sz, uint64_t *payload) { return -1; }

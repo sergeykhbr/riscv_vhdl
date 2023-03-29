@@ -32,6 +32,7 @@ DmiFunctional::DmiFunctional(const char *name)
     registerAttribute("HartList", &hartlist_);
 
     phartdata_ = 0;
+    ndmreset_ = 0;
     hartsel_ = 0;
     arg0_.val = 0;
     arg1_.val = 0;
@@ -92,6 +93,7 @@ void DmiFunctional::dmi_read(uint32_t addr, uint32_t *rdata) {
         IJtag::dmi_dmcontrol_type dmcontrol;
         dmcontrol.u32 = 0;
         dmcontrol.bits.dmactive = 1;
+        dmcontrol.bits.ndmreset = ndmreset_;
         dmcontrol.bits.hartselhi = hartsel_ >> 10;
         dmcontrol.bits.hartsello = hartsel_;
         *rdata = dmcontrol.u32;
@@ -100,6 +102,7 @@ void DmiFunctional::dmi_read(uint32_t addr, uint32_t *rdata) {
         dmstatus.u32 = 0;
         dmstatus.bits.version = 2;  // 2=ver 0.13; 3=ver 1.0
         dmstatus.bits.authenticated = 1;
+        dmstatus.bits.hasresethalreq = 1;
         dmstatus.bits.allhalted = 1;
         dmstatus.bits.anyhalted = 0;
         dmstatus.bits.allrunning = 1;
@@ -130,7 +133,7 @@ void DmiFunctional::dmi_read(uint32_t addr, uint32_t *rdata) {
         abstractcs.u32 = 0;
         abstractcs.bits.datacount = 2;
         abstractcs.bits.progbufsize = 16;
-        abstractcs.bits.cmderr = cmderr_;
+        abstractcs.bits.cmderr = getCmdErr();
         *rdata = abstractcs.u32;
     } else if (addr == IJtag::DMI_ABSTRACT_DATA0) {
         *rdata = arg0_.buf32[0];
@@ -193,21 +196,37 @@ void DmiFunctional::dmi_write(uint32_t addr, uint32_t wdata) {
             hartsel_ = hartlist_.size() - 1;
         }
         idport = phartdata_[hartsel_].idport;
-        if (cmderr_) {
-            RISCV_info("Cannot execute DMI, cmderr is non-zero: %02x", cmderr_);
+        if (getCmdErr()) {
+            RISCV_info("Cannot execute DMI, cmderr is non-zero: %02x", getCmdErr());
         } else if (dmcontrol.bits.haltreq) {
-            errcode = idport->haltreq();
+            if (ndmreset_ == 0 && dmcontrol.bits.ndmreset == 0) {
+                errcode = idport->haltreq();
+            }
         } else if (dmcontrol.bits.resumereq) {
             errcode = idport->resumereq();
         }
+
+        // Reset negative edge:
+        if (ndmreset_ && dmcontrol.bits.ndmreset == 0) {
+            // TODO through dedicated reset service
+            IResetListener *irst;
+            AttributeType rstlist;
+            RISCV_get_iface_list(IFACE_RESET_LISTENER, &rstlist);
+            for (unsigned i = 0; i < rstlist.size(); i++) {
+                irst = static_cast<IResetListener *>(rstlist[i].to_iface());
+                irst->reset(static_cast<IService *>(this));
+            }
+        }
+        ndmreset_ = dmcontrol.bits.ndmreset;    // must be after haltreq to avoid cmderr "already halted"
+
         if (errcode) {
-            cmderr_ = IJtag::DMI_ABSTRACTCS_CMDERR_HALTRESUME;
+            setCmdErr(IJtag::DMI_ABSTRACTCS_CMDERR_HALTRESUME);
         }
     } else if (addr == IJtag::DMI_ABSTRACTCS) {
         IJtag::dmi_abstractcs_type abstractcs;
         abstractcs.u32 = wdata;
         if (abstractcs.bits.cmderr == 1) {
-            cmderr_ = IJtag::DMI_ABSTRACTCS_CMDERR_NONE;
+            setCmdErr(IJtag::DMI_ABSTRACTCS_CMDERR_NONE);
         }
     } else if (addr == IJtag::DMI_COMMAND) {
         command_.u32 = wdata;
@@ -255,8 +274,8 @@ void DmiFunctional::dmi_write(uint32_t addr, uint32_t wdata) {
 
 void DmiFunctional::executeCommand() {
     IDPort *idport = phartdata_[hartsel_].idport;
-    if (cmderr_ != IJtag::DMI_ABSTRACTCS_CMDERR_NONE) {
-        RISCV_info("Cannot execute DMI, cmderr is non-zero: %02x", cmderr_);
+    if (getCmdErr() != IJtag::DMI_ABSTRACTCS_CMDERR_NONE) {
+        RISCV_info("Cannot execute DMI, cmderr is non-zero: %02x", getCmdErr());
         return;
     }
 
@@ -270,20 +289,20 @@ void DmiFunctional::executeCommand() {
             }
         }
         if (errcode) {
-            cmderr_ = IJtag::DMI_ABSTRACTCS_CMDERR_EXCEPTION;
+            setCmdErr(IJtag::DMI_ABSTRACTCS_CMDERR_EXCEPTION);
             RISCV_info("Exception on access to register: %04x", command_.regaccess.regno);
         } else if (command_.regaccess.postexec) {
             errcode = idport->executeProgbuf(progbuf_);
         }
         if (errcode) {
-            cmderr_ = IJtag::DMI_ABSTRACTCS_CMDERR_EXCEPTION;
-            RISCV_info("Exception on exec. probug, cmderr is non-zero: %02x", cmderr_);
+            setCmdErr(IJtag::DMI_ABSTRACTCS_CMDERR_EXCEPTION);
+            RISCV_info("Exception on exec. probug, cmderr is non-zero: %02x", getCmdErr());
         } else if (command_.regaccess.aarpostincrement) {
             command_.regaccess.regno++;
         }
     } else if (command_.quickaccess.cmdtype == 1) {
     } else if (command_.memaccess.cmdtype == 2) {
-        uint32_t memsz = 8 << command_.memaccess.aamsize;
+        uint32_t memsz = 1 << command_.memaccess.aamsize;
         int errcode;
         if (command_.memaccess.write) {
             errcode = idport->dportWriteMem(arg1_.val,
@@ -293,7 +312,7 @@ void DmiFunctional::executeCommand() {
                     command_.memaccess.aamvirtual, memsz, &arg0_.val);
         }
         if (errcode) {
-            cmderr_ = IJtag::DMI_ABSTRACTCS_CMDERR_EXCEPTION;
+            setCmdErr(IJtag::DMI_ABSTRACTCS_CMDERR_EXCEPTION);
             RISCV_info("Exception on memory access to %08x", arg1_.val);
         } else if (command_.memaccess.aampostincrement) {
             arg1_.val += memsz;

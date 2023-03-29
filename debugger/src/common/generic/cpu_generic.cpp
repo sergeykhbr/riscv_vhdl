@@ -602,6 +602,12 @@ void CpuGeneric::reset(IFace *isource) {
     interrupt_pending_[0] = 0;
     interrupt_pending_[1] = 0;
     do_not_cache_ = false;
+
+    if (resetState_.is_equal("Halted")) {
+        estate_ = CORE_Halted;
+    } else {
+        estate_ = CORE_Normal;
+    }
 }
 
 bool CpuGeneric::isTriggerInstruction() {
@@ -723,14 +729,14 @@ void CpuGeneric::enterProgbufExec() {
     PC_ = &ctxregs_[Ctx_ProgbufExec].pc.val;
     NPC_ = &ctxregs_[Ctx_ProgbufExec].npc.val;
     *NPC_ = 0;
-    RISCV_info("%s", "Start executing progbuf");
+    RISCV_debug("%s", "Start executing progbuf");
 }
 
 void CpuGeneric::exitProgbufExec() {
     estate_ = CORE_Halted;
     PC_ = &ctxregs_[Ctx_Normal].pc.val;
     NPC_ = &ctxregs_[Ctx_Normal].npc.val;
-    RISCV_info("%s", "Ending executing progbuf");
+    RISCV_debug("%s", "Ending executing progbuf");
     RISCV_event_set(&eventDbgRequest_);
 }
 

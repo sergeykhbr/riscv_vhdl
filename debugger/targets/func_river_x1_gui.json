@@ -1,8 +1,8 @@
 {
   'GlobalSettings':{
     'SimEnable':true,
-    'GUI':true,
-    'InitCommands':['init'
+    'GUI':false,
+    'InitCommands':[
                    ],
     'Description':'Functional simulation of the RISC-V Single Core River CPU'
   },
