@@ -55,7 +55,6 @@ SC_MODULE(jtagcdc) {
             + 32  // i_dmi_req_data
             + 1  // i_dmi_req_write
             + 1  // i_dmi_req_valid
-            + 1  // i_dmi_hardreset
     );
 
     struct jtagcdc_registers {
@@ -66,7 +65,6 @@ SC_MODULE(jtagcdc) {
         sc_signal<bool> req_write;
         sc_signal<sc_uint<7>> req_addr;
         sc_signal<sc_uint<32>> req_data;
-        sc_signal<bool> req_reset;
         sc_signal<bool> req_hardreset;
     } v, r;
 
@@ -78,7 +76,6 @@ SC_MODULE(jtagcdc) {
         iv.req_write = 0;
         iv.req_addr = 0;
         iv.req_data = 0;
-        iv.req_reset = 0;
         iv.req_hardreset = 0;
     }
 

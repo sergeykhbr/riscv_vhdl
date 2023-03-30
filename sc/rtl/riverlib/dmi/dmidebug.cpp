@@ -390,7 +390,9 @@ void dmidebug::comb() {
             vb_resp_data[0] = r.dmactive.read();
             if (r.regwr.read() == 1) {
                 if (r.wdata.read()[31] == 1) {
-                    if (i_halted.read()[vb_hartselnext] == 1) {
+                    // Do not set cmderr before/after ndmreset
+                    if (((r.wdata.read()[1] || r.ndmreset) == 0)
+                            && (i_halted.read()[vb_hartselnext] == 1)) {
                         v.cmderr = CMDERR_WRONGSTATE;
                     } else {
                         v.haltreq = 1;

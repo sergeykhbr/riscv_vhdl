@@ -49,6 +49,7 @@ int CmdHalt::isValid(AttributeType *args) {
 void CmdHalt::exec(AttributeType *args, AttributeType *res) {
     IJtag::dmi_dmstatus_type dmstatus;
     IJtag::dmi_dmcontrol_type dmcontrol;
+    IJtag::dmi_abstractcs_type abstractcs;
     int watchdog = 0;
     res->attr_free();
     res->make_nil();
@@ -65,12 +66,16 @@ void CmdHalt::exec(AttributeType *args, AttributeType *res) {
         dmstatus.u32 = read_dmi(IJtag::DMI_DMSTATUS);
     } while (dmstatus.bits.allhalted == 0 && watchdog++ < 5);
 
+
     // clear halt request
     dmcontrol.u32 = 0;
     dmcontrol.bits.dmactive = 1;
     write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
 
-    if (dmstatus.bits.allhalted == 0) {
+    abstractcs.u32 = read_dmi(IJtag::DMI_ABSTRACTCS);
+    if (abstractcs.bits.cmderr) {
+        clear_cmderr();
+    } else if (dmstatus.bits.allhalted == 0) {
         generateError(res, "Cannot halt selected harts");
     }
 }

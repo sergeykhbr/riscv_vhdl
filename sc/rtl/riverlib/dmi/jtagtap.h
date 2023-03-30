@@ -88,6 +88,7 @@ SC_MODULE(jtagtap) {
         sc_signal<sc_uint<drlen>> dr;
         sc_signal<bool> bypass;
         sc_signal<sc_uint<32>> datacnt;
+        sc_signal<bool> dmi_busy;
         sc_signal<sc_uint<2>> err_sticky;
     } v, r;
 
@@ -97,6 +98,7 @@ SC_MODULE(jtagtap) {
         iv.dr = idcode;
         iv.bypass = 0;
         iv.datacnt = 0;
+        iv.dmi_busy = 0;
         iv.err_sticky = 0;
     }
 
@@ -143,6 +145,7 @@ jtagtap<idcode, abits, irlen>::jtagtap(sc_module_name name)
     sensitive << r.dr;
     sensitive << r.bypass;
     sensitive << r.datacnt;
+    sensitive << r.dmi_busy;
     sensitive << r.err_sticky;
     sensitive << nr.ir;
     sensitive << nr.dmi_addr;
@@ -178,6 +181,7 @@ void jtagtap<idcode, abits, irlen>::generateVCD(sc_trace_file *i_vcd, sc_trace_f
         sc_trace(o_vcd, r.dr, pn + ".r_dr");
         sc_trace(o_vcd, r.bypass, pn + ".r_bypass");
         sc_trace(o_vcd, r.datacnt, pn + ".r_datacnt");
+        sc_trace(o_vcd, r.dmi_busy, pn + ".r_dmi_busy");
         sc_trace(o_vcd, r.err_sticky, pn + ".r_err_sticky");
         sc_trace(o_vcd, nr.ir, pn + ".nr_ir");
         sc_trace(o_vcd, nr.dmi_addr, pn + ".nr_dmi_addr");
@@ -315,7 +319,7 @@ void jtagtap<idcode, abits, irlen>::comb() {
         } else if (nr.ir.read() == IR_DBUS) {
             if (r.err_sticky.read() != DMISTAT_SUCCESS) {
                 // This operation should never result in a busy or error response.
-            } else if (i_dmi_busy.read() == 1) {
+            } else if (r.dmi_busy.read() == 1) {
                 vb_err_sticky = DMISTAT_BUSY;
             } else {
                 v_dmi_req_valid = r.dr.read()(1, 0).or_reduce();
@@ -385,6 +389,7 @@ void jtagtap<idcode, abits, irlen>::comb() {
         break;
     }
     v.dr = vb_dr;
+    v.dmi_busy = i_dmi_busy;
     v.err_sticky = vb_err_sticky;
 
     o_tdo = r.dr.read()[0];

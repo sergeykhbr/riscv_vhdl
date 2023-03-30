@@ -65,6 +65,7 @@ void CmdResume::exec(AttributeType *args, AttributeType *res) {
     IJtag::dmi_dmstatus_type dmstatus;
     IJtag::dmi_dmcontrol_type dmcontrol;
     IJtag::dmi_command_type command;
+    IJtag::dmi_abstractcs_type abstractcs;
     csr_dcsr_type dcsr;
     int watchdog = 0;
     uint32_t stepcnt = 0;
@@ -154,6 +155,11 @@ void CmdResume::exec(AttributeType *args, AttributeType *res) {
     dmcontrol.u32 = 0;
     dmcontrol.bits.dmactive = 1;
     write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
+
+    abstractcs.u32 = read_dmi(IJtag::DMI_ABSTRACTCS);
+    if (abstractcs.bits.cmderr) {
+        clear_cmderr();
+    }
 }
 
 #if 0

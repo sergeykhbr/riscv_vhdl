@@ -53,7 +53,6 @@ jtagcdc::jtagcdc(sc_module_name name,
     sensitive << r.req_write;
     sensitive << r.req_addr;
     sensitive << r.req_data;
-    sensitive << r.req_reset;
     sensitive << r.req_hardreset;
 
     SC_METHOD(registers);
@@ -82,7 +81,6 @@ void jtagcdc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.req_write, pn + ".r_req_write");
         sc_trace(o_vcd, r.req_addr, pn + ".r_req_addr");
         sc_trace(o_vcd, r.req_data, pn + ".r_req_data");
-        sc_trace(o_vcd, r.req_reset, pn + ".r_req_reset");
         sc_trace(o_vcd, r.req_hardreset, pn + ".r_req_hardreset");
     }
 
@@ -99,8 +97,7 @@ void jtagcdc::comb() {
             i_dmi_req_addr,
             i_dmi_req_data,
             i_dmi_req_write,
-            i_dmi_req_valid,
-            i_dmi_hardreset);
+            i_dmi_req_valid);
 
     v.l1 = vb_bus;
     v.l2 = r.l1;
@@ -110,8 +107,7 @@ void jtagcdc::comb() {
         v.req_write = r.l2.read()[1];
         v.req_data = r.l2.read()(33, 2);
         v.req_addr = r.l2.read()(40, 34);
-        v.req_reset = r.l2.read()[41];
-        v.req_hardreset = r.l2.read()[42];
+        v.req_hardreset = r.l2.read()[41];
     } else if (i_dmi_req_ready.read() == 1) {
         v.req_valid = 0;
     }
