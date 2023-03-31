@@ -24,12 +24,13 @@
 #include "coreservices/icommand.h"
 #include "coreservices/imemop.h"
 #include "coreservices/ijtag.h"
+#include "../remote/tcpclient.h"
 #include <string>
 #include <stdarg.h>
 
 namespace debugger {
 
-class CmdExecutor : public IService,
+class CmdExecutor : public TcpClient,
                     public ICmdExecutor {
  public:
     explicit CmdExecutor(const char *name);

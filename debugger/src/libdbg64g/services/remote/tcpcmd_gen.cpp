@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,8 +18,7 @@
 
 namespace debugger {
 
-TcpCommandsGen::TcpCommandsGen(IService *parent) : IHap(HAP_All) {
-    parent_ = parent;
+TcpCommandsGen::TcpCommandsGen(const char *name) : TcpClient(name) {
     rxcnt_ = 0;
     estate_ = State_Idle;
 
@@ -32,12 +31,6 @@ TcpCommandsGen::TcpCommandsGen(IService *parent) : IHap(HAP_All) {
     source_.make_string("src0");
     gui_.make_string("gui0");
 
-    iexec_ = static_cast<ICmdExecutor *>(
-        RISCV_get_service_iface(executor_.to_string(), IFACE_CMD_EXECUTOR));
-
-    igui_ = static_cast<IGui *>(
-        RISCV_get_service_iface(gui_.to_string(), IFACE_GUI_PLUGIN));
-
     iclk_ = static_cast<IClock *>(
         RISCV_get_service_iface(cpu_.to_string(), IFACE_CLOCK));
     IService *iservcpu = static_cast<IService *>(
@@ -45,21 +38,13 @@ TcpCommandsGen::TcpCommandsGen(IService *parent) : IHap(HAP_All) {
     cpuLogLevel_ = static_cast<AttributeType *>(
                         iservcpu->getAttribute("LogLevel"));
 
-    icpufunc_ = static_cast<ICpuFunctional *>(
-        RISCV_get_service_iface(cpu_.to_string(), IFACE_CPU_FUNCTIONAL));
-
-    isrc_ = static_cast<ISourceCode *>(
-        RISCV_get_service_iface(source_.to_string(), IFACE_SOURCE_CODE));
-
     char tstr[128];
-    RISCV_sprintf(tstr, sizeof(tstr), "%s_halt", parent_->getObjName());
+    RISCV_sprintf(tstr, sizeof(tstr), "%s_halt", getObjName());
     RISCV_event_create(&eventHalt_, tstr);
-    RISCV_sprintf(tstr, sizeof(tstr), "%s_delay_ms", parent_->getObjName());
+    RISCV_sprintf(tstr, sizeof(tstr), "%s_delay_ms", getObjName());
     RISCV_event_create(&eventDelayMs_, tstr);
-    RISCV_sprintf(tstr, sizeof(tstr), "%s_pwr", parent_->getObjName());
+    RISCV_sprintf(tstr, sizeof(tstr), "%s_pwr", getObjName());
     RISCV_event_create(&eventPowerChanged_, tstr);
-
-    RISCV_register_hap(static_cast<IHap *>(this));
 }
 
 TcpCommandsGen::~TcpCommandsGen() {
@@ -141,7 +126,7 @@ void TcpCommandsGen::br_add(const AttributeType &symb, AttributeType *res) {
     }
     char tstr[256];
     RISCV_sprintf(tstr, sizeof(tstr), "br add 0x%x", addr);
-    iexec_->exec(tstr, res, false);
+    //iexec_->exec(tstr, res, false);
 }
 
 void TcpCommandsGen::br_rm(const AttributeType &symb, AttributeType *res) {
@@ -162,7 +147,7 @@ void TcpCommandsGen::br_rm(const AttributeType &symb, AttributeType *res) {
     }
     char tstr[256];
     RISCV_sprintf(tstr, sizeof(tstr), "br rm 0x%x", addr);
-    iexec_->exec(tstr, res, false);
+    //iexec_->exec(tstr, res, false);
 }
 
 void TcpCommandsGen::step(int cnt, AttributeType *res) {
@@ -175,7 +160,7 @@ void TcpCommandsGen::step(int cnt, AttributeType *res) {
     }
 
     RISCV_event_clear(&eventHalt_);
-    iexec_->exec(tstr, res, false);
+    //iexec_->exec(tstr, res, false);
     RISCV_event_wait(&eventHalt_);
     cpuLogLevel_->make_int64(log_level_old);
 }
@@ -199,7 +184,7 @@ void TcpCommandsGen::go_until(const AttributeType &symb, AttributeType *res) {
     // Add breakpoint
     char tstr[256];
     RISCV_sprintf(tstr, sizeof(tstr), "br add 0x%x", addr);
-    iexec_->exec(tstr, res, false);
+    //iexec_->exec(tstr, res, false);
 
     // Set CPU LogLevel=1 to hide all debugging messages
     int log_level_old = cpuLogLevel_->to_int();
@@ -208,20 +193,20 @@ void TcpCommandsGen::go_until(const AttributeType &symb, AttributeType *res) {
     // Run simulation
     RISCV_event_clear(&eventHalt_);
     RISCV_sprintf(tstr, sizeof(tstr), "c", 0);
-    iexec_->exec(tstr, res, false);
+    //iexec_->exec(tstr, res, false);
     RISCV_event_wait(&eventHalt_);
     cpuLogLevel_->make_int64(log_level_old);
 
     // Remove breakpoint:
     RISCV_sprintf(tstr, sizeof(tstr), "br rm 0x%x", addr);
-    iexec_->exec(tstr, res, false);
+    //iexec_->exec(tstr, res, false);
 }
 
 void TcpCommandsGen::symb2addr(const char *symbol, AttributeType *res) {
     res->make_nil();
-    if (!isrc_) {
-        return;
-    }
+    //if (!isrc_) {
+    //    return;
+    //}
     // Letters capitalization:
     char capital[256];
     int i = 0;
@@ -234,42 +219,42 @@ void TcpCommandsGen::symb2addr(const char *symbol, AttributeType *res) {
         capital[i] = '\0';
     }
     uint64_t addr;
-    if (isrc_->symbol2Address(capital, &addr) == 0) {
-        res->make_uint64(addr);
-        return;
-    }
+    //if (isrc_->symbol2Address(capital, &addr) == 0) {
+    //    res->make_uint64(addr);
+    //    return;
+    //}
 }
 
 void TcpCommandsGen::power_on(const char *btn_name, AttributeType *res) {
-    if (icpufunc_->isOn()) {
-        res->make_string("Already ON");
-        return;
-    }
+    //if (icpufunc_->isOn()) {
+    //    res->make_string("Already ON");
+    //    return;
+    //}
     char tstr[256];
     AttributeType t1;
     RISCV_event_clear(&eventPowerChanged_);
     RISCV_sprintf(tstr, sizeof(tstr), "%s press", btn_name);
-    iexec_->exec(tstr, &t1, false);
+    //iexec_->exec(tstr, &t1, false);
     RISCV_event_wait(&eventPowerChanged_);
     RISCV_sprintf(tstr, sizeof(tstr), "%s release", btn_name);
-    iexec_->exec(tstr, &t1, false);
+    //iexec_->exec(tstr, &t1, false);
     res->make_string("OK");
 }
 
 void TcpCommandsGen::power_off(const char *btn_name, AttributeType *res) {
-    if (!icpufunc_->isOn()) {
-        res->make_string("Already OFF");
-        return;
-    }
+    //if (!icpufunc_->isOn()) {
+    //    res->make_string("Already OFF");
+    //    return;
+    //}
     char tstr[256];
     AttributeType t1;
     RISCV_event_clear(&eventPowerChanged_);
     RISCV_sprintf(tstr, sizeof(tstr), "%s press", btn_name);
-    iexec_->exec(tstr, &t1, false);
-    iexec_->exec("c", &t1, false);
+    //iexec_->exec(tstr, &t1, false);
+    //iexec_->exec("c", &t1, false);
     RISCV_event_wait(&eventPowerChanged_);
     RISCV_sprintf(tstr, sizeof(tstr), "%s release", btn_name);
-    iexec_->exec(tstr, &t1, false);
+    //iexec_->exec(tstr, &t1, false);
     res->make_string("OK");
 }
 
@@ -283,7 +268,7 @@ void TcpCommandsGen::go_msec(const AttributeType &msec, AttributeType *res) {
         "c %" RV_PRI64 "d", static_cast<uint64_t>(delta));
 
     RISCV_event_clear(&eventHalt_);
-    iexec_->exec(tstr, res, false);
+    //iexec_->exec(tstr, res, false);
     RISCV_event_wait(&eventHalt_);
 }
 

@@ -38,7 +38,7 @@
 namespace debugger {
 
 CmdExecutor::CmdExecutor(const char *name) 
-    : IService(name) {
+    : TcpClient(name) {
     registerInterface(static_cast<ICmdExecutor *>(this));
     registerAttribute("Bus", &bus_);
     registerAttribute("Jtag", &jtag_);

@@ -17,13 +17,10 @@
 #include "core.h"
 #include "coreservices/ithread.h"
 #include "generic/bus_generic.h"
-#include "services/debug/serial_dbglink.h"
-#include "services/debug/udp_dbglink.h"
-#include "services/debug/edcl.h"
 #include "services/debug/cpumonitor.h"
 #include "services/debug/codecov_generic.h"
-#include "services/debug/greth.h"
 #include "services/debug/jtag.h"
+#include "services/debug/openocdwrap.h"
 #include "services/elfloader/elfreader.h"
 #include "services/exec/cmdexec.h"
 #include "services/mem/memlut.h"
@@ -70,26 +67,24 @@ extern "C" int RISCV_init() {
     pcore_ = new CoreService("core");
 
     REGISTER_CLASS_IDX(BusGeneric, 0);
-    REGISTER_CLASS_IDX(SerialDbgService, 1);
-    REGISTER_CLASS_IDX(UdpService, 2);
-    REGISTER_CLASS_IDX(ElfReaderService, 3);
-    REGISTER_CLASS_IDX(CmdExecutor, 4);
-    REGISTER_CLASS_IDX(MemoryLUT, 5);
-    REGISTER_CLASS_IDX(MemorySim, 6);
-    REGISTER_CLASS_IDX(TcpClient, 7);
-    REGISTER_CLASS_IDX(TcpServer, 8);
-    REGISTER_CLASS_IDX(ComPortService, 9);
-    REGISTER_CLASS_IDX(AutoCompleter, 10);
-    REGISTER_CLASS_IDX(ConsoleService, 11);
-    REGISTER_CLASS_IDX(EdclService, 12);
-    REGISTER_CLASS_IDX(RegMemorySim, 13);
-    REGISTER_CLASS_IDX(DpiClient, 14);
-    REGISTER_CLASS_IDX(CpuMonitor, 15);
-    REGISTER_CLASS_IDX(GenericCodeCoverage, 16);
-    REGISTER_CLASS_IDX(Greth, 17)
-    REGISTER_CLASS_IDX(TcpJtagBitBangClient, 18);
-    REGISTER_CLASS_IDX(JTAG, 19);
-    REGISTER_CLASS_IDX(RiscvSourceService, 20);
+    REGISTER_CLASS_IDX(ElfReaderService, 1);
+    REGISTER_CLASS_IDX(CmdExecutor, 2);
+    REGISTER_CLASS_IDX(MemoryLUT, 3);
+    REGISTER_CLASS_IDX(MemorySim, 4);
+    REGISTER_CLASS_IDX(TcpClient, 5);
+    REGISTER_CLASS_IDX(ComPortService, 6);
+    REGISTER_CLASS_IDX(AutoCompleter, 7);
+    REGISTER_CLASS_IDX(ConsoleService, 8);
+    REGISTER_CLASS_IDX(RegMemorySim, 9);
+    REGISTER_CLASS_IDX(CpuMonitor, 10);
+    REGISTER_CLASS_IDX(GenericCodeCoverage, 11);
+    REGISTER_CLASS_IDX(RiscvSourceService, 12);
+    REGISTER_CLASS_IDX(JTAG, 13);
+    REGISTER_CLASS_IDX(TcpServerRpc, 14);
+    REGISTER_CLASS_IDX(TcpServerOpenocdSim, 15);
+    REGISTER_CLASS_IDX(TcpJtagBitBangClient, 16);
+    REGISTER_CLASS_IDX(OpenOcdWrapper, 17);
+    REGISTER_CLASS_IDX(DpiClient, 18);
 
     pcore_->load_plugins();
     return 0;

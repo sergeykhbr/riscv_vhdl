@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,12 +14,10 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_TCPCLIENT_H__
-#define __DEBUGGER_TCPCLIENT_H__
+#pragma once
 
 #include <iclass.h>
 #include <iservice.h>
-#include "tcpcmd_gen.h"
 #include "coreservices/ithread.h"
 #include "coreservices/irawlistener.h"
 
@@ -33,8 +31,8 @@ class TcpClient : public IService,
     virtual ~TcpClient();
 
     /** IService interface */
-    virtual void postinitService();
-    virtual void setExtArgument(void *args) {
+    virtual void postinitService() override;
+    virtual void setExtArgument(void *args) override {
         hsock_ = *reinterpret_cast<socket_def *>(args);
     }
 
@@ -45,32 +43,31 @@ class TcpClient : public IService,
     /** IThread interface */
     virtual void busyLoop();
 
+    virtual void processData(const char *ibuf, int ilen,
+                             const char *obuf, int *olen) = 0;
+
  protected:
-    int sendData(uint8_t *buf, int sz);
+    int sendData(const char *buf, int sz);
+    int connectToServer();       // create socket only if Server doesn't create it
     void closeSocket();
 
  private:
     AttributeType isEnable_;
     AttributeType timeout_;
-    AttributeType platformConfig_;
-    AttributeType type_;
-    AttributeType listenDefaultOutput_;
+    AttributeType targetIP_;
+    AttributeType targetPort_;
+
+    struct sockaddr_in sockaddr_ipv4_;
 
     socket_def hsock_;
     mutex_def mutexTx_;
-    char rcvbuf[4096];
+    char rxbuf_[4096];
     char txbuf_[1<<20];
     int txcnt_;
     union reg8_type {
         char ibyte;
         uint8_t ubyte;
     } asyncbuf_[1 << 20];
-
-    TcpCommandsGen *tcpcmd_;
 };
 
-DECLARE_CLASS(TcpClient)
-
 }  // namespace debugger
-
-#endif  // __DEBUGGER_TCPCLIENT_H__

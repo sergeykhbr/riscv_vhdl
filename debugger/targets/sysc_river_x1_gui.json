@@ -11,17 +11,14 @@
 #include "common_riscv.json"
 #include "common_soc.json"
 
-    {'Class':'TcpServerClass','Instances':[
+    {'Class':'TcpServerOpenocdSimClass','Instances':[
           {'Name':'jtagbb','Attr':[
                 ['LogLevel',3],
                 ['Enable',true],
                 ['Timeout',500],
                 ['BlockingMode',true],
                 ['HostIP',''],
-                ['Type','openocd'],
                 ['HostPort',9824],
-                ['ListenDefaultOutput',false, 'Re-direct console output into TCP'],
-                ['PlatformConfig',{}],
                 ['JtagTap',['core0','tap'], 'Jtag DTM systemc module implementation']
           ]}]},
     {'Class':'CpuRiscV_RTLClass','Instances':[

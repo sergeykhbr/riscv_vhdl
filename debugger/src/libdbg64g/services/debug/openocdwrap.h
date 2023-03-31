@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,52 +16,50 @@
 
 #pragma once
 
-#include <iclass.h>
-#include <iservice.h>
-#include "tcpcmd_gen.h"
+#include "iclass.h"
+#include "iservice.h"
+#include "ihap.h"
 #include "coreservices/ithread.h"
-#include "coreservices/ijtagbitbang.h"
+#include "coreservices/ijtag.h"
+#include "coreservices/icmdexec.h"
+#include <string>
 
 namespace debugger {
 
-class TcpJtagBitBangClient : public IService,
-                             public IThread {
+class OpenOcdWrapper : public IService,
+                       public IThread,
+                       public IHap {
  public:
-    explicit TcpJtagBitBangClient(const char *name);
-    virtual ~TcpJtagBitBangClient();
+    explicit OpenOcdWrapper(const char *name);
+    virtual ~OpenOcdWrapper();
 
     /** IService interface */
     virtual void postinitService() override;
+    virtual void predeleteService() override;
 
+    /** IHap */
+    virtual void hapTriggered(EHapType type, uint64_t param,
+                              const char *descr);
+
+    /** IThread */
+    virtual void stop() override;
  protected:
     /** IThread interface */
     virtual void busyLoop();
-    virtual void setExtArgument(void *args) {
-        hsock_ = *reinterpret_cast<socket_def *>(args);
-    }
-
- protected:
-    int sendData(const char *buf, int sz);
-    void closeSocket();
 
  private:
     AttributeType isEnable_;
-    AttributeType jtagtap_;
+    AttributeType jtag_;
+    AttributeType cmdexec_;
+    AttributeType pollingMs_;
+ 
+    IJtag *ijtag_;
+    ICmdExecutor *icmdexec_;
 
-    IJtagBitBang *ijtagbb_;
-
-    socket_def hsock_;
-    mutex_def mutexTx_;
-    char rcvbuf[4096];
-    char txbuf_[1<<20];
-    int txcnt_;
-    union reg8_type {
-        char ibyte;
-        uint8_t ubyte;
-    } asyncbuf_[1 << 20];
+    event_def config_done_;
+    int pid_;
 };
 
-DECLARE_CLASS(TcpJtagBitBangClient)
+DECLARE_CLASS(OpenOcdWrapper)
 
 }  // namespace debugger
-

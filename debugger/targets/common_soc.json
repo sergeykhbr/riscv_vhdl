@@ -4,14 +4,13 @@
                 ['LogLevel',4],
                 ['Image','${REPO_PATH}/../examples/ubuntu-22.04-preinstalled-server-riscv64+unmatched.img']
                 ]}]},
-    {'Class':'TcpServerClass','Instances':[
+    {'Class':'TcpServerRpcClass','Instances':[
           {'Name':'rpcserver','Attr':[
                 ['LogLevel',4],
                 ['Enable',true],
                 ['Timeout',500],
                 ['BlockingMode',true],
                 ['HostIP',''],
-                ['Type','json'],
                 ['HostPort',8687],
                 ['ListenDefaultOutput',true, 'Re-direct console output into TCP'],
                 ['PlatformConfig',{'Name':'River',
@@ -68,7 +67,19 @@
                 ['ObjDescription','This object is polling DMI haltsum0 register and detects halted CPU.
                                   Main purpose of this polling to add breakpoins on resume and remove
                                   them on halt events'],
-                ['Enable',false, 'Set to false to disable monitor. Useful when OpenOCD is used'],
+                ['Enable',true, 'Set to false to disable monitor. Useful when OpenOCD is used'],
+                ['LogLevel',1],
+                ['PollingMs',100],
+                ['Jtag','jtag0'],
+                ['CmdExecutor','cmdexec0']
+                ]}]},
+    {'Class':'OpenOcdWrapperClass','Instances':[
+          {'Name':'openocd0','Attr':[
+                ['ObjDescription','This object runs real openocd binary if the env. variable
+                                  OPENOCD_PATH was defined. Interaction is implemented through
+                                  the gdb interface. If real openocd not found, this service emulates
+                                  it and interact with the simulation throough JTAG BitBang interface'],
+                ['Enable',true],
                 ['LogLevel',1],
                 ['PollingMs',100],
                 ['Jtag','jtag0'],

@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,35 +14,21 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_TCPCMD_GEN_H__
-#define __DEBUGGER_TCPCMD_GEN_H__
+#pragma once
 
 #include <api_core.h>
 #include <iclass.h>
 #include <iservice.h>
 #include <ihap.h>
-#include "coreservices/ilink.h"
-#include "coreservices/ithread.h"
-#include "coreservices/icpufunctional.h"
-#include "coreservices/icmdexec.h"
-#include "coreservices/isrccode.h"
-#include "coreservices/ikeyboard.h"
 #include "coreservices/iclock.h"
-#include "coreservices/imotor.h"
-#include "coreservices/isensor.h"
-#include "coreservices/iwire.h"
-#include "coreservices/irawlistener.h"
-#include "coreservices/iserial.h"
-#include "coreservices/idisplay.h"
-#include "igui.h"
+#include "tcpclient.h"
 
 namespace debugger {
 
-class TcpCommandsGen : public IRawListener,
-                       public IHap,
+class TcpCommandsGen : public TcpClient,
                        public IClockListener {
  public:
-    explicit TcpCommandsGen(IService *parent);
+    explicit TcpCommandsGen(const char *name);
     virtual ~TcpCommandsGen();
 
     /** IRawListener interface */
@@ -92,12 +78,7 @@ class TcpCommandsGen : public IRawListener,
     int resptotal_;
     int respcnt_;
 
-    IService *parent_;
-    ICmdExecutor *iexec_;
-    ISourceCode *isrc_;
-    ICpuFunctional *icpufunc_;
     IClock *iclk_;
-    IGui *igui_;
     AttributeType *cpuLogLevel_;
 
     event_def eventHalt_;
@@ -113,4 +94,3 @@ class TcpCommandsGen : public IRawListener,
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_TCPCMD_GEN_H__

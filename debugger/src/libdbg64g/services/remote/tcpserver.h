@@ -36,27 +36,52 @@ class TcpServer : public IService,
     virtual void busyLoop();
 
  protected:
+    virtual IService *createClient(const char *name) = 0;
+
     int createServerSocket();
     void closeServerSocket();
     void setRcvTimeout(socket_def skt, int timeout_ms);
     bool setBlockingMode(bool mode);
 
- private:
+ protected:
     AttributeType isEnable_;
     AttributeType timeout_;
     AttributeType blockmode_;
     AttributeType hostIP_;
     AttributeType hostPort_;
-    AttributeType platformConfig_;
-    AttributeType type_;
-    AttributeType listenDefaultOutput_;
-    AttributeType jtagtap_;
 
     struct sockaddr_in sockaddr_ipv4_;
     socket_def hsock_;
     char rcvbuf[4096];
 };
 
-DECLARE_CLASS(TcpServer)
+class TcpServerRpc : public TcpServer {
+ public:
+    TcpServerRpc(const char *name) : TcpServer(name) {
+        registerAttribute("PlatformConfig", &platformConfig_);
+        registerAttribute("ListenDefaultOutput", &listenDefaultOutput_);
+    }
+ protected:
+    virtual IService *createClient(const char *name);
+ private:
+    AttributeType platformConfig_;
+    AttributeType listenDefaultOutput_;
+};
+
+
+class TcpServerOpenocdSim : public TcpServer {
+ public:
+    TcpServerOpenocdSim(const char *name) : TcpServer(name) {
+        registerAttribute("JtagTap", &jtagtap_);
+    }
+ protected:
+    virtual IService *createClient(const char *name);
+ private:
+    AttributeType jtagtap_;
+};
+
+
+DECLARE_CLASS(TcpServerRpc)
+DECLARE_CLASS(TcpServerOpenocdSim)
 
 }  // namespace debugger

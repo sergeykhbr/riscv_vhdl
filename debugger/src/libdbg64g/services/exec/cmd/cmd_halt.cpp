@@ -64,7 +64,7 @@ void CmdHalt::exec(AttributeType *args, AttributeType *res) {
     dmstatus.u32 = 0;
     do {
         dmstatus.u32 = read_dmi(IJtag::DMI_DMSTATUS);
-    } while (dmstatus.bits.allhalted == 0 && watchdog++ < 5);
+    } while (dmstatus.bits.allhalted == 0 && watchdog++ < 1000);
 
 
     // clear halt request
