@@ -16,6 +16,7 @@
 
 #include "core.h"
 #include "coreservices/ithread.h"
+#include "coreservices/iclock.h"
 #include "generic/bus_generic.h"
 #include "services/debug/cpumonitor.h"
 #include "services/debug/codecov_generic.h"
@@ -30,6 +31,7 @@
 #include "services/remote/tcpclient.h"
 #include "services/remote/tcpserver.h"
 #include "services/remote/dpiclient.h"
+#include "services/remote/jsoncmd.h"
 #include "services/comport/comport.h"
 #include "services/console/autocompleter.h"
 #include "services/console/console.h"
@@ -71,7 +73,7 @@ extern "C" int RISCV_init() {
     REGISTER_CLASS_IDX(CmdExecutor, 2);
     REGISTER_CLASS_IDX(MemoryLUT, 3);
     REGISTER_CLASS_IDX(MemorySim, 4);
-    REGISTER_CLASS_IDX(TcpClient, 5);
+    //REGISTER_CLASS_IDX(TcpClient, 5);
     REGISTER_CLASS_IDX(ComPortService, 6);
     REGISTER_CLASS_IDX(AutoCompleter, 7);
     REGISTER_CLASS_IDX(ConsoleService, 8);
@@ -82,7 +84,7 @@ extern "C" int RISCV_init() {
     REGISTER_CLASS_IDX(JTAG, 13);
     REGISTER_CLASS_IDX(TcpServerRpc, 14);
     REGISTER_CLASS_IDX(TcpServerOpenocdSim, 15);
-    REGISTER_CLASS_IDX(TcpJtagBitBangClient, 16);
+    //REGISTER_CLASS_IDX(TcpJtagBitBangClient, 16);
     REGISTER_CLASS_IDX(OpenOcdWrapper, 17);
     REGISTER_CLASS_IDX(DpiClient, 18);
 

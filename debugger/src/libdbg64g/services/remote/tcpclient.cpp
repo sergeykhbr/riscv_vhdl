@@ -33,6 +33,7 @@ TcpClient::~TcpClient() {
 
 void TcpClient::postinitService() {
     if (hsock_ == 0) {
+        // hsock is not zero if was accept() from TcpServer
         connectToServer();
     }
 
@@ -45,21 +46,30 @@ void TcpClient::postinitService() {
 }
 
 int TcpClient::updateData(const char *buf, int buflen) {
-    int tsz = RISCV_sprintf(&asyncbuf_[0].ibyte, sizeof(asyncbuf_),
-                    "['%s',", "Console");
+    if (txcnt_ + buflen >= sizeof(txbuf_)) {
+        RISCV_error("%s", "Tx buffer overflow");
+        return 0;
+    }
 
-    memcpy(&asyncbuf_[tsz], buf, buflen);
-    tsz += buflen;
-    asyncbuf_[tsz++].ubyte = ']';
-    asyncbuf_[tsz++].ubyte = '\0';
+    RISCV_mutex_lock(&mutexTx_);
+    memcpy(&txbuf_[txcnt_], buf, buflen);
+    txcnt_ += buflen;
+    RISCV_mutex_unlock(&mutexTx_);
 
-    sendData(&asyncbuf_[0].ubyte, tsz);
+    //int tsz = RISCV_sprintf(&asyncbuf_[0].ibyte, sizeof(asyncbuf_),
+    //                "['%s',", "Console");
+
+    //memcpy(&asyncbuf_[tsz], buf, buflen);
+    //tsz += buflen;
+    //asyncbuf_[tsz++].ubyte = ']';
+    //asyncbuf_[tsz++].ubyte = '\0';
+
+    //sendData(&asyncbuf_[0].ubyte, tsz);
     return buflen;
 }
 
 void TcpClient::busyLoop() {
     int rxbytes;
-    int txbytes;
 
     txcnt_ = 0;
     while (isEnabled()) {
@@ -71,11 +81,10 @@ void TcpClient::busyLoop() {
 
         rxbuf_[rxbytes] = '\0';
         RISCV_debug("i=>[%d]: %s", rxbytes, rxbuf_);
-        processData(rxbuf_, rxbytes, txbuf_, &txbytes);
 
-        if (txbytes != 0) {
-            sendData(txbuf_, txbytes);
-        }
+        processTcpData(rxbuf_, rxbytes);
+
+        sendData(txbuf_, txcnt_);
     }
 
     closeSocket();

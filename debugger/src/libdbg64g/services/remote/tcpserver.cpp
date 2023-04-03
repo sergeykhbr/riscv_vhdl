@@ -60,23 +60,17 @@ void TcpServer::busyLoop() {
     int idx = 0;
     char tname[64];
 
-    IClass *icls;
-    IService *isrv;
     while (isEnabled()) {
         FD_ZERO(&readSet);
         FD_SET(hsock_, &readSet);
-        err = select(hsock_ + 1, &readSet, NULL, NULL, &timeout);
+        err = select(static_cast<int>(hsock_) + 1, &readSet, NULL, NULL, &timeout);
         if (err > 0) {
             client_sock = accept(hsock_, 0, 0);
             setRcvTimeout(client_sock, timeout_.to_int());
-            RISCV_sprintf(tname, sizeof(tname), "client%d", idx++);
+            RISCV_sprintf(tname, sizeof(tname), "%s.client%d", getObjName(), idx++);
 
-            isrv = createClient(tname);
-            IThread *ithrd =
-                static_cast<IThread *>(isrv->getInterface(IFACE_THREAD));
-            ithrd->setExtArgument(&client_sock);
-            isrv->postinitService();
-            RISCV_info("TCP %s %p started", isrv->getObjName(), client_sock);
+            IThread *ithrd = createClientThread(tname, client_sock);
+            RISCV_info("TCP %s %p started", tname, client_sock);
         } else if (err == 0) {
             // timeout
         } else {
@@ -226,49 +220,79 @@ void TcpServer::closeServerSocket() {
     hsock_ = -1;
 }
 
-IService *TcpServerRpc::createClient(const char *name) {
-    AttributeType lst, item;
-    lst.make_list(0);
-    item.make_list(2);
 
-    IClass *icls = static_cast<IClass *>(RISCV_get_class("TcpClientClass"));
-    IService *isrv = icls->createService(".", name);
-    item[0u].make_string("LogLevel");
-    item[1].make_int64(logLevel_.to_int());
-    lst.add_to_list(&item);
-    item[0u].make_string("Enable");
-    item[1].make_boolean(true);
-    lst.add_to_list(&item);
-    item[0u].make_string("PlatformConfig");
-    item[1].clone(&platformConfig_);
-    lst.add_to_list(&item);
-    item[0u].make_string("ListenDefaultOutput");
-    item[1].clone(&listenDefaultOutput_);
-    lst.add_to_list(&item);
-
-    isrv->initService(&lst);
-    return isrv;
+/** Generic Server's ClientThread
+*/
+TcpServer::ClientThreadGeneric::ClientThreadGeneric(TcpServer *parent,
+                                                    const char *name,
+                                                    socket_def skt)
+    : IThread() {
+    parent_ = parent;
+    name_.make_string(name);
+    hsock_ = skt;
 }
 
-IService *TcpServerOpenocdSim::createClient(const char *name) {
-    AttributeType lst, item;
-    lst.make_list(0);
-    item.make_list(2);
+TcpServer::ClientThreadGeneric::~ClientThreadGeneric() {
+}
 
-    IClass *icls = static_cast<IClass *>(RISCV_get_class("TcpJtagBitBangClientClass"));
-    IService *isrv = icls->createService(".", name);
-    item[0u].make_string("LogLevel");
-    item[1].make_int64(logLevel_.to_int());
-    lst.add_to_list(&item);
-    item[0u].make_string("Enable");
-    item[1].make_boolean(true);
-    lst.add_to_list(&item);
-    item[0u].make_string("JtagTap");
-    item[1].clone(&jtagtap_);
-    lst.add_to_list(&item);
+void TcpServer::ClientThreadGeneric::busyLoop() {
+    int rxbytes;
 
-    isrv->initService(&lst);
-    return isrv;
+    while (isEnabled()) {
+        rxbytes = recv(hsock_, rcvbuf_, sizeof(rcvbuf_), 0);
+        if (rxbytes <= 0) {
+            break;
+        }
+
+        processRxBuffer(rcvbuf_, rxbytes);
+        if (sendData(txbuf_, txcnt_) < 0) {
+            break;
+        }
+        txcnt_ = 0;
+    }
+
+    closeSocket();
+}
+
+void TcpServer::ClientThreadGeneric::writeTxBuffer(const char *buf, int sz) {
+    if (txcnt_ + sz >= sizeof(txbuf_)) {
+        RISCV_error("tx buffer overflow %d", txcnt_);
+        return;
+    }
+    memcpy(&txbuf_[txcnt_], buf, sz);
+    txcnt_ += sz;
+}
+
+int TcpServer::ClientThreadGeneric::sendData(const char *buf, int sz) {
+    int total = sz;
+    const char *ptx = buf;
+    int txbytes;
+
+    while (total > 0) {
+        txbytes = send(hsock_, ptx, total, 0);
+        if (txbytes <= 0) {
+            RISCV_error("Send error: txcnt=%d", txcnt_);
+            loopEnable_.state = false;
+            return -1;
+        }
+        total -= txbytes;
+        ptx += txbytes;
+    }
+    return 0;
+}
+
+void TcpServer::ClientThreadGeneric::closeSocket() {
+    if (hsock_ < 0) {
+        return;
+    }
+
+#if defined(_WIN32) || defined(__CYGWIN__)
+    closesocket(hsock_);
+#else
+    shutdown(hsock_, SHUT_RDWR);
+    close(hsock_);
+#endif
+    hsock_ = -1;
 }
 
 }  // namespace debugger

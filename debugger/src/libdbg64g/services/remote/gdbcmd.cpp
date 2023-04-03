@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019 Andrey Sudnik
+ * Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 
 #include "gdbcmd.h"
+#include <string>
 
 namespace debugger {
 /*
@@ -48,54 +49,63 @@ uint8_t RspPacket::checksum(const char *data, const size_t sz) {
 }
 */
 
-GdbCommands::GdbCommands(IService *parent) : TcpCommandsGen(parent) {
-    estate_ = State_AckMode;
+TcpClientGdb::TcpClientGdb(const char *name) : TcpClient(name) {
+    msgcnt_ = 0;
+    enableAckMode_ = false;
 }
 
-int GdbCommands::processCommand(const char *cmdbuf, int bufsz) {
-    if (cmdbuf[0] != '$') {
-        RISCV_info("wrong packet preambule: %02x", cmdbuf[0]);
-        return bufsz;
-    }
-
-    if (bufsz < 3 || cmdbuf[bufsz - 3] != '#') {
-        RISCV_info("wrong checksum format: sz=%d; %02x",
-                    bufsz, cmdbuf[bufsz - 3]);
-        return bufsz;
-    }
-
-    char comp_sum[3] = {0};
-    RISCV_sprintf(comp_sum, 3, "%02x", checksum(&cmdbuf[1], bufsz-4));
-
-    if (comp_sum[0] != cmdbuf[bufsz-2] || comp_sum[1] != cmdbuf[bufsz-1]) {
-        RISCV_info("wrong checksum: %02x", comp_sum);
-        return bufsz;
-    }
-
-    // Remove '$' start symbol and CRC at the end
-    memcpy(&packet_data_, &cmdbuf[1], bufsz - 4);
-    packet_data_[bufsz - 4] = '\0';
-
-    handlePacket(packet_data_);
-    return bufsz;
+bool TcpClientGdb::isStartMarker(char s) {
+    return (s == '+' || s == '-' || s == '$');
 }
 
-void GdbCommands::handleHandshake(char s) {
-    switch (estate_) {
-    case State_AckMode:
-        break;
-    case State_WaitAckToSwitch:
-        if (s == '+') {
-            estate_ = State_NoAckMode;
+bool TcpClientGdb::isEndMarker(const char *s, int sz) {
+    return (s[0] == '+' || s[0] == '-' || (sz >= 3 && s[sz - 3] == '#'));
+}
+
+void TcpClientGdb::processTcpData(const char *ibuf, int ilen) {
+    for (int i = 0; i < ilen; i++) {
+        if (msgcnt_ == 0 && isStartMarker(ibuf[i])) {
+            msg_[msgcnt_++] = ibuf[i];
+        } else if (msgcnt_ >= sizeof(msg_)) {
+            RISCV_error("msg buffer overflow %d", msgcnt_);
+            return;
+        } else {
+            msg_[msgcnt_++] = ibuf[i];
         }
-        break;
-    case State_NoAckMode:
-        break;
-    default:;
+        msg_[msgcnt_] = '\0';
+
+        if (msgcnt_ && isEndMarker(ibuf, i)) {
+            if (checkPayload(msg_, msgcnt_) != 0) {
+                msg_[msgcnt_ - 3] = '\0';
+                handlePacket(&msg_[1]);
+            }
+            msgcnt_ = 0;
+        }
     }
 }
 
-void GdbCommands::handlePacket(char *data) {
+int TcpClientGdb::checkPayload(const char *cmdbuf, int bufsz) {
+    if (cmdbuf[0] == '-') {
+        enableAckMode_ = true;
+        return 0;
+    }
+    if (cmdbuf[0] == '+') {
+        enableAckMode_ = false;
+        return 0;
+    }
+
+    uint8_t crc8 = checksum(&cmdbuf[1], bufsz - 4);
+    uint8_t expected_crc8 = static_cast<uint8_t>(atoi(&cmdbuf[bufsz - 2]));
+
+    if (crc8 != expected_crc8) {
+        RISCV_info("wrong checksum: %02x != %02x", crc8, expected_crc8);
+        return 0;
+    }
+
+    return bufsz - 4;;
+}
+
+void TcpClientGdb::handlePacket(const char *data) {
     switch (data[0]) {
     case '!':
         sendPacket("OK");
@@ -123,22 +133,22 @@ void GdbCommands::handlePacket(char *data) {
         handleKill();
         break;
     case 'm' :  // Read memory.
-        handleGetMemory();
+        handleGetMemory(data);
         break;
     case 'M' :  // Write memory (hex).
         handleWriteMemoryHex();
         break;
     case 'p' :  // Read register.
-        handleReadRegister();
+        handleReadRegister(data);
         break;
     case 'P' :  // Write register.
-        handleWriteRegister();
+        handleWriteRegister(data);
         break;
     case 'q' :  // General query.
-        handleQuery();
+        handleQuery(data);
         break;
     case 'Q' :  // General set.
-        handleGeneralSet();
+        handleGeneralSet(data);
         break;
     case 's' :  // Single step.
     case 'S' :  // Step with signal.
@@ -148,34 +158,36 @@ void GdbCommands::handlePacket(char *data) {
         handleThreadAlive();
         break;
     case 'v' :  // v command.
-        handleVCommand();
+        handleVCommand(data);
         break;
     case 'X' :  // Write memory (binary).
-        handleWriteMemory();
+        handleWriteMemory(data);
         break;
     case 'z' :  // Remove breakpoint/watchpoint.
     case 'Z' :  // Insert breakpoint/watchpoint.
-        handleBreakpoint();
+        handleBreakpoint(data);
         break;
+    case '#':   // end of message
+        return;
     default:
         RISCV_info("Unknown RSP packet: %s", data);
     }
 }
 
-void GdbCommands::handleQuery() {
-    if (strcmp("qAttached", packet_data_) == 0) {
+void TcpClientGdb::handleQuery(const char *data) {
+    if (strcmp("qAttached", data) == 0) {
         /* Always attaching to an existing process, let thread id to be 1 */
         sendPacket("1");
-    } else if (strcmp("qC", packet_data_) == 0) {
+    } else if (strcmp("qC", data) == 0) {
         /* Return the current thread ID.
          * Reply QCpid - Where pid is a HEX encoded 16 bit process id.
          * Set thread id 1, because we don't have other threads. */
         sendPacket("QC1");
-    } else if (strncmp("qCRC", packet_data_, strlen("qCRC")) == 0) {
+    } else if (strncmp("qCRC", data, strlen("qCRC")) == 0) {
         /* Return CRC of memory area.
          * Return Error 01 */
         sendPacket("E01");
-    } else if (strcmp("qfThreadInfo", packet_data_) == 0) {
+    } else if (strcmp("qfThreadInfo", data) == 0) {
         /* Obtain a list of active thread ids from the target (OS)
          * this query works iteratively:
          * it may require more than one query/reply sequence to obtain the
@@ -190,77 +202,75 @@ void GdbCommands::handleQuery() {
          * reply l 	            denotes end of list.
          */
         sendPacket("m1");
-    } else if (strcmp("qsThreadInfo", packet_data_) == 0) {
+    } else if (strcmp("qsThreadInfo", data) == 0) {
         /* Return info about more active threads.
          * We have no more, so return the end of list marker, 'l' */
         sendPacket("l");
     } else if (strncmp("qGetTLSAddr:", 
-                       packet_data_, strlen("qGetTLSAddr:")) == 0) {
+                       data, strlen("qGetTLSAddr:")) == 0) {
         /* We don't support this feature */
         sendPacket("");
-    } else if (strncmp("qL", packet_data_, strlen("qL")) == 0) {
+    } else if (strncmp("qL", data, strlen("qL")) == 0) {
         /* Deprecated and replaced by 'qfThreadInfo' */
         sendPacket("qM001");
-    } else if (strcmp("qOffsets", packet_data_) == 0) {
+    } else if (strcmp("qOffsets", data) == 0) {
         /* Report any relocation */
         sendPacket("Text=0;Data=0;Bss=0");
-    } else if (strncmp("qP", packet_data_, strlen("qP")) == 0) {
+    } else if (strncmp("qP", data, strlen("qP")) == 0) {
         /* Deprecated and replaced by 'qThreadExtraInfo' */
         sendPacket("");
-    } else if (strncmp("qRcmd,", packet_data_, strlen("qRcmd,")) == 0) {
+    } else if (strncmp("qRcmd,", data, strlen("qRcmd,")) == 0) {
         /* This is used to interface to commands to do "stuff" */
         sendPacket("");
     } else if (strncmp("qSupported", 
-                        packet_data_, strlen("qSupported")) == 0) {
+                        data, strlen("qSupported")) == 0) {
         /* Report a list of the features we support.
          * 1000h == 4096
          * 500h  == 1280 */
         sendPacket("PacketSize=500;QStartNoAckMode+;vContSupported+");
         //QNonStop+
-    } else if (strncmp("qSymbol:", packet_data_, strlen("qSymbol:")) == 0) {
+    } else if (strncmp("qSymbol:", data, strlen("qSymbol:")) == 0) {
         /* Offer to look up symbols. Ignore for now */
         sendPacket("OK");
     } else if (strncmp("qThreadExtraInfo,",
-                       packet_data_, strlen("qThreadExtraInfo,")) == 0) {
+                       data, strlen("qThreadExtraInfo,")) == 0) {
         /* Report that we are runnable */
         char tstr[128] = "\0";
         RISCV_sprintf (tstr, sizeof(tstr), "%02x%02x%02x%02x%02x%02x%02x%02x",
              'R', 'u', 'n', 'n', 'a', 'b', 'l', 'e');
         sendPacket(tstr);
-    } else if (strncmp("qTStatus", packet_data_, strlen("qTStatus")) == 0) {
+    } else if (strncmp("qTStatus", data, strlen("qTStatus")) == 0) {
         /* Don't support tracing, return empty packet. */
         sendPacket("");
-    } else if (strncmp("qXfer:", packet_data_, strlen("qXfer:")) == 0) {
+    } else if (strncmp("qXfer:", data, strlen("qXfer:")) == 0) {
         /* No 'qXfer' requests supported, return empty packet. */
         sendPacket("");
     } else {
-        RISCV_error("Unrecognized RSP query: %s \n", packet_data_);
+        RISCV_error("Unrecognized RSP query: %s \n", data);
         sendPacket("");
     }
 }
 
-void GdbCommands::handleStopReasonQuery() {
+void TcpClientGdb::handleStopReasonQuery() {
     sendPacket("S05");
 }
 
-void GdbCommands::handleContinue() {
+void TcpClientGdb::handleContinue() {
     AttributeType res;
-    if (!iexec_) {
+    if (!ijtag_) {
         sendPacket("E01");
         return;
     }
-    RISCV_event_clear(&eventHalt_);
     iexec_->exec("run", &res, false);
-    RISCV_event_wait(&eventHalt_);
     sendPacket("S05");
 }
 
-void GdbCommands::handleDetach() {
+void TcpClientGdb::handleDetach() {
     /* Reply "OK" to GDB and close socket. */
     sendPacket("OK");
 }
 
-void GdbCommands::appendRegValue(char *s, uint32_t value) {
+void TcpClientGdb::appendRegValue(char *s, uint32_t value) {
     char byte_hex[3];
 
     RISCV_sprintf(byte_hex, 3, "%02X", value & 0xFF);
@@ -273,7 +283,7 @@ void GdbCommands::appendRegValue(char *s, uint32_t value) {
     strncat(s, byte_hex, 2);
 }
 
-void GdbCommands::handleGetRegisters() {
+void TcpClientGdb::handleGetRegisters() {
     char resp[512] = "\0";
     AttributeType res;
 
@@ -309,21 +319,21 @@ void GdbCommands::handleGetRegisters() {
     sendPacket(resp);
 }
 
-void GdbCommands::handleSetRegisters() {
+void TcpClientGdb::handleSetRegisters() {
     sendPacket("");
 }
 
-void GdbCommands::handleSetThread() {
+void TcpClientGdb::handleSetThread() {
     /* Set the thread number of subsequent operations. For now ignore
        silently and just reply "OK" */
     sendPacket("OK");
 }
 
-void GdbCommands::handleKill() {
+void TcpClientGdb::handleKill() {
     sendPacket("OK");
 }
 
-void GdbCommands::handleGetMemory() {
+void TcpClientGdb::handleGetMemory(const char *data) {
     /* Handle a RSP read memory (symbolic) request
      * Syntax is: m<addr>,<length>:
      * The response is the bytes.
@@ -332,9 +342,9 @@ void GdbCommands::handleGetMemory() {
      */
     unsigned long address;
     int len;
-    if (RISCV_sscanf(packet_data_, "m%lx,%x:", &address, &len) != 2) {
+    if (RISCV_sscanf(data, "m%lx,%x:", &address, &len) != 2) {
         RISCV_info("Failed to recognize RSP read memory command: %s",
-                    packet_data_);
+                    data);
         sendPacket("E01");
         return;
     }
@@ -358,16 +368,16 @@ void GdbCommands::handleGetMemory() {
     sendPacket(tstr);
 }
 
-void GdbCommands::handleWriteMemoryHex() {
+void TcpClientGdb::handleWriteMemoryHex() {
     sendPacket("");
 }
 
-void GdbCommands::handleReadRegister() {
+void TcpClientGdb::handleReadRegister(const char *data) {
     unsigned int regnum;
 
-    if (RISCV_sscanf(packet_data_, "p%x", &regnum) != 1) {
+    if (RISCV_sscanf(data, "p%x", &regnum) != 1) {
         RISCV_info("Failed to recognize RSP read register "
-                   "command: %s", packet_data_);
+                   "command: %s", data);
         sendPacket("E01");
         return;
     }
@@ -382,17 +392,17 @@ void GdbCommands::handleReadRegister() {
     sendPacket(resp);
 }
 
-void GdbCommands::handleWriteRegister() {
+void TcpClientGdb::handleWriteRegister(const char *data) {
     unsigned       regnum;            /* Register index */
     char           byte0[3];  /* Data to set */
     char           byte1[3];
     char           byte2[3];
     char           byte3[3];
 
-    if (RISCV_sscanf(packet_data_, "P%x=%2s%2s%2s%2s",
+    if (RISCV_sscanf(data, "P%x=%2s%2s%2s%2s",
                &regnum, byte0, byte1, byte2, byte3) != 5) {
         RISCV_info("Failed to recognize RSP write register "
-                   "command: %s", packet_data_);
+                   "command: %s", data);
         sendPacket("E01");
         return;
     }
@@ -430,27 +440,27 @@ void GdbCommands::handleWriteRegister() {
     sendPacket("OK");
 }
 
-void GdbCommands::handleGeneralSet() {
+void TcpClientGdb::handleGeneralSet(const char *data) {
     if (strncmp("QStartNoAckMode",
-        packet_data_, strlen("QStartNoAckMode")) == 0) {
-        estate_ = State_WaitAckToSwitch;
+        data, strlen("QStartNoAckMode")) == 0) {
+        //estate_ = State_WaitAckToSwitch;
     }
     sendPacket("OK");
 }
 
-void GdbCommands::handleStep() {
+void TcpClientGdb::handleStep() {
     sendPacket("");
 }
 
-void GdbCommands::handleThreadAlive() {
+void TcpClientGdb::handleThreadAlive() {
     sendPacket("OK");
 }
 
-void GdbCommands::handleVCommand() {
-    if (strcmp("vMustReplyEmpty", packet_data_) == 0) {
+void TcpClientGdb::handleVCommand(const char *data) {
+    if (strcmp("vMustReplyEmpty", data) == 0) {
         sendPacket("");
-    } else if (strncmp(packet_data_, "vCont", 5) == 0) {
-        const char *packet_ptr = packet_data_;
+    } else if (strncmp(data, "vCont", 5) == 0) {
+        const char *packet_ptr = data;
         packet_ptr += 5;
         if (*packet_ptr == '?') {
             sendPacket("vCont;c;C");
@@ -460,31 +470,31 @@ void GdbCommands::handleVCommand() {
             packet_ptr++;
         }
         if (*packet_ptr == 'c') {
-            RISCV_info("Continue packet: %s", packet_data_);
+            RISCV_info("Continue packet: %s", data);
             handleContinue();
         }
         if (*packet_ptr == 's') {
             AttributeType res;
-            RISCV_info("Step packet: %s", packet_data_);
+            RISCV_info("Step packet: %s", data);
             iexec_->exec("c 1", &res, false);
             sendPacket("S05");
         }
     }
 }
 
-void GdbCommands::handleWriteMemory() {
+void TcpClientGdb::handleWriteMemory(const char *data) {
     size_t         len;             /* Number of bytes to write */
     unsigned long  address;         /* Where to write the memory */
     const char     *data_ptr;       /* Pointer to the binary data */
 
-    if (RISCV_sscanf(packet_data_, "X%lx,%lx:", &address, &len) != 2) {
+    if (RISCV_sscanf(data, "X%lx,%lx:", &address, &len) != 2) {
         RISCV_info("Failed to recognize RSP write memory %s",
-                   packet_data_);
+                   data);
         sendPacket("E01");
         return;
     }
 
-    data_ptr = static_cast<char*>(memchr(packet_data_, ':', DATA_MAX));
+    data_ptr = static_cast<const char *>(memchr(data, ':', DATA_MAX));
     data_ptr++;
     char data_hex[2 * DATA_MAX + 1];
     data_hex[0] = '\0';
@@ -508,15 +518,15 @@ void GdbCommands::handleWriteMemory() {
     sendPacket("OK");
 }
 
-void GdbCommands::handleBreakpoint() {
+void TcpClientGdb::handleBreakpoint(const char *data) {
     int type;
     uint64_t address;  /* Address specified */
     int len;
     char zZ;       /* 'Z' : add breakpoint, 'z' : remove breakopint. */
 
-    if (RISCV_sscanf(packet_data_, "%c%1d,%lx,%1d",
+    if (RISCV_sscanf(data, "%c%1d,%lx,%1d",
                 &zZ, &type, &address, &len) != 4) {
-        RISCV_info("Failed to recognize RSP add breakpoint: %s", packet_data_);
+        RISCV_info("Failed to recognize RSP add breakpoint: %s", data);
         sendPacket("E01");
         return;
     }
@@ -533,9 +543,13 @@ void GdbCommands::handleBreakpoint() {
     if (type == 0) {
         /* Memory breakpoint */
         if (zZ == 'Z') {
+#if 0
             br_add(addr, &res);
+#endif
         } else {
+#if 0
             br_rm(addr, &res);
+#endif
         }
         sendPacket("OK");
     } else {
@@ -544,25 +558,23 @@ void GdbCommands::handleBreakpoint() {
     }
 }
 
-void GdbCommands::sendPacket(const char *data) {
+void TcpClientGdb::sendPacket(const char *data) {
     int tsz = static_cast<int>(strlen(data));
-    respcnt_ = 0;
-    if (estate_ != State_NoAckMode) {
-        respbuf_[respcnt_++] = '+';
+    if (enableAckMode_) {
+        updateData("+", 1);
     }
-    respbuf_[respcnt_++] = '$';
-    memcpy(&respbuf_[respcnt_], data, tsz);
-    respcnt_ += tsz;
+    updateData("$", 1);
+    updateData(data, tsz);
 
     // Add checksum
-    respbuf_[respcnt_++] = '#';
-    RISCV_sprintf(&respbuf_[respcnt_], resptotal_ - respcnt_, "%02x",
-                checksum(data, tsz));
-    respcnt_ += 2;
-    respbuf_[respcnt_] = '\0';
+    updateData("#", 1);
+    uint8_t crc8 = checksum(data, tsz);
+    char tstr[3];
+    RISCV_sprintf(tstr, sizeof(tstr), "%02x", crc8);
+    updateData(tstr, 2);
 }
 
-uint8_t GdbCommands::checksum(const char *data, const int sz) {
+uint8_t TcpClientGdb::checksum(const char *data, const int sz) {
     uint8_t sum = 0;
     for (int i = 0; i < sz; i++) {
         sum += static_cast<uint8_t>(data[i]);

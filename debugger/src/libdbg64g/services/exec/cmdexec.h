@@ -45,6 +45,10 @@ class CmdExecutor : public TcpClient,
     virtual void exec(const char *line, AttributeType *res, bool silent);
     virtual void commands(const char *substr, AttributeType *res);
 
+ protected:
+    /** TcpClient */
+    virtual void processTcpData(const char *ibuf, int ilen) {}
+
  private:
     void processSimple(AttributeType *cmd, AttributeType *res);
     void processScript(AttributeType *cmd, AttributeType *res);

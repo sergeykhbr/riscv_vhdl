@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,26 +13,52 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+ #pragma once
 
-#ifndef __DEBUGGER_SERVICES_REMOTE_JSONCMD_H__
-#define __DEBUGGER_SERVICES_REMOTE_JSONCMD_H__
-
-#include "tcpcmd_gen.h"
+ #include "coreservices/ithread.h"
+ #include "coreservices/icmdexec.h"
+ #include "coreservices/irawlistener.h"
+ #include "tcpserver.h"
 
 namespace debugger {
 
-class JsonCommands : public TcpCommandsGen {
+class TcpServerRpc : public TcpServer {
  public:
-    explicit JsonCommands(IService *parent);
-
- protected:
-    virtual int processCommand(const char *cmdbuf, int bufsz);
-    virtual bool isStartMarker(char s) { return true; }
-    virtual bool isEndMarker(const char *s, int sz) {
-        return s[sz - 1] == '\0';
+    TcpServerRpc(const char *name) : TcpServer(name) {
+        registerAttribute("CmdExecutor", &cmdexec_);
     }
+ protected:
+    virtual IThread *createClientThread(const char *name, socket_def skt);
+
+ private:
+    class ClientThread : public TcpServer::ClientThreadGeneric,
+                         public IRawListener {
+     public:
+        explicit ClientThread(TcpServer *parent,
+                              const char *name,
+                              socket_def skt,
+                              const char *cmdexec);
+
+        /** IRawListener */
+        virtual int updateData(const char *buf, int buflen);
+
+     protected:
+        virtual int processRxBuffer(const char *cmdbuf, int bufsz);
+        virtual bool isStartMarker(char s) { return true; }
+        virtual bool isEndMarker(const char *s, int sz) {
+            return s[sz - 1] == '\0';
+        }
+
+     private:
+        ICmdExecutor *iexec_;
+        int respcnt_;
+    };
+
+ private:
+    AttributeType cmdexec_;
 };
+
+DECLARE_CLASS(TcpServerRpc)
 
 }  // namespace debugger
 
-#endif  // __DEBUGGER_SERVICES_REMOTE_JSONCMD_H__

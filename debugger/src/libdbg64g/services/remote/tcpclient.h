@@ -43,8 +43,7 @@ class TcpClient : public IService,
     /** IThread interface */
     virtual void busyLoop();
 
-    virtual void processData(const char *ibuf, int ilen,
-                             const char *obuf, int *olen) = 0;
+    virtual void processTcpData(const char *ibuf, int ilen) = 0;
 
  protected:
     int sendData(const char *buf, int sz);
@@ -64,10 +63,6 @@ class TcpClient : public IService,
     char rxbuf_[4096];
     char txbuf_[1<<20];
     int txcnt_;
-    union reg8_type {
-        char ibyte;
-        uint8_t ubyte;
-    } asyncbuf_[1 << 20];
 };
 
 }  // namespace debugger

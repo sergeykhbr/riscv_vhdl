@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,50 +18,42 @@
 
 #include <iclass.h>
 #include <iservice.h>
-#include "tcpcmd_gen.h"
 #include "coreservices/ithread.h"
 #include "coreservices/ijtagbitbang.h"
+#include "tcpserver.h"
 
 namespace debugger {
 
-class TcpJtagBitBangClient : public IService,
-                             public IThread {
+class TcpServerOpenocdSim : public TcpServer {
  public:
-    explicit TcpJtagBitBangClient(const char *name);
-    virtual ~TcpJtagBitBangClient();
-
-    /** IService interface */
-    virtual void postinitService() override;
-
- protected:
-    /** IThread interface */
-    virtual void busyLoop();
-    virtual void setExtArgument(void *args) {
-        hsock_ = *reinterpret_cast<socket_def *>(args);
+    TcpServerOpenocdSim(const char *name) : TcpServer(name) {
+        registerAttribute("JtagTap", &jtagtap_);
     }
-
  protected:
-    int sendData(const char *buf, int sz);
-    void closeSocket();
+    virtual IThread *createClientThread(const char *name, socket_def skt);
 
  private:
-    AttributeType isEnable_;
+    class ClientThread : public TcpServer::ClientThreadGeneric {
+     public:
+        explicit ClientThread(TcpServer *parent,
+                              const char *name,
+                              socket_def skt,
+                              const char *jtagtap);
+        virtual ~ClientThread();
+
+     protected:
+        virtual int processRxBuffer(const char *cmdbuf, int bufsz);
+
+     private:
+        IJtagBitBang *ijtagbb_;
+    };
+
+ private:
     AttributeType jtagtap_;
-
-    IJtagBitBang *ijtagbb_;
-
-    socket_def hsock_;
-    mutex_def mutexTx_;
-    char rcvbuf[4096];
-    char txbuf_[1<<20];
-    int txcnt_;
-    union reg8_type {
-        char ibyte;
-        uint8_t ubyte;
-    } asyncbuf_[1 << 20];
 };
 
-DECLARE_CLASS(TcpJtagBitBangClient)
+
+DECLARE_CLASS(TcpServerOpenocdSim)
 
 }  // namespace debugger
 

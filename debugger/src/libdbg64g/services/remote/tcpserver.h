@@ -35,8 +35,38 @@ class TcpServer : public IService,
     /** IThread interface */
     virtual void busyLoop();
 
+    class ClientThreadGeneric : public IThread {
+     public:
+        explicit ClientThreadGeneric(TcpServer *parent,
+                                     const char *name,
+                                     socket_def skt);
+        virtual ~ClientThreadGeneric();
+
+        IFace *getInterface(const char *name) {
+            return parent_->getInterface(name);
+        }
+
+     protected:
+        /** IThread interface */
+        virtual void busyLoop();
+        virtual int processRxBuffer(const char *cmdbuf, int bufsz) = 0;
+        virtual void writeTxBuffer(const char *buf, int sz);
+
+     private:
+        virtual int sendData(const char *buf, int sz);
+        virtual void closeSocket();
+
+     private:
+        TcpServer *parent_;
+        socket_def hsock_;
+        AttributeType name_;
+        char rcvbuf_[4096];
+        char txbuf_[1 << 20];
+        int txcnt_;
+    };
+
  protected:
-    virtual IService *createClient(const char *name) = 0;
+    virtual IThread *createClientThread(const char *name, socket_def skt) = 0;
 
     int createServerSocket();
     void closeServerSocket();
@@ -54,34 +84,5 @@ class TcpServer : public IService,
     socket_def hsock_;
     char rcvbuf[4096];
 };
-
-class TcpServerRpc : public TcpServer {
- public:
-    TcpServerRpc(const char *name) : TcpServer(name) {
-        registerAttribute("PlatformConfig", &platformConfig_);
-        registerAttribute("ListenDefaultOutput", &listenDefaultOutput_);
-    }
- protected:
-    virtual IService *createClient(const char *name);
- private:
-    AttributeType platformConfig_;
-    AttributeType listenDefaultOutput_;
-};
-
-
-class TcpServerOpenocdSim : public TcpServer {
- public:
-    TcpServerOpenocdSim(const char *name) : TcpServer(name) {
-        registerAttribute("JtagTap", &jtagtap_);
-    }
- protected:
-    virtual IService *createClient(const char *name);
- private:
-    AttributeType jtagtap_;
-};
-
-
-DECLARE_CLASS(TcpServerRpc)
-DECLARE_CLASS(TcpServerOpenocdSim)
 
 }  // namespace debugger

@@ -18,16 +18,45 @@
 
 namespace debugger {
 
-JsonCommands::JsonCommands(IService *parent) : TcpCommandsGen(parent) {
+IThread *TcpServerRpc::createClientThread(const char *name, socket_def skt) {
+    ClientThread *thrd = new ClientThread(this,
+                                          name,
+                                          skt,
+                                          cmdexec_.to_string());
+
+    thrd->run();
+    return thrd;
 }
 
-int JsonCommands::processCommand(const char *cmdbuf, int bufsz) {
+
+TcpServerRpc::ClientThread::ClientThread(TcpServer *parent,
+                                         const char *name,
+                                         socket_def skt,
+                                         const char *cmdexec)
+    : TcpServer::ClientThreadGeneric(parent, name, skt) {
+    iexec_ = static_cast<ICmdExecutor *>(
+        RISCV_get_service_iface(cmdexec, IFACE_CMD_EXECUTOR));
+    respcnt_ = 0;
+
+    RISCV_add_default_output(static_cast<IRawListener *>(this));
+}
+
+// Redirect console output into Remote Client
+int TcpServerRpc::ClientThread::updateData(const char *buf, int buflen) {
+    // TODO: ['Console','output string']
+    return buflen;
+}
+
+int TcpServerRpc::ClientThread::processRxBuffer(const char *buf, int sz) {
     AttributeType cmd;
-    cmd.from_config(rxbuf_);
+    char tstr[1024];
+    int tsz;
+    cmd.from_config(buf);
     if (!cmd.is_list() || cmd.size() < 3) {
-        respcnt_ = RISCV_sprintf(respbuf_, resptotal_, "%s",
+        tsz = RISCV_sprintf(tstr, sizeof(tstr), "%s",
                                  "wrong request format");
-        return 0;
+        writeTxBuffer(tstr, tsz);
+        return -1;
     }
 
     AttributeType &requestType = cmd[1];
@@ -36,15 +65,15 @@ int JsonCommands::processCommand(const char *cmdbuf, int bufsz) {
     resp.make_string("OK");
     uint32_t idx = cmd[0u].to_uint32();
 
-    if (requestType.is_equal("Configuration")) {
-        resp.clone(&platformConfig_);
-    } else if (requestType.is_equal("Command")) {
+    if (requestType.is_equal("Command")) {
         /** Redirect command to console directly */
         iexec_->exec(requestAction.to_string(), &resp, false);
-        if (igui_) {
-            igui_->externalCommand(&requestAction);
-        }
-    } else if (requestType.is_equal("Breakpoint")) {
+        //if (igui_) {
+        //    igui_->externalCommand(&requestAction);
+        //}
+    }
+#if 0
+    else if (requestType.is_equal("Breakpoint")) {
         /** Breakpoints action */
         if (requestAction[0u].is_equal("Add")) {
             br_add(requestAction[1], &resp);
@@ -92,17 +121,16 @@ int JsonCommands::processCommand(const char *cmdbuf, int bufsz) {
         resp[0u].make_string("ERROR");
         resp[1].make_string("Wrong command format");
     }
+#endif
     resp.to_config();
+    tsz = RISCV_sprintf(tstr, sizeof(tstr), "[%d,", respcnt_);
+    writeTxBuffer(tstr, tsz);
 
-    if (static_cast<int>(resp.size()) > (resptotal_ - 64)) {
-        delete [] respbuf_;
-        resptotal_ = resp.size() + 64;
-        respbuf_ = new char[resptotal_];
-    }
+    writeTxBuffer(resp.to_string(), static_cast<int>(resp.size()));
+    writeTxBuffer("]", 1);
 
-    respcnt_ = RISCV_sprintf(respbuf_, resptotal_, "[%d,%s]",
-                             idx, resp.to_string()) + 1;
-    return rxcnt_;
+    respcnt_++;
+    return 0;
 }
 
 }  // namespace debugger

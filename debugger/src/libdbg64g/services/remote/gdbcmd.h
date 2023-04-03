@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019 Andrey Sudnik
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,10 +14,11 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_SERVICES_REMOTE_GDBCMD_H__
-#define __DEBUGGER_SERVICES_REMOTE_GDBCMD_H__
+#pragma once
 
-#include "tcpcmd_gen.h"
+#include "tcpclient.h"
+#include "coreservices/ijtag.h"
+#include "coreservices/icmdexec.h"
 
 namespace debugger {
 
@@ -40,27 +41,21 @@ static const int DATA_MAX = 4096;
 };*/
 
 
-class GdbCommands : public TcpCommandsGen {
+class TcpClientGdb : public TcpClient {
  public:
-    explicit GdbCommands(IService *parent);
+    explicit TcpClientGdb(const char *name);
 
  protected:
-    virtual int processCommand(const char *cmdbuf, int bufsz);
-    virtual bool isStartMarker(char s) {
-        if (s == '+' || s == '-') {
-            handleHandshake(s);
-        }
-        return s == '$';
-    }
-    virtual bool isEndMarker(const char *s, int sz) {
-        return s[sz - 3] == '#';
-    }
+    /** TcpClient */
+    virtual void processTcpData(const char *ibuf, int ilen);
 
  private:
-    void handleHandshake(char s);
-    void handlePacket(char *data);
-    uint8_t checksum(const char *data, const int sz);
-    void sendPacket(const char *data);
+    virtual bool isStartMarker(char s);
+    virtual bool isEndMarker(const char *s, int sz);
+    virtual int checkPayload(const char *cmdbuf, int bufsz);
+    virtual void handlePacket(const char *data);
+    virtual uint8_t checksum(const char *data, const int sz);
+    virtual void sendPacket(const char *data);
 
     // RSP packet handlers
     void handleStopReasonQuery();
@@ -70,17 +65,17 @@ class GdbCommands : public TcpCommandsGen {
     void handleSetRegisters();
     void handleSetThread();
     void handleKill();
-    void handleGetMemory();
+    void handleGetMemory(const char *data);
     void handleWriteMemoryHex();
-    void handleReadRegister();
-    void handleWriteRegister();
-    void handleQuery();
-    void handleGeneralSet();
+    void handleReadRegister(const char *data);
+    void handleWriteRegister(const char *data);
+    void handleQuery(const char *data);
+    void handleGeneralSet(const char *data);
     void handleStep();
     void handleThreadAlive();
-    void handleVCommand();
-    void handleWriteMemory();
-    void handleBreakpoint();
+    void handleVCommand(const char *data);
+    void handleWriteMemory(const char *data);
+    void handleBreakpoint(const char *data);
 
     void appendRegValue(char *s, uint32_t value);
 
@@ -88,13 +83,14 @@ class GdbCommands : public TcpCommandsGen {
     //RspPacket previous_packet;
     //bool is_ack_mode;
     //bool last_success_;
-    char packet_data_[1 << 16];
-    enum EState {
-        State_AckMode,
-        State_WaitAckToSwitch,
-        State_NoAckMode
-    } estate_;
+    char msg_[1 << 16];
+    int msgcnt_;
+    bool enableAckMode_;
+
+    IJtag *ijtag_;
+    ICmdExecutor *iexec_;
 };
 
+DECLARE_CLASS(TcpClientGdb)
+
 }
-#endif  // __DEBUGGER_SERVICES_REMOTE_GDBCMD_H__

@@ -12,13 +12,7 @@
                 ['BlockingMode',true],
                 ['HostIP',''],
                 ['HostPort',8687],
-                ['ListenDefaultOutput',true, 'Re-direct console output into TCP'],
-                ['PlatformConfig',{'Name':'River',
-                                   'Display':'',
-                                   'Keys':[],
-                                   'Vars':[],
-                                   'Indicators':[],
-                                  }]
+                ['CmdExecutor','cmdexec0'],
           ]}]},
     {'Class':'ComPortServiceClass','Instances':[
           {'Name':'port1','Attr':[
