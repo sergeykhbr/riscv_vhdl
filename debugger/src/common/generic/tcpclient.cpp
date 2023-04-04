@@ -18,13 +18,16 @@
 
 namespace debugger {
 
-TcpClient::TcpClient(const char *name) : IService(name) {
+TcpClient::TcpClient(IService *parent, const char *name, const char *ip,
+    int port) : IService(parent, name) {
     registerInterface(static_cast<IThread *>(this));
-    registerAttribute("Enable", &isEnable_);
+    registerAttribute("TargetIP", &targetIP_);
+    registerAttribute("TargetPort", &targetPort_);
     RISCV_mutex_init(&mutexTx_);
-    hsock_ = 0;
-    targetIP_.make_string("127.0.0.1");
-    targetPort_.make_int64(3333);
+    hsock_ = -1;
+    targetIP_.make_string(ip);
+    targetPort_.make_int64(port);
+    txcnt_ = 0;
 }
 
 TcpClient::~TcpClient() {
@@ -32,40 +35,16 @@ TcpClient::~TcpClient() {
 }
 
 void TcpClient::postinitService() {
-    if (hsock_ == 0) {
-        // hsock is not zero if was accept() from TcpServer
-        connectToServer();
+    if (hsock_ == -1 && connectToServer() < 0) {
+        RISCV_error("Connect to %s:%d failed",
+                targetIP_.to_string(),
+                targetPort_.to_int());
+        return;
     }
 
-    if (isEnable_.to_bool()) {
-        if (!run()) {
-            RISCV_error("Can't create thread.", NULL);
-            return;
-        }
+    if (!run()) {
+        RISCV_error("Can't create thread.", NULL);
     }
-}
-
-int TcpClient::updateData(const char *buf, int buflen) {
-    if (txcnt_ + buflen >= sizeof(txbuf_)) {
-        RISCV_error("%s", "Tx buffer overflow");
-        return 0;
-    }
-
-    RISCV_mutex_lock(&mutexTx_);
-    memcpy(&txbuf_[txcnt_], buf, buflen);
-    txcnt_ += buflen;
-    RISCV_mutex_unlock(&mutexTx_);
-
-    //int tsz = RISCV_sprintf(&asyncbuf_[0].ibyte, sizeof(asyncbuf_),
-    //                "['%s',", "Console");
-
-    //memcpy(&asyncbuf_[tsz], buf, buflen);
-    //tsz += buflen;
-    //asyncbuf_[tsz++].ubyte = ']';
-    //asyncbuf_[tsz++].ubyte = '\0';
-
-    //sendData(&asyncbuf_[0].ubyte, tsz);
-    return buflen;
 }
 
 void TcpClient::busyLoop() {
@@ -75,24 +54,39 @@ void TcpClient::busyLoop() {
     while (isEnabled()) {
         rxbytes = recv(hsock_, rxbuf_, sizeof(rxbuf_), 0);
         if (rxbytes <= 0) {
-            // Timeout:
-            continue;
+            break;
         } 
-
-        rxbuf_[rxbytes] = '\0';
-        RISCV_debug("i=>[%d]: %s", rxbytes, rxbuf_);
-
-        processTcpData(rxbuf_, rxbytes);
-
-        sendData(txbuf_, txcnt_);
+        if (processRxBuffer(rxbuf_, rxbytes) < 0) {
+            break;
+        }
+        if (sendData() < 0) {
+            break;
+        }
+        RISCV_mutex_lock(&mutexTx_);
+        txcnt_ = 0;
+        RISCV_mutex_unlock(&mutexTx_);
     }
 
+    beforeThreadClosing();
     closeSocket();
 }
 
-int TcpClient::sendData(const char *buf, int sz) {
-    int total = sz;
-    const char *ptx = buf;
+int TcpClient::writeTxBuffer(const char *buf, int sz) {
+    if (txcnt_ + sz >= sizeof(txbuf_)) {
+        RISCV_error("%s", "Tx buffer overflow");
+        return 0;
+    }
+
+    RISCV_mutex_lock(&mutexTx_);
+    memcpy(&txbuf_[txcnt_], buf, sz);
+    txcnt_ += sz;
+    RISCV_mutex_unlock(&mutexTx_);
+    return sz;
+}
+
+int TcpClient::sendData() {
+    int total = txcnt_;
+    const char *ptx = txbuf_;
     int txbytes;
 
     while (total > 0) {

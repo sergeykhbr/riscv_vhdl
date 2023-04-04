@@ -1,8 +1,8 @@
 {
   'GlobalSettings':{
     'SimEnable':true,
-    'GUI':true,
-    'InitCommands':["init"
+    'GUI':false,
+    'InitCommands':[
                    ],
     'Description':'Functional simulation of the RISC-V Single Core River CPU'
   },
@@ -11,7 +11,7 @@
 #include "common_riscv.json"
 #include "common_soc.json"
 
-    {'Class':'TcpServerOpenocdSimClass','Instances':[
+    {'Class':'TcpServerJtagBitBangClass','Instances':[
           {'Name':'jtagbb','Attr':[
                 ['LogLevel',3],
                 ['Enable',true],

@@ -13,52 +13,47 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
- #pragma once
 
- #include "coreservices/ithread.h"
- #include "coreservices/icmdexec.h"
- #include "coreservices/irawlistener.h"
- #include "tcpserver.h"
+#pragma once
+
+#include <iclass.h>
+#include <iservice.h>
+#include "coreservices/ithread.h"
+#include "coreservices/ijtagbitbang.h"
+#include "generic/tcpserver.h"
 
 namespace debugger {
 
-class TcpServerRpc : public TcpServer {
+class TcpServerJtagBitBang : public TcpServer {
  public:
-    TcpServerRpc(const char *name) : TcpServer(name) {
-        registerAttribute("CmdExecutor", &cmdexec_);
+    TcpServerJtagBitBang(const char *name) : TcpServer(name) {
+        registerAttribute("JtagTap", &jtagtap_);
     }
  protected:
     virtual IThread *createClientThread(const char *name, socket_def skt);
 
  private:
-    class ClientThread : public TcpServer::ClientThreadGeneric,
-                         public IRawListener {
+    class ClientThread : public TcpServer::ClientThreadGeneric {
      public:
         explicit ClientThread(TcpServer *parent,
                               const char *name,
                               socket_def skt,
-                              const char *cmdexec);
-
-        /** IRawListener */
-        virtual int updateData(const char *buf, int buflen);
+                              const char *jtagtap);
+        virtual ~ClientThread();
 
      protected:
         virtual int processRxBuffer(const char *cmdbuf, int bufsz);
-        virtual bool isStartMarker(char s) { return true; }
-        virtual bool isEndMarker(const char *s, int sz) {
-            return s[sz - 1] == '\0';
-        }
 
      private:
-        ICmdExecutor *iexec_;
-        int respcnt_;
+        IJtagBitBang *ijtagbb_;
     };
 
  private:
-    AttributeType cmdexec_;
+    AttributeType jtagtap_;
 };
 
-DECLARE_CLASS(TcpServerRpc)
+
+DECLARE_CLASS(TcpServerJtagBitBang)
 
 }  // namespace debugger
 

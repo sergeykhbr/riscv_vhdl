@@ -27,11 +27,9 @@
 #include "services/mem/memlut.h"
 #include "services/mem/memsim.h"
 #include "services/mem/rmemsim.h"
-#include "services/remote/tcpjtagbb.h"
-#include "services/remote/tcpclient.h"
-#include "services/remote/tcpserver.h"
 #include "services/remote/dpiclient.h"
-#include "services/remote/jsoncmd.h"
+#include "services/remote/tcpsrv_jtagbb.h"
+#include "services/remote/tcpsrv_rpc.h"
 #include "services/comport/comport.h"
 #include "services/console/autocompleter.h"
 #include "services/console/console.h"
@@ -83,7 +81,7 @@ extern "C" int RISCV_init() {
     REGISTER_CLASS_IDX(RiscvSourceService, 12);
     REGISTER_CLASS_IDX(JTAG, 13);
     REGISTER_CLASS_IDX(TcpServerRpc, 14);
-    REGISTER_CLASS_IDX(TcpServerOpenocdSim, 15);
+    REGISTER_CLASS_IDX(TcpServerJtagBitBang, 15);
     //REGISTER_CLASS_IDX(TcpJtagBitBangClient, 16);
     REGISTER_CLASS_IDX(OpenOcdWrapper, 17);
     REGISTER_CLASS_IDX(DpiClient, 18);

@@ -16,9 +16,9 @@
 
 #pragma once
 
-#include "tcpclient.h"
 #include "coreservices/ijtag.h"
 #include "coreservices/icmdexec.h"
+#include "generic/tcpclient.h"
 
 namespace debugger {
 
@@ -47,7 +47,7 @@ class TcpClientGdb : public TcpClient {
 
  protected:
     /** TcpClient */
-    virtual void processTcpData(const char *ibuf, int ilen);
+    virtual int processRxBuffer(const char *ibuf, int ilen);
 
  private:
     virtual bool isStartMarker(char s);

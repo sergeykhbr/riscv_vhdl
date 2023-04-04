@@ -13,47 +13,55 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 #pragma once
 
-#include <iclass.h>
-#include <iservice.h>
 #include "coreservices/ithread.h"
-#include "coreservices/ijtagbitbang.h"
-#include "tcpserver.h"
+#include "coreservices/icmdexec.h"
+#include "coreservices/irawlistener.h"
+#include "generic/tcpserver.h"
 
 namespace debugger {
 
-class TcpServerOpenocdSim : public TcpServer {
+class TcpServerRpc : public TcpServer {
  public:
-    TcpServerOpenocdSim(const char *name) : TcpServer(name) {
-        registerAttribute("JtagTap", &jtagtap_);
+    TcpServerRpc(const char *name) : TcpServer(name) {
+        registerAttribute("CmdExecutor", &cmdexec_);
     }
  protected:
     virtual IThread *createClientThread(const char *name, socket_def skt);
 
  private:
-    class ClientThread : public TcpServer::ClientThreadGeneric {
+    class ClientThread : public TcpServer::ClientThreadGeneric,
+                         public IRawListener {
      public:
         explicit ClientThread(TcpServer *parent,
                               const char *name,
                               socket_def skt,
-                              const char *jtagtap);
-        virtual ~ClientThread();
+                              const char *cmdexec);
+
+        /** IRawListener */
+        virtual int updateData(const char *buf, int buflen);
+
+     protected:
+        virtual void beforeThreadClosing() override;
 
      protected:
         virtual int processRxBuffer(const char *cmdbuf, int bufsz);
+        virtual bool isStartMarker(char s) { return true; }
+        virtual bool isEndMarker(const char *s, int sz) {
+            return s[sz - 1] == '\0';
+        }
 
      private:
-        IJtagBitBang *ijtagbb_;
+        ICmdExecutor *iexec_;
+        int respcnt_;
     };
 
  private:
-    AttributeType jtagtap_;
+    AttributeType cmdexec_;
 };
 
-
-DECLARE_CLASS(TcpServerOpenocdSim)
+DECLARE_CLASS(TcpServerRpc)
 
 }  // namespace debugger
 

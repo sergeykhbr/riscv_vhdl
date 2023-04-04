@@ -14,11 +14,11 @@
  *  limitations under the License.
  */
 
-#include "tcpjtagbb.h"
+#include "tcpsrv_jtagbb.h"
 
 namespace debugger {
 
-IThread *TcpServerOpenocdSim::createClientThread(const char *name, socket_def skt) {
+IThread *TcpServerJtagBitBang::createClientThread(const char *name, socket_def skt) {
 
     ClientThread *cln = new ClientThread(this,
                                          name,
@@ -29,7 +29,7 @@ IThread *TcpServerOpenocdSim::createClientThread(const char *name, socket_def sk
 }
 
 
-TcpServerOpenocdSim::ClientThread::ClientThread(TcpServer *parent,
+TcpServerJtagBitBang::ClientThread::ClientThread(TcpServer *parent,
                                                 const char *name,
                                                 socket_def skt,
                                                 const char *jtagtap)
@@ -38,10 +38,10 @@ TcpServerOpenocdSim::ClientThread::ClientThread(TcpServer *parent,
         RISCV_get_service_iface(jtagtap, IFACE_JTAG_BITBANG));
 }
 
-TcpServerOpenocdSim::ClientThread::~ClientThread() {
+TcpServerJtagBitBang::ClientThread::~ClientThread() {
 }
 
-int TcpServerOpenocdSim::ClientThread::processRxBuffer(const char *cmdbuf, int bufsz) {
+int TcpServerJtagBitBang::ClientThread::processRxBuffer(const char *cmdbuf, int bufsz) {
     int ret = 0;
 
     for (int i = 0; i < bufsz; i++) {

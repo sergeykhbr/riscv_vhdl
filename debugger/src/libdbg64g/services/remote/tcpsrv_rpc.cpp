@@ -1,5 +1,5 @@
 /*
- *  Copyright 2019 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-#include "jsoncmd.h"
+#include "tcpsrv_rpc.h"
 
 namespace debugger {
 
@@ -41,9 +41,20 @@ TcpServerRpc::ClientThread::ClientThread(TcpServer *parent,
     RISCV_add_default_output(static_cast<IRawListener *>(this));
 }
 
+void TcpServerRpc::ClientThread::beforeThreadClosing() {
+    RISCV_remove_default_output(static_cast<IRawListener *>(this));
+}
+
 // Redirect console output into Remote Client
 int TcpServerRpc::ClientThread::updateData(const char *buf, int buflen) {
-    // TODO: ['Console','output string']
+    char tstr[1024];
+    int tsz = RISCV_sprintf(tstr, sizeof(tstr), "['%s',", "Console");
+    memcpy(&tstr[tsz], buf, buflen);
+    tsz += buflen;
+    tstr[tsz++] = ']';
+    tstr[tsz++] = '\0';
+
+    writeTxBuffer(tstr, tsz);
     return buflen;
 }
 

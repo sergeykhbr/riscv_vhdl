@@ -61,7 +61,6 @@ void MemorySim::postinitService() {
         uint32_t *lsb = reinterpret_cast<uint32_t *>(tbuf);
         uint32_t *msb = reinterpret_cast<uint32_t *>(&tbuf[sz]);
         uint32_t *dst = reinterpret_cast<uint32_t *>(mem_);
-        uint32_t t1;
         for (int i = 0; i < sz/sizeof(uint32_t); i++) {
             *dst++ = *lsb++;
             *dst++ = *msb++;

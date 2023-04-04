@@ -1,5 +1,5 @@
 /*
- *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -19,50 +19,50 @@
 #include <iclass.h>
 #include <iservice.h>
 #include "coreservices/ithread.h"
-#include "coreservices/irawlistener.h"
+#include "tcpclient.h"
 
 namespace debugger {
 
-class TcpClient : public IService,
-                  public IThread,
-                  public IRawListener {
+class TcpServer : public IService,
+                  public IThread {
  public:
-    explicit TcpClient(const char *name);
-    virtual ~TcpClient();
+    explicit TcpServer(const char *name);
 
     /** IService interface */
     virtual void postinitService() override;
-    virtual void setExtArgument(void *args) override {
-        hsock_ = *reinterpret_cast<socket_def *>(args);
-    }
-
-    /** IRawListener interface */
-    virtual int updateData(const char *buf, int buflen);
 
  protected:
     /** IThread interface */
     virtual void busyLoop();
 
-    virtual void processTcpData(const char *ibuf, int ilen) = 0;
+    class ClientThreadGeneric : public TcpClient {
+     public:
+        ClientThreadGeneric(TcpServer *parent,
+                            const char *name,
+                            socket_def skt)
+        : TcpClient(parent, name, "", 0) {
+            hsock_ = skt;
+        }
+    };
 
  protected:
-    int sendData(const char *buf, int sz);
-    int connectToServer();       // create socket only if Server doesn't create it
-    void closeSocket();
+    virtual IThread *createClientThread(const char *name, socket_def skt) = 0;
 
- private:
+    int createServerSocket();
+    void closeServerSocket();
+    void setRcvTimeout(socket_def skt, int timeout_ms);
+    bool setBlockingMode(bool mode);
+
+ protected:
     AttributeType isEnable_;
     AttributeType timeout_;
-    AttributeType targetIP_;
-    AttributeType targetPort_;
+    AttributeType blockmode_;
+    AttributeType hostIP_;
+    AttributeType hostPort_;
 
     struct sockaddr_in sockaddr_ipv4_;
-
     socket_def hsock_;
-    mutex_def mutexTx_;
-    char rxbuf_[4096];
-    char txbuf_[1<<20];
-    int txcnt_;
+    char rcvbuf[4096];
 };
 
 }  // namespace debugger

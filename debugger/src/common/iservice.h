@@ -14,8 +14,7 @@
  *  limitations under the License.
  */
 
-#ifndef __DEBUGGER_COMMON_ISERVICE_H__
-#define __DEBUGGER_COMMON_ISERVICE_H__
+ #pragma once
 
 #include <api_core.h>
 #include "coreservices/imemop.h"
@@ -31,11 +30,19 @@ class IService : public IFace {
         listAttributes_ = AttributeType(Attr_List);
         listPorts_ = AttributeType(Attr_List);
         registerInterface(static_cast<IService *>(this));
+        registerAttribute("Parent", &parent_);
         registerAttribute("LogLevel", &logLevel_);
         registerAttribute("ObjDescription", &obj_descr_);
+        parent_.make_string("");
         obj_name_.make_string(obj_name);
         obj_descr_.make_string("");
         logLevel_.make_int64(LOG_ERROR);
+    }
+    IService(IService *parent, const char *obj_name)
+        : IService(obj_name) {
+        if (parent) {
+            parent_.make_string(parent->getObjName());
+        }
     }
     virtual ~IService() {
         // @warning: NEED to unregister attribute from class destructor
@@ -45,6 +52,10 @@ class IService : public IFace {
             iattr->freeAttrName();
             iattr->freeAttrDescription();
         }*/
+    }
+
+    virtual const char *getParentName() {
+        return parent_.to_string();
     }
 
     virtual void setNamespace(const char *sname) {
@@ -172,6 +183,7 @@ class IService : public IFace {
     }
 
  protected:
+    AttributeType parent_;
     AttributeType namespaceName_;
     AttributeType listInterfaces_;
     AttributeType listPorts_;       // [['portname',iface],*]
@@ -182,5 +194,3 @@ class IService : public IFace {
 };
 
 }  // namespace debugger
-
-#endif  // __DEBUGGER_COMMON_ISERVICE_H__

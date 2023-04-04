@@ -24,7 +24,7 @@
 #include "coreservices/icommand.h"
 #include "coreservices/imemop.h"
 #include "coreservices/ijtag.h"
-#include "../remote/tcpclient.h"
+#include "generic/tcpclient.h"
 #include <string>
 #include <stdarg.h>
 
@@ -47,7 +47,7 @@ class CmdExecutor : public TcpClient,
 
  protected:
     /** TcpClient */
-    virtual void processTcpData(const char *ibuf, int ilen) {}
+    virtual int processRxBuffer(const char *ibuf, int ilen) { return 0; }
 
  private:
     void processSimple(AttributeType *cmd, AttributeType *res);

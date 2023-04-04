@@ -25,17 +25,13 @@
 namespace debugger {
 
 OpenOcdWrapper::OpenOcdWrapper(const char *name) 
-    : IService(name), IHap(HAP_All) {
-    registerInterface(static_cast<IThread *>(this));
-    registerInterface(static_cast<IHap *>(this));
+    : TcpClient(0, name, "127.0.0.1", 4444),
+    openocd_(this) {
     registerAttribute("Enable", &isEnable_);
     registerAttribute("Jtag", &jtag_);
     registerAttribute("CmdExecutor", &cmdexec_);
     registerAttribute("PollingMs", &pollingMs_);
 
-    RISCV_event_create(&config_done_, "openocdwrap_config_done");
-    RISCV_register_hap(static_cast<IHap *>(this));
-    isEnable_.make_boolean(true);
 }
 
 OpenOcdWrapper::~OpenOcdWrapper() {
@@ -53,6 +49,7 @@ void OpenOcdWrapper::postinitService() {
                     cmdexec_.to_string());
     }
 
+    openocd_.run();
     if (isEnable_.to_bool()) {
         if (!run()) {
             RISCV_error("Can't create thread.", NULL);
@@ -67,37 +64,35 @@ void OpenOcdWrapper::predeleteService() {
     }
 }
 
-void OpenOcdWrapper::hapTriggered(EHapType type, 
-                                  uint64_t param,
-                                  const char *descr) {
-    if (type == HAP_ConfigDone) {
-        RISCV_event_set(&config_done_);
-    }
-}
 
 void OpenOcdWrapper::busyLoop() {
-    RISCV_event_wait(&config_done_);
+    // trying to connect to openocd:4444
+    while (openocd_.isOpened() && connectToServer() != 0) {
+        RISCV_sleep_ms(1000);
+    }
 
-    pid_ = RISCV_get_pid();
-    const char *argv[] = {"C:/Projects/riscv_vhdl/openocd_gdb_cfg/openocd.exe"
-                          "-f",
-                          "C:/Projects/riscv_vhdl/openocd_gdb_cfg/bitbang_gdb.cfg"};
-
-    //int retcode = execve(argv[0],
-    //                      argv,
-    //                      NULL);
-    //int retcode = system("C:/Projects/riscv_vhdl/openocd_gdb_cfg/openocd.exe -f C:/Projects/riscv_vhdl/openocd_gdb_cfg/bitbang_gdb.cfg");
-
-    while (isEnabled()) {
+    while (isEnabled() && openocd_.isOpened()) {
+        // Just wait exit to send 'shutdown'
         RISCV_sleep_ms(pollingMs_.to_int());
     }
+
+    char tstr[64];
+    int tsz = RISCV_sprintf(tstr, sizeof(tstr), "%s", "shutdown");
+    writeTxBuffer(tstr, tsz);
+    sendData();
 }
 
-void OpenOcdWrapper::stop() {
-    IThread::stop();
-    CloseHandle(threadInit_.Handle);
-    
-    //signal(pid_, SIGBREAK);
+void OpenOcdWrapper::ExternalProcessThread::busyLoop() {
+#if 0
+    const char *argv[] = {"C:/Projects/riscv_vhdl/openocd_gdb_cfg/openocd.exe", 
+                          "-f",
+                          "C:/Projects/riscv_vhdl/openocd_gdb_cfg/bitbang_gdb.cfg",
+                          NULL};
+    int retcode = execv(argv[0], argv);
+#endif
+    int retcode = system("C:/Projects/riscv_vhdl/openocd_gdb_cfg/openocd.exe"
+                " -f C:/Projects/riscv_vhdl/openocd_gdb_cfg/bitbang_gdb.cfg");
+    opened_ = false;
 }
 
 }  // namespace debugger

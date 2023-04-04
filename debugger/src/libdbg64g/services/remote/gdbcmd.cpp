@@ -49,7 +49,8 @@ uint8_t RspPacket::checksum(const char *data, const size_t sz) {
 }
 */
 
-TcpClientGdb::TcpClientGdb(const char *name) : TcpClient(name) {
+TcpClientGdb::TcpClientGdb(const char *name)
+    : TcpClient(0, name, "localhost", 3333) {
     msgcnt_ = 0;
     enableAckMode_ = false;
 }
@@ -62,13 +63,13 @@ bool TcpClientGdb::isEndMarker(const char *s, int sz) {
     return (s[0] == '+' || s[0] == '-' || (sz >= 3 && s[sz - 3] == '#'));
 }
 
-void TcpClientGdb::processTcpData(const char *ibuf, int ilen) {
+int TcpClientGdb::processRxBuffer(const char *ibuf, int ilen) {
     for (int i = 0; i < ilen; i++) {
         if (msgcnt_ == 0 && isStartMarker(ibuf[i])) {
             msg_[msgcnt_++] = ibuf[i];
         } else if (msgcnt_ >= sizeof(msg_)) {
             RISCV_error("msg buffer overflow %d", msgcnt_);
-            return;
+            return -1;
         } else {
             msg_[msgcnt_++] = ibuf[i];
         }
@@ -82,6 +83,7 @@ void TcpClientGdb::processTcpData(const char *ibuf, int ilen) {
             msgcnt_ = 0;
         }
     }
+    return 0;
 }
 
 int TcpClientGdb::checkPayload(const char *cmdbuf, int bufsz) {
@@ -561,17 +563,17 @@ void TcpClientGdb::handleBreakpoint(const char *data) {
 void TcpClientGdb::sendPacket(const char *data) {
     int tsz = static_cast<int>(strlen(data));
     if (enableAckMode_) {
-        updateData("+", 1);
+        writeTxBuffer("+", 1);
     }
-    updateData("$", 1);
-    updateData(data, tsz);
+    writeTxBuffer("$", 1);
+    writeTxBuffer(data, tsz);
 
     // Add checksum
-    updateData("#", 1);
+    writeTxBuffer("#", 1);
     uint8_t crc8 = checksum(data, tsz);
     char tstr[3];
     RISCV_sprintf(tstr, sizeof(tstr), "%02x", crc8);
-    updateData(tstr, 2);
+    writeTxBuffer(tstr, 2);
 }
 
 uint8_t TcpClientGdb::checksum(const char *data, const int sz) {

@@ -22,13 +22,12 @@
 #include "coreservices/ithread.h"
 #include "coreservices/ijtag.h"
 #include "coreservices/icmdexec.h"
+#include "generic/tcpclient.h"
 #include <string>
 
 namespace debugger {
 
-class OpenOcdWrapper : public IService,
-                       public IThread,
-                       public IHap {
+class OpenOcdWrapper : public TcpClient {
  public:
     explicit OpenOcdWrapper(const char *name);
     virtual ~OpenOcdWrapper();
@@ -37,15 +36,27 @@ class OpenOcdWrapper : public IService,
     virtual void postinitService() override;
     virtual void predeleteService() override;
 
-    /** IHap */
-    virtual void hapTriggered(EHapType type, uint64_t param,
-                              const char *descr);
+    /** TcpClient */
+    virtual int processRxBuffer(const char *buf, int sz) { return 0; }
 
-    /** IThread */
-    virtual void stop() override;
  protected:
     /** IThread interface */
     virtual void busyLoop();
+
+ private:
+    class ExternalProcessThread : public IThread {
+     public:
+        ExternalProcessThread(IService *parent) : IThread() {
+            opened_ = true;
+        }
+        bool isOpened() { return opened_; }
+     protected:
+        virtual void busyLoop();
+     private:
+        event_def eventLoopStarted_;
+        bool opened_;
+    };
+
 
  private:
     AttributeType isEnable_;
@@ -57,7 +68,7 @@ class OpenOcdWrapper : public IService,
     ICmdExecutor *icmdexec_;
 
     event_def config_done_;
-    int pid_;
+    ExternalProcessThread openocd_;
 };
 
 DECLARE_CLASS(OpenOcdWrapper)

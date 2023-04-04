@@ -11,7 +11,7 @@
 #include "common_riscv.json"
 #include "common_soc.json"
 
-    {'Class':'TcpServerOpenocdSimClass','Instances':[
+    {'Class':'TcpServerJtagBitBangClass','Instances':[
           {'Name':'jtagbb','Attr':[
                 ['LogLevel',3],
                 ['Enable',true],
