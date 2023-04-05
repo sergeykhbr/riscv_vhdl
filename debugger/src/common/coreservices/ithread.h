@@ -45,11 +45,14 @@ class IThread : public IFace {
         return loopEnable_.state;
     }
 
-    /** @brief Stop and join thread */
+    /** @brief Request to stop thread */
     virtual void stop() {
         RISCV_event_clear(&loopEnable_);
+    }
+
+    virtual void join(int ms) {
         if (threadInit_.Handle) {
-            RISCV_thread_join(threadInit_.Handle, 50000);
+            RISCV_thread_join(threadInit_.Handle, ms);
         }
         threadInit_.Handle = 0;
     }

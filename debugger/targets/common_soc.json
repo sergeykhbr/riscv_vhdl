@@ -77,7 +77,11 @@
                 ['LogLevel',1],
                 ['PollingMs',100],
                 ['Jtag','jtag0'],
-                ['CmdExecutor','cmdexec0']
+                ['CmdExecutor','cmdexec0'],
+                ['OpenOcdPath','${REPO_PATH}/../openocd_gdb_cfg'],
+                ['OpenOcdScript','bitbang_gdb.cfg'],
+                ['TargetIP','127.0.0.1'],
+                ['TargetPort',4444, '3333 is the default gdb port, 4444 is the default console port'],
                 ]}]},
     {'Class':'MemorySimClass','Instances':[
           {'Name':'spiflash0','Attr':[

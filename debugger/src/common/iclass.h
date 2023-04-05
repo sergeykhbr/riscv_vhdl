@@ -31,77 +31,30 @@ class IClass : public IFace {
         : IFace(IFACE_CLASS) {
         class_name_.make_string(class_name);
         RISCV_register_class(static_cast<IClass *>(this));
-        listInstances_ = AttributeType(Attr_List);
     }
     virtual ~IClass() {
-        for (unsigned i = 0; i < listInstances_.size(); i++) {
-            delete static_cast<IService *>(listInstances_[i].to_iface());
-        }
     }
 
-    virtual IService *createService(const char *nspace,
-                                    const char *obj_name) = 0;
-
-    virtual void deleteService(const char *obj_name) {
-        IService *isrv;
-        for (unsigned i = 0; i < listInstances_.size(); i++) {
-            isrv =  static_cast<IService *>(listInstances_[i].to_iface());
-            if (strcmp(isrv->getObjName(), obj_name) == 0) {
-                listInstances_.remove_from_list(i);
-                delete isrv;
-                break;
-            }
-        }
-    }
-
-    virtual void postinitServices() {
-        IService *tmp = NULL;
-        for (unsigned i = 0; i < listInstances_.size(); i++) {
-            tmp = static_cast<IService *>(listInstances_[i].to_iface());
-            tmp->postinitService();
-        }
-    }
-
-    virtual void predeleteServices() {
-        IService *tmp = NULL;
-        for (unsigned i = 0; i < listInstances_.size(); i++) {
-            tmp = static_cast<IService *>(listInstances_[i].to_iface());
-            tmp->predeleteService();
-        }
-    }
+    virtual IService *createService(const char *obj_name) = 0;
 
     virtual const char *getClassName() { return class_name_.to_string(); }
-
-    virtual IService *getInstance(const char *name) {
-        IService *ret = NULL;
-        for (unsigned i = 0; i < listInstances_.size(); i++) {
-            ret = static_cast<IService *>(listInstances_[i].to_iface());
-            if (strcmp(name, ret->getObjName()) == 0) {
-                return ret;
-            }
-        }
-        return NULL;
-    }
 
     virtual AttributeType getConfiguration() {
         AttributeType ret(Attr_Dict);
         ret["Class"] = AttributeType(getClassName());
         ret["Instances"] = AttributeType(Attr_List);
 
-        IService *tmp = NULL;
+        /*IService *tmp = NULL;
         for (unsigned i = 0; i < listInstances_.size(); i++) {
             tmp = static_cast<IService *>(listInstances_[i].to_iface());
             AttributeType val = tmp->getConfiguration();
             ret["Instances"].add_to_list(&val);
-        }
+        }*/
         return ret;
     }
 
-    virtual const AttributeType *getInstanceList() { return &listInstances_; }
-
  protected:
     AttributeType class_name_;
-    AttributeType listInstances_;
 };
 
 /**
@@ -112,11 +65,9 @@ class IClass : public IFace {
 class name ## Class : public IClass { \
  public: \
     name ## Class() : IClass(# name "Class") {} \
-    virtual IService *createService(const char *nspace, const char *obj_name) {  \
+    virtual IService *createService(const char *obj_name) {  \
         name *serv = new name(obj_name); \
-        serv->setNamespace(nspace); \
-        AttributeType item(static_cast<IService *>(serv)); \
-        listInstances_.add_to_list(&item); \
+        serv->setClassOwner(this); \
         return serv; \
     } \
 };

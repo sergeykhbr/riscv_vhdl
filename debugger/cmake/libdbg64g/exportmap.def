@@ -9,6 +9,8 @@ EXPORTS
 	RISCV_get_global_settings
 	RISCV_register_class
 	RISCV_unregister_class
+	RISCV_register_service
+	RISCV_unregister_service
 	RISCV_register_hap
 	RISCV_unregister_hap
 	RISCV_trigger_hap
@@ -60,3 +62,4 @@ EXPORTS
 	RISCV_dispatcher_start
 	RISCV_register_timer
 	RISCV_unregister_timer
+	RISCV_system

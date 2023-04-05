@@ -143,6 +143,14 @@ extern "C" void RISCV_unregister_class(const char *clsname) {
     pcore_->unregisterClass(clsname);
 }
 
+extern "C" void RISCV_register_service(IFace *isrv) {
+    pcore_->registerService(isrv);
+}
+
+extern "C" void RISCV_unregister_service(const char *srvname) {
+    pcore_->unregisterService(srvname);
+}
+
 extern "C" void RISCV_register_hap(IFace *ihap) {
     pcore_->registerHap(ihap);
 }
@@ -163,7 +171,7 @@ extern "C" IFace *RISCV_get_class(const char *name) {
 extern "C" IFace *RISCV_create_service(IFace *iclass, const char *name, 
                                         AttributeType *args) {
     IClass *icls = static_cast<IClass *>(iclass);
-    IService *iobj = icls->createService(".", name);
+    IService *iobj = icls->createService(name);
     iobj->initService(args);
     iobj->postinitService();
     return iobj;
@@ -219,11 +227,18 @@ static thread_return_t safe_exit_thread(void *args) {
     IThread *ith;
     RISCV_get_services_with_iface(IFACE_THREAD, &t1);
 
+    // Request to stop all threads
+    for (unsigned i = 0; i < t1.size(); i++) {
+        iserv = static_cast<IService *>(t1[i].to_iface());
+        ith = static_cast<IThread *>(iserv->getInterface(IFACE_THREAD));
+        ith->stop();
+    }
+
     for (unsigned i = 0; i < t1.size(); i++) {
         iserv = static_cast<IService *>(t1[i].to_iface());
         ith = static_cast<IThread *>(iserv->getInterface(IFACE_THREAD));
         printf("Stopping thread service '%s'. . .", iserv->getObjName());
-        ith->stop();
+        ith->join(50000);
         printf("Stopped\n");
     }
 
@@ -756,6 +771,10 @@ extern "C" void RISCV_set_current_dir() {
 #else         // Linux
     chdir(path);
 #endif
+}
+
+extern "C" int RISCV_system(const char *cmd) {
+    return system(cmd);
 }
 
 void put_char(char s, FILE *f) {

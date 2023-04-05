@@ -34,6 +34,7 @@ CoreService::CoreService(const char *name) : IService("CoreService") {
     active_ = 1;
     listPlugins_.make_list(0);
     listClasses_.make_list(0);
+    listServices_.make_list(0);
     listHap_.make_list(0);
     listConsole_.make_list(0);
 
@@ -117,7 +118,7 @@ int CoreService::createPlatformServices() {
             AttributeType &Instances = Services[i]["Instances"];
             for (unsigned n = 0; n < Instances.size(); n++) {
                 iserv =
-                    icls->createService(".", Instances[n]["Name"].to_string());
+                    icls->createService(Instances[n]["Name"].to_string());
                 iserv->initService(&Instances[n]["Attr"]);
             }
         }
@@ -126,18 +127,18 @@ int CoreService::createPlatformServices() {
 }
 
 void CoreService::postinitPlatformServices() {
-    IClass *icls;
-    for (unsigned i = 0; i < listClasses_.size(); i++) {
-        icls = static_cast<IClass *>(listClasses_[i].to_iface());
-        icls->postinitServices();
+    IService *isrv;
+    for (unsigned i = 0; i < listServices_.size(); i++) {
+        isrv = static_cast<IService *>(listServices_[i].to_iface());
+        isrv->postinitService();
     }
 }
 
 void CoreService::predeletePlatformServices() {
-    IClass *icls;
-    for (unsigned i = 0; i < listClasses_.size(); i++) {
-        icls = static_cast<IClass *>(listClasses_[i].to_iface());
-        icls->predeleteServices();
+    IService *isrv;
+    for (unsigned i = 0; i < listServices_.size(); i++) {
+        isrv = static_cast<IService *>(listServices_[i].to_iface());
+        isrv->predeleteService();
     }
 }
 
@@ -165,6 +166,31 @@ void CoreService::unregisterClass(const char *clsname) {
         icls = static_cast<IClass *>(listClasses_[i].to_iface());
         if (strcmp(icls->getClassName(), clsname) == 0) {
             listClasses_.remove_from_list(i);
+            break;
+        }
+    }
+}
+
+void CoreService::registerService(IFace *isrv) {
+    IService *it1, *it2;
+    it1 = static_cast<IService *>(isrv);
+    for (unsigned i = 0; i < listServices_.size(); i++) {
+        it2 = static_cast<IService *>(listServices_[i].to_iface());
+        if (strcmp(it1->getObjName(), it2->getObjName()) == 0) {
+            printf("Error: object %s already exists\n", it1->getObjName());
+            return;
+        }
+    }
+    AttributeType item(isrv);
+    listServices_.add_to_list(&item);
+}
+
+void CoreService::unregisterService(const char *srvname) {
+    IService *isrv;
+    for (unsigned i = 0; i < listServices_.size(); i++) {
+        isrv = static_cast<IService *>(listServices_[i].to_iface());
+        if (strcmp(isrv->getObjName(), srvname) == 0) {
+            listServices_.remove_from_list(i);
             break;
         }
     }
@@ -372,12 +398,11 @@ IFace *CoreService::getClass(const char *name) {
 }
 
 IFace *CoreService::getService(const char *name) {
-    IClass *icls;
-    IService *iserv;
-    for (unsigned i = 0; i < listClasses_.size(); i++) {
-        icls = static_cast<IClass *>(listClasses_[i].to_iface());
-        if ((iserv = icls->getInstance(name)) != NULL) {
-            return iserv;
+    IService *isrv;
+    for (unsigned i = 0; i < listServices_.size(); i++) {
+        isrv = static_cast<IService *>(listServices_[i].to_iface());
+        if (strcmp(isrv->getObjName(), name) == 0) {
+            return isrv;
         }
     }
     return NULL;
@@ -385,54 +410,42 @@ IFace *CoreService::getService(const char *name) {
 
 void CoreService::getServicesWithIFace(const char *iname,
                                        AttributeType *list) {
-    IClass *icls;
     IService *iserv;
     IFace *iface;
-    const AttributeType *tlist;
     list->make_list(0);
     
-    for (unsigned i = 0; i < listClasses_.size(); i++) {
-        icls = static_cast<IClass *>(listClasses_[i].to_iface());
-        tlist = icls->getInstanceList();
-        for (unsigned n = 0; n < tlist->size(); n++) {
-            iserv = static_cast<IService *>((*tlist)[n].to_iface());
-            iface = iserv->getInterface(iname);
-            if (iface) {
-                AttributeType t1(iserv);
-                list->add_to_list(&t1);
-            }
+    for (unsigned i = 0; i < listServices_.size(); i++) {
+        iserv = static_cast<IService *>(listServices_[i].to_iface());
+        iface = iserv->getInterface(iname);
+        if (iface) {
+            AttributeType t1(iserv);
+            list->add_to_list(&t1);
         }
     }
 }
 
 void CoreService::getIFaceList(const char *iname,
                                AttributeType *list) {
-    IClass *icls;
     IService *iserv;
     IFace *iface;
-    const AttributeType *tlist;
     const AttributeType *tports;
     list->make_list(0);
     
-    for (unsigned i = 0; i < listClasses_.size(); i++) {
-        icls = static_cast<IClass *>(listClasses_[i].to_iface());
-        tlist = icls->getInstanceList();
-        for (unsigned n = 0; n < tlist->size(); n++) {
-            iserv = static_cast<IService *>((*tlist)[n].to_iface());
-            iface = iserv->getInterface(iname);
-            if (iface) {
+    for (unsigned i = 0; i < listServices_.size(); i++) {
+        iserv = static_cast<IService *>(listServices_[i].to_iface());
+        iface = iserv->getInterface(iname);
+        if (iface) {
+            AttributeType t1(iface);
+            list->add_to_list(&t1);
+        }
+        tports = iserv->getPortList();
+        for (unsigned k = 0; k < tports->size(); k++) {
+            const AttributeType &prt = (*tports)[k];
+            // [0] port name; [1] port interface
+            iface = prt[1].to_iface();
+            if (strcmp(iname, iface->getFaceName()) == 0) {
                 AttributeType t1(iface);
                 list->add_to_list(&t1);
-            }
-            tports = iserv->getPortList();
-            for (unsigned k = 0; k < tports->size(); k++) {
-                const AttributeType &prt = (*tports)[k];
-                // [0] port name; [1] port interface
-                iface = prt[1].to_iface();
-                if (strcmp(iname, iface->getFaceName()) == 0) {
-                    AttributeType t1(iface);
-                    list->add_to_list(&t1);
-                }
             }
         }
     }

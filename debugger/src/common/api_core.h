@@ -96,6 +96,22 @@ void RISCV_register_class(IFace *icls);
 void RISCV_unregister_class(const char *clsname);
 
 /**
+ * @brief Registration of the service instance in the library kernel.
+ * @details Registering interface pointer will be put into kernel list of
+ *          services. Services coudl be registered without class registration.
+ * @param [in] isrv Pointer on new service interface.
+ */
+void RISCV_register_service(IFace *isrv);
+
+/**
+ * @brief Remove service instance from the library kernel.
+ * @details If the service with the defined name will be found in the list of
+            of registered objects it will be removed.
+ * @param [in] srvname String name of the service instance to remove.
+ */
+void RISCV_unregister_service(const char *srvname);
+
+/**
  * @brief Registration of the system event (hap) listener.
  * @details Haps are used to synchronized different threads by a specific
  *          events in a system. Now there's used such haps as: 
@@ -307,6 +323,9 @@ int RISCV_get_core_folderw(wchar_t* out, int sz);
 
 /** Set $(pwd) directory equals to executable location */
 void RISCV_set_current_dir();
+
+/** Execute shell command */
+int RISCV_system(const char *cmd);
 
 /** Reading configuration from JSON formatted file. */
 int RISCV_read_json_file(const char *filename, void *outattr);

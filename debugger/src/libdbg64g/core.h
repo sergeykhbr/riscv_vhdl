@@ -58,6 +58,8 @@ class CoreService : public IService {
     void unload_plugins();
     void registerClass(IFace *icls);
     void unregisterClass(const char *clsname);
+    void registerService(IFace *isrv);
+    void unregisterService(const char *srvname);
     void registerHap(IFace *ihap);
     void unregisterHap(IFace *ihap);
     void triggerHap(int type, uint64_t param, const char *descr);
@@ -87,6 +89,7 @@ class CoreService : public IService {
     AttributeType Config_;
     AttributeType listPlugins_;
     AttributeType listClasses_;
+    AttributeType listServices_;
     AttributeType listHap_;
     AttributeType listConsole_;
 

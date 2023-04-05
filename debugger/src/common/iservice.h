@@ -33,10 +33,16 @@ class IService : public IFace {
         registerAttribute("Parent", &parent_);
         registerAttribute("LogLevel", &logLevel_);
         registerAttribute("ObjDescription", &obj_descr_);
+        classown_.make_nil();
         parent_.make_string("");
         obj_name_.make_string(obj_name);
         obj_descr_.make_string("");
         logLevel_.make_int64(LOG_ERROR);
+    
+        if (strcmp(obj_name, "CoreService") != 0) {
+            // Do not call this method for Core class because lists are not initialized
+            RISCV_register_service(static_cast<IService *>(this));
+        }
     }
     IService(IService *parent, const char *obj_name)
         : IService(obj_name) {
@@ -54,12 +60,12 @@ class IService : public IFace {
         }*/
     }
 
-    virtual const char *getParentName() {
-        return parent_.to_string();
+    virtual void setClassOwner(IFace *icls) {
+        classown_.make_iface(icls);
     }
 
-    virtual void setNamespace(const char *sname) {
-        namespaceName_.make_string(sname);
+    virtual const char *getParentName() {
+        return parent_.to_string();
     }
 
     virtual void initService(const AttributeType *args) {
@@ -183,6 +189,7 @@ class IService : public IFace {
     }
 
  protected:
+    AttributeType classown_;
     AttributeType parent_;
     AttributeType namespaceName_;
     AttributeType listInterfaces_;

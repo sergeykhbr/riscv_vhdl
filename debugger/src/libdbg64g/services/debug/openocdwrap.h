@@ -44,17 +44,35 @@ class OpenOcdWrapper : public TcpClient {
     virtual void busyLoop();
 
  private:
-    class ExternalProcessThread : public IThread {
+    class ExternalProcessThread : public IService,
+                                  public IThread {
      public:
-        ExternalProcessThread(IService *parent) : IThread() {
-            opened_ = true;
+        ExternalProcessThread(IService *parent,
+                              const char *name,
+                              const char *path,
+                              const char *script)
+            : IService(name) {
+            registerInterface(static_cast<IThread *>(this));
+            AttributeType t1;
+            RISCV_generate_name(&t1);
+            RISCV_event_create(&eventLoopStarted_, t1.to_string());
+            path_.make_string(path);
+            script_.make_string(script);
+            retcode_ = 0;
         }
-        bool isOpened() { return opened_; }
+        virtual ~ExternalProcessThread() {
+            RISCV_event_close(&eventLoopStarted_);
+        }
+        virtual void waitToStart() { RISCV_event_wait(&eventLoopStarted_); }
+        virtual int getRetCode() { return retcode_; }
+
      protected:
         virtual void busyLoop();
      private:
+        AttributeType path_;
+        AttributeType script_;
         event_def eventLoopStarted_;
-        bool opened_;
+        int retcode_;
     };
 
 
@@ -63,12 +81,14 @@ class OpenOcdWrapper : public TcpClient {
     AttributeType jtag_;
     AttributeType cmdexec_;
     AttributeType pollingMs_;
+    AttributeType openOcdPath_;
+    AttributeType openOcdScript_;
  
     IJtag *ijtag_;
     ICmdExecutor *icmdexec_;
 
     event_def config_done_;
-    ExternalProcessThread openocd_;
+    ExternalProcessThread *openocd_;
 };
 
 DECLARE_CLASS(OpenOcdWrapper)
