@@ -39,9 +39,12 @@ class TcpServer : public IService,
      public:
         ClientThreadGeneric(TcpServer *parent,
                             const char *name,
-                            socket_def skt)
-        : TcpClient(parent, name, "", 0) {
+                            socket_def skt,
+                            int recvTimeout)
+        : TcpClient(parent, name) {
             hsock_ = skt;
+            recvTimeout_.make_int64(recvTimeout);
+            setRecvTimeout(recvTimeout);
         }
     };
 
@@ -50,15 +53,14 @@ class TcpServer : public IService,
 
     int createServerSocket();
     void closeServerSocket();
-    void setRcvTimeout(socket_def skt, int timeout_ms);
     bool setBlockingMode(bool mode);
 
  protected:
     AttributeType isEnable_;
-    AttributeType timeout_;
     AttributeType blockmode_;
     AttributeType hostIP_;
     AttributeType hostPort_;
+    AttributeType recvTimeout_;
 
     struct sockaddr_in sockaddr_ipv4_;
     socket_def hsock_;

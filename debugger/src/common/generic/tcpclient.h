@@ -25,8 +25,7 @@ namespace debugger {
 class TcpClient : public IService,
                   public IThread {
  public:
-    explicit TcpClient(IService *parent,
-                       const char *name, const char *ip, int port);
+    explicit TcpClient(IService *parent, const char *name);
     virtual ~TcpClient();
 
     /** IService interface */
@@ -42,13 +41,16 @@ class TcpClient : public IService,
 
  protected:
     virtual int connectToServer();       // create socket only if Server doesn't create it
+    virtual int setRecvTimeout(int timeout_ms);
     virtual int sendData();
+    virtual void afterThreadStarted() {};
     virtual void beforeThreadClosing() {};
     virtual void closeSocket();
 
  protected:
     AttributeType targetIP_;
     AttributeType targetPort_;
+    AttributeType recvTimeout_;
 
     struct sockaddr_in sockaddr_ipv4_;
     socket_def hsock_;

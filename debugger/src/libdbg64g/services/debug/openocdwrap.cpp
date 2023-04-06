@@ -25,8 +25,7 @@
 namespace debugger {
 
 OpenOcdWrapper::OpenOcdWrapper(const char *name) 
-    : TcpClient(0, name, "127.0.0.1", 4444) {
-    registerAttribute("Enable", &isEnable_);
+    : TcpClient(0, name) {
     registerAttribute("Jtag", &jtag_);
     registerAttribute("CmdExecutor", &cmdexec_);
     registerAttribute("PollingMs", &pollingMs_);
@@ -61,12 +60,9 @@ void OpenOcdWrapper::postinitService() {
                                          openOcdPath_.to_string(),
                                          openOcdScript_.to_string());
     openocd_->run();
-
-    if (isEnable_.to_bool()) {
-        if (!run()) {
-            RISCV_error("Can't create thread.", NULL);
-            return;
-        }
+    if (!run()) {
+        RISCV_error("Can't create thread.", NULL);
+        return;
     }
 }
 
@@ -75,53 +71,45 @@ void OpenOcdWrapper::predeleteService() {
     }
 }
 
-
-void OpenOcdWrapper::busyLoop() {
+void OpenOcdWrapper::afterThreadStarted() {
     openocd_->waitToStart();
     RISCV_sleep_ms(1000);
 
-    // trying to connect to external openocd:4444
+    // trying to connect to external openocd:4444 or 3333
     while (openocd_->isEnabled() && connectToServer() != 0) {
         RISCV_sleep_ms(1000);
     }
+}
 
-    // External openocd is active:
-    while (isEnabled() && openocd_->isEnabled()) {
-        RISCV_sleep_ms(pollingMs_.to_int());
-    }
-
-    // openocd start failed so we should emulate openocd functionality here
-    // and directly interact with the JTAG bitbang server without external openocd
-    while (isEnabled()) {
-        RISCV_sleep_ms(pollingMs_.to_int());
-    }
-
+void OpenOcdWrapper::beforeThreadClosing() {
     // Gracefully close external openocd:
     if (openocd_->getRetCode() == 0) {
         char tstr[64];
-        int tsz = RISCV_sprintf(tstr, sizeof(tstr), "%s\n", "shutdown");
+        //int tsz = RISCV_sprintf(tstr, sizeof(tstr), "%s\n", "shutdown");
+        int tsz = RISCV_sprintf(tstr, sizeof(tstr), "%s", "$D#00qQexitclose");
         writeTxBuffer(tstr, tsz);
         sendData();
     }
 }
 
 void OpenOcdWrapper::ExternalProcessThread::busyLoop() {
-#if 0
-    const char *argv[] = {"C:/Projects/riscv_vhdl/openocd_gdb_cfg/openocd.exe", 
-                          "-f",
-                          "C:/Projects/riscv_vhdl/openocd_gdb_cfg/bitbang_gdb.cfg",
-                          NULL};
-    int retcode = execv(argv[0], argv);
-#endif
     char tstr[4096];
-    RISCV_sprintf(tstr, sizeof(tstr), "%s/openocd -f %s/%s",
-                path_.to_string(),
+    RISCV_sprintf(tstr, sizeof(tstr), "%s/openocd -f %s",
                 path_.to_string(),
                 script_.to_string());
 
     RISCV_event_set(&eventLoopStarted_);
     retcode_ = RISCV_system(tstr);
+    RISCV_info("External OpenOCD was closed with the return code %d", retcode_);
     stop();
+}
+
+int OpenOcdWrapper::processRxBuffer(const char *buf, int sz) {
+    bool st = true;
+    if (sz == 1 && buf[0] == '+') {
+        writeTxBuffer("+", 1);
+    }
+    return 0;
 }
 
 }  // namespace debugger

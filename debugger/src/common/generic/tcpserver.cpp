@@ -21,10 +21,10 @@ namespace debugger {
 TcpServer::TcpServer(const char *name) : IService(name) {
     registerInterface(static_cast<IThread *>(this));
     registerAttribute("Enable", &isEnable_);
-    registerAttribute("Timeout", &timeout_);
     registerAttribute("BlockingMode", &blockmode_);
     registerAttribute("HostIP", &hostIP_);
     registerAttribute("HostPort", &hostPort_);
+    registerAttribute("RecvTimeout", &recvTimeout_);
 }
 
 void TcpServer::postinitService() {
@@ -66,10 +66,10 @@ void TcpServer::busyLoop() {
         err = select(static_cast<int>(hsock_) + 1, &readSet, NULL, NULL, &timeout);
         if (err > 0) {
             client_sock = accept(hsock_, 0, 0);
-            setRcvTimeout(client_sock, timeout_.to_int());
             RISCV_sprintf(tname, sizeof(tname), "%s.client%d", getObjName(), idx++);
 
-            IThread *ithrd = createClientThread(tname, client_sock);
+            IThread *ithrd = createClientThread(tname,
+                                               client_sock);
             RISCV_info("TCP %s %p started", tname, client_sock);
         } else if (err == 0) {
             // timeout
@@ -134,6 +134,12 @@ int TcpServer::createServerSocket() {
     }
 
     int enable = 1;
+    if (setsockopt(hsock_, IPPROTO_TCP, TCP_NODELAY,
+                   reinterpret_cast<const char *>(&enable), sizeof(int)) < 0) {
+        RISCV_error("%s", "setsockopt(TCP_NODELAY) failed");
+        return -1;
+    }
+
     if (setsockopt(hsock_, SOL_SOCKET, SO_REUSEADDR,
                    reinterpret_cast<const char *>(&enable), sizeof(int)) < 0) {
         RISCV_error("%s", "setsockopt(SO_REUSEADDR) failed");
@@ -158,26 +164,6 @@ int TcpServer::createServerSocket() {
                 ntohs(sockaddr_ipv4_.sin_port));
 
     return 0;
-}
-
-void TcpServer::setRcvTimeout(socket_def skt, int timeout_ms) {
-    if (!timeout_ms) {
-        return;
-    }
-    struct timeval tv;
-#if defined(_WIN32) || defined(__CYGWIN__)
-    /** On windows timeout of the setsockopt() function is the DWORD
-        * size variable in msec, so we use only the first field in timeval
-        * struct and directly assgign argument.
-        */
-    tv.tv_sec = timeout_ms;
-    tv.tv_usec = 0;
-#else
-    tv.tv_usec = (timeout_ms % 1000) * 1000;
-    tv.tv_sec = timeout_ms / 1000;
-#endif
-    setsockopt(skt, SOL_SOCKET, SO_RCVTIMEO,
-                    reinterpret_cast<char *>(&tv), sizeof(struct timeval));
 }
 
 bool TcpServer::setBlockingMode(bool mode) {

@@ -37,11 +37,13 @@ class OpenOcdWrapper : public TcpClient {
     virtual void predeleteService() override;
 
     /** TcpClient */
-    virtual int processRxBuffer(const char *buf, int sz) { return 0; }
+    virtual int processRxBuffer(const char *buf, int sz);
 
  protected:
-    /** IThread interface */
-    virtual void busyLoop();
+    /** TcpClient generic methods */
+    virtual void afterThreadStarted() override;
+    virtual void beforeThreadClosing() override;
+
 
  private:
     class ExternalProcessThread : public IService,

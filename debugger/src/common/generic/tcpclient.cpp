@@ -18,16 +18,15 @@
 
 namespace debugger {
 
-TcpClient::TcpClient(IService *parent, const char *name, const char *ip,
-    int port) : IService(parent, name) {
+TcpClient::TcpClient(IService *parent, const char *name) : IService(parent, name) {
     registerInterface(static_cast<IThread *>(this));
     registerAttribute("TargetIP", &targetIP_);
     registerAttribute("TargetPort", &targetPort_);
+    registerAttribute("RecvTimeout", &recvTimeout_);
     RISCV_mutex_init(&mutexTx_);
     hsock_ = -1;
-    targetIP_.make_string(ip);
-    targetPort_.make_int64(port);
     txcnt_ = 0;
+    recvTimeout_.make_int64(500);   //default 500 ms timeout for recv() function
 }
 
 TcpClient::~TcpClient() {
@@ -35,13 +34,6 @@ TcpClient::~TcpClient() {
 }
 
 void TcpClient::postinitService() {
-    if (hsock_ == -1 && connectToServer() < 0) {
-        RISCV_error("Connect to %s:%d failed",
-                targetIP_.to_string(),
-                targetPort_.to_int());
-        return;
-    }
-
     if (!run()) {
         RISCV_error("Can't create thread.", NULL);
     }
@@ -49,13 +41,17 @@ void TcpClient::postinitService() {
 
 void TcpClient::busyLoop() {
     int rxbytes;
+    afterThreadStarted();
 
-    txcnt_ = 0;
     while (isEnabled()) {
         rxbytes = recv(hsock_, rxbuf_, sizeof(rxbuf_), 0);
-        if (rxbytes <= 0) {
+        if (rxbytes == 0) {
+            // connection closed
             break;
-        } 
+        }  else if (rxbytes < 0) {
+            // timeout or use WSAGetLastError() to confirm it
+            continue;
+        }
         if (processRxBuffer(rxbuf_, rxbytes) < 0) {
             break;
         }
@@ -138,9 +134,20 @@ int TcpClient::connectToServer() {
     sockaddr_ipv4_.sin_port = htons(static_cast<uint16_t>(targetPort_.to_uint32()));
 
     int enable = 1;
+    if (setsockopt(hsock_, IPPROTO_TCP, TCP_NODELAY,
+                   reinterpret_cast<const char *>(&enable), sizeof(int)) < 0) {
+        RISCV_error("%s", "setsockopt(TCP_NODELAY) failed");
+        return -1;
+    }
+
     if (setsockopt(hsock_, SOL_SOCKET, SO_REUSEADDR,
                    reinterpret_cast<const char *>(&enable), sizeof(int)) < 0) {
         RISCV_error("%s", "setsockopt(SO_REUSEADDR) failed");
+        return -1;
+    }
+
+    if (setRecvTimeout(recvTimeout_.to_int())) {
+        RISCV_error("%s", "setsockopt(SO_RCVTIMEO) failed");
         return -1;
     }
 
@@ -157,6 +164,26 @@ int TcpClient::connectToServer() {
                 ntohs(sockaddr_ipv4_.sin_port));
 
     return 0;
+}
+
+int TcpClient::setRecvTimeout(int timeout_ms) {
+    if (!timeout_ms) {
+        return 0;
+    }
+    struct timeval tv;
+#if defined(_WIN32) || defined(__CYGWIN__)
+    /** On windows timeout of the setsockopt() function is the DWORD
+        * size variable in msec, so we use only the first field in timeval
+        * struct and directly assgign argument.
+        */
+    tv.tv_sec = timeout_ms;
+    tv.tv_usec = 0;
+#else
+    tv.tv_usec = (timeout_ms % 1000) * 1000;
+    tv.tv_sec = timeout_ms / 1000;
+#endif
+     return setsockopt(hsock_, SOL_SOCKET, SO_RCVTIMEO,
+                    reinterpret_cast<char *>(&tv), sizeof(struct timeval));
 }
 
 

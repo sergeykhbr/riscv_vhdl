@@ -1,3 +1,19 @@
+    {'Class':'OpenOcdWrapperClass','Instances':[
+          {'Name':'openocd0','Attr':[
+                ['ObjDescription','This object runs real openocd binary if the env. variable
+                                  OPENOCD_PATH was defined. Interaction is implemented through
+                                  the gdb interface. If real openocd not found, this service emulates
+                                  it and interact with the simulation throough JTAG BitBang interface'],
+                ['LogLevel',3],
+                ['PollingMs',100],
+                ['RecvTimeout',500,'SO_RCVTIMEO socket option'],
+                ['Jtag','jtag0'],
+                ['CmdExecutor','cmdexec0'],
+                ['OpenOcdPath','${REPO_PATH}/../openocd_gdb_cfg'],
+                ['OpenOcdScript','${REPO_PATH}/../openocd_gdb_cfg/bitbang_gdb.cfg'],
+                ['TargetIP','127.0.0.1'],
+                ['TargetPort',3333, '3333 is the default gdb port, 4444 is the default console port'],
+                ]}]},
     {'Class':'SdCardClass','Instances':[
           {'Name':'sd0','Attr':[
                 ['ObjDescription','Ubuntu image storage']
@@ -8,10 +24,10 @@
           {'Name':'rpcserver','Attr':[
                 ['LogLevel',4],
                 ['Enable',true],
-                ['Timeout',500],
                 ['BlockingMode',true],
                 ['HostIP',''],
                 ['HostPort',8687],
+                ['RecvTimeout',500],
                 ['CmdExecutor','cmdexec0'],
           ]}]},
     {'Class':'ComPortServiceClass','Instances':[
@@ -66,22 +82,6 @@
                 ['PollingMs',100],
                 ['Jtag','jtag0'],
                 ['CmdExecutor','cmdexec0']
-                ]}]},
-    {'Class':'OpenOcdWrapperClass','Instances':[
-          {'Name':'openocd0','Attr':[
-                ['ObjDescription','This object runs real openocd binary if the env. variable
-                                  OPENOCD_PATH was defined. Interaction is implemented through
-                                  the gdb interface. If real openocd not found, this service emulates
-                                  it and interact with the simulation throough JTAG BitBang interface'],
-                ['Enable',true],
-                ['LogLevel',1],
-                ['PollingMs',100],
-                ['Jtag','jtag0'],
-                ['CmdExecutor','cmdexec0'],
-                ['OpenOcdPath','${REPO_PATH}/../openocd_gdb_cfg'],
-                ['OpenOcdScript','bitbang_gdb.cfg'],
-                ['TargetIP','127.0.0.1'],
-                ['TargetPort',4444, '3333 is the default gdb port, 4444 is the default console port'],
                 ]}]},
     {'Class':'MemorySimClass','Instances':[
           {'Name':'spiflash0','Attr':[

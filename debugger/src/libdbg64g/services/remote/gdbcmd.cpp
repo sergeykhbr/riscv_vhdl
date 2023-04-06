@@ -50,7 +50,7 @@ uint8_t RspPacket::checksum(const char *data, const size_t sz) {
 */
 
 TcpClientGdb::TcpClientGdb(const char *name)
-    : TcpClient(0, name, "localhost", 3333) {
+    : TcpClient(0, name) {
     msgcnt_ = 0;
     enableAckMode_ = false;
 }

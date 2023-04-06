@@ -38,6 +38,7 @@ class TcpServerJtagBitBang : public TcpServer {
         explicit ClientThread(TcpServer *parent,
                               const char *name,
                               socket_def skt,
+                              int recvTimeout,
                               const char *jtagtap);
         virtual ~ClientThread();
 

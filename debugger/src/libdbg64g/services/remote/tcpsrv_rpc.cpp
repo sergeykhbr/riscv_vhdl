@@ -22,6 +22,7 @@ IThread *TcpServerRpc::createClientThread(const char *name, socket_def skt) {
     ClientThread *thrd = new ClientThread(this,
                                           name,
                                           skt,
+                                          recvTimeout_.to_int(),
                                           cmdexec_.to_string());
 
     thrd->run();
@@ -32,8 +33,9 @@ IThread *TcpServerRpc::createClientThread(const char *name, socket_def skt) {
 TcpServerRpc::ClientThread::ClientThread(TcpServer *parent,
                                          const char *name,
                                          socket_def skt,
+                                         int recvTimeout,
                                          const char *cmdexec)
-    : TcpServer::ClientThreadGeneric(parent, name, skt) {
+    : TcpServer::ClientThreadGeneric(parent, name, skt, recvTimeout) {
     iexec_ = static_cast<ICmdExecutor *>(
         RISCV_get_service_iface(cmdexec, IFACE_CMD_EXECUTOR));
     respcnt_ = 0;

@@ -23,6 +23,7 @@ IThread *TcpServerJtagBitBang::createClientThread(const char *name, socket_def s
     ClientThread *cln = new ClientThread(this,
                                          name,
                                          skt,
+                                         recvTimeout_.to_int(),
                                          jtagtap_.to_string());
     cln->run();
     return cln;
@@ -32,8 +33,9 @@ IThread *TcpServerJtagBitBang::createClientThread(const char *name, socket_def s
 TcpServerJtagBitBang::ClientThread::ClientThread(TcpServer *parent,
                                                 const char *name,
                                                 socket_def skt,
+                                                int recvTimeout,
                                                 const char *jtagtap)
-    : TcpServer::ClientThreadGeneric(parent, name, skt) {
+    : TcpServer::ClientThreadGeneric(parent, name, skt, recvTimeout) {
     ijtagbb_ = static_cast<IJtagBitBang *>(
         RISCV_get_service_iface(jtagtap, IFACE_JTAG_BITBANG));
 }

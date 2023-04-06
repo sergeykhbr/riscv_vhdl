@@ -15,10 +15,10 @@
           {'Name':'jtagbb','Attr':[
                 ['LogLevel',3],
                 ['Enable',true],
-                ['Timeout',500],
                 ['BlockingMode',true],
                 ['HostIP',''],
                 ['HostPort',9824],
+                ['RecvTimeout',500],
                 ['JtagTap',['core0','tap'], 'Jtag DTM systemc module implementation']
           ]}]},
     {'Class':'CpuRiscV_RTLClass','Instances':[

@@ -15,10 +15,10 @@
           {'Name':'jtagbb','Attr':[
                 ['LogLevel',3],
                 ['Enable',true],
-                ['Timeout',500],
                 ['BlockingMode',true],
                 ['HostIP',''],
                 ['HostPort',9824],
+                ['RecvTimeout',500],
                 ['JtagTap','dtm0', 'Jtag DTM functional implementation']
           ]}]},
     {'Class':'CpuRiver_FunctionalClass','Instances':[
