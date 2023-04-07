@@ -40,6 +40,80 @@ static const int DATA_MAX = 4096;
     bool    is_good;
 };*/
 
+class GdbCommandGeneric {
+ public:
+    GdbCommandGeneric() {
+        cmdstr_[0] = '\0';
+        cmdsz_ = 0;
+    }
+    virtual const char *to_string() { return cmdstr_; }
+    virtual int getStringSize() { return cmdsz_; }
+
+    uint8_t crc8(const char *data, const int sz) {
+        uint8_t sum = 0;
+        for (int i = 0; i < sz; i++) {
+            sum += static_cast<uint8_t>(data[i]);
+        }
+        return sum;
+    }
+
+ protected:
+    char cmdstr_[1<<12];
+    int cmdsz_;
+};
+
+class GdbCommand_Detach : public GdbCommandGeneric {
+ public:
+    GdbCommand_Detach() : GdbCommandGeneric() {
+        int tsz = RISCV_sprintf(cmdstr_, sizeof(cmdstr_), "$%s#", "D");
+        tsz += RISCV_sprintf(&cmdstr_[tsz], sizeof(cmdstr_) - tsz, "%02x",
+                             crc8(&cmdstr_[1], tsz - 2));
+        cmdsz_ = tsz;
+    }
+};
+
+class GdbCommand_QStartNoAckMode : public GdbCommandGeneric {
+ public:
+    GdbCommand_QStartNoAckMode() : GdbCommandGeneric() {
+        int tsz = RISCV_sprintf(cmdstr_, sizeof(cmdstr_), "$%s#", "QStartNoAckMode");
+        tsz += RISCV_sprintf(&cmdstr_[tsz], sizeof(cmdstr_) - tsz, "%02x",
+                             crc8(&cmdstr_[1], tsz - 2));
+        cmdsz_ = tsz;
+    }
+};
+
+
+class GdbCommand_vContRequest : public GdbCommandGeneric {
+ public:
+    GdbCommand_vContRequest() : GdbCommandGeneric() {
+        int tsz = RISCV_sprintf(cmdstr_, sizeof(cmdstr_), "$%s?#", "vCont");
+        tsz += RISCV_sprintf(&cmdstr_[tsz], sizeof(cmdstr_) - tsz, "%02x",
+                             crc8(&cmdstr_[1], tsz - 2));
+        cmdsz_ = tsz;
+    }
+};
+
+class GdbCommand_vCtrlC : public GdbCommandGeneric {
+ public:
+    GdbCommand_vCtrlC() : GdbCommandGeneric() {
+        int tsz = RISCV_sprintf(cmdstr_, sizeof(cmdstr_), "$%s#", "vCtrlC");
+        tsz += RISCV_sprintf(&cmdstr_[tsz], sizeof(cmdstr_) - tsz, "%02x",
+                             crc8(&cmdstr_[1], tsz - 2));
+        cmdsz_ = tsz;
+    }
+};
+
+class GdbCommand_Continue : public GdbCommandGeneric {
+ public:
+    GdbCommand_Continue() : GdbCommandGeneric() {
+        int tsz = RISCV_sprintf(cmdstr_, sizeof(cmdstr_), "$%s#", "C");
+        tsz += RISCV_sprintf(&cmdstr_[tsz], sizeof(cmdstr_) - tsz, "%02x",
+                             crc8(&cmdstr_[1], tsz - 2));
+        cmdsz_ = tsz;
+    }
+};
+
+
 
 class TcpClientGdb : public TcpClient {
  public:

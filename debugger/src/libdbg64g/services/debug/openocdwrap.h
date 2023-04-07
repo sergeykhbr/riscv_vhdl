@@ -23,6 +23,7 @@
 #include "coreservices/ijtag.h"
 #include "coreservices/icmdexec.h"
 #include "generic/tcpclient.h"
+#include "../remote/gdbcmd.h"
 #include <string>
 
 namespace debugger {
@@ -38,6 +39,9 @@ class OpenOcdWrapper : public TcpClient {
 
     /** TcpClient */
     virtual int processRxBuffer(const char *buf, int sz);
+
+    virtual void resume();
+    virtual void halt();
 
  protected:
     /** TcpClient generic methods */
@@ -91,6 +95,12 @@ class OpenOcdWrapper : public TcpClient {
 
     event_def config_done_;
     ExternalProcessThread *openocd_;
+
+    GdbCommand_QStartNoAckMode gdb_QStartNoAckMode_;
+    GdbCommand_Detach gdb_D_;
+    GdbCommand_vCtrlC gdb_vCtrlC_;
+    GdbCommand_vContRequest gdb_vContReq_;
+    GdbCommand_Continue gdb_C_;
 };
 
 DECLARE_CLASS(OpenOcdWrapper)

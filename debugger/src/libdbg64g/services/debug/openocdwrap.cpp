@@ -84,10 +84,7 @@ void OpenOcdWrapper::afterThreadStarted() {
 void OpenOcdWrapper::beforeThreadClosing() {
     // Gracefully close external openocd:
     if (openocd_->getRetCode() == 0) {
-        char tstr[64];
-        //int tsz = RISCV_sprintf(tstr, sizeof(tstr), "%s\n", "shutdown");
-        int tsz = RISCV_sprintf(tstr, sizeof(tstr), "%s", "$D#00qQexitclose");
-        writeTxBuffer(tstr, tsz);
+        writeTxBuffer(gdb_D_.to_string(), gdb_D_.getStringSize());
         sendData();
     }
 }
@@ -100,7 +97,7 @@ void OpenOcdWrapper::ExternalProcessThread::busyLoop() {
 
     RISCV_event_set(&eventLoopStarted_);
     retcode_ = RISCV_system(tstr);
-    RISCV_info("External OpenOCD was closed with the return code %d", retcode_);
+    RISCV_info("External OpenOCD was closed with code %d", retcode_);
     stop();
 }
 
@@ -108,8 +105,20 @@ int OpenOcdWrapper::processRxBuffer(const char *buf, int sz) {
     bool st = true;
     if (sz == 1 && buf[0] == '+') {
         writeTxBuffer("+", 1);
+        writeTxBuffer(gdb_QStartNoAckMode_.to_string(),
+                      gdb_QStartNoAckMode_.getStringSize());
+    } else {
+        bool st = true;
     }
     return 0;
 }
+
+void OpenOcdWrapper::resume() {
+    writeTxBuffer(gdb_C_.to_string(), gdb_C_.getStringSize());
+}
+void OpenOcdWrapper::halt() {
+    writeTxBuffer(gdb_vCtrlC_.to_string(), gdb_vCtrlC_.getStringSize());
+}
+
 
 }  // namespace debugger
