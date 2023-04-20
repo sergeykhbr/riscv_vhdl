@@ -28,6 +28,18 @@
 
 namespace debugger {
 
+class OpenOcdWrapper;
+
+class OcdCmdResume : public ICommand {
+ public:
+    explicit OcdCmdResume(OpenOcdWrapper *parent, IJtag *ijtag);
+
+    /** ICommand */
+    virtual int isValid(AttributeType *args);
+    virtual void exec(AttributeType *args, AttributeType *res);
+};
+
+
 class OpenOcdWrapper : public TcpClient {
  public:
     explicit OpenOcdWrapper(const char *name);
@@ -95,11 +107,13 @@ class OpenOcdWrapper : public TcpClient {
     event_def config_done_;
     ExternalProcessThread *openocd_;
 
-    GdbCommand_QStartNoAckMode gdb_QStartNoAckMode_;
-    GdbCommand_Detach gdb_D_;
-    GdbCommand_vCtrlC gdb_vCtrlC_;
-    GdbCommand_vContRequest gdb_vContReq_;
-    GdbCommand_Continue gdb_C_;
+    enum EState {
+        State_Connecting,
+        State_Idle,
+    } estate_;
+
+    GdbCommandGeneric gdbCmd_;
+    OcdCmdResume *pcmdResume_;
 };
 
 DECLARE_CLASS(OpenOcdWrapper)

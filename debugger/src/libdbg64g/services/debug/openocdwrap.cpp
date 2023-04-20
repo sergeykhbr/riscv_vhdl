@@ -24,6 +24,43 @@
 
 namespace debugger {
 
+OcdCmdResume::OcdCmdResume(OpenOcdWrapper *parent, IJtag *ijtag)
+    : ICommand(parent, "test") {
+
+    briefDescr_.make_string("Run simulation for a specify number of steps"
+                            "or a specific addres\n");
+    detailedDescr_.make_string(
+        "Description:\n"
+        "    Run simulation for a specified number of steps.\n"
+        "Usage:\n"
+        "    c <N steps>\n"
+        "Example:\n"
+        "    c\n"
+        "    c <addr>\n"
+        "    c 1\n");
+}
+
+
+int OcdCmdResume::isValid(AttributeType *args) {
+    AttributeType &name = (*args)[0u];
+    if (!cmdName_.is_equal(name.to_string())
+        && !name.is_equal("c")) {
+        return CMD_INVALID;
+    }
+    if (args->size() == 1 || args->size() == 2) {
+        return CMD_VALID;
+    }
+    return CMD_WRONG_ARGS;
+}
+
+void OcdCmdResume::exec(AttributeType *args, AttributeType *res) {
+    OpenOcdWrapper *p = static_cast<OpenOcdWrapper *>(cmdParent_);
+    res->attr_free();
+    res->make_nil();
+
+    p->resume();
+}
+
 OpenOcdWrapper::OpenOcdWrapper(const char *name) 
     : TcpClient(0, name) {
     registerAttribute("Jtag", &jtag_);
@@ -32,6 +69,7 @@ OpenOcdWrapper::OpenOcdWrapper(const char *name)
     registerAttribute("OpenOcdPath", &openOcdPath_);
     registerAttribute("OpenOcdScript", &openOcdScript_);
     openocd_ = 0;
+    estate_ = State_Connecting;
 }
 
 OpenOcdWrapper::~OpenOcdWrapper() {
@@ -50,6 +88,9 @@ void OpenOcdWrapper::postinitService() {
     if (!icmdexec_) {
         RISCV_error("ICmdExecutor interface '%s' not found", 
                     cmdexec_.to_string());
+    } else {
+        pcmdResume_ = new OcdCmdResume(this, 0);
+        icmdexec_->registerCommand(pcmdResume_);
     }
 
     // Run openocd as an external process using execv
@@ -68,6 +109,8 @@ void OpenOcdWrapper::postinitService() {
 
 void OpenOcdWrapper::predeleteService() {
     if (icmdexec_) {
+        icmdexec_->unregisterCommand(pcmdResume_);
+        delete pcmdResume_;
     }
 }
 
@@ -95,22 +138,37 @@ void OpenOcdWrapper::ExternalProcessThread::busyLoop() {
 }
 
 int OpenOcdWrapper::processRxBuffer(const char *buf, int sz) {
-    bool st = true;
-    if (sz == 1 && buf[0] == '+') {
-        writeTxBuffer("+", 1);
-        writeTxBuffer(gdb_QStartNoAckMode_.to_string(),
-                      gdb_QStartNoAckMode_.getStringSize());
-    } else {
-        bool st = true;
+    switch (estate_) {
+    case State_Connecting:
+        if (sz == 1 && buf[0] == '+') {
+            RISCV_info("%s", "Disabling ACK mode");
+            writeTxBuffer("+", 1);
+
+            gdbCmd_ = GdbCommand_QStartNoAckMode();
+            writeTxBuffer(gdbCmd_.to_string(),
+                          gdbCmd_.getStringSize());
+            estate_ = State_Idle;
+        }
+        break;
+    case State_Idle:
+        break;
+    default:;
     }
+
     return 0;
 }
 
 void OpenOcdWrapper::resume() {
-    writeTxBuffer(gdb_C_.to_string(), gdb_C_.getStringSize());
+    if (openocd_->isEnabled()) {
+        gdbCmd_ = GdbCommand_Continue();
+        writeTxBuffer(gdbCmd_.to_string(), gdbCmd_.getStringSize());
+    }
 }
 void OpenOcdWrapper::halt() {
-    writeTxBuffer(gdb_vCtrlC_.to_string(), gdb_vCtrlC_.getStringSize());
+    if (openocd_->isEnabled()) {
+        gdbCmd_ = GdbCommand_vCtrlC();
+        writeTxBuffer(gdbCmd_.to_string(), gdbCmd_.getStringSize());
+    }
 }
 
 
