@@ -58,32 +58,42 @@ void TcpClient::busyLoop() {
         if (sendData() < 0) {
             break;
         }
-        RISCV_mutex_lock(&mutexTx_);
-        txcnt_ = 0;
-        RISCV_mutex_unlock(&mutexTx_);
     }
+    stop();
 
     beforeThreadClosing();
     closeSocket();
 }
 
 int TcpClient::writeTxBuffer(const char *buf, int sz) {
-    if (txcnt_ + sz >= sizeof(txbuf_)) {
-        RISCV_error("%s", "Tx buffer overflow");
-        return 0;
+    int ret = 0;
+    if (!isEnabled()) {
+        return ret;
     }
 
     RISCV_mutex_lock(&mutexTx_);
-    memcpy(&txbuf_[txcnt_], buf, sz);
-    txcnt_ += sz;
+    if (txcnt_ + sz >= sizeof(txbuf_)) {
+        RISCV_error("%s", "Tx buffer overflow");
+    } else {
+        memcpy(&txbuf_[txcnt_], buf, sz);
+        txcnt_ += sz;
+        ret = sz;
+    }
     RISCV_mutex_unlock(&mutexTx_);
-    return sz;
+    return ret;
 }
 
 int TcpClient::sendData() {
-    int total = txcnt_;
-    const char *ptx = txbuf_;
+    const char *ptx = txbuf2_;
+    int total;
     int txbytes;
+
+    // Use double buffering    
+    RISCV_mutex_lock(&mutexTx_);
+    memcpy(txbuf2_, txbuf_, txcnt_);
+    total = txcnt_;
+    txcnt_ = 0;
+    RISCV_mutex_unlock(&mutexTx_);
 
     while (total > 0) {
         txbytes = send(hsock_, ptx, total, 0);

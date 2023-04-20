@@ -35,7 +35,7 @@ class TcpServerJtagBitBang : public TcpServer {
  private:
     class ClientThread : public TcpServer::ClientThreadGeneric {
      public:
-        explicit ClientThread(TcpServer *parent,
+        explicit ClientThread(TcpServerJtagBitBang *parent,
                               const char *name,
                               socket_def skt,
                               int recvTimeout,

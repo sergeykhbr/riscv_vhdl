@@ -46,7 +46,6 @@ class OpenOcdWrapper : public TcpClient {
  protected:
     /** TcpClient generic methods */
     virtual void afterThreadStarted() override;
-    virtual void beforeThreadClosing() override;
 
 
  private:

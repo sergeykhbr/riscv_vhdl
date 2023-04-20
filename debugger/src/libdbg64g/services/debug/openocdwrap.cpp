@@ -81,13 +81,6 @@ void OpenOcdWrapper::afterThreadStarted() {
     }
 }
 
-void OpenOcdWrapper::beforeThreadClosing() {
-    // Gracefully close external openocd:
-    if (openocd_->getRetCode() == 0) {
-        writeTxBuffer(gdb_D_.to_string(), gdb_D_.getStringSize());
-        sendData();
-    }
-}
 
 void OpenOcdWrapper::ExternalProcessThread::busyLoop() {
     char tstr[4096];

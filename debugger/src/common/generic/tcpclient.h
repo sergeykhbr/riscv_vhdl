@@ -58,6 +58,7 @@ class TcpClient : public IService,
     mutex_def mutexTx_;
     char rxbuf_[4096];
     char txbuf_[1<<20];
+    char txbuf2_[1<<20];    // double buffering
     int txcnt_;
 };
 

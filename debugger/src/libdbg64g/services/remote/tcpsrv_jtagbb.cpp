@@ -30,7 +30,7 @@ IThread *TcpServerJtagBitBang::createClientThread(const char *name, socket_def s
 }
 
 
-TcpServerJtagBitBang::ClientThread::ClientThread(TcpServer *parent,
+TcpServerJtagBitBang::ClientThread::ClientThread(TcpServerJtagBitBang *parent,
                                                 const char *name,
                                                 socket_def skt,
                                                 int recvTimeout,
