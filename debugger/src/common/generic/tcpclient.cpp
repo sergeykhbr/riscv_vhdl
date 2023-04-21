@@ -50,8 +50,8 @@ void TcpClient::busyLoop() {
             break;
         }  else if (rxbytes < 0) {
             // timeout or use WSAGetLastError() to confirm it
-            continue;
         }
+        rxbuf_[rxbytes] = 0;
         if (processRxBuffer(rxbuf_, rxbytes) < 0) {
             break;
         }
@@ -95,11 +95,16 @@ int TcpClient::sendData() {
     txcnt_ = 0;
     RISCV_mutex_unlock(&mutexTx_);
 
+#if 1
+    if (strcmp(getObjName(), "openocd0") == 0 && total) {
+        bool st = true;
+    }
+#endif
+
     while (total > 0) {
         txbytes = send(hsock_, ptx, total, 0);
         if (txbytes <= 0) {
             RISCV_error("Send error: txcnt=%d", txcnt_);
-            loopEnable_.state = false;
             return -1;
         }
         total -= txbytes;

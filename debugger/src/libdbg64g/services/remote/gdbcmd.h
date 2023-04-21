@@ -42,12 +42,47 @@ static const int DATA_MAX = 4096;
 
 class GdbCommandGeneric {
  public:
-    GdbCommandGeneric() {
-        cmdstr_[0] = '\0';
+    GdbCommandGeneric(const char *data, int datasz) {
+        char tcrc[3];
         cmdsz_ = 0;
+        cmdstr_[cmdsz_++] = '$';
+        for (int i = 0; i < datasz; i++) {
+            cmdstr_[cmdsz_++] = data[i];
+        }
+        cmdstr_[cmdsz_++] = '#';
+        RISCV_sprintf(tcrc, sizeof(tcrc), "%02x",
+                        crc8(&cmdstr_[1], cmdsz_ - 2));
+
+        cmdstr_[cmdsz_++] = tcrc[0];
+        cmdstr_[cmdsz_++] = tcrc[1];
+        cmdstr_[cmdsz_] = '\0';
+        request_ = false;
+        needAck_ = false;
+        isAcked_ = false;
     }
+    explicit GdbCommandGeneric(const char *data)
+        : GdbCommandGeneric(data, strlen(data)) {}
+
+    explicit GdbCommandGeneric() : GdbCommandGeneric("", 0) {}
+
     virtual const char *to_string() { return cmdstr_; }
     virtual int getStringSize() { return cmdsz_; }
+    virtual bool isAcked() { return needAck_ == false || isAcked_; }
+    virtual void setNeedAck() { needAck_ = true; }
+    virtual void setAck() { isAcked_ = true; }
+    virtual bool isRequest() { return request_; }
+    virtual void setRequest() { request_ = true; }
+    virtual void clearRequest() { request_ = false; }
+    virtual bool isEqual(const char *str) {
+        const char *p = &cmdstr_[1];
+        while (*str) {
+            if (*str++ != *p++) {
+                return false;
+            }
+        }
+        return true;
+    }
+    virtual void handleResponse(GdbCommandGeneric *resp) {}
 
     uint8_t crc8(const char *data, const int sz) {
         uint8_t sum = 0;
@@ -60,56 +95,48 @@ class GdbCommandGeneric {
  protected:
     char cmdstr_[1<<12];
     int cmdsz_;
+    bool request_;
+    bool needAck_;
+    bool isAcked_;
 };
 
-class GdbCommand_Detach : public GdbCommandGeneric {
+class GdbCommandGenericRequest : public GdbCommandGeneric {
  public:
-    GdbCommand_Detach() : GdbCommandGeneric() {
-        int tsz = RISCV_sprintf(cmdstr_, sizeof(cmdstr_), "$%s#", "D");
-        tsz += RISCV_sprintf(&cmdstr_[tsz], sizeof(cmdstr_) - tsz, "%02x",
-                             crc8(&cmdstr_[1], tsz - 2));
-        cmdsz_ = tsz;
-    }
-};
-
-class GdbCommand_QStartNoAckMode : public GdbCommandGeneric {
- public:
-    GdbCommand_QStartNoAckMode() : GdbCommandGeneric() {
-        int tsz = RISCV_sprintf(cmdstr_, sizeof(cmdstr_), "$%s#", "QStartNoAckMode");
-        tsz += RISCV_sprintf(&cmdstr_[tsz], sizeof(cmdstr_) - tsz, "%02x",
-                             crc8(&cmdstr_[1], tsz - 2));
-        cmdsz_ = tsz;
+    GdbCommandGenericRequest(const char *data)
+        : GdbCommandGeneric(data) {
+        request_ = true;
     }
 };
 
 
-class GdbCommand_vContRequest : public GdbCommandGeneric {
+class GdbCommand_QStartNoAckMode : public GdbCommandGenericRequest {
  public:
-    GdbCommand_vContRequest() : GdbCommandGeneric() {
-        int tsz = RISCV_sprintf(cmdstr_, sizeof(cmdstr_), "$%s?#", "vCont");
-        tsz += RISCV_sprintf(&cmdstr_[tsz], sizeof(cmdstr_) - tsz, "%02x",
-                             crc8(&cmdstr_[1], tsz - 2));
-        cmdsz_ = tsz;
+    GdbCommand_QStartNoAckMode() : GdbCommandGenericRequest("QStartNoAckMode") {
+        setNeedAck();
     }
 };
 
-class GdbCommand_vCtrlC : public GdbCommandGeneric {
+class GdbCommand_Continue : public GdbCommandGenericRequest {
  public:
-    GdbCommand_vCtrlC() : GdbCommandGeneric() {
-        int tsz = RISCV_sprintf(cmdstr_, sizeof(cmdstr_), "$%s#", "vCtrlC");
-        tsz += RISCV_sprintf(&cmdstr_[tsz], sizeof(cmdstr_) - tsz, "%02x",
-                             crc8(&cmdstr_[1], tsz - 2));
-        cmdsz_ = tsz;
+    GdbCommand_Continue() : GdbCommandGenericRequest("c") {}
+};
+
+
+class GdbCommand_Step : public GdbCommandGenericRequest {
+ public:
+    GdbCommand_Step() : GdbCommandGenericRequest("s") {
     }
 };
 
-class GdbCommand_Continue : public GdbCommandGeneric {
+/** "Ctrl-C", on the other hand, is defined and implemented for all transport
+ * mechanisms. It is represented by sending the single byte 0x03 without any
+ of the usual packet overhead
+*/
+class GdbCommand_Halt : public GdbCommandGenericRequest {
  public:
-    GdbCommand_Continue() : GdbCommandGeneric() {
-        int tsz = RISCV_sprintf(cmdstr_, sizeof(cmdstr_), "$%s#", "C");
-        tsz += RISCV_sprintf(&cmdstr_[tsz], sizeof(cmdstr_) - tsz, "%02x",
-                             crc8(&cmdstr_[1], tsz - 2));
-        cmdsz_ = tsz;
+    GdbCommand_Halt() : GdbCommandGenericRequest("") {
+        cmdsz_ = 0;
+        cmdstr_[cmdsz_++] = 0x03;
     }
 };
 

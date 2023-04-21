@@ -9,6 +9,7 @@
                 ['RecvTimeout',500,'SO_RCVTIMEO socket option'],
                 ['Jtag','jtag0'],
                 ['CmdExecutor','cmdexec0'],
+                ['GdbMode',true,'true=run opneocd as external process; false=connect to emulated JTAG interface'],
                 ['OpenOcdPath','${REPO_PATH}/../openocd_gdb_cfg'],
                 ['OpenOcdScript','${REPO_PATH}/../openocd_gdb_cfg/bitbang_gdb.cfg'],
                 ['TargetIP','127.0.0.1'],

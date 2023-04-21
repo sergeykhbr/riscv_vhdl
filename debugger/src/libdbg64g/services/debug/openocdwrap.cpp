@@ -58,7 +58,13 @@ void OcdCmdResume::exec(AttributeType *args, AttributeType *res) {
     res->attr_free();
     res->make_nil();
 
-    p->resume();
+    if (args->size() == 1 || (*args)[1].to_int() == 1) {
+        p->resume();
+    } else if ((*args)[1].to_int() == 2) {
+        p->halt();
+    } else if ((*args)[1].to_int() == 3) {
+        p->step();
+    }
 }
 
 OpenOcdWrapper::OpenOcdWrapper(const char *name) 
@@ -68,8 +74,12 @@ OpenOcdWrapper::OpenOcdWrapper(const char *name)
     registerAttribute("PollingMs", &pollingMs_);
     registerAttribute("OpenOcdPath", &openOcdPath_);
     registerAttribute("OpenOcdScript", &openOcdScript_);
+    registerAttribute("GdbMode", &gdbMode_);
     openocd_ = 0;
-    estate_ = State_Connecting;
+    emsgstate_ = MsgIdle;
+    msgcnt_ = 0;
+    connectionDone_ = false;                // openocd should response '+' on connection
+    gdbReq_ = GdbCommand_QStartNoAckMode();
 }
 
 OpenOcdWrapper::~OpenOcdWrapper() {
@@ -94,13 +104,15 @@ void OpenOcdWrapper::postinitService() {
     }
 
     // Run openocd as an external process using execv
-    char tstr[256];
-    RISCV_sprintf(tstr, sizeof(tstr), "%s.ext", getObjName());
-    openocd_ = new ExternalProcessThread(this,
-                                         tstr,
-                                         openOcdPath_.to_string(),
-                                         openOcdScript_.to_string());
-    openocd_->run();
+    if (gdbMode_.to_bool()) {
+        char tstr[256];
+        RISCV_sprintf(tstr, sizeof(tstr), "%s.ext", getObjName());
+        openocd_ = new ExternalProcessThread(this,
+                                             tstr,
+                                             openOcdPath_.to_string(),
+                                             openOcdScript_.to_string());
+        openocd_->run();
+    }
     if (!run()) {
         RISCV_error("Can't create thread.", NULL);
         return;
@@ -115,6 +127,10 @@ void OpenOcdWrapper::predeleteService() {
 }
 
 void OpenOcdWrapper::afterThreadStarted() {
+    if (!openocd_) {
+        return;
+    }
+
     openocd_->waitToStart();
     RISCV_sleep_ms(1000);
 
@@ -138,38 +154,76 @@ void OpenOcdWrapper::ExternalProcessThread::busyLoop() {
 }
 
 int OpenOcdWrapper::processRxBuffer(const char *buf, int sz) {
-    switch (estate_) {
-    case State_Connecting:
-        if (sz == 1 && buf[0] == '+') {
-            RISCV_info("%s", "Disabling ACK mode");
-            writeTxBuffer("+", 1);
+    RISCV_debug("%s", buf);
 
-            gdbCmd_ = GdbCommand_QStartNoAckMode();
-            writeTxBuffer(gdbCmd_.to_string(),
-                          gdbCmd_.getStringSize());
-            estate_ = State_Idle;
+    for (int i = 0; i < sz; i++) {
+        if (!connectionDone_) {
+            if (buf[i] == '+') {
+                connectionDone_ = true;
+            }
+            continue;
         }
-        break;
-    case State_Idle:
-        break;
-    default:;
-    }
 
+        msgbuf_[msgcnt_++] = buf[i];
+        msgbuf_[msgcnt_] = '\0';
+
+        switch (emsgstate_) {
+        case MsgData:
+            if (buf[i] == '#') {
+                emsgstate_ = MsgCrcHigh;
+            }
+            break;
+        case MsgCrcHigh:
+            emsgstate_ = MsgCrcLow;
+            break;
+        case MsgCrcLow:
+            gdbResp_ = GdbCommandGeneric(msgbuf_, msgcnt_);
+            gdbReq_.handleResponse(&gdbResp_);
+            emsgstate_ = MsgIdle;
+            msgcnt_ = 0;
+            break;
+        default:
+            if (buf[i] == '+') {
+                msgcnt_ = 0;
+                gdbReq_.setAck();
+            } else if (buf[i] == '-') {
+                msgcnt_ = 0;
+                gdbReq_.setRequest();
+            } else if (buf[i] == '$') {
+                emsgstate_ = MsgData;
+            } else {
+                msgcnt_ = 0;
+            }
+        }
+    }
     return 0;
+}
+
+int OpenOcdWrapper::sendData() {
+    if (connectionDone_ && gdbReq_.isRequest()) {
+        gdbReq_.clearRequest();
+        writeTxBuffer(gdbReq_.to_string(),
+                      gdbReq_.getStringSize());
+    }
+    return TcpClient::sendData();
 }
 
 void OpenOcdWrapper::resume() {
     if (openocd_->isEnabled()) {
-        gdbCmd_ = GdbCommand_Continue();
-        writeTxBuffer(gdbCmd_.to_string(), gdbCmd_.getStringSize());
-    }
-}
-void OpenOcdWrapper::halt() {
-    if (openocd_->isEnabled()) {
-        gdbCmd_ = GdbCommand_vCtrlC();
-        writeTxBuffer(gdbCmd_.to_string(), gdbCmd_.getStringSize());
+        gdbReq_ = GdbCommand_Continue();
     }
 }
 
+void OpenOcdWrapper::halt() {
+    if (openocd_->isEnabled()) {
+        gdbReq_ = GdbCommand_Halt();
+    }
+}
+
+void OpenOcdWrapper::step() {
+    if (openocd_->isEnabled()) {
+        gdbReq_ = GdbCommand_Step();
+    }
+}
 
 }  // namespace debugger

@@ -51,9 +51,12 @@ class OpenOcdWrapper : public TcpClient {
 
     /** TcpClient */
     virtual int processRxBuffer(const char *buf, int sz);
+    virtual int sendData() override;
 
+    virtual bool isGdbMode() { return gdbMode_.to_bool(); }
     virtual void resume();
     virtual void halt();
+    virtual void step();
 
  protected:
     /** TcpClient generic methods */
@@ -100,6 +103,7 @@ class OpenOcdWrapper : public TcpClient {
     AttributeType pollingMs_;
     AttributeType openOcdPath_;
     AttributeType openOcdScript_;
+    AttributeType gdbMode_;
  
     IJtag *ijtag_;
     ICmdExecutor *icmdexec_;
@@ -107,13 +111,20 @@ class OpenOcdWrapper : public TcpClient {
     event_def config_done_;
     ExternalProcessThread *openocd_;
 
-    enum EState {
-        State_Connecting,
-        State_Idle,
-    } estate_;
+    bool connectionDone_;
+    enum EMsgParserState {
+        MsgIdle,
+        MsgData,
+        MsgCrcHigh,
+        MsgCrcLow,
+    } emsgstate_;
+    char msgbuf_[1 << 10];
+    int msgcnt_;
 
-    GdbCommandGeneric gdbCmd_;
+    GdbCommandGeneric gdbReq_;
+    GdbCommandGeneric gdbResp_;
     OcdCmdResume *pcmdResume_;
+
 };
 
 DECLARE_CLASS(OpenOcdWrapper)
