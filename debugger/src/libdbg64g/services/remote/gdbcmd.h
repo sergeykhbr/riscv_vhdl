@@ -40,9 +40,16 @@ static const int DATA_MAX = 4096;
     bool    is_good;
 };*/
 
-class GdbCommandGeneric {
+class OcdWrapperCommandGeneric {
  public:
-    GdbCommandGeneric(const char *data, int datasz) {
+    OcdWrapperCommandGeneric() {}
+
+    virtual int processRxBuffer(const char *buf, int sz) { return sz; }
+};
+
+class GdbCommandGeneric : public OcdWrapperCommandGeneric {
+ public:
+    GdbCommandGeneric(const char *data, int datasz) : OcdWrapperCommandGeneric() {
         char tcrc[3];
         cmdsz_ = 0;
         cmdstr_[cmdsz_++] = '$';

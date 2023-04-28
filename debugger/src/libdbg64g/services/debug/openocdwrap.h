@@ -41,6 +41,7 @@ class OcdCmdResume : public ICommand {
 
 
 class OpenOcdWrapper : public TcpClient {
+friend class OcdCmdResume;
  public:
     explicit OpenOcdWrapper(const char *name);
     virtual ~OpenOcdWrapper();
@@ -54,6 +55,7 @@ class OpenOcdWrapper : public TcpClient {
     virtual int sendData() override;
 
     virtual bool isGdbMode() { return gdbMode_.to_bool(); }
+    virtual void setCommandInProgress(ICommand *p) { pcmdInProgress_ = p; }
     virtual void resume();
     virtual void halt();
     virtual void step();
@@ -125,6 +127,23 @@ class OpenOcdWrapper : public TcpClient {
     GdbCommandGeneric gdbResp_;
     OcdCmdResume *pcmdResume_;
 
+    ICommand *pcmdInProgress_;
+
+    static const int IRLEN = 5;
+    static const int ABITS = 7;     // should be checked in dtmconctrol register
+
+    IJtag::ETapState bbstate_;
+    struct scan_request_type {
+        bool valid;
+        uint32_t ir;
+        uint64_t dr;
+        int drlen;
+    } scanreq_;
+
+    int ircnt_;
+    int drcnt_;
+    uint32_t ir_;
+    uint64_t dr_;
 };
 
 DECLARE_CLASS(OpenOcdWrapper)

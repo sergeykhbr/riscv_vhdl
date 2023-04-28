@@ -58,13 +58,24 @@ void OcdCmdResume::exec(AttributeType *args, AttributeType *res) {
     res->attr_free();
     res->make_nil();
 
-    if (args->size() == 1 || (*args)[1].to_int() == 1) {
-        p->resume();
-    } else if ((*args)[1].to_int() == 2) {
-        p->halt();
-    } else if ((*args)[1].to_int() == 3) {
-        p->step();
+    p->setCommandInProgress(this);
+
+    if (args->size() == 1) {
+        if (p->isGdbMode()) {
+            GdbCommand_Continue req;
+            p->writeTxBuffer(req.to_string(),
+                      req.getStringSize());
+
+        } else {
+
+        }
+    } else {
+        if (p->isGdbMode()) {
+        } else {
+        }
     }
+
+    p->setCommandInProgress(0);
 }
 
 OpenOcdWrapper::OpenOcdWrapper(const char *name) 
@@ -80,6 +91,7 @@ OpenOcdWrapper::OpenOcdWrapper(const char *name)
     msgcnt_ = 0;
     connectionDone_ = false;                // openocd should response '+' on connection
     gdbReq_ = GdbCommand_QStartNoAckMode();
+    pcmdInProgress_ = 0;
 }
 
 OpenOcdWrapper::~OpenOcdWrapper() {
@@ -127,16 +139,20 @@ void OpenOcdWrapper::predeleteService() {
 }
 
 void OpenOcdWrapper::afterThreadStarted() {
-    if (!openocd_) {
-        return;
-    }
-
-    openocd_->waitToStart();
-    RISCV_sleep_ms(1000);
-
-    // trying to connect to external openocd:4444 or 3333
-    while (openocd_->isEnabled() && connectToServer() != 0) {
+    if (openocd_ && openocd_->isEnabled()) {
+        openocd_->waitToStart();
         RISCV_sleep_ms(1000);
+
+        // trying to connect to external openocd:4444 or 3333
+        while (openocd_->isEnabled() && connectToServer() != 0) {
+            RISCV_sleep_ms(1000);
+        }
+    } else {
+        targetPort_.make_int64(9824);       // connect ot BitBang server
+
+        while (connectToServer() != 0) {
+            RISCV_sleep_ms(1000);
+        }
     }
 }
 
@@ -155,6 +171,123 @@ void OpenOcdWrapper::ExternalProcessThread::busyLoop() {
 
 int OpenOcdWrapper::processRxBuffer(const char *buf, int sz) {
     RISCV_debug("%s", buf);
+
+    char pins;
+    char tms;
+    char tdo;
+    uint8_t tdi;
+    bool transmit = true;
+
+    for (int i = 0; i < sz; i++) {
+        tdi = 0;
+        if (buf[i] == '1') {
+            tdi = 1;
+        } else if (buf[i] != '0') {
+            bool st = true;
+        }
+
+        switch (bbstate_) {
+        case IJtag::IDLE:
+            tms = 0;
+            tdo = 0;
+            if (scanreq_.valid) {
+                bbstate_ = IJtag::DRSCAN;
+            } else {
+                transmit = false;
+            }
+            break;
+        case IJtag::DRSCAN:
+            if (ir_ != scanreq_.ir) {
+                tms = 1;
+                tdo = 1;
+                bbstate_ = IJtag::IRSCAN;
+            } else {
+                tms = 0;
+                tdo = 1;
+                bbstate_ = IJtag::DRCAPTURE;
+            }
+            break;
+        case IJtag::IRSCAN:
+            tms = 0;
+            tdo = 1;
+            bbstate_ = IJtag::IRCAPTURE;
+            break;
+        case IJtag::IRCAPTURE:
+            tms = 0;
+            tdo = 1;
+            ir_ = scanreq_.ir;
+            ircnt_ = 0;
+            bbstate_ = IJtag::IRSHIFT;
+            break;
+        case IJtag::IRSHIFT:
+            tms = 0;
+            tdo = (ir_ >> ircnt_) & 0x1;
+            if (++ircnt_ == IRLEN) {
+                tms = 1;
+                bbstate_ = IJtag::IREXIT1;
+            }
+            break;
+        case IJtag::IREXIT1:
+            tms = 1;
+            tdo = 1;
+            bbstate_ = IJtag::IRUPDATE;
+            break;
+        case IJtag::IRUPDATE:
+            tms = 1;
+            tdo = 1;
+            bbstate_ = IJtag::DRSCAN;
+            break;
+
+        case IJtag::DRCAPTURE:
+            tms = 0;
+            tdo = 1;
+            dr_ = scanreq_.dr;
+            drcnt_ = 0;
+            bbstate_ = IJtag::DRSHIFT;
+            break;
+        case IJtag::DRSHIFT:
+            tms = 0;
+            tdo = dr_ & 0x1;
+            dr_ >>= 1;
+            if (ir_ == IJtag::IR_DMI) {
+                dr_ |= static_cast<uint64_t>(tdi) << (ABITS + 33);
+            } else {
+                dr_ |= static_cast<uint64_t>(tdi) << 31;
+            }
+
+            if (++drcnt_ == scanreq_.drlen) {
+                tms = 1;
+                bbstate_ = IJtag::DREXIT1;
+            }
+            break;
+        case IJtag::DREXIT1:
+            tms = 1;
+            tdo = 1;
+            bbstate_ = IJtag::DRUPDATE;
+            break;
+        case IJtag::DRUPDATE:
+            tms = 0;
+            tdo = 1;
+            bbstate_ = IJtag::IDLE;
+            break;
+        default:
+            tms = 0;
+            tdo = 1;
+            bbstate_ = IJtag::IDLE;
+        }
+
+        pins = '0' + ((tms << 1) | tdo);
+        pins = '4' + ((tms << 1) | tdo);    // tck posedge
+    }
+
+    if (transmit) {
+        writeTxBuffer(&pins, 1);
+    }
+    return sz;
+
+    if (pcmdInProgress_) {
+        //pcmdInProgress_->processRxBuffer(buf, sz);
+    }
 
     for (int i = 0; i < sz; i++) {
         if (!connectionDone_) {
