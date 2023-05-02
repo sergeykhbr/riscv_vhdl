@@ -54,6 +54,17 @@ friend class OcdCmdResume;
     virtual int processRxBuffer(const char *buf, int sz);
     virtual int sendData() override;
 
+    virtual uint64_t scan(uint32_t ir, uint64_t dr, int drlen);
+    virtual uint64_t scanReset();
+    virtual IJtag::DtmcsType scanDtmcs();
+    virtual uint32_t scanDmi(uint32_t addr, uint32_t data, IJtag::EDmiOperation op);
+    virtual uint32_t read_dmi(uint32_t addr) {
+        return scanDmi(addr, 0, IJtag::DmiOp_Read);
+    }
+    virtual uint32_t write_dmi(uint32_t addr, uint32_t data) {
+        return scanDmi(addr, data, IJtag::DmiOp_Write);
+    }
+
     virtual bool isGdbMode() { return gdbMode_.to_bool(); }
     virtual void setCommandInProgress(ICommand *p) { pcmdInProgress_ = p; }
     virtual void resume();
@@ -111,6 +122,7 @@ friend class OcdCmdResume;
     ICmdExecutor *icmdexec_;
 
     event_def config_done_;
+    event_def eventJtagScanEnd_;
     ExternalProcessThread *openocd_;
 
     bool connectionDone_;
@@ -135,6 +147,7 @@ friend class OcdCmdResume;
     IJtag::ETapState bbstate_;
     struct scan_request_type {
         bool valid;
+        bool trst;  
         uint32_t ir;
         uint64_t dr;
         int drlen;

@@ -50,10 +50,11 @@ void TcpClient::busyLoop() {
             break;
         }  else if (rxbytes < 0) {
             // timeout or use WSAGetLastError() to confirm it
-        }
-        rxbuf_[rxbytes] = 0;
-        if (processRxBuffer(rxbuf_, rxbytes) < 0) {
-            break;
+        } else {
+            rxbuf_[rxbytes] = 0;
+            if (processRxBuffer(rxbuf_, rxbytes) < 0) {
+                break;
+            }
         }
         if (sendData() < 0) {
             break;

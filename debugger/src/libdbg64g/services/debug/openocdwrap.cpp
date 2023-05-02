@@ -61,18 +61,8 @@ void OcdCmdResume::exec(AttributeType *args, AttributeType *res) {
     p->setCommandInProgress(this);
 
     if (args->size() == 1) {
-        if (p->isGdbMode()) {
-            GdbCommand_Continue req;
-            p->writeTxBuffer(req.to_string(),
-                      req.getStringSize());
-
-        } else {
-
-        }
+        p->resume();
     } else {
-        if (p->isGdbMode()) {
-        } else {
-        }
     }
 
     p->setCommandInProgress(0);
@@ -92,9 +82,13 @@ OpenOcdWrapper::OpenOcdWrapper(const char *name)
     connectionDone_ = false;                // openocd should response '+' on connection
     gdbReq_ = GdbCommand_QStartNoAckMode();
     pcmdInProgress_ = 0;
+    bbstate_ = IJtag::IDLE;
+
+    RISCV_event_create(&eventJtagScanEnd_, "openocdwrap_jtagscan");
 }
 
 OpenOcdWrapper::~OpenOcdWrapper() {
+    RISCV_event_close(&eventJtagScanEnd_);
     RISCV_event_close(&config_done_);
     if (openocd_) {
         delete openocd_;
@@ -187,13 +181,29 @@ int OpenOcdWrapper::processRxBuffer(const char *buf, int sz) {
         }
 
         switch (bbstate_) {
+        case IJtag::RESET:
+            scanreq_.trst = 0;
+            transmit = false;
+            writeTxBuffer("r0R4", 4);  // srst=0 and trst=0, posedge, response
+            bbstate_ = IJtag::IDLE;
+            break;
         case IJtag::IDLE:
             tms = 0;
-            tdo = 0;
+            tdo = 1;
             if (scanreq_.valid) {
-                bbstate_ = IJtag::DRSCAN;
+                scanreq_.valid = false;
+                if (scanreq_.trst) {
+                    writeTxBuffer("uR", 2);  // srst=1 and trst=1, response
+                    bbstate_ = IJtag::RESET;
+                    transmit = false;
+                } else {
+                    tms = 1;
+                    tdo = 1;
+                    bbstate_ = IJtag::DRSCAN;
+                }
             } else {
                 transmit = false;
+                RISCV_event_set(&eventJtagScanEnd_);
             }
             break;
         case IJtag::DRSCAN:
@@ -263,6 +273,12 @@ int OpenOcdWrapper::processRxBuffer(const char *buf, int sz) {
         case IJtag::DREXIT1:
             tms = 1;
             tdo = 1;
+            dr_ >>= 1;
+            if (ir_ == IJtag::IR_DMI) {
+                dr_ |= static_cast<uint64_t>(tdi) << (ABITS + 33);
+            } else {
+                dr_ |= static_cast<uint64_t>(tdi) << 31;
+            }
             bbstate_ = IJtag::DRUPDATE;
             break;
         case IJtag::DRUPDATE:
@@ -275,13 +291,14 @@ int OpenOcdWrapper::processRxBuffer(const char *buf, int sz) {
             tdo = 1;
             bbstate_ = IJtag::IDLE;
         }
-
-        pins = '0' + ((tms << 1) | tdo);
-        pins = '4' + ((tms << 1) | tdo);    // tck posedge
     }
 
     if (transmit) {
-        writeTxBuffer(&pins, 1);
+        char tclk = '0' + ((tms << 1) | tdo);
+        writeTxBuffer(&tclk, 1);
+        writeTxBuffer("R", 1);              // response
+        tclk = '4' + ((tms << 1) | tdo);    // tck posedge
+        writeTxBuffer(&tclk, 1);
     }
     return sz;
 
@@ -332,6 +349,62 @@ int OpenOcdWrapper::processRxBuffer(const char *buf, int sz) {
     return 0;
 }
 
+uint64_t OpenOcdWrapper::scanReset() {
+    scanreq_.ir = 0;
+    scanreq_.dr = 0;
+    scanreq_.drlen = 0;
+    scanreq_.trst = true;
+    scanreq_.valid = true;
+
+    writeTxBuffer("R", 1);  // get TDI
+
+    RISCV_event_clear(&eventJtagScanEnd_);
+    RISCV_event_wait(&eventJtagScanEnd_);
+    return 0;
+}
+
+uint64_t OpenOcdWrapper::scan(uint32_t ir, uint64_t dr, int drlen) {
+    scanreq_.ir = ir;
+    scanreq_.dr = dr;
+    scanreq_.drlen = drlen;
+    scanreq_.valid = true;
+
+    writeTxBuffer("R", 1);  // get TDI
+
+    RISCV_event_clear(&eventJtagScanEnd_);
+    RISCV_event_wait(&eventJtagScanEnd_);
+    return 0;
+}
+
+IJtag::DtmcsType OpenOcdWrapper::scanDtmcs() {
+    IJtag::DtmcsType ret = {0};
+    scan(IJtag::IR_DTMCS, 0, 32);
+    ret.u32 = static_cast<uint32_t>(dr_);
+    RISCV_debug("DTMCS = %08x: ver:%d, abits:%d, stat:%d",
+            ret.u32, ret.bits.version, ret.bits.abits, ret.bits.dmistat);
+    return ret;
+}
+
+uint32_t OpenOcdWrapper::scanDmi(uint32_t addr, uint32_t data, IJtag::EDmiOperation op) {
+    IJtag::DmiType ret;
+    uint64_t dr = addr;
+    dr = (dr << 32) | data;
+    dr = (dr << 2) | op;
+    scan(IJtag::IR_DMI, dr, 34 + ABITS);
+
+    // Do the same but with rena=0 and wena=0
+    dr = static_cast<uint64_t>(addr) << 34;
+    scan(IJtag::IR_DMI, dr, 34 + ABITS);
+    ret.u64 = dr_;
+
+    RISCV_debug("DMI [%02x] %08x, stat:%d",
+            static_cast<uint32_t>(ret.bits.addr),
+            static_cast<uint32_t>(ret.bits.data),
+            static_cast<uint32_t>(ret.bits.status));
+    return static_cast<uint32_t>(ret.bits.data);
+}
+
+
 int OpenOcdWrapper::sendData() {
     if (connectionDone_ && gdbReq_.isRequest()) {
         gdbReq_.clearRequest();
@@ -342,8 +415,15 @@ int OpenOcdWrapper::sendData() {
 }
 
 void OpenOcdWrapper::resume() {
-    if (openocd_->isEnabled()) {
+    if (openocd_ && openocd_->isEnabled()) {
         gdbReq_ = GdbCommand_Continue();
+    } else {
+        scanReset();
+        IJtag::DtmcsType dtmcs;
+        dtmcs = scanDtmcs();
+        IJtag::dmi_dmstatus_type dmstatus;
+        dmstatus.u32 = read_dmi(IJtag::DMI_DMSTATUS);
+        bool st = true;
     }
 }
 
