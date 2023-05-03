@@ -54,14 +54,14 @@ void CmdReset::exec(AttributeType *args, AttributeType *res) {
 
     if (args->size() == 2) {
         dmcontrol.bits.ndmreset = (*args)[1].to_uint64();       // [1] ndmreset
-        write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
+        ijtag_->write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
     } else {
         // Reboot
         dmcontrol.bits.ndmreset = 1;
-        write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
+        ijtag_->write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
         RISCV_sleep_ms(10);
         dmcontrol.bits.ndmreset = 0;
-        write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
+        ijtag_->write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
     }
 }
 

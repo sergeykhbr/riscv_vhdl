@@ -68,7 +68,7 @@ void CmdReg::exec(AttributeType *args, AttributeType *res) {
         // Read Integer registers
         const reg_default_list_type *preg = RISCV_INTEGER_REGLIST;
         while (*preg->name) {
-            if (get_reg(preg->name, &u)) {
+            if (ijtag_->get_reg(preg->name, &u)) {
                 generateError(res, "Cannot read registers");
                 break;
             }
@@ -85,10 +85,10 @@ void CmdReg::exec(AttributeType *args, AttributeType *res) {
 
         if ((i + 1) < args->size() && (*args)[i+1].is_integer()) {
             u.val = (*args)[i+1].to_uint64();
-            err = set_reg(regname, &u);
+            err = ijtag_->set_reg(regname, &u);
             i++;
         } else {
-            err = get_reg(regname, &u);
+            err = ijtag_->get_reg(regname, &u);
             (*res)[regname].make_uint64(u.val);
         }
 

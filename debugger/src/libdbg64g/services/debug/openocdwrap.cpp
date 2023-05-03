@@ -24,53 +24,15 @@
 
 namespace debugger {
 
-OcdCmdResume::OcdCmdResume(OpenOcdWrapper *parent, IJtag *ijtag)
-    : ICommand(parent, "test") {
-
-    briefDescr_.make_string("Run simulation for a specify number of steps"
-                            "or a specific addres\n");
-    detailedDescr_.make_string(
-        "Description:\n"
-        "    Run simulation for a specified number of steps.\n"
-        "Usage:\n"
-        "    c <N steps>\n"
-        "Example:\n"
-        "    c\n"
-        "    c <addr>\n"
-        "    c 1\n");
-}
-
-
-int OcdCmdResume::isValid(AttributeType *args) {
-    AttributeType &name = (*args)[0u];
-    if (!cmdName_.is_equal(name.to_string())
-        && !name.is_equal("c")) {
-        return CMD_INVALID;
-    }
-    if (args->size() == 1 || args->size() == 2) {
-        return CMD_VALID;
-    }
-    return CMD_WRONG_ARGS;
-}
-
-void OcdCmdResume::exec(AttributeType *args, AttributeType *res) {
-    OpenOcdWrapper *p = static_cast<OpenOcdWrapper *>(cmdParent_);
-    res->attr_free();
-    res->make_nil();
-
-    p->setCommandInProgress(this);
-
-    if (args->size() == 1) {
-        p->resume();
-    } else {
-    }
-
-    p->setCommandInProgress(0);
-}
-
 OpenOcdWrapper::OpenOcdWrapper(const char *name) 
-    : TcpClient(0, name) {
-    registerAttribute("Jtag", &jtag_);
+    : TcpClient(0, name),
+    cmdInit_(this, static_cast<IJtag *>(this)),
+    cmdReset_(this, static_cast<IJtag *>(this)),
+    cmdResume_(this, static_cast<IJtag *>(this)),
+    cmdHalt_(this, static_cast<IJtag *>(this)),
+    cmdStatus_(this, static_cast<IJtag *>(this)),
+    cmdExit_(this, static_cast<IJtag *>(this)) {
+    registerInterface(static_cast<IJtag *>(this));
     registerAttribute("CmdExecutor", &cmdexec_);
     registerAttribute("PollingMs", &pollingMs_);
     registerAttribute("OpenOcdPath", &openOcdPath_);
@@ -81,8 +43,8 @@ OpenOcdWrapper::OpenOcdWrapper(const char *name)
     msgcnt_ = 0;
     connectionDone_ = false;                // openocd should response '+' on connection
     gdbReq_ = GdbCommand_QStartNoAckMode();
-    pcmdInProgress_ = 0;
     bbstate_ = IJtag::IDLE;
+    memset(&scanreq_, 0, sizeof(scanreq_));
 
     RISCV_event_create(&eventJtagScanEnd_, "openocdwrap_jtagscan");
 }
@@ -96,17 +58,18 @@ OpenOcdWrapper::~OpenOcdWrapper() {
 }
 
 void OpenOcdWrapper::postinitService() {
-    ijtag_ = static_cast<IJtag *>
-            (RISCV_get_service_iface(jtag_.to_string(), IFACE_JTAG));
-
     icmdexec_ = static_cast<ICmdExecutor *>(
        RISCV_get_service_iface(cmdexec_.to_string(), IFACE_CMD_EXECUTOR));
     if (!icmdexec_) {
         RISCV_error("ICmdExecutor interface '%s' not found", 
                     cmdexec_.to_string());
     } else {
-        pcmdResume_ = new OcdCmdResume(this, 0);
-        icmdexec_->registerCommand(pcmdResume_);
+        icmdexec_->registerCommand(&cmdInit_);
+        icmdexec_->registerCommand(&cmdReset_);
+        icmdexec_->registerCommand(&cmdResume_);
+        icmdexec_->registerCommand(&cmdHalt_);
+        icmdexec_->registerCommand(&cmdStatus_);
+        icmdexec_->registerCommand(&cmdExit_);
     }
 
     // Run openocd as an external process using execv
@@ -127,8 +90,12 @@ void OpenOcdWrapper::postinitService() {
 
 void OpenOcdWrapper::predeleteService() {
     if (icmdexec_) {
-        icmdexec_->unregisterCommand(pcmdResume_);
-        delete pcmdResume_;
+        icmdexec_->unregisterCommand(&cmdInit_);
+        icmdexec_->unregisterCommand(&cmdReset_);
+        icmdexec_->unregisterCommand(&cmdResume_);
+        icmdexec_->unregisterCommand(&cmdHalt_);
+        icmdexec_->unregisterCommand(&cmdStatus_);
+        icmdexec_->unregisterCommand(&cmdExit_);
     }
 }
 
@@ -143,7 +110,6 @@ void OpenOcdWrapper::afterThreadStarted() {
         }
     } else {
         targetPort_.make_int64(9824);       // connect ot BitBang server
-
         while (connectToServer() != 0) {
             RISCV_sleep_ms(1000);
         }
@@ -166,12 +132,8 @@ void OpenOcdWrapper::ExternalProcessThread::busyLoop() {
 int OpenOcdWrapper::processRxBuffer(const char *buf, int sz) {
     RISCV_debug("%s", buf);
 
-    char pins;
-    char tms;
-    char tdo;
-    uint8_t tdi;
-    bool transmit = true;
-
+    uint64_t tdi;
+    dr_ = 0;
     for (int i = 0; i < sz; i++) {
         tdi = 0;
         if (buf[i] == '1') {
@@ -179,31 +141,94 @@ int OpenOcdWrapper::processRxBuffer(const char *buf, int sz) {
         } else if (buf[i] != '0') {
             bool st = true;
         }
+        dr_ |= tdi << i;
+    }
+    RISCV_event_set(&eventJtagScanEnd_);
+    return sz;
 
-        switch (bbstate_) {
-        case IJtag::RESET:
-            scanreq_.trst = 0;
-            transmit = false;
-            writeTxBuffer("r0R4", 4);  // srst=0 and trst=0, posedge, response
-            bbstate_ = IJtag::IDLE;
+
+    for (int i = 0; i < sz; i++) {
+        if (!connectionDone_) {
+            if (buf[i] == '+') {
+                connectionDone_ = true;
+            }
+            continue;
+        }
+
+        msgbuf_[msgcnt_++] = buf[i];
+        msgbuf_[msgcnt_] = '\0';
+
+        switch (emsgstate_) {
+        case MsgData:
+            if (buf[i] == '#') {
+                emsgstate_ = MsgCrcHigh;
+            }
             break;
+        case MsgCrcHigh:
+            emsgstate_ = MsgCrcLow;
+            break;
+        case MsgCrcLow:
+            gdbResp_ = GdbCommandGeneric(msgbuf_, msgcnt_);
+            gdbReq_.handleResponse(&gdbResp_);
+            emsgstate_ = MsgIdle;
+            msgcnt_ = 0;
+            break;
+        default:
+            if (buf[i] == '+') {
+                msgcnt_ = 0;
+                gdbReq_.setAck();
+            } else if (buf[i] == '-') {
+                msgcnt_ = 0;
+                gdbReq_.setRequest();
+            } else if (buf[i] == '$') {
+                emsgstate_ = MsgData;
+            } else {
+                msgcnt_ = 0;
+            }
+        }
+    }
+    return 0;
+}
+
+void OpenOcdWrapper::resetAsync() {
+    writeTxBuffer("ur15R", 5);  // TRST=1,SRTS=1; TRST=0,SRST=0; RESET->IDLE; get TDO
+
+    RISCV_event_clear(&eventJtagScanEnd_);
+    RISCV_event_wait(&eventJtagScanEnd_);
+}
+
+void OpenOcdWrapper::resetSync() {
+    writeTxBuffer("373737373737373737373715R", 25); // tms=1,tdo=1; RESET->IDLE; get TDO
+
+    RISCV_event_clear(&eventJtagScanEnd_);
+    RISCV_event_wait(&eventJtagScanEnd_);
+}
+
+uint64_t OpenOcdWrapper::scan(uint32_t ir, uint64_t dr, int drlen) {
+
+#if 1
+    char tms;
+    char tdo;
+    bool R;
+
+    scanreq_.ir = ir;
+    scanreq_.dr = dr;
+    scanreq_.drlen = drlen;
+    scanreq_.valid = true;
+    char scanbuf[1024];
+    int scanbuf_cnt = 0;
+
+    while (scanreq_.valid == true || bbstate_ != IJtag::IDLE) {
+        R = false;
+        switch (bbstate_) {
         case IJtag::IDLE:
             tms = 0;
             tdo = 1;
             if (scanreq_.valid) {
                 scanreq_.valid = false;
-                if (scanreq_.trst) {
-                    writeTxBuffer("uR", 2);  // srst=1 and trst=1, response
-                    bbstate_ = IJtag::RESET;
-                    transmit = false;
-                } else {
-                    tms = 1;
-                    tdo = 1;
-                    bbstate_ = IJtag::DRSCAN;
-                }
-            } else {
-                transmit = false;
-                RISCV_event_set(&eventJtagScanEnd_);
+                tms = 1;
+                tdo = 1;
+                bbstate_ = IJtag::DRSCAN;
             }
             break;
         case IJtag::DRSCAN:
@@ -259,11 +284,12 @@ int OpenOcdWrapper::processRxBuffer(const char *buf, int sz) {
             tms = 0;
             tdo = dr_ & 0x1;
             dr_ >>= 1;
-            if (ir_ == IJtag::IR_DMI) {
-                dr_ |= static_cast<uint64_t>(tdi) << (ABITS + 33);
-            } else {
-                dr_ |= static_cast<uint64_t>(tdi) << 31;
-            }
+            R = true;
+            //if (ir_ == IJtag::IR_DMI) {
+            //    dr_ |= static_cast<uint64_t>(tdi) << (ABITS + 33);
+            //} else {
+            //    dr_ |= static_cast<uint64_t>(tdi) << 31;
+            //}
 
             if (++drcnt_ == scanreq_.drlen) {
                 tms = 1;
@@ -274,11 +300,11 @@ int OpenOcdWrapper::processRxBuffer(const char *buf, int sz) {
             tms = 1;
             tdo = 1;
             dr_ >>= 1;
-            if (ir_ == IJtag::IR_DMI) {
-                dr_ |= static_cast<uint64_t>(tdi) << (ABITS + 33);
-            } else {
-                dr_ |= static_cast<uint64_t>(tdi) << 31;
-            }
+            //if (ir_ == IJtag::IR_DMI) {
+            //    dr_ |= static_cast<uint64_t>(tdi) << (ABITS + 33);
+            //} else {
+            //    dr_ |= static_cast<uint64_t>(tdi) << 31;
+            //}
             bbstate_ = IJtag::DRUPDATE;
             break;
         case IJtag::DRUPDATE:
@@ -291,90 +317,39 @@ int OpenOcdWrapper::processRxBuffer(const char *buf, int sz) {
             tdo = 1;
             bbstate_ = IJtag::IDLE;
         }
-    }
-
-    if (transmit) {
-        char tclk = '0' + ((tms << 1) | tdo);
-        writeTxBuffer(&tclk, 1);
-        writeTxBuffer("R", 1);              // response
-        tclk = '4' + ((tms << 1) | tdo);    // tck posedge
-        writeTxBuffer(&tclk, 1);
-    }
-    return sz;
-
-    if (pcmdInProgress_) {
-        //pcmdInProgress_->processRxBuffer(buf, sz);
-    }
-
-    for (int i = 0; i < sz; i++) {
-        if (!connectionDone_) {
-            if (buf[i] == '+') {
-                connectionDone_ = true;
-            }
-            continue;
+        scanbuf[scanbuf_cnt++] = '0' + ((tms << 1) | tdo);
+        if (R) {
+            scanbuf[scanbuf_cnt++] = 'R';                       // response
         }
-
-        msgbuf_[msgcnt_++] = buf[i];
-        msgbuf_[msgcnt_] = '\0';
-
-        switch (emsgstate_) {
-        case MsgData:
-            if (buf[i] == '#') {
-                emsgstate_ = MsgCrcHigh;
-            }
-            break;
-        case MsgCrcHigh:
-            emsgstate_ = MsgCrcLow;
-            break;
-        case MsgCrcLow:
-            gdbResp_ = GdbCommandGeneric(msgbuf_, msgcnt_);
-            gdbReq_.handleResponse(&gdbResp_);
-            emsgstate_ = MsgIdle;
-            msgcnt_ = 0;
-            break;
-        default:
-            if (buf[i] == '+') {
-                msgcnt_ = 0;
-                gdbReq_.setAck();
-            } else if (buf[i] == '-') {
-                msgcnt_ = 0;
-                gdbReq_.setRequest();
-            } else if (buf[i] == '$') {
-                emsgstate_ = MsgData;
-            } else {
-                msgcnt_ = 0;
-            }
-        }
+        scanbuf[scanbuf_cnt++] = '4' + ((tms << 1) | tdo);      // tck posedge
     }
-    return 0;
-}
 
-uint64_t OpenOcdWrapper::scanReset() {
-    scanreq_.ir = 0;
-    scanreq_.dr = 0;
-    scanreq_.drlen = 0;
-    scanreq_.trst = true;
-    scanreq_.valid = true;
+    scanbuf[scanbuf_cnt] = 0;
+    writeTxBuffer(scanbuf, scanbuf_cnt);
 
-    writeTxBuffer("R", 1);  // get TDI
-
-    RISCV_event_clear(&eventJtagScanEnd_);
-    RISCV_event_wait(&eventJtagScanEnd_);
-    return 0;
-}
-
-uint64_t OpenOcdWrapper::scan(uint32_t ir, uint64_t dr, int drlen) {
+#else
     scanreq_.ir = ir;
     scanreq_.dr = dr;
     scanreq_.drlen = drlen;
     scanreq_.valid = true;
 
     writeTxBuffer("R", 1);  // get TDI
+#endif
 
     RISCV_event_clear(&eventJtagScanEnd_);
     RISCV_event_wait(&eventJtagScanEnd_);
     return 0;
 }
+
+uint32_t OpenOcdWrapper::scanIdCode() {
+    uint32_t ret = 0;
+
+    scan(IJtag::IR_IDCODE, 0xFFFFFFFFFFFFFFFFull, 32);
+    ret = static_cast<uint32_t>(dr_);
+    RISCV_debug("TAP id = %08x", ret);
+    return ret;
+}
+
 
 IJtag::DtmcsType OpenOcdWrapper::scanDtmcs() {
     IJtag::DtmcsType ret = {0};
@@ -414,11 +389,11 @@ int OpenOcdWrapper::sendData() {
     return TcpClient::sendData();
 }
 
-void OpenOcdWrapper::resume() {
+/*void OpenOcdWrapper::resume() {
     if (openocd_ && openocd_->isEnabled()) {
         gdbReq_ = GdbCommand_Continue();
     } else {
-        scanReset();
+        resetAsync();
         IJtag::DtmcsType dtmcs;
         dtmcs = scanDtmcs();
         IJtag::dmi_dmstatus_type dmstatus;
@@ -437,6 +412,6 @@ void OpenOcdWrapper::step() {
     if (openocd_->isEnabled()) {
         gdbReq_ = GdbCommand_Step();
     }
-}
+}*/
 
 }  // namespace debugger

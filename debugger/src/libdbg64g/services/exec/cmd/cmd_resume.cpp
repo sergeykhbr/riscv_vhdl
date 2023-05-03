@@ -72,7 +72,7 @@ void CmdResume::exec(AttributeType *args, AttributeType *res) {
     res->attr_free();
     res->make_nil();
 
-    dmstatus.u32 = read_dmi(IJtag::DMI_DMSTATUS);
+    dmstatus.u32 = ijtag_->read_dmi(IJtag::DMI_DMSTATUS);
     if (dmstatus.bits.allhalted == 0) {
         generateError(res, "Already running");
         return;
@@ -86,29 +86,29 @@ void CmdResume::exec(AttributeType *args, AttributeType *res) {
     RISCV_trigger_hap(HAP_Resume, 0, "Resume command received");
 
     // Flush everything:
-    write_dmi(IJtag::DMI_PROGBUF0, OPCODE_FENCE_I);
-    write_dmi(IJtag::DMI_PROGBUF1, OPCODE_FENCE);
-    write_dmi(IJtag::DMI_PROGBUF2, OPCODE_EBREAK);
+    ijtag_->write_dmi(IJtag::DMI_PROGBUF0, OPCODE_FENCE_I);
+    ijtag_->write_dmi(IJtag::DMI_PROGBUF1, OPCODE_FENCE);
+    ijtag_->write_dmi(IJtag::DMI_PROGBUF2, OPCODE_EBREAK);
 
     command.u32 = 0;
     command.regaccess.cmdtype = 0;
     command.regaccess.aarsize = IJtag::CMD_AAxSIZE_32BITS;
     command.regaccess.postexec = 1;
-    command.regaccess.regno = reg2addr("r0");
-    write_dmi(IJtag::DMI_COMMAND, command.u32);
-    wait_dmi();
+    command.regaccess.regno = ijtag_->reg2addr("r0");
+    ijtag_->write_dmi(IJtag::DMI_COMMAND, command.u32);
+    ijtag_->wait_dmi();
 
     // Read and write back the CSR register DCSR with the bits: ebreakm, ebreaks, ebreaku:
     command.u32 = 0;
     command.regaccess.cmdtype = 0;
     command.regaccess.aarsize = IJtag::CMD_AAxSIZE_64BITS;
     command.regaccess.transfer = 1;
-    command.regaccess.regno = reg2addr("dcsr");
-    write_dmi(IJtag::DMI_COMMAND, command.u32);
-    wait_dmi();
+    command.regaccess.regno = ijtag_->reg2addr("dcsr");
+    ijtag_->write_dmi(IJtag::DMI_COMMAND, command.u32);
+    ijtag_->wait_dmi();
 
-    dcsr.u32[0] = read_dmi(IJtag::DMI_ABSTRACT_DATA0);
-    dcsr.u32[1] = read_dmi(IJtag::DMI_ABSTRACT_DATA1);
+    dcsr.u32[0] = ijtag_->read_dmi(IJtag::DMI_ABSTRACT_DATA0);
+    dcsr.u32[1] = ijtag_->read_dmi(IJtag::DMI_ABSTRACT_DATA1);
     dcsr.bits.ebreakm = 1;
     dcsr.bits.ebreaks = 1;
     dcsr.bits.ebreaku = 1;
@@ -116,16 +116,16 @@ void CmdResume::exec(AttributeType *args, AttributeType *res) {
     if (stepcnt) {
         dcsr.bits.step = 1;
     }
-    write_dmi(IJtag::DMI_ABSTRACT_DATA0, dcsr.u32[0]);
+    ijtag_->write_dmi(IJtag::DMI_ABSTRACT_DATA0, dcsr.u32[0]);
 
     command.u32 = 0;
     command.regaccess.cmdtype = 0;
     command.regaccess.aarsize = IJtag::CMD_AAxSIZE_64BITS;
     command.regaccess.transfer = 1;
     command.regaccess.write = 1;
-    command.regaccess.regno = reg2addr("dcsr");
-    write_dmi(IJtag::DMI_COMMAND, command.u32);
-    wait_dmi();
+    command.regaccess.regno = ijtag_->reg2addr("dcsr");
+    ijtag_->write_dmi(IJtag::DMI_COMMAND, command.u32);
+    ijtag_->wait_dmi();
 
 
     // set resume request:
@@ -133,12 +133,12 @@ void CmdResume::exec(AttributeType *args, AttributeType *res) {
         dmcontrol.u32 = 0;
         dmcontrol.bits.dmactive = 1;
         dmcontrol.bits.resumereq = 1;
-        write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
+        ijtag_->write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
 
         // All harts should run:
         dmstatus.u32 = 0;
         do {
-            dmstatus.u32 = read_dmi(IJtag::DMI_DMSTATUS);
+            dmstatus.u32 = ijtag_->read_dmi(IJtag::DMI_DMSTATUS);
         } while (dmstatus.bits.allresumeack == 0 && watchdog++ < 5);
 
         if (dmstatus.bits.allresumeack == 0 && dmstatus.bits.allrunning == 1) {
@@ -154,11 +154,11 @@ void CmdResume::exec(AttributeType *args, AttributeType *res) {
     // clear resume request
     dmcontrol.u32 = 0;
     dmcontrol.bits.dmactive = 1;
-    write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
+    ijtag_->write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
 
-    abstractcs.u32 = read_dmi(IJtag::DMI_ABSTRACTCS);
+    abstractcs.u32 = ijtag_->read_dmi(IJtag::DMI_ABSTRACTCS);
     if (abstractcs.bits.cmderr) {
-        clear_cmderr();
+        ijtag_->clear_cmderr();
     }
 }
 

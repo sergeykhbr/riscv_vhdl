@@ -58,7 +58,7 @@ void CmdRead::exec(AttributeType *args, AttributeType *res) {
         rdData_.make_data(4 * bytes);
     }
 
-    if (read_memory(addr, bytes, rdData_.data())) {
+    if (ijtag_->read_memory(addr, bytes, rdData_.data())) {
         generateError(res, "Cannot read memory");
         return;
     }

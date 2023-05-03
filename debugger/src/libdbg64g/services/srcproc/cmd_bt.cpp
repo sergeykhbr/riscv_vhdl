@@ -51,9 +51,9 @@ void CmdStack::exec(AttributeType *args, AttributeType *res) {
     uint32_t addr;
     res->make_list(0);
 
-    get_reg("stktr_cnt", &stktr_cnt);
+    ijtag_->get_reg("stktr_cnt", &stktr_cnt);
 
-    addr = reg2addr("stktr_buf");
+    addr = ijtag_->reg2addr("stktr_buf");
     unsigned trace_sz = stktr_cnt.buf32[0];
     if (args->size() == 2 && args[1].to_uint64() < trace_sz) {
         addr += 8 * (trace_sz - args[1].to_uint32());
@@ -78,8 +78,8 @@ void CmdStack::exec(AttributeType *args, AttributeType *res) {
     res->make_list(stktr_cnt.buf32[0]);
     for (unsigned i = 0; i < trace_sz; i++) {
         AttributeType &item = (*res)[i];
-        get_reg(addr, 8, &from_addr);
-        get_reg(addr + 1, 8, &to_addr);
+        ijtag_->get_reg(addr, 8, &from_addr);
+        ijtag_->get_reg(addr + 1, 8, &to_addr);
         // [from, ['symb_name',symb_offset], to, ['symb_name',symb_offset]]
         item.make_list(4);
         item[0u].make_uint64(from_addr.val);

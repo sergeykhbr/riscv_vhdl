@@ -76,7 +76,7 @@ void CmdDisas::exec(AttributeType *args, AttributeType *res) {
         uint32_t sz = (*args)[2].to_uint32();
         membuf.make_data(sz);
         mem_data = &membuf;
-        if (read_memory(addr, sz, membuf.data())) {
+        if (ijtag_->read_memory(addr, sz, membuf.data())) {
             generateError(res, "Cannot read memory");
             return;
         }

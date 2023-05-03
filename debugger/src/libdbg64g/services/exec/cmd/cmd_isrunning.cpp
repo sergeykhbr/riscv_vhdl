@@ -43,7 +43,7 @@ void CmdIsRunning::exec(AttributeType *args, AttributeType *res) {
     IJtag::dmi_dmstatus_type dmstatus;
     res->make_boolean(false);
 
-    dmstatus.u32 = read_dmi(IJtag::DMI_DMSTATUS);
+    dmstatus.u32 = ijtag_->read_dmi(IJtag::DMI_DMSTATUS);
 
     if (dmstatus.bits.allhalted) {
         res->make_boolean(false);

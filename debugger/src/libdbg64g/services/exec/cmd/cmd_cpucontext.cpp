@@ -50,7 +50,7 @@ void CmdCpuContext::exec(AttributeType *args, AttributeType *res) {
     res->make_nil();
 
     if (args->size() == 1) {
-        dmcontrol.u32 = read_dmi(IJtag::DMI_DMCONTROL);
+        dmcontrol.u32 = ijtag_->read_dmi(IJtag::DMI_DMCONTROL);
         hartsel = dmcontrol.bits.hartselhi;
         hartsel = (hartsel << 10) | dmcontrol.bits.hartsello;
         res->make_uint64(hartsel);
@@ -61,7 +61,7 @@ void CmdCpuContext::exec(AttributeType *args, AttributeType *res) {
     dmcontrol.u32 = 0;
     dmcontrol.bits.hartsello = hartsel;
     dmcontrol.bits.hartselhi = hartsel >> 10;
-    write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
+    ijtag_->write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
 
     RISCV_trigger_hap(HAP_CpuContextChanged, hartsel, "CPU context changed");
 }

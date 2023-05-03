@@ -78,14 +78,14 @@ void CmdLoadElf::exec(AttributeType *args, AttributeType *res) {
     IJtag::dmi_dmcontrol_type dmcontrol;
     dmcontrol.u32 = 0;
     dmcontrol.bits.ndmreset = 1;
-    write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
+    ijtag_->write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
 
     uint64_t sec_addr;
     int sec_sz;
     for (unsigned i = 0; i < elf->loadableSectionTotal(); i++) {
         sec_addr = elf->sectionAddress(i);
         sec_sz = static_cast<int>(elf->sectionSize(i));
-        write_memory(sec_addr, sec_sz, elf->sectionData(i));
+        ijtag_->write_memory(sec_addr, sec_sz, elf->sectionData(i));
     }
 
     //soft_reset = 0;

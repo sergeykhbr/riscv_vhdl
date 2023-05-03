@@ -62,7 +62,7 @@ void CmdLoadBin::exec(AttributeType *args, AttributeType *res) {
     fclose(fp);
 
     uint64_t addr = (*args)[2].to_uint64();
-    write_memory(addr, sz, image);
+    ijtag_->write_memory(addr, sz, image);
     delete [] image;
 }
 

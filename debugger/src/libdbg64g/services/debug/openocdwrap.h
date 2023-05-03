@@ -24,24 +24,30 @@
 #include "coreservices/icmdexec.h"
 #include "generic/tcpclient.h"
 #include "../remote/gdbcmd.h"
+#include "../exec/cmd/cmd_init.h"
+#include "../exec/cmd/cmd_reset.h"
+#include "../exec/cmd/cmd_resume.h"
+#include "../exec/cmd/cmd_halt.h"
+#include "../exec/cmd/cmd_status.h"
+#include "../exec/cmd/cmd_reg.h"
+#include "../exec/cmd/cmd_read.h"
+#include "../exec/cmd/cmd_write.h"
+#include "../exec/cmd/cmd_exit.h"
+//#include "cmd/cmd_loadelf.h"
+//#include "cmd/cmd_loadh86.h"
+//#include "cmd/cmd_loadsrec.h"
+//#include "cmd/cmd_log.h"
+//#include "cmd/cmd_memdump.h"
+//#include "cmd/cmd_cpi.h"
+//#include "cmd/cmd_loadbin.h"
+//#include "cmd/cmd_elf2raw.h"
+//#include "cmd/cmd_cpucontext.h"
 #include <string>
 
 namespace debugger {
 
-class OpenOcdWrapper;
-
-class OcdCmdResume : public ICommand {
- public:
-    explicit OcdCmdResume(OpenOcdWrapper *parent, IJtag *ijtag);
-
-    /** ICommand */
-    virtual int isValid(AttributeType *args);
-    virtual void exec(AttributeType *args, AttributeType *res);
-};
-
-
-class OpenOcdWrapper : public TcpClient {
-friend class OcdCmdResume;
+class OpenOcdWrapper : public TcpClient,
+                       public IJtag {
  public:
     explicit OpenOcdWrapper(const char *name);
     virtual ~OpenOcdWrapper();
@@ -54,22 +60,15 @@ friend class OcdCmdResume;
     virtual int processRxBuffer(const char *buf, int sz);
     virtual int sendData() override;
 
+    /** IJtag interface */
     virtual uint64_t scan(uint32_t ir, uint64_t dr, int drlen);
-    virtual uint64_t scanReset();
+    virtual void resetAsync();
+    virtual void resetSync();
+    virtual uint32_t scanIdCode();
     virtual IJtag::DtmcsType scanDtmcs();
     virtual uint32_t scanDmi(uint32_t addr, uint32_t data, IJtag::EDmiOperation op);
-    virtual uint32_t read_dmi(uint32_t addr) {
-        return scanDmi(addr, 0, IJtag::DmiOp_Read);
-    }
-    virtual uint32_t write_dmi(uint32_t addr, uint32_t data) {
-        return scanDmi(addr, data, IJtag::DmiOp_Write);
-    }
 
     virtual bool isGdbMode() { return gdbMode_.to_bool(); }
-    virtual void setCommandInProgress(ICommand *p) { pcmdInProgress_ = p; }
-    virtual void resume();
-    virtual void halt();
-    virtual void step();
 
  protected:
     /** TcpClient generic methods */
@@ -111,15 +110,19 @@ friend class OcdCmdResume;
 
  private:
     AttributeType isEnable_;
-    AttributeType jtag_;
     AttributeType cmdexec_;
     AttributeType pollingMs_;
     AttributeType openOcdPath_;
     AttributeType openOcdScript_;
     AttributeType gdbMode_;
  
-    IJtag *ijtag_;
     ICmdExecutor *icmdexec_;
+    CmdInit cmdInit_;
+    CmdReset cmdReset_;
+    CmdResume cmdResume_;
+    CmdHalt cmdHalt_;
+    CmdStatus cmdStatus_;
+    CmdExit cmdExit_;
 
     event_def config_done_;
     event_def eventJtagScanEnd_;
@@ -137,9 +140,6 @@ friend class OcdCmdResume;
 
     GdbCommandGeneric gdbReq_;
     GdbCommandGeneric gdbResp_;
-    OcdCmdResume *pcmdResume_;
-
-    ICommand *pcmdInProgress_;
 
     static const int IRLEN = 5;
     static const int ABITS = 7;     // should be checked in dtmconctrol register
@@ -147,7 +147,6 @@ friend class OcdCmdResume;
     IJtag::ETapState bbstate_;
     struct scan_request_type {
         bool valid;
-        bool trst;  
         uint32_t ir;
         uint64_t dr;
         int drlen;

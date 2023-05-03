@@ -89,10 +89,5 @@
                         'pnp0','rfctrl0','fsegps0','dmi0',
                         'ddrflt0','ddrctrl0','prci0','qspi2','otp0']]
                 ]}]},
-    {'Class':'JTAGClass','Instances':[
-          {'Name':'jtag0','Attr':[
-                ['LogLevel',3],
-                ['TargetBitBang','dtm0'],
-          ]}]},
   ]
 }

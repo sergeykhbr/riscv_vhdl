@@ -7,7 +7,6 @@
                 ['LogLevel',3],
                 ['PollingMs',100],
                 ['RecvTimeout',500,'SO_RCVTIMEO socket option'],
-                ['Jtag','jtag0'],
                 ['CmdExecutor','cmdexec0'],
                 ['GdbMode',false,'true=run opneocd as external process; false=connect to emulated JTAG interface'],
                 ['OpenOcdPath','${REPO_PATH}/../openocd_gdb_cfg'],
@@ -66,8 +65,6 @@
     {'Class':'CmdExecutorClass','Instances':[
           {'Name':'cmdexec0','Attr':[
                 ['LogLevel',4],
-                ['Bus','axi0'],
-                ['Jtag','jtag0'],
                 ]}]},
     {'Class':'SimplePluginClass','Instances':[
           {'Name':'example0','Attr':[
@@ -81,7 +78,7 @@
                 ['Enable',false, 'Set to false to disable monitor. Useful when OpenOCD is used'],
                 ['LogLevel',1],
                 ['PollingMs',100],
-                ['Jtag','jtag0'],
+                ['Jtag','openocd0'],
                 ['CmdExecutor','cmdexec0']
                 ]}]},
     {'Class':'MemorySimClass','Instances':[

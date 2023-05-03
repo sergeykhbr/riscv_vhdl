@@ -21,9 +21,9 @@
 
 namespace debugger {
 
-class CmdExit : public ICommand  {
+class CmdExit : public ICommandRiscv {
  public:
-    explicit CmdExit(IService *parent);
+    explicit CmdExit(IService *parent, IJtag *ijtag);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);

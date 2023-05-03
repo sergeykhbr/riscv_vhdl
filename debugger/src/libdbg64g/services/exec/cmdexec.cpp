@@ -16,32 +16,12 @@
 
 #include <string.h>
 #include "cmdexec.h"
-#include "cmd/cmd_halt.h"
-#include "cmd/cmd_resume.h"
-#include "cmd/cmd_isrunning.h"
-#include "cmd/cmd_status.h"
-#include "cmd/cmd_loadelf.h"
-#include "cmd/cmd_loadh86.h"
-#include "cmd/cmd_loadsrec.h"
-#include "cmd/cmd_log.h"
-#include "cmd/cmd_read.h"
-#include "cmd/cmd_write.h"
-#include "cmd/cmd_exit.h"
-#include "cmd/cmd_memdump.h"
-#include "cmd/cmd_cpi.h"
-#include "cmd/cmd_reset.h"
-#include "cmd/cmd_loadbin.h"
-#include "cmd/cmd_elf2raw.h"
-#include "cmd/cmd_cpucontext.h"
-#include "cmd/cmd_reg.h"
 
 namespace debugger {
 
 CmdExecutor::CmdExecutor(const char *name) 
     : TcpClient(0, name) {
     registerInterface(static_cast<ICmdExecutor *>(this));
-    registerAttribute("Bus", &bus_);
-    registerAttribute("Jtag", &jtag_);
 
     cmds_.make_list(0);
 
@@ -61,32 +41,6 @@ CmdExecutor::~CmdExecutor() {
 }
 
 void CmdExecutor::postinitService() {
-    ibus_ = static_cast<IMemoryOperation *>
-            (RISCV_get_service_iface(bus_.to_string(), IFACE_MEMORY_OPERATION));
-
-    ijtag_ = static_cast<IJtag *>
-            (RISCV_get_service_iface(jtag_.to_string(), IFACE_JTAG));
-
-    // Core commands registration:
-    ICommand *tcmd;
-    registerCommand(new CmdHalt(this, ijtag_));
-    registerCommand(new CmdResume(this, ijtag_));
-    registerCommand(new CmdIsRunning(this, ijtag_));
-    registerCommand(new CmdStatus(this, ijtag_));
-    registerCommand(new CmdReg(this, ijtag_));
-    registerCommand(new CmdCpi(this, ijtag_));
-    registerCommand(new CmdCpuContext(this, ijtag_));
-    registerCommand(new CmdElf2Raw(this));
-    registerCommand(new CmdExit(this));
-    registerCommand(new CmdLoadBin(this, ijtag_));
-    registerCommand(new CmdLoadElf(this, ijtag_));
-    registerCommand(new CmdLoadH86(this, ijtag_));
-    registerCommand(new CmdLoadSrec(this, ijtag_));
-    registerCommand(new CmdLog(this));
-    registerCommand(new CmdMemDump(this, ijtag_));
-    registerCommand(tcmd = new CmdRead(this, ijtag_));
-    registerCommand(new CmdReset(this, ijtag_));
-    registerCommand(tcmd = new CmdWrite(this, ijtag_));
 }
 
 void CmdExecutor::registerCommand(ICommand *icmd) {

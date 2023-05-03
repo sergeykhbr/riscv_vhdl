@@ -45,7 +45,7 @@ void CmdStatus::exec(AttributeType *args, AttributeType *res) {
     res->attr_free();
     res->make_nil();
 
-    res->make_uint64(read_dmi(IJtag::DMI_HALTSUM0));
+    res->make_uint64(ijtag_->read_dmi(IJtag::DMI_HALTSUM0));
 }
 
 }  // namespace debugger

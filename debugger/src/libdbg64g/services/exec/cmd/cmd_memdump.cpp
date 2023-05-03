@@ -60,7 +60,7 @@ void CmdMemDump::exec(AttributeType *args, AttributeType *res) {
     int len = static_cast<int>((*args)[2].to_uint64());
     res->make_data(len);
 
-    read_memory(addr, len, res->data());
+    ijtag_->read_memory(addr, len, res->data());
     uint8_t *dumpbuf = res->data();
 
     if (args->size() == 5 && (*args)[4].is_equal("hex")) {

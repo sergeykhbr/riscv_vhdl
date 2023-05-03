@@ -62,12 +62,12 @@ void CmdCpi::exec(AttributeType *args, AttributeType *res) {
     (*res)[0u].make_uint64(0);
     (*res)[1].make_uint64(0);
 
-    err = get_reg("cycle", &user_cycle);
+    err = ijtag_->get_reg("cycle", &user_cycle);
     if (err) {
         generateError(res, "cannot read CSR_cycle register");
         return;
     }
-    err = get_reg("insret", &user_insret);
+    err = ijtag_->get_reg("insret", &user_insret);
     if (err) {
         generateError(res, "cannot read CSR_insret register");
         return;

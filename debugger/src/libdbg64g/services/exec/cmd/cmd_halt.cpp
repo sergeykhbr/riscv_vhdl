@@ -58,23 +58,23 @@ void CmdHalt::exec(AttributeType *args, AttributeType *res) {
     dmcontrol.u32 = 0;
     dmcontrol.bits.dmactive = 1;
     dmcontrol.bits.haltreq = 1;
-    write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
+    ijtag_->write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
 
     // dmstatus: allresumeack anyresumeack allhalted anyhalted authenticated hasresethaltreq version=2
     dmstatus.u32 = 0;
     do {
-        dmstatus.u32 = read_dmi(IJtag::DMI_DMSTATUS);
+        dmstatus.u32 = ijtag_->read_dmi(IJtag::DMI_DMSTATUS);
     } while (dmstatus.bits.allhalted == 0 && watchdog++ < 1000);
 
 
     // clear halt request
     dmcontrol.u32 = 0;
     dmcontrol.bits.dmactive = 1;
-    write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
+    ijtag_->write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
 
-    abstractcs.u32 = read_dmi(IJtag::DMI_ABSTRACTCS);
+    abstractcs.u32 = ijtag_->read_dmi(IJtag::DMI_ABSTRACTCS);
     if (abstractcs.bits.cmderr) {
-        clear_cmderr();
+        ijtag_->clear_cmderr();
     } else if (dmstatus.bits.allhalted == 0) {
         generateError(res, "Cannot halt selected harts");
     }

@@ -47,7 +47,7 @@ class CmdDemo : public ICommandRiscv {
     }
     virtual void exec(AttributeType *args, AttributeType *res) {
         Reg64Type t1;
-        read_memory(0xFFFFF000, 4, t1.buf);
+        ijtag_->read_memory(0xFFFFF000, 4, t1.buf);
         res->make_list(2);
         (*res)[0u].make_string("Reading 0xfffff000");
         (*res)[1].make_uint64(t1.buf32[0]);

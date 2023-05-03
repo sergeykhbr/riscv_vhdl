@@ -18,7 +18,8 @@
 
 namespace debugger {
 
-CmdExit::CmdExit(IService *parent) : ICommand (parent, "exit") {
+CmdExit::CmdExit(IService *parent, IJtag *ijtag)
+    : ICommandRiscv(parent, "exit", ijtag) {
 
     briefDescr_.make_string("Exit and close application");
     detailedDescr_.make_string(

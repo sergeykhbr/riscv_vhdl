@@ -23,7 +23,6 @@
 #include "coreservices/ijtag.h"
 #include "coreservices/icmdexec.h"
 #include <string>
-#include "../exec/cmd/cmd_init.h"
 
 namespace debugger {
 
@@ -62,7 +61,6 @@ class CpuMonitor : public IService,
  
     IJtag *ijtag_;
     ICmdExecutor *icmdexec_;
-    CmdInit *pcmdInit_;
 
     event_def config_done_;
     mutex_def mutex_resume_;

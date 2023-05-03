@@ -88,7 +88,7 @@ void CmdLoadH86::exec(AttributeType *args, AttributeType *res) {
     dmcontrol.u32 = 0;
     dmcontrol.bits.ndmreset = 1;
     if (binFileBuf == 0) {
-        write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
+        ijtag_->write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
     }
 
     while (code != -1) {
@@ -96,7 +96,7 @@ void CmdLoadH86::exec(AttributeType *args, AttributeType *res) {
         switch (code) {
         case 0:
             if (binFileBuf == 0) {
-                write_memory(sec_addr, sec_sz, sec_data);
+                ijtag_->write_memory(sec_addr, sec_sz, sec_data);
                 //memcpy(&bindata[sec_addr & 0xFFFFFF], sec_data, sec_sz);
                 //memset(&flgdata[sec_addr & 0xFFFFFF], 0xff, sec_sz);
             } else if ((sec_addr + sec_sz) <= binFileSz) {

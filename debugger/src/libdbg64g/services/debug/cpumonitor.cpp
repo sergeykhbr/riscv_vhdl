@@ -37,7 +37,6 @@ CpuMonitor::CpuMonitor(const char *name)
     RISCV_register_hap(static_cast<IHap *>(this));
     hartsel_ = 0;
     isEnable_.make_boolean(true);
-    pcmdInit_ = 0;
     initResponse_.make_dict();
 }
 
@@ -56,9 +55,6 @@ void CpuMonitor::postinitService() {
         RISCV_error("ICmdExecutor interface '%s' not found", 
                     cmdexec_.to_string());
         return;
-    } else {
-        pcmdInit_ = new CmdInit(this, ijtag_);
-        icmdexec_->registerCommand(pcmdInit_);
     }
 
     if (isEnable_.to_bool()) {
@@ -70,10 +66,6 @@ void CpuMonitor::postinitService() {
 }
 
 void CpuMonitor::predeleteService() {
-    if (icmdexec_) {
-        icmdexec_->unregisterCommand(pcmdInit_);
-        delete pcmdInit_;
-    }
 }
 
 void CpuMonitor::hapTriggered(EHapType type, 

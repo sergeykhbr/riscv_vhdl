@@ -59,12 +59,7 @@ class CmdExecutor : public TcpClient,
     int getICommand(AttributeType *args, ICommand **pcmd);
 
  private:
-    AttributeType bus_;
-    AttributeType jtag_;
     AttributeType cmds_;
-
-    IMemoryOperation *ibus_;
-    IJtag *ijtag_;
 
     mutex_def mutexExec_;
 

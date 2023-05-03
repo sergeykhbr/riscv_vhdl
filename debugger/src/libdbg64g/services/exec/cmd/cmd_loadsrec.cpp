@@ -130,13 +130,13 @@ void CmdLoadSrec::exec(AttributeType *args, AttributeType *res) {
     IJtag::dmi_dmcontrol_type dmcontrol;
     dmcontrol.u32 = 0;
     dmcontrol.bits.ndmreset = 1;
-    write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
+    ijtag_->write_dmi(IJtag::DMI_DMCONTROL, dmcontrol.u32);
 
     uint64_t sec_addr;
     int sec_sz;
     uint8_t sec_data[1024];
     while ((off = readline(image, off, sec_addr, sec_sz, sec_data)) != 0) {
-        write_memory(sec_addr, sec_sz, sec_data);
+        ijtag_->write_memory(sec_addr, sec_sz, sec_data);
 #ifdef SHOW_USAGE_INFO
         mark_addr(sec_addr, sec_sz);
 #endif
