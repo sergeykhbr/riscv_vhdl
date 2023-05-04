@@ -18,7 +18,8 @@
 
 namespace debugger {
 
-CmdLog::CmdLog(IService *parent) : ICommand(parent, "log") {
+CmdLog::CmdLog(IService *parent, IJtag *ijtag)
+    : ICommandRiscv(parent, "log", ijtag) {
 
     briefDescr_.make_string("Enable log-file");
     detailedDescr_.make_string(

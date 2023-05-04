@@ -282,6 +282,7 @@ class IJtag : public IFace {
 
     virtual const char *getDetail() { return IJtag_detail; }
 
+    virtual bool isJtagEnabled() = 0;
     virtual void resetAsync() = 0;
     virtual void resetSync() = 0;
     virtual uint32_t scanIdCode() = 0;

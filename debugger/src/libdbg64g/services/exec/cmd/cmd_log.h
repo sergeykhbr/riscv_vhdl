@@ -23,9 +23,9 @@
 
 namespace debugger {
 
-class CmdLog : public ICommand  {
+class CmdLog : public ICommandRiscv  {
  public:
-    explicit CmdLog(IService *parent);
+    explicit CmdLog(IService *parent, IJtag *ijtag);
 
     /** ICommand */
     virtual int isValid(AttributeType *args);

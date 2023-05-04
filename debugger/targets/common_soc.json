@@ -6,7 +6,7 @@
                                   it and interact with the simulation throough JTAG BitBang interface'],
                 ['LogLevel',3],
                 ['PollingMs',100],
-                ['RecvTimeout',500,'SO_RCVTIMEO socket option'],
+                ['RecvTimeout',1,'SO_RCVTIMEO socket option'],
                 ['CmdExecutor','cmdexec0'],
                 ['GdbMode',false,'true=run opneocd as external process; false=connect to emulated JTAG interface'],
                 ['OpenOcdPath','${REPO_PATH}/../openocd_gdb_cfg'],

@@ -22,6 +22,7 @@
 #include "coreservices/ithread.h"
 #include "coreservices/ijtag.h"
 #include "coreservices/icmdexec.h"
+#include "coreservices/icmdgdb.h"
 #include "generic/tcpclient.h"
 #include "../remote/gdbcmd.h"
 #include "../exec/cmd/cmd_init.h"
@@ -33,10 +34,10 @@
 #include "../exec/cmd/cmd_read.h"
 #include "../exec/cmd/cmd_write.h"
 #include "../exec/cmd/cmd_exit.h"
+#include "../exec/cmd/cmd_log.h"
 //#include "cmd/cmd_loadelf.h"
 //#include "cmd/cmd_loadh86.h"
 //#include "cmd/cmd_loadsrec.h"
-//#include "cmd/cmd_log.h"
 //#include "cmd/cmd_memdump.h"
 //#include "cmd/cmd_cpi.h"
 //#include "cmd/cmd_loadbin.h"
@@ -47,7 +48,8 @@
 namespace debugger {
 
 class OpenOcdWrapper : public TcpClient,
-                       public IJtag {
+                       public IJtag,
+                       public IGdbExecutor {
  public:
     explicit OpenOcdWrapper(const char *name);
     virtual ~OpenOcdWrapper();
@@ -58,9 +60,9 @@ class OpenOcdWrapper : public TcpClient,
 
     /** TcpClient */
     virtual int processRxBuffer(const char *buf, int sz);
-    virtual int sendData() override;
 
     /** IJtag interface */
+    virtual bool isJtagEnabled() { return !gdbMode_.to_bool(); }
     virtual uint64_t scan(uint32_t ir, uint64_t dr, int drlen);
     virtual void resetAsync();
     virtual void resetSync();
@@ -68,7 +70,8 @@ class OpenOcdWrapper : public TcpClient,
     virtual IJtag::DtmcsType scanDtmcs();
     virtual uint32_t scanDmi(uint32_t addr, uint32_t data, IJtag::EDmiOperation op);
 
-    virtual bool isGdbMode() { return gdbMode_.to_bool(); }
+    /** IGdbExecutor interface */
+    virtual void exec(GdbCommandGeneric *cmd);
 
  protected:
     /** TcpClient generic methods */
@@ -122,13 +125,16 @@ class OpenOcdWrapper : public TcpClient,
     CmdResume cmdResume_;
     CmdHalt cmdHalt_;
     CmdStatus cmdStatus_;
+    CmdReg cmdReg_;
+    CmdRead cmdRead_;
+    CmdWrite cmdWrite_;
     CmdExit cmdExit_;
+    CmdLog cmdLog_;
 
     event_def config_done_;
     event_def eventJtagScanEnd_;
     ExternalProcessThread *openocd_;
 
-    bool connectionDone_;
     enum EMsgParserState {
         MsgIdle,
         MsgData,
@@ -138,8 +144,7 @@ class OpenOcdWrapper : public TcpClient,
     char msgbuf_[1 << 10];
     int msgcnt_;
 
-    GdbCommandGeneric gdbReq_;
-    GdbCommandGeneric gdbResp_;
+    GdbCommandGeneric *pcmdGdb_;
 
     static const int IRLEN = 5;
     static const int ABITS = 7;     // should be checked in dtmconctrol register
