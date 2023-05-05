@@ -63,14 +63,12 @@ logic w_tap_dmi_req_valid;
 logic w_tap_dmi_req_write;
 logic [6:0] wb_tap_dmi_req_addr;
 logic [31:0] wb_tap_dmi_req_data;
-logic w_tap_dmi_reset;
 logic w_tap_dmi_hardreset;
 logic w_cdc_dmi_req_valid;
 logic w_cdc_dmi_req_ready;
 logic w_cdc_dmi_req_write;
 logic [6:0] wb_cdc_dmi_req_addr;
 logic [31:0] wb_cdc_dmi_req_data;
-logic w_cdc_dmi_reset;
 logic w_cdc_dmi_hardreset;
 logic [31:0] wb_jtag_dmi_resp_data;
 logic w_jtag_dmi_busy;
@@ -94,7 +92,6 @@ jtagtap #(
     .i_dmi_resp_data(wb_jtag_dmi_resp_data),
     .i_dmi_busy(w_jtag_dmi_busy),
     .i_dmi_error(w_jtag_dmi_error),
-    .o_dmi_reset(w_tap_dmi_reset),
     .o_dmi_hardreset(w_tap_dmi_hardreset)
 );
 
@@ -108,14 +105,12 @@ jtagcdc #(
     .i_dmi_req_write(w_tap_dmi_req_write),
     .i_dmi_req_addr(wb_tap_dmi_req_addr),
     .i_dmi_req_data(wb_tap_dmi_req_data),
-    .i_dmi_reset(w_tap_dmi_reset),
     .i_dmi_hardreset(w_tap_dmi_hardreset),
     .i_dmi_req_ready(w_cdc_dmi_req_ready),
     .o_dmi_req_valid(w_cdc_dmi_req_valid),
     .o_dmi_req_write(w_cdc_dmi_req_write),
     .o_dmi_req_addr(wb_cdc_dmi_req_addr),
     .o_dmi_req_data(wb_cdc_dmi_req_data),
-    .o_dmi_reset(w_cdc_dmi_reset),
     .o_dmi_hardreset(w_cdc_dmi_hardreset)
 );
 
@@ -256,7 +251,9 @@ begin: comb_proc
             vb_resp_data[0] = r.dmactive;
             if (r.regwr == 1'b1) begin
                 if (r.wdata[31] == 1'b1) begin
-                    if (i_halted[vb_hartselnext] == 1'b1) begin
+                    // Do not set cmderr before/after ndmreset
+                    if (((r.wdata[1] || r.ndmreset) == 1'b0)
+                            && (i_halted[vb_hartselnext] == 1'b1)) begin
                         v.cmderr = CMDERR_WRONGSTATE;
                     end else begin
                         v.haltreq = 1'b1;
@@ -310,7 +307,7 @@ begin: comb_proc
             vb_resp_data[12] = v_cmd_busy;                  // busy
             vb_resp_data[10: 8] = r.cmderr;
             vb_resp_data[3: 0] = CFG_DATA_REG_TOTAL;
-            if ((r.regwr == 1'b1) && ((|r.wdata[10: 8]) == 1'b1)) begin
+            if ((r.regwr == 1'b1) && (r.wdata[10: 8] == 3'h1)) begin
                 v.cmderr = CMDERR_NONE;
             end
         end else if (r.regidx == 7'h17) begin               // command
@@ -540,7 +537,7 @@ begin: comb_proc
     vb_req_type[DPortReq_MemVirtual] = r.aamvirtual;
     vb_req_type[DPortReq_Progexec] = r.cmd_progexec;
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset && i_nrst == 1'b0) || (w_cdc_dmi_hardreset == 1'b1)) begin
         v = dmidebug_r_reset;
     end
 
@@ -560,7 +557,9 @@ begin: comb_proc
 
     w_cdc_dmi_req_ready = v_cdc_dmi_req_ready;
     wb_jtag_dmi_resp_data = r.jtag_resp_data;
-    w_jtag_dmi_busy = 1'b0;                                 // |r.dmstate
+    w_jtag_dmi_busy = r.dmstate;
+    // There are no specified cases in which the DM would respond with an error,
+    // and DMI is not required to support returning errors.
     w_jtag_dmi_error = 1'b0;
 
     o_cfg = vcfg;

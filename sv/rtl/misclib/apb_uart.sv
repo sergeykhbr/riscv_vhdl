@@ -18,8 +18,7 @@
 
 module apb_uart #(
     parameter bit async_reset = 1'b0,
-    parameter int log2_fifosz = 4,
-    parameter int speedup_rate = 0                          // simulation speed-up: 0=no speed up, 1=2x, 2=4x, etc
+    parameter int log2_fifosz = 4
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -34,6 +33,7 @@ module apb_uart #(
 );
 
 import types_amba_pkg::*;
+localparam int speedup_rate = 0;                            // simulation speed-up: 0=no speed up, 1=2x, 2=4x, etc
 // Rx/Tx states
 localparam bit [2:0] idle = 3'h0;
 localparam bit [2:0] startbit = 3'h1;

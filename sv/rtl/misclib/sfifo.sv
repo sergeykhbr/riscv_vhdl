@@ -28,7 +28,7 @@ module sfifo #(
     input logic [dbits-1:0] i_wdata,
     input logic i_re,
     output logic [dbits-1:0] o_rdata,
-    output logic [log2_depth:0] o_count                     // Number of words in FIFO
+    output logic [(log2_depth + 1)-1:0] o_count             // Number of words in FIFO
 );
 
 localparam int DEPTH = (2**log2_depth);
@@ -37,7 +37,7 @@ typedef struct {
     logic [dbits-1:0] databuf[0: DEPTH - 1];
     logic [log2_depth-1:0] wr_cnt;
     logic [log2_depth-1:0] rd_cnt;
-    logic [log2_depth:0] total_cnt;
+    logic [(log2_depth + 1)-1:0] total_cnt;
 } sfifo_registers;
 
 sfifo_registers r, rin;
@@ -88,7 +88,7 @@ begin: comb_proc
         end
         v.wr_cnt = 4'h0;
         v.rd_cnt = 4'h0;
-        v.total_cnt = 5'h0;
+        v.total_cnt = 5'h00;
     end
 
     o_rdata = r.databuf[int'(r.rd_cnt)];
@@ -112,7 +112,7 @@ generate
                 end
                 r.wr_cnt <= 4'h0;
                 r.rd_cnt <= 4'h0;
-                r.total_cnt <= 4'h0;
+                r.total_cnt <= 5'h00;
             end else begin
                 for (int i = 0; i < DEPTH; i++) begin
                     r.databuf[i] <= rin.databuf[i];

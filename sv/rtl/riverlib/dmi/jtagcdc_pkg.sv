@@ -17,7 +17,6 @@ package jtagcdc_pkg;
 
 
 localparam int CDC_REG_WIDTH = (1  // i_dmi_hardreset
-        + 1  // i_dmi_reset
         + 7  // i_dmi_req_addr
         + 32  // i_dmi_req_data
         + 1  // i_dmi_req_write
@@ -32,7 +31,6 @@ typedef struct {
     logic req_write;
     logic [6:0] req_addr;
     logic [31:0] req_data;
-    logic req_reset;
     logic req_hardreset;
 } jtagcdc_registers;
 
@@ -44,7 +42,6 @@ const jtagcdc_registers jtagcdc_r_reset = '{
     1'b0,                               // req_write
     '0,                                 // req_addr
     '0,                                 // req_data
-    1'b0,                               // req_reset
     1'b0                                // req_hardreset
 };
 

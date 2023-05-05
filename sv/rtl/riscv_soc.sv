@@ -1,43 +1,42 @@
-//!
-//! Copyright 2021 
-//! Autor: Sergey Khabarov, sergeykhbr@gmail.com
-//!
-//! Licensed under the Apache License, Version 2.0 (the "License");
-//! you may not use this file except in compliance with the License.
-//! You may obtain a copy of the License at
-//!
-//!     http://www.apache.org/licenses/LICENSE-2.0
-//!
-//! Unless required by applicable law or agreed to in writing, software
-//! distributed under the License is distributed on an "AS IS" BASIS,
-//! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//! See the License for the specific language governing permissions and
-//! limitations under the License.
-//!
+// 
+//  Copyright 2022 Sergey Khabarov, sergeykhbr@gmail.com
+// 
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+// 
+//      http://www.apache.org/licenses/LICENSE-2.0
+// 
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+// 
 
-//! @brief   SOC Top-level entity declaration.
-//! @details This module implements full SOC functionality and all IO signals
-//!          are available on FPGA/ASIC IO pins.
-module riscv_soc (
-  input             i_sys_nrst,
-  input             i_sys_clk,
-  input             i_dbg_nrst,
-  input             i_ddr_nrst,
-  input             i_ddr_clk,
-  //! GPIO.
-  input [11:0]      i_gpio,
-  output [11:0]     o_gpio,
-  output [11:0]     o_gpio_dir,
-  //! JTAG signals:
-  input             i_jtag_tck,
-  input             i_jtag_trst,
-  input             i_jtag_tms,
-  input             i_jtag_tdi,
-  output            o_jtag_tdo,
-  output            o_jtag_vref,
-  //! UART1 signals:
-  input             i_uart1_rd,
-  output            o_uart1_td,
+
+`timescale 1ns/10ps
+
+module riscv_soc(
+    input logic i_sys_nrst,                                 // Power-on system reset active LOW
+    input logic i_sys_clk,                                  // System/Bus clock
+    input logic i_dbg_nrst,                                 // Reset from Debug interface (DMI). Reset everything except DMI
+    input logic i_ddr_nrst,                                 // DDR related logic reset (AXI clock transformator)
+    input logic i_ddr_clk,                                  // DDR memoru clock
+    // GPIO signals:
+    input logic [11:0] i_gpio,
+    output logic [11:0] o_gpio,
+    output logic [11:0] o_gpio_dir,
+    // JTAG signals:
+    input logic i_jtag_trst,
+    input logic i_jtag_tck,
+    input logic i_jtag_tms,
+    input logic i_jtag_tdi,
+    output logic o_jtag_tdo,
+    output logic o_jtag_vref,
+    // UART1 signals
+    input logic i_uart1_rd,
+    output logic o_uart1_td,
     // SPI SD-card signals:
     output logic o_spi_cs,
     output logic o_spi_sclk,
@@ -45,18 +44,21 @@ module riscv_soc (
     input logic i_spi_miso,                                 // SPI: Master Input Slave Output
     input logic i_sd_detected,                              // SD-card detected
     input logic i_sd_protect,                               // SD-card write protect
-  // PRCI:
-  output            o_dmreset,
-  output types_amba_pkg::mapinfo_type o_prci_pmapinfo,
-  output types_amba_pkg::apb_in_type o_prci_apbi,
-  input types_amba_pkg::apb_out_type i_prci_apbo,
-  // DDR signal:
-  output types_amba_pkg::mapinfo_type o_ddr_pmapinfo,
-  output types_amba_pkg::apb_in_type o_ddr_apbi,
-  input types_amba_pkg::apb_out_type i_ddr_apbo,
-  output types_amba_pkg::mapinfo_type o_ddr_xmapinfo,
-  output types_amba_pkg::axi4_slave_in_type o_ddr_xslvi,
-  input types_amba_pkg::axi4_slave_out_type i_ddr_xslvo
+    // PLL and Reset interfaces:
+    output logic o_dmreset,                                 // Debug reset request. Everything except DMI.
+    output types_amba_pkg::mapinfo_type o_prci_pmapinfo,    // PRCI mapping information
+    output types_amba_pkg::dev_config_type i_prci_pdevcfg,  // PRCI device descriptor
+    output types_amba_pkg::apb_in_type o_prci_apbi,         // APB: PLL and Reset configuration interface
+    input types_amba_pkg::apb_out_type i_prci_apbo,         // APB: PLL and Reset configuration interface
+    // DDR interfaces:
+    output types_amba_pkg::mapinfo_type o_ddr_pmapinfo,     // DDR configuration mapping information
+    output types_amba_pkg::dev_config_type i_ddr_pdevcfg,   // DDR configuration device descriptor
+    output types_amba_pkg::apb_in_type o_ddr_apbi,          // APB: DDR configuration interface
+    input types_amba_pkg::apb_out_type i_ddr_apbo,          // APB: DDR configuration interface
+    output types_amba_pkg::mapinfo_type o_ddr_xmapinfo,     // DDR memory bank mapping information
+    output types_amba_pkg::dev_config_type i_ddr_xdevcfg,   // DDR memory bank descriptor
+    output types_amba_pkg::axi4_slave_in_type o_ddr_xslvi,  // AXI DDR memory interface
+    input types_amba_pkg::axi4_slave_out_type i_ddr_xslvo   // AXI DDR memory interface
 );
 
 import config_target_pkg::*;
@@ -87,7 +89,7 @@ logic [CFG_PLIC_CONTEXT_TOTAL-1:0] wb_plic_xeip;
 logic [CFG_CPU_MAX-1:0] wb_plic_meip;
 logic [CFG_CPU_MAX-1:0] wb_plic_seip;
 logic w_irq_uart1;
-logic [15:0] wb_irq_gpio;
+logic [CFG_SOC_GPIO0_WIDTH-1:0] wb_irq_gpio;
 logic w_irq_pnp;
 logic [CFG_PLIC_IRQ_TOTAL-1:0] wb_ext_irqs;
 
@@ -240,8 +242,6 @@ Workgroup #(
   //! External DDR module instance with the AXI4 interface.
   //! @details Map address:
   //!          0x00000000_80000000..0x00000000_7fffffff (2GB on FU740)
-assign dev_pnp[SOC_PNP_DDR] = dev_config_none;
-
 // TODO: move into interconnect
   cdc_axi_sync_tech u_cdc_ddr0 (
     .i_xslv_clk(i_sys_clk),
@@ -261,8 +261,7 @@ assign dev_pnp[SOC_PNP_DDR] = dev_config_none;
 //!          0x00000000_10060000..0x00000000_10060fff (4 KB total)
 apb_uart #(
     .async_reset(async_reset),
-    .log2_fifosz(CFG_SOC_UART1_LOG2_FIFOSZ),
-    .speedup_rate(CFG_UART_SPEED_UP_RATE)
+    .log2_fifosz(CFG_SOC_UART1_LOG2_FIFOSZ)
 ) uart1 (
     .i_clk(i_sys_clk),
     .i_nrst(i_sys_nrst),
@@ -281,7 +280,7 @@ apb_uart #(
 //!          0x00000000_10060000..0x00000000_10060fff (4 KB total)
 apb_gpio  #(
     .async_reset(CFG_ASYNC_RESET),
-    .width(12)
+    .width(CFG_SOC_GPIO0_WIDTH)
 ) gpio0 (
     .i_clk(i_sys_clk),
     .i_nrst(i_sys_nrst),
@@ -292,9 +291,8 @@ apb_gpio  #(
     .i_gpio(i_gpio),
     .o_gpio(o_gpio),
     .o_gpio_dir(o_gpio_dir),
-    .o_irq(wb_irq_gpio[11:0])
+    .o_irq(wb_irq_gpio)
 );
-assign wb_irq_gpio[15:12] = '0;
 
 
 ////////////////////////////////////
@@ -350,7 +348,7 @@ begin: comb_proc
 
     // assign interrupts:
     vb_ext_irqs[22: 0] = '0;
-    vb_ext_irqs[38: 23] = wb_irq_gpio;                      // FU740: 16 bits, current 12-bits
+    vb_ext_irqs[((23 + CFG_SOC_GPIO0_WIDTH) - 1): 23] = wb_irq_gpio;// FU740: 16 bits, current 12-bits
     vb_ext_irqs[39] = w_irq_uart1;
     vb_ext_irqs[69: 40] = '0;
     vb_ext_irqs[70] = w_irq_pnp;
@@ -366,10 +364,13 @@ begin: comb_proc
     // PRCI:
     o_prci_apbi = apbi[CFG_BUS1_PSLV_PRCI];
     apbo[CFG_BUS1_PSLV_PRCI] = i_prci_apbo;
+    dev_pnp[SOC_PNP_PRCI] = i_prci_pdevcfg;
 
     // DDR:
     o_ddr_xmapinfo = bus0_mapinfo[CFG_BUS0_XSLV_DDR];
+    dev_pnp[SOC_PNP_DDR_AXI] = i_ddr_xdevcfg;
     o_ddr_pmapinfo = bus1_mapinfo[CFG_BUS1_PSLV_DDR];
+    dev_pnp[SOC_PNP_DDR_APB] = i_ddr_pdevcfg;
     o_ddr_apbi = apbi[CFG_BUS1_PSLV_DDR];
     apbo[CFG_BUS1_PSLV_DDR] = i_ddr_apbo;
 end: comb_proc

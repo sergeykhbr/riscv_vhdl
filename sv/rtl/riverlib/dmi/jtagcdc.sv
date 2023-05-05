@@ -27,7 +27,6 @@ module jtagcdc #(
     input logic i_dmi_req_write,
     input logic [6:0] i_dmi_req_addr,
     input logic [31:0] i_dmi_req_data,
-    input logic i_dmi_reset,
     input logic i_dmi_hardreset,
     // system clock
     input logic i_dmi_req_ready,
@@ -35,7 +34,6 @@ module jtagcdc #(
     output logic o_dmi_req_write,
     output logic [6:0] o_dmi_req_addr,
     output logic [31:0] o_dmi_req_data,
-    output logic o_dmi_reset,
     output logic o_dmi_hardreset
 );
 
@@ -53,7 +51,6 @@ begin: comb_proc
     v = r;
 
     vb_bus = {i_dmi_hardreset,
-            i_dmi_reset,
             i_dmi_req_addr,
             i_dmi_req_data,
             i_dmi_req_write,
@@ -67,8 +64,7 @@ begin: comb_proc
         v.req_write = r.l2[1];
         v.req_data = r.l2[33: 2];
         v.req_addr = r.l2[40: 34];
-        v.req_reset = r.l2[41];
-        v.req_hardreset = r.l2[42];
+        v.req_hardreset = r.l2[41];
     end else if (i_dmi_req_ready == 1'b1) begin
         v.req_valid = 1'b0;
     end
@@ -86,7 +82,6 @@ begin: comb_proc
     o_dmi_req_write = r.req_write;
     o_dmi_req_data = r.req_data;
     o_dmi_req_addr = r.req_addr;
-    o_dmi_reset = r.req_reset;
     o_dmi_hardreset = r.req_hardreset;
 
     rin = v;

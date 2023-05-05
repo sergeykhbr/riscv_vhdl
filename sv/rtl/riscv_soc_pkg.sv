@@ -29,18 +29,22 @@ localparam int SOC_PNP_XCTRL0 = 0;
 localparam int SOC_PNP_GROUP0 = 1;
 localparam int SOC_PNP_BOOTROM = 2;
 localparam int SOC_PNP_SRAM = 3;
-localparam int SOC_PNP_DDR = 4;
-localparam int SOC_PNP_GPIO = 5;
-localparam int SOC_PNP_CLINT = 6;
-localparam int SOC_PNP_PLIC = 7;
-localparam int SOC_PNP_PNP = 8;
-localparam int SOC_PNP_PBRIDGE0 = 9;
-localparam int SOC_PNP_DMI = 10;
-localparam int SOC_PNP_UART1 = 11;
-localparam int SOC_PNP_SPI = 12;
-localparam int SOC_PNP_TOTAL = 13;
+localparam int SOC_PNP_DDR_AXI = 4;
+localparam int SOC_PNP_DDR_APB = 5;
+localparam int SOC_PNP_PRCI = 6;
+localparam int SOC_PNP_GPIO = 7;
+localparam int SOC_PNP_CLINT = 8;
+localparam int SOC_PNP_PLIC = 9;
+localparam int SOC_PNP_PNP = 10;
+localparam int SOC_PNP_PBRIDGE0 = 11;
+localparam int SOC_PNP_DMI = 12;
+localparam int SOC_PNP_UART1 = 13;
+localparam int SOC_PNP_SPI = 14;
+localparam int SOC_PNP_TOTAL = 15;
 
 localparam int CFG_SOC_UART1_LOG2_FIFOSZ = 4;
+
+localparam int CFG_SOC_GPIO0_WIDTH = 12;
 
 localparam int CFG_SOC_SPI0_LOG2_FIFOSZ = 9;
 // Example FU740: S7 Core0 (M) + 4xU74 Cores (M+S).

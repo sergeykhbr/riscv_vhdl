@@ -23,12 +23,11 @@ module apb_prci #(
     input logic i_clk,                                      // CPU clock
     input logic i_pwrreset,                                 // Power-on reset, external button. Active HIGH
     input logic i_dmireset,                                 // Debug reset: system reset except DMI interface
-    input logic i_ddr_calib_done,                           // DDR calibration passed
-    output logic o_dbg_nrst,                                // Reset DMI. Active LOW
+    input logic i_sys_locked,
+    input logic i_ddr_locked,
+    output logic o_sys_rst,                                 // System reset except DMI. Active HIGH
     output logic o_sys_nrst,                                // System reset except DMI. Active LOW
-    output logic o_sys_clk,
-    output logic o_ddr_nrst,
-    output logic o_ddr_clk,
+    output logic o_dbg_nrst,                                // Reset DMI. Active LOW
     input types_amba_pkg::mapinfo_type i_mapinfo,           // interconnect slot information
     output types_amba_pkg::dev_config_type o_cfg,           // Device descriptor
     input types_amba_pkg::apb_in_type i_apbi,               // APB  Slave to Bridge interface
@@ -64,14 +63,6 @@ apb_slv #(
     .i_resp_err(r.resp_err)
 );
 
-  SysPLL_tech pll0(
-    .i_reset(i_pwrreset),
-    .i_clk_tcxo(i_clk),
-    .o_clk_sys(o_sys_clk),
-    .o_clk_ddr(o_ddr_clk),
-    .o_locked(w_pll_lock)
-  );  
-
 
 always_comb
 begin: comb_proc
@@ -82,15 +73,15 @@ begin: comb_proc
 
     v = r;
 
-    v.delayed_lock = {r.delayed_lock[2:0], w_pll_lock};
-    v.sys_nrst = r.delayed_lock[3] & ~i_dmireset;
-    v.dbg_nrst = r.delayed_lock[3];
+    v.sys_rst = (i_pwrreset || (~i_sys_locked) || i_dmireset);
+    v.sys_nrst = (~(i_pwrreset || (~i_sys_locked) || i_dmireset));
+    v.dbg_nrst = (~(i_pwrreset || (~i_sys_locked)));
 
     // Registers access:
     case (wb_req_addr[11: 2])
     10'h000: begin                                          // 0x00: pll statuses
-        vb_rdata[0] = w_pll_lock;
-        //vb_rdata[1] = i_ddr_locked;
+        vb_rdata[0] = i_sys_locked;
+        vb_rdata[1] = i_ddr_locked;
     end
     10'h001: begin                                          // 0x04: reset status
         vb_rdata[0] = r.sys_nrst;
@@ -100,9 +91,6 @@ begin: comb_proc
                 // todo:
             end
         end
-    end
-    10'h002: begin                                          // 0x08: ddr status
-        vb_rdata[0] = i_ddr_calib_done;
     end
     default: begin
     end
@@ -116,8 +104,8 @@ begin: comb_proc
         v = apb_prci_r_reset;
     end
 
+    o_sys_rst = r.sys_rst;
     o_sys_nrst = r.sys_nrst;
-    o_ddr_nrst = r.sys_nrst;
     o_dbg_nrst = r.dbg_nrst;
 
     rin = v;

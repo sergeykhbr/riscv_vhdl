@@ -34,7 +34,6 @@ module jtagtap #(
     input logic [31:0] i_dmi_resp_data,
     input logic i_dmi_busy,
     input logic i_dmi_error,
-    output logic o_dmi_reset,
     output logic o_dmi_hardreset
 );
 
@@ -77,6 +76,8 @@ typedef struct {
     logic [drlen-1:0] dr;
     logic bypass;
     logic [31:0] datacnt;
+    logic dmi_busy;
+    logic [1:0] err_sticky;
 } jtagtap_registers;
 
 const jtagtap_registers jtagtap_r_reset = '{
@@ -84,7 +85,9 @@ const jtagtap_registers jtagtap_r_reset = '{
     '0,                                 // dr_length
     idcode,                             // dr
     1'b0,                               // bypass
-    '0                                  // datacnt
+    '0,                                 // datacnt
+    1'b0,                               // dmi_busy
+    '0                                  // err_sticky
 };
 
 typedef struct {
@@ -105,35 +108,26 @@ begin: comb_proc
     jtagtap_registers v;
     jtagtap_nregisters nv;
     logic [drlen-1:0] vb_dr;
-    logic [1:0] vb_stat;
     logic v_dmi_req_valid;
     logic v_dmi_req_write;
     logic [31:0] vb_dmi_req_data;
     logic [abits-1:0] vb_dmi_req_addr;
-    logic v_dmi_reset;
+    logic [1:0] vb_err_sticky;
     logic v_dmi_hardreset;
 
     vb_dr = 0;
-    vb_stat = 0;
     v_dmi_req_valid = 0;
     v_dmi_req_write = 0;
     vb_dmi_req_data = 0;
     vb_dmi_req_addr = 0;
-    v_dmi_reset = 0;
+    vb_err_sticky = 0;
     v_dmi_hardreset = 0;
 
     v = r;
     nv = nr;
 
     vb_dr = r.dr;
-
-    if (i_dmi_busy == 1'b1) begin
-        vb_stat = DMISTAT_BUSY;
-    end else if (i_dmi_error == 1'b1) begin
-        vb_stat = DMISTAT_FAILED;
-    end else begin
-        vb_stat = DMISTAT_SUCCESS;
-    end
+    vb_err_sticky = r.err_sticky;
 
     case (r.state)
     RESET_TAP: begin
@@ -171,10 +165,15 @@ begin: comb_proc
             vb_dr[31: 0] = '0;
             vb_dr[3: 0] = 4'h1;                             // version
             vb_dr[9: 4] = abits;                            // the size of the address
-            vb_dr[11: 10] = vb_stat;
+            vb_dr[11: 10] = r.err_sticky;
             v.dr_length = 7'h20;
         end else if (nr.ir == IR_DBUS) begin
-            vb_dr[1: 0] = vb_stat;
+            if (i_dmi_error == 1'b1) begin
+                vb_err_sticky = DMISTAT_FAILED;
+                vb_dr[1: 0] = DMISTAT_FAILED;
+            end else begin
+                vb_dr[1: 0] = r.err_sticky;
+            end
             vb_dr[33: 2] = i_dmi_resp_data;
             vb_dr[((34 + abits) - 1): 34] = nr.dmi_addr;
             v.dr_length = (abits + 7'h22);
@@ -227,12 +226,20 @@ begin: comb_proc
             v.state = IDLE;
         end
         if (nr.ir == IR_DTMCONTROL) begin
-            v_dmi_reset = r.dr[DTMCONTROL_DMIRESET];
             v_dmi_hardreset = r.dr[DTMCONTROL_DMIHARDRESET];
+            if (r.dr[DTMCONTROL_DMIRESET] == 1'b1) begin
+                vb_err_sticky = DMISTAT_SUCCESS;
+            end
         end else if (nr.ir == IR_BYPASS) begin
             v.bypass = r.dr[0];
         end else if (nr.ir == IR_DBUS) begin
-            v_dmi_req_valid = (|r.dr[1: 0]);
+            if (r.err_sticky != DMISTAT_SUCCESS) begin
+                // This operation should never result in a busy or error response.
+            end else if (r.dmi_busy == 1'b1) begin
+                vb_err_sticky = DMISTAT_BUSY;
+            end else begin
+                v_dmi_req_valid = (|r.dr[1: 0]);
+            end
             v_dmi_req_write = r.dr[1];
             vb_dmi_req_data = r.dr[33: 2];
             vb_dmi_req_addr = r.dr[((34 + abits) - 1): 34];
@@ -298,13 +305,14 @@ begin: comb_proc
     end
     endcase
     v.dr = vb_dr;
+    v.dmi_busy = i_dmi_busy;
+    v.err_sticky = vb_err_sticky;
 
     o_tdo = r.dr[0];
     o_dmi_req_valid = v_dmi_req_valid;
     o_dmi_req_write = v_dmi_req_write;
     o_dmi_req_data = vb_dmi_req_data;
     o_dmi_req_addr = vb_dmi_req_addr;
-    o_dmi_reset = v_dmi_reset;
     o_dmi_hardreset = v_dmi_hardreset;
 
     rin = v;

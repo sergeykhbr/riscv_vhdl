@@ -69,6 +69,7 @@ module asic_top
   logic ib_sd_detected;
   logic ib_sd_protect;
 
+  logic             w_sys_rst;
   logic             w_sys_nrst;
   logic             w_dbg_nrst;
   logic             w_dmreset;
@@ -78,10 +79,12 @@ module asic_top
 
   // DDR interface
   mapinfo_type ddr_xmapinfo;
+  dev_config_type ddr_xdev_cfg;
   axi4_slave_out_type ddr_xslvo;
   axi4_slave_in_type ddr_xslvi;
 
   mapinfo_type ddr_pmapinfo;
+  dev_config_type ddr_pdev_cfg;
   apb_in_type ddr_apbi;
   apb_out_type ddr_apbo;
 
@@ -125,6 +128,15 @@ module asic_top
   ibuf_tech isdwp0(.o(ib_sd_protect),.i(i_sd_protect));  
 
   //assign o_ddr3_init_calib_complete = w_ddr3_init_calib_complete;
+
+  SysPLL_tech pll0(
+    .i_reset(ib_rst),
+    .i_clk_tcxo(ib_clk_tcxo),
+    .o_clk_sys(w_sys_clk),
+    .o_clk_ddr(w_ddr_clk),
+    .o_locked(w_pll_lock)
+  );  
+
   
   // PLL and Reset Control Interface:
   apb_prci #(
@@ -133,12 +145,11 @@ module asic_top
     .i_clk(ib_clk_tcxo),
     .i_pwrreset(ib_rst),
     .i_dmireset(w_dmreset),
-    .i_ddr_calib_done(w_ddr3_init_calib_complete),
-    .o_dbg_nrst(w_dbg_nrst),
+    .i_sys_locked(w_pll_lock),
+    .i_ddr_locked(w_ddr3_init_calib_complete),
+    .o_sys_rst(w_sys_rst),
     .o_sys_nrst(w_sys_nrst),
-    .o_sys_clk(w_sys_clk),
-    .o_ddr_nrst(w_ddr_nrst),
-    .o_ddr_clk(w_ddr_clk),
+    .o_dbg_nrst(w_dbg_nrst),
     .i_mapinfo(prci_pmapinfo),
     .o_cfg(prci_dev_cfg),
     .i_apbi(prci_apbi),
@@ -175,13 +186,16 @@ module asic_top
     // PRCI:
     .o_dmreset(w_dmreset),
     .o_prci_pmapinfo(prci_pmapinfo),
+    .i_prci_pdevcfg(prci_dev_cfg),
     .o_prci_apbi(prci_apbi),
     .i_prci_apbo(prci_apbo),
     // DDR:
     .o_ddr_pmapinfo(ddr_pmapinfo),
+    .i_ddr_pdevcfg(ddr_pdev_cfg),
     .o_ddr_apbi(ddr_apbi),
     .i_ddr_apbo(ddr_apbo),
     .o_ddr_xmapinfo(ddr_xmapinfo),
+    .i_ddr_xdevcfg(ddr_xdev_cfg),
     .o_ddr_xslvi(ddr_xslvi),
     .i_ddr_xslvo(ddr_xslvo)
   );
@@ -199,14 +213,14 @@ ddr_tech #(
     .i_xslv_nrst(w_sys_nrst),
     .i_xslv_clk(ib_clk_tcxo),
     .i_xmapinfo(ddr_xmapinfo),
-    .o_xcfg(),
+    .o_xcfg(ddr_xdev_cfg),
     .i_xslvi(ddr_xslvi),
     .o_xslvo(ddr_xslvo),
     // APB control interface (sys clock):
     .i_apb_nrst(w_sys_nrst),
     .i_apb_clk(w_sys_clk),
     .i_pmapinfo(ddr_pmapinfo),
-    .o_pcfg(),
+    .o_pcfg(ddr_pdev_cfg),
     .i_apbi(ddr_apbi),
     .o_apbo(ddr_apbo),
     // to SOC:
