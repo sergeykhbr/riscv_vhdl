@@ -233,14 +233,14 @@ ddr_tech #(
     .i_xslv_nrst(w_sys_nrst),
     .i_xslv_clk(ib_clk_tcxo),
     .i_xmapinfo(ddr_xmapinfo),
-    .o_xcfg(),
+    .o_xcfg(ddr_xdev_cfg),
     .i_xslvi(ddr_xslvi),
     .o_xslvo(ddr_xslvo),
     // APB control interface (sys clock):
     .i_apb_nrst(w_sys_nrst),
     .i_apb_clk(w_sys_clk),
     .i_pmapinfo(ddr_pmapinfo),
-    .o_pcfg(),
+    .o_pcfg(ddr_pdev_cfg),
     .i_apbi(ddr_apbi),
     .o_apbo(ddr_apbo),
     // to SOC:

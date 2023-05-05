@@ -70,7 +70,8 @@ OBJ_FILES = $(addsuffix .o,$(SOURCES))
 COMMONNAME = bootrom_tests
 EXECUTABLE = $(COMMONNAME).elf
 DUMPFILE = $(COMMONNAME).dump
-HEXFILE = $(COMMONNAME).hex
+HEXFILE_LO = $(COMMONNAME)_lo.hex
+HEXFILE_HI = $(COMMONNAME)_hi.hex
 LSTFILE = $(COMMONNAME).lst
 
 all: bootrom_tests
@@ -78,10 +79,10 @@ all: bootrom_tests
 .PHONY: $(EXECUTABLE) $(DUMPFILE)
 
 
-bootrom_tests: $(EXECUTABLE) $(DUMPFILE) $(HEXFILE)
-$(HEXFILE): $(EXECUTABLE)
-	echo elf2rawx $(addprefix $(ELF_DIR)/,$<) -h -f 65536 -l 8 -o $(addprefix $(ELF_DIR)/,$(HEXFILE))
-	elf2rawx $(addprefix $(ELF_DIR)/,$<) -h -f 65536 -l 8 -o $(addprefix $(ELF_DIR)/,$(HEXFILE))
+bootrom_tests: $(EXECUTABLE) $(DUMPFILE) $(HEXFILE_HI)
+$(HEXFILE_HI): $(EXECUTABLE)
+	echo elf2rawx $(addprefix $(ELF_DIR)/,$<) -h -f 65536 -l 8 -o $(addprefix $(ELF_DIR)/,$(HEXFILE_HI)) -o $(addprefix $(ELF_DIR)/,$(HEXFILE_LO))
+	elf2rawx $(addprefix $(ELF_DIR)/,$<) -h -f 65536 -l 8 -o $(addprefix $(ELF_DIR)/,$(HEXFILE_HI)) -o $(addprefix $(ELF_DIR)/,$(HEXFILE_LO))
 
 $(DUMPFILE): $(EXECUTABLE)
 	echo $(OBJDUMP) --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.data $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)

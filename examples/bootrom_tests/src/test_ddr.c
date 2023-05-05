@@ -28,7 +28,7 @@ int test_ddr(void) {
 
     uint64_t t_start = clint->mtime;
 
-    while ((prci->ddr_status & PRCI_DDR_STATUS_CALIB_DONE) == 0) {
+    while ((prci->pll_status & PRCI_PLL_STATUS_DDR_CALIB_DONE) == 0) {
         // 3 seconds timeout:
         if ((clint->mtime - t_start) > 3 * SYS_HZ) {
             printf_uart("%s", "NO_CALIB\r\n");

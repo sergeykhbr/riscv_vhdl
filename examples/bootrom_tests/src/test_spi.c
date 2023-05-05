@@ -105,14 +105,18 @@ int read_rx_crc16(SpiDriverDataType *p) {
 }
 
 uint8_t get_r1_response(SpiDriverDataType *p) {
-    uint8_t ret;
-    spi_send_byte(p, 0xff);
-    read_rx_fifo(p);
-    ret = p->rxbuf[0];
+    uint8_t ret = 0xff;
+    int watchdog = 16;
+    do {
+        spi_send_byte(p, 0xff);
+        read_rx_fifo(p);
+        ret = p->rxbuf[0];
+    } while (ret == 0xff && watchdog--);
     return ret;
 }
 
-uint32_t get_r3_ocr(SpiDriverDataType *p) {
+// R3 is 40-bits split on [R1 (8-bits),R3 (32-bits)]
+uint32_t get_ui32(SpiDriverDataType *p) {
     uint32_t ret = 0;
     int rxcnt;
     spi_send_dummy(p, 4);
@@ -123,10 +127,12 @@ uint32_t get_r3_ocr(SpiDriverDataType *p) {
     return ret;
 }
 
+
 ESdCardType spi_sd_card_init(SpiDriverDataType *p) {
     int rdcnt;
     uint8_t R1;
     uint32_t R3;
+    uint32_t R7;
     uint32_t HCS;   // High Capacity Support
     int watchdog;
     p->etype = SD_Unknown;
@@ -172,7 +178,8 @@ ESdCardType spi_sd_card_init(SpiDriverDataType *p) {
     }
 
     R1 = get_r1_response(p);
-    printf_uart("R1: %02x\r\n", R1);
+    R7 = get_ui32(p);
+    printf_uart("R1: %02x %08x\r\n", R1, R7);
 
     if (R1 == 0x01) {
        // SD-card ver 2 or higher
@@ -193,8 +200,9 @@ ESdCardType spi_sd_card_init(SpiDriverDataType *p) {
         printf_uart("%02x ", p->rxbuf[i]);
     }
 
+    // R3 is 40-bits split on [R1 (8-bits),R3 (32-bits)]
     R1 = get_r1_response(p);
-    R3 = get_r3_ocr(p);
+    R3 = get_ui32(p);
     printf_uart("R3: %02x %08x\r\n", R1, R3);
     if (R1 != 0x01) {
        p->etype = SD_Unknown;
@@ -279,7 +287,7 @@ ESdCardType spi_sd_card_init(SpiDriverDataType *p) {
     }
 
     R1 = get_r1_response(p);
-    R3 = get_r3_ocr(p);
+    R3 = get_ui32(p);
     HCS = (R3 >> 30) & 0x1;
     printf_uart("R3: %02x %04x HCS=%d\r\n", R1, R3, HCS);
 
@@ -383,7 +391,7 @@ int spi_sd_card_memcpy(uint64_t src, uint64_t dst, int sz) {
                            (uint64_t)src, p->crc16_rx, p->crc16_calculated);
             }
 
-            if ((prci->ddr_status & PRCI_DDR_STATUS_CALIB_DONE) != 0) {
+            if ((prci->pll_status & PRCI_PLL_STATUS_DDR_CALIB_DONE) != 0) {
                 memcpy((void *)dst, p->rxbuf, 512);
             }
             dst += 512;

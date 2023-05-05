@@ -17,12 +17,12 @@
 #pragma once
 #include <inttypes.h>
 
-#define PRCI_DDR_STATUS_CALIB_DONE (0x1 << 0)
+#define PRCI_PLL_STATUS_SYS_LOCKED (0x1 << 0)
+#define PRCI_PLL_STATUS_DDR_CALIB_DONE (0x1 << 1)
 
 typedef struct prci_map {
     uint32_t pll_status;              /// 0x000: RO: PLL Status
     uint32_t rst_status;              /// 0x004: RO: Reset Statuses
-    uint32_t ddr_status;              /// 0x008: RO: DDR controller status
 } prci_map;
 
 
