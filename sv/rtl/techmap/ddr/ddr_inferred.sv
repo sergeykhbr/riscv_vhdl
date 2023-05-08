@@ -65,17 +65,17 @@ localparam SIM_DDRINIT_FILE_HEX = "../../../../examples/bbl-q/bbl-q-noprintf.hex
   );
 
   // TODO: better ddr functional model
-  axi4_sram #(
+  axi_sram #(
     .async_reset(async_reset),
-    .abits((10 + $clog2(512*1024))),      // 512MB address
-    .init_file(SIM_DDRINIT_FILE_HEX)
+    .abits((10 + $clog2(512*1024)))      // 512MB address
+//    .init_file(SIM_DDRINIT_FILE_HEX)
   ) mem0 (
-    .clk(i_xslv_clk),
-    .nrst(i_xslv_nrst),
+    .i_clk(i_xslv_clk),
+    .i_nrst(i_xslv_nrst),
     .i_mapinfo(i_xmapinfo),
-    .cfg(),
-    .i(i_xslvi),
-    .o(o_xslvo)
+    .o_cfg(),
+    .i_xslvi(i_xslvi),
+    .o_xslvo(o_xslvo)
   );
 
   assign o_ui_nrst = i_xslv_nrst;

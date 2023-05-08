@@ -178,21 +178,22 @@ Workgroup #(
   );
 
 
-  ////////////////////////////////////
-  //! Internal SRAM module instance with the AXI4 interface.
-  //! @details Map address:
-  //!          0x00000000_08000000..0x00000000_081fffff (2MB on FU740)
-  axi4_sram #(
-    .async_reset(CFG_ASYNC_RESET),
+////////////////////////////////////
+//! Internal SRAM module instance with the AXI4 interface.
+//! @details Map address:
+//!          0x00000000_08000000..0x00000000_081fffff (2MB on FU740)
+axi_sram #(
+    .async_reset(async_reset),
     .abits(CFG_SRAM_LOG2_SIZE)
-  ) sram0 (
-    .clk(i_sys_clk),
-    .nrst(i_sys_nrst),
+) sram0 (
+    .i_clk(i_sys_clk),
+    .i_nrst(i_sys_nrst),
     .i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_SRAM]),
-    .cfg(dev_pnp[SOC_PNP_SRAM]),
-    .i(axisi[CFG_BUS0_XSLV_SRAM]),
-    .o(axiso[CFG_BUS0_XSLV_SRAM])
-  );
+    .o_cfg(dev_pnp[SOC_PNP_SRAM]),
+    .i_xslvi(axisi[CFG_BUS0_XSLV_SRAM]),
+    .o_xslvo(axiso[CFG_BUS0_XSLV_SRAM])
+);
+
 
   ////////////////////////////////////
   //! @brief Core local interrupt controller (CLINT).
