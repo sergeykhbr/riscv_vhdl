@@ -28,9 +28,9 @@ SC_MODULE(ram_bytes_tech) {
     sc_in<bool> i_clk;                                      // CPU clock
     sc_in<sc_uint<abits>> i_addr;
     sc_in<bool> i_wena;
-    sc_in<bool> i_wstrb;
-    sc_in<sc_uint<(1 << log2_dbytes)>> i_wdata;
-    sc_out<sc_uint<(1 << log2_dbytes)>> o_rdata;
+    sc_in<sc_uint<(1 << log2_dbytes)>> i_wstrb;
+    sc_in<sc_uint<(8 * (1 << log2_dbytes))>> i_wdata;
+    sc_out<sc_uint<(8 * (1 << log2_dbytes))>> o_rdata;
 
     void comb();
 
@@ -105,7 +105,7 @@ void ram_bytes_tech<abits, log2_dbytes>::comb() {
 
     wb_addr = i_addr.read()((abits - 1), log2_dbytes);
     for (int i = 0; i < dbytes; i++) {
-        wb_wena[i] = (i_wena.read() & i_wstrb[i]);
+        wb_wena[i] = (i_wena && i_wstrb[i]);
         wb_wdata[i] = i_wdata.read()((8 * i) + 8 - 1, (8 * i)).to_uint64();
         vb_rdata((8 * i) + 8- 1, (8 * i)) = wb_rdata[i];
     }

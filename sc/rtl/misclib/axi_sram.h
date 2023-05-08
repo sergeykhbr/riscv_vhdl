@@ -51,7 +51,7 @@ SC_MODULE(axi_sram) {
     sc_signal<sc_uint<8>> wb_req_size;
     sc_signal<bool> w_req_write;
     sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> wb_req_wdata;
-    sc_signal<sc_uint<CFG_SYSBUS_DATA_BYTES>> wb_req_wdata;
+    sc_signal<sc_uint<CFG_SYSBUS_DATA_BYTES>> wb_req_wstrb;
     sc_signal<bool> w_req_last;
     sc_signal<bool> w_req_ready;
     sc_signal<bool> w_resp_valid;
@@ -60,7 +60,7 @@ SC_MODULE(axi_sram) {
     sc_signal<sc_uint<abits>> wb_req_addr_abits;
 
     axi_slv *xslv0;
-    ram_bytes_tech<17, CFG_LOG2_SYSBUS_DATA_BYTES> *tech0;
+    ram_bytes_tech<abits, CFG_LOG2_SYSBUS_DATA_BYTES> *tech0;
 
 };
 
@@ -93,7 +93,7 @@ axi_sram<abits>::axi_sram(sc_module_name name,
     xslv0->o_req_size(wb_req_size);
     xslv0->o_req_write(w_req_write);
     xslv0->o_req_wdata(wb_req_wdata);
-    xslv0->o_req_wstrb(wb_req_wdata);
+    xslv0->o_req_wstrb(wb_req_wstrb);
     xslv0->o_req_last(w_req_last);
     xslv0->i_req_ready(w_req_ready);
     xslv0->i_resp_valid(w_resp_valid);
@@ -101,12 +101,12 @@ axi_sram<abits>::axi_sram(sc_module_name name,
     xslv0->i_resp_err(wb_resp_err);
 
 
-    tech0 = new ram_bytes_tech<17,
+    tech0 = new ram_bytes_tech<abits,
                                CFG_LOG2_SYSBUS_DATA_BYTES>("tech0");
     tech0->i_clk(i_clk);
     tech0->i_addr(wb_req_addr_abits);
     tech0->i_wena(w_req_write);
-    tech0->i_wstrb(wb_req_wdata);
+    tech0->i_wstrb(wb_req_wstrb);
     tech0->i_wdata(wb_req_wdata);
     tech0->o_rdata(wb_resp_rdata);
 
@@ -121,7 +121,7 @@ axi_sram<abits>::axi_sram(sc_module_name name,
     sensitive << wb_req_size;
     sensitive << w_req_write;
     sensitive << wb_req_wdata;
-    sensitive << wb_req_wdata;
+    sensitive << wb_req_wstrb;
     sensitive << w_req_last;
     sensitive << w_req_ready;
     sensitive << w_resp_valid;
@@ -157,7 +157,7 @@ void axi_sram<abits>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 template<int abits>
 void axi_sram<abits>::comb() {
 
-    wb_req_addr_abits = wb_req_addr_abits.read()((abits - 1), 0);
+    wb_req_addr_abits = wb_req_addr.read()((abits - 1), 0);
     w_req_ready = 1;
     w_resp_valid = 1;
     wb_resp_err = 0;
