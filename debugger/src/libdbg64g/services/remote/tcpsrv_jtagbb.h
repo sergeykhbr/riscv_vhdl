@@ -39,7 +39,7 @@ class TcpServerJtagBitBang : public TcpServer {
                               const char *name,
                               socket_def skt,
                               int recvTimeout,
-                              const char *jtagtap);
+                              IJtagBitBang *jtagbb);
         virtual ~ClientThread();
 
      protected:

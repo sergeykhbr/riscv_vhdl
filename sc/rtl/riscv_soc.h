@@ -23,6 +23,7 @@
 #include "riverlib/river_cfg.h"
 #include "riverlib/types_river.h"
 #include "riverlib/workgroup.h"
+#include "misclib/axi_sram.h"
 #include "ambalib/axi2apb.h"
 #include "misclib/apb_uart.h"
 #include "misclib/apb_gpio.h"
@@ -90,16 +91,18 @@ SC_MODULE(riscv_soc) {
     static const int SOC_PNP_GROUP0 = 1;
     static const int SOC_PNP_BOOTROM = 2;
     static const int SOC_PNP_SRAM = 3;
-    static const int SOC_PNP_DDR = 4;
-    static const int SOC_PNP_GPIO = 5;
-    static const int SOC_PNP_CLINT = 6;
-    static const int SOC_PNP_PLIC = 7;
-    static const int SOC_PNP_PNP = 8;
-    static const int SOC_PNP_PBRIDGE0 = 9;
-    static const int SOC_PNP_DMI = 10;
-    static const int SOC_PNP_UART1 = 11;
-    static const int SOC_PNP_SPI = 12;
-    static const int SOC_PNP_TOTAL = 13;
+    static const int SOC_PNP_DDR_AXI = 4;
+    static const int SOC_PNP_DDR_APB = 5;
+    static const int SOC_PNP_PRCI = 6;
+    static const int SOC_PNP_GPIO = 7;
+    static const int SOC_PNP_CLINT = 8;
+    static const int SOC_PNP_PLIC = 9;
+    static const int SOC_PNP_PNP = 10;
+    static const int SOC_PNP_PBRIDGE0 = 11;
+    static const int SOC_PNP_DMI = 12;
+    static const int SOC_PNP_UART1 = 13;
+    static const int SOC_PNP_SPI = 14;
+    static const int SOC_PNP_TOTAL = 15;
     
     static const int CFG_SOC_UART1_LOG2_FIFOSZ = 4;
     
@@ -135,6 +138,7 @@ SC_MODULE(riscv_soc) {
     sc_signal<bool> w_irq_pnp;
     sc_signal<sc_biguint<CFG_PLIC_IRQ_TOTAL>> wb_ext_irqs;
 
+    axi_sram<CFG_SRAM_LOG2_SIZE> *sram0;
     axi2apb *apbrdg0;
     apb_uart<CFG_SOC_UART1_LOG2_FIFOSZ> *uart1;
     apb_gpio<CFG_SOC_GPIO0_WIDTH> *gpio0;

@@ -66,6 +66,7 @@ riscv_soc::riscv_soc(sc_module_name name)
     apbo("apbo", CFG_BUS1_PSLV_TOTAL),
     dev_pnp("dev_pnp", SOC_PNP_TOTAL) {
 
+    sram0 = 0;
     apbrdg0 = 0;
     uart1 = 0;
     gpio0 = 0;
@@ -116,6 +117,15 @@ riscv_soc::riscv_soc(sc_module_name name)
     group0->i_dmi_apbi(apbi[CFG_BUS1_PSLV_DMI]);
     group0->o_dmi_apbo(apbo[CFG_BUS1_PSLV_DMI]);
     group0->o_dmreset(o_dmreset);
+
+
+    sram0 = new axi_sram<CFG_SRAM_LOG2_SIZE>("sram0", async_reset);
+    sram0->i_clk(i_sys_clk);
+    sram0->i_nrst(i_sys_nrst);
+    sram0->i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_SRAM]);
+    sram0->o_cfg(dev_pnp[SOC_PNP_SRAM]);
+    sram0->i_xslvi(axisi[CFG_BUS0_XSLV_SRAM]);
+    sram0->o_xslvo(axiso[CFG_BUS0_XSLV_SRAM]);
 
 
     uart1 = new apb_uart<CFG_SOC_UART1_LOG2_FIFOSZ>("uart1", async_reset);
@@ -219,6 +229,9 @@ riscv_soc::riscv_soc(sc_module_name name)
 }
 
 riscv_soc::~riscv_soc() {
+    if (sram0) {
+        delete sram0;
+    }
     if (apbrdg0) {
         delete apbrdg0;
     }
@@ -275,6 +288,9 @@ void riscv_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_ddr_xslvo, i_ddr_xslvo.name());
     }
 
+    if (sram0) {
+        sram0->generateVCD(i_vcd, o_vcd);
+    }
     if (apbrdg0) {
         apbrdg0->generateVCD(i_vcd, o_vcd);
     }
@@ -312,6 +328,19 @@ void riscv_soc::comb() {
     // Nullify emty AXI-slots:
     aximo[CFG_BUS0_XMST_DMA] = axi4_master_out_none;
     acpo = axi4_master_out_none;
+
+    // PRCI:
+    o_prci_apbi = apbi[CFG_BUS1_PSLV_PRCI];
+    apbo[CFG_BUS1_PSLV_PRCI] = i_prci_apbo;
+    dev_pnp[SOC_PNP_PRCI] = i_prci_pdevcfg;
+
+    // DDR:
+    o_ddr_xmapinfo = bus0_mapinfo[CFG_BUS0_XSLV_DDR];
+    dev_pnp[SOC_PNP_DDR_AXI] = i_ddr_xdevcfg;
+    o_ddr_pmapinfo = bus1_mapinfo[CFG_BUS1_PSLV_DDR];
+    dev_pnp[SOC_PNP_DDR_APB] = i_ddr_pdevcfg;
+    o_ddr_apbi = apbi[CFG_BUS1_PSLV_DDR];
+    apbo[CFG_BUS1_PSLV_DDR] = i_ddr_apbo;
 }
 
 }  // namespace debugger

@@ -19,12 +19,22 @@
 namespace debugger {
 
 IThread *TcpServerJtagBitBang::createClientThread(const char *name, socket_def skt) {
+    IJtagBitBang *ijtagbb = 0;
+    if (jtagtap_.is_string()) {
+        ijtagbb = static_cast<IJtagBitBang *>(
+            RISCV_get_service_iface(jtagtap_.to_string(), IFACE_JTAG_BITBANG));
+    } else if (jtagtap_.is_list() && jtagtap_.size() == 2) {
+        ijtagbb = static_cast<IJtagBitBang *>(
+            RISCV_get_service_port_iface(jtagtap_[0u].to_string(),
+                                         jtagtap_[1].to_string(),
+                                         IFACE_JTAG_BITBANG));
+    }
 
     ClientThread *cln = new ClientThread(this,
                                          name,
                                          skt,
                                          recvTimeout_.to_int(),
-                                         jtagtap_.to_string());
+                                         ijtagbb);
     cln->run();
     return cln;
 }
@@ -34,10 +44,9 @@ TcpServerJtagBitBang::ClientThread::ClientThread(TcpServerJtagBitBang *parent,
                                                 const char *name,
                                                 socket_def skt,
                                                 int recvTimeout,
-                                                const char *jtagtap)
+                                                IJtagBitBang *ijtagbb)
     : TcpServer::ClientThreadGeneric(parent, name, skt, recvTimeout) {
-    ijtagbb_ = static_cast<IJtagBitBang *>(
-        RISCV_get_service_iface(jtagtap, IFACE_JTAG_BITBANG));
+    ijtagbb_ = ijtagbb;
 }
 
 TcpServerJtagBitBang::ClientThread::~ClientThread() {
