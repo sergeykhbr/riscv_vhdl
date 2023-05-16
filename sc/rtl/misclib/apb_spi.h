@@ -58,20 +58,27 @@ SC_MODULE(apb_spi) {
     static const uint8_t idle = 0;
     static const uint8_t wait_edge = 1;
     static const uint8_t send_data = 2;
-    static const uint8_t ending = 3;
+    static const uint8_t recv_data = 3;
+    static const uint8_t recv_sync = 4;
+    static const uint8_t ending = 5;
 
     struct apb_spi_registers {
         sc_signal<sc_uint<32>> scaler;
         sc_signal<sc_uint<32>> scaler_cnt;
+        sc_signal<sc_uint<16>> wdog;
+        sc_signal<sc_uint<16>> wdog_cnt;
         sc_signal<bool> generate_crc;
+        sc_signal<bool> rx_ena;
+        sc_signal<bool> rx_synced;
+        sc_signal<bool> rx_data_block;                      // Wait 0xFE start data block marker
         sc_signal<bool> level;
         sc_signal<bool> cs;
-        sc_signal<sc_uint<2>> state;
+        sc_signal<sc_uint<3>> state;
+        sc_signal<sc_uint<8>> shiftreg;
         sc_signal<sc_uint<16>> ena_byte_cnt;
         sc_signal<sc_uint<3>> bit_cnt;
         sc_signal<sc_uint<8>> tx_val;
-        sc_signal<sc_uint<8>> tx_shift;
-        sc_signal<sc_uint<8>> rx_shift;
+        sc_signal<sc_uint<8>> rx_val;
         sc_signal<bool> rx_ready;
         sc_signal<sc_uint<7>> crc7;
         sc_signal<sc_uint<16>> crc16;
@@ -86,15 +93,20 @@ SC_MODULE(apb_spi) {
     void apb_spi_r_reset(apb_spi_registers &iv) {
         iv.scaler = 0;
         iv.scaler_cnt = 0;
+        iv.wdog = 0;
+        iv.wdog_cnt = 0;
         iv.generate_crc = 0;
+        iv.rx_ena = 0;
+        iv.rx_synced = 0;
+        iv.rx_data_block = 0;
         iv.level = 1;
         iv.cs = 0;
         iv.state = idle;
+        iv.shiftreg = ~0ul;
         iv.ena_byte_cnt = 0;
         iv.bit_cnt = 0;
         iv.tx_val = 0;
-        iv.tx_shift = ~0ul;
-        iv.rx_shift = 0;
+        iv.rx_val = 0;
         iv.rx_ready = 0;
         iv.crc7 = 0;
         iv.crc16 = 0;
@@ -215,15 +227,20 @@ apb_spi<log2_fifosz>::apb_spi(sc_module_name name,
     sensitive << wb_txfifo_count;
     sensitive << r.scaler;
     sensitive << r.scaler_cnt;
+    sensitive << r.wdog;
+    sensitive << r.wdog_cnt;
     sensitive << r.generate_crc;
+    sensitive << r.rx_ena;
+    sensitive << r.rx_synced;
+    sensitive << r.rx_data_block;
     sensitive << r.level;
     sensitive << r.cs;
     sensitive << r.state;
+    sensitive << r.shiftreg;
     sensitive << r.ena_byte_cnt;
     sensitive << r.bit_cnt;
     sensitive << r.tx_val;
-    sensitive << r.tx_shift;
-    sensitive << r.rx_shift;
+    sensitive << r.rx_val;
     sensitive << r.rx_ready;
     sensitive << r.crc7;
     sensitive << r.crc16;
@@ -268,15 +285,20 @@ void apb_spi<log2_fifosz>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vc
         sc_trace(o_vcd, i_protect, i_protect.name());
         sc_trace(o_vcd, r.scaler, pn + ".r_scaler");
         sc_trace(o_vcd, r.scaler_cnt, pn + ".r_scaler_cnt");
+        sc_trace(o_vcd, r.wdog, pn + ".r_wdog");
+        sc_trace(o_vcd, r.wdog_cnt, pn + ".r_wdog_cnt");
         sc_trace(o_vcd, r.generate_crc, pn + ".r_generate_crc");
+        sc_trace(o_vcd, r.rx_ena, pn + ".r_rx_ena");
+        sc_trace(o_vcd, r.rx_synced, pn + ".r_rx_synced");
+        sc_trace(o_vcd, r.rx_data_block, pn + ".r_rx_data_block");
         sc_trace(o_vcd, r.level, pn + ".r_level");
         sc_trace(o_vcd, r.cs, pn + ".r_cs");
         sc_trace(o_vcd, r.state, pn + ".r_state");
+        sc_trace(o_vcd, r.shiftreg, pn + ".r_shiftreg");
         sc_trace(o_vcd, r.ena_byte_cnt, pn + ".r_ena_byte_cnt");
         sc_trace(o_vcd, r.bit_cnt, pn + ".r_bit_cnt");
         sc_trace(o_vcd, r.tx_val, pn + ".r_tx_val");
-        sc_trace(o_vcd, r.tx_shift, pn + ".r_tx_shift");
-        sc_trace(o_vcd, r.rx_shift, pn + ".r_rx_shift");
+        sc_trace(o_vcd, r.rx_val, pn + ".r_rx_val");
         sc_trace(o_vcd, r.rx_ready, pn + ".r_rx_ready");
         sc_trace(o_vcd, r.crc7, pn + ".r_crc7");
         sc_trace(o_vcd, r.crc16, pn + ".r_crc16");
@@ -307,13 +329,12 @@ void apb_spi<log2_fifosz>::comb() {
     bool v_txfifo_we;
     sc_uint<8> vb_txfifo_wdata;
     bool v_rxfifo_re;
-    bool v_rxfifo_we;
-    sc_uint<8> vb_rxfifo_wdata;
     bool v_inv7;
     sc_uint<7> vb_crc7;
     bool v_inv16;
     sc_uint<16> vb_crc16;
     sc_uint<32> vb_rdata;
+    sc_uint<8> vb_shiftreg_next;
 
     v_posedge = 0;
     v_negedge = 0;
@@ -321,18 +342,17 @@ void apb_spi<log2_fifosz>::comb() {
     v_txfifo_we = 0;
     vb_txfifo_wdata = 0;
     v_rxfifo_re = 0;
-    v_rxfifo_we = 0;
-    vb_rxfifo_wdata = 0;
     v_inv7 = 0;
     vb_crc7 = 0;
     v_inv16 = 0;
     vb_crc16 = 0;
     vb_rdata = 0;
+    vb_shiftreg_next = 0;
 
     v = r;
 
     // CRC7 = x^7 + x^3 + 1
-    v_inv7 = (r.crc7.read()[6] ^ r.tx_shift.read()[7]);
+    v_inv7 = (r.crc7.read()[6] ^ r.shiftreg.read()[7]);
     vb_crc7[6] = r.crc7.read()[5];
     vb_crc7[5] = r.crc7.read()[4];
     vb_crc7[4] = r.crc7.read()[3];
@@ -371,25 +391,32 @@ void apb_spi<log2_fifosz>::comb() {
         }
     }
 
+    if (r.rx_ena.read() == 0) {
+        vb_shiftreg_next = ((r.shiftreg.read()(6, 0) << 1) | 1);
+    } else {
+        vb_shiftreg_next = (r.shiftreg.read()(6, 0), i_miso.read());
+    }
+    if (r.cs.read() == 1) {
+        if (((v_negedge == 1) && (r.rx_ena.read() == 0))
+                || ((v_posedge == 1) && (r.rx_ena.read() == 1))) {
+            v.shiftreg = vb_shiftreg_next;
+        }
+    }
+
     if ((v_negedge == 1) && (r.cs.read() == 1)) {
-        v.tx_shift = ((r.tx_shift.read()(6, 0) << 1) | 1);
         if (r.bit_cnt.read().or_reduce() == 1) {
-            v.bit_cnt = (r.bit_cnt.read() - 1);
+            if ((r.rx_ena.read() == 0)
+                    || ((r.rx_ena.read() == 1) && (r.rx_synced.read() == 1))) {
+                v.bit_cnt = (r.bit_cnt.read() - 1);
+            }
         } else {
             v.cs = 0;
         }
     }
 
+    v.rx_ready = 0;
     if (v_posedge == 1) {
-        if (r.rx_ready.read() == 1) {
-            v.rx_ready = 0;
-            v_rxfifo_we = 1;
-            vb_rxfifo_wdata = r.rx_shift;
-            v.rx_shift = 0;
-        }
-
-        if (r.cs.read() == 1) {
-            v.rx_shift = (r.rx_shift.read()(6, 0), i_miso.read());
+        if ((r.cs.read() == 1) && ((r.rx_ena.read() == 0) || (r.rx_synced.read() == 1))) {
             v.crc7 = vb_crc7;
             v.crc16 = vb_crc16;
         }
@@ -398,10 +425,11 @@ void apb_spi<log2_fifosz>::comb() {
     // Transmitter's state machine:
     switch (r.state.read()) {
     case idle:
+        v.wdog_cnt = r.wdog;
         if (r.ena_byte_cnt.read().or_reduce() == 1) {
-            v_txfifo_re = 1;
-            if (wb_txfifo_count.read().or_reduce() == 0) {
-                // FIFO is empty:
+            v_txfifo_re = (!r.rx_ena);
+            if ((wb_txfifo_count.read().or_reduce() == 0) || (r.rx_ena.read() == 1)) {
+                // FIFO is empty or RX is enabled:
                 v.tx_val = ~0ull;
             } else {
                 v.tx_val = wb_txfifo_rdata;
@@ -417,8 +445,17 @@ void apb_spi<log2_fifosz>::comb() {
         if (v_negedge == 1) {
             v.cs = 1;
             v.bit_cnt = 7;
-            v.tx_shift = r.tx_val;
-            v.state = send_data;
+            if (r.rx_ena.read() == 1) {
+                v.shiftreg = 0;
+                if (r.rx_data_block.read() == 1) {
+                    v.state = recv_sync;
+                } else {
+                    v.state = recv_data;
+                }
+            } else {
+                v.shiftreg = r.tx_val;
+                v.state = send_data;
+            }
         }
         break;
     case send_data:
@@ -440,7 +477,47 @@ void apb_spi<log2_fifosz>::comb() {
             } else {
                 v.state = ending;
             }
-            v.rx_ready = 1;
+        }
+        break;
+    case recv_data:
+        if (v_posedge == 1) {
+            if (r.rx_synced.read() == 0) {
+                v.rx_synced = ((r.cs.read() == 1) && (!i_miso));
+                if (r.wdog_cnt.read().or_reduce() == 1) {
+                    v.wdog_cnt = (r.wdog_cnt.read() - 1);
+                } else if (r.wdog.read().or_reduce() == 0) {
+                    // Wait Start bit infinitely
+                } else {
+                    // Wait Start bit time is out:
+                    v.rx_synced = 1;
+                }
+            }
+            // Check RX shift ready
+            if (r.bit_cnt.read().or_reduce() == 0) {
+                if (r.ena_byte_cnt.read().or_reduce() == 1) {
+                    v.state = wait_edge;
+                    v.ena_byte_cnt = (r.ena_byte_cnt.read() - 1);
+                } else {
+                    v.state = ending;
+                }
+                v.rx_ready = 1;
+                v.rx_val = vb_shiftreg_next;
+            }
+        }
+        break;
+    case recv_sync:
+        if (v_posedge == 1) {
+            if ((vb_shiftreg_next == 0xFE)
+                    || (r.wdog_cnt.read().or_reduce() == 0)) {
+                v.state = ending;
+                v.rx_val = vb_shiftreg_next;
+                v.rx_ready = 1;
+                v.ena_byte_cnt = 0;
+                v.bit_cnt = 0;
+                v.crc16 = 0;
+            } else {
+                v.wdog_cnt = (r.wdog_cnt.read() - 1);
+            }
         }
         break;
     case ending:
@@ -461,15 +538,27 @@ void apb_spi<log2_fifosz>::comb() {
             v.scaler_cnt = 0;
         }
         break;
+    case 0x2:                                               // 0x08: reserved (watchdog)
+        vb_rdata(15, 0) = r.wdog;
+        if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
+            v.wdog = wb_req_wdata.read()(15, 0);
+        }
+        break;
     case 0x11:                                              // 0x44: reserved 4 (txctrl)
         vb_rdata[0] = i_detected.read();                    // [0] sd card inserted
         vb_rdata[1] = i_protect.read();                     // [1] write protect
         vb_rdata[2] = i_miso.read();                        // [2] miso data bit
-        vb_rdata(5, 4) = r.state;                           // [5:4] state machine
+        vb_rdata(6, 4) = r.state;                           // [6:4] state machine
         vb_rdata[7] = r.generate_crc.read();                // [7] Compute and generate CRC as the last Tx byte
+        vb_rdata[8] = r.rx_ena.read();                      // [8] Receive data and write into FIFO only if rx_synced
+        vb_rdata[9] = r.rx_synced.read();                   // [9] rx_ena=1 and start bit received
+        vb_rdata[10] = r.rx_data_block.read();              // [10] rx_data_block=1 receive certain template byte
         vb_rdata(31, 16) = r.ena_byte_cnt;                  // [31:16] Number of bytes to transmit
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             v.generate_crc = wb_req_wdata.read()[7];
+            v.rx_ena = wb_req_wdata.read()[8];
+            v.rx_synced = wb_req_wdata.read()[9];
+            v.rx_data_block = wb_req_wdata.read()[10];
             v.ena_byte_cnt = wb_req_wdata.read()(31, 16);
         }
         break;
@@ -521,8 +610,8 @@ void apb_spi<log2_fifosz>::comb() {
         break;
     }
 
-    w_rxfifo_we = v_rxfifo_we;
-    wb_rxfifo_wdata = vb_rxfifo_wdata;
+    w_rxfifo_we = r.rx_ready;
+    wb_rxfifo_wdata = r.rx_val;
     w_rxfifo_re = v_rxfifo_re;
 
     w_txfifo_we = v_txfifo_we;
@@ -538,7 +627,7 @@ void apb_spi<log2_fifosz>::comb() {
     }
 
     o_sclk = (r.level.read() & r.cs.read());
-    o_mosi = r.tx_shift.read()[7];
+    o_mosi = (r.rx_ena || r.shiftreg.read()[7]);
     o_cs = (!r.cs);
 }
 

@@ -117,11 +117,19 @@ int main() {
 #endif
 
     ESdCardType sdtype = spi_init();
-    if (sdtype != SD_Ver2x_HighCapacity) {
-        printf_uart("SPI.Init . . . .Wrong SD-card(%d)\r\n", sdtype);
+
+    SD_Unknown,
+    printf_uart("%s", "SPI.Init . . . .");
+    if (sdtype == SD_Ver1x) {
+        printf_uart("%s\r\n", "SD1x");
+    } else if (sdtype == SD_Ver2x_StandardCapacity) {
+        printf_uart("%s\r\n", "SD2x");
+    } else if (sdtype == SD_Ver2x_HighCapacity) {
+        printf_uart("%s\r\n", "SDHC");
+    } else {
+        printf_uart("%s", "Wrong SD-card\r\n");
         while (1) {}
     }
-    printf_uart("SPI.Init . . . .%s\r\n", "SDHC");
 
     static const int BBL_IMAGE_SIZE = 10*1024*1024;  // actually ~8MB
 

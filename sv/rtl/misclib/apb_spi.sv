@@ -38,23 +38,30 @@ module apb_spi #(
 import types_amba_pkg::*;
 localparam int fifo_dbits = 8;
 // SPI states
-localparam bit [1:0] idle = 2'h0;
-localparam bit [1:0] wait_edge = 2'h1;
-localparam bit [1:0] send_data = 2'h2;
-localparam bit [1:0] ending = 2'h3;
+localparam bit [2:0] idle = 3'h0;
+localparam bit [2:0] wait_edge = 3'h1;
+localparam bit [2:0] send_data = 3'h2;
+localparam bit [2:0] recv_data = 3'h3;
+localparam bit [2:0] recv_sync = 3'h4;
+localparam bit [2:0] ending = 3'h5;
 
 typedef struct {
     logic [31:0] scaler;
     logic [31:0] scaler_cnt;
+    logic [15:0] wdog;
+    logic [15:0] wdog_cnt;
     logic generate_crc;
+    logic rx_ena;
+    logic rx_synced;
+    logic rx_data_block;                                    // Wait 0xFE start data block marker
     logic level;
     logic cs;
-    logic [1:0] state;
+    logic [2:0] state;
+    logic [7:0] shiftreg;
     logic [15:0] ena_byte_cnt;
     logic [2:0] bit_cnt;
     logic [7:0] tx_val;
-    logic [7:0] tx_shift;
-    logic [7:0] rx_shift;
+    logic [7:0] rx_val;
     logic rx_ready;
     logic [6:0] crc7;
     logic [15:0] crc16;
@@ -69,15 +76,20 @@ typedef struct {
 const apb_spi_registers apb_spi_r_reset = '{
     '0,                                 // scaler
     '0,                                 // scaler_cnt
+    '0,                                 // wdog
+    '0,                                 // wdog_cnt
     1'b0,                               // generate_crc
+    1'b0,                               // rx_ena
+    1'b0,                               // rx_synced
+    1'b0,                               // rx_data_block
     1'h1,                               // level
     1'b0,                               // cs
     idle,                               // state
+    '1,                                 // shiftreg
     '0,                                 // ena_byte_cnt
     '0,                                 // bit_cnt
     '0,                                 // tx_val
-    '1,                                 // tx_shift
-    '0,                                 // rx_shift
+    '0,                                 // rx_val
     1'b0,                               // rx_ready
     '0,                                 // crc7
     '0,                                 // crc16
@@ -167,13 +179,12 @@ begin: comb_proc
     logic v_txfifo_we;
     logic [7:0] vb_txfifo_wdata;
     logic v_rxfifo_re;
-    logic v_rxfifo_we;
-    logic [7:0] vb_rxfifo_wdata;
     logic v_inv7;
     logic [6:0] vb_crc7;
     logic v_inv16;
     logic [15:0] vb_crc16;
     logic [31:0] vb_rdata;
+    logic [7:0] vb_shiftreg_next;
 
     v_posedge = 0;
     v_negedge = 0;
@@ -181,18 +192,17 @@ begin: comb_proc
     v_txfifo_we = 0;
     vb_txfifo_wdata = 0;
     v_rxfifo_re = 0;
-    v_rxfifo_we = 0;
-    vb_rxfifo_wdata = 0;
     v_inv7 = 0;
     vb_crc7 = 0;
     v_inv16 = 0;
     vb_crc16 = 0;
     vb_rdata = 0;
+    vb_shiftreg_next = 0;
 
     v = r;
 
     // CRC7 = x^7 + x^3 + 1
-    v_inv7 = (r.crc7[6] ^ r.tx_shift[7]);
+    v_inv7 = (r.crc7[6] ^ r.shiftreg[7]);
     vb_crc7[6] = r.crc7[5];
     vb_crc7[5] = r.crc7[4];
     vb_crc7[4] = r.crc7[3];
@@ -231,25 +241,32 @@ begin: comb_proc
         end
     end
 
+    if (r.rx_ena == 1'b0) begin
+        vb_shiftreg_next = {r.shiftreg[6: 0], 1'h1};
+    end else begin
+        vb_shiftreg_next = {r.shiftreg[6: 0], i_miso};
+    end
+    if (r.cs == 1'b1) begin
+        if (((v_negedge == 1'b1) && (r.rx_ena == 1'b0))
+                || ((v_posedge == 1'b1) && (r.rx_ena == 1'b1))) begin
+            v.shiftreg = vb_shiftreg_next;
+        end
+    end
+
     if ((v_negedge == 1'b1) && (r.cs == 1'b1)) begin
-        v.tx_shift = {r.tx_shift[6: 0], 1'h1};
         if ((|r.bit_cnt) == 1'b1) begin
-            v.bit_cnt = (r.bit_cnt - 1);
+            if ((r.rx_ena == 1'b0)
+                    || ((r.rx_ena == 1'b1) && (r.rx_synced == 1'b1))) begin
+                v.bit_cnt = (r.bit_cnt - 1);
+            end
         end else begin
             v.cs = 1'b0;
         end
     end
 
+    v.rx_ready = 1'b0;
     if (v_posedge == 1'b1) begin
-        if (r.rx_ready == 1'b1) begin
-            v.rx_ready = 1'b0;
-            v_rxfifo_we = 1'b1;
-            vb_rxfifo_wdata = r.rx_shift;
-            v.rx_shift = '0;
-        end
-
-        if (r.cs == 1'b1) begin
-            v.rx_shift = {r.rx_shift[6: 0], i_miso};
+        if ((r.cs == 1'b1) && ((r.rx_ena == 1'b0) || (r.rx_synced == 1'b1))) begin
             v.crc7 = vb_crc7;
             v.crc16 = vb_crc16;
         end
@@ -258,10 +275,11 @@ begin: comb_proc
     // Transmitter's state machine:
     case (r.state)
     idle: begin
+        v.wdog_cnt = r.wdog;
         if ((|r.ena_byte_cnt) == 1'b1) begin
-            v_txfifo_re = 1'b1;
-            if ((|wb_txfifo_count) == 1'b0) begin
-                // FIFO is empty:
+            v_txfifo_re = (~r.rx_ena);
+            if (((|wb_txfifo_count) == 1'b0) || (r.rx_ena == 1'b1)) begin
+                // FIFO is empty or RX is enabled:
                 v.tx_val = '1;
             end else begin
                 v.tx_val = wb_txfifo_rdata;
@@ -277,8 +295,17 @@ begin: comb_proc
         if (v_negedge == 1'b1) begin
             v.cs = 1'b1;
             v.bit_cnt = 7;
-            v.tx_shift = r.tx_val;
-            v.state = send_data;
+            if (r.rx_ena == 1'b1) begin
+                v.shiftreg = '0;
+                if (r.rx_data_block == 1'b1) begin
+                    v.state = recv_sync;
+                end else begin
+                    v.state = recv_data;
+                end
+            end else begin
+                v.shiftreg = r.tx_val;
+                v.state = send_data;
+            end
         end
     end
     send_data: begin
@@ -300,7 +327,47 @@ begin: comb_proc
             end else begin
                 v.state = ending;
             end
-            v.rx_ready = 1'b1;
+        end
+    end
+    recv_data: begin
+        if (v_posedge == 1'b1) begin
+            if (r.rx_synced == 1'b0) begin
+                v.rx_synced = ((r.cs == 1'b1) && (~i_miso));
+                if ((|r.wdog_cnt) == 1'b1) begin
+                    v.wdog_cnt = (r.wdog_cnt - 1);
+                end else if ((|r.wdog) == 1'b0) begin
+                    // Wait Start bit infinitely
+                end else begin
+                    // Wait Start bit time is out:
+                    v.rx_synced = 1'b1;
+                end
+            end
+            // Check RX shift ready
+            if ((|r.bit_cnt) == 1'b0) begin
+                if ((|r.ena_byte_cnt) == 1'b1) begin
+                    v.state = wait_edge;
+                    v.ena_byte_cnt = (r.ena_byte_cnt - 1);
+                end else begin
+                    v.state = ending;
+                end
+                v.rx_ready = 1'b1;
+                v.rx_val = vb_shiftreg_next;
+            end
+        end
+    end
+    recv_sync: begin
+        if (v_posedge == 1'b1) begin
+            if ((vb_shiftreg_next == 8'hfe)
+                    || ((|r.wdog_cnt) == 1'b0)) begin
+                v.state = ending;
+                v.rx_val = vb_shiftreg_next;
+                v.rx_ready = 1'b1;
+                v.ena_byte_cnt = '0;
+                v.bit_cnt = '0;
+                v.crc16 = '0;
+            end else begin
+                v.wdog_cnt = (r.wdog_cnt - 1);
+            end
         end
     end
     ending: begin
@@ -321,15 +388,27 @@ begin: comb_proc
             v.scaler_cnt = '0;
         end
     end
+    10'h002: begin                                          // 0x08: reserved (watchdog)
+        vb_rdata[15: 0] = r.wdog;
+        if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
+            v.wdog = wb_req_wdata[15: 0];
+        end
+    end
     10'h011: begin                                          // 0x44: reserved 4 (txctrl)
         vb_rdata[0] = i_detected;                           // [0] sd card inserted
         vb_rdata[1] = i_protect;                            // [1] write protect
         vb_rdata[2] = i_miso;                               // [2] miso data bit
-        vb_rdata[5: 4] = r.state;                           // [5:4] state machine
+        vb_rdata[6: 4] = r.state;                           // [6:4] state machine
         vb_rdata[7] = r.generate_crc;                       // [7] Compute and generate CRC as the last Tx byte
+        vb_rdata[8] = r.rx_ena;                             // [8] Receive data and write into FIFO only if rx_synced
+        vb_rdata[9] = r.rx_synced;                          // [9] rx_ena=1 and start bit received
+        vb_rdata[10] = r.rx_data_block;                     // [10] rx_data_block=1 receive certain template byte
         vb_rdata[31: 16] = r.ena_byte_cnt;                  // [31:16] Number of bytes to transmit
         if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
             v.generate_crc = wb_req_wdata[7];
+            v.rx_ena = wb_req_wdata[8];
+            v.rx_synced = wb_req_wdata[9];
+            v.rx_data_block = wb_req_wdata[10];
             v.ena_byte_cnt = wb_req_wdata[31: 16];
         end
     end
@@ -381,8 +460,8 @@ begin: comb_proc
     end
     endcase
 
-    w_rxfifo_we = v_rxfifo_we;
-    wb_rxfifo_wdata = vb_rxfifo_wdata;
+    w_rxfifo_we = r.rx_ready;
+    wb_rxfifo_wdata = r.rx_val;
     w_rxfifo_re = v_rxfifo_re;
 
     w_txfifo_we = v_txfifo_we;
@@ -398,7 +477,7 @@ begin: comb_proc
     end
 
     o_sclk = (r.level & r.cs);
-    o_mosi = r.tx_shift[7];
+    o_mosi = (r.rx_ena || r.shiftreg[7]);
     o_cs = (~r.cs);
 
     rin = v;
