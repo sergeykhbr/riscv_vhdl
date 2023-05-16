@@ -125,10 +125,16 @@ static uint32_t spi_recv_sync_data_block(SpiDriverDataType *p) {
     return p->rxbuf[0];
 }
 
-int read_rx_crc16(SpiDriverDataType *p) {
-    int ret = 0;
-    p->crc16_rx = (uint8_t)(p->map->rxdata & 0xFF);
-    p->crc16_rx = (p->crc16_rx << 8) | (uint8_t)(p->map->rxdata & 0xFF);
+uint16_t spi_recv_data_block_crc16(SpiDriverDataType *p) {
+    uint16_t ret = 0;
+    // [8] rx_ena=1
+    // [9] rx_synced=1
+    // [10] rx_data_block=0
+    // [31:16] number of bytes=2
+    p->map->rsrv4 = (1 << 8) | (1 << 9) | (2 << 16);
+    while (!spi_is_idle(p)) {}
+    ret = (uint16_t)(p->map->rxdata & 0xFF);
+    ret = (ret << 8) | (uint16_t)(p->map->rxdata & 0xFF);
     return ret;
 }
 
@@ -159,6 +165,7 @@ ESdCardType spi_sd_card_init(SpiDriverDataType *p) {
     uint8_t R1;
     uint32_t R3;
     uint32_t R7;
+    uint32_t OCR;
     uint32_t HCS;   // High Capacity Support
     int watchdog;
     p->etype = SD_Unknown;
@@ -210,8 +217,8 @@ ESdCardType spi_sd_card_init(SpiDriverDataType *p) {
 
     // R3 is 40-bits split on [R1 (8-bits),R3 (32-bits)]
     R1 = get_r1_response(p);
-    R3 = get_ui32(p);
-    printf_uart("R3: %02x %08x\r\n", R1, R3);
+    OCR = get_ui32(p);
+    printf_uart("OCR: %02x %08x\r\n", R1, OCR);
     if (R1 != 0x01) {
         p->etype = SD_Unknown;
         return p->etype;
@@ -226,13 +233,13 @@ ESdCardType spi_sd_card_init(SpiDriverDataType *p) {
     // Argument: none; Response R1
     watchdog = 0;
     do {
-        HCS = 0;
+        HCS = OCR & 0xFFFFF;  // [23:0] VDD Voltage window
         if (p->etype == SD_Ver2x_StandardCapacity) {
             printf_uart("%s", "CMD55: 00000000 ");
             spi_send_cmd(p, CMD55, 0);
             R1 = get_r1_response(p);
             printf_uart("R1: %02x\r\n", R1);
-            HCS = (1 << 30);
+            HCS |= (1 << 30);
         }
 
         printf_uart("ACMD41: %08x ", HCS);
@@ -325,11 +332,8 @@ int spi_sd_read_block(SpiDriverDataType *p) {
 
     // Expected CRC16:
     p->crc16_calculated = (uint16_t)p->map->crc16;
-
-    // CRC16
-    spi_recv_bytes(p, 2, RX_IS_SYNCED);
-    p->crc16_rx = (p->rxbuf[0] & 0xFF);
-    p->crc16_rx = (p->crc16_rx << 8) | (p->rxbuf[1] & 0xFF);
+    // Received CRC16:
+    p->crc16_rx = spi_recv_data_block_crc16(p);
     return 512;
 }
 
