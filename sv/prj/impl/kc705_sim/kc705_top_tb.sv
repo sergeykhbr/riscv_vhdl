@@ -177,8 +177,7 @@ module kc705_top_tb;
   sim_uart_rx
   #(
     .p_inst_num(0),
-//      .p_uart_clk_half_period   (3.125ns)
-      .p_uart_clk_half_period   (270.3125ns) // True 115200 UART speed
+      .p_uart_clk_half_period   (270.3125ns / (2**SIM_UART_SPEED_UP_RATE)) // True 115200 UART speed
   ) UART_RX (
     .scaler  (32'd8),
     .rx      (o_uart1_td),
