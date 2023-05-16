@@ -17,7 +17,10 @@
 
 `timescale 1ns/10ps
 
-module riscv_soc(
+module riscv_soc #(
+    parameter int sim_uart_speedup_rate = 0                 // simulation UART speed-up: 0=no speed up, 1=2x, 2=4x, etc
+)
+(
     input logic i_sys_nrst,                                 // Power-on system reset active LOW
     input logic i_sys_clk,                                  // System/Bus clock
     input logic i_dbg_nrst,                                 // Reset from Debug interface (DMI). Reset everything except DMI
@@ -262,7 +265,8 @@ axi_sram #(
 //!          0x00000000_10060000..0x00000000_10060fff (4 KB total)
 apb_uart #(
     .async_reset(async_reset),
-    .log2_fifosz(CFG_SOC_UART1_LOG2_FIFOSZ)
+    .log2_fifosz(CFG_SOC_UART1_LOG2_FIFOSZ),
+    .sim_speedup_rate(sim_uart_speedup_rate)
 ) uart1 (
     .i_clk(i_sys_clk),
     .i_nrst(i_sys_nrst),

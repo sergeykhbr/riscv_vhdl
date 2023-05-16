@@ -14,7 +14,9 @@
 //! limitations under the License.
 //!
 
-module asic_top
+module asic_top #(
+    parameter int sim_uart_speedup_rate = 0                 // simulation UART speed-up: 0=no speed up, 1=2x, 2=4x, etc
+)
 ( 
     //! Input reset. Active HIGH.
     input                     i_rst,
@@ -156,7 +158,9 @@ module asic_top
     .o_apbo(prci_apbo)
   );
   
-  riscv_soc soc0(
+  riscv_soc #(
+    .sim_uart_speedup_rate(sim_uart_speedup_rate)
+  ) soc0 (
     .i_sys_nrst (w_sys_nrst),
     .i_sys_clk (w_sys_clk),
     .i_dbg_nrst(w_dbg_nrst),

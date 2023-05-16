@@ -23,6 +23,9 @@
 module kc705_top_tb;
 
     parameter real HALF_PERIOD = `SCLK_PERIOD / 2.0;
+    // UART simulation speed-up rate. Directly use as a divider for the 'scaler' register
+    // 0=no speed-up, 1=2x speed, 2=4x speed, 3=8x speed, 4=16x speed, .. etc
+    parameter int SIM_UART_SPEED_UP_RATE = 3;
 
     localparam DDR3_CS_WIDTH              = 1;
     localparam DDR3_MEMORY_WIDTH          = 8;
@@ -125,7 +128,8 @@ module kc705_top_tb;
 
   kc705_top #(
     .SIM_BYPASS_INIT_CAL("FAST"),  // "FAST"-for simulation true; "OFF"
-    .SIMULATION("TRUE")
+    .SIMULATION("TRUE"),
+    .sim_uart_speedup_rate(SIM_UART_SPEED_UP_RATE)
   ) tt (
     .i_rst (i_rst),
     .i_sclk_p (i_sclk_p),

@@ -43,11 +43,6 @@ localparam int CFG_BOOTROM_LOG2_SIZE = 16;                  // 16=64 KB (default
 //     - Change bootloader stack pointer if need less than 512 KB
 localparam int CFG_SRAM_LOG2_SIZE = 18;                     // 19=512 KB (KC705); 21=2 MB (ASIC); ..
 
-// UART simulation speed-up rate. Directly use as a divider for the 'scaler' register
-// 0=no speed-up, 1=2x speed, 2=4x speed, 3=8x speed, 4=16x speed, .. etc
-localparam int CFG_UART_SPEED_UP_RATE = 0;
-
-
 localparam CFG_TOPDIR = "../../../../";
 //! @brief   HEX-image for the initialization of the Boot ROM.
 //! @details This file is used by \e inferred ROM implementation.

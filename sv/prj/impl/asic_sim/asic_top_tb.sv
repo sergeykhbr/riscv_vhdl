@@ -23,6 +23,10 @@
 module asic_top_tb;
 
     parameter real HALF_PERIOD = `SCLK_PERIOD / 2.0;
+    // UART simulation speed-up rate. Directly use as a divider for the 'scaler' register
+    // 0=no speed-up, 1=2x speed, 2=4x speed, 3=8x speed, 4=16x speed, .. etc
+    parameter int SIM_UART_SPEED_UP_RATE = 3;
+
 
     //! Input reset. Active HIGH.
     logic                     i_rst;
@@ -93,7 +97,9 @@ module asic_top_tb;
     clk_cnt <= clk_cnt + 1;
   end
 
-  asic_top tt(
+  asic_top #(
+    .sim_uart_speedup_rate(SIM_UART_SPEED_UP_RATE)
+  ) tt (
     .i_rst (i_rst),
     .i_sclk_p (i_sclk_p),
     .i_sclk_n (i_sclk_n),
@@ -126,7 +132,7 @@ module asic_top_tb;
   #(
     .p_inst_num(0),
 //      .p_uart_clk_half_period   (3.125ns)
-      .p_uart_clk_half_period   (270.3125ns)// / (2**config_target_pkg::CFG_UART_SPEED_UP_RATE)) // True 115200 UART speed
+      .p_uart_clk_half_period   (270.3125ns / (2**SIM_UART_SPEED_UP_RATE)) // True 115200 UART speed
   ) UART_RX (
     .scaler  (32'd8),
     .rx      (o_uart1_td),

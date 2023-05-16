@@ -18,7 +18,8 @@
 
 module apb_uart #(
     parameter bit async_reset = 1'b0,
-    parameter int log2_fifosz = 4
+    parameter int log2_fifosz = 4,
+    parameter int sim_speedup_rate = 0                      // simulation speed-up: 0=no speed up, 1=2x, 2=4x, etc
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -33,7 +34,6 @@ module apb_uart #(
 );
 
 import types_amba_pkg::*;
-localparam int speedup_rate = 0;                            // simulation speed-up: 0=no speed up, 1=2x, 2=4x, etc
 // Rx/Tx states
 localparam bit [2:0] idle = 3'h0;
 localparam bit [2:0] startbit = 3'h1;
@@ -428,7 +428,7 @@ begin: comb_proc
     10'h006: begin                                          // 0x18: scaler
         vb_rdata = r.scaler;
         if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
-            v.scaler = wb_req_wdata[30: speedup_rate];
+            v.scaler = wb_req_wdata[30: sim_speedup_rate];
             v.scaler_cnt = '0;
         end
     end
