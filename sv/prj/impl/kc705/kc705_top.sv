@@ -180,7 +180,9 @@ module kc705_top #(
   );
 
  
-  riscv_soc soc0(
+  riscv_soc #(
+    .sim_uart_speedup_rate(sim_uart_speedup_rate)
+  ) soc0 (
     .i_sys_nrst (w_sys_nrst),
     .i_sys_clk (w_sys_clk),
     .i_dbg_nrst(w_dbg_nrst),

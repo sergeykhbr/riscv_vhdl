@@ -168,6 +168,7 @@ ESdCardType spi_sd_card_init(SpiDriverDataType *p) {
     uint32_t OCR;
     uint32_t HCS;   // High Capacity Support
     int watchdog;
+    clint_map *clint = (clint_map *)ADDR_BUS0_XSLV_CLINT;
     p->etype = SD_Unknown;
 
     // Reset SD-card
@@ -179,6 +180,11 @@ ESdCardType spi_sd_card_init(SpiDriverDataType *p) {
         R1 = get_r1_response(p);
         printf_uart("R1: %02x\r\n", R1);
     } while (R1 != 0x01);
+
+    // Delay 2000 usec as implemented in uboot
+    watchdog = clint->mtime;
+    watchdog += 2 * SYS_HZ / 1000;
+    while (clint->mtime < watchdog) {}
     
 
     // Interface Condition Command:
