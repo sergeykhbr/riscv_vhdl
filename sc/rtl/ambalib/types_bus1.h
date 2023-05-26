@@ -41,6 +41,8 @@ static const int CFG_BUS1_PSLV_DDR = 5;
 static const int CFG_BUS1_PSLV_PNP = 6;
 // Total number of the APB slaves devices on Bus[1].
 static const int CFG_BUS1_PSLV_TOTAL = 7;
+// Necessary bus width to store index + 1.
+static const int CFG_BUS1_PSLV_LOG2_TOTAL = 3;              // $clog2(CFG_BUS1_PSLV_TOTAL + 1)
 
 typedef sc_vector<sc_signal<apb_in_type>> bus1_apb_in_vector;
 typedef sc_vector<sc_signal<apb_out_type>> bus1_apb_out_vector;

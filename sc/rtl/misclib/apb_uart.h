@@ -41,16 +41,17 @@ SC_MODULE(apb_uart) {
     SC_HAS_PROCESS(apb_uart);
 
     apb_uart(sc_module_name name,
-             bool async_reset);
+             bool async_reset,
+             int sim_speedup_rate);
     virtual ~apb_uart();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
     bool async_reset_;
+    int sim_speedup_rate_;
 
     static const int fifosz = (1 << log2_fifosz);
-    static const int speedup_rate = 0;
     // Rx/Tx states
     static const uint8_t idle = 0;
     static const uint8_t startbit = 1;
@@ -110,7 +111,8 @@ SC_MODULE(apb_uart) {
 
 template<int log2_fifosz>
 apb_uart<log2_fifosz>::apb_uart(sc_module_name name,
-                                bool async_reset)
+                                bool async_reset,
+                                int sim_speedup_rate)
     : sc_module(name),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
@@ -123,6 +125,7 @@ apb_uart<log2_fifosz>::apb_uart(sc_module_name name,
     o_irq("o_irq") {
 
     async_reset_ = async_reset;
+    sim_speedup_rate_ = sim_speedup_rate;
     pslv0 = 0;
 
     pslv0 = new apb_slv("pslv0", async_reset,
@@ -588,7 +591,7 @@ void apb_uart<log2_fifosz>::comb() {
     case 6:                                                 // 0x18: scaler
         vb_rdata = r.scaler;
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
-            v.scaler = wb_req_wdata.read()(30, speedup_rate);
+            v.scaler = wb_req_wdata.read()(30, sim_speedup_rate_);
             v.scaler_cnt = 0;
         }
         break;

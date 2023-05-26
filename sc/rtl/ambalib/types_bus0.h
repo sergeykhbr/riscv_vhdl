@@ -31,6 +31,8 @@ static const int CFG_BUS0_XMST_GROUP0 = 0;
 static const int CFG_BUS0_XMST_DMA = 1;
 // Total Number of master devices on system bus.
 static const int CFG_BUS0_XMST_TOTAL = 2;
+// Necessary bus width to store index + 1.
+static const int CFG_BUS0_XMST_LOG2_TOTAL = 2;              // $clog2(CFG_BUS0_XMST_TOTAL + 1)
 
 
 // @defgroup slave_id_group AMBA AXI slaves generic IDs.
@@ -52,6 +54,8 @@ static const int CFG_BUS0_XSLV_PBRIDGE = 4;
 static const int CFG_BUS0_XSLV_DDR = 5;
 // Total number of the slaves devices.
 static const int CFG_BUS0_XSLV_TOTAL = 6;
+// Necessary bus width to store index + 1.
+static const int CFG_BUS0_XSLV_LOG2_TOTAL = 3;              // $clog2(CFG_BUS0_XSLV_TOTAL + 1)
 
 typedef sc_vector<sc_signal<axi4_master_in_type>> bus0_xmst_in_vector;
 typedef sc_vector<sc_signal<axi4_master_out_type>> bus0_xmst_out_vector;

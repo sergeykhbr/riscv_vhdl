@@ -22,7 +22,7 @@
 
 namespace debugger {
 
-SC_MODULE(axi2apb) {
+SC_MODULE(axi2apb_bus1) {
  public:
     sc_in<bool> i_clk;                                      // CPU clock
     sc_in<bool> i_nrst;                                     // Reset: active LOW
@@ -37,11 +37,11 @@ SC_MODULE(axi2apb) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(axi2apb);
+    SC_HAS_PROCESS(axi2apb_bus1);
 
-    axi2apb(sc_module_name name,
-            bool async_reset);
-    virtual ~axi2apb();
+    axi2apb_bus1(sc_module_name name,
+                 bool async_reset);
+    virtual ~axi2apb_bus1();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -53,9 +53,9 @@ SC_MODULE(axi2apb) {
     static const uint8_t State_access = 2;
     static const uint8_t State_out = 3;
 
-    struct axi2apb_registers {
+    struct axi2apb_bus1_registers {
         sc_signal<sc_uint<3>> state;
-        sc_signal<sc_uint<3>> selidx;                       // TODO: clog2 depending slaves number
+        sc_signal<sc_uint<CFG_BUS1_PSLV_LOG2_TOTAL>> selidx;
         sc_signal<bool> pvalid;
         sc_signal<sc_uint<32>> paddr;
         sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> pwdata;
@@ -69,7 +69,7 @@ SC_MODULE(axi2apb) {
         sc_signal<sc_uint<8>> size;
     } v, r;
 
-    void axi2apb_r_reset(axi2apb_registers &iv) {
+    void axi2apb_bus1_r_reset(axi2apb_bus1_registers &iv) {
         iv.state = State_Idle;
         iv.selidx = 0;
         iv.pvalid = 0;

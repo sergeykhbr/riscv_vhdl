@@ -19,7 +19,8 @@
 
 namespace debugger {
 
-riscv_soc::riscv_soc(sc_module_name name)
+riscv_soc::riscv_soc(sc_module_name name,
+                     int sim_uart_speedup_rate)
     : sc_module(name),
     i_sys_nrst("i_sys_nrst"),
     i_sys_clk("i_sys_clk"),
@@ -66,23 +67,36 @@ riscv_soc::riscv_soc(sc_module_name name)
     apbo("apbo", CFG_BUS1_PSLV_TOTAL),
     dev_pnp("dev_pnp", SOC_PNP_TOTAL) {
 
+    sim_uart_speedup_rate_ = sim_uart_speedup_rate;
+    bus0 = 0;
+    bus1 = 0;
     sram0 = 0;
-    apbrdg0 = 0;
     uart1 = 0;
     gpio0 = 0;
     spi0 = 0;
     group0 = 0;
 
-    apbrdg0 = new axi2apb("apbrdg0", async_reset);
-    apbrdg0->i_clk(i_sys_clk);
-    apbrdg0->i_nrst(i_sys_nrst);
-    apbrdg0->i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_PBRIDGE]);
-    apbrdg0->o_cfg(dev_pnp[SOC_PNP_PBRIDGE0]);
-    apbrdg0->i_xslvi(axisi[CFG_BUS0_XSLV_PBRIDGE]);
-    apbrdg0->o_xslvo(axiso[CFG_BUS0_XSLV_PBRIDGE]);
-    apbrdg0->i_apbo(apbo);
-    apbrdg0->o_apbi(apbi);
-    apbrdg0->o_mapinfo(bus1_mapinfo);
+    bus0 = new axictrl_bus0("bus0", async_reset);
+    bus0->i_clk(i_sys_clk);
+    bus0->i_nrst(i_sys_nrst);
+    bus0->o_cfg(dev_pnp[SOC_PNP_XCTRL0]);
+    bus0->i_xmsto(aximo);
+    bus0->o_xmsti(aximi);
+    bus0->i_xslvo(axiso);
+    bus0->o_xslvi(axisi);
+    bus0->o_mapinfo(bus0_mapinfo);
+
+
+    bus1 = new axi2apb_bus1("bus1", async_reset);
+    bus1->i_clk(i_sys_clk);
+    bus1->i_nrst(i_sys_nrst);
+    bus1->i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_PBRIDGE]);
+    bus1->o_cfg(dev_pnp[SOC_PNP_PBRIDGE0]);
+    bus1->i_xslvi(axisi[CFG_BUS0_XSLV_PBRIDGE]);
+    bus1->o_xslvo(axiso[CFG_BUS0_XSLV_PBRIDGE]);
+    bus1->i_apbo(apbo);
+    bus1->o_apbi(apbi);
+    bus1->o_mapinfo(bus1_mapinfo);
 
 
     group0 = new Workgroup("group0", async_reset,
@@ -128,7 +142,8 @@ riscv_soc::riscv_soc(sc_module_name name)
     sram0->o_xslvo(axiso[CFG_BUS0_XSLV_SRAM]);
 
 
-    uart1 = new apb_uart<CFG_SOC_UART1_LOG2_FIFOSZ>("uart1", async_reset);
+    uart1 = new apb_uart<CFG_SOC_UART1_LOG2_FIFOSZ>("uart1", async_reset,
+                                                    sim_uart_speedup_rate);
     uart1->i_clk(i_sys_clk);
     uart1->i_nrst(i_sys_nrst);
     uart1->i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_UART1]);
@@ -229,11 +244,14 @@ riscv_soc::riscv_soc(sc_module_name name)
 }
 
 riscv_soc::~riscv_soc() {
+    if (bus0) {
+        delete bus0;
+    }
+    if (bus1) {
+        delete bus1;
+    }
     if (sram0) {
         delete sram0;
-    }
-    if (apbrdg0) {
-        delete apbrdg0;
     }
     if (uart1) {
         delete uart1;
@@ -288,11 +306,14 @@ void riscv_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_ddr_xslvo, i_ddr_xslvo.name());
     }
 
+    if (bus0) {
+        bus0->generateVCD(i_vcd, o_vcd);
+    }
+    if (bus1) {
+        bus1->generateVCD(i_vcd, o_vcd);
+    }
     if (sram0) {
         sram0->generateVCD(i_vcd, o_vcd);
-    }
-    if (apbrdg0) {
-        apbrdg0->generateVCD(i_vcd, o_vcd);
     }
     if (uart1) {
         uart1->generateVCD(i_vcd, o_vcd);

@@ -39,7 +39,6 @@
 #include "tap_bitbang.h"
 #include "bus_slv.h"
 #include "ambalib/types_amba.h"
-#include "ambalib/axi2apb.h"
 #include "riverlib/workgroup.h"
 #include <systemc.h>
 

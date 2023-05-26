@@ -23,8 +23,9 @@
 #include "riverlib/river_cfg.h"
 #include "riverlib/types_river.h"
 #include "riverlib/workgroup.h"
+#include "ambalib/axictrl_bus0.h"
+#include "ambalib/axi2apb_bus1.h"
 #include "misclib/axi_sram.h"
-#include "ambalib/axi2apb.h"
 #include "misclib/apb_uart.h"
 #include "misclib/apb_gpio.h"
 #include "misclib/apb_spi.h"
@@ -79,12 +80,15 @@ SC_MODULE(riscv_soc) {
 
     SC_HAS_PROCESS(riscv_soc);
 
-    riscv_soc(sc_module_name name);
+    riscv_soc(sc_module_name name,
+              int sim_uart_speedup_rate);
     virtual ~riscv_soc();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
+    int sim_uart_speedup_rate_;
+
     static const bool async_reset = CFG_ASYNC_RESET;
     
     static const int SOC_PNP_XCTRL0 = 0;
@@ -138,8 +142,9 @@ SC_MODULE(riscv_soc) {
     sc_signal<bool> w_irq_pnp;
     sc_signal<sc_biguint<CFG_PLIC_IRQ_TOTAL>> wb_ext_irqs;
 
+    axictrl_bus0 *bus0;
+    axi2apb_bus1 *bus1;
     axi_sram<CFG_SRAM_LOG2_SIZE> *sram0;
-    axi2apb *apbrdg0;
     apb_uart<CFG_SOC_UART1_LOG2_FIFOSZ> *uart1;
     apb_gpio<CFG_SOC_GPIO0_WIDTH> *gpio0;
     apb_spi<CFG_SOC_SPI0_LOG2_FIFOSZ> *spi0;

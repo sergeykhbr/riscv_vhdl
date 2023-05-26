@@ -14,13 +14,13 @@
 //  limitations under the License.
 // 
 
-#include "axi2apb.h"
+#include "axi2apb_bus1.h"
 #include "api_core.h"
 
 namespace debugger {
 
-axi2apb::axi2apb(sc_module_name name,
-                 bool async_reset)
+axi2apb_bus1::axi2apb_bus1(sc_module_name name,
+                           bool async_reset)
     : sc_module(name),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
@@ -92,13 +92,13 @@ axi2apb::axi2apb(sc_module_name name,
     sensitive << i_clk.pos();
 }
 
-axi2apb::~axi2apb() {
+axi2apb_bus1::~axi2apb_bus1() {
     if (axi0) {
         delete axi0;
     }
 }
 
-void axi2apb::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+void axi2apb_bus1::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     std::string pn(name());
     if (o_vcd) {
         sc_trace(o_vcd, i_mapinfo, i_mapinfo.name());
@@ -125,7 +125,7 @@ void axi2apb::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
 }
 
-void axi2apb::comb() {
+void axi2apb_bus1::comb() {
     int iselidx;
     apb_in_type vapbi[CFG_BUS1_PSLV_TOTAL];
     apb_out_type vapbo[(CFG_BUS1_PSLV_TOTAL + 1)];
@@ -231,7 +231,7 @@ void axi2apb::comb() {
     vapbi[iselidx].pprot = r.pprot;
 
     if (!async_reset_ && i_nrst.read() == 0) {
-        axi2apb_r_reset(v);
+        axi2apb_bus1_r_reset(v);
     }
 
     for (int i = 0; i < CFG_BUS1_PSLV_TOTAL; i++) {
@@ -240,9 +240,9 @@ void axi2apb::comb() {
     }
 }
 
-void axi2apb::registers() {
+void axi2apb_bus1::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
-        axi2apb_r_reset(r);
+        axi2apb_bus1_r_reset(r);
     } else {
         r = v;
     }
