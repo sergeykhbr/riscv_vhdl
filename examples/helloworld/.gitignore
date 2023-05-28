@@ -1,2 +1,5 @@
 obj
-bin
+*.elf
+*.dump
+*.lst
+*.err

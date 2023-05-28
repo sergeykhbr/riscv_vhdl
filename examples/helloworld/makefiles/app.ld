@@ -5,17 +5,20 @@ OUTPUT_ARCH( "riscv" )
 /*----------------------------------------------------------------------*/
 SECTIONS
 {
-
   /* text: test code section */
-  . = 0x08000000;
+  . = 0x10000;
+  _ftext = .;
   .text : 
   {
-    ../../helloworld/makefiles/obj/main.o (.text.startup)
-    *(.text)
+    KEEP(*(.isr_vector))
+    *(.text*)
   }
 
   /* data segment */
-  .data : { *(.data) }
+  .data : {
+    *(.data)
+    *(.dtb)
+  }
 
   .sdata : {
     *(.srodata.cst16) *(.srodata.cst8) *(.srodata.cst4) *(.srodata.cst2) *(.srodata*)

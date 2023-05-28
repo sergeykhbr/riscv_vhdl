@@ -4,19 +4,21 @@ CC=riscv64-unknown-elf-gcc
 CPP=riscv64-unknown-elf-gcc
 OBJDUMP=riscv64-unknown-elf-objdump
 
-CFLAGS= -c -fPIC -g -O0
-LDFLAGS=-static -T app.ld -nostartfiles
+CFLAGS= -c -fPIC -g -static -O0 -DSYS_HZ=40000000
+LDFLAGS= -T app.ld -nostartfiles
 INCL_KEY=-I
 DIR_KEY=-B
 
 
 # include sub-folders list
 INCL_PATH=\
+	$(TOP_DIR)common/system \
 	$(TOP_DIR)common \
 	$(TOP_DIR)helloworld/src
 
 # source files directories list:
 SRC_PATH = \
+	$(TOP_DIR)common/system \
 	$(TOP_DIR)helloworld/src
 
 LIB_NAMES = \
@@ -27,26 +29,28 @@ LIB_NAMES = \
 
 VPATH = $(SRC_PATH)
 
-SOURCES = \
+SOURCES = startup \
 	main \
 	helloworld
 
 OBJ_FILES = $(addsuffix .o,$(SOURCES))
-EXECUTABLE = helloworld
-DUMPFILE = $(EXECUTABLE).dump
-HEXFILE = $(EXECUTABLE).hex
-LSTFILE = $(EXECUTABLE).lst
+COMMONNAME = helloworld
+EXECUTABLE = $(COMMONNAME).elf
+DUMPFILE = $(COMMONNAME).dump
+HEXFILE_LO = $(COMMONNAME)_lo.hex
+HEXFILE_HI = $(COMMONNAME)_hi.hex
+LSTFILE = $(COMMONNAME).lst
 
 all: example
 
 .PHONY: $(EXECUTABLE)
 
 
-example: $(EXECUTABLE) $(DUMPFILE) $(HEXFILE)
+example: $(EXECUTABLE) $(DUMPFILE) $(HEXFILE_HI)
 
-$(HEXFILE): $(EXECUTABLE)
-	echo elf2rawx $(addprefix $(ELF_DIR)/,$<) -h -f 262144 -l 8 -o $(addprefix $(ELF_DIR)/,$(EXECUTABLE).hex)
-	elf2rawx $(addprefix $(ELF_DIR)/,$<) -h -f 262144 -l 8 -o $(addprefix $(ELF_DIR)/,$(EXECUTABLE).hex)
+$(HEXFILE_HI): $(EXECUTABLE)
+	echo elf2rawx $(addprefix $(ELF_DIR)/,$<) -h -f 65536 -l 8 -o $(addprefix $(ELF_DIR)/,$(HEXFILE_HI)) -o $(addprefix $(ELF_DIR)/,$(HEXFILE_LO))
+	elf2rawx $(addprefix $(ELF_DIR)/,$<) -h -f 65536 -l 8 -o $(addprefix $(ELF_DIR)/,$(HEXFILE_HI)) -o $(addprefix $(ELF_DIR)/,$(HEXFILE_LO))
 
 $(DUMPFILE): $(EXECUTABLE)
 	echo $(OBJDUMP) --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.data $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)

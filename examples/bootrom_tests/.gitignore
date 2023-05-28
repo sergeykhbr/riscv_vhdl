@@ -3,4 +3,4 @@ linuxbuild/obj
 *.dump
 *.lst
 *.err
-*bootrom_tests.hex
+

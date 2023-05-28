@@ -13,14 +13,6 @@
                 ['Length',8192]
                 ]}]},
     {'Class':'MemorySimClass','Instances':[
-          {'Name':'fwimage0','Attr':[
-                ['LogLevel',1],
-                ['InitFile','${REPO_PATH}/../examples/dhrystone21/makefiles/binarm/dhrystone21.hex'],
-                ['ReadOnly',true],
-                ['BaseAddress',0x00100000],
-                ['Length',0x40000]
-                ]}]},
-    {'Class':'MemorySimClass','Instances':[
           {'Name':'sram0','Attr':[
                 ['LogLevel',1],
                 ['InitFile','${REPO_PATH}/../examples/dhrystone21/makefiles/binarm/dhrystone21.hex'],

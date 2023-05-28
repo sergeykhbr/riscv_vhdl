@@ -35,7 +35,7 @@ void print_uart(const char *buf, int sz) {
 void helloWorld() {
     char ss[256];
     int ss_len;
-    ss_len = sprintf(ss, "Hellow World - %d!!!!\n", 1);
+    ss_len = sprintf(ss, "Hello World - %d!!!!\n", 1);
     print_uart(ss, ss_len);
 }
 
