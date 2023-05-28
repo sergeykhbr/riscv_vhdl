@@ -41,7 +41,7 @@ SC_MODULE(ram_bytes_tech) {
 
  private:
     static const int dbytes = (1 << log2_dbytes);
-    static const int dbits = (8 * dbytes);
+    static const int dbits = (8 * (1 << log2_dbytes));
 
     sc_signal<sc_uint<(abits - log2_dbytes)>> wb_addr;
     sc_signal<bool> wb_wena[dbytes];

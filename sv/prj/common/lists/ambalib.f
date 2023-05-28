@@ -1,10 +1,11 @@
 ${RTL_HOME}/ambalib/types_amba_pkg.sv
 ${RTL_HOME}/ambalib/types_bus0_pkg.sv
 ${RTL_HOME}/ambalib/types_bus1_pkg.sv
-${RTL_HOME}/ambalib/axi2apb_pkg.sv
+${RTL_HOME}/ambalib/axictrl_bus0_pkg.sv
+${RTL_HOME}/ambalib/axi2apb_bus1_pkg.sv
 ${RTL_HOME}/ambalib/apb_slv_pkg.sv
 ${RTL_HOME}/ambalib/apb_slv.sv
 ${RTL_HOME}/ambalib/axi_slv_pkg.sv
 ${RTL_HOME}/ambalib/axi_slv.sv
 ${RTL_HOME}/ambalib/axictrl_bus0.sv
-${RTL_HOME}/ambalib/axi2apb.sv
+${RTL_HOME}/ambalib/axi2apb_bus1.sv

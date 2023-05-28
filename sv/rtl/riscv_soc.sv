@@ -97,24 +97,23 @@ logic w_irq_pnp;
 logic [CFG_PLIC_IRQ_TOTAL-1:0] wb_ext_irqs;
 
 
-//! @brief AXI4 controller.
 axictrl_bus0 #(
-    .async_reset(CFG_ASYNC_RESET)
-) ctrl0 (
+    .async_reset(async_reset)
+) bus0 (
     .i_clk(i_sys_clk),
     .i_nrst(i_sys_nrst),
     .o_cfg(dev_pnp[SOC_PNP_XCTRL0]),
-    .i_slvo(axiso),
-    .i_msto(aximo),
-    .o_slvi(axisi),
-    .o_msti(aximi),
+    .i_xmsto(aximo),
+    .o_xmsti(aximi),
+    .i_xslvo(axiso),
+    .o_xslvi(axisi),
     .o_mapinfo(bus0_mapinfo)
 );
 
-/// AXI to APB bridge
-axi2apb #(
+
+axi2apb_bus1 #(
     .async_reset(async_reset)
-) apbrdg0 (
+) bus1 (
     .i_clk(i_sys_clk),
     .i_nrst(i_sys_nrst),
     .i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_PBRIDGE]),
@@ -125,7 +124,6 @@ axi2apb #(
     .o_apbi(apbi),
     .o_mapinfo(bus1_mapinfo)
 );
-
 
 Workgroup #(
     .async_reset(async_reset),

@@ -38,6 +38,8 @@ localparam int CFG_BUS1_PSLV_DDR = 5;
 localparam int CFG_BUS1_PSLV_PNP = 6;
 // Total number of the APB slaves devices on Bus[1].
 localparam int CFG_BUS1_PSLV_TOTAL = 7;
+// Necessary bus width to store index + 1.
+localparam int CFG_BUS1_PSLV_LOG2_TOTAL = 3;                // $clog2(CFG_BUS1_PSLV_TOTAL + 1)
 
 typedef apb_in_type bus1_apb_in_vector[0:CFG_BUS1_PSLV_TOTAL - 1];
 typedef apb_out_type bus1_apb_out_vector[0:CFG_BUS1_PSLV_TOTAL - 1];

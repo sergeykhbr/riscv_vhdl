@@ -16,7 +16,7 @@
 
 `timescale 1ns/10ps
 
-module axi2apb #(
+module axi2apb_bus1 #(
     parameter bit async_reset = 1'b0
 )
 (
@@ -33,7 +33,7 @@ module axi2apb #(
 
 import types_amba_pkg::*;
 import types_bus1_pkg::*;
-import axi2apb_pkg::*;
+import axi2apb_bus1_pkg::*;
 
 logic w_req_valid;
 logic [CFG_SYSBUS_ADDR_BITS-1:0] wb_req_addr;
@@ -43,7 +43,7 @@ logic [CFG_SYSBUS_DATA_BITS-1:0] wb_req_wdata;
 logic [CFG_SYSBUS_DATA_BYTES-1:0] wb_req_wstrb;
 logic w_req_last;
 logic w_req_ready;
-axi2apb_registers r, rin;
+axi2apb_bus1_registers r, rin;
 
 axi_slv #(
     .async_reset(async_reset),
@@ -72,7 +72,7 @@ axi_slv #(
 
 always_comb
 begin: comb_proc
-    axi2apb_registers v;
+    axi2apb_bus1_registers v;
     int iselidx;
     apb_in_type vapbi[0: CFG_BUS1_PSLV_TOTAL-1];
     apb_out_type vapbo[0: (CFG_BUS1_PSLV_TOTAL + 1)-1];
@@ -178,7 +178,7 @@ begin: comb_proc
     vapbi[iselidx].pprot = r.pprot;
 
     if (~async_reset && i_nrst == 1'b0) begin
-        v = axi2apb_r_reset;
+        v = axi2apb_bus1_r_reset;
     end
 
     for (int i = 0; i < CFG_BUS1_PSLV_TOTAL; i++) begin
@@ -194,7 +194,7 @@ generate
 
         always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
             if (i_nrst == 1'b0) begin
-                r <= axi2apb_r_reset;
+                r <= axi2apb_bus1_r_reset;
             end else begin
                 r <= rin;
             end
@@ -211,4 +211,4 @@ generate
     end: no_rst_gen
 endgenerate
 
-endmodule: axi2apb
+endmodule: axi2apb_bus1
