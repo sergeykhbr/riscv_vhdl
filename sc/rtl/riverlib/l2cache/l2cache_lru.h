@@ -78,6 +78,7 @@ SC_MODULE(L2CacheLru) {
     static const int abus = CFG_CPU_ADDR_BITS;
     static const int lnbits = CFG_L2_LOG2_BYTES_PER_LINE;
     static const int flbits = L2TAG_FL_TOTAL;
+    
     // State machine states:
     static const uint8_t State_Idle = 0;
     static const uint8_t State_CheckHit = 1;

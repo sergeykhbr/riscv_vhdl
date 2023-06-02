@@ -25,10 +25,12 @@
 #include "riverlib/workgroup.h"
 #include "ambalib/axictrl_bus0.h"
 #include "ambalib/axi2apb_bus1.h"
+#include "misclib/axi_rom.h"
 #include "misclib/axi_sram.h"
 #include "misclib/apb_uart.h"
 #include "misclib/apb_gpio.h"
 #include "misclib/apb_spi.h"
+#include "sv_func.h"
 
 namespace debugger {
 
@@ -91,6 +93,7 @@ SC_MODULE(riscv_soc) {
 
     static const bool async_reset = CFG_ASYNC_RESET;
     
+    
     static const int SOC_PNP_XCTRL0 = 0;
     static const int SOC_PNP_GROUP0 = 1;
     static const int SOC_PNP_BOOTROM = 2;
@@ -108,15 +111,21 @@ SC_MODULE(riscv_soc) {
     static const int SOC_PNP_SPI = 14;
     static const int SOC_PNP_TOTAL = 15;
     
-    static const int CFG_SOC_UART1_LOG2_FIFOSZ = 4;
+    static const int SOC_UART1_LOG2_FIFOSZ = 4;
     
-    static const int CFG_SOC_GPIO0_WIDTH = 12;
+    static const int SOC_GPIO0_WIDTH = 12;
     
-    static const int CFG_SOC_SPI0_LOG2_FIFOSZ = 9;
+    static const int SOC_SPI0_LOG2_FIFOSZ = 9;
+    
+    // Number of contexts in PLIC controller.
     // Example FU740: S7 Core0 (M) + 4xU74 Cores (M+S).
-    static const int CFG_PLIC_CONTEXT_TOTAL = 9;
+    static const int SOC_PLIC_CONTEXT_TOTAL = 9;
     // Any number up to 1024. Zero interrupt must be 0.
-    static const int CFG_PLIC_IRQ_TOTAL = 73;
+    static const int SOC_PLIC_IRQ_TOTAL = 73;
+    
+    // Hardware SoC Identificator.
+    // Read Only unique platform identificator that could be read by FW
+    static const uint32_t SOC_HW_ID = 0x20220903;
 
     typedef sc_vector<sc_signal<dev_config_type>> soc_pnp_vector;
 
@@ -134,20 +143,21 @@ SC_MODULE(riscv_soc) {
     sc_signal<sc_uint<64>> wb_clint_mtimer;
     sc_signal<sc_uint<CFG_CPU_MAX>> wb_clint_msip;
     sc_signal<sc_uint<CFG_CPU_MAX>> wb_clint_mtip;
-    sc_signal<sc_uint<CFG_PLIC_CONTEXT_TOTAL>> wb_plic_xeip;
+    sc_signal<sc_uint<SOC_PLIC_CONTEXT_TOTAL>> wb_plic_xeip;
     sc_signal<sc_uint<CFG_CPU_MAX>> wb_plic_meip;
     sc_signal<sc_uint<CFG_CPU_MAX>> wb_plic_seip;
     sc_signal<bool> w_irq_uart1;
-    sc_signal<sc_uint<CFG_SOC_GPIO0_WIDTH>> wb_irq_gpio;
+    sc_signal<sc_uint<SOC_GPIO0_WIDTH>> wb_irq_gpio;
     sc_signal<bool> w_irq_pnp;
-    sc_signal<sc_biguint<CFG_PLIC_IRQ_TOTAL>> wb_ext_irqs;
+    sc_signal<sc_biguint<SOC_PLIC_IRQ_TOTAL>> wb_ext_irqs;
 
     axictrl_bus0 *bus0;
     axi2apb_bus1 *bus1;
+    axi_rom<CFG_BOOTROM_LOG2_SIZE> *rom0;
     axi_sram<CFG_SRAM_LOG2_SIZE> *sram0;
-    apb_uart<CFG_SOC_UART1_LOG2_FIFOSZ> *uart1;
-    apb_gpio<CFG_SOC_GPIO0_WIDTH> *gpio0;
-    apb_spi<CFG_SOC_SPI0_LOG2_FIFOSZ> *spi0;
+    apb_uart<SOC_UART1_LOG2_FIFOSZ> *uart1;
+    apb_gpio<SOC_GPIO0_WIDTH> *gpio0;
+    apb_spi<SOC_SPI0_LOG2_FIFOSZ> *spi0;
     Workgroup *group0;
 
 };

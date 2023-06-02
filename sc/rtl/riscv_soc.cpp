@@ -19,6 +19,8 @@
 
 namespace debugger {
 
+static std::string SOC_BOOTROM_FILE_HEX = "../../../../examples/bootrom_tests/linuxbuild/bin/bootrom_tests";
+
 riscv_soc::riscv_soc(sc_module_name name,
                      int sim_uart_speedup_rate)
     : sc_module(name),
@@ -70,6 +72,7 @@ riscv_soc::riscv_soc(sc_module_name name,
     sim_uart_speedup_rate_ = sim_uart_speedup_rate;
     bus0 = 0;
     bus1 = 0;
+    rom0 = 0;
     sram0 = 0;
     uart1 = 0;
     gpio0 = 0;
@@ -133,6 +136,16 @@ riscv_soc::riscv_soc(sc_module_name name,
     group0->o_dmreset(o_dmreset);
 
 
+    rom0 = new axi_rom<CFG_BOOTROM_LOG2_SIZE>("rom0", async_reset,
+                                              SOC_BOOTROM_FILE_HEX);
+    rom0->i_clk(i_sys_clk);
+    rom0->i_nrst(i_sys_nrst);
+    rom0->i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_BOOTROM]);
+    rom0->o_cfg(dev_pnp[SOC_PNP_SRAM]);
+    rom0->i_xslvi(axisi[CFG_BUS0_XSLV_BOOTROM]);
+    rom0->o_xslvo(axiso[CFG_BUS0_XSLV_BOOTROM]);
+
+
     sram0 = new axi_sram<CFG_SRAM_LOG2_SIZE>("sram0", async_reset);
     sram0->i_clk(i_sys_clk);
     sram0->i_nrst(i_sys_nrst);
@@ -142,8 +155,8 @@ riscv_soc::riscv_soc(sc_module_name name,
     sram0->o_xslvo(axiso[CFG_BUS0_XSLV_SRAM]);
 
 
-    uart1 = new apb_uart<CFG_SOC_UART1_LOG2_FIFOSZ>("uart1", async_reset,
-                                                    sim_uart_speedup_rate);
+    uart1 = new apb_uart<SOC_UART1_LOG2_FIFOSZ>("uart1", async_reset,
+                                                sim_uart_speedup_rate);
     uart1->i_clk(i_sys_clk);
     uart1->i_nrst(i_sys_nrst);
     uart1->i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_UART1]);
@@ -155,7 +168,7 @@ riscv_soc::riscv_soc(sc_module_name name,
     uart1->o_irq(w_irq_uart1);
 
 
-    gpio0 = new apb_gpio<CFG_SOC_GPIO0_WIDTH>("gpio0", async_reset);
+    gpio0 = new apb_gpio<SOC_GPIO0_WIDTH>("gpio0", async_reset);
     gpio0->i_clk(i_sys_clk);
     gpio0->i_nrst(i_sys_nrst);
     gpio0->i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_GPIO]);
@@ -168,7 +181,7 @@ riscv_soc::riscv_soc(sc_module_name name,
     gpio0->o_irq(wb_irq_gpio);
 
 
-    spi0 = new apb_spi<CFG_SOC_SPI0_LOG2_FIFOSZ>("spi0", async_reset);
+    spi0 = new apb_spi<SOC_SPI0_LOG2_FIFOSZ>("spi0", async_reset);
     spi0->i_clk(i_sys_clk);
     spi0->i_nrst(i_sys_nrst);
     spi0->i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_SPI]);
@@ -250,6 +263,9 @@ riscv_soc::~riscv_soc() {
     if (bus1) {
         delete bus1;
     }
+    if (rom0) {
+        delete rom0;
+    }
     if (sram0) {
         delete sram0;
     }
@@ -312,6 +328,9 @@ void riscv_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (bus1) {
         bus1->generateVCD(i_vcd, o_vcd);
     }
+    if (rom0) {
+        rom0->generateVCD(i_vcd, o_vcd);
+    }
     if (sram0) {
         sram0->generateVCD(i_vcd, o_vcd);
     }
@@ -330,18 +349,18 @@ void riscv_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void riscv_soc::comb() {
-    sc_biguint<CFG_PLIC_IRQ_TOTAL> vb_ext_irqs;
+    sc_biguint<SOC_PLIC_IRQ_TOTAL> vb_ext_irqs;
 
     vb_ext_irqs = 0;
 
 
     // assign interrupts:
     vb_ext_irqs(22, 0) = 0;
-    vb_ext_irqs(((23 + CFG_SOC_GPIO0_WIDTH) - 1), 23) = wb_irq_gpio;// FU740: 16 bits, current 12-bits
+    vb_ext_irqs(((23 + SOC_GPIO0_WIDTH) - 1), 23) = wb_irq_gpio;// FU740: 16 bits, current 12-bits
     vb_ext_irqs[39] = w_irq_uart1.read();
     vb_ext_irqs(69, 40) = 0;
     vb_ext_irqs[70] = w_irq_pnp.read();
-    vb_ext_irqs((CFG_PLIC_IRQ_TOTAL - 1), 71) = 0;
+    vb_ext_irqs((SOC_PLIC_IRQ_TOTAL - 1), 71) = 0;
     wb_ext_irqs = vb_ext_irqs;
 
     o_jtag_vref = 1;

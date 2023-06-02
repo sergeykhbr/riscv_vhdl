@@ -63,3 +63,7 @@ EXPORTS
 	RISCV_register_timer
 	RISCV_unregister_timer
 	RISCV_system
+	RISCV_file_open
+	RISCV_file_read
+	RISCV_file_write
+	RISCV_file_close

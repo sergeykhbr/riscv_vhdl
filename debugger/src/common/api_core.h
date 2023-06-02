@@ -333,6 +333,19 @@ int RISCV_read_json_file(const char *filename, void *outattr);
 /** Write configuration string to JSON formatted file. */
 void RISCV_write_json_file(const char *filename, const char *s);
 
+/** Generic file operation API */
+/** Open file with the specified directory */
+file_def *RISCV_file_open(const char *fname, const char *attr);
+
+/** Read file into buffer */
+int RISCV_file_read(file_def *f, char *buf, int sz);
+
+/** Write buffer into file */
+int RISCV_file_write(file_def *f, char *buf, int sz);
+
+/** Close file handler */
+void RISCV_file_close(file_def *f);
+
 #ifdef __cplusplus
 }
 #endif

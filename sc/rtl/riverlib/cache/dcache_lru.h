@@ -95,6 +95,7 @@ SC_MODULE(DCacheLru) {
     static const int abus = CFG_CPU_ADDR_BITS;
     static const int lnbits = CFG_LOG2_L1CACHE_BYTES_PER_LINE;
     static const int flbits = DTAG_FL_TOTAL;
+    
     // State machine states:
     static const uint8_t State_Idle = 0;
     static const uint8_t State_CheckHit = 1;

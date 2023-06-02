@@ -43,6 +43,7 @@
 #include <termios.h>  // work with console
 #include <errno.h>
 #endif
+#include <stdio.h>
 
 namespace debugger {
 
@@ -81,6 +82,7 @@ namespace debugger {
     #  define RV_PRI64 "ll"
     # endif
 #endif
+typedef FILE file_def;
 
 typedef struct LibThreadType {
     lib_thread_func func;

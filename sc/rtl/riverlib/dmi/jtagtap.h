@@ -61,9 +61,11 @@ SC_MODULE(jtagtap) {
     static const uint8_t DMISTAT_RESERVED = 0x1;
     static const uint8_t DMISTAT_FAILED = 0x2;
     static const uint8_t DMISTAT_BUSY = 0x3;
+    
     // DTMCONTROL register bits
     static const int DTMCONTROL_DMIRESET = 16;
     static const int DTMCONTROL_DMIHARDRESET = 17;
+    
     // JTAG states:
     static const uint8_t RESET_TAP = 0;
     static const uint8_t IDLE = 1;

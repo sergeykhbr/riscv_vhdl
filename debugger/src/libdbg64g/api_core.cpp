@@ -980,5 +980,22 @@ int RISCV_read_json_file(const char *filename, void *outattr) {
     return sz;
 }
 
+file_def *RISCV_file_open(const char *fname, const char *attr) {
+    file_def *f = fopen(fname, attr);
+    return f;
+}
+
+int RISCV_file_read(file_def *f, char *buf, int sz) {
+    return static_cast<int>(fread(buf, 1, sz, f));
+}
+
+int RISCV_file_write(file_def *f, char *buf, int sz) {
+    return static_cast<int>(fwrite(buf, 1, sz, f));
+}
+
+void RISCV_file_close(file_def *f) {
+    fclose(f);
+}
+
 }  // namespace debugger
 
