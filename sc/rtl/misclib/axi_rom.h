@@ -86,7 +86,7 @@ axi_rom<abits>::axi_rom(sc_module_name name,
 
     xslv0 = new axi_slv("xslv0", async_reset,
                          VENDOR_OPTIMITECH,
-                         OPTIMITECH_SRAM);
+                         OPTIMITECH_ROM);
     xslv0->i_clk(i_clk);
     xslv0->i_nrst(i_nrst);
     xslv0->i_mapinfo(i_mapinfo);

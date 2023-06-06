@@ -74,6 +74,7 @@ riscv_soc::riscv_soc(sc_module_name name,
     bus1 = 0;
     rom0 = 0;
     sram0 = 0;
+    plic0 = 0;
     uart1 = 0;
     gpio0 = 0;
     spi0 = 0;
@@ -153,6 +154,18 @@ riscv_soc::riscv_soc(sc_module_name name,
     sram0->o_cfg(dev_pnp[SOC_PNP_SRAM]);
     sram0->i_xslvi(axisi[CFG_BUS0_XSLV_SRAM]);
     sram0->o_xslvo(axiso[CFG_BUS0_XSLV_SRAM]);
+
+
+    plic0 = new plic<SOC_PLIC_CONTEXT_TOTAL,
+                     SOC_PLIC_IRQ_TOTAL>("plic0", async_reset);
+    plic0->i_clk(i_sys_clk);
+    plic0->i_nrst(i_sys_nrst);
+    plic0->i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_PLIC]);
+    plic0->o_cfg(dev_pnp[SOC_PNP_PLIC]);
+    plic0->i_xslvi(axisi[CFG_BUS0_XSLV_PLIC]);
+    plic0->o_xslvo(axiso[CFG_BUS0_XSLV_PLIC]);
+    plic0->i_irq_request(wb_ext_irqs);
+    plic0->o_ip(wb_plic_xeip);
 
 
     uart1 = new apb_uart<SOC_UART1_LOG2_FIFOSZ>("uart1", async_reset,
@@ -269,6 +282,9 @@ riscv_soc::~riscv_soc() {
     if (sram0) {
         delete sram0;
     }
+    if (plic0) {
+        delete plic0;
+    }
     if (uart1) {
         delete uart1;
     }
@@ -334,6 +350,9 @@ void riscv_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (sram0) {
         sram0->generateVCD(i_vcd, o_vcd);
     }
+    if (plic0) {
+        plic0->generateVCD(i_vcd, o_vcd);
+    }
     if (uart1) {
         uart1->generateVCD(i_vcd, o_vcd);
     }
@@ -349,8 +368,10 @@ void riscv_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void riscv_soc::comb() {
+    sc_uint<1> v_gnd1;                                      // 1
     sc_biguint<SOC_PLIC_IRQ_TOTAL> vb_ext_irqs;
 
+    v_gnd1 = 0;
     vb_ext_irqs = 0;
 
 
@@ -362,6 +383,19 @@ void riscv_soc::comb() {
     vb_ext_irqs[70] = w_irq_pnp.read();
     vb_ext_irqs((SOC_PLIC_IRQ_TOTAL - 1), 71) = 0;
     wb_ext_irqs = vb_ext_irqs;
+
+    // FU740 implements 5 cores (we implement only 4):
+    //     Hart0 - M-mode only (S7 Core RV64IMAC)
+    //     Hart1..4 - M+S modes (U74 Cores RV64GC)
+    // Hart4 ignored
+    wb_plic_meip = (wb_plic_xeip.read()[5],
+            wb_plic_xeip.read()[3],
+            wb_plic_xeip.read()[1],
+            wb_plic_xeip.read()[0]);
+    wb_plic_seip = (wb_plic_xeip.read()[6],
+            wb_plic_xeip.read()[4],
+            wb_plic_xeip.read()[2],
+            v_gnd1);
 
     o_jtag_vref = 1;
 
