@@ -43,19 +43,4 @@ localparam int CFG_BOOTROM_LOG2_SIZE = 16;                  // 16=64 KB (default
 //     - Change bootloader stack pointer if need less than 512 KB
 localparam int CFG_SRAM_LOG2_SIZE = 18;                     // 19=512 KB (KC705); 21=2 MB (ASIC); ..
 
-localparam CFG_TOPDIR = "../../../../";
-//! @brief   HEX-image for the initialization of the Boot ROM.
-//! @details This file is used by \e inferred ROM implementation.
-localparam CFG_BOOTROM_FILE =
-                {CFG_TOPDIR, "examples/bootrom_tests/linuxbuild/bin/bootrom_tests"};
-//            {CFG_TOPDIR, "examples/boot/linuxbuild/bin/bootimage"};
-localparam CFG_BOOTROM_FILE_HEX = {CFG_BOOTROM_FILE, ".hex"};
-
-
-// @brief Hardware SoC Identificator.
-//
-// @details Read Only unique platform identificator that could be
-//          read by firmware from the Plug'n'Play support module.
-localparam bit [31:0] CFG_HW_ID = 32'h20221101;
-
 endpackage: config_target_pkg

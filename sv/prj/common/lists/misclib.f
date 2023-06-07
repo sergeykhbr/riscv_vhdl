@@ -7,7 +7,7 @@ ${RTL_HOME}/misclib/apb_uart.sv
 ${RTL_HOME}/misclib/apb_gpio.sv
 ${RTL_HOME}/misclib/apb_spi.sv
 ${RTL_HOME}/misclib/apb_pnp.sv
-${RTL_HOME}/misclib/axi4_rom.sv
+${RTL_HOME}/misclib/axi_rom.sv
 ${RTL_HOME}/misclib/axi_sram.sv
 ${RTL_HOME}/misclib/clint.sv
 ${RTL_HOME}/misclib/plic.sv

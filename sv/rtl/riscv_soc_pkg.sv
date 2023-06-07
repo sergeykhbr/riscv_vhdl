@@ -25,6 +25,7 @@ import workgroup_pkg::*;
 
 localparam bit async_reset = CFG_ASYNC_RESET;
 
+
 localparam int SOC_PNP_XCTRL0 = 0;
 localparam int SOC_PNP_GROUP0 = 1;
 localparam int SOC_PNP_BOOTROM = 2;
@@ -42,15 +43,24 @@ localparam int SOC_PNP_UART1 = 13;
 localparam int SOC_PNP_SPI = 14;
 localparam int SOC_PNP_TOTAL = 15;
 
-localparam int CFG_SOC_UART1_LOG2_FIFOSZ = 4;
+localparam int SOC_UART1_LOG2_FIFOSZ = 4;
 
-localparam int CFG_SOC_GPIO0_WIDTH = 12;
+localparam int SOC_GPIO0_WIDTH = 12;
 
-localparam int CFG_SOC_SPI0_LOG2_FIFOSZ = 9;
+localparam int SOC_SPI0_LOG2_FIFOSZ = 9;
+
+// Number of contexts in PLIC controller.
 // Example FU740: S7 Core0 (M) + 4xU74 Cores (M+S).
-localparam int CFG_PLIC_CONTEXT_TOTAL = 9;
+localparam int SOC_PLIC_CONTEXT_TOTAL = 9;
 // Any number up to 1024. Zero interrupt must be 0.
-localparam int CFG_PLIC_IRQ_TOTAL = 73;
+localparam int SOC_PLIC_IRQ_TOTAL = 73;
+
+// HEX-image for the initialization of the Boot ROM.
+localparam string SOC_BOOTROM_FILE_HEX = "../../../../examples/bootrom_tests/linuxbuild/bin/bootrom_tests";
+
+// Hardware SoC Identificator.
+// Read Only unique platform identificator that could be read by FW
+localparam bit [31:0] SOC_HW_ID = 32'h20220903;
 
 typedef dev_config_type soc_pnp_vector[0:SOC_PNP_TOTAL - 1];
 

@@ -88,13 +88,13 @@ soc_pnp_vector dev_pnp;
 logic [63:0] wb_clint_mtimer;
 logic [CFG_CPU_MAX-1:0] wb_clint_msip;
 logic [CFG_CPU_MAX-1:0] wb_clint_mtip;
-logic [CFG_PLIC_CONTEXT_TOTAL-1:0] wb_plic_xeip;
+logic [SOC_PLIC_CONTEXT_TOTAL-1:0] wb_plic_xeip;
 logic [CFG_CPU_MAX-1:0] wb_plic_meip;
 logic [CFG_CPU_MAX-1:0] wb_plic_seip;
 logic w_irq_uart1;
-logic [CFG_SOC_GPIO0_WIDTH-1:0] wb_irq_gpio;
+logic [SOC_GPIO0_WIDTH-1:0] wb_irq_gpio;
 logic w_irq_pnp;
-logic [CFG_PLIC_IRQ_TOTAL-1:0] wb_ext_irqs;
+logic [SOC_PLIC_IRQ_TOTAL-1:0] wb_ext_irqs;
 
 
 axictrl_bus0 #(
@@ -161,28 +161,20 @@ Workgroup #(
     .o_dmreset(o_dmreset)
 );
 
-  ////////////////////////////////////
-  //! @brief BOOT ROM module instance with the AXI4 interface.
-  //! @details Map address:
-  //!          0x00000000_00010000..0x00000000_0001ffff (64 KB total upto 0x0100_0000 on FU740)
-  axi4_rom #(
+axi_rom #(
+    .async_reset(async_reset),
     .abits(CFG_BOOTROM_LOG2_SIZE),
-    .async_reset(CFG_ASYNC_RESET),
-    .filename(CFG_BOOTROM_FILE)
-  ) boot0 (
-    .clk(i_sys_clk),
-    .nrst(i_sys_nrst),
+    .filename(SOC_BOOTROM_FILE_HEX)
+) rom0 (
+    .i_clk(i_sys_clk),
+    .i_nrst(i_sys_nrst),
     .i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_BOOTROM]),
-    .cfg(dev_pnp[SOC_PNP_BOOTROM]),
-    .i(axisi[CFG_BUS0_XSLV_BOOTROM]),
-    .o(axiso[CFG_BUS0_XSLV_BOOTROM])
-  );
+    .o_cfg(dev_pnp[SOC_PNP_SRAM]),
+    .i_xslvi(axisi[CFG_BUS0_XSLV_BOOTROM]),
+    .o_xslvo(axiso[CFG_BUS0_XSLV_BOOTROM])
+);
 
 
-////////////////////////////////////
-//! Internal SRAM module instance with the AXI4 interface.
-//! @details Map address:
-//!          0x00000000_08000000..0x00000000_081fffff (2MB on FU740)
 axi_sram #(
     .async_reset(async_reset),
     .abits(CFG_SRAM_LOG2_SIZE)
@@ -220,8 +212,8 @@ axi_sram #(
   //!          0x00000000_0C000000..0x00000000_0fffffff (64 MB total)
 plic #(
     .async_reset(async_reset),
-    .ctxmax(CFG_PLIC_CONTEXT_TOTAL),
-    .irqmax(CFG_PLIC_IRQ_TOTAL)
+    .ctxmax(SOC_PLIC_CONTEXT_TOTAL),
+    .irqmax(SOC_PLIC_IRQ_TOTAL)
 ) plic0 (
     .i_clk(i_sys_clk),
     .i_nrst(i_sys_nrst),
@@ -232,13 +224,6 @@ plic #(
     .i_irq_request(wb_ext_irqs),
     .o_ip(wb_plic_xeip)
 );
-  // FU740 implements 5 cores (we implement only 4):
-  //   Hart0 - M-mode only (S7 Core RV64IMAC)
-  //   Hart1..4 - M+S modes (U74 Cores RV64GC)
-  // Hart4 ignored
-  assign wb_plic_meip = {wb_plic_xeip[5], wb_plic_xeip[3], wb_plic_xeip[1], wb_plic_xeip[0]};
-  assign wb_plic_seip = {wb_plic_xeip[6], wb_plic_xeip[4], wb_plic_xeip[2], 1'b0};
-
 
   ////////////////////////////////////
   //! External DDR module instance with the AXI4 interface.
@@ -263,7 +248,7 @@ plic #(
 //!          0x00000000_10060000..0x00000000_10060fff (4 KB total)
 apb_uart #(
     .async_reset(async_reset),
-    .log2_fifosz(CFG_SOC_UART1_LOG2_FIFOSZ),
+    .log2_fifosz(SOC_UART1_LOG2_FIFOSZ),
     .sim_speedup_rate(sim_uart_speedup_rate)
 ) uart1 (
     .i_clk(i_sys_clk),
@@ -283,7 +268,7 @@ apb_uart #(
 //!          0x00000000_10060000..0x00000000_10060fff (4 KB total)
 apb_gpio  #(
     .async_reset(CFG_ASYNC_RESET),
-    .width(CFG_SOC_GPIO0_WIDTH)
+    .width(SOC_GPIO0_WIDTH)
 ) gpio0 (
     .i_clk(i_sys_clk),
     .i_nrst(i_sys_nrst),
@@ -302,7 +287,7 @@ apb_gpio  #(
 //! @brief SD-card SPI controller.
 apb_spi #(
     .async_reset(async_reset),
-    .log2_fifosz(CFG_SOC_SPI0_LOG2_FIFOSZ)
+    .log2_fifosz(SOC_SPI0_LOG2_FIFOSZ)
 ) spi0 (
     .i_clk(i_sys_clk),
     .i_nrst(i_sys_nrst),
@@ -326,10 +311,10 @@ apb_spi #(
 apb_pnp #(
     .async_reset(CFG_ASYNC_RESET),
     .cfg_slots(SOC_PNP_TOTAL),
-    .hw_id(CFG_HW_ID),
+    .hw_id(SOC_HW_ID),
     .cpu_max(CFG_CPU_NUM[3:0]), //CFG_CPU_MAX[3:0]),
     .l2cache_ena(CFG_L2CACHE_ENA),
-    .plic_irq_max(CFG_PLIC_IRQ_TOTAL[7:0])
+    .plic_irq_max(SOC_PLIC_IRQ_TOTAL[7:0])
 ) pnp0 (
     .sys_clk(i_sys_clk),
     .nrst(i_sys_nrst),
@@ -344,21 +329,36 @@ apb_pnp #(
 
 always_comb
 begin: comb_proc
-    logic [CFG_PLIC_IRQ_TOTAL-1:0] vb_ext_irqs;
+    logic v_gnd1;                                           // 1
+    logic [SOC_PLIC_IRQ_TOTAL-1:0] vb_ext_irqs;
 
-    vb_ext_irqs = '0;
+    v_gnd1 = 0;
+    vb_ext_irqs = 0;
 
 
     // assign interrupts:
     vb_ext_irqs[22: 0] = '0;
-    vb_ext_irqs[((23 + CFG_SOC_GPIO0_WIDTH) - 1): 23] = wb_irq_gpio;// FU740: 16 bits, current 12-bits
+    vb_ext_irqs[((23 + SOC_GPIO0_WIDTH) - 1): 23] = wb_irq_gpio;// FU740: 16 bits, current 12-bits
     vb_ext_irqs[39] = w_irq_uart1;
     vb_ext_irqs[69: 40] = '0;
     vb_ext_irqs[70] = w_irq_pnp;
-    vb_ext_irqs[(CFG_PLIC_IRQ_TOTAL - 1): 71] = '0;
+    vb_ext_irqs[(SOC_PLIC_IRQ_TOTAL - 1): 71] = '0;
     wb_ext_irqs = vb_ext_irqs;
 
-//    o_jtag_vref = 1'b1;
+    // FU740 implements 5 cores (we implement only 4):
+    //     Hart0 - M-mode only (S7 Core RV64IMAC)
+    //     Hart1..4 - M+S modes (U74 Cores RV64GC)
+    // Hart4 ignored
+    wb_plic_meip = {wb_plic_xeip[5],
+            wb_plic_xeip[3],
+            wb_plic_xeip[1],
+            wb_plic_xeip[0]};
+    wb_plic_seip = {wb_plic_xeip[6],
+            wb_plic_xeip[4],
+            wb_plic_xeip[2],
+            v_gnd1};
+
+    o_jtag_vref = 1'b1;
 
     // Nullify emty AXI-slots:
     aximo[CFG_BUS0_XMST_DMA] = axi4_master_out_none;
@@ -377,7 +377,5 @@ begin: comb_proc
     o_ddr_apbi = apbi[CFG_BUS1_PSLV_DDR];
     apbo[CFG_BUS1_PSLV_DDR] = i_ddr_apbo;
 end: comb_proc
-assign o_jtag_vref = 1'b1;
-
 
 endmodule

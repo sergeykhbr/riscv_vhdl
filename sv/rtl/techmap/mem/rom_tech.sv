@@ -1,16 +1,16 @@
 `timescale 1ns/10ps
 
-module rom_tech
-#(
-    parameter abits = 12,
-    parameter integer log2_dbytes = 3,  // 2^log2_dbytes = number of bytes on data bus
-    parameter filename = ""
+module rom_tech #(
+    parameter int abits = 6,
+    parameter int log2_dbytes = 3,
+    parameter string filename = ""
 )
 (
-    input clk,
-    input [abits-1: 0] address,
-    output logic [8*(2**log2_dbytes) - 1 : 0] data
+    input logic i_clk,                                      // CPU clock
+    input logic [abits-1:0] i_addr,
+    output logic [(8 * (2**log2_dbytes))-1:0] o_rdata
 );
+
 
 import config_target_pkg::*;
 
@@ -29,9 +29,9 @@ localparam int ROM_LENGTH = 2**(abits - log2_dbytes);
     )
     ROM
     (
-        .clk(clk),
-        .address(address[abits-1: log2_dbytes]),
-        .data(data)
+        .clk(i_clk),
+        .address(i_addr[abits-1: log2_dbytes]),
+        .data(o_rdata)
     );
 
 `elsif TARGET_KC705
@@ -43,9 +43,9 @@ localparam int ROM_LENGTH = 2**(abits - log2_dbytes);
     )
     ROM
     (
-        .clk(clk),
-        .address(address[abits-1: log2_dbytes]),
-        .data(data)
+        .clk(i_clk),
+        .address(i_addr[abits-1: log2_dbytes]),
+        .data(o_rdata)
     );
 
 `else
