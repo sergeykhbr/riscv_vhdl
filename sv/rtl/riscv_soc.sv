@@ -218,20 +218,20 @@ axi_sram #(
   //! @brief External interrupt controller (PLIC).
   //! @details Map address:
   //!          0x00000000_0C000000..0x00000000_0fffffff (64 MB total)
-  plic #(
-    .async_reset(CFG_ASYNC_RESET),
+plic #(
+    .async_reset(async_reset),
     .ctxmax(CFG_PLIC_CONTEXT_TOTAL),
     .irqmax(CFG_PLIC_IRQ_TOTAL)
-  ) plic0 (
-    .clk(i_sys_clk),
-    .nrst(i_sys_nrst),
+) plic0 (
+    .i_clk(i_sys_clk),
+    .i_nrst(i_sys_nrst),
     .i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_PLIC]),
     .o_cfg(dev_pnp[SOC_PNP_PLIC]),
-    .i_axi(axisi[CFG_BUS0_XSLV_PLIC]),
-    .o_axi(axiso[CFG_BUS0_XSLV_PLIC]),
-    .i_irq_request(wb_ext_irqs),  // [0] must be tight to GND
+    .i_xslvi(axisi[CFG_BUS0_XSLV_PLIC]),
+    .o_xslvo(axiso[CFG_BUS0_XSLV_PLIC]),
+    .i_irq_request(wb_ext_irqs),
     .o_ip(wb_plic_xeip)
-  );
+);
   // FU740 implements 5 cores (we implement only 4):
   //   Hart0 - M-mode only (S7 Core RV64IMAC)
   //   Hart1..4 - M+S modes (U74 Cores RV64GC)
