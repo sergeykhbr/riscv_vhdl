@@ -228,10 +228,16 @@ void plic<ctxmax, irqmax>::comb() {
     }
     v.rdata = r.rdata;
 
+    // Warning SystemC limitation workaround:
+    //   Cannot directly write into bitfields of the signals v.* registers
+    //   So, use the following vb_* logic variables for that and then copy them.
+    vb_src_priority = r.src_priority;
+    vb_pending = r.pending;
     for (int i = 0; i < ctxmax; i++) {
-        v.ctx[i].ip_prio = 0;
-        v.ctx[i].prio_mask = 0;
-        v.ctx[i].sel_prio = 0;
+        vb_ctx[i].priority_th = r.ctx[i].priority_th;
+        vb_ctx[i].ie = r.ctx[i].ie;
+        vb_ctx[i].irq_idx = r.ctx[i].irq_idx;
+        vb_ctx[i].irq_prio = r.ctx[i].irq_prio;
     }
 
     for (int i = 1; i < irqmax; i++) {
@@ -379,6 +385,7 @@ void plic<ctxmax, irqmax>::comb() {
     w_resp_valid = 1;
     wb_resp_rdata = r.rdata;
     wb_resp_err = 0;
+    o_ip = r.ip;
 }
 
 template<int ctxmax, int irqmax>

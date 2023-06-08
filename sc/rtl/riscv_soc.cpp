@@ -74,6 +74,7 @@ riscv_soc::riscv_soc(sc_module_name name,
     bus1 = 0;
     rom0 = 0;
     sram0 = 0;
+    clint0 = 0;
     plic0 = 0;
     uart1 = 0;
     gpio0 = 0;
@@ -154,6 +155,18 @@ riscv_soc::riscv_soc(sc_module_name name,
     sram0->o_cfg(dev_pnp[SOC_PNP_SRAM]);
     sram0->i_xslvi(axisi[CFG_BUS0_XSLV_SRAM]);
     sram0->o_xslvo(axiso[CFG_BUS0_XSLV_SRAM]);
+
+
+    clint0 = new clint<CFG_CPU_MAX>("clint0", async_reset);
+    clint0->i_clk(i_sys_clk);
+    clint0->i_nrst(i_sys_nrst);
+    clint0->i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_CLINT]);
+    clint0->o_cfg(dev_pnp[SOC_PNP_CLINT]);
+    clint0->i_xslvi(axisi[CFG_BUS0_XSLV_CLINT]);
+    clint0->o_xslvo(axiso[CFG_BUS0_XSLV_CLINT]);
+    clint0->o_mtimer(wb_clint_mtimer);
+    clint0->o_msip(wb_clint_msip);
+    clint0->o_mtip(wb_clint_mtip);
 
 
     plic0 = new plic<SOC_PLIC_CONTEXT_TOTAL,
@@ -282,6 +295,9 @@ riscv_soc::~riscv_soc() {
     if (sram0) {
         delete sram0;
     }
+    if (clint0) {
+        delete clint0;
+    }
     if (plic0) {
         delete plic0;
     }
@@ -349,6 +365,9 @@ void riscv_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
     if (sram0) {
         sram0->generateVCD(i_vcd, o_vcd);
+    }
+    if (clint0) {
+        clint0->generateVCD(i_vcd, o_vcd);
     }
     if (plic0) {
         plic0->generateVCD(i_vcd, o_vcd);

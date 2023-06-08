@@ -27,6 +27,7 @@
 #include "ambalib/axi2apb_bus1.h"
 #include "misclib/axi_rom.h"
 #include "misclib/axi_sram.h"
+#include "misclib/clint.h"
 #include "misclib/plic.h"
 #include "misclib/apb_uart.h"
 #include "misclib/apb_gpio.h"
@@ -156,6 +157,7 @@ SC_MODULE(riscv_soc) {
     axi2apb_bus1 *bus1;
     axi_rom<CFG_BOOTROM_LOG2_SIZE> *rom0;
     axi_sram<CFG_SRAM_LOG2_SIZE> *sram0;
+    clint<CFG_CPU_MAX> *clint0;
     plic<SOC_PLIC_CONTEXT_TOTAL, SOC_PLIC_IRQ_TOTAL> *plic0;
     apb_uart<SOC_UART1_LOG2_FIFOSZ> *uart1;
     apb_gpio<SOC_GPIO0_WIDTH> *gpio0;

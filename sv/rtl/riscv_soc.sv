@@ -14,7 +14,6 @@
 //  limitations under the License.
 // 
 
-
 `timescale 1ns/10ps
 
 module riscv_soc #(
@@ -188,28 +187,22 @@ axi_sram #(
 );
 
 
-  ////////////////////////////////////
-  //! @brief Core local interrupt controller (CLINT).
-  //! @details Map address:
-  //!          0x00000000_02000000..0x00000000_02000fff (64 KB total)
-  clint #(
-    .async_reset(CFG_ASYNC_RESET)
-  ) clint0 (
-    .clk(i_sys_clk),
-    .nrst(i_sys_nrst),
+clint #(
+    .async_reset(async_reset),
+    .cpu_total(CFG_CPU_MAX)
+) clint0 (
+    .i_clk(i_sys_clk),
+    .i_nrst(i_sys_nrst),
     .i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_CLINT]),
     .o_cfg(dev_pnp[SOC_PNP_CLINT]),
-    .i_axi(axisi[CFG_BUS0_XSLV_CLINT]),
-    .o_axi(axiso[CFG_BUS0_XSLV_CLINT]),
+    .i_xslvi(axisi[CFG_BUS0_XSLV_CLINT]),
+    .o_xslvo(axiso[CFG_BUS0_XSLV_CLINT]),
     .o_mtimer(wb_clint_mtimer),
     .o_msip(wb_clint_msip),
     .o_mtip(wb_clint_mtip)
-  );
+);
 
-  ////////////////////////////////////
-  //! @brief External interrupt controller (PLIC).
-  //! @details Map address:
-  //!          0x00000000_0C000000..0x00000000_0fffffff (64 MB total)
+
 plic #(
     .async_reset(async_reset),
     .ctxmax(SOC_PLIC_CONTEXT_TOTAL),
@@ -242,10 +235,6 @@ plic #(
   );
 
 
-////////////////////////////////////
-//! @brief Controller of the LEDs, DIPs and GPIO with the AXI4 interface.
-//! @details Map address:
-//!          0x00000000_10060000..0x00000000_10060fff (4 KB total)
 apb_uart #(
     .async_reset(async_reset),
     .log2_fifosz(SOC_UART1_LOG2_FIFOSZ),
@@ -262,10 +251,6 @@ apb_uart #(
     .o_irq(w_irq_uart1)
 );
 
-////////////////////////////////////
-//! @brief Controller of the LEDs, DIPs and GPIO with the AXI4 interface.
-//! @details Map address:
-//!          0x00000000_10060000..0x00000000_10060fff (4 KB total)
 apb_gpio  #(
     .async_reset(CFG_ASYNC_RESET),
     .width(SOC_GPIO0_WIDTH)
@@ -283,8 +268,6 @@ apb_gpio  #(
 );
 
 
-////////////////////////////////////
-//! @brief SD-card SPI controller.
 apb_spi #(
     .async_reset(async_reset),
     .log2_fifosz(SOC_SPI0_LOG2_FIFOSZ)
