@@ -225,10 +225,10 @@ void apb_pnp<cfg_slots>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd)
 
 template<int cfg_slots>
 void apb_pnp<cfg_slots>::comb() {
-    sc_uint<32> cfgmap[cfg_slots];
+    sc_uint<32> cfgmap[(8 * cfg_slots)];
     sc_uint<CFG_SYSBUS_DATA_BITS> vrdata;
 
-    for (int i = 0; i < cfg_slots; i++) {
+    for (int i = 0; i < (8 * cfg_slots); i++) {
         cfgmap[i] = 0;
     }
     vrdata = 0;

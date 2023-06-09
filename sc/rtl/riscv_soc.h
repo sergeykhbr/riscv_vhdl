@@ -23,8 +23,6 @@
 #include "ambalib/types_pnp.h"
 #include "riverlib/river_cfg.h"
 #include "riverlib/types_river.h"
-#include "riverlib/workgroup.h"
-#include "misclib/apb_pnp.h"
 #include "ambalib/axictrl_bus0.h"
 #include "ambalib/axi2apb_bus1.h"
 #include "misclib/axi_rom.h"
@@ -34,6 +32,8 @@
 #include "misclib/apb_uart.h"
 #include "misclib/apb_gpio.h"
 #include "misclib/apb_spi.h"
+#include "misclib/apb_pnp.h"
+#include "riverlib/workgroup.h"
 #include "sv_func.h"
 
 namespace debugger {
