@@ -41,6 +41,9 @@ static const int CFG_L2_LOG2_LINES_PER_WAY = 9;             // 7=16KB; 8=32KB; 9
 // Internal Boot ROM size:
 static const int CFG_BOOTROM_LOG2_SIZE = 16;                // 16=64 KB (default); 17=128KB; ..
 
+// Project relative HEX-file name to init boot ROM without .hex extension:
+static const std::string SOC_BOOTROM_FILE_HEX = "../../../../examples/bootrom_tests/linuxbuild/bin/bootrom_tests";
+
 // Internal SRAM block:
 //     - Increase memory map if need > 2MB FU740
 //     - Change bootloader stack pointer if need less than 512 KB

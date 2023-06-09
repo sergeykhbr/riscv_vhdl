@@ -20,9 +20,11 @@
 #include "ambalib/types_amba.h"
 #include "ambalib/types_bus0.h"
 #include "ambalib/types_bus1.h"
+#include "ambalib/types_pnp.h"
 #include "riverlib/river_cfg.h"
 #include "riverlib/types_river.h"
 #include "riverlib/workgroup.h"
+#include "misclib/apb_pnp.h"
 #include "ambalib/axictrl_bus0.h"
 #include "ambalib/axi2apb_bus1.h"
 #include "misclib/axi_rom.h"
@@ -85,38 +87,29 @@ SC_MODULE(riscv_soc) {
     SC_HAS_PROCESS(riscv_soc);
 
     riscv_soc(sc_module_name name,
+              std::string bootfile,
               int sim_uart_speedup_rate);
     virtual ~riscv_soc();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
+    std::string bootfile_;
     int sim_uart_speedup_rate_;
 
     static const bool async_reset = CFG_ASYNC_RESET;
     
+    // Hardware SoC Identificator.
+    // Read Only unique platform identificator that could be read by FW
+    static const uint32_t SOC_HW_ID = 0x20220903;
     
-    static const int SOC_PNP_XCTRL0 = 0;
-    static const int SOC_PNP_GROUP0 = 1;
-    static const int SOC_PNP_BOOTROM = 2;
-    static const int SOC_PNP_SRAM = 3;
-    static const int SOC_PNP_DDR_AXI = 4;
-    static const int SOC_PNP_DDR_APB = 5;
-    static const int SOC_PNP_PRCI = 6;
-    static const int SOC_PNP_GPIO = 7;
-    static const int SOC_PNP_CLINT = 8;
-    static const int SOC_PNP_PLIC = 9;
-    static const int SOC_PNP_PNP = 10;
-    static const int SOC_PNP_PBRIDGE0 = 11;
-    static const int SOC_PNP_DMI = 12;
-    static const int SOC_PNP_UART1 = 13;
-    static const int SOC_PNP_SPI = 14;
-    static const int SOC_PNP_TOTAL = 15;
-    
+    // UARTx fifo log2(size) in bytes:
     static const int SOC_UART1_LOG2_FIFOSZ = 4;
     
+    // Number of available generic IO pins:
     static const int SOC_GPIO0_WIDTH = 12;
     
+    // SD-card in SPI mode buffer size. It should be at least log2(512) Bytes:
     static const int SOC_SPI0_LOG2_FIFOSZ = 9;
     
     // Number of contexts in PLIC controller.
@@ -124,12 +117,6 @@ SC_MODULE(riscv_soc) {
     static const int SOC_PLIC_CONTEXT_TOTAL = 9;
     // Any number up to 1024. Zero interrupt must be 0.
     static const int SOC_PLIC_IRQ_TOTAL = 73;
-    
-    // Hardware SoC Identificator.
-    // Read Only unique platform identificator that could be read by FW
-    static const uint32_t SOC_HW_ID = 0x20220903;
-
-    typedef sc_vector<sc_signal<dev_config_type>> soc_pnp_vector;
 
     sc_signal<axi4_master_out_type> acpo;
     sc_signal<axi4_master_in_type> acpi;
@@ -162,6 +149,7 @@ SC_MODULE(riscv_soc) {
     apb_uart<SOC_UART1_LOG2_FIFOSZ> *uart1;
     apb_gpio<SOC_GPIO0_WIDTH> *gpio0;
     apb_spi<SOC_SPI0_LOG2_FIFOSZ> *spi0;
+    apb_pnp<SOC_PNP_TOTAL> *pnp0;
     Workgroup *group0;
 
 };
