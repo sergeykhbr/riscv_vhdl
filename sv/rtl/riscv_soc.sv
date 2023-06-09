@@ -17,6 +17,7 @@
 `timescale 1ns/10ps
 
 module riscv_soc #(
+    parameter string bootfile = "",                         // Project relative HEX-file name to init boot ROM without .hex extension
     parameter int sim_uart_speedup_rate = 0                 // simulation UART speed-up: 0=no speed up, 1=2x, 2=4x, etc
 )
 (
@@ -66,6 +67,7 @@ module riscv_soc #(
 import config_target_pkg::*;
 import types_bus0_pkg::*;
 import types_bus1_pkg::*;
+import types_pnp_pkg::*;
 import types_amba_pkg::*;
 import river_cfg_pkg::*;
 import types_river_pkg::*;
@@ -163,7 +165,7 @@ Workgroup #(
 axi_rom #(
     .async_reset(async_reset),
     .abits(CFG_BOOTROM_LOG2_SIZE),
-    .filename(SOC_BOOTROM_FILE_HEX)
+    .filename(bootfile)
 ) rom0 (
     .i_clk(i_sys_clk),
     .i_nrst(i_sys_nrst),
@@ -287,25 +289,21 @@ apb_spi #(
 );
 
 
-  //! @brief Plug'n'Play controller of the current configuration with the
-  //!        AXI4 interface.
-  //! @details Map address:
-  //!          0x00000000_100ff000..0x00000000_100fffff (4 KB total)
 apb_pnp #(
-    .async_reset(CFG_ASYNC_RESET),
+    .async_reset(async_reset),
     .cfg_slots(SOC_PNP_TOTAL),
-    .hw_id(SOC_HW_ID),
-    .cpu_max(CFG_CPU_NUM[3:0]), //CFG_CPU_MAX[3:0]),
+    .hwid(SOC_HW_ID),
+    .cpu_max(CFG_CPU_NUM),
     .l2cache_ena(CFG_L2CACHE_ENA),
-    .plic_irq_max(SOC_PLIC_IRQ_TOTAL[7:0])
+    .plic_irq_max(SOC_PLIC_IRQ_TOTAL)
 ) pnp0 (
-    .sys_clk(i_sys_clk),
-    .nrst(i_sys_nrst),
+    .i_clk(i_sys_clk),
+    .i_nrst(i_sys_nrst),
     .i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_PNP]),
     .i_cfg(dev_pnp),
     .o_cfg(dev_pnp[SOC_PNP_PNP]),
-    .i(apbi[CFG_BUS1_PSLV_PNP]),
-    .o(apbo[CFG_BUS1_PSLV_PNP]),
+    .i_apbi(apbi[CFG_BUS1_PSLV_PNP]),
+    .o_apbo(apbo[CFG_BUS1_PSLV_PNP]),
     .o_irq(w_irq_pnp)
 );
 

@@ -1,73 +1,99 @@
-//! @brief Hardware Configuration storage with the AMBA AXI4 interface.
+// 
+//  Copyright 2022 Sergey Khabarov, sergeykhbr@gmail.com
+// 
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+// 
+//      http://www.apache.org/licenses/LICENSE-2.0
+// 
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+// 
+
+`timescale 1ns/10ps
 
 module apb_pnp #(
-
-    parameter async_reset = 1'b0,
+    parameter bit async_reset = 1'b0,
     parameter int cfg_slots = 1,
-    parameter logic [31 : 0] hw_id = 32'h20221123,
-    parameter logic [3 : 0] cpu_max = 4'd1,
-    parameter logic l2cache_ena = 8'd1,
-    parameter logic [7 : 0] plic_irq_max = 8'd127
-
-)(
-
-  input sys_clk,
-  input nrst,
-  input types_amba_pkg::mapinfo_type i_mapinfo,
-  input types_amba_pkg::dev_config_type i_cfg[0:cfg_slots-1],
-  output types_amba_pkg::dev_config_type o_cfg,
-  input types_amba_pkg::apb_in_type i,
-  output types_amba_pkg::apb_out_type o,
-  output logic o_irq                            // self-test interrupt request on write into read only register
+    parameter logic [31:0] hwid = 32'h20221123,
+    parameter int cpu_max = 1,
+    parameter int l2cache_ena = 1,
+    parameter int plic_irq_max = 127
+)
+(
+    input logic i_clk,                                      // CPU clock
+    input logic i_nrst,                                     // Reset: active LOW
+    input types_amba_pkg::mapinfo_type i_mapinfo,           // interconnect slot information
+    input types_pnp_pkg::soc_pnp_vector i_cfg,              // Device descriptors vector
+    output types_amba_pkg::dev_config_type o_cfg,           // PNP Device descriptor
+    input types_amba_pkg::apb_in_type i_apbi,               // APB  Slave to Bridge interface
+    output types_amba_pkg::apb_out_type o_apbo,             // APB Bridge to Slave interface
+    output logic o_irq
 );
 
-  import types_amba_pkg::*;
-  import types_bus1_pkg::*;
-
-  // Descriptor size 8 x 32-bits word = 32 Bytes
-  typedef logic [31 : 0] config_map  [0 : 8*cfg_slots-1];
-
-  typedef struct {
-    logic [31 : 0] fw_id;
-    logic [63 : 0] idt; //! debug counter
-    logic [63 : 0] malloc_addr; //! dynamic allocation addr
-    logic [63 : 0] malloc_size; //! dynamic allocation size
-    logic [63 : 0] fwdbg1; //! FW marker for the debug porposes
-    logic [63 : 0] fwdbg2;
-    logic [63 : 0] fwdbg3;
+import types_amba_pkg::*;
+import types_pnp_pkg::*;
+typedef struct {
+    logic [31:0] fw_id;
+    logic [31:0] idt_l;
+    logic [31:0] idt_m;
+    logic [31:0] malloc_addr_l;
+    logic [31:0] malloc_addr_m;
+    logic [31:0] malloc_size_l;
+    logic [31:0] malloc_size_m;
+    logic [31:0] fwdbg1;
+    logic [31:0] fwdbg2;
+    logic [31:0] fwdbg3;
+    logic [31:0] fwdbg4;
+    logic [31:0] fwdbg5;
+    logic [31:0] fwdbg6;
     logic irq;
     logic resp_valid;
     logic [31:0] resp_rdata;
     logic resp_err;
-  } registers;
+} apb_pnp_registers;
 
-  const registers R_RESET = '{
-    '0, '0, '0,
-    '0, '0, '0, '0,
-    1'b0,
-    1'b0,// resp_valid
-    '0,  // resp_data
-    1'b0 // resp_err
-  };
-
-  registers r, rin;
+const apb_pnp_registers apb_pnp_r_reset = '{
+    '0,                                 // fw_id
+    '0,                                 // idt_l
+    '0,                                 // idt_m
+    '0,                                 // malloc_addr_l
+    '0,                                 // malloc_addr_m
+    '0,                                 // malloc_size_l
+    '0,                                 // malloc_size_m
+    '0,                                 // fwdbg1
+    '0,                                 // fwdbg2
+    '0,                                 // fwdbg3
+    '0,                                 // fwdbg4
+    '0,                                 // fwdbg5
+    '0,                                 // fwdbg6
+    1'b0,                               // irq
+    1'b0,                               // resp_valid
+    '0,                                 // resp_rdata
+    1'b0                                // resp_err
+};
 
 logic w_req_valid;
 logic [31:0] wb_req_addr;
 logic w_req_write;
 logic [31:0] wb_req_wdata;
+apb_pnp_registers r, rin;
 
 apb_slv #(
-   .async_reset(async_reset),
-   .vid(VENDOR_OPTIMITECH),
-   .did(OPTIMITECH_PNP)
-) apb0 (
-    .i_clk(sys_clk),
-    .i_nrst(nrst),
+    .async_reset(async_reset),
+    .vid(VENDOR_OPTIMITECH),
+    .did(OPTIMITECH_PNP)
+) pslv0 (
+    .i_clk(i_clk),
+    .i_nrst(i_nrst),
     .i_mapinfo(i_mapinfo),
     .o_cfg(o_cfg),
-    .i_apbi(i),
-    .o_apbo(o),
+    .i_apbi(i_apbi),
+    .o_apbo(o_apbo),
     .o_req_valid(w_req_valid),
     .o_req_addr(wb_req_addr),
     .o_req_write(w_req_write),
@@ -79,143 +105,143 @@ apb_slv #(
 
 
 always_comb
-  begin : main_proc
-    registers v;
-    config_map cfgmap;
-    logic [31 : 0] vrdata;
+begin: comb_proc
+    apb_pnp_registers v;
+    logic [31:0] cfgmap[0: (8 * cfg_slots)-1];
+    logic [CFG_SYSBUS_DATA_BITS-1:0] vrdata;
+
+    for (int i = 0; i < (8 * cfg_slots); i++) begin
+        cfgmap[i] = 32'h00000000;
+    end
+    vrdata = 0;
 
     v = r;
 
     v.irq = 1'b0;
-    vrdata = '0;
 
-    for (int k = 0; k <= cfg_slots-1; k++) begin
-      cfgmap[8*k] = {8'h00, 8'h00, 6'b000000, i_cfg[k].descrtype, i_cfg[k].descrsize};
-      cfgmap[8*k+1] = {i_cfg[k].vid, i_cfg[k].did};
-      cfgmap[8*k+2] = '0; // reserved lsb
-      cfgmap[8*k+3] = '0; // reserved msb
-      cfgmap[8*k+4] = i_cfg[k].addr_start[31:0];
-      cfgmap[8*k+5] = i_cfg[k].addr_start[63:32];
-      cfgmap[8*k+6] = i_cfg[k].addr_end[31:0];
-      cfgmap[8*k+7] = i_cfg[k].addr_end[63:32];
+    for (int i = 0; i < cfg_slots; i++) begin
+        cfgmap[(8 * i)] = {22'h000000, i_cfg[i].descrtype, i_cfg[i].descrsize};
+        cfgmap[((8 * i) + 1)] = {i_cfg[i].vid, i_cfg[i].did};
+        cfgmap[((8 * i) + 4)] = i_cfg[i].addr_start[31: 0];
+        cfgmap[((8 * i) + 5)] = i_cfg[i].addr_start[63: 32];
+        cfgmap[((8 * i) + 6)] = i_cfg[i].addr_end[31: 0];
+        cfgmap[((8 * i) + 7)] = i_cfg[i].addr_end[63: 32];
     end
 
-
-    if (wb_req_addr[11:2] == 9'd0) begin
-        vrdata = hw_id;
+    if (wb_req_addr[11: 2] == 9'h000) begin
+        vrdata = hwid;
         if ((w_req_valid & w_req_write) == 1'b1) begin
             v.irq = 1'b1;
         end
-    end else if (wb_req_addr[11:2] == 9'd1) begin
+    end else if (wb_req_addr[11: 2] == 9'h001) begin
         vrdata = r.fw_id;
         if ((w_req_valid & w_req_write) == 1'b1) begin
             v.fw_id = wb_req_wdata;
         end
-    end else if (wb_req_addr[11:2] == 9'd2) begin
-        vrdata = {cpu_max[3:0],
-                  3'd0,    // reserved
-                  l2cache_ena,
-                  8'h0,
-                  cfg_slots[7:0],
-                  plic_irq_max[7:0]};
-    end else if (wb_req_addr[11:2] == 9'd3) begin
+    end else if (wb_req_addr[11: 2] == 9'h002) begin
+        vrdata[31: 28] = cpu_max[3: 0];
+        vrdata[24] = l2cache_ena;
+        vrdata[15: 8] = cfg_slots[7: 0];
+        vrdata[7: 0] = plic_irq_max[7: 0];
+    end else if (wb_req_addr[11: 2] == 9'h003) begin
         vrdata = '0;
-    end else if (wb_req_addr[11:2] == 9'd4) begin
-        vrdata = r.idt[31:0];
+    end else if (wb_req_addr[11: 2] == 9'h004) begin
+        vrdata = r.idt_l;
         if ((w_req_valid & w_req_write) == 1'b1) begin
-            v.idt[31:0] = wb_req_wdata;
+            v.idt_l = wb_req_wdata;
         end
-    end else if (wb_req_addr[11:2] == 9'd5) begin
-        vrdata = r.idt[63:32];
+    end else if (wb_req_addr[11: 2] == 9'h005) begin
+        vrdata = r.idt_m;
         if ((w_req_valid & w_req_write) == 1'b1) begin
-            v.idt[63:32] = wb_req_wdata;
+            v.idt_m = wb_req_wdata;
         end
-    end else if (wb_req_addr[11:2] == 9'd6) begin
-        vrdata = r.malloc_addr[31:0];
+    end else if (wb_req_addr[11: 2] == 9'h006) begin
+        vrdata = r.malloc_addr_l;
         if ((w_req_valid & w_req_write) == 1'b1) begin
-            v.malloc_addr[31:0] = wb_req_wdata;
+            v.malloc_addr_l = wb_req_wdata;
         end
-    end else if (wb_req_addr[11:2] == 9'd7) begin
-        vrdata = r.malloc_addr[63:32];
+    end else if (wb_req_addr[11: 2] == 9'h007) begin
+        vrdata = r.malloc_addr_m;
         if ((w_req_valid & w_req_write) == 1'b1) begin
-            v.malloc_addr[63:32] = wb_req_wdata;
+            v.malloc_addr_m = wb_req_wdata;
         end
-    end else if (wb_req_addr[11:2] == 9'd8) begin
-        vrdata = r.malloc_size[31:0];
+    end else if (wb_req_addr[11: 2] == 9'h008) begin
+        vrdata = r.malloc_size_l;
         if ((w_req_valid & w_req_write) == 1'b1) begin
-            v.malloc_size[31:0] = wb_req_wdata;
+            v.malloc_size_l = wb_req_wdata;
         end
-    end else if (wb_req_addr[11:2] == 9'd9) begin
-        vrdata = r.malloc_size[63:32];
+    end else if (wb_req_addr[11: 2] == 9'h009) begin
+        vrdata = r.malloc_size_m;
         if ((w_req_valid & w_req_write) == 1'b1) begin
-            v.malloc_size[63:32] = wb_req_wdata;
+            v.malloc_size_m = wb_req_wdata;
         end
-    end else if (wb_req_addr[11:2] == 9'd10) begin
-        vrdata = r.fwdbg1[31:0];
+    end else if (wb_req_addr[11: 2] == 9'h00a) begin
+        vrdata = r.fwdbg1;
         if ((w_req_valid & w_req_write) == 1'b1) begin
-            v.fwdbg1[31:0] = wb_req_wdata;
+            v.fwdbg1 = wb_req_wdata;
         end
-    end else if (wb_req_addr[11:2] == 9'd11) begin
-        vrdata = r.fwdbg1[63:32];
+    end else if (wb_req_addr[11: 2] == 9'h00b) begin
+        vrdata = r.fwdbg2;
         if ((w_req_valid & w_req_write) == 1'b1) begin
-            v.fwdbg1[63:32] = wb_req_wdata;
+            v.fwdbg2 = wb_req_wdata;
         end
-    end else if (wb_req_addr[11:2] == 9'd12) begin
-        vrdata = r.fwdbg2[31:0];
+    end else if (wb_req_addr[11: 2] == 9'h00c) begin
+        vrdata = r.fwdbg3;
         if ((w_req_valid & w_req_write) == 1'b1) begin
-            v.fwdbg2[31:0] = wb_req_wdata;
+            v.fwdbg3 = wb_req_wdata;
         end
-    end else if (wb_req_addr[11:2] == 9'd13) begin
-        vrdata = r.fwdbg2[63:32];
+    end else if (wb_req_addr[11: 2] == 9'h00d) begin
+        vrdata = r.fwdbg4;
         if ((w_req_valid & w_req_write) == 1'b1) begin
-            v.fwdbg2[63:32] = wb_req_wdata;
+            v.fwdbg4 = wb_req_wdata;
         end
-    end else if (wb_req_addr[11:2] == 9'd14) begin
-        vrdata = r.fwdbg3[31:0];
+    end else if (wb_req_addr[11: 2] == 9'h00e) begin
+        vrdata = r.fwdbg5;
         if ((w_req_valid & w_req_write) == 1'b1) begin
-            v.fwdbg3[31:0] = wb_req_wdata;
+            v.fwdbg5 = wb_req_wdata;
         end
-    end else if (wb_req_addr[11:2] == 9'd15) begin
-        vrdata = r.fwdbg3[63:32];
+    end else if (wb_req_addr[11: 2] == 9'h00f) begin
+        vrdata = r.fwdbg6;
         if ((w_req_valid & w_req_write) == 1'b1) begin
-            v.fwdbg3[63:32] = wb_req_wdata;
+            v.fwdbg6 = wb_req_wdata;
         end
-    end else if ((int'(wb_req_addr[11:2]) >= 16) & (int'(wb_req_addr[11:2]) < 16+8*cfg_slots)) begin
-        vrdata = cfgmap[int'(wb_req_addr[11:2]) - 16];
+    end else if ((wb_req_addr[11: 2] >= 9'h010)
+                && (wb_req_addr[11: 2] < (16 + (8 * cfg_slots)))) begin
+        vrdata = cfgmap[(int'(wb_req_addr[11: 2]) - 16)];
+    end
+
+    if (~async_reset && i_nrst == 1'b0) begin
+        v = apb_pnp_r_reset;
     end
 
     v.resp_valid = w_req_valid;
     v.resp_rdata = vrdata;
-    v.resp_err = '0;
-
-    if (~async_reset & (nrst == 1'b0)) begin
-        v = R_RESET;
-    end
-
+    v.resp_err = 1'b0;
     o_irq = r.irq;
 
     rin = v;
-  end : main_proc
+end: comb_proc
 
-  generate
+generate
+    if (async_reset) begin: async_rst_gen
 
-   if(async_reset) begin: gen_async_reset
+        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+            if (i_nrst == 1'b0) begin
+                r <= apb_pnp_r_reset;
+            end else begin
+                r <= rin;
+            end
+        end: rg_proc
 
-      always_ff@(posedge sys_clk, negedge nrst)
-          if(!nrst)
-              r <= R_RESET;
-          else
-              r <= rin;
 
-   end
-   else begin: gen_sync_reset
+    end: async_rst_gen
+    else begin: no_rst_gen
 
-      always_ff@(posedge sys_clk)
-              r <= rin;
+        always_ff @(posedge i_clk) begin: rg_proc
+            r <= rin;
+        end: rg_proc
 
-   end
+    end: no_rst_gen
+endgenerate
 
-  endgenerate
-
-endmodule
-
+endmodule: apb_pnp

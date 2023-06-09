@@ -20,6 +20,7 @@ import river_cfg_pkg::*;
 localparam int abus = CFG_CPU_ADDR_BITS;
 localparam int lnbits = CFG_LOG2_L1CACHE_BYTES_PER_LINE;
 localparam int flbits = DTAG_FL_TOTAL;
+
 // State machine states:
 localparam bit [3:0] State_Idle = 4'h0;
 localparam bit [3:0] State_CheckHit = 4'h1;

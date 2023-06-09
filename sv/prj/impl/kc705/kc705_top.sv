@@ -18,6 +18,7 @@ module kc705_top #(
     parameter SYSCLK_TYPE           = "NO_BUFFER",
     parameter SIM_BYPASS_INIT_CAL   = "OFF",
     parameter SIMULATION            = "FALSE",
+    parameter string bootfile = "",                         // Project relative HEX-file name to init boot ROM without .hex extension
     parameter int sim_uart_speedup_rate = 0                 // simulation UART speed-up: 0=no speed up, 1=2x, 2=4x, etc
 )
 ( 
@@ -181,6 +182,7 @@ module kc705_top #(
 
  
   riscv_soc #(
+    .bootfile(bootfile),
     .sim_uart_speedup_rate(sim_uart_speedup_rate)
   ) soc0 (
     .i_sys_nrst (w_sys_nrst),

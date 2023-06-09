@@ -98,6 +98,7 @@ module asic_top_tb;
   end
 
   asic_top #(
+    .bootfile(config_target_pkg::CFG_BOOTROM_FILE_HEX),
     .sim_uart_speedup_rate(SIM_UART_SPEED_UP_RATE)
   ) tt (
     .i_rst (i_rst),

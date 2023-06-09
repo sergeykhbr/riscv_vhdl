@@ -47,9 +47,11 @@ localparam bit [1:0] DMISTAT_SUCCESS = 2'h0;
 localparam bit [1:0] DMISTAT_RESERVED = 2'h1;
 localparam bit [1:0] DMISTAT_FAILED = 2'h2;
 localparam bit [1:0] DMISTAT_BUSY = 2'h3;
+
 // DTMCONTROL register bits
 localparam int DTMCONTROL_DMIRESET = 16;
 localparam int DTMCONTROL_DMIHARDRESET = 17;
+
 // JTAG states:
 localparam bit [3:0] RESET_TAP = 4'h0;
 localparam bit [3:0] IDLE = 4'h1;
