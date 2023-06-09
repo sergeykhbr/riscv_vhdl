@@ -19,9 +19,8 @@
 
 namespace debugger {
 
-static std::string SOC_BOOTROM_FILE_HEX = "../../../../examples/bootrom_tests/linuxbuild/bin/bootrom_tests";
-
 riscv_soc::riscv_soc(sc_module_name name,
+                     std::string bootfile,
                      int sim_uart_speedup_rate)
     : sc_module(name),
     i_sys_nrst("i_sys_nrst"),
@@ -69,6 +68,7 @@ riscv_soc::riscv_soc(sc_module_name name,
     apbo("apbo", CFG_BUS1_PSLV_TOTAL),
     dev_pnp("dev_pnp", SOC_PNP_TOTAL) {
 
+    bootfile_ = bootfile;
     sim_uart_speedup_rate_ = sim_uart_speedup_rate;
     bus0 = 0;
     bus1 = 0;
@@ -79,6 +79,7 @@ riscv_soc::riscv_soc(sc_module_name name,
     uart1 = 0;
     gpio0 = 0;
     spi0 = 0;
+    pnp0 = 0;
     group0 = 0;
 
     bus0 = new axictrl_bus0("bus0", async_reset);
@@ -139,7 +140,7 @@ riscv_soc::riscv_soc(sc_module_name name,
 
 
     rom0 = new axi_rom<CFG_BOOTROM_LOG2_SIZE>("rom0", async_reset,
-                                              SOC_BOOTROM_FILE_HEX);
+                                              bootfile);
     rom0->i_clk(i_sys_clk);
     rom0->i_nrst(i_sys_nrst);
     rom0->i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_BOOTROM]);
@@ -220,6 +221,21 @@ riscv_soc::riscv_soc(sc_module_name name,
     spi0->i_miso(i_spi_miso);
     spi0->i_detected(i_sd_detected);
     spi0->i_protect(i_sd_protect);
+
+
+    pnp0 = new apb_pnp<SOC_PNP_TOTAL>("pnp0", async_reset,
+                                      SOC_HW_ID,
+                                      CFG_CPU_NUM,
+                                      CFG_L2CACHE_ENA,
+                                      SOC_PLIC_IRQ_TOTAL);
+    pnp0->i_clk(i_sys_clk);
+    pnp0->i_nrst(i_sys_nrst);
+    pnp0->i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_PNP]);
+    pnp0->i_cfg(dev_pnp);
+    pnp0->o_cfg(dev_pnp[SOC_PNP_PNP]);
+    pnp0->i_apbi(apbi[CFG_BUS1_PSLV_PNP]);
+    pnp0->o_apbo(apbo[CFG_BUS1_PSLV_PNP]);
+    pnp0->o_irq(w_irq_pnp);
 
 
 
@@ -310,6 +326,9 @@ riscv_soc::~riscv_soc() {
     if (spi0) {
         delete spi0;
     }
+    if (pnp0) {
+        delete pnp0;
+    }
     if (group0) {
         delete group0;
     }
@@ -380,6 +399,9 @@ void riscv_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
     if (spi0) {
         spi0->generateVCD(i_vcd, o_vcd);
+    }
+    if (pnp0) {
+        pnp0->generateVCD(i_vcd, o_vcd);
     }
     if (group0) {
         group0->generateVCD(i_vcd, o_vcd);
