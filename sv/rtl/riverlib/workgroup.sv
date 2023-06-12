@@ -92,7 +92,6 @@ logic w_ic_dport_resp_error;
 logic [RISCV_ARCH-1:0] wb_ic_dport_rdata;
 logic [(32 * CFG_PROGBUF_REG_TOTAL)-1:0] wb_progbuf;
 logic w_flush_l2;
-dev_config_type wb_xmst_cfg;
 
 dmidebug #(
     .async_reset(async_reset)
@@ -250,11 +249,13 @@ L2SerDes #(
 
 always_comb
 begin: comb_proc
+    dev_config_type vb_xmst_cfg;
     logic v_flush_l2;
     logic [CFG_CPU_MAX-1:0] vb_halted;
     logic [CFG_CPU_MAX-1:0] vb_available;
     logic [IRQ_TOTAL-1:0] vb_irq[0: CFG_CPU_MAX-1];
 
+    vb_xmst_cfg = dev_config_none;
     v_flush_l2 = 0;
     vb_halted = 0;
     vb_available = 0;
@@ -262,10 +263,10 @@ begin: comb_proc
         vb_irq[i] = 16'h0000;
     end
 
-    wb_xmst_cfg.descrsize = PNP_CFG_DEV_DESCR_BYTES;
-    wb_xmst_cfg.descrtype = PNP_CFG_TYPE_MASTER;
-    wb_xmst_cfg.vid = VENDOR_OPTIMITECH;
-    wb_xmst_cfg.did = RISCV_RIVER_WORKGROUP;
+    vb_xmst_cfg.descrsize = PNP_CFG_DEV_DESCR_BYTES;
+    vb_xmst_cfg.descrtype = PNP_CFG_TYPE_MASTER;
+    vb_xmst_cfg.vid = VENDOR_OPTIMITECH;
+    vb_xmst_cfg.did = RISCV_RIVER_WORKGROUP;
 
     // Vector to signal conversion is neccessary to implement compatibility with SystemC:
     for (int i = 0; i < CFG_CPU_MAX; i++) begin
@@ -281,7 +282,7 @@ begin: comb_proc
     w_flush_l2 = v_flush_l2;
     wb_halted = vb_halted;
     wb_available = vb_available;
-    o_xmst_cfg = wb_xmst_cfg;
+    o_xmst_cfg = vb_xmst_cfg;
 end: comb_proc
 
 endmodule: Workgroup

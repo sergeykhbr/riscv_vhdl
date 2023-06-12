@@ -168,4 +168,12 @@ bit w_ui_rst;
   assign o_xslvo.r_user = '0;
   assign o_xslvo.b_user = '0;
 
+
+  assign o_xcfg.descrsize = PNP_CFG_DEV_DESCR_BYTES;
+  assign o_xcfg.descrtype = PNP_CFG_TYPE_SLAVE;
+  assign o_xcfg.addr_start = i_xmapinfo.addr_start;
+  assign o_xcfg.addr_end = i_xmapinfo.addr_end;
+  assign o_xcfg.vid = VENDOR_OPTIMITECH;
+  assign o_xcfg.did = OPTIMITECH_SRAM;
+
 endmodule

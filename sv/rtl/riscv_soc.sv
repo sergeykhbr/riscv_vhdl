@@ -50,30 +50,28 @@ module riscv_soc #(
     // PLL and Reset interfaces:
     output logic o_dmreset,                                 // Debug reset request. Everything except DMI.
     output types_amba_pkg::mapinfo_type o_prci_pmapinfo,    // PRCI mapping information
-    output types_amba_pkg::dev_config_type i_prci_pdevcfg,  // PRCI device descriptor
+    input types_amba_pkg::dev_config_type i_prci_pdevcfg,   // PRCI device descriptor
     output types_amba_pkg::apb_in_type o_prci_apbi,         // APB: PLL and Reset configuration interface
     input types_amba_pkg::apb_out_type i_prci_apbo,         // APB: PLL and Reset configuration interface
     // DDR interfaces:
     output types_amba_pkg::mapinfo_type o_ddr_pmapinfo,     // DDR configuration mapping information
-    output types_amba_pkg::dev_config_type i_ddr_pdevcfg,   // DDR configuration device descriptor
+    input types_amba_pkg::dev_config_type i_ddr_pdevcfg,    // DDR configuration device descriptor
     output types_amba_pkg::apb_in_type o_ddr_apbi,          // APB: DDR configuration interface
     input types_amba_pkg::apb_out_type i_ddr_apbo,          // APB: DDR configuration interface
     output types_amba_pkg::mapinfo_type o_ddr_xmapinfo,     // DDR memory bank mapping information
-    output types_amba_pkg::dev_config_type i_ddr_xdevcfg,   // DDR memory bank descriptor
+    input types_amba_pkg::dev_config_type i_ddr_xdevcfg,    // DDR memory bank descriptor
     output types_amba_pkg::axi4_slave_in_type o_ddr_xslvi,  // AXI DDR memory interface
     input types_amba_pkg::axi4_slave_out_type i_ddr_xslvo   // AXI DDR memory interface
 );
 
 import config_target_pkg::*;
+import types_amba_pkg::*;
 import types_bus0_pkg::*;
 import types_bus1_pkg::*;
 import types_pnp_pkg::*;
-import types_amba_pkg::*;
 import river_cfg_pkg::*;
 import types_river_pkg::*;
-import workgroup_pkg::*;
 import riscv_soc_pkg::*;
-
 
 axi4_master_out_type acpo;
 axi4_master_in_type acpi;
@@ -96,7 +94,6 @@ logic w_irq_uart1;
 logic [SOC_GPIO0_WIDTH-1:0] wb_irq_gpio;
 logic w_irq_pnp;
 logic [SOC_PLIC_IRQ_TOTAL-1:0] wb_ext_irqs;
-
 
 axictrl_bus0 #(
     .async_reset(async_reset)
@@ -125,6 +122,7 @@ axi2apb_bus1 #(
     .o_apbi(apbi),
     .o_mapinfo(bus1_mapinfo)
 );
+
 
 Workgroup #(
     .async_reset(async_reset),
@@ -162,6 +160,7 @@ Workgroup #(
     .o_dmreset(o_dmreset)
 );
 
+
 axi_rom #(
     .async_reset(async_reset),
     .abits(CFG_BOOTROM_LOG2_SIZE),
@@ -170,7 +169,7 @@ axi_rom #(
     .i_clk(i_sys_clk),
     .i_nrst(i_sys_nrst),
     .i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_BOOTROM]),
-    .o_cfg(dev_pnp[SOC_PNP_SRAM]),
+    .o_cfg(dev_pnp[SOC_PNP_BOOTROM]),
     .i_xslvi(axisi[CFG_BUS0_XSLV_BOOTROM]),
     .o_xslvo(axiso[CFG_BUS0_XSLV_BOOTROM])
 );
@@ -220,12 +219,8 @@ plic #(
     .o_ip(wb_plic_xeip)
 );
 
-  ////////////////////////////////////
-  //! External DDR module instance with the AXI4 interface.
-  //! @details Map address:
-  //!          0x00000000_80000000..0x00000000_7fffffff (2GB on FU740)
-// TODO: move into interconnect
-  cdc_axi_sync_tech u_cdc_ddr0 (
+
+cdc_axi_sync_tech u_cdc_ddr0 (
     .i_xslv_clk(i_sys_clk),
     .i_xslv_nrst(i_sys_nrst),
     .i_xslvi(axisi[CFG_BUS0_XSLV_DDR]),
@@ -234,7 +229,7 @@ plic #(
     .i_xmst_nrst(i_ddr_nrst),
     .o_xmsto(o_ddr_xslvi),
     .i_xmsti(i_ddr_xslvo)
-  );
+);
 
 
 apb_uart #(
@@ -253,8 +248,9 @@ apb_uart #(
     .o_irq(w_irq_uart1)
 );
 
-apb_gpio  #(
-    .async_reset(CFG_ASYNC_RESET),
+
+apb_gpio #(
+    .async_reset(async_reset),
     .width(SOC_GPIO0_WIDTH)
 ) gpio0 (
     .i_clk(i_sys_clk),
@@ -264,8 +260,8 @@ apb_gpio  #(
     .i_apbi(apbi[CFG_BUS1_PSLV_GPIO]),
     .o_apbo(apbo[CFG_BUS1_PSLV_GPIO]),
     .i_gpio(i_gpio),
-    .o_gpio(o_gpio),
     .o_gpio_dir(o_gpio_dir),
+    .o_gpio(o_gpio),
     .o_irq(wb_irq_gpio)
 );
 
@@ -359,4 +355,4 @@ begin: comb_proc
     apbo[CFG_BUS1_PSLV_DDR] = i_ddr_apbo;
 end: comb_proc
 
-endmodule
+endmodule: riscv_soc
