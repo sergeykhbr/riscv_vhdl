@@ -120,7 +120,6 @@ SC_MODULE(Workgroup) {
     sc_signal<sc_uint<RISCV_ARCH>> wb_ic_dport_rdata;
     sc_signal<sc_biguint<(32 * CFG_PROGBUF_REG_TOTAL)>> wb_progbuf;
     sc_signal<bool> w_flush_l2;
-    dev_config_type wb_xmst_cfg;
 
     dmidebug *dmi0;
     ic_dport *dport_ic0;

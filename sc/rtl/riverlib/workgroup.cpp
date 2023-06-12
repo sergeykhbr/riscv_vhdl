@@ -373,11 +373,13 @@ void Workgroup::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void Workgroup::comb() {
+    dev_config_type vb_xmst_cfg;
     bool v_flush_l2;
     sc_uint<CFG_CPU_MAX> vb_halted;
     sc_uint<CFG_CPU_MAX> vb_available;
     sc_uint<IRQ_TOTAL> vb_irq[CFG_CPU_MAX];
 
+    vb_xmst_cfg = dev_config_none;
     v_flush_l2 = 0;
     vb_halted = 0;
     vb_available = 0;
@@ -385,10 +387,10 @@ void Workgroup::comb() {
         vb_irq[i] = 0;
     }
 
-    wb_xmst_cfg.descrsize = PNP_CFG_DEV_DESCR_BYTES;
-    wb_xmst_cfg.descrtype = PNP_CFG_TYPE_MASTER;
-    wb_xmst_cfg.vid = VENDOR_OPTIMITECH;
-    wb_xmst_cfg.did = RISCV_RIVER_WORKGROUP;
+    vb_xmst_cfg.descrsize = PNP_CFG_DEV_DESCR_BYTES;
+    vb_xmst_cfg.descrtype = PNP_CFG_TYPE_MASTER;
+    vb_xmst_cfg.vid = VENDOR_OPTIMITECH;
+    vb_xmst_cfg.did = RISCV_RIVER_WORKGROUP;
 
     // Vector to signal conversion is neccessary to implement compatibility with SystemC:
     for (int i = 0; i < CFG_CPU_MAX; i++) {
@@ -404,7 +406,7 @@ void Workgroup::comb() {
     w_flush_l2 = v_flush_l2;
     wb_halted = vb_halted;
     wb_available = vb_available;
-    o_xmst_cfg = wb_xmst_cfg;
+    o_xmst_cfg = vb_xmst_cfg;
 }
 
 }  // namespace debugger

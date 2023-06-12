@@ -34,6 +34,7 @@
 #include "misclib/apb_spi.h"
 #include "misclib/apb_pnp.h"
 #include "riverlib/workgroup.h"
+#include "techmap/cdc_axi_sync/cdc_axi_sync_tech.h"
 #include "sv_func.h"
 
 namespace debugger {
@@ -69,16 +70,16 @@ SC_MODULE(riscv_soc) {
     // PLL and Reset interfaces:
     sc_out<bool> o_dmreset;                                 // Debug reset request. Everything except DMI.
     sc_out<mapinfo_type> o_prci_pmapinfo;                   // PRCI mapping information
-    sc_out<dev_config_type> i_prci_pdevcfg;                 // PRCI device descriptor
+    sc_in<dev_config_type> i_prci_pdevcfg;                  // PRCI device descriptor
     sc_out<apb_in_type> o_prci_apbi;                        // APB: PLL and Reset configuration interface
     sc_in<apb_out_type> i_prci_apbo;                        // APB: PLL and Reset configuration interface
     // DDR interfaces:
     sc_out<mapinfo_type> o_ddr_pmapinfo;                    // DDR configuration mapping information
-    sc_out<dev_config_type> i_ddr_pdevcfg;                  // DDR configuration device descriptor
+    sc_in<dev_config_type> i_ddr_pdevcfg;                   // DDR configuration device descriptor
     sc_out<apb_in_type> o_ddr_apbi;                         // APB: DDR configuration interface
     sc_in<apb_out_type> i_ddr_apbo;                         // APB: DDR configuration interface
     sc_out<mapinfo_type> o_ddr_xmapinfo;                    // DDR memory bank mapping information
-    sc_out<dev_config_type> i_ddr_xdevcfg;                  // DDR memory bank descriptor
+    sc_in<dev_config_type> i_ddr_xdevcfg;                   // DDR memory bank descriptor
     sc_out<axi4_slave_in_type> o_ddr_xslvi;                 // AXI DDR memory interface
     sc_in<axi4_slave_out_type> i_ddr_xslvo;                 // AXI DDR memory interface
 
@@ -151,6 +152,7 @@ SC_MODULE(riscv_soc) {
     apb_spi<SOC_SPI0_LOG2_FIFOSZ> *spi0;
     apb_pnp<SOC_PNP_TOTAL> *pnp0;
     Workgroup *group0;
+    cdc_axi_sync_tech *u_cdc_ddr0;
 
 };
 

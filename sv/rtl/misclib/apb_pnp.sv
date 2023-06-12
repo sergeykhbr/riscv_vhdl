@@ -108,7 +108,7 @@ always_comb
 begin: comb_proc
     apb_pnp_registers v;
     logic [31:0] cfgmap[0: (8 * cfg_slots)-1];
-    logic [CFG_SYSBUS_DATA_BITS-1:0] vrdata;
+    logic [31:0] vrdata;
 
     for (int i = 0; i < (8 * cfg_slots); i++) begin
         cfgmap[i] = 32'h00000000;

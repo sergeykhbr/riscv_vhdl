@@ -81,6 +81,7 @@ riscv_soc::riscv_soc(sc_module_name name,
     spi0 = 0;
     pnp0 = 0;
     group0 = 0;
+    u_cdc_ddr0 = 0;
 
     bus0 = new axictrl_bus0("bus0", async_reset);
     bus0->i_clk(i_sys_clk);
@@ -144,7 +145,7 @@ riscv_soc::riscv_soc(sc_module_name name,
     rom0->i_clk(i_sys_clk);
     rom0->i_nrst(i_sys_nrst);
     rom0->i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_BOOTROM]);
-    rom0->o_cfg(dev_pnp[SOC_PNP_SRAM]);
+    rom0->o_cfg(dev_pnp[SOC_PNP_BOOTROM]);
     rom0->i_xslvi(axisi[CFG_BUS0_XSLV_BOOTROM]);
     rom0->o_xslvo(axiso[CFG_BUS0_XSLV_BOOTROM]);
 
@@ -180,6 +181,17 @@ riscv_soc::riscv_soc(sc_module_name name,
     plic0->o_xslvo(axiso[CFG_BUS0_XSLV_PLIC]);
     plic0->i_irq_request(wb_ext_irqs);
     plic0->o_ip(wb_plic_xeip);
+
+
+    u_cdc_ddr0 = new cdc_axi_sync_tech("u_cdc_ddr0");
+    u_cdc_ddr0->i_xslv_clk(i_sys_clk);
+    u_cdc_ddr0->i_xslv_nrst(i_sys_nrst);
+    u_cdc_ddr0->i_xslvi(axisi[CFG_BUS0_XSLV_DDR]);
+    u_cdc_ddr0->o_xslvo(axiso[CFG_BUS0_XSLV_DDR]);
+    u_cdc_ddr0->i_xmst_clk(i_ddr_clk);
+    u_cdc_ddr0->i_xmst_nrst(i_ddr_nrst);
+    u_cdc_ddr0->o_xmsto(o_ddr_xslvi);
+    u_cdc_ddr0->i_xmsti(i_ddr_xslvo);
 
 
     uart1 = new apb_uart<SOC_UART1_LOG2_FIFOSZ>("uart1", async_reset,
@@ -254,8 +266,11 @@ riscv_soc::riscv_soc(sc_module_name name,
     sensitive << i_spi_miso;
     sensitive << i_sd_detected;
     sensitive << i_sd_protect;
+    sensitive << i_prci_pdevcfg;
     sensitive << i_prci_apbo;
+    sensitive << i_ddr_pdevcfg;
     sensitive << i_ddr_apbo;
+    sensitive << i_ddr_xdevcfg;
     sensitive << i_ddr_xslvo;
     sensitive << acpo;
     sensitive << acpi;
@@ -332,6 +347,9 @@ riscv_soc::~riscv_soc() {
     if (group0) {
         delete group0;
     }
+    if (u_cdc_ddr0) {
+        delete u_cdc_ddr0;
+    }
 }
 
 void riscv_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
@@ -405,6 +423,9 @@ void riscv_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
     if (group0) {
         group0->generateVCD(i_vcd, o_vcd);
+    }
+    if (u_cdc_ddr0) {
+        u_cdc_ddr0->generateVCD(i_vcd, o_vcd);
     }
 }
 
