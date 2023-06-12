@@ -19,7 +19,7 @@
 module Tracer #(
     parameter bit async_reset = 1'b0,
     parameter int unsigned hartid = 0,
-    parameter string trace_file = "trace_river_sysc"
+    parameter trace_file = "trace_river_sysc"
 )
 (
     input logic i_clk,                                      // CPU clock

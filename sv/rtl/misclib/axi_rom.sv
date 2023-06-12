@@ -19,7 +19,7 @@
 module axi_rom #(
     parameter bit async_reset = 1'b0,
     parameter int abits = 17,
-    parameter string filename = ""
+    parameter filename = ""
 )
 (
     input logic i_clk,                                      // CPU clock
