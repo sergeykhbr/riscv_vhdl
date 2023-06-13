@@ -16,6 +16,7 @@
 package axi2apb_bus1_pkg;
 
 import types_amba_pkg::*;
+import types_pnp_pkg::*;
 import types_bus1_pkg::*;
 
 localparam bit [1:0] State_Idle = 2'h0;

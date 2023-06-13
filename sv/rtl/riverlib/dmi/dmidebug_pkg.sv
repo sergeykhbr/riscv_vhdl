@@ -16,6 +16,7 @@
 package dmidebug_pkg;
 
 import types_amba_pkg::*;
+import types_pnp_pkg::*;
 import river_cfg_pkg::*;
 
 localparam bit [2:0] CMDERR_NONE = 3'h0;

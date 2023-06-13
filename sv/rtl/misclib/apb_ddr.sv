@@ -23,7 +23,7 @@ module apb_ddr #(
     input logic i_clk,                                      // APB clock
     input logic i_nrst,                                     // Reset: active LOW
     input types_amba_pkg::mapinfo_type i_mapinfo,           // interconnect slot information
-    output types_amba_pkg::dev_config_type o_cfg,           // Device descriptor
+    output types_pnp_pkg::dev_config_type o_cfg,            // Device descriptor
     input types_amba_pkg::apb_in_type i_apbi,               // APB input interface
     output types_amba_pkg::apb_out_type o_apbo,             // APB output interface
     input logic i_pll_locked,                               // PLL locked
@@ -35,6 +35,7 @@ module apb_ddr #(
 );
 
 import types_amba_pkg::*;
+import types_pnp_pkg::*;
 import apb_ddr_pkg::*;
 
 logic w_req_valid;

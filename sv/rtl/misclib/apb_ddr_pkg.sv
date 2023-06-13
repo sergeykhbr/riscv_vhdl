@@ -16,6 +16,7 @@
 package apb_ddr_pkg;
 
 import types_amba_pkg::*;
+import types_pnp_pkg::*;
 
 typedef struct {
     logic pll_locked;

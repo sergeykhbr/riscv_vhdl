@@ -25,7 +25,7 @@ module apb_uart #(
     input logic i_clk,                                      // CPU clock
     input logic i_nrst,                                     // Reset: active LOW
     input types_amba_pkg::mapinfo_type i_mapinfo,           // interconnect slot information
-    output types_amba_pkg::dev_config_type o_cfg,           // Device descriptor
+    output types_pnp_pkg::dev_config_type o_cfg,            // Device descriptor
     input types_amba_pkg::apb_in_type i_apbi,               // APB  Slave to Bridge interface
     output types_amba_pkg::apb_out_type o_apbo,             // APB Bridge to Slave interface
     input logic i_rd,
@@ -34,6 +34,7 @@ module apb_uart #(
 );
 
 import types_amba_pkg::*;
+import types_pnp_pkg::*;
 // Rx/Tx states
 localparam bit [2:0] idle = 3'h0;
 localparam bit [2:0] startbit = 3'h1;

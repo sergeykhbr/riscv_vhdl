@@ -23,7 +23,7 @@ module axi2apb_bus1 #(
     input logic i_clk,                                      // CPU clock
     input logic i_nrst,                                     // Reset: active LOW
     input types_amba_pkg::mapinfo_type i_mapinfo,           // Base address information from the interconnect port
-    output types_amba_pkg::dev_config_type o_cfg,           // Slave config descriptor
+    output types_pnp_pkg::dev_config_type o_cfg,            // Slave config descriptor
     input types_amba_pkg::axi4_slave_in_type i_xslvi,       // AXI4 Interconnect Bridge interface
     output types_amba_pkg::axi4_slave_out_type o_xslvo,     // AXI4 Bridge to Interconnect interface
     input types_bus1_pkg::bus1_apb_out_vector i_apbo,       // APB slaves output vector
@@ -32,6 +32,7 @@ module axi2apb_bus1 #(
 );
 
 import types_amba_pkg::*;
+import types_pnp_pkg::*;
 import types_bus1_pkg::*;
 import axi2apb_bus1_pkg::*;
 

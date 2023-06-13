@@ -16,6 +16,7 @@
 package axi_slv_pkg;
 
 import types_amba_pkg::*;
+import types_pnp_pkg::*;
 
 localparam bit [3:0] State_Idle = 4'h0;
 localparam bit [3:0] State_w = 4'h1;

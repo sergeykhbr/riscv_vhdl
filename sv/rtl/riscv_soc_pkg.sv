@@ -17,9 +17,9 @@ package riscv_soc_pkg;
 
 import config_target_pkg::*;
 import types_amba_pkg::*;
+import types_pnp_pkg::*;
 import types_bus0_pkg::*;
 import types_bus1_pkg::*;
-import types_pnp_pkg::*;
 import river_cfg_pkg::*;
 import types_river_pkg::*;
 

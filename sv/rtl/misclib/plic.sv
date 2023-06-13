@@ -25,7 +25,7 @@ module plic #(
     input logic i_clk,                                      // CPU clock
     input logic i_nrst,                                     // Reset: active LOW
     input types_amba_pkg::mapinfo_type i_mapinfo,           // interconnect slot information
-    output types_amba_pkg::dev_config_type o_cfg,           // Device descriptor
+    output types_pnp_pkg::dev_config_type o_cfg,            // Device descriptor
     input types_amba_pkg::axi4_slave_in_type i_xslvi,       // AXI Slave to Bridge interface
     output types_amba_pkg::axi4_slave_out_type o_xslvo,     // AXI Bridge to Slave interface
     input logic [irqmax-1:0] i_irq_request,                 // [0] must be tight to GND
@@ -33,6 +33,7 @@ module plic #(
 );
 
 import types_amba_pkg::*;
+import types_pnp_pkg::*;
 typedef struct {
     logic [3:0] priority_th;
     logic [1023:0] ie;                                      // interrupt enable per context

@@ -22,7 +22,7 @@ module axictrl_bus0 #(
 (
     input logic i_clk,                                      // CPU clock
     input logic i_nrst,                                     // Reset: active LOW
-    output types_amba_pkg::dev_config_type o_cfg,           // Slave config descriptor
+    output types_pnp_pkg::dev_config_type o_cfg,            // Slave config descriptor
     input types_bus0_pkg::bus0_xmst_out_vector i_xmsto,     // AXI4 masters output vector
     output types_bus0_pkg::bus0_xmst_in_vector o_xmsti,     // AXI4 masters input vector
     input types_bus0_pkg::bus0_xslv_out_vector i_xslvo,     // AXI4 slaves output vectors
@@ -30,6 +30,7 @@ module axictrl_bus0 #(
     output types_bus0_pkg::bus0_mapinfo_vector o_mapinfo    // AXI devices memory mapping information
 );
 
+import types_pnp_pkg::*;
 import types_amba_pkg::*;
 import types_bus0_pkg::*;
 import axictrl_bus0_pkg::*;

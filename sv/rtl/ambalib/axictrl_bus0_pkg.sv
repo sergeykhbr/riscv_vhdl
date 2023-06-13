@@ -15,6 +15,7 @@
 // 
 package axictrl_bus0_pkg;
 
+import types_pnp_pkg::*;
 import types_amba_pkg::*;
 import types_bus0_pkg::*;
 

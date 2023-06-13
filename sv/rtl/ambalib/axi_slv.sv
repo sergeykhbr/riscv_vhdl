@@ -25,7 +25,7 @@ module axi_slv #(
     input logic i_clk,                                      // CPU clock
     input logic i_nrst,                                     // Reset: active LOW
     input types_amba_pkg::mapinfo_type i_mapinfo,           // Base address information from the interconnect port
-    output types_amba_pkg::dev_config_type o_cfg,           // Slave config descriptor
+    output types_pnp_pkg::dev_config_type o_cfg,            // Slave config descriptor
     input types_amba_pkg::axi4_slave_in_type i_xslvi,       // AXI Slave input interface
     output types_amba_pkg::axi4_slave_out_type o_xslvo,     // AXI Slave output interface
     output logic o_req_valid,
@@ -42,6 +42,7 @@ module axi_slv #(
 );
 
 import types_amba_pkg::*;
+import types_pnp_pkg::*;
 import axi_slv_pkg::*;
 
 axi_slv_registers r, rin;

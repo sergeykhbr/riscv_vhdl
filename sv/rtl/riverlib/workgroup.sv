@@ -45,12 +45,12 @@ module Workgroup #(
     input types_amba_pkg::axi4_master_out_type i_acpo,
     output types_amba_pkg::axi4_master_in_type o_acpi,
     // System bus port
-    output types_amba_pkg::dev_config_type o_xmst_cfg,      // Workgroup master interface descriptor
+    output types_pnp_pkg::dev_config_type o_xmst_cfg,       // Workgroup master interface descriptor
     input types_amba_pkg::axi4_master_in_type i_msti,
     output types_amba_pkg::axi4_master_out_type o_msto,
     // APB debug access:
     input types_amba_pkg::mapinfo_type i_dmi_mapinfo,       // DMI APB itnerface mapping information
-    output types_amba_pkg::dev_config_type o_dmi_cfg,       // DMI device descriptor
+    output types_pnp_pkg::dev_config_type o_dmi_cfg,        // DMI device descriptor
     input types_amba_pkg::apb_in_type i_dmi_apbi,
     output types_amba_pkg::apb_out_type o_dmi_apbo,
     output logic o_dmreset                                  // reset everything except DMI debug interface
@@ -58,6 +58,7 @@ module Workgroup #(
 
 import river_cfg_pkg::*;
 import types_amba_pkg::*;
+import types_pnp_pkg::*;
 import types_river_pkg::*;
 import workgroup_pkg::*;
 

@@ -16,6 +16,7 @@
 package apb_slv_pkg;
 
 import types_amba_pkg::*;
+import types_pnp_pkg::*;
 
 localparam bit [1:0] State_Idle = 2'h0;
 localparam bit [1:0] State_Request = 2'h1;

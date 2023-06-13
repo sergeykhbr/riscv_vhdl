@@ -29,7 +29,7 @@ module apb_pnp #(
     input logic i_nrst,                                     // Reset: active LOW
     input types_amba_pkg::mapinfo_type i_mapinfo,           // interconnect slot information
     input types_pnp_pkg::soc_pnp_vector i_cfg,              // Device descriptors vector
-    output types_amba_pkg::dev_config_type o_cfg,           // PNP Device descriptor
+    output types_pnp_pkg::dev_config_type o_cfg,            // PNP Device descriptor
     input types_amba_pkg::apb_in_type i_apbi,               // APB  Slave to Bridge interface
     output types_amba_pkg::apb_out_type o_apbo,             // APB Bridge to Slave interface
     output logic o_irq

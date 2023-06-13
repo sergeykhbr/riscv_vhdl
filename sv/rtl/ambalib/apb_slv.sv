@@ -25,7 +25,7 @@ module apb_slv #(
     input logic i_clk,                                      // CPU clock
     input logic i_nrst,                                     // Reset: active LOW
     input types_amba_pkg::mapinfo_type i_mapinfo,           // Base address information from the interconnect port
-    output types_amba_pkg::dev_config_type o_cfg,           // Slave config descriptor
+    output types_pnp_pkg::dev_config_type o_cfg,            // Slave config descriptor
     input types_amba_pkg::apb_in_type i_apbi,               // APB  Slave to Bridge interface
     output types_amba_pkg::apb_out_type o_apbo,             // APB Bridge to Slave interface
     output logic o_req_valid,
@@ -38,6 +38,7 @@ module apb_slv #(
 );
 
 import types_amba_pkg::*;
+import types_pnp_pkg::*;
 import apb_slv_pkg::*;
 
 apb_slv_registers r, rin;

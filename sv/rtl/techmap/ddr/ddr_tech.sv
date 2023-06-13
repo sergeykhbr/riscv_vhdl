@@ -28,12 +28,12 @@ module ddr_tech
     input i_xslv_clk,
     // AXI memory access (ddr clock)
     input types_amba_pkg::mapinfo_type i_xmapinfo,
-    output types_amba_pkg::dev_config_type o_xcfg,
+    output types_pnp_pkg::dev_config_type o_xcfg,
     input types_amba_pkg::axi4_slave_in_type i_xslvi,
     output types_amba_pkg::axi4_slave_out_type o_xslvo,
     // APB control interface (sys clock):
     input types_amba_pkg::mapinfo_type i_pmapinfo,
-    output types_amba_pkg::dev_config_type o_pcfg,
+    output types_pnp_pkg::dev_config_type o_pcfg,
     input types_amba_pkg::apb_in_type i_apbi,
     output types_amba_pkg::apb_out_type o_apbo,
     // to SOC:
@@ -59,6 +59,7 @@ module ddr_tech
 );
 
 import types_amba_pkg::*;
+import types_pnp_pkg::*;
 
 axi4_slave_in_type wb_xslvi;  // remapped
 

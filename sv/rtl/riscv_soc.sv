@@ -50,25 +50,25 @@ module riscv_soc #(
     // PLL and Reset interfaces:
     output logic o_dmreset,                                 // Debug reset request. Everything except DMI.
     output types_amba_pkg::mapinfo_type o_prci_pmapinfo,    // PRCI mapping information
-    input types_amba_pkg::dev_config_type i_prci_pdevcfg,   // PRCI device descriptor
+    input types_pnp_pkg::dev_config_type i_prci_pdevcfg,    // PRCI device descriptor
     output types_amba_pkg::apb_in_type o_prci_apbi,         // APB: PLL and Reset configuration interface
     input types_amba_pkg::apb_out_type i_prci_apbo,         // APB: PLL and Reset configuration interface
     // DDR interfaces:
     output types_amba_pkg::mapinfo_type o_ddr_pmapinfo,     // DDR configuration mapping information
-    input types_amba_pkg::dev_config_type i_ddr_pdevcfg,    // DDR configuration device descriptor
+    input types_pnp_pkg::dev_config_type i_ddr_pdevcfg,     // DDR configuration device descriptor
     output types_amba_pkg::apb_in_type o_ddr_apbi,          // APB: DDR configuration interface
     input types_amba_pkg::apb_out_type i_ddr_apbo,          // APB: DDR configuration interface
     output types_amba_pkg::mapinfo_type o_ddr_xmapinfo,     // DDR memory bank mapping information
-    input types_amba_pkg::dev_config_type i_ddr_xdevcfg,    // DDR memory bank descriptor
+    input types_pnp_pkg::dev_config_type i_ddr_xdevcfg,     // DDR memory bank descriptor
     output types_amba_pkg::axi4_slave_in_type o_ddr_xslvi,  // AXI DDR memory interface
     input types_amba_pkg::axi4_slave_out_type i_ddr_xslvo   // AXI DDR memory interface
 );
 
 import config_target_pkg::*;
 import types_amba_pkg::*;
+import types_pnp_pkg::*;
 import types_bus0_pkg::*;
 import types_bus1_pkg::*;
-import types_pnp_pkg::*;
 import river_cfg_pkg::*;
 import types_river_pkg::*;
 import riscv_soc_pkg::*;

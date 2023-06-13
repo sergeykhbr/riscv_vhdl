@@ -30,7 +30,7 @@ module dmidebug #(
     output logic o_tdo,                                     // Test Data Output
     // Bus interface (APB):
     input types_amba_pkg::mapinfo_type i_mapinfo,           // interconnect slot information
-    output types_amba_pkg::dev_config_type o_cfg,           // Device descriptor
+    output types_pnp_pkg::dev_config_type o_cfg,            // Device descriptor
     input types_amba_pkg::apb_in_type i_apbi,               // APB input interface
     output types_amba_pkg::apb_out_type o_apbo,             // APB output interface
     // DMI interface:
@@ -56,6 +56,7 @@ module dmidebug #(
 );
 
 import types_amba_pkg::*;
+import types_pnp_pkg::*;
 import river_cfg_pkg::*;
 import dmidebug_pkg::*;
 

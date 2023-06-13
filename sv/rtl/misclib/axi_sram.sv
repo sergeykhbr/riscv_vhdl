@@ -24,12 +24,13 @@ module axi_sram #(
     input logic i_clk,                                      // CPU clock
     input logic i_nrst,                                     // Reset: active LOW
     input types_amba_pkg::mapinfo_type i_mapinfo,           // interconnect slot information
-    output types_amba_pkg::dev_config_type o_cfg,           // Device descriptor
+    output types_pnp_pkg::dev_config_type o_cfg,            // Device descriptor
     input types_amba_pkg::axi4_slave_in_type i_xslvi,       // AXI Slave to Bridge interface
     output types_amba_pkg::axi4_slave_out_type o_xslvo      // AXI Bridge to Slave interface
 );
 
 import types_amba_pkg::*;
+import types_pnp_pkg::*;
 logic w_req_valid;
 logic [CFG_SYSBUS_ADDR_BITS-1:0] wb_req_addr;
 logic [7:0] wb_req_size;
