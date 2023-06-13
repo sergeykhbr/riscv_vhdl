@@ -18,9 +18,9 @@
 #include <systemc.h>
 #include "../prj/impl/asic_full/config_target.h"
 #include "ambalib/types_amba.h"
+#include "ambalib/types_pnp.h"
 #include "ambalib/types_bus0.h"
 #include "ambalib/types_bus1.h"
-#include "ambalib/types_pnp.h"
 #include "riverlib/river_cfg.h"
 #include "riverlib/types_river.h"
 #include "ambalib/axictrl_bus0.h"

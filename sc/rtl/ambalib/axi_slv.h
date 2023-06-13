@@ -17,6 +17,7 @@
 
 #include <systemc.h>
 #include "types_amba.h"
+#include "types_pnp.h"
 
 namespace debugger {
 

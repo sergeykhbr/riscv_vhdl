@@ -16,6 +16,7 @@
 #pragma once
 
 #include <systemc.h>
+#include "types_pnp.h"
 #include "types_amba.h"
 #include "types_bus0.h"
 #include "axi_slv.h"

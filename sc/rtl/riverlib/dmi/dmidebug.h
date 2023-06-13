@@ -17,6 +17,7 @@
 
 #include <systemc.h>
 #include "../../ambalib/types_amba.h"
+#include "../../ambalib/types_pnp.h"
 #include "../river_cfg.h"
 #include "jtagcdc.h"
 #include "jtagtap.h"

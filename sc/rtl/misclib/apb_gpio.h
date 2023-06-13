@@ -17,6 +17,7 @@
 
 #include <systemc.h>
 #include "../ambalib/types_amba.h"
+#include "../ambalib/types_pnp.h"
 #include "../ambalib/apb_slv.h"
 #include "api_core.h"
 
