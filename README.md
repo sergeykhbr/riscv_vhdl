@@ -1,6 +1,22 @@
 System-On-Chip template based on synthesizable processor compliant with the RISC-V architecture.
 =====================
 
+## Howto build FPGA bitstream or RTL simulation:
+
+- To build KC705 bitstream file:
+
+        $ cd sv/prj/impl/kc705
+        $ make
+
+- To build and run full system unisim RTL simulation:
+
+        $ cd sv/prj/impl/asic_sim
+        $ make build
+        $ make gui
+
+Note: Information related to VHDL source code is obsolete and currently is updating.
+
+
 This repository provides open source System-on-Chip implementation based on
 open source RISC-V specifications. SOC project
 includes general set of peripheries, FPGA CADs projects files, own
