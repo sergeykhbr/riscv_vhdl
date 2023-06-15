@@ -16,7 +16,7 @@
 #pragma once
 
 #include <systemc.h>
-#include "../prj/impl/asic_full/config_target.h"
+#include "../prj/impl/asic/config_target.h"
 #include "ambalib/types_amba.h"
 #include "ambalib/types_pnp.h"
 #include "ambalib/types_bus0.h"

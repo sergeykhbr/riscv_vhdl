@@ -29,8 +29,8 @@ file(GLOB_RECURSE cpu_sysc_plugin_src
     LIST_DIRECTORIES false
     ${src_top}/debugger/src/common/*.cpp
     ${src_top}/debugger/src/common/*.h
-    ${src_top}/sc/rtl/*.cpp
-    ${src_top}/sc/rtl/*.h
+    ${src_top}/sc/*.cpp
+    ${src_top}/sc/*.h
     ${src_top}/debugger/src/cpu_sysc_plugin/*.cpp
     ${src_top}/debugger/src/cpu_sysc_plugin/*.h
     ${CMAKE_CURRENT_SOURCE_DIR}/exportmap.def

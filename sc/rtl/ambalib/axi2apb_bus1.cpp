@@ -127,11 +127,11 @@ void axi2apb_bus1::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
 void axi2apb_bus1::comb() {
     int iselidx;
-    apb_in_type vapbi[CFG_BUS1_PSLV_TOTAL];
+    apb_in_type vapbi[(CFG_BUS1_PSLV_TOTAL + 1)];
     apb_out_type vapbo[(CFG_BUS1_PSLV_TOTAL + 1)];
 
     iselidx = 0;
-    for (int i = 0; i < CFG_BUS1_PSLV_TOTAL; i++) {
+    for (int i = 0; i < (CFG_BUS1_PSLV_TOTAL + 1); i++) {
         vapbi[i] = apb_in_none;
     }
     for (int i = 0; i < (CFG_BUS1_PSLV_TOTAL + 1); i++) {

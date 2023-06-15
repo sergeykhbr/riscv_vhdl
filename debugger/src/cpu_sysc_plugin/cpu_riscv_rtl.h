@@ -40,6 +40,7 @@
 #include "bus_slv.h"
 #include "ambalib/types_amba.h"
 #include "riverlib/workgroup.h"
+#include "../prj/impl/asic/asic_top.h"
 #include <systemc.h>
 
 namespace debugger {
@@ -111,9 +112,21 @@ class CpuRiscV_RTL : public IService,
     IMemoryOperation *ibus_;
 
     sc_signal<bool> w_clk;
+    sc_signal<bool> w_rst;
     sc_signal<bool> w_sys_nrst;
     sc_signal<bool> w_dmi_nrst;
     sc_signal<sc_uint<64>> wb_mtimer;
+
+    sc_signal<sc_uint<12>> wb_gpio;
+    sc_signal<bool> w_jtag_vref;
+    sc_signal<bool> w_uart1_rd;
+    sc_signal<bool> wuart1_td;
+    sc_signal<bool> w_spi_cs;
+    sc_signal<bool> w_spi_sclk;
+    sc_signal<bool> w_spi_mosi;
+    sc_signal<bool> w_spi_miso;
+    sc_signal<bool> w_sd_detected;
+    sc_signal<bool> w_sd_protect;
 
     // AXI4 input structure:
     sc_signal<dev_config_type> xcfg;
@@ -152,6 +165,7 @@ class CpuRiscV_RTL : public IService,
     TapBitBang *tapbb_;
     BusSlave *dmislv_;
     Workgroup *group0_;
+    asic_top *asic0_;
 };
 
 DECLARE_CLASS(CpuRiscV_RTL)

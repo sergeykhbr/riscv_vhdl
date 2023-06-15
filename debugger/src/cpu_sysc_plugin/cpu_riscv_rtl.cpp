@@ -107,9 +107,16 @@ void CpuRiscV_RTL::postinitService() {
     wrapper_->setPLIC(iirqext_);
     wrapper_->setClockHz(freqHz_.to_int());
     wrapper_->generateVCD(i_vcd_, o_vcd_);
-    dmislv_->setBaseAddress(dmibar_.to_uint64());
-    dmislv_->setLength(4096);
-    group0_->generateVCD(i_vcd_, o_vcd_);
+    if (dmislv_) {
+        dmislv_->setBaseAddress(dmibar_.to_uint64());
+        dmislv_->setLength(4096);
+    }
+    if (group0_) {
+        group0_->generateVCD(i_vcd_, o_vcd_);
+    }
+    if (asic0_) {
+        asic0_->generateVCD(i_vcd_, o_vcd_);
+    }
 
     if (!run()) {
         RISCV_error("Can't create thread.", NULL);
@@ -129,6 +136,7 @@ void CpuRiscV_RTL::createSystemC() {
     registerInterface(static_cast<ICpuRiscV *>(wrapper_));
     registerInterface(static_cast<IResetListener *>(wrapper_));
     w_clk = wrapper_->o_clk;
+    wrapper_->o_rst(w_rst);
     wrapper_->o_sys_nrst(w_sys_nrst);
     wrapper_->o_dmi_nrst(w_dmi_nrst);
     wrapper_->o_msti(msti);
@@ -149,6 +157,7 @@ void CpuRiscV_RTL::createSystemC() {
     tapbb_->o_tdo(w_tdi);
     tapbb_->i_tdi(w_tdo);
 
+#if 0
     dmislv_ = new BusSlave("dmislv");
     registerPortInterface("dmi", static_cast<IMemoryOperation *>(dmislv_));
     dmislv_->i_clk(wrapper_->o_clk),
@@ -187,6 +196,34 @@ void CpuRiscV_RTL::createSystemC() {
     group0_->o_dmi_apbo(wb_dmi_apbo);
     group0_->o_dmreset(w_ndmreset);
 
+    asic0_ = 0;
+#else
+    asic0_ = new asic_top("tt",
+                          CFG_BOOTROM_FILE_HEX,
+                          3);
+
+    asic0_->i_rst(w_rst);
+    asic0_->i_sclk_p(wrapper_->o_clk);
+    asic0_->i_sclk_n(wrapper_->o_clk);
+    asic0_->io_gpio(wb_gpio);
+    asic0_->i_jtag_trst(w_trst);
+    asic0_->i_jtag_tck(w_tck);
+    asic0_->i_jtag_tms(w_tms);
+    asic0_->i_jtag_tdi(w_tdi);
+    asic0_->o_jtag_tdo(w_tdo);
+    asic0_->o_jtag_vref(w_jtag_vref);
+    asic0_->i_uart1_rd(w_uart1_rd);
+    asic0_->o_uart1_td(wuart1_td);
+    asic0_->o_spi_cs(w_spi_cs);
+    asic0_->o_spi_sclk(w_spi_sclk);
+    asic0_->o_spi_mosi(w_spi_mosi);
+    asic0_->i_spi_miso(w_spi_miso);
+    asic0_->i_sd_detected(w_sd_detected);
+    asic0_->i_sd_protect(w_sd_protect);
+
+    dmislv_ = 0;
+    group0_ = 0;
+#endif
 
 #ifdef DBG_ICACHE_LRU_TB
     ICacheLru_tb *tb = new ICacheLru_tb("tb");
@@ -205,8 +242,15 @@ void CpuRiscV_RTL::createSystemC() {
 void CpuRiscV_RTL::deleteSystemC() {
     delete wrapper_;
     delete tapbb_;
-    delete dmislv_;
-    delete group0_;
+    if (dmislv_) {
+        delete dmislv_;
+    }
+    if (group0_) {
+        delete group0_;
+    }
+    if (asic0_) {
+        delete asic0_;
+    }
 }
 
 void CpuRiscV_RTL::hapTriggered(EHapType type,
