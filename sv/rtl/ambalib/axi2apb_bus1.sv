@@ -75,11 +75,11 @@ always_comb
 begin: comb_proc
     axi2apb_bus1_registers v;
     int iselidx;
-    apb_in_type vapbi[0: CFG_BUS1_PSLV_TOTAL-1];
+    apb_in_type vapbi[0: (CFG_BUS1_PSLV_TOTAL + 1)-1];
     apb_out_type vapbo[0: (CFG_BUS1_PSLV_TOTAL + 1)-1];
 
     iselidx = 0;
-    for (int i = 0; i < CFG_BUS1_PSLV_TOTAL; i++) begin
+    for (int i = 0; i < (CFG_BUS1_PSLV_TOTAL + 1); i++) begin
         vapbi[i] = apb_in_none;
     end
     for (int i = 0; i < (CFG_BUS1_PSLV_TOTAL + 1); i++) begin
