@@ -266,8 +266,8 @@ begin: comb_proc
     vb_ctrl_bus = 55'h00000000000000;
     vb_data_bus = 55'h00000000000000;
     vb_queue_bus = 55'h00000000000000;
-    ctrl_path_id = 0;
-    data_path_id = 0;
+    ctrl_path_id = CTRL_PATH;
+    data_path_id = DATA_PATH;
     v_queue_we = 0;
     v_queue_re = 0;
     v_req_mem_path_o = 0;
@@ -284,13 +284,11 @@ begin: comb_proc
     v_queue_re = i_req_mem_ready;
     v_queue_we = (i.req_mem_valid || d.req_mem_valid);
 
-    ctrl_path_id = CTRL_PATH;
     vb_ctrl_bus = {ctrl_path_id,
             i.req_mem_type,
             i.req_mem_size,
             i.req_mem_addr};
 
-    data_path_id = DATA_PATH;
     vb_data_bus = {data_path_id,
             d.req_mem_type,
             d.req_mem_size,
