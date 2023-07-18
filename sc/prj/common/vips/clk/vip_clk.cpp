@@ -20,13 +20,15 @@
 namespace debugger {
 
 vip_clk::vip_clk(sc_module_name name,
-                 double half_period)
+                 double period)
     : sc_module(name),
-    o_clk("o_clk") {
+    o_clk("o_clk"),
+    pll("pll", period, SC_SEC) {
 
-    half_period_ = half_period;
+    period_ = period;
 
     SC_METHOD(comb);
+    sensitive << pll;
 }
 
 void vip_clk::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
@@ -37,6 +39,7 @@ void vip_clk::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void vip_clk::comb() {
+    o_clk = pll;
 }
 
 }  // namespace debugger

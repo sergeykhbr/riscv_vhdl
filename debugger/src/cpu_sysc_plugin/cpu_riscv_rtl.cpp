@@ -117,6 +117,9 @@ void CpuRiscV_RTL::postinitService() {
     if (asic0_) {
         asic0_->generateVCD(i_vcd_, o_vcd_);
     }
+    if (uart0_) {
+        uart0_->generateVCD(i_vcd_, o_vcd_);
+    }
 
     if (!run()) {
         RISCV_error("Can't create thread.", NULL);
@@ -197,10 +200,13 @@ void CpuRiscV_RTL::createSystemC() {
     group0_->o_dmreset(w_ndmreset);
 
     asic0_ = 0;
+    uart0_ = 0;
 #else
+    int SIM_UART_SPEED_UP_RATE = 3;
+    int uart_scaler = 8;   // expected uart bit edge in a range 8..16 of scaler counter
     asic0_ = new asic_top("tt",
                           CFG_BOOTROM_FILE_HEX,
-                          3);
+                          SIM_UART_SPEED_UP_RATE);
 
     asic0_->i_rst(w_rst);
     asic0_->i_sclk_p(wrapper_->o_clk);
@@ -213,13 +219,20 @@ void CpuRiscV_RTL::createSystemC() {
     asic0_->o_jtag_tdo(w_tdo);
     asic0_->o_jtag_vref(w_jtag_vref);
     asic0_->i_uart1_rd(w_uart1_rd);
-    asic0_->o_uart1_td(wuart1_td);
+    asic0_->o_uart1_td(w_uart1_td);
     asic0_->o_spi_cs(w_spi_cs);
     asic0_->o_spi_sclk(w_spi_sclk);
     asic0_->o_spi_mosi(w_spi_mosi);
     asic0_->i_spi_miso(w_spi_miso);
     asic0_->i_sd_detected(w_sd_detected);
     asic0_->i_sd_protect(w_sd_protect);
+
+    uart0_ = new vip_uart_top("uart0",
+                              asyncReset_.to_bool(),
+                              (1.0/115200.0 / 2) / (1 << SIM_UART_SPEED_UP_RATE),
+                              uart_scaler);
+    uart0_->i_nrst(w_sys_nrst);
+    uart0_->i_rx(w_uart1_td);
 
     dmislv_ = 0;
     group0_ = 0;
@@ -250,6 +263,9 @@ void CpuRiscV_RTL::deleteSystemC() {
     }
     if (asic0_) {
         delete asic0_;
+    }
+    if (uart0_) {
+        delete uart0_;
     }
 }
 

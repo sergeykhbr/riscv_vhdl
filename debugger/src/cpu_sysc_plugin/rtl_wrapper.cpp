@@ -25,7 +25,7 @@ namespace debugger {
 extern bool dbg_e_valid;
 
 RtlWrapper::RtlWrapper(IFace *parent, sc_module_name name) : sc_module(name),
-    o_clk("clk", 10, SC_NS),
+    o_clk("clk", 1.0/40.0, SC_US),
     o_rst("o_rst"),
     o_sys_nrst("o_sys_nrst"),
     o_dmi_nrst("o_dmi_nrst"),

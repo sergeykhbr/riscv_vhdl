@@ -40,10 +40,10 @@ void SV_readmemh(const char *filename, sc_uint<32> *mem) {
             v64.val = (v64.val << 4) | static_cast<uint8_t>(buf - '0');
             cnt++;
         } else if (buf >= 'a' && buf <= 'f') {
-            v64.val = 10 + (v64.val << 4) | static_cast<uint8_t>(buf - 'a');
+            v64.val = (v64.val << 4) | (10 + static_cast<uint8_t>(buf - 'a'));
             cnt++;
         } else if (buf >= 'A' && buf <= 'F') {
-            v64.val = 10 + (v64.val << 4) | static_cast<uint8_t>(buf - 'A');
+            v64.val = (v64.val << 4) | (10 + static_cast<uint8_t>(buf - 'A'));
             cnt++;
         } else {
             if (cnt) {

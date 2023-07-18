@@ -28,13 +28,13 @@ SC_MODULE(vip_clk) {
     SC_HAS_PROCESS(vip_clk);
 
     vip_clk(sc_module_name name,
-            double half_period);
+            double period);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
-    double half_period_;
-
+    double period_;
+    sc_clock pll;
 };
 
 }  // namespace debugger

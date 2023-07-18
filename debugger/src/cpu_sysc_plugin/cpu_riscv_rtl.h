@@ -41,6 +41,7 @@
 #include "ambalib/types_amba.h"
 #include "riverlib/workgroup.h"
 #include "../prj/impl/asic/asic_top.h"
+#include "../prj/common/vips/uart/vip_uart_top.h"
 #include <systemc.h>
 
 namespace debugger {
@@ -120,7 +121,7 @@ class CpuRiscV_RTL : public IService,
     sc_signal<sc_uint<12>> wb_gpio;
     sc_signal<bool> w_jtag_vref;
     sc_signal<bool> w_uart1_rd;
-    sc_signal<bool> wuart1_td;
+    sc_signal<bool> w_uart1_td;
     sc_signal<bool> w_spi_cs;
     sc_signal<bool> w_spi_sclk;
     sc_signal<bool> w_spi_mosi;
@@ -166,6 +167,7 @@ class CpuRiscV_RTL : public IService,
     BusSlave *dmislv_;
     Workgroup *group0_;
     asic_top *asic0_;
+    vip_uart_top *uart0_;
 };
 
 DECLARE_CLASS(CpuRiscV_RTL)

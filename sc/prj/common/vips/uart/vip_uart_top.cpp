@@ -34,7 +34,7 @@ vip_uart_top::vip_uart_top(sc_module_name name,
     rx0 = 0;
 
     clk0 = new vip_clk("clk0",
-                        half_period);
+                        half_period / scaler);
     clk0->o_clk(w_clk);
 
 

@@ -81,7 +81,7 @@ void vip_uart_receiver::comb() {
         // Start counting from the first low sample, once we've
         // sampled a full bit, start collecting data bits.
 
-        if ((i_rx.read() == 1) || (r.sample.read().or_reduce() == 1)) {
+        if ((i_rx.read() == 0) || (r.sample.read().or_reduce() == 1)) {
             v.sample = (r.sample.read() + 1);
         }
 

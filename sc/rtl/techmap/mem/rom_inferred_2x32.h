@@ -62,13 +62,13 @@ rom_inferred_2x32<abits>::rom_inferred_2x32(sc_module_name name,
     filename_ = filename;
     // initial
     char tstr[256];
-    RISCV_sprintf(tstr, sizeof(tstr), "%s_lo.log", filename_.c_str());
+    RISCV_sprintf(tstr, sizeof(tstr), "%s_lo.hex", filename_.c_str());
     hexname0 = std::string(tstr);
-    SV_readmemh(filename_.c_str(), mem0);
+    SV_readmemh(hexname0.c_str(), mem0);
 
-    RISCV_sprintf(tstr, sizeof(tstr), "%s_hi.log", filename_.c_str());
+    RISCV_sprintf(tstr, sizeof(tstr), "%s_hi.hex", filename_.c_str());
     hexname1 = std::string(tstr);
-    SV_readmemh(filename_.c_str(), mem1);
+    SV_readmemh(hexname1.c_str(), mem1);
 
     // end initial
 
