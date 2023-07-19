@@ -27,6 +27,7 @@ SC_MODULE(vip_uart_top) {
     sc_in<bool> i_rx;
 
     void comb();
+    void registers();
 
     SC_HAS_PROCESS(vip_uart_top);
 
@@ -47,6 +48,7 @@ SC_MODULE(vip_uart_top) {
     sc_signal<bool> w_rdy;
     sc_signal<bool> w_rdy_clr;
     sc_signal<sc_uint<8>> wb_rdata;
+    std::string strOut_;
 
     vip_clk *clk0;
     vip_uart_receiver *rx0;
