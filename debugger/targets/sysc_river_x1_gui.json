@@ -35,7 +35,7 @@
                 ['DmiBAR',0x1000,'Base address of the DMI module'],
                 ['InVcdFile','','None empty string enables generation of stimulus VCD file'],
                 ['OutVcdFile','','None empty string enables VCD file with reference signals'],
-                ['FreqHz',1000000]
+                ['FreqHz',40000000]
                 ]}]},
     {'Class':'BusGenericClass','Instances':[
           {'Name':'axi0','Attr':[

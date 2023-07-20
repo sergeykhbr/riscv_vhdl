@@ -33,7 +33,7 @@ SC_MODULE(vip_uart_top) {
 
     vip_uart_top(sc_module_name name,
                  bool async_reset,
-                 double half_period,
+                 int baudrate,
                  int scaler);
     virtual ~vip_uart_top();
 
@@ -41,8 +41,9 @@ SC_MODULE(vip_uart_top) {
 
  private:
     bool async_reset_;
-    double half_period_;
+    int baudrate_;
     int scaler_;
+    double pll_period;
 
     sc_signal<bool> w_clk;
     sc_signal<bool> w_rdy;

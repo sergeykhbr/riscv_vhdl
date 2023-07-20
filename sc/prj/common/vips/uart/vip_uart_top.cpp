@@ -21,21 +21,22 @@ namespace debugger {
 
 vip_uart_top::vip_uart_top(sc_module_name name,
                            bool async_reset,
-                           double half_period,
+                           int baudrate,
                            int scaler)
     : sc_module(name),
     i_nrst("i_nrst"),
     i_rx("i_rx") {
 
     async_reset_ = async_reset;
-    half_period_ = half_period;
+    baudrate_ = baudrate;
     scaler_ = scaler;
+    pll_period = (1.0 / ((2 * scaler) * baudrate));
     clk0 = 0;
     rx0 = 0;
     strOut_ = "";
 
     clk0 = new vip_clk("clk0",
-                        half_period / scaler);
+                        pll_period);
     clk0->o_clk(w_clk);
 
 

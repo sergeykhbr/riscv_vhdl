@@ -229,7 +229,7 @@ void CpuRiscV_RTL::createSystemC() {
 
     uart0_ = new vip_uart_top("uart0",
                               asyncReset_.to_bool(),
-                              (1.0/115200.0 / 2) / (1 << SIM_UART_SPEED_UP_RATE),
+                              115200 * (1 << SIM_UART_SPEED_UP_RATE),
                               uart_scaler);
     uart0_->i_nrst(w_sys_nrst);
     uart0_->i_rx(w_uart1_td);

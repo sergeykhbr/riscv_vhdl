@@ -26,6 +26,7 @@ vip_clk::vip_clk(sc_module_name name,
     pll("pll", period, SC_SEC) {
 
     period_ = period;
+    half_period = (period / 2);
 
     SC_METHOD(comb);
     sensitive << pll;
