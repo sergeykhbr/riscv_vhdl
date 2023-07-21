@@ -120,6 +120,9 @@ void CpuRiscV_RTL::postinitService() {
     if (uart0_) {
         uart0_->generateVCD(i_vcd_, o_vcd_);
     }
+    if (sdcard0_) {
+        sdcard0_->generateVCD(i_vcd_, o_vcd_);
+    }
 
     if (!run()) {
         RISCV_error("Can't create thread.", NULL);
@@ -201,6 +204,7 @@ void CpuRiscV_RTL::createSystemC() {
 
     asic0_ = 0;
     uart0_ = 0;
+    sdcard0_ = 0;
 #else
     int SIM_UART_SPEED_UP_RATE = 3;
     int uart_scaler = 8;   // expected uart bit edge in a range 8..16 of scaler counter
@@ -220,10 +224,12 @@ void CpuRiscV_RTL::createSystemC() {
     asic0_->o_jtag_vref(w_jtag_vref);
     asic0_->i_uart1_rd(w_uart1_rd);
     asic0_->o_uart1_td(w_uart1_td);
-    asic0_->o_spi_cs(w_spi_cs);
-    asic0_->o_spi_sclk(w_spi_sclk);
-    asic0_->o_spi_mosi(w_spi_mosi);
-    asic0_->i_spi_miso(w_spi_miso);
+    asic0_->o_sd_sclk(w_sd_sclk);
+    asic0_->io_sd_cmd(w_sd_cmd);
+    asic0_->io_sd_dat0(w_sd_dat0);
+    asic0_->io_sd_dat1(w_sd_dat1);
+    asic0_->io_sd_dat2(w_sd_dat2);
+    asic0_->io_sd_cd_dat3(w_sd_dat3);
     asic0_->i_sd_detected(w_sd_detected);
     asic0_->i_sd_protect(w_sd_protect);
 
@@ -233,6 +239,14 @@ void CpuRiscV_RTL::createSystemC() {
                               uart_scaler);
     uart0_->i_nrst(w_sys_nrst);
     uart0_->i_rx(w_uart1_td);
+
+    sdcard0_ = new vip_sdcard_top("sdcard0");
+    sdcard0_->i_sclk(w_sd_sclk);
+    sdcard0_->io_cmd(w_sd_cmd);
+    sdcard0_->io_dat0(w_sd_dat0);
+    sdcard0_->io_dat1(w_sd_dat1);
+    sdcard0_->io_dat2(w_sd_dat2);
+    sdcard0_->io_cd_dat3(w_sd_dat3);
 
     dmislv_ = 0;
     group0_ = 0;
@@ -266,6 +280,9 @@ void CpuRiscV_RTL::deleteSystemC() {
     }
     if (uart0_) {
         delete uart0_;
+    }
+    if (sdcard0_) {
+        delete sdcard0_;
     }
 }
 

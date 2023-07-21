@@ -31,7 +31,7 @@
 #include "misclib/plic.h"
 #include "misclib/apb_uart.h"
 #include "misclib/apb_gpio.h"
-#include "misclib/apb_spi.h"
+#include "sdctrl/sdctrl.h"
 #include "misclib/apb_pnp.h"
 #include "riverlib/workgroup.h"
 #include "techmap/cdc_axi_sync/cdc_axi_sync_tech.h"
@@ -60,11 +60,23 @@ SC_MODULE(riscv_soc) {
     // UART1 signals
     sc_in<bool> i_uart1_rd;
     sc_out<bool> o_uart1_td;
-    // SPI SD-card signals:
-    sc_out<bool> o_spi_cs;
-    sc_out<bool> o_spi_sclk;
-    sc_out<bool> o_spi_mosi;                                // SPI: Master Output Slave Input
-    sc_in<bool> i_spi_miso;                                 // SPI: Master Input Slave Output
+    // SD-card signals:
+    sc_out<bool> o_sd_sclk;                                 // Clock up to 50 MHz
+    sc_in<bool> i_sd_cmd;                                   // Command response;
+    sc_out<bool> o_sd_cmd;                                  // Command request; DO in SPI mode
+    sc_out<bool> o_sd_cmd_dir;                              // Direction bit: 1=input; 0=output
+    sc_in<bool> i_sd_dat0;                                  // Data Line[0] input; DI in SPI mode
+    sc_out<bool> o_sd_dat0;                                 // Data Line[0] output
+    sc_out<bool> o_sd_dat0_dir;                             // Direction bit: 1=input; 0=output
+    sc_in<bool> i_sd_dat1;                                  // Data Line[1] input
+    sc_out<bool> o_sd_dat1;                                 // Data Line[1] output
+    sc_out<bool> o_sd_dat1_dir;                             // Direction bit: 1=input; 0=output
+    sc_in<bool> i_sd_dat2;                                  // Data Line[2] input
+    sc_out<bool> o_sd_dat2;                                 // Data Line[2] output
+    sc_out<bool> o_sd_dat2_dir;                             // Direction bit: 1=input; 0=output
+    sc_in<bool> i_sd_cd_dat3;                               // Card Detect / Data Line[3] input
+    sc_out<bool> o_sd_cd_dat3;                              // Card Detect / Data Line[3] output; CS output in SPI mode
+    sc_out<bool> o_sd_cd_dat3_dir;                          // Direction bit: 1=input; 0=output
     sc_in<bool> i_sd_detected;                              // SD-card detected
     sc_in<bool> i_sd_protect;                               // SD-card write protect
     // PLL and Reset interfaces:
@@ -149,7 +161,7 @@ SC_MODULE(riscv_soc) {
     plic<SOC_PLIC_CONTEXT_TOTAL, SOC_PLIC_IRQ_TOTAL> *plic0;
     apb_uart<SOC_UART1_LOG2_FIFOSZ> *uart1;
     apb_gpio<SOC_GPIO0_WIDTH> *gpio0;
-    apb_spi<SOC_SPI0_LOG2_FIFOSZ> *spi0;
+    sdctrl<SOC_SPI0_LOG2_FIFOSZ> *sdctrl0;
     apb_pnp<SOC_PNP_TOTAL> *pnp0;
     Workgroup *group0;
     cdc_axi_sync_tech *u_cdc_ddr0;

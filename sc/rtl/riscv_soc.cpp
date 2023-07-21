@@ -39,10 +39,22 @@ riscv_soc::riscv_soc(sc_module_name name,
     o_jtag_vref("o_jtag_vref"),
     i_uart1_rd("i_uart1_rd"),
     o_uart1_td("o_uart1_td"),
-    o_spi_cs("o_spi_cs"),
-    o_spi_sclk("o_spi_sclk"),
-    o_spi_mosi("o_spi_mosi"),
-    i_spi_miso("i_spi_miso"),
+    o_sd_sclk("o_sd_sclk"),
+    i_sd_cmd("i_sd_cmd"),
+    o_sd_cmd("o_sd_cmd"),
+    o_sd_cmd_dir("o_sd_cmd_dir"),
+    i_sd_dat0("i_sd_dat0"),
+    o_sd_dat0("o_sd_dat0"),
+    o_sd_dat0_dir("o_sd_dat0_dir"),
+    i_sd_dat1("i_sd_dat1"),
+    o_sd_dat1("o_sd_dat1"),
+    o_sd_dat1_dir("o_sd_dat1_dir"),
+    i_sd_dat2("i_sd_dat2"),
+    o_sd_dat2("o_sd_dat2"),
+    o_sd_dat2_dir("o_sd_dat2_dir"),
+    i_sd_cd_dat3("i_sd_cd_dat3"),
+    o_sd_cd_dat3("o_sd_cd_dat3"),
+    o_sd_cd_dat3_dir("o_sd_cd_dat3_dir"),
     i_sd_detected("i_sd_detected"),
     i_sd_protect("i_sd_protect"),
     o_dmreset("o_dmreset"),
@@ -78,7 +90,7 @@ riscv_soc::riscv_soc(sc_module_name name,
     plic0 = 0;
     uart1 = 0;
     gpio0 = 0;
-    spi0 = 0;
+    sdctrl0 = 0;
     pnp0 = 0;
     group0 = 0;
     u_cdc_ddr0 = 0;
@@ -220,19 +232,31 @@ riscv_soc::riscv_soc(sc_module_name name,
     gpio0->o_irq(wb_irq_gpio);
 
 
-    spi0 = new apb_spi<SOC_SPI0_LOG2_FIFOSZ>("spi0", async_reset);
-    spi0->i_clk(i_sys_clk);
-    spi0->i_nrst(i_sys_nrst);
-    spi0->i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_SPI]);
-    spi0->o_cfg(dev_pnp[SOC_PNP_SPI]);
-    spi0->i_apbi(apbi[CFG_BUS1_PSLV_SPI]);
-    spi0->o_apbo(apbo[CFG_BUS1_PSLV_SPI]);
-    spi0->o_cs(o_spi_cs);
-    spi0->o_sclk(o_spi_sclk);
-    spi0->o_mosi(o_spi_mosi);
-    spi0->i_miso(i_spi_miso);
-    spi0->i_detected(i_sd_detected);
-    spi0->i_protect(i_sd_protect);
+    sdctrl0 = new sdctrl<SOC_SPI0_LOG2_FIFOSZ>("sdctrl0", async_reset);
+    sdctrl0->i_clk(i_sys_clk);
+    sdctrl0->i_nrst(i_sys_nrst);
+    sdctrl0->i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_SPI]);
+    sdctrl0->o_cfg(dev_pnp[SOC_PNP_SPI]);
+    sdctrl0->i_apbi(apbi[CFG_BUS1_PSLV_SPI]);
+    sdctrl0->o_apbo(apbo[CFG_BUS1_PSLV_SPI]);
+    sdctrl0->o_sclk(o_sd_sclk);
+    sdctrl0->i_cmd(i_sd_cmd);
+    sdctrl0->o_cmd(o_sd_cmd);
+    sdctrl0->o_cmd_dir(o_sd_cmd_dir);
+    sdctrl0->i_dat0(i_sd_dat0);
+    sdctrl0->o_dat0(o_sd_dat0);
+    sdctrl0->o_dat0_dir(o_sd_dat0_dir);
+    sdctrl0->i_dat1(i_sd_dat1);
+    sdctrl0->o_dat1(o_sd_dat1);
+    sdctrl0->o_dat1_dir(o_sd_dat1_dir);
+    sdctrl0->i_dat2(i_sd_dat2);
+    sdctrl0->o_dat2(o_sd_dat2);
+    sdctrl0->o_dat2_dir(o_sd_dat2_dir);
+    sdctrl0->i_cd_dat3(i_sd_cd_dat3);
+    sdctrl0->o_cd_dat3(o_sd_cd_dat3);
+    sdctrl0->o_cd_dat3_dir(o_sd_cd_dat3_dir);
+    sdctrl0->i_detected(i_sd_detected);
+    sdctrl0->i_protect(i_sd_protect);
 
 
     pnp0 = new apb_pnp<SOC_PNP_TOTAL>("pnp0", async_reset,
@@ -263,7 +287,11 @@ riscv_soc::riscv_soc(sc_module_name name,
     sensitive << i_jtag_tms;
     sensitive << i_jtag_tdi;
     sensitive << i_uart1_rd;
-    sensitive << i_spi_miso;
+    sensitive << i_sd_cmd;
+    sensitive << i_sd_dat0;
+    sensitive << i_sd_dat1;
+    sensitive << i_sd_dat2;
+    sensitive << i_sd_cd_dat3;
     sensitive << i_sd_detected;
     sensitive << i_sd_protect;
     sensitive << i_prci_pdevcfg;
@@ -338,8 +366,8 @@ riscv_soc::~riscv_soc() {
     if (gpio0) {
         delete gpio0;
     }
-    if (spi0) {
-        delete spi0;
+    if (sdctrl0) {
+        delete sdctrl0;
     }
     if (pnp0) {
         delete pnp0;
@@ -370,10 +398,22 @@ void riscv_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_jtag_vref, o_jtag_vref.name());
         sc_trace(o_vcd, i_uart1_rd, i_uart1_rd.name());
         sc_trace(o_vcd, o_uart1_td, o_uart1_td.name());
-        sc_trace(o_vcd, o_spi_cs, o_spi_cs.name());
-        sc_trace(o_vcd, o_spi_sclk, o_spi_sclk.name());
-        sc_trace(o_vcd, o_spi_mosi, o_spi_mosi.name());
-        sc_trace(o_vcd, i_spi_miso, i_spi_miso.name());
+        sc_trace(o_vcd, o_sd_sclk, o_sd_sclk.name());
+        sc_trace(o_vcd, i_sd_cmd, i_sd_cmd.name());
+        sc_trace(o_vcd, o_sd_cmd, o_sd_cmd.name());
+        sc_trace(o_vcd, o_sd_cmd_dir, o_sd_cmd_dir.name());
+        sc_trace(o_vcd, i_sd_dat0, i_sd_dat0.name());
+        sc_trace(o_vcd, o_sd_dat0, o_sd_dat0.name());
+        sc_trace(o_vcd, o_sd_dat0_dir, o_sd_dat0_dir.name());
+        sc_trace(o_vcd, i_sd_dat1, i_sd_dat1.name());
+        sc_trace(o_vcd, o_sd_dat1, o_sd_dat1.name());
+        sc_trace(o_vcd, o_sd_dat1_dir, o_sd_dat1_dir.name());
+        sc_trace(o_vcd, i_sd_dat2, i_sd_dat2.name());
+        sc_trace(o_vcd, o_sd_dat2, o_sd_dat2.name());
+        sc_trace(o_vcd, o_sd_dat2_dir, o_sd_dat2_dir.name());
+        sc_trace(o_vcd, i_sd_cd_dat3, i_sd_cd_dat3.name());
+        sc_trace(o_vcd, o_sd_cd_dat3, o_sd_cd_dat3.name());
+        sc_trace(o_vcd, o_sd_cd_dat3_dir, o_sd_cd_dat3_dir.name());
         sc_trace(o_vcd, i_sd_detected, i_sd_detected.name());
         sc_trace(o_vcd, i_sd_protect, i_sd_protect.name());
         sc_trace(o_vcd, o_dmreset, o_dmreset.name());
@@ -415,8 +455,8 @@ void riscv_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (gpio0) {
         gpio0->generateVCD(i_vcd, o_vcd);
     }
-    if (spi0) {
-        spi0->generateVCD(i_vcd, o_vcd);
+    if (sdctrl0) {
+        sdctrl0->generateVCD(i_vcd, o_vcd);
     }
     if (pnp0) {
         pnp0->generateVCD(i_vcd, o_vcd);

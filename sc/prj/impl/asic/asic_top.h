@@ -24,6 +24,7 @@
 #include "../../../rtl/riverlib/river_cfg.h"
 #include "../../../rtl/riverlib/types_river.h"
 #include "../../../rtl/techmap/bufg/ids_tech.h"
+#include "../../../rtl/techmap/bufg/iobuf_tech.h"
 #include "../../../rtl/techmap/pll/SysPLL_tech.h"
 #include "../../../rtl/misclib/apb_prci.h"
 #include "../../../rtl/riscv_soc.h"
@@ -49,11 +50,13 @@ SC_MODULE(asic_top) {
     // UART1 signals
     sc_in<bool> i_uart1_rd;
     sc_out<bool> o_uart1_td;
-    // SPI SD-card signals:
-    sc_out<bool> o_spi_cs;
-    sc_out<bool> o_spi_sclk;
-    sc_out<bool> o_spi_mosi;                                // SPI: Master Output Slave Input
-    sc_in<bool> i_spi_miso;                                 // SPI: Master Input Slave Output
+    // SD-card signals:
+    sc_out<bool> o_sd_sclk;
+    sc_inout<bool> io_sd_cmd;                               // CMD IO Command/Resonse; Data output in SPI mode
+    sc_inout<bool> io_sd_dat0;                              // Data[0] IO; Data input in SPI mode
+    sc_inout<bool> io_sd_dat1;
+    sc_inout<bool> io_sd_dat2;
+    sc_inout<bool> io_sd_cd_dat3;                           // CD/DAT3 IO CardDetect/Data[3]; CS output in SPI mode
     sc_in<bool> i_sd_detected;                              // SD-card detected
     sc_in<bool> i_sd_protect;                               // SD-card write protect
 
@@ -78,6 +81,21 @@ SC_MODULE(asic_top) {
     sc_signal<sc_uint<12>> ib_gpio_ipins;
     sc_signal<sc_uint<12>> ob_gpio_opins;
     sc_signal<sc_uint<12>> ob_gpio_direction;
+    sc_signal<bool> ib_sd_cmd;
+    sc_signal<bool> ob_sd_cmd;
+    sc_signal<bool> ob_sd_cmd_direction;
+    sc_signal<bool> ib_sd_dat0;
+    sc_signal<bool> ob_sd_dat0;
+    sc_signal<bool> ob_sd_dat0_direction;
+    sc_signal<bool> ib_sd_dat1;
+    sc_signal<bool> ob_sd_dat1;
+    sc_signal<bool> ob_sd_dat1_direction;
+    sc_signal<bool> ib_sd_dat2;
+    sc_signal<bool> ob_sd_dat2;
+    sc_signal<bool> ob_sd_dat2_direction;
+    sc_signal<bool> ib_sd_cd_dat3;
+    sc_signal<bool> ob_sd_cd_dat3;
+    sc_signal<bool> ob_sd_cd_dat3_direction;
     sc_signal<bool> w_sys_rst;
     sc_signal<bool> w_sys_nrst;
     sc_signal<bool> w_dbg_nrst;
@@ -102,6 +120,11 @@ SC_MODULE(asic_top) {
     sc_signal<apb_out_type> prci_apbo;
 
     ids_tech *iclk0;
+    iobuf_tech *iosdcmd0;
+    iobuf_tech *iosddat0;
+    iobuf_tech *iosddat1;
+    iobuf_tech *iosddat2;
+    iobuf_tech *iosddat3;
     SysPLL_tech *pll0;
     apb_prci *prci0;
     riscv_soc *soc0;

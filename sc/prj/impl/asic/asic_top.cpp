@@ -35,16 +35,23 @@ asic_top::asic_top(sc_module_name name,
     o_jtag_vref("o_jtag_vref"),
     i_uart1_rd("i_uart1_rd"),
     o_uart1_td("o_uart1_td"),
-    o_spi_cs("o_spi_cs"),
-    o_spi_sclk("o_spi_sclk"),
-    o_spi_mosi("o_spi_mosi"),
-    i_spi_miso("i_spi_miso"),
+    o_sd_sclk("o_sd_sclk"),
+    io_sd_cmd("io_sd_cmd"),
+    io_sd_dat0("io_sd_dat0"),
+    io_sd_dat1("io_sd_dat1"),
+    io_sd_dat2("io_sd_dat2"),
+    io_sd_cd_dat3("io_sd_cd_dat3"),
     i_sd_detected("i_sd_detected"),
     i_sd_protect("i_sd_protect") {
 
     bootfile_ = bootfile;
     sim_uart_speedup_rate_ = sim_uart_speedup_rate;
     iclk0 = 0;
+    iosdcmd0 = 0;
+    iosddat0 = 0;
+    iosddat1 = 0;
+    iosddat2 = 0;
+    iosddat3 = 0;
     pll0 = 0;
     prci0 = 0;
     soc0 = 0;
@@ -53,6 +60,41 @@ asic_top::asic_top(sc_module_name name,
     iclk0->i_clk_p(i_sclk_p);
     iclk0->i_clk_n(i_sclk_n);
     iclk0->o_clk(ib_clk_tcxo);
+
+
+    iosdcmd0 = new iobuf_tech("iosdcmd0");
+    iosdcmd0->io(io_sd_cmd);
+    iosdcmd0->o(ib_sd_cmd);
+    iosdcmd0->i(ob_sd_cmd);
+    iosdcmd0->t(ob_sd_cmd_direction);
+
+
+    iosddat0 = new iobuf_tech("iosddat0");
+    iosddat0->io(io_sd_dat0);
+    iosddat0->o(ib_sd_dat0);
+    iosddat0->i(ob_sd_dat0);
+    iosddat0->t(ob_sd_dat0_direction);
+
+
+    iosddat1 = new iobuf_tech("iosddat1");
+    iosddat1->io(io_sd_dat1);
+    iosddat1->o(ib_sd_dat1);
+    iosddat1->i(ob_sd_dat1);
+    iosddat1->t(ob_sd_dat1_direction);
+
+
+    iosddat2 = new iobuf_tech("iosddat2");
+    iosddat2->io(io_sd_dat2);
+    iosddat2->o(ib_sd_dat2);
+    iosddat2->i(ob_sd_dat2);
+    iosddat2->t(ob_sd_dat2_direction);
+
+
+    iosddat3 = new iobuf_tech("iosddat3");
+    iosddat3->io(io_sd_cd_dat3);
+    iosddat3->o(ib_sd_cd_dat3);
+    iosddat3->i(ob_sd_cd_dat3);
+    iosddat3->t(ob_sd_cd_dat3_direction);
 
 
     pll0 = new SysPLL_tech("pll0");
@@ -97,10 +139,22 @@ asic_top::asic_top(sc_module_name name,
     soc0->o_jtag_vref(o_jtag_vref);
     soc0->i_uart1_rd(i_uart1_rd);
     soc0->o_uart1_td(o_uart1_td);
-    soc0->o_spi_cs(o_spi_cs);
-    soc0->o_spi_sclk(o_spi_sclk);
-    soc0->o_spi_mosi(o_spi_mosi);
-    soc0->i_spi_miso(i_spi_miso);
+    soc0->o_sd_sclk(o_sd_sclk);
+    soc0->i_sd_cmd(ib_sd_cmd);
+    soc0->o_sd_cmd(ob_sd_cmd);
+    soc0->o_sd_cmd_dir(ob_sd_cmd_direction);
+    soc0->i_sd_dat0(ib_sd_dat0);
+    soc0->o_sd_dat0(ob_sd_dat0);
+    soc0->o_sd_dat0_dir(ob_sd_dat0_direction);
+    soc0->i_sd_dat1(ib_sd_dat1);
+    soc0->o_sd_dat1(ob_sd_dat1);
+    soc0->o_sd_dat1_dir(ob_sd_dat1_direction);
+    soc0->i_sd_dat2(ib_sd_dat2);
+    soc0->o_sd_dat2(ob_sd_dat2);
+    soc0->o_sd_dat2_dir(ob_sd_dat2_direction);
+    soc0->i_sd_cd_dat3(ib_sd_cd_dat3);
+    soc0->o_sd_cd_dat3(ob_sd_cd_dat3);
+    soc0->o_sd_cd_dat3_dir(ob_sd_cd_dat3_direction);
     soc0->i_sd_detected(i_sd_detected);
     soc0->i_sd_protect(i_sd_protect);
     soc0->o_dmreset(w_dmreset);
@@ -128,13 +182,27 @@ asic_top::asic_top(sc_module_name name,
     sensitive << i_jtag_tms;
     sensitive << i_jtag_tdi;
     sensitive << i_uart1_rd;
-    sensitive << i_spi_miso;
     sensitive << i_sd_detected;
     sensitive << i_sd_protect;
     sensitive << ib_clk_tcxo;
     sensitive << ib_gpio_ipins;
     sensitive << ob_gpio_opins;
     sensitive << ob_gpio_direction;
+    sensitive << ib_sd_cmd;
+    sensitive << ob_sd_cmd;
+    sensitive << ob_sd_cmd_direction;
+    sensitive << ib_sd_dat0;
+    sensitive << ob_sd_dat0;
+    sensitive << ob_sd_dat0_direction;
+    sensitive << ib_sd_dat1;
+    sensitive << ob_sd_dat1;
+    sensitive << ob_sd_dat1_direction;
+    sensitive << ib_sd_dat2;
+    sensitive << ob_sd_dat2;
+    sensitive << ob_sd_dat2_direction;
+    sensitive << ib_sd_cd_dat3;
+    sensitive << ob_sd_cd_dat3;
+    sensitive << ob_sd_cd_dat3_direction;
     sensitive << w_sys_rst;
     sensitive << w_sys_nrst;
     sensitive << w_dbg_nrst;
@@ -163,6 +231,21 @@ asic_top::~asic_top() {
     if (iclk0) {
         delete iclk0;
     }
+    if (iosdcmd0) {
+        delete iosdcmd0;
+    }
+    if (iosddat0) {
+        delete iosddat0;
+    }
+    if (iosddat1) {
+        delete iosddat1;
+    }
+    if (iosddat2) {
+        delete iosddat2;
+    }
+    if (iosddat3) {
+        delete iosddat3;
+    }
     if (pll0) {
         delete pll0;
     }
@@ -188,16 +271,33 @@ void asic_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_jtag_vref, o_jtag_vref.name());
         sc_trace(o_vcd, i_uart1_rd, i_uart1_rd.name());
         sc_trace(o_vcd, o_uart1_td, o_uart1_td.name());
-        sc_trace(o_vcd, o_spi_cs, o_spi_cs.name());
-        sc_trace(o_vcd, o_spi_sclk, o_spi_sclk.name());
-        sc_trace(o_vcd, o_spi_mosi, o_spi_mosi.name());
-        sc_trace(o_vcd, i_spi_miso, i_spi_miso.name());
+        sc_trace(o_vcd, o_sd_sclk, o_sd_sclk.name());
+        sc_trace(o_vcd, io_sd_cmd, io_sd_cmd.name());
+        sc_trace(o_vcd, io_sd_dat0, io_sd_dat0.name());
+        sc_trace(o_vcd, io_sd_dat1, io_sd_dat1.name());
+        sc_trace(o_vcd, io_sd_dat2, io_sd_dat2.name());
+        sc_trace(o_vcd, io_sd_cd_dat3, io_sd_cd_dat3.name());
         sc_trace(o_vcd, i_sd_detected, i_sd_detected.name());
         sc_trace(o_vcd, i_sd_protect, i_sd_protect.name());
     }
 
     if (iclk0) {
         iclk0->generateVCD(i_vcd, o_vcd);
+    }
+    if (iosdcmd0) {
+        iosdcmd0->generateVCD(i_vcd, o_vcd);
+    }
+    if (iosddat0) {
+        iosddat0->generateVCD(i_vcd, o_vcd);
+    }
+    if (iosddat1) {
+        iosddat1->generateVCD(i_vcd, o_vcd);
+    }
+    if (iosddat2) {
+        iosddat2->generateVCD(i_vcd, o_vcd);
+    }
+    if (iosddat3) {
+        iosddat3->generateVCD(i_vcd, o_vcd);
     }
     if (pll0) {
         pll0->generateVCD(i_vcd, o_vcd);

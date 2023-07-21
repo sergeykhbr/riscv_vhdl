@@ -19,27 +19,22 @@
 
 namespace debugger {
 
-SC_MODULE(vip_sdcard_top) {
+SC_MODULE(iobuf_tech) {
  public:
-    sc_in<bool> i_sclk;
-    sc_inout<bool> io_cmd;
-    sc_inout<bool> io_dat0;
-    sc_inout<bool> io_dat1;
-    sc_inout<bool> io_dat2;
-    sc_inout<bool> io_cd_dat3;
+    sc_inout<bool> io;                                      // bi-drectional port
+    sc_out<bool> o;                                         // Output signal is valid when t=0
+    sc_in<bool> i;                                          // Input signal is valid when t=1
+    sc_in<bool> t;                                          // Direction bit: 0=output; 1=input
 
     void comb();
 
-    SC_HAS_PROCESS(vip_sdcard_top);
+    SC_HAS_PROCESS(iobuf_tech);
 
-    vip_sdcard_top(sc_module_name name);
+    iobuf_tech(sc_module_name name);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
-    sc_signal<bool> w_clk;
-    sc_signal<sc_uint<8>> wb_rdata;
-
 };
 
 }  // namespace debugger

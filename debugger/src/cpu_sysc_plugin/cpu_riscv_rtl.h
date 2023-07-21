@@ -42,6 +42,7 @@
 #include "riverlib/workgroup.h"
 #include "../prj/impl/asic/asic_top.h"
 #include "../prj/common/vips/uart/vip_uart_top.h"
+#include "../prj/common/vips/sdcard/vip_sdcard_top.h"
 #include <systemc.h>
 
 namespace debugger {
@@ -122,10 +123,12 @@ class CpuRiscV_RTL : public IService,
     sc_signal<bool> w_jtag_vref;
     sc_signal<bool> w_uart1_rd;
     sc_signal<bool> w_uart1_td;
-    sc_signal<bool> w_spi_cs;
-    sc_signal<bool> w_spi_sclk;
-    sc_signal<bool> w_spi_mosi;
-    sc_signal<bool> w_spi_miso;
+    sc_signal<bool, SC_MANY_WRITERS> w_sd_cmd;
+    sc_signal<bool> w_sd_sclk;
+    sc_signal<bool, SC_MANY_WRITERS> w_sd_dat0;
+    sc_signal<bool, SC_MANY_WRITERS> w_sd_dat1;
+    sc_signal<bool, SC_MANY_WRITERS> w_sd_dat2;
+    sc_signal<bool, SC_MANY_WRITERS> w_sd_dat3;
     sc_signal<bool> w_sd_detected;
     sc_signal<bool> w_sd_protect;
 
@@ -168,6 +171,7 @@ class CpuRiscV_RTL : public IService,
     Workgroup *group0_;
     asic_top *asic0_;
     vip_uart_top *uart0_;
+    vip_sdcard_top *sdcard0_;
 };
 
 DECLARE_CLASS(CpuRiscV_RTL)

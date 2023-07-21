@@ -14,40 +14,50 @@
 //  limitations under the License.
 // 
 
-#include "vip_sdcard_top.h"
+#include "iobuf_tech.h"
 #include "api_core.h"
 
 namespace debugger {
 
-vip_sdcard_top::vip_sdcard_top(sc_module_name name)
+iobuf_tech::iobuf_tech(sc_module_name name)
     : sc_module(name),
-    i_sclk("i_sclk"),
-    io_cmd("io_cmd"),
-    io_dat0("io_dat0"),
-    io_dat1("io_dat1"),
-    io_dat2("io_dat2"),
-    io_cd_dat3("io_cd_dat3") {
+    io("io"),
+    o("o"),
+    i("i"),
+    t("t") {
 
 
     SC_METHOD(comb);
-    sensitive << i_sclk;
-    sensitive << w_clk;
-    sensitive << wb_rdata;
+    sensitive << i;
+    sensitive << t;
 }
 
-void vip_sdcard_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+void iobuf_tech::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_sclk, i_sclk.name());
-        sc_trace(o_vcd, io_cmd, io_cmd.name());
-        sc_trace(o_vcd, io_dat0, io_dat0.name());
-        sc_trace(o_vcd, io_dat1, io_dat1.name());
-        sc_trace(o_vcd, io_dat2, io_dat2.name());
-        sc_trace(o_vcd, io_cd_dat3, io_cd_dat3.name());
+        sc_trace(o_vcd, io, io.name());
+        sc_trace(o_vcd, o, o.name());
+        sc_trace(o_vcd, i, i.name());
+        sc_trace(o_vcd, t, t.name());
     }
 
 }
 
-void vip_sdcard_top::comb() {
+void iobuf_tech::comb() {
+    bool v_io;
+    bool v_o;
+
+    v_io = 0;
+    v_o = 0;
+
+    if (t.read() == 1) {
+        // IO as input:
+        v_o = io;
+        v_io = 0;                                           // assign Z-state here
+    } else {
+        // IO as output:
+        v_o = 0;
+        v_io = i;
+    }
 }
 
 }  // namespace debugger
