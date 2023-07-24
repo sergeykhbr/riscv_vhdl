@@ -671,7 +671,7 @@ void sdctrl<log2_fifosz>::comb() {
     o_cmd = (r.rx_ena || r.shiftreg.read()[7]);
     o_cd_dat3 = (!r.cs);
     // Direction bits:
-    o_cmd = 0;
+    o_cmd_dir = 0;
     o_dat0_dir = 1;
     o_dat1_dir = 1;
     o_dat2_dir = 1;

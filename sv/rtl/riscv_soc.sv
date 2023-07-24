@@ -40,11 +40,23 @@ module riscv_soc #(
     // UART1 signals
     input logic i_uart1_rd,
     output logic o_uart1_td,
-    // SPI SD-card signals:
-    output logic o_spi_cs,
-    output logic o_spi_sclk,
-    output logic o_spi_mosi,                                // SPI: Master Output Slave Input
-    input logic i_spi_miso,                                 // SPI: Master Input Slave Output
+    // SD-card signals:
+    output logic o_sd_sclk,                                 // Clock up to 50 MHz
+    input logic i_sd_cmd,                                   // Command response;
+    output logic o_sd_cmd,                                  // Command request; DO in SPI mode
+    output logic o_sd_cmd_dir,                              // Direction bit: 1=input; 0=output
+    input logic i_sd_dat0,                                  // Data Line[0] input; DI in SPI mode
+    output logic o_sd_dat0,                                 // Data Line[0] output
+    output logic o_sd_dat0_dir,                             // Direction bit: 1=input; 0=output
+    input logic i_sd_dat1,                                  // Data Line[1] input
+    output logic o_sd_dat1,                                 // Data Line[1] output
+    output logic o_sd_dat1_dir,                             // Direction bit: 1=input; 0=output
+    input logic i_sd_dat2,                                  // Data Line[2] input
+    output logic o_sd_dat2,                                 // Data Line[2] output
+    output logic o_sd_dat2_dir,                             // Direction bit: 1=input; 0=output
+    input logic i_sd_cd_dat3,                               // Card Detect / Data Line[3] input
+    output logic o_sd_cd_dat3,                              // Card Detect / Data Line[3] output; CS output in SPI mode
+    output logic o_sd_cd_dat3_dir,                          // Direction bit: 1=input; 0=output
     input logic i_sd_detected,                              // SD-card detected
     input logic i_sd_protect,                               // SD-card write protect
     // PLL and Reset interfaces:
@@ -266,20 +278,32 @@ apb_gpio #(
 );
 
 
-apb_spi #(
+sdctrl #(
     .async_reset(async_reset),
     .log2_fifosz(SOC_SPI0_LOG2_FIFOSZ)
-) spi0 (
+) sdctrl0 (
     .i_clk(i_sys_clk),
     .i_nrst(i_sys_nrst),
     .i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_SPI]),
     .o_cfg(dev_pnp[SOC_PNP_SPI]),
     .i_apbi(apbi[CFG_BUS1_PSLV_SPI]),
     .o_apbo(apbo[CFG_BUS1_PSLV_SPI]),
-    .o_cs(o_spi_cs),
-    .o_sclk(o_spi_sclk),
-    .o_mosi(o_spi_mosi),
-    .i_miso(i_spi_miso),
+    .o_sclk(o_sd_sclk),
+    .i_cmd(i_sd_cmd),
+    .o_cmd(o_sd_cmd),
+    .o_cmd_dir(o_sd_cmd_dir),
+    .i_dat0(i_sd_dat0),
+    .o_dat0(o_sd_dat0),
+    .o_dat0_dir(o_sd_dat0_dir),
+    .i_dat1(i_sd_dat1),
+    .o_dat1(o_sd_dat1),
+    .o_dat1_dir(o_sd_dat1_dir),
+    .i_dat2(i_sd_dat2),
+    .o_dat2(o_sd_dat2),
+    .o_dat2_dir(o_sd_dat2_dir),
+    .i_cd_dat3(i_sd_cd_dat3),
+    .o_cd_dat3(o_sd_cd_dat3),
+    .o_cd_dat3_dir(o_sd_cd_dat3_dir),
     .i_detected(i_sd_detected),
     .i_protect(i_sd_protect)
 );

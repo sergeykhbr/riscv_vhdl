@@ -106,6 +106,7 @@ if {[string is true $load_files]} {
 	set filelist_name ${LIST_ROOT}/techmap_ddr_kc705.f; source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
 	set filelist_name ${LIST_ROOT}/riverlib.f;     	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
 	set filelist_name ${LIST_ROOT}/misclib.f;    	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
+	set filelist_name ${LIST_ROOT}/sdctrl.f;    	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
 	set filelist_name ${LIST_ROOT}/riscv_soc.f;    	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
 	set filelist_name ${PRJ_ROOT}/kc705_top.f;  	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
 

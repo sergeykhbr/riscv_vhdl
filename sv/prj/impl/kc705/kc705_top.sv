@@ -39,13 +39,15 @@ module kc705_top #(
     //! UART1 signals:
     input                     i_uart1_rd,
     output                    o_uart1_td,
-    // SPI SD-card signals:
-    output logic o_spi_cs,
-    output logic o_spi_sclk,
-    output logic o_spi_mosi,
-    input logic i_spi_miso,
+    // SD-card signals:
+    output logic o_sd_sclk,
+    inout logic io_sd_cmd,                                  // CMD IO Command/Resonse; Data output in SPI mode
+    inout logic io_sd_dat0,                                 // Data[0] IO; Data input in SPI mode
+    inout logic io_sd_dat1,
+    inout logic io_sd_dat2,
+    inout logic io_sd_cd_dat3,                              // CD/DAT3 IO CardDetect/Data[3]; CS output in SPI mode
     input logic i_sd_detected,                              // SD-card detected
-    input logic i_sd_protect,                                // SD-card write protect
+    input logic i_sd_protect,                               // SD-card write protect
     // DDR3 signals:
     output o_ddr3_reset_n,
     output [0:0] o_ddr3_ck_n,
@@ -76,6 +78,21 @@ module kc705_top #(
   logic [11:0]      ob_gpio_direction;
   logic [11:0]      ob_gpio_opins;
   logic [11:0]      ib_gpio_ipins;  
+  logic ib_sd_cmd;
+  logic ob_sd_cmd;
+  logic ob_sd_cmd_direction;
+  logic ib_sd_dat0;
+  logic ob_sd_dat0;
+  logic ob_sd_dat0_direction;
+  logic ib_sd_dat1;
+  logic ob_sd_dat1;
+  logic ob_sd_dat1_direction;
+  logic ib_sd_dat2;
+  logic ob_sd_dat2;
+  logic ob_sd_dat2_direction;
+  logic ib_sd_cd_dat3;
+  logic ob_sd_cd_dat3;
+  logic ob_sd_cd_dat3_direction;
   logic             ib_uart1_rd;  
   logic             ob_uart1_td;  
   //! JTAG signals:  
@@ -136,20 +153,55 @@ module kc705_top #(
       iobuf_tech iob0(.o(ib_gpio_ipins[i]), .io(io_gpio[i]), .i(ob_gpio_opins[i]), .t(ob_gpio_direction[i])); 
     end
   endgenerate
+
+iobuf_tech iosdcmd0 (
+    .io(io_sd_cmd),
+    .o(ib_sd_cmd),
+    .i(ob_sd_cmd),
+    .t(ob_sd_cmd_direction)
+);
+
+
+iobuf_tech iosddat0 (
+    .io(io_sd_dat0),
+    .o(ib_sd_dat0),
+    .i(ob_sd_dat0),
+    .t(ob_sd_dat0_direction)
+);
+
+
+iobuf_tech iosddat1 (
+    .io(io_sd_dat1),
+    .o(ib_sd_dat1),
+    .i(ob_sd_dat1),
+    .t(ob_sd_dat1_direction)
+);
+
+
+iobuf_tech iosddat2 (
+    .io(io_sd_dat2),
+    .o(ib_sd_dat2),
+    .i(ob_sd_dat2),
+    .t(ob_sd_dat2_direction)
+);
+
+
+iobuf_tech iosddat3 (
+    .io(io_sd_cd_dat3),
+    .o(ib_sd_cd_dat3),
+    .i(ob_sd_cd_dat3),
+    .t(ob_sd_cd_dat3_direction)
+);
   
+  ibuf_tech isddet0(.o(ib_sd_detected),.i(i_sd_detected));  
+  ibuf_tech isdwp0(.o(ib_sd_protect),.i(i_sd_protect));  
+
   ibuf_tech ijtck0(.o(ib_jtag_tck),.i(i_jtag_tck));  
   ibuf_tech ijtrst0(.o(ib_jtag_trst),.i(i_jtag_trst)); 
   ibuf_tech ijtms0(.o(ib_jtag_tms),.i(i_jtag_tms));   
   ibuf_tech ijtdi0(.o(ib_jtag_tdi),.i(i_jtag_tdi)); 
   obuf_tech ojtdo0(.o(o_jtag_tdo),.i(ob_jtag_tdo));   
   obuf_tech ojvrf0(.o(o_jtag_vref),.i(ob_jtag_vref)); 
-
-  obuf_tech ocs0(.o(o_spi_cs),.i(ob_spi_cs)); 
-  obuf_tech osclk0(.o(o_spi_sclk),.i(ob_spi_sclk)); 
-  obuf_tech omosi0(.o(o_spi_mosi),.i(ob_spi_mosi)); 
-  ibuf_tech imiso0(.o(ib_spi_miso),.i(i_spi_miso));  
-  ibuf_tech isddet0(.o(ib_sd_detected),.i(i_sd_detected));  
-  ibuf_tech isdwp0(.o(ib_sd_protect),.i(i_sd_protect));  
 
   assign o_ddr3_init_calib_complete = w_ddr3_init_calib_complete;
   
@@ -205,11 +257,23 @@ module kc705_top #(
     //! UART1 signals:
     .i_uart1_rd(ib_uart1_rd),
     .o_uart1_td(ob_uart1_td),
-    // SPI SD-card signals:
-    .o_spi_cs(ob_spi_cs),
-    .o_spi_sclk(ob_spi_sclk),
-    .o_spi_mosi(ob_spi_mosi),
-    .i_spi_miso(ib_spi_miso),
+    // SD-card signals:
+    .o_sd_sclk(o_sd_sclk),
+    .i_sd_cmd(ib_sd_cmd),
+    .o_sd_cmd(ob_sd_cmd),
+    .o_sd_cmd_dir(ob_sd_cmd_direction),
+    .i_sd_dat0(ib_sd_dat0),
+    .o_sd_dat0(ob_sd_dat0),
+    .o_sd_dat0_dir(ob_sd_dat0_direction),
+    .i_sd_dat1(ib_sd_dat1),
+    .o_sd_dat1(ob_sd_dat1),
+    .o_sd_dat1_dir(ob_sd_dat1_direction),
+    .i_sd_dat2(ib_sd_dat2),
+    .o_sd_dat2(ob_sd_dat2),
+    .o_sd_dat2_dir(ob_sd_dat2_direction),
+    .i_sd_cd_dat3(ib_sd_cd_dat3),
+    .o_sd_cd_dat3(ob_sd_cd_dat3),
+    .o_sd_cd_dat3_dir(ob_sd_cd_dat3_direction),
     .i_sd_detected(ib_sd_detected),
     .i_sd_protect(ib_sd_protect),
     // PRCI:

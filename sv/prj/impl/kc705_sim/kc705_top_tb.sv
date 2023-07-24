@@ -53,11 +53,13 @@ module kc705_top_tb;
     //! UART1 signals:
     logic i_uart1_rd;
     logic o_uart1_td;
-    // SPI SD-card signals:
-    logic o_spi_cs;
-    logic o_spi_sclk;
-    logic o_spi_mosi;
-    logic i_spi_miso;
+    // SD-card signals:
+    logic o_sd_sclk;
+    wire io_sd_cmd;
+    wire io_sd_dat0;
+    wire io_sd_dat1;
+    wire io_sd_dat2;
+    wire io_sd_cd_dat3;
     logic i_sd_detected;
     logic i_sd_protect;
     // ddr3
@@ -146,11 +148,13 @@ module kc705_top_tb;
     //! UART1 signals:
     .i_uart1_rd(i_uart1_rd),
     .o_uart1_td(o_uart1_td),
-    // SPI SD-card signals:
-    .o_spi_cs(o_spi_cs),
-    .o_spi_sclk(o_spi_sclk),
-    .o_spi_mosi(o_spi_mosi),
-    .i_spi_miso(i_spi_miso),
+    // SD-card SPI signals
+    .o_sd_sclk(o_sd_sclk),
+    .io_sd_cmd(io_sd_cmd),
+    .io_sd_dat0(io_sd_dat0),
+    .io_sd_dat1(io_sd_dat1),
+    .io_sd_dat2(io_sd_dat2),
+    .io_sd_cd_dat3(io_sd_cd_dat3),
     .i_sd_detected(i_sd_detected),
     .i_sd_protect(i_sd_protect),
     // DDR signals:
@@ -190,10 +194,12 @@ module kc705_top_tb;
     .half_period_clk(50ns), // 20 MHz = 50ns
     .block_size(512)
   ) SD0 (
-    .i_csn(o_spi_cs),
-    .i_sck(o_spi_sclk),
-    .i_mosi(o_spi_mosi),
-    .o_miso(i_spi_miso)
+    .i_sclk(o_sd_sclk),
+    .io_cmd(io_sd_cmd),
+    .io_dat0(io_sd_dat0),
+    .io_dat1(io_sd_dat1),
+    .io_dat2(io_sd_dat2),
+    .io_cd_dat3(io_sd_cd_dat3)
   );
 
 

@@ -76,19 +76,27 @@ set_property IOSTANDARD LVCMOS25 [get_ports o_uart1_td]
 
 #SPI SD-card:
 # SIO connector CD_DAT3
-set_property PACKAGE_PIN AC21 [get_ports o_spi_cs]
-set_property IOSTANDARD LVCMOS25 [get_ports o_spi_cs]
+set_property PACKAGE_PIN AC21 [get_ports io_sd_cd_dat3]
+set_property IOSTANDARD LVCMOS25 [get_ports io_sd_cd_dat3]
 
-set_property PACKAGE_PIN AB23 [get_ports o_spi_sclk]
-set_property IOSTANDARD LVCMOS25 [get_ports o_spi_sclk]
+set_property PACKAGE_PIN AB23 [get_ports o_sd_sclk]
+set_property IOSTANDARD LVCMOS25 [get_ports o_sd_sclk]
 
 # SDIO connector CMD:
-set_property PACKAGE_PIN AB22 [get_ports o_spi_mosi]
-set_property IOSTANDARD LVCMOS25 [get_ports o_spi_mosi]
+set_property PACKAGE_PIN AB22 [get_ports io_sd_cmd]
+set_property IOSTANDARD LVCMOS25 [get_ports io_sd_cmd]
 
 # SDIO connector DAT0
-set_property PACKAGE_PIN AC20 [get_ports i_spi_miso]
-set_property IOSTANDARD LVCMOS25 [get_ports i_spi_miso]
+set_property PACKAGE_PIN AC20 [get_ports io_sd_dat0]
+set_property IOSTANDARD LVCMOS25 [get_ports io_sd_dat0]
+
+# SDIO connector DAT1
+set_property PACKAGE_PIN AA23 [get_ports io_sd_dat1]
+set_property IOSTANDARD LVCMOS25 [get_ports io_sd_dat1]
+
+# SDIO connector DAT2
+set_property PACKAGE_PIN AA22 [get_ports io_sd_dat2]
+set_property IOSTANDARD LVCMOS25 [get_ports io_sd_dat2]
 
 set_property PACKAGE_PIN AA21 [get_ports i_sd_detected]
 set_property IOSTANDARD LVCMOS25 [get_ports i_sd_detected]

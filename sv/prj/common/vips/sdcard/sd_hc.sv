@@ -20,10 +20,12 @@ module sd_hc
     parameter integer block_size = 512
 )
 (
-    input i_csn,
-    input i_sck,
-    input i_mosi,
-    output logic o_miso
+    input i_sclk,
+    inout logic io_cmd,
+    inout logic io_dat0,
+    inout logic io_dat1,
+    inout logic io_dat2,
+    inout logic io_cd_dat3
 );
 
 
@@ -37,6 +39,22 @@ parameter CMD_STATE_SHIFT = 3'd1;
 parameter CMD_STATE_CRC = 3'd2;
 parameter CMD_STATE_UPDATE = 3'd3;
 parameter CMD_STATE_DUMMY = 3'd4;
+
+logic ib_cmd;
+logic ob_cmd;
+logic ob_cmd_direction;
+logic ib_dat0;
+logic ob_dat0;
+logic ob_dat0_direction;
+logic ib_dat1;
+logic ob_dat1;
+logic ob_dat1_direction;
+logic ib_dat2;
+logic ob_dat2;
+logic ob_dat2_direction;
+logic ib_cd_dat3;
+logic ob_cd_dat3;
+logic ob_cd_dat3_direction;
 
 typedef struct {
     logic [1:0] sdstate;
@@ -91,6 +109,41 @@ end
 
 always #half_period_clk clk=~clk;
 
+iobuf_tech iosdcmd0 (
+    .io(io_cmd),
+    .o(ib_cmd),
+    .i(ob_cmd),
+    .t(ob_cmd_direction)
+);
+
+iobuf_tech iosddat0 (
+    .io(io_dat0),
+    .o(ib_dat0),
+    .i(ob_dat0),
+    .t(ob_dat0_direction)
+);
+
+iobuf_tech iosddat1 (
+    .io(io_dat1),
+    .o(ib_dat1),
+    .i(ob_dat1),
+    .t(ob_dat1_direction)
+);
+
+iobuf_tech iosddat2 (
+    .io(io_dat2),
+    .o(ib_dat2),
+    .i(ob_dat2),
+    .t(ob_dat2_direction)
+);
+
+iobuf_tech iosddat3 (
+    .io(io_cd_dat3),
+    .o(ib_cd_dat3),
+    .i(ob_cd_dat3),
+    .t(ob_cd_dat3_direction)
+);
+
 always_comb
 begin: comb_proc
     sd_hc_registers v;
@@ -103,21 +156,21 @@ begin: comb_proc
     v_idle = 1'b0;
     v = r;
 
-    v.sck = i_sck;
+    v.sck = i_sclk;
     v.update = 1'b0;
     v.cmd_ready = 1'b0;
 
-    if (r.sck == 1'b1 && i_sck == 1'b0) begin
+    if (r.sck == 1'b1 && i_sclk == 1'b0) begin
         v_negedge = 1'b1;
     end
 
-    if (r.sck == 1'b0 && i_sck == 1'b1) begin
+    if (r.sck == 1'b0 && i_sclk == 1'b1) begin
         v_posedge = 1'b1;
     end
 
-    if (i_csn == 1'b0 && v_posedge == 1'b1) begin
+    if (ib_cd_dat3 == 1'b0 && v_posedge == 1'b1) begin
         v.update = 1'b1;
-        v.rx_shift = {r.rx_shift[54:0], i_mosi};
+        v.rx_shift = {r.rx_shift[54:0], ib_cmd};
         if (r.sdstate == SD_STATE_DATA) begin
             // 4 dummy + prefix + 512 + 2 CRC + 1 dummy
             if (r.data_bitcnt < (8*(7 + 512) - 1)) begin
@@ -231,7 +284,11 @@ begin: comb_proc
         end
     end
 
-    o_miso = r.miso;
+    ob_dat0 = r.miso;
+
+    ob_cd_dat3_direction = 1'b1;  // cs
+    ob_cmd_direction = 1'b1;      // miso
+    ob_dat0_direction = 1'b0;     // mosi
 
     rin = v;
 end: comb_proc

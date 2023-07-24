@@ -50,6 +50,7 @@ comp: prep clr_logs
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/riverlib.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/techmap.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/misclib.f
+	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/sdctrl.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/riscv_soc.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ../asic/asic_top.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f asic_top_sim.f
@@ -79,6 +80,7 @@ mce_flow: prep clr_logs
 	-f ${LISTS_HOME}/riverlib.f \
 	-f ${LISTS_HOME}/techmap.f \
 	-f ${LISTS_HOME}/misclib.f \
+	-f ${LISTS_HOME}/sdctrl.f \
 	-f ${LISTS_HOME}/riscv_soc.f \
 	-f ../asic/asic_top.f \
 	-f asic_top_sim.f \
