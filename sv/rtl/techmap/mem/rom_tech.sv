@@ -3,7 +3,7 @@
 module rom_tech #(
     parameter int abits = 6,
     parameter int log2_dbytes = 3,
-    parameter string filename = ""
+    parameter filename = ""
 )
 (
     input logic i_clk,                                      // CPU clock
