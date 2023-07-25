@@ -131,7 +131,6 @@ module kc705_top_tb;
   kc705_top #(
     .SIM_BYPASS_INIT_CAL("FAST"),  // "FAST"-for simulation true; "OFF"
     .SIMULATION("TRUE"),
-    .bootfile(config_target_pkg::CFG_BOOTROM_FILE_HEX),
     .sim_uart_speedup_rate(SIM_UART_SPEED_UP_RATE)
   ) tt (
     .i_rst (i_rst),

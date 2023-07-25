@@ -17,7 +17,7 @@ package proc_pkg;
 
 import river_cfg_pkg::*;
 
-localparam string trace_file = "trace_river_sysc";
+localparam trace_file = "trace_river_sysc";
 
 typedef struct {
     logic instr_load_fault;

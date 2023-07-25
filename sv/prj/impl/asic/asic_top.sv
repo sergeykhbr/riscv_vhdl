@@ -15,7 +15,6 @@
 //!
 
 module asic_top #(
-    parameter bootfile = config_target_pkg::CFG_BOOTROM_FILE_HEX, // Project relative HEX-file name to init boot ROM without .hex extension
     parameter int sim_uart_speedup_rate = 0                 // simulation UART speed-up: 0=no speed up, 1=2x, 2=4x, etc
 )
 ( 
@@ -213,7 +212,7 @@ iobuf_tech iosddat3 (
   );
   
   riscv_soc #(
-    .bootfile(bootfile),
+    .bootfile(CFG_BOOTROM_FILE_HEX),
     .sim_uart_speedup_rate(sim_uart_speedup_rate)
   ) soc0 (
     .i_sys_nrst (w_sys_nrst),
