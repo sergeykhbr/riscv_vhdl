@@ -23,9 +23,13 @@ module sdctrl #(
 (
     input logic i_clk,                                      // CPU clock
     input logic i_nrst,                                     // Reset: active LOW
-    input types_amba_pkg::mapinfo_type i_mapinfo,           // interconnect slot information
-    output types_pnp_pkg::dev_config_type o_cfg,            // Device descriptor
-    input types_amba_pkg::apb_in_type i_apbi,               // APB  Slave to Bridge interface
+    input types_amba_pkg::mapinfo_type i_xmapinfo,          // APB interconnect slot information
+    output types_pnp_pkg::dev_config_type o_xcfg,           // APB Device descriptor
+    input types_amba_pkg::axi4_slave_in_type i_xslvi,       // AXI input interface to access SD-card memory
+    output types_amba_pkg::axi4_slave_out_type o_xslvo,     // AXI output interface to access SD-card memory
+    input types_amba_pkg::mapinfo_type i_pmapinfo,          // APB interconnect slot information
+    output types_pnp_pkg::dev_config_type o_pcfg,           // APB sd-controller configuration registers descriptor
+    input types_amba_pkg::apb_in_type i_apbi,               // APB Slave to Bridge interface
     output types_amba_pkg::apb_out_type o_apbo,             // APB Bridge to Slave interface
     output logic o_sclk,                                    // Clock up to 50 MHz
     input logic i_cmd,                                      // Command response;
@@ -81,9 +85,9 @@ typedef struct {
     logic [7:0] spi_resp;
     logic [log2_fifosz-1:0] txmark;
     logic [log2_fifosz-1:0] rxmark;
-    logic resp_valid;
-    logic [31:0] resp_rdata;
-    logic resp_err;
+    logic presp_valid;
+    logic [31:0] presp_rdata;
+    logic presp_err;
 } sdctrl_registers;
 
 const sdctrl_registers sdctrl_r_reset = '{
@@ -109,15 +113,26 @@ const sdctrl_registers sdctrl_r_reset = '{
     '0,                                 // spi_resp
     '0,                                 // txmark
     '0,                                 // rxmark
-    1'b0,                               // resp_valid
-    '0,                                 // resp_rdata
-    1'b0                                // resp_err
+    1'b0,                               // presp_valid
+    '0,                                 // presp_rdata
+    1'b0                                // presp_err
 };
 
-logic w_req_valid;
-logic [31:0] wb_req_addr;
-logic w_req_write;
-logic [31:0] wb_req_wdata;
+logic w_preq_valid;
+logic [31:0] wb_preq_addr;
+logic w_preq_write;
+logic [31:0] wb_preq_wdata;
+logic w_mem_req_valid;
+logic [CFG_SYSBUS_ADDR_BITS-1:0] wb_mem_req_addr;
+logic [7:0] wb_mem_req_size;
+logic w_mem_req_write;
+logic [CFG_SYSBUS_DATA_BITS-1:0] wb_mem_req_wdata;
+logic [CFG_SYSBUS_DATA_BYTES-1:0] wb_mem_req_wstrb;
+logic w_mem_req_last;
+logic w_mem_req_ready;
+logic w_mem_resp_valid;
+logic [CFG_SYSBUS_DATA_BITS-1:0] wb_mem_resp_rdata;
+logic wb_mem_resp_err;
 // Rx FIFO signals:
 logic w_rxfifo_we;
 logic [7:0] wb_rxfifo_wdata;
@@ -135,21 +150,46 @@ sdctrl_registers r, rin;
 apb_slv #(
     .async_reset(async_reset),
     .vid(VENDOR_OPTIMITECH),
-    .did(OPTIMITECH_SPI)
+    .did(OPTIMITECH_SDCTRL_REG)
 ) pslv0 (
     .i_clk(i_clk),
     .i_nrst(i_nrst),
-    .i_mapinfo(i_mapinfo),
-    .o_cfg(o_cfg),
+    .i_mapinfo(i_pmapinfo),
+    .o_cfg(o_pcfg),
     .i_apbi(i_apbi),
     .o_apbo(o_apbo),
-    .o_req_valid(w_req_valid),
-    .o_req_addr(wb_req_addr),
-    .o_req_write(w_req_write),
-    .o_req_wdata(wb_req_wdata),
-    .i_resp_valid(r.resp_valid),
-    .i_resp_rdata(r.resp_rdata),
-    .i_resp_err(r.resp_err)
+    .o_req_valid(w_preq_valid),
+    .o_req_addr(wb_preq_addr),
+    .o_req_write(w_preq_write),
+    .o_req_wdata(wb_preq_wdata),
+    .i_resp_valid(r.presp_valid),
+    .i_resp_rdata(r.presp_rdata),
+    .i_resp_err(r.presp_err)
+);
+
+
+axi_slv #(
+    .async_reset(async_reset),
+    .vid(VENDOR_OPTIMITECH),
+    .did(OPTIMITECH_SDCTRL_MEM)
+) xslv0 (
+    .i_clk(i_clk),
+    .i_nrst(i_nrst),
+    .i_mapinfo(i_xmapinfo),
+    .o_cfg(o_xcfg),
+    .i_xslvi(i_xslvi),
+    .o_xslvo(o_xslvo),
+    .o_req_valid(w_mem_req_valid),
+    .o_req_addr(wb_mem_req_addr),
+    .o_req_size(wb_mem_req_size),
+    .o_req_write(w_mem_req_write),
+    .o_req_wdata(wb_mem_req_wdata),
+    .o_req_wstrb(wb_mem_req_wstrb),
+    .o_req_last(w_mem_req_last),
+    .i_req_ready(w_mem_req_ready),
+    .i_resp_valid(w_mem_resp_valid),
+    .i_resp_rdata(wb_mem_resp_rdata),
+    .i_resp_err(wb_mem_resp_err)
 );
 
 
@@ -393,18 +433,18 @@ begin: comb_proc
     endcase
 
     // Registers access:
-    case (wb_req_addr[11: 2])
+    case (wb_preq_addr[11: 2])
     10'h000: begin                                          // 0x00: sckdiv
         vb_rdata = r.scaler;
-        if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
-            v.scaler = wb_req_wdata[30: 0];
+        if ((w_preq_valid == 1'b1) && (w_preq_write == 1'b1)) begin
+            v.scaler = wb_preq_wdata[30: 0];
             v.scaler_cnt = '0;
         end
     end
     10'h002: begin                                          // 0x08: reserved (watchdog)
         vb_rdata[15: 0] = r.wdog;
-        if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
-            v.wdog = wb_req_wdata[15: 0];
+        if ((w_preq_valid == 1'b1) && (w_preq_write == 1'b1)) begin
+            v.wdog = wb_preq_wdata[15: 0];
         end
     end
     10'h011: begin                                          // 0x44: reserved 4 (txctrl)
@@ -417,28 +457,28 @@ begin: comb_proc
         vb_rdata[9] = r.rx_synced;                          // [9] rx_ena=1 and start bit received
         vb_rdata[10] = r.rx_data_block;                     // [10] rx_data_block=1 receive certain template byte
         vb_rdata[31: 16] = r.ena_byte_cnt;                  // [31:16] Number of bytes to transmit
-        if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
-            v.generate_crc = wb_req_wdata[7];
-            v.rx_ena = wb_req_wdata[8];
-            v.rx_synced = wb_req_wdata[9];
-            v.rx_data_block = wb_req_wdata[10];
-            v.ena_byte_cnt = wb_req_wdata[31: 16];
+        if ((w_preq_valid == 1'b1) && (w_preq_write == 1'b1)) begin
+            v.generate_crc = wb_preq_wdata[7];
+            v.rx_ena = wb_preq_wdata[8];
+            v.rx_synced = wb_preq_wdata[9];
+            v.rx_data_block = wb_preq_wdata[10];
+            v.ena_byte_cnt = wb_preq_wdata[31: 16];
         end
     end
     10'h012: begin                                          // 0x48: Tx FIFO Data
         vb_rdata[31] = (&wb_txfifo_count);
-        if (w_req_valid == 1'b1) begin
-            if (w_req_write == 1'b1) begin
+        if (w_preq_valid == 1'b1) begin
+            if (w_preq_write == 1'b1) begin
                 v_txfifo_we = 1'h1;
-                vb_txfifo_wdata = wb_req_wdata[7: 0];
+                vb_txfifo_wdata = wb_preq_wdata[7: 0];
             end
         end
     end
     10'h013: begin                                          // 0x4C: Rx FIFO Data
         vb_rdata[7: 0] = wb_rxfifo_rdata;
         vb_rdata[31] = (~(|wb_rxfifo_count));
-        if (w_req_valid == 1'b1) begin
-            if (w_req_write == 1'b1) begin
+        if (w_preq_valid == 1'b1) begin
+            if (w_preq_write == 1'b1) begin
                 // do nothing:
             end else begin
                 v_rxfifo_re = 1'h1;
@@ -447,25 +487,25 @@ begin: comb_proc
     end
     10'h014: begin                                          // 0x50: Tx FIFO Watermark
         vb_rdata[(log2_fifosz - 1): 0] = r.txmark;
-        if (w_req_valid == 1'b1) begin
-            if (w_req_write == 1'b1) begin
-                v.txmark = wb_req_wdata[(log2_fifosz - 1): 0];
+        if (w_preq_valid == 1'b1) begin
+            if (w_preq_write == 1'b1) begin
+                v.txmark = wb_preq_wdata[(log2_fifosz - 1): 0];
             end
         end
     end
     10'h015: begin                                          // 0x54: Rx FIFO Watermark
         vb_rdata[(log2_fifosz - 1): 0] = r.rxmark;
-        if (w_req_valid == 1'b1) begin
-            if (w_req_write == 1'b1) begin
-                v.rxmark = wb_req_wdata[(log2_fifosz - 1): 0];
+        if (w_preq_valid == 1'b1) begin
+            if (w_preq_write == 1'b1) begin
+                v.rxmark = wb_preq_wdata[(log2_fifosz - 1): 0];
             end
         end
     end
     10'h016: begin                                          // 0x58: CRC16 value (reserved FU740)
         vb_rdata[15: 0] = r.crc16;
-        if (w_req_valid == 1'b1) begin
-            if (w_req_write == 1'b1) begin
-                v.crc16 = wb_req_wdata[15: 0];
+        if (w_preq_valid == 1'b1) begin
+            if (w_preq_write == 1'b1) begin
+                v.crc16 = wb_preq_wdata[15: 0];
             end
         end
     end
@@ -481,9 +521,9 @@ begin: comb_proc
     wb_txfifo_wdata = vb_txfifo_wdata;
     w_txfifo_re = v_txfifo_re;
 
-    v.resp_valid = w_req_valid;
-    v.resp_rdata = vb_rdata;
-    v.resp_err = 1'b0;
+    v.presp_valid = w_preq_valid;
+    v.presp_rdata = vb_rdata;
+    v.presp_err = 1'b0;
 
     if (~async_reset && i_nrst == 1'b0) begin
         v = sdctrl_r_reset;
@@ -498,6 +538,11 @@ begin: comb_proc
     o_dat1_dir = 1'b1;
     o_dat2_dir = 1'b1;
     o_cd_dat3_dir = 1'b0;
+    // Memory request:
+    w_mem_req_ready = 1'b1;
+    w_mem_resp_valid = 1'b1;
+    wb_mem_resp_rdata = '1;
+    wb_mem_resp_err = 1'b0;
 
     rin = v;
 end: comb_proc

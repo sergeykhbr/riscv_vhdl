@@ -49,8 +49,10 @@ localparam int CFG_BUS0_XSLV_PLIC = 3;
 localparam int CFG_BUS0_XSLV_PBRIDGE = 4;
 // External DDR
 localparam int CFG_BUS0_XSLV_DDR = 5;
+// SD-card direct memory access.
+localparam int CFG_BUS0_XSLV_SDCTRL_MEM = 6;
 // Total number of the slaves devices.
-localparam int CFG_BUS0_XSLV_TOTAL = 6;
+localparam int CFG_BUS0_XSLV_TOTAL = 7;
 // Necessary bus width to store index + 1.
 localparam int CFG_BUS0_XSLV_LOG2_TOTAL = 3;                // $clog2(CFG_BUS0_XSLV_TOTAL + 1)
 
@@ -67,7 +69,8 @@ const bus0_mapinfo_vector CFG_BUS0_MAP = '{
     '{64'h0000008000000, 64'h0000008200000},                // 2, sram, 2MB
     '{64'h000000C000000, 64'h0000010000000},                // 3, plic
     '{64'h0000010000000, 64'h0000010100000},                // 4, APB bridge: uart1
-    '{64'h0000080000000, 64'h00000C0000000}                 // 5, ddr, 512 MB
+    '{64'h0000080000000, 64'h00000C0000000},                // 5, ddr, 512 MB
+    '{64'h0000800000000, 64'h0001000000000}                 // 6, sdctrl, 32 GB
 };
 
 endpackage: types_bus0_pkg

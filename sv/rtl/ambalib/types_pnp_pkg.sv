@@ -59,8 +59,10 @@ localparam bit [15:0] OPTIMITECH_AXI_INTERCONNECT = 16'h0086;
 localparam bit [15:0] OPTIMITECH_PRCI = 16'h0087;
 // DDR controller status registers
 localparam bit [15:0] OPTIMITECH_DDRCTRL = 16'h0088;
-// SPI controller (SD-card in SPI mode)
-localparam bit [15:0] OPTIMITECH_SPI = 16'h0089;
+// SD-card controller control registers
+localparam bit [15:0] OPTIMITECH_SDCTRL_REG = 16'h0089;
+// SD-card controller memory
+localparam bit [15:0] OPTIMITECH_SDCTRL_MEM = 16'h008b;
 // RIVER debug registers:
 localparam bit [15:0] OPTIMITECH_RIVER_DMI = 16'h008a;
 
@@ -90,8 +92,9 @@ localparam int SOC_PNP_PNP = 10;
 localparam int SOC_PNP_PBRIDGE0 = 11;
 localparam int SOC_PNP_DMI = 12;
 localparam int SOC_PNP_UART1 = 13;
-localparam int SOC_PNP_SPI = 14;
-localparam int SOC_PNP_TOTAL = 15;
+localparam int SOC_PNP_SDCTRL_REG = 14;
+localparam int SOC_PNP_SDCTRL_MEM = 15;
+localparam int SOC_PNP_TOTAL = 16;
 
 // @brief   Plug-n-play descriptor structure for connected device.
 // @details Each device must generates this datatype output that

@@ -123,7 +123,7 @@ apb_spi_registers r, rin;
 apb_slv #(
     .async_reset(async_reset),
     .vid(VENDOR_OPTIMITECH),
-    .did(OPTIMITECH_SPI)
+    .did(OPTIMITECH_SDCTRL_REG)
 ) pslv0 (
     .i_clk(i_clk),
     .i_nrst(i_nrst),
