@@ -19,6 +19,7 @@
 #include "../ambalib/types_amba.h"
 #include "../ambalib/types_pnp.h"
 #include "../ambalib/apb_slv.h"
+#include "../ambalib/axi_slv.h"
 #include "../misclib/sfifo.h"
 #include "api_core.h"
 
@@ -29,9 +30,13 @@ SC_MODULE(sdctrl) {
  public:
     sc_in<bool> i_clk;                                      // CPU clock
     sc_in<bool> i_nrst;                                     // Reset: active LOW
-    sc_in<mapinfo_type> i_mapinfo;                          // interconnect slot information
-    sc_out<dev_config_type> o_cfg;                          // Device descriptor
-    sc_in<apb_in_type> i_apbi;                              // APB  Slave to Bridge interface
+    sc_in<mapinfo_type> i_xmapinfo;                         // APB interconnect slot information
+    sc_out<dev_config_type> o_xcfg;                         // APB Device descriptor
+    sc_in<axi4_slave_in_type> i_xslvi;                      // AXI input interface to access SD-card memory
+    sc_out<axi4_slave_out_type> o_xslvo;                    // AXI output interface to access SD-card memory
+    sc_in<mapinfo_type> i_pmapinfo;                         // APB interconnect slot information
+    sc_out<dev_config_type> o_pcfg;                         // APB sd-controller configuration registers descriptor
+    sc_in<apb_in_type> i_apbi;                              // APB Slave to Bridge interface
     sc_out<apb_out_type> o_apbo;                            // APB Bridge to Slave interface
     sc_out<bool> o_sclk;                                    // Clock up to 50 MHz
     sc_in<bool> i_cmd;                                      // Command response;
@@ -98,9 +103,9 @@ SC_MODULE(sdctrl) {
         sc_signal<sc_uint<8>> spi_resp;
         sc_signal<sc_uint<log2_fifosz>> txmark;
         sc_signal<sc_uint<log2_fifosz>> rxmark;
-        sc_signal<bool> resp_valid;
-        sc_signal<sc_uint<32>> resp_rdata;
-        sc_signal<bool> resp_err;
+        sc_signal<bool> presp_valid;
+        sc_signal<sc_uint<32>> presp_rdata;
+        sc_signal<bool> presp_err;
     } v, r;
 
     void sdctrl_r_reset(sdctrl_registers &iv) {
@@ -126,15 +131,26 @@ SC_MODULE(sdctrl) {
         iv.spi_resp = 0;
         iv.txmark = 0;
         iv.rxmark = 0;
-        iv.resp_valid = 0;
-        iv.resp_rdata = 0;
-        iv.resp_err = 0;
+        iv.presp_valid = 0;
+        iv.presp_rdata = 0;
+        iv.presp_err = 0;
     }
 
-    sc_signal<bool> w_req_valid;
-    sc_signal<sc_uint<32>> wb_req_addr;
-    sc_signal<bool> w_req_write;
-    sc_signal<sc_uint<32>> wb_req_wdata;
+    sc_signal<bool> w_preq_valid;
+    sc_signal<sc_uint<32>> wb_preq_addr;
+    sc_signal<bool> w_preq_write;
+    sc_signal<sc_uint<32>> wb_preq_wdata;
+    sc_signal<bool> w_mem_req_valid;
+    sc_signal<sc_uint<CFG_SYSBUS_ADDR_BITS>> wb_mem_req_addr;
+    sc_signal<sc_uint<8>> wb_mem_req_size;
+    sc_signal<bool> w_mem_req_write;
+    sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> wb_mem_req_wdata;
+    sc_signal<sc_uint<CFG_SYSBUS_DATA_BYTES>> wb_mem_req_wstrb;
+    sc_signal<bool> w_mem_req_last;
+    sc_signal<bool> w_mem_req_ready;
+    sc_signal<bool> w_mem_resp_valid;
+    sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> wb_mem_resp_rdata;
+    sc_signal<bool> wb_mem_resp_err;
     // Rx FIFO signals:
     sc_signal<bool> w_rxfifo_we;
     sc_signal<sc_uint<8>> wb_rxfifo_wdata;
@@ -149,6 +165,7 @@ SC_MODULE(sdctrl) {
     sc_signal<sc_uint<(log2_fifosz + 1)>> wb_txfifo_count;
 
     apb_slv *pslv0;
+    axi_slv *xslv0;
     sfifo<fifo_dbits, 9> *rxfifo;
     sfifo<fifo_dbits, 9> *txfifo;
 
@@ -160,8 +177,12 @@ sdctrl<log2_fifosz>::sdctrl(sc_module_name name,
     : sc_module(name),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
-    i_mapinfo("i_mapinfo"),
-    o_cfg("o_cfg"),
+    i_xmapinfo("i_xmapinfo"),
+    o_xcfg("o_xcfg"),
+    i_xslvi("i_xslvi"),
+    o_xslvo("o_xslvo"),
+    i_pmapinfo("i_pmapinfo"),
+    o_pcfg("o_pcfg"),
     i_apbi("i_apbi"),
     o_apbo("o_apbo"),
     o_sclk("o_sclk"),
@@ -185,25 +206,48 @@ sdctrl<log2_fifosz>::sdctrl(sc_module_name name,
 
     async_reset_ = async_reset;
     pslv0 = 0;
+    xslv0 = 0;
     rxfifo = 0;
     txfifo = 0;
 
     pslv0 = new apb_slv("pslv0", async_reset,
                          VENDOR_OPTIMITECH,
-                         OPTIMITECH_SPI);
+                         OPTIMITECH_SDCTRL_REG);
     pslv0->i_clk(i_clk);
     pslv0->i_nrst(i_nrst);
-    pslv0->i_mapinfo(i_mapinfo);
-    pslv0->o_cfg(o_cfg);
+    pslv0->i_mapinfo(i_pmapinfo);
+    pslv0->o_cfg(o_pcfg);
     pslv0->i_apbi(i_apbi);
     pslv0->o_apbo(o_apbo);
-    pslv0->o_req_valid(w_req_valid);
-    pslv0->o_req_addr(wb_req_addr);
-    pslv0->o_req_write(w_req_write);
-    pslv0->o_req_wdata(wb_req_wdata);
-    pslv0->i_resp_valid(r.resp_valid);
-    pslv0->i_resp_rdata(r.resp_rdata);
-    pslv0->i_resp_err(r.resp_err);
+    pslv0->o_req_valid(w_preq_valid);
+    pslv0->o_req_addr(wb_preq_addr);
+    pslv0->o_req_write(w_preq_write);
+    pslv0->o_req_wdata(wb_preq_wdata);
+    pslv0->i_resp_valid(r.presp_valid);
+    pslv0->i_resp_rdata(r.presp_rdata);
+    pslv0->i_resp_err(r.presp_err);
+
+
+    xslv0 = new axi_slv("xslv0", async_reset,
+                         VENDOR_OPTIMITECH,
+                         OPTIMITECH_SDCTRL_MEM);
+    xslv0->i_clk(i_clk);
+    xslv0->i_nrst(i_nrst);
+    xslv0->i_mapinfo(i_xmapinfo);
+    xslv0->o_cfg(o_xcfg);
+    xslv0->i_xslvi(i_xslvi);
+    xslv0->o_xslvo(o_xslvo);
+    xslv0->o_req_valid(w_mem_req_valid);
+    xslv0->o_req_addr(wb_mem_req_addr);
+    xslv0->o_req_size(wb_mem_req_size);
+    xslv0->o_req_write(w_mem_req_write);
+    xslv0->o_req_wdata(wb_mem_req_wdata);
+    xslv0->o_req_wstrb(wb_mem_req_wstrb);
+    xslv0->o_req_last(w_mem_req_last);
+    xslv0->i_req_ready(w_mem_req_ready);
+    xslv0->i_resp_valid(w_mem_resp_valid);
+    xslv0->i_resp_rdata(wb_mem_resp_rdata);
+    xslv0->i_resp_err(wb_mem_resp_err);
 
 
     rxfifo = new sfifo<fifo_dbits,
@@ -231,7 +275,9 @@ sdctrl<log2_fifosz>::sdctrl(sc_module_name name,
 
     SC_METHOD(comb);
     sensitive << i_nrst;
-    sensitive << i_mapinfo;
+    sensitive << i_xmapinfo;
+    sensitive << i_xslvi;
+    sensitive << i_pmapinfo;
     sensitive << i_apbi;
     sensitive << i_cmd;
     sensitive << i_dat0;
@@ -240,10 +286,21 @@ sdctrl<log2_fifosz>::sdctrl(sc_module_name name,
     sensitive << i_cd_dat3;
     sensitive << i_detected;
     sensitive << i_protect;
-    sensitive << w_req_valid;
-    sensitive << wb_req_addr;
-    sensitive << w_req_write;
-    sensitive << wb_req_wdata;
+    sensitive << w_preq_valid;
+    sensitive << wb_preq_addr;
+    sensitive << w_preq_write;
+    sensitive << wb_preq_wdata;
+    sensitive << w_mem_req_valid;
+    sensitive << wb_mem_req_addr;
+    sensitive << wb_mem_req_size;
+    sensitive << w_mem_req_write;
+    sensitive << wb_mem_req_wdata;
+    sensitive << wb_mem_req_wstrb;
+    sensitive << w_mem_req_last;
+    sensitive << w_mem_req_ready;
+    sensitive << w_mem_resp_valid;
+    sensitive << wb_mem_resp_rdata;
+    sensitive << wb_mem_resp_err;
     sensitive << w_rxfifo_we;
     sensitive << wb_rxfifo_wdata;
     sensitive << w_rxfifo_re;
@@ -276,9 +333,9 @@ sdctrl<log2_fifosz>::sdctrl(sc_module_name name,
     sensitive << r.spi_resp;
     sensitive << r.txmark;
     sensitive << r.rxmark;
-    sensitive << r.resp_valid;
-    sensitive << r.resp_rdata;
-    sensitive << r.resp_err;
+    sensitive << r.presp_valid;
+    sensitive << r.presp_rdata;
+    sensitive << r.presp_err;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -289,6 +346,9 @@ template<int log2_fifosz>
 sdctrl<log2_fifosz>::~sdctrl() {
     if (pslv0) {
         delete pslv0;
+    }
+    if (xslv0) {
+        delete xslv0;
     }
     if (rxfifo) {
         delete rxfifo;
@@ -302,8 +362,12 @@ template<int log2_fifosz>
 void sdctrl<log2_fifosz>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     std::string pn(name());
     if (o_vcd) {
-        sc_trace(o_vcd, i_mapinfo, i_mapinfo.name());
-        sc_trace(o_vcd, o_cfg, o_cfg.name());
+        sc_trace(o_vcd, i_xmapinfo, i_xmapinfo.name());
+        sc_trace(o_vcd, o_xcfg, o_xcfg.name());
+        sc_trace(o_vcd, i_xslvi, i_xslvi.name());
+        sc_trace(o_vcd, o_xslvo, o_xslvo.name());
+        sc_trace(o_vcd, i_pmapinfo, i_pmapinfo.name());
+        sc_trace(o_vcd, o_pcfg, o_pcfg.name());
         sc_trace(o_vcd, i_apbi, i_apbi.name());
         sc_trace(o_vcd, o_apbo, o_apbo.name());
         sc_trace(o_vcd, o_sclk, o_sclk.name());
@@ -346,13 +410,16 @@ void sdctrl<log2_fifosz>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd
         sc_trace(o_vcd, r.spi_resp, pn + ".r_spi_resp");
         sc_trace(o_vcd, r.txmark, pn + ".r_txmark");
         sc_trace(o_vcd, r.rxmark, pn + ".r_rxmark");
-        sc_trace(o_vcd, r.resp_valid, pn + ".r_resp_valid");
-        sc_trace(o_vcd, r.resp_rdata, pn + ".r_resp_rdata");
-        sc_trace(o_vcd, r.resp_err, pn + ".r_resp_err");
+        sc_trace(o_vcd, r.presp_valid, pn + ".r_presp_valid");
+        sc_trace(o_vcd, r.presp_rdata, pn + ".r_presp_rdata");
+        sc_trace(o_vcd, r.presp_err, pn + ".r_presp_err");
     }
 
     if (pslv0) {
         pslv0->generateVCD(i_vcd, o_vcd);
+    }
+    if (xslv0) {
+        xslv0->generateVCD(i_vcd, o_vcd);
     }
     if (rxfifo) {
         rxfifo->generateVCD(i_vcd, o_vcd);
@@ -571,18 +638,18 @@ void sdctrl<log2_fifosz>::comb() {
     }
 
     // Registers access:
-    switch (wb_req_addr.read()(11, 2)) {
+    switch (wb_preq_addr.read()(11, 2)) {
     case 0x0:                                               // 0x00: sckdiv
         vb_rdata = r.scaler;
-        if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
-            v.scaler = wb_req_wdata.read()(30, 0);
+        if ((w_preq_valid.read() == 1) && (w_preq_write.read() == 1)) {
+            v.scaler = wb_preq_wdata.read()(30, 0);
             v.scaler_cnt = 0;
         }
         break;
     case 0x2:                                               // 0x08: reserved (watchdog)
         vb_rdata(15, 0) = r.wdog;
-        if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
-            v.wdog = wb_req_wdata.read()(15, 0);
+        if ((w_preq_valid.read() == 1) && (w_preq_write.read() == 1)) {
+            v.wdog = wb_preq_wdata.read()(15, 0);
         }
         break;
     case 0x11:                                              // 0x44: reserved 4 (txctrl)
@@ -595,28 +662,28 @@ void sdctrl<log2_fifosz>::comb() {
         vb_rdata[9] = r.rx_synced.read();                   // [9] rx_ena=1 and start bit received
         vb_rdata[10] = r.rx_data_block.read();              // [10] rx_data_block=1 receive certain template byte
         vb_rdata(31, 16) = r.ena_byte_cnt;                  // [31:16] Number of bytes to transmit
-        if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
-            v.generate_crc = wb_req_wdata.read()[7];
-            v.rx_ena = wb_req_wdata.read()[8];
-            v.rx_synced = wb_req_wdata.read()[9];
-            v.rx_data_block = wb_req_wdata.read()[10];
-            v.ena_byte_cnt = wb_req_wdata.read()(31, 16);
+        if ((w_preq_valid.read() == 1) && (w_preq_write.read() == 1)) {
+            v.generate_crc = wb_preq_wdata.read()[7];
+            v.rx_ena = wb_preq_wdata.read()[8];
+            v.rx_synced = wb_preq_wdata.read()[9];
+            v.rx_data_block = wb_preq_wdata.read()[10];
+            v.ena_byte_cnt = wb_preq_wdata.read()(31, 16);
         }
         break;
     case 0x12:                                              // 0x48: Tx FIFO Data
         vb_rdata[31] = wb_txfifo_count.read().and_reduce();
-        if (w_req_valid.read() == 1) {
-            if (w_req_write.read() == 1) {
+        if (w_preq_valid.read() == 1) {
+            if (w_preq_write.read() == 1) {
                 v_txfifo_we = 1;
-                vb_txfifo_wdata = wb_req_wdata.read()(7, 0);
+                vb_txfifo_wdata = wb_preq_wdata.read()(7, 0);
             }
         }
         break;
     case 0x13:                                              // 0x4C: Rx FIFO Data
         vb_rdata(7, 0) = wb_rxfifo_rdata;
         vb_rdata[31] = (!wb_rxfifo_count.read().or_reduce());
-        if (w_req_valid.read() == 1) {
-            if (w_req_write.read() == 1) {
+        if (w_preq_valid.read() == 1) {
+            if (w_preq_write.read() == 1) {
                 // do nothing:
             } else {
                 v_rxfifo_re = 1;
@@ -625,25 +692,25 @@ void sdctrl<log2_fifosz>::comb() {
         break;
     case 0x14:                                              // 0x50: Tx FIFO Watermark
         vb_rdata((log2_fifosz - 1), 0) = r.txmark;
-        if (w_req_valid.read() == 1) {
-            if (w_req_write.read() == 1) {
-                v.txmark = wb_req_wdata.read()((log2_fifosz - 1), 0);
+        if (w_preq_valid.read() == 1) {
+            if (w_preq_write.read() == 1) {
+                v.txmark = wb_preq_wdata.read()((log2_fifosz - 1), 0);
             }
         }
         break;
     case 0x15:                                              // 0x54: Rx FIFO Watermark
         vb_rdata((log2_fifosz - 1), 0) = r.rxmark;
-        if (w_req_valid.read() == 1) {
-            if (w_req_write.read() == 1) {
-                v.rxmark = wb_req_wdata.read()((log2_fifosz - 1), 0);
+        if (w_preq_valid.read() == 1) {
+            if (w_preq_write.read() == 1) {
+                v.rxmark = wb_preq_wdata.read()((log2_fifosz - 1), 0);
             }
         }
         break;
     case 0x16:                                              // 0x58: CRC16 value (reserved FU740)
         vb_rdata(15, 0) = r.crc16;
-        if (w_req_valid.read() == 1) {
-            if (w_req_write.read() == 1) {
-                v.crc16 = wb_req_wdata.read()(15, 0);
+        if (w_preq_valid.read() == 1) {
+            if (w_preq_write.read() == 1) {
+                v.crc16 = wb_preq_wdata.read()(15, 0);
             }
         }
         break;
@@ -659,9 +726,9 @@ void sdctrl<log2_fifosz>::comb() {
     wb_txfifo_wdata = vb_txfifo_wdata;
     w_txfifo_re = v_txfifo_re;
 
-    v.resp_valid = w_req_valid;
-    v.resp_rdata = vb_rdata;
-    v.resp_err = 0;
+    v.presp_valid = w_preq_valid;
+    v.presp_rdata = vb_rdata;
+    v.presp_err = 0;
 
     if (!async_reset_ && i_nrst.read() == 0) {
         sdctrl_r_reset(v);
@@ -676,6 +743,11 @@ void sdctrl<log2_fifosz>::comb() {
     o_dat1_dir = 1;
     o_dat2_dir = 1;
     o_cd_dat3_dir = 0;
+    // Memory request:
+    w_mem_req_ready = 1;
+    w_mem_resp_valid = 1;
+    wb_mem_resp_rdata = ~0ull;
+    wb_mem_resp_err = 0;
 }
 
 template<int log2_fifosz>

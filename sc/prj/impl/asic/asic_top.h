@@ -65,14 +65,12 @@ SC_MODULE(asic_top) {
     SC_HAS_PROCESS(asic_top);
 
     asic_top(sc_module_name name,
-             std::string bootfile,
              int sim_uart_speedup_rate);
     virtual ~asic_top();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
-    std::string bootfile_;
     int sim_uart_speedup_rate_;
 
     static const bool async_reset = CFG_ASYNC_RESET;

@@ -52,8 +52,10 @@ static const int CFG_BUS0_XSLV_PLIC = 3;
 static const int CFG_BUS0_XSLV_PBRIDGE = 4;
 // External DDR
 static const int CFG_BUS0_XSLV_DDR = 5;
+// SD-card direct memory access.
+static const int CFG_BUS0_XSLV_SDCTRL_MEM = 6;
 // Total number of the slaves devices.
-static const int CFG_BUS0_XSLV_TOTAL = 6;
+static const int CFG_BUS0_XSLV_TOTAL = 7;
 // Necessary bus width to store index + 1.
 static const int CFG_BUS0_XSLV_LOG2_TOTAL = 3;              // $clog2(CFG_BUS0_XSLV_TOTAL + 1)
 
@@ -70,7 +72,8 @@ static const mapinfo_type CFG_BUS0_MAP[CFG_BUS0_XSLV_TOTAL] = {
     {0x0000008000000, 0x0000008200000},                     // 2, sram, 2MB
     {0x000000C000000, 0x0000010000000},                     // 3, plic
     {0x0000010000000, 0x0000010100000},                     // 4, APB bridge: uart1
-    {0x0000080000000, 0x00000C0000000}                      // 5, ddr, 512 MB
+    {0x0000080000000, 0x00000C0000000},                     // 5, ddr, 512 MB
+    {0x0000800000000, 0x0001000000000}                      // 6, sdctrl, 32 GB
 };
 
 }  // namespace debugger

@@ -209,7 +209,6 @@ void CpuRiscV_RTL::createSystemC() {
     int SIM_UART_SPEED_UP_RATE = 3;
     int uart_scaler = 8;   // expected uart bit edge in a range 8..16 of scaler counter
     asic0_ = new asic_top("tt",
-                          CFG_BOOTROM_FILE_HEX,
                           SIM_UART_SPEED_UP_RATE);
 
     asic0_->i_rst(w_rst);

@@ -235,10 +235,14 @@ riscv_soc::riscv_soc(sc_module_name name,
     sdctrl0 = new sdctrl<SOC_SPI0_LOG2_FIFOSZ>("sdctrl0", async_reset);
     sdctrl0->i_clk(i_sys_clk);
     sdctrl0->i_nrst(i_sys_nrst);
-    sdctrl0->i_mapinfo(bus1_mapinfo[CFG_BUS1_PSLV_SPI]);
-    sdctrl0->o_cfg(dev_pnp[SOC_PNP_SPI]);
-    sdctrl0->i_apbi(apbi[CFG_BUS1_PSLV_SPI]);
-    sdctrl0->o_apbo(apbo[CFG_BUS1_PSLV_SPI]);
+    sdctrl0->i_xmapinfo(bus0_mapinfo[CFG_BUS0_XSLV_SDCTRL_MEM]);
+    sdctrl0->o_xcfg(dev_pnp[SOC_PNP_SDCTRL_MEM]);
+    sdctrl0->i_xslvi(axisi[CFG_BUS0_XSLV_SDCTRL_MEM]);
+    sdctrl0->o_xslvo(axiso[CFG_BUS0_XSLV_SDCTRL_MEM]);
+    sdctrl0->i_pmapinfo(bus1_mapinfo[CFG_BUS1_PSLV_SDCTRL_REG]);
+    sdctrl0->o_pcfg(dev_pnp[SOC_PNP_SDCTRL_REG]);
+    sdctrl0->i_apbi(apbi[CFG_BUS1_PSLV_SDCTRL_REG]);
+    sdctrl0->o_apbo(apbo[CFG_BUS1_PSLV_SDCTRL_REG]);
     sdctrl0->o_sclk(o_sd_sclk);
     sdctrl0->i_cmd(i_sd_cmd);
     sdctrl0->o_cmd(o_sd_cmd);

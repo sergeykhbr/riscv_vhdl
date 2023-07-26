@@ -62,8 +62,10 @@ static const uint16_t OPTIMITECH_AXI_INTERCONNECT = 0x0086;
 static const uint16_t OPTIMITECH_PRCI = 0x0087;
 // DDR controller status registers
 static const uint16_t OPTIMITECH_DDRCTRL = 0x0088;
-// SPI controller (SD-card in SPI mode)
-static const uint16_t OPTIMITECH_SPI = 0x0089;
+// SD-card controller control registers
+static const uint16_t OPTIMITECH_SDCTRL_REG = 0x0089;
+// SD-card controller memory
+static const uint16_t OPTIMITECH_SDCTRL_MEM = 0x008b;
 // RIVER debug registers:
 static const uint16_t OPTIMITECH_RIVER_DMI = 0x008a;
 
@@ -93,8 +95,9 @@ static const int SOC_PNP_PNP = 10;
 static const int SOC_PNP_PBRIDGE0 = 11;
 static const int SOC_PNP_DMI = 12;
 static const int SOC_PNP_UART1 = 13;
-static const int SOC_PNP_SPI = 14;
-static const int SOC_PNP_TOTAL = 15;
+static const int SOC_PNP_SDCTRL_REG = 14;
+static const int SOC_PNP_SDCTRL_MEM = 15;
+static const int SOC_PNP_TOTAL = 16;
 
 // @brief   Plug-n-play descriptor structure for connected device.
 // @details Each device must generates this datatype output that

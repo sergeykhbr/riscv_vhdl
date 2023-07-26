@@ -166,7 +166,7 @@ apb_spi<log2_fifosz>::apb_spi(sc_module_name name,
 
     pslv0 = new apb_slv("pslv0", async_reset,
                          VENDOR_OPTIMITECH,
-                         OPTIMITECH_SPI);
+                         OPTIMITECH_SDCTRL_REG);
     pslv0->i_clk(i_clk);
     pslv0->i_nrst(i_nrst);
     pslv0->i_mapinfo(i_mapinfo);

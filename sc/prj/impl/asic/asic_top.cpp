@@ -20,7 +20,6 @@
 namespace debugger {
 
 asic_top::asic_top(sc_module_name name,
-                   std::string bootfile,
                    int sim_uart_speedup_rate)
     : sc_module(name),
     i_rst("i_rst"),
@@ -44,7 +43,6 @@ asic_top::asic_top(sc_module_name name,
     i_sd_detected("i_sd_detected"),
     i_sd_protect("i_sd_protect") {
 
-    bootfile_ = bootfile;
     sim_uart_speedup_rate_ = sim_uart_speedup_rate;
     iclk0 = 0;
     iosdcmd0 = 0;
@@ -121,7 +119,7 @@ asic_top::asic_top(sc_module_name name,
 
 
     soc0 = new riscv_soc("soc0",
-                          bootfile,
+                          CFG_BOOTROM_FILE_HEX,
                           sim_uart_speedup_rate);
     soc0->i_sys_nrst(w_sys_nrst);
     soc0->i_sys_clk(w_sys_clk);
