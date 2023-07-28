@@ -9,8 +9,6 @@ module idsbuf_tech (
     output o_clk
 );
  
-import config_target_pkg::*;
-
 `ifdef TARGET_INFERRED
 
     assign o_clk = clk_p;

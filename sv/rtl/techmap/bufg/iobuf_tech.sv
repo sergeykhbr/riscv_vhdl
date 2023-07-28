@@ -12,8 +12,6 @@ module iobuf_tech (
     
 );
 
-import config_target_pkg::*;
-
 `ifdef TARGET_INFERRED
 
    assign o = t ? io : 1'b0;

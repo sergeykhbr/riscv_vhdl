@@ -8,8 +8,6 @@ module ibuf_tech(
     input i
 );
 
-import config_target_pkg::*;
-
 `ifdef TARGET_INFERRED
 
    assign o = i;

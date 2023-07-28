@@ -12,8 +12,6 @@ module rom_tech #(
 );
 
 
-import config_target_pkg::*;
-
 localparam integer dbytes = (2**log2_dbytes);
 localparam integer dbits = 8*dbytes;
 localparam int ROM_LENGTH = 2**(abits - log2_dbytes);

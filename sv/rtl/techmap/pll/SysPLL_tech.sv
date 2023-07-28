@@ -18,8 +18,6 @@ module SysPLL_tech (
   output        o_locked
 );
 
-import config_target_pkg::*;
-
 `ifdef TARGET_INFERRED
 
     SysPLL_inferred inf0
