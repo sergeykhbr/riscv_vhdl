@@ -19,6 +19,8 @@
 
 namespace debugger {
 
+static std::string CFG_BOOTROM_FILE_HEX = "../../../../examples/bootrom_tests/linuxbuild/bin/bootrom_tests";
+
 asic_top::asic_top(sc_module_name name,
                    int sim_uart_speedup_rate)
     : sc_module(name),
