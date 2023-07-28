@@ -46,7 +46,6 @@ comp: prep clr_logs
 	@echo " START COMPILATION: "
 	@echo "==========================================================================================="
 
-	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} ../kc705/config_target_pkg.sv
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/ambalib.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/riverlib.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/techmap.f
@@ -77,7 +76,6 @@ mce_flow: prep clr_logs
 	-timescale 1ns/10ps \
 	-access -rwc \
     +UART_LOG_PATH=uart -input run.tcl  ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} \
-	../kc705/config_target_pkg.sv \
 	-f ${LISTS_HOME}/ambalib.f \
 	-f ${LISTS_HOME}/riverlib.f \
 	-f ${LISTS_HOME}/techmap.f \

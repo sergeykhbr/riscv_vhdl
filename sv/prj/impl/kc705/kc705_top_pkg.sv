@@ -12,8 +12,8 @@
 //  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
-// 
-package config_target_pkg;
+
+package kc705_top_pkg;
 
 localparam bit async_reset = 0;
 
@@ -30,7 +30,7 @@ localparam int CFG_DLOG2_LINES_PER_WAY = 7;                 // D$ length: 7=16KB
 localparam int CFG_DLOG2_NWAYS = 2;                         // D$ associativity. Default bits width = 2, means 4 ways
 
 // @brief Enable/disable L2 caching. L2 can be enabled even in 1 CPU config
-localparam int CFG_L2CACHE_ENA = 1;
+localparam int CFG_L2CACHE_ENA = 0;
 localparam int CFG_L2_LOG2_NWAYS = 4;
 localparam int CFG_L2_LOG2_LINES_PER_WAY = 9;               // 7=16KB; 8=32KB; 9=64KB, ..
 
@@ -45,4 +45,4 @@ localparam CFG_BOOTROM_FILE_HEX = "../../../../examples/bootrom_tests/linuxbuild
 //     - Change bootloader stack pointer if need less than 512 KB
 localparam int CFG_SRAM_LOG2_SIZE = 18;                     // 19=512 KB (KC705); 21=2 MB (ASIC); ..
 
-endpackage: config_target_pkg
+endpackage: kc705_top_pkg

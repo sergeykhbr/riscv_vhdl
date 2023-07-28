@@ -68,7 +68,7 @@ module kc705_top #(
 
   import types_amba_pkg::*;
   import types_pnp_pkg::*;
-  import config_target_pkg::*;
+  import kc705_top_pkg::*;
 
   logic             ib_rst;
   logic             ib_clk_tcxo;
