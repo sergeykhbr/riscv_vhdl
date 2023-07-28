@@ -15,8 +15,7 @@
 // 
 package config_target_pkg;
 
-
-localparam bit CFG_ASYNC_RESET = 0;
+localparam bit async_reset = 0;
 
 // @brief   Number of processors in a system
 // @details This value may be in a range 1 to CFG_TOTAL_CPU_MAX-1

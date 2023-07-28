@@ -118,7 +118,17 @@ asic_top::asic_top(sc_module_name name,
     prci0->o_apbo(prci_apbo);
 
 
-    soc0 = new riscv_soc("soc0",
+    soc0 = new riscv_soc("soc0", async_reset,
+                          CFG_CPU_NUM,
+                          CFG_ILOG2_NWAYS,
+                          CFG_ILOG2_LINES_PER_WAY,
+                          CFG_DLOG2_NWAYS,
+                          CFG_DLOG2_LINES_PER_WAY,
+                          CFG_L2CACHE_ENA,
+                          CFG_L2_LOG2_NWAYS,
+                          CFG_L2_LOG2_LINES_PER_WAY,
+                          CFG_BOOTROM_LOG2_SIZE,
+                          CFG_SRAM_LOG2_SIZE,
                           CFG_BOOTROM_FILE_HEX,
                           sim_uart_speedup_rate);
     soc0->i_sys_nrst(w_sys_nrst);
@@ -170,59 +180,6 @@ asic_top::asic_top(sc_module_name name,
     soc0->i_ddr_xslvo(ddr_xslvo);
 
 
-
-    SC_METHOD(comb);
-    sensitive << i_rst;
-    sensitive << i_sclk_p;
-    sensitive << i_sclk_n;
-    sensitive << i_jtag_trst;
-    sensitive << i_jtag_tck;
-    sensitive << i_jtag_tms;
-    sensitive << i_jtag_tdi;
-    sensitive << i_uart1_rd;
-    sensitive << i_sd_detected;
-    sensitive << i_sd_protect;
-    sensitive << ib_clk_tcxo;
-    sensitive << ib_gpio_ipins;
-    sensitive << ob_gpio_opins;
-    sensitive << ob_gpio_direction;
-    sensitive << ib_sd_cmd;
-    sensitive << ob_sd_cmd;
-    sensitive << ob_sd_cmd_direction;
-    sensitive << ib_sd_dat0;
-    sensitive << ob_sd_dat0;
-    sensitive << ob_sd_dat0_direction;
-    sensitive << ib_sd_dat1;
-    sensitive << ob_sd_dat1;
-    sensitive << ob_sd_dat1_direction;
-    sensitive << ib_sd_dat2;
-    sensitive << ob_sd_dat2;
-    sensitive << ob_sd_dat2_direction;
-    sensitive << ib_sd_cd_dat3;
-    sensitive << ob_sd_cd_dat3;
-    sensitive << ob_sd_cd_dat3_direction;
-    sensitive << w_sys_rst;
-    sensitive << w_sys_nrst;
-    sensitive << w_dbg_nrst;
-    sensitive << w_dmreset;
-    sensitive << w_sys_clk;
-    sensitive << w_ddr_clk;
-    sensitive << w_pll_lock;
-    sensitive << ddr_xmapinfo;
-    sensitive << ddr_xdev_cfg;
-    sensitive << ddr_xslvo;
-    sensitive << ddr_xslvi;
-    sensitive << ddr_pmapinfo;
-    sensitive << ddr_pdev_cfg;
-    sensitive << ddr_apbi;
-    sensitive << ddr_apbo;
-    sensitive << w_ddr_ui_nrst;
-    sensitive << w_ddr_ui_clk;
-    sensitive << w_ddr3_init_calib_complete;
-    sensitive << prci_pmapinfo;
-    sensitive << prci_dev_cfg;
-    sensitive << prci_apbi;
-    sensitive << prci_apbo;
 }
 
 asic_top::~asic_top() {
@@ -306,9 +263,6 @@ void asic_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (soc0) {
         soc0->generateVCD(i_vcd, o_vcd);
     }
-}
-
-void asic_top::comb() {
 }
 
 }  // namespace debugger

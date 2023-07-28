@@ -17,6 +17,17 @@
 `timescale 1ns/10ps
 
 module riscv_soc #(
+    parameter bit async_reset = 1'b0,
+    parameter int unsigned cpu_num = 1,
+    parameter int unsigned ilog2_nways = 2,                 // I$ Cache associativity. Default bits width = 2, means 4 ways
+    parameter int unsigned ilog2_lines_per_way = 7,         // I$ Cache length: 7=16KB; 8=32KB; ..
+    parameter int unsigned dlog2_nways = 2,                 // D$ Cache associativity. Default bits width = 2, means 4 ways
+    parameter int unsigned dlog2_lines_per_way = 7,         // D$ Cache length: 7=16KB; 8=32KB; ..
+    parameter int unsigned l2cache_ena = 1,
+    parameter int unsigned l2log2_nways = 4,                // L2$ Cache associativity. Default bits width = 4, means 16 ways
+    parameter int unsigned l2log2_lines_per_way = 9,        // L2$ Cache length: 9=64KB;
+    parameter int unsigned bootrom_log2_size = 16,          // 16=64 KB (default); 17=128KB; ..
+    parameter int unsigned sram_log2_size = 21,             // 19=512 KB (KC705); 21=2 MB (ASIC); ..
     parameter bootfile = "",                                // Project relative HEX-file name to init boot ROM without .hex extension
     parameter int sim_uart_speedup_rate = 0                 // simulation UART speed-up: 0=no speed up, 1=2x, 2=4x, etc
 )
@@ -76,7 +87,6 @@ module riscv_soc #(
     input types_amba_pkg::axi4_slave_out_type i_ddr_xslvo   // AXI DDR memory interface
 );
 
-import config_target_pkg::*;
 import types_amba_pkg::*;
 import types_pnp_pkg::*;
 import types_bus0_pkg::*;
@@ -138,14 +148,14 @@ axi2apb_bus1 #(
 
 Workgroup #(
     .async_reset(async_reset),
-    .cpu_num(CFG_CPU_NUM),
-    .ilog2_nways(CFG_ILOG2_NWAYS),
-    .ilog2_lines_per_way(CFG_ILOG2_LINES_PER_WAY),
-    .dlog2_nways(CFG_DLOG2_NWAYS),
-    .dlog2_lines_per_way(CFG_DLOG2_LINES_PER_WAY),
-    .l2cache_ena(CFG_L2CACHE_ENA),
-    .l2log2_nways(CFG_L2_LOG2_NWAYS),
-    .l2log2_lines_per_way(CFG_L2_LOG2_LINES_PER_WAY)
+    .cpu_num(cpu_num),
+    .ilog2_nways(ilog2_nways),
+    .ilog2_lines_per_way(ilog2_lines_per_way),
+    .dlog2_nways(dlog2_nways),
+    .dlog2_lines_per_way(dlog2_lines_per_way),
+    .l2cache_ena(l2cache_ena),
+    .l2log2_nways(l2log2_nways),
+    .l2log2_lines_per_way(l2log2_lines_per_way)
 ) group0 (
     .i_cores_nrst(i_sys_nrst),
     .i_dmi_nrst(i_dbg_nrst),
@@ -175,7 +185,7 @@ Workgroup #(
 
 axi_rom #(
     .async_reset(async_reset),
-    .abits(CFG_BOOTROM_LOG2_SIZE),
+    .abits(bootrom_log2_size),
     .filename(bootfile)
 ) rom0 (
     .i_clk(i_sys_clk),
@@ -189,7 +199,7 @@ axi_rom #(
 
 axi_sram #(
     .async_reset(async_reset),
-    .abits(CFG_SRAM_LOG2_SIZE)
+    .abits(sram_log2_size)
 ) sram0 (
     .i_clk(i_sys_clk),
     .i_nrst(i_sys_nrst),
@@ -317,8 +327,8 @@ apb_pnp #(
     .async_reset(async_reset),
     .cfg_slots(SOC_PNP_TOTAL),
     .hwid(SOC_HW_ID),
-    .cpu_max(CFG_CPU_NUM),
-    .l2cache_ena(CFG_L2CACHE_ENA),
+    .cpu_max(cpu_num),
+    .l2cache_ena(l2cache_ena),
     .plic_irq_max(SOC_PLIC_IRQ_TOTAL)
 ) pnp0 (
     .i_clk(i_sys_clk),

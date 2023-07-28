@@ -60,9 +60,6 @@ SC_MODULE(asic_top) {
     sc_in<bool> i_sd_detected;                              // SD-card detected
     sc_in<bool> i_sd_protect;                               // SD-card write protect
 
-    void comb();
-
-    SC_HAS_PROCESS(asic_top);
 
     asic_top(sc_module_name name,
              int sim_uart_speedup_rate);

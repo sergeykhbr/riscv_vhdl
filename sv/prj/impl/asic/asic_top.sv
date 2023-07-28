@@ -195,7 +195,7 @@ iobuf_tech iosddat3 (
   
   // PLL and Reset Control Interface:
   apb_prci #(
-    .async_reset(1'b0)
+    .async_reset(async_reset)
   ) prci0 (
     .i_clk(ib_clk_tcxo),
     .i_pwrreset(ib_rst),
@@ -212,6 +212,17 @@ iobuf_tech iosddat3 (
   );
   
   riscv_soc #(
+    .async_reset(async_reset),
+    .cpu_num(CFG_CPU_NUM),
+    .ilog2_nways(CFG_ILOG2_NWAYS),
+    .ilog2_lines_per_way(CFG_ILOG2_LINES_PER_WAY),
+    .dlog2_nways(CFG_DLOG2_NWAYS),
+    .dlog2_lines_per_way(CFG_DLOG2_LINES_PER_WAY),
+    .l2cache_ena(CFG_L2CACHE_ENA),
+    .l2log2_nways(CFG_L2_LOG2_NWAYS),
+    .l2log2_lines_per_way(CFG_L2_LOG2_LINES_PER_WAY),
+    .bootrom_log2_size(CFG_BOOTROM_LOG2_SIZE),
+    .sram_log2_size(CFG_SRAM_LOG2_SIZE),
     .bootfile(CFG_BOOTROM_FILE_HEX),
     .sim_uart_speedup_rate(sim_uart_speedup_rate)
   ) soc0 (
@@ -272,7 +283,7 @@ iobuf_tech iosddat3 (
 
 
 ddr_tech #(
-    .async_reset(CFG_ASYNC_RESET),
+    .async_reset(async_reset),
     .SYSCLK_TYPE("NO_BUFFER"), // "NO_BUFFER,"DIFFERENTIAL"
     .SIM_BYPASS_INIT_CAL("FAST"),  // "FAST"-for simulation true; "OFF"
     .SIMULATION("TRUE")
