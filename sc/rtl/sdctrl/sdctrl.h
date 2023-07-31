@@ -72,6 +72,17 @@ SC_MODULE(sdctrl) {
     bool async_reset_;
 
     static const int fifo_dbits = 8;
+    // SD-card global state:
+    static const uint8_t SDSTATE_RESET = 0;
+    // SD-card initalization state:
+    static const uint8_t INITSTATE_CMD0 = 0;
+    static const uint8_t INITSTATE_CMD8 = 1;
+    static const uint8_t INITSTATE_CMD41 = 2;
+    static const uint8_t INITSTATE_CMD11 = 3;
+    static const uint8_t INITSTATE_CMD2 = 4;
+    static const uint8_t INITSTATE_CMD3 = 5;
+    static const uint8_t INITSTATE_ERROR = 6;
+    static const uint8_t INITSTATE_DONE = 7;
     // SPI states
     static const uint8_t idle = 0;
     static const uint8_t wait_edge = 1;
@@ -91,6 +102,8 @@ SC_MODULE(sdctrl) {
         sc_signal<bool> rx_data_block;                      // Wait 0xFE start data block marker
         sc_signal<bool> level;
         sc_signal<bool> cs;
+        sc_signal<sc_uint<2>> sdstate;
+        sc_signal<sc_uint<3>> initstate;
         sc_signal<sc_uint<3>> state;
         sc_signal<sc_uint<8>> shiftreg;
         sc_signal<sc_uint<16>> ena_byte_cnt;
@@ -119,6 +132,8 @@ SC_MODULE(sdctrl) {
         iv.rx_data_block = 0;
         iv.level = 1;
         iv.cs = 0;
+        iv.sdstate = SDSTATE_RESET;
+        iv.initstate = INITSTATE_CMD0;
         iv.state = idle;
         iv.shiftreg = ~0ul;
         iv.ena_byte_cnt = 0;
@@ -321,6 +336,8 @@ sdctrl<log2_fifosz>::sdctrl(sc_module_name name,
     sensitive << r.rx_data_block;
     sensitive << r.level;
     sensitive << r.cs;
+    sensitive << r.sdstate;
+    sensitive << r.initstate;
     sensitive << r.state;
     sensitive << r.shiftreg;
     sensitive << r.ena_byte_cnt;
@@ -398,6 +415,8 @@ void sdctrl<log2_fifosz>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd
         sc_trace(o_vcd, r.rx_data_block, pn + ".r_rx_data_block");
         sc_trace(o_vcd, r.level, pn + ".r_level");
         sc_trace(o_vcd, r.cs, pn + ".r_cs");
+        sc_trace(o_vcd, r.sdstate, pn + ".r_sdstate");
+        sc_trace(o_vcd, r.initstate, pn + ".r_initstate");
         sc_trace(o_vcd, r.state, pn + ".r_state");
         sc_trace(o_vcd, r.shiftreg, pn + ".r_shiftreg");
         sc_trace(o_vcd, r.ena_byte_cnt, pn + ".r_ena_byte_cnt");
@@ -486,6 +505,34 @@ void sdctrl<log2_fifosz>::comb() {
     vb_crc16[2] = r.crc16.read()[1];
     vb_crc16[1] = r.crc16.read()[0];
     vb_crc16[0] = v_inv16;
+
+    // Registers access:
+    switch (r.sdstate.read()) {
+    case SDSTATE_RESET:
+        switch (r.initstate.read()) {
+        case INITSTATE_CMD0:
+            break;
+        case INITSTATE_CMD8:
+            break;
+        case INITSTATE_CMD41:
+            break;
+        case INITSTATE_CMD11:
+            break;
+        case INITSTATE_CMD2:
+            break;
+        case INITSTATE_CMD3:
+            break;
+        case INITSTATE_ERROR:
+            break;
+        case INITSTATE_DONE:
+            break;
+        default:
+            break;
+        }
+        break;
+    default:
+        break;
+    }
 
     // system bus clock scaler to baudrate:
     if (r.scaler.read().or_reduce() == 1) {

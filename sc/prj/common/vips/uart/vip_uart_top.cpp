@@ -42,14 +42,14 @@ vip_uart_top::vip_uart_top(sc_module_name name,
 
     // initial
     char tstr[256];
-    RISCV_sprintf(tstr, sizeof(tstr), "%s_%d.log",
+    RISCV_sprintf(tstr, sizeof(tstr), "%s_%1d.log",
             logpath_.c_str(),
             instnum_);
     outfilename = std::string(tstr);
     fl = fopen(outfilename.c_str(), "wb");
 
     // Output string with each new symbol ended
-    RISCV_sprintf(tstr, sizeof(tstr), "%s_%d.log.tmp",
+    RISCV_sprintf(tstr, sizeof(tstr), "%s_%1d.log.tmp",
             logpath_.c_str(),
             instnum_);
     outfilename = std::string(tstr);
