@@ -19,6 +19,7 @@
 #include <string>
 #include "../clk/vip_clk.h"
 #include "vip_uart_receiver.h"
+#include "vip_uart_transmitter.h"
 #include "sv_func.h"
 
 namespace debugger {
@@ -27,6 +28,7 @@ SC_MODULE(vip_uart_top) {
  public:
     sc_in<bool> i_nrst;
     sc_in<bool> i_rx;
+    sc_out<bool> o_tx;
 
     void comb();
     void registers();
@@ -51,19 +53,24 @@ SC_MODULE(vip_uart_top) {
     std::string logpath_;
     double pll_period;
 
+    static const uint8_t EOF_0x0D = 0x0D;
+
     std::string U8ToString(sc_uint<8> symb);
 
     sc_signal<bool> w_clk;
-    sc_signal<bool> w_rdy;
-    sc_signal<bool> w_rdy_clr;
+    sc_signal<bool> w_rx_rdy;
+    sc_signal<bool> w_rx_rdy_clr;
+    sc_signal<bool> w_tx_full;
     sc_signal<sc_uint<8>> wb_rdata;
     std::string rdatastr;
     std::string outstr;
     std::string outfilename;                                // formatted string name with instnum
     FILE *fl;
+    FILE *fl_tmp;
 
     vip_clk *clk0;
     vip_uart_receiver *rx0;
+    vip_uart_transmitter *tx0;
 
 };
 

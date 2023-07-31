@@ -27,7 +27,8 @@ vip_uart_top::vip_uart_top(sc_module_name name,
                            std::string logpath)
     : sc_module(name),
     i_nrst("i_nrst"),
-    i_rx("i_rx") {
+    i_rx("i_rx"),
+    o_tx("o_tx") {
 
     async_reset_ = async_reset;
     instnum_ = instnum;
@@ -37,14 +38,22 @@ vip_uart_top::vip_uart_top(sc_module_name name,
     pll_period = (1.0 / ((2 * scaler) * baudrate));
     clk0 = 0;
     rx0 = 0;
+    tx0 = 0;
 
     // initial
     char tstr[256];
-    RISCV_sprintf(tstr, sizeof(tstr), "%s%d.log",
+    RISCV_sprintf(tstr, sizeof(tstr), "%s_%d.log",
             logpath_.c_str(),
             instnum_);
     outfilename = std::string(tstr);
     fl = fopen(outfilename.c_str(), "wb");
+
+    // Output string with each new symbol ended
+    RISCV_sprintf(tstr, sizeof(tstr), "%s_%d.log.tmp",
+            logpath_.c_str(),
+            instnum_);
+    outfilename = std::string(tstr);
+    fl_tmp = fopen(outfilename.c_str(), "wb");
 
     // end initial
 
@@ -58,9 +67,19 @@ vip_uart_top::vip_uart_top(sc_module_name name,
     rx0->i_nrst(i_nrst);
     rx0->i_clk(w_clk);
     rx0->i_rx(i_rx);
-    rx0->o_rdy(w_rdy);
-    rx0->i_rdy_clr(w_rdy_clr);
+    rx0->o_rdy(w_rx_rdy);
+    rx0->i_rdy_clr(w_rx_rdy_clr);
     rx0->o_data(wb_rdata);
+
+
+    tx0 = new vip_uart_transmitter("tx0", async_reset,
+                                    scaler);
+    tx0->i_nrst(i_nrst);
+    tx0->i_clk(w_clk);
+    tx0->i_we(w_rx_rdy);
+    tx0->i_wdata(wb_rdata);
+    tx0->o_full(w_tx_full);
+    tx0->o_tx(o_tx);
 
 
 
@@ -68,8 +87,9 @@ vip_uart_top::vip_uart_top(sc_module_name name,
     sensitive << i_nrst;
     sensitive << i_rx;
     sensitive << w_clk;
-    sensitive << w_rdy;
-    sensitive << w_rdy_clr;
+    sensitive << w_rx_rdy;
+    sensitive << w_rx_rdy_clr;
+    sensitive << w_tx_full;
     sensitive << wb_rdata;
 
     SC_METHOD(registers);
@@ -84,11 +104,15 @@ vip_uart_top::~vip_uart_top() {
     if (rx0) {
         delete rx0;
     }
+    if (tx0) {
+        delete tx0;
+    }
 }
 
 void vip_uart_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
         sc_trace(o_vcd, i_rx, i_rx.name());
+        sc_trace(o_vcd, o_tx, o_tx.name());
     }
 
     if (clk0) {
@@ -96,6 +120,9 @@ void vip_uart_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
     if (rx0) {
         rx0->generateVCD(i_vcd, o_vcd);
+    }
+    if (tx0) {
+        tx0->generateVCD(i_vcd, o_vcd);
     }
 }
 
@@ -110,13 +137,19 @@ std::string vip_uart_top::U8ToString(sc_uint<8> symb) {
 }
 
 void vip_uart_top::comb() {
-    w_rdy_clr = w_rdy;
+    w_rx_rdy_clr = w_rx_rdy;
 }
 
 void vip_uart_top::registers() {
 
-    if (w_rdy.read() == 1) {
+    if (w_rx_rdy.read() == 1) {
         if (wb_rdata.read() == 0x0A) {
+            // Use 0x0d as a new symbol in fl_tmp file:
+            rdatastr = U8ToString(EOF_0x0D);
+            fwrite(rdatastr.c_str(), 1, rdatastr.size(), fl_tmp);
+            fwrite(outstr.c_str(), 1, outstr.size(), fl_tmp);
+            fflush(fl_tmp);
+
             SV_display(outstr.c_str());
             fwrite(outstr.c_str(), 1, outstr.size(), fl);
             fflush(fl);
@@ -132,6 +165,12 @@ void vip_uart_top::registers() {
             // Add symbol to string
             rdatastr = U8ToString(wb_rdata);
             outstr += rdatastr;
+
+            // Output string with the line ending symbol 0x0D first:
+            rdatastr = U8ToString(EOF_0x0D);
+            fwrite(rdatastr.c_str(), 1, rdatastr.size(), fl_tmp);
+            fwrite(outstr.c_str(), 1, outstr.size(), fl_tmp);
+            fflush(fl_tmp);
         }
     }
 }

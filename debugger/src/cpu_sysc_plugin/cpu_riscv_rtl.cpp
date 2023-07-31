@@ -240,6 +240,7 @@ void CpuRiscV_RTL::createSystemC() {
                               "uart");
     uart0_->i_nrst(w_sys_nrst);
     uart0_->i_rx(w_uart1_td);
+    uart0_->o_tx(w_uart1_rd);
 
     sdcard0_ = new vip_sdcard_top("sdcard0");
     sdcard0_->i_sclk(w_sd_sclk);
