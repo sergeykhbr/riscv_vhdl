@@ -57,4 +57,8 @@ void SV_readmemh(const char *filename, sc_uint<32> *mem) {
     RISCV_file_close(f);
 }
 
+void SV_display(const char *str) {
+    RISCV_printf(0, 0, "%s", str);
+}
+
 } // namespace debugger

@@ -21,19 +21,32 @@ namespace debugger {
 
 vip_uart_top::vip_uart_top(sc_module_name name,
                            bool async_reset,
+                           int instnum,
                            int baudrate,
-                           int scaler)
+                           int scaler,
+                           std::string logpath)
     : sc_module(name),
     i_nrst("i_nrst"),
     i_rx("i_rx") {
 
     async_reset_ = async_reset;
+    instnum_ = instnum;
     baudrate_ = baudrate;
     scaler_ = scaler;
+    logpath_ = logpath;
     pll_period = (1.0 / ((2 * scaler) * baudrate));
     clk0 = 0;
     rx0 = 0;
-    strOut_ = "";
+
+    // initial
+    char tstr[256];
+    RISCV_sprintf(tstr, sizeof(tstr), "%s%d.log",
+            logpath_.c_str(),
+            instnum_);
+    outfilename = std::string(tstr);
+    fl = fopen(outfilename.c_str(), "wb");
+
+    // end initial
 
     clk0 = new vip_clk("clk0",
                         pll_period);
@@ -60,6 +73,7 @@ vip_uart_top::vip_uart_top(sc_module_name name,
     sensitive << wb_rdata;
 
     SC_METHOD(registers);
+    sensitive << i_nrst;
     sensitive << w_clk.posedge_event();
 }
 
@@ -85,26 +99,39 @@ void vip_uart_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
 }
 
+std::string vip_uart_top::U8ToString(sc_uint<8> symb) {
+    char tstr[256];
+    std::string ostr;
+
+    tstr[0] = static_cast<char>(symb.to_uint());
+    tstr[1] = 0;
+    ostr = tstr;
+    return ostr;
+}
+
 void vip_uart_top::comb() {
     w_rdy_clr = w_rdy;
 }
 
 void vip_uart_top::registers() {
+
     if (w_rdy.read() == 1) {
         if (wb_rdata.read() == 0x0A) {
-            // End of line
-            RISCV_printf(0, LOG_INFO, "%s", strOut_.c_str());
-            strOut_ = "";
+            SV_display(outstr.c_str());
+            fwrite(outstr.c_str(), 1, outstr.size(), fl);
+            fflush(fl);
+            outstr = "";
         } else if (wb_rdata.read() == 0x0D) {
-            if (strOut_.size()) {
-                RISCV_printf(0, LOG_INFO, "%s", strOut_.c_str());
-                strOut_ = "";
+            if (outstr != "") {
+                SV_display(outstr.c_str());
+                fwrite(outstr.c_str(), 1, outstr.size(), fl);
+                fflush(fl);
+                outstr = "";
             }
         } else {
             // Add symbol to string
-            char tstr[2] = {0};
-            tstr[0] = static_cast<char>(wb_rdata.read().to_uint());
-            strOut_ += tstr;
+            rdatastr = U8ToString(wb_rdata);
+            outstr += rdatastr;
         }
     }
 }

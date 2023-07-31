@@ -451,6 +451,7 @@ void apb_uart<log2_fifosz>::comb() {
         case stopbit:
             if (r.tx_stop_cnt.read() == 0) {
                 v.tx_state = idle;
+                v.tx_shift = ~0ull;
             } else {
                 v.tx_stop_cnt = 0;
             }
@@ -459,7 +460,7 @@ void apb_uart<log2_fifosz>::comb() {
             break;
         }
 
-        if (r.tx_state.read() != idle) {
+        if ((r.tx_state.read() != idle) && (r.tx_state.read() != stopbit)) {
             v.tx_frame_cnt = (r.tx_frame_cnt.read() + 1);
             v.tx_shift = (1, r.tx_shift.read()(10, 1));
         }

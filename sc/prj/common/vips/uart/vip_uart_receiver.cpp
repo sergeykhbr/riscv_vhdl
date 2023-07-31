@@ -39,12 +39,14 @@ vip_uart_receiver::vip_uart_receiver(sc_module_name name,
     sensitive << i_nrst;
     sensitive << i_rx;
     sensitive << i_rdy_clr;
+    sensitive << r.rx;
     sensitive << r.state;
     sensitive << r.rdy;
     sensitive << r.rdata;
     sensitive << r.sample;
     sensitive << r.bitpos;
     sensitive << r.scratch;
+    sensitive << r.rx_err;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -58,19 +60,30 @@ void vip_uart_receiver::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) 
         sc_trace(o_vcd, o_rdy, o_rdy.name());
         sc_trace(o_vcd, i_rdy_clr, i_rdy_clr.name());
         sc_trace(o_vcd, o_data, o_data.name());
+        sc_trace(o_vcd, r.rx, pn + ".r_rx");
         sc_trace(o_vcd, r.state, pn + ".r_state");
         sc_trace(o_vcd, r.rdy, pn + ".r_rdy");
         sc_trace(o_vcd, r.rdata, pn + ".r_rdata");
         sc_trace(o_vcd, r.sample, pn + ".r_sample");
         sc_trace(o_vcd, r.bitpos, pn + ".r_bitpos");
         sc_trace(o_vcd, r.scratch, pn + ".r_scratch");
+        sc_trace(o_vcd, r.rx_err, pn + ".r_rx_err");
     }
 
 }
 
 void vip_uart_receiver::comb() {
+    bool v_rx_pos;
+    bool v_rx_neg;
+
+    v_rx_pos = 0;
+    v_rx_neg = 0;
+
     v = r;
 
+    v.rx = i_rx;
+    v_rx_pos = ((!r.rx) && i_rx);
+    v_rx_neg = (r.rx && (!i_rx));
     if (i_rdy_clr.read() == 1) {
         v.rdy = 0;
     }
@@ -85,16 +98,21 @@ void vip_uart_receiver::comb() {
             v.sample = (r.sample.read() + 1);
         }
 
-        if (r.sample.read() == scaler_max) {
+        if ((r.sample.read() == scaler_max) || (v_rx_pos == 1)) {
             v.state = data;
             v.bitpos = 0;
             v.sample = 0;
             v.scratch = 0;
+            v.rx_err = 0;
         }
         break;
     case data:
-        if (r.sample.read() == scaler_max) {
+        if ((r.sample.read() == scaler_max)
+                || ((r.sample.read() > scaler_mid) && ((v_rx_neg == 1) || (v_rx_pos == 1)))) {
             v.sample = 0;
+            if (r.bitpos.read() == 8) {
+                v.state = stopbit;
+            }
         } else {
             v.sample = (r.sample.read() + 1);
         }
@@ -103,21 +121,28 @@ void vip_uart_receiver::comb() {
             v.scratch = (i_rx.read(), r.scratch.read()(7, 1));
             v.bitpos = (r.bitpos.read() + 1);
         }
-        if ((r.bitpos.read() == 8) && (r.sample.read() == scaler_mid)) {
-            v.state = stopbit;
-        }
         break;
     case stopbit:
-
-        // Our baud clock may not be running at exactly the
-        // same rate as the transmitter.  If we thing that
-        // we're at least half way into the stop bit, allow
-        // transition into handling the next start bit.
-
-        if ((r.sample.read() == scaler_max) || ((r.sample.read() >= scaler_mid) && (i_rx.read() == 1))) {
-            v.state = startbit;
+        if (r.sample.read() == scaler_mid) {
             v.rdata = r.scratch;
             v.rdy = 1;
+            if (i_rx.read() == 0) {
+                v.rx_err = 1;
+            } else {
+            }
+        }
+        if (r.sample.read() == scaler_max) {
+            v.state = dummy;
+            v.sample = 0;
+        } else {
+            v.sample = (r.sample.read() + 1);
+        }
+        break;
+    case dummy:
+        // Idle state in UART generates additional byte and it works
+        // even if rx=0 on real device:
+        if (r.sample.read() >= scaler_mid) {
+            v.state = startbit;
             v.sample = 0;
         } else {
             v.sample = (r.sample.read() + 1);

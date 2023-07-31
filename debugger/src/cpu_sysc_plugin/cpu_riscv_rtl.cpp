@@ -233,9 +233,11 @@ void CpuRiscV_RTL::createSystemC() {
     asic0_->i_sd_protect(w_sd_protect);
 
     uart0_ = new vip_uart_top("uart0",
+                              0,
                               asyncReset_.to_bool(),
                               115200 * (1 << SIM_UART_SPEED_UP_RATE),
-                              uart_scaler);
+                              uart_scaler,
+                              "uart");
     uart0_->i_nrst(w_sys_nrst);
     uart0_->i_rx(w_uart1_td);
 

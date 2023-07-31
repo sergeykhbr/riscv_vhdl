@@ -48,23 +48,28 @@ SC_MODULE(vip_uart_receiver) {
     static const uint8_t startbit = 0;
     static const uint8_t data = 1;
     static const uint8_t stopbit = 2;
+    static const uint8_t dummy = 3;
 
     struct vip_uart_receiver_registers {
+        sc_signal<bool> rx;
         sc_signal<sc_uint<2>> state;
         sc_signal<bool> rdy;
         sc_signal<sc_uint<8>> rdata;
         sc_signal<sc_uint<32>> sample;
         sc_signal<sc_uint<4>> bitpos;
         sc_signal<sc_uint<8>> scratch;
+        sc_signal<bool> rx_err;
     } v, r;
 
     void vip_uart_receiver_r_reset(vip_uart_receiver_registers &iv) {
+        iv.rx = 0;
         iv.state = startbit;
         iv.rdy = 0;
         iv.rdata = 0;
         iv.sample = 0;
         iv.bitpos = 0;
         iv.scratch = 0;
+        iv.rx_err = 0;
     }
 
 };

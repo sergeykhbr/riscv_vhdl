@@ -22,5 +22,6 @@ namespace debugger {
 
 /** Read HEX-file using relaitve RTL simulation project path */
 void SV_readmemh(const char *filename, sc_uint<32> *mem);
+void SV_display(const char *str);
 
 }  // namespace debugger
