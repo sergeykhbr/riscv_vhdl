@@ -55,15 +55,24 @@ SC_MODULE(vip_uart_top) {
 
     static const uint8_t EOF_0x0D = 0x0D;
 
-    std::string U8ToString(sc_uint<8> symb);
+    std::string U8ToString(std::string istr, sc_uint<8> symb);
+
+    struct vip_uart_top_registers {
+        sc_signal<sc_uint<2>> initdone;
+    } v, r;
+
+    void vip_uart_top_r_reset(vip_uart_top_registers &iv) {
+        iv.initdone = 0;
+    }
 
     sc_signal<bool> w_clk;
     sc_signal<bool> w_rx_rdy;
     sc_signal<bool> w_rx_rdy_clr;
     sc_signal<bool> w_tx_full;
     sc_signal<sc_uint<8>> wb_rdata;
-    std::string rdatastr;
+    sc_signal<sc_uint<8>> wb_rdataz;
     std::string outstr;
+    std::string outstrtmp;
     std::string outfilename;                                // formatted string name with instnum
     FILE *fl;
     FILE *fl_tmp;

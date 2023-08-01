@@ -91,6 +91,8 @@ vip_uart_top::vip_uart_top(sc_module_name name,
     sensitive << w_rx_rdy_clr;
     sensitive << w_tx_full;
     sensitive << wb_rdata;
+    sensitive << wb_rdataz;
+    sensitive << r.initdone;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -110,9 +112,11 @@ vip_uart_top::~vip_uart_top() {
 }
 
 void vip_uart_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+    std::string pn(name());
     if (o_vcd) {
         sc_trace(o_vcd, i_rx, i_rx.name());
         sc_trace(o_vcd, o_tx, o_tx.name());
+        sc_trace(o_vcd, r.initdone, pn + ".r_initdone");
     }
 
     if (clk0) {
@@ -126,52 +130,74 @@ void vip_uart_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     }
 }
 
-std::string vip_uart_top::U8ToString(sc_uint<8> symb) {
+std::string vip_uart_top::U8ToString(
+            std::string istr,
+            sc_uint<8> symb) {
     char tstr[256];
     std::string ostr;
 
-    tstr[0] = static_cast<char>(symb.to_uint());
-    tstr[1] = 0;
+    int tsz = RISCV_sprintf(tstr, sizeof(tstr), "%s", istr.c_str());
+    tstr[tsz++] = static_cast<char>(symb.to_uint());
+    tstr[tsz] = 0;
     ostr = tstr;
     return ostr;
 }
 
 void vip_uart_top::comb() {
+    v = r;
+
     w_rx_rdy_clr = w_rx_rdy;
+    v.initdone = ((r.initdone.read()[0] << 1) | 1);
+
+    if (!async_reset_ && i_nrst.read() == 0) {
+        vip_uart_top_r_reset(v);
+    }
 }
 
 void vip_uart_top::registers() {
+    if (async_reset_ && i_nrst.read() == 0) {
+        vip_uart_top_r_reset(r);
+    } else {
+        r = v;
+    }
+
+    if (r.initdone.read()[1] == 0) {
+        outstrtmp = "";
+        outstrtmp = U8ToString(outstrtmp,
+                EOF_0x0D);
+    }
 
     if (w_rx_rdy.read() == 1) {
-        if (wb_rdata.read() == 0x0A) {
-            // Use 0x0d as a new symbol in fl_tmp file:
-            rdatastr = U8ToString(EOF_0x0D);
-            fwrite(rdatastr.c_str(), 1, rdatastr.size(), fl_tmp);
-            fwrite(outstr.c_str(), 1, outstr.size(), fl_tmp);
-            fflush(fl_tmp);
+        if ((wb_rdata.read() == 0x0A) && (wb_rdataz.read() != 0x0D)) {
+            // Create CR LF (0xd 0xa) instead of 0x0a:
+            outstr = U8ToString(outstr,
+                    EOF_0x0D);
+        }
+        // Add symbol to string:
+        outstr = U8ToString(outstr,
+                wb_rdata);
+        outstrtmp = U8ToString(outstrtmp,
+                wb_rdata);
 
+        if (wb_rdata.read() == 0x0A) {
+            // Output simple string:
             SV_display(outstr.c_str());
             fwrite(outstr.c_str(), 1, outstr.size(), fl);
             fflush(fl);
-            outstr = "";
-        } else if (wb_rdata.read() == 0x0D) {
-            if (outstr != "") {
-                SV_display(outstr.c_str());
-                fwrite(outstr.c_str(), 1, outstr.size(), fl);
-                fflush(fl);
-                outstr = "";
-            }
-        } else {
-            // Add symbol to string
-            rdatastr = U8ToString(wb_rdata);
-            outstr += rdatastr;
-
-            // Output string with the line ending symbol 0x0D first:
-            rdatastr = U8ToString(EOF_0x0D);
-            fwrite(rdatastr.c_str(), 1, rdatastr.size(), fl_tmp);
-            fwrite(outstr.c_str(), 1, outstr.size(), fl_tmp);
-            fflush(fl_tmp);
         }
+
+        // Output string with the line ending symbol 0x0D first:
+        fwrite(outstrtmp.c_str(), 1, outstrtmp.size(), fl_tmp);
+        fflush(fl_tmp);
+
+        // End-of-line
+        if (wb_rdata.read() == 0x0A) {
+            outstr = "";
+            outstrtmp = "";
+            outstrtmp = U8ToString(outstrtmp,
+                    EOF_0x0D);
+        }
+        wb_rdataz = wb_rdata;
     }
 }
 

@@ -34,7 +34,6 @@ SC_MODULE(vip_clk) {
 
  private:
     double period_;
-    double half_period;
 
     sc_clock pll;
 
