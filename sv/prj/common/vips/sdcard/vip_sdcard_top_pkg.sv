@@ -13,32 +13,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 // 
+package vip_sdcard_top_pkg;
 
-`timescale 1ns/10ps
 
-module vip_clk #(
-    parameter realtime period = 1.0
-)
-(
-    output logic o_clk
-);
-
-import vip_clk_pkg::*;
-
-logic pll;
-
-initial begin
-    pll = 1'b0;
-
-end
-
-always begin
-    #(0.5 * 1000000000 * period) pll = ~pll;
-end
-
-always_comb
-begin: comb_proc
-    o_clk = pll;
-end: comb_proc
-
-endmodule: vip_clk
+endpackage: vip_sdcard_top_pkg

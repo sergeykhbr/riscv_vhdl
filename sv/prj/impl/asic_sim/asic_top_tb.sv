@@ -72,9 +72,6 @@ module asic_top_tb;
   assign (weak0, weak1) io_gpio[11:4]  = 8'h00;
   assign io_gpio[3:0] = 4'hF;
 
-  // Tie high UART input pins:
-  assign i_uart1_rd = 1'b1;
-
   assign i_sclk_p = clk;
   assign i_sclk_n = ~clk;
 
@@ -132,16 +129,15 @@ module asic_top_tb;
     glbl glbl();
   `endif
 
-  sim_uart_rx
-  #(
-    .p_inst_num(0),
-//      .p_uart_clk_half_period   (3.125ns)
-      .p_uart_clk_half_period   (270.3125ns / (2**SIM_UART_SPEED_UP_RATE)) // True 115200 UART speed
-  ) UART_RX (
-    .scaler  (32'd8),
-    .rx      (o_uart1_td),
-    .rst_n   (~i_rst),
-    .clk_in  (1'b0)
+  vip_uart_top #(
+    .async_reset(0),
+    .instnum(0),
+    .baudrate(115200 * (2**SIM_UART_SPEED_UP_RATE)),
+    .scaler(8)
+  ) UART0 (
+    .i_nrst(~i_rst),
+    .i_rx(o_uart1_td),
+    .o_tx(i_uart1_rd)
   );
 
   sd_hc #(

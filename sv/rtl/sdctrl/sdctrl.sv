@@ -54,6 +54,17 @@ module sdctrl #(
 import types_amba_pkg::*;
 import types_pnp_pkg::*;
 localparam int fifo_dbits = 8;
+// SD-card global state:
+localparam bit [1:0] SDSTATE_RESET = 2'h0;
+// SD-card initalization state:
+localparam bit [2:0] INITSTATE_CMD0 = 3'h0;
+localparam bit [2:0] INITSTATE_CMD8 = 3'h1;
+localparam bit [2:0] INITSTATE_CMD41 = 3'h2;
+localparam bit [2:0] INITSTATE_CMD11 = 3'h3;
+localparam bit [2:0] INITSTATE_CMD2 = 3'h4;
+localparam bit [2:0] INITSTATE_CMD3 = 3'h5;
+localparam bit [2:0] INITSTATE_ERROR = 3'h6;
+localparam bit [2:0] INITSTATE_DONE = 3'h7;
 // SPI states
 localparam bit [2:0] idle = 3'h0;
 localparam bit [2:0] wait_edge = 3'h1;
@@ -73,6 +84,8 @@ typedef struct {
     logic rx_data_block;                                    // Wait 0xFE start data block marker
     logic level;
     logic cs;
+    logic [1:0] sdstate;
+    logic [2:0] initstate;
     logic [2:0] state;
     logic [7:0] shiftreg;
     logic [15:0] ena_byte_cnt;
@@ -101,6 +114,8 @@ const sdctrl_registers sdctrl_r_reset = '{
     1'b0,                               // rx_data_block
     1'h1,                               // level
     1'b0,                               // cs
+    SDSTATE_RESET,                      // sdstate
+    INITSTATE_CMD0,                     // initstate
     idle,                               // state
     '1,                                 // shiftreg
     '0,                                 // ena_byte_cnt
@@ -281,6 +296,34 @@ begin: comb_proc
     vb_crc16[2] = r.crc16[1];
     vb_crc16[1] = r.crc16[0];
     vb_crc16[0] = v_inv16;
+
+    // Registers access:
+    case (r.sdstate)
+    SDSTATE_RESET: begin
+        case (r.initstate)
+        INITSTATE_CMD0: begin
+        end
+        INITSTATE_CMD8: begin
+        end
+        INITSTATE_CMD41: begin
+        end
+        INITSTATE_CMD11: begin
+        end
+        INITSTATE_CMD2: begin
+        end
+        INITSTATE_CMD3: begin
+        end
+        INITSTATE_ERROR: begin
+        end
+        INITSTATE_DONE: begin
+        end
+        default: begin
+        end
+        endcase
+    end
+    default: begin
+    end
+    endcase
 
     // system bus clock scaler to baudrate:
     if ((|r.scaler) == 1'b1) begin

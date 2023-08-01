@@ -288,6 +288,7 @@ begin: comb_proc
         stopbit: begin
             if (r.tx_stop_cnt == 1'b0) begin
                 v.tx_state = idle;
+                v.tx_shift = '1;
             end else begin
                 v.tx_stop_cnt = 1'b0;
             end
@@ -296,7 +297,7 @@ begin: comb_proc
         end
         endcase
 
-        if (r.tx_state != idle) begin
+        if ((r.tx_state != idle) && (r.tx_state != stopbit)) begin
             v.tx_frame_cnt = (r.tx_frame_cnt + 1);
             v.tx_shift = {1'h1, r.tx_shift[10: 1]};
         end

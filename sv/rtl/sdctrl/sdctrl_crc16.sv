@@ -35,37 +35,103 @@ sdctrl_crc16_registers r, rin;
 always_comb
 begin: comb_proc
     sdctrl_crc16_registers v;
-    logic v_inv16;
-    logic [15:0] vb_crc16;
+    logic v_inv16_3;
+    logic [15:0] vb_crc16_3;
+    logic v_inv16_2;
+    logic [15:0] vb_crc16_2;
+    logic v_inv16_1;
+    logic [15:0] vb_crc16_1;
+    logic v_inv16_0;
+    logic [15:0] vb_crc16_0;
 
-    v_inv16 = 0;
-    vb_crc16 = 0;
+    v_inv16_3 = 0;
+    vb_crc16_3 = 0;
+    v_inv16_2 = 0;
+    vb_crc16_2 = 0;
+    v_inv16_1 = 0;
+    vb_crc16_1 = 0;
+    v_inv16_0 = 0;
+    vb_crc16_0 = 0;
 
     v = r;
 
     // CRC16 = x^16 + x^12 + x^5 + 1
-    v_inv16 = (r.crc16[15] ^ i_dat[3]);
-    vb_crc16[15] = r.crc16[14];
-    vb_crc16[14] = r.crc16[13];
-    vb_crc16[13] = r.crc16[12];
-    vb_crc16[12] = (r.crc16[11] ^ v_inv16);
-    vb_crc16[11] = r.crc16[10];
-    vb_crc16[10] = r.crc16[9];
-    vb_crc16[9] = r.crc16[8];
-    vb_crc16[8] = r.crc16[7];
-    vb_crc16[7] = r.crc16[6];
-    vb_crc16[6] = r.crc16[5];
-    vb_crc16[5] = (r.crc16[4] ^ v_inv16);
-    vb_crc16[4] = r.crc16[3];
-    vb_crc16[3] = r.crc16[2];
-    vb_crc16[2] = r.crc16[1];
-    vb_crc16[1] = r.crc16[0];
-    vb_crc16[0] = v_inv16;
+    v_inv16_3 = (r.crc16[15] ^ i_dat[3]);
+    vb_crc16_3[15] = r.crc16[14];
+    vb_crc16_3[14] = r.crc16[13];
+    vb_crc16_3[13] = r.crc16[12];
+    vb_crc16_3[12] = (r.crc16[11] ^ v_inv16_3);
+    vb_crc16_3[11] = r.crc16[10];
+    vb_crc16_3[10] = r.crc16[9];
+    vb_crc16_3[9] = r.crc16[8];
+    vb_crc16_3[8] = r.crc16[7];
+    vb_crc16_3[7] = r.crc16[6];
+    vb_crc16_3[6] = r.crc16[5];
+    vb_crc16_3[5] = (r.crc16[4] ^ v_inv16_3);
+    vb_crc16_3[4] = r.crc16[3];
+    vb_crc16_3[3] = r.crc16[2];
+    vb_crc16_3[2] = r.crc16[1];
+    vb_crc16_3[1] = r.crc16[0];
+    vb_crc16_3[0] = v_inv16_3;
+
+    v_inv16_2 = (vb_crc16_3[15] ^ i_dat[2]);
+    vb_crc16_2[15] = vb_crc16_3[14];
+    vb_crc16_2[14] = vb_crc16_3[13];
+    vb_crc16_2[13] = vb_crc16_3[12];
+    vb_crc16_2[12] = (vb_crc16_3[11] ^ v_inv16_2);
+    vb_crc16_2[11] = vb_crc16_3[10];
+    vb_crc16_2[10] = vb_crc16_3[9];
+    vb_crc16_2[9] = vb_crc16_3[8];
+    vb_crc16_2[8] = vb_crc16_3[7];
+    vb_crc16_2[7] = vb_crc16_3[6];
+    vb_crc16_2[6] = vb_crc16_3[5];
+    vb_crc16_2[5] = (vb_crc16_3[4] ^ v_inv16_2);
+    vb_crc16_2[4] = vb_crc16_3[3];
+    vb_crc16_2[3] = vb_crc16_3[2];
+    vb_crc16_2[2] = vb_crc16_3[1];
+    vb_crc16_2[1] = vb_crc16_3[0];
+    vb_crc16_2[0] = v_inv16_2;
+
+    v_inv16_1 = (vb_crc16_2[15] ^ i_dat[1]);
+    vb_crc16_1[15] = vb_crc16_2[14];
+    vb_crc16_1[14] = vb_crc16_2[13];
+    vb_crc16_1[13] = vb_crc16_2[12];
+    vb_crc16_1[12] = (vb_crc16_2[11] ^ v_inv16_1);
+    vb_crc16_1[11] = vb_crc16_2[10];
+    vb_crc16_1[10] = vb_crc16_2[9];
+    vb_crc16_1[9] = vb_crc16_2[8];
+    vb_crc16_1[8] = vb_crc16_2[7];
+    vb_crc16_1[7] = vb_crc16_2[6];
+    vb_crc16_1[6] = vb_crc16_2[5];
+    vb_crc16_1[5] = (vb_crc16_2[4] ^ v_inv16_1);
+    vb_crc16_1[4] = vb_crc16_2[3];
+    vb_crc16_1[3] = vb_crc16_2[2];
+    vb_crc16_1[2] = vb_crc16_2[1];
+    vb_crc16_1[1] = vb_crc16_2[0];
+    vb_crc16_1[0] = v_inv16_1;
+
+    v_inv16_0 = (vb_crc16_1[15] ^ i_dat[0]);
+    vb_crc16_0[15] = vb_crc16_1[14];
+    vb_crc16_0[14] = vb_crc16_1[13];
+    vb_crc16_0[13] = vb_crc16_1[12];
+    vb_crc16_0[12] = (vb_crc16_1[11] ^ v_inv16_0);
+    vb_crc16_0[11] = vb_crc16_1[10];
+    vb_crc16_0[10] = vb_crc16_1[9];
+    vb_crc16_0[9] = vb_crc16_1[8];
+    vb_crc16_0[8] = vb_crc16_1[7];
+    vb_crc16_0[7] = vb_crc16_1[6];
+    vb_crc16_0[6] = vb_crc16_1[5];
+    vb_crc16_0[5] = (vb_crc16_1[4] ^ v_inv16_0);
+    vb_crc16_0[4] = vb_crc16_1[3];
+    vb_crc16_0[3] = vb_crc16_1[2];
+    vb_crc16_0[2] = vb_crc16_1[1];
+    vb_crc16_0[1] = vb_crc16_1[0];
+    vb_crc16_0[0] = v_inv16_0;
 
     if (i_clear == 1'b1) begin
         v.crc16 = '0;
     end else if (i_next == 1'b1) begin
-        v.crc16 = vb_crc16;
+        v.crc16 = vb_crc16_0;
     end
 
     if (~async_reset && i_nrst == 1'b0) begin

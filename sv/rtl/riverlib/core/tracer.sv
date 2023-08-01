@@ -957,7 +957,7 @@ initial begin
     trfilename = $sformatf("%s%d.log",
             trace_file,
             hartid);
-    fl = $fopen(trfilename, "w");
+    fl = $fopen(trfilename, "wb");
     assert (fl)
     else begin
         $warning("Cannot open log-file");
@@ -1108,7 +1108,7 @@ begin: comb_proc
     // check instruction data completness
     entry_valid = 1'b1;
     rcnt_inc = r.tr_rcnt;
-    outstr = "";
+    outstr = {""};
     while ((entry_valid == 1'b1) && (rcnt_inc != r.tr_wcnt)) begin
         for (int i = 0; i < int'(r.trace_tbl[rcnt_inc].memactioncnt); i++) begin
             if (r.trace_tbl[rcnt_inc].memaction[i].complete == 1'b0) begin
@@ -1247,7 +1247,7 @@ generate
             if (outstr != "") begin
                 $fwrite(fl, "%s", outstr);
             end
-            outstr = "";
+            outstr = {""};
         end: rg_proc
 
 
@@ -1286,7 +1286,7 @@ generate
             if (outstr != "") begin
                 $fwrite(fl, "%s", outstr);
             end
-            outstr = "";
+            outstr = {""};
         end: rg_proc
 
     end: no_rst_gen

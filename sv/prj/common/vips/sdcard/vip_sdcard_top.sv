@@ -16,29 +16,22 @@
 
 `timescale 1ns/10ps
 
-module vip_clk #(
-    parameter realtime period = 1.0
-)
-(
-    output logic o_clk
+module vip_sdcard_top(
+    input logic i_sclk,
+    inout logic io_cmd,
+    inout logic io_dat0,
+    inout logic io_dat1,
+    inout logic io_dat2,
+    inout logic io_cd_dat3
 );
 
-import vip_clk_pkg::*;
+import vip_sdcard_top_pkg::*;
 
-logic pll;
-
-initial begin
-    pll = 1'b0;
-
-end
-
-always begin
-    #(0.5 * 1000000000 * period) pll = ~pll;
-end
+logic w_clk;
+logic [7:0] wb_rdata;
 
 always_comb
 begin: comb_proc
-    o_clk = pll;
 end: comb_proc
 
-endmodule: vip_clk
+endmodule: vip_sdcard_top
