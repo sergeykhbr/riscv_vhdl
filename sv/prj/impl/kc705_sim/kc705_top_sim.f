@@ -50,6 +50,8 @@ ${COMMON_HOME}/unisims/B_OSERDESE2.v
 ${COMMON_HOME}/unisims/B_ISERDESE2.v
 ${COMMON_HOME}/unisims/SIP_PHASER_IN.v
 ${COMMON_HOME}/unisims/xil_phaser_in_mod0.v
+${VIPS_HOME}/clk/vip_clk_pkg.sv
+${VIPS_HOME}/clk/vip_clk.sv
 ${VIPS_HOME}/uart/vip_uart_receiver_pkg.sv
 ${VIPS_HOME}/uart/vip_uart_receiver.sv
 ${VIPS_HOME}/uart/vip_uart_transmitter_pkg.sv
