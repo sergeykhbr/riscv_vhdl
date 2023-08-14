@@ -2,12 +2,13 @@
 #include <fstream>
 #include <cstring>
 
-ElfReader::ElfReader(const char *filename) {
+ElfReader::ElfReader(const char *filename, int no_data) {
     image_ = NULL;
     sectionNames_ = NULL;
     symbolList_.make_list(0);
     loadSectionList_.make_list(0);
     sourceProc_.make_string("");
+    no_data_ = no_data;
 
 
     FILE *fp = fopen(filename, "rb");
@@ -125,6 +126,20 @@ int ElfReader::loadSections() {
                     &sectionNames_[sh->get_name()]);
         }
 #endif
+        // Exclude data sections from image:
+        if (no_data_ && sectionNames_) {
+            if (strcmp(sectionNames_ + sh->get_name(), ".data") == 0
+                || strcmp(sectionNames_ + sh->get_name(), ".bss") == 0
+                || strcmp(sectionNames_ + sh->get_name(), ".heap") == 0) {
+
+                uint64_t toff = sh->get_addr();
+                uint64_t tsz = sh->get_size();
+                uint8_t *tbuf = &image_[sh->get_offset()];
+                bool st = true;
+                continue;
+            }
+        }
+
 
         if ((sh->get_type() == SHT_PROGBITS ||
              sh->get_type() == SHT_INIT_ARRAY ||
@@ -291,15 +306,16 @@ void ElfReader::writeRomHexArray(AttributeType *ofiles,
         sz = fixed_size;
     }
 
-    FILE *fp = fopen((*ofiles)[0u].to_string(), "wb");
-    FILE *fplsb = 0;
-    if (!fp) {
-        printf("elf2rawx error: can't create '%s' file\n",
-                (*ofiles)[0u].to_string());
-        return ;
-    }
-    if (ofiles->size() == 2) {
-        fplsb = fopen((*ofiles)[1].to_string(), "wb");
+    int files_total = static_cast<int>((*ofiles).size());
+    FILE **fp = new FILE *[files_total];
+
+    for (int i = 0; i < files_total; i++) {
+        fp[i] = fopen((*ofiles)[i].to_string(), "wb");
+        if (!fp[i]) {
+            printf("elf2rawx error: can't create '%s' file\n",
+                    (*ofiles)[i].to_string());
+            return;
+        }
     }
 
     uint8_t *img = new uint8_t[static_cast<int>(sz)];
@@ -323,33 +339,24 @@ void ElfReader::writeRomHexArray(AttributeType *ofiles,
     uint32_t byte_cnt = 0;
     int startidx, stopidx;
     for (uint64_t i = 0; i < sz/bytes_per_line; i++) {
-        tstr_sz = 0;
-        startidx = static_cast<int>((i + 1)*bytes_per_line - 1);
-        stopidx = static_cast<int>(i*bytes_per_line);
-        if (fplsb == 0) {
-            /** Single file */
+        for (int k = 0; k < files_total; k++) {
+            tstr_sz = 0;
+            startidx = static_cast<int>((i + 1)*bytes_per_line) - (k*bytes_per_line/files_total) - 1;
+            stopidx = startidx - (bytes_per_line/files_total) + 1;
+
             for (int n = startidx; n >= stopidx; n--) {
                 tstr_sz += sprintf(&tstr[tstr_sz], "%02X", img[n]);
             }
             tstr_sz += sprintf(&tstr[tstr_sz], "%s", "\r\n");
-            fwrite(tstr, tstr_sz, 1, fp);
-        } else {
-            /** Couple of files */
-            char tstr2[128];
-            int tstr2_sz = 0;
-            for (int n = startidx; n >= (stopidx+bytes_per_line/2); n--) {
-                tstr_sz += sprintf(&tstr[tstr_sz], "%02X", img[n]);
-                tstr2_sz += sprintf(&tstr2[tstr2_sz], "%02X", img[n - bytes_per_line/2]);
-            }
-            tstr_sz += sprintf(&tstr[tstr_sz], "%s", "\r\n");
-            tstr2_sz += sprintf(&tstr2[tstr2_sz], "%s", "\r\n");
-            fwrite(tstr, tstr_sz, 1, fp);
-            fwrite(tstr2, tstr2_sz, 1, fplsb);
+            fwrite(tstr, tstr_sz, 1, fp[k]);
         }
         byte_cnt++;
     }
     
-    fclose(fp);
+    for (int i = 0; i < files_total; i++) {
+        fclose(fp[i]);
+    }
+    delete [] fp;
     delete [] img;
 
     printf("elf2rawx: HexRom was generated: %dx%d lines\n", 

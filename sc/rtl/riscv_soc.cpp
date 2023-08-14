@@ -254,7 +254,7 @@ riscv_soc::riscv_soc(sc_module_name name,
     gpio0->o_irq(wb_irq_gpio);
 
 
-    sdctrl0 = new sdctrl<SOC_SPI0_LOG2_FIFOSZ>("sdctrl0", async_reset);
+    sdctrl0 = new sdctrl("sdctrl0", async_reset);
     sdctrl0->i_clk(i_sys_clk);
     sdctrl0->i_nrst(i_sys_nrst);
     sdctrl0->i_xmapinfo(bus0_mapinfo[CFG_BUS0_XSLV_SDCTRL_MEM]);

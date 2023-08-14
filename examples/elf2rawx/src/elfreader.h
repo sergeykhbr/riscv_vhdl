@@ -23,7 +23,7 @@
 
 class ElfReader {
  public:
-    explicit ElfReader(const char *file_name);
+    explicit ElfReader(const char *file_name, int no_data);
 
     virtual unsigned loadableSectionTotal() {
         return loadSectionList_.size();
@@ -87,6 +87,7 @@ private:
     AttributeType sourceProc_;
     AttributeType symbolList_;
     AttributeType loadSectionList_;
+    int no_data_;
 
     uint8_t *image_;
     ElfHeaderType *header_;

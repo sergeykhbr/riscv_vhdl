@@ -21,6 +21,7 @@
 #include "ambalib/types_bus0.h"
 #include "ambalib/types_bus1.h"
 #include "riverlib/river_cfg.h"
+#include "sdctrl/sdctrl_cfg.h"
 #include "riverlib/types_river.h"
 #include "ambalib/axictrl_bus0.h"
 #include "ambalib/axi2apb_bus1.h"
@@ -181,7 +182,7 @@ SC_MODULE(riscv_soc) {
     plic<SOC_PLIC_CONTEXT_TOTAL, SOC_PLIC_IRQ_TOTAL> *plic0;
     apb_uart<SOC_UART1_LOG2_FIFOSZ> *uart1;
     apb_gpio<SOC_GPIO0_WIDTH> *gpio0;
-    sdctrl<SOC_SPI0_LOG2_FIFOSZ> *sdctrl0;
+    sdctrl *sdctrl0;
     apb_pnp<SOC_PNP_TOTAL> *pnp0;
     Workgroup *group0;
     cdc_axi_sync_tech *u_cdc_ddr0;

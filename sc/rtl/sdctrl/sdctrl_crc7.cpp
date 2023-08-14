@@ -84,7 +84,7 @@ void sdctrl_crc7::comb() {
         sdctrl_crc7_r_reset(v);
     }
 
-    o_crc7 = r.crc7;
+    o_crc7 = vb_crc7;
 }
 
 void sdctrl_crc7::registers() {

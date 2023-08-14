@@ -81,6 +81,17 @@ int main() {
     led_set(0x01);
 
 #if 1
+    *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 4)) = 0x1;  // enable sdctrl sclk
+    printf_uart("sdctrl test:\r\n");
+    uint32_t cmd_status = *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 0x10));
+    printf_uart("cmd_status: %08x\r\n", cmd_status);
+    uint32_t last_cmd_reponse = *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 0x14));
+    printf_uart("last_resp: %08x\r\n", last_cmd_reponse);
+    uint32_t last_cmd_arg = *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 0x18));
+    printf_uart("last_arg: %08x\r\n", last_cmd_arg);
+#endif
+
+#if 1
     cpu_max = pnp->cfg >> 28;
 
     printf_uart("HARTID . . . . .%d\r\n", fw_get_cpuid());

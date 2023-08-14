@@ -33,6 +33,18 @@ SC_MODULE(sdctrl_regs) {
     sc_out<bool> o_sck;                                     // SD-card clock usually upto 50 MHz
     sc_out<bool> o_sck_posedge;                             // Strob just before positive edge
     sc_out<bool> o_sck_negedge;                             // Strob just before negative edge
+    sc_out<sc_uint<16>> o_watchdog;                         // Number of sclk to detect no response
+    sc_out<bool> o_clear_cmderr;                            // Clear cmderr from FW
+    // Debug command state machine
+    sc_in<sc_uint<4>> i_cmd_state;
+    sc_in<sc_uint<4>> i_cmd_err;
+    sc_in<bool> i_cmd_req_valid;
+    sc_in<sc_uint<6>> i_cmd_req_cmd;
+    sc_in<bool> i_cmd_resp_valid;
+    sc_in<sc_uint<6>> i_cmd_resp_cmd;
+    sc_in<sc_uint<32>> i_cmd_resp_reg;
+    sc_in<sc_uint<7>> i_cmd_resp_crc7_rx;
+    sc_in<sc_uint<7>> i_cmd_resp_crc7_calc;
 
     void comb();
     void registers();
@@ -49,6 +61,8 @@ SC_MODULE(sdctrl_regs) {
     bool async_reset_;
 
     struct sdctrl_regs_registers {
+        sc_signal<bool> sclk_ena;
+        sc_signal<bool> clear_cmderr;
         sc_signal<sc_uint<32>> scaler;
         sc_signal<sc_uint<32>> scaler_cnt;
         sc_signal<sc_uint<16>> wdog;
@@ -57,17 +71,29 @@ SC_MODULE(sdctrl_regs) {
         sc_signal<bool> resp_valid;
         sc_signal<sc_uint<32>> resp_rdata;
         sc_signal<bool> resp_err;
+        sc_signal<sc_uint<6>> last_req_cmd;
+        sc_signal<sc_uint<6>> last_resp_cmd;
+        sc_signal<sc_uint<7>> last_resp_crc7_rx;
+        sc_signal<sc_uint<7>> last_resp_crc7_calc;
+        sc_signal<sc_uint<32>> last_resp_reg;
     } v, r;
 
     void sdctrl_regs_r_reset(sdctrl_regs_registers &iv) {
+        iv.sclk_ena = 0;
+        iv.clear_cmderr = 0;
         iv.scaler = 0;
         iv.scaler_cnt = 0;
-        iv.wdog = 0;
+        iv.wdog = 0x0FFF;
         iv.wdog_cnt = 0;
-        iv.level = 1;
+        iv.level = 0;
         iv.resp_valid = 0;
         iv.resp_rdata = 0;
         iv.resp_err = 0;
+        iv.last_req_cmd = ~0ul;
+        iv.last_resp_cmd = 0;
+        iv.last_resp_crc7_rx = 0;
+        iv.last_resp_crc7_calc = 0;
+        iv.last_resp_reg = 0;
     }
 
     sc_signal<bool> w_req_valid;
