@@ -63,7 +63,7 @@ begin: comb_proc
         v = sdctrl_crc7_r_reset;
     end
 
-    o_crc7 = r.crc7;
+    o_crc7 = vb_crc7;
 
     rin = v;
 end: comb_proc

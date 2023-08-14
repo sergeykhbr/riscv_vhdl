@@ -19,6 +19,8 @@ import types_amba_pkg::*;
 import types_pnp_pkg::*;
 
 typedef struct {
+    logic sclk_ena;
+    logic clear_cmderr;
     logic [31:0] scaler;
     logic [31:0] scaler_cnt;
     logic [15:0] wdog;
@@ -27,17 +29,29 @@ typedef struct {
     logic resp_valid;
     logic [31:0] resp_rdata;
     logic resp_err;
+    logic [5:0] last_req_cmd;
+    logic [5:0] last_resp_cmd;
+    logic [6:0] last_resp_crc7_rx;
+    logic [6:0] last_resp_crc7_calc;
+    logic [31:0] last_resp_reg;
 } sdctrl_regs_registers;
 
 const sdctrl_regs_registers sdctrl_regs_r_reset = '{
+    1'b0,                               // sclk_ena
+    1'b0,                               // clear_cmderr
     '0,                                 // scaler
     '0,                                 // scaler_cnt
-    '0,                                 // wdog
+    16'h0fff,                           // wdog
     '0,                                 // wdog_cnt
-    1'h1,                               // level
+    1'b0,                               // level
     1'b0,                               // resp_valid
     '0,                                 // resp_rdata
-    1'b0                                // resp_err
+    1'b0,                               // resp_err
+    '1,                                 // last_req_cmd
+    '0,                                 // last_resp_cmd
+    '0,                                 // last_resp_crc7_rx
+    '0,                                 // last_resp_crc7_calc
+    '0                                  // last_resp_reg
 };
 
 endpackage: sdctrl_regs_pkg

@@ -92,6 +92,7 @@ import types_pnp_pkg::*;
 import types_bus0_pkg::*;
 import types_bus1_pkg::*;
 import river_cfg_pkg::*;
+import sdctrl_cfg_pkg::*;
 import types_river_pkg::*;
 import riscv_soc_pkg::*;
 
@@ -289,8 +290,7 @@ apb_gpio #(
 
 
 sdctrl #(
-    .async_reset(async_reset),
-    .log2_fifosz(SOC_SPI0_LOG2_FIFOSZ)
+    .async_reset(async_reset)
 ) sdctrl0 (
     .i_clk(i_sys_clk),
     .i_nrst(i_sys_nrst),
