@@ -20,7 +20,8 @@
 namespace debugger {
 
 CpuRiscV_RTL::CpuRiscV_RTL(const char *name)  
-    : IService(name), IHap(HAP_ConfigDone) {
+    : IService(name), IHap(HAP_ConfigDone),
+    w_sd_cmd("w_sd_cmd") {
     registerInterface(static_cast<IThread *>(this));
     registerInterface(static_cast<IClock *>(this));
     registerInterface(static_cast<IHap *>(this));
@@ -242,7 +243,9 @@ void CpuRiscV_RTL::createSystemC() {
     uart0_->i_rx(w_uart1_td);
     uart0_->o_tx(w_uart1_rd);
 
-    sdcard0_ = new vip_sdcard_top("sdcard0");
+    sdcard0_ = new vip_sdcard_top("sdcard0",
+                                  asyncReset_.to_bool());
+    sdcard0_->i_nrst(w_sys_nrst);
     sdcard0_->i_sclk(w_sd_sclk);
     sdcard0_->io_cmd(w_sd_cmd);
     sdcard0_->io_dat0(w_sd_dat0);

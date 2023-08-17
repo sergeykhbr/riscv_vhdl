@@ -123,7 +123,8 @@ class CpuRiscV_RTL : public IService,
     sc_signal<bool> w_jtag_vref;
     sc_signal<bool> w_uart1_rd;
     sc_signal<bool> w_uart1_td;
-    sc_signal<bool, SC_MANY_WRITERS> w_sd_cmd;
+    sc_signal<bool, SC_UNCHECKED_WRITERS> w_sd_cmd;
+    //sc_signal<bool, SC_MANY_WRITERS> w_sd_cmd;
     sc_signal<bool> w_sd_sclk;
     sc_signal<bool, SC_MANY_WRITERS> w_sd_dat0;
     sc_signal<bool, SC_MANY_WRITERS> w_sd_dat1;

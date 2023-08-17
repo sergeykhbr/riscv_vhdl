@@ -28,6 +28,7 @@ iobuf_tech::iobuf_tech(sc_module_name name)
 
 
     SC_METHOD(comb);
+    sensitive << io;
     sensitive << i;
     sensitive << t;
 }
@@ -43,20 +44,14 @@ void iobuf_tech::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void iobuf_tech::comb() {
-    bool v_io;
-    bool v_o;
-
-    v_io = 0;
-    v_o = 0;
-
     if (t.read() == 1) {
         // IO as input:
-        v_o = io;
-        v_io = 0;                                           // assign Z-state here
+        o = io;
+        // io = 1'bz;
     } else {
         // IO as output:
-        v_o = 0;
-        v_io = i;
+        o = 0;
+        io = i;
     }
 }
 
