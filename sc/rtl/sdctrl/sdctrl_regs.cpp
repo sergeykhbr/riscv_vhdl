@@ -33,6 +33,10 @@ sdctrl_regs::sdctrl_regs(sc_module_name name,
     o_sck_negedge("o_sck_negedge"),
     o_watchdog("o_watchdog"),
     o_clear_cmderr("o_clear_cmderr"),
+    o_pcie_12V_support("o_pcie_12V_support"),
+    o_pcie_available("o_pcie_available"),
+    o_voltage_supply("o_voltage_supply"),
+    o_check_pattern("o_check_pattern"),
     i_cmd_state("i_cmd_state"),
     i_cmd_err("i_cmd_err"),
     i_cmd_req_valid("i_cmd_req_valid"),
@@ -97,6 +101,10 @@ sdctrl_regs::sdctrl_regs(sc_module_name name,
     sensitive << r.last_resp_crc7_rx;
     sensitive << r.last_resp_crc7_calc;
     sensitive << r.last_resp_reg;
+    sensitive << r.pcie_12V_support;
+    sensitive << r.pcie_available;
+    sensitive << r.voltage_supply;
+    sensitive << r.check_pattern;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -121,6 +129,10 @@ void sdctrl_regs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_sck_negedge, o_sck_negedge.name());
         sc_trace(o_vcd, o_watchdog, o_watchdog.name());
         sc_trace(o_vcd, o_clear_cmderr, o_clear_cmderr.name());
+        sc_trace(o_vcd, o_pcie_12V_support, o_pcie_12V_support.name());
+        sc_trace(o_vcd, o_pcie_available, o_pcie_available.name());
+        sc_trace(o_vcd, o_voltage_supply, o_voltage_supply.name());
+        sc_trace(o_vcd, o_check_pattern, o_check_pattern.name());
         sc_trace(o_vcd, i_cmd_state, i_cmd_state.name());
         sc_trace(o_vcd, i_cmd_err, i_cmd_err.name());
         sc_trace(o_vcd, i_cmd_req_valid, i_cmd_req_valid.name());
@@ -145,6 +157,10 @@ void sdctrl_regs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.last_resp_crc7_rx, pn + ".r_last_resp_crc7_rx");
         sc_trace(o_vcd, r.last_resp_crc7_calc, pn + ".r_last_resp_crc7_calc");
         sc_trace(o_vcd, r.last_resp_reg, pn + ".r_last_resp_reg");
+        sc_trace(o_vcd, r.pcie_12V_support, pn + ".r_pcie_12V_support");
+        sc_trace(o_vcd, r.pcie_available, pn + ".r_pcie_available");
+        sc_trace(o_vcd, r.voltage_supply, pn + ".r_voltage_supply");
+        sc_trace(o_vcd, r.check_pattern, pn + ".r_check_pattern");
     }
 
     if (pslv0) {
@@ -220,6 +236,18 @@ void sdctrl_regs::comb() {
     case 0x6:                                               // {0x18, 'RO', 'last_cmd_resp_arg'}
         vb_rdata = r.last_resp_reg;
         break;
+    case 0x8:                                               // {0x20, 'RW', 'interface_condition', 'CMD8 parameters'}
+        vb_rdata(7, 0) = r.check_pattern;
+        vb_rdata(11, 8) = r.voltage_supply;
+        vb_rdata[12] = r.pcie_available.read();
+        vb_rdata[13] = r.pcie_12V_support.read();
+        if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
+            v.check_pattern = wb_req_wdata.read()(7, 0);
+            v.voltage_supply = wb_req_wdata.read()(11, 8);
+            v.pcie_available = wb_req_wdata.read()[12];
+            v.pcie_12V_support = wb_req_wdata.read()[13];
+        }
+        break;
     case 0x11:                                              // 0x44: reserved 4 (txctrl)
         break;
     case 0x12:                                              // 0x48: Tx FIFO Data
@@ -243,6 +271,11 @@ void sdctrl_regs::comb() {
     if (!async_reset_ && i_nrst.read() == 0) {
         sdctrl_regs_r_reset(v);
     }
+
+    o_pcie_12V_support = r.pcie_12V_support;
+    o_pcie_available = r.pcie_available;
+    o_voltage_supply = r.voltage_supply;
+    o_check_pattern = r.check_pattern;
 
     o_sck = r.level;
     o_sck_posedge = v_posedge;

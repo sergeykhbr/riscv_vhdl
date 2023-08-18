@@ -21,7 +21,8 @@ namespace debugger {
 
 // 
 // 
-static const uint8_t CMD0 = 0;
+static const uint8_t CMD0 = 0;                              // GO_IDLE_STATE: Reset card to idle state. Response - (4.7.4)
+static const uint8_t CMD8 = 8;                              // SEND_IF_COND: Card interface condition. Response R7 (4.9.6).
 // 
 static const uint8_t R1 = 1;
 static const uint8_t R2 = 2;

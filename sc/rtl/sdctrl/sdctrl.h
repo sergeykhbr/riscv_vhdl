@@ -74,16 +74,24 @@ SC_MODULE(sdctrl) {
 
     static const int log2_fifosz = 9;
     static const int fifo_dbits = 8;
-    // SD-card global state:
-    static const uint8_t SDSTATE_RESET = 0;
+    // SD-card states see Card Status[12:9] CURRENT_STATE on page 145:
+    static const uint8_t SDSTATE_IDLE = 0;
+    static const uint8_t SDSTATE_READY = 1;
+    static const uint8_t SDSTATE_IDENT = 2;
+    static const uint8_t SDSTATE_STBY = 3;
+    static const uint8_t SDSTATE_TRAN = 4;
+    static const uint8_t SDSTATE_DATA = 5;
+    static const uint8_t SDSTATE_RCV = 6;
+    static const uint8_t SDSTATE_PRG = 7;
+    static const uint8_t SDSTATE_DIS = 8;
     // SD-card initalization state:
     static const uint8_t INITSTATE_CMD0 = 0;
-    static const uint8_t INITSTATE_CMD0_RESP = 1;
-    static const uint8_t INITSTATE_CMD8 = 2;
-    static const uint8_t INITSTATE_CMD41 = 3;
-    static const uint8_t INITSTATE_CMD11 = 4;
-    static const uint8_t INITSTATE_CMD2 = 5;
-    static const uint8_t INITSTATE_CMD3 = 6;
+    static const uint8_t INITSTATE_CMD8 = 1;
+    static const uint8_t INITSTATE_ACMD41 = 2;
+    static const uint8_t INITSTATE_CMD11 = 3;
+    static const uint8_t INITSTATE_CMD2 = 4;
+    static const uint8_t INITSTATE_CMD3 = 5;
+    static const uint8_t INITSTATE_WAIT_RESP = 6;
     static const uint8_t INITSTATE_ERROR = 7;
     static const uint8_t INITSTATE_DONE = 8;
 
@@ -97,8 +105,9 @@ SC_MODULE(sdctrl) {
         sc_signal<bool> crc16_clear;
         sc_signal<sc_uint<4>> dat;
         sc_signal<bool> dat_dir;
-        sc_signal<sc_uint<2>> sdstate;
+        sc_signal<sc_uint<4>> sdstate;
         sc_signal<sc_uint<4>> initstate;
+        sc_signal<sc_uint<4>> initstate_next;
     } v, r;
 
     void sdctrl_r_reset(sdctrl_registers &iv) {
@@ -111,14 +120,19 @@ SC_MODULE(sdctrl) {
         iv.crc16_clear = 1;
         iv.dat = ~0ul;
         iv.dat_dir = DIR_INPUT;
-        iv.sdstate = SDSTATE_RESET;
+        iv.sdstate = SDSTATE_IDLE;
         iv.initstate = INITSTATE_CMD0;
+        iv.initstate_next = INITSTATE_CMD0;
     }
 
     sc_signal<bool> w_regs_sck_posedge;
     sc_signal<bool> w_regs_sck;
     sc_signal<bool> w_regs_clear_cmderr;
     sc_signal<sc_uint<16>> wb_regs_watchdog;
+    sc_signal<bool> w_regs_pcie_12V_support;
+    sc_signal<bool> w_regs_pcie_available;
+    sc_signal<sc_uint<4>> wb_regs_voltage_supply;
+    sc_signal<sc_uint<8>> wb_regs_check_pattern;
     sc_signal<bool> w_mem_req_valid;
     sc_signal<sc_uint<CFG_SYSBUS_ADDR_BITS>> wb_mem_req_addr;
     sc_signal<sc_uint<8>> wb_mem_req_size;

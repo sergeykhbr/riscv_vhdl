@@ -35,6 +35,11 @@ SC_MODULE(sdctrl_regs) {
     sc_out<bool> o_sck_negedge;                             // Strob just before negative edge
     sc_out<sc_uint<16>> o_watchdog;                         // Number of sclk to detect no response
     sc_out<bool> o_clear_cmderr;                            // Clear cmderr from FW
+    // Configuration parameters:
+    sc_out<bool> o_pcie_12V_support;                        // 0b: not asking 1.2V support
+    sc_out<bool> o_pcie_available;                          // 0b: not asking PCIe availability
+    sc_out<sc_uint<4>> o_voltage_supply;                    // 0=not defined; 1=2.7-3.6V; 2=reserved for Low Voltage Range
+    sc_out<sc_uint<8>> o_check_pattern;                     // Check pattern in CMD8 request
     // Debug command state machine
     sc_in<sc_uint<4>> i_cmd_state;
     sc_in<sc_uint<4>> i_cmd_err;
@@ -76,6 +81,10 @@ SC_MODULE(sdctrl_regs) {
         sc_signal<sc_uint<7>> last_resp_crc7_rx;
         sc_signal<sc_uint<7>> last_resp_crc7_calc;
         sc_signal<sc_uint<32>> last_resp_reg;
+        sc_signal<bool> pcie_12V_support;
+        sc_signal<bool> pcie_available;
+        sc_signal<sc_uint<4>> voltage_supply;
+        sc_signal<sc_uint<8>> check_pattern;
     } v, r;
 
     void sdctrl_regs_r_reset(sdctrl_regs_registers &iv) {
@@ -94,6 +103,10 @@ SC_MODULE(sdctrl_regs) {
         iv.last_resp_crc7_rx = 0;
         iv.last_resp_crc7_calc = 0;
         iv.last_resp_reg = 0;
+        iv.pcie_12V_support = 00;
+        iv.pcie_available = 0;
+        iv.voltage_supply = 0x1;
+        iv.check_pattern = 0x55;
     }
 
     sc_signal<bool> w_req_valid;
