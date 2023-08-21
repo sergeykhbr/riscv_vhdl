@@ -81,10 +81,15 @@ int main() {
     led_set(0x01);
 
 #if 1
+    *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 0)) = 0x1;  // clock divider 40 / (2*(divider+1) = 10 MHz
     *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 4)) = 0x1;  // enable sdctrl sclk
+    *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 8)) = 0xFFFF;  // Increase default watchdog to detect 'no response'
     printf_uart("sdctrl test:\r\n");
-    uint32_t cmd_status = *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 0x10));
-    printf_uart("cmd_status: %08x\r\n", cmd_status);
+    uint32_t cmd_status;
+    do {
+        cmd_status = *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 0x10));
+        printf_uart("cmd_status: %08x\r\n", cmd_status);
+    } while (((cmd_status >> 4) & 0xF) != 0);  // [7:4] cmd_state: 0=Idle; [3:0] cmd_err
     uint32_t last_cmd_reponse = *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 0x14));
     printf_uart("last_resp: %08x\r\n", last_cmd_reponse);
     uint32_t last_cmd_arg = *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 0x18));

@@ -14,13 +14,13 @@
 //  limitations under the License.
 // 
 
-#include "sdctrl_crc7.h"
+#include "vip_sdcard_crc7.h"
 #include "api_core.h"
 
 namespace debugger {
 
-sdctrl_crc7::sdctrl_crc7(sc_module_name name,
-                         bool async_reset)
+vip_sdcard_crc7::vip_sdcard_crc7(sc_module_name name,
+                                 bool async_reset)
     : sc_module(name),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
@@ -43,7 +43,7 @@ sdctrl_crc7::sdctrl_crc7(sc_module_name name,
     sensitive << i_clk.pos();
 }
 
-void sdctrl_crc7::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+void vip_sdcard_crc7::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     std::string pn(name());
     if (o_vcd) {
         sc_trace(o_vcd, i_clear, i_clear.name());
@@ -55,7 +55,7 @@ void sdctrl_crc7::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
 }
 
-void sdctrl_crc7::comb() {
+void vip_sdcard_crc7::comb() {
     bool v_inv7;
     sc_uint<7> vb_crc7;
 
@@ -64,7 +64,7 @@ void sdctrl_crc7::comb() {
 
     v = r;
 
-    // CRC7 = x^7 + x^3 + 1 (page 116)
+    // CRC7 = x^7 + x^3 + 1
     // CMD0 -> 01 000000 0000..000000000000000000000000 1001010 1 -> 0x4A (0x95)
     // CMD17-> 01 010001 0000..000000000000000000000000 0101010 1 -> 0x2A (0x55)
     // CMD17<- 00 010001 0000..000000000010010000000000 0110011 1 -> 0x33 (0x67)
@@ -84,15 +84,15 @@ void sdctrl_crc7::comb() {
     }
 
     if (!async_reset_ && i_nrst.read() == 0) {
-        sdctrl_crc7_r_reset(v);
+        vip_sdcard_crc7_r_reset(v);
     }
 
     o_crc7 = vb_crc7;
 }
 
-void sdctrl_crc7::registers() {
+void vip_sdcard_crc7::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
-        sdctrl_crc7_r_reset(r);
+        vip_sdcard_crc7_r_reset(r);
     } else {
         r = v;
     }

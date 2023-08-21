@@ -17,6 +17,7 @@
 
 #include <systemc.h>
 #include "../../../../rtl/techmap/bufg/iobuf_tech.h"
+#include "vip_sdcard_crc7.h"
 
 namespace debugger {
 
@@ -44,19 +45,27 @@ SC_MODULE(vip_sdcard_top) {
  private:
     bool async_reset_;
 
+    // Generic config parameters
+    static const uint8_t CFG_SDCARD_VHS = 0x1;
+    static const bool CFG_SDCARD_PCIE_1_2V = 0;
+    static const bool CFG_SDCARD_PCIE_AVAIL = 0;
+    // 
     // Receiver CMD state:
     static const uint8_t CMDSTATE_IDLE = 0;
-    static const uint8_t CMDSTATE_REQ_ARG = 1;
-    static const uint8_t CMDSTATE_REQ_CRC7 = 2;
-    static const uint8_t CMDSTATE_REQ_STOPBIT = 3;
-    static const uint8_t CMDSTATE_WAIT_RESP = 4;
-    static const uint8_t CMDSTATE_RESP = 5;
+    static const uint8_t CMDSTATE_REQ_STARTBIT = 1;
+    static const uint8_t CMDSTATE_REQ_CMD = 2;
+    static const uint8_t CMDSTATE_REQ_ARG = 3;
+    static const uint8_t CMDSTATE_REQ_CRC7 = 4;
+    static const uint8_t CMDSTATE_REQ_STOPBIT = 5;
+    static const uint8_t CMDSTATE_WAIT_RESP = 6;
+    static const uint8_t CMDSTATE_RESP = 7;
+    static const uint8_t CMDSTATE_RESP_CRC7 = 8;
 
     struct vip_sdcard_top_registers {
         sc_signal<bool> cmd_dir;
         sc_signal<sc_uint<48>> cmd_rxshift;
         sc_signal<sc_uint<48>> cmd_txshift;
-        sc_signal<sc_uint<3>> cmd_state;
+        sc_signal<sc_uint<4>> cmd_state;
         sc_signal<sc_uint<6>> bitcnt;
     } v, r;
 
@@ -72,8 +81,13 @@ SC_MODULE(vip_sdcard_top) {
     sc_signal<sc_uint<8>> wb_rdata;
     sc_signal<bool> w_cmd_in;
     sc_signal<bool> w_cmd_out;
+    sc_signal<bool> w_crc7_clear;
+    sc_signal<bool> w_crc7_next;
+    sc_signal<bool> w_crc7_dat;
+    sc_signal<sc_uint<7>> wb_crc7;
 
     iobuf_tech *iobufcmd0;
+    vip_sdcard_crc7 *crccmd0;
 
 };
 
