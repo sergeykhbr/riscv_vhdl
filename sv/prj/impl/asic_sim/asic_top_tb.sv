@@ -30,6 +30,7 @@ module asic_top_tb;
 
     //! Input reset. Active HIGH.
     logic                     i_rst;
+    logic sys_rst_n;
     //! Differential clock (LVDS) positive/negaive signal.
     wire                     i_sclk_p;
     wire                     i_sclk_n;
@@ -95,6 +96,7 @@ module asic_top_tb;
     end
     clk_cnt <= clk_cnt + 1;
   end
+  assign sys_rst_n = ~i_rst;
 
   asic_top #(
     .sim_uart_speedup_rate(SIM_UART_SPEED_UP_RATE)
@@ -135,13 +137,15 @@ module asic_top_tb;
     .baudrate(115200 * (2**SIM_UART_SPEED_UP_RATE)),
     .scaler(8)
   ) UART0 (
-    .i_nrst(~i_rst),
+    .i_nrst(sys_rst_n),
     .i_rx(o_uart1_td),
     .o_tx(i_uart1_rd)
   );
 
-  vip_sdcard_top SD0 (
-    .i_nrst(i_nrst),
+  vip_sdcard_top #(
+    .async_reset(1)
+  ) SD0 (
+    .i_nrst(sys_rst_n),
     .i_sclk(o_sd_sclk),
     .io_cmd(io_sd_cmd),
     .io_dat0(io_sd_dat0),

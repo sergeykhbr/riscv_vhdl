@@ -186,7 +186,9 @@ module kc705_top_tb;
     .o_tx(i_uart1_rd)
   );
 
-  vip_sdcard_top SD0 (
+  vip_sdcard_top #(
+    .async_reset(1)
+  ) SD0 (
     .i_nrst(sys_rst_n),
     .i_sclk(o_sd_sclk),
     .io_cmd(io_sd_cmd),
