@@ -181,15 +181,13 @@ module kc705_top_tb;
     .baudrate(115200 * (2**SIM_UART_SPEED_UP_RATE)),
     .scaler(8)
   ) UART0 (
-    .i_nrst(~i_rst),
+    .i_nrst(sys_rst_n),
     .i_rx(o_uart1_td),
     .o_tx(i_uart1_rd)
   );
 
-  sd_hc #(
-    .half_period_clk(50ns), // 20 MHz = 50ns
-    .block_size(512)
-  ) SD0 (
+  vip_sdcard_top SD0 (
+    .i_nrst(sys_rst_n),
     .i_sclk(o_sd_sclk),
     .io_cmd(io_sd_cmd),
     .io_dat0(io_sd_dat0),

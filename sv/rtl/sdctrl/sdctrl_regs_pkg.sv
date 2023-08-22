@@ -34,6 +34,10 @@ typedef struct {
     logic [6:0] last_resp_crc7_rx;
     logic [6:0] last_resp_crc7_calc;
     logic [31:0] last_resp_reg;
+    logic pcie_12V_support;
+    logic pcie_available;
+    logic [3:0] voltage_supply;
+    logic [7:0] check_pattern;
 } sdctrl_regs_registers;
 
 const sdctrl_regs_registers sdctrl_regs_r_reset = '{
@@ -51,7 +55,11 @@ const sdctrl_regs_registers sdctrl_regs_r_reset = '{
     '0,                                 // last_resp_cmd
     '0,                                 // last_resp_crc7_rx
     '0,                                 // last_resp_crc7_calc
-    '0                                  // last_resp_reg
+    '0,                                 // last_resp_reg
+    1'b0,                               // pcie_12V_support
+    1'b0,                               // pcie_available
+    4'h1,                               // voltage_supply
+    8'h55                               // check_pattern
 };
 
 endpackage: sdctrl_regs_pkg

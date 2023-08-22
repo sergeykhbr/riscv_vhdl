@@ -140,10 +140,8 @@ module asic_top_tb;
     .o_tx(i_uart1_rd)
   );
 
-  sd_hc #(
-    .half_period_clk(50ns), // 20 MHz = 50ns
-    .block_size(512)
-  ) SD0 (
+  vip_sdcard_top SD0 (
+    .i_nrst(i_nrst),
     .i_sclk(o_sd_sclk),
     .io_cmd(io_sd_cmd),
     .io_dat0(io_sd_dat0),

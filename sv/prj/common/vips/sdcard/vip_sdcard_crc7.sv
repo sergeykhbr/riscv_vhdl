@@ -16,7 +16,7 @@
 
 `timescale 1ns/10ps
 
-module sdctrl_crc7 #(
+module vip_sdcard_crc7 #(
     parameter bit async_reset = 1'b0
 )
 (
@@ -28,13 +28,13 @@ module sdctrl_crc7 #(
     output logic [6:0] o_crc7                               // Computed value
 );
 
-import sdctrl_crc7_pkg::*;
+import vip_sdcard_crc7_pkg::*;
 
-sdctrl_crc7_registers r, rin;
+vip_sdcard_crc7_registers r, rin;
 
 always_comb
 begin: comb_proc
-    sdctrl_crc7_registers v;
+    vip_sdcard_crc7_registers v;
     logic v_inv7;
     logic [6:0] vb_crc7;
 
@@ -43,7 +43,7 @@ begin: comb_proc
 
     v = r;
 
-    // CRC7 = x^7 + x^3 + 1 (page 116)
+    // CRC7 = x^7 + x^3 + 1
     // CMD0 -> 01 000000 0000..000000000000000000000000 1001010 1 -> 0x4A (0x95)
     // CMD17-> 01 010001 0000..000000000000000000000000 0101010 1 -> 0x2A (0x55)
     // CMD17<- 00 010001 0000..000000000010010000000000 0110011 1 -> 0x33 (0x67)
@@ -63,7 +63,7 @@ begin: comb_proc
     end
 
     if (~async_reset && i_nrst == 1'b0) begin
-        v = sdctrl_crc7_r_reset;
+        v = vip_sdcard_crc7_r_reset;
     end
 
     o_crc7 = vb_crc7;
@@ -76,7 +76,7 @@ generate
 
         always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
             if (i_nrst == 1'b0) begin
-                r <= sdctrl_crc7_r_reset;
+                r <= vip_sdcard_crc7_r_reset;
             end else begin
                 r <= rin;
             end
@@ -93,4 +93,4 @@ generate
     end: no_rst_gen
 endgenerate
 
-endmodule: sdctrl_crc7
+endmodule: vip_sdcard_crc7

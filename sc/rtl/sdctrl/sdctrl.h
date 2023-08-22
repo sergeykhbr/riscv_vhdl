@@ -75,15 +75,16 @@ SC_MODULE(sdctrl) {
     static const int log2_fifosz = 9;
     static const int fifo_dbits = 8;
     // SD-card states see Card Status[12:9] CURRENT_STATE on page 145:
-    static const uint8_t SDSTATE_IDLE = 0;
-    static const uint8_t SDSTATE_READY = 1;
-    static const uint8_t SDSTATE_IDENT = 2;
-    static const uint8_t SDSTATE_STBY = 3;
-    static const uint8_t SDSTATE_TRAN = 4;
-    static const uint8_t SDSTATE_DATA = 5;
-    static const uint8_t SDSTATE_RCV = 6;
-    static const uint8_t SDSTATE_PRG = 7;
-    static const uint8_t SDSTATE_DIS = 8;
+    static const uint8_t SDSTATE_PRE_INIT = 0;
+    static const uint8_t SDSTATE_IDLE = 1;
+    static const uint8_t SDSTATE_READY = 2;
+    static const uint8_t SDSTATE_IDENT = 3;
+    static const uint8_t SDSTATE_STBY = 4;
+    static const uint8_t SDSTATE_TRAN = 5;
+    static const uint8_t SDSTATE_DATA = 6;
+    static const uint8_t SDSTATE_RCV = 7;
+    static const uint8_t SDSTATE_PRG = 8;
+    static const uint8_t SDSTATE_DIS = 9;
     // SD-card initalization state:
     static const uint8_t INITSTATE_CMD0 = 0;
     static const uint8_t INITSTATE_CMD8 = 1;
@@ -96,6 +97,7 @@ SC_MODULE(sdctrl) {
     static const uint8_t INITSTATE_DONE = 8;
 
     struct sdctrl_registers {
+        sc_signal<sc_uint<7>> clkcnt;
         sc_signal<bool> cmd_req_ena;
         sc_signal<sc_uint<6>> cmd_req_cmd;
         sc_signal<sc_uint<32>> cmd_req_arg;
@@ -111,6 +113,7 @@ SC_MODULE(sdctrl) {
     } v, r;
 
     void sdctrl_r_reset(sdctrl_registers &iv) {
+        iv.clkcnt = 0;
         iv.cmd_req_ena = 0;
         iv.cmd_req_cmd = 0;
         iv.cmd_req_arg = 0;
@@ -120,7 +123,7 @@ SC_MODULE(sdctrl) {
         iv.crc16_clear = 1;
         iv.dat = ~0ul;
         iv.dat_dir = DIR_INPUT;
-        iv.sdstate = SDSTATE_IDLE;
+        iv.sdstate = SDSTATE_PRE_INIT;
         iv.initstate = INITSTATE_CMD0;
         iv.initstate_next = INITSTATE_CMD0;
     }

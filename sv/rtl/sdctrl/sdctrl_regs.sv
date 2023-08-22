@@ -31,6 +31,11 @@ module sdctrl_regs #(
     output logic o_sck_negedge,                             // Strob just before negative edge
     output logic [15:0] o_watchdog,                         // Number of sclk to detect no response
     output logic o_clear_cmderr,                            // Clear cmderr from FW
+    // Configuration parameters:
+    output logic o_pcie_12V_support,                        // 0b: not asking 1.2V support
+    output logic o_pcie_available,                          // 0b: not asking PCIe availability
+    output logic [3:0] o_voltage_supply,                    // 0=not defined; 1=2.7-3.6V; 2=reserved for Low Voltage Range
+    output logic [7:0] o_check_pattern,                     // Check pattern in CMD8 request
     // Debug command state machine
     input logic [3:0] i_cmd_state,
     input logic [3:0] i_cmd_err,
@@ -144,6 +149,18 @@ begin: comb_proc
     10'h006: begin                                          // {0x18, 'RO', 'last_cmd_resp_arg'}
         vb_rdata = r.last_resp_reg;
     end
+    10'h008: begin                                          // {0x20, 'RW', 'interface_condition', 'CMD8 parameters'}
+        vb_rdata[7: 0] = r.check_pattern;
+        vb_rdata[11: 8] = r.voltage_supply;
+        vb_rdata[12] = r.pcie_available;
+        vb_rdata[13] = r.pcie_12V_support;
+        if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
+            v.check_pattern = wb_req_wdata[7: 0];
+            v.voltage_supply = wb_req_wdata[11: 8];
+            v.pcie_available = wb_req_wdata[12];
+            v.pcie_12V_support = wb_req_wdata[13];
+        end
+    end
     10'h011: begin                                          // 0x44: reserved 4 (txctrl)
     end
     10'h012: begin                                          // 0x48: Tx FIFO Data
@@ -167,6 +184,11 @@ begin: comb_proc
     if (~async_reset && i_nrst == 1'b0) begin
         v = sdctrl_regs_r_reset;
     end
+
+    o_pcie_12V_support = r.pcie_12V_support;
+    o_pcie_available = r.pcie_available;
+    o_voltage_supply = r.voltage_supply;
+    o_check_pattern = r.check_pattern;
 
     o_sck = r.level;
     o_sck_posedge = v_posedge;

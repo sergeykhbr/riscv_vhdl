@@ -59,6 +59,10 @@ logic w_regs_sck_posedge;
 logic w_regs_sck;
 logic w_regs_clear_cmderr;
 logic [15:0] wb_regs_watchdog;
+logic w_regs_pcie_12V_support;
+logic w_regs_pcie_available;
+logic [3:0] wb_regs_voltage_supply;
+logic [7:0] wb_regs_check_pattern;
 logic w_mem_req_valid;
 logic [CFG_SYSBUS_ADDR_BITS-1:0] wb_mem_req_addr;
 logic [7:0] wb_mem_req_size;
@@ -127,6 +131,10 @@ sdctrl_regs #(
     .o_sck_negedge(w_regs_sck),
     .o_watchdog(wb_regs_watchdog),
     .o_clear_cmderr(w_regs_clear_cmderr),
+    .o_pcie_12V_support(w_regs_pcie_12V_support),
+    .o_pcie_available(w_regs_pcie_available),
+    .o_voltage_supply(wb_regs_voltage_supply),
+    .o_check_pattern(wb_regs_check_pattern),
     .i_cmd_state(wb_cmdstate),
     .i_cmd_err(wb_cmderr),
     .i_cmd_req_valid(r.cmd_req_ena),
@@ -207,31 +215,65 @@ begin: comb_proc
 
     // SD-card global state:
     case (r.sdstate)
-    SDSTATE_RESET: begin
+    SDSTATE_PRE_INIT: begin
+        // Page 222, Fig.4-96 State Diagram (Pre-Init mode)
+        // 1. No commands were sent to the card after POW (except CMD0):
+        //     CMD line held High for at least 1 ms, then SDCLK supplied
+        //     at least 74 clocks with keeping CMD line High
+        if (w_regs_sck_posedge == 1'b1) begin
+            v.clkcnt = (r.clkcnt + 1);
+        end
+        if (r.clkcnt >= 7'h4b) begin
+            v.sdstate = SDSTATE_IDLE;
+        end
+    end
+    SDSTATE_IDLE: begin
         case (r.initstate)
         INITSTATE_CMD0: begin
             v.cmd_req_ena = 1'b1;
             v.cmd_req_cmd = CMD0;
             v.cmd_req_arg = 32'h00000000;
             v.cmd_req_rn = R1;
-            v.initstate = (r.initstate + 1);
-        end
-        INITSTATE_CMD0_RESP: begin
-            if (w_cmd_resp_valid == 1'b1) begin
-                v.cmd_resp_r1 = wb_cmd_resp_cmd;
-                v.cmd_resp_reg = wb_cmd_resp_reg;
-                v.initstate = (r.initstate + 1);
-            end
+            v.initstate = INITSTATE_WAIT_RESP;
+            v.initstate_next = INITSTATE_CMD8;
         end
         INITSTATE_CMD8: begin
+            // See page 113. 4.3.13 Send Interface Condition Command
+            //   [39:22] reserved 00000h
+            //   [21]    PCIe 1.2V support 0
+            //   [20]    PCIe availability 0
+            //   [19:16] Voltage Supply (VHS) 0001b: 2.7-3.6V
+            //   [15:8]  Check Pattern 55h
+            v.cmd_req_ena = 1'b1;
+            v.cmd_req_cmd = CMD8;
+            v.cmd_req_arg = {18'h00000,
+                    w_regs_pcie_12V_support,
+                    w_regs_pcie_available,
+                    wb_regs_voltage_supply,
+                    wb_regs_check_pattern};
+            v.cmd_req_rn = R1;
+            if (wb_cmderr == CMDERR_NONE) begin
+                // See page 143. 4.10.1 Card Status response on CMD0
+                v.initstate = INITSTATE_WAIT_RESP;
+                v.initstate_next = INITSTATE_ACMD41;
+            end else begin
+                v.initstate = INITSTATE_ERROR;
+            end
         end
-        INITSTATE_CMD41: begin
+        INITSTATE_ACMD41: begin
         end
         INITSTATE_CMD11: begin
         end
         INITSTATE_CMD2: begin
         end
         INITSTATE_CMD3: begin
+        end
+        INITSTATE_WAIT_RESP: begin
+            if (w_cmd_resp_valid == 1'b1) begin
+                v.cmd_resp_r1 = wb_cmd_resp_cmd;
+                v.cmd_resp_reg = wb_cmd_resp_reg;
+                v.initstate = r.initstate_next;
+            end
         end
         INITSTATE_ERROR: begin
         end

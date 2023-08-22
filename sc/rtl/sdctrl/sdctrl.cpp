@@ -203,6 +203,7 @@ sdctrl::sdctrl(sc_module_name name,
     sensitive << w_crc16_next;
     sensitive << wb_crc16_dat;
     sensitive << wb_crc16;
+    sensitive << r.clkcnt;
     sensitive << r.cmd_req_ena;
     sensitive << r.cmd_req_cmd;
     sensitive << r.cmd_req_arg;
@@ -268,6 +269,7 @@ void sdctrl::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_cd_dat3_dir, o_cd_dat3_dir.name());
         sc_trace(o_vcd, i_detected, i_detected.name());
         sc_trace(o_vcd, i_protect, i_protect.name());
+        sc_trace(o_vcd, r.clkcnt, pn + ".r_clkcnt");
         sc_trace(o_vcd, r.cmd_req_ena, pn + ".r_cmd_req_ena");
         sc_trace(o_vcd, r.cmd_req_cmd, pn + ".r_cmd_req_cmd");
         sc_trace(o_vcd, r.cmd_req_arg, pn + ".r_cmd_req_arg");
@@ -309,6 +311,18 @@ void sdctrl::comb() {
 
     // SD-card global state:
     switch (r.sdstate.read()) {
+    case SDSTATE_PRE_INIT:
+        // Page 222, Fig.4-96 State Diagram (Pre-Init mode)
+        // 1. No commands were sent to the card after POW (except CMD0):
+        //     CMD line held High for at least 1 ms, then SDCLK supplied
+        //     at least 74 clocks with keeping CMD line High
+        if (w_regs_sck_posedge.read() == 1) {
+            v.clkcnt = (r.clkcnt.read() + 1);
+        }
+        if (r.clkcnt.read() >= 75) {
+            v.sdstate = SDSTATE_IDLE;
+        }
+        break;
     case SDSTATE_IDLE:
         switch (r.initstate.read()) {
         case INITSTATE_CMD0:

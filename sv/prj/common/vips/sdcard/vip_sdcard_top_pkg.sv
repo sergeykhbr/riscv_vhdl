@@ -16,19 +16,27 @@
 package vip_sdcard_top_pkg;
 
 
+// Generic config parameters
+localparam bit [3:0] CFG_SDCARD_VHS = 4'h1;                 // CMD8 Voltage supply mask
+localparam bit CFG_SDCARD_PCIE_1_2V = 1'h0;
+localparam bit CFG_SDCARD_PCIE_AVAIL = 1'h0;
+// 
 // Receiver CMD state:
-localparam bit [2:0] CMDSTATE_IDLE = 3'h0;
-localparam bit [2:0] CMDSTATE_REQ_ARG = 3'h1;
-localparam bit [2:0] CMDSTATE_REQ_CRC7 = 3'h2;
-localparam bit [2:0] CMDSTATE_REQ_STOPBIT = 3'h3;
-localparam bit [2:0] CMDSTATE_WAIT_RESP = 3'h4;
-localparam bit [2:0] CMDSTATE_RESP = 3'h5;
+localparam bit [3:0] CMDSTATE_IDLE = 4'h0;
+localparam bit [3:0] CMDSTATE_REQ_STARTBIT = 4'h1;
+localparam bit [3:0] CMDSTATE_REQ_CMD = 4'h2;
+localparam bit [3:0] CMDSTATE_REQ_ARG = 4'h3;
+localparam bit [3:0] CMDSTATE_REQ_CRC7 = 4'h4;
+localparam bit [3:0] CMDSTATE_REQ_STOPBIT = 4'h5;
+localparam bit [3:0] CMDSTATE_WAIT_RESP = 4'h6;
+localparam bit [3:0] CMDSTATE_RESP = 4'h7;
+localparam bit [3:0] CMDSTATE_RESP_CRC7 = 4'h8;
 
 typedef struct {
     logic cmd_dir;
     logic [47:0] cmd_rxshift;
     logic [47:0] cmd_txshift;
-    logic [2:0] cmd_state;
+    logic [3:0] cmd_state;
     logic [5:0] bitcnt;
 } vip_sdcard_top_registers;
 

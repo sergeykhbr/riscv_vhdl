@@ -18,7 +18,8 @@ package sdctrl_cfg_pkg;
 
 // 
 // 
-localparam bit [5:0] CMD0 = 6'h00;
+localparam bit [5:0] CMD0 = 6'h00;                          // GO_IDLE_STATE: Reset card to idle state. Response - (4.7.4)
+localparam bit [5:0] CMD8 = 6'h08;                          // SEND_IF_COND: Card interface condition. Response R7 (4.9.6).
 // 
 localparam bit [2:0] R1 = 3'h1;
 localparam bit [2:0] R2 = 3'h2;
