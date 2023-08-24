@@ -81,8 +81,10 @@ logic [31:0] wb_cmd_resp_reg;
 logic [6:0] wb_cmd_resp_crc7_rx;
 logic [6:0] wb_cmd_resp_crc7_calc;
 logic w_cmd_resp_ready;
-logic [3:0] wb_cmdstate;
-logic [3:0] wb_cmderr;
+logic [3:0] wb_trx_cmdstate;
+logic [3:0] wb_trx_cmderr;
+logic w_clear_cmderr;
+logic w_400kHz_ena;
 logic w_crc7_clear;
 logic w_crc7_next;
 logic w_crc7_dat;
@@ -135,9 +137,12 @@ sdctrl_regs #(
     .o_pcie_available(w_regs_pcie_available),
     .o_voltage_supply(wb_regs_voltage_supply),
     .o_check_pattern(wb_regs_check_pattern),
-    .i_cmd_state(wb_cmdstate),
-    .i_cmd_err(wb_cmderr),
-    .i_cmd_req_valid(r.cmd_req_ena),
+    .i_400khz_ena(w_400kHz_ena),
+    .i_sdtype(r.sdtype),
+    .i_sdstate(r.sdstate),
+    .i_cmd_state(wb_trx_cmdstate),
+    .i_cmd_err(wb_trx_cmderr),
+    .i_cmd_req_valid(r.cmd_req_valid),
     .i_cmd_req_cmd(r.cmd_req_cmd),
     .i_cmd_resp_valid(w_cmd_resp_valid),
     .i_cmd_resp_cmd(wb_cmd_resp_cmd),
@@ -182,7 +187,7 @@ sdctrl_cmd_transmitter #(
     .o_cmd(o_cmd),
     .o_cmd_dir(o_cmd_dir),
     .i_watchdog(wb_regs_watchdog),
-    .i_req_valid(r.cmd_req_ena),
+    .i_req_valid(r.cmd_req_valid),
     .i_req_cmd(r.cmd_req_cmd),
     .i_req_arg(r.cmd_req_arg),
     .i_req_rn(r.cmd_req_rn),
@@ -197,9 +202,9 @@ sdctrl_cmd_transmitter #(
     .o_resp_crc7_rx(wb_cmd_resp_crc7_rx),
     .o_resp_crc7_calc(wb_cmd_resp_crc7_calc),
     .i_resp_ready(w_cmd_resp_ready),
-    .i_clear_cmderr(w_regs_clear_cmderr),
-    .o_cmdstate(wb_cmdstate),
-    .o_cmderr(wb_cmderr)
+    .i_clear_cmderr(w_clear_cmderr),
+    .o_cmdstate(wb_trx_cmdstate),
+    .o_cmderr(wb_trx_cmderr)
 );
 
 
@@ -207,96 +212,234 @@ always_comb
 begin: comb_proc
     sdctrl_registers v;
     logic v_crc16_next;
+    logic [31:0] vb_cmd_req_arg;
+    logic v_cmd_resp_ready;
+    logic v_clear_cmderr;
 
     v_crc16_next = 0;
+    vb_cmd_req_arg = 0;
+    v_cmd_resp_ready = 0;
+    v_clear_cmderr = 0;
 
     v = r;
 
+    vb_cmd_req_arg = r.cmd_req_arg;
 
-    // SD-card global state:
-    case (r.sdstate)
-    SDSTATE_PRE_INIT: begin
-        // Page 222, Fig.4-96 State Diagram (Pre-Init mode)
-        // 1. No commands were sent to the card after POW (except CMD0):
-        //     CMD line held High for at least 1 ms, then SDCLK supplied
-        //     at least 74 clocks with keeping CMD line High
-        if (w_regs_sck_posedge == 1'b1) begin
-            v.clkcnt = (r.clkcnt + 1);
-        end
-        if (r.clkcnt >= 7'h4b) begin
-            v.sdstate = SDSTATE_IDLE;
-        end
-    end
-    SDSTATE_IDLE: begin
-        case (r.initstate)
-        INITSTATE_CMD0: begin
-            v.cmd_req_ena = 1'b1;
-            v.cmd_req_cmd = CMD0;
-            v.cmd_req_arg = 32'h00000000;
-            v.cmd_req_rn = R1;
-            v.initstate = INITSTATE_WAIT_RESP;
-            v.initstate_next = INITSTATE_CMD8;
-        end
-        INITSTATE_CMD8: begin
-            // See page 113. 4.3.13 Send Interface Condition Command
-            //   [39:22] reserved 00000h
-            //   [21]    PCIe 1.2V support 0
-            //   [20]    PCIe availability 0
-            //   [19:16] Voltage Supply (VHS) 0001b: 2.7-3.6V
-            //   [15:8]  Check Pattern 55h
-            v.cmd_req_ena = 1'b1;
-            v.cmd_req_cmd = CMD8;
-            v.cmd_req_arg = {18'h00000,
-                    w_regs_pcie_12V_support,
-                    w_regs_pcie_available,
-                    wb_regs_voltage_supply,
-                    wb_regs_check_pattern};
-            v.cmd_req_rn = R1;
-            if (wb_cmderr == CMDERR_NONE) begin
-                // See page 143. 4.10.1 Card Status response on CMD0
-                v.initstate = INITSTATE_WAIT_RESP;
-                v.initstate_next = INITSTATE_ACMD41;
+    if (r.wait_cmd_resp == 1'b1) begin
+        v_cmd_resp_ready = 1'b1;
+        if (w_cmd_resp_valid == 1'b1) begin
+            v.wait_cmd_resp = 1'b0;
+            v.cmd_resp_r1 = wb_cmd_resp_cmd;
+            v.cmd_resp_reg = wb_cmd_resp_reg;
+
+            if ((r.cmd_req_cmd == CMD8)
+                    && (wb_trx_cmderr == CMDERR_NO_RESPONSE)) begin
+                v.sdtype = SDCARD_VER1X;
+                v.HCS = 1'b0;                               // Standard Capacity only
+                v.initstate = IDLESTATE_CMD55;
+                v_clear_cmderr = 1'b1;
+            end else if (wb_trx_cmderr != CMDERR_NONE) begin
+                v.sdstate = SDSTATE_INA;
+                v.sdtype = SDCARD_UNUSABLE;
             end else begin
-                v.initstate = INITSTATE_ERROR;
+                // Parse Rx response:
+                case (r.cmd_req_rn)
+                R1: begin
+                end
+                R3: begin
+                    // Table 5-1: OCR Register definition, page 246
+                    //     [23:0]  Voltage window can be requested by CMD58
+                    //     [24]    Switching to 1.8V accepted (S18A)
+                    //     [27]    Over 2TB support status (CO2T)
+                    //     [29]    UHS-II Card status
+                    //     [30]    Card Capacity Status (CCS)
+                    //     [31]    Card power-up status (busy is LOW if the card not finished the power-up routine)
+                    if (wb_cmd_resp_reg[31] == 1'b1) begin
+                        v.OCR_VoltageWindow = wb_cmd_resp_reg[23: 0];
+                        v.HCS = wb_cmd_resp_reg[30];
+                        v.S18 = wb_cmd_resp_reg[24];
+                    end
+                end
+                R6: begin
+                    v.RCA = {wb_cmd_resp_reg[31: 16], 16'h0000};
+                end
+                default: begin
+                end
+                endcase
             end
         end
-        INITSTATE_ACMD41: begin
-        end
-        INITSTATE_CMD11: begin
-        end
-        INITSTATE_CMD2: begin
-        end
-        INITSTATE_CMD3: begin
-        end
-        INITSTATE_WAIT_RESP: begin
-            if (w_cmd_resp_valid == 1'b1) begin
-                v.cmd_resp_r1 = wb_cmd_resp_cmd;
-                v.cmd_resp_reg = wb_cmd_resp_reg;
-                v.initstate = r.initstate_next;
+    end else if (r.cmd_req_valid == 1'b1) begin
+        // Do nothing wait to accept
+    end else begin
+        // SD-card global state:
+        case (r.sdstate)
+        SDSTATE_PRE_INIT: begin
+            // Page 222, Fig.4-96 State Diagram (Pre-Init mode)
+            // 1. No commands were sent to the card after POW (except CMD0):
+            //     CMD line held High for at least 1 ms, then SDCLK supplied
+            //     at least 74 clocks with keeping CMD line High
+            if (w_regs_sck_posedge == 1'b1) begin
+                v.clkcnt = (r.clkcnt + 1);
+            end
+            if (r.clkcnt >= 7'h4b) begin
+                v.sdstate = SDSTATE_IDLE;
             end
         end
-        INITSTATE_ERROR: begin
+        SDSTATE_IDLE: begin
+            case (r.initstate)
+            IDLESTATE_CMD0: begin
+                v.sdtype = SDCARD_UNKNOWN;
+                v.HCS = 1'b1;
+                v.S18 = 1'b0;
+                v.RCA = '0;
+                v.cmd_req_valid = 1'b1;
+                v.cmd_req_cmd = CMD0;
+                v.cmd_req_rn = R1;
+                vb_cmd_req_arg = '0;
+                v.initstate = IDLESTATE_CMD8;
+            end
+            IDLESTATE_CMD8: begin
+                // See page 113. 4.3.13 Send Interface Condition Command
+                //   [39:22] reserved 00000h
+                //   [21]    PCIe 1.2V support 0
+                //   [20]    PCIe availability 0
+                //   [19:16] Voltage Supply (VHS) 0001b: 2.7-3.6V
+                //   [15:8]  Check Pattern 55h
+                v.cmd_req_valid = 1'b1;
+                v.cmd_req_cmd = CMD8;
+                v.cmd_req_rn = R7;
+                vb_cmd_req_arg = '0;
+                vb_cmd_req_arg[13] = w_regs_pcie_12V_support;
+                vb_cmd_req_arg[12] = w_regs_pcie_available;
+                vb_cmd_req_arg[11: 8] = wb_regs_voltage_supply;
+                vb_cmd_req_arg[7: 0] = wb_regs_check_pattern;
+                v.initstate = IDLESTATE_CMD55;
+            end
+            IDLESTATE_CMD55: begin
+                // Page 64: APP_CMD (CMD55) shall always precede ACMD41.
+                //   [31:16] RCA (Relative Adrress should be set 0)
+                //   [15:0] stuff bits
+                v.cmd_req_valid = 1'b1;
+                v.cmd_req_cmd = CMD55;
+                v.cmd_req_rn = R1;
+                vb_cmd_req_arg = '0;
+                v.initstate = IDLESTATE_ACMD41;
+            end
+            IDLESTATE_ACMD41: begin
+                // Page 131: SD_SEND_OP_COND. 
+                //   [31] reserved bit
+                //   [30] HCS (high capacity support)
+                //   [29] reserved for eSD
+                //   [28] XPC (maximum power in default speed)
+                //   [27:25] reserved bits
+                //   [24] S18R Send request to switch to 1.8V
+                //   [23:0] VDD voltage window (OCR[23:0])
+                v.cmd_req_valid = 1'b1;
+                v.cmd_req_cmd = ACMD41;
+                v.cmd_req_rn = R3;
+                vb_cmd_req_arg = '0;
+                vb_cmd_req_arg[30] = r.HCS;
+                vb_cmd_req_arg[24] = r.S18;
+                vb_cmd_req_arg[23: 0] = r.OCR_VoltageWindow;
+                v.initstate = IDLESTATE_CARD_IDENTIFICATION;
+            end
+            IDLESTATE_CARD_IDENTIFICATION: begin
+                if (r.cmd_resp_reg[31] == 1'b0) begin
+                    // LOW if the card has not finished power-up routine
+                    v.initstate = IDLESTATE_CMD55;
+                end else begin
+                    if (r.HCS == 1'b1) begin
+                        v.sdtype = SDCARD_VER2X_HC;
+                    end else if (r.sdtype == SDCARD_UNKNOWN) begin
+                        v.sdtype = SDCARD_VER2X_SC;
+                    end
+                    if (r.S18 == 1'b1) begin
+                        // Voltage switch command to change 3.3V to 1.8V
+                        v.readystate = READYSTATE_CMD11;
+                    end else begin
+                        v.readystate = READYSTATE_CMD2;
+                    end
+                    v.sdstate = SDSTATE_READY;
+                end
+            end
+            default: begin
+                v.initstate = IDLESTATE_CMD0;
+            end
+            endcase
         end
-        INITSTATE_DONE: begin
+        SDSTATE_READY: begin
+            case (r.readystate)
+            READYSTATE_CMD11: begin
+                // CMD11: VOLTAGE_SWITCH siwtch to 1.8V bus signaling.
+                //   [31:0] reserved all zeros
+                v.cmd_req_valid = 1'b1;
+                v.cmd_req_cmd = CMD11;
+                v.cmd_req_rn = R1;
+                vb_cmd_req_arg = '0;
+                v.readystate = READYSTATE_CMD2;
+            end
+            READYSTATE_CMD2: begin
+                // CMD2: ALL_SEND_CID ask to send CID number.
+                //   [31:0] stuff bits
+                v.cmd_req_valid = 1'b1;
+                v.cmd_req_cmd = CMD2;
+                v.cmd_req_rn = R2;
+                vb_cmd_req_arg = '0;
+                v.readystate = READYSTATE_CHECK_CID;
+            end
+            READYSTATE_CHECK_CID: begin
+                v.sdstate = SDSTATE_IDENT;
+                v.identstate = IDENTSTATE_CMD3;
+            end
+            default: begin
+            end
+            endcase
+        end
+        SDSTATE_IDENT: begin
+            case (r.identstate)
+            IDENTSTATE_CMD3: begin
+                // CMD3: SEND_RELATIVE_ADDR ask card to publish a new relative address (RCA).
+                //   [31:0] stuff bits
+                v.cmd_req_valid = 1'b1;
+                v.cmd_req_cmd = CMD3;
+                v.cmd_req_rn = R6;
+                vb_cmd_req_arg = '0;
+                v.identstate = IDENTSTATE_CHECK_RCA;
+            end
+            IDENTSTATE_CHECK_RCA: begin
+                v.sdstate = SDSTATE_STBY;
+            end
+            default: begin
+            end
+            endcase
         end
         default: begin
         end
         endcase
     end
-    default: begin
-    end
-    endcase
+    v.cmd_req_arg = vb_cmd_req_arg;
 
-    if ((r.cmd_req_ena == 1'b1) && (w_cmd_req_ready == 1'b1)) begin
-        v.cmd_req_ena = 1'b0;
+    if ((r.cmd_req_valid == 1'b1) && (w_cmd_req_ready == 1'b1)) begin
+        v.cmd_req_valid = 1'b0;
+        v.wait_cmd_resp = 1'b1;
     end
 
     if (~async_reset && i_nrst == 1'b0) begin
         v = sdctrl_r_reset;
     end
 
-    w_cmd_resp_ready = 1'b1;
+    w_cmd_resp_ready = v_cmd_resp_ready;
     w_crc16_next = v_crc16_next;
+    // Page 222, Table 4-81 Overview of Card States vs Operation Modes table
+    if ((r.sdstate <= SDSTATE_IDENT)
+            || (r.sdstate == SDSTATE_INA)
+            || (r.sdstate == SDSTATE_PRE_INIT)) begin
+        w_400kHz_ena = 1'b1;
+    end else begin
+        // data transfer mode:
+        // Stand-By, Transfer, Sending, Receive, Programming, Disconnect states
+        w_400kHz_ena = 1'b0;
+    end
 
     o_cd_dat3 = r.dat[3];
     o_dat2 = r.dat[2];
@@ -312,6 +455,7 @@ begin: comb_proc
     w_mem_resp_valid = 1'b1;
     wb_mem_resp_rdata = '1;
     wb_mem_resp_err = 1'b0;
+    w_clear_cmderr = (w_regs_clear_cmderr || v_clear_cmderr);
 
     rin = v;
 end: comb_proc

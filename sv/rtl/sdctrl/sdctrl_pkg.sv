@@ -22,30 +22,34 @@ import sdctrl_cfg_pkg::*;
 localparam int log2_fifosz = 9;
 localparam int fifo_dbits = 8;
 // SD-card states see Card Status[12:9] CURRENT_STATE on page 145:
-localparam bit [3:0] SDSTATE_PRE_INIT = 4'h0;
-localparam bit [3:0] SDSTATE_IDLE = 4'h1;
-localparam bit [3:0] SDSTATE_READY = 4'h2;
-localparam bit [3:0] SDSTATE_IDENT = 4'h3;
-localparam bit [3:0] SDSTATE_STBY = 4'h4;
-localparam bit [3:0] SDSTATE_TRAN = 4'h5;
-localparam bit [3:0] SDSTATE_DATA = 4'h6;
-localparam bit [3:0] SDSTATE_RCV = 4'h7;
-localparam bit [3:0] SDSTATE_PRG = 4'h8;
-localparam bit [3:0] SDSTATE_DIS = 4'h9;
-// SD-card initalization state:
-localparam bit [3:0] INITSTATE_CMD0 = 4'h0;
-localparam bit [3:0] INITSTATE_CMD8 = 4'h1;
-localparam bit [3:0] INITSTATE_ACMD41 = 4'h2;
-localparam bit [3:0] INITSTATE_CMD11 = 4'h3;
-localparam bit [3:0] INITSTATE_CMD2 = 4'h4;
-localparam bit [3:0] INITSTATE_CMD3 = 4'h5;
-localparam bit [3:0] INITSTATE_WAIT_RESP = 4'h6;
-localparam bit [3:0] INITSTATE_ERROR = 4'h7;
-localparam bit [3:0] INITSTATE_DONE = 4'h8;
+localparam bit [3:0] SDSTATE_PRE_INIT = 4'hf;
+localparam bit [3:0] SDSTATE_IDLE = 4'h0;
+localparam bit [3:0] SDSTATE_READY = 4'h1;
+localparam bit [3:0] SDSTATE_IDENT = 4'h2;
+localparam bit [3:0] SDSTATE_STBY = 4'h3;
+localparam bit [3:0] SDSTATE_TRAN = 4'h4;
+localparam bit [3:0] SDSTATE_DATA = 4'h5;
+localparam bit [3:0] SDSTATE_RCV = 4'h6;
+localparam bit [3:0] SDSTATE_PRG = 4'h7;
+localparam bit [3:0] SDSTATE_DIS = 4'h8;
+localparam bit [3:0] SDSTATE_INA = 4'h9;
+// SD-card 'idle' state substates:
+localparam bit [2:0] IDLESTATE_CMD0 = 3'h0;
+localparam bit [2:0] IDLESTATE_CMD8 = 3'h1;
+localparam bit [2:0] IDLESTATE_CMD55 = 3'h2;
+localparam bit [2:0] IDLESTATE_ACMD41 = 3'h3;
+localparam bit [2:0] IDLESTATE_CARD_IDENTIFICATION = 3'h4;
+// SD-card 'ready' state substates:
+localparam bit [1:0] READYSTATE_CMD11 = 2'h0;
+localparam bit [1:0] READYSTATE_CMD2 = 2'h1;
+localparam bit [1:0] READYSTATE_CHECK_CID = 2'h2;           // State change: ready -> ident
+// SD-card 'ident' state substates:
+localparam bit IDENTSTATE_CMD3 = 1'h0;
+localparam bit IDENTSTATE_CHECK_RCA = 1'h1;                 // State change: ident -> stby
 
 typedef struct {
     logic [6:0] clkcnt;
-    logic cmd_req_ena;
+    logic cmd_req_valid;
     logic [5:0] cmd_req_cmd;
     logic [31:0] cmd_req_arg;
     logic [2:0] cmd_req_rn;
@@ -55,13 +59,20 @@ typedef struct {
     logic [3:0] dat;
     logic dat_dir;
     logic [3:0] sdstate;
-    logic [3:0] initstate;
-    logic [3:0] initstate_next;
+    logic [2:0] initstate;
+    logic [1:0] readystate;
+    logic identstate;
+    logic wait_cmd_resp;
+    logic [2:0] sdtype;
+    logic HCS;                                              // High Capacity Support
+    logic S18;                                              // 1.8V Low voltage
+    logic [31:0] RCA;                                       // Relative Address
+    logic [23:0] OCR_VoltageWindow;                         // all ranges 2.7 to 3.6 V
 } sdctrl_registers;
 
 const sdctrl_registers sdctrl_r_reset = '{
     '0,                                 // clkcnt
-    1'b0,                               // cmd_req_ena
+    1'b0,                               // cmd_req_valid
     '0,                                 // cmd_req_cmd
     '0,                                 // cmd_req_arg
     '0,                                 // cmd_req_rn
@@ -71,8 +82,15 @@ const sdctrl_registers sdctrl_r_reset = '{
     '1,                                 // dat
     DIR_INPUT,                          // dat_dir
     SDSTATE_PRE_INIT,                   // sdstate
-    INITSTATE_CMD0,                     // initstate
-    INITSTATE_CMD0                      // initstate_next
+    IDLESTATE_CMD0,                     // initstate
+    READYSTATE_CMD11,                   // readystate
+    IDENTSTATE_CMD3,                    // identstate
+    1'b0,                               // wait_cmd_resp
+    SDCARD_UNKNOWN,                     // sdtype
+    1'h1,                               // HCS
+    1'b0,                               // S18
+    '0,                                 // RCA
+    24'hff8000                          // OCR_VoltageWindow
 };
 
 endpackage: sdctrl_pkg

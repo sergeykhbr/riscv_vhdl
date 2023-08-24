@@ -81,19 +81,27 @@ int main() {
     led_set(0x01);
 
 #if 1
-    *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 0)) = 0x1;  // clock divider 40 / (2*(divider+1) = 10 MHz
+    *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 0)) = (0 << 24) | 49;  // [31:24]=20 MHz;  [23:0]=400 KHz
     *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 4)) = 0x1;  // enable sdctrl sclk
     *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 8)) = 0xFFFF;  // Increase default watchdog to detect 'no response'
-    printf_uart("sdctrl test:\r\n");
     uint32_t cmd_status;
+    uint32_t cmd_err;
+    uint32_t sdstate;
+    uint32_t t1;
     do {
         cmd_status = *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 0x10));
-        printf_uart("cmd_status: %08x\r\n", cmd_status);
-    } while (((cmd_status >> 4) & 0xF) != 0);  // [7:4] cmd_state: 0=Idle; [3:0] cmd_err
-    uint32_t last_cmd_reponse = *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 0x14));
-    printf_uart("last_resp: %08x\r\n", last_cmd_reponse);
-    uint32_t last_cmd_arg = *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 0x18));
-    printf_uart("last_arg: %08x\r\n", last_cmd_arg);
+        cmd_err = cmd_status & 0xF;
+        sdstate = (cmd_status >> 8) & 0xF;
+        printf_uart("status:%04x;err:%1x;sdstate:%1x\r\n", cmd_status, cmd_err, sdstate);
+        t1 = *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 0x14));
+        printf_uart("last_resp: %08x\r\n", t1);
+        t1 = *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 0x18));
+        printf_uart("last_arg: %08x\r\n", t1);
+    } while (cmd_err == 0 && sdstate != 3);  // SDSTATE=3 (STBY)
+    t1 = *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 0x10));
+    t1 = (t1 >> 12) & 0x7; // sdtype
+    const char *SDTYPE[8] = {"unknown", "Ver1X", "Ver2X_SC", "Ver2X_HC", "Unusable", 0};
+    printf_uart("sdtype: %s\r\n", SDTYPE[t1]);
 #endif
 
 #if 1

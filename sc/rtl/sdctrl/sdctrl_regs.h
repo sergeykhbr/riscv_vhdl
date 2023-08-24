@@ -40,6 +40,9 @@ SC_MODULE(sdctrl_regs) {
     sc_out<bool> o_pcie_available;                          // 0b: not asking PCIe availability
     sc_out<sc_uint<4>> o_voltage_supply;                    // 0=not defined; 1=2.7-3.6V; 2=reserved for Low Voltage Range
     sc_out<sc_uint<8>> o_check_pattern;                     // Check pattern in CMD8 request
+    sc_in<bool> i_400khz_ena;                               // Default frequency enabled in identification mode
+    sc_in<sc_uint<3>> i_sdtype;                             // Ver1X or Ver2X standard or Ver2X high/extended capacity
+    sc_in<sc_uint<4>> i_sdstate;                            // Card state:0=idle;1=ready;2=ident;3=stby,... see spec
     // Debug command state machine
     sc_in<sc_uint<4>> i_cmd_state;
     sc_in<sc_uint<4>> i_cmd_err;
@@ -68,7 +71,8 @@ SC_MODULE(sdctrl_regs) {
     struct sdctrl_regs_registers {
         sc_signal<bool> sclk_ena;
         sc_signal<bool> clear_cmderr;
-        sc_signal<sc_uint<32>> scaler;
+        sc_signal<sc_uint<24>> scaler_400khz;
+        sc_signal<sc_uint<8>> scaler_data;
         sc_signal<sc_uint<32>> scaler_cnt;
         sc_signal<sc_uint<16>> wdog;
         sc_signal<sc_uint<16>> wdog_cnt;
@@ -90,7 +94,8 @@ SC_MODULE(sdctrl_regs) {
     void sdctrl_regs_r_reset(sdctrl_regs_registers &iv) {
         iv.sclk_ena = 0;
         iv.clear_cmderr = 0;
-        iv.scaler = 0;
+        iv.scaler_400khz = 0;
+        iv.scaler_data = 0;
         iv.scaler_cnt = 0;
         iv.wdog = 0x0FFF;
         iv.wdog_cnt = 0;

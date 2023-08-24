@@ -17,9 +17,11 @@ package vip_sdcard_top_pkg;
 
 
 // Generic config parameters
+localparam int CFG_SDCARD_POWERUP_DONE_DELAY = 700;         // Delay of busy bits in ACMD41 response
 localparam bit [3:0] CFG_SDCARD_VHS = 4'h1;                 // CMD8 Voltage supply mask
 localparam bit CFG_SDCARD_PCIE_1_2V = 1'h0;
 localparam bit CFG_SDCARD_PCIE_AVAIL = 1'h0;
+localparam bit [23:0] CFG_SDCARD_VDD_VOLTAGE_WINDOW = 24'hff8000;
 // 
 // Receiver CMD state:
 localparam bit [3:0] CMDSTATE_IDLE = 4'h0;
@@ -38,6 +40,8 @@ typedef struct {
     logic [47:0] cmd_txshift;
     logic [3:0] cmd_state;
     logic [5:0] bitcnt;
+    logic [31:0] powerup_cnt;
+    logic powerup_done;
 } vip_sdcard_top_registers;
 
 const vip_sdcard_top_registers vip_sdcard_top_r_reset = '{
@@ -45,7 +49,9 @@ const vip_sdcard_top_registers vip_sdcard_top_r_reset = '{
     '1,                                 // cmd_rxshift
     '1,                                 // cmd_txshift
     CMDSTATE_IDLE,                      // cmd_state
-    '0                                  // bitcnt
+    '0,                                 // bitcnt
+    '0,                                 // powerup_cnt
+    1'b0                                // powerup_done
 };
 
 endpackage: vip_sdcard_top_pkg

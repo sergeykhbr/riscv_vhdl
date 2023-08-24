@@ -21,7 +21,8 @@ import types_pnp_pkg::*;
 typedef struct {
     logic sclk_ena;
     logic clear_cmderr;
-    logic [31:0] scaler;
+    logic [23:0] scaler_400khz;
+    logic [7:0] scaler_data;
     logic [31:0] scaler_cnt;
     logic [15:0] wdog;
     logic [15:0] wdog_cnt;
@@ -43,7 +44,8 @@ typedef struct {
 const sdctrl_regs_registers sdctrl_regs_r_reset = '{
     1'b0,                               // sclk_ena
     1'b0,                               // clear_cmderr
-    '0,                                 // scaler
+    '0,                                 // scaler_400khz
+    '0,                                 // scaler_data
     '0,                                 // scaler_cnt
     16'h0fff,                           // wdog
     '0,                                 // wdog_cnt

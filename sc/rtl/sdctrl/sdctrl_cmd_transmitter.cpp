@@ -163,7 +163,9 @@ void sdctrl_cmd_transmitter::comb() {
             vb_cmdshift = ~0ull;
             v.crc7_clear = 1;
             v_req_ready = 1;
-            if ((i_req_valid.read() == 1) && (r.cmderr.read() == CMDERR_NONE)) {
+            if (r.cmderr.read() != CMDERR_NONE) {
+                v_req_ready = 0;
+            } else if (i_req_valid.read() == 1) {
                 v.req_cmd = i_req_cmd;
                 v.req_rn = i_req_rn;
                 vb_cmdshift = (0x1, i_req_cmd, i_req_arg);

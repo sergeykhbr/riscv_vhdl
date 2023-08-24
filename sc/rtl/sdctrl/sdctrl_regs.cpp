@@ -37,6 +37,9 @@ sdctrl_regs::sdctrl_regs(sc_module_name name,
     o_pcie_available("o_pcie_available"),
     o_voltage_supply("o_voltage_supply"),
     o_check_pattern("o_check_pattern"),
+    i_400khz_ena("i_400khz_ena"),
+    i_sdtype("i_sdtype"),
+    i_sdstate("i_sdstate"),
     i_cmd_state("i_cmd_state"),
     i_cmd_err("i_cmd_err"),
     i_cmd_req_valid("i_cmd_req_valid"),
@@ -73,6 +76,9 @@ sdctrl_regs::sdctrl_regs(sc_module_name name,
     sensitive << i_nrst;
     sensitive << i_pmapinfo;
     sensitive << i_apbi;
+    sensitive << i_400khz_ena;
+    sensitive << i_sdtype;
+    sensitive << i_sdstate;
     sensitive << i_cmd_state;
     sensitive << i_cmd_err;
     sensitive << i_cmd_req_valid;
@@ -88,7 +94,8 @@ sdctrl_regs::sdctrl_regs(sc_module_name name,
     sensitive << wb_req_wdata;
     sensitive << r.sclk_ena;
     sensitive << r.clear_cmderr;
-    sensitive << r.scaler;
+    sensitive << r.scaler_400khz;
+    sensitive << r.scaler_data;
     sensitive << r.scaler_cnt;
     sensitive << r.wdog;
     sensitive << r.wdog_cnt;
@@ -133,6 +140,9 @@ void sdctrl_regs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_pcie_available, o_pcie_available.name());
         sc_trace(o_vcd, o_voltage_supply, o_voltage_supply.name());
         sc_trace(o_vcd, o_check_pattern, o_check_pattern.name());
+        sc_trace(o_vcd, i_400khz_ena, i_400khz_ena.name());
+        sc_trace(o_vcd, i_sdtype, i_sdtype.name());
+        sc_trace(o_vcd, i_sdstate, i_sdstate.name());
         sc_trace(o_vcd, i_cmd_state, i_cmd_state.name());
         sc_trace(o_vcd, i_cmd_err, i_cmd_err.name());
         sc_trace(o_vcd, i_cmd_req_valid, i_cmd_req_valid.name());
@@ -144,7 +154,8 @@ void sdctrl_regs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_cmd_resp_crc7_calc, i_cmd_resp_crc7_calc.name());
         sc_trace(o_vcd, r.sclk_ena, pn + ".r_sclk_ena");
         sc_trace(o_vcd, r.clear_cmderr, pn + ".r_clear_cmderr");
-        sc_trace(o_vcd, r.scaler, pn + ".r_scaler");
+        sc_trace(o_vcd, r.scaler_400khz, pn + ".r_scaler_400khz");
+        sc_trace(o_vcd, r.scaler_data, pn + ".r_scaler_data");
         sc_trace(o_vcd, r.scaler_cnt, pn + ".r_scaler_cnt");
         sc_trace(o_vcd, r.wdog, pn + ".r_wdog");
         sc_trace(o_vcd, r.wdog_cnt, pn + ".r_wdog_cnt");
@@ -192,7 +203,8 @@ void sdctrl_regs::comb() {
 
     // system bus clock scaler to baudrate:
     if (r.sclk_ena.read() == 1) {
-        if (r.scaler_cnt.read() == r.scaler.read()) {
+        if (((i_400khz_ena.read() == 1) && (r.scaler_cnt.read() == r.scaler_400khz.read()))
+                || ((i_400khz_ena.read() == 0) && (r.scaler_cnt.read() == r.scaler_data.read()))) {
             v.scaler_cnt = 0;
             v.level = (!r.level);
             v_posedge = (!r.level);
@@ -204,9 +216,10 @@ void sdctrl_regs::comb() {
     // Registers access:
     switch (wb_req_addr.read()(11, 2)) {
     case 0x0:                                               // {0x00, 'RW', 'sckdiv', 'Clock Divivder'}
-        vb_rdata = r.scaler;
+        vb_rdata = (r.scaler_data.read(), r.scaler_400khz.read());
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
-            v.scaler = wb_req_wdata.read()(30, 0);
+            v.scaler_data = wb_req_wdata.read()(31, 24);
+            v.scaler_400khz = wb_req_wdata.read()(23, 0);
             v.scaler_cnt = 0;
         }
         break;
@@ -223,9 +236,11 @@ void sdctrl_regs::comb() {
             v.wdog = wb_req_wdata.read()(15, 0);
         }
         break;
-    case 0x4:                                               // {0x10, 'RO', 'cmd_status', 'CMD state machine status'}
-        vb_rdata(3, 0) = i_cmd_err;
-        vb_rdata(7, 4) = i_cmd_state;
+    case 0x4:                                               // {0x10, 'RO', 'status', 'state machines status'}
+        vb_rdata(3, 0) = i_cmd_err;                         // cmd transmitter error flag
+        vb_rdata(7, 4) = i_cmd_state;                       // cmd transmitter state
+        vb_rdata(11, 8) = i_sdstate;                        // card state
+        vb_rdata(14, 12) = i_sdtype;                        // detected card type
         break;
     case 0x5:                                               // {0x14, 'RO', 'last_cmd_response', 'Last CMD response data'}
         vb_rdata(5, 0) = r.last_req_cmd;

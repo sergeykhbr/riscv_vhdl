@@ -46,9 +46,11 @@ SC_MODULE(vip_sdcard_top) {
     bool async_reset_;
 
     // Generic config parameters
+    static const int CFG_SDCARD_POWERUP_DONE_DELAY = 700;
     static const uint8_t CFG_SDCARD_VHS = 0x1;
     static const bool CFG_SDCARD_PCIE_1_2V = 0;
     static const bool CFG_SDCARD_PCIE_AVAIL = 0;
+    static const uint32_t CFG_SDCARD_VDD_VOLTAGE_WINDOW = 0xff8000;
     // 
     // Receiver CMD state:
     static const uint8_t CMDSTATE_IDLE = 0;
@@ -67,6 +69,8 @@ SC_MODULE(vip_sdcard_top) {
         sc_signal<sc_uint<48>> cmd_txshift;
         sc_signal<sc_uint<4>> cmd_state;
         sc_signal<sc_uint<6>> bitcnt;
+        sc_signal<sc_uint<32>> powerup_cnt;
+        sc_signal<bool> powerup_done;
     } v, r;
 
     void vip_sdcard_top_r_reset(vip_sdcard_top_registers &iv) {
@@ -75,6 +79,8 @@ SC_MODULE(vip_sdcard_top) {
         iv.cmd_txshift = ~0ull;
         iv.cmd_state = CMDSTATE_IDLE;
         iv.bitcnt = 0;
+        iv.powerup_cnt = 0;
+        iv.powerup_done = 0;
     }
 
     sc_signal<bool> w_clk;

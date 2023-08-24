@@ -85,7 +85,9 @@ begin: comb_proc
             vb_cmdshift = '1;
             v.crc7_clear = 1'b1;
             v_req_ready = 1'b1;
-            if ((i_req_valid == 1'b1) && (r.cmderr == CMDERR_NONE)) begin
+            if (r.cmderr != CMDERR_NONE) begin
+                v_req_ready = 1'b0;
+            end else if (i_req_valid == 1'b1) begin
                 v.req_cmd = i_req_cmd;
                 v.req_rn = i_req_rn;
                 vb_cmdshift = {2'h1, i_req_cmd, i_req_arg};

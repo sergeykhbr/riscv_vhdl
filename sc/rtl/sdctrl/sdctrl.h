@@ -75,30 +75,34 @@ SC_MODULE(sdctrl) {
     static const int log2_fifosz = 9;
     static const int fifo_dbits = 8;
     // SD-card states see Card Status[12:9] CURRENT_STATE on page 145:
-    static const uint8_t SDSTATE_PRE_INIT = 0;
-    static const uint8_t SDSTATE_IDLE = 1;
-    static const uint8_t SDSTATE_READY = 2;
-    static const uint8_t SDSTATE_IDENT = 3;
-    static const uint8_t SDSTATE_STBY = 4;
-    static const uint8_t SDSTATE_TRAN = 5;
-    static const uint8_t SDSTATE_DATA = 6;
-    static const uint8_t SDSTATE_RCV = 7;
-    static const uint8_t SDSTATE_PRG = 8;
-    static const uint8_t SDSTATE_DIS = 9;
-    // SD-card initalization state:
-    static const uint8_t INITSTATE_CMD0 = 0;
-    static const uint8_t INITSTATE_CMD8 = 1;
-    static const uint8_t INITSTATE_ACMD41 = 2;
-    static const uint8_t INITSTATE_CMD11 = 3;
-    static const uint8_t INITSTATE_CMD2 = 4;
-    static const uint8_t INITSTATE_CMD3 = 5;
-    static const uint8_t INITSTATE_WAIT_RESP = 6;
-    static const uint8_t INITSTATE_ERROR = 7;
-    static const uint8_t INITSTATE_DONE = 8;
+    static const uint8_t SDSTATE_PRE_INIT = 0xF;
+    static const uint8_t SDSTATE_IDLE = 0;
+    static const uint8_t SDSTATE_READY = 1;
+    static const uint8_t SDSTATE_IDENT = 2;
+    static const uint8_t SDSTATE_STBY = 3;
+    static const uint8_t SDSTATE_TRAN = 4;
+    static const uint8_t SDSTATE_DATA = 5;
+    static const uint8_t SDSTATE_RCV = 6;
+    static const uint8_t SDSTATE_PRG = 7;
+    static const uint8_t SDSTATE_DIS = 8;
+    static const uint8_t SDSTATE_INA = 9;
+    // SD-card 'idle' state substates:
+    static const uint8_t IDLESTATE_CMD0 = 0;
+    static const uint8_t IDLESTATE_CMD8 = 1;
+    static const uint8_t IDLESTATE_CMD55 = 2;
+    static const uint8_t IDLESTATE_ACMD41 = 3;
+    static const uint8_t IDLESTATE_CARD_IDENTIFICATION = 4;
+    // SD-card 'ready' state substates:
+    static const uint8_t READYSTATE_CMD11 = 0;
+    static const uint8_t READYSTATE_CMD2 = 1;
+    static const uint8_t READYSTATE_CHECK_CID = 2;
+    // SD-card 'ident' state substates:
+    static const bool IDENTSTATE_CMD3 = 0;
+    static const bool IDENTSTATE_CHECK_RCA = 1;
 
     struct sdctrl_registers {
         sc_signal<sc_uint<7>> clkcnt;
-        sc_signal<bool> cmd_req_ena;
+        sc_signal<bool> cmd_req_valid;
         sc_signal<sc_uint<6>> cmd_req_cmd;
         sc_signal<sc_uint<32>> cmd_req_arg;
         sc_signal<sc_uint<3>> cmd_req_rn;
@@ -108,13 +112,20 @@ SC_MODULE(sdctrl) {
         sc_signal<sc_uint<4>> dat;
         sc_signal<bool> dat_dir;
         sc_signal<sc_uint<4>> sdstate;
-        sc_signal<sc_uint<4>> initstate;
-        sc_signal<sc_uint<4>> initstate_next;
+        sc_signal<sc_uint<3>> initstate;
+        sc_signal<sc_uint<2>> readystate;
+        sc_signal<bool> identstate;
+        sc_signal<bool> wait_cmd_resp;
+        sc_signal<sc_uint<3>> sdtype;
+        sc_signal<bool> HCS;                                // High Capacity Support
+        sc_signal<bool> S18;                                // 1.8V Low voltage
+        sc_signal<sc_uint<32>> RCA;                         // Relative Address
+        sc_signal<sc_uint<24>> OCR_VoltageWindow;           // all ranges 2.7 to 3.6 V
     } v, r;
 
     void sdctrl_r_reset(sdctrl_registers &iv) {
         iv.clkcnt = 0;
-        iv.cmd_req_ena = 0;
+        iv.cmd_req_valid = 0;
         iv.cmd_req_cmd = 0;
         iv.cmd_req_arg = 0;
         iv.cmd_req_rn = 0;
@@ -124,8 +135,15 @@ SC_MODULE(sdctrl) {
         iv.dat = ~0ul;
         iv.dat_dir = DIR_INPUT;
         iv.sdstate = SDSTATE_PRE_INIT;
-        iv.initstate = INITSTATE_CMD0;
-        iv.initstate_next = INITSTATE_CMD0;
+        iv.initstate = IDLESTATE_CMD0;
+        iv.readystate = READYSTATE_CMD11;
+        iv.identstate = IDENTSTATE_CMD3;
+        iv.wait_cmd_resp = 0;
+        iv.sdtype = SDCARD_UNKNOWN;
+        iv.HCS = 1;
+        iv.S18 = 0;
+        iv.RCA = 0;
+        iv.OCR_VoltageWindow = 0xff8000;
     }
 
     sc_signal<bool> w_regs_sck_posedge;
@@ -154,8 +172,10 @@ SC_MODULE(sdctrl) {
     sc_signal<sc_uint<7>> wb_cmd_resp_crc7_rx;
     sc_signal<sc_uint<7>> wb_cmd_resp_crc7_calc;
     sc_signal<bool> w_cmd_resp_ready;
-    sc_signal<sc_uint<4>> wb_cmdstate;
-    sc_signal<sc_uint<4>> wb_cmderr;
+    sc_signal<sc_uint<4>> wb_trx_cmdstate;
+    sc_signal<sc_uint<4>> wb_trx_cmderr;
+    sc_signal<bool> w_clear_cmderr;
+    sc_signal<bool> w_400kHz_ena;
     sc_signal<bool> w_crc7_clear;
     sc_signal<bool> w_crc7_next;
     sc_signal<bool> w_crc7_dat;

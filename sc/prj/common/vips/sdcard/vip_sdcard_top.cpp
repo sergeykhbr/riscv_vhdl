@@ -72,6 +72,8 @@ vip_sdcard_top::vip_sdcard_top(sc_module_name name,
     sensitive << r.cmd_txshift;
     sensitive << r.cmd_state;
     sensitive << r.bitcnt;
+    sensitive << r.powerup_cnt;
+    sensitive << r.powerup_done;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -101,6 +103,8 @@ void vip_sdcard_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.cmd_txshift, pn + ".r_cmd_txshift");
         sc_trace(o_vcd, r.cmd_state, pn + ".r_cmd_state");
         sc_trace(o_vcd, r.bitcnt, pn + ".r_bitcnt");
+        sc_trace(o_vcd, r.powerup_cnt, pn + ".r_powerup_cnt");
+        sc_trace(o_vcd, r.powerup_done, pn + ".r_powerup_done");
     }
 
     if (iobufcmd0) {
@@ -126,6 +130,11 @@ void vip_sdcard_top::comb() {
 
     vb_cmd_txshift = ((r.cmd_txshift.read()(46, 0) << 1) | 1);
     v_crc7_in = w_cmd_in;
+    if ((r.powerup_done.read() == 0) && (r.powerup_cnt.read() < CFG_SDCARD_POWERUP_DONE_DELAY)) {
+        v.powerup_cnt = (r.powerup_cnt.read() + 1);
+    } else {
+        v.powerup_done = 1;
+    }
 
     switch (r.cmd_state.read()) {
     case CMDSTATE_IDLE:
@@ -199,11 +208,18 @@ void vip_sdcard_top::comb() {
                 vb_cmd_txshift(19, 16) = (r.cmd_rxshift.read()(19, 16) & CFG_SDCARD_VHS);
                 vb_cmd_txshift(15, 8) = r.cmd_rxshift.read()(15, 8);
                 break;
+            case 55:                                        // CMD55: APP_CMD. 
+                vb_cmd_txshift(39, 8) = 0;
+                break;
             case 41:                                        // ACMD41: SD_SEND_OP_COND. Send host capacity info
-                // [31] HCS (OCR[30]) Host Capacity
-                // [28] XPC
-                // [24] S18R
-                // [23:0] VDD Voltage Window (OCR[23:0])
+                // [39] BUSY, active LOW
+                // [38] HCS (OCR[30]) Host Capacity
+                // [36] XPC
+                // [32] S18R
+                // [31:8] VDD Voltage Window (OCR[23:0])
+                vb_cmd_txshift(45, 40) = ~0ull;
+                vb_cmd_txshift[39] = r.powerup_done.read();
+                vb_cmd_txshift(31, 8) = (r.cmd_rxshift.read()(31, 8) & CFG_SDCARD_VDD_VOLTAGE_WINDOW);
                 break;
             default:
                 vb_cmd_txshift(39, 8) = 0;

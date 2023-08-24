@@ -36,6 +36,9 @@ module sdctrl_regs #(
     output logic o_pcie_available,                          // 0b: not asking PCIe availability
     output logic [3:0] o_voltage_supply,                    // 0=not defined; 1=2.7-3.6V; 2=reserved for Low Voltage Range
     output logic [7:0] o_check_pattern,                     // Check pattern in CMD8 request
+    input logic i_400khz_ena,                               // Default frequency enabled in identification mode
+    input logic [2:0] i_sdtype,                             // Ver1X or Ver2X standard or Ver2X high/extended capacity
+    input logic [3:0] i_sdstate,                            // Card state:0=idle;1=ready;2=ident;3=stby,... see spec
     // Debug command state machine
     input logic [3:0] i_cmd_state,
     input logic [3:0] i_cmd_err,
@@ -105,7 +108,8 @@ begin: comb_proc
 
     // system bus clock scaler to baudrate:
     if (r.sclk_ena == 1'b1) begin
-        if (r.scaler_cnt == r.scaler) begin
+        if (((i_400khz_ena == 1'b1) && (r.scaler_cnt == r.scaler_400khz))
+                || ((i_400khz_ena == 1'b0) && (r.scaler_cnt == r.scaler_data))) begin
             v.scaler_cnt = '0;
             v.level = (~r.level);
             v_posedge = (~r.level);
@@ -117,9 +121,10 @@ begin: comb_proc
     // Registers access:
     case (wb_req_addr[11: 2])
     10'h000: begin                                          // {0x00, 'RW', 'sckdiv', 'Clock Divivder'}
-        vb_rdata = r.scaler;
+        vb_rdata = {r.scaler_data, r.scaler_400khz};
         if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
-            v.scaler = wb_req_wdata[30: 0];
+            v.scaler_data = wb_req_wdata[31: 24];
+            v.scaler_400khz = wb_req_wdata[23: 0];
             v.scaler_cnt = '0;
         end
     end
@@ -136,9 +141,11 @@ begin: comb_proc
             v.wdog = wb_req_wdata[15: 0];
         end
     end
-    10'h004: begin                                          // {0x10, 'RO', 'cmd_status', 'CMD state machine status'}
-        vb_rdata[3: 0] = i_cmd_err;
-        vb_rdata[7: 4] = i_cmd_state;
+    10'h004: begin                                          // {0x10, 'RO', 'status', 'state machines status'}
+        vb_rdata[3: 0] = i_cmd_err;                         // cmd transmitter error flag
+        vb_rdata[7: 4] = i_cmd_state;                       // cmd transmitter state
+        vb_rdata[11: 8] = i_sdstate;                        // card state
+        vb_rdata[14: 12] = i_sdtype;                        // detected card type
     end
     10'h005: begin                                          // {0x14, 'RO', 'last_cmd_response', 'Last CMD response data'}
         vb_rdata[5: 0] = r.last_req_cmd;

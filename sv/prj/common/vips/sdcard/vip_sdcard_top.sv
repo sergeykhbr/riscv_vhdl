@@ -78,6 +78,11 @@ begin: comb_proc
 
     vb_cmd_txshift = {r.cmd_txshift[46: 0], 1'h1};
     v_crc7_in = w_cmd_in;
+    if ((r.powerup_done == 1'b0) && (r.powerup_cnt < CFG_SDCARD_POWERUP_DONE_DELAY)) begin
+        v.powerup_cnt = (r.powerup_cnt + 1);
+    end else begin
+        v.powerup_done = 1'b1;
+    end
 
     case (r.cmd_state)
     CMDSTATE_IDLE: begin
@@ -151,11 +156,18 @@ begin: comb_proc
                 vb_cmd_txshift[19: 16] = (r.cmd_rxshift[19: 16] & CFG_SDCARD_VHS);
                 vb_cmd_txshift[15: 8] = r.cmd_rxshift[15: 8];
             end
+            6'h37: begin                                    // CMD55: APP_CMD. 
+                vb_cmd_txshift[39: 8] = '0;
+            end
             6'h29: begin                                    // ACMD41: SD_SEND_OP_COND. Send host capacity info
-                // [31] HCS (OCR[30]) Host Capacity
-                // [28] XPC
-                // [24] S18R
-                // [23:0] VDD Voltage Window (OCR[23:0])
+                // [39] BUSY, active LOW
+                // [38] HCS (OCR[30]) Host Capacity
+                // [36] XPC
+                // [32] S18R
+                // [31:8] VDD Voltage Window (OCR[23:0])
+                vb_cmd_txshift[45: 40] = '1;
+                vb_cmd_txshift[39] = r.powerup_done;
+                vb_cmd_txshift[31: 8] = (r.cmd_rxshift[31: 8] & CFG_SDCARD_VDD_VOLTAGE_WINDOW);
             end
             default: begin
                 vb_cmd_txshift[39: 8] = 32'h00000000;
