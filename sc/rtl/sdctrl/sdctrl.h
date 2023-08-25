@@ -102,6 +102,7 @@ SC_MODULE(sdctrl) {
 
     struct sdctrl_registers {
         sc_signal<sc_uint<7>> clkcnt;
+        sc_signal<bool> cmd_set_low;
         sc_signal<bool> cmd_req_valid;
         sc_signal<sc_uint<6>> cmd_req_cmd;
         sc_signal<sc_uint<32>> cmd_req_arg;
@@ -125,6 +126,7 @@ SC_MODULE(sdctrl) {
 
     void sdctrl_r_reset(sdctrl_registers &iv) {
         iv.clkcnt = 0;
+        iv.cmd_set_low = 0;
         iv.cmd_req_valid = 0;
         iv.cmd_req_cmd = 0;
         iv.cmd_req_arg = 0;
@@ -133,7 +135,7 @@ SC_MODULE(sdctrl) {
         iv.cmd_resp_reg = 0;
         iv.crc16_clear = 1;
         iv.dat = ~0ul;
-        iv.dat_dir = DIR_INPUT;
+        iv.dat_dir = DIR_OUTPUT;
         iv.sdstate = SDSTATE_PRE_INIT;
         iv.initstate = IDLESTATE_CMD0;
         iv.readystate = READYSTATE_CMD11;

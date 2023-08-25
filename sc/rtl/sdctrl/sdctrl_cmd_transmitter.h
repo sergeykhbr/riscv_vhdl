@@ -30,6 +30,7 @@ SC_MODULE(sdctrl_cmd_transmitter) {
     sc_out<bool> o_cmd;
     sc_out<bool> o_cmd_dir;
     sc_in<sc_uint<16>> i_watchdog;                          // Max number of sclk to receive start bit
+    sc_in<bool> i_cmd_set_low;                              // Set forcibly o_cmd output to LOW
     sc_in<bool> i_req_valid;
     sc_in<sc_uint<6>> i_req_cmd;
     sc_in<sc_uint<32>> i_req_arg;

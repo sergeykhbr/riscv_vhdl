@@ -49,6 +49,7 @@ localparam bit IDENTSTATE_CHECK_RCA = 1'h1;                 // State change: ide
 
 typedef struct {
     logic [6:0] clkcnt;
+    logic cmd_set_low;
     logic cmd_req_valid;
     logic [5:0] cmd_req_cmd;
     logic [31:0] cmd_req_arg;
@@ -72,6 +73,7 @@ typedef struct {
 
 const sdctrl_registers sdctrl_r_reset = '{
     '0,                                 // clkcnt
+    1'b0,                               // cmd_set_low
     1'b0,                               // cmd_req_valid
     '0,                                 // cmd_req_cmd
     '0,                                 // cmd_req_arg
@@ -80,7 +82,7 @@ const sdctrl_registers sdctrl_r_reset = '{
     '0,                                 // cmd_resp_reg
     1'h1,                               // crc16_clear
     '1,                                 // dat
-    DIR_INPUT,                          // dat_dir
+    DIR_OUTPUT,                         // dat_dir
     SDSTATE_PRE_INIT,                   // sdstate
     IDLESTATE_CMD0,                     // initstate
     READYSTATE_CMD11,                   // readystate

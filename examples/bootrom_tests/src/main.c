@@ -81,6 +81,9 @@ int main() {
     led_set(0x01);
 
 #if 1
+    // wait 1 ms of CMD = HIGH before enabling SD-controller clock
+    while (fw_get_rdtime() < (SYS_HZ / 1000)) {}
+
     *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 0)) = (0 << 24) | 49;  // [31:24]=20 MHz;  [23:0]=400 KHz
     *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 4)) = 0x1;  // enable sdctrl sclk
     *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 8)) = 0xFFFF;  // Increase default watchdog to detect 'no response'

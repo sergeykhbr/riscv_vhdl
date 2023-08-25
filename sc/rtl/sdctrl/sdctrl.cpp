@@ -137,6 +137,7 @@ sdctrl::sdctrl(sc_module_name name,
     cmdtrx0->o_cmd(o_cmd);
     cmdtrx0->o_cmd_dir(o_cmd_dir);
     cmdtrx0->i_watchdog(wb_regs_watchdog);
+    cmdtrx0->i_cmd_set_low(r.cmd_set_low);
     cmdtrx0->i_req_valid(r.cmd_req_valid);
     cmdtrx0->i_req_cmd(r.cmd_req_cmd);
     cmdtrx0->i_req_arg(r.cmd_req_arg);
@@ -209,6 +210,7 @@ sdctrl::sdctrl(sc_module_name name,
     sensitive << wb_crc16_dat;
     sensitive << wb_crc16;
     sensitive << r.clkcnt;
+    sensitive << r.cmd_set_low;
     sensitive << r.cmd_req_valid;
     sensitive << r.cmd_req_cmd;
     sensitive << r.cmd_req_arg;
@@ -282,6 +284,7 @@ void sdctrl::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_detected, i_detected.name());
         sc_trace(o_vcd, i_protect, i_protect.name());
         sc_trace(o_vcd, r.clkcnt, pn + ".r_clkcnt");
+        sc_trace(o_vcd, r.cmd_set_low, pn + ".r_cmd_set_low");
         sc_trace(o_vcd, r.cmd_req_valid, pn + ".r_cmd_req_valid");
         sc_trace(o_vcd, r.cmd_req_cmd, pn + ".r_cmd_req_cmd");
         sc_trace(o_vcd, r.cmd_req_arg, pn + ".r_cmd_req_arg");
@@ -386,13 +389,18 @@ void sdctrl::comb() {
         case SDSTATE_PRE_INIT:
             // Page 222, Fig.4-96 State Diagram (Pre-Init mode)
             // 1. No commands were sent to the card after POW (except CMD0):
-            //     CMD line held High for at least 1 ms, then SDCLK supplied
+            //     CMD line held High for at least 1 ms (by SW), then SDCLK supplied
             //     at least 74 clocks with keeping CMD line High
+            // 2. CMD High to Low transition && CMD=Low < 74 clocks then go idle,
+            //     if Low >= 74 clocks then Fast boot in CV-mode
             if (w_regs_sck_posedge.read() == 1) {
                 v.clkcnt = (r.clkcnt.read() + 1);
             }
-            if (r.clkcnt.read() >= 75) {
+            if (r.clkcnt.read() >= 73) {
                 v.sdstate = SDSTATE_IDLE;
+                v.cmd_set_low = 0;
+            } else if (r.clkcnt.read() > 2) {
+                v.cmd_set_low = 1;
             }
             break;
         case SDSTATE_IDLE:

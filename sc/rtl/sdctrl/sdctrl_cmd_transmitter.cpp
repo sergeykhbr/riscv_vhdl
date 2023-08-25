@@ -30,6 +30,7 @@ sdctrl_cmd_transmitter::sdctrl_cmd_transmitter(sc_module_name name,
     o_cmd("o_cmd"),
     o_cmd_dir("o_cmd_dir"),
     i_watchdog("i_watchdog"),
+    i_cmd_set_low("i_cmd_set_low"),
     i_req_valid("i_req_valid"),
     i_req_cmd("i_req_cmd"),
     i_req_arg("i_req_arg"),
@@ -57,6 +58,7 @@ sdctrl_cmd_transmitter::sdctrl_cmd_transmitter(sc_module_name name,
     sensitive << i_sclk_negedge;
     sensitive << i_cmd;
     sensitive << i_watchdog;
+    sensitive << i_cmd_set_low;
     sensitive << i_req_valid;
     sensitive << i_req_cmd;
     sensitive << i_req_arg;
@@ -95,6 +97,7 @@ void sdctrl_cmd_transmitter::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_
         sc_trace(o_vcd, o_cmd, o_cmd.name());
         sc_trace(o_vcd, o_cmd_dir, o_cmd_dir.name());
         sc_trace(o_vcd, i_watchdog, i_watchdog.name());
+        sc_trace(o_vcd, i_cmd_set_low, i_cmd_set_low.name());
         sc_trace(o_vcd, i_req_valid, i_req_valid.name());
         sc_trace(o_vcd, i_req_cmd, i_req_cmd.name());
         sc_trace(o_vcd, i_req_arg, i_req_arg.name());
@@ -160,7 +163,12 @@ void sdctrl_cmd_transmitter::comb() {
     if (i_sclk_negedge.read() == 1) {
         // CMD Request:
         if (r.cmdstate.read() == CMDSTATE_IDLE) {
-            vb_cmdshift = ~0ull;
+            if (i_cmd_set_low.read() == 1) {
+                // Used during p-init state (power-up)
+                vb_cmdshift = 0;
+            } else {
+                vb_cmdshift = ~0ull;
+            }
             v.crc7_clear = 1;
             v_req_ready = 1;
             if (r.cmderr.read() != CMDERR_NONE) {

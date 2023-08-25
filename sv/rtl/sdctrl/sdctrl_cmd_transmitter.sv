@@ -28,6 +28,7 @@ module sdctrl_cmd_transmitter #(
     output logic o_cmd,
     output logic o_cmd_dir,
     input logic [15:0] i_watchdog,                          // Max number of sclk to receive start bit
+    input logic i_cmd_set_low,                              // Set forcibly o_cmd output to LOW
     input logic i_req_valid,
     input logic [5:0] i_req_cmd,
     input logic [31:0] i_req_arg,
@@ -82,7 +83,12 @@ begin: comb_proc
     if (i_sclk_negedge == 1'b1) begin
         // CMD Request:
         if (r.cmdstate == CMDSTATE_IDLE) begin
-            vb_cmdshift = '1;
+            if (i_cmd_set_low == 1'b1) begin
+                // Used during p-init state (power-up)
+                vb_cmdshift = '0;
+            end else begin
+                vb_cmdshift = '1;
+            end
             v.crc7_clear = 1'b1;
             v_req_ready = 1'b1;
             if (r.cmderr != CMDERR_NONE) begin

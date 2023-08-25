@@ -187,6 +187,7 @@ sdctrl_cmd_transmitter #(
     .o_cmd(o_cmd),
     .o_cmd_dir(o_cmd_dir),
     .i_watchdog(wb_regs_watchdog),
+    .i_cmd_set_low(r.cmd_set_low),
     .i_req_valid(r.cmd_req_valid),
     .i_req_cmd(r.cmd_req_cmd),
     .i_req_arg(r.cmd_req_arg),
@@ -276,13 +277,18 @@ begin: comb_proc
         SDSTATE_PRE_INIT: begin
             // Page 222, Fig.4-96 State Diagram (Pre-Init mode)
             // 1. No commands were sent to the card after POW (except CMD0):
-            //     CMD line held High for at least 1 ms, then SDCLK supplied
+            //     CMD line held High for at least 1 ms (by SW), then SDCLK supplied
             //     at least 74 clocks with keeping CMD line High
+            // 2. CMD High to Low transition && CMD=Low < 74 clocks then go idle,
+            //     if Low >= 74 clocks then Fast boot in CV-mode
             if (w_regs_sck_posedge == 1'b1) begin
                 v.clkcnt = (r.clkcnt + 1);
             end
-            if (r.clkcnt >= 7'h4b) begin
+            if (r.clkcnt >= 7'h49) begin
                 v.sdstate = SDSTATE_IDLE;
+                v.cmd_set_low = 1'b0;
+            end else if (r.clkcnt > 7'h02) begin
+                v.cmd_set_low = 1'b1;
             end
         end
         SDSTATE_IDLE: begin

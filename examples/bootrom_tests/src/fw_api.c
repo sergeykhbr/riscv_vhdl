@@ -25,6 +25,13 @@ int fw_get_cpuid() {
     return ret;
 }
 
+int fw_get_rdtime() {
+    int ret;
+    asm("rdtime %0" : "=r" (ret));
+    return ret;
+}
+
+
 void flush_tlb()
 {
     asm volatile ("sfence.vma");
