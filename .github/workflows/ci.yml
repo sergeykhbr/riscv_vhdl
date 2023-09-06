@@ -1,0 +1,66 @@
+name: build
+on:
+    push:
+    pull_request:
+    workflow_dispatch:
+
+env:
+    CI_OS_NAME: linux
+    CI_COMMIT: ${{ github.sha }}
+    CCACHE_COMPRESS: 1
+    CCACHE_DIR: ${{ github.workspace }}/.ccache
+    CCACHE_LIMIT_MULTIPLE: 0.95
+    QT_VERSION: 6.2.*
+
+default:
+    run:
+    working-directory: repo
+
+jobs:
+    linux-gcc:
+        name: Linux GCC
+        runs-on: ubuntu-22.04
+        env:
+            CC: gcc-12
+            CXX: g++-12
+            CACHE_BASE_KEY: build-ubuntu-22.04-gcc-12
+            CCACHE_MAXSIZE: 250M # Per build matrix entry (2000M in total)
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v3
+              with: 
+                  path: repo
+
+            - name: Cache $CCACHE_DIR
+              uses: actions/cache@v3
+              env:
+                 CACHE_KEY: ${{ env.CACHE_BASE_KEY }}-ccache
+              with:
+                 path: ${{ env.CCACHE_DIR }}
+                 key: ${{ env.CACHE_KEY }}-${{ github.sha }}
+                 restore-keys: |
+                    ${{ env.CACHE_KEY }}-
+
+            - name: Install Linux packages for build
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y ccache g++-12 libstdc++-12-dev libsystemc libsystemc-dev
+
+            - name: Install Qt6
+              uses: jurplel/install-qt-action@v3
+              with:
+                version: ${{env.QT_VERSION}}
+                host:    linux
+                dir:     $RUNNER_TEMP
+                modules: qtbase
+
+          - name: Install vcpkg
+              run: /bin/bash .ci/install-vcpkg.sh
+
+            - name: Build 
+              run: /bin/bash .ci/build-project.sh
+              env:
+                QT_PATH: ${{github.workspace}}/${{env.Qt6_DIR}}
+                SYSTEMC_SRC: /usr/include
+                SYSTEMC_LIB: /usr/lib
+

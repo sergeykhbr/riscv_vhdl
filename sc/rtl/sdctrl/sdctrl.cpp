@@ -352,8 +352,14 @@ void sdctrl::comb() {
                 v.initstate = IDLESTATE_CMD55;
                 v_clear_cmderr = 1;
             } else if (wb_trx_cmderr.read() != CMDERR_NONE) {
-                v.sdstate = SDSTATE_INA;
-                v.sdtype = SDCARD_UNUSABLE;
+                if (r.cmd_req_cmd.read() == CMD0) {
+                    // Re-send CMD0
+                    v.initstate = IDLESTATE_CMD0;
+                    v_clear_cmderr = 1;
+                } else {
+                    v.sdstate = SDSTATE_INA;
+                    v.sdtype = SDCARD_UNUSABLE;
+                }
             } else {
                 // Parse Rx response:
                 switch (r.cmd_req_rn.read()) {

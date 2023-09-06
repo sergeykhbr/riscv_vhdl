@@ -21,6 +21,7 @@
 #include "../../../rtl/ambalib/types_bus0.h"
 #include "../../../rtl/ambalib/types_bus1.h"
 #include "../../../rtl/riverlib/river_cfg.h"
+#include "../../../rtl/sdctrl/sdctrl_cfg.h"
 #include "../../../rtl/riverlib/types_river.h"
 #include "../../../rtl/techmap/bufg/ids_tech.h"
 #include "../../../rtl/techmap/bufg/iobuf_tech.h"

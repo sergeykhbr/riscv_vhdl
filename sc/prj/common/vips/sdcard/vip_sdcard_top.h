@@ -17,7 +17,8 @@
 
 #include <systemc.h>
 #include "../../../../rtl/techmap/bufg/iobuf_tech.h"
-#include "vip_sdcard_crc7.h"
+#include "vip_sdcard_cmdio.h"
+#include "vip_sdcard_ctrl.h"
 
 namespace debugger {
 
@@ -32,7 +33,6 @@ SC_MODULE(vip_sdcard_top) {
     sc_inout<bool> io_cd_dat3;
 
     void comb();
-    void registers();
 
     SC_HAS_PROCESS(vip_sdcard_top);
 
@@ -51,49 +51,23 @@ SC_MODULE(vip_sdcard_top) {
     static const bool CFG_SDCARD_PCIE_1_2V = 0;
     static const bool CFG_SDCARD_PCIE_AVAIL = 0;
     static const uint32_t CFG_SDCARD_VDD_VOLTAGE_WINDOW = 0xff8000;
-    // 
-    // Receiver CMD state:
-    static const uint8_t CMDSTATE_IDLE = 0;
-    static const uint8_t CMDSTATE_REQ_STARTBIT = 1;
-    static const uint8_t CMDSTATE_REQ_CMD = 2;
-    static const uint8_t CMDSTATE_REQ_ARG = 3;
-    static const uint8_t CMDSTATE_REQ_CRC7 = 4;
-    static const uint8_t CMDSTATE_REQ_STOPBIT = 5;
-    static const uint8_t CMDSTATE_WAIT_RESP = 6;
-    static const uint8_t CMDSTATE_RESP = 7;
-    static const uint8_t CMDSTATE_RESP_CRC7 = 8;
-
-    struct vip_sdcard_top_registers {
-        sc_signal<bool> cmd_dir;
-        sc_signal<sc_uint<48>> cmd_rxshift;
-        sc_signal<sc_uint<48>> cmd_txshift;
-        sc_signal<sc_uint<4>> cmd_state;
-        sc_signal<sc_uint<6>> bitcnt;
-        sc_signal<sc_uint<32>> powerup_cnt;
-        sc_signal<bool> powerup_done;
-    } v, r;
-
-    void vip_sdcard_top_r_reset(vip_sdcard_top_registers &iv) {
-        iv.cmd_dir = 1;
-        iv.cmd_rxshift = ~0ull;
-        iv.cmd_txshift = ~0ull;
-        iv.cmd_state = CMDSTATE_IDLE;
-        iv.bitcnt = 0;
-        iv.powerup_cnt = 0;
-        iv.powerup_done = 0;
-    }
 
     sc_signal<bool> w_clk;
     sc_signal<sc_uint<8>> wb_rdata;
     sc_signal<bool> w_cmd_in;
     sc_signal<bool> w_cmd_out;
-    sc_signal<bool> w_crc7_clear;
-    sc_signal<bool> w_crc7_next;
-    sc_signal<bool> w_crc7_dat;
-    sc_signal<sc_uint<7>> wb_crc7;
+    sc_signal<bool> w_cmd_dir;
+    sc_signal<bool> w_cmd_req_valid;
+    sc_signal<sc_uint<6>> wb_cmd_req_cmd;
+    sc_signal<sc_uint<32>> wb_cmd_req_data;
+    sc_signal<bool> w_cmd_req_ready;
+    sc_signal<bool> w_cmd_resp_valid;
+    sc_signal<sc_uint<32>> wb_cmd_resp_data32;
+    sc_signal<bool> w_cmd_resp_ready;
 
     iobuf_tech *iobufcmd0;
-    vip_sdcard_crc7 *crccmd0;
+    vip_sdcard_cmdio *cmdio0;
+    vip_sdcard_ctrl *ctrl0;
 
 };
 
