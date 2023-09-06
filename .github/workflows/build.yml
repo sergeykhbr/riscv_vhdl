@@ -14,7 +14,8 @@ env:
 
 default:
     run:
-    working-directory: repo
+        shell: bash
+        working-directory: repo
 
 jobs:
     build:
