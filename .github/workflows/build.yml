@@ -17,7 +17,7 @@ default:
     working-directory: repo
 
 jobs:
-    linux-gcc:
+    build:
         name: Linux GCC
         runs-on: ubuntu-22.04
         env:
