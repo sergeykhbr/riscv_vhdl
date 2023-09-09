@@ -97,6 +97,8 @@ void vip_sdcard_ctrl::comb() {
 
     v = r;
 
+    vb_resp_data32 = r.cmd_resp_data32;
+
     if ((r.cmd_resp_valid_delayed.read() == 1) && (i_cmd_resp_ready.read() == 1)) {
         v.cmd_resp_valid_delayed = 0;
     }
@@ -130,6 +132,7 @@ void vip_sdcard_ctrl::comb() {
                 vb_resp_data32(7, 0) = i_cmd_req_data.read()(7, 0);
                 break;
             case 55:                                        // CMD55: APP_CMD.
+                v.cmd_resp_valid = 1;
                 vb_resp_data32 = 0;
                 break;
             case 41:                                        // ACMD41: SD_SEND_OP_COND.

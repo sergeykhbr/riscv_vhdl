@@ -51,6 +51,8 @@ begin: comb_proc
 
     v = r;
 
+    vb_resp_data32 = r.cmd_resp_data32;
+
     if ((r.cmd_resp_valid_delayed == 1'b1) && (i_cmd_resp_ready == 1'b1)) begin
         v.cmd_resp_valid_delayed = 1'b0;
     end
@@ -84,6 +86,7 @@ begin: comb_proc
                 vb_resp_data32[7: 0] = i_cmd_req_data[7: 0];
             end
             6'h37: begin                                    // CMD55: APP_CMD.
+                v.cmd_resp_valid = 1'b1;
                 vb_resp_data32 = '0;
             end
             6'h29: begin                                    // ACMD41: SD_SEND_OP_COND.

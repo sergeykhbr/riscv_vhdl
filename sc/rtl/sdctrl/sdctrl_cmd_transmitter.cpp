@@ -281,6 +281,7 @@ void sdctrl_cmd_transmitter::comb() {
             v.cmdbitcnt = 2;
             v.resp_valid = 1;
         } else if (r.cmdstate.read() == CMDSTATE_PAUSE) {
+            v.crc7_clear = 1;
             if (r.cmdbitcnt.read().or_reduce() == 1) {
                 v.cmdbitcnt = (r.cmdbitcnt.read() - 1);
             } else {

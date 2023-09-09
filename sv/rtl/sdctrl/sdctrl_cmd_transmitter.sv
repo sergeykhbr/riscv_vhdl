@@ -201,6 +201,7 @@ begin: comb_proc
             v.cmdbitcnt = 7'h02;
             v.resp_valid = 1'b1;
         end else if (r.cmdstate == CMDSTATE_PAUSE) begin
+            v.crc7_clear = 1'b1;
             if ((|r.cmdbitcnt) == 1'b1) begin
                 v.cmdbitcnt = (r.cmdbitcnt - 1);
             end else begin

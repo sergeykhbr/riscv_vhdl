@@ -53,7 +53,7 @@ jobs:
                 version: ${{env.QT_VERSION}}
                 host:    linux
                 dir:     $RUNNER_TEMP
-                modules: qtbase
+                modules: qtscxml
 
             - name: Install vcpkg
               run: /bin/bash .ci/install-vcpkg.sh
