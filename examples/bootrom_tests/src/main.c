@@ -100,7 +100,7 @@ int main() {
         printf_uart("last_resp: %08x\r\n", t1);
         t1 = *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 0x18));
         printf_uart("last_arg: %08x\r\n", t1);
-    } while (cmd_err == 0 && sdstate != 3);  // SDSTATE=3 (STBY)
+    } while (sdstate != 3);  // SDSTATE=3 (STBY)
     t1 = *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 0x10));
     t1 = (t1 >> 12) & 0x7; // sdtype
     const char *SDTYPE[8] = {"unknown", "Ver1X", "Ver2X_SC", "Ver2X_HC", "Unusable", 0};

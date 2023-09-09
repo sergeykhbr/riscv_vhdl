@@ -51,8 +51,8 @@ SC_MODULE(vip_sdcard_cmdio) {
 
     // 
     // Receiver CMD state:
-    static const uint8_t CMDSTATE_IDLE = 0;
-    static const uint8_t CMDSTATE_REQ_STARTBIT = 1;
+    static const uint8_t CMDSTATE_REQ_STARTBIT = 0;
+    static const uint8_t CMDSTATE_REQ_TXBIT = 1;
     static const uint8_t CMDSTATE_REQ_CMD = 2;
     static const uint8_t CMDSTATE_REQ_ARG = 3;
     static const uint8_t CMDSTATE_REQ_CRC7 = 4;
@@ -61,14 +61,20 @@ SC_MODULE(vip_sdcard_cmdio) {
     static const uint8_t CMDSTATE_WAIT_RESP = 7;
     static const uint8_t CMDSTATE_RESP = 8;
     static const uint8_t CMDSTATE_RESP_CRC7 = 9;
+    static const uint8_t CMDSTATE_RESP_STOPBIT = 10;
+    static const uint8_t CMDSTATE_INIT = 15;
 
     struct vip_sdcard_cmdio_registers {
+        sc_signal<sc_uint<8>> clkcnt;
         sc_signal<bool> cmdz;
         sc_signal<bool> cmd_dir;
         sc_signal<sc_uint<48>> cmd_rxshift;
         sc_signal<sc_uint<48>> cmd_txshift;
         sc_signal<sc_uint<4>> cmd_state;
         sc_signal<sc_uint<6>> bitcnt;
+        sc_signal<bool> txbit;
+        sc_signal<sc_uint<7>> crc_calc;
+        sc_signal<sc_uint<7>> crc_rx;
         sc_signal<bool> cmd_req_valid;
         sc_signal<sc_uint<6>> cmd_req_cmd;
         sc_signal<sc_uint<32>> cmd_req_data;
@@ -76,12 +82,16 @@ SC_MODULE(vip_sdcard_cmdio) {
     } v, r;
 
     void vip_sdcard_cmdio_r_reset(vip_sdcard_cmdio_registers &iv) {
+        iv.clkcnt = 0;
         iv.cmdz = 1;
         iv.cmd_dir = 1;
         iv.cmd_rxshift = ~0ull;
         iv.cmd_txshift = ~0ull;
-        iv.cmd_state = CMDSTATE_IDLE;
+        iv.cmd_state = CMDSTATE_INIT;
         iv.bitcnt = 0;
+        iv.txbit = 0;
+        iv.crc_calc = 0;
+        iv.crc_rx = 0;
         iv.cmd_req_valid = 0;
         iv.cmd_req_cmd = 0;
         iv.cmd_req_data = 0;

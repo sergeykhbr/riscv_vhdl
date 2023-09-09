@@ -404,9 +404,10 @@ void sdctrl::comb() {
             }
             if (r.clkcnt.read() >= 73) {
                 v.sdstate = SDSTATE_IDLE;
+            }
+            if (r.clkcnt.read() <= 63) {
+            } else {
                 v.cmd_set_low = 0;
-            } else if (r.clkcnt.read() > 2) {
-                v.cmd_set_low = 1;
             }
             break;
         case SDSTATE_IDLE:

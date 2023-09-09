@@ -1,21 +1,13 @@
 name: build
-on:
-    push:
-    pull_request:
-    workflow_dispatch:
+on: [push]
 
 env:
-    CI_OS_NAME: linux
-    CI_COMMIT: ${{ github.sha }}
-    CCACHE_COMPRESS: 1
-    CCACHE_DIR: ${{ github.workspace }}/.ccache
-    CCACHE_LIMIT_MULTIPLE: 0.95
-    QT_VERSION: 6.2.*
-
-default:
-    run:
-        shell: bash
-        working-directory: repo
+  CI_OS_NAME: linux
+  CI_COMMIT: ${{ github.sha }}
+  CCACHE_COMPRESS: 1
+  CCACHE_DIR: ${{ github.workspace }}/.ccache
+  CCACHE_LIMIT_MULTIPLE: 0.95
+  QT_VERSION: 6.2.*
 
 jobs:
     build:
@@ -29,8 +21,6 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v3
-              with: 
-                  path: repo
 
             - name: Cache $CCACHE_DIR
               uses: actions/cache@v3

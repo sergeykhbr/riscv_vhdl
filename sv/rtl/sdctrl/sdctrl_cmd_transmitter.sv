@@ -197,13 +197,21 @@ begin: comb_proc
             if (i_cmd == 1'b0) begin
                 v.cmderr = CMDERR_WRONG_RESP_STOPBIT;
             end
-            v.cmdstate = CMDSTATE_IDLE;
+            v.cmdstate = CMDSTATE_PAUSE;
+            v.cmdbitcnt = 7'h02;
             v.resp_valid = 1'b1;
+        end else if (r.cmdstate == CMDSTATE_PAUSE) begin
+            if ((|r.cmdbitcnt) == 1'b1) begin
+                v.cmdbitcnt = (r.cmdbitcnt - 1);
+            end else begin
+                v.cmdstate = CMDSTATE_IDLE;
+            end
         end
     end
     v.cmdshift = vb_cmdshift;
 
-    if (r.cmdstate < CMDSTATE_RESP_WAIT) begin
+    if ((r.cmdstate < CMDSTATE_RESP_WAIT)
+            || (r.cmdstate == CMDSTATE_PAUSE)) begin
         v_cmd_dir = DIR_OUTPUT;
         v_crc7_dat = r.cmdshift[39];
     end else begin

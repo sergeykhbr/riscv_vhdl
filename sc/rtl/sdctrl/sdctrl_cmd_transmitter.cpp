@@ -277,13 +277,21 @@ void sdctrl_cmd_transmitter::comb() {
             if (i_cmd.read() == 0) {
                 v.cmderr = CMDERR_WRONG_RESP_STOPBIT;
             }
-            v.cmdstate = CMDSTATE_IDLE;
+            v.cmdstate = CMDSTATE_PAUSE;
+            v.cmdbitcnt = 2;
             v.resp_valid = 1;
+        } else if (r.cmdstate.read() == CMDSTATE_PAUSE) {
+            if (r.cmdbitcnt.read().or_reduce() == 1) {
+                v.cmdbitcnt = (r.cmdbitcnt.read() - 1);
+            } else {
+                v.cmdstate = CMDSTATE_IDLE;
+            }
         }
     }
     v.cmdshift = vb_cmdshift;
 
-    if (r.cmdstate.read() < CMDSTATE_RESP_WAIT) {
+    if ((r.cmdstate.read() < CMDSTATE_RESP_WAIT)
+            || (r.cmdstate.read() == CMDSTATE_PAUSE)) {
         v_cmd_dir = DIR_OUTPUT;
         v_crc7_dat = r.cmdshift.read()[39];
     } else {

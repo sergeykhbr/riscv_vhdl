@@ -56,7 +56,6 @@ SC_MODULE(vip_sdcard_ctrl) {
 
     // 
     // SD-card states (see Card Status[12:9] CURRENT_STATE on page 145)
-    static const uint8_t SDSTATE_PRE_INIT = 0xF;
     static const uint8_t SDSTATE_IDLE = 0;
     static const uint8_t SDSTATE_READY = 1;
     static const uint8_t SDSTATE_IDENT = 2;
@@ -74,19 +73,19 @@ SC_MODULE(vip_sdcard_ctrl) {
         sc_signal<sc_uint<8>> preinit_cnt;
         sc_signal<sc_uint<32>> delay_cnt;
         sc_signal<bool> powerup_done;
-        sc_signal<bool> cmd_resp_ready;
+        sc_signal<bool> cmd_req_ready;
         sc_signal<bool> cmd_resp_valid;
         sc_signal<bool> cmd_resp_valid_delayed;
         sc_signal<sc_uint<32>> cmd_resp_data32;
     } v, r;
 
     void vip_sdcard_ctrl_r_reset(vip_sdcard_ctrl_registers &iv) {
-        iv.sdstate = SDSTATE_PRE_INIT;
+        iv.sdstate = SDSTATE_IDLE;
         iv.powerup_cnt = 0;
         iv.preinit_cnt = 0;
         iv.delay_cnt = 0;
         iv.powerup_done = 0;
-        iv.cmd_resp_ready = 0;
+        iv.cmd_req_ready = 0;
         iv.cmd_resp_valid = 0;
         iv.cmd_resp_valid_delayed = 0;
         iv.cmd_resp_data32 = 0;

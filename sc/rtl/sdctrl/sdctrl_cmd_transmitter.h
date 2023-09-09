@@ -76,6 +76,7 @@ SC_MODULE(sdctrl_cmd_transmitter) {
     static const uint8_t CMDSTATE_RESP_CID_CSD = 9;
     static const uint8_t CMDSTATE_RESP_CRC7 = 10;
     static const uint8_t CMDSTATE_RESP_STOPBIT = 11;
+    static const uint8_t CMDSTATE_PAUSE = 12;
 
     struct sdctrl_cmd_transmitter_registers {
         sc_signal<sc_uint<6>> req_cmd;

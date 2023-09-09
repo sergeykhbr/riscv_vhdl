@@ -30,6 +30,7 @@ localparam bit [3:0] CMDSTATE_RESP_REG = 4'h8;
 localparam bit [3:0] CMDSTATE_RESP_CID_CSD = 4'h9;
 localparam bit [3:0] CMDSTATE_RESP_CRC7 = 4'ha;
 localparam bit [3:0] CMDSTATE_RESP_STOPBIT = 4'hb;
+localparam bit [3:0] CMDSTATE_PAUSE = 4'hc;
 
 typedef struct {
     logic [5:0] req_cmd;

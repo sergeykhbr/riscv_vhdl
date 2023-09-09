@@ -240,8 +240,14 @@ begin: comb_proc
                 v.initstate = IDLESTATE_CMD55;
                 v_clear_cmderr = 1'b1;
             end else if (wb_trx_cmderr != CMDERR_NONE) begin
-                v.sdstate = SDSTATE_INA;
-                v.sdtype = SDCARD_UNUSABLE;
+                if (r.cmd_req_cmd == CMD0) begin
+                    // Re-send CMD0
+                    v.initstate = IDLESTATE_CMD0;
+                    v_clear_cmderr = 1'b1;
+                end else begin
+                    v.sdstate = SDSTATE_INA;
+                    v.sdtype = SDCARD_UNUSABLE;
+                end
             end else begin
                 // Parse Rx response:
                 case (r.cmd_req_rn)
@@ -286,9 +292,10 @@ begin: comb_proc
             end
             if (r.clkcnt >= 7'h49) begin
                 v.sdstate = SDSTATE_IDLE;
+            end
+            if (r.clkcnt <= 7'h3f) begin
+            end else begin
                 v.cmd_set_low = 1'b0;
-            end else if (r.clkcnt > 7'h02) begin
-                v.cmd_set_low = 1'b1;
             end
         end
         SDSTATE_IDLE: begin

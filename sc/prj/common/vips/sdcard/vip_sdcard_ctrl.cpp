@@ -55,7 +55,7 @@ vip_sdcard_ctrl::vip_sdcard_ctrl(sc_module_name name,
     sensitive << r.preinit_cnt;
     sensitive << r.delay_cnt;
     sensitive << r.powerup_done;
-    sensitive << r.cmd_resp_ready;
+    sensitive << r.cmd_req_ready;
     sensitive << r.cmd_resp_valid;
     sensitive << r.cmd_resp_valid_delayed;
     sensitive << r.cmd_resp_data32;
@@ -80,7 +80,7 @@ void vip_sdcard_ctrl::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.preinit_cnt, pn + ".r_preinit_cnt");
         sc_trace(o_vcd, r.delay_cnt, pn + ".r_delay_cnt");
         sc_trace(o_vcd, r.powerup_done, pn + ".r_powerup_done");
-        sc_trace(o_vcd, r.cmd_resp_ready, pn + ".r_cmd_resp_ready");
+        sc_trace(o_vcd, r.cmd_req_ready, pn + ".r_cmd_req_ready");
         sc_trace(o_vcd, r.cmd_resp_valid, pn + ".r_cmd_resp_valid");
         sc_trace(o_vcd, r.cmd_resp_valid_delayed, pn + ".r_cmd_resp_valid_delayed");
         sc_trace(o_vcd, r.cmd_resp_data32, pn + ".r_cmd_resp_data32");
@@ -107,80 +107,136 @@ void vip_sdcard_ctrl::comb() {
         v.powerup_done = 1;
     }
 
-    switch (r.sdstate.read()) {
-    case SDSTATE_PRE_INIT:
-        // Wait several (72) clocks to switch into idle state
-        if (r.preinit_cnt.read() >= 5) {
-            v.sdstate = SDSTATE_IDLE;
-        } else {
-            v.preinit_cnt = (r.preinit_cnt.read() + 1);
-        }
-        break;
-    case SDSTATE_IDLE:
-        switch (i_cmd_req_cmd.read()) {
-        case 8:                                             // CMD8: SEND_IF_COND. Send memory Card interface condition
-            // [21] PCIe 1.2V support
-            // [20] PCIe availability
-            // [19:16] Voltage supply
-            // [15:8] check pattern
-            v.cmd_resp_valid = 1;
-            v.delay_cnt = 20;
-            vb_resp_data32[13] = (i_cmd_req_data.read()[13] & CFG_SDCARD_PCIE_1_2V_);
-            vb_resp_data32[12] = (i_cmd_req_data.read()[12] & CFG_SDCARD_PCIE_AVAIL_);
-            vb_resp_data32(11, 8) = (i_cmd_req_data.read()(11, 8) & CFG_SDCARD_VHS_);
-            vb_resp_data32(7, 0) = i_cmd_req_data.read()(7, 0);
+    if (i_cmd_req_valid.read() == 1) {
+        switch (r.sdstate.read()) {
+        case SDSTATE_IDLE:
+            switch (i_cmd_req_cmd.read()) {
+            case 0:                                         // CMD0: GO_IDLE_STATE.
+                v.cmd_resp_valid = 1;
+                vb_resp_data32 = 0;
+                v.delay_cnt = 20;
+                break;
+            case 8:                                         // CMD8: SEND_IF_COND.
+                // Send memory Card interface condition:
+                // [21] PCIe 1.2V support
+                // [20] PCIe availability
+                // [19:16] Voltage supply
+                // [15:8] check pattern
+                v.cmd_resp_valid = 1;
+                v.delay_cnt = 20;
+                vb_resp_data32[13] = (i_cmd_req_data.read()[13] & CFG_SDCARD_PCIE_1_2V_);
+                vb_resp_data32[12] = (i_cmd_req_data.read()[12] & CFG_SDCARD_PCIE_AVAIL_);
+                vb_resp_data32(11, 8) = (i_cmd_req_data.read()(11, 8) & CFG_SDCARD_VHS_);
+                vb_resp_data32(7, 0) = i_cmd_req_data.read()(7, 0);
+                break;
+            case 55:                                        // CMD55: APP_CMD.
+                vb_resp_data32 = 0;
+                break;
+            case 41:                                        // ACMD41: SD_SEND_OP_COND.
+                // Send host capacity info:
+                // [39] BUSY, active LOW
+                // [38] HCS (OCR[30]) Host Capacity
+                // [36] XPC
+                // [32] S18R
+                // [31:8] VDD Voltage Window (OCR[23:0])
+                v.cmd_resp_valid = 1;
+                v.delay_cnt = 20;
+                vb_resp_data32[31] = r.powerup_done.read();
+                vb_resp_data32(23, 0) = (i_cmd_req_data.read()(23, 0) & CFG_SDCARD_VDD_VOLTAGE_WINDOW_);
+                break;
+                if ((i_cmd_req_data.read()(23, 0) & CFG_SDCARD_VDD_VOLTAGE_WINDOW_) == 0) {
+                    // OCR check failed:
+                    v.sdstate = SDSTATE_INA;
+                } else if (r.powerup_done.read() == 1) {
+                    v.sdstate = SDSTATE_READY;
+                }
+            default:
+                // Illegal commands in 'idle' state:
+                v.cmd_resp_valid = 1;
+                vb_resp_data32 = ~0ull;
+                break;
+            }
             break;
-        case 55:                                            // CMD55: APP_CMD. 
-            vb_resp_data32 = 0;
+        case SDSTATE_READY:
+            switch (i_cmd_req_cmd.read()) {
+            case 0:                                         // CMD0: GO_IDLE_STATE.
+                v.cmd_resp_valid = 1;
+                vb_resp_data32 = 0;
+                v.delay_cnt = 2;
+                v.sdstate = SDSTATE_IDLE;
+                break;
+                break;
+            case 2:                                         // CMD2: .
+                v.cmd_resp_valid = 1;
+                v.delay_cnt = 1;
+                v.sdstate = SDSTATE_IDENT;
+                break;
+                break;
+            case 11:                                        // CMD11: .
+                v.cmd_resp_valid = 1;
+                v.delay_cnt = 1;
+                break;
+                break;
+            default:
+                // Illegal commands in 'ready' state:
+                v.cmd_resp_valid = 1;
+                vb_resp_data32 = ~0ull;
+                break;
+            }
             break;
-        case 41:                                            // ACMD41: SD_SEND_OP_COND. Send host capacity info
-            // [39] BUSY, active LOW
-            // [38] HCS (OCR[30]) Host Capacity
-            // [36] XPC
-            // [32] S18R
-            // [31:8] VDD Voltage Window (OCR[23:0])
-            v.cmd_resp_valid = 1;
-            v.delay_cnt = 20;
-            vb_resp_data32[31] = r.powerup_done.read();
-            vb_resp_data32(23, 0) = (i_cmd_req_data.read()(23, 0) & CFG_SDCARD_VDD_VOLTAGE_WINDOW_);
+        case SDSTATE_IDENT:
+            switch (i_cmd_req_cmd.read()) {
+            case 0:                                         // CMD0: GO_IDLE_STATE.
+                v.cmd_resp_valid = 1;
+                vb_resp_data32 = 0;
+                v.delay_cnt = 2;
+                v.sdstate = SDSTATE_IDLE;
+                break;
+                break;
+            case 3:                                         // CMD3: .
+                v.cmd_resp_valid = 1;
+                v.delay_cnt = 1;
+                v.sdstate = SDSTATE_STBY;
+                break;
+                break;
+            default:
+                // Illegal commands in 'stby' state:
+                v.cmd_resp_valid = 1;
+                vb_resp_data32 = ~0ull;
+                break;
+            }
+            break;
+        case SDSTATE_STBY:
+            break;
+        case SDSTATE_TRAN:
+            break;
+        case SDSTATE_DATA:
+            break;
+        case SDSTATE_RCV:
+            break;
+        case SDSTATE_PRG:
+            break;
+        case SDSTATE_DIS:
+            break;
+        case SDSTATE_INA:
             break;
         default:
-            vb_resp_data32 = 0;
             break;
         }
-        break;
-    case SDSTATE_READY:
-        break;
-    case SDSTATE_IDENT:
-        break;
-    case SDSTATE_STBY:
-        break;
-    case SDSTATE_TRAN:
-        break;
-    case SDSTATE_DATA:
-        break;
-    case SDSTATE_RCV:
-        break;
-    case SDSTATE_PRG:
-        break;
-    case SDSTATE_DIS:
-        break;
-    case SDSTATE_INA:
-        break;
-    default:
-        break;
     }
 
     v.cmd_resp_data32 = vb_resp_data32;
-    v.cmd_resp_ready = (!r.delay_cnt.read().or_reduce());
-    if (r.delay_cnt.read().or_reduce() == 0) {
-        v.cmd_resp_valid_delayed = r.cmd_resp_valid;
-        v.cmd_resp_valid = 0;
-    } else {
-        v.delay_cnt = (r.delay_cnt.read() - 1);
+    v.cmd_req_ready = (!r.delay_cnt.read().or_reduce());
+    if (r.cmd_resp_valid.read() == 1) {
+        if (r.delay_cnt.read().or_reduce() == 0) {
+            v.cmd_resp_valid_delayed = r.cmd_resp_valid;
+            v.cmd_resp_valid = 0;
+        } else {
+            v.delay_cnt = (r.delay_cnt.read() - 1);
+        }
     }
 
-    o_cmd_req_ready = r.cmd_resp_ready;
+    o_cmd_req_ready = r.cmd_req_ready;
     o_cmd_resp_valid = r.cmd_resp_valid_delayed;
     o_cmd_resp_data32 = r.cmd_resp_data32;
 }
