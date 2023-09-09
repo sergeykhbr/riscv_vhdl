@@ -12,7 +12,9 @@
 set -e
 set -x
 
+# folder of current script
 cd $(dirname "$0")
+cd ../
 
 #if $1 is not set then use "build" as the default
 BUILD_DIR=${1:-build}
