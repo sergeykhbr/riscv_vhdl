@@ -22,16 +22,18 @@ VCPKG_DIR="$HOME/vcpkg"
 if [[ -d "$VCPKG_DIR" ]]; then TOOLCHAIN="$VCPKG_DIR/scripts/buildsystems/vcpkg.cmake"; else TOOLCHAIN=False; fi
 
 echo "---- build-project.sh ----"
+echo "pwd: $PWD"
 echo "BUILD_DIR: $BUILD_DIR"
 echo "VCPKG_DIR: $VCPKG_DIR"
 echo "CC: $CC"
 echo "CXX: $CXX"
 echo "CXXFLAGS: $CXXFLAGS"
 echo "CMAKE_TOOLCHAIN_FILE: $TOOLCHAIN"
+echo "CCACHE_DIR: $CCACHE_DIR"
 echo "--------------------------"
 
 if [ -n "$CCACHE_DIR" ]; then
-    mkdir -p "$CCACHE_DIR" && ./ci-ccache-maint.sh
+    #mkdir -p "$CCACHE_DIR" && ./ci-ccache-maint.sh
 fi
 
 mkdir "$BUILD_DIR"
