@@ -32,9 +32,9 @@ echo "CMAKE_TOOLCHAIN_FILE: $TOOLCHAIN"
 echo "CCACHE_DIR: $CCACHE_DIR"
 echo "--------------------------"
 
-if [ -n "$CCACHE_DIR" ]; then
-    #mkdir -p "$CCACHE_DIR" && ./ci-ccache-maint.sh
-fi
+#if [ -n "$CCACHE_DIR" ]; then
+#    mkdir -p "$CCACHE_DIR" && ./ci-ccache-maint.sh
+#fi
 
 mkdir "$BUILD_DIR"
 cmake -S ./debugger/cmake -DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN" -B "$BUILD_DIR"
