@@ -1,6 +1,8 @@
 System-On-Chip template based on synthesizable processor compliant with the RISC-V architecture.
 =====================
 
+[![CI](https://github.com/sergeykhbr/riscv_vhdl/workflows/build/badge.svg)](https://github.com/sergeykhbr/riscv_vhdl/actions)
+
 ## Howto build FPGA bitstream or RTL simulation:
 
 - To build KC705 bitstream file:
@@ -13,6 +15,14 @@ System-On-Chip template based on synthesizable processor compliant with the RISC
         $ cd sv/prj/impl/asic_sim
         $ make build
         $ make gui
+
+- To build and run precise SystemC simulation (see github actions):
+
+        $ cmake -S ./debugger/cmake -B build
+        $ cd build
+        $ make
+        $ cd linuxbuild/bin
+        $ ./run_sysc_river_x1_gui.sh
 
 Note: Information related to VHDL source code is obsolete and currently is updating.
 
