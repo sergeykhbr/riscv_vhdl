@@ -63,5 +63,5 @@ jobs:
               env:
                 QT_PATH: ${{github.workspace}}/${{env.Qt6_DIR}}
                 SYSTEMC_SRC: /usr/include
-                SYSTEMC_LIB: /usr/lib
+                SYSTEMC_LIB: /usr/lib/x86_64-linux-gnu
 

@@ -68,7 +68,7 @@ template<int iwidth, int shiftwidth>
 void zeroenc<iwidth, shiftwidth>::gen0() {
     wb_muxind[iwidth] = 0;
     for (int i = (iwidth - 1); i >= 0; i--) {
-        wb_muxind[i] = (i_value.read()[i] == 1) ? i : wb_muxind[(i + 1)].read();
+        wb_muxind[i] = (i_value.read()[i] == 1) ? i : wb_muxind[(i + 1)].read().to_int();
     }
     o_shift = wb_muxind[0];
 }

@@ -18,7 +18,7 @@ package ic_dport_pkg;
 import river_cfg_pkg::*;
 import types_river_pkg::*;
 
-localparam bit [CFG_CPU_MAX-1:0] ALL_CPU_MASK = '1;
+localparam bit [CFG_CPU_MAX-1:0] ALL_CPU_MASK = ((2**CFG_CPU_MAX) - 1);
 
 typedef struct {
     logic [CFG_LOG2_CPU_MAX-1:0] hartsel;

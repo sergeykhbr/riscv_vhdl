@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.4.0)
+cmake_minimum_required(VERSION 3.6)
 project(cpu_sysc_plugin DESCRIPTION "cpu_sysc_plugin shared library")
 
 if (NOT DEFINED ENV{SYSTEMC_SRC} OR NOT DEFINED ENV{SYSTEMC_LIB})

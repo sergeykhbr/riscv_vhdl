@@ -58,7 +58,7 @@ SC_MODULE(ic_dport) {
  private:
     bool async_reset_;
 
-    static const uint8_t ALL_CPU_MASK = ~0ul;
+    static const uint8_t ALL_CPU_MASK = ((1 << CFG_CPU_MAX) - 1);
 
     struct ic_dport_registers {
         sc_signal<sc_uint<CFG_LOG2_CPU_MAX>> hartsel;

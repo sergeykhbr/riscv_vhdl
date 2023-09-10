@@ -136,6 +136,7 @@ begin: comb_proc
             end else if ((|r.watchdog) == 1'b0) begin
                 v.cmderr = CMDERR_NO_RESPONSE;
                 v.cmdstate = CMDSTATE_IDLE;
+                v.resp_valid = 1'b1;
             end
         end else if (r.cmdstate == CMDSTATE_RESP_TRANSBIT) begin
             // [46](134) transmission bit (R2);
@@ -147,6 +148,7 @@ begin: comb_proc
             end else begin
                 v.cmderr = CMDERR_WRONG_RESP_STARTBIT;
                 v.cmdstate = CMDSTATE_IDLE;
+                v.resp_valid = 1'b1;
             end
         end else if (r.cmdstate == CMDSTATE_RESP_CMD_MIRROR) begin
             // [45:40] [133:128] command index mirrored: 111111 for R2 and R3 (OCR)

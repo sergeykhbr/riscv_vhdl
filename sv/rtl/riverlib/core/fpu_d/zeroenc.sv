@@ -29,7 +29,7 @@ logic [shiftwidth-1:0] wb_muxind[0: (iwidth + 1) - 1];
 
     assign wb_muxind[iwidth] = '0;
     for (genvar i = (iwidth - 1); i >= 0; i--) begin: shftgen
-        assign wb_muxind[i] = (i_value[i] == 1'b1) ? i : wb_muxind[(i + 1)];
+        assign wb_muxind[i] = (i_value[i] == 1'b1) ? i : int'(wb_muxind[(i + 1)]);
     end: shftgen
     assign o_shift = wb_muxind[0];
 

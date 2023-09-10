@@ -216,6 +216,7 @@ void sdctrl_cmd_transmitter::comb() {
             } else if (r.watchdog.read().or_reduce() == 0) {
                 v.cmderr = CMDERR_NO_RESPONSE;
                 v.cmdstate = CMDSTATE_IDLE;
+                v.resp_valid = 1;
             }
         } else if (r.cmdstate.read() == CMDSTATE_RESP_TRANSBIT) {
             // [46](134) transmission bit (R2);
@@ -227,6 +228,7 @@ void sdctrl_cmd_transmitter::comb() {
             } else {
                 v.cmderr = CMDERR_WRONG_RESP_STARTBIT;
                 v.cmdstate = CMDSTATE_IDLE;
+                v.resp_valid = 1;
             }
         } else if (r.cmdstate.read() == CMDSTATE_RESP_CMD_MIRROR) {
             // [45:40] [133:128] command index mirrored: 111111 for R2 and R3 (OCR)

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.4.0)
+cmake_minimum_required(VERSION 3.6)
 project(riscvdebugger)
 
 add_definitions(-DREPO_PATH="${CMAKE_CURRENT_SOURCE_DIR}/..")

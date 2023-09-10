@@ -1,3 +1,7 @@
+#!/bin/sh
+
+echo "QT_PATH=" $QT_PATH
+
 mkdir -pv $1/../qtlib
 mkdir -pv $1/../qtlib/platforms
 cp $QT_PATH/plugins/platforms/libqlinuxfb.so $1/../qtlib/platforms/

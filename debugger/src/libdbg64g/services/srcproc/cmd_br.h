@@ -47,7 +47,7 @@ class CmdBrRiscv : public CmdBr {
     explicit CmdBrRiscv(IService *parent) : CmdBr(parent) {}
 
  protected:
-    virtual void CmdBrRiscv::getSwBreakpointInstr(Reg64Type *instr, uint32_t *len) {
+    virtual void getSwBreakpointInstr(Reg64Type *instr, uint32_t *len) {
         if ((instr->val & 0x3) == 0x3) {
             instr->buf32[0] = 0x00100073;  // EBREAK instruction
 		    *len = 4;

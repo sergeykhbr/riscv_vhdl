@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.4.0)
+cmake_minimum_required(VERSION 3.6)
 project(gui_plugin DESCRIPTION "gui_plugin shared library")
 
 set(CMAKE_AUTOMOC ON)
