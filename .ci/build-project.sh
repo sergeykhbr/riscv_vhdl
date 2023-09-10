@@ -18,15 +18,10 @@ cd ../
 
 #if $1 is not set then use "build" as the default
 BUILD_DIR=${1:-build}
-VCPKG_DIR="$HOME/vcpkg"
-
-# only pass toolchain file to CMake if Vcpkg is installed
-if [[ -d "$VCPKG_DIR" ]]; then TOOLCHAIN="$VCPKG_DIR/scripts/buildsystems/vcpkg.cmake"; else TOOLCHAIN=False; fi
 
 echo "---- build-project.sh ----"
 echo "pwd: $PWD"
 echo "BUILD_DIR: $BUILD_DIR"
-echo "VCPKG_DIR: $VCPKG_DIR"
 echo "CC: $CC"
 echo "CXX: $CXX"
 echo "CXXFLAGS: $CXXFLAGS"
@@ -39,5 +34,5 @@ echo "--------------------------"
 #fi
 
 mkdir "$BUILD_DIR"
-cmake -S ./debugger/cmake -DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN" -B "$BUILD_DIR"
+cmake -S ./debugger/cmake -B "$BUILD_DIR"
 cmake --build "$BUILD_DIR" -j

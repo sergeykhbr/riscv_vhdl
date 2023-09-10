@@ -45,7 +45,7 @@ jobs:
             - name: Install Linux packages for build
               run: |
                   sudo apt-get update
-                  sudo apt-get install -y ccache g++-12 libstdc++-12-dev libsystemc libsystemc-dev
+                  sudo apt-get install -y ccache g++-12 libstdc++-12-dev libsystemc libsystemc-dev cmake
 
             - name: Install Qt6
               uses: jurplel/install-qt-action@v3
@@ -54,9 +54,6 @@ jobs:
                 host:    linux
                 dir:     $RUNNER_TEMP
                 modules: qtscxml
-
-            - name: Install vcpkg
-              run: /bin/bash .ci/install-vcpkg.sh
 
             - name: Build 
               run: /bin/bash .ci/build-project.sh

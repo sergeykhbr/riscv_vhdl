@@ -71,10 +71,13 @@ add_executable(
 if(UNIX)
     target_link_libraries(riscvdebugger pthread rt dl libdbg64g)
 
+if (DEFINED ENV{QT_PATH})
     add_custom_command(TARGET riscvdebugger
 	        POST_BUILD
 	        COMMAND /bin/bash ${CMAKE_CURRENT_SOURCE_DIR}/post_build_event.sh "${CMAKE_CURRENT_BINARY_DIR}/linuxbuild/bin" "${CMAKE_CURRENT_SOURCE_DIR}"
 	        )
+endif()
+
 else()
 
     foreach(_source IN ITEMS ${_riscvdebugger_src})
