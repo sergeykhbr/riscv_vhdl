@@ -6,6 +6,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 set(CMAKE_PREFIX_PATH "$ENV{QT_PATH}//")
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Network Widgets)
 
 set(src_top "${CMAKE_CURRENT_SOURCE_DIR}/../../src")
 
@@ -52,8 +53,6 @@ else()
         source_group("${_group_path}" FILES "${_source}")
     endforeach()
 endif()
-
-find_package(Qt6 COMPONENTS Widgets Network REQUIRED)
 
 add_library(gui_plugin SHARED
     ${gui_plugin_src}

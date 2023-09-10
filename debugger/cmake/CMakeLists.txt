@@ -14,18 +14,42 @@ else()
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 endif()
 
+# Core simulator library
 add_subdirectory(libdbg64g)
+
+# Plugin example to interact with the core library
 add_subdirectory(simple_plugin)
+
+# Functional models of peripheries
 add_subdirectory(socsim_plugin)
-# Build systemc plugin only on windows. Cannot link it properly on linux.
+
+# Precise RISC-V System-on-Chip model. Full analog of the System Verilog.
+# Build systemc only if env. variables are defined:
+#    apt install libsystemc libsystemc-dev
+#    export SYSTEMC_SRC=/usr/include
+#    export SYSTEMC_LIB=/usr/lib/x86_64-linux-gnu
 if (DEFINED ENV{SYSTEMC_SRC} AND DEFINED ENV{SYSTEMC_LIB})
     add_subdirectory(cpu_sysc_plugin)
+    set(SYSC_PLUING_NAME, "cpu_sysc_plugin")
 else()
     message(WARNING "SYSTEMC_SRC and SYSTEMC_LIB are not set. SystemC cpu_sysc_plugin disabled")
+    set(SYSC_PLUING_NAME, "")
 endif()
+
+# ARM CPU functional model
 add_subdirectory(cpu_arm_plugin)
+
+# RISC-V CPU functional model
 add_subdirectory(cpu_fnc_plugin)
-add_subdirectory(gui_plugin)
+
+# Qt-based GUI interface (optional). Simulator can run without GUI.
+if (DEFINED ENV{QT_PATH})
+    add_subdirectory(gui_plugin)
+    set(GUI_PLUING_NAME, "gui_plugin")
+else()
+    message(WARNING "QT_PATH is not set. GUI gui_plugin disabled")
+    set(GUI_PLUING_NAME, "")
+endif()
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/../src/common
@@ -77,10 +101,13 @@ else()
 	        )
 
     target_link_libraries(riscvdebugger libdbg64g)
-if (DEFINED ENV{SYSTEMC_SRC} AND DEFINED ENV{SYSTEMC_LIB})
-    add_dependencies(riscvdebugger libdbg64g simple_plugin socsim_plugin cpu_sysc_plugin cpu_arm_plugin cpu_fnc_plugin gui_plugin)
-else()
-    add_dependencies(riscvdebugger libdbg64g simple_plugin socsim_plugin cpu_arm_plugin cpu_fnc_plugin gui_plugin)
-endif()
+    add_dependencies(riscvdebugger
+                     libdbg64g
+                     simple_plugin
+                     socsim_plugin
+                     ${SYSC_PLUING_NAME}
+                     cpu_arm_plugin
+                     cpu_fnc_plugin
+                     ${GUI_PLUING_NAME})
 endif()
   
