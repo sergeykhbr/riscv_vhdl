@@ -35,4 +35,5 @@ echo "--------------------------"
 
 mkdir "$BUILD_DIR"
 cmake -S ./debugger/cmake -B "$BUILD_DIR"
-cmake --build "$BUILD_DIR" -j
+cd $BUILD_DIR
+make

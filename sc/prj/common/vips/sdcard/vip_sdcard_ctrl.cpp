@@ -146,13 +146,13 @@ void vip_sdcard_ctrl::comb() {
                 v.delay_cnt = 20;
                 vb_resp_data32[31] = r.powerup_done.read();
                 vb_resp_data32(23, 0) = (i_cmd_req_data.read()(23, 0) & CFG_SDCARD_VDD_VOLTAGE_WINDOW_);
-                break;
                 if ((i_cmd_req_data.read()(23, 0) & CFG_SDCARD_VDD_VOLTAGE_WINDOW_) == 0) {
                     // OCR check failed:
                     v.sdstate = SDSTATE_INA;
                 } else if (r.powerup_done.read() == 1) {
                     v.sdstate = SDSTATE_READY;
                 }
+                break;
             default:
                 // Illegal commands in 'idle' state:
                 v.cmd_resp_valid = 1;
@@ -168,17 +168,14 @@ void vip_sdcard_ctrl::comb() {
                 v.delay_cnt = 2;
                 v.sdstate = SDSTATE_IDLE;
                 break;
-                break;
             case 2:                                         // CMD2: .
                 v.cmd_resp_valid = 1;
                 v.delay_cnt = 1;
                 v.sdstate = SDSTATE_IDENT;
                 break;
-                break;
             case 11:                                        // CMD11: .
                 v.cmd_resp_valid = 1;
                 v.delay_cnt = 1;
-                break;
                 break;
             default:
                 // Illegal commands in 'ready' state:
@@ -195,12 +192,10 @@ void vip_sdcard_ctrl::comb() {
                 v.delay_cnt = 2;
                 v.sdstate = SDSTATE_IDLE;
                 break;
-                break;
             case 3:                                         // CMD3: .
                 v.cmd_resp_valid = 1;
                 v.delay_cnt = 1;
                 v.sdstate = SDSTATE_STBY;
-                break;
                 break;
             default:
                 // Illegal commands in 'stby' state:

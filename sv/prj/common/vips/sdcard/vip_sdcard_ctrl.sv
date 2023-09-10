@@ -100,13 +100,13 @@ begin: comb_proc
                 v.delay_cnt = 32'h00000014;
                 vb_resp_data32[31] = r.powerup_done;
                 vb_resp_data32[23: 0] = (i_cmd_req_data[23: 0] & CFG_SDCARD_VDD_VOLTAGE_WINDOW);
-            end
                 if ((i_cmd_req_data[23: 0] & CFG_SDCARD_VDD_VOLTAGE_WINDOW) == 24'h000000) begin
                     // OCR check failed:
                     v.sdstate = SDSTATE_INA;
                 end else if (r.powerup_done == 1'b1) begin
                     v.sdstate = SDSTATE_READY;
                 end
+            end
             default: begin
                 // Illegal commands in 'idle' state:
                 v.cmd_resp_valid = 1'b1;
@@ -122,17 +122,14 @@ begin: comb_proc
                 v.delay_cnt = 32'h00000002;
                 v.sdstate = SDSTATE_IDLE;
             end
-            end
             6'h02: begin                                    // CMD2: .
                 v.cmd_resp_valid = 1'b1;
                 v.delay_cnt = 32'h00000001;
                 v.sdstate = SDSTATE_IDENT;
             end
-            end
             6'h0b: begin                                    // CMD11: .
                 v.cmd_resp_valid = 1'b1;
                 v.delay_cnt = 32'h00000001;
-            end
             end
             default: begin
                 // Illegal commands in 'ready' state:
@@ -149,12 +146,10 @@ begin: comb_proc
                 v.delay_cnt = 32'h00000002;
                 v.sdstate = SDSTATE_IDLE;
             end
-            end
             6'h03: begin                                    // CMD3: .
                 v.cmd_resp_valid = 1'b1;
                 v.delay_cnt = 32'h00000001;
                 v.sdstate = SDSTATE_STBY;
-            end
             end
             default: begin
                 // Illegal commands in 'stby' state:
