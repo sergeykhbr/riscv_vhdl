@@ -626,7 +626,7 @@ extern "C" void* RISCV_memshare_map(sharemem_def h, int sz) {
                         sz);
 #else
     ret = mmap(NULL, sz + 1, PROT_READ|PROT_WRITE, MAP_SHARED, h, 0);
-    if (ret < 0) {
+    if (reinterpret_cast<int>(ret) < 0) {
         ret = 0;
     }
 #endif
