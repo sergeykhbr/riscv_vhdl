@@ -30,10 +30,8 @@ add_subdirectory(socsim_plugin)
 #    export SYSTEMC_LIB=/usr/lib/x86_64-linux-gnu
 if (DEFINED ENV{SYSTEMC_SRC} AND DEFINED ENV{SYSTEMC_LIB})
     add_subdirectory(cpu_sysc_plugin)
-    set(SYSC_PLUING_NAME, "cpu_sysc_plugin")
 else()
     message(WARNING "SYSTEMC_SRC and SYSTEMC_LIB are not set. SystemC cpu_sysc_plugin disabled")
-    set(SYSC_PLUING_NAME, "")
 endif()
 
 # ARM CPU functional model
@@ -45,7 +43,7 @@ add_subdirectory(cpu_fnc_plugin)
 # Qt-based GUI interface (optional). Simulator can run without GUI.
 if (DEFINED ENV{QT_PATH})
     add_subdirectory(gui_plugin)
-    set(GUI_PLUING_NAME, "gui_plugin")
+    set(GUI_PLUING_NAME, gui_plugin)
 else()
     message(WARNING "QT_PATH is not set. GUI gui_plugin disabled")
     set(GUI_PLUING_NAME, "")
@@ -108,9 +106,16 @@ else()
                      libdbg64g
                      simple_plugin
                      socsim_plugin
-                     ${SYSC_PLUING_NAME}
                      cpu_arm_plugin
-                     cpu_fnc_plugin
-                     ${GUI_PLUING_NAME})
+                     cpu_fnc_plugin)
+
+if (DEFINED ENV{SYSTEMC_SRC} AND DEFINED ENV{SYSTEMC_LIB})
+    add_dependencies(riscvdebugger cpu_sysc_plugin)
+endif()
+
+if (DEFINED ENV{QT_PATH})
+    add_dependencies(riscvdebugger gui_plugin)
+endif()
+
 endif()
   

@@ -135,7 +135,7 @@ SC_MODULE(sdctrl) {
         iv.cmd_resp_reg = 0;
         iv.crc16_clear = 1;
         iv.dat = ~0ul;
-        iv.dat_dir = DIR_OUTPUT;
+        iv.dat_dir = DIR_INPUT;
         iv.sdstate = SDSTATE_PRE_INIT;
         iv.initstate = IDLESTATE_CMD0;
         iv.readystate = READYSTATE_CMD11;

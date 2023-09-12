@@ -28,6 +28,11 @@ sdctrl_regs::sdctrl_regs(sc_module_name name,
     o_pcfg("o_pcfg"),
     i_apbi("i_apbi"),
     o_apbo("o_apbo"),
+    i_sd_cmd("i_sd_cmd"),
+    i_sd_dat0("i_sd_dat0"),
+    i_sd_dat1("i_sd_dat1"),
+    i_sd_dat2("i_sd_dat2"),
+    i_sd_dat3("i_sd_dat3"),
     o_sck("o_sck"),
     o_sck_posedge("o_sck_posedge"),
     o_sck_negedge("o_sck_negedge"),
@@ -76,6 +81,11 @@ sdctrl_regs::sdctrl_regs(sc_module_name name,
     sensitive << i_nrst;
     sensitive << i_pmapinfo;
     sensitive << i_apbi;
+    sensitive << i_sd_cmd;
+    sensitive << i_sd_dat0;
+    sensitive << i_sd_dat1;
+    sensitive << i_sd_dat2;
+    sensitive << i_sd_dat3;
     sensitive << i_400khz_ena;
     sensitive << i_sdtype;
     sensitive << i_sdstate;
@@ -131,6 +141,11 @@ void sdctrl_regs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_pcfg, o_pcfg.name());
         sc_trace(o_vcd, i_apbi, i_apbi.name());
         sc_trace(o_vcd, o_apbo, o_apbo.name());
+        sc_trace(o_vcd, i_sd_cmd, i_sd_cmd.name());
+        sc_trace(o_vcd, i_sd_dat0, i_sd_dat0.name());
+        sc_trace(o_vcd, i_sd_dat1, i_sd_dat1.name());
+        sc_trace(o_vcd, i_sd_dat2, i_sd_dat2.name());
+        sc_trace(o_vcd, i_sd_dat3, i_sd_dat3.name());
         sc_trace(o_vcd, o_sck, o_sck.name());
         sc_trace(o_vcd, o_sck_posedge, o_sck_posedge.name());
         sc_trace(o_vcd, o_sck_negedge, o_sck_negedge.name());
@@ -225,6 +240,11 @@ void sdctrl_regs::comb() {
         break;
     case 0x1:                                               // {0x04, 'RW', 'control', 'Global Control register'}
         vb_rdata[0] = r.sclk_ena.read();
+        vb_rdata[4] = i_sd_dat0.read();
+        vb_rdata[5] = i_sd_dat1.read();
+        vb_rdata[6] = i_sd_dat2.read();
+        vb_rdata[7] = i_sd_dat3.read();
+        vb_rdata[8] = i_sd_cmd.read();
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             v.sclk_ena = wb_req_wdata.read()[0];
             v.clear_cmderr = wb_req_wdata.read()[1];

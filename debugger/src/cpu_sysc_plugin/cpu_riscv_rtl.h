@@ -126,10 +126,10 @@ class CpuRiscV_RTL : public IService,
     sc_signal<bool, SC_UNCHECKED_WRITERS> w_sd_cmd;
     //sc_signal<bool, SC_MANY_WRITERS> w_sd_cmd;
     sc_signal<bool> w_sd_sclk;
-    sc_signal<bool, SC_MANY_WRITERS> w_sd_dat0;
-    sc_signal<bool, SC_MANY_WRITERS> w_sd_dat1;
-    sc_signal<bool, SC_MANY_WRITERS> w_sd_dat2;
-    sc_signal<bool, SC_MANY_WRITERS> w_sd_dat3;
+    sc_signal<bool, SC_UNCHECKED_WRITERS> w_sd_dat0;
+    sc_signal<bool, SC_UNCHECKED_WRITERS> w_sd_dat1;
+    sc_signal<bool, SC_UNCHECKED_WRITERS> w_sd_dat2;
+    sc_signal<bool, SC_UNCHECKED_WRITERS> w_sd_dat3;
     sc_signal<bool> w_sd_detected;
     sc_signal<bool> w_sd_protect;
 

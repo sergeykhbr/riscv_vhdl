@@ -36,6 +36,18 @@ logic [7:0] wb_rdata;
 logic w_cmd_in;
 logic w_cmd_out;
 logic w_cmd_dir;
+logic w_dat0_in;
+logic w_dat1_in;
+logic w_dat2_in;
+logic w_dat3_in;
+logic w_dat0_out;
+logic w_dat1_out;
+logic w_dat2_out;
+logic w_dat3_out;
+logic w_dat0_dir;
+logic w_dat1_dir;
+logic w_dat2_dir;
+logic w_dat3_dir;
 logic w_cmd_req_valid;
 logic [5:0] wb_cmd_req_cmd;
 logic [31:0] wb_cmd_req_data;
@@ -49,6 +61,38 @@ iobuf_tech iobufcmd0 (
     .o(w_cmd_in),
     .i(w_cmd_out),
     .t(w_cmd_dir)
+);
+
+
+iobuf_tech iobufdat0 (
+    .io(io_dat0),
+    .o(w_dat0_in),
+    .i(w_dat0_out),
+    .t(w_dat0_dir)
+);
+
+
+iobuf_tech iobufdat1 (
+    .io(io_dat1),
+    .o(w_dat1_in),
+    .i(w_dat1_out),
+    .t(w_dat1_dir)
+);
+
+
+iobuf_tech iobufdat2 (
+    .io(io_dat2),
+    .o(w_dat2_in),
+    .i(w_dat2_out),
+    .t(w_dat2_dir)
+);
+
+
+iobuf_tech iobufdat3 (
+    .io(io_cd_dat3),
+    .o(w_dat3_in),
+    .i(w_dat3_out),
+    .t(w_dat3_dir)
 );
 
 
@@ -102,6 +146,15 @@ begin: comb_proc
     v_crc7_next = 0;
     v_crc7_in = 0;
 
+    w_dat0_dir = 1'b1;                                      // in:
+    w_dat1_dir = 1'b1;                                      // in:
+    w_dat2_dir = 1'b1;                                      // in:
+    w_dat3_dir = 1'b0;                                      // out: Emulate pull-up CardDetect value
+
+    w_dat0_out = 1'b1;
+    w_dat1_out = 1'b1;
+    w_dat2_out = 1'b1;
+    w_dat3_out = 1'b1;
 end: comb_proc
 
 endmodule: vip_sdcard_top

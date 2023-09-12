@@ -82,7 +82,7 @@ const sdctrl_registers sdctrl_r_reset = '{
     '0,                                 // cmd_resp_reg
     1'h1,                               // crc16_clear
     '1,                                 // dat
-    DIR_OUTPUT,                         // dat_dir
+    DIR_INPUT,                          // dat_dir
     SDSTATE_PRE_INIT,                   // sdstate
     IDLESTATE_CMD0,                     // initstate
     READYSTATE_CMD11,                   // readystate

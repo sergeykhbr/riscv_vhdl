@@ -21,7 +21,11 @@ namespace debugger {
 
 CpuRiscV_RTL::CpuRiscV_RTL(const char *name)  
     : IService(name), IHap(HAP_ConfigDone),
-    w_sd_cmd("w_sd_cmd") {
+    w_sd_cmd("w_sd_cmd"),
+    w_sd_dat0("w_sd_dat0"),
+    w_sd_dat1("w_sd_dat1"),
+    w_sd_dat2("w_sd_dat2"),
+    w_sd_dat3("w_sd_dat3") {
     registerInterface(static_cast<IThread *>(this));
     registerInterface(static_cast<IClock *>(this));
     registerInterface(static_cast<IHap *>(this));

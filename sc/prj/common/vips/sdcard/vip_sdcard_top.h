@@ -57,6 +57,18 @@ SC_MODULE(vip_sdcard_top) {
     sc_signal<bool> w_cmd_in;
     sc_signal<bool> w_cmd_out;
     sc_signal<bool> w_cmd_dir;
+    sc_signal<bool> w_dat0_in;
+    sc_signal<bool> w_dat1_in;
+    sc_signal<bool> w_dat2_in;
+    sc_signal<bool> w_dat3_in;
+    sc_signal<bool> w_dat0_out;
+    sc_signal<bool> w_dat1_out;
+    sc_signal<bool> w_dat2_out;
+    sc_signal<bool> w_dat3_out;
+    sc_signal<bool> w_dat0_dir;
+    sc_signal<bool> w_dat1_dir;
+    sc_signal<bool> w_dat2_dir;
+    sc_signal<bool> w_dat3_dir;
     sc_signal<bool> w_cmd_req_valid;
     sc_signal<sc_uint<6>> wb_cmd_req_cmd;
     sc_signal<sc_uint<32>> wb_cmd_req_data;
@@ -66,6 +78,10 @@ SC_MODULE(vip_sdcard_top) {
     sc_signal<bool> w_cmd_resp_ready;
 
     iobuf_tech *iobufcmd0;
+    iobuf_tech *iobufdat0;
+    iobuf_tech *iobufdat1;
+    iobuf_tech *iobufdat2;
+    iobuf_tech *iobufdat3;
     vip_sdcard_cmdio *cmdio0;
     vip_sdcard_ctrl *ctrl0;
 

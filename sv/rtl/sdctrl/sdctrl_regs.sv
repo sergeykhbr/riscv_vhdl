@@ -26,6 +26,11 @@ module sdctrl_regs #(
     output types_pnp_pkg::dev_config_type o_pcfg,           // APB sd-controller configuration registers descriptor
     input types_amba_pkg::apb_in_type i_apbi,               // APB Slave to Bridge interface
     output types_amba_pkg::apb_out_type o_apbo,             // APB Bridge to Slave interface
+    input logic i_sd_cmd,
+    input logic i_sd_dat0,
+    input logic i_sd_dat1,
+    input logic i_sd_dat2,
+    input logic i_sd_dat3,
     output logic o_sck,                                     // SD-card clock usually upto 50 MHz
     output logic o_sck_posedge,                             // Strob just before positive edge
     output logic o_sck_negedge,                             // Strob just before negative edge
@@ -130,6 +135,11 @@ begin: comb_proc
     end
     10'h001: begin                                          // {0x04, 'RW', 'control', 'Global Control register'}
         vb_rdata[0] = r.sclk_ena;
+        vb_rdata[4] = i_sd_dat0;
+        vb_rdata[5] = i_sd_dat1;
+        vb_rdata[6] = i_sd_dat2;
+        vb_rdata[7] = i_sd_dat3;
+        vb_rdata[8] = i_sd_cmd;
         if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
             v.sclk_ena = wb_req_wdata[0];
             v.clear_cmderr = wb_req_wdata[1];

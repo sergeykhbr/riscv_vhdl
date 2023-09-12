@@ -87,6 +87,11 @@ sdctrl::sdctrl(sc_module_name name,
     regs0->o_pcfg(o_pcfg);
     regs0->i_apbi(i_apbi);
     regs0->o_apbo(o_apbo);
+    regs0->i_sd_cmd(i_cmd);
+    regs0->i_sd_dat0(i_dat0);
+    regs0->i_sd_dat1(i_dat1);
+    regs0->i_sd_dat2(i_dat2);
+    regs0->i_sd_dat3(i_cd_dat3);
     regs0->o_sck(o_sclk);
     regs0->o_sck_posedge(w_regs_sck_posedge);
     regs0->o_sck_negedge(w_regs_sck);

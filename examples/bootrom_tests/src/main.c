@@ -86,18 +86,38 @@ int main() {
 
     *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 0)) = (0 << 24) | 49;  // [31:24]=20 MHz;  [23:0]=400 KHz
     *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 4)) = 0x1;  // enable sdctrl sclk
-    *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 8)) = 0xFFFF;  // Increase default watchdog to detect 'no response'
+    *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 8)) = 0x0FFF;  // Increase default watchdog to detect 'no response'
     uint32_t cmd_status;
     uint32_t cmd_err;
     uint32_t sdstate;
     uint32_t t1;
     do {
+        t1 = *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 0x04));
+        printf_uart("x04: cmd:%d {cd,dat2,da1,dat0} %d%d%d%d\r\n",
+                   (t1 >> 8) & 1,
+                   (t1 >> 7) & 1,
+                   (t1 >> 6) & 1,
+                   (t1 >> 5) & 1,
+                   (t1 >> 4) & 1
+                   );
+
         cmd_status = *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 0x10));
         cmd_err = cmd_status & 0xF;
         sdstate = (cmd_status >> 8) & 0xF;
-        printf_uart("status:%04x;err:%1x;sdstate:%1x\r\n", cmd_status, cmd_err, sdstate);
+        printf_uart("x10_status:%04x;err:%1x;cmdstate:%1d;sdstate:%1d;type:%d\r\n",
+                   cmd_status,
+                   cmd_err,
+                   (cmd_status >> 4) & 0xF,
+                   sdstate,
+                   (cmd_status >> 12) & 0x7);
         t1 = *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 0x14));
-        printf_uart("last_resp: %08x\r\n", t1);
+        printf_uart("x14_last_resp:%08x;req_cmd:%d,resp_cmd:%d;crc_rx:%02x,crc_calc:%02x\r\n",
+                    t1,
+                    (t1 >> 0) & 0x3F,
+                    (t1 >> 8) & 0x3F,
+                    (t1 >> 16) & 0x7F,
+                    (t1 >> 24) & 0x7F
+                    );
         t1 = *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 0x18));
         printf_uart("last_arg: %08x\r\n", t1);
     } while (sdstate != 3);  // SDSTATE=3 (STBY)

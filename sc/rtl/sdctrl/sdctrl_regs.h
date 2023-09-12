@@ -30,6 +30,11 @@ SC_MODULE(sdctrl_regs) {
     sc_out<dev_config_type> o_pcfg;                         // APB sd-controller configuration registers descriptor
     sc_in<apb_in_type> i_apbi;                              // APB Slave to Bridge interface
     sc_out<apb_out_type> o_apbo;                            // APB Bridge to Slave interface
+    sc_in<bool> i_sd_cmd;
+    sc_in<bool> i_sd_dat0;
+    sc_in<bool> i_sd_dat1;
+    sc_in<bool> i_sd_dat2;
+    sc_in<bool> i_sd_dat3;
     sc_out<bool> o_sck;                                     // SD-card clock usually upto 50 MHz
     sc_out<bool> o_sck_posedge;                             // Strob just before positive edge
     sc_out<bool> o_sck_negedge;                             // Strob just before negative edge

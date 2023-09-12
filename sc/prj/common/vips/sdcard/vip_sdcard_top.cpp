@@ -32,6 +32,10 @@ vip_sdcard_top::vip_sdcard_top(sc_module_name name,
 
     async_reset_ = async_reset;
     iobufcmd0 = 0;
+    iobufdat0 = 0;
+    iobufdat1 = 0;
+    iobufdat2 = 0;
+    iobufdat3 = 0;
     cmdio0 = 0;
     ctrl0 = 0;
 
@@ -40,6 +44,34 @@ vip_sdcard_top::vip_sdcard_top(sc_module_name name,
     iobufcmd0->o(w_cmd_in);
     iobufcmd0->i(w_cmd_out);
     iobufcmd0->t(w_cmd_dir);
+
+
+    iobufdat0 = new iobuf_tech("iobufdat0");
+    iobufdat0->io(io_dat0);
+    iobufdat0->o(w_dat0_in);
+    iobufdat0->i(w_dat0_out);
+    iobufdat0->t(w_dat0_dir);
+
+
+    iobufdat1 = new iobuf_tech("iobufdat1");
+    iobufdat1->io(io_dat1);
+    iobufdat1->o(w_dat1_in);
+    iobufdat1->i(w_dat1_out);
+    iobufdat1->t(w_dat1_dir);
+
+
+    iobufdat2 = new iobuf_tech("iobufdat2");
+    iobufdat2->io(io_dat2);
+    iobufdat2->o(w_dat2_in);
+    iobufdat2->i(w_dat2_out);
+    iobufdat2->t(w_dat2_dir);
+
+
+    iobufdat3 = new iobuf_tech("iobufdat3");
+    iobufdat3->io(io_cd_dat3);
+    iobufdat3->o(w_dat3_in);
+    iobufdat3->i(w_dat3_out);
+    iobufdat3->t(w_dat3_dir);
 
 
     cmdio0 = new vip_sdcard_cmdio("cmdio0", async_reset);
@@ -88,6 +120,18 @@ vip_sdcard_top::vip_sdcard_top(sc_module_name name,
     sensitive << w_cmd_in;
     sensitive << w_cmd_out;
     sensitive << w_cmd_dir;
+    sensitive << w_dat0_in;
+    sensitive << w_dat1_in;
+    sensitive << w_dat2_in;
+    sensitive << w_dat3_in;
+    sensitive << w_dat0_out;
+    sensitive << w_dat1_out;
+    sensitive << w_dat2_out;
+    sensitive << w_dat3_out;
+    sensitive << w_dat0_dir;
+    sensitive << w_dat1_dir;
+    sensitive << w_dat2_dir;
+    sensitive << w_dat3_dir;
     sensitive << w_cmd_req_valid;
     sensitive << wb_cmd_req_cmd;
     sensitive << wb_cmd_req_data;
@@ -100,6 +144,18 @@ vip_sdcard_top::vip_sdcard_top(sc_module_name name,
 vip_sdcard_top::~vip_sdcard_top() {
     if (iobufcmd0) {
         delete iobufcmd0;
+    }
+    if (iobufdat0) {
+        delete iobufdat0;
+    }
+    if (iobufdat1) {
+        delete iobufdat1;
+    }
+    if (iobufdat2) {
+        delete iobufdat2;
+    }
+    if (iobufdat3) {
+        delete iobufdat3;
     }
     if (cmdio0) {
         delete cmdio0;
@@ -122,6 +178,18 @@ void vip_sdcard_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (iobufcmd0) {
         iobufcmd0->generateVCD(i_vcd, o_vcd);
     }
+    if (iobufdat0) {
+        iobufdat0->generateVCD(i_vcd, o_vcd);
+    }
+    if (iobufdat1) {
+        iobufdat1->generateVCD(i_vcd, o_vcd);
+    }
+    if (iobufdat2) {
+        iobufdat2->generateVCD(i_vcd, o_vcd);
+    }
+    if (iobufdat3) {
+        iobufdat3->generateVCD(i_vcd, o_vcd);
+    }
     if (cmdio0) {
         cmdio0->generateVCD(i_vcd, o_vcd);
     }
@@ -141,6 +209,15 @@ void vip_sdcard_top::comb() {
     v_crc7_next = 0;
     v_crc7_in = 0;
 
+    w_dat0_dir = 1;                                         // in:
+    w_dat1_dir = 1;                                         // in:
+    w_dat2_dir = 1;                                         // in:
+    w_dat3_dir = 0;                                         // out: Emulate pull-up CardDetect value
+
+    w_dat0_out = 1;
+    w_dat1_out = 1;
+    w_dat2_out = 1;
+    w_dat3_out = 1;
 }
 
 }  // namespace debugger
