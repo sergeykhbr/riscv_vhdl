@@ -24,6 +24,8 @@ vip_sdcard_cmdio::vip_sdcard_cmdio(sc_module_name name,
     : sc_module(name),
     i_nrst("i_nrst"),
     i_clk("i_clk"),
+    i_cs("i_cs"),
+    o_spi_mode("o_spi_mode"),
     i_cmd("i_cmd"),
     o_cmd("o_cmd"),
     o_cmd_dir("o_cmd_dir"),
@@ -50,6 +52,7 @@ vip_sdcard_cmdio::vip_sdcard_cmdio(sc_module_name name,
 
     SC_METHOD(comb);
     sensitive << i_nrst;
+    sensitive << i_cs;
     sensitive << i_cmd;
     sensitive << i_cmd_req_ready;
     sensitive << i_cmd_resp_valid;
@@ -60,6 +63,8 @@ vip_sdcard_cmdio::vip_sdcard_cmdio(sc_module_name name,
     sensitive << w_crc7_dat;
     sensitive << wb_crc7;
     sensitive << r.clkcnt;
+    sensitive << r.cs;
+    sensitive << r.spi_mode;
     sensitive << r.cmdz;
     sensitive << r.cmd_dir;
     sensitive << r.cmd_rxshift;
@@ -88,6 +93,8 @@ vip_sdcard_cmdio::~vip_sdcard_cmdio() {
 void vip_sdcard_cmdio::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     std::string pn(name());
     if (o_vcd) {
+        sc_trace(o_vcd, i_cs, i_cs.name());
+        sc_trace(o_vcd, o_spi_mode, o_spi_mode.name());
         sc_trace(o_vcd, i_cmd, i_cmd.name());
         sc_trace(o_vcd, o_cmd, o_cmd.name());
         sc_trace(o_vcd, o_cmd_dir, o_cmd_dir.name());
@@ -99,6 +106,8 @@ void vip_sdcard_cmdio::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_cmd_resp_data32, i_cmd_resp_data32.name());
         sc_trace(o_vcd, o_cmd_resp_ready, o_cmd_resp_ready.name());
         sc_trace(o_vcd, r.clkcnt, pn + ".r_clkcnt");
+        sc_trace(o_vcd, r.cs, pn + ".r_cs");
+        sc_trace(o_vcd, r.spi_mode, pn + ".r_spi_mode");
         sc_trace(o_vcd, r.cmdz, pn + ".r_cmdz");
         sc_trace(o_vcd, r.cmd_dir, pn + ".r_cmd_dir");
         sc_trace(o_vcd, r.cmd_rxshift, pn + ".r_cmd_rxshift");
@@ -142,6 +151,7 @@ void vip_sdcard_cmdio::comb() {
 
     switch (r.cmd_state.read()) {
     case CMDSTATE_INIT:
+        v.spi_mode = 0;
         v.cmd_dir = 1;
         v_crc7_clear = 1;
         // Wait several (72) clocks to switch into idle state
@@ -151,6 +161,7 @@ void vip_sdcard_cmdio::comb() {
         break;
     case CMDSTATE_REQ_STARTBIT:
         if ((r.cmdz.read() == 1) && (i_cmd.read() == 0)) {
+            v.cs = i_cs;
             v_crc7_next = 1;
             v.cmd_state = CMDSTATE_REQ_TXBIT;
         } else {
@@ -200,6 +211,10 @@ void vip_sdcard_cmdio::comb() {
                 && (r.crc_calc.read() == r.crc_rx.read())) {
             v.cmd_state = CMDSTATE_WAIT_RESP;
             v.cmd_req_valid = 1;
+            if ((r.cmd_rxshift.read()(45, 40).or_reduce() == 0) && (r.cs.read() == 0)) {
+                // CMD0 with CS = 0 (CD_DAT3)
+                v.spi_mode = 1;
+            }
         } else {
             v.cmd_state = CMDSTATE_REQ_STARTBIT;
             v.cmd_dir = 1;

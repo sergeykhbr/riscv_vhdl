@@ -41,6 +41,7 @@ SC_MODULE(sdctrl_regs) {
     sc_out<sc_uint<16>> o_watchdog;                         // Number of sclk to detect no response
     sc_out<bool> o_clear_cmderr;                            // Clear cmderr from FW
     // Configuration parameters:
+    sc_out<bool> o_spi_mode;                                // SPI mode was selected from FW
     sc_out<bool> o_pcie_12V_support;                        // 0b: not asking 1.2V support
     sc_out<bool> o_pcie_available;                          // 0b: not asking PCIe availability
     sc_out<sc_uint<4>> o_voltage_supply;                    // 0=not defined; 1=2.7-3.6V; 2=reserved for Low Voltage Range
@@ -75,6 +76,7 @@ SC_MODULE(sdctrl_regs) {
 
     struct sdctrl_regs_registers {
         sc_signal<bool> sclk_ena;
+        sc_signal<bool> spi_mode;
         sc_signal<bool> clear_cmderr;
         sc_signal<sc_uint<24>> scaler_400khz;
         sc_signal<sc_uint<8>> scaler_data;
@@ -98,6 +100,7 @@ SC_MODULE(sdctrl_regs) {
 
     void sdctrl_regs_r_reset(sdctrl_regs_registers &iv) {
         iv.sclk_ena = 0;
+        iv.spi_mode = 0;
         iv.clear_cmderr = 0;
         iv.scaler_400khz = 0;
         iv.scaler_data = 0;

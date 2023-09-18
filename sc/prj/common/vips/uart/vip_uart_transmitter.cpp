@@ -109,7 +109,7 @@ void vip_uart_transmitter::comb() {
             break;
         case data:
             if (r.bitpos.read() == 7) {
-                v.state = stopbit;
+                v.state = idle;                             // No dummy bit at the end
                 v.shiftreg = ~0ull;
             } else {
                 v.shiftreg = (1, r.shiftreg.read()(8, 1));

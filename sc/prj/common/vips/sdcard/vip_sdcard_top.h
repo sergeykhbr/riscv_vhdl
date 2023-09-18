@@ -54,6 +54,7 @@ SC_MODULE(vip_sdcard_top) {
 
     sc_signal<bool> w_clk;
     sc_signal<sc_uint<8>> wb_rdata;
+    sc_signal<bool> w_spi_mode;
     sc_signal<bool> w_cmd_in;
     sc_signal<bool> w_cmd_out;
     sc_signal<bool> w_cmd_dir;

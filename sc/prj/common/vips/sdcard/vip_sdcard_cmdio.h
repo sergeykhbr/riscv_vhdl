@@ -24,6 +24,8 @@ SC_MODULE(vip_sdcard_cmdio) {
  public:
     sc_in<bool> i_nrst;
     sc_in<bool> i_clk;
+    sc_in<bool> i_cs;                                       // dat3 in SPI mode.
+    sc_out<bool> o_spi_mode;                                // Detected SPI mode on CMD0
     sc_in<bool> i_cmd;
     sc_out<bool> o_cmd;
     sc_out<bool> o_cmd_dir;
@@ -66,6 +68,8 @@ SC_MODULE(vip_sdcard_cmdio) {
 
     struct vip_sdcard_cmdio_registers {
         sc_signal<sc_uint<8>> clkcnt;
+        sc_signal<bool> cs;
+        sc_signal<bool> spi_mode;
         sc_signal<bool> cmdz;
         sc_signal<bool> cmd_dir;
         sc_signal<sc_uint<48>> cmd_rxshift;
@@ -83,6 +87,8 @@ SC_MODULE(vip_sdcard_cmdio) {
 
     void vip_sdcard_cmdio_r_reset(vip_sdcard_cmdio_registers &iv) {
         iv.clkcnt = 0;
+        iv.cs = 0;
+        iv.spi_mode = 0;
         iv.cmdz = 1;
         iv.cmd_dir = 1;
         iv.cmd_rxshift = ~0ull;

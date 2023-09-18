@@ -28,7 +28,8 @@ vip_uart_top::vip_uart_top(sc_module_name name,
     : sc_module(name),
     i_nrst("i_nrst"),
     i_rx("i_rx"),
-    o_tx("o_tx") {
+    o_tx("o_tx"),
+    i_loopback_ena("i_loopback_ena") {
 
     async_reset_ = async_reset;
     instnum_ = instnum;
@@ -76,7 +77,7 @@ vip_uart_top::vip_uart_top(sc_module_name name,
                                     scaler);
     tx0->i_nrst(i_nrst);
     tx0->i_clk(w_clk);
-    tx0->i_we(w_rx_rdy);
+    tx0->i_we(w_tx_we);
     tx0->i_wdata(wb_rdata);
     tx0->o_full(w_tx_full);
     tx0->o_tx(o_tx);
@@ -86,9 +87,11 @@ vip_uart_top::vip_uart_top(sc_module_name name,
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_rx;
+    sensitive << i_loopback_ena;
     sensitive << w_clk;
     sensitive << w_rx_rdy;
     sensitive << w_rx_rdy_clr;
+    sensitive << w_tx_we;
     sensitive << w_tx_full;
     sensitive << wb_rdata;
     sensitive << wb_rdataz;
@@ -116,6 +119,7 @@ void vip_uart_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
         sc_trace(o_vcd, i_rx, i_rx.name());
         sc_trace(o_vcd, o_tx, o_tx.name());
+        sc_trace(o_vcd, i_loopback_ena, i_loopback_ena.name());
         sc_trace(o_vcd, r.initdone, pn + ".r_initdone");
     }
 
@@ -146,7 +150,8 @@ std::string vip_uart_top::U8ToString(
 void vip_uart_top::comb() {
     v = r;
 
-    w_rx_rdy_clr = w_rx_rdy;
+    w_tx_we = (w_rx_rdy.read() & i_loopback_ena.read());
+    w_rx_rdy_clr = (!w_tx_full);
     v.initdone = ((r.initdone.read()[0] << 1) | 1);
 
     if (!async_reset_ && i_nrst.read() == 0) {

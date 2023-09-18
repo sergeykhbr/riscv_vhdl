@@ -23,6 +23,7 @@ SC_MODULE(vip_sdcard_ctrl) {
  public:
     sc_in<bool> i_nrst;
     sc_in<bool> i_clk;
+    sc_in<bool> i_spi_mode;
     sc_in<bool> i_cmd_req_valid;
     sc_in<sc_uint<6>> i_cmd_req_cmd;
     sc_in<sc_uint<32>> i_cmd_req_data;

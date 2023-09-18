@@ -29,6 +29,7 @@ SC_MODULE(vip_uart_top) {
     sc_in<bool> i_nrst;
     sc_in<bool> i_rx;
     sc_out<bool> o_tx;
+    sc_in<bool> i_loopback_ena;                             // redirect Rx bytes into Tx
 
     void comb();
     void registers();
@@ -68,6 +69,7 @@ SC_MODULE(vip_uart_top) {
     sc_signal<bool> w_clk;
     sc_signal<bool> w_rx_rdy;
     sc_signal<bool> w_rx_rdy_clr;
+    sc_signal<bool> w_tx_we;
     sc_signal<bool> w_tx_full;
     sc_signal<sc_uint<8>> wb_rdata;
     sc_signal<sc_uint<8>> wb_rdataz;

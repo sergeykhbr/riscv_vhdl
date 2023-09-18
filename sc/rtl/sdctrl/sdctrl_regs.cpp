@@ -38,6 +38,7 @@ sdctrl_regs::sdctrl_regs(sc_module_name name,
     o_sck_negedge("o_sck_negedge"),
     o_watchdog("o_watchdog"),
     o_clear_cmderr("o_clear_cmderr"),
+    o_spi_mode("o_spi_mode"),
     o_pcie_12V_support("o_pcie_12V_support"),
     o_pcie_available("o_pcie_available"),
     o_voltage_supply("o_voltage_supply"),
@@ -103,6 +104,7 @@ sdctrl_regs::sdctrl_regs(sc_module_name name,
     sensitive << w_req_write;
     sensitive << wb_req_wdata;
     sensitive << r.sclk_ena;
+    sensitive << r.spi_mode;
     sensitive << r.clear_cmderr;
     sensitive << r.scaler_400khz;
     sensitive << r.scaler_data;
@@ -151,6 +153,7 @@ void sdctrl_regs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_sck_negedge, o_sck_negedge.name());
         sc_trace(o_vcd, o_watchdog, o_watchdog.name());
         sc_trace(o_vcd, o_clear_cmderr, o_clear_cmderr.name());
+        sc_trace(o_vcd, o_spi_mode, o_spi_mode.name());
         sc_trace(o_vcd, o_pcie_12V_support, o_pcie_12V_support.name());
         sc_trace(o_vcd, o_pcie_available, o_pcie_available.name());
         sc_trace(o_vcd, o_voltage_supply, o_voltage_supply.name());
@@ -168,6 +171,7 @@ void sdctrl_regs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_cmd_resp_crc7_rx, i_cmd_resp_crc7_rx.name());
         sc_trace(o_vcd, i_cmd_resp_crc7_calc, i_cmd_resp_crc7_calc.name());
         sc_trace(o_vcd, r.sclk_ena, pn + ".r_sclk_ena");
+        sc_trace(o_vcd, r.spi_mode, pn + ".r_spi_mode");
         sc_trace(o_vcd, r.clear_cmderr, pn + ".r_clear_cmderr");
         sc_trace(o_vcd, r.scaler_400khz, pn + ".r_scaler_400khz");
         sc_trace(o_vcd, r.scaler_data, pn + ".r_scaler_data");
@@ -240,6 +244,7 @@ void sdctrl_regs::comb() {
         break;
     case 0x1:                                               // {0x04, 'RW', 'control', 'Global Control register'}
         vb_rdata[0] = r.sclk_ena.read();
+        vb_rdata[3] = r.spi_mode.read();
         vb_rdata[4] = i_sd_dat0.read();
         vb_rdata[5] = i_sd_dat1.read();
         vb_rdata[6] = i_sd_dat2.read();
@@ -248,6 +253,7 @@ void sdctrl_regs::comb() {
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             v.sclk_ena = wb_req_wdata.read()[0];
             v.clear_cmderr = wb_req_wdata.read()[1];
+            v.spi_mode = wb_req_wdata.read()[3];
         }
         break;
     case 0x2:                                               // {0x08, 'RW', 'watchdog', 'Watchdog'}
@@ -307,6 +313,7 @@ void sdctrl_regs::comb() {
         sdctrl_regs_r_reset(v);
     }
 
+    o_spi_mode = r.spi_mode;
     o_pcie_12V_support = r.pcie_12V_support;
     o_pcie_available = r.pcie_available;
     o_voltage_supply = r.voltage_supply;

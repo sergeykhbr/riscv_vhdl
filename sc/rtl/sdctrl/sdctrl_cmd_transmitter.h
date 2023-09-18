@@ -29,6 +29,8 @@ SC_MODULE(sdctrl_cmd_transmitter) {
     sc_in<bool> i_cmd;
     sc_out<bool> o_cmd;
     sc_out<bool> o_cmd_dir;
+    sc_out<bool> o_cmd_cs;
+    sc_in<bool> i_spi_mode;                                 // SPI mode was selected by FW
     sc_in<sc_uint<16>> i_watchdog;                          // Max number of sclk to receive start bit
     sc_in<bool> i_cmd_set_low;                              // Set forcibly o_cmd output to LOW
     sc_in<bool> i_req_valid;
@@ -94,6 +96,7 @@ SC_MODULE(sdctrl_cmd_transmitter) {
         sc_signal<bool> crc7_clear;
         sc_signal<sc_uint<4>> cmdstate;
         sc_signal<sc_uint<4>> cmderr;
+        sc_signal<bool> cmd_cs;
         sc_signal<sc_uint<16>> watchdog;
     } v, r;
 
@@ -113,6 +116,7 @@ SC_MODULE(sdctrl_cmd_transmitter) {
         iv.crc7_clear = 1;
         iv.cmdstate = CMDSTATE_IDLE;
         iv.cmderr = CMDERR_NONE;
+        iv.cmd_cs = 1;
         iv.watchdog = 0;
     }
 

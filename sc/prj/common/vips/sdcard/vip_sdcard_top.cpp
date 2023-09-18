@@ -77,6 +77,8 @@ vip_sdcard_top::vip_sdcard_top(sc_module_name name,
     cmdio0 = new vip_sdcard_cmdio("cmdio0", async_reset);
     cmdio0->i_nrst(i_nrst);
     cmdio0->i_clk(i_sclk);
+    cmdio0->i_cs(w_dat3_in);
+    cmdio0->o_spi_mode(w_spi_mode);
     cmdio0->i_cmd(w_cmd_in);
     cmdio0->o_cmd(w_cmd_out);
     cmdio0->o_cmd_dir(w_cmd_dir);
@@ -97,6 +99,7 @@ vip_sdcard_top::vip_sdcard_top(sc_module_name name,
                                  CFG_SDCARD_VDD_VOLTAGE_WINDOW);
     ctrl0->i_nrst(i_nrst);
     ctrl0->i_clk(i_sclk);
+    ctrl0->i_spi_mode(w_spi_mode);
     ctrl0->i_cmd_req_valid(w_cmd_req_valid);
     ctrl0->i_cmd_req_cmd(wb_cmd_req_cmd);
     ctrl0->i_cmd_req_data(wb_cmd_req_data);
@@ -117,6 +120,7 @@ vip_sdcard_top::vip_sdcard_top(sc_module_name name,
     sensitive << io_cd_dat3;
     sensitive << w_clk;
     sensitive << wb_rdata;
+    sensitive << w_spi_mode;
     sensitive << w_cmd_in;
     sensitive << w_cmd_out;
     sensitive << w_cmd_dir;
@@ -212,7 +216,7 @@ void vip_sdcard_top::comb() {
     w_dat0_dir = 1;                                         // in:
     w_dat1_dir = 1;                                         // in:
     w_dat2_dir = 1;                                         // in:
-    w_dat3_dir = 0;                                         // out: Emulate pull-up CardDetect value
+    w_dat3_dir = 1;                                         // in:
 
     w_dat0_out = 1;
     w_dat1_out = 1;

@@ -132,7 +132,7 @@ void vip_uart_receiver::comb() {
             }
         }
         if (r.sample.read() == scaler_max) {
-            v.state = dummy;
+            v.state = startbit;                             // dummy bit disabled
             v.sample = 0;
         } else {
             v.sample = (r.sample.read() + 1);

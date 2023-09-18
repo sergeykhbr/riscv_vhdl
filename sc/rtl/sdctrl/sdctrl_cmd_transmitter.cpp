@@ -29,6 +29,8 @@ sdctrl_cmd_transmitter::sdctrl_cmd_transmitter(sc_module_name name,
     i_cmd("i_cmd"),
     o_cmd("o_cmd"),
     o_cmd_dir("o_cmd_dir"),
+    o_cmd_cs("o_cmd_cs"),
+    i_spi_mode("i_spi_mode"),
     i_watchdog("i_watchdog"),
     i_cmd_set_low("i_cmd_set_low"),
     i_req_valid("i_req_valid"),
@@ -57,6 +59,7 @@ sdctrl_cmd_transmitter::sdctrl_cmd_transmitter(sc_module_name name,
     sensitive << i_sclk_posedge;
     sensitive << i_sclk_negedge;
     sensitive << i_cmd;
+    sensitive << i_spi_mode;
     sensitive << i_watchdog;
     sensitive << i_cmd_set_low;
     sensitive << i_req_valid;
@@ -81,6 +84,7 @@ sdctrl_cmd_transmitter::sdctrl_cmd_transmitter(sc_module_name name,
     sensitive << r.crc7_clear;
     sensitive << r.cmdstate;
     sensitive << r.cmderr;
+    sensitive << r.cmd_cs;
     sensitive << r.watchdog;
 
     SC_METHOD(registers);
@@ -96,6 +100,8 @@ void sdctrl_cmd_transmitter::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_
         sc_trace(o_vcd, i_cmd, i_cmd.name());
         sc_trace(o_vcd, o_cmd, o_cmd.name());
         sc_trace(o_vcd, o_cmd_dir, o_cmd_dir.name());
+        sc_trace(o_vcd, o_cmd_cs, o_cmd_cs.name());
+        sc_trace(o_vcd, i_spi_mode, i_spi_mode.name());
         sc_trace(o_vcd, i_watchdog, i_watchdog.name());
         sc_trace(o_vcd, i_cmd_set_low, i_cmd_set_low.name());
         sc_trace(o_vcd, i_req_valid, i_req_valid.name());
@@ -131,6 +137,7 @@ void sdctrl_cmd_transmitter::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_
         sc_trace(o_vcd, r.crc7_clear, pn + ".r_crc7_clear");
         sc_trace(o_vcd, r.cmdstate, pn + ".r_cmdstate");
         sc_trace(o_vcd, r.cmderr, pn + ".r_cmderr");
+        sc_trace(o_vcd, r.cmd_cs, pn + ".r_cmd_cs");
         sc_trace(o_vcd, r.watchdog, pn + ".r_watchdog");
     }
 
@@ -169,11 +176,13 @@ void sdctrl_cmd_transmitter::comb() {
             } else {
                 vb_cmdshift = ~0ull;
             }
+            v.cmd_cs = 1;
             v.crc7_clear = 1;
             v_req_ready = 1;
             if (r.cmderr.read() != CMDERR_NONE) {
                 v_req_ready = 0;
             } else if (i_req_valid.read() == 1) {
+                v.cmd_cs = 0;
                 v.req_cmd = i_req_cmd;
                 v.req_rn = i_req_rn;
                 vb_cmdshift = (0x1, i_req_cmd, i_req_arg);
@@ -284,6 +293,7 @@ void sdctrl_cmd_transmitter::comb() {
             v.resp_valid = 1;
         } else if (r.cmdstate.read() == CMDSTATE_PAUSE) {
             v.crc7_clear = 1;
+            v.cmd_cs = 1;
             if (r.cmdbitcnt.read().or_reduce() == 1) {
                 v.cmdbitcnt = (r.cmdbitcnt.read() - 1);
             } else {
@@ -308,6 +318,7 @@ void sdctrl_cmd_transmitter::comb() {
 
     o_cmd = r.cmdshift.read()[39];
     o_cmd_dir = v_cmd_dir;
+    o_cmd_cs = r.cmd_cs;
     o_req_ready = v_req_ready;
     o_crc7_clear = r.crc7_clear;
     o_crc7_next = v_crc7_next;

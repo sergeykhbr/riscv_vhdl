@@ -29,6 +29,7 @@ vip_sdcard_ctrl::vip_sdcard_ctrl(sc_module_name name,
     : sc_module(name),
     i_nrst("i_nrst"),
     i_clk("i_clk"),
+    i_spi_mode("i_spi_mode"),
     i_cmd_req_valid("i_cmd_req_valid"),
     i_cmd_req_cmd("i_cmd_req_cmd"),
     i_cmd_req_data("i_cmd_req_data"),
@@ -46,6 +47,7 @@ vip_sdcard_ctrl::vip_sdcard_ctrl(sc_module_name name,
 
     SC_METHOD(comb);
     sensitive << i_nrst;
+    sensitive << i_spi_mode;
     sensitive << i_cmd_req_valid;
     sensitive << i_cmd_req_cmd;
     sensitive << i_cmd_req_data;
@@ -68,6 +70,7 @@ vip_sdcard_ctrl::vip_sdcard_ctrl(sc_module_name name,
 void vip_sdcard_ctrl::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     std::string pn(name());
     if (o_vcd) {
+        sc_trace(o_vcd, i_spi_mode, i_spi_mode.name());
         sc_trace(o_vcd, i_cmd_req_valid, i_cmd_req_valid.name());
         sc_trace(o_vcd, i_cmd_req_cmd, i_cmd_req_cmd.name());
         sc_trace(o_vcd, i_cmd_req_data, i_cmd_req_data.name());

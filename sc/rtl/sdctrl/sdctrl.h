@@ -22,7 +22,7 @@
 #include "../ambalib/axi_slv.h"
 #include "sdctrl_regs.h"
 #include "sdctrl_crc7.h"
-#include "sdctrl_crc16.h"
+#include "sdctrl_crc15.h"
 #include "sdctrl_cmd_transmitter.h"
 
 namespace debugger {
@@ -109,9 +109,10 @@ SC_MODULE(sdctrl) {
         sc_signal<sc_uint<3>> cmd_req_rn;
         sc_signal<sc_uint<6>> cmd_resp_r1;
         sc_signal<sc_uint<32>> cmd_resp_reg;
-        sc_signal<bool> crc16_clear;
+        sc_signal<bool> crc15_clear;
         sc_signal<sc_uint<4>> dat;
         sc_signal<bool> dat_dir;
+        sc_signal<bool> dat3_dir;
         sc_signal<sc_uint<4>> sdstate;
         sc_signal<sc_uint<3>> initstate;
         sc_signal<sc_uint<2>> readystate;
@@ -133,9 +134,10 @@ SC_MODULE(sdctrl) {
         iv.cmd_req_rn = 0;
         iv.cmd_resp_r1 = 0;
         iv.cmd_resp_reg = 0;
-        iv.crc16_clear = 1;
+        iv.crc15_clear = 1;
         iv.dat = ~0ul;
-        iv.dat_dir = DIR_INPUT;
+        iv.dat_dir = DIR_OUTPUT;
+        iv.dat3_dir = DIR_INPUT;
         iv.sdstate = SDSTATE_PRE_INIT;
         iv.initstate = IDLESTATE_CMD0;
         iv.readystate = READYSTATE_CMD11;
@@ -152,6 +154,7 @@ SC_MODULE(sdctrl) {
     sc_signal<bool> w_regs_sck;
     sc_signal<bool> w_regs_clear_cmderr;
     sc_signal<sc_uint<16>> wb_regs_watchdog;
+    sc_signal<bool> w_regs_spi_mode;
     sc_signal<bool> w_regs_pcie_12V_support;
     sc_signal<bool> w_regs_pcie_available;
     sc_signal<sc_uint<4>> wb_regs_voltage_supply;
@@ -167,6 +170,9 @@ SC_MODULE(sdctrl) {
     sc_signal<bool> w_mem_resp_valid;
     sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> wb_mem_resp_rdata;
     sc_signal<bool> wb_mem_resp_err;
+    sc_signal<bool> w_trx_cmd_dir;
+    sc_signal<bool> w_trx_cmd_cs;
+    sc_signal<bool> w_cmd_in;
     sc_signal<bool> w_cmd_req_ready;
     sc_signal<bool> w_cmd_resp_valid;
     sc_signal<sc_uint<6>> wb_cmd_resp_cmd;
@@ -182,14 +188,19 @@ SC_MODULE(sdctrl) {
     sc_signal<bool> w_crc7_next;
     sc_signal<bool> w_crc7_dat;
     sc_signal<sc_uint<7>> wb_crc7;
-    sc_signal<bool> w_crc16_next;
-    sc_signal<sc_uint<4>> wb_crc16_dat;
-    sc_signal<sc_uint<16>> wb_crc16;
+    sc_signal<bool> w_crc15_next;
+    sc_signal<sc_uint<15>> wb_crc15_0;
+    sc_signal<sc_uint<15>> wb_crc15_1;
+    sc_signal<sc_uint<15>> wb_crc15_2;
+    sc_signal<sc_uint<15>> wb_crc15_3;
 
     axi_slv *xslv0;
     sdctrl_regs *regs0;
     sdctrl_crc7 *crccmd0;
-    sdctrl_crc16 *crcdat0;
+    sdctrl_crc15 *crcdat0;
+    sdctrl_crc15 *crcdat1;
+    sdctrl_crc15 *crcdat2;
+    sdctrl_crc15 *crcdat3;
     sdctrl_cmd_transmitter *cmdtrx0;
 
 };

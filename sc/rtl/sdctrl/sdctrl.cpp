@@ -56,6 +56,9 @@ sdctrl::sdctrl(sc_module_name name,
     regs0 = 0;
     crccmd0 = 0;
     crcdat0 = 0;
+    crcdat1 = 0;
+    crcdat2 = 0;
+    crcdat3 = 0;
     cmdtrx0 = 0;
 
     xslv0 = new axi_slv("xslv0", async_reset,
@@ -97,6 +100,7 @@ sdctrl::sdctrl(sc_module_name name,
     regs0->o_sck_negedge(w_regs_sck);
     regs0->o_watchdog(wb_regs_watchdog);
     regs0->o_clear_cmderr(w_regs_clear_cmderr);
+    regs0->o_spi_mode(w_regs_spi_mode);
     regs0->o_pcie_12V_support(w_regs_pcie_12V_support);
     regs0->o_pcie_available(w_regs_pcie_available);
     regs0->o_voltage_supply(wb_regs_voltage_supply);
@@ -124,13 +128,40 @@ sdctrl::sdctrl(sc_module_name name,
     crccmd0->o_crc7(wb_crc7);
 
 
-    crcdat0 = new sdctrl_crc16("crcdat0", async_reset);
+    crcdat0 = new sdctrl_crc15("crcdat0", async_reset);
     crcdat0->i_clk(i_clk);
     crcdat0->i_nrst(i_nrst);
-    crcdat0->i_clear(r.crc16_clear);
-    crcdat0->i_next(w_crc16_next);
-    crcdat0->i_dat(wb_crc16_dat);
-    crcdat0->o_crc16(wb_crc16);
+    crcdat0->i_clear(r.crc15_clear);
+    crcdat0->i_next(w_crc15_next);
+    crcdat0->i_dat(i_dat0);
+    crcdat0->o_crc15(wb_crc15_0);
+
+
+    crcdat0 = new sdctrl_crc15("crcdat0", async_reset);
+    crcdat0->i_clk(i_clk);
+    crcdat0->i_nrst(i_nrst);
+    crcdat0->i_clear(r.crc15_clear);
+    crcdat0->i_next(w_crc15_next);
+    crcdat0->i_dat(i_dat1);
+    crcdat0->o_crc15(wb_crc15_1);
+
+
+    crcdat0 = new sdctrl_crc15("crcdat0", async_reset);
+    crcdat0->i_clk(i_clk);
+    crcdat0->i_nrst(i_nrst);
+    crcdat0->i_clear(r.crc15_clear);
+    crcdat0->i_next(w_crc15_next);
+    crcdat0->i_dat(i_dat2);
+    crcdat0->o_crc15(wb_crc15_2);
+
+
+    crcdat0 = new sdctrl_crc15("crcdat0", async_reset);
+    crcdat0->i_clk(i_clk);
+    crcdat0->i_nrst(i_nrst);
+    crcdat0->i_clear(r.crc15_clear);
+    crcdat0->i_next(w_crc15_next);
+    crcdat0->i_dat(i_cd_dat3);
+    crcdat0->o_crc15(wb_crc15_3);
 
 
     cmdtrx0 = new sdctrl_cmd_transmitter("cmdtrx0", async_reset);
@@ -138,9 +169,11 @@ sdctrl::sdctrl(sc_module_name name,
     cmdtrx0->i_nrst(i_nrst);
     cmdtrx0->i_sclk_posedge(w_regs_sck_posedge);
     cmdtrx0->i_sclk_negedge(w_regs_sck);
-    cmdtrx0->i_cmd(i_cmd);
+    cmdtrx0->i_cmd(w_cmd_in);
     cmdtrx0->o_cmd(o_cmd);
-    cmdtrx0->o_cmd_dir(o_cmd_dir);
+    cmdtrx0->o_cmd_dir(w_trx_cmd_dir);
+    cmdtrx0->o_cmd_cs(w_trx_cmd_cs);
+    cmdtrx0->i_spi_mode(w_regs_spi_mode);
     cmdtrx0->i_watchdog(wb_regs_watchdog);
     cmdtrx0->i_cmd_set_low(r.cmd_set_low);
     cmdtrx0->i_req_valid(r.cmd_req_valid);
@@ -181,6 +214,7 @@ sdctrl::sdctrl(sc_module_name name,
     sensitive << w_regs_sck;
     sensitive << w_regs_clear_cmderr;
     sensitive << wb_regs_watchdog;
+    sensitive << w_regs_spi_mode;
     sensitive << w_regs_pcie_12V_support;
     sensitive << w_regs_pcie_available;
     sensitive << wb_regs_voltage_supply;
@@ -196,6 +230,9 @@ sdctrl::sdctrl(sc_module_name name,
     sensitive << w_mem_resp_valid;
     sensitive << wb_mem_resp_rdata;
     sensitive << wb_mem_resp_err;
+    sensitive << w_trx_cmd_dir;
+    sensitive << w_trx_cmd_cs;
+    sensitive << w_cmd_in;
     sensitive << w_cmd_req_ready;
     sensitive << w_cmd_resp_valid;
     sensitive << wb_cmd_resp_cmd;
@@ -211,9 +248,11 @@ sdctrl::sdctrl(sc_module_name name,
     sensitive << w_crc7_next;
     sensitive << w_crc7_dat;
     sensitive << wb_crc7;
-    sensitive << w_crc16_next;
-    sensitive << wb_crc16_dat;
-    sensitive << wb_crc16;
+    sensitive << w_crc15_next;
+    sensitive << wb_crc15_0;
+    sensitive << wb_crc15_1;
+    sensitive << wb_crc15_2;
+    sensitive << wb_crc15_3;
     sensitive << r.clkcnt;
     sensitive << r.cmd_set_low;
     sensitive << r.cmd_req_valid;
@@ -222,9 +261,10 @@ sdctrl::sdctrl(sc_module_name name,
     sensitive << r.cmd_req_rn;
     sensitive << r.cmd_resp_r1;
     sensitive << r.cmd_resp_reg;
-    sensitive << r.crc16_clear;
+    sensitive << r.crc15_clear;
     sensitive << r.dat;
     sensitive << r.dat_dir;
+    sensitive << r.dat3_dir;
     sensitive << r.sdstate;
     sensitive << r.initstate;
     sensitive << r.readystate;
@@ -253,6 +293,15 @@ sdctrl::~sdctrl() {
     }
     if (crcdat0) {
         delete crcdat0;
+    }
+    if (crcdat1) {
+        delete crcdat1;
+    }
+    if (crcdat2) {
+        delete crcdat2;
+    }
+    if (crcdat3) {
+        delete crcdat3;
     }
     if (cmdtrx0) {
         delete cmdtrx0;
@@ -296,9 +345,10 @@ void sdctrl::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.cmd_req_rn, pn + ".r_cmd_req_rn");
         sc_trace(o_vcd, r.cmd_resp_r1, pn + ".r_cmd_resp_r1");
         sc_trace(o_vcd, r.cmd_resp_reg, pn + ".r_cmd_resp_reg");
-        sc_trace(o_vcd, r.crc16_clear, pn + ".r_crc16_clear");
+        sc_trace(o_vcd, r.crc15_clear, pn + ".r_crc15_clear");
         sc_trace(o_vcd, r.dat, pn + ".r_dat");
         sc_trace(o_vcd, r.dat_dir, pn + ".r_dat_dir");
+        sc_trace(o_vcd, r.dat3_dir, pn + ".r_dat3_dir");
         sc_trace(o_vcd, r.sdstate, pn + ".r_sdstate");
         sc_trace(o_vcd, r.initstate, pn + ".r_initstate");
         sc_trace(o_vcd, r.readystate, pn + ".r_readystate");
@@ -323,25 +373,58 @@ void sdctrl::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (crcdat0) {
         crcdat0->generateVCD(i_vcd, o_vcd);
     }
+    if (crcdat1) {
+        crcdat1->generateVCD(i_vcd, o_vcd);
+    }
+    if (crcdat2) {
+        crcdat2->generateVCD(i_vcd, o_vcd);
+    }
+    if (crcdat3) {
+        crcdat3->generateVCD(i_vcd, o_vcd);
+    }
     if (cmdtrx0) {
         cmdtrx0->generateVCD(i_vcd, o_vcd);
     }
 }
 
 void sdctrl::comb() {
-    bool v_crc16_next;
+    bool v_crc15_next;
     sc_uint<32> vb_cmd_req_arg;
     bool v_cmd_resp_ready;
+    bool v_cmd_dir;
+    bool v_cmd_in;
+    bool v_dat0_dir;
+    bool v_dat3_dir;
+    bool v_dat3_out;
     bool v_clear_cmderr;
 
-    v_crc16_next = 0;
+    v_crc15_next = 0;
     vb_cmd_req_arg = 0;
     v_cmd_resp_ready = 0;
+    v_cmd_dir = 0;
+    v_cmd_in = 0;
+    v_dat0_dir = 0;
+    v_dat3_dir = 0;
+    v_dat3_out = 0;
     v_clear_cmderr = 0;
 
     v = r;
 
     vb_cmd_req_arg = r.cmd_req_arg;
+
+    if (w_regs_spi_mode.read() == 1) {
+        v_dat3_dir = DIR_OUTPUT;
+        v_dat3_out = w_trx_cmd_cs;
+        v_cmd_dir = DIR_OUTPUT;
+        v_dat0_dir = DIR_INPUT;
+        v_cmd_in = i_dat0;
+    } else {
+        v_dat3_dir = r.dat3_dir;
+        v_dat3_out = r.dat.read()[3];
+        v_cmd_dir = w_trx_cmd_dir;
+        v_dat0_dir = r.dat_dir;
+        v_cmd_in = i_cmd;
+    }
 
     if (r.wait_cmd_resp.read() == 1) {
         v_cmd_resp_ready = 1;
@@ -559,7 +642,7 @@ void sdctrl::comb() {
     }
 
     w_cmd_resp_ready = v_cmd_resp_ready;
-    w_crc16_next = v_crc16_next;
+    w_crc15_next = v_crc15_next;
     // Page 222, Table 4-81 Overview of Card States vs Operation Modes table
     if ((r.sdstate.read() <= SDSTATE_IDENT)
             || (r.sdstate.read() == SDSTATE_INA)
@@ -571,15 +654,17 @@ void sdctrl::comb() {
         w_400kHz_ena = 0;
     }
 
-    o_cd_dat3 = r.dat.read()[3];
+    w_cmd_in = v_cmd_in;
+    o_cd_dat3 = v_dat3_out;
     o_dat2 = r.dat.read()[2];
     o_dat1 = r.dat.read()[1];
     o_dat0 = r.dat.read()[0];
     // Direction bits:
-    o_dat0_dir = r.dat_dir;
+    o_cmd_dir = v_cmd_dir;
+    o_dat0_dir = v_dat0_dir;
     o_dat1_dir = r.dat_dir;
     o_dat2_dir = r.dat_dir;
-    o_cd_dat3_dir = r.dat_dir;
+    o_cd_dat3_dir = v_dat3_dir;
     // Memory request:
     w_mem_req_ready = 1;
     w_mem_resp_valid = 1;

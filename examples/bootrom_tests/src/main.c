@@ -85,8 +85,9 @@ int main() {
     while (fw_get_rdtime() < (SYS_HZ / 1000)) {}
 
     *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 0)) = (0 << 24) | 49;  // [31:24]=20 MHz;  [23:0]=400 KHz
-    *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 4)) = 0x1;  // enable sdctrl sclk
-    *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 8)) = 0x0FFF;  // Increase default watchdog to detect 'no response'
+    *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 4)) = (1 << 3)         // [3] SPI mode enable
+                                             | 0x1;             // [0] enable sdctrl sclk
+    *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 8)) = 0x0FFF;          // watchdog interval to detect 'no response'
     uint32_t cmd_status;
     uint32_t cmd_err;
     uint32_t sdstate;
