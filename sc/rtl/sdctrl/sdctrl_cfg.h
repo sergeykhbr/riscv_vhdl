@@ -28,6 +28,7 @@ static const uint8_t CMD8 = 8;                              // SEND_IF_COND: Car
 static const uint8_t CMD11 = 11;                            // VOLTAGE_SWITCH: Switch to 1.8V bus signaling level
 static const uint8_t ACMD41 = 41;
 static const uint8_t CMD55 = 55;                            // APP_CMD: application specific commands
+static const uint8_t CMD58 = 58;                            // READ_OCR: Read OCR register in SPI mode
 // 
 static const uint8_t R1 = 1;
 // 4.9.3 R2 (CID, CSD register, page 140)

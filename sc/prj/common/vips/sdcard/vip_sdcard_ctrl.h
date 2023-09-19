@@ -31,6 +31,12 @@ SC_MODULE(vip_sdcard_ctrl) {
     sc_out<bool> o_cmd_resp_valid;
     sc_out<sc_uint<32>> o_cmd_resp_data32;
     sc_in<bool> i_cmd_resp_ready;
+    sc_out<bool> o_cmd_resp_r1b;
+    sc_out<bool> o_cmd_resp_r2;
+    sc_out<bool> o_cmd_resp_r3;
+    sc_out<bool> o_cmd_resp_r7;
+    sc_out<bool> o_stat_idle_state;
+    sc_out<bool> o_stat_illegal_cmd;
 
     void comb();
     void registers();
@@ -40,6 +46,7 @@ SC_MODULE(vip_sdcard_ctrl) {
     vip_sdcard_ctrl(sc_module_name name,
                     bool async_reset,
                     int CFG_SDCARD_POWERUP_DONE_DELAY,
+                    bool CFG_SDCARD_HCS,
                     sc_uint<4> CFG_SDCARD_VHS,
                     bool CFG_SDCARD_PCIE_1_2V,
                     bool CFG_SDCARD_PCIE_AVAIL,
@@ -50,6 +57,7 @@ SC_MODULE(vip_sdcard_ctrl) {
  private:
     bool async_reset_;
     int CFG_SDCARD_POWERUP_DONE_DELAY_;
+    bool CFG_SDCARD_HCS_;
     sc_uint<4> CFG_SDCARD_VHS_;
     bool CFG_SDCARD_PCIE_1_2V_;
     bool CFG_SDCARD_PCIE_AVAIL_;
@@ -78,6 +86,11 @@ SC_MODULE(vip_sdcard_ctrl) {
         sc_signal<bool> cmd_resp_valid;
         sc_signal<bool> cmd_resp_valid_delayed;
         sc_signal<sc_uint<32>> cmd_resp_data32;
+        sc_signal<bool> cmd_resp_r1b;
+        sc_signal<bool> cmd_resp_r2;
+        sc_signal<bool> cmd_resp_r3;
+        sc_signal<bool> cmd_resp_r7;
+        sc_signal<bool> illegal_cmd;
     } v, r;
 
     void vip_sdcard_ctrl_r_reset(vip_sdcard_ctrl_registers &iv) {
@@ -90,6 +103,11 @@ SC_MODULE(vip_sdcard_ctrl) {
         iv.cmd_resp_valid = 0;
         iv.cmd_resp_valid_delayed = 0;
         iv.cmd_resp_data32 = 0;
+        iv.cmd_resp_r1b = 0;
+        iv.cmd_resp_r2 = 0;
+        iv.cmd_resp_r3 = 0;
+        iv.cmd_resp_r7 = 0;
+        iv.illegal_cmd = 0;
     }
 
 };

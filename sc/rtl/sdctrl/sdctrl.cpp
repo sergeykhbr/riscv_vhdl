@@ -190,6 +190,7 @@ sdctrl::sdctrl(sc_module_name name,
     cmdtrx0->o_resp_reg(wb_cmd_resp_reg);
     cmdtrx0->o_resp_crc7_rx(wb_cmd_resp_crc7_rx);
     cmdtrx0->o_resp_crc7_calc(wb_cmd_resp_crc7_calc);
+    cmdtrx0->o_resp_spistatus(wb_cmd_resp_spistatus);
     cmdtrx0->i_resp_ready(w_cmd_resp_ready);
     cmdtrx0->i_clear_cmderr(w_clear_cmderr);
     cmdtrx0->o_cmdstate(wb_trx_cmdstate);
@@ -239,6 +240,7 @@ sdctrl::sdctrl(sc_module_name name,
     sensitive << wb_cmd_resp_reg;
     sensitive << wb_cmd_resp_crc7_rx;
     sensitive << wb_cmd_resp_crc7_calc;
+    sensitive << wb_cmd_resp_spistatus;
     sensitive << w_cmd_resp_ready;
     sensitive << wb_trx_cmdstate;
     sensitive << wb_trx_cmderr;
@@ -261,6 +263,7 @@ sdctrl::sdctrl(sc_module_name name,
     sensitive << r.cmd_req_rn;
     sensitive << r.cmd_resp_r1;
     sensitive << r.cmd_resp_reg;
+    sensitive << r.cmd_resp_spistatus;
     sensitive << r.crc15_clear;
     sensitive << r.dat;
     sensitive << r.dat_dir;
@@ -345,6 +348,7 @@ void sdctrl::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.cmd_req_rn, pn + ".r_cmd_req_rn");
         sc_trace(o_vcd, r.cmd_resp_r1, pn + ".r_cmd_resp_r1");
         sc_trace(o_vcd, r.cmd_resp_reg, pn + ".r_cmd_resp_reg");
+        sc_trace(o_vcd, r.cmd_resp_spistatus, pn + ".r_cmd_resp_spistatus");
         sc_trace(o_vcd, r.crc15_clear, pn + ".r_crc15_clear");
         sc_trace(o_vcd, r.dat, pn + ".r_dat");
         sc_trace(o_vcd, r.dat_dir, pn + ".r_dat_dir");
@@ -432,6 +436,7 @@ void sdctrl::comb() {
             v.wait_cmd_resp = 0;
             v.cmd_resp_r1 = wb_cmd_resp_cmd;
             v.cmd_resp_reg = wb_cmd_resp_reg;
+            v.cmd_resp_spistatus = wb_cmd_resp_spistatus;
 
             if ((r.cmd_req_cmd.read() == CMD8)
                     && (wb_trx_cmderr.read() == CMDERR_NO_RESPONSE)) {
@@ -549,30 +554,57 @@ void sdctrl::comb() {
                 //   [23:0] VDD voltage window (OCR[23:0])
                 v.cmd_req_valid = 1;
                 v.cmd_req_cmd = ACMD41;
-                v.cmd_req_rn = R3;
                 vb_cmd_req_arg = 0;
                 vb_cmd_req_arg[30] = r.HCS.read();
-                vb_cmd_req_arg[24] = r.S18.read();
                 vb_cmd_req_arg(23, 0) = r.OCR_VoltageWindow;
-                v.initstate = IDLESTATE_CARD_IDENTIFICATION;
+                if (w_regs_spi_mode.read() == 0) {
+                    // SD mode:
+                    vb_cmd_req_arg[24] = r.S18.read();
+                    v.cmd_req_rn = R3;
+                    v.initstate = IDLESTATE_CARD_IDENTIFICATION;
+                } else {
+                    // SPI mode:
+                    v.cmd_req_rn = R1;
+                    v.initstate = IDLESTATE_CMD58;
+                }
                 break;
-            case IDLESTATE_CARD_IDENTIFICATION:
-                if (r.cmd_resp_reg.read()[31] == 0) {
-                    // LOW if the card has not finished power-up routine
+            case IDLESTATE_CMD58:
+                // READ_OCR: Reads OCR register. Used in SPI mode only.
+                //   [31] reserved bit
+                //   [30] HCS (high capacity support)
+                //   [29:0] reserved
+                if (r.cmd_resp_spistatus.read()(14, 8) != 0x1) {
+                    // SD card not in idle state
                     v.initstate = IDLESTATE_CMD55;
                 } else {
-                    if (r.HCS.read() == 1) {
-                        v.sdtype = SDCARD_VER2X_HC;
-                    } else if (r.sdtype.read() == SDCARD_UNKNOWN) {
-                        v.sdtype = SDCARD_VER2X_SC;
-                    }
-                    if (r.S18.read() == 1) {
+                    v.cmd_req_valid = 1;
+                    v.cmd_req_cmd = CMD58;
+                    vb_cmd_req_arg = 0;
+                    v.cmd_req_rn = R3;
+                    v.initstate = IDLESTATE_CARD_IDENTIFICATION;
+                }
+                break;
+            case IDLESTATE_CARD_IDENTIFICATION:
+                if (r.HCS.read() == 1) {
+                    v.sdtype = SDCARD_VER2X_HC;
+                } else if (r.sdtype.read() == SDCARD_UNKNOWN) {
+                    v.sdtype = SDCARD_VER2X_SC;
+                }
+                if (w_regs_spi_mode.read() == 0) {
+                    // SD mode:
+                    if (r.cmd_resp_reg.read()[31] == 0) {
+                        // LOW if the card has not finished power-up routine
+                        v.initstate = IDLESTATE_CMD55;
+                    } else if (r.S18.read() == 1) {
                         // Voltage switch command to change 3.3V to 1.8V
                         v.readystate = READYSTATE_CMD11;
                     } else {
                         v.readystate = READYSTATE_CMD2;
                     }
                     v.sdstate = SDSTATE_READY;
+                } else {
+                    // SPI mode:
+                    v.sdstate = SDSTATE_STBY;
                 }
                 break;
             default:

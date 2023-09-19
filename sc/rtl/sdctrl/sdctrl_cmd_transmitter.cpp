@@ -47,6 +47,7 @@ sdctrl_cmd_transmitter::sdctrl_cmd_transmitter(sc_module_name name,
     o_resp_reg("o_resp_reg"),
     o_resp_crc7_rx("o_resp_crc7_rx"),
     o_resp_crc7_calc("o_resp_crc7_calc"),
+    o_resp_spistatus("o_resp_spistatus"),
     i_resp_ready("i_resp_ready"),
     i_clear_cmderr("i_clear_cmderr"),
     o_cmdstate("o_cmdstate"),
@@ -74,6 +75,7 @@ sdctrl_cmd_transmitter::sdctrl_cmd_transmitter(sc_module_name name,
     sensitive << r.resp_valid;
     sensitive << r.resp_cmd;
     sensitive << r.resp_arg;
+    sensitive << r.resp_spistatus;
     sensitive << r.cmdshift;
     sensitive << r.cmdmirror;
     sensitive << r.regshift;
@@ -118,6 +120,7 @@ void sdctrl_cmd_transmitter::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_
         sc_trace(o_vcd, o_resp_reg, o_resp_reg.name());
         sc_trace(o_vcd, o_resp_crc7_rx, o_resp_crc7_rx.name());
         sc_trace(o_vcd, o_resp_crc7_calc, o_resp_crc7_calc.name());
+        sc_trace(o_vcd, o_resp_spistatus, o_resp_spistatus.name());
         sc_trace(o_vcd, i_resp_ready, i_resp_ready.name());
         sc_trace(o_vcd, i_clear_cmderr, i_clear_cmderr.name());
         sc_trace(o_vcd, o_cmdstate, o_cmdstate.name());
@@ -127,6 +130,7 @@ void sdctrl_cmd_transmitter::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_
         sc_trace(o_vcd, r.resp_valid, pn + ".r_resp_valid");
         sc_trace(o_vcd, r.resp_cmd, pn + ".r_resp_cmd");
         sc_trace(o_vcd, r.resp_arg, pn + ".r_resp_arg");
+        sc_trace(o_vcd, r.resp_spistatus, pn + ".r_resp_spistatus");
         sc_trace(o_vcd, r.cmdshift, pn + ".r_cmdshift");
         sc_trace(o_vcd, r.cmdmirror, pn + ".r_cmdmirror");
         sc_trace(o_vcd, r.regshift, pn + ".r_regshift");
@@ -146,12 +150,14 @@ void sdctrl_cmd_transmitter::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_
 void sdctrl_cmd_transmitter::comb() {
     bool v_req_ready;
     sc_uint<48> vb_cmdshift;
+    sc_uint<15> vb_resp_spistatus;
     bool v_cmd_dir;
     bool v_crc7_dat;
     bool v_crc7_next;
 
     v_req_ready = 0;
     vb_cmdshift = 0;
+    vb_resp_spistatus = 0;
     v_cmd_dir = 0;
     v_crc7_dat = 0;
     v_crc7_next = 0;
@@ -159,6 +165,7 @@ void sdctrl_cmd_transmitter::comb() {
     v = r;
 
     vb_cmdshift = r.cmdshift;
+    vb_resp_spistatus = r.resp_spistatus;
     if (i_clear_cmderr.read() == 1) {
         v.cmderr = 0;
     }
@@ -197,6 +204,7 @@ void sdctrl_cmd_transmitter::comb() {
                 v.cmdbitcnt = (r.cmdbitcnt.read() - 1);
             } else {
                 v.cmdstate = CMDSTATE_REQ_CRC7;
+                v.crc_calc = i_crc7;
                 vb_cmdshift(39, 32) = ((i_crc7.read() << 1) | 1);
                 v.cmdbitcnt = 6;
                 v.crc7_clear = 1;
@@ -220,8 +228,17 @@ void sdctrl_cmd_transmitter::comb() {
             // [47] start bit; [135] for R2
             v.watchdog = (r.watchdog.read() - 1);
             if (i_cmd.read() == 0) {
-                v_crc7_next = 1;
-                v.cmdstate = CMDSTATE_RESP_TRANSBIT;
+                if (i_spi_mode.read() == 0) {
+                    v_crc7_next = 1;
+                    v.cmdstate = CMDSTATE_RESP_TRANSBIT;
+                } else {
+                    // Response in SPI mode:
+                    v.cmdstate = CMDSTATE_RESP_SPI_R1;
+                    v.cmdbitcnt = 6;
+                    v.cmdmirror = r.req_cmd;
+                    v.resp_spistatus = 0;
+                    v.regshift = 0;
+                }
             } else if (r.watchdog.read().or_reduce() == 0) {
                 v.cmderr = CMDERR_NO_RESPONSE;
                 v.cmdstate = CMDSTATE_IDLE;
@@ -291,6 +308,38 @@ void sdctrl_cmd_transmitter::comb() {
             v.cmdstate = CMDSTATE_PAUSE;
             v.cmdbitcnt = 2;
             v.resp_valid = 1;
+        } else if (r.cmdstate.read() == CMDSTATE_RESP_SPI_R1) {
+            vb_resp_spistatus(14, 8) = (r.resp_spistatus.read()(13, 8), i_cmd.read());
+            if (r.cmdbitcnt.read().or_reduce() == 1) {
+                v.cmdbitcnt = (r.cmdbitcnt.read() - 1);
+            } else {
+                if (r.req_rn.read() == R2) {
+                    v.cmdbitcnt = 7;
+                    v.cmdstate = CMDSTATE_RESP_SPI_R2;
+                } else if ((r.req_rn.read() == R3) || (r.req_rn.read() == R7)) {
+                    v.cmdbitcnt = 31;
+                    v.cmdstate = CMDSTATE_RESP_SPI_DATA;
+                } else {
+                    v.cmdstate = CMDSTATE_PAUSE;
+                    v.resp_valid = 1;
+                }
+            }
+        } else if (r.cmdstate.read() == CMDSTATE_RESP_SPI_R2) {
+            vb_resp_spistatus(7, 0) = (r.resp_spistatus.read()(6, 0), i_cmd.read());
+            if (r.cmdbitcnt.read().or_reduce() == 1) {
+                v.cmdbitcnt = (r.cmdbitcnt.read() - 1);
+            } else {
+                v.cmdstate = CMDSTATE_PAUSE;
+                v.resp_valid = 1;
+            }
+        } else if (r.cmdstate.read() == CMDSTATE_RESP_SPI_DATA) {
+            v.regshift = (r.regshift.read()(30, 0), i_cmd.read());
+            if (r.cmdbitcnt.read().or_reduce() == 1) {
+                v.cmdbitcnt = (r.cmdbitcnt.read() - 1);
+            } else {
+                v.cmdstate = CMDSTATE_PAUSE;
+                v.resp_valid = 1;
+            }
         } else if (r.cmdstate.read() == CMDSTATE_PAUSE) {
             v.crc7_clear = 1;
             v.cmd_cs = 1;
@@ -302,6 +351,7 @@ void sdctrl_cmd_transmitter::comb() {
         }
     }
     v.cmdshift = vb_cmdshift;
+    v.resp_spistatus = vb_resp_spistatus;
 
     if ((r.cmdstate.read() < CMDSTATE_RESP_WAIT)
             || (r.cmdstate.read() == CMDSTATE_PAUSE)) {
@@ -328,6 +378,7 @@ void sdctrl_cmd_transmitter::comb() {
     o_resp_reg = r.regshift;
     o_resp_crc7_rx = r.crc_rx;
     o_resp_crc7_calc = r.crc_calc;
+    o_resp_spistatus = r.resp_spistatus;
     o_cmdstate = r.cmdstate;
     o_cmderr = r.cmderr;
 }

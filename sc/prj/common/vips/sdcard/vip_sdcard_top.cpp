@@ -80,8 +80,8 @@ vip_sdcard_top::vip_sdcard_top(sc_module_name name,
     cmdio0->i_cs(w_dat3_in);
     cmdio0->o_spi_mode(w_spi_mode);
     cmdio0->i_cmd(w_cmd_in);
-    cmdio0->o_cmd(w_cmd_out);
-    cmdio0->o_cmd_dir(w_cmd_dir);
+    cmdio0->o_cmd(w_cmdio_cmd_out);
+    cmdio0->o_cmd_dir(w_cmdio_cmd_dir);
     cmdio0->o_cmd_req_valid(w_cmd_req_valid);
     cmdio0->o_cmd_req_cmd(wb_cmd_req_cmd);
     cmdio0->o_cmd_req_data(wb_cmd_req_data);
@@ -89,10 +89,29 @@ vip_sdcard_top::vip_sdcard_top(sc_module_name name,
     cmdio0->i_cmd_resp_valid(w_cmd_resp_valid);
     cmdio0->i_cmd_resp_data32(wb_cmd_resp_data32);
     cmdio0->o_cmd_resp_ready(w_cmd_resp_ready);
+    cmdio0->i_cmd_resp_r1b(w_cmd_resp_r1b);
+    cmdio0->i_cmd_resp_r2(w_cmd_resp_r2);
+    cmdio0->i_cmd_resp_r3(w_cmd_resp_r3);
+    cmdio0->i_cmd_resp_r7(w_cmd_resp_r7);
+    cmdio0->i_stat_idle_state(w_stat_idle_state);
+    cmdio0->i_stat_erase_reset(w_stat_erase_reset);
+    cmdio0->i_stat_illegal_cmd(w_stat_illegal_cmd);
+    cmdio0->i_stat_err_erase_sequence(w_stat_err_erase_sequence);
+    cmdio0->i_stat_err_address(w_stat_err_address);
+    cmdio0->i_stat_err_parameter(w_stat_err_parameter);
+    cmdio0->i_stat_locked(w_stat_locked);
+    cmdio0->i_stat_wp_erase_skip(w_stat_wp_erase_skip);
+    cmdio0->i_stat_err(w_stat_err);
+    cmdio0->i_stat_err_cc(w_stat_err_cc);
+    cmdio0->i_stat_ecc_failed(w_stat_ecc_failed);
+    cmdio0->i_stat_wp_violation(w_stat_wp_violation);
+    cmdio0->i_stat_erase_param(w_stat_erase_param);
+    cmdio0->i_stat_out_of_range(w_stat_out_of_range);
 
 
     ctrl0 = new vip_sdcard_ctrl("ctrl0", async_reset,
                                  CFG_SDCARD_POWERUP_DONE_DELAY,
+                                 CFG_SDCARD_HCS,
                                  CFG_SDCARD_VHS,
                                  CFG_SDCARD_PCIE_1_2V,
                                  CFG_SDCARD_PCIE_AVAIL,
@@ -107,6 +126,12 @@ vip_sdcard_top::vip_sdcard_top(sc_module_name name,
     ctrl0->o_cmd_resp_valid(w_cmd_resp_valid);
     ctrl0->o_cmd_resp_data32(wb_cmd_resp_data32);
     ctrl0->i_cmd_resp_ready(w_cmd_resp_ready);
+    ctrl0->o_cmd_resp_r1b(w_cmd_resp_r1b);
+    ctrl0->o_cmd_resp_r2(w_cmd_resp_r2);
+    ctrl0->o_cmd_resp_r3(w_cmd_resp_r3);
+    ctrl0->o_cmd_resp_r7(w_cmd_resp_r7);
+    ctrl0->o_stat_idle_state(w_stat_idle_state);
+    ctrl0->o_stat_illegal_cmd(w_stat_illegal_cmd);
 
 
 
@@ -143,6 +168,26 @@ vip_sdcard_top::vip_sdcard_top(sc_module_name name,
     sensitive << w_cmd_resp_valid;
     sensitive << wb_cmd_resp_data32;
     sensitive << w_cmd_resp_ready;
+    sensitive << w_cmd_resp_r1b;
+    sensitive << w_cmd_resp_r2;
+    sensitive << w_cmd_resp_r3;
+    sensitive << w_cmd_resp_r7;
+    sensitive << w_cmdio_cmd_dir;
+    sensitive << w_cmdio_cmd_out;
+    sensitive << w_stat_idle_state;
+    sensitive << w_stat_erase_reset;
+    sensitive << w_stat_illegal_cmd;
+    sensitive << w_stat_err_erase_sequence;
+    sensitive << w_stat_err_address;
+    sensitive << w_stat_err_parameter;
+    sensitive << w_stat_locked;
+    sensitive << w_stat_wp_erase_skip;
+    sensitive << w_stat_err;
+    sensitive << w_stat_err_cc;
+    sensitive << w_stat_ecc_failed;
+    sensitive << w_stat_wp_violation;
+    sensitive << w_stat_erase_param;
+    sensitive << w_stat_out_of_range;
 }
 
 vip_sdcard_top::~vip_sdcard_top() {
@@ -213,15 +258,44 @@ void vip_sdcard_top::comb() {
     v_crc7_next = 0;
     v_crc7_in = 0;
 
-    w_dat0_dir = 1;                                         // in:
-    w_dat1_dir = 1;                                         // in:
-    w_dat2_dir = 1;                                         // in:
-    w_dat3_dir = 1;                                         // in:
+    if (w_spi_mode.read() == 1) {
+        w_cmd_dir = 1;                                      // in: din
+        w_dat0_dir = 0;                                     // out: dout
+        w_dat1_dir = 1;                                     // in: reserved
+        w_dat2_dir = 1;                                     // in: reserved
+        w_dat3_dir = 1;                                     // in: cs
 
-    w_dat0_out = 1;
-    w_dat1_out = 1;
-    w_dat2_out = 1;
-    w_dat3_out = 1;
+        w_dat0_out = w_cmdio_cmd_out;
+        w_dat1_out = 1;
+        w_dat2_out = 1;
+        w_dat3_out = 1;
+    } else {
+        w_cmd_dir = w_cmdio_cmd_dir;
+        w_dat0_dir = 1;                                     // in:
+        w_dat1_dir = 1;                                     // in:
+        w_dat2_dir = 1;                                     // in:
+        w_dat3_dir = 1;                                     // in:
+
+        w_cmd_out = w_cmdio_cmd_out;
+        w_dat0_out = 1;
+        w_dat1_out = 1;
+        w_dat2_out = 1;
+        w_dat3_out = 1;
+    }
+
+    // Not implemented yet:
+    w_stat_erase_reset = 0;
+    w_stat_err_erase_sequence = 0;
+    w_stat_err_address = 0;
+    w_stat_err_parameter = 0;
+    w_stat_locked = 0;
+    w_stat_wp_erase_skip = 0;
+    w_stat_err = 0;
+    w_stat_err_cc = 0;
+    w_stat_ecc_failed = 0;
+    w_stat_wp_violation = 0;
+    w_stat_erase_param = 0;
+    w_stat_out_of_range = 0;
 }
 
 }  // namespace debugger

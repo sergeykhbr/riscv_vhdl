@@ -36,6 +36,24 @@ SC_MODULE(vip_sdcard_cmdio) {
     sc_in<bool> i_cmd_resp_valid;
     sc_in<sc_uint<32>> i_cmd_resp_data32;
     sc_out<bool> o_cmd_resp_ready;
+    sc_in<bool> i_cmd_resp_r1b;                             // Same as R1 with zero line (any number of bits) card is busy, non-zero is ready
+    sc_in<bool> i_cmd_resp_r2;                              // 2-Bytes status
+    sc_in<bool> i_cmd_resp_r3;                              // Read OCR 32 bits
+    sc_in<bool> i_cmd_resp_r7;                              // CMD8 interface condition response
+    sc_in<bool> i_stat_idle_state;                          // Card in idle state and running initialization process
+    sc_in<bool> i_stat_erase_reset;                         // Erase sequence was cleared before executing
+    sc_in<bool> i_stat_illegal_cmd;                         // Illegal command was detected
+    sc_in<bool> i_stat_err_erase_sequence;                  // An error ini the sequence of erase commands occured
+    sc_in<bool> i_stat_err_address;                         // A misaligned adddres that didnot mathc block length
+    sc_in<bool> i_stat_err_parameter;                       // The command argument was otuside the allows range
+    sc_in<bool> i_stat_locked;                              // Is set when card is locked by the user
+    sc_in<bool> i_stat_wp_erase_skip;                       // Erase wp-sector or password error during card lock/unlock
+    sc_in<bool> i_stat_err;                                 // A general or an unknown error occured during operation
+    sc_in<bool> i_stat_err_cc;                              // Internal card controller error
+    sc_in<bool> i_stat_ecc_failed;                          // Card internal ECC eas applied but failed to correct data
+    sc_in<bool> i_stat_wp_violation;                        // The command tried to write wp block
+    sc_in<bool> i_stat_erase_param;                         // An invalid selection for erase, sectors or groups
+    sc_in<bool> i_stat_out_of_range;
 
     void comb();
     void registers();
@@ -75,6 +93,7 @@ SC_MODULE(vip_sdcard_cmdio) {
         sc_signal<sc_uint<48>> cmd_rxshift;
         sc_signal<sc_uint<48>> cmd_txshift;
         sc_signal<sc_uint<4>> cmd_state;
+        sc_signal<bool> cmd_req_crc_err;
         sc_signal<sc_uint<6>> bitcnt;
         sc_signal<bool> txbit;
         sc_signal<sc_uint<7>> crc_calc;
@@ -94,6 +113,7 @@ SC_MODULE(vip_sdcard_cmdio) {
         iv.cmd_rxshift = ~0ull;
         iv.cmd_txshift = ~0ull;
         iv.cmd_state = CMDSTATE_INIT;
+        iv.cmd_req_crc_err = 0;
         iv.bitcnt = 0;
         iv.txbit = 0;
         iv.crc_calc = 0;

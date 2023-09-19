@@ -47,6 +47,7 @@ SC_MODULE(sdctrl_cmd_transmitter) {
     sc_out<sc_uint<32>> o_resp_reg;                         // Card Status, OCR register (R3) or RCA register (R6)
     sc_out<sc_uint<7>> o_resp_crc7_rx;                      // Received CRC7
     sc_out<sc_uint<7>> o_resp_crc7_calc;                    // Calculated CRC7
+    sc_out<sc_uint<15>> o_resp_spistatus;                   // {R1,R2} response valid only in SPI mode
     sc_in<bool> i_resp_ready;
     sc_in<bool> i_clear_cmderr;
     sc_out<sc_uint<4>> o_cmdstate;
@@ -73,12 +74,14 @@ SC_MODULE(sdctrl_cmd_transmitter) {
     static const uint8_t CMDSTATE_RESP_WAIT = 4;
     static const uint8_t CMDSTATE_RESP_TRANSBIT = 5;
     static const uint8_t CMDSTATE_RESP_CMD_MIRROR = 6;
-    static const uint8_t CMDSTATE_RESP_R1 = 7;
-    static const uint8_t CMDSTATE_RESP_REG = 8;
-    static const uint8_t CMDSTATE_RESP_CID_CSD = 9;
-    static const uint8_t CMDSTATE_RESP_CRC7 = 10;
-    static const uint8_t CMDSTATE_RESP_STOPBIT = 11;
-    static const uint8_t CMDSTATE_PAUSE = 12;
+    static const uint8_t CMDSTATE_RESP_REG = 7;
+    static const uint8_t CMDSTATE_RESP_CID_CSD = 8;
+    static const uint8_t CMDSTATE_RESP_CRC7 = 9;
+    static const uint8_t CMDSTATE_RESP_STOPBIT = 10;
+    static const uint8_t CMDSTATE_RESP_SPI_R1 = 11;
+    static const uint8_t CMDSTATE_RESP_SPI_R2 = 12;
+    static const uint8_t CMDSTATE_RESP_SPI_DATA = 13;
+    static const uint8_t CMDSTATE_PAUSE = 15;
 
     struct sdctrl_cmd_transmitter_registers {
         sc_signal<sc_uint<6>> req_cmd;
@@ -86,6 +89,7 @@ SC_MODULE(sdctrl_cmd_transmitter) {
         sc_signal<bool> resp_valid;
         sc_signal<sc_uint<6>> resp_cmd;
         sc_signal<sc_uint<32>> resp_arg;
+        sc_signal<sc_uint<15>> resp_spistatus;
         sc_signal<sc_uint<40>> cmdshift;
         sc_signal<sc_uint<6>> cmdmirror;
         sc_signal<sc_uint<32>> regshift;
@@ -106,6 +110,7 @@ SC_MODULE(sdctrl_cmd_transmitter) {
         iv.resp_valid = 0;
         iv.resp_cmd = 0;
         iv.resp_arg = 0;
+        iv.resp_spistatus = 0;
         iv.cmdshift = ~0ull;
         iv.cmdmirror = 0;
         iv.regshift = 0;

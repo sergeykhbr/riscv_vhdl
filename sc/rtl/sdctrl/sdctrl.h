@@ -91,7 +91,8 @@ SC_MODULE(sdctrl) {
     static const uint8_t IDLESTATE_CMD8 = 1;
     static const uint8_t IDLESTATE_CMD55 = 2;
     static const uint8_t IDLESTATE_ACMD41 = 3;
-    static const uint8_t IDLESTATE_CARD_IDENTIFICATION = 4;
+    static const uint8_t IDLESTATE_CMD58 = 4;
+    static const uint8_t IDLESTATE_CARD_IDENTIFICATION = 5;
     // SD-card 'ready' state substates:
     static const uint8_t READYSTATE_CMD11 = 0;
     static const uint8_t READYSTATE_CMD2 = 1;
@@ -109,6 +110,7 @@ SC_MODULE(sdctrl) {
         sc_signal<sc_uint<3>> cmd_req_rn;
         sc_signal<sc_uint<6>> cmd_resp_r1;
         sc_signal<sc_uint<32>> cmd_resp_reg;
+        sc_signal<sc_uint<15>> cmd_resp_spistatus;
         sc_signal<bool> crc15_clear;
         sc_signal<sc_uint<4>> dat;
         sc_signal<bool> dat_dir;
@@ -134,6 +136,7 @@ SC_MODULE(sdctrl) {
         iv.cmd_req_rn = 0;
         iv.cmd_resp_r1 = 0;
         iv.cmd_resp_reg = 0;
+        iv.cmd_resp_spistatus = 0;
         iv.crc15_clear = 1;
         iv.dat = ~0ul;
         iv.dat_dir = DIR_OUTPUT;
@@ -179,6 +182,7 @@ SC_MODULE(sdctrl) {
     sc_signal<sc_uint<32>> wb_cmd_resp_reg;
     sc_signal<sc_uint<7>> wb_cmd_resp_crc7_rx;
     sc_signal<sc_uint<7>> wb_cmd_resp_crc7_calc;
+    sc_signal<sc_uint<15>> wb_cmd_resp_spistatus;
     sc_signal<bool> w_cmd_resp_ready;
     sc_signal<sc_uint<4>> wb_trx_cmdstate;
     sc_signal<sc_uint<4>> wb_trx_cmderr;

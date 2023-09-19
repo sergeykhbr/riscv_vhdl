@@ -35,7 +35,25 @@ vip_sdcard_cmdio::vip_sdcard_cmdio(sc_module_name name,
     i_cmd_req_ready("i_cmd_req_ready"),
     i_cmd_resp_valid("i_cmd_resp_valid"),
     i_cmd_resp_data32("i_cmd_resp_data32"),
-    o_cmd_resp_ready("o_cmd_resp_ready") {
+    o_cmd_resp_ready("o_cmd_resp_ready"),
+    i_cmd_resp_r1b("i_cmd_resp_r1b"),
+    i_cmd_resp_r2("i_cmd_resp_r2"),
+    i_cmd_resp_r3("i_cmd_resp_r3"),
+    i_cmd_resp_r7("i_cmd_resp_r7"),
+    i_stat_idle_state("i_stat_idle_state"),
+    i_stat_erase_reset("i_stat_erase_reset"),
+    i_stat_illegal_cmd("i_stat_illegal_cmd"),
+    i_stat_err_erase_sequence("i_stat_err_erase_sequence"),
+    i_stat_err_address("i_stat_err_address"),
+    i_stat_err_parameter("i_stat_err_parameter"),
+    i_stat_locked("i_stat_locked"),
+    i_stat_wp_erase_skip("i_stat_wp_erase_skip"),
+    i_stat_err("i_stat_err"),
+    i_stat_err_cc("i_stat_err_cc"),
+    i_stat_ecc_failed("i_stat_ecc_failed"),
+    i_stat_wp_violation("i_stat_wp_violation"),
+    i_stat_erase_param("i_stat_erase_param"),
+    i_stat_out_of_range("i_stat_out_of_range") {
 
     async_reset_ = async_reset;
     crccmd0 = 0;
@@ -57,6 +75,24 @@ vip_sdcard_cmdio::vip_sdcard_cmdio(sc_module_name name,
     sensitive << i_cmd_req_ready;
     sensitive << i_cmd_resp_valid;
     sensitive << i_cmd_resp_data32;
+    sensitive << i_cmd_resp_r1b;
+    sensitive << i_cmd_resp_r2;
+    sensitive << i_cmd_resp_r3;
+    sensitive << i_cmd_resp_r7;
+    sensitive << i_stat_idle_state;
+    sensitive << i_stat_erase_reset;
+    sensitive << i_stat_illegal_cmd;
+    sensitive << i_stat_err_erase_sequence;
+    sensitive << i_stat_err_address;
+    sensitive << i_stat_err_parameter;
+    sensitive << i_stat_locked;
+    sensitive << i_stat_wp_erase_skip;
+    sensitive << i_stat_err;
+    sensitive << i_stat_err_cc;
+    sensitive << i_stat_ecc_failed;
+    sensitive << i_stat_wp_violation;
+    sensitive << i_stat_erase_param;
+    sensitive << i_stat_out_of_range;
     sensitive << w_cmd_out;
     sensitive << w_crc7_clear;
     sensitive << w_crc7_next;
@@ -70,6 +106,7 @@ vip_sdcard_cmdio::vip_sdcard_cmdio(sc_module_name name,
     sensitive << r.cmd_rxshift;
     sensitive << r.cmd_txshift;
     sensitive << r.cmd_state;
+    sensitive << r.cmd_req_crc_err;
     sensitive << r.bitcnt;
     sensitive << r.txbit;
     sensitive << r.crc_calc;
@@ -105,6 +142,24 @@ void vip_sdcard_cmdio::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_cmd_resp_valid, i_cmd_resp_valid.name());
         sc_trace(o_vcd, i_cmd_resp_data32, i_cmd_resp_data32.name());
         sc_trace(o_vcd, o_cmd_resp_ready, o_cmd_resp_ready.name());
+        sc_trace(o_vcd, i_cmd_resp_r1b, i_cmd_resp_r1b.name());
+        sc_trace(o_vcd, i_cmd_resp_r2, i_cmd_resp_r2.name());
+        sc_trace(o_vcd, i_cmd_resp_r3, i_cmd_resp_r3.name());
+        sc_trace(o_vcd, i_cmd_resp_r7, i_cmd_resp_r7.name());
+        sc_trace(o_vcd, i_stat_idle_state, i_stat_idle_state.name());
+        sc_trace(o_vcd, i_stat_erase_reset, i_stat_erase_reset.name());
+        sc_trace(o_vcd, i_stat_illegal_cmd, i_stat_illegal_cmd.name());
+        sc_trace(o_vcd, i_stat_err_erase_sequence, i_stat_err_erase_sequence.name());
+        sc_trace(o_vcd, i_stat_err_address, i_stat_err_address.name());
+        sc_trace(o_vcd, i_stat_err_parameter, i_stat_err_parameter.name());
+        sc_trace(o_vcd, i_stat_locked, i_stat_locked.name());
+        sc_trace(o_vcd, i_stat_wp_erase_skip, i_stat_wp_erase_skip.name());
+        sc_trace(o_vcd, i_stat_err, i_stat_err.name());
+        sc_trace(o_vcd, i_stat_err_cc, i_stat_err_cc.name());
+        sc_trace(o_vcd, i_stat_ecc_failed, i_stat_ecc_failed.name());
+        sc_trace(o_vcd, i_stat_wp_violation, i_stat_wp_violation.name());
+        sc_trace(o_vcd, i_stat_erase_param, i_stat_erase_param.name());
+        sc_trace(o_vcd, i_stat_out_of_range, i_stat_out_of_range.name());
         sc_trace(o_vcd, r.clkcnt, pn + ".r_clkcnt");
         sc_trace(o_vcd, r.cs, pn + ".r_cs");
         sc_trace(o_vcd, r.spi_mode, pn + ".r_spi_mode");
@@ -113,6 +168,7 @@ void vip_sdcard_cmdio::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.cmd_rxshift, pn + ".r_cmd_rxshift");
         sc_trace(o_vcd, r.cmd_txshift, pn + ".r_cmd_txshift");
         sc_trace(o_vcd, r.cmd_state, pn + ".r_cmd_state");
+        sc_trace(o_vcd, r.cmd_req_crc_err, pn + ".r_cmd_req_crc_err");
         sc_trace(o_vcd, r.bitcnt, pn + ".r_bitcnt");
         sc_trace(o_vcd, r.txbit, pn + ".r_txbit");
         sc_trace(o_vcd, r.crc_calc, pn + ".r_crc_calc");
@@ -154,6 +210,7 @@ void vip_sdcard_cmdio::comb() {
         v.spi_mode = 0;
         v.cmd_dir = 1;
         v_crc7_clear = 1;
+        v.cmd_req_crc_err = 0;
         // Wait several (72) clocks to switch into idle state
         if (r.clkcnt.read() == 70) {
             v.cmd_state = CMDSTATE_REQ_STARTBIT;
@@ -207,8 +264,10 @@ void vip_sdcard_cmdio::comb() {
         v_crc7_clear = 1;
         break;
     case CMDSTATE_REQ_VALID:
-        if ((r.txbit.read() == 1)
-                && (r.crc_calc.read() == r.crc_rx.read())) {
+        if (r.crc_calc.read() != r.crc_rx.read()) {
+            v.cmd_req_crc_err = 1;
+        }
+        if (r.txbit.read() == 1) {
             v.cmd_state = CMDSTATE_WAIT_RESP;
             v.cmd_req_valid = 1;
             if ((r.cmd_rxshift.read()(45, 40).or_reduce() == 0) && (r.cs.read() == 0)) {
@@ -227,20 +286,52 @@ void vip_sdcard_cmdio::comb() {
         if (i_cmd_resp_valid.read() == 1) {
             v.cmd_resp_ready = 0;
             v.cmd_state = CMDSTATE_RESP;
-            v.bitcnt = 39;
-            vb_cmd_txshift = 0;
-            vb_cmd_txshift(45, 40) = r.cmd_rxshift.read()(45, 40);
-            vb_cmd_txshift(39, 8) = i_cmd_resp_data32;
-            vb_cmd_txshift(7, 0) = 0xFF;
+            if (r.spi_mode.read() == 0) {
+                v.bitcnt = 39;
+                vb_cmd_txshift = 0;
+                vb_cmd_txshift(45, 40) = r.cmd_rxshift.read()(45, 40);
+                vb_cmd_txshift(39, 8) = i_cmd_resp_data32;
+                vb_cmd_txshift(7, 0) = 0xFF;
+            } else {
+                // Default R1 response in SPI mode:
+                v.bitcnt = 7;
+                vb_cmd_txshift = ~0ull;
+                vb_cmd_txshift[47] = 0;
+                vb_cmd_txshift[46] = i_stat_err_parameter.read();
+                vb_cmd_txshift[45] = i_stat_err_address.read();
+                vb_cmd_txshift[44] = i_stat_err_erase_sequence.read();
+                vb_cmd_txshift[43] = r.cmd_req_crc_err.read();
+                vb_cmd_txshift[42] = i_stat_illegal_cmd.read();
+                vb_cmd_txshift[41] = i_stat_erase_reset.read();
+                vb_cmd_txshift[40] = i_stat_idle_state.read();
+                if (i_cmd_resp_r2.read() == 1) {
+                    v.bitcnt = 15;
+                    vb_cmd_txshift[39] = i_stat_out_of_range.read();
+                    vb_cmd_txshift[38] = i_stat_erase_param.read();
+                    vb_cmd_txshift[37] = i_stat_wp_violation.read();
+                    vb_cmd_txshift[36] = i_stat_ecc_failed.read();
+                    vb_cmd_txshift[35] = i_stat_err_cc.read();
+                    vb_cmd_txshift[34] = i_stat_err.read();
+                    vb_cmd_txshift[33] = i_stat_wp_erase_skip.read();
+                    vb_cmd_txshift[32] = i_stat_locked.read();
+                } else if ((i_cmd_resp_r3.read() == 1) || (i_cmd_resp_r7.read() == 1)) {
+                    v.bitcnt = 39;
+                    vb_cmd_txshift(39, 8) = i_cmd_resp_data32;
+                }
+            }
         }
         break;
     case CMDSTATE_RESP:
         v_crc7_in = r.cmd_txshift.read()[47];
         if (r.bitcnt.read().or_reduce() == 0) {
-            v.bitcnt = 6;
-            v.cmd_state = CMDSTATE_RESP_CRC7;
-            vb_cmd_txshift(47, 40) = ((wb_crc7.read() << 1) | 1);
-            v.crc_calc = wb_crc7;
+            if (r.spi_mode.read() == 0) {
+                v.bitcnt = 6;
+                v.cmd_state = CMDSTATE_RESP_CRC7;
+                vb_cmd_txshift(47, 40) = ((wb_crc7.read() << 1) | 1);
+                v.crc_calc = wb_crc7;
+            } else {
+                v.cmd_state = CMDSTATE_RESP_STOPBIT;
+            }
         } else {
             v_crc7_next = 1;
             v.bitcnt = (r.bitcnt.read() - 1);
@@ -256,6 +347,7 @@ void vip_sdcard_cmdio::comb() {
     case CMDSTATE_RESP_STOPBIT:
         v.cmd_state = CMDSTATE_REQ_STARTBIT;
         v.cmd_dir = 1;
+        v_crc7_clear = 1;
         break;
     default:
         break;
@@ -288,6 +380,7 @@ void vip_sdcard_cmdio::comb() {
     o_cmd_req_cmd = r.cmd_req_cmd;
     o_cmd_req_data = r.cmd_req_data;
     o_cmd_resp_ready = r.cmd_resp_ready;
+    o_spi_mode = r.spi_mode;
 }
 
 void vip_sdcard_cmdio::registers() {

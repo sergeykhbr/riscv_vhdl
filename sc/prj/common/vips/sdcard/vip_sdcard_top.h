@@ -47,6 +47,7 @@ SC_MODULE(vip_sdcard_top) {
 
     // Generic config parameters
     static const int CFG_SDCARD_POWERUP_DONE_DELAY = 700;
+    static const bool CFG_SDCARD_HCS = 1;
     static const uint8_t CFG_SDCARD_VHS = 0x1;
     static const bool CFG_SDCARD_PCIE_1_2V = 0;
     static const bool CFG_SDCARD_PCIE_AVAIL = 0;
@@ -77,6 +78,27 @@ SC_MODULE(vip_sdcard_top) {
     sc_signal<bool> w_cmd_resp_valid;
     sc_signal<sc_uint<32>> wb_cmd_resp_data32;
     sc_signal<bool> w_cmd_resp_ready;
+    sc_signal<bool> w_cmd_resp_r1b;
+    sc_signal<bool> w_cmd_resp_r2;
+    sc_signal<bool> w_cmd_resp_r3;
+    sc_signal<bool> w_cmd_resp_r7;
+    sc_signal<bool> w_cmdio_cmd_dir;
+    sc_signal<bool> w_cmdio_cmd_out;
+    // Status signals:
+    sc_signal<bool> w_stat_idle_state;
+    sc_signal<bool> w_stat_erase_reset;
+    sc_signal<bool> w_stat_illegal_cmd;
+    sc_signal<bool> w_stat_err_erase_sequence;
+    sc_signal<bool> w_stat_err_address;
+    sc_signal<bool> w_stat_err_parameter;
+    sc_signal<bool> w_stat_locked;
+    sc_signal<bool> w_stat_wp_erase_skip;
+    sc_signal<bool> w_stat_err;
+    sc_signal<bool> w_stat_err_cc;
+    sc_signal<bool> w_stat_ecc_failed;
+    sc_signal<bool> w_stat_wp_violation;
+    sc_signal<bool> w_stat_erase_param;
+    sc_signal<bool> w_stat_out_of_range;
 
     iobuf_tech *iobufcmd0;
     iobuf_tech *iobufdat0;
