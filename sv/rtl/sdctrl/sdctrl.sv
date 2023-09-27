@@ -191,7 +191,7 @@ sdctrl_crc15 #(
 
 sdctrl_crc15 #(
     .async_reset(async_reset)
-) crcdat0 (
+) crcdat1 (
     .i_clk(i_clk),
     .i_nrst(i_nrst),
     .i_clear(r.crc15_clear),
@@ -203,7 +203,7 @@ sdctrl_crc15 #(
 
 sdctrl_crc15 #(
     .async_reset(async_reset)
-) crcdat0 (
+) crcdat2 (
     .i_clk(i_clk),
     .i_nrst(i_nrst),
     .i_clear(r.crc15_clear),
@@ -215,7 +215,7 @@ sdctrl_crc15 #(
 
 sdctrl_crc15 #(
     .async_reset(async_reset)
-) crcdat0 (
+) crcdat3 (
     .i_clk(i_clk),
     .i_nrst(i_nrst),
     .i_clear(r.crc15_clear),

@@ -137,31 +137,31 @@ sdctrl::sdctrl(sc_module_name name,
     crcdat0->o_crc15(wb_crc15_0);
 
 
-    crcdat0 = new sdctrl_crc15("crcdat0", async_reset);
-    crcdat0->i_clk(i_clk);
-    crcdat0->i_nrst(i_nrst);
-    crcdat0->i_clear(r.crc15_clear);
-    crcdat0->i_next(w_crc15_next);
-    crcdat0->i_dat(i_dat1);
-    crcdat0->o_crc15(wb_crc15_1);
+    crcdat1 = new sdctrl_crc15("crcdat1", async_reset);
+    crcdat1->i_clk(i_clk);
+    crcdat1->i_nrst(i_nrst);
+    crcdat1->i_clear(r.crc15_clear);
+    crcdat1->i_next(w_crc15_next);
+    crcdat1->i_dat(i_dat1);
+    crcdat1->o_crc15(wb_crc15_1);
 
 
-    crcdat0 = new sdctrl_crc15("crcdat0", async_reset);
-    crcdat0->i_clk(i_clk);
-    crcdat0->i_nrst(i_nrst);
-    crcdat0->i_clear(r.crc15_clear);
-    crcdat0->i_next(w_crc15_next);
-    crcdat0->i_dat(i_dat2);
-    crcdat0->o_crc15(wb_crc15_2);
+    crcdat2 = new sdctrl_crc15("crcdat2", async_reset);
+    crcdat2->i_clk(i_clk);
+    crcdat2->i_nrst(i_nrst);
+    crcdat2->i_clear(r.crc15_clear);
+    crcdat2->i_next(w_crc15_next);
+    crcdat2->i_dat(i_dat2);
+    crcdat2->o_crc15(wb_crc15_2);
 
 
-    crcdat0 = new sdctrl_crc15("crcdat0", async_reset);
-    crcdat0->i_clk(i_clk);
-    crcdat0->i_nrst(i_nrst);
-    crcdat0->i_clear(r.crc15_clear);
-    crcdat0->i_next(w_crc15_next);
-    crcdat0->i_dat(i_cd_dat3);
-    crcdat0->o_crc15(wb_crc15_3);
+    crcdat3 = new sdctrl_crc15("crcdat3", async_reset);
+    crcdat3->i_clk(i_clk);
+    crcdat3->i_nrst(i_nrst);
+    crcdat3->i_clear(r.crc15_clear);
+    crcdat3->i_next(w_crc15_next);
+    crcdat3->i_dat(i_cd_dat3);
+    crcdat3->o_crc15(wb_crc15_3);
 
 
     cmdtrx0 = new sdctrl_cmd_transmitter("cmdtrx0", async_reset);
