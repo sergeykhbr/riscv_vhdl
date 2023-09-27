@@ -37,6 +37,7 @@ module sdctrl_regs #(
     output logic [15:0] o_watchdog,                         // Number of sclk to detect no response
     output logic o_clear_cmderr,                            // Clear cmderr from FW
     // Configuration parameters:
+    output logic o_spi_mode,                                // SPI mode was selected from FW
     output logic o_pcie_12V_support,                        // 0b: not asking 1.2V support
     output logic o_pcie_available,                          // 0b: not asking PCIe availability
     output logic [3:0] o_voltage_supply,                    // 0=not defined; 1=2.7-3.6V; 2=reserved for Low Voltage Range
@@ -135,6 +136,7 @@ begin: comb_proc
     end
     10'h001: begin                                          // {0x04, 'RW', 'control', 'Global Control register'}
         vb_rdata[0] = r.sclk_ena;
+        vb_rdata[3] = r.spi_mode;
         vb_rdata[4] = i_sd_dat0;
         vb_rdata[5] = i_sd_dat1;
         vb_rdata[6] = i_sd_dat2;
@@ -143,6 +145,7 @@ begin: comb_proc
         if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
             v.sclk_ena = wb_req_wdata[0];
             v.clear_cmderr = wb_req_wdata[1];
+            v.spi_mode = wb_req_wdata[3];
         end
     end
     10'h002: begin                                          // {0x08, 'RW', 'watchdog', 'Watchdog'}
@@ -202,6 +205,7 @@ begin: comb_proc
         v = sdctrl_regs_r_reset;
     end
 
+    o_spi_mode = r.spi_mode;
     o_pcie_12V_support = r.pcie_12V_support;
     o_pcie_available = r.pcie_available;
     o_voltage_supply = r.voltage_supply;

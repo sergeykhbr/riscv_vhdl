@@ -25,12 +25,14 @@ localparam bit [3:0] CMDSTATE_REQ_STOPBIT = 4'h3;
 localparam bit [3:0] CMDSTATE_RESP_WAIT = 4'h4;
 localparam bit [3:0] CMDSTATE_RESP_TRANSBIT = 4'h5;
 localparam bit [3:0] CMDSTATE_RESP_CMD_MIRROR = 4'h6;
-localparam bit [3:0] CMDSTATE_RESP_R1 = 4'h7;
-localparam bit [3:0] CMDSTATE_RESP_REG = 4'h8;
-localparam bit [3:0] CMDSTATE_RESP_CID_CSD = 4'h9;
-localparam bit [3:0] CMDSTATE_RESP_CRC7 = 4'ha;
-localparam bit [3:0] CMDSTATE_RESP_STOPBIT = 4'hb;
-localparam bit [3:0] CMDSTATE_PAUSE = 4'hc;
+localparam bit [3:0] CMDSTATE_RESP_REG = 4'h7;
+localparam bit [3:0] CMDSTATE_RESP_CID_CSD = 4'h8;
+localparam bit [3:0] CMDSTATE_RESP_CRC7 = 4'h9;
+localparam bit [3:0] CMDSTATE_RESP_STOPBIT = 4'ha;
+localparam bit [3:0] CMDSTATE_RESP_SPI_R1 = 4'hb;
+localparam bit [3:0] CMDSTATE_RESP_SPI_R2 = 4'hc;
+localparam bit [3:0] CMDSTATE_RESP_SPI_DATA = 4'hd;
+localparam bit [3:0] CMDSTATE_PAUSE = 4'hf;
 
 typedef struct {
     logic [5:0] req_cmd;
@@ -38,6 +40,7 @@ typedef struct {
     logic resp_valid;
     logic [5:0] resp_cmd;
     logic [31:0] resp_arg;
+    logic [14:0] resp_spistatus;
     logic [39:0] cmdshift;
     logic [5:0] cmdmirror;
     logic [31:0] regshift;
@@ -48,6 +51,7 @@ typedef struct {
     logic crc7_clear;
     logic [3:0] cmdstate;
     logic [3:0] cmderr;
+    logic cmd_cs;
     logic [15:0] watchdog;
 } sdctrl_cmd_transmitter_registers;
 
@@ -57,6 +61,7 @@ const sdctrl_cmd_transmitter_registers sdctrl_cmd_transmitter_r_reset = '{
     1'b0,                               // resp_valid
     '0,                                 // resp_cmd
     '0,                                 // resp_arg
+    '0,                                 // resp_spistatus
     '1,                                 // cmdshift
     '0,                                 // cmdmirror
     '0,                                 // regshift
@@ -67,6 +72,7 @@ const sdctrl_cmd_transmitter_registers sdctrl_cmd_transmitter_r_reset = '{
     1'h1,                               // crc7_clear
     CMDSTATE_IDLE,                      // cmdstate
     CMDERR_NONE,                        // cmderr
+    1'h1,                               // cmd_cs
     '0                                  // watchdog
 };
 

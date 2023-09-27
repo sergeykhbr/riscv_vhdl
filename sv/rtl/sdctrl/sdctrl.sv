@@ -59,6 +59,7 @@ logic w_regs_sck_posedge;
 logic w_regs_sck;
 logic w_regs_clear_cmderr;
 logic [15:0] wb_regs_watchdog;
+logic w_regs_spi_mode;
 logic w_regs_pcie_12V_support;
 logic w_regs_pcie_available;
 logic [3:0] wb_regs_voltage_supply;
@@ -74,12 +75,16 @@ logic w_mem_req_ready;
 logic w_mem_resp_valid;
 logic [CFG_SYSBUS_DATA_BITS-1:0] wb_mem_resp_rdata;
 logic wb_mem_resp_err;
+logic w_trx_cmd_dir;
+logic w_trx_cmd_cs;
+logic w_cmd_in;
 logic w_cmd_req_ready;
 logic w_cmd_resp_valid;
 logic [5:0] wb_cmd_resp_cmd;
 logic [31:0] wb_cmd_resp_reg;
 logic [6:0] wb_cmd_resp_crc7_rx;
 logic [6:0] wb_cmd_resp_crc7_calc;
+logic [14:0] wb_cmd_resp_spistatus;
 logic w_cmd_resp_ready;
 logic [3:0] wb_trx_cmdstate;
 logic [3:0] wb_trx_cmderr;
@@ -89,9 +94,11 @@ logic w_crc7_clear;
 logic w_crc7_next;
 logic w_crc7_dat;
 logic [6:0] wb_crc7;
-logic w_crc16_next;
-logic [3:0] wb_crc16_dat;
-logic [15:0] wb_crc16;
+logic w_crc15_next;
+logic [14:0] wb_crc15_0;
+logic [14:0] wb_crc15_1;
+logic [14:0] wb_crc15_2;
+logic [14:0] wb_crc15_3;
 sdctrl_registers r, rin;
 
 axi_slv #(
@@ -138,6 +145,7 @@ sdctrl_regs #(
     .o_sck_negedge(w_regs_sck),
     .o_watchdog(wb_regs_watchdog),
     .o_clear_cmderr(w_regs_clear_cmderr),
+    .o_spi_mode(w_regs_spi_mode),
     .o_pcie_12V_support(w_regs_pcie_12V_support),
     .o_pcie_available(w_regs_pcie_available),
     .o_voltage_supply(wb_regs_voltage_supply),
@@ -169,15 +177,51 @@ sdctrl_crc7 #(
 );
 
 
-sdctrl_crc16 #(
+sdctrl_crc15 #(
     .async_reset(async_reset)
 ) crcdat0 (
     .i_clk(i_clk),
     .i_nrst(i_nrst),
-    .i_clear(r.crc16_clear),
-    .i_next(w_crc16_next),
-    .i_dat(wb_crc16_dat),
-    .o_crc16(wb_crc16)
+    .i_clear(r.crc15_clear),
+    .i_next(w_crc15_next),
+    .i_dat(i_dat0),
+    .o_crc15(wb_crc15_0)
+);
+
+
+sdctrl_crc15 #(
+    .async_reset(async_reset)
+) crcdat0 (
+    .i_clk(i_clk),
+    .i_nrst(i_nrst),
+    .i_clear(r.crc15_clear),
+    .i_next(w_crc15_next),
+    .i_dat(i_dat1),
+    .o_crc15(wb_crc15_1)
+);
+
+
+sdctrl_crc15 #(
+    .async_reset(async_reset)
+) crcdat0 (
+    .i_clk(i_clk),
+    .i_nrst(i_nrst),
+    .i_clear(r.crc15_clear),
+    .i_next(w_crc15_next),
+    .i_dat(i_dat2),
+    .o_crc15(wb_crc15_2)
+);
+
+
+sdctrl_crc15 #(
+    .async_reset(async_reset)
+) crcdat0 (
+    .i_clk(i_clk),
+    .i_nrst(i_nrst),
+    .i_clear(r.crc15_clear),
+    .i_next(w_crc15_next),
+    .i_dat(i_cd_dat3),
+    .o_crc15(wb_crc15_3)
 );
 
 
@@ -188,9 +232,11 @@ sdctrl_cmd_transmitter #(
     .i_nrst(i_nrst),
     .i_sclk_posedge(w_regs_sck_posedge),
     .i_sclk_negedge(w_regs_sck),
-    .i_cmd(i_cmd),
+    .i_cmd(w_cmd_in),
     .o_cmd(o_cmd),
-    .o_cmd_dir(o_cmd_dir),
+    .o_cmd_dir(w_trx_cmd_dir),
+    .o_cmd_cs(w_trx_cmd_cs),
+    .i_spi_mode(w_regs_spi_mode),
     .i_watchdog(wb_regs_watchdog),
     .i_cmd_set_low(r.cmd_set_low),
     .i_req_valid(r.cmd_req_valid),
@@ -207,6 +253,7 @@ sdctrl_cmd_transmitter #(
     .o_resp_reg(wb_cmd_resp_reg),
     .o_resp_crc7_rx(wb_cmd_resp_crc7_rx),
     .o_resp_crc7_calc(wb_cmd_resp_crc7_calc),
+    .o_resp_spistatus(wb_cmd_resp_spistatus),
     .i_resp_ready(w_cmd_resp_ready),
     .i_clear_cmderr(w_clear_cmderr),
     .o_cmdstate(wb_trx_cmdstate),
@@ -217,19 +264,43 @@ sdctrl_cmd_transmitter #(
 always_comb
 begin: comb_proc
     sdctrl_registers v;
-    logic v_crc16_next;
+    logic v_crc15_next;
     logic [31:0] vb_cmd_req_arg;
     logic v_cmd_resp_ready;
+    logic v_cmd_dir;
+    logic v_cmd_in;
+    logic v_dat0_dir;
+    logic v_dat3_dir;
+    logic v_dat3_out;
     logic v_clear_cmderr;
 
-    v_crc16_next = 0;
+    v_crc15_next = 0;
     vb_cmd_req_arg = 0;
     v_cmd_resp_ready = 0;
+    v_cmd_dir = 0;
+    v_cmd_in = 0;
+    v_dat0_dir = 0;
+    v_dat3_dir = 0;
+    v_dat3_out = 0;
     v_clear_cmderr = 0;
 
     v = r;
 
     vb_cmd_req_arg = r.cmd_req_arg;
+
+    if (w_regs_spi_mode == 1'b1) begin
+        v_dat3_dir = DIR_OUTPUT;
+        v_dat3_out = w_trx_cmd_cs;
+        v_cmd_dir = DIR_OUTPUT;
+        v_dat0_dir = DIR_INPUT;
+        v_cmd_in = i_dat0;
+    end else begin
+        v_dat3_dir = r.dat3_dir;
+        v_dat3_out = r.dat[3];
+        v_cmd_dir = w_trx_cmd_dir;
+        v_dat0_dir = r.dat_dir;
+        v_cmd_in = i_cmd;
+    end
 
     if (r.wait_cmd_resp == 1'b1) begin
         v_cmd_resp_ready = 1'b1;
@@ -237,6 +308,7 @@ begin: comb_proc
             v.wait_cmd_resp = 1'b0;
             v.cmd_resp_r1 = wb_cmd_resp_cmd;
             v.cmd_resp_reg = wb_cmd_resp_reg;
+            v.cmd_resp_spistatus = wb_cmd_resp_spistatus;
 
             if ((r.cmd_req_cmd == CMD8)
                     && (wb_trx_cmderr == CMDERR_NO_RESPONSE)) begin
@@ -354,30 +426,57 @@ begin: comb_proc
                 //   [23:0] VDD voltage window (OCR[23:0])
                 v.cmd_req_valid = 1'b1;
                 v.cmd_req_cmd = ACMD41;
-                v.cmd_req_rn = R3;
                 vb_cmd_req_arg = '0;
                 vb_cmd_req_arg[30] = r.HCS;
-                vb_cmd_req_arg[24] = r.S18;
                 vb_cmd_req_arg[23: 0] = r.OCR_VoltageWindow;
-                v.initstate = IDLESTATE_CARD_IDENTIFICATION;
+                if (w_regs_spi_mode == 1'b0) begin
+                    // SD mode:
+                    vb_cmd_req_arg[24] = r.S18;
+                    v.cmd_req_rn = R3;
+                    v.initstate = IDLESTATE_CARD_IDENTIFICATION;
+                end else begin
+                    // SPI mode:
+                    v.cmd_req_rn = R1;
+                    v.initstate = IDLESTATE_CMD58;
+                end
             end
-            IDLESTATE_CARD_IDENTIFICATION: begin
-                if (r.cmd_resp_reg[31] == 1'b0) begin
-                    // LOW if the card has not finished power-up routine
+            IDLESTATE_CMD58: begin
+                // READ_OCR: Reads OCR register. Used in SPI mode only.
+                //   [31] reserved bit
+                //   [30] HCS (high capacity support)
+                //   [29:0] reserved
+                if (r.cmd_resp_spistatus[14: 8] != 7'h01) begin
+                    // SD card not in idle state
                     v.initstate = IDLESTATE_CMD55;
                 end else begin
-                    if (r.HCS == 1'b1) begin
-                        v.sdtype = SDCARD_VER2X_HC;
-                    end else if (r.sdtype == SDCARD_UNKNOWN) begin
-                        v.sdtype = SDCARD_VER2X_SC;
-                    end
-                    if (r.S18 == 1'b1) begin
+                    v.cmd_req_valid = 1'b1;
+                    v.cmd_req_cmd = CMD58;
+                    vb_cmd_req_arg = '0;
+                    v.cmd_req_rn = R3;
+                    v.initstate = IDLESTATE_CARD_IDENTIFICATION;
+                end
+            end
+            IDLESTATE_CARD_IDENTIFICATION: begin
+                if (r.HCS == 1'b1) begin
+                    v.sdtype = SDCARD_VER2X_HC;
+                end else if (r.sdtype == SDCARD_UNKNOWN) begin
+                    v.sdtype = SDCARD_VER2X_SC;
+                end
+                if (w_regs_spi_mode == 1'b0) begin
+                    // SD mode:
+                    if (r.cmd_resp_reg[31] == 1'b0) begin
+                        // LOW if the card has not finished power-up routine
+                        v.initstate = IDLESTATE_CMD55;
+                    end else if (r.S18 == 1'b1) begin
                         // Voltage switch command to change 3.3V to 1.8V
                         v.readystate = READYSTATE_CMD11;
                     end else begin
                         v.readystate = READYSTATE_CMD2;
                     end
                     v.sdstate = SDSTATE_READY;
+                end else begin
+                    // SPI mode:
+                    v.sdstate = SDSTATE_STBY;
                 end
             end
             default: begin
@@ -447,7 +546,7 @@ begin: comb_proc
     end
 
     w_cmd_resp_ready = v_cmd_resp_ready;
-    w_crc16_next = v_crc16_next;
+    w_crc15_next = v_crc15_next;
     // Page 222, Table 4-81 Overview of Card States vs Operation Modes table
     if ((r.sdstate <= SDSTATE_IDENT)
             || (r.sdstate == SDSTATE_INA)
@@ -459,15 +558,17 @@ begin: comb_proc
         w_400kHz_ena = 1'b0;
     end
 
-    o_cd_dat3 = r.dat[3];
+    w_cmd_in = v_cmd_in;
+    o_cd_dat3 = v_dat3_out;
     o_dat2 = r.dat[2];
     o_dat1 = r.dat[1];
     o_dat0 = r.dat[0];
     // Direction bits:
-    o_dat0_dir = r.dat_dir;
+    o_cmd_dir = v_cmd_dir;
+    o_dat0_dir = v_dat0_dir;
     o_dat1_dir = r.dat_dir;
     o_dat2_dir = r.dat_dir;
-    o_cd_dat3_dir = r.dat_dir;
+    o_cd_dat3_dir = v_dat3_dir;
     // Memory request:
     w_mem_req_ready = 1'b1;
     w_mem_resp_valid = 1'b1;

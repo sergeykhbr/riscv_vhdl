@@ -39,6 +39,11 @@ typedef struct {
     logic cmd_resp_valid;
     logic cmd_resp_valid_delayed;
     logic [31:0] cmd_resp_data32;
+    logic cmd_resp_r1b;
+    logic cmd_resp_r2;
+    logic cmd_resp_r3;
+    logic cmd_resp_r7;
+    logic illegal_cmd;
 } vip_sdcard_ctrl_registers;
 
 const vip_sdcard_ctrl_registers vip_sdcard_ctrl_r_reset = '{
@@ -50,7 +55,12 @@ const vip_sdcard_ctrl_registers vip_sdcard_ctrl_r_reset = '{
     1'b0,                               // cmd_req_ready
     1'b0,                               // cmd_resp_valid
     1'b0,                               // cmd_resp_valid_delayed
-    '0                                  // cmd_resp_data32
+    '0,                                 // cmd_resp_data32
+    1'b0,                               // cmd_resp_r1b
+    1'b0,                               // cmd_resp_r2
+    1'b0,                               // cmd_resp_r3
+    1'b0,                               // cmd_resp_r7
+    1'b0                                // illegal_cmd
 };
 
 endpackage: vip_sdcard_ctrl_pkg

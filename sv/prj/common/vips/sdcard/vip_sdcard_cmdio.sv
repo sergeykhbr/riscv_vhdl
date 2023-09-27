@@ -22,6 +22,8 @@ module vip_sdcard_cmdio #(
 (
     input logic i_nrst,
     input logic i_clk,
+    input logic i_cs,                                       // dat3 in SPI mode.
+    output logic o_spi_mode,                                // Detected SPI mode on CMD0
     input logic i_cmd,
     output logic o_cmd,
     output logic o_cmd_dir,
@@ -31,7 +33,25 @@ module vip_sdcard_cmdio #(
     input logic i_cmd_req_ready,
     input logic i_cmd_resp_valid,
     input logic [31:0] i_cmd_resp_data32,
-    output logic o_cmd_resp_ready
+    output logic o_cmd_resp_ready,
+    input logic i_cmd_resp_r1b,                             // Same as R1 with zero line (any number of bits) card is busy, non-zero is ready
+    input logic i_cmd_resp_r2,                              // 2-Bytes status
+    input logic i_cmd_resp_r3,                              // Read OCR 32 bits
+    input logic i_cmd_resp_r7,                              // CMD8 interface condition response
+    input logic i_stat_idle_state,                          // Card in idle state and running initialization process
+    input logic i_stat_erase_reset,                         // Erase sequence was cleared before executing
+    input logic i_stat_illegal_cmd,                         // Illegal command was detected
+    input logic i_stat_err_erase_sequence,                  // An error ini the sequence of erase commands occured
+    input logic i_stat_err_address,                         // A misaligned adddres that didnot mathc block length
+    input logic i_stat_err_parameter,                       // The command argument was otuside the allows range
+    input logic i_stat_locked,                              // Is set when card is locked by the user
+    input logic i_stat_wp_erase_skip,                       // Erase wp-sector or password error during card lock/unlock
+    input logic i_stat_err,                                 // A general or an unknown error occured during operation
+    input logic i_stat_err_cc,                              // Internal card controller error
+    input logic i_stat_ecc_failed,                          // Card internal ECC eas applied but failed to correct data
+    input logic i_stat_wp_violation,                        // The command tried to write wp block
+    input logic i_stat_erase_param,                         // An invalid selection for erase, sectors or groups
+    input logic i_stat_out_of_range
 );
 
 import vip_sdcard_cmdio_pkg::*;
@@ -80,8 +100,10 @@ begin: comb_proc
 
     case (r.cmd_state)
     CMDSTATE_INIT: begin
+        v.spi_mode = 1'b0;
         v.cmd_dir = 1'b1;
         v_crc7_clear = 1'b1;
+        v.cmd_req_crc_err = 1'b0;
         // Wait several (72) clocks to switch into idle state
         if (r.clkcnt == 70) begin
             v.cmd_state = CMDSTATE_REQ_STARTBIT;
@@ -89,6 +111,7 @@ begin: comb_proc
     end
     CMDSTATE_REQ_STARTBIT: begin
         if ((r.cmdz == 1'b1) && (i_cmd == 1'b0)) begin
+            v.cs = i_cs;
             v_crc7_next = 1'b1;
             v.cmd_state = CMDSTATE_REQ_TXBIT;
         end else begin
@@ -134,10 +157,16 @@ begin: comb_proc
         v_crc7_clear = 1'b1;
     end
     CMDSTATE_REQ_VALID: begin
-        if ((r.txbit == 1'b1)
-                && (r.crc_calc == r.crc_rx)) begin
+        if (r.crc_calc != r.crc_rx) begin
+            v.cmd_req_crc_err = 1'b1;
+        end
+        if (r.txbit == 1'b1) begin
             v.cmd_state = CMDSTATE_WAIT_RESP;
             v.cmd_req_valid = 1'b1;
+            if (((|r.cmd_rxshift[45: 40]) == 1'b0) && (r.cs == 1'b0)) begin
+                // CMD0 with CS = 0 (CD_DAT3)
+                v.spi_mode = 1'b1;
+            end
         end else begin
             v.cmd_state = CMDSTATE_REQ_STARTBIT;
             v.cmd_dir = 1'b1;
@@ -150,20 +179,52 @@ begin: comb_proc
         if (i_cmd_resp_valid == 1'b1) begin
             v.cmd_resp_ready = 1'b0;
             v.cmd_state = CMDSTATE_RESP;
-            v.bitcnt = 6'h27;
-            vb_cmd_txshift = '0;
-            vb_cmd_txshift[45: 40] = r.cmd_rxshift[45: 40];
-            vb_cmd_txshift[39: 8] = i_cmd_resp_data32;
-            vb_cmd_txshift[7: 0] = 8'hff;
+            if (r.spi_mode == 1'b0) begin
+                v.bitcnt = 6'h27;
+                vb_cmd_txshift = '0;
+                vb_cmd_txshift[45: 40] = r.cmd_rxshift[45: 40];
+                vb_cmd_txshift[39: 8] = i_cmd_resp_data32;
+                vb_cmd_txshift[7: 0] = 8'hff;
+            end else begin
+                // Default R1 response in SPI mode:
+                v.bitcnt = 6'h07;
+                vb_cmd_txshift = '1;
+                vb_cmd_txshift[47] = 1'h0;
+                vb_cmd_txshift[46] = i_stat_err_parameter;
+                vb_cmd_txshift[45] = i_stat_err_address;
+                vb_cmd_txshift[44] = i_stat_err_erase_sequence;
+                vb_cmd_txshift[43] = r.cmd_req_crc_err;
+                vb_cmd_txshift[42] = i_stat_illegal_cmd;
+                vb_cmd_txshift[41] = i_stat_erase_reset;
+                vb_cmd_txshift[40] = i_stat_idle_state;
+                if (i_cmd_resp_r2 == 1'b1) begin
+                    v.bitcnt = 6'h0f;
+                    vb_cmd_txshift[39] = i_stat_out_of_range;
+                    vb_cmd_txshift[38] = i_stat_erase_param;
+                    vb_cmd_txshift[37] = i_stat_wp_violation;
+                    vb_cmd_txshift[36] = i_stat_ecc_failed;
+                    vb_cmd_txshift[35] = i_stat_err_cc;
+                    vb_cmd_txshift[34] = i_stat_err;
+                    vb_cmd_txshift[33] = i_stat_wp_erase_skip;
+                    vb_cmd_txshift[32] = i_stat_locked;
+                end else if ((i_cmd_resp_r3 == 1'b1) || (i_cmd_resp_r7 == 1'b1)) begin
+                    v.bitcnt = 6'h27;
+                    vb_cmd_txshift[39: 8] = i_cmd_resp_data32;
+                end
+            end
         end
     end
     CMDSTATE_RESP: begin
         v_crc7_in = r.cmd_txshift[47];
         if ((|r.bitcnt) == 1'b0) begin
-            v.bitcnt = 6'h06;
-            v.cmd_state = CMDSTATE_RESP_CRC7;
-            vb_cmd_txshift[47: 40] = {wb_crc7, 1'h1};
-            v.crc_calc = wb_crc7;
+            if (r.spi_mode == 1'b0) begin
+                v.bitcnt = 6'h06;
+                v.cmd_state = CMDSTATE_RESP_CRC7;
+                vb_cmd_txshift[47: 40] = {wb_crc7, 1'h1};
+                v.crc_calc = wb_crc7;
+            end else begin
+                v.cmd_state = CMDSTATE_RESP_STOPBIT;
+            end
         end else begin
             v_crc7_next = 1'b1;
             v.bitcnt = (r.bitcnt - 1);
@@ -179,6 +240,7 @@ begin: comb_proc
     CMDSTATE_RESP_STOPBIT: begin
         v.cmd_state = CMDSTATE_REQ_STARTBIT;
         v.cmd_dir = 1'b1;
+        v_crc7_clear = 1'b1;
     end
     default: begin
     end
@@ -211,6 +273,7 @@ begin: comb_proc
     o_cmd_req_cmd = r.cmd_req_cmd;
     o_cmd_req_data = r.cmd_req_data;
     o_cmd_resp_ready = r.cmd_resp_ready;
+    o_spi_mode = r.spi_mode;
 
     rin = v;
 end: comb_proc

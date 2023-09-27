@@ -25,6 +25,7 @@ localparam bit [5:0] CMD8 = 6'h08;                          // SEND_IF_COND: Car
 localparam bit [5:0] CMD11 = 6'h0b;                         // VOLTAGE_SWITCH: Switch to 1.8V bus signaling level
 localparam bit [5:0] ACMD41 = 6'h29;
 localparam bit [5:0] CMD55 = 6'h37;                         // APP_CMD: application specific commands
+localparam bit [5:0] CMD58 = 6'h3a;                         // READ_OCR: Read OCR register in SPI mode
 // 
 localparam bit [2:0] R1 = 3'h1;
 // 4.9.3 R2 (CID, CSD register, page 140)

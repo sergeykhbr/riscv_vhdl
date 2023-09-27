@@ -33,6 +33,7 @@ import vip_sdcard_top_pkg::*;
 
 logic w_clk;
 logic [7:0] wb_rdata;
+logic w_spi_mode;
 logic w_cmd_in;
 logic w_cmd_out;
 logic w_cmd_dir;
@@ -55,6 +56,27 @@ logic w_cmd_req_ready;
 logic w_cmd_resp_valid;
 logic [31:0] wb_cmd_resp_data32;
 logic w_cmd_resp_ready;
+logic w_cmd_resp_r1b;
+logic w_cmd_resp_r2;
+logic w_cmd_resp_r3;
+logic w_cmd_resp_r7;
+logic w_cmdio_cmd_dir;
+logic w_cmdio_cmd_out;
+// Status signals:
+logic w_stat_idle_state;
+logic w_stat_erase_reset;
+logic w_stat_illegal_cmd;
+logic w_stat_err_erase_sequence;
+logic w_stat_err_address;
+logic w_stat_err_parameter;
+logic w_stat_locked;
+logic w_stat_wp_erase_skip;
+logic w_stat_err;
+logic w_stat_err_cc;
+logic w_stat_ecc_failed;
+logic w_stat_wp_violation;
+logic w_stat_erase_param;
+logic w_stat_out_of_range;
 
 iobuf_tech iobufcmd0 (
     .io(io_cmd),
@@ -101,22 +123,43 @@ vip_sdcard_cmdio #(
 ) cmdio0 (
     .i_nrst(i_nrst),
     .i_clk(i_sclk),
+    .i_cs(w_dat3_in),
+    .o_spi_mode(w_spi_mode),
     .i_cmd(w_cmd_in),
-    .o_cmd(w_cmd_out),
-    .o_cmd_dir(w_cmd_dir),
+    .o_cmd(w_cmdio_cmd_out),
+    .o_cmd_dir(w_cmdio_cmd_dir),
     .o_cmd_req_valid(w_cmd_req_valid),
     .o_cmd_req_cmd(wb_cmd_req_cmd),
     .o_cmd_req_data(wb_cmd_req_data),
     .i_cmd_req_ready(w_cmd_req_ready),
     .i_cmd_resp_valid(w_cmd_resp_valid),
     .i_cmd_resp_data32(wb_cmd_resp_data32),
-    .o_cmd_resp_ready(w_cmd_resp_ready)
+    .o_cmd_resp_ready(w_cmd_resp_ready),
+    .i_cmd_resp_r1b(w_cmd_resp_r1b),
+    .i_cmd_resp_r2(w_cmd_resp_r2),
+    .i_cmd_resp_r3(w_cmd_resp_r3),
+    .i_cmd_resp_r7(w_cmd_resp_r7),
+    .i_stat_idle_state(w_stat_idle_state),
+    .i_stat_erase_reset(w_stat_erase_reset),
+    .i_stat_illegal_cmd(w_stat_illegal_cmd),
+    .i_stat_err_erase_sequence(w_stat_err_erase_sequence),
+    .i_stat_err_address(w_stat_err_address),
+    .i_stat_err_parameter(w_stat_err_parameter),
+    .i_stat_locked(w_stat_locked),
+    .i_stat_wp_erase_skip(w_stat_wp_erase_skip),
+    .i_stat_err(w_stat_err),
+    .i_stat_err_cc(w_stat_err_cc),
+    .i_stat_ecc_failed(w_stat_ecc_failed),
+    .i_stat_wp_violation(w_stat_wp_violation),
+    .i_stat_erase_param(w_stat_erase_param),
+    .i_stat_out_of_range(w_stat_out_of_range)
 );
 
 
 vip_sdcard_ctrl #(
     .async_reset(async_reset),
     .CFG_SDCARD_POWERUP_DONE_DELAY(CFG_SDCARD_POWERUP_DONE_DELAY),
+    .CFG_SDCARD_HCS(CFG_SDCARD_HCS),
     .CFG_SDCARD_VHS(CFG_SDCARD_VHS),
     .CFG_SDCARD_PCIE_1_2V(CFG_SDCARD_PCIE_1_2V),
     .CFG_SDCARD_PCIE_AVAIL(CFG_SDCARD_PCIE_AVAIL),
@@ -124,13 +167,20 @@ vip_sdcard_ctrl #(
 ) ctrl0 (
     .i_nrst(i_nrst),
     .i_clk(i_sclk),
+    .i_spi_mode(w_spi_mode),
     .i_cmd_req_valid(w_cmd_req_valid),
     .i_cmd_req_cmd(wb_cmd_req_cmd),
     .i_cmd_req_data(wb_cmd_req_data),
     .o_cmd_req_ready(w_cmd_req_ready),
     .o_cmd_resp_valid(w_cmd_resp_valid),
     .o_cmd_resp_data32(wb_cmd_resp_data32),
-    .i_cmd_resp_ready(w_cmd_resp_ready)
+    .i_cmd_resp_ready(w_cmd_resp_ready),
+    .o_cmd_resp_r1b(w_cmd_resp_r1b),
+    .o_cmd_resp_r2(w_cmd_resp_r2),
+    .o_cmd_resp_r3(w_cmd_resp_r3),
+    .o_cmd_resp_r7(w_cmd_resp_r7),
+    .o_stat_idle_state(w_stat_idle_state),
+    .o_stat_illegal_cmd(w_stat_illegal_cmd)
 );
 
 
@@ -146,15 +196,44 @@ begin: comb_proc
     v_crc7_next = 0;
     v_crc7_in = 0;
 
-    w_dat0_dir = 1'b1;                                      // in:
-    w_dat1_dir = 1'b1;                                      // in:
-    w_dat2_dir = 1'b1;                                      // in:
-    w_dat3_dir = 1'b0;                                      // out: Emulate pull-up CardDetect value
+    if (w_spi_mode == 1'b1) begin
+        w_cmd_dir = 1'b1;                                   // in: din
+        w_dat0_dir = 1'b0;                                  // out: dout
+        w_dat1_dir = 1'b1;                                  // in: reserved
+        w_dat2_dir = 1'b1;                                  // in: reserved
+        w_dat3_dir = 1'b1;                                  // in: cs
 
-    w_dat0_out = 1'b1;
-    w_dat1_out = 1'b1;
-    w_dat2_out = 1'b1;
-    w_dat3_out = 1'b1;
+        w_dat0_out = w_cmdio_cmd_out;
+        w_dat1_out = 1'b1;
+        w_dat2_out = 1'b1;
+        w_dat3_out = 1'b1;
+    end else begin
+        w_cmd_dir = w_cmdio_cmd_dir;
+        w_dat0_dir = 1'b1;                                  // in:
+        w_dat1_dir = 1'b1;                                  // in:
+        w_dat2_dir = 1'b1;                                  // in:
+        w_dat3_dir = 1'b1;                                  // in:
+
+        w_cmd_out = w_cmdio_cmd_out;
+        w_dat0_out = 1'b1;
+        w_dat1_out = 1'b1;
+        w_dat2_out = 1'b1;
+        w_dat3_out = 1'b1;
+    end
+
+    // Not implemented yet:
+    w_stat_erase_reset = 1'b0;
+    w_stat_err_erase_sequence = 1'b0;
+    w_stat_err_address = 1'b0;
+    w_stat_err_parameter = 1'b0;
+    w_stat_locked = 1'b0;
+    w_stat_wp_erase_skip = 1'b0;
+    w_stat_err = 1'b0;
+    w_stat_err_cc = 1'b0;
+    w_stat_ecc_failed = 1'b0;
+    w_stat_wp_violation = 1'b0;
+    w_stat_erase_param = 1'b0;
+    w_stat_out_of_range = 1'b0;
 end: comb_proc
 
 endmodule: vip_sdcard_top

@@ -33,11 +33,14 @@ localparam bit [3:0] CMDSTATE_INIT = 4'hf;
 
 typedef struct {
     logic [7:0] clkcnt;
+    logic cs;
+    logic spi_mode;
     logic cmdz;
     logic cmd_dir;
     logic [47:0] cmd_rxshift;
     logic [47:0] cmd_txshift;
     logic [3:0] cmd_state;
+    logic cmd_req_crc_err;
     logic [5:0] bitcnt;
     logic txbit;
     logic [6:0] crc_calc;
@@ -50,11 +53,14 @@ typedef struct {
 
 const vip_sdcard_cmdio_registers vip_sdcard_cmdio_r_reset = '{
     '0,                                 // clkcnt
+    1'b0,                               // cs
+    1'b0,                               // spi_mode
     1'h1,                               // cmdz
     1'h1,                               // cmd_dir
     '1,                                 // cmd_rxshift
     '1,                                 // cmd_txshift
     CMDSTATE_INIT,                      // cmd_state
+    1'b0,                               // cmd_req_crc_err
     '0,                                 // bitcnt
     1'b0,                               // txbit
     '0,                                 // crc_calc

@@ -20,6 +20,7 @@ import types_pnp_pkg::*;
 
 typedef struct {
     logic sclk_ena;
+    logic spi_mode;
     logic clear_cmderr;
     logic [23:0] scaler_400khz;
     logic [7:0] scaler_data;
@@ -43,6 +44,7 @@ typedef struct {
 
 const sdctrl_regs_registers sdctrl_regs_r_reset = '{
     1'b0,                               // sclk_ena
+    1'b0,                               // spi_mode
     1'b0,                               // clear_cmderr
     '0,                                 // scaler_400khz
     '0,                                 // scaler_data

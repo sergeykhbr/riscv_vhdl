@@ -38,7 +38,8 @@ localparam bit [2:0] IDLESTATE_CMD0 = 3'h0;
 localparam bit [2:0] IDLESTATE_CMD8 = 3'h1;
 localparam bit [2:0] IDLESTATE_CMD55 = 3'h2;
 localparam bit [2:0] IDLESTATE_ACMD41 = 3'h3;
-localparam bit [2:0] IDLESTATE_CARD_IDENTIFICATION = 3'h4;
+localparam bit [2:0] IDLESTATE_CMD58 = 3'h4;
+localparam bit [2:0] IDLESTATE_CARD_IDENTIFICATION = 3'h5;
 // SD-card 'ready' state substates:
 localparam bit [1:0] READYSTATE_CMD11 = 2'h0;
 localparam bit [1:0] READYSTATE_CMD2 = 2'h1;
@@ -56,9 +57,11 @@ typedef struct {
     logic [2:0] cmd_req_rn;
     logic [5:0] cmd_resp_r1;
     logic [31:0] cmd_resp_reg;
-    logic crc16_clear;
+    logic [14:0] cmd_resp_spistatus;
+    logic crc15_clear;
     logic [3:0] dat;
     logic dat_dir;
+    logic dat3_dir;
     logic [3:0] sdstate;
     logic [2:0] initstate;
     logic [1:0] readystate;
@@ -80,9 +83,11 @@ const sdctrl_registers sdctrl_r_reset = '{
     '0,                                 // cmd_req_rn
     '0,                                 // cmd_resp_r1
     '0,                                 // cmd_resp_reg
-    1'h1,                               // crc16_clear
+    '0,                                 // cmd_resp_spistatus
+    1'h1,                               // crc15_clear
     '1,                                 // dat
-    DIR_INPUT,                          // dat_dir
+    DIR_OUTPUT,                         // dat_dir
+    DIR_INPUT,                          // dat3_dir
     SDSTATE_PRE_INIT,                   // sdstate
     IDLESTATE_CMD0,                     // initstate
     READYSTATE_CMD11,                   // readystate
