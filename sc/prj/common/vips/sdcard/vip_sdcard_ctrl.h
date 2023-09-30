@@ -75,9 +75,16 @@ SC_MODULE(vip_sdcard_ctrl) {
     static const uint8_t SDSTATE_PRG = 7;
     static const uint8_t SDSTATE_DIS = 8;
     static const uint8_t SDSTATE_INA = 9;
+    
+    // Data block access state machine:
+    static const uint8_t DATASTATE_IDLE = 0;
+    static const uint8_t DATASTATE_START = 1;
+    static const uint8_t DATASTATE_CRC15 = 2;
+    static const uint8_t DATASTATE_STOP = 3;
 
     struct vip_sdcard_ctrl_registers {
         sc_signal<sc_uint<4>> sdstate;
+        sc_signal<sc_uint<3>> datastate;
         sc_signal<sc_uint<32>> powerup_cnt;
         sc_signal<sc_uint<8>> preinit_cnt;
         sc_signal<sc_uint<32>> delay_cnt;
@@ -91,10 +98,15 @@ SC_MODULE(vip_sdcard_ctrl) {
         sc_signal<bool> cmd_resp_r3;
         sc_signal<bool> cmd_resp_r7;
         sc_signal<bool> illegal_cmd;
+        sc_signal<bool> ocr_hcs;
+        sc_signal<sc_uint<24>> ocr_vdd_window;
+        sc_signal<bool> req_mem_valid;
+        sc_signal<sc_uint<41>> req_mem_addr;
     } v, r;
 
     void vip_sdcard_ctrl_r_reset(vip_sdcard_ctrl_registers &iv) {
         iv.sdstate = SDSTATE_IDLE;
+        iv.datastate = DATASTATE_IDLE;
         iv.powerup_cnt = 0;
         iv.preinit_cnt = 0;
         iv.delay_cnt = 0;
@@ -108,6 +120,10 @@ SC_MODULE(vip_sdcard_ctrl) {
         iv.cmd_resp_r3 = 0;
         iv.cmd_resp_r7 = 0;
         iv.illegal_cmd = 0;
+        iv.ocr_hcs = 0;
+        iv.ocr_vdd_window = 0;
+        iv.req_mem_valid = 0;
+        iv.req_mem_addr = 0ull;
     }
 
 };

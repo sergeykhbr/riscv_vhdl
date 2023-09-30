@@ -46,7 +46,7 @@ SC_MODULE(vip_sdcard_top) {
     bool async_reset_;
 
     // Generic config parameters
-    static const int CFG_SDCARD_POWERUP_DONE_DELAY = 700;
+    static const int CFG_SDCARD_POWERUP_DONE_DELAY = 450;
     static const bool CFG_SDCARD_HCS = 1;
     static const uint8_t CFG_SDCARD_VHS = 0x1;
     static const bool CFG_SDCARD_PCIE_1_2V = 0;

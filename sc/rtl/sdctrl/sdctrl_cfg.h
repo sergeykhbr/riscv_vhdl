@@ -19,6 +19,16 @@
 
 namespace debugger {
 
+// Cache config:
+static const int CFG_SDCACHE_ADDR_BITS = 48;
+static const int CFG_LOG2_SDCACHE_LINEBITS = 5;             // 2=2KB (4 x (8x64))
+static const int CFG_LOG2_SDCACHE_BYTES_PER_LINE = 6;       // 64 Bytes
+static const int SDCACHE_BYTES_PER_LINE = (1 << CFG_LOG2_SDCACHE_BYTES_PER_LINE);
+static const int SDCACHE_LINE_BITS = (8 * SDCACHE_BYTES_PER_LINE);
+
+static const int SDCACHE_FL_VALID = 0;
+static const int SDCACHE_FL_DIRTY = 1;
+static const int SDCACHE_FL_TOTAL = 2;
 // 
 // 
 static const uint8_t CMD0 = 0;                              // GO_IDLE_STATE: Reset card to idle state. Response - (4.7.4)
@@ -26,6 +36,8 @@ static const uint8_t CMD2 = 2;                              // ALL_SEND_CID: ask
 static const uint8_t CMD3 = 3;                              // SEND_RELATIVE_ADDRE: Ask to publish (RCA) relative address
 static const uint8_t CMD8 = 8;                              // SEND_IF_COND: Card interface condition. Response R7 (4.9.6).
 static const uint8_t CMD11 = 11;                            // VOLTAGE_SWITCH: Switch to 1.8V bus signaling level
+static const uint8_t CMD17 = 17;                            // READ_SINGLE_BLOCK: Read block size of SET_BLOCKLEN
+static const uint8_t CMD24 = 24;                            // WRITE_SINGLE_BLOCK: Write block size of SET_BLOCKLEN
 static const uint8_t ACMD41 = 41;
 static const uint8_t CMD55 = 55;                            // APP_CMD: application specific commands
 static const uint8_t CMD58 = 58;                            // READ_OCR: Read OCR register in SPI mode
@@ -53,7 +65,7 @@ static const uint8_t R2 = 2;
 //     [7:1]   reserved = 7'b1111111
 //     [0]     End bit = 1'b1
 static const uint8_t R3 = 3;
-// 4.9.5 R^ (Published RCA response, page 141)
+// 4.9.5 R3 (Published RCA response, page 141)
 //     [47]    Start bit = 1'b0
 //     [46]    Transmission bit = 1'b0
 //     [45:40] Command index = 6'b000011

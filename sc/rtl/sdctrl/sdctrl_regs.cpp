@@ -222,8 +222,8 @@ void sdctrl_regs::comb() {
 
     // system bus clock scaler to baudrate:
     if (r.sclk_ena.read() == 1) {
-        if (((i_400khz_ena.read() == 1) && (r.scaler_cnt.read() == r.scaler_400khz.read()))
-                || ((i_400khz_ena.read() == 0) && (r.scaler_cnt.read() == r.scaler_data.read()))) {
+        if (((i_400khz_ena.read() == 1) && (r.scaler_cnt.read() >= r.scaler_400khz.read()))
+                || ((i_400khz_ena.read() == 0) && (r.scaler_cnt.read() >= r.scaler_data.read()))) {
             v.scaler_cnt = 0;
             v.level = (!r.level);
             v_posedge = (!r.level);

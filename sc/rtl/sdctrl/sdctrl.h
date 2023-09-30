@@ -24,6 +24,7 @@
 #include "sdctrl_crc7.h"
 #include "sdctrl_crc15.h"
 #include "sdctrl_cmd_transmitter.h"
+#include "sdctrl_cache.h"
 
 namespace debugger {
 
@@ -75,6 +76,7 @@ SC_MODULE(sdctrl) {
     static const int log2_fifosz = 9;
     static const int fifo_dbits = 8;
     // SD-card states see Card Status[12:9] CURRENT_STATE on page 145:
+    static const uint8_t SDSTATE_SPI_DATA = 0xE;
     static const uint8_t SDSTATE_PRE_INIT = 0xF;
     static const uint8_t SDSTATE_IDLE = 0;
     static const uint8_t SDSTATE_READY = 1;
@@ -100,6 +102,16 @@ SC_MODULE(sdctrl) {
     // SD-card 'ident' state substates:
     static const bool IDENTSTATE_CMD3 = 0;
     static const bool IDENTSTATE_CHECK_RCA = 1;
+    // 
+    static const uint8_t SPIDATASTATE_WAIT_MEM_REQ = 0;
+    static const uint8_t SPIDATASTATE_CACHE_REQ = 1;
+    static const uint8_t SPIDATASTATE_CACHE_WAIT_RESP = 2;
+    static const uint8_t SPIDATASTATE_CMD17_READ_SINGLE_BLOCK = 3;
+    static const uint8_t SPIDATASTATE_CMD24_WRITE_SINGLE_BLOCK = 4;
+    static const uint8_t SPIDATASTATE_WAIT_DATA_START = 5;
+    static const uint8_t SPIDATASTATE_READING_DATA = 6;
+    static const uint8_t SPIDATASTATE_READING_CRC15 = 7;
+    static const uint8_t SPIDATASTATE_READING_END = 8;
 
     struct sdctrl_registers {
         sc_signal<sc_uint<7>> clkcnt;
@@ -111,6 +123,14 @@ SC_MODULE(sdctrl) {
         sc_signal<sc_uint<6>> cmd_resp_r1;
         sc_signal<sc_uint<32>> cmd_resp_reg;
         sc_signal<sc_uint<15>> cmd_resp_spistatus;
+        sc_signal<bool> cache_req_valid;
+        sc_signal<sc_uint<CFG_SDCACHE_ADDR_BITS>> cache_req_addr;
+        sc_signal<bool> cache_req_write;
+        sc_signal<sc_uint<64>> cache_req_wdata;
+        sc_signal<sc_uint<8>> cache_req_wstrb;
+        sc_signal<sc_uint<32>> sdmem_addr;
+        sc_signal<sc_biguint<512>> sdmem_data;
+        sc_signal<bool> sdmem_valid;
         sc_signal<bool> crc15_clear;
         sc_signal<sc_uint<4>> dat;
         sc_signal<bool> dat_dir;
@@ -119,12 +139,14 @@ SC_MODULE(sdctrl) {
         sc_signal<sc_uint<3>> initstate;
         sc_signal<sc_uint<2>> readystate;
         sc_signal<bool> identstate;
+        sc_signal<sc_uint<4>> spidatastate;
         sc_signal<bool> wait_cmd_resp;
         sc_signal<sc_uint<3>> sdtype;
         sc_signal<bool> HCS;                                // High Capacity Support
         sc_signal<bool> S18;                                // 1.8V Low voltage
         sc_signal<sc_uint<32>> RCA;                         // Relative Address
         sc_signal<sc_uint<24>> OCR_VoltageWindow;           // all ranges 2.7 to 3.6 V
+        sc_signal<sc_uint<12>> bitcnt;
     } v, r;
 
     void sdctrl_r_reset(sdctrl_registers &iv) {
@@ -137,6 +159,14 @@ SC_MODULE(sdctrl) {
         iv.cmd_resp_r1 = 0;
         iv.cmd_resp_reg = 0;
         iv.cmd_resp_spistatus = 0;
+        iv.cache_req_valid = 0;
+        iv.cache_req_addr = 0ull;
+        iv.cache_req_write = 0;
+        iv.cache_req_wdata = 0ull;
+        iv.cache_req_wstrb = 0;
+        iv.sdmem_addr = 0;
+        iv.sdmem_data = 0ull;
+        iv.sdmem_valid = 0;
         iv.crc15_clear = 1;
         iv.dat = ~0ul;
         iv.dat_dir = DIR_OUTPUT;
@@ -145,12 +175,14 @@ SC_MODULE(sdctrl) {
         iv.initstate = IDLESTATE_CMD0;
         iv.readystate = READYSTATE_CMD11;
         iv.identstate = IDENTSTATE_CMD3;
+        iv.spidatastate = SPIDATASTATE_WAIT_MEM_REQ;
         iv.wait_cmd_resp = 0;
         iv.sdtype = SDCARD_UNKNOWN;
         iv.HCS = 1;
         iv.S18 = 0;
         iv.RCA = 0;
         iv.OCR_VoltageWindow = 0xff8000;
+        iv.bitcnt = 0;
     }
 
     sc_signal<bool> w_regs_sck_posedge;
@@ -170,9 +202,21 @@ SC_MODULE(sdctrl) {
     sc_signal<sc_uint<CFG_SYSBUS_DATA_BYTES>> wb_mem_req_wstrb;
     sc_signal<bool> w_mem_req_last;
     sc_signal<bool> w_mem_req_ready;
-    sc_signal<bool> w_mem_resp_valid;
-    sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> wb_mem_resp_rdata;
-    sc_signal<bool> wb_mem_resp_err;
+    sc_signal<bool> w_cache_req_ready;
+    sc_signal<bool> w_cache_resp_valid;
+    sc_signal<sc_uint<64>> wb_cache_resp_rdata;
+    sc_signal<bool> w_cache_resp_err;
+    sc_signal<bool> w_cache_resp_ready;
+    sc_signal<bool> w_req_sdmem_ready;
+    sc_signal<bool> w_req_sdmem_valid;
+    sc_signal<bool> w_req_sdmem_write;
+    sc_signal<sc_uint<CFG_SDCACHE_ADDR_BITS>> wb_req_sdmem_addr;
+    sc_signal<sc_biguint<SDCACHE_LINE_BITS>> wb_req_sdmem_wdata;
+    sc_signal<sc_biguint<SDCACHE_LINE_BITS>> wb_resp_sdmem_rdata;
+    sc_signal<bool> w_resp_sdmem_err;
+    sc_signal<sc_uint<CFG_SDCACHE_ADDR_BITS>> wb_regs_flush_address;
+    sc_signal<bool> w_regs_flush_valid;
+    sc_signal<bool> w_cache_flush_end;
     sc_signal<bool> w_trx_cmd_dir;
     sc_signal<bool> w_trx_cmd_cs;
     sc_signal<bool> w_cmd_in;
@@ -206,6 +250,7 @@ SC_MODULE(sdctrl) {
     sdctrl_crc15 *crcdat2;
     sdctrl_crc15 *crcdat3;
     sdctrl_cmd_transmitter *cmdtrx0;
+    sdctrl_cache *cache0;
 
 };
 

@@ -22,6 +22,7 @@ import sdctrl_cfg_pkg::*;
 localparam int log2_fifosz = 9;
 localparam int fifo_dbits = 8;
 // SD-card states see Card Status[12:9] CURRENT_STATE on page 145:
+localparam bit [3:0] SDSTATE_SPI_DATA = 4'he;
 localparam bit [3:0] SDSTATE_PRE_INIT = 4'hf;
 localparam bit [3:0] SDSTATE_IDLE = 4'h0;
 localparam bit [3:0] SDSTATE_READY = 4'h1;
@@ -47,6 +48,16 @@ localparam bit [1:0] READYSTATE_CHECK_CID = 2'h2;           // State change: rea
 // SD-card 'ident' state substates:
 localparam bit IDENTSTATE_CMD3 = 1'h0;
 localparam bit IDENTSTATE_CHECK_RCA = 1'h1;                 // State change: ident -> stby
+// 
+localparam bit [3:0] SPIDATASTATE_WAIT_MEM_REQ = 4'h0;
+localparam bit [3:0] SPIDATASTATE_CACHE_REQ = 4'h1;
+localparam bit [3:0] SPIDATASTATE_CACHE_WAIT_RESP = 4'h2;
+localparam bit [3:0] SPIDATASTATE_CMD17_READ_SINGLE_BLOCK = 4'h3;
+localparam bit [3:0] SPIDATASTATE_CMD24_WRITE_SINGLE_BLOCK = 4'h4;
+localparam bit [3:0] SPIDATASTATE_WAIT_DATA_START = 4'h5;
+localparam bit [3:0] SPIDATASTATE_READING_DATA = 4'h6;
+localparam bit [3:0] SPIDATASTATE_READING_CRC15 = 4'h7;
+localparam bit [3:0] SPIDATASTATE_READING_END = 4'h8;
 
 typedef struct {
     logic [6:0] clkcnt;
@@ -58,6 +69,14 @@ typedef struct {
     logic [5:0] cmd_resp_r1;
     logic [31:0] cmd_resp_reg;
     logic [14:0] cmd_resp_spistatus;
+    logic cache_req_valid;
+    logic [CFG_SDCACHE_ADDR_BITS-1:0] cache_req_addr;
+    logic cache_req_write;
+    logic [63:0] cache_req_wdata;
+    logic [7:0] cache_req_wstrb;
+    logic [31:0] sdmem_addr;
+    logic [511:0] sdmem_data;
+    logic sdmem_valid;
     logic crc15_clear;
     logic [3:0] dat;
     logic dat_dir;
@@ -66,12 +85,14 @@ typedef struct {
     logic [2:0] initstate;
     logic [1:0] readystate;
     logic identstate;
+    logic [3:0] spidatastate;
     logic wait_cmd_resp;
     logic [2:0] sdtype;
     logic HCS;                                              // High Capacity Support
     logic S18;                                              // 1.8V Low voltage
     logic [31:0] RCA;                                       // Relative Address
     logic [23:0] OCR_VoltageWindow;                         // all ranges 2.7 to 3.6 V
+    logic [11:0] bitcnt;
 } sdctrl_registers;
 
 const sdctrl_registers sdctrl_r_reset = '{
@@ -84,6 +105,14 @@ const sdctrl_registers sdctrl_r_reset = '{
     '0,                                 // cmd_resp_r1
     '0,                                 // cmd_resp_reg
     '0,                                 // cmd_resp_spistatus
+    1'b0,                               // cache_req_valid
+    '0,                                 // cache_req_addr
+    1'b0,                               // cache_req_write
+    '0,                                 // cache_req_wdata
+    '0,                                 // cache_req_wstrb
+    '0,                                 // sdmem_addr
+    '0,                                 // sdmem_data
+    1'b0,                               // sdmem_valid
     1'h1,                               // crc15_clear
     '1,                                 // dat
     DIR_OUTPUT,                         // dat_dir
@@ -92,12 +121,14 @@ const sdctrl_registers sdctrl_r_reset = '{
     IDLESTATE_CMD0,                     // initstate
     READYSTATE_CMD11,                   // readystate
     IDENTSTATE_CMD3,                    // identstate
+    SPIDATASTATE_WAIT_MEM_REQ,          // spidatastate
     1'b0,                               // wait_cmd_resp
     SDCARD_UNKNOWN,                     // sdtype
     1'h1,                               // HCS
     1'b0,                               // S18
     '0,                                 // RCA
-    24'hff8000                          // OCR_VoltageWindow
+    24'hff8000,                         // OCR_VoltageWindow
+    '0                                  // bitcnt
 };
 
 endpackage: sdctrl_pkg

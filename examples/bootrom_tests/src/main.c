@@ -81,6 +81,8 @@ int main() {
     led_set(0x01);
 
 #if 1
+asm volatile ("fence.i");
+
     // wait 1 ms of CMD = HIGH before enabling SD-controller clock
     while (fw_get_rdtime() < (SYS_HZ / 1000)) {}
 
@@ -89,43 +91,14 @@ int main() {
                                              | 0x1;             // [0] enable sdctrl sclk
     *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 8)) = 0x0FFF;          // watchdog interval to detect 'no response'
     uint32_t cmd_status;
-    uint32_t cmd_err;
-    uint32_t sdstate;
-    uint32_t t1;
+    uint32_t sdtype = 0;
     do {
-        t1 = *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 0x04));
-        printf_uart("x04: cmd:%d {cd,dat2,da1,dat0} %d%d%d%d\r\n",
-                   (t1 >> 8) & 1,
-                   (t1 >> 7) & 1,
-                   (t1 >> 6) & 1,
-                   (t1 >> 5) & 1,
-                   (t1 >> 4) & 1
-                   );
-
         cmd_status = *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 0x10));
-        cmd_err = cmd_status & 0xF;
-        sdstate = (cmd_status >> 8) & 0xF;
-        printf_uart("x10_status:%04x;err:%1x;cmdstate:%1d;sdstate:%1d;type:%d\r\n",
-                   cmd_status,
-                   cmd_err,
-                   (cmd_status >> 4) & 0xF,
-                   sdstate,
-                   (cmd_status >> 12) & 0x7);
-        t1 = *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 0x14));
-        printf_uart("x14_last_resp:%08x;req_cmd:%d,resp_cmd:%d;crc_rx:%02x,crc_calc:%02x\r\n",
-                    t1,
-                    (t1 >> 0) & 0x3F,
-                    (t1 >> 8) & 0x3F,
-                    (t1 >> 16) & 0x7F,
-                    (t1 >> 24) & 0x7F
-                    );
-        t1 = *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 0x18));
-        printf_uart("last_arg: %08x\r\n", t1);
-    } while (sdstate != 3);  // SDSTATE=3 (STBY)
-    t1 = *((uint32_t *)(ADDR_BUS1_APB_QSPI2 + 0x10));
-    t1 = (t1 >> 12) & 0x7; // sdtype
+        sdtype = (cmd_status >> 12) & 0x7;
+    } while (sdtype == 0 && fw_get_rdtime() < (5*SYS_HZ / 1000));  // sdtype=0 (unknown)
     const char *SDTYPE[8] = {"unknown", "Ver1X", "Ver2X_SC", "Ver2X_HC", "Unusable", 0};
-    printf_uart("sdtype: %s\r\n", SDTYPE[t1]);
+    printf_uart("sdtype: %s\r\n", SDTYPE[sdtype]);
+    printf_uart("sd: %x\r\n", ((uint32_t *)0x0000800000000)[128]);
 #endif
 
 #if 1
@@ -163,21 +136,6 @@ int main() {
 
     test_ddr();
 #endif
-
-    ESdCardType sdtype = spi_init();
-
-    SD_Unknown,
-    printf_uart("%s", "SPI.Init . . . .");
-    if (sdtype == SD_Ver1x) {
-        printf_uart("%s\r\n", "SD1x");
-    } else if (sdtype == SD_Ver2x_StandardCapacity) {
-        printf_uart("%s\r\n", "SD2x");
-    } else if (sdtype == SD_Ver2x_HighCapacity) {
-        printf_uart("%s\r\n", "SDHC");
-    } else {
-        printf_uart("%s", "Wrong SD-card\r\n");
-        while (1) {}
-    }
 
     static const int BBL_IMAGE_SIZE = 10*1024*1024;  // actually ~8MB
 

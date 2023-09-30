@@ -18,7 +18,7 @@
 
 module vip_sdcard_ctrl #(
     parameter bit async_reset = 1'b0,
-    parameter int CFG_SDCARD_POWERUP_DONE_DELAY = 700,      // Delay of busy bits in ACMD41 response
+    parameter int CFG_SDCARD_POWERUP_DONE_DELAY = 450,      // Delay of busy bits in ACMD41 response
     parameter logic CFG_SDCARD_HCS = 1'h1,                  // High Capacity Support
     parameter logic [3:0] CFG_SDCARD_VHS = 4'h1,            // CMD8 Voltage supply mask
     parameter logic CFG_SDCARD_PCIE_1_2V = 1'h0,
@@ -53,11 +53,9 @@ begin: comb_proc
     vip_sdcard_ctrl_registers v;
     logic v_resp_valid;
     logic [31:0] vb_resp_data32;
-    logic v_idle_state;
 
     v_resp_valid = 0;
     vb_resp_data32 = 0;
-    v_idle_state = 0;
 
     v = r;
 
@@ -76,10 +74,6 @@ begin: comb_proc
         v.powerup_cnt = (r.powerup_cnt + 1);
     end else begin
         v.powerup_done = 1'b1;
-    end
-
-    if (r.sdstate == SDSTATE_IDLE) begin
-        v_idle_state = 1'b1;
     end
 
     if (i_cmd_req_valid == 1'b1) begin
@@ -116,10 +110,12 @@ begin: comb_proc
                 // [36] XPC
                 // [32] S18R
                 // [31:8] VDD Voltage Window (OCR[23:0])
+                v.ocr_hcs = (i_cmd_req_data[30] & CFG_SDCARD_HCS);
+                v.ocr_vdd_window = (i_cmd_req_data[23: 0] & CFG_SDCARD_VDD_VOLTAGE_WINDOW);
                 v.cmd_resp_valid = 1'b1;
                 v.delay_cnt = 32'h00000014;
                 vb_resp_data32[31] = r.powerup_done;
-                vb_resp_data32[30] = i_cmd_req_data[30];
+                vb_resp_data32[30] = (i_cmd_req_data[30] & CFG_SDCARD_HCS);
                 vb_resp_data32[23: 0] = (i_cmd_req_data[23: 0] & CFG_SDCARD_VDD_VOLTAGE_WINDOW);
                 if ((i_cmd_req_data[23: 0] & CFG_SDCARD_VDD_VOLTAGE_WINDOW) == 24'h000000) begin
                     // OCR check failed:
@@ -135,8 +131,19 @@ begin: comb_proc
                 v.delay_cnt = 32'h00000014;
                 if (i_spi_mode == 1'b1) begin
                     vb_resp_data32 = '0;
-                    vb_resp_data32[30] = CFG_SDCARD_HCS;
-                    vb_resp_data32[23: 0] = CFG_SDCARD_VDD_VOLTAGE_WINDOW;
+                    vb_resp_data32[30] = r.ocr_hcs;
+                    vb_resp_data32[23: 0] = r.ocr_vdd_window;
+                end else begin
+                    v.illegal_cmd = 1'b1;
+                end
+            end
+            6'h11: begin                                    // CMD17: READ_SINGLE_BLOCK.
+                v.cmd_resp_valid = 1'b1;
+                v.delay_cnt = 32'h00000014;
+                if (i_spi_mode == 1'b1) begin
+                    v.req_mem_valid = 1'b1;
+                    v.req_mem_addr = {i_cmd_req_data, 9'h000};
+                    vb_resp_data32 = '0;
                 end else begin
                     v.illegal_cmd = 1'b1;
                 end
@@ -214,6 +221,17 @@ begin: comb_proc
         endcase
     end
 
+    case (r.datastate)
+    DATASTATE_IDLE: begin
+        if (r.req_mem_valid == 1'b1) begin
+            v.req_mem_valid = 1'b0;
+            v.datastate = DATASTATE_START;
+        end
+    end
+    default: begin
+    end
+    endcase
+
     v.cmd_resp_data32 = vb_resp_data32;
     v.cmd_req_ready = (~(|r.delay_cnt));
     if (r.cmd_resp_valid == 1'b1) begin
@@ -233,7 +251,7 @@ begin: comb_proc
     o_cmd_resp_r3 = r.cmd_resp_r3;
     o_cmd_resp_r7 = r.cmd_resp_r7;
     o_stat_illegal_cmd = r.illegal_cmd;
-    o_stat_idle_state = v_idle_state;
+    o_stat_idle_state = r.powerup_done;
 
     rin = v;
 end: comb_proc

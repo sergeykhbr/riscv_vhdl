@@ -7,5 +7,7 @@ ${RTL_HOME}/sdctrl/sdctrl_crc15_pkg.sv
 ${RTL_HOME}/sdctrl/sdctrl_crc15.sv
 ${RTL_HOME}/sdctrl/sdctrl_cmd_transmitter_pkg.sv
 ${RTL_HOME}/sdctrl/sdctrl_cmd_transmitter.sv
+${RTL_HOME}/sdctrl/sdctrl_cache_pkg.sv
+${RTL_HOME}/sdctrl/sdctrl_cache.sv
 ${RTL_HOME}/sdctrl/sdctrl_pkg.sv
 ${RTL_HOME}/sdctrl/sdctrl.sv

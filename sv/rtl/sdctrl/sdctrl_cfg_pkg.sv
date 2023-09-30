@@ -16,6 +16,16 @@
 package sdctrl_cfg_pkg;
 
 
+// Cache config:
+localparam int CFG_SDCACHE_ADDR_BITS = 48;
+localparam int CFG_LOG2_SDCACHE_LINEBITS = 5;               // 2=2KB (4 x (8x64))
+localparam int CFG_LOG2_SDCACHE_BYTES_PER_LINE = 6;         // 64 Bytes
+localparam int SDCACHE_BYTES_PER_LINE = (2**CFG_LOG2_SDCACHE_BYTES_PER_LINE);
+localparam int SDCACHE_LINE_BITS = (8 * SDCACHE_BYTES_PER_LINE);
+
+localparam int SDCACHE_FL_VALID = 0;
+localparam int SDCACHE_FL_DIRTY = 1;
+localparam int SDCACHE_FL_TOTAL = 2;
 // 
 // 
 localparam bit [5:0] CMD0 = 6'h00;                          // GO_IDLE_STATE: Reset card to idle state. Response - (4.7.4)
@@ -23,6 +33,8 @@ localparam bit [5:0] CMD2 = 6'h02;                          // ALL_SEND_CID: ask
 localparam bit [5:0] CMD3 = 6'h03;                          // SEND_RELATIVE_ADDRE: Ask to publish (RCA) relative address
 localparam bit [5:0] CMD8 = 6'h08;                          // SEND_IF_COND: Card interface condition. Response R7 (4.9.6).
 localparam bit [5:0] CMD11 = 6'h0b;                         // VOLTAGE_SWITCH: Switch to 1.8V bus signaling level
+localparam bit [5:0] CMD17 = 6'h11;                         // READ_SINGLE_BLOCK: Read block size of SET_BLOCKLEN
+localparam bit [5:0] CMD24 = 6'h18;                         // WRITE_SINGLE_BLOCK: Write block size of SET_BLOCKLEN
 localparam bit [5:0] ACMD41 = 6'h29;
 localparam bit [5:0] CMD55 = 6'h37;                         // APP_CMD: application specific commands
 localparam bit [5:0] CMD58 = 6'h3a;                         // READ_OCR: Read OCR register in SPI mode
@@ -50,7 +62,7 @@ localparam bit [2:0] R2 = 3'h2;
 //     [7:1]   reserved = 7'b1111111
 //     [0]     End bit = 1'b1
 localparam bit [2:0] R3 = 3'h3;
-// 4.9.5 R^ (Published RCA response, page 141)
+// 4.9.5 R3 (Published RCA response, page 141)
 //     [47]    Start bit = 1'b0
 //     [46]    Transmission bit = 1'b0
 //     [45:40] Command index = 6'b000011

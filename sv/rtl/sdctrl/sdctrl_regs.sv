@@ -114,8 +114,8 @@ begin: comb_proc
 
     // system bus clock scaler to baudrate:
     if (r.sclk_ena == 1'b1) begin
-        if (((i_400khz_ena == 1'b1) && (r.scaler_cnt == r.scaler_400khz))
-                || ((i_400khz_ena == 1'b0) && (r.scaler_cnt == r.scaler_data))) begin
+        if (((i_400khz_ena == 1'b1) && (r.scaler_cnt >= r.scaler_400khz))
+                || ((i_400khz_ena == 1'b0) && (r.scaler_cnt >= r.scaler_data))) begin
             v.scaler_cnt = '0;
             v.level = (~r.level);
             v_posedge = (~r.level);

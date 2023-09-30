@@ -29,8 +29,15 @@ localparam bit [3:0] SDSTATE_PRG = 4'h7;
 localparam bit [3:0] SDSTATE_DIS = 4'h8;
 localparam bit [3:0] SDSTATE_INA = 4'h9;
 
+// Data block access state machine:
+localparam bit [2:0] DATASTATE_IDLE = 3'h0;
+localparam bit [2:0] DATASTATE_START = 3'h1;
+localparam bit [2:0] DATASTATE_CRC15 = 3'h2;
+localparam bit [2:0] DATASTATE_STOP = 3'h3;
+
 typedef struct {
     logic [3:0] sdstate;
+    logic [2:0] datastate;
     logic [31:0] powerup_cnt;
     logic [7:0] preinit_cnt;
     logic [31:0] delay_cnt;
@@ -44,10 +51,15 @@ typedef struct {
     logic cmd_resp_r3;
     logic cmd_resp_r7;
     logic illegal_cmd;
+    logic ocr_hcs;
+    logic [23:0] ocr_vdd_window;
+    logic req_mem_valid;
+    logic [40:0] req_mem_addr;
 } vip_sdcard_ctrl_registers;
 
 const vip_sdcard_ctrl_registers vip_sdcard_ctrl_r_reset = '{
     SDSTATE_IDLE,                       // sdstate
+    DATASTATE_IDLE,                     // datastate
     '0,                                 // powerup_cnt
     '0,                                 // preinit_cnt
     '0,                                 // delay_cnt
@@ -60,7 +72,11 @@ const vip_sdcard_ctrl_registers vip_sdcard_ctrl_r_reset = '{
     1'b0,                               // cmd_resp_r2
     1'b0,                               // cmd_resp_r3
     1'b0,                               // cmd_resp_r7
-    1'b0                                // illegal_cmd
+    1'b0,                               // illegal_cmd
+    1'b0,                               // ocr_hcs
+    '0,                                 // ocr_vdd_window
+    1'b0,                               // req_mem_valid
+    '0                                  // req_mem_addr
 };
 
 endpackage: vip_sdcard_ctrl_pkg

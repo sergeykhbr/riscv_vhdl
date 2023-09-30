@@ -61,6 +61,7 @@ vip_sdcard_ctrl::vip_sdcard_ctrl(sc_module_name name,
     sensitive << i_cmd_req_data;
     sensitive << i_cmd_resp_ready;
     sensitive << r.sdstate;
+    sensitive << r.datastate;
     sensitive << r.powerup_cnt;
     sensitive << r.preinit_cnt;
     sensitive << r.delay_cnt;
@@ -74,6 +75,10 @@ vip_sdcard_ctrl::vip_sdcard_ctrl(sc_module_name name,
     sensitive << r.cmd_resp_r3;
     sensitive << r.cmd_resp_r7;
     sensitive << r.illegal_cmd;
+    sensitive << r.ocr_hcs;
+    sensitive << r.ocr_vdd_window;
+    sensitive << r.req_mem_valid;
+    sensitive << r.req_mem_addr;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -98,6 +103,7 @@ void vip_sdcard_ctrl::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_stat_idle_state, o_stat_idle_state.name());
         sc_trace(o_vcd, o_stat_illegal_cmd, o_stat_illegal_cmd.name());
         sc_trace(o_vcd, r.sdstate, pn + ".r_sdstate");
+        sc_trace(o_vcd, r.datastate, pn + ".r_datastate");
         sc_trace(o_vcd, r.powerup_cnt, pn + ".r_powerup_cnt");
         sc_trace(o_vcd, r.preinit_cnt, pn + ".r_preinit_cnt");
         sc_trace(o_vcd, r.delay_cnt, pn + ".r_delay_cnt");
@@ -111,6 +117,10 @@ void vip_sdcard_ctrl::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.cmd_resp_r3, pn + ".r_cmd_resp_r3");
         sc_trace(o_vcd, r.cmd_resp_r7, pn + ".r_cmd_resp_r7");
         sc_trace(o_vcd, r.illegal_cmd, pn + ".r_illegal_cmd");
+        sc_trace(o_vcd, r.ocr_hcs, pn + ".r_ocr_hcs");
+        sc_trace(o_vcd, r.ocr_vdd_window, pn + ".r_ocr_vdd_window");
+        sc_trace(o_vcd, r.req_mem_valid, pn + ".r_req_mem_valid");
+        sc_trace(o_vcd, r.req_mem_addr, pn + ".r_req_mem_addr");
     }
 
 }
@@ -118,11 +128,9 @@ void vip_sdcard_ctrl::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 void vip_sdcard_ctrl::comb() {
     bool v_resp_valid;
     sc_uint<32> vb_resp_data32;
-    bool v_idle_state;
 
     v_resp_valid = 0;
     vb_resp_data32 = 0;
-    v_idle_state = 0;
 
     v = r;
 
@@ -141,10 +149,6 @@ void vip_sdcard_ctrl::comb() {
         v.powerup_cnt = (r.powerup_cnt.read() + 1);
     } else {
         v.powerup_done = 1;
-    }
-
-    if (r.sdstate.read() == SDSTATE_IDLE) {
-        v_idle_state = 1;
     }
 
     if (i_cmd_req_valid.read() == 1) {
@@ -181,10 +185,12 @@ void vip_sdcard_ctrl::comb() {
                 // [36] XPC
                 // [32] S18R
                 // [31:8] VDD Voltage Window (OCR[23:0])
+                v.ocr_hcs = (i_cmd_req_data.read()[30] & CFG_SDCARD_HCS_);
+                v.ocr_vdd_window = (i_cmd_req_data.read()(23, 0) & CFG_SDCARD_VDD_VOLTAGE_WINDOW_);
                 v.cmd_resp_valid = 1;
                 v.delay_cnt = 20;
                 vb_resp_data32[31] = r.powerup_done.read();
-                vb_resp_data32[30] = i_cmd_req_data.read()[30];
+                vb_resp_data32[30] = (i_cmd_req_data.read()[30] & CFG_SDCARD_HCS_);
                 vb_resp_data32(23, 0) = (i_cmd_req_data.read()(23, 0) & CFG_SDCARD_VDD_VOLTAGE_WINDOW_);
                 if ((i_cmd_req_data.read()(23, 0) & CFG_SDCARD_VDD_VOLTAGE_WINDOW_) == 0) {
                     // OCR check failed:
@@ -200,8 +206,19 @@ void vip_sdcard_ctrl::comb() {
                 v.delay_cnt = 20;
                 if (i_spi_mode.read() == 1) {
                     vb_resp_data32 = 0;
-                    vb_resp_data32[30] = CFG_SDCARD_HCS_;
-                    vb_resp_data32(23, 0) = CFG_SDCARD_VDD_VOLTAGE_WINDOW_;
+                    vb_resp_data32[30] = r.ocr_hcs.read();
+                    vb_resp_data32(23, 0) = r.ocr_vdd_window;
+                } else {
+                    v.illegal_cmd = 1;
+                }
+                break;
+            case 17:                                        // CMD17: READ_SINGLE_BLOCK.
+                v.cmd_resp_valid = 1;
+                v.delay_cnt = 20;
+                if (i_spi_mode.read() == 1) {
+                    v.req_mem_valid = 1;
+                    v.req_mem_addr = (i_cmd_req_data.read() << 9);
+                    vb_resp_data32 = 0;
                 } else {
                     v.illegal_cmd = 1;
                 }
@@ -279,6 +296,17 @@ void vip_sdcard_ctrl::comb() {
         }
     }
 
+    switch (r.datastate.read()) {
+    case DATASTATE_IDLE:
+        if (r.req_mem_valid.read() == 1) {
+            v.req_mem_valid = 0;
+            v.datastate = DATASTATE_START;
+        }
+        break;
+    default:
+        break;
+    }
+
     v.cmd_resp_data32 = vb_resp_data32;
     v.cmd_req_ready = (!r.delay_cnt.read().or_reduce());
     if (r.cmd_resp_valid.read() == 1) {
@@ -298,7 +326,7 @@ void vip_sdcard_ctrl::comb() {
     o_cmd_resp_r3 = r.cmd_resp_r3;
     o_cmd_resp_r7 = r.cmd_resp_r7;
     o_stat_illegal_cmd = r.illegal_cmd;
-    o_stat_idle_state = v_idle_state;
+    o_stat_idle_state = r.powerup_done;
 }
 
 void vip_sdcard_ctrl::registers() {
