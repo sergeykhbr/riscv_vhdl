@@ -51,12 +51,12 @@ always_comb
 begin: comb_proc
     axi_slv_registers v;
     logic [11:0] vb_req_addr_next;
-    logic v_req_last;
+    logic [7:0] vb_req_len_next;
     dev_config_type vcfg;
     axi4_slave_out_type vxslvo;
 
     vb_req_addr_next = 0;
-    v_req_last = 0;
+    vb_req_len_next = 0;
     vcfg = dev_config_none;
     vxslvo = axi4_slave_out_none;
 
@@ -88,11 +88,14 @@ begin: comb_proc
         end
     end
 
-    v_req_last = (~(|r.req_len));
-    v.req_last = v_req_last;
+    vb_req_len_next = r.req_len;
+    if ((|r.req_len) == 1'b1) begin
+        vb_req_len_next = (r.req_len - 1);
+    end
 
     case (r.state)
     State_Idle: begin
+        v.req_done = 1'b0;
         v.req_valid = 1'b0;
         v.req_write = 1'b0;
         v.resp_valid = 1'b0;
@@ -112,14 +115,16 @@ begin: comb_proc
             v.req_wstrb = i_xslvi.w_strb;
             if (i_xslvi.w_valid == 1'b1) begin
                 // AXI Lite does not support burst transaction
-                v.state = State_last_w;
+                v.state = State_burst_w;
                 v.req_valid = 1'b1;
                 v.req_write = 1'b1;
+                v.req_last_a = (~(|i_xslvi.aw_bits.len));
             end else begin
                 v.state = State_w;
             end
         end else if (i_xslvi.ar_valid == 1'b1) begin
             v.req_valid = 1'b1;
+            v.req_last_a = (~(|i_xslvi.ar_bits.len));
             v.req_addr = i_xslvi.ar_bits.addr;
             v.req_xsize = XSizeToBytes(i_xslvi.ar_bits.size);
             v.req_len = i_xslvi.ar_bits.len;
@@ -136,94 +141,81 @@ begin: comb_proc
         if (i_xslvi.w_valid == 1'b1) begin
             v.req_valid = 1'b1;
             v.req_write = 1'b1;
-            if ((|r.req_len) == 1'b1) begin
-                v.state = State_burst_w;
-            end else begin
-                v.state = State_last_w;
-            end
+            v.req_last_a = (~(|vb_req_len_next));
+            v.state = State_burst_w;
         end
     end
     State_burst_w: begin
-        v.req_valid = i_xslvi.w_valid;
-        vxslvo.w_ready = i_resp_valid;
-        if ((i_xslvi.w_valid == 1'b1) && (i_resp_valid == 1'b1)) begin
-            v.req_addr = {r.req_addr[(CFG_SYSBUS_ADDR_BITS - 1): 12], vb_req_addr_next};
+        vxslvo.w_ready = i_req_ready;
+        if (i_xslvi.w_valid == 1'b1) begin
+            v.req_valid = 1'b1;
             v.req_wdata = i_xslvi.w_data;
             v.req_wstrb = i_xslvi.w_strb;
+        end else if (i_req_ready == 1'b1) begin
+            v.req_valid = 1'b0;
+        end
+        if ((r.req_valid == 1'b1) && (i_req_ready == 1'b1)) begin
+            v.req_done = 1'b1;
+            v.req_addr = {r.req_addr[(CFG_SYSBUS_ADDR_BITS - 1): 12], vb_req_addr_next};
+            v.req_last_a = (~(|vb_req_len_next));
             if ((|r.req_len) == 1'b1) begin
                 v.req_len = (r.req_len - 1);
+            end else begin
+                v.req_write = 1'b0;
+                v.req_last_a = 1'b0;
+                v.state = State_b;
             end
-            if (r.req_len == 8'h01) begin
-                v.state = State_last_w;
-            end
-        end
-    end
-    State_last_w: begin
-        // Wait cycle: w_ready is zero on the last write because it is laready accepted
-        if (i_resp_valid == 1'b1) begin
-            v.req_valid = 1'b0;
-            v.req_write = 1'b0;
-            v.resp_err = i_resp_err;
-            v.state = State_b;
         end
     end
     State_b: begin
-        vxslvo.b_valid = 1'b1;
-        if (i_xslvi.b_ready == 1'b1) begin
+        vxslvo.b_valid = i_resp_valid;
+        if ((i_xslvi.b_ready == 1'b1) && (i_resp_valid == 1'b1)) begin
+            v.req_done = 1'b0;
             v.state = State_Idle;
         end
     end
     State_addr_r: begin
         // Setup address:
         if (i_req_ready == 1'b1) begin
-            if ((|r.req_len) == 1'b1) begin
-                v.req_addr = {r.req_addr[(CFG_SYSBUS_ADDR_BITS - 1): 12], vb_req_addr_next};
-                v.req_len = (r.req_len - 1);
-                v.state = State_addrdata_r;
-            end else begin
-                v.req_valid = 1'b0;
-                v.state = State_data_r;
-            end
-        end
-    end
-    State_addrdata_r: begin
-        v.resp_valid = i_resp_valid;
-        v.resp_rdata = i_resp_rdata;
-        v.resp_err = i_resp_err;
-        if ((i_resp_valid == 1'b0) || ((|r.req_len) == 1'b0)) begin
-            v.req_valid = 1'b0;
             v.state = State_data_r;
-        end else if (i_xslvi.r_ready == 1'b0) begin
-            // Bus is not ready to accept read data
-            v.req_valid = 1'b0;
-            v.state = State_out_r;
-        end else if (i_req_ready == 1'b0) begin
-            // Slave device is not ready to accept burst request
-            v.state = State_addr_r;
-        end else begin
             v.req_addr = {r.req_addr[(CFG_SYSBUS_ADDR_BITS - 1): 12], vb_req_addr_next};
-            v.req_len = (r.req_len - 1);
+            v.req_len = vb_req_len_next;
+            v.req_last_a = (~(|vb_req_len_next));
+            v.req_last_r = r.req_last_a;
+            v.req_valid = (|r.req_len);
+            v.req_done = 1'b1;
         end
     end
     State_data_r: begin
-        if (i_resp_valid == 1'b1) begin
+        v.req_valid = ((~r.req_last_r) & i_xslvi.r_ready);
+        if ((i_resp_valid == 1'b1) && (r.req_done == 1'b1)) begin
+            v.req_done = 1'b0;
             v.resp_valid = 1'b1;
+            v.resp_last = r.req_last_r;
             v.resp_rdata = i_resp_rdata;
             v.resp_err = i_resp_err;
-            v.resp_last = (~(|r.req_len));
-            v.state = State_out_r;
+            if (r.req_last_r == 1'b1) begin
+                v.state = State_out_r;
+            end
+        end else if (i_xslvi.r_ready == 1'b1) begin
+            v.resp_valid = 1'b0;
+        end
+        if ((r.req_valid == 1'b1) && (i_req_ready == 1'b1)) begin
+            v.req_addr = {r.req_addr[(CFG_SYSBUS_ADDR_BITS - 1): 12], vb_req_addr_next};
+            v.req_len = vb_req_len_next;
+            v.req_last_a = (~(|vb_req_len_next));
+            v.req_last_r = r.req_last_a;
+            v.req_valid = ((~r.req_last_a) & i_xslvi.r_ready);
+            v.req_done = 1'b1;
         end
     end
     State_out_r: begin
         if (i_xslvi.r_ready == 1'b1) begin
-            v.resp_valid = 1'b0;
+            v.req_last_a = 1'b0;
+            v.req_last_r = 1'b0;
             v.resp_last = 1'b0;
-            if ((|r.req_len) == 1'b1) begin
-                v.req_valid = 1'b1;
-                v.state = State_addr_r;
-            end else begin
-                v.state = State_Idle;
-            end
+            v.resp_valid = 1'b0;
+            v.state = State_Idle;
         end
     end
     default: begin
@@ -235,7 +227,7 @@ begin: comb_proc
     end
 
     o_req_valid = r.req_valid;
-    o_req_last = v_req_last;
+    o_req_last = r.req_last_a;
     o_req_addr = r.req_addr;
     o_req_size = r.req_xsize;
     o_req_write = r.req_write;
@@ -244,7 +236,7 @@ begin: comb_proc
 
     vxslvo.b_id = r.req_id;
     vxslvo.b_user = r.req_user;
-    vxslvo.b_resp = {r.resp_err, 1'h0};
+    vxslvo.b_resp = {i_resp_err, 1'h0};
     vxslvo.r_valid = r.resp_valid;
     vxslvo.r_id = r.req_id;
     vxslvo.r_user = r.req_user;

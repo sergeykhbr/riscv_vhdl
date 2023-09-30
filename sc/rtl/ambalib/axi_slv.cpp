@@ -65,7 +65,9 @@ axi_slv::axi_slv(sc_module_name name,
     sensitive << r.req_user;
     sensitive << r.req_id;
     sensitive << r.req_burst;
-    sensitive << r.req_last;
+    sensitive << r.req_last_a;
+    sensitive << r.req_last_r;
+    sensitive << r.req_done;
     sensitive << r.resp_valid;
     sensitive << r.resp_last;
     sensitive << r.resp_rdata;
@@ -105,7 +107,9 @@ void axi_slv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.req_user, pn + ".r_req_user");
         sc_trace(o_vcd, r.req_id, pn + ".r_req_id");
         sc_trace(o_vcd, r.req_burst, pn + ".r_req_burst");
-        sc_trace(o_vcd, r.req_last, pn + ".r_req_last");
+        sc_trace(o_vcd, r.req_last_a, pn + ".r_req_last_a");
+        sc_trace(o_vcd, r.req_last_r, pn + ".r_req_last_r");
+        sc_trace(o_vcd, r.req_done, pn + ".r_req_done");
         sc_trace(o_vcd, r.resp_valid, pn + ".r_resp_valid");
         sc_trace(o_vcd, r.resp_last, pn + ".r_resp_last");
         sc_trace(o_vcd, r.resp_rdata, pn + ".r_resp_rdata");
@@ -116,12 +120,12 @@ void axi_slv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
 void axi_slv::comb() {
     sc_uint<12> vb_req_addr_next;
-    bool v_req_last;
+    sc_uint<8> vb_req_len_next;
     dev_config_type vcfg;
     axi4_slave_out_type vxslvo;
 
     vb_req_addr_next = 0;
-    v_req_last = 0;
+    vb_req_len_next = 0;
     vcfg = dev_config_none;
     vxslvo = axi4_slave_out_none;
 
@@ -153,11 +157,14 @@ void axi_slv::comb() {
         }
     }
 
-    v_req_last = (!r.req_len.read().or_reduce());
-    v.req_last = v_req_last;
+    vb_req_len_next = r.req_len;
+    if (r.req_len.read().or_reduce() == 1) {
+        vb_req_len_next = (r.req_len.read() - 1);
+    }
 
     switch (r.state.read()) {
     case State_Idle:
+        v.req_done = 0;
         v.req_valid = 0;
         v.req_write = 0;
         v.resp_valid = 0;
@@ -177,14 +184,16 @@ void axi_slv::comb() {
             v.req_wstrb = i_xslvi.read().w_strb;
             if (i_xslvi.read().w_valid == 1) {
                 // AXI Lite does not support burst transaction
-                v.state = State_last_w;
+                v.state = State_burst_w;
                 v.req_valid = 1;
                 v.req_write = 1;
+                v.req_last_a = (!i_xslvi.read().aw_bits.len.or_reduce());
             } else {
                 v.state = State_w;
             }
         } else if (i_xslvi.read().ar_valid == 1) {
             v.req_valid = 1;
+            v.req_last_a = (!i_xslvi.read().ar_bits.len.or_reduce());
             v.req_addr = i_xslvi.read().ar_bits.addr;
             v.req_xsize = XSizeToBytes(i_xslvi.read().ar_bits.size);
             v.req_len = i_xslvi.read().ar_bits.len;
@@ -201,94 +210,81 @@ void axi_slv::comb() {
         if (i_xslvi.read().w_valid == 1) {
             v.req_valid = 1;
             v.req_write = 1;
-            if (r.req_len.read().or_reduce() == 1) {
-                v.state = State_burst_w;
-            } else {
-                v.state = State_last_w;
-            }
+            v.req_last_a = (!vb_req_len_next.or_reduce());
+            v.state = State_burst_w;
         }
         break;
     case State_burst_w:
-        v.req_valid = i_xslvi.read().w_valid;
-        vxslvo.w_ready = i_resp_valid;
-        if ((i_xslvi.read().w_valid == 1) && (i_resp_valid.read() == 1)) {
-            v.req_addr = (r.req_addr.read()((CFG_SYSBUS_ADDR_BITS - 1), 12), vb_req_addr_next);
+        vxslvo.w_ready = i_req_ready;
+        if (i_xslvi.read().w_valid == 1) {
+            v.req_valid = 1;
             v.req_wdata = i_xslvi.read().w_data;
             v.req_wstrb = i_xslvi.read().w_strb;
+        } else if (i_req_ready.read() == 1) {
+            v.req_valid = 0;
+        }
+        if ((r.req_valid.read() == 1) && (i_req_ready.read() == 1)) {
+            v.req_done = 1;
+            v.req_addr = (r.req_addr.read()((CFG_SYSBUS_ADDR_BITS - 1), 12), vb_req_addr_next);
+            v.req_last_a = (!vb_req_len_next.or_reduce());
             if (r.req_len.read().or_reduce() == 1) {
                 v.req_len = (r.req_len.read() - 1);
+            } else {
+                v.req_write = 0;
+                v.req_last_a = 0;
+                v.state = State_b;
             }
-            if (r.req_len.read() == 1) {
-                v.state = State_last_w;
-            }
-        }
-        break;
-    case State_last_w:
-        // Wait cycle: w_ready is zero on the last write because it is laready accepted
-        if (i_resp_valid.read() == 1) {
-            v.req_valid = 0;
-            v.req_write = 0;
-            v.resp_err = i_resp_err;
-            v.state = State_b;
         }
         break;
     case State_b:
-        vxslvo.b_valid = 1;
-        if (i_xslvi.read().b_ready == 1) {
+        vxslvo.b_valid = i_resp_valid;
+        if ((i_xslvi.read().b_ready == 1) && (i_resp_valid.read() == 1)) {
+            v.req_done = 0;
             v.state = State_Idle;
         }
         break;
     case State_addr_r:
         // Setup address:
         if (i_req_ready.read() == 1) {
-            if (r.req_len.read().or_reduce() == 1) {
-                v.req_addr = (r.req_addr.read()((CFG_SYSBUS_ADDR_BITS - 1), 12), vb_req_addr_next);
-                v.req_len = (r.req_len.read() - 1);
-                v.state = State_addrdata_r;
-            } else {
-                v.req_valid = 0;
-                v.state = State_data_r;
-            }
-        }
-        break;
-    case State_addrdata_r:
-        v.resp_valid = i_resp_valid;
-        v.resp_rdata = i_resp_rdata;
-        v.resp_err = i_resp_err;
-        if ((i_resp_valid.read() == 0) || (r.req_len.read().or_reduce() == 0)) {
-            v.req_valid = 0;
             v.state = State_data_r;
-        } else if (i_xslvi.read().r_ready == 0) {
-            // Bus is not ready to accept read data
-            v.req_valid = 0;
-            v.state = State_out_r;
-        } else if (i_req_ready.read() == 0) {
-            // Slave device is not ready to accept burst request
-            v.state = State_addr_r;
-        } else {
             v.req_addr = (r.req_addr.read()((CFG_SYSBUS_ADDR_BITS - 1), 12), vb_req_addr_next);
-            v.req_len = (r.req_len.read() - 1);
+            v.req_len = vb_req_len_next;
+            v.req_last_a = (!vb_req_len_next.or_reduce());
+            v.req_last_r = r.req_last_a;
+            v.req_valid = r.req_len.read().or_reduce();
+            v.req_done = 1;
         }
         break;
     case State_data_r:
-        if (i_resp_valid.read() == 1) {
+        v.req_valid = ((!r.req_last_r) & i_xslvi.read().r_ready);
+        if ((i_resp_valid.read() == 1) && (r.req_done.read() == 1)) {
+            v.req_done = 0;
             v.resp_valid = 1;
+            v.resp_last = r.req_last_r;
             v.resp_rdata = i_resp_rdata;
             v.resp_err = i_resp_err;
-            v.resp_last = (!r.req_len.read().or_reduce());
-            v.state = State_out_r;
+            if (r.req_last_r.read() == 1) {
+                v.state = State_out_r;
+            }
+        } else if (i_xslvi.read().r_ready == 1) {
+            v.resp_valid = 0;
+        }
+        if ((r.req_valid.read() == 1) && (i_req_ready.read() == 1)) {
+            v.req_addr = (r.req_addr.read()((CFG_SYSBUS_ADDR_BITS - 1), 12), vb_req_addr_next);
+            v.req_len = vb_req_len_next;
+            v.req_last_a = (!vb_req_len_next.or_reduce());
+            v.req_last_r = r.req_last_a;
+            v.req_valid = ((!r.req_last_a) & i_xslvi.read().r_ready);
+            v.req_done = 1;
         }
         break;
     case State_out_r:
         if (i_xslvi.read().r_ready == 1) {
-            v.resp_valid = 0;
+            v.req_last_a = 0;
+            v.req_last_r = 0;
             v.resp_last = 0;
-            if (r.req_len.read().or_reduce() == 1) {
-                v.req_valid = 1;
-                v.state = State_addr_r;
-            } else {
-                v.state = State_Idle;
-            }
+            v.resp_valid = 0;
+            v.state = State_Idle;
         }
         break;
     default:
@@ -300,7 +296,7 @@ void axi_slv::comb() {
     }
 
     o_req_valid = r.req_valid;
-    o_req_last = v_req_last;
+    o_req_last = r.req_last_a;
     o_req_addr = r.req_addr;
     o_req_size = r.req_xsize;
     o_req_write = r.req_write;
@@ -309,7 +305,7 @@ void axi_slv::comb() {
 
     vxslvo.b_id = r.req_id;
     vxslvo.b_user = r.req_user;
-    vxslvo.b_resp = (r.resp_err.read() << 1);
+    vxslvo.b_resp = (i_resp_err.read() << 1);
     vxslvo.r_valid = r.resp_valid;
     vxslvo.r_id = r.req_id;
     vxslvo.r_user = r.req_user;

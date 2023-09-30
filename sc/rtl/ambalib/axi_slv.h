@@ -61,15 +61,13 @@ SC_MODULE(axi_slv) {
     static const uint8_t State_Idle = 0;
     static const uint8_t State_w = 1;
     static const uint8_t State_burst_w = 2;
-    static const uint8_t State_last_w = 3;
-    static const uint8_t State_addr_r = 4;
-    static const uint8_t State_addrdata_r = 5;
-    static const uint8_t State_data_r = 6;
-    static const uint8_t State_out_r = 7;
-    static const uint8_t State_b = 8;
+    static const uint8_t State_addr_r = 3;
+    static const uint8_t State_data_r = 4;
+    static const uint8_t State_out_r = 5;
+    static const uint8_t State_b = 6;
 
     struct axi_slv_registers {
-        sc_signal<sc_uint<4>> state;
+        sc_signal<sc_uint<3>> state;
         sc_signal<bool> req_valid;
         sc_signal<sc_uint<CFG_SYSBUS_ADDR_BITS>> req_addr;
         sc_signal<bool> req_write;
@@ -80,7 +78,9 @@ SC_MODULE(axi_slv) {
         sc_signal<sc_uint<CFG_SYSBUS_USER_BITS>> req_user;
         sc_signal<sc_uint<CFG_SYSBUS_ID_BITS>> req_id;
         sc_signal<sc_uint<2>> req_burst;
-        sc_signal<bool> req_last;
+        sc_signal<bool> req_last_a;
+        sc_signal<bool> req_last_r;
+        sc_signal<bool> req_done;
         sc_signal<bool> resp_valid;
         sc_signal<bool> resp_last;
         sc_signal<sc_uint<CFG_SYSBUS_DATA_BITS>> resp_rdata;
@@ -99,7 +99,9 @@ SC_MODULE(axi_slv) {
         iv.req_user = 0;
         iv.req_id = 0;
         iv.req_burst = 0;
-        iv.req_last = 0;
+        iv.req_last_a = 0;
+        iv.req_last_r = 0;
+        iv.req_done = 0;
         iv.resp_valid = 0;
         iv.resp_last = 0;
         iv.resp_rdata = 0ull;
