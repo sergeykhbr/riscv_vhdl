@@ -18,17 +18,18 @@ package sdctrl_cache_pkg;
 import sdctrl_cfg_pkg::*;
 
 localparam int abus = CFG_SDCACHE_ADDR_BITS;
+localparam int ibits = CFG_LOG2_SDCACHE_LINEBITS;
 localparam int lnbits = CFG_LOG2_SDCACHE_BYTES_PER_LINE;
 localparam int flbits = SDCACHE_FL_TOTAL;
 
 // State machine states:
 localparam bit [3:0] State_Idle = 4'h0;
-localparam bit [3:0] State_CheckHit = 4'h1;
-localparam bit [3:0] State_TranslateAddress = 4'h2;
-localparam bit [3:0] State_WaitGrant = 4'h3;
-localparam bit [3:0] State_WaitResp = 4'h4;
-localparam bit [3:0] State_CheckResp = 4'h5;
-localparam bit [3:0] State_SetupReadAdr = 4'h6;
+localparam bit [3:0] State_CheckHit = 4'h2;
+localparam bit [3:0] State_TranslateAddress = 4'h3;
+localparam bit [3:0] State_WaitGrant = 4'h4;
+localparam bit [3:0] State_WaitResp = 4'h5;
+localparam bit [3:0] State_CheckResp = 4'h6;
+localparam bit [3:0] State_SetupReadAdr = 4'h1;
 localparam bit [3:0] State_WriteBus = 4'h7;
 localparam bit [3:0] State_FlushAddr = 4'h8;
 localparam bit [3:0] State_FlushCheck = 4'h9;
@@ -49,12 +50,9 @@ typedef struct {
     logic mem_fault;
     logic write_first;
     logic write_flush;
-    logic write_share;
-    logic req_flush;                                        // init flush request
-    logic req_flush_all;
-    logic [CFG_SDCACHE_ADDR_BITS-1:0] req_flush_addr;       // [0]=1 flush all
-    logic [31:0] req_flush_cnt;
+    logic req_flush;
     logic [31:0] flush_cnt;
+    logic [CFG_SDCACHE_ADDR_BITS-1:0] line_addr_i;
     logic [SDCACHE_LINE_BITS-1:0] cache_line_i;
     logic [SDCACHE_LINE_BITS-1:0] cache_line_o;
 } sdctrl_cache_registers;
@@ -71,12 +69,9 @@ const sdctrl_cache_registers sdctrl_cache_r_reset = '{
     1'b0,                               // mem_fault
     1'b0,                               // write_first
     1'b0,                               // write_flush
-    1'b0,                               // write_share
-    1'h1,                               // req_flush
-    1'b0,                               // req_flush_all
-    '0,                                 // req_flush_addr
-    '0,                                 // req_flush_cnt
+    1'b0,                               // req_flush
     '0,                                 // flush_cnt
+    '0,                                 // line_addr_i
     '0,                                 // cache_line_i
     '0                                  // cache_line_o
 };

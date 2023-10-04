@@ -51,7 +51,8 @@ module vip_sdcard_cmdio #(
     input logic i_stat_ecc_failed,                          // Card internal ECC eas applied but failed to correct data
     input logic i_stat_wp_violation,                        // The command tried to write wp block
     input logic i_stat_erase_param,                         // An invalid selection for erase, sectors or groups
-    input logic i_stat_out_of_range
+    input logic i_stat_out_of_range,
+    output logic o_busy
 );
 
 import vip_sdcard_cmdio_pkg::*;
@@ -82,11 +83,13 @@ begin: comb_proc
     logic v_crc7_clear;
     logic v_crc7_next;
     logic v_crc7_in;
+    logic v_busy;
 
     vb_cmd_txshift = 0;
     v_crc7_clear = 0;
     v_crc7_next = 0;
     v_crc7_in = 0;
+    v_busy = 1'h1;
 
     v = r;
 
@@ -110,12 +113,13 @@ begin: comb_proc
         end
     end
     CMDSTATE_REQ_STARTBIT: begin
-        if ((r.cmdz == 1'b1) && (i_cmd == 1'b0)) begin
+        v_busy = 1'b0;
+        v_crc7_clear = 1'b1;
+        if ((r.spi_mode && i_cs) == 1'b1) begin
+            // Do nothing
+        end else if ((r.cmdz == 1'b1) && (i_cmd == 1'b0)) begin
             v.cs = i_cs;
-            v_crc7_next = 1'b1;
             v.cmd_state = CMDSTATE_REQ_TXBIT;
-        end else begin
-            v_crc7_clear = 1'b1;
         end
     end
     CMDSTATE_REQ_TXBIT: begin
@@ -274,6 +278,7 @@ begin: comb_proc
     o_cmd_req_data = r.cmd_req_data;
     o_cmd_resp_ready = r.cmd_resp_ready;
     o_spi_mode = r.spi_mode;
+    o_busy = v_busy;
 
     rin = v;
 end: comb_proc

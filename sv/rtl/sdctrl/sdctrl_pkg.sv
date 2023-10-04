@@ -78,9 +78,12 @@ typedef struct {
     logic [511:0] sdmem_data;
     logic sdmem_valid;
     logic crc15_clear;
+    logic [14:0] crc15_calc0;
+    logic [14:0] crc15_rx0;
     logic [3:0] dat;
     logic dat_dir;
     logic dat3_dir;
+    logic dat_tran;
     logic [3:0] sdstate;
     logic [2:0] initstate;
     logic [1:0] readystate;
@@ -114,9 +117,12 @@ const sdctrl_registers sdctrl_r_reset = '{
     '0,                                 // sdmem_data
     1'b0,                               // sdmem_valid
     1'h1,                               // crc15_clear
+    '0,                                 // crc15_calc0
+    '0,                                 // crc15_rx0
     '1,                                 // dat
     DIR_OUTPUT,                         // dat_dir
     DIR_INPUT,                          // dat3_dir
+    1'h1,                               // dat_tran
     SDSTATE_PRE_INIT,                   // sdstate
     IDLESTATE_CMD0,                     // initstate
     READYSTATE_CMD11,                   // readystate

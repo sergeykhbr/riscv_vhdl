@@ -82,9 +82,7 @@ logic w_req_sdmem_valid;
 logic w_req_sdmem_write;
 logic [CFG_SDCACHE_ADDR_BITS-1:0] wb_req_sdmem_addr;
 logic [SDCACHE_LINE_BITS-1:0] wb_req_sdmem_wdata;
-logic [SDCACHE_LINE_BITS-1:0] wb_resp_sdmem_rdata;
 logic w_resp_sdmem_err;
-logic [CFG_SDCACHE_ADDR_BITS-1:0] wb_regs_flush_address;
 logic w_regs_flush_valid;
 logic w_cache_flush_end;
 logic w_trx_cmd_dir;
@@ -274,8 +272,7 @@ sdctrl_cmd_transmitter #(
 
 
 sdctrl_cache #(
-    .async_reset(async_reset),
-    .ibits(CFG_LOG2_SDCACHE_LINEBITS)
+    .async_reset(async_reset)
 ) cache0 (
     .i_clk(i_clk),
     .i_nrst(i_nrst),
@@ -295,9 +292,8 @@ sdctrl_cache #(
     .o_req_mem_addr(wb_req_sdmem_addr),
     .o_req_mem_data(wb_req_sdmem_wdata),
     .i_mem_data_valid(r.sdmem_valid),
-    .i_mem_data(wb_resp_sdmem_rdata),
+    .i_mem_data(r.sdmem_data),
     .i_mem_fault(w_resp_sdmem_err),
-    .i_flush_address(wb_regs_flush_address),
     .i_flush_valid(w_regs_flush_valid),
     .o_flush_end(w_cache_flush_end)
 );
@@ -338,13 +334,13 @@ begin: comb_proc
 
     if (w_regs_spi_mode == 1'b1) begin
         v_dat3_dir = DIR_OUTPUT;
-        v_dat3_out = w_trx_cmd_cs;
+        v_dat3_out = (w_trx_cmd_cs && r.dat_tran);
         v_cmd_dir = DIR_OUTPUT;
         v_dat0_dir = DIR_INPUT;
         v_cmd_in = i_dat0;
         if (w_regs_sck_posedge) begin
-            // Not a full block 4096 bits just a cache line:
-            v.sdmem_data = {r.sdmem_data[510: 0], i_dat0};
+            // Not a full block 4096 bits just a cache line (dat_tran is active LOW):
+            v.sdmem_data = {r.sdmem_data[510: 0], (i_dat0 || r.dat_tran)};
             v.bitcnt = (r.bitcnt + 1);
         end
     end else begin
@@ -614,20 +610,31 @@ begin: comb_proc
                 v.bitcnt = '0;
             end else if (r.spidatastate == SPIDATASTATE_CMD24_WRITE_SINGLE_BLOCK) begin
             end else if (r.spidatastate == SPIDATASTATE_WAIT_DATA_START) begin
-                if (r.bitcnt[7: 0] == 8'hfe) begin
+                v.dat_tran = 1'b0;
+                v.crc15_clear = 1'b1;
+                if (r.sdmem_data[7: 0] == 8'hfe) begin
                     v.spidatastate = SPIDATASTATE_READING_DATA;
                     v.bitcnt = '0;
+                    v.crc15_clear = 1'b0;
                 end else if ((&r.bitcnt) == 1'b1) begin
                     // TODO: set errmode, no data response
                 end
             end else if (r.spidatastate == SPIDATASTATE_READING_DATA) begin
                 if (w_regs_sck_posedge == 1'b1) begin
+                    v_crc15_next = 1'b1;
                     if ((&r.bitcnt) == 1'b1) begin
                         v.spidatastate = SPIDATASTATE_READING_CRC15;
+                        v.crc15_calc0 = wb_crc15_0;
                     end
                 end
             end else if (r.spidatastate == SPIDATASTATE_READING_CRC15) begin
-                v.spidatastate = SPIDATASTATE_READING_END;
+                if (w_regs_sck_posedge == 1'b1) begin
+                    if ((&r.bitcnt[3: 0]) == 1'b1) begin
+                        v.spidatastate = SPIDATASTATE_READING_END;
+                        v.dat_tran = 1'b1;
+                        v.crc15_rx0 = r.sdmem_data[15: 1];
+                    end
+                end
             end else if (r.spidatastate == SPIDATASTATE_READING_END) begin
                 v.spidatastate = SPIDATASTATE_CACHE_WAIT_RESP;
             end else begin

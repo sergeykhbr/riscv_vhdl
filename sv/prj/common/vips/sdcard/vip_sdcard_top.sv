@@ -77,6 +77,14 @@ logic w_stat_ecc_failed;
 logic w_stat_wp_violation;
 logic w_stat_erase_param;
 logic w_stat_out_of_range;
+logic [40:0] wb_mem_addr;
+logic [7:0] wb_mem_rdata;
+logic w_crc15_clear;
+logic w_crc15_next;
+logic [14:0] wb_crc15;
+logic w_dat_trans;
+logic [3:0] wb_dat;
+logic w_cmdio_busy;
 
 iobuf_tech iobufcmd0 (
     .io(io_cmd),
@@ -152,7 +160,8 @@ vip_sdcard_cmdio #(
     .i_stat_ecc_failed(w_stat_ecc_failed),
     .i_stat_wp_violation(w_stat_wp_violation),
     .i_stat_erase_param(w_stat_erase_param),
-    .i_stat_out_of_range(w_stat_out_of_range)
+    .i_stat_out_of_range(w_stat_out_of_range),
+    .o_busy(w_cmdio_busy)
 );
 
 
@@ -168,6 +177,7 @@ vip_sdcard_ctrl #(
     .i_nrst(i_nrst),
     .i_clk(i_sclk),
     .i_spi_mode(w_spi_mode),
+    .i_cs(w_dat3_in),
     .i_cmd_req_valid(w_cmd_req_valid),
     .i_cmd_req_cmd(wb_cmd_req_cmd),
     .i_cmd_req_data(wb_cmd_req_data),
@@ -180,7 +190,15 @@ vip_sdcard_ctrl #(
     .o_cmd_resp_r3(w_cmd_resp_r3),
     .o_cmd_resp_r7(w_cmd_resp_r7),
     .o_stat_idle_state(w_stat_idle_state),
-    .o_stat_illegal_cmd(w_stat_illegal_cmd)
+    .o_stat_illegal_cmd(w_stat_illegal_cmd),
+    .o_mem_addr(wb_mem_addr),
+    .i_mem_rdata(wb_mem_rdata),
+    .o_crc15_clear(w_crc15_clear),
+    .o_crc15_next(w_crc15_next),
+    .i_crc15(wb_crc15),
+    .o_dat_trans(w_dat_trans),
+    .o_dat(wb_dat),
+    .i_cmdio_busy(w_cmdio_busy)
 );
 
 
@@ -203,7 +221,8 @@ begin: comb_proc
         w_dat2_dir = 1'b1;                                  // in: reserved
         w_dat3_dir = 1'b1;                                  // in: cs
 
-        w_dat0_out = w_cmdio_cmd_out;
+        w_dat0_out = (((~w_dat_trans) & w_cmdio_cmd_out)
+                | (w_dat_trans & wb_dat[3]));
         w_dat1_out = 1'b1;
         w_dat2_out = 1'b1;
         w_dat3_out = 1'b1;
@@ -215,10 +234,10 @@ begin: comb_proc
         w_dat3_dir = 1'b1;                                  // in:
 
         w_cmd_out = w_cmdio_cmd_out;
-        w_dat0_out = 1'b1;
-        w_dat1_out = 1'b1;
-        w_dat2_out = 1'b1;
-        w_dat3_out = 1'b1;
+        w_dat0_out = wb_dat[0];
+        w_dat1_out = wb_dat[1];
+        w_dat2_out = wb_dat[2];
+        w_dat3_out = wb_dat[3];
     end
 
     // Not implemented yet:
@@ -234,6 +253,8 @@ begin: comb_proc
     w_stat_wp_violation = 1'b0;
     w_stat_erase_param = 1'b0;
     w_stat_out_of_range = 1'b0;
+    wb_mem_rdata = 8'hff;
+    wb_crc15 = 15'h0045;
 end: comb_proc
 
 endmodule: vip_sdcard_top

@@ -17,8 +17,7 @@
 `timescale 1ns/10ps
 
 module sdctrl_cache #(
-    parameter bit async_reset = 1'b0,
-    parameter int unsigned ibits = 2                        // Log2 of number of lines: 2=2KB; .. (if bytes per line = 512 B)
+    parameter bit async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -44,7 +43,6 @@ module sdctrl_cache #(
     input logic [sdctrl_cfg_pkg::SDCACHE_LINE_BITS-1:0] i_mem_data,
     input logic i_mem_fault,
     // Debug interface
-    input logic [sdctrl_cfg_pkg::CFG_SDCACHE_ADDR_BITS-1:0] i_flush_address,
     input logic i_flush_valid,
     output logic o_flush_end
 );
@@ -54,7 +52,6 @@ import sdctrl_cache_pkg::*;
 
 localparam bit [31:0] FLUSH_ALL_VALUE = ((2**ibits) - 1);
 
-logic [CFG_SDCACHE_ADDR_BITS-1:0] line_addr_i;
 logic [SDCACHE_LINE_BITS-1:0] line_wdata_i;
 logic [SDCACHE_BYTES_PER_LINE-1:0] line_wstrb_i;
 logic [SDCACHE_FL_TOTAL-1:0] line_wflags_i;
@@ -77,7 +74,7 @@ TagMem #(
 ) mem0 (
     .i_clk(i_clk),
     .i_nrst(i_nrst),
-    .i_addr(line_addr_i),
+    .i_addr(r.line_addr_i),
     .i_wstrb(line_wstrb_i),
     .i_wdata(line_wdata_i),
     .i_wflags(line_wflags_i),
@@ -103,14 +100,13 @@ begin: comb_proc
     logic v_resp_valid;
     logic [63:0] vb_resp_data;
     logic v_flush_end;
-    logic [CFG_SDCACHE_ADDR_BITS-1:0] vb_line_addr;
     logic [SDCACHE_LINE_BITS-1:0] vb_line_wdata;
     logic [SDCACHE_BYTES_PER_LINE-1:0] vb_line_wstrb;
     logic [63:0] vb_req_mask;
     logic [SDCACHE_FL_TOTAL-1:0] vb_line_wflags;
     logic [(CFG_LOG2_SDCACHE_BYTES_PER_LINE - 3)-1:0] ridx;
     logic v_req_same_line;
-    logic v_ready_next;
+    logic v_mem_addr_last;
     logic [CFG_SDCACHE_ADDR_BITS-1:0] vb_addr_direct_next;
 
     vb_cache_line_i_modified = 0;
@@ -123,19 +119,19 @@ begin: comb_proc
     v_resp_valid = 0;
     vb_resp_data = 0;
     v_flush_end = 0;
-    vb_line_addr = 0;
     vb_line_wdata = 0;
     vb_line_wstrb = 0;
     vb_req_mask = 0;
     vb_line_wflags = 0;
     ridx = 0;
     v_req_same_line = 0;
-    v_ready_next = 0;
+    v_mem_addr_last = 0;
     vb_addr_direct_next = 0;
 
     v = r;
 
     ridx = r.req_addr[(CFG_LOG2_SDCACHE_BYTES_PER_LINE - 1): 3];
+    v_mem_addr_last = (&r.mem_addr[9: CFG_LOG2_SDCACHE_BYTES_PER_LINE]);
 
     vb_cached_data = line_rdata_o[(64 * int'(ridx)) +: 64];
     vb_uncached_data = r.cache_line_i[63: 0];
@@ -146,14 +142,6 @@ begin: comb_proc
 
     if (i_flush_valid == 1'b1) begin
         v.req_flush = 1'b1;
-        v.req_flush_all = i_flush_address[0];
-        if (i_flush_address[0] == 1'b1) begin
-            v.req_flush_cnt = FLUSH_ALL_VALUE;
-            v.req_flush_addr = '0;
-        end else begin
-            v.req_flush_cnt = '0;
-            v.req_flush_addr = i_flush_address;
-        end
     end
 
     for (int i = 0; i < 8; i++) begin
@@ -179,14 +167,36 @@ begin: comb_proc
     // Flush counter when direct access
     vb_addr_direct_next = (r.req_addr + 1);
 
-    vb_line_addr = r.req_addr;
     vb_line_wdata = r.cache_line_i;
 
     // System Bus access state machine
     case (r.state)
     State_Idle: begin
         v.mem_fault = 1'b0;
-        v_ready_next = 1'b1;
+        if (r.req_flush == 1'b1) begin
+            v.state = State_FlushAddr;
+            v.cache_line_i = '0;
+            v.flush_cnt = FLUSH_ALL_VALUE;
+        end else begin
+            v_req_ready = 1'b1;
+            if (i_req_valid == 1'b1) begin
+                v.line_addr_i = i_req_addr;
+                v.req_addr = i_req_addr;
+                v.req_wstrb = i_req_wstrb;
+                v.req_wdata = i_req_wdata;
+                v.req_write = i_req_write;
+                if (v_req_same_line == 1'b1) begin
+                    // Write address is the same as the next requested, so use it to write
+                    // value and update state machine
+                    v.state = State_CheckHit;
+                end else begin
+                    v.state = State_SetupReadAdr;
+                end
+            end
+        end
+    end
+    State_SetupReadAdr: begin
+        v.state = State_CheckHit;
     end
     State_CheckHit: begin
         vb_resp_data = vb_cached_data;
@@ -194,6 +204,7 @@ begin: comb_proc
             // Hit
             v_resp_valid = 1'b1;
             if (i_resp_ready == 1'b1) begin
+                v.state = State_Idle;
                 if (r.req_write == 1'b1) begin
                     // Modify tagged mem output with request and write back
                     vb_line_wflags[SDCACHE_FL_VALID] = 1'b1;
@@ -201,14 +212,6 @@ begin: comb_proc
                     v.req_write = 1'b0;
                     vb_line_wstrb = vb_line_rdata_o_wstrb;
                     vb_line_wdata = vb_line_rdata_o_modified;
-                    if (v_req_same_line == 1'b1) begin
-                        // Write address is the same as the next requested, so use it to write
-                        // value and update state machine
-                        v_ready_next = 1'b1;
-                    end
-                    v.state = State_Idle;
-                end else begin
-                    v_ready_next = 1'b1;
                     v.state = State_Idle;
                 end
             end
@@ -221,18 +224,15 @@ begin: comb_proc
         v.req_mem_valid = 1'b1;
         v.mem_fault = 1'b0;
         v.state = State_WaitGrant;
-        if (r.write_share == 1'b1) begin
-            v.req_mem_write = 1'b1;
-            v.mem_addr = {line_raddr_o[(CFG_SDCACHE_ADDR_BITS - 1): CFG_LOG2_SDCACHE_BYTES_PER_LINE], {CFG_LOG2_SDCACHE_BYTES_PER_LINE{1'b0}}};
-        end else if ((line_rflags_o[SDCACHE_FL_VALID] == 1'b1)
-                    && (line_rflags_o[SDCACHE_FL_DIRTY] == 1'b1)) begin
+        if ((line_rflags_o[SDCACHE_FL_VALID] == 1'b1)
+                && (line_rflags_o[SDCACHE_FL_DIRTY] == 1'b1)) begin
             v.write_first = 1'b1;
             v.req_mem_write = 1'b1;
-            v.mem_addr = {line_raddr_o[(CFG_SDCACHE_ADDR_BITS - 1): CFG_LOG2_SDCACHE_BYTES_PER_LINE], {CFG_LOG2_SDCACHE_BYTES_PER_LINE{1'b0}}};
+            v.mem_addr = {line_raddr_o[(CFG_SDCACHE_ADDR_BITS - 1): 9], {9{1'b0}}};
         end else begin
             // 1. Read -> Save cache
             // 2. Read -> Modify -> Save cache
-            v.mem_addr = {r.req_addr[(CFG_SDCACHE_ADDR_BITS - 1): CFG_LOG2_SDCACHE_BYTES_PER_LINE], {CFG_LOG2_SDCACHE_BYTES_PER_LINE{1'b0}}};
+            v.mem_addr = {r.req_addr[(CFG_SDCACHE_ADDR_BITS - 1): 9], {9{1'b0}}};
             v.req_mem_write = r.req_write;
         end
         v.cache_line_o = line_rdata_o;
@@ -242,7 +242,6 @@ begin: comb_proc
         if (i_req_mem_ready == 1'b1) begin
             if ((r.write_flush == 1'b1)
                     || (r.write_first == 1'b1)
-                    || (r.write_share == 1'b1)
                     || (r.req_write == 1'b1)) begin
                 v.state = State_WriteBus;
             end else begin
@@ -269,28 +268,21 @@ begin: comb_proc
                 v.state = State_Idle;
             end
         end else begin
-            v.state = State_SetupReadAdr;
             vb_line_wflags[SDCACHE_FL_VALID] = 1'b1;
             vb_line_wstrb = '1;                             // write full line
-            if (r.req_write == 1'b1) begin
-                // Modify tagged mem output with request before write
-                v.req_write = 1'b0;
-                vb_line_wflags[SDCACHE_FL_DIRTY] = 1'b1;
-                vb_line_wdata = vb_cache_line_i_modified;
-                v_resp_valid = 1'b1;
-                v.state = State_Idle;
+            v.mem_addr = (r.mem_addr + SDCACHE_BYTES_PER_LINE);
+            if (v_mem_addr_last == 1'b1) begin
+                v.state = State_SetupReadAdr;
+                v.line_addr_i = r.req_addr;
+            end else begin
+                v.state = State_WaitResp;
+                v.line_addr_i = (r.line_addr_i + SDCACHE_BYTES_PER_LINE);
             end
         end
     end
-    State_SetupReadAdr: begin
-        v.state = State_CheckHit;
-    end
     State_WriteBus: begin
         if (i_mem_data_valid == 1'b1) begin
-            if (r.write_share == 1'b1) begin
-                v.write_share = 1'b0;
-                v.state = State_Idle;
-            end else if (r.write_flush == 1'b1) begin
+            if (r.write_flush == 1'b1) begin
                 // Offloading Cache line on flush request
                 v.state = State_FlushAddr;
             end else if (r.write_first == 1'b1) begin
@@ -333,32 +325,23 @@ begin: comb_proc
                 v_flush_end = 1'b1;
             end
         end
+        v.line_addr_i = (r.line_addr_i + SDCACHE_BYTES_PER_LINE);
         if ((|r.flush_cnt) == 1'b1) begin
             v.flush_cnt = (r.flush_cnt - 1);
-            if (r.req_flush_all == 1'b1) begin
-                v.req_addr = vb_addr_direct_next;
-            end else begin
-                v.req_addr = (r.req_addr + SDCACHE_BYTES_PER_LINE);
-            end
         end
     end
     State_Reset: begin
         // Write clean line
-        if (r.req_flush == 1'b1) begin
-            v.req_flush = 1'b0;
-            v.flush_cnt = FLUSH_ALL_VALUE;                  // Init after power-on-reset
-        end
-        vb_line_wstrb = '1;
-        vb_line_wflags = '0;
+        v.line_addr_i = '0;
+        v.flush_cnt = FLUSH_ALL_VALUE;                      // Init after power-on-reset
         v.state = State_ResetWrite;
     end
     State_ResetWrite: begin
         vb_line_wstrb = '1;
         vb_line_wflags = '0;
-        v.state = State_Reset;
+        v.line_addr_i = (r.line_addr_i + SDCACHE_BYTES_PER_LINE);
         if ((|r.flush_cnt) == 1'b1) begin
             v.flush_cnt = (r.flush_cnt - 1);
-            v.req_addr = vb_addr_direct_next;
         end else begin
             v.state = State_Idle;
         end
@@ -367,31 +350,10 @@ begin: comb_proc
     end
     endcase
 
-    if (v_ready_next == 1'b1) begin
-        if (r.req_flush == 1'b1) begin
-            v.state = State_FlushAddr;
-            v.req_flush = 1'b0;
-            v.cache_line_i = '0;
-            v.req_addr = (r.req_flush_addr & (~LINE_BYTES_MASK));
-            v.flush_cnt = r.req_flush_cnt;
-        end else begin
-            v_req_ready = 1'b1;
-            vb_line_addr = i_req_addr;
-            if (i_req_valid == 1'b1) begin
-                v.req_addr = i_req_addr;
-                v.req_wstrb = i_req_wstrb;
-                v.req_wdata = i_req_wdata;
-                v.req_write = i_req_write;
-                v.state = State_CheckHit;
-            end
-        end
-    end
-
     if (~async_reset && i_nrst == 1'b0) begin
         v = sdctrl_cache_r_reset;
     end
 
-    line_addr_i = vb_line_addr;
     line_wdata_i = vb_line_wdata;
     line_wstrb_i = vb_line_wstrb;
     line_wflags_i = vb_line_wflags;

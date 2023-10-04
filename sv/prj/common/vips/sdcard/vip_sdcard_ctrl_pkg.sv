@@ -55,6 +55,11 @@ typedef struct {
     logic [23:0] ocr_vdd_window;
     logic req_mem_valid;
     logic [40:0] req_mem_addr;
+    logic [14:0] shiftdat;
+    logic [12:0] bitcnt;
+    logic crc15_clear;
+    logic crc15_next;
+    logic dat_trans;
 } vip_sdcard_ctrl_registers;
 
 const vip_sdcard_ctrl_registers vip_sdcard_ctrl_r_reset = '{
@@ -76,7 +81,12 @@ const vip_sdcard_ctrl_registers vip_sdcard_ctrl_r_reset = '{
     1'b0,                               // ocr_hcs
     '0,                                 // ocr_vdd_window
     1'b0,                               // req_mem_valid
-    '0                                  // req_mem_addr
+    '0,                                 // req_mem_addr
+    '1,                                 // shiftdat
+    '0,                                 // bitcnt
+    1'b0,                               // crc15_clear
+    1'b0,                               // crc15_next
+    1'b0                                // dat_trans
 };
 
 endpackage: vip_sdcard_ctrl_pkg
