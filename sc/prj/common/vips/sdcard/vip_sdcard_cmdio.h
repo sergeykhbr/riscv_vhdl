@@ -54,6 +54,7 @@ SC_MODULE(vip_sdcard_cmdio) {
     sc_in<bool> i_stat_wp_violation;                        // The command tried to write wp block
     sc_in<bool> i_stat_erase_param;                         // An invalid selection for erase, sectors or groups
     sc_in<bool> i_stat_out_of_range;
+    sc_out<bool> o_busy;
 
     void comb();
     void registers();

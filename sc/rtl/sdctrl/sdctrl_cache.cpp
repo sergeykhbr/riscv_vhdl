@@ -20,8 +20,7 @@
 namespace debugger {
 
 sdctrl_cache::sdctrl_cache(sc_module_name name,
-                           bool async_reset,
-                           uint32_t ibits)
+                           bool async_reset)
     : sc_module(name),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
@@ -43,23 +42,21 @@ sdctrl_cache::sdctrl_cache(sc_module_name name,
     i_mem_data_valid("i_mem_data_valid"),
     i_mem_data("i_mem_data"),
     i_mem_fault("i_mem_fault"),
-    i_flush_address("i_flush_address"),
     i_flush_valid("i_flush_valid"),
     o_flush_end("o_flush_end") {
 
     async_reset_ = async_reset;
-    ibits_ = ibits;
     FLUSH_ALL_VALUE = ((1 << ibits) - 1);
     mem0 = 0;
 
     mem0 = new TagMem<abus,
-                      2,
+                      ibits,
                       lnbits,
                       flbits,
                       0>("mem0", async_reset);
     mem0->i_clk(i_clk);
     mem0->i_nrst(i_nrst);
-    mem0->i_addr(line_addr_i);
+    mem0->i_addr(r.line_addr_i);
     mem0->i_wstrb(line_wstrb_i);
     mem0->i_wdata(line_wdata_i);
     mem0->i_wflags(line_wflags_i);
@@ -84,9 +81,7 @@ sdctrl_cache::sdctrl_cache(sc_module_name name,
     sensitive << i_mem_data_valid;
     sensitive << i_mem_data;
     sensitive << i_mem_fault;
-    sensitive << i_flush_address;
     sensitive << i_flush_valid;
-    sensitive << line_addr_i;
     sensitive << line_wdata_i;
     sensitive << line_wstrb_i;
     sensitive << line_wflags_i;
@@ -107,12 +102,9 @@ sdctrl_cache::sdctrl_cache(sc_module_name name,
     sensitive << r.mem_fault;
     sensitive << r.write_first;
     sensitive << r.write_flush;
-    sensitive << r.write_share;
     sensitive << r.req_flush;
-    sensitive << r.req_flush_all;
-    sensitive << r.req_flush_addr;
-    sensitive << r.req_flush_cnt;
     sensitive << r.flush_cnt;
+    sensitive << r.line_addr_i;
     sensitive << r.cache_line_i;
     sensitive << r.cache_line_o;
 
@@ -148,7 +140,6 @@ void sdctrl_cache::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_mem_data_valid, i_mem_data_valid.name());
         sc_trace(o_vcd, i_mem_data, i_mem_data.name());
         sc_trace(o_vcd, i_mem_fault, i_mem_fault.name());
-        sc_trace(o_vcd, i_flush_address, i_flush_address.name());
         sc_trace(o_vcd, i_flush_valid, i_flush_valid.name());
         sc_trace(o_vcd, o_flush_end, o_flush_end.name());
         sc_trace(o_vcd, r.req_write, pn + ".r_req_write");
@@ -162,12 +153,9 @@ void sdctrl_cache::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.mem_fault, pn + ".r_mem_fault");
         sc_trace(o_vcd, r.write_first, pn + ".r_write_first");
         sc_trace(o_vcd, r.write_flush, pn + ".r_write_flush");
-        sc_trace(o_vcd, r.write_share, pn + ".r_write_share");
         sc_trace(o_vcd, r.req_flush, pn + ".r_req_flush");
-        sc_trace(o_vcd, r.req_flush_all, pn + ".r_req_flush_all");
-        sc_trace(o_vcd, r.req_flush_addr, pn + ".r_req_flush_addr");
-        sc_trace(o_vcd, r.req_flush_cnt, pn + ".r_req_flush_cnt");
         sc_trace(o_vcd, r.flush_cnt, pn + ".r_flush_cnt");
+        sc_trace(o_vcd, r.line_addr_i, pn + ".r_line_addr_i");
         sc_trace(o_vcd, r.cache_line_i, pn + ".r_cache_line_i");
         sc_trace(o_vcd, r.cache_line_o, pn + ".r_cache_line_o");
     }
@@ -188,14 +176,13 @@ void sdctrl_cache::comb() {
     bool v_resp_valid;
     sc_uint<64> vb_resp_data;
     bool v_flush_end;
-    sc_uint<CFG_SDCACHE_ADDR_BITS> vb_line_addr;
     sc_biguint<SDCACHE_LINE_BITS> vb_line_wdata;
     sc_uint<SDCACHE_BYTES_PER_LINE> vb_line_wstrb;
     sc_uint<64> vb_req_mask;
     sc_uint<SDCACHE_FL_TOTAL> vb_line_wflags;
     sc_uint<(CFG_LOG2_SDCACHE_BYTES_PER_LINE - 3)> ridx;
     bool v_req_same_line;
-    bool v_ready_next;
+    bool v_mem_addr_last;
     sc_uint<CFG_SDCACHE_ADDR_BITS> vb_addr_direct_next;
 
     vb_cache_line_i_modified = 0;
@@ -208,19 +195,19 @@ void sdctrl_cache::comb() {
     v_resp_valid = 0;
     vb_resp_data = 0;
     v_flush_end = 0;
-    vb_line_addr = 0;
     vb_line_wdata = 0;
     vb_line_wstrb = 0;
     vb_req_mask = 0;
     vb_line_wflags = 0;
     ridx = 0;
     v_req_same_line = 0;
-    v_ready_next = 0;
+    v_mem_addr_last = 0;
     vb_addr_direct_next = 0;
 
     v = r;
 
     ridx = r.req_addr.read()((CFG_LOG2_SDCACHE_BYTES_PER_LINE - 1), 3);
+    v_mem_addr_last = r.mem_addr.read()(9, CFG_LOG2_SDCACHE_BYTES_PER_LINE).and_reduce();
 
     vb_cached_data = line_rdata_o.read()((64 * ridx.to_int()) + 64 - 1, (64 * ridx.to_int()));
     vb_uncached_data = r.cache_line_i.read()(63, 0).to_uint64();
@@ -231,14 +218,6 @@ void sdctrl_cache::comb() {
 
     if (i_flush_valid.read() == 1) {
         v.req_flush = 1;
-        v.req_flush_all = i_flush_address.read()[0];
-        if (i_flush_address.read()[0] == 1) {
-            v.req_flush_cnt = FLUSH_ALL_VALUE;
-            v.req_flush_addr = 0;
-        } else {
-            v.req_flush_cnt = 0;
-            v.req_flush_addr = i_flush_address;
-        }
     }
 
     for (int i = 0; i < 8; i++) {
@@ -264,14 +243,36 @@ void sdctrl_cache::comb() {
     // Flush counter when direct access
     vb_addr_direct_next = (r.req_addr.read() + 1);
 
-    vb_line_addr = r.req_addr;
     vb_line_wdata = r.cache_line_i;
 
     // System Bus access state machine
     switch (r.state.read()) {
     case State_Idle:
         v.mem_fault = 0;
-        v_ready_next = 1;
+        if (r.req_flush.read() == 1) {
+            v.state = State_FlushAddr;
+            v.cache_line_i = 0;
+            v.flush_cnt = FLUSH_ALL_VALUE;
+        } else {
+            v_req_ready = 1;
+            if (i_req_valid.read() == 1) {
+                v.line_addr_i = i_req_addr;
+                v.req_addr = i_req_addr;
+                v.req_wstrb = i_req_wstrb;
+                v.req_wdata = i_req_wdata;
+                v.req_write = i_req_write;
+                if (v_req_same_line == 1) {
+                    // Write address is the same as the next requested, so use it to write
+                    // value and update state machine
+                    v.state = State_CheckHit;
+                } else {
+                    v.state = State_SetupReadAdr;
+                }
+            }
+        }
+        break;
+    case State_SetupReadAdr:
+        v.state = State_CheckHit;
         break;
     case State_CheckHit:
         vb_resp_data = vb_cached_data;
@@ -279,6 +280,7 @@ void sdctrl_cache::comb() {
             // Hit
             v_resp_valid = 1;
             if (i_resp_ready.read() == 1) {
+                v.state = State_Idle;
                 if (r.req_write.read() == 1) {
                     // Modify tagged mem output with request and write back
                     vb_line_wflags[SDCACHE_FL_VALID] = 1;
@@ -286,14 +288,6 @@ void sdctrl_cache::comb() {
                     v.req_write = 0;
                     vb_line_wstrb = vb_line_rdata_o_wstrb;
                     vb_line_wdata = vb_line_rdata_o_modified;
-                    if (v_req_same_line == 1) {
-                        // Write address is the same as the next requested, so use it to write
-                        // value and update state machine
-                        v_ready_next = 1;
-                    }
-                    v.state = State_Idle;
-                } else {
-                    v_ready_next = 1;
                     v.state = State_Idle;
                 }
             }
@@ -306,18 +300,15 @@ void sdctrl_cache::comb() {
         v.req_mem_valid = 1;
         v.mem_fault = 0;
         v.state = State_WaitGrant;
-        if (r.write_share.read() == 1) {
-            v.req_mem_write = 1;
-            v.mem_addr = (line_raddr_o.read()((CFG_SDCACHE_ADDR_BITS - 1), CFG_LOG2_SDCACHE_BYTES_PER_LINE) << CFG_LOG2_SDCACHE_BYTES_PER_LINE);
-        } else if ((line_rflags_o.read()[SDCACHE_FL_VALID] == 1)
-                    && (line_rflags_o.read()[SDCACHE_FL_DIRTY] == 1)) {
+        if ((line_rflags_o.read()[SDCACHE_FL_VALID] == 1)
+                && (line_rflags_o.read()[SDCACHE_FL_DIRTY] == 1)) {
             v.write_first = 1;
             v.req_mem_write = 1;
-            v.mem_addr = (line_raddr_o.read()((CFG_SDCACHE_ADDR_BITS - 1), CFG_LOG2_SDCACHE_BYTES_PER_LINE) << CFG_LOG2_SDCACHE_BYTES_PER_LINE);
+            v.mem_addr = (line_raddr_o.read()((CFG_SDCACHE_ADDR_BITS - 1), 9) << 9);
         } else {
             // 1. Read -> Save cache
             // 2. Read -> Modify -> Save cache
-            v.mem_addr = (r.req_addr.read()((CFG_SDCACHE_ADDR_BITS - 1), CFG_LOG2_SDCACHE_BYTES_PER_LINE) << CFG_LOG2_SDCACHE_BYTES_PER_LINE);
+            v.mem_addr = (r.req_addr.read()((CFG_SDCACHE_ADDR_BITS - 1), 9) << 9);
             v.req_mem_write = r.req_write;
         }
         v.cache_line_o = line_rdata_o;
@@ -327,7 +318,6 @@ void sdctrl_cache::comb() {
         if (i_req_mem_ready.read() == 1) {
             if ((r.write_flush.read() == 1)
                     || (r.write_first.read() == 1)
-                    || (r.write_share.read() == 1)
                     || (r.req_write.read() == 1)) {
                 v.state = State_WriteBus;
             } else {
@@ -354,28 +344,21 @@ void sdctrl_cache::comb() {
                 v.state = State_Idle;
             }
         } else {
-            v.state = State_SetupReadAdr;
             vb_line_wflags[SDCACHE_FL_VALID] = 1;
             vb_line_wstrb = ~0ull;                          // write full line
-            if (r.req_write.read() == 1) {
-                // Modify tagged mem output with request before write
-                v.req_write = 0;
-                vb_line_wflags[SDCACHE_FL_DIRTY] = 1;
-                vb_line_wdata = vb_cache_line_i_modified;
-                v_resp_valid = 1;
-                v.state = State_Idle;
+            v.mem_addr = (r.mem_addr.read() + SDCACHE_BYTES_PER_LINE);
+            if (v_mem_addr_last == 1) {
+                v.state = State_SetupReadAdr;
+                v.line_addr_i = r.req_addr;
+            } else {
+                v.state = State_WaitResp;
+                v.line_addr_i = (r.line_addr_i.read() + SDCACHE_BYTES_PER_LINE);
             }
         }
         break;
-    case State_SetupReadAdr:
-        v.state = State_CheckHit;
-        break;
     case State_WriteBus:
         if (i_mem_data_valid.read() == 1) {
-            if (r.write_share.read() == 1) {
-                v.write_share = 0;
-                v.state = State_Idle;
-            } else if (r.write_flush.read() == 1) {
+            if (r.write_flush.read() == 1) {
                 // Offloading Cache line on flush request
                 v.state = State_FlushAddr;
             } else if (r.write_first.read() == 1) {
@@ -418,32 +401,23 @@ void sdctrl_cache::comb() {
                 v_flush_end = 1;
             }
         }
+        v.line_addr_i = (r.line_addr_i.read() + SDCACHE_BYTES_PER_LINE);
         if (r.flush_cnt.read().or_reduce() == 1) {
             v.flush_cnt = (r.flush_cnt.read() - 1);
-            if (r.req_flush_all.read() == 1) {
-                v.req_addr = vb_addr_direct_next;
-            } else {
-                v.req_addr = (r.req_addr.read() + SDCACHE_BYTES_PER_LINE);
-            }
         }
         break;
     case State_Reset:
         // Write clean line
-        if (r.req_flush.read() == 1) {
-            v.req_flush = 0;
-            v.flush_cnt = FLUSH_ALL_VALUE;                  // Init after power-on-reset
-        }
-        vb_line_wstrb = ~0ull;
-        vb_line_wflags = 0;
+        v.line_addr_i = 0;
+        v.flush_cnt = FLUSH_ALL_VALUE;                      // Init after power-on-reset
         v.state = State_ResetWrite;
         break;
     case State_ResetWrite:
         vb_line_wstrb = ~0ull;
         vb_line_wflags = 0;
-        v.state = State_Reset;
+        v.line_addr_i = (r.line_addr_i.read() + SDCACHE_BYTES_PER_LINE);
         if (r.flush_cnt.read().or_reduce() == 1) {
             v.flush_cnt = (r.flush_cnt.read() - 1);
-            v.req_addr = vb_addr_direct_next;
         } else {
             v.state = State_Idle;
         }
@@ -452,31 +426,10 @@ void sdctrl_cache::comb() {
         break;
     }
 
-    if (v_ready_next == 1) {
-        if (r.req_flush.read() == 1) {
-            v.state = State_FlushAddr;
-            v.req_flush = 0;
-            v.cache_line_i = 0;
-            v.req_addr = (r.req_flush_addr.read() & (~LINE_BYTES_MASK));
-            v.flush_cnt = r.req_flush_cnt;
-        } else {
-            v_req_ready = 1;
-            vb_line_addr = i_req_addr;
-            if (i_req_valid.read() == 1) {
-                v.req_addr = i_req_addr;
-                v.req_wstrb = i_req_wstrb;
-                v.req_wdata = i_req_wdata;
-                v.req_write = i_req_write;
-                v.state = State_CheckHit;
-            }
-        }
-    }
-
     if (!async_reset_ && i_nrst.read() == 0) {
         sdctrl_cache_r_reset(v);
     }
 
-    line_addr_i = vb_line_addr;
     line_wdata_i = vb_line_wdata;
     line_wstrb_i = vb_line_wstrb;
     line_wflags_i = vb_line_wflags;

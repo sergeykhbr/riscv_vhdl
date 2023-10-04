@@ -132,9 +132,12 @@ SC_MODULE(sdctrl) {
         sc_signal<sc_biguint<512>> sdmem_data;
         sc_signal<bool> sdmem_valid;
         sc_signal<bool> crc15_clear;
+        sc_signal<sc_uint<15>> crc15_calc0;
+        sc_signal<sc_uint<15>> crc15_rx0;
         sc_signal<sc_uint<4>> dat;
         sc_signal<bool> dat_dir;
         sc_signal<bool> dat3_dir;
+        sc_signal<bool> dat_tran;
         sc_signal<sc_uint<4>> sdstate;
         sc_signal<sc_uint<3>> initstate;
         sc_signal<sc_uint<2>> readystate;
@@ -168,9 +171,12 @@ SC_MODULE(sdctrl) {
         iv.sdmem_data = 0ull;
         iv.sdmem_valid = 0;
         iv.crc15_clear = 1;
+        iv.crc15_calc0 = 0;
+        iv.crc15_rx0 = 0;
         iv.dat = ~0ul;
         iv.dat_dir = DIR_OUTPUT;
         iv.dat3_dir = DIR_INPUT;
+        iv.dat_tran = 1;
         iv.sdstate = SDSTATE_PRE_INIT;
         iv.initstate = IDLESTATE_CMD0;
         iv.readystate = READYSTATE_CMD11;
@@ -212,9 +218,7 @@ SC_MODULE(sdctrl) {
     sc_signal<bool> w_req_sdmem_write;
     sc_signal<sc_uint<CFG_SDCACHE_ADDR_BITS>> wb_req_sdmem_addr;
     sc_signal<sc_biguint<SDCACHE_LINE_BITS>> wb_req_sdmem_wdata;
-    sc_signal<sc_biguint<SDCACHE_LINE_BITS>> wb_resp_sdmem_rdata;
     sc_signal<bool> w_resp_sdmem_err;
-    sc_signal<sc_uint<CFG_SDCACHE_ADDR_BITS>> wb_regs_flush_address;
     sc_signal<bool> w_regs_flush_valid;
     sc_signal<bool> w_cache_flush_end;
     sc_signal<bool> w_trx_cmd_dir;

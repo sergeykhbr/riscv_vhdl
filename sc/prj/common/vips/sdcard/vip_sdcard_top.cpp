@@ -107,6 +107,7 @@ vip_sdcard_top::vip_sdcard_top(sc_module_name name,
     cmdio0->i_stat_wp_violation(w_stat_wp_violation);
     cmdio0->i_stat_erase_param(w_stat_erase_param);
     cmdio0->i_stat_out_of_range(w_stat_out_of_range);
+    cmdio0->o_busy(w_cmdio_busy);
 
 
     ctrl0 = new vip_sdcard_ctrl("ctrl0", async_reset,
@@ -119,6 +120,7 @@ vip_sdcard_top::vip_sdcard_top(sc_module_name name,
     ctrl0->i_nrst(i_nrst);
     ctrl0->i_clk(i_sclk);
     ctrl0->i_spi_mode(w_spi_mode);
+    ctrl0->i_cs(w_dat3_in);
     ctrl0->i_cmd_req_valid(w_cmd_req_valid);
     ctrl0->i_cmd_req_cmd(wb_cmd_req_cmd);
     ctrl0->i_cmd_req_data(wb_cmd_req_data);
@@ -132,6 +134,14 @@ vip_sdcard_top::vip_sdcard_top(sc_module_name name,
     ctrl0->o_cmd_resp_r7(w_cmd_resp_r7);
     ctrl0->o_stat_idle_state(w_stat_idle_state);
     ctrl0->o_stat_illegal_cmd(w_stat_illegal_cmd);
+    ctrl0->o_mem_addr(wb_mem_addr);
+    ctrl0->i_mem_rdata(wb_mem_rdata);
+    ctrl0->o_crc15_clear(w_crc15_clear);
+    ctrl0->o_crc15_next(w_crc15_next);
+    ctrl0->i_crc15(wb_crc15);
+    ctrl0->o_dat_trans(w_dat_trans);
+    ctrl0->o_dat(wb_dat);
+    ctrl0->i_cmdio_busy(w_cmdio_busy);
 
 
 
@@ -188,6 +198,14 @@ vip_sdcard_top::vip_sdcard_top(sc_module_name name,
     sensitive << w_stat_wp_violation;
     sensitive << w_stat_erase_param;
     sensitive << w_stat_out_of_range;
+    sensitive << wb_mem_addr;
+    sensitive << wb_mem_rdata;
+    sensitive << w_crc15_clear;
+    sensitive << w_crc15_next;
+    sensitive << wb_crc15;
+    sensitive << w_dat_trans;
+    sensitive << wb_dat;
+    sensitive << w_cmdio_busy;
 }
 
 vip_sdcard_top::~vip_sdcard_top() {
@@ -265,7 +283,8 @@ void vip_sdcard_top::comb() {
         w_dat2_dir = 1;                                     // in: reserved
         w_dat3_dir = 1;                                     // in: cs
 
-        w_dat0_out = w_cmdio_cmd_out;
+        w_dat0_out = (((!w_dat_trans) & w_cmdio_cmd_out.read())
+                | (w_dat_trans.read() & wb_dat.read()[3]));
         w_dat1_out = 1;
         w_dat2_out = 1;
         w_dat3_out = 1;
@@ -277,10 +296,10 @@ void vip_sdcard_top::comb() {
         w_dat3_dir = 1;                                     // in:
 
         w_cmd_out = w_cmdio_cmd_out;
-        w_dat0_out = 1;
-        w_dat1_out = 1;
-        w_dat2_out = 1;
-        w_dat3_out = 1;
+        w_dat0_out = wb_dat.read()[0];
+        w_dat1_out = wb_dat.read()[1];
+        w_dat2_out = wb_dat.read()[2];
+        w_dat3_out = wb_dat.read()[3];
     }
 
     // Not implemented yet:
@@ -296,6 +315,8 @@ void vip_sdcard_top::comb() {
     w_stat_wp_violation = 0;
     w_stat_erase_param = 0;
     w_stat_out_of_range = 0;
+    wb_mem_rdata = 0xFF;
+    wb_crc15 = 0x45;
 }
 
 }  // namespace debugger

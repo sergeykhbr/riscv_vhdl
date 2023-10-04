@@ -99,6 +99,14 @@ SC_MODULE(vip_sdcard_top) {
     sc_signal<bool> w_stat_wp_violation;
     sc_signal<bool> w_stat_erase_param;
     sc_signal<bool> w_stat_out_of_range;
+    sc_signal<sc_uint<41>> wb_mem_addr;
+    sc_signal<sc_uint<8>> wb_mem_rdata;
+    sc_signal<bool> w_crc15_clear;
+    sc_signal<bool> w_crc15_next;
+    sc_signal<sc_uint<15>> wb_crc15;
+    sc_signal<bool> w_dat_trans;
+    sc_signal<sc_uint<4>> wb_dat;
+    sc_signal<bool> w_cmdio_busy;
 
     iobuf_tech *iobufcmd0;
     iobuf_tech *iobufdat0;

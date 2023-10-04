@@ -46,7 +46,6 @@ SC_MODULE(sdctrl_cache) {
     sc_in<sc_biguint<SDCACHE_LINE_BITS>> i_mem_data;
     sc_in<bool> i_mem_fault;
     // Debug interface
-    sc_in<sc_uint<CFG_SDCACHE_ADDR_BITS>> i_flush_address;
     sc_in<bool> i_flush_valid;
     sc_out<bool> o_flush_end;
 
@@ -56,29 +55,28 @@ SC_MODULE(sdctrl_cache) {
     SC_HAS_PROCESS(sdctrl_cache);
 
     sdctrl_cache(sc_module_name name,
-                 bool async_reset,
-                 uint32_t ibits);
+                 bool async_reset);
     virtual ~sdctrl_cache();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
     bool async_reset_;
-    uint32_t ibits_;
     uint32_t FLUSH_ALL_VALUE;
 
     static const int abus = CFG_SDCACHE_ADDR_BITS;
+    static const int ibits = CFG_LOG2_SDCACHE_LINEBITS;
     static const int lnbits = CFG_LOG2_SDCACHE_BYTES_PER_LINE;
     static const int flbits = SDCACHE_FL_TOTAL;
     
     // State machine states:
     static const uint8_t State_Idle = 0;
-    static const uint8_t State_CheckHit = 1;
-    static const uint8_t State_TranslateAddress = 2;
-    static const uint8_t State_WaitGrant = 3;
-    static const uint8_t State_WaitResp = 4;
-    static const uint8_t State_CheckResp = 5;
-    static const uint8_t State_SetupReadAdr = 6;
+    static const uint8_t State_CheckHit = 2;
+    static const uint8_t State_TranslateAddress = 3;
+    static const uint8_t State_WaitGrant = 4;
+    static const uint8_t State_WaitResp = 5;
+    static const uint8_t State_CheckResp = 6;
+    static const uint8_t State_SetupReadAdr = 1;
     static const uint8_t State_WriteBus = 7;
     static const uint8_t State_FlushAddr = 8;
     static const uint8_t State_FlushCheck = 9;
@@ -99,12 +97,9 @@ SC_MODULE(sdctrl_cache) {
         sc_signal<bool> mem_fault;
         sc_signal<bool> write_first;
         sc_signal<bool> write_flush;
-        sc_signal<bool> write_share;
-        sc_signal<bool> req_flush;                          // init flush request
-        sc_signal<bool> req_flush_all;
-        sc_signal<sc_uint<CFG_SDCACHE_ADDR_BITS>> req_flush_addr;// [0]=1 flush all
-        sc_signal<sc_uint<32>> req_flush_cnt;
+        sc_signal<bool> req_flush;
         sc_signal<sc_uint<32>> flush_cnt;
+        sc_signal<sc_uint<CFG_SDCACHE_ADDR_BITS>> line_addr_i;
         sc_signal<sc_biguint<SDCACHE_LINE_BITS>> cache_line_i;
         sc_signal<sc_biguint<SDCACHE_LINE_BITS>> cache_line_o;
     } v, r;
@@ -121,17 +116,13 @@ SC_MODULE(sdctrl_cache) {
         iv.mem_fault = 0;
         iv.write_first = 0;
         iv.write_flush = 0;
-        iv.write_share = 0;
-        iv.req_flush = 1;
-        iv.req_flush_all = 0;
-        iv.req_flush_addr = 0ull;
-        iv.req_flush_cnt = 0;
+        iv.req_flush = 0;
         iv.flush_cnt = 0;
+        iv.line_addr_i = 0ull;
         iv.cache_line_i = 0ull;
         iv.cache_line_o = 0ull;
     }
 
-    sc_signal<sc_uint<CFG_SDCACHE_ADDR_BITS>> line_addr_i;
     sc_signal<sc_biguint<SDCACHE_LINE_BITS>> line_wdata_i;
     sc_signal<sc_uint<SDCACHE_BYTES_PER_LINE>> line_wstrb_i;
     sc_signal<sc_uint<SDCACHE_FL_TOTAL>> line_wflags_i;
@@ -143,7 +134,7 @@ SC_MODULE(sdctrl_cache) {
     sc_signal<sc_uint<CFG_SDCACHE_ADDR_BITS>> line_snoop_addr_i;
     sc_signal<sc_uint<SDCACHE_FL_TOTAL>> line_snoop_flags_o;
 
-    TagMem<abus, 2, lnbits, flbits, 0> *mem0;
+    TagMem<abus, ibits, lnbits, flbits, 0> *mem0;
 
 };
 

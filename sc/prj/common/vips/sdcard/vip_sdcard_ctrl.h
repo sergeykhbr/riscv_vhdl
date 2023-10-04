@@ -24,6 +24,7 @@ SC_MODULE(vip_sdcard_ctrl) {
     sc_in<bool> i_nrst;
     sc_in<bool> i_clk;
     sc_in<bool> i_spi_mode;
+    sc_in<bool> i_cs;
     sc_in<bool> i_cmd_req_valid;
     sc_in<sc_uint<6>> i_cmd_req_cmd;
     sc_in<sc_uint<32>> i_cmd_req_data;
@@ -37,6 +38,14 @@ SC_MODULE(vip_sdcard_ctrl) {
     sc_out<bool> o_cmd_resp_r7;
     sc_out<bool> o_stat_idle_state;
     sc_out<bool> o_stat_illegal_cmd;
+    sc_out<sc_uint<41>> o_mem_addr;
+    sc_in<sc_uint<8>> i_mem_rdata;
+    sc_out<bool> o_crc15_clear;
+    sc_out<bool> o_crc15_next;
+    sc_in<sc_uint<15>> i_crc15;
+    sc_out<bool> o_dat_trans;
+    sc_out<sc_uint<4>> o_dat;
+    sc_in<bool> i_cmdio_busy;
 
     void comb();
     void registers();
@@ -102,6 +111,11 @@ SC_MODULE(vip_sdcard_ctrl) {
         sc_signal<sc_uint<24>> ocr_vdd_window;
         sc_signal<bool> req_mem_valid;
         sc_signal<sc_uint<41>> req_mem_addr;
+        sc_signal<sc_uint<15>> shiftdat;
+        sc_signal<sc_uint<13>> bitcnt;
+        sc_signal<bool> crc15_clear;
+        sc_signal<bool> crc15_next;
+        sc_signal<bool> dat_trans;
     } v, r;
 
     void vip_sdcard_ctrl_r_reset(vip_sdcard_ctrl_registers &iv) {
@@ -124,6 +138,11 @@ SC_MODULE(vip_sdcard_ctrl) {
         iv.ocr_vdd_window = 0;
         iv.req_mem_valid = 0;
         iv.req_mem_addr = 0ull;
+        iv.shiftdat = ~0ul;
+        iv.bitcnt = 0;
+        iv.crc15_clear = 0;
+        iv.crc15_next = 0;
+        iv.dat_trans = 0;
     }
 
 };

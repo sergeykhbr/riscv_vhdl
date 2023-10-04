@@ -198,8 +198,7 @@ sdctrl::sdctrl(sc_module_name name,
     cmdtrx0->o_cmderr(wb_trx_cmderr);
 
 
-    cache0 = new sdctrl_cache("cache0", async_reset,
-                               CFG_LOG2_SDCACHE_LINEBITS);
+    cache0 = new sdctrl_cache("cache0", async_reset);
     cache0->i_clk(i_clk);
     cache0->i_nrst(i_nrst);
     cache0->i_req_valid(r.cache_req_valid);
@@ -218,9 +217,8 @@ sdctrl::sdctrl(sc_module_name name,
     cache0->o_req_mem_addr(wb_req_sdmem_addr);
     cache0->o_req_mem_data(wb_req_sdmem_wdata);
     cache0->i_mem_data_valid(r.sdmem_valid);
-    cache0->i_mem_data(wb_resp_sdmem_rdata);
+    cache0->i_mem_data(r.sdmem_data);
     cache0->i_mem_fault(w_resp_sdmem_err);
-    cache0->i_flush_address(wb_regs_flush_address);
     cache0->i_flush_valid(w_regs_flush_valid);
     cache0->o_flush_end(w_cache_flush_end);
 
@@ -266,9 +264,7 @@ sdctrl::sdctrl(sc_module_name name,
     sensitive << w_req_sdmem_write;
     sensitive << wb_req_sdmem_addr;
     sensitive << wb_req_sdmem_wdata;
-    sensitive << wb_resp_sdmem_rdata;
     sensitive << w_resp_sdmem_err;
-    sensitive << wb_regs_flush_address;
     sensitive << w_regs_flush_valid;
     sensitive << w_cache_flush_end;
     sensitive << w_trx_cmd_dir;
@@ -313,9 +309,12 @@ sdctrl::sdctrl(sc_module_name name,
     sensitive << r.sdmem_data;
     sensitive << r.sdmem_valid;
     sensitive << r.crc15_clear;
+    sensitive << r.crc15_calc0;
+    sensitive << r.crc15_rx0;
     sensitive << r.dat;
     sensitive << r.dat_dir;
     sensitive << r.dat3_dir;
+    sensitive << r.dat_tran;
     sensitive << r.sdstate;
     sensitive << r.initstate;
     sensitive << r.readystate;
@@ -411,9 +410,12 @@ void sdctrl::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.sdmem_data, pn + ".r_sdmem_data");
         sc_trace(o_vcd, r.sdmem_valid, pn + ".r_sdmem_valid");
         sc_trace(o_vcd, r.crc15_clear, pn + ".r_crc15_clear");
+        sc_trace(o_vcd, r.crc15_calc0, pn + ".r_crc15_calc0");
+        sc_trace(o_vcd, r.crc15_rx0, pn + ".r_crc15_rx0");
         sc_trace(o_vcd, r.dat, pn + ".r_dat");
         sc_trace(o_vcd, r.dat_dir, pn + ".r_dat_dir");
         sc_trace(o_vcd, r.dat3_dir, pn + ".r_dat3_dir");
+        sc_trace(o_vcd, r.dat_tran, pn + ".r_dat_tran");
         sc_trace(o_vcd, r.sdstate, pn + ".r_sdstate");
         sc_trace(o_vcd, r.initstate, pn + ".r_initstate");
         sc_trace(o_vcd, r.readystate, pn + ".r_readystate");
@@ -490,13 +492,13 @@ void sdctrl::comb() {
 
     if (w_regs_spi_mode.read() == 1) {
         v_dat3_dir = DIR_OUTPUT;
-        v_dat3_out = w_trx_cmd_cs;
+        v_dat3_out = (w_trx_cmd_cs && r.dat_tran);
         v_cmd_dir = DIR_OUTPUT;
         v_dat0_dir = DIR_INPUT;
         v_cmd_in = i_dat0;
         if (w_regs_sck_posedge) {
-            // Not a full block 4096 bits just a cache line:
-            v.sdmem_data = (r.sdmem_data.read()(510, 0), i_dat0.read());
+            // Not a full block 4096 bits just a cache line (dat_tran is active LOW):
+            v.sdmem_data = (r.sdmem_data.read()(510, 0), (i_dat0 || r.dat_tran));
             v.bitcnt = (r.bitcnt.read() + 1);
         }
     } else {
@@ -766,20 +768,31 @@ void sdctrl::comb() {
                 v.bitcnt = 0;
             } else if (r.spidatastate.read() == SPIDATASTATE_CMD24_WRITE_SINGLE_BLOCK) {
             } else if (r.spidatastate.read() == SPIDATASTATE_WAIT_DATA_START) {
-                if (r.bitcnt.read()(7, 0) == 0xFE) {
+                v.dat_tran = 0;
+                v.crc15_clear = 1;
+                if (r.sdmem_data.read()(7, 0) == 0xFE) {
                     v.spidatastate = SPIDATASTATE_READING_DATA;
                     v.bitcnt = 0;
+                    v.crc15_clear = 0;
                 } else if (r.bitcnt.read().and_reduce() == 1) {
                     // TODO: set errmode, no data response
                 }
             } else if (r.spidatastate.read() == SPIDATASTATE_READING_DATA) {
                 if (w_regs_sck_posedge.read() == 1) {
+                    v_crc15_next = 1;
                     if (r.bitcnt.read().and_reduce() == 1) {
                         v.spidatastate = SPIDATASTATE_READING_CRC15;
+                        v.crc15_calc0 = wb_crc15_0;
                     }
                 }
             } else if (r.spidatastate.read() == SPIDATASTATE_READING_CRC15) {
-                v.spidatastate = SPIDATASTATE_READING_END;
+                if (w_regs_sck_posedge.read() == 1) {
+                    if (r.bitcnt.read()(3, 0).and_reduce() == 1) {
+                        v.spidatastate = SPIDATASTATE_READING_END;
+                        v.dat_tran = 1;
+                        v.crc15_rx0 = r.sdmem_data.read()(15, 1).to_uint();
+                    }
+                }
             } else if (r.spidatastate.read() == SPIDATASTATE_READING_END) {
                 v.spidatastate = SPIDATASTATE_CACHE_WAIT_RESP;
             } else {

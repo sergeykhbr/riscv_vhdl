@@ -31,6 +31,7 @@ vip_sdcard_ctrl::vip_sdcard_ctrl(sc_module_name name,
     i_nrst("i_nrst"),
     i_clk("i_clk"),
     i_spi_mode("i_spi_mode"),
+    i_cs("i_cs"),
     i_cmd_req_valid("i_cmd_req_valid"),
     i_cmd_req_cmd("i_cmd_req_cmd"),
     i_cmd_req_data("i_cmd_req_data"),
@@ -43,7 +44,15 @@ vip_sdcard_ctrl::vip_sdcard_ctrl(sc_module_name name,
     o_cmd_resp_r3("o_cmd_resp_r3"),
     o_cmd_resp_r7("o_cmd_resp_r7"),
     o_stat_idle_state("o_stat_idle_state"),
-    o_stat_illegal_cmd("o_stat_illegal_cmd") {
+    o_stat_illegal_cmd("o_stat_illegal_cmd"),
+    o_mem_addr("o_mem_addr"),
+    i_mem_rdata("i_mem_rdata"),
+    o_crc15_clear("o_crc15_clear"),
+    o_crc15_next("o_crc15_next"),
+    i_crc15("i_crc15"),
+    o_dat_trans("o_dat_trans"),
+    o_dat("o_dat"),
+    i_cmdio_busy("i_cmdio_busy") {
 
     async_reset_ = async_reset;
     CFG_SDCARD_POWERUP_DONE_DELAY_ = CFG_SDCARD_POWERUP_DONE_DELAY;
@@ -56,10 +65,14 @@ vip_sdcard_ctrl::vip_sdcard_ctrl(sc_module_name name,
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_spi_mode;
+    sensitive << i_cs;
     sensitive << i_cmd_req_valid;
     sensitive << i_cmd_req_cmd;
     sensitive << i_cmd_req_data;
     sensitive << i_cmd_resp_ready;
+    sensitive << i_mem_rdata;
+    sensitive << i_crc15;
+    sensitive << i_cmdio_busy;
     sensitive << r.sdstate;
     sensitive << r.datastate;
     sensitive << r.powerup_cnt;
@@ -79,6 +92,11 @@ vip_sdcard_ctrl::vip_sdcard_ctrl(sc_module_name name,
     sensitive << r.ocr_vdd_window;
     sensitive << r.req_mem_valid;
     sensitive << r.req_mem_addr;
+    sensitive << r.shiftdat;
+    sensitive << r.bitcnt;
+    sensitive << r.crc15_clear;
+    sensitive << r.crc15_next;
+    sensitive << r.dat_trans;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -89,6 +107,7 @@ void vip_sdcard_ctrl::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     std::string pn(name());
     if (o_vcd) {
         sc_trace(o_vcd, i_spi_mode, i_spi_mode.name());
+        sc_trace(o_vcd, i_cs, i_cs.name());
         sc_trace(o_vcd, i_cmd_req_valid, i_cmd_req_valid.name());
         sc_trace(o_vcd, i_cmd_req_cmd, i_cmd_req_cmd.name());
         sc_trace(o_vcd, i_cmd_req_data, i_cmd_req_data.name());
@@ -102,6 +121,14 @@ void vip_sdcard_ctrl::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_cmd_resp_r7, o_cmd_resp_r7.name());
         sc_trace(o_vcd, o_stat_idle_state, o_stat_idle_state.name());
         sc_trace(o_vcd, o_stat_illegal_cmd, o_stat_illegal_cmd.name());
+        sc_trace(o_vcd, o_mem_addr, o_mem_addr.name());
+        sc_trace(o_vcd, i_mem_rdata, i_mem_rdata.name());
+        sc_trace(o_vcd, o_crc15_clear, o_crc15_clear.name());
+        sc_trace(o_vcd, o_crc15_next, o_crc15_next.name());
+        sc_trace(o_vcd, i_crc15, i_crc15.name());
+        sc_trace(o_vcd, o_dat_trans, o_dat_trans.name());
+        sc_trace(o_vcd, o_dat, o_dat.name());
+        sc_trace(o_vcd, i_cmdio_busy, i_cmdio_busy.name());
         sc_trace(o_vcd, r.sdstate, pn + ".r_sdstate");
         sc_trace(o_vcd, r.datastate, pn + ".r_datastate");
         sc_trace(o_vcd, r.powerup_cnt, pn + ".r_powerup_cnt");
@@ -121,6 +148,11 @@ void vip_sdcard_ctrl::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.ocr_vdd_window, pn + ".r_ocr_vdd_window");
         sc_trace(o_vcd, r.req_mem_valid, pn + ".r_req_mem_valid");
         sc_trace(o_vcd, r.req_mem_addr, pn + ".r_req_mem_addr");
+        sc_trace(o_vcd, r.shiftdat, pn + ".r_shiftdat");
+        sc_trace(o_vcd, r.bitcnt, pn + ".r_bitcnt");
+        sc_trace(o_vcd, r.crc15_clear, pn + ".r_crc15_clear");
+        sc_trace(o_vcd, r.crc15_next, pn + ".r_crc15_next");
+        sc_trace(o_vcd, r.dat_trans, pn + ".r_dat_trans");
     }
 
 }
@@ -296,11 +328,42 @@ void vip_sdcard_ctrl::comb() {
         }
     }
 
+    v.shiftdat = ((r.shiftdat.read()(13, 0) << 1) | 1);
     switch (r.datastate.read()) {
     case DATASTATE_IDLE:
-        if (r.req_mem_valid.read() == 1) {
+        v.crc15_clear = 1;
+        v.crc15_next = 0;
+        v.dat_trans = 0;
+        if ((r.req_mem_valid.read() == 1) && (i_cmdio_busy.read() == 0) && (i_cs.read() == 0)) {
             v.req_mem_valid = 0;
             v.datastate = DATASTATE_START;
+            v.shiftdat = 0x7F00;
+            v.bitcnt = 0;
+            v.dat_trans = 1;
+        }
+        break;
+    case DATASTATE_START:
+        v.bitcnt = (r.bitcnt.read() + 1);
+        if (r.bitcnt.read()(2, 0).and_reduce() == 1) {
+            v.crc15_clear = 0;
+            v.crc15_next = 1;
+            if (r.bitcnt.read()(12, 3) == 512) {
+                v.datastate = DATASTATE_CRC15;
+                v.shiftdat = i_crc15;
+                v.bitcnt = 0;
+                v.crc15_next = 0;
+            } else {
+                // Read memory byte:
+                v.shiftdat = (i_mem_rdata.read(), r.shiftdat.read()(6, 0));
+                v.req_mem_addr = (r.req_mem_addr.read() + 1);
+            }
+        }
+        break;
+    case DATASTATE_CRC15:
+        v.bitcnt = (r.bitcnt.read() + 1);
+        if (r.bitcnt.read()(3, 0).and_reduce() == 1) {
+            v.datastate = DATASTATE_IDLE;
+            v.dat_trans = 0;
         }
         break;
     default:
@@ -327,6 +390,11 @@ void vip_sdcard_ctrl::comb() {
     o_cmd_resp_r7 = r.cmd_resp_r7;
     o_stat_illegal_cmd = r.illegal_cmd;
     o_stat_idle_state = r.powerup_done;
+    o_mem_addr = r.req_mem_addr;
+    o_crc15_clear = r.crc15_clear;
+    o_crc15_next = r.crc15_next;
+    o_dat_trans = r.dat_trans;
+    o_dat = r.shiftdat.read()(14, 11);
 }
 
 void vip_sdcard_ctrl::registers() {
