@@ -16,7 +16,7 @@
 
 `timescale 1ns/10ps
 
-module sdctrl_crc15 #(
+module sdctrl_crc16 #(
     parameter bit async_reset = 1'b0
 )
 (
@@ -25,53 +25,54 @@ module sdctrl_crc15 #(
     input logic i_clear,                                    // Clear CRC register;
     input logic i_next,                                     // Shift enable strob
     input logic i_dat,                                      // Input bit
-    output logic [14:0] o_crc15                             // Computed value
+    output logic [15:0] o_crc15                             // Computed value
 );
 
-import sdctrl_crc15_pkg::*;
+import sdctrl_crc16_pkg::*;
 
-sdctrl_crc15_registers r, rin;
+sdctrl_crc16_registers r, rin;
 
 always_comb
 begin: comb_proc
-    sdctrl_crc15_registers v;
-    logic v_inv15_0;
-    logic [14:0] vb_crc15_0;
+    sdctrl_crc16_registers v;
+    logic v_inv16_0;
+    logic [15:0] vb_crc16_0;
 
-    v_inv15_0 = 0;
-    vb_crc15_0 = 0;
+    v_inv16_0 = 0;
+    vb_crc16_0 = 0;
 
     v = r;
 
-    // CRC15 = x^16 + x^12 + x^5 + 1
-    v_inv15_0 = (r.crc15[14] ^ i_dat);
-    vb_crc15_0[14] = r.crc15[13];
-    vb_crc15_0[13] = r.crc15[12];
-    vb_crc15_0[12] = (r.crc15[11] ^ v_inv15_0);
-    vb_crc15_0[11] = r.crc15[10];
-    vb_crc15_0[10] = r.crc15[9];
-    vb_crc15_0[9] = r.crc15[8];
-    vb_crc15_0[8] = r.crc15[7];
-    vb_crc15_0[7] = r.crc15[6];
-    vb_crc15_0[6] = r.crc15[5];
-    vb_crc15_0[5] = (r.crc15[4] ^ v_inv15_0);
-    vb_crc15_0[4] = r.crc15[3];
-    vb_crc15_0[3] = r.crc15[2];
-    vb_crc15_0[2] = r.crc15[1];
-    vb_crc15_0[1] = r.crc15[0];
-    vb_crc15_0[0] = v_inv15_0;
+    // CRC16 = x^16 + x^12 + x^5 + 1
+    v_inv16_0 = (r.crc16[15] ^ i_dat);
+    vb_crc16_0[15] = r.crc16[14];
+    vb_crc16_0[14] = r.crc16[13];
+    vb_crc16_0[13] = r.crc16[12];
+    vb_crc16_0[12] = (r.crc16[11] ^ v_inv16_0);
+    vb_crc16_0[11] = r.crc16[10];
+    vb_crc16_0[10] = r.crc16[9];
+    vb_crc16_0[9] = r.crc16[8];
+    vb_crc16_0[8] = r.crc16[7];
+    vb_crc16_0[7] = r.crc16[6];
+    vb_crc16_0[6] = r.crc16[5];
+    vb_crc16_0[5] = (r.crc16[4] ^ v_inv16_0);
+    vb_crc16_0[4] = r.crc16[3];
+    vb_crc16_0[3] = r.crc16[2];
+    vb_crc16_0[2] = r.crc16[1];
+    vb_crc16_0[1] = r.crc16[0];
+    vb_crc16_0[0] = v_inv16_0;
 
     if (i_clear == 1'b1) begin
-        v.crc15 = '0;
+        v.crc16 = '0;
     end else if (i_next == 1'b1) begin
-        v.crc15 = vb_crc15_0;
+        v.crc16 = vb_crc16_0;
     end
 
     if (~async_reset && i_nrst == 1'b0) begin
-        v = sdctrl_crc15_r_reset;
+        v = sdctrl_crc16_r_reset;
     end
 
-    o_crc15 = r.crc15;
+    o_crc15 = vb_crc16_0;
 
     rin = v;
 end: comb_proc
@@ -81,7 +82,7 @@ generate
 
         always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
             if (i_nrst == 1'b0) begin
-                r <= sdctrl_crc15_r_reset;
+                r <= sdctrl_crc16_r_reset;
             end else begin
                 r <= rin;
             end
@@ -98,4 +99,4 @@ generate
     end: no_rst_gen
 endgenerate
 
-endmodule: sdctrl_crc15
+endmodule: sdctrl_crc16

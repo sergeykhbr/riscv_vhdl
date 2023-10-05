@@ -13,15 +13,15 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 // 
-package sdctrl_crc15_pkg;
+package sdctrl_crc16_pkg;
 
 
 typedef struct {
-    logic [14:0] crc15;
-} sdctrl_crc15_registers;
+    logic [15:0] crc16;
+} sdctrl_crc16_registers;
 
-const sdctrl_crc15_registers sdctrl_crc15_r_reset = '{
-    '0                                  // crc15
+const sdctrl_crc16_registers sdctrl_crc16_r_reset = '{
+    '0                                  // crc16
 };
 
-endpackage: sdctrl_crc15_pkg
+endpackage: sdctrl_crc16_pkg

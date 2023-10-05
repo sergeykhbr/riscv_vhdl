@@ -81,7 +81,7 @@ logic [40:0] wb_mem_addr;
 logic [7:0] wb_mem_rdata;
 logic w_crc15_clear;
 logic w_crc15_next;
-logic [14:0] wb_crc15;
+logic [15:0] wb_crc16;
 logic w_dat_trans;
 logic [3:0] wb_dat;
 logic w_cmdio_busy;
@@ -193,9 +193,9 @@ vip_sdcard_ctrl #(
     .o_stat_illegal_cmd(w_stat_illegal_cmd),
     .o_mem_addr(wb_mem_addr),
     .i_mem_rdata(wb_mem_rdata),
-    .o_crc15_clear(w_crc15_clear),
-    .o_crc15_next(w_crc15_next),
-    .i_crc15(wb_crc15),
+    .o_crc16_clear(w_crc15_clear),
+    .o_crc16_next(w_crc15_next),
+    .i_crc16(wb_crc16),
     .o_dat_trans(w_dat_trans),
     .o_dat(wb_dat),
     .i_cmdio_busy(w_cmdio_busy)
@@ -254,7 +254,7 @@ begin: comb_proc
     w_stat_erase_param = 1'b0;
     w_stat_out_of_range = 1'b0;
     wb_mem_rdata = 8'hff;
-    wb_crc15 = 15'h0045;
+    wb_crc16 = 16'h7fa1;
 end: comb_proc
 
 endmodule: vip_sdcard_top

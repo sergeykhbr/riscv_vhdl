@@ -19,21 +19,21 @@
 
 namespace debugger {
 
-SC_MODULE(sdctrl_crc15) {
+SC_MODULE(sdctrl_crc16) {
  public:
     sc_in<bool> i_clk;                                      // CPU clock
     sc_in<bool> i_nrst;                                     // Reset: active LOW
     sc_in<bool> i_clear;                                    // Clear CRC register;
     sc_in<bool> i_next;                                     // Shift enable strob
     sc_in<bool> i_dat;                                      // Input bit
-    sc_out<sc_uint<15>> o_crc15;                            // Computed value
+    sc_out<sc_uint<16>> o_crc15;                            // Computed value
 
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(sdctrl_crc15);
+    SC_HAS_PROCESS(sdctrl_crc16);
 
-    sdctrl_crc15(sc_module_name name,
+    sdctrl_crc16(sc_module_name name,
                  bool async_reset);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
@@ -41,12 +41,12 @@ SC_MODULE(sdctrl_crc15) {
  private:
     bool async_reset_;
 
-    struct sdctrl_crc15_registers {
-        sc_signal<sc_uint<15>> crc15;
+    struct sdctrl_crc16_registers {
+        sc_signal<sc_uint<16>> crc16;
     } v, r;
 
-    void sdctrl_crc15_r_reset(sdctrl_crc15_registers &iv) {
-        iv.crc15 = 0;
+    void sdctrl_crc16_r_reset(sdctrl_crc16_registers &iv) {
+        iv.crc16 = 0;
     }
 
 };

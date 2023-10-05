@@ -103,7 +103,7 @@ SC_MODULE(vip_sdcard_top) {
     sc_signal<sc_uint<8>> wb_mem_rdata;
     sc_signal<bool> w_crc15_clear;
     sc_signal<bool> w_crc15_next;
-    sc_signal<sc_uint<15>> wb_crc15;
+    sc_signal<sc_uint<16>> wb_crc16;
     sc_signal<bool> w_dat_trans;
     sc_signal<sc_uint<4>> wb_dat;
     sc_signal<bool> w_cmdio_busy;

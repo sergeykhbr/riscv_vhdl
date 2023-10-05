@@ -98,7 +98,9 @@ asm volatile ("fence.i");
     } while (sdtype == 0 && fw_get_rdtime() < (5*SYS_HZ / 1000));  // sdtype=0 (unknown)
     const char *SDTYPE[8] = {"unknown", "Ver1X", "Ver2X_SC", "Ver2X_HC", "Unusable", 0};
     printf_uart("sdtype: %s\r\n", SDTYPE[sdtype]);
-    printf_uart("sd: %x\r\n", ((uint32_t *)0x0000800000000)[128]);
+    if (sdtype == 2 || sdtype == 3) {
+        printf_uart("sd: %x\r\n", ((uint32_t *)0x0000800000000)[128]);
+    }
 #endif
 
 #if 1

@@ -45,9 +45,9 @@ module vip_sdcard_ctrl #(
     output logic o_stat_illegal_cmd,
     output logic [40:0] o_mem_addr,
     input logic [7:0] i_mem_rdata,
-    output logic o_crc15_clear,
-    output logic o_crc15_next,
-    input logic [14:0] i_crc15,
+    output logic o_crc16_clear,
+    output logic o_crc16_next,
+    input logic [15:0] i_crc16,
     output logic o_dat_trans,
     output logic [3:0] o_dat,
     input logic i_cmdio_busy
@@ -230,16 +230,16 @@ begin: comb_proc
         endcase
     end
 
-    v.shiftdat = {r.shiftdat[13: 0], 1'h1};
+    v.shiftdat = {r.shiftdat[14: 0], 1'h1};
     case (r.datastate)
     DATASTATE_IDLE: begin
-        v.crc15_clear = 1'b1;
-        v.crc15_next = 1'b0;
+        v.crc16_clear = 1'b1;
+        v.crc16_next = 1'b0;
         v.dat_trans = 1'b0;
         if ((r.req_mem_valid == 1'b1) && (i_cmdio_busy == 1'b0) && (i_cs == 1'b0)) begin
             v.req_mem_valid = 1'b0;
             v.datastate = DATASTATE_START;
-            v.shiftdat = 15'h7f00;
+            v.shiftdat = 16'hfe00;
             v.bitcnt = '0;
             v.dat_trans = 1'b1;
         end
@@ -247,16 +247,16 @@ begin: comb_proc
     DATASTATE_START: begin
         v.bitcnt = (r.bitcnt + 1);
         if ((&r.bitcnt[2: 0]) == 1'b1) begin
-            v.crc15_clear = 1'b0;
-            v.crc15_next = 1'b1;
+            v.crc16_clear = 1'b0;
+            v.crc16_next = 1'b1;
             if (r.bitcnt[12: 3] == 10'h200) begin
                 v.datastate = DATASTATE_CRC15;
-                v.shiftdat = i_crc15;
+                v.shiftdat = i_crc16;
                 v.bitcnt = '0;
-                v.crc15_next = 1'b0;
+                v.crc16_next = 1'b0;
             end else begin
                 // Read memory byte:
-                v.shiftdat = {i_mem_rdata, r.shiftdat[6: 0]};
+                v.shiftdat = {i_mem_rdata, r.shiftdat[7: 0]};
                 v.req_mem_addr = (r.req_mem_addr + 1);
             end
         end
@@ -293,10 +293,10 @@ begin: comb_proc
     o_stat_illegal_cmd = r.illegal_cmd;
     o_stat_idle_state = r.powerup_done;
     o_mem_addr = r.req_mem_addr;
-    o_crc15_clear = r.crc15_clear;
-    o_crc15_next = r.crc15_next;
+    o_crc16_clear = r.crc16_clear;
+    o_crc16_next = r.crc16_next;
     o_dat_trans = r.dat_trans;
-    o_dat = r.shiftdat[14: 11];
+    o_dat = r.shiftdat[15: 12];
 
     rin = v;
 end: comb_proc

@@ -22,7 +22,7 @@
 #include "../ambalib/axi_slv.h"
 #include "sdctrl_regs.h"
 #include "sdctrl_crc7.h"
-#include "sdctrl_crc15.h"
+#include "sdctrl_crc16.h"
 #include "sdctrl_cmd_transmitter.h"
 #include "sdctrl_cache.h"
 
@@ -131,9 +131,10 @@ SC_MODULE(sdctrl) {
         sc_signal<sc_uint<32>> sdmem_addr;
         sc_signal<sc_biguint<512>> sdmem_data;
         sc_signal<bool> sdmem_valid;
-        sc_signal<bool> crc15_clear;
-        sc_signal<sc_uint<15>> crc15_calc0;
-        sc_signal<sc_uint<15>> crc15_rx0;
+        sc_signal<bool> sdmem_err;
+        sc_signal<bool> crc16_clear;
+        sc_signal<sc_uint<16>> crc16_calc0;
+        sc_signal<sc_uint<16>> crc16_rx0;
         sc_signal<sc_uint<4>> dat;
         sc_signal<bool> dat_dir;
         sc_signal<bool> dat3_dir;
@@ -170,9 +171,10 @@ SC_MODULE(sdctrl) {
         iv.sdmem_addr = 0;
         iv.sdmem_data = 0ull;
         iv.sdmem_valid = 0;
-        iv.crc15_clear = 1;
-        iv.crc15_calc0 = 0;
-        iv.crc15_rx0 = 0;
+        iv.sdmem_err = 0;
+        iv.crc16_clear = 1;
+        iv.crc16_calc0 = 0;
+        iv.crc16_rx0 = 0;
         iv.dat = ~0ul;
         iv.dat_dir = DIR_OUTPUT;
         iv.dat3_dir = DIR_INPUT;
@@ -218,7 +220,6 @@ SC_MODULE(sdctrl) {
     sc_signal<bool> w_req_sdmem_write;
     sc_signal<sc_uint<CFG_SDCACHE_ADDR_BITS>> wb_req_sdmem_addr;
     sc_signal<sc_biguint<SDCACHE_LINE_BITS>> wb_req_sdmem_wdata;
-    sc_signal<bool> w_resp_sdmem_err;
     sc_signal<bool> w_regs_flush_valid;
     sc_signal<bool> w_cache_flush_end;
     sc_signal<bool> w_trx_cmd_dir;
@@ -240,19 +241,19 @@ SC_MODULE(sdctrl) {
     sc_signal<bool> w_crc7_next;
     sc_signal<bool> w_crc7_dat;
     sc_signal<sc_uint<7>> wb_crc7;
-    sc_signal<bool> w_crc15_next;
-    sc_signal<sc_uint<15>> wb_crc15_0;
-    sc_signal<sc_uint<15>> wb_crc15_1;
-    sc_signal<sc_uint<15>> wb_crc15_2;
-    sc_signal<sc_uint<15>> wb_crc15_3;
+    sc_signal<bool> w_crc16_next;
+    sc_signal<sc_uint<16>> wb_crc16_0;
+    sc_signal<sc_uint<16>> wb_crc16_1;
+    sc_signal<sc_uint<16>> wb_crc16_2;
+    sc_signal<sc_uint<16>> wb_crc16_3;
 
     axi_slv *xslv0;
     sdctrl_regs *regs0;
     sdctrl_crc7 *crccmd0;
-    sdctrl_crc15 *crcdat0;
-    sdctrl_crc15 *crcdat1;
-    sdctrl_crc15 *crcdat2;
-    sdctrl_crc15 *crcdat3;
+    sdctrl_crc16 *crcdat0;
+    sdctrl_crc16 *crcdat1;
+    sdctrl_crc16 *crcdat2;
+    sdctrl_crc16 *crcdat3;
     sdctrl_cmd_transmitter *cmdtrx0;
     sdctrl_cache *cache0;
 

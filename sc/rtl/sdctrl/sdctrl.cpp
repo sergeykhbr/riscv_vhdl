@@ -129,40 +129,40 @@ sdctrl::sdctrl(sc_module_name name,
     crccmd0->o_crc7(wb_crc7);
 
 
-    crcdat0 = new sdctrl_crc15("crcdat0", async_reset);
+    crcdat0 = new sdctrl_crc16("crcdat0", async_reset);
     crcdat0->i_clk(i_clk);
     crcdat0->i_nrst(i_nrst);
-    crcdat0->i_clear(r.crc15_clear);
-    crcdat0->i_next(w_crc15_next);
+    crcdat0->i_clear(r.crc16_clear);
+    crcdat0->i_next(w_crc16_next);
     crcdat0->i_dat(i_dat0);
-    crcdat0->o_crc15(wb_crc15_0);
+    crcdat0->o_crc15(wb_crc16_0);
 
 
-    crcdat1 = new sdctrl_crc15("crcdat1", async_reset);
+    crcdat1 = new sdctrl_crc16("crcdat1", async_reset);
     crcdat1->i_clk(i_clk);
     crcdat1->i_nrst(i_nrst);
-    crcdat1->i_clear(r.crc15_clear);
-    crcdat1->i_next(w_crc15_next);
+    crcdat1->i_clear(r.crc16_clear);
+    crcdat1->i_next(w_crc16_next);
     crcdat1->i_dat(i_dat1);
-    crcdat1->o_crc15(wb_crc15_1);
+    crcdat1->o_crc15(wb_crc16_1);
 
 
-    crcdat2 = new sdctrl_crc15("crcdat2", async_reset);
+    crcdat2 = new sdctrl_crc16("crcdat2", async_reset);
     crcdat2->i_clk(i_clk);
     crcdat2->i_nrst(i_nrst);
-    crcdat2->i_clear(r.crc15_clear);
-    crcdat2->i_next(w_crc15_next);
+    crcdat2->i_clear(r.crc16_clear);
+    crcdat2->i_next(w_crc16_next);
     crcdat2->i_dat(i_dat2);
-    crcdat2->o_crc15(wb_crc15_2);
+    crcdat2->o_crc15(wb_crc16_2);
 
 
-    crcdat3 = new sdctrl_crc15("crcdat3", async_reset);
+    crcdat3 = new sdctrl_crc16("crcdat3", async_reset);
     crcdat3->i_clk(i_clk);
     crcdat3->i_nrst(i_nrst);
-    crcdat3->i_clear(r.crc15_clear);
-    crcdat3->i_next(w_crc15_next);
+    crcdat3->i_clear(r.crc16_clear);
+    crcdat3->i_next(w_crc16_next);
     crcdat3->i_dat(i_cd_dat3);
-    crcdat3->o_crc15(wb_crc15_3);
+    crcdat3->o_crc15(wb_crc16_3);
 
 
     cmdtrx0 = new sdctrl_cmd_transmitter("cmdtrx0", async_reset);
@@ -218,7 +218,7 @@ sdctrl::sdctrl(sc_module_name name,
     cache0->o_req_mem_data(wb_req_sdmem_wdata);
     cache0->i_mem_data_valid(r.sdmem_valid);
     cache0->i_mem_data(r.sdmem_data);
-    cache0->i_mem_fault(w_resp_sdmem_err);
+    cache0->i_mem_fault(r.sdmem_err);
     cache0->i_flush_valid(w_regs_flush_valid);
     cache0->o_flush_end(w_cache_flush_end);
 
@@ -264,7 +264,6 @@ sdctrl::sdctrl(sc_module_name name,
     sensitive << w_req_sdmem_write;
     sensitive << wb_req_sdmem_addr;
     sensitive << wb_req_sdmem_wdata;
-    sensitive << w_resp_sdmem_err;
     sensitive << w_regs_flush_valid;
     sensitive << w_cache_flush_end;
     sensitive << w_trx_cmd_dir;
@@ -286,11 +285,11 @@ sdctrl::sdctrl(sc_module_name name,
     sensitive << w_crc7_next;
     sensitive << w_crc7_dat;
     sensitive << wb_crc7;
-    sensitive << w_crc15_next;
-    sensitive << wb_crc15_0;
-    sensitive << wb_crc15_1;
-    sensitive << wb_crc15_2;
-    sensitive << wb_crc15_3;
+    sensitive << w_crc16_next;
+    sensitive << wb_crc16_0;
+    sensitive << wb_crc16_1;
+    sensitive << wb_crc16_2;
+    sensitive << wb_crc16_3;
     sensitive << r.clkcnt;
     sensitive << r.cmd_set_low;
     sensitive << r.cmd_req_valid;
@@ -308,9 +307,10 @@ sdctrl::sdctrl(sc_module_name name,
     sensitive << r.sdmem_addr;
     sensitive << r.sdmem_data;
     sensitive << r.sdmem_valid;
-    sensitive << r.crc15_clear;
-    sensitive << r.crc15_calc0;
-    sensitive << r.crc15_rx0;
+    sensitive << r.sdmem_err;
+    sensitive << r.crc16_clear;
+    sensitive << r.crc16_calc0;
+    sensitive << r.crc16_rx0;
     sensitive << r.dat;
     sensitive << r.dat_dir;
     sensitive << r.dat3_dir;
@@ -409,9 +409,10 @@ void sdctrl::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.sdmem_addr, pn + ".r_sdmem_addr");
         sc_trace(o_vcd, r.sdmem_data, pn + ".r_sdmem_data");
         sc_trace(o_vcd, r.sdmem_valid, pn + ".r_sdmem_valid");
-        sc_trace(o_vcd, r.crc15_clear, pn + ".r_crc15_clear");
-        sc_trace(o_vcd, r.crc15_calc0, pn + ".r_crc15_calc0");
-        sc_trace(o_vcd, r.crc15_rx0, pn + ".r_crc15_rx0");
+        sc_trace(o_vcd, r.sdmem_err, pn + ".r_sdmem_err");
+        sc_trace(o_vcd, r.crc16_clear, pn + ".r_crc16_clear");
+        sc_trace(o_vcd, r.crc16_calc0, pn + ".r_crc16_calc0");
+        sc_trace(o_vcd, r.crc16_rx0, pn + ".r_crc16_rx0");
         sc_trace(o_vcd, r.dat, pn + ".r_dat");
         sc_trace(o_vcd, r.dat_dir, pn + ".r_dat_dir");
         sc_trace(o_vcd, r.dat3_dir, pn + ".r_dat3_dir");
@@ -460,7 +461,7 @@ void sdctrl::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void sdctrl::comb() {
-    bool v_crc15_next;
+    bool v_crc16_next;
     sc_uint<32> vb_cmd_req_arg;
     bool v_cmd_resp_ready;
     bool v_cmd_dir;
@@ -473,7 +474,7 @@ void sdctrl::comb() {
     bool v_req_sdmem_ready;
     bool v_cache_resp_ready;
 
-    v_crc15_next = 0;
+    v_crc16_next = 0;
     vb_cmd_req_arg = 0;
     v_cmd_resp_ready = 0;
     v_cmd_dir = 0;
@@ -769,20 +770,22 @@ void sdctrl::comb() {
             } else if (r.spidatastate.read() == SPIDATASTATE_CMD24_WRITE_SINGLE_BLOCK) {
             } else if (r.spidatastate.read() == SPIDATASTATE_WAIT_DATA_START) {
                 v.dat_tran = 0;
-                v.crc15_clear = 1;
-                if (r.sdmem_data.read()(7, 0) == 0xFE) {
+                v.crc16_clear = 1;
+                if (wb_trx_cmderr.read() != CMDERR_NONE) {
+                    v.spidatastate = SPIDATASTATE_CACHE_WAIT_RESP;
+                } else if (r.sdmem_data.read()(7, 0) == 0xFE) {
                     v.spidatastate = SPIDATASTATE_READING_DATA;
                     v.bitcnt = 0;
-                    v.crc15_clear = 0;
+                    v.crc16_clear = 0;
                 } else if (r.bitcnt.read().and_reduce() == 1) {
                     // TODO: set errmode, no data response
                 }
             } else if (r.spidatastate.read() == SPIDATASTATE_READING_DATA) {
                 if (w_regs_sck_posedge.read() == 1) {
-                    v_crc15_next = 1;
+                    v_crc16_next = 1;
                     if (r.bitcnt.read().and_reduce() == 1) {
                         v.spidatastate = SPIDATASTATE_READING_CRC15;
-                        v.crc15_calc0 = wb_crc15_0;
+                        v.crc16_calc0 = wb_crc16_0;
                     }
                 }
             } else if (r.spidatastate.read() == SPIDATASTATE_READING_CRC15) {
@@ -790,10 +793,10 @@ void sdctrl::comb() {
                     if (r.bitcnt.read()(3, 0).and_reduce() == 1) {
                         v.spidatastate = SPIDATASTATE_READING_END;
                         v.dat_tran = 1;
-                        v.crc15_rx0 = r.sdmem_data.read()(15, 1).to_uint();
                     }
                 }
             } else if (r.spidatastate.read() == SPIDATASTATE_READING_END) {
+                v.crc16_rx0 = r.sdmem_data.read()(15, 0).to_uint();
                 v.spidatastate = SPIDATASTATE_CACHE_WAIT_RESP;
             } else {
                 // Wait memory request:
@@ -820,9 +823,14 @@ void sdctrl::comb() {
     }
 
     v.sdmem_valid = 0;
-    if ((r.spidatastate.read() == SPIDATASTATE_READING_DATA)
-            && (r.bitcnt.read()(8, 0).and_reduce() == 1)
-            && (w_regs_sck_posedge.read() == 1)) {
+    v.sdmem_err = 0;
+    if (wb_trx_cmderr.read() != CMDERR_NONE) {
+        // To avoid cache hanging set always valid in error state
+        v.sdmem_valid = 1;
+        v.sdmem_err = 1;
+    } else if ((r.spidatastate.read() == SPIDATASTATE_READING_DATA)
+                && (r.bitcnt.read()(8, 0).and_reduce() == 1)
+                && (w_regs_sck_posedge.read() == 1)) {
         v.sdmem_valid = 1;
     }
 
@@ -831,7 +839,7 @@ void sdctrl::comb() {
     }
 
     w_cmd_resp_ready = v_cmd_resp_ready;
-    w_crc15_next = v_crc15_next;
+    w_crc16_next = v_crc16_next;
     // Page 222, Table 4-81 Overview of Card States vs Operation Modes table
     if ((r.sdstate.read() <= SDSTATE_IDENT)
             || (r.sdstate.read() == SDSTATE_INA)

@@ -136,9 +136,9 @@ vip_sdcard_top::vip_sdcard_top(sc_module_name name,
     ctrl0->o_stat_illegal_cmd(w_stat_illegal_cmd);
     ctrl0->o_mem_addr(wb_mem_addr);
     ctrl0->i_mem_rdata(wb_mem_rdata);
-    ctrl0->o_crc15_clear(w_crc15_clear);
-    ctrl0->o_crc15_next(w_crc15_next);
-    ctrl0->i_crc15(wb_crc15);
+    ctrl0->o_crc16_clear(w_crc15_clear);
+    ctrl0->o_crc16_next(w_crc15_next);
+    ctrl0->i_crc16(wb_crc16);
     ctrl0->o_dat_trans(w_dat_trans);
     ctrl0->o_dat(wb_dat);
     ctrl0->i_cmdio_busy(w_cmdio_busy);
@@ -202,7 +202,7 @@ vip_sdcard_top::vip_sdcard_top(sc_module_name name,
     sensitive << wb_mem_rdata;
     sensitive << w_crc15_clear;
     sensitive << w_crc15_next;
-    sensitive << wb_crc15;
+    sensitive << wb_crc16;
     sensitive << w_dat_trans;
     sensitive << wb_dat;
     sensitive << w_cmdio_busy;
@@ -316,7 +316,7 @@ void vip_sdcard_top::comb() {
     w_stat_erase_param = 0;
     w_stat_out_of_range = 0;
     wb_mem_rdata = 0xFF;
-    wb_crc15 = 0x45;
+    wb_crc16 = 0x7fa1;
 }
 
 }  // namespace debugger

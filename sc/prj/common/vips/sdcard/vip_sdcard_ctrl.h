@@ -40,9 +40,9 @@ SC_MODULE(vip_sdcard_ctrl) {
     sc_out<bool> o_stat_illegal_cmd;
     sc_out<sc_uint<41>> o_mem_addr;
     sc_in<sc_uint<8>> i_mem_rdata;
-    sc_out<bool> o_crc15_clear;
-    sc_out<bool> o_crc15_next;
-    sc_in<sc_uint<15>> i_crc15;
+    sc_out<bool> o_crc16_clear;
+    sc_out<bool> o_crc16_next;
+    sc_in<sc_uint<16>> i_crc16;
     sc_out<bool> o_dat_trans;
     sc_out<sc_uint<4>> o_dat;
     sc_in<bool> i_cmdio_busy;
@@ -111,10 +111,10 @@ SC_MODULE(vip_sdcard_ctrl) {
         sc_signal<sc_uint<24>> ocr_vdd_window;
         sc_signal<bool> req_mem_valid;
         sc_signal<sc_uint<41>> req_mem_addr;
-        sc_signal<sc_uint<15>> shiftdat;
+        sc_signal<sc_uint<16>> shiftdat;
         sc_signal<sc_uint<13>> bitcnt;
-        sc_signal<bool> crc15_clear;
-        sc_signal<bool> crc15_next;
+        sc_signal<bool> crc16_clear;
+        sc_signal<bool> crc16_next;
         sc_signal<bool> dat_trans;
     } v, r;
 
@@ -140,8 +140,8 @@ SC_MODULE(vip_sdcard_ctrl) {
         iv.req_mem_addr = 0ull;
         iv.shiftdat = ~0ul;
         iv.bitcnt = 0;
-        iv.crc15_clear = 0;
-        iv.crc15_next = 0;
+        iv.crc16_clear = 0;
+        iv.crc16_next = 0;
         iv.dat_trans = 0;
     }
 

@@ -82,7 +82,6 @@ logic w_req_sdmem_valid;
 logic w_req_sdmem_write;
 logic [CFG_SDCACHE_ADDR_BITS-1:0] wb_req_sdmem_addr;
 logic [SDCACHE_LINE_BITS-1:0] wb_req_sdmem_wdata;
-logic w_resp_sdmem_err;
 logic w_regs_flush_valid;
 logic w_cache_flush_end;
 logic w_trx_cmd_dir;
@@ -104,11 +103,11 @@ logic w_crc7_clear;
 logic w_crc7_next;
 logic w_crc7_dat;
 logic [6:0] wb_crc7;
-logic w_crc15_next;
-logic [14:0] wb_crc15_0;
-logic [14:0] wb_crc15_1;
-logic [14:0] wb_crc15_2;
-logic [14:0] wb_crc15_3;
+logic w_crc16_next;
+logic [15:0] wb_crc16_0;
+logic [15:0] wb_crc16_1;
+logic [15:0] wb_crc16_2;
+logic [15:0] wb_crc16_3;
 sdctrl_registers r, rin;
 
 axi_slv #(
@@ -187,51 +186,51 @@ sdctrl_crc7 #(
 );
 
 
-sdctrl_crc15 #(
+sdctrl_crc16 #(
     .async_reset(async_reset)
 ) crcdat0 (
     .i_clk(i_clk),
     .i_nrst(i_nrst),
-    .i_clear(r.crc15_clear),
-    .i_next(w_crc15_next),
+    .i_clear(r.crc16_clear),
+    .i_next(w_crc16_next),
     .i_dat(i_dat0),
-    .o_crc15(wb_crc15_0)
+    .o_crc15(wb_crc16_0)
 );
 
 
-sdctrl_crc15 #(
+sdctrl_crc16 #(
     .async_reset(async_reset)
 ) crcdat1 (
     .i_clk(i_clk),
     .i_nrst(i_nrst),
-    .i_clear(r.crc15_clear),
-    .i_next(w_crc15_next),
+    .i_clear(r.crc16_clear),
+    .i_next(w_crc16_next),
     .i_dat(i_dat1),
-    .o_crc15(wb_crc15_1)
+    .o_crc15(wb_crc16_1)
 );
 
 
-sdctrl_crc15 #(
+sdctrl_crc16 #(
     .async_reset(async_reset)
 ) crcdat2 (
     .i_clk(i_clk),
     .i_nrst(i_nrst),
-    .i_clear(r.crc15_clear),
-    .i_next(w_crc15_next),
+    .i_clear(r.crc16_clear),
+    .i_next(w_crc16_next),
     .i_dat(i_dat2),
-    .o_crc15(wb_crc15_2)
+    .o_crc15(wb_crc16_2)
 );
 
 
-sdctrl_crc15 #(
+sdctrl_crc16 #(
     .async_reset(async_reset)
 ) crcdat3 (
     .i_clk(i_clk),
     .i_nrst(i_nrst),
-    .i_clear(r.crc15_clear),
-    .i_next(w_crc15_next),
+    .i_clear(r.crc16_clear),
+    .i_next(w_crc16_next),
     .i_dat(i_cd_dat3),
-    .o_crc15(wb_crc15_3)
+    .o_crc15(wb_crc16_3)
 );
 
 
@@ -293,7 +292,7 @@ sdctrl_cache #(
     .o_req_mem_data(wb_req_sdmem_wdata),
     .i_mem_data_valid(r.sdmem_valid),
     .i_mem_data(r.sdmem_data),
-    .i_mem_fault(w_resp_sdmem_err),
+    .i_mem_fault(r.sdmem_err),
     .i_flush_valid(w_regs_flush_valid),
     .o_flush_end(w_cache_flush_end)
 );
@@ -302,7 +301,7 @@ sdctrl_cache #(
 always_comb
 begin: comb_proc
     sdctrl_registers v;
-    logic v_crc15_next;
+    logic v_crc16_next;
     logic [31:0] vb_cmd_req_arg;
     logic v_cmd_resp_ready;
     logic v_cmd_dir;
@@ -315,7 +314,7 @@ begin: comb_proc
     logic v_req_sdmem_ready;
     logic v_cache_resp_ready;
 
-    v_crc15_next = 0;
+    v_crc16_next = 0;
     vb_cmd_req_arg = 0;
     v_cmd_resp_ready = 0;
     v_cmd_dir = 0;
@@ -611,20 +610,22 @@ begin: comb_proc
             end else if (r.spidatastate == SPIDATASTATE_CMD24_WRITE_SINGLE_BLOCK) begin
             end else if (r.spidatastate == SPIDATASTATE_WAIT_DATA_START) begin
                 v.dat_tran = 1'b0;
-                v.crc15_clear = 1'b1;
-                if (r.sdmem_data[7: 0] == 8'hfe) begin
+                v.crc16_clear = 1'b1;
+                if (wb_trx_cmderr != CMDERR_NONE) begin
+                    v.spidatastate = SPIDATASTATE_CACHE_WAIT_RESP;
+                end else if (r.sdmem_data[7: 0] == 8'hfe) begin
                     v.spidatastate = SPIDATASTATE_READING_DATA;
                     v.bitcnt = '0;
-                    v.crc15_clear = 1'b0;
+                    v.crc16_clear = 1'b0;
                 end else if ((&r.bitcnt) == 1'b1) begin
                     // TODO: set errmode, no data response
                 end
             end else if (r.spidatastate == SPIDATASTATE_READING_DATA) begin
                 if (w_regs_sck_posedge == 1'b1) begin
-                    v_crc15_next = 1'b1;
+                    v_crc16_next = 1'b1;
                     if ((&r.bitcnt) == 1'b1) begin
                         v.spidatastate = SPIDATASTATE_READING_CRC15;
-                        v.crc15_calc0 = wb_crc15_0;
+                        v.crc16_calc0 = wb_crc16_0;
                     end
                 end
             end else if (r.spidatastate == SPIDATASTATE_READING_CRC15) begin
@@ -632,10 +633,10 @@ begin: comb_proc
                     if ((&r.bitcnt[3: 0]) == 1'b1) begin
                         v.spidatastate = SPIDATASTATE_READING_END;
                         v.dat_tran = 1'b1;
-                        v.crc15_rx0 = r.sdmem_data[15: 1];
                     end
                 end
             end else if (r.spidatastate == SPIDATASTATE_READING_END) begin
+                v.crc16_rx0 = r.sdmem_data[15: 0];
                 v.spidatastate = SPIDATASTATE_CACHE_WAIT_RESP;
             end else begin
                 // Wait memory request:
@@ -662,9 +663,14 @@ begin: comb_proc
     end
 
     v.sdmem_valid = 1'b0;
-    if ((r.spidatastate == SPIDATASTATE_READING_DATA)
-            && ((&r.bitcnt[8: 0]) == 1'b1)
-            && (w_regs_sck_posedge == 1'b1)) begin
+    v.sdmem_err = 1'b0;
+    if (wb_trx_cmderr != CMDERR_NONE) begin
+        // To avoid cache hanging set always valid in error state
+        v.sdmem_valid = 1'b1;
+        v.sdmem_err = 1'b1;
+    end else if ((r.spidatastate == SPIDATASTATE_READING_DATA)
+                && ((&r.bitcnt[8: 0]) == 1'b1)
+                && (w_regs_sck_posedge == 1'b1)) begin
         v.sdmem_valid = 1'b1;
     end
 
@@ -673,7 +679,7 @@ begin: comb_proc
     end
 
     w_cmd_resp_ready = v_cmd_resp_ready;
-    w_crc15_next = v_crc15_next;
+    w_crc16_next = v_crc16_next;
     // Page 222, Table 4-81 Overview of Card States vs Operation Modes table
     if ((r.sdstate <= SDSTATE_IDENT)
             || (r.sdstate == SDSTATE_INA)
