@@ -238,6 +238,7 @@ void vip_sdcard_ctrl::comb() {
                 v.delay_cnt = 20;
                 if (i_spi_mode.read() == 1) {
                     vb_resp_data32 = 0;
+                    vb_resp_data32[31] = r.powerup_done.read();
                     vb_resp_data32[30] = r.ocr_hcs.read();
                     vb_resp_data32(23, 0) = r.ocr_vdd_window;
                 } else {
