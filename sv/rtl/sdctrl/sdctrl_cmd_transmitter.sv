@@ -29,17 +29,14 @@ module sdctrl_cmd_transmitter #(
     output logic o_cmd_dir,
     output logic o_cmd_cs,
     input logic i_spi_mode,                                 // SPI mode was selected by FW
-    input logic [15:0] i_watchdog,                          // Max number of sclk to receive start bit
+    input logic [3:0] i_err_code,
+    input logic i_wdog_trigger,                             // Event from wdog timer
     input logic i_cmd_set_low,                              // Set forcibly o_cmd output to LOW
     input logic i_req_valid,
     input logic [5:0] i_req_cmd,
     input logic [31:0] i_req_arg,
     input logic [2:0] i_req_rn,                             // R1, R3,R6 or R2
     output logic o_req_ready,
-    input logic [6:0] i_crc7,
-    output logic o_crc7_clear,
-    output logic o_crc7_next,
-    output logic o_crc7_dat,
     output logic o_resp_valid,
     output logic [5:0] o_resp_cmd,                          // Mirrored command
     output logic [31:0] o_resp_reg,                         // Card Status, OCR register (R3) or RCA register (R6)
@@ -47,15 +44,30 @@ module sdctrl_cmd_transmitter #(
     output logic [6:0] o_resp_crc7_calc,                    // Calculated CRC7
     output logic [14:0] o_resp_spistatus,                   // {R1,R2} response valid only in SPI mode
     input logic i_resp_ready,
-    input logic i_clear_cmderr,
-    output logic [3:0] o_cmdstate,
-    output logic [3:0] o_cmderr
+    output logic o_wdog_ena,
+    output logic o_err_valid,
+    output logic [3:0] o_err_setcode
 );
 
 import sdctrl_cfg_pkg::*;
 import sdctrl_cmd_transmitter_pkg::*;
 
+logic [6:0] wb_crc7;
+logic w_crc7_next;
+logic w_crc7_dat;
 sdctrl_cmd_transmitter_registers r, rin;
+
+sdctrl_crc7 #(
+    .async_reset(async_reset)
+) crc0 (
+    .i_clk(i_clk),
+    .i_nrst(i_nrst),
+    .i_clear(r.crc7_clear),
+    .i_next(w_crc7_next),
+    .i_dat(w_crc7_dat),
+    .o_crc7(wb_crc7)
+);
+
 
 always_comb
 begin: comb_proc
@@ -63,14 +75,12 @@ begin: comb_proc
     logic v_req_ready;
     logic [47:0] vb_cmdshift;
     logic [14:0] vb_resp_spistatus;
-    logic v_cmd_dir;
     logic v_crc7_dat;
     logic v_crc7_next;
 
     v_req_ready = 0;
     vb_cmdshift = 0;
     vb_resp_spistatus = 0;
-    v_cmd_dir = 0;
     v_crc7_dat = 0;
     v_crc7_next = 0;
 
@@ -78,9 +88,8 @@ begin: comb_proc
 
     vb_cmdshift = r.cmdshift;
     vb_resp_spistatus = r.resp_spistatus;
-    if (i_clear_cmderr == 1'b1) begin
-        v.cmderr = '0;
-    end
+    v.err_valid = 1'b0;
+    v.err_setcode = '0;
     if (i_resp_ready == 1'b1) begin
         v.resp_valid = 1'b0;
     end
@@ -95,10 +104,12 @@ begin: comb_proc
             end else begin
                 vb_cmdshift = '1;
             end
+            v.wdog_ena = 1'b0;
             v.cmd_cs = 1'b1;
+            v.cmd_dir = DIR_OUTPUT;
             v.crc7_clear = 1'b1;
             v_req_ready = 1'b1;
-            if (r.cmderr != CMDERR_NONE) begin
+            if (i_err_code != CMDERR_NONE) begin
                 v_req_ready = 1'b0;
             end else if (i_req_valid == 1'b1) begin
                 v.cmd_cs = 1'b0;
@@ -116,8 +127,8 @@ begin: comb_proc
                 v.cmdbitcnt = (r.cmdbitcnt - 1);
             end else begin
                 v.cmdstate = CMDSTATE_REQ_CRC7;
-                v.crc_calc = i_crc7;
-                vb_cmdshift[39: 32] = {i_crc7, 1'h1};
+                v.crc_calc = wb_crc7;
+                vb_cmdshift[39: 32] = {wb_crc7, 1'h1};
                 v.cmdbitcnt = 7'h06;
                 v.crc7_clear = 1'b1;
             end
@@ -130,15 +141,24 @@ begin: comb_proc
             end
         end else if (r.cmdstate == CMDSTATE_REQ_STOPBIT) begin
             v.cmdstate = CMDSTATE_RESP_WAIT;
-            v.watchdog = i_watchdog;
+            v.cmd_dir = DIR_INPUT;
+            v.wdog_ena = 1'b1;
             v.crc7_clear = 1'b0;
+        end else if (r.cmdstate == CMDSTATE_PAUSE) begin
+            v.crc7_clear = 1'b1;
+            v.cmd_cs = 1'b1;
+            v.cmd_dir = DIR_OUTPUT;
+            if ((|r.cmdbitcnt) == 1'b1) begin
+                v.cmdbitcnt = (r.cmdbitcnt - 1);
+            end else begin
+                v.cmdstate = CMDSTATE_IDLE;
+            end
         end
     end else if (i_sclk_posedge == 1'b1) begin
         // CMD Response (see page 140. '4.9 Responses'):
 
         if (r.cmdstate == CMDSTATE_RESP_WAIT) begin
             // [47] start bit; [135] for R2
-            v.watchdog = (r.watchdog - 1);
             if (i_cmd == 1'b0) begin
                 if (i_spi_mode == 1'b0) begin
                     v_crc7_next = 1'b1;
@@ -151,8 +171,10 @@ begin: comb_proc
                     v.resp_spistatus = '0;
                     v.regshift = '0;
                 end
-            end else if ((|r.watchdog) == 1'b0) begin
-                v.cmderr = CMDERR_NO_RESPONSE;
+            end else if (i_wdog_trigger == 1'b1) begin
+                v.wdog_ena = 1'b0;
+                v.err_valid = 1'b1;
+                v.err_setcode = CMDERR_NO_RESPONSE;
                 v.cmdstate = CMDSTATE_IDLE;
                 v.resp_valid = 1'b1;
             end
@@ -164,7 +186,8 @@ begin: comb_proc
                 v.cmdmirror = '0;
                 v.cmdbitcnt = 7'h05;
             end else begin
-                v.cmderr = CMDERR_WRONG_RESP_STARTBIT;
+                v.err_valid = 1'b1;
+                v.err_setcode = CMDERR_WRONG_RESP_STARTBIT;
                 v.cmdstate = CMDSTATE_IDLE;
                 v.resp_valid = 1'b1;
             end
@@ -190,7 +213,7 @@ begin: comb_proc
             if ((|r.cmdbitcnt) == 1'b1) begin
                 v.cmdbitcnt = (r.cmdbitcnt - 1);
             end else begin
-                v.crc_calc = i_crc7;
+                v.crc_calc = wb_crc7;
                 v.cmdbitcnt = 7'h06;
                 v.cmdstate = CMDSTATE_RESP_CRC7;
             end
@@ -200,7 +223,7 @@ begin: comb_proc
             if ((|r.cmdbitcnt) == 1'b1) begin
                 v.cmdbitcnt = (r.cmdbitcnt - 1);
             end else begin
-                v.crc_calc = i_crc7;
+                v.crc_calc = wb_crc7;
                 v.cmdbitcnt = 7'h06;
                 v.cmdstate = CMDSTATE_RESP_CRC7;
             end
@@ -215,7 +238,8 @@ begin: comb_proc
         end else if (r.cmdstate == CMDSTATE_RESP_STOPBIT) begin
             // [7:1] End bit
             if (i_cmd == 1'b0) begin
-                v.cmderr = CMDERR_WRONG_RESP_STOPBIT;
+                v.err_valid = 1'b1;
+                v.err_setcode = CMDERR_WRONG_RESP_STOPBIT;
             end
             v.cmdstate = CMDSTATE_PAUSE;
             v.cmdbitcnt = 7'h02;
@@ -233,6 +257,7 @@ begin: comb_proc
                     v.cmdstate = CMDSTATE_RESP_SPI_DATA;
                 end else begin
                     v.cmdstate = CMDSTATE_PAUSE;
+                    v.cmdbitcnt = 7'h02;
                     v.resp_valid = 1'b1;
                 end
             end
@@ -242,6 +267,7 @@ begin: comb_proc
                 v.cmdbitcnt = (r.cmdbitcnt - 1);
             end else begin
                 v.cmdstate = CMDSTATE_PAUSE;
+                v.cmdbitcnt = 7'h02;
                 v.resp_valid = 1'b1;
             end
         end else if (r.cmdstate == CMDSTATE_RESP_SPI_DATA) begin
@@ -250,15 +276,8 @@ begin: comb_proc
                 v.cmdbitcnt = (r.cmdbitcnt - 1);
             end else begin
                 v.cmdstate = CMDSTATE_PAUSE;
+                v.cmdbitcnt = 7'h02;
                 v.resp_valid = 1'b1;
-            end
-        end else if (r.cmdstate == CMDSTATE_PAUSE) begin
-            v.crc7_clear = 1'b1;
-            v.cmd_cs = 1'b1;
-            if ((|r.cmdbitcnt) == 1'b1) begin
-                v.cmdbitcnt = (r.cmdbitcnt - 1);
-            end else begin
-                v.cmdstate = CMDSTATE_IDLE;
             end
         end
     end
@@ -267,10 +286,8 @@ begin: comb_proc
 
     if ((r.cmdstate < CMDSTATE_RESP_WAIT)
             || (r.cmdstate == CMDSTATE_PAUSE)) begin
-        v_cmd_dir = DIR_OUTPUT;
         v_crc7_dat = r.cmdshift[39];
     end else begin
-        v_cmd_dir = DIR_INPUT;
         v_crc7_dat = i_cmd;
     end
 
@@ -278,21 +295,21 @@ begin: comb_proc
         v = sdctrl_cmd_transmitter_r_reset;
     end
 
+    w_crc7_next = v_crc7_next;
+    w_crc7_dat = v_crc7_dat;
     o_cmd = r.cmdshift[39];
-    o_cmd_dir = v_cmd_dir;
+    o_cmd_dir = r.cmd_dir;
     o_cmd_cs = r.cmd_cs;
     o_req_ready = v_req_ready;
-    o_crc7_clear = r.crc7_clear;
-    o_crc7_next = v_crc7_next;
-    o_crc7_dat = v_crc7_dat;
     o_resp_valid = r.resp_valid;
     o_resp_cmd = r.cmdmirror;
     o_resp_reg = r.regshift;
     o_resp_crc7_rx = r.crc_rx;
     o_resp_crc7_calc = r.crc_calc;
     o_resp_spistatus = r.resp_spistatus;
-    o_cmdstate = r.cmdstate;
-    o_cmderr = r.cmderr;
+    o_wdog_ena = r.wdog_ena;
+    o_err_valid = r.err_valid;
+    o_err_setcode = r.err_setcode;
 
     rin = v;
 end: comb_proc

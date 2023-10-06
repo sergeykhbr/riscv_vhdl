@@ -5,6 +5,14 @@ ${RTL_HOME}/sdctrl/sdctrl_crc7_pkg.sv
 ${RTL_HOME}/sdctrl/sdctrl_crc7.sv
 ${RTL_HOME}/sdctrl/sdctrl_crc16_pkg.sv
 ${RTL_HOME}/sdctrl/sdctrl_crc16.sv
+${RTL_HOME}/sdctrl/sdctrl_err_pkg.sv
+${RTL_HOME}/sdctrl/sdctrl_err.sv
+${RTL_HOME}/sdctrl/sdctrl_wdog_pkg.sv
+${RTL_HOME}/sdctrl/sdctrl_wdog.sv
+${RTL_HOME}/sdctrl/sdctrl_spimode_pkg.sv
+${RTL_HOME}/sdctrl/sdctrl_spimode.sv
+${RTL_HOME}/sdctrl/sdctrl_sdmode_pkg.sv
+${RTL_HOME}/sdctrl/sdctrl_sdmode.sv
 ${RTL_HOME}/sdctrl/sdctrl_cmd_transmitter_pkg.sv
 ${RTL_HOME}/sdctrl/sdctrl_cmd_transmitter.sv
 ${RTL_HOME}/sdctrl/sdctrl_cache_pkg.sv

@@ -13,31 +13,16 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 // 
-package sdctrl_pkg;
+package sdctrl_err_pkg;
 
-import types_amba_pkg::*;
-import types_pnp_pkg::*;
 import sdctrl_cfg_pkg::*;
 
-// SD controller modes:
-localparam bit [1:0] MODE_PRE_INIT = 2'h0;
-localparam bit [1:0] MODE_SPI = 2'h1;
-localparam bit [1:0] MODE_SD = 2'h2;
-
 typedef struct {
-    logic nrst_spimode;
-    logic nrst_sdmode;
-    logic [6:0] clkcnt;
-    logic cmd_set_low;
-    logic [1:0] mode;
-} sdctrl_registers;
+    logic [3:0] code;
+} sdctrl_err_registers;
 
-const sdctrl_registers sdctrl_r_reset = '{
-    1'b0,                               // nrst_spimode
-    1'b0,                               // nrst_sdmode
-    '0,                                 // clkcnt
-    1'b0,                               // cmd_set_low
-    MODE_PRE_INIT                       // mode
+const sdctrl_err_registers sdctrl_err_r_reset = '{
+    CMDERR_NONE                         // code
 };
 
-endpackage: sdctrl_pkg
+endpackage: sdctrl_err_pkg
