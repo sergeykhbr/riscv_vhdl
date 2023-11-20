@@ -44,14 +44,13 @@ VPATH = $(SRC_PATH)
 SOURCES = main \
 	trap \
 	crt \
-	uart \
-	spi \
-	sd_uefi
+	uart
 
 OBJ_FILES = $(addsuffix .o,$(SOURCES))
 EXECUTABLE = bootimage
 DUMPFILE = $(EXECUTABLE).dump
-HEXFILE = $(EXECUTABLE).hex
+HEXFILE_LO = $(EXECUTABLE)_lo.hex
+HEXFILE_HI = $(EXECUTABLE)_hi.hex
 LSTFILE = $(EXECUTABLE).lst
 
 all: boot
@@ -59,10 +58,10 @@ all: boot
 .PHONY: $(EXECUTABLE) $(DUMPFILE)
 
 
-boot: $(EXECUTABLE) $(DUMPFILE) $(HEXFILE)
-$(HEXFILE): $(EXECUTABLE)
-	echo elf2rawx $(addprefix $(ELF_DIR)/,$<) -h -f 32768 -l 8 -o $(addprefix $(ELF_DIR)/,$(EXECUTABLE).hex)
-	elf2rawx $(addprefix $(ELF_DIR)/,$<) -h -f 32768 -l 8 -o $(addprefix $(ELF_DIR)/,$(EXECUTABLE).hex)
+boot: $(EXECUTABLE) $(DUMPFILE) $(HEXFILE_HI)
+$(HEXFILE_HI): $(EXECUTABLE)
+	echo elf2rawx $(addprefix $(ELF_DIR)/,$<) -h -f 65536 -l 8 -o $(addprefix $(ELF_DIR)/,$(HEXFILE_HI)) -o $(addprefix $(ELF_DIR)/,$(HEXFILE_LO))
+	elf2rawx $(addprefix $(ELF_DIR)/,$<) -h -f 65536 -l 8 -o $(addprefix $(ELF_DIR)/,$(HEXFILE_HI)) -o $(addprefix $(ELF_DIR)/,$(HEXFILE_LO))
 
 $(DUMPFILE): $(EXECUTABLE)
 	echo $(OBJDUMP) --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.data $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)

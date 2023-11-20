@@ -48,7 +48,7 @@ int get_dips() {
 
 
 void copy_image() { 
-    uint64_t *fwrom = (uint64_t *)ADDR_BUS0_XSLV_FWIMAGE;
+//    uint64_t *fwrom = (uint64_t *)ADDR_BUS0_XSLV_FWIMAGE;
     uint64_t *sram = (uint64_t *)ADDR_BUS0_XSLV_SRAM;
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
 
@@ -59,7 +59,8 @@ void copy_image() {
         qspi2 = get_dev_bar(pnp, VENDOR_GNSSSENSOR, GNSSSENSOR_SPI_FLASH);
         if (qspi2 != ~0ull) {
             print_uart("Select . .QSPI2\r\n", 17);
-            if (run_from_sdcard() == -1) {
+            //if (run_from_sdcard() == -1)
+            {
                 print_uart("QSPI2. . .FAILED\r\n", 18);
                 qspi2 = ~0ull;
             }
@@ -69,6 +70,7 @@ void copy_image() {
     if (qspi2 != ~0ull) {
         // Copy BSL from SD-card
     } else if (pnp->fwid == 0) {
+#if 0
         // Check if SRAM already initialized in RTL simulation, then skip copying
         uint64_t *dst = (uint64_t *)sram;
         uint64_t *src = (uint64_t *)fwrom;
@@ -85,6 +87,7 @@ void copy_image() {
             print_uart("Coping . .FWIMAGE\r\n", 19);
             memcpy(sram, fwrom, FW_IMAGE_SIZE_BYTES);
         }
+#endif
     }
     // Write Firmware ID to avoid copy image after soft-reset.
     pnp->fwid = 0x20211123;
