@@ -26,16 +26,11 @@ module sdctrl_regs #(
     output types_pnp_pkg::dev_config_type o_pcfg,           // APB sd-controller configuration registers descriptor
     input types_amba_pkg::apb_in_type i_apbi,               // APB Slave to Bridge interface
     output types_amba_pkg::apb_out_type o_apbo,             // APB Bridge to Slave interface
-    input logic i_sd_cmd,
-    input logic i_sd_dat0,
-    input logic i_sd_dat1,
-    input logic i_sd_dat2,
-    input logic i_sd_dat3,
     output logic o_sck,                                     // SD-card clock usually upto 50 MHz
     output logic o_sck_posedge,                             // Strob just before positive edge
     output logic o_sck_negedge,                             // Strob just before negative edge
     output logic [15:0] o_watchdog,                         // Number of sclk to detect no response
-    output logic o_clear_cmderr,                            // Clear cmderr from FW
+    output logic o_err_clear,                               // Clear err from FW
     // Configuration parameters:
     output logic o_spi_mode,                                // SPI mode was selected from FW
     output logic o_pcie_12V_support,                        // 0b: not asking 1.2V support
@@ -44,10 +39,13 @@ module sdctrl_regs #(
     output logic [7:0] o_check_pattern,                     // Check pattern in CMD8 request
     input logic i_400khz_ena,                               // Default frequency enabled in identification mode
     input logic [2:0] i_sdtype,                             // Ver1X or Ver2X standard or Ver2X high/extended capacity
-    input logic [3:0] i_sdstate,                            // Card state:0=idle;1=ready;2=ident;3=stby,... see spec
     // Debug command state machine
-    input logic [3:0] i_cmd_state,
-    input logic [3:0] i_cmd_err,
+    input logic i_sd_cmd,
+    input logic i_sd_dat0,
+    input logic i_sd_dat1,
+    input logic i_sd_dat2,
+    input logic i_sd_dat3,
+    input logic [3:0] i_err_code,
     input logic i_cmd_req_valid,
     input logic [5:0] i_cmd_req_cmd,
     input logic i_cmd_resp_valid,
@@ -101,7 +99,7 @@ begin: comb_proc
 
     v = r;
 
-    v.clear_cmderr = 1'b0;
+    v.err_clear = 1'b0;
     if (i_cmd_req_valid == 1'b1) begin
         v.last_req_cmd = i_cmd_req_cmd;
     end
@@ -144,7 +142,7 @@ begin: comb_proc
         vb_rdata[8] = i_sd_cmd;
         if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
             v.sclk_ena = wb_req_wdata[0];
-            v.clear_cmderr = wb_req_wdata[1];
+            v.err_clear = wb_req_wdata[1];
             v.spi_mode = wb_req_wdata[3];
         end
     end
@@ -155,9 +153,7 @@ begin: comb_proc
         end
     end
     10'h004: begin                                          // {0x10, 'RO', 'status', 'state machines status'}
-        vb_rdata[3: 0] = i_cmd_err;                         // cmd transmitter error flag
-        vb_rdata[7: 4] = i_cmd_state;                       // cmd transmitter state
-        vb_rdata[11: 8] = i_sdstate;                        // card state
+        vb_rdata[3: 0] = i_err_code;                        // the latest error code
         vb_rdata[14: 12] = i_sdtype;                        // detected card type
     end
     10'h005: begin                                          // {0x14, 'RO', 'last_cmd_response', 'Last CMD response data'}
@@ -215,7 +211,7 @@ begin: comb_proc
     o_sck_posedge = v_posedge;
     o_sck_negedge = v_negedge;
     o_watchdog = r.wdog;
-    o_clear_cmderr = r.clear_cmderr;
+    o_err_clear = r.err_clear;
 
     rin = v;
 end: comb_proc

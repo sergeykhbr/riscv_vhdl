@@ -140,6 +140,7 @@ begin: comb_proc
                 v.delay_cnt = 32'h00000014;
                 if (i_spi_mode == 1'b1) begin
                     vb_resp_data32 = '0;
+                    vb_resp_data32[31] = r.powerup_done;
                     vb_resp_data32[30] = r.ocr_hcs;
                     vb_resp_data32[23: 0] = r.ocr_vdd_window;
                 end else begin

@@ -50,9 +50,11 @@ typedef struct {
     logic [6:0] cmdbitcnt;
     logic crc7_clear;
     logic [3:0] cmdstate;
-    logic [3:0] cmderr;
+    logic err_valid;
+    logic [3:0] err_setcode;
     logic cmd_cs;
-    logic [15:0] watchdog;
+    logic cmd_dir;
+    logic wdog_ena;
 } sdctrl_cmd_transmitter_registers;
 
 const sdctrl_cmd_transmitter_registers sdctrl_cmd_transmitter_r_reset = '{
@@ -71,9 +73,11 @@ const sdctrl_cmd_transmitter_registers sdctrl_cmd_transmitter_r_reset = '{
     '0,                                 // cmdbitcnt
     1'h1,                               // crc7_clear
     CMDSTATE_IDLE,                      // cmdstate
-    CMDERR_NONE,                        // cmderr
+    1'b0,                               // err_valid
+    CMDERR_NONE,                        // err_setcode
     1'h1,                               // cmd_cs
-    '0                                  // watchdog
+    1'h1,                               // cmd_dir
+    1'b0                                // wdog_ena
 };
 
 endpackage: sdctrl_cmd_transmitter_pkg

@@ -54,11 +54,14 @@ sdctrl::sdctrl(sc_module_name name,
     async_reset_ = async_reset;
     xslv0 = 0;
     regs0 = 0;
-    crccmd0 = 0;
+    err0 = 0;
+    wdog0 = 0;
     crcdat0 = 0;
     crcdat1 = 0;
     crcdat2 = 0;
     crcdat3 = 0;
+    spimode0 = 0;
+    sdmode0 = 0;
     cmdtrx0 = 0;
     cache0 = 0;
 
@@ -78,7 +81,7 @@ sdctrl::sdctrl(sc_module_name name,
     xslv0->o_req_wdata(wb_mem_req_wdata);
     xslv0->o_req_wstrb(wb_mem_req_wstrb);
     xslv0->o_req_last(w_mem_req_last);
-    xslv0->i_req_ready(w_mem_req_ready);
+    xslv0->i_req_ready(w_cache_req_ready);
     xslv0->i_resp_valid(w_cache_resp_valid);
     xslv0->i_resp_rdata(wb_cache_resp_rdata);
     xslv0->i_resp_err(w_cache_resp_err);
@@ -91,28 +94,26 @@ sdctrl::sdctrl(sc_module_name name,
     regs0->o_pcfg(o_pcfg);
     regs0->i_apbi(i_apbi);
     regs0->o_apbo(o_apbo);
-    regs0->i_sd_cmd(i_cmd);
-    regs0->i_sd_dat0(i_dat0);
-    regs0->i_sd_dat1(i_dat1);
-    regs0->i_sd_dat2(i_dat2);
-    regs0->i_sd_dat3(i_cd_dat3);
     regs0->o_sck(o_sclk);
     regs0->o_sck_posedge(w_regs_sck_posedge);
     regs0->o_sck_negedge(w_regs_sck);
     regs0->o_watchdog(wb_regs_watchdog);
-    regs0->o_clear_cmderr(w_regs_clear_cmderr);
+    regs0->o_err_clear(w_regs_err_clear);
     regs0->o_spi_mode(w_regs_spi_mode);
     regs0->o_pcie_12V_support(w_regs_pcie_12V_support);
     regs0->o_pcie_available(w_regs_pcie_available);
     regs0->o_voltage_supply(wb_regs_voltage_supply);
     regs0->o_check_pattern(wb_regs_check_pattern);
     regs0->i_400khz_ena(w_400kHz_ena);
-    regs0->i_sdtype(r.sdtype);
-    regs0->i_sdstate(r.sdstate);
-    regs0->i_cmd_state(wb_trx_cmdstate);
-    regs0->i_cmd_err(wb_trx_cmderr);
-    regs0->i_cmd_req_valid(r.cmd_req_valid);
-    regs0->i_cmd_req_cmd(r.cmd_req_cmd);
+    regs0->i_sdtype(wb_sdtype);
+    regs0->i_sd_cmd(i_cmd);
+    regs0->i_sd_dat0(i_dat0);
+    regs0->i_sd_dat1(i_dat1);
+    regs0->i_sd_dat2(i_dat2);
+    regs0->i_sd_dat3(i_cd_dat3);
+    regs0->i_err_code(wb_err_code);
+    regs0->i_cmd_req_valid(w_cmd_req_valid);
+    regs0->i_cmd_req_cmd(wb_cmd_req_cmd);
     regs0->i_cmd_resp_valid(w_cmd_resp_valid);
     regs0->i_cmd_resp_cmd(wb_cmd_resp_cmd);
     regs0->i_cmd_resp_reg(wb_cmd_resp_reg);
@@ -120,19 +121,28 @@ sdctrl::sdctrl(sc_module_name name,
     regs0->i_cmd_resp_crc7_calc(wb_cmd_resp_crc7_calc);
 
 
-    crccmd0 = new sdctrl_crc7("crccmd0", async_reset);
-    crccmd0->i_clk(i_clk);
-    crccmd0->i_nrst(i_nrst);
-    crccmd0->i_clear(w_crc7_clear);
-    crccmd0->i_next(w_crc7_next);
-    crccmd0->i_dat(w_crc7_dat);
-    crccmd0->o_crc7(wb_crc7);
+    wdog0 = new sdctrl_wdog("wdog0", async_reset);
+    wdog0->i_clk(i_clk);
+    wdog0->i_nrst(i_nrst);
+    wdog0->i_ena(w_wdog_ena);
+    wdog0->i_period(wb_regs_watchdog);
+    wdog0->o_trigger(w_wdog_trigger);
+
+
+    err0 = new sdctrl_err("err0", async_reset);
+    err0->i_clk(i_clk);
+    err0->i_nrst(i_nrst);
+    err0->i_err_valid(w_err_valid);
+    err0->i_err_code(wb_err_setcode);
+    err0->i_err_clear(w_err_clear);
+    err0->o_err_code(wb_err_code);
+    err0->o_err_pending(w_err_pending);
 
 
     crcdat0 = new sdctrl_crc16("crcdat0", async_reset);
     crcdat0->i_clk(i_clk);
     crcdat0->i_nrst(i_nrst);
-    crcdat0->i_clear(r.crc16_clear);
+    crcdat0->i_clear(w_crc16_clear);
     crcdat0->i_next(w_crc16_next);
     crcdat0->i_dat(i_dat0);
     crcdat0->o_crc15(wb_crc16_0);
@@ -141,7 +151,7 @@ sdctrl::sdctrl(sc_module_name name,
     crcdat1 = new sdctrl_crc16("crcdat1", async_reset);
     crcdat1->i_clk(i_clk);
     crcdat1->i_nrst(i_nrst);
-    crcdat1->i_clear(r.crc16_clear);
+    crcdat1->i_clear(w_crc16_clear);
     crcdat1->i_next(w_crc16_next);
     crcdat1->i_dat(i_dat1);
     crcdat1->o_crc15(wb_crc16_1);
@@ -150,7 +160,7 @@ sdctrl::sdctrl(sc_module_name name,
     crcdat2 = new sdctrl_crc16("crcdat2", async_reset);
     crcdat2->i_clk(i_clk);
     crcdat2->i_nrst(i_nrst);
-    crcdat2->i_clear(r.crc16_clear);
+    crcdat2->i_clear(w_crc16_clear);
     crcdat2->i_next(w_crc16_next);
     crcdat2->i_dat(i_dat2);
     crcdat2->o_crc15(wb_crc16_2);
@@ -159,10 +169,104 @@ sdctrl::sdctrl(sc_module_name name,
     crcdat3 = new sdctrl_crc16("crcdat3", async_reset);
     crcdat3->i_clk(i_clk);
     crcdat3->i_nrst(i_nrst);
-    crcdat3->i_clear(r.crc16_clear);
+    crcdat3->i_clear(w_crc16_clear);
     crcdat3->i_next(w_crc16_next);
     crcdat3->i_dat(i_cd_dat3);
     crcdat3->o_crc15(wb_crc16_3);
+
+
+    spimode0 = new sdctrl_spimode("spimode0", async_reset);
+    spimode0->i_clk(i_clk);
+    spimode0->i_nrst(r.nrst_spimode);
+    spimode0->i_posedge(w_regs_sck_posedge);
+    spimode0->i_miso(i_dat0);
+    spimode0->o_mosi(w_spi_dat);
+    spimode0->o_csn(w_spi_dat_csn);
+    spimode0->i_detected(i_detected);
+    spimode0->i_protect(i_protect);
+    spimode0->i_cfg_pcie_12V_support(w_regs_pcie_12V_support);
+    spimode0->i_cfg_pcie_available(w_regs_pcie_available);
+    spimode0->i_cfg_voltage_supply(wb_regs_voltage_supply);
+    spimode0->i_cfg_check_pattern(wb_regs_check_pattern);
+    spimode0->i_cmd_req_ready(w_cmd_req_ready);
+    spimode0->o_cmd_req_valid(w_spi_cmd_req_valid);
+    spimode0->o_cmd_req_cmd(wb_spi_cmd_req_cmd);
+    spimode0->o_cmd_req_arg(wb_spi_cmd_req_arg);
+    spimode0->o_cmd_req_rn(wb_spi_cmd_req_rn);
+    spimode0->i_cmd_resp_valid(w_cmd_resp_valid);
+    spimode0->i_cmd_resp_r1r2(wb_cmd_resp_spistatus);
+    spimode0->i_cmd_resp_arg32(wb_cmd_resp_reg);
+    spimode0->o_data_req_ready(w_spi_req_sdmem_ready);
+    spimode0->i_data_req_valid(w_req_sdmem_valid);
+    spimode0->i_data_req_write(w_req_sdmem_write);
+    spimode0->i_data_req_addr(wb_req_sdmem_addr);
+    spimode0->i_data_req_wdata(wb_req_sdmem_wdata);
+    spimode0->o_data_resp_valid(w_spi_resp_sdmem_valid);
+    spimode0->o_data_resp_rdata(wb_spi_resp_sdmem_data);
+    spimode0->i_crc16_0(wb_crc16_0);
+    spimode0->o_crc16_clear(w_spi_crc16_clear);
+    spimode0->o_crc16_next(w_spi_crc16_next);
+    spimode0->o_wdog_ena(w_spi_wdog_ena);
+    spimode0->i_wdog_trigger(w_wdog_trigger);
+    spimode0->i_err_code(wb_err_code);
+    spimode0->o_err_valid(w_spi_err_valid);
+    spimode0->o_err_clear(w_spi_err_clear);
+    spimode0->o_err_code(wb_spi_err_setcode);
+    spimode0->o_400khz_ena(w_spi_400kHz_ena);
+    spimode0->o_sdtype(wb_spi_sdtype);
+
+
+    sdmode0 = new sdctrl_sdmode("sdmode0", async_reset);
+    sdmode0->i_clk(i_clk);
+    sdmode0->i_nrst(r.nrst_sdmode);
+    sdmode0->i_posedge(w_regs_sck_posedge);
+    sdmode0->i_dat0(i_dat0);
+    sdmode0->o_dat0(w_sd_dat0);
+    sdmode0->o_dat0_dir(w_sd_dat0_dir);
+    sdmode0->i_dat1(i_dat1);
+    sdmode0->o_dat1(w_sd_dat1);
+    sdmode0->o_dat1_dir(w_sd_dat1_dir);
+    sdmode0->i_dat2(i_dat2);
+    sdmode0->o_dat2(w_sd_dat2);
+    sdmode0->o_dat2_dir(w_sd_dat2_dir);
+    sdmode0->i_cd_dat3(i_cd_dat3);
+    sdmode0->o_dat3(w_sd_dat3);
+    sdmode0->o_dat3_dir(w_sd_dat3_dir);
+    sdmode0->i_detected(i_detected);
+    sdmode0->i_protect(i_protect);
+    sdmode0->i_cfg_pcie_12V_support(w_regs_pcie_12V_support);
+    sdmode0->i_cfg_pcie_available(w_regs_pcie_available);
+    sdmode0->i_cfg_voltage_supply(wb_regs_voltage_supply);
+    sdmode0->i_cfg_check_pattern(wb_regs_check_pattern);
+    sdmode0->i_cmd_req_ready(w_cmd_req_ready);
+    sdmode0->o_cmd_req_valid(w_sd_cmd_req_valid);
+    sdmode0->o_cmd_req_cmd(wb_sd_cmd_req_cmd);
+    sdmode0->o_cmd_req_arg(wb_sd_cmd_req_arg);
+    sdmode0->o_cmd_req_rn(wb_sd_cmd_req_rn);
+    sdmode0->i_cmd_resp_valid(w_cmd_resp_valid);
+    sdmode0->i_cmd_resp_cmd(wb_cmd_resp_cmd);
+    sdmode0->i_cmd_resp_arg32(wb_cmd_resp_reg);
+    sdmode0->o_data_req_ready(w_sd_req_sdmem_ready);
+    sdmode0->i_data_req_valid(w_req_sdmem_valid);
+    sdmode0->i_data_req_write(w_req_sdmem_write);
+    sdmode0->i_data_req_addr(wb_req_sdmem_addr);
+    sdmode0->i_data_req_wdata(wb_req_sdmem_wdata);
+    sdmode0->o_data_resp_valid(w_sd_resp_sdmem_valid);
+    sdmode0->o_data_resp_rdata(wb_sd_resp_sdmem_data);
+    sdmode0->i_crc16_0(wb_crc16_0);
+    sdmode0->i_crc16_1(wb_crc16_1);
+    sdmode0->i_crc16_2(wb_crc16_2);
+    sdmode0->i_crc16_3(wb_crc16_3);
+    sdmode0->o_crc16_clear(w_sd_crc16_clear);
+    sdmode0->o_crc16_next(w_sd_crc16_next);
+    sdmode0->o_wdog_ena(w_sd_wdog_ena);
+    sdmode0->i_wdog_trigger(w_wdog_trigger);
+    sdmode0->i_err_code(wb_err_code);
+    sdmode0->o_err_valid(w_sd_err_valid);
+    sdmode0->o_err_clear(w_sd_err_clear);
+    sdmode0->o_err_code(wb_sd_err_setcode);
+    sdmode0->o_400khz_ena(w_sd_400kHz_ena);
+    sdmode0->o_sdtype(wb_sd_sdtype);
 
 
     cmdtrx0 = new sdctrl_cmd_transmitter("cmdtrx0", async_reset);
@@ -171,21 +275,18 @@ sdctrl::sdctrl(sc_module_name name,
     cmdtrx0->i_sclk_posedge(w_regs_sck_posedge);
     cmdtrx0->i_sclk_negedge(w_regs_sck);
     cmdtrx0->i_cmd(w_cmd_in);
-    cmdtrx0->o_cmd(o_cmd);
+    cmdtrx0->o_cmd(w_trx_cmd);
     cmdtrx0->o_cmd_dir(w_trx_cmd_dir);
-    cmdtrx0->o_cmd_cs(w_trx_cmd_cs);
+    cmdtrx0->o_cmd_cs(w_trx_cmd_csn);
     cmdtrx0->i_spi_mode(w_regs_spi_mode);
-    cmdtrx0->i_watchdog(wb_regs_watchdog);
+    cmdtrx0->i_err_code(wb_err_code);
+    cmdtrx0->i_wdog_trigger(w_wdog_trigger);
     cmdtrx0->i_cmd_set_low(r.cmd_set_low);
-    cmdtrx0->i_req_valid(r.cmd_req_valid);
-    cmdtrx0->i_req_cmd(r.cmd_req_cmd);
-    cmdtrx0->i_req_arg(r.cmd_req_arg);
-    cmdtrx0->i_req_rn(r.cmd_req_rn);
+    cmdtrx0->i_req_valid(w_cmd_req_valid);
+    cmdtrx0->i_req_cmd(wb_cmd_req_cmd);
+    cmdtrx0->i_req_arg(wb_cmd_req_arg);
+    cmdtrx0->i_req_rn(wb_cmd_req_rn);
     cmdtrx0->o_req_ready(w_cmd_req_ready);
-    cmdtrx0->i_crc7(wb_crc7);
-    cmdtrx0->o_crc7_clear(w_crc7_clear);
-    cmdtrx0->o_crc7_next(w_crc7_next);
-    cmdtrx0->o_crc7_dat(w_crc7_dat);
     cmdtrx0->o_resp_valid(w_cmd_resp_valid);
     cmdtrx0->o_resp_cmd(wb_cmd_resp_cmd);
     cmdtrx0->o_resp_reg(wb_cmd_resp_reg);
@@ -193,19 +294,19 @@ sdctrl::sdctrl(sc_module_name name,
     cmdtrx0->o_resp_crc7_calc(wb_cmd_resp_crc7_calc);
     cmdtrx0->o_resp_spistatus(wb_cmd_resp_spistatus);
     cmdtrx0->i_resp_ready(w_cmd_resp_ready);
-    cmdtrx0->i_clear_cmderr(w_clear_cmderr);
-    cmdtrx0->o_cmdstate(wb_trx_cmdstate);
-    cmdtrx0->o_cmderr(wb_trx_cmderr);
+    cmdtrx0->o_wdog_ena(w_trx_wdog_ena);
+    cmdtrx0->o_err_valid(w_trx_err_valid);
+    cmdtrx0->o_err_setcode(wb_trx_err_setcode);
 
 
     cache0 = new sdctrl_cache("cache0", async_reset);
     cache0->i_clk(i_clk);
     cache0->i_nrst(i_nrst);
-    cache0->i_req_valid(r.cache_req_valid);
-    cache0->i_req_write(r.cache_req_write);
-    cache0->i_req_addr(r.cache_req_addr);
-    cache0->i_req_wdata(r.cache_req_wdata);
-    cache0->i_req_wstrb(r.cache_req_wstrb);
+    cache0->i_req_valid(w_mem_req_valid);
+    cache0->i_req_write(w_mem_req_write);
+    cache0->i_req_addr(wb_mem_req_addr);
+    cache0->i_req_wdata(wb_mem_req_wdata);
+    cache0->i_req_wstrb(wb_mem_req_wstrb);
     cache0->o_req_ready(w_cache_req_ready);
     cache0->o_resp_valid(w_cache_resp_valid);
     cache0->o_resp_data(wb_cache_resp_rdata);
@@ -216,9 +317,9 @@ sdctrl::sdctrl(sc_module_name name,
     cache0->o_req_mem_write(w_req_sdmem_write);
     cache0->o_req_mem_addr(wb_req_sdmem_addr);
     cache0->o_req_mem_data(wb_req_sdmem_wdata);
-    cache0->i_mem_data_valid(r.sdmem_valid);
-    cache0->i_mem_data(r.sdmem_data);
-    cache0->i_mem_fault(r.sdmem_err);
+    cache0->i_mem_data_valid(w_resp_sdmem_valid);
+    cache0->i_mem_data(wb_resp_sdmem_data);
+    cache0->i_mem_fault(w_err_pending);
     cache0->i_flush_valid(w_regs_flush_valid);
     cache0->o_flush_end(w_cache_flush_end);
 
@@ -239,7 +340,7 @@ sdctrl::sdctrl(sc_module_name name,
     sensitive << i_protect;
     sensitive << w_regs_sck_posedge;
     sensitive << w_regs_sck;
-    sensitive << w_regs_clear_cmderr;
+    sensitive << w_regs_err_clear;
     sensitive << wb_regs_watchdog;
     sensitive << w_regs_spi_mode;
     sensitive << w_regs_pcie_12V_support;
@@ -253,21 +354,23 @@ sdctrl::sdctrl(sc_module_name name,
     sensitive << wb_mem_req_wdata;
     sensitive << wb_mem_req_wstrb;
     sensitive << w_mem_req_last;
-    sensitive << w_mem_req_ready;
     sensitive << w_cache_req_ready;
     sensitive << w_cache_resp_valid;
     sensitive << wb_cache_resp_rdata;
     sensitive << w_cache_resp_err;
     sensitive << w_cache_resp_ready;
-    sensitive << w_req_sdmem_ready;
     sensitive << w_req_sdmem_valid;
     sensitive << w_req_sdmem_write;
     sensitive << wb_req_sdmem_addr;
     sensitive << wb_req_sdmem_wdata;
     sensitive << w_regs_flush_valid;
     sensitive << w_cache_flush_end;
+    sensitive << w_trx_cmd;
     sensitive << w_trx_cmd_dir;
-    sensitive << w_trx_cmd_cs;
+    sensitive << w_trx_cmd_csn;
+    sensitive << w_trx_wdog_ena;
+    sensitive << w_trx_err_valid;
+    sensitive << wb_trx_err_setcode;
     sensitive << w_cmd_in;
     sensitive << w_cmd_req_ready;
     sensitive << w_cmd_resp_valid;
@@ -277,56 +380,73 @@ sdctrl::sdctrl(sc_module_name name,
     sensitive << wb_cmd_resp_crc7_calc;
     sensitive << wb_cmd_resp_spistatus;
     sensitive << w_cmd_resp_ready;
-    sensitive << wb_trx_cmdstate;
-    sensitive << wb_trx_cmderr;
-    sensitive << w_clear_cmderr;
-    sensitive << w_400kHz_ena;
-    sensitive << w_crc7_clear;
-    sensitive << w_crc7_next;
-    sensitive << w_crc7_dat;
-    sensitive << wb_crc7;
-    sensitive << w_crc16_next;
     sensitive << wb_crc16_0;
     sensitive << wb_crc16_1;
     sensitive << wb_crc16_2;
     sensitive << wb_crc16_3;
+    sensitive << w_wdog_trigger;
+    sensitive << wb_err_code;
+    sensitive << w_err_pending;
+    sensitive << w_spi_dat;
+    sensitive << w_spi_dat_csn;
+    sensitive << w_spi_cmd_req_valid;
+    sensitive << wb_spi_cmd_req_cmd;
+    sensitive << wb_spi_cmd_req_arg;
+    sensitive << wb_spi_cmd_req_rn;
+    sensitive << w_spi_req_sdmem_ready;
+    sensitive << w_spi_resp_sdmem_valid;
+    sensitive << wb_spi_resp_sdmem_data;
+    sensitive << w_spi_err_valid;
+    sensitive << w_spi_err_clear;
+    sensitive << wb_spi_err_setcode;
+    sensitive << w_spi_400kHz_ena;
+    sensitive << wb_spi_sdtype;
+    sensitive << w_spi_wdog_ena;
+    sensitive << w_spi_crc16_clear;
+    sensitive << w_spi_crc16_next;
+    sensitive << w_sd_dat0;
+    sensitive << w_sd_dat0_dir;
+    sensitive << w_sd_dat1;
+    sensitive << w_sd_dat1_dir;
+    sensitive << w_sd_dat2;
+    sensitive << w_sd_dat2_dir;
+    sensitive << w_sd_dat3;
+    sensitive << w_sd_dat3_dir;
+    sensitive << w_sd_cmd_req_valid;
+    sensitive << wb_sd_cmd_req_cmd;
+    sensitive << wb_sd_cmd_req_arg;
+    sensitive << wb_sd_cmd_req_rn;
+    sensitive << w_sd_req_sdmem_ready;
+    sensitive << w_sd_resp_sdmem_valid;
+    sensitive << wb_sd_resp_sdmem_data;
+    sensitive << w_sd_err_valid;
+    sensitive << w_sd_err_clear;
+    sensitive << wb_sd_err_setcode;
+    sensitive << w_sd_400kHz_ena;
+    sensitive << wb_sd_sdtype;
+    sensitive << w_sd_wdog_ena;
+    sensitive << w_sd_crc16_clear;
+    sensitive << w_sd_crc16_next;
+    sensitive << w_cmd_req_valid;
+    sensitive << wb_cmd_req_cmd;
+    sensitive << wb_cmd_req_arg;
+    sensitive << wb_cmd_req_rn;
+    sensitive << w_req_sdmem_ready;
+    sensitive << w_resp_sdmem_valid;
+    sensitive << wb_resp_sdmem_data;
+    sensitive << w_err_valid;
+    sensitive << w_err_clear;
+    sensitive << wb_err_setcode;
+    sensitive << w_400kHz_ena;
+    sensitive << wb_sdtype;
+    sensitive << w_wdog_ena;
+    sensitive << w_crc16_clear;
+    sensitive << w_crc16_next;
+    sensitive << r.nrst_spimode;
+    sensitive << r.nrst_sdmode;
     sensitive << r.clkcnt;
     sensitive << r.cmd_set_low;
-    sensitive << r.cmd_req_valid;
-    sensitive << r.cmd_req_cmd;
-    sensitive << r.cmd_req_arg;
-    sensitive << r.cmd_req_rn;
-    sensitive << r.cmd_resp_r1;
-    sensitive << r.cmd_resp_reg;
-    sensitive << r.cmd_resp_spistatus;
-    sensitive << r.cache_req_valid;
-    sensitive << r.cache_req_addr;
-    sensitive << r.cache_req_write;
-    sensitive << r.cache_req_wdata;
-    sensitive << r.cache_req_wstrb;
-    sensitive << r.sdmem_addr;
-    sensitive << r.sdmem_data;
-    sensitive << r.sdmem_valid;
-    sensitive << r.sdmem_err;
-    sensitive << r.crc16_clear;
-    sensitive << r.crc16_calc0;
-    sensitive << r.crc16_rx0;
-    sensitive << r.dat;
-    sensitive << r.dat_dir;
-    sensitive << r.dat3_dir;
-    sensitive << r.dat_tran;
-    sensitive << r.sdstate;
-    sensitive << r.initstate;
-    sensitive << r.readystate;
-    sensitive << r.identstate;
-    sensitive << r.spidatastate;
-    sensitive << r.wait_cmd_resp;
-    sensitive << r.sdtype;
-    sensitive << r.HCS;
-    sensitive << r.S18;
-    sensitive << r.RCA;
-    sensitive << r.OCR_VoltageWindow;
-    sensitive << r.bitcnt;
+    sensitive << r.mode;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -340,8 +460,11 @@ sdctrl::~sdctrl() {
     if (regs0) {
         delete regs0;
     }
-    if (crccmd0) {
-        delete crccmd0;
+    if (err0) {
+        delete err0;
+    }
+    if (wdog0) {
+        delete wdog0;
     }
     if (crcdat0) {
         delete crcdat0;
@@ -354,6 +477,12 @@ sdctrl::~sdctrl() {
     }
     if (crcdat3) {
         delete crcdat3;
+    }
+    if (spimode0) {
+        delete spimode0;
+    }
+    if (sdmode0) {
+        delete sdmode0;
     }
     if (cmdtrx0) {
         delete cmdtrx0;
@@ -392,43 +521,11 @@ void sdctrl::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_cd_dat3_dir, o_cd_dat3_dir.name());
         sc_trace(o_vcd, i_detected, i_detected.name());
         sc_trace(o_vcd, i_protect, i_protect.name());
+        sc_trace(o_vcd, r.nrst_spimode, pn + ".r_nrst_spimode");
+        sc_trace(o_vcd, r.nrst_sdmode, pn + ".r_nrst_sdmode");
         sc_trace(o_vcd, r.clkcnt, pn + ".r_clkcnt");
         sc_trace(o_vcd, r.cmd_set_low, pn + ".r_cmd_set_low");
-        sc_trace(o_vcd, r.cmd_req_valid, pn + ".r_cmd_req_valid");
-        sc_trace(o_vcd, r.cmd_req_cmd, pn + ".r_cmd_req_cmd");
-        sc_trace(o_vcd, r.cmd_req_arg, pn + ".r_cmd_req_arg");
-        sc_trace(o_vcd, r.cmd_req_rn, pn + ".r_cmd_req_rn");
-        sc_trace(o_vcd, r.cmd_resp_r1, pn + ".r_cmd_resp_r1");
-        sc_trace(o_vcd, r.cmd_resp_reg, pn + ".r_cmd_resp_reg");
-        sc_trace(o_vcd, r.cmd_resp_spistatus, pn + ".r_cmd_resp_spistatus");
-        sc_trace(o_vcd, r.cache_req_valid, pn + ".r_cache_req_valid");
-        sc_trace(o_vcd, r.cache_req_addr, pn + ".r_cache_req_addr");
-        sc_trace(o_vcd, r.cache_req_write, pn + ".r_cache_req_write");
-        sc_trace(o_vcd, r.cache_req_wdata, pn + ".r_cache_req_wdata");
-        sc_trace(o_vcd, r.cache_req_wstrb, pn + ".r_cache_req_wstrb");
-        sc_trace(o_vcd, r.sdmem_addr, pn + ".r_sdmem_addr");
-        sc_trace(o_vcd, r.sdmem_data, pn + ".r_sdmem_data");
-        sc_trace(o_vcd, r.sdmem_valid, pn + ".r_sdmem_valid");
-        sc_trace(o_vcd, r.sdmem_err, pn + ".r_sdmem_err");
-        sc_trace(o_vcd, r.crc16_clear, pn + ".r_crc16_clear");
-        sc_trace(o_vcd, r.crc16_calc0, pn + ".r_crc16_calc0");
-        sc_trace(o_vcd, r.crc16_rx0, pn + ".r_crc16_rx0");
-        sc_trace(o_vcd, r.dat, pn + ".r_dat");
-        sc_trace(o_vcd, r.dat_dir, pn + ".r_dat_dir");
-        sc_trace(o_vcd, r.dat3_dir, pn + ".r_dat3_dir");
-        sc_trace(o_vcd, r.dat_tran, pn + ".r_dat_tran");
-        sc_trace(o_vcd, r.sdstate, pn + ".r_sdstate");
-        sc_trace(o_vcd, r.initstate, pn + ".r_initstate");
-        sc_trace(o_vcd, r.readystate, pn + ".r_readystate");
-        sc_trace(o_vcd, r.identstate, pn + ".r_identstate");
-        sc_trace(o_vcd, r.spidatastate, pn + ".r_spidatastate");
-        sc_trace(o_vcd, r.wait_cmd_resp, pn + ".r_wait_cmd_resp");
-        sc_trace(o_vcd, r.sdtype, pn + ".r_sdtype");
-        sc_trace(o_vcd, r.HCS, pn + ".r_HCS");
-        sc_trace(o_vcd, r.S18, pn + ".r_S18");
-        sc_trace(o_vcd, r.RCA, pn + ".r_RCA");
-        sc_trace(o_vcd, r.OCR_VoltageWindow, pn + ".r_OCR_VoltageWindow");
-        sc_trace(o_vcd, r.bitcnt, pn + ".r_bitcnt");
+        sc_trace(o_vcd, r.mode, pn + ".r_mode");
     }
 
     if (xslv0) {
@@ -437,8 +534,11 @@ void sdctrl::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (regs0) {
         regs0->generateVCD(i_vcd, o_vcd);
     }
-    if (crccmd0) {
-        crccmd0->generateVCD(i_vcd, o_vcd);
+    if (err0) {
+        err0->generateVCD(i_vcd, o_vcd);
+    }
+    if (wdog0) {
+        wdog0->generateVCD(i_vcd, o_vcd);
     }
     if (crcdat0) {
         crcdat0->generateVCD(i_vcd, o_vcd);
@@ -452,6 +552,12 @@ void sdctrl::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (crcdat3) {
         crcdat3->generateVCD(i_vcd, o_vcd);
     }
+    if (spimode0) {
+        spimode0->generateVCD(i_vcd, o_vcd);
+    }
+    if (sdmode0) {
+        sdmode0->generateVCD(i_vcd, o_vcd);
+    }
     if (cmdtrx0) {
         cmdtrx0->generateVCD(i_vcd, o_vcd);
     }
@@ -461,414 +567,176 @@ void sdctrl::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void sdctrl::comb() {
-    bool v_crc16_next;
-    sc_uint<32> vb_cmd_req_arg;
-    bool v_cmd_resp_ready;
     bool v_cmd_dir;
     bool v_cmd_in;
+    bool v_cmd_out;
     bool v_dat0_dir;
+    bool v_dat0_out;
+    bool v_dat1_dir;
+    bool v_dat1_out;
+    bool v_dat2_dir;
+    bool v_dat2_out;
     bool v_dat3_dir;
     bool v_dat3_out;
-    bool v_clear_cmderr;
-    bool v_mem_req_ready;
+    bool v_cmd_req_valid;
+    sc_uint<6> vb_cmd_req_cmd;
+    sc_uint<32> vb_cmd_req_arg;
+    sc_uint<3> vb_cmd_req_rn;
     bool v_req_sdmem_ready;
-    bool v_cache_resp_ready;
+    bool v_resp_sdmem_valid;
+    sc_biguint<512> vb_resp_sdmem_data;
+    bool v_err_valid;
+    bool v_err_clear;
+    sc_uint<4> vb_err_setcode;
+    bool v_400kHz_ena;
+    sc_uint<3> vb_sdtype;
+    bool v_wdog_ena;
+    bool v_crc16_clear;
+    bool v_crc16_next;
 
-    v_crc16_next = 0;
-    vb_cmd_req_arg = 0;
-    v_cmd_resp_ready = 0;
-    v_cmd_dir = 0;
+    v_cmd_dir = DIR_OUTPUT;
     v_cmd_in = 0;
-    v_dat0_dir = 0;
-    v_dat3_dir = 0;
-    v_dat3_out = 0;
-    v_clear_cmderr = 0;
-    v_mem_req_ready = 0;
+    v_cmd_out = 1;
+    v_dat0_dir = DIR_OUTPUT;
+    v_dat0_out = 1;
+    v_dat1_dir = DIR_OUTPUT;
+    v_dat1_out = 1;
+    v_dat2_dir = DIR_OUTPUT;
+    v_dat2_out = 1;
+    v_dat3_dir = DIR_OUTPUT;
+    v_dat3_out = 1;
+    v_cmd_req_valid = 0;
+    vb_cmd_req_cmd = 0;
+    vb_cmd_req_arg = 0;
+    vb_cmd_req_rn = 0;
     v_req_sdmem_ready = 0;
-    v_cache_resp_ready = 0;
+    v_resp_sdmem_valid = 0;
+    vb_resp_sdmem_data = 0;
+    v_err_valid = 0;
+    v_err_clear = 0;
+    vb_err_setcode = 0;
+    v_400kHz_ena = 1;
+    vb_sdtype = 0;
+    v_wdog_ena = 0;
+    v_crc16_clear = 0;
+    v_crc16_next = 0;
 
     v = r;
 
-    vb_cmd_req_arg = r.cmd_req_arg;
 
-    if (w_regs_spi_mode.read() == 1) {
-        v_dat3_dir = DIR_OUTPUT;
-        v_dat3_out = (w_trx_cmd_cs && r.dat_tran);
+    if (r.mode.read() == MODE_PRE_INIT) {
+        // Page 222, Fig.4-96 State Diagram (Pre-Init mode)
+        // 1. No commands were sent to the card after POW (except CMD0):
+        //     CMD line held High for at least 1 ms (by SW), then SDCLK supplied
+        //     at least 74 clocks with keeping CMD line High
+        // 2. CMD High to Low transition && CMD=Low < 74 clocks then go idle,
+        //     if Low >= 74 clocks then Fast boot in CV-mode
+        if (w_regs_sck_posedge.read() == 1) {
+            v.clkcnt = (r.clkcnt.read() + 1);
+        }
+        if (r.clkcnt.read() >= 73) {
+            if (w_regs_spi_mode.read() == 1) {
+                v.mode = MODE_SPI;
+                v.nrst_spimode = 1;
+            } else {
+                v.mode = MODE_SD;
+                v.nrst_sdmode = 1;
+            }
+        }
+    } else if (r.mode.read() == MODE_SPI) {
+        // SPI MOSI:
         v_cmd_dir = DIR_OUTPUT;
+        v_cmd_out = (!(((!w_trx_cmd) && (!w_trx_cmd_csn))
+                || ((!w_spi_dat) && (!w_spi_dat_csn))));
+        // SPI MISO:
         v_dat0_dir = DIR_INPUT;
         v_cmd_in = i_dat0;
-        if (w_regs_sck_posedge) {
-            // Not a full block 4096 bits just a cache line (dat_tran is active LOW):
-            v.sdmem_data = (r.sdmem_data.read()(510, 0), (i_dat0 || r.dat_tran));
-            v.bitcnt = (r.bitcnt.read() + 1);
-        }
+        // SPI CSn:
+        v_dat3_dir = DIR_OUTPUT;
+        v_dat3_out = (w_trx_cmd_csn && w_spi_dat_csn);
+        // Unused in SPI mode:
+        v_dat2_dir = DIR_OUTPUT;
+        v_dat2_out = 1;
+        v_dat1_dir = DIR_OUTPUT;
+        v_dat1_out = 1;
+
+        v_cmd_req_valid = w_spi_cmd_req_valid;
+        vb_cmd_req_cmd = wb_spi_cmd_req_cmd;
+        vb_cmd_req_arg = wb_spi_cmd_req_arg;
+        vb_cmd_req_rn = wb_spi_cmd_req_rn;
+        v_req_sdmem_ready = w_spi_req_sdmem_ready;
+        v_resp_sdmem_valid = w_spi_resp_sdmem_valid;
+        vb_resp_sdmem_data = wb_spi_resp_sdmem_data;
+        v_err_valid = w_spi_err_valid;
+        v_err_clear = (w_regs_err_clear || w_spi_err_clear);
+        vb_err_setcode = wb_spi_err_setcode;
+        v_400kHz_ena = w_spi_400kHz_ena;
+        vb_sdtype = wb_spi_sdtype;
+        v_wdog_ena = (w_spi_wdog_ena || w_trx_wdog_ena);
+        v_crc16_clear = w_spi_crc16_clear;
+        v_crc16_next = w_spi_crc16_next;
     } else {
-        v_dat3_dir = r.dat3_dir;
-        v_dat3_out = r.dat.read()[3];
         v_cmd_dir = w_trx_cmd_dir;
-        v_dat0_dir = r.dat_dir;
         v_cmd_in = i_cmd;
-    }
+        v_cmd_out = w_trx_cmd;
+        v_dat0_dir = w_sd_dat0_dir;
+        v_dat0_out = w_sd_dat0;
+        v_dat1_dir = w_sd_dat1_dir;
+        v_dat1_out = w_sd_dat1;
+        v_dat2_dir = w_sd_dat2_dir;
+        v_dat2_out = w_sd_dat2;
+        v_dat3_dir = w_sd_dat3_dir;
+        v_dat3_out = w_sd_dat3;
 
-    if (r.wait_cmd_resp.read() == 1) {
-        v_cmd_resp_ready = 1;
-        if (w_cmd_resp_valid.read() == 1) {
-            v.wait_cmd_resp = 0;
-            v.cmd_resp_r1 = wb_cmd_resp_cmd;
-            v.cmd_resp_reg = wb_cmd_resp_reg;
-            v.cmd_resp_spistatus = wb_cmd_resp_spistatus;
-
-            if ((r.cmd_req_cmd.read() == CMD8)
-                    && (wb_trx_cmderr.read() == CMDERR_NO_RESPONSE)) {
-                v.sdtype = SDCARD_VER1X;
-                v.HCS = 0;                                  // Standard Capacity only
-                v.initstate = IDLESTATE_CMD55;
-                v_clear_cmderr = 1;
-            } else if (wb_trx_cmderr.read() != CMDERR_NONE) {
-                if (r.cmd_req_cmd.read() == CMD0) {
-                    // Re-send CMD0
-                    v.initstate = IDLESTATE_CMD0;
-                    v_clear_cmderr = 1;
-                } else {
-                    v.sdstate = SDSTATE_INA;
-                    v.sdtype = SDCARD_UNUSABLE;
-                }
-            } else {
-                // Parse Rx response:
-                switch (r.cmd_req_rn.read()) {
-                case R1:
-                    break;
-                case R3:
-                    // Table 5-1: OCR Register definition, page 246
-                    //     [23:0]  Voltage window can be requested by CMD58
-                    //     [24]    Switching to 1.8V accepted (S18A)
-                    //     [27]    Over 2TB support status (CO2T)
-                    //     [29]    UHS-II Card status
-                    //     [30]    Card Capacity Status (CCS)
-                    //     [31]    Card power-up status (busy is LOW if the card not finished the power-up routine)
-                    if (wb_cmd_resp_reg.read()[31] == 1) {
-                        v.OCR_VoltageWindow = wb_cmd_resp_reg.read()(23, 0);
-                        v.HCS = wb_cmd_resp_reg.read()[30];
-                        v.S18 = wb_cmd_resp_reg.read()[24];
-                    }
-                    break;
-                case R6:
-                    v.RCA = (wb_cmd_resp_reg.read()(31, 16) << 16);
-                    break;
-                default:
-                    break;
-                }
-            }
-        }
-    } else if (r.cmd_req_valid.read() == 1) {
-        // Do nothing wait to accept
-    } else {
-        // SD-card global state:
-        switch (r.sdstate.read()) {
-        case SDSTATE_PRE_INIT:
-            // Page 222, Fig.4-96 State Diagram (Pre-Init mode)
-            // 1. No commands were sent to the card after POW (except CMD0):
-            //     CMD line held High for at least 1 ms (by SW), then SDCLK supplied
-            //     at least 74 clocks with keeping CMD line High
-            // 2. CMD High to Low transition && CMD=Low < 74 clocks then go idle,
-            //     if Low >= 74 clocks then Fast boot in CV-mode
-            if (w_regs_sck_posedge.read() == 1) {
-                v.clkcnt = (r.clkcnt.read() + 1);
-            }
-            if (r.clkcnt.read() >= 73) {
-                v.sdstate = SDSTATE_IDLE;
-            }
-            if (r.clkcnt.read() <= 63) {
-            } else {
-                v.cmd_set_low = 0;
-            }
-            break;
-        case SDSTATE_IDLE:
-            switch (r.initstate.read()) {
-            case IDLESTATE_CMD0:
-                v.sdtype = SDCARD_UNKNOWN;
-                v.HCS = 1;
-                v.S18 = 0;
-                v.RCA = 0;
-                v.cmd_req_valid = 1;
-                v.cmd_req_cmd = CMD0;
-                v.cmd_req_rn = R1;
-                vb_cmd_req_arg = 0;
-                v.initstate = IDLESTATE_CMD8;
-                break;
-            case IDLESTATE_CMD8:
-                // See page 113. 4.3.13 Send Interface Condition Command
-                //   [39:22] reserved 00000h
-                //   [21]    PCIe 1.2V support 0
-                //   [20]    PCIe availability 0
-                //   [19:16] Voltage Supply (VHS) 0001b: 2.7-3.6V
-                //   [15:8]  Check Pattern 55h
-                v.cmd_req_valid = 1;
-                v.cmd_req_cmd = CMD8;
-                v.cmd_req_rn = R7;
-                vb_cmd_req_arg = 0;
-                vb_cmd_req_arg[13] = w_regs_pcie_12V_support.read();
-                vb_cmd_req_arg[12] = w_regs_pcie_available.read();
-                vb_cmd_req_arg(11, 8) = wb_regs_voltage_supply;
-                vb_cmd_req_arg(7, 0) = wb_regs_check_pattern;
-                v.initstate = IDLESTATE_CMD55;
-                break;
-            case IDLESTATE_CMD55:
-                // Page 64: APP_CMD (CMD55) shall always precede ACMD41.
-                //   [31:16] RCA (Relative Adrress should be set 0)
-                //   [15:0] stuff bits
-                v.cmd_req_valid = 1;
-                v.cmd_req_cmd = CMD55;
-                v.cmd_req_rn = R1;
-                vb_cmd_req_arg = 0;
-                v.initstate = IDLESTATE_ACMD41;
-                break;
-            case IDLESTATE_ACMD41:
-                // Page 131: SD_SEND_OP_COND. 
-                //   [31] reserved bit
-                //   [30] HCS (high capacity support)
-                //   [29] reserved for eSD
-                //   [28] XPC (maximum power in default speed)
-                //   [27:25] reserved bits
-                //   [24] S18R Send request to switch to 1.8V
-                //   [23:0] VDD voltage window (OCR[23:0])
-                v.cmd_req_valid = 1;
-                v.cmd_req_cmd = ACMD41;
-                vb_cmd_req_arg = 0;
-                vb_cmd_req_arg[30] = r.HCS.read();
-                vb_cmd_req_arg(23, 0) = r.OCR_VoltageWindow;
-                if (w_regs_spi_mode.read() == 0) {
-                    // SD mode:
-                    vb_cmd_req_arg[24] = r.S18.read();
-                    v.cmd_req_rn = R3;
-                    v.initstate = IDLESTATE_CARD_IDENTIFICATION;
-                } else {
-                    // SPI mode:
-                    v.cmd_req_rn = R1;
-                    v.initstate = IDLESTATE_CMD58;
-                }
-                break;
-            case IDLESTATE_CMD58:
-                // READ_OCR: Reads OCR register. Used in SPI mode only.
-                //   [31] reserved bit
-                //   [30] HCS (high capacity support)
-                //   [29:0] reserved
-                //   SPI R1 response always in upper bits [14:8]
-                if (r.cmd_resp_spistatus.read()(14, 8) != 0x1) {
-                    // SD card not in idle state
-                    v.initstate = IDLESTATE_CMD55;
-                } else {
-                    v.cmd_req_valid = 1;
-                    v.cmd_req_cmd = CMD58;
-                    vb_cmd_req_arg = 0;
-                    v.cmd_req_rn = R3;
-                    v.initstate = IDLESTATE_CARD_IDENTIFICATION;
-                }
-                break;
-            case IDLESTATE_CARD_IDENTIFICATION:
-                if (r.HCS.read() == 1) {
-                    v.sdtype = SDCARD_VER2X_HC;
-                } else if (r.sdtype.read() == SDCARD_UNKNOWN) {
-                    v.sdtype = SDCARD_VER2X_SC;
-                }
-                if (w_regs_spi_mode.read() == 0) {
-                    // SD mode:
-                    if (r.cmd_resp_reg.read()[31] == 0) {
-                        // LOW if the card has not finished power-up routine
-                        v.initstate = IDLESTATE_CMD55;
-                    } else if (r.S18.read() == 1) {
-                        // Voltage switch command to change 3.3V to 1.8V
-                        v.readystate = READYSTATE_CMD11;
-                    } else {
-                        v.readystate = READYSTATE_CMD2;
-                    }
-                    v.sdstate = SDSTATE_READY;
-                } else {
-                    // SPI mode:
-                    v.sdstate = SDSTATE_SPI_DATA;
-                }
-                break;
-            default:
-                v.initstate = IDLESTATE_CMD0;
-                break;
-            }
-            break;
-        case SDSTATE_READY:
-            switch (r.readystate.read()) {
-            case READYSTATE_CMD11:
-                // CMD11: VOLTAGE_SWITCH siwtch to 1.8V bus signaling.
-                //   [31:0] reserved all zeros
-                v.cmd_req_valid = 1;
-                v.cmd_req_cmd = CMD11;
-                v.cmd_req_rn = R1;
-                vb_cmd_req_arg = 0;
-                v.readystate = READYSTATE_CMD2;
-                break;
-            case READYSTATE_CMD2:
-                // CMD2: ALL_SEND_CID ask to send CID number.
-                //   [31:0] stuff bits
-                v.cmd_req_valid = 1;
-                v.cmd_req_cmd = CMD2;
-                v.cmd_req_rn = R2;
-                vb_cmd_req_arg = 0;
-                v.readystate = READYSTATE_CHECK_CID;
-                break;
-            case READYSTATE_CHECK_CID:
-                v.sdstate = SDSTATE_IDENT;
-                v.identstate = IDENTSTATE_CMD3;
-                break;
-            default:
-                break;
-            }
-            break;
-        case SDSTATE_IDENT:
-            switch (r.identstate.read()) {
-            case IDENTSTATE_CMD3:
-                // CMD3: SEND_RELATIVE_ADDR ask card to publish a new relative address (RCA).
-                //   [31:0] stuff bits
-                v.cmd_req_valid = 1;
-                v.cmd_req_cmd = CMD3;
-                v.cmd_req_rn = R6;
-                vb_cmd_req_arg = 0;
-                v.identstate = IDENTSTATE_CHECK_RCA;
-                break;
-            case IDENTSTATE_CHECK_RCA:
-                v.sdstate = SDSTATE_STBY;
-                break;
-            default:
-                break;
-            }
-            break;
-        case SDSTATE_SPI_DATA:
-            if (r.spidatastate.read() == SPIDATASTATE_CACHE_REQ) {
-                if (w_cache_req_ready.read() == 1) {
-                    v.cache_req_valid = 0;
-                    v.spidatastate = SPIDATASTATE_CACHE_WAIT_RESP;
-                }
-            } else if (r.spidatastate.read() == SPIDATASTATE_CACHE_WAIT_RESP) {
-                v_req_sdmem_ready = 1;
-                v_cache_resp_ready = 1;
-                v.sdmem_addr = wb_req_sdmem_addr.read()((CFG_SDCACHE_ADDR_BITS - 1), 9);
-                if (w_req_sdmem_valid.read() == 1) {
-                    if (w_req_sdmem_write.read() == 0) {
-                        v.spidatastate = SPIDATASTATE_CMD17_READ_SINGLE_BLOCK;
-                    } else {
-                        v.spidatastate = SPIDATASTATE_CMD24_WRITE_SINGLE_BLOCK;
-                    }
-                } else if (w_cache_resp_valid.read() == 1) {
-                    v.spidatastate = SPIDATASTATE_WAIT_MEM_REQ;
-                }
-            } else if (r.spidatastate.read() == SPIDATASTATE_CMD17_READ_SINGLE_BLOCK) {
-                // CMD17: READ_SINGLE_BLOCK. Reads a block of the size SET_BLOCKLEN
-                //   [31:0] data address
-                v.cmd_req_valid = 1;
-                v.cmd_req_cmd = CMD17;
-                v.cmd_req_rn = R1;
-                vb_cmd_req_arg = r.sdmem_addr;
-                v.spidatastate = SPIDATASTATE_WAIT_DATA_START;
-                v.bitcnt = 0;
-            } else if (r.spidatastate.read() == SPIDATASTATE_CMD24_WRITE_SINGLE_BLOCK) {
-            } else if (r.spidatastate.read() == SPIDATASTATE_WAIT_DATA_START) {
-                v.dat_tran = 0;
-                v.crc16_clear = 1;
-                if (wb_trx_cmderr.read() != CMDERR_NONE) {
-                    v.spidatastate = SPIDATASTATE_CACHE_WAIT_RESP;
-                } else if (r.sdmem_data.read()(7, 0) == 0xFE) {
-                    v.spidatastate = SPIDATASTATE_READING_DATA;
-                    v.bitcnt = 0;
-                    v.crc16_clear = 0;
-                } else if (r.bitcnt.read().and_reduce() == 1) {
-                    // TODO: set errmode, no data response
-                }
-            } else if (r.spidatastate.read() == SPIDATASTATE_READING_DATA) {
-                if (w_regs_sck_posedge.read() == 1) {
-                    v_crc16_next = 1;
-                    if (r.bitcnt.read().and_reduce() == 1) {
-                        v.spidatastate = SPIDATASTATE_READING_CRC15;
-                        v.crc16_calc0 = wb_crc16_0;
-                    }
-                }
-            } else if (r.spidatastate.read() == SPIDATASTATE_READING_CRC15) {
-                if (w_regs_sck_posedge.read() == 1) {
-                    if (r.bitcnt.read()(3, 0).and_reduce() == 1) {
-                        v.spidatastate = SPIDATASTATE_READING_END;
-                        v.dat_tran = 1;
-                    }
-                }
-            } else if (r.spidatastate.read() == SPIDATASTATE_READING_END) {
-                v.crc16_rx0 = r.sdmem_data.read()(15, 0).to_uint();
-                v.spidatastate = SPIDATASTATE_CACHE_WAIT_RESP;
-            } else {
-                // Wait memory request:
-                v_mem_req_ready = 1;
-                if (w_mem_req_valid.read() == 1) {
-                    v.spidatastate = SPIDATASTATE_CACHE_REQ;
-                    v.cache_req_valid = 1;
-                    v.cache_req_addr = (wb_mem_req_addr.read() - i_xmapinfo.read().addr_start);
-                    v.cache_req_write = w_mem_req_write;
-                    v.cache_req_wdata = wb_mem_req_wdata;
-                    v.cache_req_wstrb = wb_mem_req_wstrb;
-                }
-            }
-            break;
-        default:
-            break;
-        }
-    }
-    v.cmd_req_arg = vb_cmd_req_arg;
-
-    if ((r.cmd_req_valid.read() == 1) && (w_cmd_req_ready.read() == 1)) {
-        v.cmd_req_valid = 0;
-        v.wait_cmd_resp = 1;
-    }
-
-    v.sdmem_valid = 0;
-    v.sdmem_err = 0;
-    if (wb_trx_cmderr.read() != CMDERR_NONE) {
-        // To avoid cache hanging set always valid in error state
-        v.sdmem_valid = 1;
-        v.sdmem_err = 1;
-    } else if ((r.spidatastate.read() == SPIDATASTATE_READING_DATA)
-                && (r.bitcnt.read()(8, 0).and_reduce() == 1)
-                && (w_regs_sck_posedge.read() == 1)) {
-        v.sdmem_valid = 1;
+        v_cmd_req_valid = w_sd_cmd_req_valid;
+        vb_cmd_req_cmd = wb_sd_cmd_req_cmd;
+        vb_cmd_req_arg = wb_sd_cmd_req_arg;
+        vb_cmd_req_rn = wb_sd_cmd_req_rn;
+        v_req_sdmem_ready = w_sd_req_sdmem_ready;
+        v_resp_sdmem_valid = w_sd_resp_sdmem_valid;
+        vb_resp_sdmem_data = wb_sd_resp_sdmem_data;
+        v_err_valid = w_sd_err_valid;
+        v_err_clear = (w_regs_err_clear || w_sd_err_clear);
+        vb_err_setcode = wb_sd_err_setcode;
+        v_400kHz_ena = w_sd_400kHz_ena;
+        vb_sdtype = wb_sd_sdtype;
+        v_wdog_ena = (w_sd_wdog_ena || w_trx_wdog_ena);
+        v_crc16_clear = w_sd_crc16_clear;
+        v_crc16_next = w_sd_crc16_next;
     }
 
     if (!async_reset_ && i_nrst.read() == 0) {
         sdctrl_r_reset(v);
     }
 
-    w_cmd_resp_ready = v_cmd_resp_ready;
-    w_crc16_next = v_crc16_next;
-    // Page 222, Table 4-81 Overview of Card States vs Operation Modes table
-    if ((r.sdstate.read() <= SDSTATE_IDENT)
-            || (r.sdstate.read() == SDSTATE_INA)
-            || (r.sdstate.read() == SDSTATE_PRE_INIT)) {
-        w_400kHz_ena = 1;
-    } else {
-        // data transfer mode:
-        // Stand-By, Transfer, Sending, Receive, Programming, Disconnect states
-        w_400kHz_ena = 0;
-    }
-
     w_cmd_in = v_cmd_in;
-    o_cd_dat3 = v_dat3_out;
-    o_dat2 = r.dat.read()[2];
-    o_dat1 = r.dat.read()[1];
-    o_dat0 = r.dat.read()[0];
-    // Direction bits:
+    o_cmd = v_cmd_out;
     o_cmd_dir = v_cmd_dir;
-    o_dat0_dir = v_dat0_dir;
-    o_dat1_dir = r.dat_dir;
-    o_dat2_dir = r.dat_dir;
+    o_cd_dat3 = v_dat3_out;
     o_cd_dat3_dir = v_dat3_dir;
-    // Memory request:
-    w_mem_req_ready = v_mem_req_ready;
-    w_cache_resp_ready = v_cache_resp_ready;
-    w_clear_cmderr = (w_regs_clear_cmderr || v_clear_cmderr);
-    // Cache to SD card requests:
+    o_dat2 = v_dat2_out;
+    o_dat2_dir = v_dat2_dir;
+    o_dat1 = v_dat1_out;
+    o_dat1_dir = v_dat1_dir;
+    o_dat0 = v_dat0_out;
+    o_dat0_dir = v_dat0_dir;
+    w_cmd_req_valid = v_cmd_req_valid;
+    wb_cmd_req_cmd = vb_cmd_req_cmd;
+    wb_cmd_req_arg = vb_cmd_req_arg;
+    wb_cmd_req_rn = vb_cmd_req_rn;
+    w_cmd_resp_ready = 1;
+    w_cache_resp_ready = 1;
     w_req_sdmem_ready = v_req_sdmem_ready;
-    w_regs_flush_valid = 0;
+    w_resp_sdmem_valid = v_resp_sdmem_valid;
+    wb_resp_sdmem_data = vb_resp_sdmem_data;
+    w_err_valid = v_err_valid;
+    w_err_clear = v_err_clear;
+    wb_err_setcode = vb_err_setcode;
+    w_400kHz_ena = v_400kHz_ena;
+    wb_sdtype = vb_sdtype;
+    w_wdog_ena = v_wdog_ena;
+    w_crc16_clear = v_crc16_clear;
+    w_crc16_next = v_crc16_next;
 }
 
 void sdctrl::registers() {

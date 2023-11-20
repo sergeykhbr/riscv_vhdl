@@ -30,16 +30,11 @@ SC_MODULE(sdctrl_regs) {
     sc_out<dev_config_type> o_pcfg;                         // APB sd-controller configuration registers descriptor
     sc_in<apb_in_type> i_apbi;                              // APB Slave to Bridge interface
     sc_out<apb_out_type> o_apbo;                            // APB Bridge to Slave interface
-    sc_in<bool> i_sd_cmd;
-    sc_in<bool> i_sd_dat0;
-    sc_in<bool> i_sd_dat1;
-    sc_in<bool> i_sd_dat2;
-    sc_in<bool> i_sd_dat3;
     sc_out<bool> o_sck;                                     // SD-card clock usually upto 50 MHz
     sc_out<bool> o_sck_posedge;                             // Strob just before positive edge
     sc_out<bool> o_sck_negedge;                             // Strob just before negative edge
     sc_out<sc_uint<16>> o_watchdog;                         // Number of sclk to detect no response
-    sc_out<bool> o_clear_cmderr;                            // Clear cmderr from FW
+    sc_out<bool> o_err_clear;                               // Clear err from FW
     // Configuration parameters:
     sc_out<bool> o_spi_mode;                                // SPI mode was selected from FW
     sc_out<bool> o_pcie_12V_support;                        // 0b: not asking 1.2V support
@@ -48,10 +43,13 @@ SC_MODULE(sdctrl_regs) {
     sc_out<sc_uint<8>> o_check_pattern;                     // Check pattern in CMD8 request
     sc_in<bool> i_400khz_ena;                               // Default frequency enabled in identification mode
     sc_in<sc_uint<3>> i_sdtype;                             // Ver1X or Ver2X standard or Ver2X high/extended capacity
-    sc_in<sc_uint<4>> i_sdstate;                            // Card state:0=idle;1=ready;2=ident;3=stby,... see spec
     // Debug command state machine
-    sc_in<sc_uint<4>> i_cmd_state;
-    sc_in<sc_uint<4>> i_cmd_err;
+    sc_in<bool> i_sd_cmd;
+    sc_in<bool> i_sd_dat0;
+    sc_in<bool> i_sd_dat1;
+    sc_in<bool> i_sd_dat2;
+    sc_in<bool> i_sd_dat3;
+    sc_in<sc_uint<4>> i_err_code;
     sc_in<bool> i_cmd_req_valid;
     sc_in<sc_uint<6>> i_cmd_req_cmd;
     sc_in<bool> i_cmd_resp_valid;
@@ -77,7 +75,7 @@ SC_MODULE(sdctrl_regs) {
     struct sdctrl_regs_registers {
         sc_signal<bool> sclk_ena;
         sc_signal<bool> spi_mode;
-        sc_signal<bool> clear_cmderr;
+        sc_signal<bool> err_clear;
         sc_signal<sc_uint<24>> scaler_400khz;
         sc_signal<sc_uint<8>> scaler_data;
         sc_signal<sc_uint<32>> scaler_cnt;
@@ -101,7 +99,7 @@ SC_MODULE(sdctrl_regs) {
     void sdctrl_regs_r_reset(sdctrl_regs_registers &iv) {
         iv.sclk_ena = 0;
         iv.spi_mode = 0;
-        iv.clear_cmderr = 0;
+        iv.err_clear = 0;
         iv.scaler_400khz = 0;
         iv.scaler_data = 0;
         iv.scaler_cnt = 0;

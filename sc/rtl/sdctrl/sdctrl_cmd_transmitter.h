@@ -17,6 +17,7 @@
 
 #include <systemc.h>
 #include "sdctrl_cfg.h"
+#include "sdctrl_crc7.h"
 
 namespace debugger {
 
@@ -31,17 +32,14 @@ SC_MODULE(sdctrl_cmd_transmitter) {
     sc_out<bool> o_cmd_dir;
     sc_out<bool> o_cmd_cs;
     sc_in<bool> i_spi_mode;                                 // SPI mode was selected by FW
-    sc_in<sc_uint<16>> i_watchdog;                          // Max number of sclk to receive start bit
+    sc_in<sc_uint<4>> i_err_code;
+    sc_in<bool> i_wdog_trigger;                             // Event from wdog timer
     sc_in<bool> i_cmd_set_low;                              // Set forcibly o_cmd output to LOW
     sc_in<bool> i_req_valid;
     sc_in<sc_uint<6>> i_req_cmd;
     sc_in<sc_uint<32>> i_req_arg;
     sc_in<sc_uint<3>> i_req_rn;                             // R1, R3,R6 or R2
     sc_out<bool> o_req_ready;
-    sc_in<sc_uint<7>> i_crc7;
-    sc_out<bool> o_crc7_clear;
-    sc_out<bool> o_crc7_next;
-    sc_out<bool> o_crc7_dat;
     sc_out<bool> o_resp_valid;
     sc_out<sc_uint<6>> o_resp_cmd;                          // Mirrored command
     sc_out<sc_uint<32>> o_resp_reg;                         // Card Status, OCR register (R3) or RCA register (R6)
@@ -49,9 +47,9 @@ SC_MODULE(sdctrl_cmd_transmitter) {
     sc_out<sc_uint<7>> o_resp_crc7_calc;                    // Calculated CRC7
     sc_out<sc_uint<15>> o_resp_spistatus;                   // {R1,R2} response valid only in SPI mode
     sc_in<bool> i_resp_ready;
-    sc_in<bool> i_clear_cmderr;
-    sc_out<sc_uint<4>> o_cmdstate;
-    sc_out<sc_uint<4>> o_cmderr;
+    sc_out<bool> o_wdog_ena;
+    sc_out<bool> o_err_valid;
+    sc_out<sc_uint<4>> o_err_setcode;
 
     void comb();
     void registers();
@@ -60,6 +58,7 @@ SC_MODULE(sdctrl_cmd_transmitter) {
 
     sdctrl_cmd_transmitter(sc_module_name name,
                            bool async_reset);
+    virtual ~sdctrl_cmd_transmitter();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
@@ -99,9 +98,11 @@ SC_MODULE(sdctrl_cmd_transmitter) {
         sc_signal<sc_uint<7>> cmdbitcnt;
         sc_signal<bool> crc7_clear;
         sc_signal<sc_uint<4>> cmdstate;
-        sc_signal<sc_uint<4>> cmderr;
+        sc_signal<bool> err_valid;
+        sc_signal<sc_uint<4>> err_setcode;
         sc_signal<bool> cmd_cs;
-        sc_signal<sc_uint<16>> watchdog;
+        sc_signal<bool> cmd_dir;
+        sc_signal<bool> wdog_ena;
     } v, r;
 
     void sdctrl_cmd_transmitter_r_reset(sdctrl_cmd_transmitter_registers &iv) {
@@ -120,10 +121,18 @@ SC_MODULE(sdctrl_cmd_transmitter) {
         iv.cmdbitcnt = 0;
         iv.crc7_clear = 1;
         iv.cmdstate = CMDSTATE_IDLE;
-        iv.cmderr = CMDERR_NONE;
+        iv.err_valid = 0;
+        iv.err_setcode = CMDERR_NONE;
         iv.cmd_cs = 1;
-        iv.watchdog = 0;
+        iv.cmd_dir = 1;
+        iv.wdog_ena = 0;
     }
+
+    sc_signal<sc_uint<7>> wb_crc7;
+    sc_signal<bool> w_crc7_next;
+    sc_signal<bool> w_crc7_dat;
+
+    sdctrl_crc7 *crc0;
 
 };
 

@@ -28,16 +28,11 @@ sdctrl_regs::sdctrl_regs(sc_module_name name,
     o_pcfg("o_pcfg"),
     i_apbi("i_apbi"),
     o_apbo("o_apbo"),
-    i_sd_cmd("i_sd_cmd"),
-    i_sd_dat0("i_sd_dat0"),
-    i_sd_dat1("i_sd_dat1"),
-    i_sd_dat2("i_sd_dat2"),
-    i_sd_dat3("i_sd_dat3"),
     o_sck("o_sck"),
     o_sck_posedge("o_sck_posedge"),
     o_sck_negedge("o_sck_negedge"),
     o_watchdog("o_watchdog"),
-    o_clear_cmderr("o_clear_cmderr"),
+    o_err_clear("o_err_clear"),
     o_spi_mode("o_spi_mode"),
     o_pcie_12V_support("o_pcie_12V_support"),
     o_pcie_available("o_pcie_available"),
@@ -45,9 +40,12 @@ sdctrl_regs::sdctrl_regs(sc_module_name name,
     o_check_pattern("o_check_pattern"),
     i_400khz_ena("i_400khz_ena"),
     i_sdtype("i_sdtype"),
-    i_sdstate("i_sdstate"),
-    i_cmd_state("i_cmd_state"),
-    i_cmd_err("i_cmd_err"),
+    i_sd_cmd("i_sd_cmd"),
+    i_sd_dat0("i_sd_dat0"),
+    i_sd_dat1("i_sd_dat1"),
+    i_sd_dat2("i_sd_dat2"),
+    i_sd_dat3("i_sd_dat3"),
+    i_err_code("i_err_code"),
     i_cmd_req_valid("i_cmd_req_valid"),
     i_cmd_req_cmd("i_cmd_req_cmd"),
     i_cmd_resp_valid("i_cmd_resp_valid"),
@@ -82,16 +80,14 @@ sdctrl_regs::sdctrl_regs(sc_module_name name,
     sensitive << i_nrst;
     sensitive << i_pmapinfo;
     sensitive << i_apbi;
+    sensitive << i_400khz_ena;
+    sensitive << i_sdtype;
     sensitive << i_sd_cmd;
     sensitive << i_sd_dat0;
     sensitive << i_sd_dat1;
     sensitive << i_sd_dat2;
     sensitive << i_sd_dat3;
-    sensitive << i_400khz_ena;
-    sensitive << i_sdtype;
-    sensitive << i_sdstate;
-    sensitive << i_cmd_state;
-    sensitive << i_cmd_err;
+    sensitive << i_err_code;
     sensitive << i_cmd_req_valid;
     sensitive << i_cmd_req_cmd;
     sensitive << i_cmd_resp_valid;
@@ -105,7 +101,7 @@ sdctrl_regs::sdctrl_regs(sc_module_name name,
     sensitive << wb_req_wdata;
     sensitive << r.sclk_ena;
     sensitive << r.spi_mode;
-    sensitive << r.clear_cmderr;
+    sensitive << r.err_clear;
     sensitive << r.scaler_400khz;
     sensitive << r.scaler_data;
     sensitive << r.scaler_cnt;
@@ -143,16 +139,11 @@ void sdctrl_regs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_pcfg, o_pcfg.name());
         sc_trace(o_vcd, i_apbi, i_apbi.name());
         sc_trace(o_vcd, o_apbo, o_apbo.name());
-        sc_trace(o_vcd, i_sd_cmd, i_sd_cmd.name());
-        sc_trace(o_vcd, i_sd_dat0, i_sd_dat0.name());
-        sc_trace(o_vcd, i_sd_dat1, i_sd_dat1.name());
-        sc_trace(o_vcd, i_sd_dat2, i_sd_dat2.name());
-        sc_trace(o_vcd, i_sd_dat3, i_sd_dat3.name());
         sc_trace(o_vcd, o_sck, o_sck.name());
         sc_trace(o_vcd, o_sck_posedge, o_sck_posedge.name());
         sc_trace(o_vcd, o_sck_negedge, o_sck_negedge.name());
         sc_trace(o_vcd, o_watchdog, o_watchdog.name());
-        sc_trace(o_vcd, o_clear_cmderr, o_clear_cmderr.name());
+        sc_trace(o_vcd, o_err_clear, o_err_clear.name());
         sc_trace(o_vcd, o_spi_mode, o_spi_mode.name());
         sc_trace(o_vcd, o_pcie_12V_support, o_pcie_12V_support.name());
         sc_trace(o_vcd, o_pcie_available, o_pcie_available.name());
@@ -160,9 +151,12 @@ void sdctrl_regs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_check_pattern, o_check_pattern.name());
         sc_trace(o_vcd, i_400khz_ena, i_400khz_ena.name());
         sc_trace(o_vcd, i_sdtype, i_sdtype.name());
-        sc_trace(o_vcd, i_sdstate, i_sdstate.name());
-        sc_trace(o_vcd, i_cmd_state, i_cmd_state.name());
-        sc_trace(o_vcd, i_cmd_err, i_cmd_err.name());
+        sc_trace(o_vcd, i_sd_cmd, i_sd_cmd.name());
+        sc_trace(o_vcd, i_sd_dat0, i_sd_dat0.name());
+        sc_trace(o_vcd, i_sd_dat1, i_sd_dat1.name());
+        sc_trace(o_vcd, i_sd_dat2, i_sd_dat2.name());
+        sc_trace(o_vcd, i_sd_dat3, i_sd_dat3.name());
+        sc_trace(o_vcd, i_err_code, i_err_code.name());
         sc_trace(o_vcd, i_cmd_req_valid, i_cmd_req_valid.name());
         sc_trace(o_vcd, i_cmd_req_cmd, i_cmd_req_cmd.name());
         sc_trace(o_vcd, i_cmd_resp_valid, i_cmd_resp_valid.name());
@@ -172,7 +166,7 @@ void sdctrl_regs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_cmd_resp_crc7_calc, i_cmd_resp_crc7_calc.name());
         sc_trace(o_vcd, r.sclk_ena, pn + ".r_sclk_ena");
         sc_trace(o_vcd, r.spi_mode, pn + ".r_spi_mode");
-        sc_trace(o_vcd, r.clear_cmderr, pn + ".r_clear_cmderr");
+        sc_trace(o_vcd, r.err_clear, pn + ".r_err_clear");
         sc_trace(o_vcd, r.scaler_400khz, pn + ".r_scaler_400khz");
         sc_trace(o_vcd, r.scaler_data, pn + ".r_scaler_data");
         sc_trace(o_vcd, r.scaler_cnt, pn + ".r_scaler_cnt");
@@ -209,7 +203,7 @@ void sdctrl_regs::comb() {
 
     v = r;
 
-    v.clear_cmderr = 0;
+    v.err_clear = 0;
     if (i_cmd_req_valid.read() == 1) {
         v.last_req_cmd = i_cmd_req_cmd;
     }
@@ -252,7 +246,7 @@ void sdctrl_regs::comb() {
         vb_rdata[8] = i_sd_cmd.read();
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             v.sclk_ena = wb_req_wdata.read()[0];
-            v.clear_cmderr = wb_req_wdata.read()[1];
+            v.err_clear = wb_req_wdata.read()[1];
             v.spi_mode = wb_req_wdata.read()[3];
         }
         break;
@@ -263,9 +257,7 @@ void sdctrl_regs::comb() {
         }
         break;
     case 0x4:                                               // {0x10, 'RO', 'status', 'state machines status'}
-        vb_rdata(3, 0) = i_cmd_err;                         // cmd transmitter error flag
-        vb_rdata(7, 4) = i_cmd_state;                       // cmd transmitter state
-        vb_rdata(11, 8) = i_sdstate;                        // card state
+        vb_rdata(3, 0) = i_err_code;                        // the latest error code
         vb_rdata(14, 12) = i_sdtype;                        // detected card type
         break;
     case 0x5:                                               // {0x14, 'RO', 'last_cmd_response', 'Last CMD response data'}
@@ -323,7 +315,7 @@ void sdctrl_regs::comb() {
     o_sck_posedge = v_posedge;
     o_sck_negedge = v_negedge;
     o_watchdog = r.wdog;
-    o_clear_cmderr = r.clear_cmderr;
+    o_err_clear = r.err_clear;
 }
 
 void sdctrl_regs::registers() {
