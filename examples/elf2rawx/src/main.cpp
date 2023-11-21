@@ -14,7 +14,6 @@ void printHelp() {
     printf("    -f    define fixed image size in Bytes, otherwise the size will\n");
     printf("          the size will be computed\n");
     printf("    -l    bytes per line (with -h only). Default 16 bytes/128 bits.\n");
-    printf("    --no-data    Ignore sections: '.data', '.bss' and '.heap'.\n");
     printf("    -o    output file name. Multiple files supported to generate \n");
     printf("          splitted HEX-files\n");
     printf("Example\n");
@@ -33,7 +32,6 @@ int main(int argc, char* argv[]) {
     int iFixedSizeBytes = 0;
     int iBytesPerLine = 16;
     int infile_index = 1;
-    int no_data = 0;
     AttributeType outFiles(Attr_List);
     for (int i=1; i<argc; i++) {
         if (strcmp(argv[i], "-r") == 0) {         // generate raw image file
@@ -44,8 +42,6 @@ int main(int argc, char* argv[]) {
             iFixedSizeBytes = strtol(argv[++i], NULL, 0);
         } else if (strcmp(argv[i], "-l") == 0) {  // bytes per hex-line
             iBytesPerLine = strtol(argv[++i], NULL, 0);
-        } else if (strcmp(argv[i], "--no-data") == 0) {  // ignore .bss .data and .heap sections
-            no_data = 1;
         } else if (strcmp(argv[i], "-o") == 0) {  // output file name
             AttributeType filename;
             filename.make_string(argv[++i]);
@@ -58,7 +54,7 @@ int main(int argc, char* argv[]) {
     std::string arg1(argv[infile_index]);
     std::string in = std::string(arg1.begin(), arg1.end());
 
-    ElfReader elf(in.c_str(), no_data);
+    ElfReader elf(in.c_str());
     if (elf.loadableSectionTotal() == 0) {
         printf("elf2rawx error: can't load file %s\n", in.c_str());
         return 0;

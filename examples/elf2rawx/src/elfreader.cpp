@@ -2,14 +2,12 @@
 #include <fstream>
 #include <cstring>
 
-ElfReader::ElfReader(const char *filename, int no_data) {
+ElfReader::ElfReader(const char *filename) {
     image_ = NULL;
     sectionNames_ = NULL;
     symbolList_.make_list(0);
     loadSectionList_.make_list(0);
     sourceProc_.make_string("");
-    no_data_ = no_data;
-
 
     FILE *fp = fopen(filename, "rb");
     if (!fp) {
@@ -41,6 +39,23 @@ ElfReader::ElfReader(const char *filename, int no_data) {
         fclose(fp);
         return;
     }
+
+    // Program Segment headers
+    ph_tbl_ = 0;
+    if  (header_->get_phnum()) {
+        uint8_t *pph = &image_[header_->get_phoff()];
+        ph_tbl_ = new SegmentHeaderType *[header_->get_phnum()];
+        for (int i = 0; i < header_->get_phnum(); i++) {
+            ph_tbl_[i] = new SegmentHeaderType(pph, header_);
+
+            if (header_->isElf32()) {
+                pph += sizeof(Elf32_Phdr);
+            } else {
+                pph += sizeof(Elf64_Phdr);
+            }
+        }
+    }
+
 
     sh_tbl_ = new SectionHeaderType *[header_->get_shnum()];
 
@@ -99,6 +114,22 @@ ElfReader::ElfReader(const char *filename, int no_data) {
     fclose(fp);
 }
 
+uint64_t ElfReader::vma2lma(uint64_t addr) {
+    uint64_t ret = addr;
+    uint64_t vaddr, paddr, memsz;
+    for (int i = 0; i < header_->get_phnum(); i++) {
+        vaddr = ph_tbl_[i]->get_vaddr();
+        paddr = ph_tbl_[i]->get_paddr();
+        memsz = ph_tbl_[i]->get_memsz();
+
+        if (addr >= vaddr && addr < (vaddr + memsz)) {
+            ret = addr - vaddr + paddr;
+            break;
+        }
+    }
+    return ret;
+}
+
 int ElfReader::readElfHeader() {
     header_ = new ElfHeaderType(image_);
     if (header_->isElf()) {
@@ -116,6 +147,11 @@ int ElfReader::loadSections() {
     for (int i = 0; i < header_->get_shnum(); i++) {
         sh = sh_tbl_[i];
 
+        uint64_t toff = sh->get_addr();
+        uint64_t tsz = sh->get_size();
+        uint8_t *tbuf = &image_[sh->get_offset()];
+        const char *tname = sectionNames_ + sh->get_name();
+
         if (sh->get_size() == 0) {
             continue;
         }
@@ -126,20 +162,6 @@ int ElfReader::loadSections() {
                     &sectionNames_[sh->get_name()]);
         }
 #endif
-        // Exclude data sections from image:
-        if (no_data_ && sectionNames_) {
-            if (strcmp(sectionNames_ + sh->get_name(), ".data") == 0
-                || strcmp(sectionNames_ + sh->get_name(), ".bss") == 0
-                || strcmp(sectionNames_ + sh->get_name(), ".heap") == 0) {
-
-                uint64_t toff = sh->get_addr();
-                uint64_t tsz = sh->get_size();
-                uint8_t *tbuf = &image_[sh->get_offset()];
-                bool st = true;
-                continue;
-            }
-        }
-
 
         if ((sh->get_type() == SHT_PROGBITS ||
              sh->get_type() == SHT_INIT_ARRAY ||
@@ -159,13 +181,13 @@ int ElfReader::loadSections() {
             } else {
                 loadsec[LoadSh_name].make_string("unknown");
             }
-            loadsec[LoadSh_addr].make_uint64(sh->get_addr());
+            loadsec[LoadSh_addr].make_uint64(vma2lma(sh->get_addr()));
             loadsec[LoadSh_size].make_uint64(sh->get_size());
             loadsec[LoadSh_data].make_data(static_cast<unsigned>(sh->get_size()),
                                            &image_[sh->get_offset()]);
             loadSectionList_.add_to_list(&loadsec);
             total_bytes += sh->get_size();
-            uint64_t t1 = sh->get_addr() + sh->get_size();
+            uint64_t t1 = vma2lma(sh->get_addr()) + sh->get_size();
             if (t1 > lastLoadAdr_) {
                 lastLoadAdr_ = t1;
             }
@@ -185,14 +207,14 @@ int ElfReader::loadSections() {
             } else {
                 loadsec[LoadSh_name].make_string("unknown");
             }
-            loadsec[LoadSh_addr].make_uint64(sh->get_addr());
+            loadsec[LoadSh_addr].make_uint64(vma2lma(sh->get_addr()));
             loadsec[LoadSh_size].make_uint64(sh->get_size());
             loadsec[LoadSh_data].make_data(static_cast<unsigned>(sh->get_size()));
             memset(loadsec[LoadSh_data].data(), 
                         0, static_cast<size_t>(sh->get_size()));
             loadSectionList_.add_to_list(&loadsec);
             total_bytes += sh->get_size();
-            uint64_t t1 = sh->get_addr() + sh->get_size();
+            uint64_t t1 = vma2lma(sh->get_addr()) + sh->get_size();
             if (t1 > lastLoadAdr_) {
                 lastLoadAdr_ = t1;
             }

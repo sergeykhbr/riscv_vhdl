@@ -23,7 +23,7 @@
 
 class ElfReader {
  public:
-    explicit ElfReader(const char *file_name, int no_data);
+    explicit ElfReader(const char *file_name);
 
     virtual unsigned loadableSectionTotal() {
         return loadSectionList_.size();
@@ -52,6 +52,7 @@ class ElfReader {
                           int fixed_size = 0);
 
 private:
+    uint64_t vma2lma(uint64_t addr);
     int readElfHeader();
     int loadSections();
     void processDebugSymbol(SectionHeaderType *sh);
@@ -87,10 +88,10 @@ private:
     AttributeType sourceProc_;
     AttributeType symbolList_;
     AttributeType loadSectionList_;
-    int no_data_;
 
     uint8_t *image_;
     ElfHeaderType *header_;
+    SegmentHeaderType **ph_tbl_;
     SectionHeaderType **sh_tbl_;
     char *sectionNames_;
     char *symbolNames_;

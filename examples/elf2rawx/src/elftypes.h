@@ -141,11 +141,13 @@ class ElfHeaderType {
                 e_shoff_ = SwapBytes(h->e_shoff);
                 e_shnum_ = SwapBytes(h->e_shnum);
                 e_phoff_ = SwapBytes(h->e_phoff);
+                e_phnum_ = SwapBytes(h->e_phnum);
                 e_entry_ = SwapBytes(h->e_entry);
             } else {
                 e_shoff_ = h->e_shoff;
                 e_shnum_ = h->e_shnum;
                 e_phoff_ = h->e_phoff;
+                e_phnum_ = h->e_phnum;
                 e_entry_ = h->e_entry;
             }
         } else {
@@ -154,11 +156,13 @@ class ElfHeaderType {
                 e_shoff_ = SwapBytes(h->e_shoff);
                 e_shnum_ = SwapBytes(h->e_shnum);
                 e_phoff_ = SwapBytes(h->e_phoff);
+                e_phnum_ = SwapBytes(h->e_phnum);
                 e_entry_ = SwapBytes(h->e_entry);
             } else {
                 e_shoff_ = h->e_shoff;
                 e_shnum_ = h->e_shnum;
                 e_phoff_ = h->e_phoff;
+                e_phnum_ = h->e_phnum;
                 e_entry_ = h->e_entry;
             }
         }
@@ -170,6 +174,7 @@ class ElfHeaderType {
     virtual uint64_t get_shoff() { return e_shoff_; }
     virtual ElfHalf get_shnum() { return e_shnum_; }
     virtual uint64_t get_phoff() { return e_phoff_; }
+    virtual ElfHalf get_phnum() { return e_phnum_; }
     virtual uint64_t get_entry() { return e_entry_; }
  protected:
     uint8_t *pimg_;
@@ -179,6 +184,7 @@ class ElfHeaderType {
     uint64_t e_shoff_;
     ElfHalf e_shnum_;
     uint64_t e_phoff_;
+    ElfHalf e_phnum_;
     uint64_t e_entry_;
 };
 
@@ -293,6 +299,99 @@ class SectionHeaderType {
     uint64_t sh_flags_;
     uint64_t sh_entsize_;
 };
+
+
+/* Program segment header.  */
+
+typedef struct
+{
+  ElfWord        p_type;                 /* Segment type             */
+  ElfOff32       p_offset;               /* Segment file offset      */
+  ElfAddr32      p_vaddr;                /* Segment virtual address  */
+  ElfAddr32      p_paddr;                /* Segment physical address */
+  ElfWord        p_filesz;               /* Segment size in file     */
+  ElfWord        p_memsz;                /* Segment size in memory   */
+  ElfWord        p_flags;                /* Segment flags            */
+  ElfWord        p_align;                /* Segment alignment        */
+} Elf32_Phdr;
+
+typedef struct
+{
+  ElfWord        p_type;                 /* Segment type             */
+  ElfWord        p_flags;                /* Segment flags            */
+  ElfOff64       p_offset;               /* Segment file offset      */
+  ElfAddr64      p_vaddr;                /* Segment virtual address  */
+  ElfAddr64      p_paddr;                /* Segment physical address */
+  ElfDWord       p_filesz;               /* Segment size in file     */
+  ElfDWord       p_memsz;                /* Segment size in memory   */
+  ElfDWord       p_align;                /* Segment alignment        */
+} Elf64_Phdr;
+
+class SegmentHeaderType {
+ public:
+    SegmentHeaderType (uint8_t *img, ElfHeaderType *h) {
+        if (h->isElf32()) {
+            Elf32_Phdr *ph = reinterpret_cast<Elf32_Phdr *>(img);
+            if (h->isElfMsb()) {
+                p_type_ = SwapBytes(ph->p_type);
+                p_flags_ = SwapBytes(ph->p_flags);
+                p_offset_ = SwapBytes(ph->p_offset);
+                p_vaddr_ = SwapBytes(ph->p_vaddr);
+                p_paddr_ = SwapBytes(ph->p_paddr);
+                p_filesz_ = SwapBytes(ph->p_filesz);
+                p_memsz_ = SwapBytes(ph->p_memsz);
+                p_align_ = SwapBytes(ph->p_align);
+            } else {
+                p_type_ = ph->p_type;
+                p_flags_ = ph->p_flags;
+                p_offset_ = ph->p_offset;
+                p_vaddr_ = ph->p_vaddr;
+                p_paddr_ = ph->p_paddr;
+                p_filesz_ = ph->p_filesz;
+                p_memsz_ = ph->p_memsz;
+                p_align_ = ph->p_align;
+            }
+        } else {
+            Elf64_Phdr *ph = reinterpret_cast<Elf64_Phdr *>(img);
+            if (h->isElfMsb()) {
+                p_type_ = SwapBytes(ph->p_type);
+                p_flags_ = SwapBytes(ph->p_flags);
+                p_offset_ = SwapBytes(ph->p_offset);
+                p_vaddr_ = SwapBytes(ph->p_vaddr);
+                p_paddr_ = SwapBytes(ph->p_paddr);
+                p_filesz_ = SwapBytes(ph->p_filesz);
+                p_memsz_ = SwapBytes(ph->p_memsz);
+                p_align_ = SwapBytes(ph->p_align);
+            } else {
+                p_type_ = ph->p_type;
+                p_flags_ = ph->p_flags;
+                p_offset_ = ph->p_offset;
+                p_vaddr_ = ph->p_vaddr;
+                p_paddr_ = ph->p_paddr;
+                p_filesz_ = ph->p_filesz;
+                p_memsz_ = ph->p_memsz;
+                p_align_ = ph->p_align;
+            }
+        }
+    }
+    virtual ElfWord get_type() { return p_type_; }
+    virtual uint64_t get_offset() { return p_offset_; }
+    virtual uint64_t get_vaddr() { return p_vaddr_; }
+    virtual uint64_t get_paddr() { return p_paddr_; }
+    virtual uint64_t get_flags() { return p_flags_; }
+    virtual uint64_t get_memsz() { return p_memsz_; }
+    
+ protected:
+    ElfWord p_type_;
+    ElfWord p_flags_;
+    uint64_t p_offset_;
+    uint64_t p_vaddr_;
+    uint64_t p_paddr_;
+    uint64_t p_filesz_;
+    uint64_t p_memsz_;
+    uint64_t p_align_;
+};
+
 
 
 #define ELF32_ST_BIND(i) ((i)>>4)
