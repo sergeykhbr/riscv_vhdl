@@ -4,7 +4,8 @@ CC=riscv64-unknown-elf-gcc
 CPP=riscv64-unknown-elf-gcc
 OBJDUMP=riscv64-unknown-elf-objdump
 
-CFLAGS= -c -fPIC -g -static -O0 -DSYS_HZ=40000000
+CFLAGS= -c -g -static -O0 -DSYS_HZ=40000000
+CFLAGS+= -fno-common
 LDFLAGS= -T app.ld -nostartfiles
 INCL_KEY=-I
 DIR_KEY=-B
@@ -30,8 +31,11 @@ LIB_NAMES = \
 VPATH = $(SRC_PATH)
 
 SOURCES = startup \
-	main \
-	helloworld
+	isr_vector \
+	gcc_startup \
+	gcc_newlib \
+	hwinit \
+	main
 
 OBJ_FILES = $(addsuffix .o,$(SOURCES))
 COMMONNAME = helloworld

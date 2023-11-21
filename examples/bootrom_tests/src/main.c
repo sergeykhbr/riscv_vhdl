@@ -44,7 +44,7 @@ ESdCardType spi_init();
 int spi_sd_card_memcpy(uint64_t src, uint64_t dst, int sz);
 
 
-int main() {
+int __main() {
     uint32_t cfg;
     pnp_map *pnp = (pnp_map *)ADDR_BUS0_XSLV_PNP;
     uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;

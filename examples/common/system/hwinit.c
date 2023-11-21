@@ -15,29 +15,20 @@
  */
 
 #include <inttypes.h>
-#include <string.h>
-#include <stdio.h>
 #include <axi_maps.h>
 
-int check_global_init = 0x7;
-
-void print_uart(const char *buf, int sz) {
+void __attribute__((weak)) hwinit() {
     uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
-    uart_txdata_type txdata;
-    for (int i = 0; i < sz; i++) {
-        do {
-            txdata.v = uart->txdata;
-        } while (txdata.b.full);
-        uart->txdata = buf[i];
-    }
-}
 
-// Wait about 8-10 ms in RTL simulation before output (spent on .data segment coping):
-int main() {
-    char ss[256];
-    int ss_len;
-    ss_len = sprintf(ss, "Hello World - %d!!!!\n", check_global_init);
-    print_uart(ss, ss_len);
-    return 0;
+    // scaler is enabled in SRAM self test, duplicate it here
+    uart->scaler = SYS_HZ / 115200 / 2;
+    uart->txctrl = 0x1;  // txen=1
+    uart->rxctrl = 0x1;  // rxen=1
+    uart_irq_type ie;
+    ie.v = 0;
+#ifdef UART_BUF_ENABLE    
+    ie.b.txwm = 1;
+    ie.b.rxwm = 0;
+#endif
+    uart->ie = ie.v;
 }
-

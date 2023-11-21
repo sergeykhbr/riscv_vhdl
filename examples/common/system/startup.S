@@ -142,11 +142,12 @@ init0:
   # HW Initialization is run only on Core[0]
   # run memory selftest only on Core[0]
   #jal _mbist_ram
+  jal hwinit
 _mbist_ram_exit:
 end_init0:
 
   # run tests in machine mode:
-  jal main
+  jal __main
   ## Never reach here
 
 
