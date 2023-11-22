@@ -1,6 +1,5 @@
 rem ---------------------------------------------------------------------------
 
-rem Perforce paths
 set PATH=%RISCV_GCC%;%PATH%
 
 set TOP_DIR=../../

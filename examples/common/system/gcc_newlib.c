@@ -15,15 +15,20 @@
  */
 
 #include <inttypes.h>
+#include "utils.h"
 
 extern char __heap_start__[];  // defined in linker script
+int heap_allocated_sz_ = 0;
 
 /*
  * @brief Increase program data space.
  * @details Malloc and related functions depend on this
  */
-char * __attribute__((weak)) _sbrk(int incr) {
-    return __heap_start__;
+char * sbrk(int incr) {
+    char *ret = __heap_start__ + heap_allocated_sz_;
+    incr = (incr + 3) & (~3); // align value to 4
+    heap_allocated_sz_ += incr;
+    return ret;
 }
 
 
@@ -33,20 +38,26 @@ char * __attribute__((weak)) _sbrk(int incr) {
  *          to all files, including stdout
  * @return -1 on error or number of bytes sent
  */
-int _write(int file __attribute__((unused)),
+int write(int file __attribute__((unused)),
            const void *ptr __attribute__((unused)),
            int len)
 {
+    uint8_t *buf = (uint8_t *)ptr;
+    int total = len;
+    while (total--) {
+        utils_uart_putc(*buf++);
+    }
+
     return len;
 }
 
-int _close(int file __attribute__((unused)))
+int close(int file __attribute__((unused)))
 {
     return -1;
 }
 
 #if!defined(_WIN32)
-void __attribute__((weak)) _exit(int code __attribute__((unused)))
+void exit(int code __attribute__((unused)))
 {
   // TODO: write on trace
   while (1) {}
@@ -59,28 +70,27 @@ void __attribute__((weak)) _exit(int code __attribute__((unused)))
  all files are regarded as character special devices.
  The `sys/stat.h' header file required is distributed in the `include' subdirectory for this C library.
  */
-int _fstat(int file __attribute__((unused)),
+int fstat(int file __attribute__((unused)),
            void *st __attribute__((unused)))
 {
     return 0;
 }
 
-int __attribute__((weak))_getpid(void)
+int getpid(void)
 {
-  return -1;
+    return -1;
 }
 
 /*
  isatty
  Query whether output stream is a terminal. For consistency with the other minimal implementations,
  */
-int _isatty(int file __attribute__((unused)))
+int isatty(int file __attribute__((unused)))
 {
     return 1;
 }
 
-int __attribute__((weak))
-_kill(int pid __attribute__((unused)), int sig __attribute__((unused)))
+int kill(int pid __attribute__((unused)), int sig __attribute__((unused)))
 {
   return -1;
 }
@@ -89,7 +99,7 @@ _kill(int pid __attribute__((unused)), int sig __attribute__((unused)))
  lseek
  Set position in a file. Minimal implementation:
  */
-int _lseek(int file __attribute__((unused)),
+int lseek(int file __attribute__((unused)),
              int ptr __attribute__((unused)),
              int dir __attribute__((unused)))
 {
@@ -103,7 +113,7 @@ int _lseek(int file __attribute__((unused)),
  * @return  -1 on error or blocks until the number of characters have been
             read.
  */
-int _read(int file __attribute__((unused)),
+int read(int file __attribute__((unused)),
                void *ptr __attribute__((unused)),
                int len __attribute__((unused)))
 {

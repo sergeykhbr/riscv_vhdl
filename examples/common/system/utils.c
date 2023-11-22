@@ -15,22 +15,18 @@
  */
 
 #include <inttypes.h>
+#include <axi_maps.h>
 #include <string.h>
-#include <stdio.h>
-#include <utils.h>
 
-int check_global_init = 0x7;
-
-// Wait about 8-10 ms in RTL simulation before output (spent on .data segment coping without memcpy):
-int main() {
-    char ss[256];
-    int ss_len;
-    ss_len = sprintf(ss, "Hello World - %d!!!!\n", check_global_init);
-
-    // printf() function requries more than 64 KB of ROM (see cpp_demo example):
-    for (int i = 0; i < ss_len; i++) {
-        utils_uart_putc(ss[i]);
-    }
-    return 0;
+void utils_memcpy(void *dst, void *src, int sz) {
+    memcpy(dst, src, sz);
 }
 
+void utils_uart_putc(char s) {
+    uart_map *uart = (uart_map *)ADDR_BUS0_XSLV_UART0;
+    uart_txdata_type txdata;
+    do {
+        txdata.v = uart->txdata;
+    } while (txdata.b.full);
+    uart->txdata = s;
+}

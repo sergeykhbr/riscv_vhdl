@@ -15,6 +15,7 @@
  */
 
 #include <inttypes.h>
+#include "utils.h"
 
 extern void main(void);
 
@@ -40,12 +41,8 @@ void init_data_bss(void)
 {
     /* Declare pointers for various data sections. These pointers
      * are initialized using values pulled in from the linker file */
-    uint8_t * bss_start;
-    const uint8_t * bss_end;
-
-    /* BSS */
-    bss_start       = (uint8_t *)__bss_start__;
-    bss_end         = (uint8_t *)__bss_end__;
+    uint8_t * bss_start = (uint8_t *)__bss_start__;
+    const uint8_t * bss_end = (uint8_t *)__bss_end__;
 
     /* Clear the zero-initialized data section */
     while (bss_end != bss_start) {
@@ -83,17 +80,16 @@ __run_fini_array (void)
 
     count = __fini_array_end - __fini_array_start;
 
-    for (i = count; i > 0; i--)
-    {
+    for (i = count; i > 0; i--) {
        __fini_array_start[i - 1] ();
     }
 }
 
-void copy_data_section(void)
-{
-    for (size_t i = 0; i < (size_t)__DATA_SIZE; i++) {
-        __DATA_START[i] = __DATA_LOAD_START[i];
-    }
+void copy_data_section(void) {
+    utils_memcpy(__DATA_START, __DATA_LOAD_START, (int)__DATA_SIZE);
+//    for (size_t i = 0; i < (size_t)__DATA_SIZE; i++) {
+//        __DATA_START[i] = __DATA_LOAD_START[i];
+//    }
 }
 
 
@@ -101,11 +97,11 @@ int __main(void)
 {
     init_data_bss();
 
+    copy_data_section();
+
     // Call the standard library initialisation (mandatory for C++ to
     // execute the constructors for the static objects).
    __run_init_array();
-
-   copy_data_section();
 
     // Call the main entry point, and save the exit code.
     main();

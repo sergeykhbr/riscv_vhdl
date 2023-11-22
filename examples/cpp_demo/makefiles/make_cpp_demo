@@ -1,25 +1,23 @@
 include util.mak
 
-CC=riscv-none-embed-gcc
-CPP=riscv-none-embed-gcc
-OBJDUMP=riscv-none-embed-objdump
+CC=riscv64-unknown-elf-gcc
+CPP=riscv64-unknown-elf-gcc
+OBJDUMP=riscv64-unknown-elf-objdump
 
 FPU_ENABLED=0
 
-CFLAGS= -c -g -O0 -DSYS_HZ=40000000
+CFLAGS= -c -g -static -O0 -DSYS_HZ=40000000 -fno-common
 ifeq ($(FPU_ENABLED), 1)
   CFLAGS += -march=rv64imafd -DFPU_ENABLED
 else
   CFLAGS += -march=rv64imac -mabi=lp64
 endif
 
-
-LDFLAGS=-T cpp_demo.ld
+LDFLAGS=-T ../../common/system/river.ld -nostartfiles
 ifeq ($(FPU_ENABLED), 1)
 else
   LDFLAGS += -march=rv64imac -mabi=lp64
 endif
-
 
 INCL_KEY=-I
 DIR_KEY=-B
@@ -27,12 +25,14 @@ DIR_KEY=-B
 
 # include sub-folders list
 INCL_PATH=\
-	$(TOP_DIR)../common \
-	$(TOP_DIR)src
+	$(TOP_DIR)common/system \
+	$(TOP_DIR)common \
+	$(TOP_DIR)cpp_demo/src
 
 # source files directories list:
-SRC_PATH =\
-	$(TOP_DIR)src
+SRC_PATH = \
+	$(TOP_DIR)common/system \
+	$(TOP_DIR)cpp_demo/src
 
 LIB_NAMES =\
 	gcc \
@@ -41,17 +41,20 @@ LIB_NAMES =\
 
 VPATH = $(SRC_PATH)
 
-SOURCES = main \
-	uart \
-	trap \
-	crt \
-	stubc++
+SOURCES = startup \
+	isr_vector \
+	gcc_startup \
+	gcc_newlib \
+	hwinit \
+	utils \
+	main
 
 OBJ_FILES = $(addsuffix .o,$(SOURCES))
 OUTFILENAME = cpp_demo
 EXECUTABLE = $(OUTFILENAME).elf
 DUMPFILE = $(OUTFILENAME).dump
-HEXFILE = $(OUTFILENAME).hex
+HEXFILE_LO = $(OUTFILENAME)_lo.hex
+HEXFILE_HI = $(OUTFILENAME)_hi.hex
 LSTFILE = $(OUTFILENAME).lst
 
 all: cpp_demo
@@ -59,10 +62,10 @@ all: cpp_demo
 .PHONY: $(EXECUTABLE) $(DUMPFILE)
 
 
-cpp_demo: $(EXECUTABLE) $(DUMPFILE) $(HEXFILE)
-$(HEXFILE): $(EXECUTABLE)
-	echo elf2rawx $(addprefix $(ELF_DIR)/,$<) -h -f 262144 -l 8 -o $(addprefix $(ELF_DIR)/,$(OUTFILENAME).hex)
-	elf2rawx $(addprefix $(ELF_DIR)/,$<) -h -f 262144 -l 8 -o $(addprefix $(ELF_DIR)/,$(OUTFILENAME).hex)
+cpp_demo: $(EXECUTABLE) $(DUMPFILE) $(HEXFILE_HI)
+$(HEXFILE_HI): $(EXECUTABLE)
+	echo elf2rawx $(addprefix $(ELF_DIR)/,$<) -h -f 131072 -l 8 -o $(addprefix $(ELF_DIR)/,$(HEXFILE_HI)) -o $(addprefix $(ELF_DIR)/,$(HEXFILE_LO))
+	elf2rawx $(addprefix $(ELF_DIR)/,$<) -h -f 131072 -l 8 -o $(addprefix $(ELF_DIR)/,$(HEXFILE_HI)) -o $(addprefix $(ELF_DIR)/,$(HEXFILE_LO))
 
 $(DUMPFILE): $(EXECUTABLE)
 	echo $(OBJDUMP) --disassemble-all --disassemble-zeroes --section=.text --section=.text.startup --section=.data $(addprefix $(ELF_DIR)/,$<) > $(addprefix $(ELF_DIR)/,$@)

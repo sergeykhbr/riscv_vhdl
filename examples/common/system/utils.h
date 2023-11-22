@@ -1,5 +1,5 @@
 /*
- *  Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
+ *  Copyright 2023 Sergey Khabarov, sergeykhbr@gmail.com
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -14,24 +14,20 @@
  *  limitations under the License.
  */
 
+#pragma once
+
 #include <inttypes.h>
 #include <stdarg.h>
 
-#ifndef __TEST_NORF_SRC_GENERAL_H__
-#define __TEST_NORF_SRC_GENERAL_H__
-
-#ifdef __cplusplus
-extern "C" {
+#if defined(__cplusplus)
+extern "C"
+{
 #endif
 
-void print_uart(const char *buf, int sz);
-void print_uart_hex(uint64_t val);
-void printf_uart(const char *fmt, ... );
+void utils_memcpy(void *dst, void *src, int sz);
 
-void print_pnp(void);
+void utils_uart_putc(char s);
 
-#ifdef __cplusplus
+#if defined(__cplusplus)
 }  // extern "C"
 #endif
-
-#endif  // __TEST_NORF_SRC_GENERAL_H__

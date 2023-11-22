@@ -6,7 +6,7 @@ OBJDUMP=riscv64-unknown-elf-objdump
 
 CFLAGS= -c -g -static -O0 -DSYS_HZ=40000000
 CFLAGS+= -fno-common
-LDFLAGS= -T app.ld -nostartfiles
+LDFLAGS= -T ../../common/system/river.ld -nostartfiles
 INCL_KEY=-I
 DIR_KEY=-B
 
@@ -35,6 +35,7 @@ SOURCES = startup \
 	gcc_startup \
 	gcc_newlib \
 	hwinit \
+	utils \
 	main
 
 OBJ_FILES = $(addsuffix .o,$(SOURCES))
