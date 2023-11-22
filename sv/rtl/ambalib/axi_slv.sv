@@ -105,7 +105,7 @@ begin: comb_proc
         vxslvo.w_ready = 1'b1;                              // No burst AXILite ready
         vxslvo.ar_ready = (~i_xslvi.aw_valid);
         if (i_xslvi.aw_valid == 1'b1) begin
-            v.req_addr = i_xslvi.aw_bits.addr;
+            v.req_addr = (i_xslvi.aw_bits.addr - i_mapinfo.addr_start);
             v.req_xsize = XSizeToBytes(i_xslvi.aw_bits.size);
             v.req_len = i_xslvi.aw_bits.len;
             v.req_burst = i_xslvi.aw_bits.burst;
@@ -125,7 +125,7 @@ begin: comb_proc
         end else if (i_xslvi.ar_valid == 1'b1) begin
             v.req_valid = 1'b1;
             v.req_last_a = (~(|i_xslvi.ar_bits.len));
-            v.req_addr = i_xslvi.ar_bits.addr;
+            v.req_addr = (i_xslvi.ar_bits.addr - i_mapinfo.addr_start);
             v.req_xsize = XSizeToBytes(i_xslvi.ar_bits.size);
             v.req_len = i_xslvi.ar_bits.len;
             v.req_burst = i_xslvi.ar_bits.burst;

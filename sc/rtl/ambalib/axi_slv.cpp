@@ -174,7 +174,7 @@ void axi_slv::comb() {
         vxslvo.w_ready = 1;                                 // No burst AXILite ready
         vxslvo.ar_ready = (!i_xslvi.read().aw_valid);
         if (i_xslvi.read().aw_valid == 1) {
-            v.req_addr = i_xslvi.read().aw_bits.addr;
+            v.req_addr = (i_xslvi.read().aw_bits.addr - i_mapinfo.read().addr_start);
             v.req_xsize = XSizeToBytes(i_xslvi.read().aw_bits.size);
             v.req_len = i_xslvi.read().aw_bits.len;
             v.req_burst = i_xslvi.read().aw_bits.burst;
@@ -194,7 +194,7 @@ void axi_slv::comb() {
         } else if (i_xslvi.read().ar_valid == 1) {
             v.req_valid = 1;
             v.req_last_a = (!i_xslvi.read().ar_bits.len.or_reduce());
-            v.req_addr = i_xslvi.read().ar_bits.addr;
+            v.req_addr = (i_xslvi.read().ar_bits.addr - i_mapinfo.read().addr_start);
             v.req_xsize = XSizeToBytes(i_xslvi.read().ar_bits.size);
             v.req_len = i_xslvi.read().ar_bits.len;
             v.req_burst = i_xslvi.read().ar_bits.burst;

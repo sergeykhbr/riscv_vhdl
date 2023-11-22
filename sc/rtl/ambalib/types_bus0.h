@@ -67,7 +67,7 @@ typedef sc_vector<sc_signal<mapinfo_type>> bus0_mapinfo_vector;
 
 // Bus 0 device tree
 static const mapinfo_type CFG_BUS0_MAP[CFG_BUS0_XSLV_TOTAL] = {
-    {0x0000000010000, 0x0000000020000},                     // 0, bootrom
+    {0x0000000010000, 0x0000000050000},                     // 0, bootrom, 256 KB
     {0x0000002000000, 0x0000002010000},                     // 1, clint
     {0x0000008000000, 0x0000008200000},                     // 2, sram, 2MB
     {0x000000C000000, 0x0000010000000},                     // 3, plic

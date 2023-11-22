@@ -64,7 +64,7 @@ typedef mapinfo_type bus0_mapinfo_vector[0:CFG_BUS0_XSLV_TOTAL - 1];
 
 // Bus 0 device tree
 const bus0_mapinfo_vector CFG_BUS0_MAP = '{
-    '{64'h0000000010000, 64'h0000000020000},                // 0, bootrom
+    '{64'h0000000010000, 64'h0000000050000},                // 0, bootrom, 256 KB
     '{64'h0000002000000, 64'h0000002010000},                // 1, clint
     '{64'h0000008000000, 64'h0000008200000},                // 2, sram, 2MB
     '{64'h000000C000000, 64'h0000010000000},                // 3, plic
