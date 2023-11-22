@@ -20,9 +20,7 @@
 namespace debugger {
 
 L2CacheLru::L2CacheLru(sc_module_name name,
-                       bool async_reset,
-                       uint32_t waybits,
-                       uint32_t ibits)
+                       bool async_reset)
     : sc_module(name),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
@@ -55,15 +53,11 @@ L2CacheLru::L2CacheLru(sc_module_name name,
     o_flush_end("o_flush_end") {
 
     async_reset_ = async_reset;
-    waybits_ = waybits;
-    ibits_ = ibits;
-    ways = (1 << waybits);
-    FLUSH_ALL_VALUE = ((1 << (ibits + waybits)) - 1);
     mem0 = 0;
 
     mem0 = new TagMemNWay<abus,
-                          4,
-                          9,
+                          CFG_L2_LOG2_NWAYS,
+                          CFG_L2_LOG2_LINES_PER_WAY,
                           lnbits,
                           flbits,
                           0>("mem0", async_reset);
@@ -310,7 +304,7 @@ void L2CacheLru::comb() {
     }
 
     // Flush counter when direct access
-    if (r.req_addr.read()((waybits_ - 1), 0) == (ways - 1)) {
+    if (r.req_addr.read()((CFG_L2_LOG2_NWAYS - 1), 0) == (ways - 1)) {
         vb_addr_direct_next = ((r.req_addr.read() + L2CACHE_BYTES_PER_LINE)
                 & (~LINE_BYTES_MASK));
     } else {

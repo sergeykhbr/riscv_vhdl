@@ -21,17 +21,6 @@ namespace debugger {
 
 riscv_soc::riscv_soc(sc_module_name name,
                      bool async_reset,
-                     uint32_t cpu_num,
-                     uint32_t ilog2_nways,
-                     uint32_t ilog2_lines_per_way,
-                     uint32_t dlog2_nways,
-                     uint32_t dlog2_lines_per_way,
-                     uint32_t l2cache_ena,
-                     uint32_t l2log2_nways,
-                     uint32_t l2log2_lines_per_way,
-                     uint32_t bootrom_log2_size,
-                     uint32_t sram_log2_size,
-                     std::string bootfile,
                      int sim_uart_speedup_rate)
     : sc_module(name),
     i_sys_nrst("i_sys_nrst"),
@@ -92,17 +81,6 @@ riscv_soc::riscv_soc(sc_module_name name,
     dev_pnp("dev_pnp", SOC_PNP_TOTAL) {
 
     async_reset_ = async_reset;
-    cpu_num_ = cpu_num;
-    ilog2_nways_ = ilog2_nways;
-    ilog2_lines_per_way_ = ilog2_lines_per_way;
-    dlog2_nways_ = dlog2_nways;
-    dlog2_lines_per_way_ = dlog2_lines_per_way;
-    l2cache_ena_ = l2cache_ena;
-    l2log2_nways_ = l2log2_nways;
-    l2log2_lines_per_way_ = l2log2_lines_per_way;
-    bootrom_log2_size_ = bootrom_log2_size;
-    sram_log2_size_ = sram_log2_size;
-    bootfile_ = bootfile;
     sim_uart_speedup_rate_ = sim_uart_speedup_rate;
     bus0 = 0;
     bus1 = 0;
@@ -141,14 +119,8 @@ riscv_soc::riscv_soc(sc_module_name name,
 
 
     group0 = new Workgroup("group0", async_reset,
-                            cpu_num,
-                            ilog2_nways,
-                            ilog2_lines_per_way,
-                            dlog2_nways,
-                            dlog2_lines_per_way,
-                            l2cache_ena,
-                            l2log2_nways,
-                            l2log2_lines_per_way);
+                            CFG_CPU_NUM,
+                            CFG_L2CACHE_ENA);
     group0->i_cores_nrst(i_sys_nrst);
     group0->i_dmi_nrst(i_dbg_nrst);
     group0->i_clk(i_sys_clk);
@@ -174,8 +146,8 @@ riscv_soc::riscv_soc(sc_module_name name,
     group0->o_dmreset(o_dmreset);
 
 
-    rom0 = new axi_rom<16>("rom0", async_reset,
-                           bootfile);
+    rom0 = new axi_rom<CFG_BOOTROM_LOG2_SIZE>("rom0", async_reset,
+                                              CFG_BOOTROM_FILE_HEX);
     rom0->i_clk(i_sys_clk);
     rom0->i_nrst(i_sys_nrst);
     rom0->i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_BOOTROM]);
@@ -184,7 +156,7 @@ riscv_soc::riscv_soc(sc_module_name name,
     rom0->o_xslvo(axiso[CFG_BUS0_XSLV_BOOTROM]);
 
 
-    sram0 = new axi_sram<21>("sram0", async_reset);
+    sram0 = new axi_sram<CFG_SRAM_LOG2_SIZE>("sram0", async_reset);
     sram0->i_clk(i_sys_clk);
     sram0->i_nrst(i_sys_nrst);
     sram0->i_mapinfo(bus0_mapinfo[CFG_BUS0_XSLV_SRAM]);
@@ -287,8 +259,8 @@ riscv_soc::riscv_soc(sc_module_name name,
 
     pnp0 = new apb_pnp<SOC_PNP_TOTAL>("pnp0", async_reset,
                                       SOC_HW_ID,
-                                      cpu_num,
-                                      l2cache_ena,
+                                      CFG_CPU_NUM,
+                                      CFG_L2CACHE_ENA,
                                       SOC_PLIC_IRQ_TOTAL);
     pnp0->i_clk(i_sys_clk);
     pnp0->i_nrst(i_sys_nrst);

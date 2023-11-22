@@ -17,6 +17,7 @@
 
 #include <systemc.h>
 #include "../river_cfg.h"
+#include "../../../prj/impl/asic/target_cfg.h"
 #include "../cache/tagmemnway.h"
 
 namespace debugger {
@@ -61,23 +62,18 @@ SC_MODULE(L2CacheLru) {
     SC_HAS_PROCESS(L2CacheLru);
 
     L2CacheLru(sc_module_name name,
-               bool async_reset,
-               uint32_t waybits,
-               uint32_t ibits);
+               bool async_reset);
     virtual ~L2CacheLru();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
     bool async_reset_;
-    uint32_t waybits_;
-    uint32_t ibits_;
-    int ways;
-    uint32_t FLUSH_ALL_VALUE;
 
     static const int abus = CFG_CPU_ADDR_BITS;
     static const int lnbits = CFG_L2_LOG2_BYTES_PER_LINE;
     static const int flbits = L2TAG_FL_TOTAL;
+    static const int ways = (1 << CFG_L2_LOG2_NWAYS);
     
     // State machine states:
     static const uint8_t State_Idle = 0;
@@ -94,6 +90,7 @@ SC_MODULE(L2CacheLru) {
     static const uint8_t State_ResetWrite = 11;
     
     static const uint64_t LINE_BYTES_MASK = ((1 << CFG_L2_LOG2_BYTES_PER_LINE) - 1);
+    static const uint32_t FLUSH_ALL_VALUE = ((1 << (CFG_L2_LOG2_LINES_PER_WAY + CFG_L2_LOG2_NWAYS)) - 1);
 
     struct L2CacheLru_registers {
         sc_signal<sc_uint<L2_REQ_TYPE_BITS>> req_type;
@@ -160,7 +157,7 @@ SC_MODULE(L2CacheLru) {
     sc_signal<bool> line_snoop_ready_o;
     sc_signal<sc_uint<L2TAG_FL_TOTAL>> line_snoop_flags_o;
 
-    TagMemNWay<abus, 4, 9, lnbits, flbits, 0> *mem0;
+    TagMemNWay<abus, CFG_L2_LOG2_NWAYS, CFG_L2_LOG2_LINES_PER_WAY, lnbits, flbits, 0> *mem0;
 
 };
 

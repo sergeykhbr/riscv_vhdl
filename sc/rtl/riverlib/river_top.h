@@ -17,6 +17,7 @@
 
 #include <systemc.h>
 #include "river_cfg.h"
+#include "../../prj/impl/asic/target_cfg.h"
 #include "core/proc.h"
 #include "cache/cache_top.h"
 
@@ -78,11 +79,7 @@ SC_MODULE(RiverTop) {
              uint32_t hartid,
              bool fpu_ena,
              bool coherence_ena,
-             bool tracer_ena,
-             uint32_t ilog2_nways,
-             uint32_t ilog2_lines_per_way,
-             uint32_t dlog2_nways,
-             uint32_t dlog2_lines_per_way);
+             bool tracer_ena);
     virtual ~RiverTop();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
@@ -93,10 +90,6 @@ SC_MODULE(RiverTop) {
     bool fpu_ena_;
     bool coherence_ena_;
     bool tracer_ena_;
-    uint32_t ilog2_nways_;
-    uint32_t ilog2_lines_per_way_;
-    uint32_t dlog2_nways_;
-    uint32_t dlog2_lines_per_way_;
 
     // Control path:
     sc_signal<bool> w_req_ctrl_ready;

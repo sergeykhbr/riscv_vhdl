@@ -21,8 +21,6 @@ namespace debugger {
 
 DCacheLru::DCacheLru(sc_module_name name,
                      bool async_reset,
-                     uint32_t waybits,
-                     uint32_t ibits,
                      bool coherence_ena)
     : sc_module(name),
     i_clk("i_clk"),
@@ -68,16 +66,12 @@ DCacheLru::DCacheLru(sc_module_name name,
     o_flush_end("o_flush_end") {
 
     async_reset_ = async_reset;
-    waybits_ = waybits;
-    ibits_ = ibits;
     coherence_ena_ = coherence_ena;
-    ways = (1 << waybits);
-    FLUSH_ALL_VALUE = ((1 << (ibits + waybits)) - 1);
     mem0 = 0;
 
     mem0 = new TagMemNWay<abus,
-                          2,
-                          7,
+                          CFG_DLOG2_NWAYS,
+                          CFG_DLOG2_LINES_PER_WAY,
                           lnbits,
                           flbits,
                           1>("mem0", async_reset);
@@ -361,7 +355,7 @@ void DCacheLru::comb() {
     }
 
     // Flush counter when direct access
-    if (r.req_addr.read()((waybits_ - 1), 0) == (ways - 1)) {
+    if (r.req_addr.read()((CFG_DLOG2_NWAYS - 1), 0) == (ways - 1)) {
         vb_addr_direct_next = ((r.req_addr.read() + L1CACHE_BYTES_PER_LINE)
                 & (~LINE_BYTES_MASK));
     } else {

@@ -17,6 +17,7 @@
 
 #include <systemc.h>
 #include "../river_cfg.h"
+#include "../../../prj/impl/asic/target_cfg.h"
 #include "tagmemcoupled.h"
 
 namespace debugger {
@@ -59,23 +60,18 @@ SC_MODULE(ICacheLru) {
     SC_HAS_PROCESS(ICacheLru);
 
     ICacheLru(sc_module_name name,
-              bool async_reset,
-              uint32_t waybits,
-              uint32_t ibits);
+              bool async_reset);
     virtual ~ICacheLru();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
     bool async_reset_;
-    uint32_t waybits_;
-    uint32_t ibits_;
-    int ways;
-    uint32_t FLUSH_ALL_VALUE;
 
     static const int abus = CFG_CPU_ADDR_BITS;
     static const int lnbits = CFG_LOG2_L1CACHE_BYTES_PER_LINE;
     static const int flbits = ITAG_FL_TOTAL;
+    static const int ways = (1 << CFG_ILOG2_NWAYS);
     
     // State machine states:
     static const uint8_t State_Idle = 0;
@@ -91,6 +87,7 @@ SC_MODULE(ICacheLru) {
     static const uint8_t State_ResetWrite = 11;
     
     static const uint64_t LINE_BYTES_MASK = ((1 << CFG_LOG2_L1CACHE_BYTES_PER_LINE) - 1);
+    static const uint32_t FLUSH_ALL_VALUE = ((1 << (CFG_ILOG2_LINES_PER_WAY + CFG_ILOG2_NWAYS)) - 1);
 
     struct ICacheLru_registers {
         sc_signal<sc_uint<CFG_CPU_ADDR_BITS>> req_addr;
@@ -142,7 +139,7 @@ SC_MODULE(ICacheLru) {
     sc_signal<bool> line_hit_o;
     sc_signal<bool> line_hit_next_o;
 
-    TagMemCoupled<abus, 2, 7, lnbits, flbits> *mem0;
+    TagMemCoupled<abus, CFG_ILOG2_NWAYS, CFG_ILOG2_LINES_PER_WAY, lnbits, flbits> *mem0;
 
 };
 

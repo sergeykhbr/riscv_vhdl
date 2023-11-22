@@ -20,9 +20,7 @@
 namespace debugger {
 
 ICacheLru::ICacheLru(sc_module_name name,
-                     bool async_reset,
-                     uint32_t waybits,
-                     uint32_t ibits)
+                     bool async_reset)
     : sc_module(name),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
@@ -51,15 +49,11 @@ ICacheLru::ICacheLru(sc_module_name name,
     i_flush_valid("i_flush_valid") {
 
     async_reset_ = async_reset;
-    waybits_ = waybits;
-    ibits_ = ibits;
-    ways = (1 << waybits);
-    FLUSH_ALL_VALUE = ((1 << (ibits + waybits)) - 1);
     mem0 = 0;
 
     mem0 = new TagMemCoupled<abus,
-                             2,
-                             7,
+                             CFG_ILOG2_NWAYS,
+                             CFG_ILOG2_LINES_PER_WAY,
                              lnbits,
                              flbits>("mem0", async_reset);
     mem0->i_clk(i_clk);
@@ -240,7 +234,7 @@ void ICacheLru::comb() {
     }
 
     // Flush counter when direct access
-    if (r.req_addr.read()((waybits_ - 1), 0) == (ways - 1)) {
+    if (r.req_addr.read()((CFG_ILOG2_NWAYS - 1), 0) == (ways - 1)) {
         vb_addr_direct_next = ((r.req_addr.read() + L1CACHE_BYTES_PER_LINE) & (~LINE_BYTES_MASK));
     } else {
         vb_addr_direct_next = (r.req_addr.read() + 1);

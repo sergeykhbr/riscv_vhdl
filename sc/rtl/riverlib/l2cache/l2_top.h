@@ -19,6 +19,7 @@
 #include "../../ambalib/types_amba.h"
 #include "../river_cfg.h"
 #include "../types_river.h"
+#include "../../../prj/impl/asic/target_cfg.h"
 #include "l2cache_lru.h"
 #include "l2_amba.h"
 #include "l2_dst.h"
@@ -37,17 +38,13 @@ SC_MODULE(L2Top) {
 
 
     L2Top(sc_module_name name,
-          bool async_reset,
-          uint32_t waybits,
-          uint32_t ibits);
+          bool async_reset);
     virtual ~L2Top();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
     bool async_reset_;
-    uint32_t waybits_;
-    uint32_t ibits_;
 
     sc_signal<bool> w_req_ready;
     sc_signal<bool> w_req_valid;

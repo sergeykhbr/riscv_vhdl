@@ -20,9 +20,7 @@
 namespace debugger {
 
 L2Top::L2Top(sc_module_name name,
-             bool async_reset,
-             uint32_t waybits,
-             uint32_t ibits)
+             bool async_reset)
     : sc_module(name),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
@@ -33,8 +31,6 @@ L2Top::L2Top(sc_module_name name,
     i_flush_valid("i_flush_valid") {
 
     async_reset_ = async_reset;
-    waybits_ = waybits;
-    ibits_ = ibits;
     cache0 = 0;
     amba0 = 0;
     dst0 = 0;
@@ -61,9 +57,7 @@ L2Top::L2Top(sc_module_name name,
     dst0->o_req_wstrb(wb_req_wstrb);
 
 
-    cache0 = new L2CacheLru("cache0", async_reset,
-                             waybits,
-                             ibits);
+    cache0 = new L2CacheLru("cache0", async_reset);
     cache0->i_clk(i_clk);
     cache0->i_nrst(i_nrst);
     cache0->i_req_valid(w_req_valid);

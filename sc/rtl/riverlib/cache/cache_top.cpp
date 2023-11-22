@@ -21,11 +21,7 @@ namespace debugger {
 
 CacheTop::CacheTop(sc_module_name name,
                    bool async_reset,
-                   bool coherence_ena,
-                   uint32_t ilog2_nways,
-                   uint32_t ilog2_lines_per_way,
-                   uint32_t dlog2_nways,
-                   uint32_t dlog2_lines_per_way)
+                   bool coherence_ena)
     : sc_module(name),
     i_clk("i_clk"),
     i_nrst("i_nrst"),
@@ -85,19 +81,13 @@ CacheTop::CacheTop(sc_module_name name,
 
     async_reset_ = async_reset;
     coherence_ena_ = coherence_ena;
-    ilog2_nways_ = ilog2_nways;
-    ilog2_lines_per_way_ = ilog2_lines_per_way;
-    dlog2_nways_ = dlog2_nways;
-    dlog2_lines_per_way_ = dlog2_lines_per_way;
     i1 = 0;
     d0 = 0;
     pma0 = 0;
     pmp0 = 0;
     queue0 = 0;
 
-    i1 = new ICacheLru("i1", async_reset,
-                        ilog2_nways,
-                        ilog2_lines_per_way);
+    i1 = new ICacheLru("i1", async_reset);
     i1->i_clk(i_clk);
     i1->i_nrst(i_nrst);
     i1->i_req_valid(i_req_ctrl_valid);
@@ -126,8 +116,6 @@ CacheTop::CacheTop(sc_module_name name,
 
 
     d0 = new DCacheLru("d0", async_reset,
-                        dlog2_nways,
-                        dlog2_lines_per_way,
                         coherence_ena);
     d0->i_clk(i_clk);
     d0->i_nrst(i_nrst);

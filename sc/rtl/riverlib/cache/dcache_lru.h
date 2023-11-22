@@ -17,6 +17,7 @@
 
 #include <systemc.h>
 #include "../river_cfg.h"
+#include "../../../prj/impl/asic/target_cfg.h"
 #include "tagmemnway.h"
 
 namespace debugger {
@@ -77,8 +78,6 @@ SC_MODULE(DCacheLru) {
 
     DCacheLru(sc_module_name name,
               bool async_reset,
-              uint32_t waybits,
-              uint32_t ibits,
               bool coherence_ena);
     virtual ~DCacheLru();
 
@@ -86,15 +85,12 @@ SC_MODULE(DCacheLru) {
 
  private:
     bool async_reset_;
-    uint32_t waybits_;
-    uint32_t ibits_;
     bool coherence_ena_;
-    int ways;
-    uint32_t FLUSH_ALL_VALUE;
 
     static const int abus = CFG_CPU_ADDR_BITS;
     static const int lnbits = CFG_LOG2_L1CACHE_BYTES_PER_LINE;
     static const int flbits = DTAG_FL_TOTAL;
+    static const int ways = (1 << CFG_DLOG2_NWAYS);
     
     // State machine states:
     static const uint8_t State_Idle = 0;
@@ -113,6 +109,7 @@ SC_MODULE(DCacheLru) {
     static const uint8_t State_SnoopReadData = 13;
     
     static const uint64_t LINE_BYTES_MASK = ((1 << CFG_LOG2_L1CACHE_BYTES_PER_LINE) - 1);
+    static const uint32_t FLUSH_ALL_VALUE = ((1 << (CFG_DLOG2_LINES_PER_WAY + CFG_DLOG2_NWAYS)) - 1);
 
     struct DCacheLru_registers {
         sc_signal<sc_uint<MemopType_Total>> req_type;
@@ -191,7 +188,7 @@ SC_MODULE(DCacheLru) {
     sc_signal<bool> line_snoop_ready_o;
     sc_signal<sc_uint<DTAG_FL_TOTAL>> line_snoop_flags_o;
 
-    TagMemNWay<abus, 2, 7, lnbits, flbits, 1> *mem0;
+    TagMemNWay<abus, CFG_DLOG2_NWAYS, CFG_DLOG2_LINES_PER_WAY, lnbits, flbits, 1> *mem0;
 
 };
 

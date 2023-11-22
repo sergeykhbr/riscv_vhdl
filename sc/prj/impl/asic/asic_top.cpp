@@ -19,8 +19,6 @@
 
 namespace debugger {
 
-static std::string CFG_BOOTROM_FILE_HEX = "../../../../examples/bootrom_tests/linuxbuild/bin/bootrom_tests";
-
 asic_top::asic_top(sc_module_name name,
                    int sim_uart_speedup_rate)
     : sc_module(name),
@@ -121,17 +119,6 @@ asic_top::asic_top(sc_module_name name,
 
 
     soc0 = new riscv_soc("soc0", async_reset,
-                          CFG_CPU_NUM,
-                          CFG_ILOG2_NWAYS,
-                          CFG_ILOG2_LINES_PER_WAY,
-                          CFG_DLOG2_NWAYS,
-                          CFG_DLOG2_LINES_PER_WAY,
-                          CFG_L2CACHE_ENA,
-                          CFG_L2_LOG2_NWAYS,
-                          CFG_L2_LOG2_LINES_PER_WAY,
-                          CFG_BOOTROM_LOG2_SIZE,
-                          CFG_SRAM_LOG2_SIZE,
-                          CFG_BOOTROM_FILE_HEX,
                           sim_uart_speedup_rate);
     soc0->i_sys_nrst(w_sys_nrst);
     soc0->i_sys_clk(w_sys_clk);

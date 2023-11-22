@@ -17,6 +17,7 @@
 
 #include <systemc.h>
 #include "../river_cfg.h"
+#include "../../../prj/impl/asic/target_cfg.h"
 #include "icache_lru.h"
 #include "dcache_lru.h"
 #include "pma.h"
@@ -95,11 +96,7 @@ SC_MODULE(CacheTop) {
 
     CacheTop(sc_module_name name,
              bool async_reset,
-             bool coherence_ena,
-             uint32_t ilog2_nways,
-             uint32_t ilog2_lines_per_way,
-             uint32_t dlog2_nways,
-             uint32_t dlog2_lines_per_way);
+             bool coherence_ena);
     virtual ~CacheTop();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
@@ -107,10 +104,6 @@ SC_MODULE(CacheTop) {
  private:
     bool async_reset_;
     bool coherence_ena_;
-    uint32_t ilog2_nways_;
-    uint32_t ilog2_lines_per_way_;
-    uint32_t dlog2_nways_;
-    uint32_t dlog2_lines_per_way_;
 
     static const int DATA_PATH = 0;
     static const int CTRL_PATH = 1;

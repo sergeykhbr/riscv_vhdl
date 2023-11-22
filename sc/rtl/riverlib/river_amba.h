@@ -19,6 +19,7 @@
 #include "river_cfg.h"
 #include "../ambalib/types_amba.h"
 #include "types_river.h"
+#include "../../prj/impl/asic/target_cfg.h"
 #include "river_top.h"
 
 namespace debugger {
@@ -48,11 +49,7 @@ SC_MODULE(RiverAmba) {
               uint32_t hartid,
               bool fpu_ena,
               bool coherence_ena,
-              bool tracer_ena,
-              uint32_t ilog2_nways,
-              uint32_t ilog2_lines_per_way,
-              uint32_t dlog2_nways,
-              uint32_t dlog2_lines_per_way);
+              bool tracer_ena);
     virtual ~RiverAmba();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
@@ -63,10 +60,6 @@ SC_MODULE(RiverAmba) {
     bool fpu_ena_;
     bool coherence_ena_;
     bool tracer_ena_;
-    uint32_t ilog2_nways_;
-    uint32_t ilog2_lines_per_way_;
-    uint32_t dlog2_nways_;
-    uint32_t dlog2_lines_per_way_;
 
     static const uint8_t state_idle = 0;
     static const uint8_t state_ar = 1;

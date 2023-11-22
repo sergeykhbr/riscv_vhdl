@@ -23,6 +23,7 @@
 #include "riverlib/river_cfg.h"
 #include "sdctrl/sdctrl_cfg.h"
 #include "riverlib/types_river.h"
+#include "../prj/impl/asic/target_cfg.h"
 #include "ambalib/axictrl_bus0.h"
 #include "ambalib/axi2apb_bus1.h"
 #include "misclib/axi_rom.h"
@@ -101,17 +102,6 @@ SC_MODULE(riscv_soc) {
 
     riscv_soc(sc_module_name name,
               bool async_reset,
-              uint32_t cpu_num,
-              uint32_t ilog2_nways,
-              uint32_t ilog2_lines_per_way,
-              uint32_t dlog2_nways,
-              uint32_t dlog2_lines_per_way,
-              uint32_t l2cache_ena,
-              uint32_t l2log2_nways,
-              uint32_t l2log2_lines_per_way,
-              uint32_t bootrom_log2_size,
-              uint32_t sram_log2_size,
-              std::string bootfile,
               int sim_uart_speedup_rate);
     virtual ~riscv_soc();
 
@@ -119,17 +109,6 @@ SC_MODULE(riscv_soc) {
 
  private:
     bool async_reset_;
-    uint32_t cpu_num_;
-    uint32_t ilog2_nways_;
-    uint32_t ilog2_lines_per_way_;
-    uint32_t dlog2_nways_;
-    uint32_t dlog2_lines_per_way_;
-    uint32_t l2cache_ena_;
-    uint32_t l2log2_nways_;
-    uint32_t l2log2_lines_per_way_;
-    uint32_t bootrom_log2_size_;
-    uint32_t sram_log2_size_;
-    std::string bootfile_;
     int sim_uart_speedup_rate_;
 
     
@@ -176,8 +155,8 @@ SC_MODULE(riscv_soc) {
 
     axictrl_bus0 *bus0;
     axi2apb_bus1 *bus1;
-    axi_rom<16> *rom0;
-    axi_sram<21> *sram0;
+    axi_rom<CFG_BOOTROM_LOG2_SIZE> *rom0;
+    axi_sram<CFG_SRAM_LOG2_SIZE> *sram0;
     clint<CFG_CPU_MAX> *clint0;
     plic<SOC_PLIC_CONTEXT_TOTAL, SOC_PLIC_IRQ_TOTAL> *plic0;
     apb_uart<SOC_UART1_LOG2_FIFOSZ> *uart1;
