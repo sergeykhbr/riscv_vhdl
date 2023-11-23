@@ -16,5 +16,6 @@
 package river_top_pkg;
 
 import river_cfg_pkg::*;
+import target_cfg_pkg::*;
 
 endpackage: river_top_pkg

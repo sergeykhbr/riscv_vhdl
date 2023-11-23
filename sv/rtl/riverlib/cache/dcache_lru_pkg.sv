@@ -16,10 +16,12 @@
 package dcache_lru_pkg;
 
 import river_cfg_pkg::*;
+import target_cfg_pkg::*;
 
 localparam int abus = CFG_CPU_ADDR_BITS;
 localparam int lnbits = CFG_LOG2_L1CACHE_BYTES_PER_LINE;
 localparam int flbits = DTAG_FL_TOTAL;
+localparam int ways = (2**CFG_DLOG2_NWAYS);
 
 // State machine states:
 localparam bit [3:0] State_Idle = 4'h0;
@@ -38,6 +40,7 @@ localparam bit [3:0] State_SnoopSetupAddr = 4'hc;
 localparam bit [3:0] State_SnoopReadData = 4'hd;
 
 localparam bit [CFG_CPU_ADDR_BITS-1:0] LINE_BYTES_MASK = ((2**CFG_LOG2_L1CACHE_BYTES_PER_LINE) - 1);
+localparam bit [31:0] FLUSH_ALL_VALUE = ((2**(CFG_DLOG2_LINES_PER_WAY + CFG_DLOG2_NWAYS)) - 1);// Actual bitwidth is (ibits + waybits) but to avoid sc template generation use 32-bits
 
 typedef struct {
     logic [MemopType_Total-1:0] req_type;

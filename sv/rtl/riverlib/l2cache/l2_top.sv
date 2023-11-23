@@ -17,9 +17,7 @@
 `timescale 1ns/10ps
 
 module L2Top #(
-    parameter bit async_reset = 1'b0,
-    parameter int unsigned waybits = 4,                     // Log2 of number of ways. Default 4: 16 ways
-    parameter int unsigned ibits = 9                        // Log2 of number of lines per way: 9=64KB (if bytes per line = 32 B)
+    parameter bit async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -34,6 +32,7 @@ module L2Top #(
 import types_amba_pkg::*;
 import river_cfg_pkg::*;
 import types_river_pkg::*;
+import target_cfg_pkg::*;
 import l2_top_pkg::*;
 
 logic w_req_ready;
@@ -91,9 +90,7 @@ L2Destination #(
 
 
 L2CacheLru #(
-    .async_reset(async_reset),
-    .waybits(waybits),
-    .ibits(ibits)
+    .async_reset(async_reset)
 ) cache0 (
     .i_clk(i_clk),
     .i_nrst(i_nrst),

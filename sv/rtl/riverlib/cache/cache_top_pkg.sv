@@ -16,6 +16,7 @@
 package cache_top_pkg;
 
 import river_cfg_pkg::*;
+import target_cfg_pkg::*;
 
 localparam int DATA_PATH = 0;
 localparam int CTRL_PATH = 1;

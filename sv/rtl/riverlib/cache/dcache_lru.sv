@@ -18,8 +18,6 @@
 
 module DCacheLru #(
     parameter bit async_reset = 1'b0,
-    parameter int unsigned waybits = 2,                     // Log2 of number of ways. Default 2: 4 ways
-    parameter int unsigned ibits = 7,                       // Log2 of number of lines per way: 7=16KB; 8=32KB; .. (if bytes per line = 32 B)
     parameter bit coherence_ena = 1'b0
 )
 (
@@ -72,10 +70,8 @@ module DCacheLru #(
 );
 
 import river_cfg_pkg::*;
+import target_cfg_pkg::*;
 import dcache_lru_pkg::*;
-
-localparam int ways = (2**waybits);
-localparam bit [31:0] FLUSH_ALL_VALUE = ((2**(ibits + waybits)) - 1);
 
 logic line_direct_access_i;
 logic line_invalidate_i;
@@ -98,8 +94,8 @@ DCacheLru_registers r, rin;
 TagMemNWay #(
     .async_reset(async_reset),
     .abus(abus),
-    .waybits(waybits),
-    .ibits(ibits),
+    .waybits(CFG_DLOG2_NWAYS),
+    .ibits(CFG_DLOG2_LINES_PER_WAY),
     .lnbits(lnbits),
     .flbits(flbits),
     .snoop(1)
@@ -233,7 +229,7 @@ begin: comb_proc
     end
 
     // Flush counter when direct access
-    if (r.req_addr[(waybits - 1): 0] == (ways - 1)) begin
+    if (r.req_addr[(CFG_DLOG2_NWAYS - 1): 0] == (ways - 1)) begin
         vb_addr_direct_next = ((r.req_addr + L1CACHE_BYTES_PER_LINE)
                 & (~LINE_BYTES_MASK));
     end else begin

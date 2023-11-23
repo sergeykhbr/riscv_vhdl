@@ -21,11 +21,7 @@ module RiverTop #(
     parameter int unsigned hartid = 0,
     parameter bit fpu_ena = 1'b1,
     parameter bit coherence_ena = 1'b0,
-    parameter bit tracer_ena = 1'b1,
-    parameter int unsigned ilog2_nways = 2,                 // I$ Cache associativity. Default bits width = 2, means 4 ways
-    parameter int unsigned ilog2_lines_per_way = 7,         // I$ Cache length: 7=16KB; 8=32KB; ..
-    parameter int unsigned dlog2_nways = 2,                 // D$ Cache associativity. Default bits width = 2, means 4 ways
-    parameter int unsigned dlog2_lines_per_way = 7          // D$ Cache length: 7=16KB; 8=32KB; ..
+    parameter bit tracer_ena = 1'b1
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -75,6 +71,7 @@ module RiverTop #(
 );
 
 import river_cfg_pkg::*;
+import target_cfg_pkg::*;
 import river_top_pkg::*;
 
 // Control path:
@@ -173,11 +170,7 @@ Processor #(
 
 CacheTop #(
     .async_reset(async_reset),
-    .coherence_ena(coherence_ena),
-    .ilog2_nways(ilog2_nways),
-    .ilog2_lines_per_way(ilog2_lines_per_way),
-    .dlog2_nways(dlog2_nways),
-    .dlog2_lines_per_way(dlog2_lines_per_way)
+    .coherence_ena(coherence_ena)
 ) cache0 (
     .i_clk(i_clk),
     .i_nrst(i_nrst),

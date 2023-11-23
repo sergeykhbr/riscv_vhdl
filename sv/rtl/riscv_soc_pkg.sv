@@ -22,6 +22,7 @@ import types_bus1_pkg::*;
 import river_cfg_pkg::*;
 import sdctrl_cfg_pkg::*;
 import types_river_pkg::*;
+import target_cfg_pkg::*;
 
 
 // Hardware SoC Identificator.

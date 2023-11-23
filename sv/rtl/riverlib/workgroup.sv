@@ -19,13 +19,7 @@
 module Workgroup #(
     parameter bit async_reset = 1'b0,
     parameter int unsigned cpu_num = 1,
-    parameter int unsigned ilog2_nways = 2,                 // I$ Cache associativity. Default bits width = 2, means 4 ways
-    parameter int unsigned ilog2_lines_per_way = 7,         // I$ Cache length: 7=16KB; 8=32KB; ..
-    parameter int unsigned dlog2_nways = 2,                 // D$ Cache associativity. Default bits width = 2, means 4 ways
-    parameter int unsigned dlog2_lines_per_way = 7,         // D$ Cache length: 7=16KB; 8=32KB; ..
-    parameter int unsigned l2cache_ena = 1,
-    parameter int unsigned l2log2_nways = 4,                // L2$ Cache associativity. Default bits width = 4, means 16 ways
-    parameter int unsigned l2log2_lines_per_way = 9         // L2$ Cache length: 9=64KB;
+    parameter int unsigned l2cache_ena = 1
 )
 (
     input logic i_cores_nrst,                               // System reset without DMI inteface
@@ -60,6 +54,7 @@ import river_cfg_pkg::*;
 import types_amba_pkg::*;
 import types_pnp_pkg::*;
 import types_river_pkg::*;
+import target_cfg_pkg::*;
 import workgroup_pkg::*;
 
 localparam bit coherence_ena = ((cpu_num * l2cache_ena) > 1 ? 1: 0);
@@ -174,11 +169,7 @@ generate
             .hartid(i),
             .fpu_ena(CFG_HW_FPU_ENABLE),
             .coherence_ena(coherence_ena),
-            .tracer_ena(CFG_TRACER_ENABLE),
-            .ilog2_nways(ilog2_nways),
-            .ilog2_lines_per_way(ilog2_lines_per_way),
-            .dlog2_nways(dlog2_nways),
-            .dlog2_lines_per_way(dlog2_lines_per_way)
+            .tracer_ena(CFG_TRACER_ENABLE)
         ) cpux (
             .i_clk(i_clk),
             .i_nrst(i_cores_nrst),
@@ -208,9 +199,7 @@ endgenerate
 
 if (l2cache_ena == 1) begin: l2_en
     L2Top #(
-        .async_reset(async_reset),
-        .waybits(l2log2_nways),
-        .ibits(l2log2_lines_per_way)
+        .async_reset(async_reset)
     ) l2cache (
         .i_clk(i_clk),
         .i_nrst(i_cores_nrst),

@@ -99,6 +99,7 @@ source -notrace scripts/set_paths.tcl
 
 # Load project files if LOAD_FILES = true:
 if {[string is true $load_files]} {
+	read_verilog -sv target_cfg_pkg.sv
 	set filelist_name ${LIST_ROOT}/ambalib.f;       source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
 	set filelist_name ${LIST_ROOT}/techmap.f;	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
 	set filelist_name ${LIST_ROOT}/techmap_ddr_kc705.f; source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]

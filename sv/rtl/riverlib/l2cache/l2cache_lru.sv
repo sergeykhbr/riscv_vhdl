@@ -17,9 +17,7 @@
 `timescale 1ns/10ps
 
 module L2CacheLru #(
-    parameter bit async_reset = 1'b0,
-    parameter int unsigned waybits = 4,                     // Log2 of number of ways. Default 4: 16 ways
-    parameter int unsigned ibits = 9                        // Log2 of number of lines per way: 9=64KB (if bytes per line = 32 B)
+    parameter bit async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -56,10 +54,8 @@ module L2CacheLru #(
 );
 
 import river_cfg_pkg::*;
+import target_cfg_pkg::*;
 import l2cache_lru_pkg::*;
-
-localparam int ways = (2**waybits);
-localparam bit [31:0] FLUSH_ALL_VALUE = ((2**(ibits + waybits)) - 1);
 
 logic line_direct_access_i;
 logic line_invalidate_i;
@@ -82,8 +78,8 @@ L2CacheLru_registers r, rin;
 TagMemNWay #(
     .async_reset(async_reset),
     .abus(abus),
-    .waybits(waybits),
-    .ibits(ibits),
+    .waybits(CFG_L2_LOG2_NWAYS),
+    .ibits(CFG_L2_LOG2_LINES_PER_WAY),
     .lnbits(lnbits),
     .flbits(flbits),
     .snoop(0)
@@ -210,7 +206,7 @@ begin: comb_proc
     end
 
     // Flush counter when direct access
-    if (r.req_addr[(waybits - 1): 0] == (ways - 1)) begin
+    if (r.req_addr[(CFG_L2_LOG2_NWAYS - 1): 0] == (ways - 1)) begin
         vb_addr_direct_next = ((r.req_addr + L2CACHE_BYTES_PER_LINE)
                 & (~LINE_BYTES_MASK));
     end else begin
