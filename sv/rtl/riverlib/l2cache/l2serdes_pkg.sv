@@ -15,8 +15,8 @@
 // 
 package l2serdes_pkg;
 
-import river_cfg_pkg::*;
 import types_amba_pkg::*;
+import river_cfg_pkg::*;
 import types_river_pkg::*;
 
 localparam int linew = L2CACHE_LINE_BITS;

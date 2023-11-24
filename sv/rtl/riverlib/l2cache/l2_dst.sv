@@ -38,8 +38,8 @@ module L2Destination #(
     output logic [river_cfg_pkg::L1CACHE_BYTES_PER_LINE-1:0] o_req_wstrb
 );
 
-import river_cfg_pkg::*;
 import types_amba_pkg::*;
+import river_cfg_pkg::*;
 import types_river_pkg::*;
 import l2_dst_pkg::*;
 

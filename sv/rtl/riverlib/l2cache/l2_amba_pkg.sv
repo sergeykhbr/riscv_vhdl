@@ -15,8 +15,8 @@
 // 
 package l2_amba_pkg;
 
-import river_cfg_pkg::*;
 import types_amba_pkg::*;
+import river_cfg_pkg::*;
 import types_river_pkg::*;
 
 localparam bit [1:0] idle = 2'h0;

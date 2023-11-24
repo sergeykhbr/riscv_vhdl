@@ -50,9 +50,9 @@ module Workgroup #(
     output logic o_dmreset                                  // reset everything except DMI debug interface
 );
 
-import river_cfg_pkg::*;
 import types_amba_pkg::*;
 import types_pnp_pkg::*;
+import river_cfg_pkg::*;
 import types_river_pkg::*;
 import target_cfg_pkg::*;
 import workgroup_pkg::*;

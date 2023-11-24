@@ -39,8 +39,8 @@ module L2Amba #(
     output types_river_pkg::axi4_l2_out_type o_msto
 );
 
-import river_cfg_pkg::*;
 import types_amba_pkg::*;
+import river_cfg_pkg::*;
 import types_river_pkg::*;
 import l2_amba_pkg::*;
 

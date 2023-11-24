@@ -15,8 +15,8 @@
 // 
 package types_river_pkg;
 
-import river_cfg_pkg::*;
 import types_amba_pkg::*;
+import river_cfg_pkg::*;
 
 
 

@@ -16,9 +16,9 @@
 #pragma once
 
 #include <systemc.h>
-#include "river_cfg.h"
 #include "../ambalib/types_amba.h"
 #include "../ambalib/types_pnp.h"
+#include "river_cfg.h"
 #include "types_river.h"
 #include "../../prj/impl/asic/target_cfg.h"
 #include "dmi/dmidebug.h"

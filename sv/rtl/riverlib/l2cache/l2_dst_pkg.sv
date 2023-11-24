@@ -15,8 +15,8 @@
 // 
 package l2_dst_pkg;
 
-import river_cfg_pkg::*;
 import types_amba_pkg::*;
+import river_cfg_pkg::*;
 import types_river_pkg::*;
 
 localparam bit [2:0] Idle = 3'h0;

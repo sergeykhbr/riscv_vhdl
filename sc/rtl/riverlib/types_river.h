@@ -16,8 +16,8 @@
 #pragma once
 
 #include <systemc.h>
-#include "river_cfg.h"
 #include "../ambalib/types_amba.h"
+#include "river_cfg.h"
 
 namespace debugger {
 

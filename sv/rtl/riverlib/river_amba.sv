@@ -38,8 +38,8 @@ module RiverAmba #(
     input logic [(32 * river_cfg_pkg::CFG_PROGBUF_REG_TOTAL)-1:0] i_progbuf// progam buffer
 );
 
-import river_cfg_pkg::*;
 import types_amba_pkg::*;
+import river_cfg_pkg::*;
 import types_river_pkg::*;
 import target_cfg_pkg::*;
 import river_amba_pkg::*;

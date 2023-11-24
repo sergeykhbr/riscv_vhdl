@@ -28,8 +28,8 @@ module L2SerDes #(
     output types_amba_pkg::axi4_master_out_type o_msto
 );
 
-import river_cfg_pkg::*;
 import types_amba_pkg::*;
+import river_cfg_pkg::*;
 import types_river_pkg::*;
 import l2serdes_pkg::*;
 

@@ -15,9 +15,9 @@
 // 
 package workgroup_pkg;
 
-import river_cfg_pkg::*;
 import types_amba_pkg::*;
 import types_pnp_pkg::*;
+import river_cfg_pkg::*;
 import types_river_pkg::*;
 import target_cfg_pkg::*;
 
