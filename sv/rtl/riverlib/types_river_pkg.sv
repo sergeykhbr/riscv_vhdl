@@ -84,7 +84,7 @@ typedef struct {
     logic [CFG_CPU_ID_BITS-1:0] ar_id;
     logic [CFG_SYSBUS_USER_BITS-1:0] ar_user;
     logic r_ready;
-    // ACE signals;
+    // ACE signals
     logic [1:0] ar_domain;                                  // 00=Non-shareable (single master in domain)
     logic [3:0] ar_snoop;                                   // Table C3-7:
     logic [1:0] ar_bar;                                     // read barrier transaction

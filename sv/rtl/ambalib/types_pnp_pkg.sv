@@ -100,17 +100,17 @@ localparam int SOC_PNP_TOTAL = 16;
 // @details Each device must generates this datatype output that
 //          is connected directly to the 'pnp' slave module on system bus.
 typedef struct {
-    // Descriptor size in bytes.;
+    // Descriptor size in bytes.
     logic [7:0] descrsize;
-    // Descriptor type.;
+    // Descriptor type.
     logic [1:0] descrtype;
-    // Base Address.;
+    // Base Address.
     logic [63:0] addr_start;
-    // End of the base address.;
+    // End of the base address.
     logic [63:0] addr_end;
-    // Vendor ID.;
+    // Vendor ID.
     logic [15:0] vid;
-    // Device ID.;
+    // Device ID.
     logic [15:0] did;
 } dev_config_type;
 

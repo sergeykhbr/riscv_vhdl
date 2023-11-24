@@ -165,17 +165,17 @@ class dev_config_type {
     }
 
  public:
-    // Descriptor size in bytes.;
+    // Descriptor size in bytes.
     sc_uint<8> descrsize;
-    // Descriptor type.;
+    // Descriptor type.
     sc_uint<2> descrtype;
-    // Base Address.;
+    // Base Address.
     sc_uint<64> addr_start;
-    // End of the base address.;
+    // End of the base address.
     sc_uint<64> addr_end;
-    // Vendor ID.;
+    // Vendor ID.
     sc_uint<16> vid;
-    // Device ID.;
+    // Device ID.
     sc_uint<16> did;
 };
 

@@ -445,7 +445,7 @@ class axi4_l1_out_type {
     sc_uint<CFG_CPU_ID_BITS> ar_id;
     sc_uint<CFG_SYSBUS_USER_BITS> ar_user;
     bool r_ready;
-    // ACE signals;
+    // ACE signals
     sc_uint<2> ar_domain;                                   // 00=Non-shareable (single master in domain)
     sc_uint<4> ar_snoop;                                    // Table C3-7:
     sc_uint<2> ar_bar;                                      // read barrier transaction

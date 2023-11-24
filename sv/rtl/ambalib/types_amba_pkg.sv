@@ -26,9 +26,9 @@ localparam int CFG_SYSBUS_DATA_BITS = (8 * CFG_SYSBUS_DATA_BYTES);
 
 // @brief Map information for the memory mapped device.
 typedef struct {
-    // Base Address.;
+    // Base Address.
     longint unsigned addr_start;
-    // Maskable bits of the base address.;
+    // Maskable bits of the base address.
     longint unsigned addr_end;
 } mapinfo_type;
 
@@ -116,54 +116,54 @@ localparam bit [3:0] AC_SNOOP_MAKE_INVALID = 4'hd;
 
 typedef struct {
     logic [CFG_SYSBUS_ADDR_BITS-1:0] addr;
-    // @brief   Burst length.;
-    // @details This signal indicates the exact number of transfers in;
-    //          a burst. This changes between AXI3 and AXI4. nastiXLenBits=8 so;
-    //          this is an AXI4 implementation.;
-    //              Burst_Length = len[7:0] + 1;
+    // @brief   Burst length.
+    // @details This signal indicates the exact number of transfers in
+    //          a burst. This changes between AXI3 and AXI4. nastiXLenBits=8 so
+    //          this is an AXI4 implementation.
+    //              Burst_Length = len[7:0] + 1
     logic [7:0] len;
-    // @brief   Burst size.;
-    // @details This signal indicates the size of each transfer;
-    //          in the burst: 0=1 byte; ..., 6=64 bytes; 7=128 bytes;;
+    // @brief   Burst size.
+    // @details This signal indicates the size of each transfer
+    //          in the burst: 0=1 byte; ..., 6=64 bytes; 7=128 bytes;
     logic [2:0] size;
-    // @brief   Read response.;
-    // @details This signal indicates the status of the read transfer.;
-    // The responses are:;
-    //      0b00 FIXED - In a fixed burst, the address is the same for every transfer;
-    //                  in the burst. Typically is used for FIFO.;
-    //      0b01 INCR - Incrementing. In an incrementing burst, the address for each;
-    //                  transfer in the burst is an increment of the address for the;
-    //                  previous transfer. The increment value depends on the size of;
-    //                  the transfer.;
-    //      0b10 WRAP - A wrapping burst is similar to an incrementing burst, except;
-    //                  that the address wraps around to a lower address if an upper address;
-    //                  limit is reached.;
-    //      0b11 resrved.;
+    // @brief   Read response.
+    // @details This signal indicates the status of the read transfer.
+    // The responses are:
+    //      0b00 FIXED - In a fixed burst, the address is the same for every transfer
+    //                  in the burst. Typically is used for FIFO.
+    //      0b01 INCR - Incrementing. In an incrementing burst, the address for each
+    //                  transfer in the burst is an increment of the address for the
+    //                  previous transfer. The increment value depends on the size of
+    //                  the transfer.
+    //      0b10 WRAP - A wrapping burst is similar to an incrementing burst, except
+    //                  that the address wraps around to a lower address if an upper address
+    //                  limit is reached.
+    //      0b11 resrved.
     logic [1:0] burst;
     logic lock;
     logic [3:0] cache;
-    // @brief   Protection type.;
-    // @details This signal indicates the privilege and security level;
-    //          of the transaction, and whether the transaction is a data access;
-    //          or an instruction access:;
-    //  [0] :   0 = Unpriviledge access;
-    //          1 = Priviledge access;
-    //  [1] :   0 = Secure access;
-    //          1 = Non-secure access;
-    //  [2] :   0 = Data access;
-    //          1 = Instruction access;
+    // @brief   Protection type.
+    // @details This signal indicates the privilege and security level
+    //          of the transaction, and whether the transaction is a data access
+    //          or an instruction access:
+    //  [0] :   0 = Unpriviledge access
+    //          1 = Priviledge access
+    //  [1] :   0 = Secure access
+    //          1 = Non-secure access
+    //  [2] :   0 = Data access
+    //          1 = Instruction access
     logic [2:0] prot;
-    // @brief   Quality of Service, QoS.;
-    // @details QoS identifier sent for each read transaction.;
-    //          Implemented only in AXI4:;
-    //              0b0000 - default value. Indicates that the interface is;
-    //                       not participating in any QoS scheme.;
+    // @brief   Quality of Service, QoS.
+    // @details QoS identifier sent for each read transaction.
+    //          Implemented only in AXI4:
+    //              0b0000 - default value. Indicates that the interface is
+    //                       not participating in any QoS scheme.
     logic [3:0] qos;
-    // @brief Region identifier.;
-    // @details Permits a single physical interface on a slave to be used for;
-    //          multiple logical interfaces. Implemented only in AXI4. This is;
-    //          similar to the banks implementation in Leon3 without address;
-    //          decoding.;
+    // @brief Region identifier.
+    // @details Permits a single physical interface on a slave to be used for
+    //          multiple logical interfaces. Implemented only in AXI4. This is
+    //          similar to the banks implementation in Leon3 without address
+    //          decoding.
     logic [3:0] region;
 } axi4_metadata_type;
 

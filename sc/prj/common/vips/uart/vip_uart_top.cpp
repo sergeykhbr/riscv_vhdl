@@ -135,8 +135,8 @@ void vip_uart_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 std::string vip_uart_top::U8ToString(
-            std::string istr,
-            sc_uint<8> symb) {
+        std::string istr,
+        sc_uint<8> symb) {
     char tstr[256];
     std::string ostr;
 
