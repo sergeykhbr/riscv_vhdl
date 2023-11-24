@@ -578,7 +578,7 @@ void CsrRegs::comb() {
     case State_Resume:
         v.state = State_Response;
         if (i_dbg_progbuf_ena.read() == 1) {
-            v.cmd_data = 0;
+            v.cmd_data = 0ull;
         } else {
             v.cmd_data = (0, r.dpc.read());
         }
@@ -618,11 +618,11 @@ void CsrRegs::comb() {
         break;
     case State_Wfi:
         v.state = State_Response;
-        v.cmd_data = 0;                                     // no error, valid for all mdoes
+        v.cmd_data = 0ull;                                  // no error, valid for all mdoes
         break;
     case State_Fence:
         if (r.fencestate.read() == Fence_End) {
-            v.cmd_data = 0;
+            v.cmd_data = 0ull;
             v.state = State_Response;
             v.fencestate = Fence_None;
         }
@@ -1212,7 +1212,7 @@ void CsrRegs::comb() {
         v.pmp_region = r.pmp_upd_cnt;
         if (r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()(4, 3) == 0) {
             // OFF: Null region (disabled)
-            v.pmp_start_addr = 0;
+            v.pmp_start_addr = 0ull;
             v.pmp_end_addr = r.pmp[r.pmp_upd_cnt.read().to_int()].addr.read();
             v.pmp_flags = 0;
         } else if (r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()(4, 3) == 1) {
@@ -1237,8 +1237,8 @@ void CsrRegs::comb() {
         }
     } else {
         v.pmp_upd_cnt = 0;
-        v.pmp_start_addr = 0;
-        v.pmp_end_addr = 0;
+        v.pmp_start_addr = 0ull;
+        v.pmp_end_addr = 0ull;
         v.pmp_flags = 0;
         v.pmp_we = 0;
     }
@@ -1248,12 +1248,12 @@ void CsrRegs::comb() {
     w_mstackovr = 0;
     if ((r.mstackovr.read().or_reduce() == 1) && (i_sp.read() < r.mstackovr.read())) {
         w_mstackovr = 1;
-        v.mstackovr = 0;
+        v.mstackovr = 0ull;
     }
     w_mstackund = 0;
     if ((r.mstackund.read().or_reduce() == 1) && (i_sp.read() > r.mstackund.read())) {
         w_mstackund = 1;
-        v.mstackund = 0;
+        v.mstackund = 0ull;
     }
 
     // if (i_fpu_valid.read()) {

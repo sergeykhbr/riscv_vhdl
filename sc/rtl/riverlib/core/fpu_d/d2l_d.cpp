@@ -164,7 +164,7 @@ void Double2Long::comb() {
 
     mantPreScale = (r.mantA.read().to_uint64() << 11);
 
-    mantPostScale = 0;
+    mantPostScale = 0ull;
     if (expDif_gr == 1) {
         overflow = 1;
         underflow = 0;

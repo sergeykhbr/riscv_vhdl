@@ -269,7 +269,7 @@ void IntDiv::comb() {
         v.busy = 0;
         if (r.resid.read() == 1) {
             if (r.overflow.read() == 1) {
-                v.result = 0;
+                v.result = 0ull;
             } else {
                 v.result = vb_rem;
             }

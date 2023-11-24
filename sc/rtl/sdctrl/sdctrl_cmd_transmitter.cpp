@@ -196,7 +196,7 @@ void sdctrl_cmd_transmitter::comb() {
         if (r.cmdstate.read() == CMDSTATE_IDLE) {
             if (i_cmd_set_low.read() == 1) {
                 // Used during p-init state (power-up)
-                vb_cmdshift = 0;
+                vb_cmdshift = 0ull;
             } else {
                 vb_cmdshift = ~0ull;
             }

@@ -413,7 +413,7 @@ void Mmu::comb() {
         }
         if (r.req_flush.read() == 1) {
             v.req_flush = 0;
-            v.tlb_wdata = 0;
+            v.tlb_wdata = 0ull;
             v.state = FlushTlb;
         } else if ((i_mmu_ena.read() == 0) || (v_va_ena == 0)) {// MMU disabled
             // Direct connection to Cache

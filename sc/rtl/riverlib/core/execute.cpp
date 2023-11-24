@@ -765,7 +765,7 @@ void InstrExecute::comb() {
     }
     // AMO value read from memory[rs1]
     if ((wv[Instr_AMOSWAP_D] || wv[Instr_AMOSWAP_W]) == 1) {
-        vb_rdata1_amo = 0;
+        vb_rdata1_amo = 0ull;
     } else if (i_mem_valid.read() == 1) {
         if (mux.rv32 == 1) {
             // All AMO are sign-extended:
@@ -1179,7 +1179,7 @@ void InstrExecute::comb() {
     } else if (r.select.read()[Res_FPU] == 1) {
         vb_res = wb_select[Res_FPU].res;
     } else {
-        vb_res = 0;
+        vb_res = 0ull;
     }
 
     if (((i_d_pc.read() == r.npc.read())
@@ -1397,7 +1397,7 @@ void InstrExecute::comb() {
             v.csrstate = CsrState_Req;
             v.csr_req_type = CsrReq_ResumeCmd;
             v.csr_req_addr = 0;
-            v.csr_req_data = 0;
+            v.csr_req_data = 0ull;
         } else if (i_dbg_mem_req_valid.read() == 1) {
             v_dbg_mem_req_ready = 1;
             v_dbg_mem_req_error = v_debug_misaligned;
@@ -1451,7 +1451,7 @@ void InstrExecute::comb() {
     vb_tagcnt_next((CFG_REG_TAG_WIDTH * t_waddr) + CFG_REG_TAG_WIDTH- 1, (CFG_REG_TAG_WIDTH * t_waddr)) = t_tagcnt_wr;
     vb_tagcnt_next((CFG_REG_TAG_WIDTH - 1), 0) = 0;         // r0 always 0
     if (i_dbg_progbuf_ena.read() == 0) {
-        v.dnpc = 0;
+        v.dnpc = 0ull;
     }
 
     // Latch decoder's data into internal registers:
@@ -1459,7 +1459,7 @@ void InstrExecute::comb() {
         if (i_dbg_progbuf_ena.read() == 1) {
             v.dnpc = (r.dnpc.read() + opcode_len);
         } else {
-            v.dnpc = 0;
+            v.dnpc = 0ull;
             v.pc = i_d_pc;
             v.npc = vb_prog_npc;                            // Actually this value will be restored on resume request
         }

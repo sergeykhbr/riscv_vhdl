@@ -181,7 +181,7 @@ void InstrFetch::comb() {
         // Clear pipeline stage
         v.req_valid = 0;
         v.pc = ~0ull;
-        v.instr = 0;
+        v.instr = 0ull;
         v.instr_load_fault = 0;
         v.instr_page_fault_x = 0;
     }

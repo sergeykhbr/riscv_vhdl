@@ -271,7 +271,7 @@ void DbgPort::comb() {
     switch (r.dstate.read()) {
     case idle:
         v_req_ready = 1;
-        vrdata = 0;
+        vrdata = 0ull;
         v.req_accepted = 0;
         v.resp_error = 0;
         v.progbuf_ena = 0;
@@ -338,7 +338,7 @@ void DbgPort::comb() {
         v.dstate = wait_to_accept;
         break;
     case reg_stktr_cnt:
-        vrdata = 0;
+        vrdata = 0ull;
         vrdata((CFG_LOG2_STACK_TRACE_ADDR - 1), 0) = r.stack_trace_cnt;
         if (r.dport_write.read() == 1) {
             v.stack_trace_cnt = r.dport_wdata.read()((CFG_LOG2_STACK_TRACE_ADDR - 1), 0);
@@ -359,7 +359,7 @@ void DbgPort::comb() {
         break;
     case exec_progbuf_start:
         v.progbuf_ena = 1;
-        v.progbuf_pc = 0;
+        v.progbuf_pc = 0ull;
         v.progbuf_instr = i_progbuf.read()(63, 0).to_uint64();
         v.dstate = exec_progbuf_next;
         break;

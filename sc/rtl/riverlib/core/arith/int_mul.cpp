@@ -272,7 +272,7 @@ void IntMul::comb() {
             v.result = wb_res32;
         } else if (r.high.read() == 1) {
             if (r.zero.read() == 1) {
-                v.result = 0;
+                v.result = 0ull;
             } else if (r.inv.read() == 1) {
                 v.result = (~wb_lvl5);
             } else {

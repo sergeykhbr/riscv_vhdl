@@ -350,7 +350,7 @@ void DoubleAdd::comb() {
     mantLessScale = r.mantLess.read().to_uint64();
     mantLessScale = (mantLessScale << 52);
     if (r.ena.read()[1] == 1) {
-        v.mantLessScale = 0;
+        v.mantLessScale = 0ull;
         for (int i = 0; i < 105; i++) {
             if (i == r.preShift.read()) {
                 v.mantLessScale = (mantLessScale >> i);

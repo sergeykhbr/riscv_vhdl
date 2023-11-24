@@ -32,9 +32,9 @@ class mapinfo_type {
  public:
     mapinfo_type() {
         // Base Address.
-        addr_start = 0;
+        addr_start = 0ull;
         // Maskable bits of the base address.
-        addr_end = 0;
+        addr_end = 0ull;
     }
 
     mapinfo_type(uint64_t addr_start_,

@@ -86,12 +86,12 @@ void Shifter::comb() {
     if (i_a1.read()[63] == 1) {
         msk64 = ~0ull;
     } else {
-        msk64 = 0;
+        msk64 = 0ull;
     }
     if (i_a1.read()[31] == 1) {
         msk32 = ~0ull;
     } else {
-        msk32 = 0;
+        msk32 = 0ull;
     }
 
     switch (i_a2.read()) {

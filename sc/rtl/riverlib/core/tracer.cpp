@@ -1340,7 +1340,7 @@ void Tracer::comb() {
         mskoff[i_e_memop_size.read().to_int()] = 1;
         mskoff = (mskoff << 3);
         if (mskoff < 64) {
-            mask = 0;
+            mask = 0ull;
             mask[mskoff.to_int()] = 1;
             mask = (mask - 1);
         }

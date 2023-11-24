@@ -251,7 +251,7 @@ void sdctrl_cache::comb() {
         v.mem_fault = 0;
         if (r.req_flush.read() == 1) {
             v.state = State_FlushAddr;
-            v.cache_line_i = 0;
+            v.cache_line_i = 0ull;
             v.flush_cnt = FLUSH_ALL_VALUE;
         } else {
             v_req_ready = 1;
@@ -312,7 +312,7 @@ void sdctrl_cache::comb() {
             v.req_mem_write = r.req_write;
         }
         v.cache_line_o = line_rdata_o;
-        v.cache_line_i = 0;
+        v.cache_line_i = 0ull;
         break;
     case State_WaitGrant:
         if (i_req_mem_ready.read() == 1) {
@@ -381,7 +381,7 @@ void sdctrl_cache::comb() {
         vb_line_wstrb = ~0ull;
         vb_line_wflags = 0;
         v.write_flush = 0;
-        v.cache_line_i = 0;
+        v.cache_line_i = 0ull;
         break;
     case State_FlushCheck:
         v.cache_line_o = line_rdata_o;
@@ -408,7 +408,7 @@ void sdctrl_cache::comb() {
         break;
     case State_Reset:
         // Write clean line
-        v.line_addr_i = 0;
+        v.line_addr_i = 0ull;
         v.flush_cnt = FLUSH_ALL_VALUE;                      // Init after power-on-reset
         v.state = State_ResetWrite;
         break;
@@ -433,7 +433,7 @@ void sdctrl_cache::comb() {
     line_wdata_i = vb_line_wdata;
     line_wstrb_i = vb_line_wstrb;
     line_wflags_i = vb_line_wflags;
-    line_snoop_addr_i = 0;
+    line_snoop_addr_i = 0ull;
 
     o_req_ready = v_req_ready;
     o_req_mem_valid = r.req_mem_valid;

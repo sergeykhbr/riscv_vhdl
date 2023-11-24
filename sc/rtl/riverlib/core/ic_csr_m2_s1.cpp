@@ -142,7 +142,7 @@ void ic_csr_m2_s1::comb() {
         o_m0_resp_exception = i_s0_resp_exception;
         o_m1_req_ready = 0;
         o_m1_resp_valid = 0;
-        o_m1_resp_data = 0;
+        o_m1_resp_data = 0ull;
         o_m1_resp_exception = 0;
     } else {
         o_s0_req_valid = i_m1_req_valid;
@@ -156,7 +156,7 @@ void ic_csr_m2_s1::comb() {
         o_m1_resp_exception = i_s0_resp_exception;
         o_m0_req_ready = 0;
         o_m0_resp_valid = 0;
-        o_m0_resp_data = 0;
+        o_m0_resp_data = 0ull;
         o_m0_resp_exception = 0;
     }
 

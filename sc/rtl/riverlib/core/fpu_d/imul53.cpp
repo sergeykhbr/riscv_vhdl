@@ -133,7 +133,7 @@ void imul53::comb() {
         v.b = (0, i_b.read());
         v.overflow = 0;
         v.accum_ena = 1;
-        v.sum = 0;
+        v.sum = 0ull;
         v.shift = 0;
     } else if (r.delay.read()[13] == 1) {
         v.accum_ena = 0;
@@ -186,7 +186,7 @@ void imul53::comb() {
         vb_sel = vb_mux[15];
         break;
     default:
-        vb_sel = 0;
+        vb_sel = 0ull;
         break;
     }
     if (r.accum_ena.read() == 1) {

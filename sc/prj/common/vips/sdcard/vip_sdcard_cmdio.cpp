@@ -293,7 +293,7 @@ void vip_sdcard_cmdio::comb() {
             v.cmd_state = CMDSTATE_RESP;
             if (r.spi_mode.read() == 0) {
                 v.bitcnt = 39;
-                vb_cmd_txshift = 0;
+                vb_cmd_txshift = 0ull;
                 vb_cmd_txshift(45, 40) = r.cmd_rxshift.read()(45, 40);
                 vb_cmd_txshift(39, 8) = i_cmd_resp_data32;
                 vb_cmd_txshift(7, 0) = 0xFF;
