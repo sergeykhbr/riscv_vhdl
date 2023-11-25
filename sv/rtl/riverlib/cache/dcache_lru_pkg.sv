@@ -24,20 +24,20 @@ localparam int flbits = DTAG_FL_TOTAL;
 localparam int ways = (2**CFG_DLOG2_NWAYS);
 
 // State machine states:
-localparam bit [3:0] State_Idle = 4'h0;
-localparam bit [3:0] State_CheckHit = 4'h1;
-localparam bit [3:0] State_TranslateAddress = 4'h2;
-localparam bit [3:0] State_WaitGrant = 4'h3;
-localparam bit [3:0] State_WaitResp = 4'h4;
-localparam bit [3:0] State_CheckResp = 4'h5;
-localparam bit [3:0] State_SetupReadAdr = 4'h6;
-localparam bit [3:0] State_WriteBus = 4'h7;
-localparam bit [3:0] State_FlushAddr = 4'h8;
-localparam bit [3:0] State_FlushCheck = 4'h9;
-localparam bit [3:0] State_Reset = 4'ha;
-localparam bit [3:0] State_ResetWrite = 4'hb;
-localparam bit [3:0] State_SnoopSetupAddr = 4'hc;
-localparam bit [3:0] State_SnoopReadData = 4'hd;
+localparam bit [3:0] State_Idle = 4'd0;
+localparam bit [3:0] State_CheckHit = 4'd1;
+localparam bit [3:0] State_TranslateAddress = 4'd2;
+localparam bit [3:0] State_WaitGrant = 4'd3;
+localparam bit [3:0] State_WaitResp = 4'd4;
+localparam bit [3:0] State_CheckResp = 4'd5;
+localparam bit [3:0] State_SetupReadAdr = 4'd6;
+localparam bit [3:0] State_WriteBus = 4'd7;
+localparam bit [3:0] State_FlushAddr = 4'd8;
+localparam bit [3:0] State_FlushCheck = 4'd9;
+localparam bit [3:0] State_Reset = 4'd10;
+localparam bit [3:0] State_ResetWrite = 4'd11;
+localparam bit [3:0] State_SnoopSetupAddr = 4'd12;
+localparam bit [3:0] State_SnoopReadData = 4'd13;
 
 localparam bit [CFG_CPU_ADDR_BITS-1:0] LINE_BYTES_MASK = ((2**CFG_LOG2_L1CACHE_BYTES_PER_LINE) - 1);
 localparam bit [31:0] FLUSH_ALL_VALUE = ((2**(CFG_DLOG2_LINES_PER_WAY + CFG_DLOG2_NWAYS)) - 1);// Actual bitwidth is (ibits + waybits) but to avoid sc template generation use 32-bits
@@ -88,9 +88,9 @@ const DCacheLru_registers DCacheLru_r_reset = '{
     1'b0,                               // write_flush
     1'b0,                               // write_share
     '0,                                 // mem_wstrb
-    1'h1,                               // req_flush
+    1'b1,                               // req_flush
     1'b0,                               // req_flush_all
-    '0,                                 // req_flush_addr
+    48'd0,                              // req_flush_addr
     '0,                                 // req_flush_cnt
     '0,                                 // flush_cnt
     '0,                                 // cache_line_i

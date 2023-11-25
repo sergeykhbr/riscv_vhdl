@@ -18,29 +18,29 @@ package sdctrl_sdmode_pkg;
 import sdctrl_cfg_pkg::*;
 
 // SD-card states see Card Status[12:9] CURRENT_STATE on page 145:
-localparam bit [3:0] SDSTATE_IDLE = 4'h0;
-localparam bit [3:0] SDSTATE_READY = 4'h1;
-localparam bit [3:0] SDSTATE_IDENT = 4'h2;
-localparam bit [3:0] SDSTATE_STBY = 4'h3;
-localparam bit [3:0] SDSTATE_TRAN = 4'h4;
-localparam bit [3:0] SDSTATE_DATA = 4'h5;
-localparam bit [3:0] SDSTATE_RCV = 4'h6;
-localparam bit [3:0] SDSTATE_PRG = 4'h7;
-localparam bit [3:0] SDSTATE_DIS = 4'h8;
-localparam bit [3:0] SDSTATE_INA = 4'h9;
+localparam bit [3:0] SDSTATE_IDLE = 4'd0;
+localparam bit [3:0] SDSTATE_READY = 4'd1;
+localparam bit [3:0] SDSTATE_IDENT = 4'd2;
+localparam bit [3:0] SDSTATE_STBY = 4'd3;
+localparam bit [3:0] SDSTATE_TRAN = 4'd4;
+localparam bit [3:0] SDSTATE_DATA = 4'd5;
+localparam bit [3:0] SDSTATE_RCV = 4'd6;
+localparam bit [3:0] SDSTATE_PRG = 4'd7;
+localparam bit [3:0] SDSTATE_DIS = 4'd8;
+localparam bit [3:0] SDSTATE_INA = 4'd9;
 // SD-card 'idle' state substates:
-localparam bit [2:0] IDLESTATE_CMD0 = 3'h0;
-localparam bit [2:0] IDLESTATE_CMD8 = 3'h1;
-localparam bit [2:0] IDLESTATE_CMD55 = 3'h2;
-localparam bit [2:0] IDLESTATE_ACMD41 = 3'h3;
-localparam bit [2:0] IDLESTATE_CARD_IDENTIFICATION = 3'h5;
+localparam bit [2:0] IDLESTATE_CMD0 = 3'd0;
+localparam bit [2:0] IDLESTATE_CMD8 = 3'd1;
+localparam bit [2:0] IDLESTATE_CMD55 = 3'd2;
+localparam bit [2:0] IDLESTATE_ACMD41 = 3'd3;
+localparam bit [2:0] IDLESTATE_CARD_IDENTIFICATION = 3'd5;
 // SD-card 'ready' state substates:
-localparam bit [1:0] READYSTATE_CMD11 = 2'h0;
-localparam bit [1:0] READYSTATE_CMD2 = 2'h1;
-localparam bit [1:0] READYSTATE_CHECK_CID = 2'h2;           // State change: ready -> ident
+localparam bit [1:0] READYSTATE_CMD11 = 2'd0;
+localparam bit [1:0] READYSTATE_CMD2 = 2'd1;
+localparam bit [1:0] READYSTATE_CHECK_CID = 2'd2;           // State change: ready -> ident
 // SD-card 'ident' state substates:
-localparam bit IDENTSTATE_CMD3 = 1'h0;
-localparam bit IDENTSTATE_CHECK_RCA = 1'h1;                 // State change: ident -> stby
+localparam bit IDENTSTATE_CMD3 = 1'b0;
+localparam bit IDENTSTATE_CHECK_RCA = 1'b1;                 // State change: ident -> stby
 
 typedef struct {
     logic [6:0] clkcnt;
@@ -93,7 +93,7 @@ const sdctrl_sdmode_registers sdctrl_sdmode_r_reset = '{
     '0,                                 // data_data
     1'b0,                               // data_resp_valid
     1'b0,                               // wdog_ena
-    1'h1,                               // crc16_clear
+    1'b1,                               // crc16_clear
     '0,                                 // crc16_calc0
     '0,                                 // crc16_calc1
     '0,                                 // crc16_calc2
@@ -103,18 +103,18 @@ const sdctrl_sdmode_registers sdctrl_sdmode_r_reset = '{
     '0,                                 // crc16_rx2
     '0,                                 // crc16_rx3
     1'b0,                               // dat_full_ena
-    1'h1,                               // dat_csn
+    1'b1,                               // dat_csn
     1'b0,                               // err_clear
     1'b0,                               // err_valid
     '0,                                 // err_code
-    1'h1,                               // sck_400khz_ena
+    1'b1,                               // sck_400khz_ena
     SDSTATE_IDLE,                       // sdstate
     IDLESTATE_CMD0,                     // initstate
     READYSTATE_CMD11,                   // readystate
     IDENTSTATE_CMD3,                    // identstate
     1'b0,                               // wait_cmd_resp
     SDCARD_UNKNOWN,                     // sdtype
-    1'h1,                               // HCS
+    1'b1,                               // HCS
     1'b0,                               // S18
     24'hff8000,                         // OCR_VoltageWindow
     '0                                  // bitcnt

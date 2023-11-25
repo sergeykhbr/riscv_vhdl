@@ -84,7 +84,7 @@ RiverAmba_registers r, rin;
 function logic [3:0] reqtype2arsnoop(input logic [REQ_MEM_TYPE_BITS-1:0] reqtype);
 logic [3:0] ret;
 begin
-    ret = '0;
+    ret = 4'd0;
     if (reqtype[REQ_MEM_TYPE_CACHED] == 1'b0) begin
         ret = ARSNOOP_READ_NO_SNOOP;
     end else begin
@@ -101,7 +101,7 @@ endfunction: reqtype2arsnoop
 function logic [3:0] reqtype2awsnoop(input logic [REQ_MEM_TYPE_BITS-1:0] reqtype);
 logic [3:0] ret;
 begin
-    ret = '0;
+    ret = 4'd0;
     if (reqtype[REQ_MEM_TYPE_CACHED] == 1'b0) begin
         ret = AWSNOOP_WRITE_NO_SNOOP;
     end else begin
@@ -183,20 +183,20 @@ begin: comb_proc
     logic v_cd_valid;
     logic [L1CACHE_LINE_BITS-1:0] vb_cd_data;
 
-    v_resp_mem_valid = 0;
-    v_mem_er_load_fault = 0;
-    v_mem_er_store_fault = 0;
-    v_next_ready = 0;
+    v_resp_mem_valid = 1'b0;
+    v_mem_er_load_fault = 1'b0;
+    v_mem_er_store_fault = 1'b0;
+    v_next_ready = 1'b0;
     vmsto = axi4_l1_out_none;
     vdporto = dport_out_none;
-    v_snoop_next_ready = 0;
-    req_snoop_valid = 0;
-    vb_req_snoop_addr = 0;
-    vb_req_snoop_type = 0;
-    v_cr_valid = 0;
-    vb_cr_resp = 0;
-    v_cd_valid = 0;
-    vb_cd_data = 0;
+    v_snoop_next_ready = 1'b0;
+    req_snoop_valid = 1'b0;
+    vb_req_snoop_addr = '0;
+    vb_req_snoop_type = '0;
+    v_cr_valid = 1'b0;
+    vb_cr_resp = '0;
+    v_cd_valid = 1'b0;
+    vb_cd_data = '0;
 
     v = r;
 
@@ -233,8 +233,8 @@ begin: comb_proc
             v.req_prot = {req_mem_path_o, {2{1'b0}}};
             if (req_mem_type_o[REQ_MEM_TYPE_WRITE] == 1'b0) begin
                 v.state = state_ar;
-                v.req_wdata = '0;
-                v.req_wstrb = '0;
+                v.req_wdata = 256'd0;
+                v.req_wstrb = 32'd0;
                 if (req_mem_type_o[REQ_MEM_TYPE_CACHED] == 1'b1) begin
                     v.req_cached = ARCACHE_WRBACK_READ_ALLOCATE;
                 end else begin
@@ -361,7 +361,7 @@ begin: comb_proc
                     v.snoop_state = snoop_cr_wait_accept;
                 end
             end else begin
-                vb_cr_resp = '0;
+                vb_cr_resp = 5'd0;
                 if (i_msti.cr_ready == 1'b1) begin
                     v.snoop_state = snoop_idle;
                 end else begin
@@ -410,8 +410,8 @@ begin: comb_proc
             && (i_msti.ac_valid == 1'b1)) begin
         req_snoop_valid = 1'b1;
         v.cache_access = 1'b0;
-        vb_req_snoop_type = '0;                             // First snoop operation always just to read flags
-        v.req_snoop_type = '0;
+        vb_req_snoop_type = 2'd0;                           // First snoop operation always just to read flags
+        v.req_snoop_type = 2'd0;
         vb_req_snoop_addr = i_msti.ac_addr;
         v.ac_addr = i_msti.ac_addr;
         v.ac_snoop = i_msti.ac_snoop;
@@ -451,7 +451,7 @@ begin: comb_proc
 
     o_msto = vmsto;
     o_dport = vdporto;                                      // systemc compatibility
-    o_available = 1'h1;
+    o_available = 1'b1;
 
     rin = v;
 end: comb_proc

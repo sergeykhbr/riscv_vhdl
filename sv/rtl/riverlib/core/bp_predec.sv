@@ -47,15 +47,15 @@ begin: comb_proc
     logic [RISCV_ARCH-1:0] vb_c_j_off;
     logic [RISCV_ARCH-1:0] vb_c_j_addr;
 
-    vb_tmp = 0;
-    vb_npc = 0;
-    vb_pc = 0;
-    vb_jal_off = 0;
-    vb_jal_addr = 0;
-    vb_branch_off = 0;
-    vb_branch_addr = 0;
-    vb_c_j_off = 0;
-    vb_c_j_addr = 0;
+    vb_tmp = '0;
+    vb_npc = '0;
+    vb_pc = '0;
+    vb_jal_off = '0;
+    vb_jal_addr = '0;
+    vb_branch_off = '0;
+    vb_branch_addr = '0;
+    vb_c_j_off = '0;
+    vb_c_j_addr = '0;
 
     vb_pc = i_addr;
     vb_tmp = i_data;

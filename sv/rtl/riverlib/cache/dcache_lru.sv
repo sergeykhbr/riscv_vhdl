@@ -153,35 +153,35 @@ begin: comb_proc
     logic [CFG_CPU_ADDR_BITS-1:0] vb_addr_direct_next;
     logic [MemopType_Total-1:0] t_req_type;
 
-    vb_cache_line_i_modified = 0;
-    vb_line_rdata_o_modified = 0;
-    vb_line_rdata_o_wstrb = 0;
-    v_req_ready = 0;
-    t_cache_line_i = 0;
-    vb_cached_data = 0;
-    vb_uncached_data = 0;
-    v_resp_valid = 0;
-    vb_resp_data = 0;
-    v_resp_er_load_fault = 0;
-    v_resp_er_store_fault = 0;
-    v_direct_access = 0;
-    v_invalidate = 0;
-    v_flush_end = 0;
-    v_line_cs_read = 0;
-    v_line_cs_write = 0;
-    vb_line_addr = 0;
-    vb_line_wdata = 0;
-    vb_line_wstrb = 0;
-    vb_req_mask = 0;
-    v_line_wflags = 0;
-    ridx = 0;
-    v_req_same_line = 0;
-    v_ready_next = 0;
-    v_req_snoop_ready = 0;
-    v_req_snoop_ready_on_wait = 0;
-    v_resp_snoop_valid = 0;
-    vb_addr_direct_next = 0;
-    t_req_type = 0;
+    vb_cache_line_i_modified = '0;
+    vb_line_rdata_o_modified = '0;
+    vb_line_rdata_o_wstrb = '0;
+    v_req_ready = 1'b0;
+    t_cache_line_i = '0;
+    vb_cached_data = '0;
+    vb_uncached_data = '0;
+    v_resp_valid = 1'b0;
+    vb_resp_data = '0;
+    v_resp_er_load_fault = 1'b0;
+    v_resp_er_store_fault = 1'b0;
+    v_direct_access = 1'b0;
+    v_invalidate = 1'b0;
+    v_flush_end = 1'b0;
+    v_line_cs_read = 1'b0;
+    v_line_cs_write = 1'b0;
+    vb_line_addr = '0;
+    vb_line_wdata = '0;
+    vb_line_wstrb = '0;
+    vb_req_mask = '0;
+    v_line_wflags = '0;
+    ridx = '0;
+    v_req_same_line = 1'b0;
+    v_ready_next = 1'b0;
+    v_req_snoop_ready = 1'b0;
+    v_req_snoop_ready_on_wait = 1'b0;
+    v_resp_snoop_valid = 1'b0;
+    vb_addr_direct_next = '0;
+    t_req_type = '0;
 
     v = r;
 
@@ -201,9 +201,9 @@ begin: comb_proc
         v.req_flush_all = i_flush_address[0];
         if (i_flush_address[0] == 1'b1) begin
             v.req_flush_cnt = FLUSH_ALL_VALUE;
-            v.req_flush_addr = '0;
+            v.req_flush_addr = 48'd0;
         end else begin
-            v.req_flush_cnt = '0;
+            v.req_flush_cnt = 32'd0;
             v.req_flush_addr = i_flush_address;
         end
     end
@@ -262,13 +262,13 @@ begin: comb_proc
                     vb_line_wstrb = vb_line_rdata_o_wstrb;
                     vb_line_wdata = vb_line_rdata_o_modified;
                     if (r.req_type[MemopType_Release] == 1'b1) begin
-                        vb_resp_data = '0;
+                        vb_resp_data = 64'd0;
                     end
                     if ((r.req_type[MemopType_Release] == 1'b1)
                             && (line_rflags_o[DTAG_FL_RESERVED] == 1'b0)) begin
                         // ignore writing if cacheline wasn't reserved before:
                         v_line_cs_write = 1'b0;
-                        vb_line_wstrb = '0;
+                        vb_line_wstrb = 32'd0;
                         vb_resp_data = 64'd1;               // return error
                         v.state = State_Idle;
                     end else begin
@@ -313,12 +313,12 @@ begin: comb_proc
     State_TranslateAddress: begin
         if ((r.req_type[MemopType_Store] == 1'b1) && (i_pmp_w == 1'b0)) begin
             v.load_fault = 1'b1;
-            t_cache_line_i = '0;
+            t_cache_line_i = 256'd0;
             v.cache_line_i = (~t_cache_line_i);
             v.state = State_CheckResp;
         end else if ((r.req_type[MemopType_Store] == 1'b0) && (i_pmp_r == 1'b0)) begin
             v.load_fault = 1'b1;
-            t_cache_line_i = '0;
+            t_cache_line_i = 256'd0;
             v.cache_line_i = (~t_cache_line_i);
             v.state = State_CheckResp;
         end else begin
@@ -358,12 +358,12 @@ begin: comb_proc
                 end else begin
                     v.req_mem_type = ReadNoSnoop();
                 end
-                t_cache_line_i = '0;
+                t_cache_line_i = 256'd0;
                 t_cache_line_i[63: 0] = r.req_wdata;
                 v.cache_line_o = t_cache_line_i;
             end
         end
-        v.cache_line_i = '0;
+        v.cache_line_i = 256'd0;
     end
     State_WaitGrant: begin
         if (i_req_mem_ready == 1'b1) begin
@@ -475,7 +475,7 @@ begin: comb_proc
         v_direct_access = r.req_flush_all;                  // 0=only if hit; 1=will be applied ignoring hit
         v_invalidate = 1'b1;                                // generate: wstrb='1; wflags='0
         v.write_flush = 1'b0;
-        v.cache_line_i = '0;
+        v.cache_line_i = 256'd0;
     end
     State_FlushCheck: begin
         v.cache_line_o = line_rdata_o;
@@ -578,7 +578,7 @@ begin: comb_proc
         end else if (r.req_flush == 1'b1) begin
             v.state = State_FlushAddr;
             v.req_flush = 1'b0;
-            v.cache_line_i = '0;
+            v.cache_line_i = 256'd0;
             v.req_addr = (r.req_flush_addr & (~LINE_BYTES_MASK));
             v.req_mem_size = CFG_LOG2_L1CACHE_BYTES_PER_LINE;
             v.flush_cnt = r.req_flush_cnt;
@@ -589,7 +589,7 @@ begin: comb_proc
             if (i_req_valid == 1'b1) begin
                 v.req_addr = i_req_addr;
                 v.req_wstrb = i_req_wstrb;
-                v.req_size = {1'h0, i_req_size};
+                v.req_size = {1'b0, i_req_size};
                 v.req_wdata = i_req_wdata;
                 v.req_type = i_req_type;
                 v.state = State_CheckHit;

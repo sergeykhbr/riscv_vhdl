@@ -28,18 +28,18 @@ localparam int SDCACHE_FL_DIRTY = 1;
 localparam int SDCACHE_FL_TOTAL = 2;
 // 
 // 
-localparam bit [5:0] CMD0 = 6'h00;                          // GO_IDLE_STATE: Reset card to idle state. Response - (4.7.4)
-localparam bit [5:0] CMD2 = 6'h02;                          // ALL_SEND_CID: ask to send CID number
-localparam bit [5:0] CMD3 = 6'h03;                          // SEND_RELATIVE_ADDRE: Ask to publish (RCA) relative address
-localparam bit [5:0] CMD8 = 6'h08;                          // SEND_IF_COND: Card interface condition. Response R7 (4.9.6).
-localparam bit [5:0] CMD11 = 6'h0b;                         // VOLTAGE_SWITCH: Switch to 1.8V bus signaling level
-localparam bit [5:0] CMD17 = 6'h11;                         // READ_SINGLE_BLOCK: Read block size of SET_BLOCKLEN
-localparam bit [5:0] CMD24 = 6'h18;                         // WRITE_SINGLE_BLOCK: Write block size of SET_BLOCKLEN
-localparam bit [5:0] ACMD41 = 6'h29;
-localparam bit [5:0] CMD55 = 6'h37;                         // APP_CMD: application specific commands
-localparam bit [5:0] CMD58 = 6'h3a;                         // READ_OCR: Read OCR register in SPI mode
+localparam bit [5:0] CMD0 = 6'd0;                           // GO_IDLE_STATE: Reset card to idle state. Response - (4.7.4)
+localparam bit [5:0] CMD2 = 6'd2;                           // ALL_SEND_CID: ask to send CID number
+localparam bit [5:0] CMD3 = 6'd3;                           // SEND_RELATIVE_ADDRE: Ask to publish (RCA) relative address
+localparam bit [5:0] CMD8 = 6'd8;                           // SEND_IF_COND: Card interface condition. Response R7 (4.9.6).
+localparam bit [5:0] CMD11 = 6'd11;                         // VOLTAGE_SWITCH: Switch to 1.8V bus signaling level
+localparam bit [5:0] CMD17 = 6'd17;                         // READ_SINGLE_BLOCK: Read block size of SET_BLOCKLEN
+localparam bit [5:0] CMD24 = 6'd24;                         // WRITE_SINGLE_BLOCK: Write block size of SET_BLOCKLEN
+localparam bit [5:0] ACMD41 = 6'd41;
+localparam bit [5:0] CMD55 = 6'd55;                         // APP_CMD: application specific commands
+localparam bit [5:0] CMD58 = 6'd58;                         // READ_OCR: Read OCR register in SPI mode
 // 
-localparam bit [2:0] R1 = 3'h1;
+localparam bit [2:0] R1 = 3'd1;
 // 4.9.3 R2 (CID, CSD register, page 140)
 //     [135]     Start bit = 1'b0
 //     [134]     Transmission bit = 1'b0
@@ -53,7 +53,7 @@ localparam bit [2:0] R1 = 3'h1;
 //     [19:8]    Manufacturer date = 12'hX
 //     [7:1]     CRC7 = 7'hXX
 //     [0]       End bit = 1'b1
-localparam bit [2:0] R2 = 3'h2;
+localparam bit [2:0] R2 = 3'd2;
 // 4.9.4 R3 (OCR register, page 140)
 //     [47]    Start bit = 1'b0
 //     [46]    Transmission bit = 1'b0
@@ -61,7 +61,7 @@ localparam bit [2:0] R2 = 3'h2;
 //     [39:8]  OCR register = 32'hX
 //     [7:1]   reserved = 7'b1111111
 //     [0]     End bit = 1'b1
-localparam bit [2:0] R3 = 3'h3;
+localparam bit [2:0] R3 = 3'd3;
 // 4.9.5 R3 (Published RCA response, page 141)
 //     [47]    Start bit = 1'b0
 //     [46]    Transmission bit = 1'b0
@@ -70,7 +70,7 @@ localparam bit [2:0] R3 = 3'h3;
 //     [24:8]  status bits {[23,22,12,[12:0]} see Table 4-42
 //     [7:1]   CRC7 = 7'hXX
 //     [0]     End bit = 1'b1
-localparam bit [2:0] R6 = 3'h6;
+localparam bit [2:0] R6 = 3'd6;
 // 4.9.6 R7 (Card interface condition, page 142)
 //     [47]    Start bit = 1'b0
 //     [46]    Transmission bit = 1'b0
@@ -82,21 +82,21 @@ localparam bit [2:0] R6 = 3'h6;
 //     [15:8]  Echo-back of check pattern = 8'hXX
 //     [7:1]   CRC7 = 7'hXX
 //     [0]     End bit = 1'b1
-localparam bit [2:0] R7 = 3'h7;
+localparam bit [2:0] R7 = 3'd7;
 // 
-localparam bit DIR_OUTPUT = 1'h0;
-localparam bit DIR_INPUT = 1'h1;
+localparam bit DIR_OUTPUT = 1'b0;
+localparam bit DIR_INPUT = 1'b1;
 
 // Card types detected during identification stage
-localparam bit [2:0] SDCARD_UNKNOWN = 3'h0;
-localparam bit [2:0] SDCARD_VER1X = 3'h1;                   // Ver1.X Standard Capacity
-localparam bit [2:0] SDCARD_VER2X_SC = 3'h2;                // Ver2.00 or higer Standard Capacity
-localparam bit [2:0] SDCARD_VER2X_HC = 3'h3;                // Ver2.00 or higer High or Extended Capacity
-localparam bit [2:0] SDCARD_UNUSABLE = 3'h7;
+localparam bit [2:0] SDCARD_UNKNOWN = 3'd0;
+localparam bit [2:0] SDCARD_VER1X = 3'd1;                   // Ver1.X Standard Capacity
+localparam bit [2:0] SDCARD_VER2X_SC = 3'd2;                // Ver2.00 or higer Standard Capacity
+localparam bit [2:0] SDCARD_VER2X_HC = 3'd3;                // Ver2.00 or higer High or Extended Capacity
+localparam bit [2:0] SDCARD_UNUSABLE = 3'd7;
 // 
-localparam bit [3:0] CMDERR_NONE = 4'h0;
-localparam bit [3:0] CMDERR_NO_RESPONSE = 4'h1;
-localparam bit [3:0] CMDERR_WRONG_RESP_STARTBIT = 4'h2;
-localparam bit [3:0] CMDERR_WRONG_RESP_STOPBIT = 4'h3;
+localparam bit [3:0] CMDERR_NONE = 4'd0;
+localparam bit [3:0] CMDERR_NO_RESPONSE = 4'd1;
+localparam bit [3:0] CMDERR_WRONG_RESP_STARTBIT = 4'd2;
+localparam bit [3:0] CMDERR_WRONG_RESP_STOPBIT = 4'd3;
 
 endpackage: sdctrl_cfg_pkg

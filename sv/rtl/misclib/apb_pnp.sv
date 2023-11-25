@@ -111,16 +111,16 @@ begin: comb_proc
     logic [31:0] vrdata;
 
     for (int i = 0; i < (8 * cfg_slots); i++) begin
-        cfgmap[i] = 32'h00000000;
+        cfgmap[i] = 32'd0;
     end
-    vrdata = 0;
+    vrdata = '0;
 
     v = r;
 
     v.irq = 1'b0;
 
     for (int i = 0; i < cfg_slots; i++) begin
-        cfgmap[(8 * i)] = {22'h000000, i_cfg[i].descrtype, i_cfg[i].descrsize};
+        cfgmap[(8 * i)] = {22'd0, i_cfg[i].descrtype, i_cfg[i].descrsize};
         cfgmap[((8 * i) + 1)] = {i_cfg[i].vid, i_cfg[i].did};
         cfgmap[((8 * i) + 4)] = i_cfg[i].addr_start[31: 0];
         cfgmap[((8 * i) + 5)] = i_cfg[i].addr_start[63: 32];
@@ -128,84 +128,84 @@ begin: comb_proc
         cfgmap[((8 * i) + 7)] = i_cfg[i].addr_end[63: 32];
     end
 
-    if (wb_req_addr[11: 2] == 9'h000) begin
+    if (wb_req_addr[11: 2] == 9'd0) begin
         vrdata = hwid;
         if ((w_req_valid & w_req_write) == 1'b1) begin
             v.irq = 1'b1;
         end
-    end else if (wb_req_addr[11: 2] == 9'h001) begin
+    end else if (wb_req_addr[11: 2] == 9'd1) begin
         vrdata = r.fw_id;
         if ((w_req_valid & w_req_write) == 1'b1) begin
             v.fw_id = wb_req_wdata;
         end
-    end else if (wb_req_addr[11: 2] == 9'h002) begin
+    end else if (wb_req_addr[11: 2] == 9'd2) begin
         vrdata[31: 28] = cpu_max[3: 0];
         vrdata[24] = l2cache_ena;
         vrdata[15: 8] = cfg_slots[7: 0];
         vrdata[7: 0] = plic_irq_max[7: 0];
-    end else if (wb_req_addr[11: 2] == 9'h003) begin
-        vrdata = '0;
-    end else if (wb_req_addr[11: 2] == 9'h004) begin
+    end else if (wb_req_addr[11: 2] == 9'd3) begin
+        vrdata = 32'd0;
+    end else if (wb_req_addr[11: 2] == 9'd4) begin
         vrdata = r.idt_l;
         if ((w_req_valid & w_req_write) == 1'b1) begin
             v.idt_l = wb_req_wdata;
         end
-    end else if (wb_req_addr[11: 2] == 9'h005) begin
+    end else if (wb_req_addr[11: 2] == 9'd5) begin
         vrdata = r.idt_m;
         if ((w_req_valid & w_req_write) == 1'b1) begin
             v.idt_m = wb_req_wdata;
         end
-    end else if (wb_req_addr[11: 2] == 9'h006) begin
+    end else if (wb_req_addr[11: 2] == 9'd6) begin
         vrdata = r.malloc_addr_l;
         if ((w_req_valid & w_req_write) == 1'b1) begin
             v.malloc_addr_l = wb_req_wdata;
         end
-    end else if (wb_req_addr[11: 2] == 9'h007) begin
+    end else if (wb_req_addr[11: 2] == 9'd7) begin
         vrdata = r.malloc_addr_m;
         if ((w_req_valid & w_req_write) == 1'b1) begin
             v.malloc_addr_m = wb_req_wdata;
         end
-    end else if (wb_req_addr[11: 2] == 9'h008) begin
+    end else if (wb_req_addr[11: 2] == 9'd8) begin
         vrdata = r.malloc_size_l;
         if ((w_req_valid & w_req_write) == 1'b1) begin
             v.malloc_size_l = wb_req_wdata;
         end
-    end else if (wb_req_addr[11: 2] == 9'h009) begin
+    end else if (wb_req_addr[11: 2] == 9'd9) begin
         vrdata = r.malloc_size_m;
         if ((w_req_valid & w_req_write) == 1'b1) begin
             v.malloc_size_m = wb_req_wdata;
         end
-    end else if (wb_req_addr[11: 2] == 9'h00a) begin
+    end else if (wb_req_addr[11: 2] == 9'd10) begin
         vrdata = r.fwdbg1;
         if ((w_req_valid & w_req_write) == 1'b1) begin
             v.fwdbg1 = wb_req_wdata;
         end
-    end else if (wb_req_addr[11: 2] == 9'h00b) begin
+    end else if (wb_req_addr[11: 2] == 9'd11) begin
         vrdata = r.fwdbg2;
         if ((w_req_valid & w_req_write) == 1'b1) begin
             v.fwdbg2 = wb_req_wdata;
         end
-    end else if (wb_req_addr[11: 2] == 9'h00c) begin
+    end else if (wb_req_addr[11: 2] == 9'd12) begin
         vrdata = r.fwdbg3;
         if ((w_req_valid & w_req_write) == 1'b1) begin
             v.fwdbg3 = wb_req_wdata;
         end
-    end else if (wb_req_addr[11: 2] == 9'h00d) begin
+    end else if (wb_req_addr[11: 2] == 9'd13) begin
         vrdata = r.fwdbg4;
         if ((w_req_valid & w_req_write) == 1'b1) begin
             v.fwdbg4 = wb_req_wdata;
         end
-    end else if (wb_req_addr[11: 2] == 9'h00e) begin
+    end else if (wb_req_addr[11: 2] == 9'd14) begin
         vrdata = r.fwdbg5;
         if ((w_req_valid & w_req_write) == 1'b1) begin
             v.fwdbg5 = wb_req_wdata;
         end
-    end else if (wb_req_addr[11: 2] == 9'h00f) begin
+    end else if (wb_req_addr[11: 2] == 9'd15) begin
         vrdata = r.fwdbg6;
         if ((w_req_valid & w_req_write) == 1'b1) begin
             v.fwdbg6 = wb_req_wdata;
         end
-    end else if ((wb_req_addr[11: 2] >= 9'h010)
+    end else if ((wb_req_addr[11: 2] >= 9'd16)
                 && (wb_req_addr[11: 2] < (16 + (8 * cfg_slots)))) begin
         vrdata = cfgmap[(int'(wb_req_addr[11: 2]) - 16)];
     end

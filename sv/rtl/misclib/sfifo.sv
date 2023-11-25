@@ -48,8 +48,8 @@ begin: comb_proc
     logic v_full;
     logic v_empty;
 
-    v_full = 0;
-    v_empty = 0;
+    v_full = 1'b0;
+    v_empty = 1'b0;
 
     for (int i = 0; i < DEPTH; i++) begin
         v.databuf[i] = r.databuf[i];
@@ -84,11 +84,11 @@ begin: comb_proc
 
     if (~async_reset && i_nrst == 1'b0) begin
         for (int i = 0; i < DEPTH; i++) begin
-            v.databuf[i] = 8'h00;
+            v.databuf[i] = 8'd0;
         end
-        v.wr_cnt = 4'h0;
-        v.rd_cnt = 4'h0;
-        v.total_cnt = 5'h00;
+        v.wr_cnt = '0;
+        v.rd_cnt = '0;
+        v.total_cnt = '0;
     end
 
     o_rdata = r.databuf[int'(r.rd_cnt)];
@@ -108,11 +108,11 @@ generate
         always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
             if (i_nrst == 1'b0) begin
                 for (int i = 0; i < DEPTH; i++) begin
-                    r.databuf[i] <= 8'h00;
+                    r.databuf[i] <= 8'd0;
                 end
-                r.wr_cnt <= 4'h0;
-                r.rd_cnt <= 4'h0;
-                r.total_cnt <= 5'h00;
+                r.wr_cnt <= '0;
+                r.rd_cnt <= '0;
+                r.total_cnt <= '0;
             end else begin
                 for (int i = 0; i < DEPTH; i++) begin
                     r.databuf[i] <= rin.databuf[i];

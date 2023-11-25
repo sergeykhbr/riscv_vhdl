@@ -70,19 +70,19 @@ begin: comb_proc
     logic [63:0] vb_div;
     logic v_a1_m0;                                          // a1 == -0ll
     logic v_a2_m1;                                          // a2 == -1ll
-    logic v_ena;                                            // 1
+    logic v_ena;
     logic [119:0] t_divisor;
 
-    v_invert64 = 0;
-    v_invert32 = 0;
-    vb_a1 = 0;
-    vb_a2 = 0;
-    vb_rem = 0;
-    vb_div = 0;
-    v_a1_m0 = 1'h0;
-    v_a2_m1 = 1'h0;
-    v_ena = 0;
-    t_divisor = 0;
+    v_invert64 = 1'b0;
+    v_invert32 = 1'b0;
+    vb_a1 = '0;
+    vb_a2 = '0;
+    vb_rem = '0;
+    vb_div = '0;
+    v_a1_m0 = 1'b0;
+    v_a2_m1 = 1'b0;
+    v_ena = 1'b0;
+    t_divisor = '0;
 
     v = r;
 
@@ -135,8 +135,8 @@ begin: comb_proc
     // DIVW, DIVUW, REMW and REMUW sign-extended accordingly with
     // User Level ISA v2.2
     if (r.rv32 == 1'b1) begin
-        vb_div[63: 32] = 32'h00000000;
-        vb_rem[63: 32] = 32'h00000000;
+        vb_div[63: 32] = 32'd0;
+        vb_rem[63: 32] = 32'd0;
         if (vb_div[31] == 1'b1) begin
             vb_div[63: 32] = '1;
         end
@@ -200,7 +200,7 @@ begin: comb_proc
         v.busy = 1'b0;
         if (r.resid == 1'b1) begin
             if (r.overflow == 1'b1) begin
-                v.result = '0;
+                v.result = 64'd0;
             end else begin
                 v.result = vb_rem;
             end
@@ -213,11 +213,11 @@ begin: comb_proc
         end
     end else if (r.busy == 1'b1) begin
         v.divident_i = wb_resid1_o;
-        v.divisor_i = {8'h00, r.divisor_i[119: 8]};
+        v.divisor_i = {8'd0, r.divisor_i[119: 8]};
         v.bits_i = {r.bits_i, wb_bits0_o, wb_bits1_o};
     end
-    wb_divisor0_i = {r.divisor_i, 4'h0};
-    wb_divisor1_i = {4'h0, r.divisor_i};
+    wb_divisor0_i = {r.divisor_i, 4'd0};
+    wb_divisor1_i = {4'd0, r.divisor_i};
 
     if (~async_reset && i_nrst == 1'b0) begin
         v = IntDiv_r_reset;

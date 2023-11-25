@@ -50,7 +50,7 @@ begin: comb_proc
     dev_config_type vcfg;
     apb_out_type vapbo;
 
-    vb_rdata = 0;
+    vb_rdata = '0;
     vcfg = dev_config_none;
     vapbo = apb_out_none;
 

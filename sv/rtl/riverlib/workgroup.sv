@@ -246,11 +246,11 @@ begin: comb_proc
     logic [IRQ_TOTAL-1:0] vb_irq[0: CFG_CPU_MAX-1];
 
     vb_xmst_cfg = dev_config_none;
-    v_flush_l2 = 0;
-    vb_halted = 0;
-    vb_available = 0;
+    v_flush_l2 = 1'b0;
+    vb_halted = '0;
+    vb_available = '0;
     for (int i = 0; i < CFG_CPU_MAX; i++) begin
-        vb_irq[i] = 16'h0000;
+        vb_irq[i] = 16'd0;
     end
 
     vb_xmst_cfg.descrsize = PNP_CFG_DEV_DESCR_BYTES;

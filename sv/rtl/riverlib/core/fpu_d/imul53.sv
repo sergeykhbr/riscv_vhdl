@@ -55,31 +55,31 @@ begin: comb_proc
     logic [6:0] vb_shift;
     logic [104:0] vb_sumInv;
 
-    v_ena = 0;
+    v_ena = 1'b0;
     for (int i = 0; i < 17; i++) begin
-        vb_mux[i] = 57'h000000000000000;
+        vb_mux[i] = 57'd0;
     end
-    vb_sel = 0;
-    vb_shift = 0;
-    vb_sumInv = 0;
+    vb_sel = '0;
+    vb_shift = '0;
+    vb_sumInv = '0;
 
     v = r;
 
 
     vb_mux[0] = '0;
     vb_mux[1] = i_a;
-    vb_mux[2] = {i_a, 1'h0};
+    vb_mux[2] = {i_a, 1'b0};
     vb_mux[3] = (vb_mux[2] + vb_mux[1]);
-    vb_mux[4] = {i_a, 2'h0};
+    vb_mux[4] = {i_a, 2'd0};
     vb_mux[5] = (vb_mux[4] + vb_mux[1]);
     vb_mux[6] = (vb_mux[4] + vb_mux[2]);
-    vb_mux[8] = {i_a, 3'h0};
+    vb_mux[8] = {i_a, 3'd0};
     vb_mux[7] = (vb_mux[8] - vb_mux[1]);
     vb_mux[9] = (vb_mux[8] + vb_mux[1]);
     vb_mux[10] = (vb_mux[8] + vb_mux[2]);
     vb_mux[11] = (vb_mux[10] + vb_mux[1]);
     vb_mux[12] = (vb_mux[8] + vb_mux[4]);
-    vb_mux[16] = {i_a, 4'h0};
+    vb_mux[16] = {i_a, 4'd0};
     vb_mux[13] = (vb_mux[16] - vb_mux[3]);
     vb_mux[14] = (vb_mux[16] - vb_mux[2]);
     vb_mux[15] = (vb_mux[16] - vb_mux[1]);
@@ -88,68 +88,68 @@ begin: comb_proc
     v.delay = {r.delay[14: 0], v_ena};
 
     if (i_ena == 1'b1) begin
-        v.b = {3'h0, i_b};
+        v.b = {3'd0, i_b};
         v.overflow = 1'b0;
         v.accum_ena = 1'b1;
-        v.sum = '0;
-        v.shift = '0;
+        v.sum = 106'd0;
+        v.shift = 7'd0;
     end else if (r.delay[13] == 1'b1) begin
         v.accum_ena = 1'b0;
     end
 
     case (r.b[55: 52])
-    4'h1: begin
+    4'd1: begin
         vb_sel = vb_mux[1];
     end
-    4'h2: begin
+    4'd2: begin
         vb_sel = vb_mux[2];
     end
-    4'h3: begin
+    4'd3: begin
         vb_sel = vb_mux[3];
     end
-    4'h4: begin
+    4'd4: begin
         vb_sel = vb_mux[4];
     end
-    4'h5: begin
+    4'd5: begin
         vb_sel = vb_mux[5];
     end
-    4'h6: begin
+    4'd6: begin
         vb_sel = vb_mux[6];
     end
-    4'h7: begin
+    4'd7: begin
         vb_sel = vb_mux[7];
     end
-    4'h8: begin
+    4'd8: begin
         vb_sel = vb_mux[8];
     end
-    4'h9: begin
+    4'd9: begin
         vb_sel = vb_mux[9];
     end
-    4'ha: begin
+    4'd10: begin
         vb_sel = vb_mux[10];
     end
-    4'hb: begin
+    4'd11: begin
         vb_sel = vb_mux[11];
     end
-    4'hc: begin
+    4'd12: begin
         vb_sel = vb_mux[12];
     end
-    4'hd: begin
+    4'd13: begin
         vb_sel = vb_mux[13];
     end
-    4'he: begin
+    4'd14: begin
         vb_sel = vb_mux[14];
     end
-    4'hf: begin
+    4'd15: begin
         vb_sel = vb_mux[15];
     end
     default: begin
-        vb_sel = '0;
+        vb_sel = 57'd0;
     end
     endcase
     if (r.accum_ena == 1'b1) begin
-        v.sum = ({r.sum, 4'h0} + vb_sel);
-        v.b = {r.b, 4'h0};
+        v.sum = ({r.sum, 4'd0} + vb_sel);
+        v.b = {r.b, 4'd0};
     end
 
     // To avoid timing constrains violation try to implement parallel demux
@@ -163,7 +163,7 @@ begin: comb_proc
         vb_shift = '1;
         v.overflow = 1'b1;
     end else if (r.sum[104] == 1'b1) begin
-        vb_shift = '0;
+        vb_shift = 7'd0;
     end else begin
         vb_shift = wb_lshift;
     end

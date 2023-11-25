@@ -146,7 +146,7 @@ begin: comb_proc
     logic shift_ena;
 
     selidx = 0;
-    shift_ena = 0;
+    shift_ena = 1'b0;
 
     for (int i = 0; i < FULL_DEC_DEPTH; i++) begin
         v.d[i].pc = r.d[i].pc;
@@ -211,27 +211,27 @@ begin: comb_proc
     if ((~async_reset && i_nrst == 1'b0) || (i_flush_pipeline == 1'b1)) begin
         for (int i = 0; i < FULL_DEC_DEPTH; i++) begin
             v.d[i].pc = '1;
-            v.d[i].isa_type = 6'h00;
+            v.d[i].isa_type = '0;
             v.d[i].instr_vec = '0;
             v.d[i].instr = '1;
-            v.d[i].memop_store = 1'h0;
-            v.d[i].memop_load = 1'h0;
-            v.d[i].memop_sign_ext = 1'h0;
+            v.d[i].memop_store = 1'b0;
+            v.d[i].memop_load = 1'b0;
+            v.d[i].memop_sign_ext = 1'b0;
             v.d[i].memop_size = MEMOP_1B;
-            v.d[i].unsigned_op = 1'h0;
-            v.d[i].rv32 = 1'h0;
-            v.d[i].f64 = 1'h0;
-            v.d[i].compressed = 1'h0;
-            v.d[i].amo = 1'h0;
-            v.d[i].instr_load_fault = 1'h0;
-            v.d[i].instr_page_fault_x = 1'h0;
-            v.d[i].instr_unimplemented = 1'h0;
-            v.d[i].radr1 = 6'h00;
-            v.d[i].radr2 = 6'h00;
-            v.d[i].waddr = 6'h00;
-            v.d[i].csr_addr = 12'h000;
-            v.d[i].imm = 64'h0000000000000000;
-            v.d[i].progbuf_ena = 1'h0;
+            v.d[i].unsigned_op = 1'b0;
+            v.d[i].rv32 = 1'b0;
+            v.d[i].f64 = 1'b0;
+            v.d[i].compressed = 1'b0;
+            v.d[i].amo = 1'b0;
+            v.d[i].instr_load_fault = 1'b0;
+            v.d[i].instr_page_fault_x = 1'b0;
+            v.d[i].instr_unimplemented = 1'b0;
+            v.d[i].radr1 = '0;
+            v.d[i].radr2 = '0;
+            v.d[i].waddr = '0;
+            v.d[i].csr_addr = '0;
+            v.d[i].imm = '0;
+            v.d[i].progbuf_ena = 1'b0;
         end
     end
 
@@ -291,27 +291,27 @@ generate
             if (i_nrst == 1'b0) begin
                 for (int i = 0; i < FULL_DEC_DEPTH; i++) begin
                     r.d[i].pc <= '1;
-                    r.d[i].isa_type <= 6'h00;
+                    r.d[i].isa_type <= '0;
                     r.d[i].instr_vec <= '0;
                     r.d[i].instr <= '1;
-                    r.d[i].memop_store <= 1'h0;
-                    r.d[i].memop_load <= 1'h0;
-                    r.d[i].memop_sign_ext <= 1'h0;
+                    r.d[i].memop_store <= 1'b0;
+                    r.d[i].memop_load <= 1'b0;
+                    r.d[i].memop_sign_ext <= 1'b0;
                     r.d[i].memop_size <= MEMOP_1B;
-                    r.d[i].unsigned_op <= 1'h0;
-                    r.d[i].rv32 <= 1'h0;
-                    r.d[i].f64 <= 1'h0;
-                    r.d[i].compressed <= 1'h0;
-                    r.d[i].amo <= 1'h0;
-                    r.d[i].instr_load_fault <= 1'h0;
-                    r.d[i].instr_page_fault_x <= 1'h0;
-                    r.d[i].instr_unimplemented <= 1'h0;
-                    r.d[i].radr1 <= 6'h00;
-                    r.d[i].radr2 <= 6'h00;
-                    r.d[i].waddr <= 6'h00;
-                    r.d[i].csr_addr <= 12'h000;
-                    r.d[i].imm <= 64'h0000000000000000;
-                    r.d[i].progbuf_ena <= 1'h0;
+                    r.d[i].unsigned_op <= 1'b0;
+                    r.d[i].rv32 <= 1'b0;
+                    r.d[i].f64 <= 1'b0;
+                    r.d[i].compressed <= 1'b0;
+                    r.d[i].amo <= 1'b0;
+                    r.d[i].instr_load_fault <= 1'b0;
+                    r.d[i].instr_page_fault_x <= 1'b0;
+                    r.d[i].instr_unimplemented <= 1'b0;
+                    r.d[i].radr1 <= '0;
+                    r.d[i].radr2 <= '0;
+                    r.d[i].waddr <= '0;
+                    r.d[i].csr_addr <= '0;
+                    r.d[i].imm <= '0;
+                    r.d[i].progbuf_ena <= 1'b0;
                 end
             end else begin
                 for (int i = 0; i < FULL_DEC_DEPTH; i++) begin

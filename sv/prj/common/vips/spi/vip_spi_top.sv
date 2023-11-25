@@ -81,7 +81,7 @@ begin: comb_proc
     vip_spi_top_registers v;
     logic [31:0] rdata;
 
-    rdata = 0;
+    rdata = '0;
 
     v = r;
 

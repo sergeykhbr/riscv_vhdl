@@ -490,31 +490,31 @@ begin: comb_proc
     logic v_crc16_next;
 
     v_cmd_dir = DIR_OUTPUT;
-    v_cmd_in = 0;
-    v_cmd_out = 1'h1;
+    v_cmd_in = 1'b0;
+    v_cmd_out = 1'b1;
     v_dat0_dir = DIR_OUTPUT;
-    v_dat0_out = 1'h1;
+    v_dat0_out = 1'b1;
     v_dat1_dir = DIR_OUTPUT;
-    v_dat1_out = 1'h1;
+    v_dat1_out = 1'b1;
     v_dat2_dir = DIR_OUTPUT;
-    v_dat2_out = 1'h1;
+    v_dat2_out = 1'b1;
     v_dat3_dir = DIR_OUTPUT;
-    v_dat3_out = 1'h1;
-    v_cmd_req_valid = 0;
-    vb_cmd_req_cmd = 0;
-    vb_cmd_req_arg = 0;
-    vb_cmd_req_rn = 0;
-    v_req_sdmem_ready = 0;
-    v_resp_sdmem_valid = 0;
-    vb_resp_sdmem_data = 0;
-    v_err_valid = 0;
-    v_err_clear = 0;
-    vb_err_setcode = 0;
-    v_400kHz_ena = 1'h1;
-    vb_sdtype = 0;
-    v_wdog_ena = 0;
-    v_crc16_clear = 0;
-    v_crc16_next = 0;
+    v_dat3_out = 1'b1;
+    v_cmd_req_valid = 1'b0;
+    vb_cmd_req_cmd = '0;
+    vb_cmd_req_arg = '0;
+    vb_cmd_req_rn = '0;
+    v_req_sdmem_ready = 1'b0;
+    v_resp_sdmem_valid = 1'b0;
+    vb_resp_sdmem_data = '0;
+    v_err_valid = 1'b0;
+    v_err_clear = 1'b0;
+    vb_err_setcode = '0;
+    v_400kHz_ena = 1'b1;
+    vb_sdtype = '0;
+    v_wdog_ena = 1'b0;
+    v_crc16_clear = 1'b0;
+    v_crc16_next = 1'b0;
 
     v = r;
 
@@ -529,7 +529,7 @@ begin: comb_proc
         if (w_regs_sck_posedge == 1'b1) begin
             v.clkcnt = (r.clkcnt + 1);
         end
-        if (r.clkcnt >= 7'h49) begin
+        if (r.clkcnt >= 7'd73) begin
             if (w_regs_spi_mode == 1'b1) begin
                 v.mode = MODE_SPI;
                 v.nrst_spimode = 1'b1;

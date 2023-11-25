@@ -19,27 +19,27 @@ import types_amba_pkg::*;
 import types_pnp_pkg::*;
 import river_cfg_pkg::*;
 
-localparam bit [2:0] CMDERR_NONE = 3'h0;
-localparam bit [2:0] CMDERR_BUSY = 3'h1;
-localparam bit [2:0] CMDERR_NOTSUPPROTED = 3'h2;
-localparam bit [2:0] CMDERR_EXCEPTION = 3'h3;
-localparam bit [2:0] CMDERR_WRONGSTATE = 3'h4;
-localparam bit [2:0] CMDERR_BUSERROR = 3'h5;
-localparam bit [2:0] CMDERR_OTHERS = 3'h7;
+localparam bit [2:0] CMDERR_NONE = 3'd0;
+localparam bit [2:0] CMDERR_BUSY = 3'd1;
+localparam bit [2:0] CMDERR_NOTSUPPROTED = 3'd2;
+localparam bit [2:0] CMDERR_EXCEPTION = 3'd3;
+localparam bit [2:0] CMDERR_WRONGSTATE = 3'd4;
+localparam bit [2:0] CMDERR_BUSERROR = 3'd5;
+localparam bit [2:0] CMDERR_OTHERS = 3'd7;
 // Dedicated bit in the 'command' register
 localparam int CmdPostexecBit = 18;
 localparam int CmdTransferBit = 17;
 localparam int CmdWriteBit = 16;
 localparam int CmdPostincrementBit = 19;
 // dmstate:
-localparam bit DM_STATE_IDLE = 1'h0;
-localparam bit DM_STATE_ACCESS = 1'h1;
+localparam bit DM_STATE_IDLE = 1'b0;
+localparam bit DM_STATE_ACCESS = 1'b1;
 // cmdstate:
-localparam bit [2:0] CMD_STATE_IDLE = 3'h0;
-localparam bit [2:0] CMD_STATE_INIT = 3'h1;
-localparam bit [2:0] CMD_STATE_REQUEST = 3'h2;
-localparam bit [2:0] CMD_STATE_RESPONSE = 3'h3;
-localparam bit [2:0] CMD_STATE_WAIT_HALTED = 3'h4;
+localparam bit [2:0] CMD_STATE_IDLE = 3'd0;
+localparam bit [2:0] CMD_STATE_INIT = 3'd1;
+localparam bit [2:0] CMD_STATE_REQUEST = 3'd2;
+localparam bit [2:0] CMD_STATE_RESPONSE = 3'd3;
+localparam bit [2:0] CMD_STATE_WAIT_HALTED = 3'd4;
 
 typedef struct {
     logic bus_jtag;

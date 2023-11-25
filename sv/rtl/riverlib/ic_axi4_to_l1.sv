@@ -52,13 +52,13 @@ begin: comb_proc
 
     vb_xmsti = axi4_master_in_none;
     vb_l1o = axi4_l1_out_none;
-    idx = 2'h0;
-    vb_req_xbytes = 0;
-    vb_req_mask = 0;
-    vb_r_data_modified = 0;
-    vb_line_wstrb = 0;
-    vb_resp_data = 0;
-    t_req_addr = 0;
+    idx = 2'd0;
+    vb_req_xbytes = '0;
+    vb_req_mask = '0;
+    vb_r_data_modified = '0;
+    vb_line_wstrb = '0;
+    vb_resp_data = '0;
+    t_req_addr = '0;
 
     v = r;
 
@@ -69,7 +69,7 @@ begin: comb_proc
     idx = r.req_addr[(CFG_LOG2_L1CACHE_BYTES_PER_LINE - 1): 3];
     vb_req_xbytes = XSizeToBytes(r.req_size);
 
-    vb_req_mask = '0;
+    vb_req_mask = 64'd0;
     for (int i = 0; i < 8; i++) begin
         if (r.req_wstrb[i] == 1'b1) begin
             vb_req_mask[(8 * i) +: 8] = 8'hff;
@@ -82,7 +82,7 @@ begin: comb_proc
     vb_r_data_modified[(idx * 64) +: 64] = ((i_l1i.r_data[(idx * 64) +: 64] & (~vb_req_mask))
             | (r.req_wdata & vb_req_mask));
 
-    vb_line_wstrb = '0;
+    vb_line_wstrb = 32'd0;
     vb_line_wstrb[(idx * 8) +: 8] = r.req_wstrb;
 
     case (r.state)
@@ -126,7 +126,7 @@ begin: comb_proc
         vb_l1o.ar_bits.addr = {r.req_addr[(CFG_SYSBUS_ADDR_BITS - 1): CFG_LOG2_L1CACHE_BYTES_PER_LINE], {CFG_LOG2_L1CACHE_BYTES_PER_LINE{1'b0}}};
         vb_l1o.ar_bits.cache = ARCACHE_WRBACK_READ_ALLOCATE;
         vb_l1o.ar_bits.size = CFG_LOG2_L1CACHE_BYTES_PER_LINE;
-        vb_l1o.ar_bits.len = '0;
+        vb_l1o.ar_bits.len = 8'd0;
         vb_l1o.ar_bits.prot = r.req_prot;
         vb_l1o.ar_snoop = ARSNOOP_READ_MAKE_UNIQUE;
         vb_l1o.ar_id = r.req_id;
@@ -154,7 +154,7 @@ begin: comb_proc
         vb_l1o.aw_bits.addr = {r.req_addr[(CFG_SYSBUS_ADDR_BITS - 1): CFG_LOG2_L1CACHE_BYTES_PER_LINE], {CFG_LOG2_L1CACHE_BYTES_PER_LINE{1'b0}}};
         vb_l1o.aw_bits.cache = AWCACHE_DEVICE_NON_BUFFERABLE;
         vb_l1o.aw_bits.size = CFG_LOG2_L1CACHE_BYTES_PER_LINE;
-        vb_l1o.aw_bits.len = '0;
+        vb_l1o.aw_bits.len = 8'd0;
         vb_l1o.aw_bits.prot = r.req_prot;
         vb_l1o.aw_snoop = AWSNOOP_WRITE_NO_SNOOP;           // offloading non-cached always
         vb_l1o.aw_id = r.req_id;

@@ -32,8 +32,8 @@ begin: comb_proc
     logic v_icached;
     logic v_dcached;
 
-    v_icached = 0;
-    v_dcached = 0;
+    v_icached = 1'b0;
+    v_dcached = 1'b0;
 
     v_icached = 1'b1;
     if ((i_iaddr & (~CLINT_MASK)) == CLINT_BAR) begin

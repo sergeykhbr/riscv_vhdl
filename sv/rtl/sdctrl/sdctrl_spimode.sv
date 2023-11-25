@@ -73,16 +73,16 @@ begin: comb_proc
     logic v_data_req_ready;
     logic v_crc16_next;
 
-    v_dat = 0;
-    vb_cmd_req_arg = 0;
-    v_data_req_ready = 0;
-    v_crc16_next = 0;
+    v_dat = 1'b0;
+    vb_cmd_req_arg = '0;
+    v_data_req_ready = 1'b0;
+    v_crc16_next = 1'b0;
 
     v = r;
 
     v.err_clear = 1'b0;
     v.err_valid = 1'b0;
-    v.err_code = '0;
+    v.err_code = 4'd0;
     v.data_resp_valid = 1'b0;
     vb_cmd_req_arg = r.cmd_req_arg;
 
@@ -127,7 +127,7 @@ begin: comb_proc
         end
         R6: begin
             // Relative Address (RCA):
-            v.data_addr = {i_cmd_resp_arg32[31: 16], 16'h0000};
+            v.data_addr = {i_cmd_resp_arg32[31: 16], 16'd0};
         end
         default: begin
         end
@@ -138,12 +138,12 @@ begin: comb_proc
         v.sdtype = SDCARD_UNKNOWN;
         v.HCS = 1'b1;
         v.S18 = 1'b0;
-        v.data_addr = '0;
+        v.data_addr = 32'd0;
         v.OCR_VoltageWindow = 32'h00ff8000;
         v.cmd_req_valid = 1'b1;
         v.cmd_req_cmd = CMD0;
         v.cmd_req_rn = R1;
-        vb_cmd_req_arg = '0;
+        vb_cmd_req_arg = 32'd0;
         v.state = STATE_CMD8;
     end else if (r.state == STATE_CMD8) begin
         // See page 113. 4.3.13 Send Interface Condition Command
@@ -160,7 +160,7 @@ begin: comb_proc
         end
         v.cmd_req_cmd = CMD8;
         v.cmd_req_rn = R7;
-        vb_cmd_req_arg = '0;
+        vb_cmd_req_arg = 32'd0;
         vb_cmd_req_arg[13] = i_cfg_pcie_12V_support;
         vb_cmd_req_arg[12] = i_cfg_pcie_available;
         vb_cmd_req_arg[11: 8] = i_cfg_voltage_supply;
@@ -178,7 +178,7 @@ begin: comb_proc
         v.cmd_req_valid = 1'b1;
         v.cmd_req_cmd = CMD55;
         v.cmd_req_rn = R1;
-        vb_cmd_req_arg = '0;
+        vb_cmd_req_arg = 32'd0;
         v.state = STATE_ACMD41;
     end else if (r.state == STATE_ACMD41) begin
         // Page 131: SD_SEND_OP_COND. 
@@ -191,7 +191,7 @@ begin: comb_proc
         //   [23:0] VDD voltage window (OCR[23:0])
         v.cmd_req_valid = 1'b1;
         v.cmd_req_cmd = ACMD41;
-        vb_cmd_req_arg = '0;
+        vb_cmd_req_arg = 32'd0;
         vb_cmd_req_arg[30] = r.HCS;
         vb_cmd_req_arg[23: 0] = r.OCR_VoltageWindow;
         v.cmd_req_rn = R1;
@@ -207,7 +207,7 @@ begin: comb_proc
         end else begin
             v.cmd_req_valid = 1'b1;
             v.cmd_req_cmd = CMD58;
-            vb_cmd_req_arg = '0;
+            vb_cmd_req_arg = 32'd0;
             v.cmd_req_rn = R3;
             v.state = STATE_WAIT_DATA_REQ;
             v.sck_400khz_ena = 1'b0;
@@ -232,7 +232,7 @@ begin: comb_proc
         v.cmd_req_rn = R1;
         vb_cmd_req_arg = r.data_addr;
         v.state = STATE_WAIT_DATA_START;
-        v.bitcnt = '0;
+        v.bitcnt = 12'd0;
     end else if (r.state == STATE_CMD24_WRITE_SINGLE_BLOCK) begin
         // TODO:
     end else if (r.state == STATE_WAIT_DATA_START) begin
@@ -244,7 +244,7 @@ begin: comb_proc
             v.state = STATE_WAIT_DATA_REQ;
         end else if (r.data_data[7: 0] == 8'hfe) begin
             v.state = STATE_READING_DATA;
-            v.bitcnt = '0;
+            v.bitcnt = 12'd0;
             v.crc16_clear = 1'b0;
         end else if (i_wdog_trigger == 1'b1) begin
             v.state = STATE_WAIT_DATA_REQ;

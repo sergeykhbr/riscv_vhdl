@@ -85,15 +85,15 @@ begin: comb_proc
     logic v_crc7_in;
     logic v_busy;
 
-    vb_cmd_txshift = 0;
-    v_crc7_clear = 0;
-    v_crc7_next = 0;
-    v_crc7_in = 0;
-    v_busy = 1'h1;
+    vb_cmd_txshift = '0;
+    v_crc7_clear = 1'b0;
+    v_crc7_next = 1'b0;
+    v_crc7_in = 1'b0;
+    v_busy = 1'b1;
 
     v = r;
 
-    vb_cmd_txshift = {r.cmd_txshift[46: 0], 1'h1};
+    vb_cmd_txshift = {r.cmd_txshift[46: 0], 1'b1};
     v_crc7_in = i_cmd;
 
     if (i_cmd_req_ready == 1'b1) begin
@@ -124,14 +124,14 @@ begin: comb_proc
     end
     CMDSTATE_REQ_TXBIT: begin
         v.cmd_state = CMDSTATE_REQ_CMD;
-        v.bitcnt = 6'h05;
+        v.bitcnt = 6'd5;
         v_crc7_next = 1'b1;
         v.txbit = i_cmd;
     end
     CMDSTATE_REQ_CMD: begin
         v_crc7_next = 1'b1;
         if ((|r.bitcnt) == 1'b0) begin
-            v.bitcnt = 6'h1f;
+            v.bitcnt = 6'd31;
             v.cmd_state = CMDSTATE_REQ_ARG;
         end else begin
             v.bitcnt = (r.bitcnt - 1);
@@ -141,7 +141,7 @@ begin: comb_proc
         v_crc7_next = 1'b1;
         if ((|r.bitcnt) == 1'b0) begin
             v.cmd_state = CMDSTATE_REQ_CRC7;
-            v.bitcnt = 6'h06;
+            v.bitcnt = 6'd6;
             v.crc_calc = wb_crc7;
         end else begin
             v.bitcnt = (r.bitcnt - 1);
@@ -184,16 +184,16 @@ begin: comb_proc
             v.cmd_resp_ready = 1'b0;
             v.cmd_state = CMDSTATE_RESP;
             if (r.spi_mode == 1'b0) begin
-                v.bitcnt = 6'h27;
-                vb_cmd_txshift = '0;
+                v.bitcnt = 6'd39;
+                vb_cmd_txshift = 48'd0;
                 vb_cmd_txshift[45: 40] = r.cmd_rxshift[45: 40];
                 vb_cmd_txshift[39: 8] = i_cmd_resp_data32;
                 vb_cmd_txshift[7: 0] = 8'hff;
             end else begin
                 // Default R1 response in SPI mode:
-                v.bitcnt = 6'h07;
+                v.bitcnt = 6'd7;
                 vb_cmd_txshift = '1;
-                vb_cmd_txshift[47] = 1'h0;
+                vb_cmd_txshift[47] = 1'b0;
                 vb_cmd_txshift[46] = i_stat_err_parameter;
                 vb_cmd_txshift[45] = i_stat_err_address;
                 vb_cmd_txshift[44] = i_stat_err_erase_sequence;
@@ -202,7 +202,7 @@ begin: comb_proc
                 vb_cmd_txshift[41] = i_stat_erase_reset;
                 vb_cmd_txshift[40] = i_stat_idle_state;
                 if (i_cmd_resp_r2 == 1'b1) begin
-                    v.bitcnt = 6'h0f;
+                    v.bitcnt = 6'd15;
                     vb_cmd_txshift[39] = i_stat_out_of_range;
                     vb_cmd_txshift[38] = i_stat_erase_param;
                     vb_cmd_txshift[37] = i_stat_wp_violation;
@@ -212,7 +212,7 @@ begin: comb_proc
                     vb_cmd_txshift[33] = i_stat_wp_erase_skip;
                     vb_cmd_txshift[32] = i_stat_locked;
                 end else if ((i_cmd_resp_r3 == 1'b1) || (i_cmd_resp_r7 == 1'b1)) begin
-                    v.bitcnt = 6'h27;
+                    v.bitcnt = 6'd39;
                     vb_cmd_txshift[39: 8] = i_cmd_resp_data32;
                 end
             end
@@ -222,9 +222,9 @@ begin: comb_proc
         v_crc7_in = r.cmd_txshift[47];
         if ((|r.bitcnt) == 1'b0) begin
             if (r.spi_mode == 1'b0) begin
-                v.bitcnt = 6'h06;
+                v.bitcnt = 6'd6;
                 v.cmd_state = CMDSTATE_RESP_CRC7;
-                vb_cmd_txshift[47: 40] = {wb_crc7, 1'h1};
+                vb_cmd_txshift[47: 40] = {wb_crc7, 1'b1};
                 v.crc_calc = wb_crc7;
             end else begin
                 v.cmd_state = CMDSTATE_RESP_STOPBIT;

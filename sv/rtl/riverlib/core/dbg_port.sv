@@ -119,25 +119,25 @@ begin: comb_proc
     logic [63:0] vrdata;
     logic [4:0] t_idx;
 
-    vb_stack_raddr = 0;
-    v_stack_we = 0;
-    vb_stack_waddr = 0;
-    vb_stack_wdata = 0;
-    v_csr_req_valid = 0;
-    v_csr_resp_ready = 0;
-    vb_csr_req_type = 0;
-    vb_csr_req_addr = 0;
-    vb_csr_req_data = 0;
-    vb_o_ireg_addr = 0;
-    vb_o_ireg_wdata = 0;
-    vb_idx = 0;
-    v_o_ireg_ena = 0;
-    v_o_ireg_write = 0;
-    v_mem_req_valid = 0;
-    v_req_ready = 0;
-    v_resp_valid = 0;
-    vrdata = 0;
-    t_idx = 0;
+    vb_stack_raddr = '0;
+    v_stack_we = 1'b0;
+    vb_stack_waddr = '0;
+    vb_stack_wdata = '0;
+    v_csr_req_valid = 1'b0;
+    v_csr_resp_ready = 1'b0;
+    vb_csr_req_type = '0;
+    vb_csr_req_addr = '0;
+    vb_csr_req_data = '0;
+    vb_o_ireg_addr = '0;
+    vb_o_ireg_wdata = '0;
+    vb_idx = '0;
+    v_o_ireg_ena = 1'b0;
+    v_o_ireg_write = 1'b0;
+    v_mem_req_valid = 1'b0;
+    v_req_ready = 1'b0;
+    v_resp_valid = 1'b0;
+    vrdata = '0;
+    t_idx = '0;
 
     v = r;
 
@@ -158,7 +158,7 @@ begin: comb_proc
     case (r.dstate)
     idle: begin
         v_req_ready = 1'b1;
-        vrdata = '0;
+        vrdata = 64'd0;
         v.req_accepted = 1'b0;
         v.resp_error = 1'b0;
         v.progbuf_ena = 1'b0;
@@ -173,7 +173,7 @@ begin: comb_proc
                     v.dstate = reg_bank;
                 end else if (i_dport_addr[15: 12] == 4'hc) begin
                     // non-standard extension
-                    if (vb_idx == 12'h040) begin
+                    if (vb_idx == 12'd64) begin
                         v.dstate = reg_stktr_cnt;
                     end else if ((vb_idx >= 128) && (vb_idx < (128 + (2 * STACK_TRACE_BUF_SIZE)))) begin
                         v.dstate = reg_stktr_buf_adr;
@@ -225,7 +225,7 @@ begin: comb_proc
         v.dstate = wait_to_accept;
     end
     reg_stktr_cnt: begin
-        vrdata = '0;
+        vrdata = 64'd0;
         vrdata[(CFG_LOG2_STACK_TRACE_ADDR - 1): 0] = r.stack_trace_cnt;
         if (r.dport_write == 1'b1) begin
             v.stack_trace_cnt = r.dport_wdata[(CFG_LOG2_STACK_TRACE_ADDR - 1): 0];
@@ -246,7 +246,7 @@ begin: comb_proc
     end
     exec_progbuf_start: begin
         v.progbuf_ena = 1'b1;
-        v.progbuf_pc = '0;
+        v.progbuf_pc = 64'd0;
         v.progbuf_instr = i_progbuf[63: 0];
         v.dstate = exec_progbuf_next;
     end
@@ -259,9 +259,9 @@ begin: comb_proc
             v.dstate = exec_progbuf_waitmemop;
         end else begin
             t_idx = i_e_npc[5: 2];
-            v.progbuf_pc = {58'h000000000000000, {i_e_npc[5: 2], 2'h0}};
+            v.progbuf_pc = {58'd0, {i_e_npc[5: 2], 2'd0}};
             if (t_idx == 4'hf) begin
-                v.progbuf_instr = {32'h00000000, i_progbuf[255: 224]};
+                v.progbuf_instr = {32'd0, i_progbuf[255: 224]};
             end else begin
                 v.progbuf_instr = i_progbuf[(32 * t_idx) +: 64];
             end

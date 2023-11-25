@@ -42,11 +42,11 @@ begin: comb_proc
     logic [RISCV_ARCH-1:0] vb_sub;
     logic [RISCV_ARCH-1:0] vb_res;
 
-    vb_rdata1 = 0;
-    vb_rdata2 = 0;
-    vb_add = 0;
-    vb_sub = 0;
-    vb_res = 0;
+    vb_rdata1 = '0;
+    vb_rdata2 = '0;
+    vb_add = '0;
+    vb_sub = '0;
+    vb_res = '0;
 
     v = r;
 

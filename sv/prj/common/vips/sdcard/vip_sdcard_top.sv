@@ -209,10 +209,10 @@ begin: comb_proc
     logic v_crc7_next;
     logic v_crc7_in;
 
-    vb_cmd_txshift = 0;
-    v_crc7_clear = 0;
-    v_crc7_next = 0;
-    v_crc7_in = 0;
+    vb_cmd_txshift = '0;
+    v_crc7_clear = 1'b0;
+    v_crc7_next = 1'b0;
+    v_crc7_in = 1'b0;
 
     if (w_spi_mode == 1'b1) begin
         w_cmd_dir = 1'b1;                                   // in: din

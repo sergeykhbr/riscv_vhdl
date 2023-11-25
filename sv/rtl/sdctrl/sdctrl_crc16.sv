@@ -38,8 +38,8 @@ begin: comb_proc
     logic v_inv16_0;
     logic [15:0] vb_crc16_0;
 
-    v_inv16_0 = 0;
-    vb_crc16_0 = 0;
+    v_inv16_0 = 1'b0;
+    vb_crc16_0 = '0;
 
     v = r;
 
@@ -63,7 +63,7 @@ begin: comb_proc
     vb_crc16_0[0] = v_inv16_0;
 
     if (i_clear == 1'b1) begin
-        v.crc16 = '0;
+        v.crc16 = 16'd0;
     end else if (i_next == 1'b1) begin
         v.crc16 = vb_crc16_0;
     end

@@ -64,10 +64,10 @@ begin: comb_proc
     logic [104:0] vb_bits;
     logic v_mux_ena_i;
 
-    v_ena = 0;
-    vb_muxind = 0;
-    vb_bits = 0;
-    v_mux_ena_i = 0;
+    v_ena = 1'b0;
+    vb_muxind = '0;
+    vb_bits = '0;
+    v_mux_ena_i = 1'b0;
 
     v = r;
 
@@ -76,18 +76,18 @@ begin: comb_proc
     v_ena = i_ena;
     v.delay = {r.delay[13: 0], v_ena};
     if (i_ena == 1'b1) begin
-        v.divident = {8'h00, i_divident};
+        v.divident = {8'd0, i_divident};
         v.divisor = i_divisor;
         v.lshift_rdy = 1'b0;
         v.overflow = 1'b0;
         v.zero_resid = 1'b0;
     end else if (r.delay[0] == 1'b1) begin
         v_mux_ena_i = (~r.lshift_rdy);
-        v.divident = {wb_dif_o, 8'h00};
+        v.divident = {wb_dif_o, 8'd0};
         vb_bits[104] = (~wb_dif_o[52]);
     end else if (r.delay[1] == 1'b1) begin
         v_mux_ena_i = (~r.lshift_rdy);
-        v.divident = {wb_dif_o, 8'h00};
+        v.divident = {wb_dif_o, 8'd0};
         vb_muxind[55: 49] = 1;
         vb_muxind[48: 42] = 2;
         vb_muxind[41: 35] = 3;
@@ -99,7 +99,7 @@ begin: comb_proc
         vb_bits[103: 96] = wb_bits_o;
     end else if (r.delay[2] == 1'b1) begin
         v_mux_ena_i = (~r.lshift_rdy);
-        v.divident = {wb_dif_o, 8'h00};
+        v.divident = {wb_dif_o, 8'd0};
         vb_muxind[55: 49] = 9;
         vb_muxind[48: 42] = 10;
         vb_muxind[41: 35] = 11;
@@ -111,7 +111,7 @@ begin: comb_proc
         vb_bits[95: 88] = wb_bits_o;
     end else if (r.delay[3] == 1'b1) begin
         v_mux_ena_i = (~r.lshift_rdy);
-        v.divident = {wb_dif_o, 8'h00};
+        v.divident = {wb_dif_o, 8'd0};
         vb_muxind[55: 49] = 17;
         vb_muxind[48: 42] = 18;
         vb_muxind[41: 35] = 19;
@@ -123,7 +123,7 @@ begin: comb_proc
         vb_bits[87: 80] = wb_bits_o;
     end else if (r.delay[4] == 1'b1) begin
         v_mux_ena_i = (~r.lshift_rdy);
-        v.divident = {wb_dif_o, 8'h00};
+        v.divident = {wb_dif_o, 8'd0};
         vb_muxind[55: 49] = 25;
         vb_muxind[48: 42] = 26;
         vb_muxind[41: 35] = 27;
@@ -135,7 +135,7 @@ begin: comb_proc
         vb_bits[79: 72] = wb_bits_o;
     end else if (r.delay[5] == 1'b1) begin
         v_mux_ena_i = (~r.lshift_rdy);
-        v.divident = {wb_dif_o, 8'h00};
+        v.divident = {wb_dif_o, 8'd0};
         vb_muxind[55: 49] = 33;
         vb_muxind[48: 42] = 34;
         vb_muxind[41: 35] = 35;
@@ -147,7 +147,7 @@ begin: comb_proc
         vb_bits[71: 64] = wb_bits_o;
     end else if (r.delay[6] == 1'b1) begin
         v_mux_ena_i = (~r.lshift_rdy);
-        v.divident = {wb_dif_o, 8'h00};
+        v.divident = {wb_dif_o, 8'd0};
         vb_muxind[55: 49] = 41;
         vb_muxind[48: 42] = 42;
         vb_muxind[41: 35] = 43;
@@ -159,7 +159,7 @@ begin: comb_proc
         vb_bits[63: 56] = wb_bits_o;
     end else if (r.delay[7] == 1'b1) begin
         v_mux_ena_i = (~r.lshift_rdy);
-        v.divident = {wb_dif_o, 8'h00};
+        v.divident = {wb_dif_o, 8'd0};
         vb_muxind[55: 49] = 49;
         vb_muxind[48: 42] = 50;
         vb_muxind[41: 35] = 51;
@@ -171,7 +171,7 @@ begin: comb_proc
         vb_bits[55: 48] = wb_bits_o;
     end else if (r.delay[8] == 1'b1) begin
         v_mux_ena_i = (~r.lshift_rdy);
-        v.divident = {wb_dif_o, 8'h00};
+        v.divident = {wb_dif_o, 8'd0};
         vb_muxind[55: 49] = 57;
         vb_muxind[48: 42] = 58;
         vb_muxind[41: 35] = 59;
@@ -183,7 +183,7 @@ begin: comb_proc
         vb_bits[47: 40] = wb_bits_o;
     end else if (r.delay[9] == 1'b1) begin
         v_mux_ena_i = (~r.lshift_rdy);
-        v.divident = {wb_dif_o, 8'h00};
+        v.divident = {wb_dif_o, 8'd0};
         vb_muxind[55: 49] = 65;
         vb_muxind[48: 42] = 66;
         vb_muxind[41: 35] = 67;
@@ -195,7 +195,7 @@ begin: comb_proc
         vb_bits[39: 32] = wb_bits_o;
     end else if (r.delay[10] == 1'b1) begin
         v_mux_ena_i = (~r.lshift_rdy);
-        v.divident = {wb_dif_o, 8'h00};
+        v.divident = {wb_dif_o, 8'd0};
         vb_muxind[55: 49] = 73;
         vb_muxind[48: 42] = 74;
         vb_muxind[41: 35] = 75;
@@ -207,7 +207,7 @@ begin: comb_proc
         vb_bits[31: 24] = wb_bits_o;
     end else if (r.delay[11] == 1'b1) begin
         v_mux_ena_i = (~r.lshift_rdy);
-        v.divident = {wb_dif_o, 8'h00};
+        v.divident = {wb_dif_o, 8'd0};
         vb_muxind[55: 49] = 81;
         vb_muxind[48: 42] = 82;
         vb_muxind[41: 35] = 83;
@@ -219,7 +219,7 @@ begin: comb_proc
         vb_bits[23: 16] = wb_bits_o;
     end else if (r.delay[12] == 1'b1) begin
         v_mux_ena_i = (~r.lshift_rdy);
-        v.divident = {wb_dif_o, 8'h00};
+        v.divident = {wb_dif_o, 8'd0};
         vb_muxind[55: 49] = 89;
         vb_muxind[48: 42] = 90;
         vb_muxind[41: 35] = 91;
@@ -231,7 +231,7 @@ begin: comb_proc
         vb_bits[15: 8] = wb_bits_o;
     end else if (r.delay[13] == 1'b1) begin
         v_mux_ena_i = (~r.lshift_rdy);
-        v.divident = {wb_dif_o, 8'h00};
+        v.divident = {wb_dif_o, 8'd0};
         vb_muxind[55: 49] = 97;
         vb_muxind[48: 42] = 98;
         vb_muxind[41: 35] = 99;
@@ -256,7 +256,7 @@ begin: comb_proc
             v.lshift = wb_muxind_o;
         end else if (r.delay[13] == 1'b1) begin
             v.lshift_rdy = 1'b1;
-            v.lshift = 7'h68;
+            v.lshift = 7'd104;
         end
     end
 

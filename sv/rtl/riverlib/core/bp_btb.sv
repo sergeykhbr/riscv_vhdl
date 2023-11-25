@@ -49,13 +49,13 @@ begin: comb_proc
     logic [CFG_BP_DEPTH-1:0] vb_bp_exec;
     logic v_dont_update;
 
-    vb_addr = 0;
-    vb_hit = 0;
-    t_addr = 0;
-    vb_pc_equal = 0;
-    vb_pc_nshift = 0;
-    vb_bp_exec = 0;
-    v_dont_update = 0;
+    vb_addr = '0;
+    vb_hit = '0;
+    t_addr = '0;
+    vb_pc_equal = '0;
+    vb_pc_nshift = '0;
+    vb_bp_exec = '0;
+    v_dont_update = 1'b0;
 
     for (int i = 0; i < CFG_BTB_SIZE; i++) begin
         v.btb[i].pc = r.btb[i].pc;
@@ -71,7 +71,7 @@ begin: comb_proc
         for (int n = (CFG_BTB_SIZE - 1); n >= 0; n--) begin
             if (t_addr == r.btb[n].pc) begin
                 vb_addr[(i * RISCV_ARCH) +: RISCV_ARCH] = r.btb[n].npc;
-                vb_hit[i] = 1'h1;
+                vb_hit[i] = 1'b1;
                 vb_bp_exec[i] = r.btb[n].exec;              // Used for: Do not override by pre-decoded jumps
             end else if (vb_hit[i] == 1'b0) begin
                 vb_addr[(i * RISCV_ARCH) +: RISCV_ARCH] = (t_addr + 4);
@@ -108,8 +108,8 @@ begin: comb_proc
     if ((~async_reset && i_nrst == 1'b0) || i_flush_pipeline) begin
         for (int i = 0; i < CFG_BTB_SIZE; i++) begin
             v.btb[i].pc = '1;
-            v.btb[i].npc = 64'h0000000000000000;
-            v.btb[i].exec = 1'h0;
+            v.btb[i].npc = '0;
+            v.btb[i].exec = 1'b0;
         end
     end
 
@@ -133,8 +133,8 @@ generate
             if (i_nrst == 1'b0) begin
                 for (int i = 0; i < CFG_BTB_SIZE; i++) begin
                     r.btb[i].pc <= '1;
-                    r.btb[i].npc <= 64'h0000000000000000;
-                    r.btb[i].exec <= 1'h0;
+                    r.btb[i].npc <= '0;
+                    r.btb[i].exec <= 1'b0;
                 end
             end else begin
                 for (int i = 0; i < CFG_BTB_SIZE; i++) begin

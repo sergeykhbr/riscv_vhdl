@@ -17,18 +17,18 @@ package dbg_port_pkg;
 
 import river_cfg_pkg::*;
 
-localparam bit [3:0] idle = 4'h0;
-localparam bit [3:0] csr_region = 4'h1;
-localparam bit [3:0] reg_bank = 4'h2;
-localparam bit [3:0] reg_stktr_cnt = 4'h3;
-localparam bit [3:0] reg_stktr_buf_adr = 4'h4;
-localparam bit [3:0] reg_stktr_buf_dat = 4'h5;
-localparam bit [3:0] exec_progbuf_start = 4'h6;
-localparam bit [3:0] exec_progbuf_next = 4'h7;
-localparam bit [3:0] exec_progbuf_waitmemop = 4'h8;
-localparam bit [3:0] abstract_mem_request = 4'h9;
-localparam bit [3:0] abstract_mem_response = 4'ha;
-localparam bit [3:0] wait_to_accept = 4'hb;
+localparam bit [3:0] idle = 4'd0;
+localparam bit [3:0] csr_region = 4'd1;
+localparam bit [3:0] reg_bank = 4'd2;
+localparam bit [3:0] reg_stktr_cnt = 4'd3;
+localparam bit [3:0] reg_stktr_buf_adr = 4'd4;
+localparam bit [3:0] reg_stktr_buf_dat = 4'd5;
+localparam bit [3:0] exec_progbuf_start = 4'd6;
+localparam bit [3:0] exec_progbuf_next = 4'd7;
+localparam bit [3:0] exec_progbuf_waitmemop = 4'd8;
+localparam bit [3:0] abstract_mem_request = 4'd9;
+localparam bit [3:0] abstract_mem_response = 4'd10;
+localparam bit [3:0] wait_to_accept = 4'd11;
 
 typedef struct {
     logic dport_write;
@@ -54,7 +54,7 @@ const DbgPort_registers DbgPort_r_reset = '{
     '0,                                 // dport_size
     idle,                               // dstate
     '0,                                 // rdata
-    '0,                                 // stack_trace_cnt
+    5'd0,                               // stack_trace_cnt
     1'b0,                               // req_accepted
     1'b0,                               // resp_error
     1'b0,                               // progbuf_ena

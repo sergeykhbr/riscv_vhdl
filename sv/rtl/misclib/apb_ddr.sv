@@ -70,7 +70,7 @@ begin: comb_proc
     apb_ddr_registers v;
     logic [31:0] vb_rdata;
 
-    vb_rdata = 0;
+    vb_rdata = '0;
 
     v = r;
 
@@ -84,14 +84,14 @@ begin: comb_proc
     v.resp_err = 1'b0;
     // Registers access:
     case (wb_req_addr[11: 2])
-    10'h000: begin                                          // 0x00: clock status
+    10'd0: begin                                            // 0x00: clock status
         vb_rdata[0] = r.pll_locked;
         vb_rdata[1] = r.init_calib_done;
     end
-    10'h001: begin                                          // 0x04: temperature
+    10'd1: begin                                            // 0x04: temperature
         vb_rdata[11: 0] = r.device_temp;
     end
-    10'h002: begin                                          // 0x08: app bits
+    10'd2: begin                                            // 0x08: app bits
         vb_rdata[0] = r.sr_active;                          // [0] 
         vb_rdata[1] = r.ref_ack;                            // [1] 
         vb_rdata[2] = r.zq_ack;                             // [2] 

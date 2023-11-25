@@ -50,12 +50,12 @@ begin: comb_proc
     logic [RISCV_ARCH-1:0] vb_end_addr;
     logic [CFG_PMP_FL_TOTAL-1:0] vb_flags;
 
-    v_r = 0;
-    v_w = 0;
-    v_x = 0;
-    vb_start_addr = 0;
-    vb_end_addr = 0;
-    vb_flags = 0;
+    v_r = 1'b0;
+    v_w = 1'b0;
+    v_x = 1'b0;
+    vb_start_addr = '0;
+    vb_end_addr = '0;
+    vb_flags = '0;
 
     for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) begin
         v.tbl[i].start_addr = r.tbl[i].start_addr;
@@ -104,9 +104,9 @@ begin: comb_proc
 
     if (~async_reset && i_nrst == 1'b0) begin
         for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) begin
-            v.tbl[i].start_addr = 64'h0000000000000000;
-            v.tbl[i].end_addr = 64'h0000000000000000;
-            v.tbl[i].flags = 5'h00;
+            v.tbl[i].start_addr = '0;
+            v.tbl[i].end_addr = '0;
+            v.tbl[i].flags = 5'd0;
         end
     end
 
@@ -127,9 +127,9 @@ generate
         always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
             if (i_nrst == 1'b0) begin
                 for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) begin
-                    r.tbl[i].start_addr <= 64'h0000000000000000;
-                    r.tbl[i].end_addr <= 64'h0000000000000000;
-                    r.tbl[i].flags <= 5'h00;
+                    r.tbl[i].start_addr <= '0;
+                    r.tbl[i].end_addr <= '0;
+                    r.tbl[i].flags <= 5'd0;
                 end
             end else begin
                 for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) begin

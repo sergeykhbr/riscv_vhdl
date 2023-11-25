@@ -18,13 +18,13 @@ package axi_slv_pkg;
 import types_amba_pkg::*;
 import types_pnp_pkg::*;
 
-localparam bit [2:0] State_Idle = 3'h0;
-localparam bit [2:0] State_w = 3'h1;
-localparam bit [2:0] State_burst_w = 3'h2;
-localparam bit [2:0] State_addr_r = 3'h3;
-localparam bit [2:0] State_data_r = 3'h4;
-localparam bit [2:0] State_out_r = 3'h5;
-localparam bit [2:0] State_b = 3'h6;
+localparam bit [2:0] State_Idle = 3'd0;
+localparam bit [2:0] State_w = 3'd1;
+localparam bit [2:0] State_burst_w = 3'd2;
+localparam bit [2:0] State_addr_r = 3'd3;
+localparam bit [2:0] State_data_r = 3'd4;
+localparam bit [2:0] State_out_r = 3'd5;
+localparam bit [2:0] State_b = 3'd6;
 
 typedef struct {
     logic [2:0] state;

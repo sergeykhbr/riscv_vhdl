@@ -18,22 +18,22 @@ package vip_sdcard_ctrl_pkg;
 
 // 
 // SD-card states (see Card Status[12:9] CURRENT_STATE on page 145)
-localparam bit [3:0] SDSTATE_IDLE = 4'h0;
-localparam bit [3:0] SDSTATE_READY = 4'h1;
-localparam bit [3:0] SDSTATE_IDENT = 4'h2;
-localparam bit [3:0] SDSTATE_STBY = 4'h3;
-localparam bit [3:0] SDSTATE_TRAN = 4'h4;
-localparam bit [3:0] SDSTATE_DATA = 4'h5;
-localparam bit [3:0] SDSTATE_RCV = 4'h6;
-localparam bit [3:0] SDSTATE_PRG = 4'h7;
-localparam bit [3:0] SDSTATE_DIS = 4'h8;
-localparam bit [3:0] SDSTATE_INA = 4'h9;
+localparam bit [3:0] SDSTATE_IDLE = 4'd0;
+localparam bit [3:0] SDSTATE_READY = 4'd1;
+localparam bit [3:0] SDSTATE_IDENT = 4'd2;
+localparam bit [3:0] SDSTATE_STBY = 4'd3;
+localparam bit [3:0] SDSTATE_TRAN = 4'd4;
+localparam bit [3:0] SDSTATE_DATA = 4'd5;
+localparam bit [3:0] SDSTATE_RCV = 4'd6;
+localparam bit [3:0] SDSTATE_PRG = 4'd7;
+localparam bit [3:0] SDSTATE_DIS = 4'd8;
+localparam bit [3:0] SDSTATE_INA = 4'd9;
 
 // Data block access state machine:
-localparam bit [2:0] DATASTATE_IDLE = 3'h0;
-localparam bit [2:0] DATASTATE_START = 3'h1;
-localparam bit [2:0] DATASTATE_CRC15 = 3'h2;
-localparam bit [2:0] DATASTATE_STOP = 3'h3;
+localparam bit [2:0] DATASTATE_IDLE = 3'd0;
+localparam bit [2:0] DATASTATE_START = 3'd1;
+localparam bit [2:0] DATASTATE_CRC15 = 3'd2;
+localparam bit [2:0] DATASTATE_STOP = 3'd3;
 
 typedef struct {
     logic [3:0] sdstate;

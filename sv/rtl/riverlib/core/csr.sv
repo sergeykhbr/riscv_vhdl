@@ -123,35 +123,35 @@ begin: comb_proc
     iH = int'(PRV_H);
     iS = int'(PRV_S);
     iU = int'(PRV_U);
-    vb_xpp = 0;
-    vb_pending = 0;
-    vb_irq_ena = 0;
-    vb_e_emux = 64'h0000000000000000;
-    vb_e_imux = 16'h0000;
-    wb_trap_cause = 0;
-    vb_xtval = 64'h0000000000000000;
-    w_mstackovr = 0;
-    w_mstackund = 0;
-    v_csr_rena = 0;
-    v_csr_wena = 0;
-    v_csr_trapreturn = 0;
-    vb_rdata = 0;
-    v_req_halt = 0;
-    v_req_resume = 0;
-    v_req_progbuf = 0;
-    v_req_ready = 0;
-    v_resp_valid = 0;
-    v_medeleg_ena = 0;
-    v_mideleg_ena = 0;
-    vb_xtvec_off_ideleg = 64'h0000000000000000;
-    vb_xtvec_off_edeleg = 64'h0000000000000000;
-    v_flushd = 0;
-    v_flushi = 0;
-    v_flushmmu = 0;
-    v_flushpipeline = 0;
-    vb_pmp_upd_ena = 0;
-    vb_pmp_napot_mask = 0;
-    v_napot_shift = 0;
+    vb_xpp = '0;
+    vb_pending = '0;
+    vb_irq_ena = '0;
+    vb_e_emux = 64'd0;
+    vb_e_imux = 16'd0;
+    wb_trap_cause = '0;
+    vb_xtval = 64'd0;
+    w_mstackovr = 1'b0;
+    w_mstackund = 1'b0;
+    v_csr_rena = 1'b0;
+    v_csr_wena = 1'b0;
+    v_csr_trapreturn = 1'b0;
+    vb_rdata = '0;
+    v_req_halt = 1'b0;
+    v_req_resume = 1'b0;
+    v_req_progbuf = 1'b0;
+    v_req_ready = 1'b0;
+    v_resp_valid = 1'b0;
+    v_medeleg_ena = 1'b0;
+    v_mideleg_ena = 1'b0;
+    vb_xtvec_off_ideleg = 64'd0;
+    vb_xtvec_off_edeleg = 64'd0;
+    v_flushd = 1'b0;
+    v_flushi = 1'b0;
+    v_flushmmu = 1'b0;
+    v_flushpipeline = 1'b0;
+    vb_pmp_upd_ena = '0;
+    vb_pmp_napot_mask = '0;
+    v_napot_shift = 1'b0;
     t_pmpdataidx = 0;
     t_pmpcfgidx = 0;
 
@@ -338,7 +338,7 @@ begin: comb_proc
     State_Resume: begin
         v.state = State_Response;
         if (i_dbg_progbuf_ena == 1'b1) begin
-            v.cmd_data = '0;
+            v.cmd_data = 64'd0;
         end else begin
             v.cmd_data = {'0, r.dpc};
         end
@@ -348,9 +348,9 @@ begin: comb_proc
         vb_e_imux[int'(r.cmd_addr[3: 0])] = 1'b1;
         wb_trap_cause = r.cmd_addr[4: 0];
         v.cmd_data = vb_xtvec_off_ideleg;
-        if (r.xmode[int'(r.mode)].xtvec_mode == 2'h1) begin
+        if (r.xmode[int'(r.mode)].xtvec_mode == 2'd1) begin
             // vectorized
-            v.cmd_data = (vb_xtvec_off_ideleg + {wb_trap_cause, 2'h0});
+            v.cmd_data = (vb_xtvec_off_ideleg + {wb_trap_cause, 2'd0});
         end
     end
     State_TrapReturn: begin
@@ -378,11 +378,11 @@ begin: comb_proc
     end
     State_Wfi: begin
         v.state = State_Response;
-        v.cmd_data = '0;                                    // no error, valid for all mdoes
+        v.cmd_data = 64'd0;                                 // no error, valid for all mdoes
     end
     State_Fence: begin
         if (r.fencestate == Fence_End) begin
-            v.cmd_data = '0;
+            v.cmd_data = 64'd0;
             v.state = State_Response;
             v.fencestate = Fence_None;
         end
@@ -458,7 +458,7 @@ begin: comb_proc
         vb_rdata[4] = r.ex_fpu_invalidop;
     end else if (r.cmd_addr == 12'h002) begin               // fflags: [URW] Floating-Point Dynamic Rounding Mode
         if (CFG_HW_FPU_ENABLE) begin
-            vb_rdata[2: 0] = 3'h4;                          // Round mode: round to Nearest (RMM)
+            vb_rdata[2: 0] = 3'd4;                          // Round mode: round to Nearest (RMM)
         end
     end else if (r.cmd_addr == 12'h003) begin               // fcsr: [URW] Floating-Point Control and Status Register (frm + fflags)
         vb_rdata[0] = r.ex_fpu_inexact;
@@ -467,7 +467,7 @@ begin: comb_proc
         vb_rdata[3] = r.ex_fpu_divbyzero;
         vb_rdata[4] = r.ex_fpu_invalidop;
         if (CFG_HW_FPU_ENABLE) begin
-            vb_rdata[7: 5] = 3'h4;                          // Round mode: round to Nearest (RMM)
+            vb_rdata[7: 5] = 3'd4;                          // Round mode: round to Nearest (RMM)
         end
     end else if (r.cmd_addr == 12'hc00) begin               // cycle: [URO] User Cycle counter for RDCYCLE pseudo-instruction
         if ((r.mode == PRV_U)
@@ -532,7 +532,7 @@ begin: comb_proc
         if (v_csr_wena == 1'b1) begin
             v.xmode[iS].xie = r.cmd_data[1];
             v.xmode[iS].xpie = r.cmd_data[5];
-            v.xmode[iS].xpp = {1'h0, r.cmd_data[8]};
+            v.xmode[iS].xpp = {1'b0, r.cmd_data[8]};
         end
     end else if (r.cmd_addr == 12'h104) begin               // sie: [SRW] Supervisor interrupt-enable register
         vb_rdata[(IRQ_SSIP - 1)] = r.xmode[iS].xsie;
@@ -548,7 +548,7 @@ begin: comb_proc
         vb_rdata = r.xmode[iS].xtvec_off;
         vb_rdata[1: 0] = r.xmode[iS].xtvec_mode;
         if (v_csr_wena == 1'b1) begin
-            v.xmode[iS].xtvec_off = {r.cmd_data[(RISCV_ARCH - 1): 2], 2'h0};
+            v.xmode[iS].xtvec_off = {r.cmd_data[(RISCV_ARCH - 1): 2], 2'd0};
             v.xmode[iS].xtvec_mode = r.cmd_data[1: 0];
         end
     end else if (r.cmd_addr == 12'h106) begin               // scounteren: [SRW] Supervisor counter enable
@@ -650,7 +650,7 @@ begin: comb_proc
             v.xmode[iM].xie = r.cmd_data[3];
             v.xmode[iS].xpie = r.cmd_data[5];
             v.xmode[iM].xpie = r.cmd_data[7];
-            v.xmode[iS].xpp = {1'h0, r.cmd_data[8]};
+            v.xmode[iS].xpp = {1'b0, r.cmd_data[8]};
             v.xmode[iM].xpp = r.cmd_data[12: 11];
             v.mprv = r.cmd_data[17];
             v.sum = r.cmd_data[18];
@@ -663,7 +663,7 @@ begin: comb_proc
         //      2 = 64
         //      3 = 128
 
-        vb_rdata[(RISCV_ARCH - 1): (RISCV_ARCH - 2)] = 2'h2;
+        vb_rdata[(RISCV_ARCH - 1): (RISCV_ARCH - 2)] = 2'd2;
         // BitCharacterDescription
         //      0  A Atomic extension
         //      1  B Tentatively reserved for Bit operations extension
@@ -732,7 +732,7 @@ begin: comb_proc
         vb_rdata = r.xmode[iM].xtvec_off;
         vb_rdata[1: 0] = r.xmode[iM].xtvec_mode;
         if (v_csr_wena == 1'b1) begin
-            v.xmode[iM].xtvec_off = {r.cmd_data[(RISCV_ARCH - 1): 2], 2'h0};
+            v.xmode[iM].xtvec_off = {r.cmd_data[(RISCV_ARCH - 1): 2], 2'd0};
             v.xmode[iM].xtvec_mode = r.cmd_data[1: 0];
         end
     end else if (r.cmd_addr == 12'h306) begin               // mcounteren: [MRW] Machine counter enable
@@ -788,7 +788,7 @@ begin: comb_proc
         // pmpaddr0..63: [MRW] Physical memory protection address register
         for (int i = 0; i < (RISCV_ARCH - 2); i++) begin
             if ((r.cmd_data[i] == 1'b1) && (v_napot_shift == 1'b0)) begin
-                vb_pmp_napot_mask = {vb_pmp_napot_mask, 1'h1};
+                vb_pmp_napot_mask = {vb_pmp_napot_mask, 1'b1};
             end else begin
                 v_napot_shift = 1'b1;
             end
@@ -797,7 +797,7 @@ begin: comb_proc
             vb_rdata[(RISCV_ARCH - 3): 0] = r.pmp[t_pmpdataidx].addr;
             if ((v_csr_wena == 1'b1)
                     && (r.pmp[t_pmpdataidx].cfg[7] == 1'b0)) begin
-                v.pmp[t_pmpdataidx].addr = {r.cmd_data[(RISCV_ARCH - 3): 0], 2'h0};
+                v.pmp[t_pmpdataidx].addr = {r.cmd_data[(RISCV_ARCH - 3): 0], 2'd0};
                 v.pmp[t_pmpdataidx].mask = vb_pmp_napot_mask;
             end
         end
@@ -826,14 +826,14 @@ begin: comb_proc
     end else if (r.cmd_addr == 12'h7a3) begin               // tdata3: [MRW] Third Debug/Trace trigger data register
     end else if (r.cmd_addr == 12'h7a8) begin               // mcontext: [MRW] Machine-mode context register
     end else if (r.cmd_addr == 12'h7b0) begin               // dcsr: [DRW] Debug control and status register
-        vb_rdata[31: 28] = 4'h4;                            // xdebugver: 4=External debug supported
+        vb_rdata[31: 28] = 4'd4;                            // xdebugver: 4=External debug supported
         vb_rdata[15] = r.dcsr_ebreakm;
         vb_rdata[11] = r.dcsr_stepie;                       // interrupt dis/ena during step
         vb_rdata[10] = r.dcsr_stopcount;                    // don't increment any counter
         vb_rdata[9] = r.dcsr_stoptimer;                     // don't increment timer
         vb_rdata[8: 6] = r.halt_cause;
         vb_rdata[2] = r.dcsr_step;
-        vb_rdata[1: 0] = 2'h3;                              // prv: privilege in debug mode: 3=machine
+        vb_rdata[1: 0] = 2'd3;                              // prv: privilege in debug mode: 3=machine
         if (v_csr_wena == 1'b1) begin
             v.dcsr_ebreakm = r.cmd_data[15];
             v.dcsr_stepie = r.cmd_data[11];
@@ -894,7 +894,7 @@ begin: comb_proc
     if (v_csr_trapreturn == 1'b1) begin
         if (r.mode == r.cmd_addr) begin
             v.mode = vb_xpp;
-            v.xmode[int'(r.mode)].xpie = 1'h1;              // xPIE is set to 1 always, page 21
+            v.xmode[int'(r.mode)].xpie = 1'b1;              // xPIE is set to 1 always, page 21
             v.xmode[int'(r.mode)].xpp = PRV_U;              // Set to least-privildged supported mode (U), page 21
         end else begin
             v.cmd_exception = 1'b1;                         // xret not matched to current mode
@@ -924,7 +924,7 @@ begin: comb_proc
         // Trap delegated to Supervisor mode
         v.xmode[iS].xpp = r.mode;
         v.xmode[iS].xpie = r.xmode[int'(r.mode)].xie;
-        v.xmode[iS].xie = 1'h0;
+        v.xmode[iS].xie = 1'b0;
         v.xmode[iS].xepc = i_e_pc;                          // current latched instruction not executed overwritten by exception/interrupt
         v.xmode[iS].xtval = vb_xtval;                       // trap value/bad address
         v.xmode[iS].xcause_code = wb_trap_cause;
@@ -934,7 +934,7 @@ begin: comb_proc
         // By default all exceptions and interrupts handled in M-mode (not delegations)
         v.xmode[iM].xpp = r.mode;
         v.xmode[iM].xpie = r.xmode[int'(r.mode)].xie;
-        v.xmode[iM].xie = 1'h0;
+        v.xmode[iM].xie = 1'b0;
         v.xmode[iM].xepc = i_e_pc;                          // current latched instruction not executed overwritten by exception/interrupt
         v.xmode[iM].xtval = vb_xtval;                       // trap value/bad address
         v.xmode[iM].xcause_code = wb_trap_cause;
@@ -970,12 +970,12 @@ begin: comb_proc
         v.pmp_upd_cnt = (r.pmp_upd_cnt + 1);
         v.pmp_we = r.pmp_upd_ena[int'(r.pmp_upd_cnt)];
         v.pmp_region = r.pmp_upd_cnt;
-        if (r.pmp[int'(r.pmp_upd_cnt)].cfg[4: 3] == 2'h0) begin
+        if (r.pmp[int'(r.pmp_upd_cnt)].cfg[4: 3] == 2'd0) begin
             // OFF: Null region (disabled)
-            v.pmp_start_addr = '0;
+            v.pmp_start_addr = 64'd0;
             v.pmp_end_addr = r.pmp[int'(r.pmp_upd_cnt)].addr;
-            v.pmp_flags = '0;
-        end else if (r.pmp[int'(r.pmp_upd_cnt)].cfg[4: 3] == 2'h1) begin
+            v.pmp_flags = 5'd0;
+        end else if (r.pmp[int'(r.pmp_upd_cnt)].cfg[4: 3] == 2'd1) begin
             // TOR: Top of range
             if (r.pmp_end_addr[0] == 1'b1) begin
                 v.pmp_start_addr = (r.pmp_end_addr + 1);
@@ -983,23 +983,23 @@ begin: comb_proc
                 v.pmp_start_addr = r.pmp_end_addr;
             end
             v.pmp_end_addr = (r.pmp[int'(r.pmp_upd_cnt)].addr - 1);
-            v.pmp_flags = {1'h1, r.pmp[int'(r.pmp_upd_cnt)].cfg[7], r.pmp[int'(r.pmp_upd_cnt)].cfg[2: 0]};
-        end else if (r.pmp[int'(r.pmp_upd_cnt)].cfg[4: 3] == 2'h2) begin
+            v.pmp_flags = {1'b1, r.pmp[int'(r.pmp_upd_cnt)].cfg[7], r.pmp[int'(r.pmp_upd_cnt)].cfg[2: 0]};
+        end else if (r.pmp[int'(r.pmp_upd_cnt)].cfg[4: 3] == 2'd2) begin
             // NA4: Naturally aligned four-bytes region
             v.pmp_start_addr = r.pmp[int'(r.pmp_upd_cnt)].addr;
             v.pmp_end_addr = (r.pmp[int'(r.pmp_upd_cnt)].addr | 2'h3);
-            v.pmp_flags = {1'h1, r.pmp[int'(r.pmp_upd_cnt)].cfg[7], r.pmp[int'(r.pmp_upd_cnt)].cfg[2: 0]};
+            v.pmp_flags = {1'b1, r.pmp[int'(r.pmp_upd_cnt)].cfg[7], r.pmp[int'(r.pmp_upd_cnt)].cfg[2: 0]};
         end else begin
             // NAPOT: Naturally aligned power-of-two region, >=8 bytes
             v.pmp_start_addr = (r.pmp[int'(r.pmp_upd_cnt)].addr & (~r.pmp[int'(r.pmp_upd_cnt)].mask));
             v.pmp_end_addr = (r.pmp[int'(r.pmp_upd_cnt)].addr | r.pmp[int'(r.pmp_upd_cnt)].mask);
-            v.pmp_flags = {1'h1, r.pmp[int'(r.pmp_upd_cnt)].cfg[7], r.pmp[int'(r.pmp_upd_cnt)].cfg[2: 0]};
+            v.pmp_flags = {1'b1, r.pmp[int'(r.pmp_upd_cnt)].cfg[7], r.pmp[int'(r.pmp_upd_cnt)].cfg[2: 0]};
         end
     end else begin
-        v.pmp_upd_cnt = '0;
-        v.pmp_start_addr = '0;
-        v.pmp_end_addr = '0;
-        v.pmp_flags = '0;
+        v.pmp_upd_cnt = 3'd0;
+        v.pmp_start_addr = 64'd0;
+        v.pmp_end_addr = 64'd0;
+        v.pmp_flags = 5'd0;
         v.pmp_we = 1'b0;
     end
     v.pmp_upd_ena = vb_pmp_upd_ena;
@@ -1008,12 +1008,12 @@ begin: comb_proc
     w_mstackovr = 1'b0;
     if (((|r.mstackovr) == 1'b1) && (i_sp < r.mstackovr)) begin
         w_mstackovr = 1'b1;
-        v.mstackovr = '0;
+        v.mstackovr = 64'd0;
     end
     w_mstackund = 1'b0;
     if (((|r.mstackund) == 1'b1) && (i_sp > r.mstackund)) begin
         w_mstackund = 1'b1;
-        v.mstackund = '0;
+        v.mstackund = 64'd0;
     end
 
     // if (i_fpu_valid.read()) {
@@ -1037,79 +1037,79 @@ begin: comb_proc
 
     if (~async_reset && i_nrst == 1'b0) begin
         for (int i = 0; i < 4; i++) begin
-            v.xmode[i].xepc = 64'h0000000000000000;
-            v.xmode[i].xpp = 2'h0;
-            v.xmode[i].xpie = 1'h0;
-            v.xmode[i].xie = 1'h0;
-            v.xmode[i].xsie = 1'h0;
-            v.xmode[i].xtie = 1'h0;
-            v.xmode[i].xeie = 1'h0;
-            v.xmode[i].xtvec_off = 64'h0000000000000000;
-            v.xmode[i].xtvec_mode = 2'h0;
-            v.xmode[i].xtval = 64'h0000000000000000;
-            v.xmode[i].xcause_irq = 1'h0;
-            v.xmode[i].xcause_code = 5'h00;
-            v.xmode[i].xscratch = 64'h0000000000000000;
-            v.xmode[i].xcounteren = 32'h00000000;
+            v.xmode[i].xepc = 64'd0;
+            v.xmode[i].xpp = 2'd0;
+            v.xmode[i].xpie = 1'b0;
+            v.xmode[i].xie = 1'b0;
+            v.xmode[i].xsie = 1'b0;
+            v.xmode[i].xtie = 1'b0;
+            v.xmode[i].xeie = 1'b0;
+            v.xmode[i].xtvec_off = 64'd0;
+            v.xmode[i].xtvec_mode = 2'd0;
+            v.xmode[i].xtval = 64'd0;
+            v.xmode[i].xcause_irq = 1'b0;
+            v.xmode[i].xcause_code = 5'd0;
+            v.xmode[i].xscratch = 64'd0;
+            v.xmode[i].xcounteren = 32'd0;
         end
         for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) begin
-            v.pmp[i].cfg = 8'h00;
-            v.pmp[i].addr = 64'h0000000000000000;
-            v.pmp[i].mask = 64'h0000000000000000;
+            v.pmp[i].cfg = 8'd0;
+            v.pmp[i].addr = 64'd0;
+            v.pmp[i].mask = 64'd0;
         end
         v.state = State_Idle;
         v.fencestate = Fence_None;
-        v.irq_pending = 16'h0000;
-        v.cmd_type = 10'h000;
-        v.cmd_addr = 12'h000;
-        v.cmd_data = 64'h0000000000000000;
-        v.cmd_exception = 1'h0;
-        v.progbuf_end = 1'h0;
-        v.progbuf_err = 1'h0;
-        v.mip_ssip = 1'h0;
-        v.mip_stip = 1'h0;
-        v.mip_seip = 1'h0;
-        v.medeleg = 64'h0000000000000000;
-        v.mideleg = 16'h0000;
-        v.mcountinhibit = 32'h00000000;
-        v.mstackovr = 64'h0000000000000000;
-        v.mstackund = 64'h0000000000000000;
-        v.mmu_ena = 1'h0;
-        v.satp_ppn = 44'h00000000000;
-        v.satp_sv39 = 1'h0;
-        v.satp_sv48 = 1'h0;
+        v.irq_pending = '0;
+        v.cmd_type = '0;
+        v.cmd_addr = '0;
+        v.cmd_data = '0;
+        v.cmd_exception = 1'b0;
+        v.progbuf_end = 1'b0;
+        v.progbuf_err = 1'b0;
+        v.mip_ssip = 1'b0;
+        v.mip_stip = 1'b0;
+        v.mip_seip = 1'b0;
+        v.medeleg = '0;
+        v.mideleg = '0;
+        v.mcountinhibit = 32'd0;
+        v.mstackovr = '0;
+        v.mstackund = '0;
+        v.mmu_ena = 1'b0;
+        v.satp_ppn = 44'd0;
+        v.satp_sv39 = 1'b0;
+        v.satp_sv48 = 1'b0;
         v.mode = PRV_M;
-        v.mprv = 1'h0;
-        v.mxr = 1'h0;
-        v.sum = 1'h0;
-        v.tvm = 1'h0;
-        v.ex_fpu_invalidop = 1'h0;
-        v.ex_fpu_divbyzero = 1'h0;
-        v.ex_fpu_overflow = 1'h0;
-        v.ex_fpu_underflow = 1'h0;
-        v.ex_fpu_inexact = 1'h0;
-        v.trap_addr = 64'h0000000000000000;
-        v.mcycle_cnt = 64'h0000000000000000;
-        v.minstret_cnt = 64'h0000000000000000;
-        v.dscratch0 = 64'h0000000000000000;
-        v.dscratch1 = 64'h0000000000000000;
+        v.mprv = 1'b0;
+        v.mxr = 1'b0;
+        v.sum = 1'b0;
+        v.tvm = 1'b0;
+        v.ex_fpu_invalidop = 1'b0;
+        v.ex_fpu_divbyzero = 1'b0;
+        v.ex_fpu_overflow = 1'b0;
+        v.ex_fpu_underflow = 1'b0;
+        v.ex_fpu_inexact = 1'b0;
+        v.trap_addr = '0;
+        v.mcycle_cnt = 64'd0;
+        v.minstret_cnt = 64'd0;
+        v.dscratch0 = '0;
+        v.dscratch1 = '0;
         v.dpc = CFG_RESET_VECTOR;
-        v.halt_cause = 3'h0;
-        v.dcsr_ebreakm = 1'h0;
-        v.dcsr_stopcount = 1'h0;
-        v.dcsr_stoptimer = 1'h0;
-        v.dcsr_step = 1'h0;
-        v.dcsr_stepie = 1'h0;
-        v.stepping_mode_cnt = 64'h0000000000000000;
-        v.ins_per_step = 64'h0000000000000001;
-        v.pmp_upd_ena = 8'h00;
-        v.pmp_upd_cnt = 3'h0;
-        v.pmp_ena = 1'h0;
-        v.pmp_we = 1'h0;
-        v.pmp_region = 3'h0;
-        v.pmp_start_addr = 64'h0000000000000000;
-        v.pmp_end_addr = 64'h0000000000000000;
-        v.pmp_flags = 5'h00;
+        v.halt_cause = 3'd0;
+        v.dcsr_ebreakm = 1'b0;
+        v.dcsr_stopcount = 1'b0;
+        v.dcsr_stoptimer = 1'b0;
+        v.dcsr_step = 1'b0;
+        v.dcsr_stepie = 1'b0;
+        v.stepping_mode_cnt = 64'd0;
+        v.ins_per_step = 64'd1;
+        v.pmp_upd_ena = '0;
+        v.pmp_upd_cnt = '0;
+        v.pmp_ena = 1'b0;
+        v.pmp_we = 1'b0;
+        v.pmp_region = '0;
+        v.pmp_start_addr = '0;
+        v.pmp_end_addr = '0;
+        v.pmp_flags = '0;
     end
 
     o_req_ready = v_req_ready;
@@ -1225,79 +1225,79 @@ generate
         always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
             if (i_nrst == 1'b0) begin
                 for (int i = 0; i < 4; i++) begin
-                    r.xmode[i].xepc <= 64'h0000000000000000;
-                    r.xmode[i].xpp <= 2'h0;
-                    r.xmode[i].xpie <= 1'h0;
-                    r.xmode[i].xie <= 1'h0;
-                    r.xmode[i].xsie <= 1'h0;
-                    r.xmode[i].xtie <= 1'h0;
-                    r.xmode[i].xeie <= 1'h0;
-                    r.xmode[i].xtvec_off <= 64'h0000000000000000;
-                    r.xmode[i].xtvec_mode <= 2'h0;
-                    r.xmode[i].xtval <= 64'h0000000000000000;
-                    r.xmode[i].xcause_irq <= 1'h0;
-                    r.xmode[i].xcause_code <= 5'h00;
-                    r.xmode[i].xscratch <= 64'h0000000000000000;
-                    r.xmode[i].xcounteren <= 32'h00000000;
+                    r.xmode[i].xepc <= 64'd0;
+                    r.xmode[i].xpp <= 2'd0;
+                    r.xmode[i].xpie <= 1'b0;
+                    r.xmode[i].xie <= 1'b0;
+                    r.xmode[i].xsie <= 1'b0;
+                    r.xmode[i].xtie <= 1'b0;
+                    r.xmode[i].xeie <= 1'b0;
+                    r.xmode[i].xtvec_off <= 64'd0;
+                    r.xmode[i].xtvec_mode <= 2'd0;
+                    r.xmode[i].xtval <= 64'd0;
+                    r.xmode[i].xcause_irq <= 1'b0;
+                    r.xmode[i].xcause_code <= 5'd0;
+                    r.xmode[i].xscratch <= 64'd0;
+                    r.xmode[i].xcounteren <= 32'd0;
                 end
                 for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) begin
-                    r.pmp[i].cfg <= 8'h00;
-                    r.pmp[i].addr <= 64'h0000000000000000;
-                    r.pmp[i].mask <= 64'h0000000000000000;
+                    r.pmp[i].cfg <= 8'd0;
+                    r.pmp[i].addr <= 64'd0;
+                    r.pmp[i].mask <= 64'd0;
                 end
                 r.state <= State_Idle;
                 r.fencestate <= Fence_None;
-                r.irq_pending <= 16'h0000;
-                r.cmd_type <= 10'h000;
-                r.cmd_addr <= 12'h000;
-                r.cmd_data <= 64'h0000000000000000;
-                r.cmd_exception <= 1'h0;
-                r.progbuf_end <= 1'h0;
-                r.progbuf_err <= 1'h0;
-                r.mip_ssip <= 1'h0;
-                r.mip_stip <= 1'h0;
-                r.mip_seip <= 1'h0;
-                r.medeleg <= 64'h0000000000000000;
-                r.mideleg <= 16'h0000;
-                r.mcountinhibit <= 32'h00000000;
-                r.mstackovr <= 64'h0000000000000000;
-                r.mstackund <= 64'h0000000000000000;
-                r.mmu_ena <= 1'h0;
-                r.satp_ppn <= 44'h00000000000;
-                r.satp_sv39 <= 1'h0;
-                r.satp_sv48 <= 1'h0;
+                r.irq_pending <= '0;
+                r.cmd_type <= '0;
+                r.cmd_addr <= '0;
+                r.cmd_data <= '0;
+                r.cmd_exception <= 1'b0;
+                r.progbuf_end <= 1'b0;
+                r.progbuf_err <= 1'b0;
+                r.mip_ssip <= 1'b0;
+                r.mip_stip <= 1'b0;
+                r.mip_seip <= 1'b0;
+                r.medeleg <= '0;
+                r.mideleg <= '0;
+                r.mcountinhibit <= 32'd0;
+                r.mstackovr <= '0;
+                r.mstackund <= '0;
+                r.mmu_ena <= 1'b0;
+                r.satp_ppn <= 44'd0;
+                r.satp_sv39 <= 1'b0;
+                r.satp_sv48 <= 1'b0;
                 r.mode <= PRV_M;
-                r.mprv <= 1'h0;
-                r.mxr <= 1'h0;
-                r.sum <= 1'h0;
-                r.tvm <= 1'h0;
-                r.ex_fpu_invalidop <= 1'h0;
-                r.ex_fpu_divbyzero <= 1'h0;
-                r.ex_fpu_overflow <= 1'h0;
-                r.ex_fpu_underflow <= 1'h0;
-                r.ex_fpu_inexact <= 1'h0;
-                r.trap_addr <= 64'h0000000000000000;
-                r.mcycle_cnt <= 64'h0000000000000000;
-                r.minstret_cnt <= 64'h0000000000000000;
-                r.dscratch0 <= 64'h0000000000000000;
-                r.dscratch1 <= 64'h0000000000000000;
+                r.mprv <= 1'b0;
+                r.mxr <= 1'b0;
+                r.sum <= 1'b0;
+                r.tvm <= 1'b0;
+                r.ex_fpu_invalidop <= 1'b0;
+                r.ex_fpu_divbyzero <= 1'b0;
+                r.ex_fpu_overflow <= 1'b0;
+                r.ex_fpu_underflow <= 1'b0;
+                r.ex_fpu_inexact <= 1'b0;
+                r.trap_addr <= '0;
+                r.mcycle_cnt <= 64'd0;
+                r.minstret_cnt <= 64'd0;
+                r.dscratch0 <= '0;
+                r.dscratch1 <= '0;
                 r.dpc <= CFG_RESET_VECTOR;
-                r.halt_cause <= 3'h0;
-                r.dcsr_ebreakm <= 1'h0;
-                r.dcsr_stopcount <= 1'h0;
-                r.dcsr_stoptimer <= 1'h0;
-                r.dcsr_step <= 1'h0;
-                r.dcsr_stepie <= 1'h0;
-                r.stepping_mode_cnt <= 64'h0000000000000000;
-                r.ins_per_step <= 64'h0000000000000001;
-                r.pmp_upd_ena <= 8'h00;
-                r.pmp_upd_cnt <= 3'h0;
-                r.pmp_ena <= 1'h0;
-                r.pmp_we <= 1'h0;
-                r.pmp_region <= 3'h0;
-                r.pmp_start_addr <= 64'h0000000000000000;
-                r.pmp_end_addr <= 64'h0000000000000000;
-                r.pmp_flags <= 5'h00;
+                r.halt_cause <= 3'd0;
+                r.dcsr_ebreakm <= 1'b0;
+                r.dcsr_stopcount <= 1'b0;
+                r.dcsr_stoptimer <= 1'b0;
+                r.dcsr_step <= 1'b0;
+                r.dcsr_stepie <= 1'b0;
+                r.stepping_mode_cnt <= 64'd0;
+                r.ins_per_step <= 64'd1;
+                r.pmp_upd_ena <= '0;
+                r.pmp_upd_cnt <= '0;
+                r.pmp_ena <= 1'b0;
+                r.pmp_we <= 1'b0;
+                r.pmp_region <= '0;
+                r.pmp_start_addr <= '0;
+                r.pmp_end_addr <= '0;
+                r.pmp_flags <= '0;
             end else begin
                 for (int i = 0; i < 4; i++) begin
                     r.xmode[i].xepc <= rin.xmode[i].xepc;

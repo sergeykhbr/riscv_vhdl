@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module vip_clk #(
-    parameter realtime period = 1.0
+    parameter realtime period = 1
 )
 (
     output logic o_clk

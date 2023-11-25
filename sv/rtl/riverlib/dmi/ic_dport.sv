@@ -66,27 +66,27 @@ begin: comb_proc
     dport_out_type vb_dporto[0: CFG_CPU_MAX-1];
     logic v_req_accepted;
 
-    vb_hartsel = 0;
-    vb_cpu_mask = 0;
-    vb_req_ready_mask = 0;
-    vb_req_valid_mask = 0;
-    vb_haltreq = 0;
-    vb_resumereq = 0;
-    vb_resethaltreq = 0;
-    vb_hartreset = 0;
-    vb_req_valid = 0;
-    vb_req_ready = 0;
+    vb_hartsel = '0;
+    vb_cpu_mask = '0;
+    vb_req_ready_mask = '0;
+    vb_req_valid_mask = '0;
+    vb_haltreq = '0;
+    vb_resumereq = '0;
+    vb_resethaltreq = '0;
+    vb_hartreset = '0;
+    vb_req_valid = '0;
+    vb_req_ready = '0;
     for (int i = 0; i < CFG_CPU_MAX; i++) begin
         vb_dporti[i] = dport_in_none;
     end
     for (int i = 0; i < CFG_CPU_MAX; i++) begin
         vb_dporto[i] = dport_out_none;
     end
-    v_req_accepted = 0;
+    v_req_accepted = 1'b0;
 
     v = r;
 
-    vb_cpu_mask[int'(i_hartsel)] = 1'h1;
+    vb_cpu_mask[int'(i_hartsel)] = 1'b1;
     if (i_haltreq == 1'b1) begin
         vb_haltreq = ALL_CPU_MASK;
     end

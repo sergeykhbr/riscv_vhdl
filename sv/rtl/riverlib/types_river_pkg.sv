@@ -35,16 +35,16 @@ typedef struct {
 } dport_in_type;
 
 const dport_in_type dport_in_none = '{
-    1'h0,  // haltreq
-    1'h0,  // resumereq
-    1'h0,  // resethaltreq
-    1'h0,  // hartreset
-    1'h0,  // req_valid
+    1'b0,  // haltreq
+    1'b0,  // resumereq
+    1'b0,  // resethaltreq
+    1'b0,  // hartreset
+    1'b0,  // req_valid
     '0,  // dtype
     '0,  // addr
     '0,  // wdata
     '0,  // size
-    1'h0  // resp_ready
+    1'b0  // resp_ready
 };
 
 typedef struct {
@@ -55,9 +55,9 @@ typedef struct {
 } dport_out_type;
 
 const dport_out_type dport_out_none = '{
-    1'h1,  // req_ready
-    1'h1,  // resp_valid
-    1'h0,  // resp_error
+    1'b1,  // req_ready
+    1'b1,  // resp_valid
+    1'b0,  // resp_error
     '0  // rdata
 };
 
@@ -102,35 +102,35 @@ typedef struct {
 } axi4_l1_out_type;
 
 const axi4_l1_out_type axi4_l1_out_none = '{
-    1'h0,  // aw_valid
+    1'b0,  // aw_valid
     META_NONE,  // aw_bits
-    1'h0,  // aw_id
-    1'h0,  // aw_user
-    1'h0,  // w_valid
+    1'b0,  // aw_id
+    1'b0,  // aw_user
+    1'b0,  // w_valid
     '0,  // w_data
-    1'h0,  // w_last
+    1'b0,  // w_last
     '0,  // w_strb
-    1'h0,  // w_user
-    1'h0,  // b_ready
-    1'h0,  // ar_valid
+    1'b0,  // w_user
+    1'b0,  // b_ready
+    1'b0,  // ar_valid
     META_NONE,  // ar_bits
-    1'h0,  // ar_id
-    1'h0,  // ar_user
-    1'h0,  // r_ready
+    1'b0,  // ar_id
+    1'b0,  // ar_user
+    1'b0,  // r_ready
     '0,  // ar_domain
     '0,  // ar_snoop
     '0,  // ar_bar
     '0,  // aw_domain
     '0,  // aw_snoop
     '0,  // aw_bar
-    1'h1,  // ac_ready
-    1'h1,  // cr_valid
+    1'b1,  // ac_ready
+    1'b1,  // cr_valid
     '0,  // cr_resp
-    1'h0,  // cd_valid
+    1'b0,  // cd_valid
     '0,  // cd_data
-    1'h0,  // cd_last
-    1'h0,  // rack
-    1'h0  // wack
+    1'b0,  // cd_last
+    1'b0,  // rack
+    1'b0  // wack
 };
 
 typedef struct {
@@ -156,25 +156,25 @@ typedef struct {
 } axi4_l1_in_type;
 
 const axi4_l1_in_type axi4_l1_in_none = '{
-    1'h0,  // aw_ready
-    1'h0,  // w_ready
-    1'h0,  // b_valid
+    1'b0,  // aw_ready
+    1'b0,  // w_ready
+    1'b0,  // b_valid
     '0,  // b_resp
-    1'h0,  // b_id
-    1'h0,  // b_user
-    1'h0,  // ar_ready
-    1'h0,  // r_valid
+    1'b0,  // b_id
+    1'b0,  // b_user
+    1'b0,  // ar_ready
+    1'b0,  // r_valid
     '0,  // r_resp
     '0,  // r_data
-    1'h0,  // r_last
-    1'h0,  // r_id
-    1'h0,  // r_user
-    1'h0,  // ac_valid
+    1'b0,  // r_last
+    1'b0,  // r_id
+    1'b0,  // r_user
+    1'b0,  // ac_valid
     '0,  // ac_addr
     '0,  // ac_snoop
     '0,  // ac_prot
-    1'h1,  // cr_ready
-    1'h1  // cd_ready
+    1'b1,  // cr_ready
+    1'b1  // cd_ready
 };
 
 typedef axi4_l1_in_type axi4_l1_in_vector[0:CFG_SLOT_L1_TOTAL - 1];
@@ -199,21 +199,21 @@ typedef struct {
 } axi4_l2_out_type;
 
 const axi4_l2_out_type axi4_l2_out_none = '{
-    1'h0,  // aw_valid
+    1'b0,  // aw_valid
     META_NONE,  // aw_bits
-    1'h0,  // aw_id
-    1'h0,  // aw_user
-    1'h0,  // w_valid
+    1'b0,  // aw_id
+    1'b0,  // aw_user
+    1'b0,  // w_valid
     '0,  // w_data
-    1'h0,  // w_last
+    1'b0,  // w_last
     '0,  // w_strb
-    1'h0,  // w_user
-    1'h0,  // b_ready
-    1'h0,  // ar_valid
+    1'b0,  // w_user
+    1'b0,  // b_ready
+    1'b0,  // ar_valid
     META_NONE,  // ar_bits
-    1'h0,  // ar_id
-    1'h0,  // ar_user
-    1'h0  // r_ready
+    1'b0,  // ar_id
+    1'b0,  // ar_user
+    1'b0  // r_ready
 };
 
 typedef struct {
@@ -233,19 +233,19 @@ typedef struct {
 } axi4_l2_in_type;
 
 const axi4_l2_in_type axi4_l2_in_none = '{
-    1'h0,  // aw_ready
-    1'h0,  // w_ready
-    1'h0,  // b_valid
+    1'b0,  // aw_ready
+    1'b0,  // w_ready
+    1'b0,  // b_valid
     '0,  // b_resp
-    1'h0,  // b_id
-    1'h0,  // b_user
-    1'h0,  // ar_ready
-    1'h0,  // r_valid
+    1'b0,  // b_id
+    1'b0,  // b_user
+    1'b0,  // ar_ready
+    1'b0,  // r_valid
     '0,  // r_resp
     '0,  // r_data
-    1'h0,  // r_last
-    1'h0,  // r_id
-    1'h0  // r_user
+    1'b0,  // r_last
+    1'b0,  // r_id
+    1'b0  // r_user
 };
 
 

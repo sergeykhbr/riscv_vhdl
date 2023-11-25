@@ -88,19 +88,19 @@ begin: comb_proc
     logic v_data_req_ready;
     logic v_crc16_next;
 
-    v_dat0 = 0;
-    v_dat1 = 0;
-    v_dat2 = 0;
-    v_dat3 = 0;
-    vb_cmd_req_arg = 0;
-    v_data_req_ready = 0;
-    v_crc16_next = 0;
+    v_dat0 = 1'b0;
+    v_dat1 = 1'b0;
+    v_dat2 = 1'b0;
+    v_dat3 = 1'b0;
+    vb_cmd_req_arg = '0;
+    v_data_req_ready = 1'b0;
+    v_crc16_next = 1'b0;
 
     v = r;
 
     v.err_clear = 1'b0;
     v.err_valid = 1'b0;
-    v.err_code = '0;
+    v.err_code = 4'd0;
     v.data_resp_valid = 1'b0;
     vb_cmd_req_arg = r.cmd_req_arg;
 
@@ -145,7 +145,7 @@ begin: comb_proc
             end
         end
         R6: begin
-            v.data_addr = {i_cmd_resp_arg32[31: 16], 16'h0000};
+            v.data_addr = {i_cmd_resp_arg32[31: 16], 16'd0};
         end
         default: begin
         end
@@ -159,11 +159,11 @@ begin: comb_proc
             v.sdtype = SDCARD_UNKNOWN;
             v.HCS = 1'b1;
             v.S18 = 1'b0;
-            v.data_addr = '0;
+            v.data_addr = 32'd0;
             v.cmd_req_valid = 1'b1;
             v.cmd_req_cmd = CMD0;
             v.cmd_req_rn = R1;
-            vb_cmd_req_arg = '0;
+            vb_cmd_req_arg = 32'd0;
             v.initstate = IDLESTATE_CMD8;
         end
         IDLESTATE_CMD8: begin
@@ -181,7 +181,7 @@ begin: comb_proc
             end
             v.cmd_req_cmd = CMD8;
             v.cmd_req_rn = R7;
-            vb_cmd_req_arg = '0;
+            vb_cmd_req_arg = 32'd0;
             vb_cmd_req_arg[13] = i_cfg_pcie_12V_support;
             vb_cmd_req_arg[12] = i_cfg_pcie_available;
             vb_cmd_req_arg[11: 8] = i_cfg_voltage_supply;
@@ -200,7 +200,7 @@ begin: comb_proc
             v.cmd_req_valid = 1'b1;
             v.cmd_req_cmd = CMD55;
             v.cmd_req_rn = R1;
-            vb_cmd_req_arg = '0;
+            vb_cmd_req_arg = 32'd0;
             v.initstate = IDLESTATE_ACMD41;
         end
         IDLESTATE_ACMD41: begin
@@ -214,7 +214,7 @@ begin: comb_proc
             //   [23:0] VDD voltage window (OCR[23:0])
             v.cmd_req_valid = 1'b1;
             v.cmd_req_cmd = ACMD41;
-            vb_cmd_req_arg = '0;
+            vb_cmd_req_arg = 32'd0;
             vb_cmd_req_arg[30] = r.HCS;
             vb_cmd_req_arg[23: 0] = r.OCR_VoltageWindow;
             vb_cmd_req_arg[24] = r.S18;
@@ -245,7 +245,7 @@ begin: comb_proc
             v.cmd_req_valid = 1'b1;
             v.cmd_req_cmd = CMD11;
             v.cmd_req_rn = R1;
-            vb_cmd_req_arg = '0;
+            vb_cmd_req_arg = 32'd0;
             v.readystate = READYSTATE_CMD2;
         end
         READYSTATE_CMD2: begin
@@ -254,7 +254,7 @@ begin: comb_proc
             v.cmd_req_valid = 1'b1;
             v.cmd_req_cmd = CMD2;
             v.cmd_req_rn = R2;
-            vb_cmd_req_arg = '0;
+            vb_cmd_req_arg = 32'd0;
             v.readystate = READYSTATE_CHECK_CID;
         end
         READYSTATE_CHECK_CID: begin
@@ -272,7 +272,7 @@ begin: comb_proc
             v.cmd_req_valid = 1'b1;
             v.cmd_req_cmd = CMD3;
             v.cmd_req_rn = R6;
-            vb_cmd_req_arg = '0;
+            vb_cmd_req_arg = 32'd0;
             v.identstate = IDENTSTATE_CHECK_RCA;
         end
         IDENTSTATE_CHECK_RCA: begin

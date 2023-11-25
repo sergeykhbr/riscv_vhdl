@@ -19,10 +19,10 @@
 module vip_sdcard_ctrl #(
     parameter bit async_reset = 1'b0,
     parameter int CFG_SDCARD_POWERUP_DONE_DELAY = 450,      // Delay of busy bits in ACMD41 response
-    parameter logic CFG_SDCARD_HCS = 1'h1,                  // High Capacity Support
+    parameter logic CFG_SDCARD_HCS = 1'b1,                  // High Capacity Support
     parameter logic [3:0] CFG_SDCARD_VHS = 4'h1,            // CMD8 Voltage supply mask
-    parameter logic CFG_SDCARD_PCIE_1_2V = 1'h0,
-    parameter logic CFG_SDCARD_PCIE_AVAIL = 1'h0,
+    parameter logic CFG_SDCARD_PCIE_1_2V = 1'b0,
+    parameter logic CFG_SDCARD_PCIE_AVAIL = 1'b0,
     parameter logic [23:0] CFG_SDCARD_VDD_VOLTAGE_WINDOW = 24'hff8000
 )
 (
@@ -63,8 +63,8 @@ begin: comb_proc
     logic v_resp_valid;
     logic [31:0] vb_resp_data32;
 
-    v_resp_valid = 0;
-    vb_resp_data32 = 0;
+    v_resp_valid = 1'b0;
+    vb_resp_data32 = '0;
 
     v = r;
 
@@ -89,12 +89,12 @@ begin: comb_proc
         case (r.sdstate)
         SDSTATE_IDLE: begin
             case (i_cmd_req_cmd)
-            6'h00: begin                                    // CMD0: GO_IDLE_STATE.
+            6'd0: begin                                     // CMD0: GO_IDLE_STATE.
                 v.cmd_resp_valid = 1'b1;
-                vb_resp_data32 = '0;
-                v.delay_cnt = 32'h00000014;
+                vb_resp_data32 = 32'd0;
+                v.delay_cnt = 32'd20;
             end
-            6'h08: begin                                    // CMD8: SEND_IF_COND.
+            6'd8: begin                                     // CMD8: SEND_IF_COND.
                 // Send memory Card interface condition:
                 // [21] PCIe 1.2V support
                 // [20] PCIe availability
@@ -102,17 +102,17 @@ begin: comb_proc
                 // [15:8] check pattern
                 v.cmd_resp_valid = 1'b1;
                 v.cmd_resp_r7 = 1'b1;
-                v.delay_cnt = 32'h00000014;
+                v.delay_cnt = 32'd20;
                 vb_resp_data32[13] = (i_cmd_req_data[13] & CFG_SDCARD_PCIE_1_2V);
                 vb_resp_data32[12] = (i_cmd_req_data[12] & CFG_SDCARD_PCIE_AVAIL);
                 vb_resp_data32[11: 8] = (i_cmd_req_data[11: 8] & CFG_SDCARD_VHS);
                 vb_resp_data32[7: 0] = i_cmd_req_data[7: 0];
             end
-            6'h37: begin                                    // CMD55: APP_CMD.
+            6'd55: begin                                    // CMD55: APP_CMD.
                 v.cmd_resp_valid = 1'b1;
-                vb_resp_data32 = '0;
+                vb_resp_data32 = 32'd0;
             end
-            6'h29: begin                                    // ACMD41: SD_SEND_OP_COND.
+            6'd41: begin                                    // ACMD41: SD_SEND_OP_COND.
                 // Send host capacity info:
                 // [39] BUSY, active LOW
                 // [38] HCS (OCR[30]) Host Capacity
@@ -122,11 +122,11 @@ begin: comb_proc
                 v.ocr_hcs = (i_cmd_req_data[30] & CFG_SDCARD_HCS);
                 v.ocr_vdd_window = (i_cmd_req_data[23: 0] & CFG_SDCARD_VDD_VOLTAGE_WINDOW);
                 v.cmd_resp_valid = 1'b1;
-                v.delay_cnt = 32'h00000014;
+                v.delay_cnt = 32'd20;
                 vb_resp_data32[31] = r.powerup_done;
                 vb_resp_data32[30] = (i_cmd_req_data[30] & CFG_SDCARD_HCS);
                 vb_resp_data32[23: 0] = (i_cmd_req_data[23: 0] & CFG_SDCARD_VDD_VOLTAGE_WINDOW);
-                if ((i_cmd_req_data[23: 0] & CFG_SDCARD_VDD_VOLTAGE_WINDOW) == 24'h000000) begin
+                if ((i_cmd_req_data[23: 0] & CFG_SDCARD_VDD_VOLTAGE_WINDOW) == 24'd0) begin
                     // OCR check failed:
                     v.sdstate = SDSTATE_INA;
                 end else if ((i_spi_mode == 1'b0) && (r.powerup_done == 1'b1)) begin
@@ -134,12 +134,12 @@ begin: comb_proc
                     v.sdstate = SDSTATE_READY;
                 end
             end
-            6'h3a: begin                                    // CMD58: READ_OCR.
+            6'd58: begin                                    // CMD58: READ_OCR.
                 v.cmd_resp_valid = 1'b1;
                 v.cmd_resp_r7 = 1'b1;
-                v.delay_cnt = 32'h00000014;
+                v.delay_cnt = 32'd20;
                 if (i_spi_mode == 1'b1) begin
-                    vb_resp_data32 = '0;
+                    vb_resp_data32 = 32'd0;
                     vb_resp_data32[31] = r.powerup_done;
                     vb_resp_data32[30] = r.ocr_hcs;
                     vb_resp_data32[23: 0] = r.ocr_vdd_window;
@@ -147,13 +147,13 @@ begin: comb_proc
                     v.illegal_cmd = 1'b1;
                 end
             end
-            6'h11: begin                                    // CMD17: READ_SINGLE_BLOCK.
+            6'd17: begin                                    // CMD17: READ_SINGLE_BLOCK.
                 v.cmd_resp_valid = 1'b1;
-                v.delay_cnt = 32'h00000014;
+                v.delay_cnt = 32'd20;
                 if (i_spi_mode == 1'b1) begin
                     v.req_mem_valid = 1'b1;
-                    v.req_mem_addr = {i_cmd_req_data, 9'h000};
-                    vb_resp_data32 = '0;
+                    v.req_mem_addr = {i_cmd_req_data, 9'd0};
+                    vb_resp_data32 = 32'd0;
                 end else begin
                     v.illegal_cmd = 1'b1;
                 end
@@ -168,20 +168,20 @@ begin: comb_proc
         end
         SDSTATE_READY: begin
             case (i_cmd_req_cmd)
-            6'h00: begin                                    // CMD0: GO_IDLE_STATE.
+            6'd0: begin                                     // CMD0: GO_IDLE_STATE.
                 v.cmd_resp_valid = 1'b1;
-                vb_resp_data32 = '0;
-                v.delay_cnt = 32'h00000002;
+                vb_resp_data32 = 32'd0;
+                v.delay_cnt = 32'd2;
                 v.sdstate = SDSTATE_IDLE;
             end
-            6'h02: begin                                    // CMD2: .
+            6'd2: begin                                     // CMD2: .
                 v.cmd_resp_valid = 1'b1;
-                v.delay_cnt = 32'h00000001;
+                v.delay_cnt = 32'd1;
                 v.sdstate = SDSTATE_IDENT;
             end
-            6'h0b: begin                                    // CMD11: .
+            6'd11: begin                                    // CMD11: .
                 v.cmd_resp_valid = 1'b1;
-                v.delay_cnt = 32'h00000001;
+                v.delay_cnt = 32'd1;
             end
             default: begin
                 // Illegal commands in 'ready' state:
@@ -193,15 +193,15 @@ begin: comb_proc
         end
         SDSTATE_IDENT: begin
             case (i_cmd_req_cmd)
-            6'h00: begin                                    // CMD0: GO_IDLE_STATE.
+            6'd0: begin                                     // CMD0: GO_IDLE_STATE.
                 v.cmd_resp_valid = 1'b1;
-                vb_resp_data32 = '0;
-                v.delay_cnt = 32'h00000002;
+                vb_resp_data32 = 32'd0;
+                v.delay_cnt = 32'd2;
                 v.sdstate = SDSTATE_IDLE;
             end
-            6'h03: begin                                    // CMD3: .
+            6'd3: begin                                     // CMD3: .
                 v.cmd_resp_valid = 1'b1;
-                v.delay_cnt = 32'h00000001;
+                v.delay_cnt = 32'd1;
                 v.sdstate = SDSTATE_STBY;
             end
             default: begin
@@ -231,7 +231,7 @@ begin: comb_proc
         endcase
     end
 
-    v.shiftdat = {r.shiftdat[14: 0], 1'h1};
+    v.shiftdat = {r.shiftdat[14: 0], 1'b1};
     case (r.datastate)
     DATASTATE_IDLE: begin
         v.crc16_clear = 1'b1;
@@ -241,7 +241,7 @@ begin: comb_proc
             v.req_mem_valid = 1'b0;
             v.datastate = DATASTATE_START;
             v.shiftdat = 16'hfe00;
-            v.bitcnt = '0;
+            v.bitcnt = 13'd0;
             v.dat_trans = 1'b1;
         end
     end
@@ -250,10 +250,10 @@ begin: comb_proc
         if ((&r.bitcnt[2: 0]) == 1'b1) begin
             v.crc16_clear = 1'b0;
             v.crc16_next = 1'b1;
-            if (r.bitcnt[12: 3] == 10'h200) begin
+            if (r.bitcnt[12: 3] == 10'd512) begin
                 v.datastate = DATASTATE_CRC15;
                 v.shiftdat = i_crc16;
-                v.bitcnt = '0;
+                v.bitcnt = 13'd0;
                 v.crc16_next = 1'b0;
             end else begin
                 // Read memory byte:

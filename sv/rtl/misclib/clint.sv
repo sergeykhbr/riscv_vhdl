@@ -93,9 +93,9 @@ begin: comb_proc
     logic [cpu_total-1:0] vb_mtip;
     int regidx;
 
-    vrdata = 0;
-    vb_msip = 0;
-    vb_mtip = 0;
+    vrdata = '0;
+    vb_msip = '0;
+    vb_mtip = '0;
     regidx = 0;
 
     v.mtime = r.mtime;
@@ -110,14 +110,14 @@ begin: comb_proc
     regidx = int'(wb_req_addr[13: 3]);
 
     for (int i = 0; i < cpu_total; i++) begin
-        v.hart[i].mtip = 1'h0;
+        v.hart[i].mtip = 1'b0;
         if (r.mtime >= r.hart[i].mtimecmp) begin
-            v.hart[i].mtip = 1'h1;
+            v.hart[i].mtip = 1'b1;
         end
     end
 
     case (wb_req_addr[15: 14])
-    2'h0: begin
+    2'd0: begin
         vrdata[0] = r.hart[regidx].msip;
         vrdata[32] = r.hart[(regidx + 1)].msip;
         if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
@@ -129,13 +129,13 @@ begin: comb_proc
             end
         end
     end
-    2'h1: begin
+    2'd1: begin
         vrdata = r.hart[regidx].mtimecmp;
         if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
             v.hart[regidx].mtimecmp = wb_req_wdata;
         end
     end
-    2'h2: begin
+    2'd2: begin
         if (wb_req_addr[13: 3] == 11'h7ff) begin
             vrdata = r.mtime;                               // [RO]
         end
@@ -146,13 +146,13 @@ begin: comb_proc
     v.rdata = vrdata;
 
     if (~async_reset && i_nrst == 1'b0) begin
-        v.mtime = 64'h0000000000000000;
+        v.mtime = '0;
         for (int i = 0; i < cpu_total; i++) begin
-            v.hart[i].msip = 1'h0;
-            v.hart[i].mtip = 1'h0;
-            v.hart[i].mtimecmp = 64'h0000000000000000;
+            v.hart[i].msip = 1'b0;
+            v.hart[i].mtip = 1'b0;
+            v.hart[i].mtimecmp = 64'd0;
         end
-        v.rdata = 64'h0000000000000000;
+        v.rdata = '0;
     end
 
     for (int i = 0; i < cpu_total; i++) begin
@@ -182,13 +182,13 @@ generate
 
         always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
             if (i_nrst == 1'b0) begin
-                r.mtime <= 64'h0000000000000000;
+                r.mtime <= '0;
                 for (int i = 0; i < cpu_total; i++) begin
-                    r.hart[i].msip <= 1'h0;
-                    r.hart[i].mtip <= 1'h0;
-                    r.hart[i].mtimecmp <= 64'h0000000000000000;
+                    r.hart[i].msip <= 1'b0;
+                    r.hart[i].mtip <= 1'b0;
+                    r.hart[i].mtimecmp <= 64'd0;
                 end
-                r.rdata <= 64'h0000000000000000;
+                r.rdata <= '0;
             end else begin
                 r.mtime <= rin.mtime;
                 for (int i = 0; i < cpu_total; i++) begin

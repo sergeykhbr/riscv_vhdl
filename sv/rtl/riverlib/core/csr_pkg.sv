@@ -30,15 +30,15 @@ localparam int unsigned State_Fence = 9;
 localparam int unsigned State_WaitPmp = 10;
 localparam int unsigned State_Response = 11;
 
-localparam bit [2:0] Fence_None = 3'h0;
-localparam bit [2:0] Fence_DataBarrier = 3'h1;
-localparam bit [2:0] Fence_DataFlush = 3'h2;
-localparam bit [2:0] Fence_WaitDataFlushEnd = 3'h3;
-localparam bit [2:0] Fence_FlushInstr = 3'h4;
-localparam bit [2:0] Fence_End = 3'h7;
+localparam bit [2:0] Fence_None = 3'd0;
+localparam bit [2:0] Fence_DataBarrier = 3'd1;
+localparam bit [2:0] Fence_DataFlush = 3'd2;
+localparam bit [2:0] Fence_WaitDataFlushEnd = 3'd3;
+localparam bit [2:0] Fence_FlushInstr = 3'd4;
+localparam bit [2:0] Fence_End = 3'd7;
 
-localparam bit [3:0] SATP_MODE_SV39 = 4'h8;                 // 39-bits Page mode
-localparam bit [3:0] SATP_MODE_SV48 = 4'h9;                 // 48-bits Page mode
+localparam bit [3:0] SATP_MODE_SV39 = 4'd8;                 // 39-bits Page mode
+localparam bit [3:0] SATP_MODE_SV48 = 4'd9;                 // 48-bits Page mode
 
 typedef struct {
     logic [RISCV_ARCH-1:0] xepc;

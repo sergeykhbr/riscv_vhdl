@@ -49,10 +49,10 @@ begin: comb_proc
     logic full;
     logic show_full;
 
-    nempty = 0;
-    vb_data_o = 0;
-    full = 0;
-    show_full = 0;
+    nempty = 1'b0;
+    vb_data_o = '0;
+    full = 1'b0;
+    show_full = 1'b0;
 
     v.wcnt = r.wcnt;
     for (int i = 0; i < DEPTH; i++) begin
@@ -100,7 +100,7 @@ begin: comb_proc
     end
 
     if (~async_reset && i_nrst == 1'b0) begin
-        v.wcnt = 7'h00;
+        v.wcnt = 7'd0;
     end
 
     o_nempty = nempty;
@@ -118,7 +118,7 @@ generate
 
         always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
             if (i_nrst == 1'b0) begin
-                r.wcnt <= 7'h00;
+                r.wcnt <= 7'd0;
             end else begin
                 r.wcnt <= rin.wcnt;
                 for (int i = 0; i < DEPTH; i++) begin

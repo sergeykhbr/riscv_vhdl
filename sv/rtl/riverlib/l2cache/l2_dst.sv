@@ -67,16 +67,16 @@ begin: comb_proc
     for (int i = 0; i < CFG_SLOT_L1_TOTAL; i++) begin
         vlxi[i] = axi4_l1_in_none;
     end
-    vb_src_aw = 0;
-    vb_src_ar = 0;
-    vb_broadband_mask_full = 0;
-    vb_broadband_mask = 0;
-    vb_ac_valid = 0;
-    vb_cr_ready = 0;
-    vb_cd_ready = 0;
-    vb_srcid = 0;
-    v_req_valid = 0;
-    vb_req_type = 0;
+    vb_src_aw = '0;
+    vb_src_ar = '0;
+    vb_broadband_mask_full = '0;
+    vb_broadband_mask = '0;
+    vb_ac_valid = '0;
+    vb_cr_ready = '0;
+    vb_cd_ready = '0;
+    vb_srcid = '0;
+    v_req_valid = 1'b0;
+    vb_req_type = '0;
 
     v = r;
 
@@ -118,11 +118,11 @@ begin: comb_proc
 
     case (r.state)
     Idle: begin
-        vb_req_type = '0;
+        vb_req_type = 4'd0;
         if ((|vb_src_aw) == 1'b1) begin
             v.state = CacheWriteReq;
-            vlxi[int'(vb_srcid)].aw_ready = 1'h1;
-            vlxi[int'(vb_srcid)].w_ready = 1'h1;            // Lite-interface
+            vlxi[int'(vb_srcid)].aw_ready = 1'b1;
+            vlxi[int'(vb_srcid)].w_ready = 1'b1;            // Lite-interface
 
             v.srcid = vb_srcid;
             v.req_addr = vcoreo[int'(vb_srcid)].aw_bits.addr;
@@ -134,14 +134,14 @@ begin: comb_proc
                 if (vcoreo[int'(vb_srcid)].aw_snoop == AWSNOOP_WRITE_LINE_UNIQUE) begin
                     vb_req_type[L2_REQ_TYPE_UNIQUE] = 1'b1;
                     v.ac_valid = vb_broadband_mask;
-                    v.cr_ready = '0;
-                    v.cd_ready = '0;
+                    v.cr_ready = 6'd0;
+                    v.cd_ready = 6'd0;
                     v.state = snoop_ac;
                 end
             end
         end else if ((|vb_src_ar) == 1'b1) begin
             v.state = CacheReadReq;
-            vlxi[int'(vb_srcid)].ar_ready = 1'h1;
+            vlxi[int'(vb_srcid)].ar_ready = 1'b1;
 
             v.srcid = vb_srcid;
             v.req_addr = vcoreo[int'(vb_srcid)].ar_bits.addr;
@@ -159,8 +159,8 @@ begin: comb_proc
                 end else begin
                     v.ac_valid = vb_broadband_mask;
                 end
-                v.cr_ready = '0;
-                v.cd_ready = '0;
+                v.cr_ready = 6'd0;
+                v.cd_ready = 6'd0;
                 v.state = snoop_ac;
             end
         end
@@ -216,7 +216,7 @@ begin: comb_proc
             if (r.req_type[L2_REQ_TYPE_UNIQUE] == 1'b1) begin
                 vlxi[i].ac_snoop = AC_SNOOP_READ_UNIQUE;
             end else begin
-                vlxi[i].ac_snoop = 4'h0;
+                vlxi[i].ac_snoop = 4'd0;
             end
             if ((r.ac_valid[i] == 1'b1) && (vcoreo[i].ac_ready == 1'b1)) begin
                 vb_ac_valid[i] = 1'b0;

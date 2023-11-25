@@ -126,19 +126,19 @@ begin: comb_proc
     i_w_sidx = 0;
     i_b_midx = 0;
     i_b_sidx = 0;
-    v_aw_fire = 0;
-    v_ar_fire = 0;
-    v_w_fire = 0;
-    v_w_busy = 0;
-    v_r_fire = 0;
-    v_r_busy = 0;
-    v_b_fire = 0;
-    v_b_busy = 0;
+    v_aw_fire = 1'b0;
+    v_ar_fire = 1'b0;
+    v_w_fire = 1'b0;
+    v_w_busy = 1'b0;
+    v_r_fire = 1'b0;
+    v_r_busy = 1'b0;
+    v_b_fire = 1'b0;
+    v_b_busy = 1'b0;
 
     v = r;
 
-    vb_def_mapinfo.addr_start = '0;
-    vb_def_mapinfo.addr_end = '0;
+    vb_def_mapinfo.addr_start = 0;
+    vb_def_mapinfo.addr_end = 0;
     for (int i = 0; i < CFG_BUS0_XMST_TOTAL; i++) begin
         vmsto[i] = i_xmsto[i];                              // Cannot read vector item from port in systemc
         vmsti[i] = axi4_master_in_none;

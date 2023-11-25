@@ -103,25 +103,25 @@ begin: comb_proc
     logic [ctxmax-1:0] vb_ip;
     int rctx_idx;
 
-    vrdata = 0;
+    vrdata = '0;
     for (int i = 0; i < ctxmax; i++) begin
-        vb_irq_idx[i] = 10'h000;
+        vb_irq_idx[i] = 10'd0;
     end
     for (int i = 0; i < ctxmax; i++) begin
-        vb_irq_prio[i] = 10'h000;
+        vb_irq_prio[i] = 10'd0;
     end
     for (int i = 0; i < ctxmax; i++) begin
-        vb_ctx[i].priority_th = 4'h0;
-        vb_ctx[i].ie = '0;
-        vb_ctx[i].ip_prio = '0;
-        vb_ctx[i].prio_mask = 16'h0000;
-        vb_ctx[i].sel_prio = 4'h0;
-        vb_ctx[i].irq_idx = 10'h000;
-        vb_ctx[i].irq_prio = 10'h000;
+        vb_ctx[i].priority_th = 4'd0;
+        vb_ctx[i].ie = 1024'd0;
+        vb_ctx[i].ip_prio = 4096'd0;
+        vb_ctx[i].prio_mask = 16'd0;
+        vb_ctx[i].sel_prio = 4'd0;
+        vb_ctx[i].irq_idx = 10'd0;
+        vb_ctx[i].irq_prio = 10'd0;
     end
-    vb_src_priority = 0;
-    vb_pending = 0;
-    vb_ip = 0;
+    vb_src_priority = '0;
+    vb_pending = '0;
+    vb_ip = '0;
     rctx_idx = 0;
 
     v.src_priority = r.src_priority;
@@ -151,7 +151,7 @@ begin: comb_proc
     end
 
     for (int i = 1; i < irqmax; i++) begin
-        if ((i_irq_request[i] == 1'b1) && (int'(r.src_priority[(4 * i) +: 4]) > 4'h0)) begin
+        if ((i_irq_request[i] == 1'b1) && (int'(r.src_priority[(4 * i) +: 4]) > 4'd0)) begin
             vb_pending[i] = 1'b1;
         end
     end
@@ -162,7 +162,7 @@ begin: comb_proc
                     && (r.ctx[n].ie[i] == 1'b1)
                     && (int'(r.src_priority[(4 * i) +: 4]) > r.ctx[n].priority_th)) begin
                 vb_ctx[n].ip_prio[(4 * i) +: 4] = r.src_priority[(4 * i) +: 4];
-                vb_ctx[n].prio_mask[int'(r.src_priority[(4 * i) +: 4])] = 1'h1;
+                vb_ctx[n].prio_mask[int'(r.src_priority[(4 * i) +: 4])] = 1'b1;
             end
         end
     end
@@ -196,7 +196,7 @@ begin: comb_proc
 
     // R/W registers access:
     rctx_idx = int'(wb_req_addr[20: 12]);
-    if (wb_req_addr[21: 12] == 10'h000) begin               // src_prioirty
+    if (wb_req_addr[21: 12] == 10'd0) begin                 // src_prioirty
         // 0x000000..0x001000: Irq 0 unused
         if ((|wb_req_addr[11: 3]) == 1'b1) begin
             vrdata[3: 0] = r.src_priority[(8 * wb_req_addr[11: 3]) +: 4];
@@ -213,7 +213,7 @@ begin: comb_proc
                 vb_src_priority[((8 * wb_req_addr[11: 3]) + 32) +: 4] = wb_req_wdata[35: 32];
             end
         end
-    end else if (wb_req_addr[21: 12] == 10'h001) begin
+    end else if (wb_req_addr[21: 12] == 10'd1) begin
         // 0x001000..0x001080
         vrdata = r.pending[(64 * wb_req_addr[6: 3]) +: 64];
         if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
@@ -224,7 +224,7 @@ begin: comb_proc
                 vb_pending[((64 * wb_req_addr[6: 3]) + 32) +: 32] = wb_req_wdata[63: 32];
             end
         end
-    end else if ((wb_req_addr[21: 12] == 10'h002)
+    end else if ((wb_req_addr[21: 12] == 10'd2)
                 && (wb_req_addr[11: 7] < ctxmax)) begin
         // First 32 context of 15867 support only
         // 0x002000,0x002080,...,0x200000
@@ -239,13 +239,13 @@ begin: comb_proc
         end
     end else if ((wb_req_addr[21: 12] >= 10'h200) && (wb_req_addr[20: 12] < ctxmax)) begin
         // 0x200000,0x201000,...,0x4000000
-        if (wb_req_addr[11: 3] == 9'h000) begin
+        if (wb_req_addr[11: 3] == 9'd0) begin
             // masking (disabling) all interrupt with <= priority
             vrdata[3: 0] = r.ctx[rctx_idx].priority_th;
             vrdata[41: 32] = r.ctx[rctx_idx].irq_idx;
             // claim/ complete. Reading clears pending bit
             if (r.ip[rctx_idx] == 1'b1) begin
-                vb_pending[r.ctx[rctx_idx].irq_idx] = 1'h0;
+                vb_pending[r.ctx[rctx_idx].irq_idx] = 1'b0;
             end
             if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
                 if ((|wb_req_wstrb[3: 0]) == 1'b1) begin
@@ -278,17 +278,17 @@ begin: comb_proc
     if (~async_reset && i_nrst == 1'b0) begin
         v.src_priority = '0;
         v.pending = '0;
-        v.ip = 8'h00;
+        v.ip = '0;
         for (int i = 0; i < ctxmax; i++) begin
-            v.ctx[i].priority_th = 4'h0;
+            v.ctx[i].priority_th = 4'd0;
             v.ctx[i].ie = '0;
             v.ctx[i].ip_prio = '0;
-            v.ctx[i].prio_mask = 16'h0000;
-            v.ctx[i].sel_prio = 4'h0;
-            v.ctx[i].irq_idx = 10'h000;
-            v.ctx[i].irq_prio = 10'h000;
+            v.ctx[i].prio_mask = 16'd0;
+            v.ctx[i].sel_prio = 4'd0;
+            v.ctx[i].irq_idx = 10'd0;
+            v.ctx[i].irq_prio = 10'd0;
         end
-        v.rdata = 64'h0000000000000000;
+        v.rdata = '0;
     end
 
     w_req_ready = 1'b1;
@@ -319,17 +319,17 @@ generate
             if (i_nrst == 1'b0) begin
                 r.src_priority <= '0;
                 r.pending <= '0;
-                r.ip <= 8'h00;
+                r.ip <= '0;
                 for (int i = 0; i < ctxmax; i++) begin
-                    r.ctx[i].priority_th <= 4'h0;
+                    r.ctx[i].priority_th <= 4'd0;
                     r.ctx[i].ie <= '0;
                     r.ctx[i].ip_prio <= '0;
-                    r.ctx[i].prio_mask <= 16'h0000;
-                    r.ctx[i].sel_prio <= 4'h0;
-                    r.ctx[i].irq_idx <= 10'h000;
-                    r.ctx[i].irq_prio <= 10'h000;
+                    r.ctx[i].prio_mask <= 16'd0;
+                    r.ctx[i].sel_prio <= 4'd0;
+                    r.ctx[i].irq_idx <= 10'd0;
+                    r.ctx[i].irq_prio <= 10'd0;
                 end
-                r.rdata <= 64'h0000000000000000;
+                r.rdata <= '0;
             end else begin
                 r.src_priority <= rin.src_priority;
                 r.pending <= rin.pending;

@@ -135,16 +135,16 @@ begin: comb_proc
 
     vcfg = dev_config_none;
     vapbo = apb_out_none;
-    vb_req_type = 0;
-    vb_resp_data = 0;
-    vb_hartselnext = 0;
-    v_resp_valid = 0;
+    vb_req_type = '0;
+    vb_resp_data = '0;
+    vb_hartselnext = '0;
+    v_resp_valid = 1'b0;
     hsel = 0;
-    v_cmd_busy = 0;
-    v_cdc_dmi_req_ready = 0;
-    vb_arg1 = 0;
-    t_command = 0;
-    t_progbuf = 0;
+    v_cmd_busy = 1'b0;
+    v_cdc_dmi_req_ready = 1'b0;
+    vb_arg1 = '0;
+    t_command = '0;
+    t_progbuf = '0;
     t_idx = 0;
 
     v = r;
@@ -294,21 +294,21 @@ begin: comb_proc
             vb_resp_data[8] = (i_halted[hsel] && i_available[hsel]);// anyhalted:
             vb_resp_data[7] = 1'b1;                         // authenticated:
             vb_resp_data[5] = 1'b1;                         // hasresethaltreq
-            vb_resp_data[3: 0] = 4'h2;                      // version: dbg spec v0.13
+            vb_resp_data[3: 0] = 4'd2;                      // version: dbg spec v0.13
         end else if (r.regidx == 7'h12) begin               // hartinfo
             // Not available core should returns 0
             if (i_available[hsel] == 1'b1) begin
                 vb_resp_data[23: 20] = CFG_DSCRATCH_REG_TOTAL;// nscratch
                 vb_resp_data[16] = 1'b0;                    // dataaccess: 0=CSR shadowed;1=memory shadowed
-                vb_resp_data[15: 12] = 4'h0;                // datasize
-                vb_resp_data[11: 0] = 12'h000;              // dataaddr
+                vb_resp_data[15: 12] = 4'd0;                // datasize
+                vb_resp_data[11: 0] = 12'd0;                // dataaddr
             end
         end else if (r.regidx == 7'h16) begin               // abstractcs
             vb_resp_data[28: 24] = CFG_PROGBUF_REG_TOTAL;
             vb_resp_data[12] = v_cmd_busy;                  // busy
             vb_resp_data[10: 8] = r.cmderr;
             vb_resp_data[3: 0] = CFG_DATA_REG_TOTAL;
-            if ((r.regwr == 1'b1) && (r.wdata[10: 8] == 3'h1)) begin
+            if ((r.regwr == 1'b1) && (r.wdata[10: 8] == 3'd1)) begin
                 v.cmderr = CMDERR_NONE;
             end
         end else if (r.regidx == 7'h17) begin               // command
@@ -368,7 +368,7 @@ begin: comb_proc
     end
     CMD_STATE_INIT: begin
         v.postincrement = r.command[CmdPostincrementBit];
-        if (r.command[31: 24] == 8'h00) begin
+        if (r.command[31: 24] == 8'd0) begin
             // Register access command
             if (r.command[CmdTransferBit] == 1'b1) begin    // transfer
                 v.cmdstate = CMD_STATE_REQUEST;
@@ -377,7 +377,7 @@ begin: comb_proc
                 v.cmd_write = r.command[CmdWriteBit];
 
                 v.dport_req_valid = 1'b1;
-                v.dport_addr = {48'h000000000000, r.command[15: 0]};
+                v.dport_addr = {48'd0, r.command[15: 0]};
                 v.dport_wdata = {r.data1, r.data0};
                 v.dport_size = r.command[22: 20];
             end else if (r.command[CmdPostexecBit] == 1'b1) begin// no transfer only buffer execution
@@ -389,7 +389,7 @@ begin: comb_proc
                 // Empty command: do nothing
                 v.cmdstate = CMD_STATE_IDLE;
             end
-        end else if (r.command[31: 24] == 8'h01) begin
+        end else if (r.command[31: 24] == 8'd1) begin
             // Quick access command
             if (i_halted[hsel] == 1'b1) begin
                 v.cmderr = CMDERR_WRONGSTATE;
@@ -399,7 +399,7 @@ begin: comb_proc
                 v.cmd_quickaccess = 1'b1;
                 v.cmdstate = CMD_STATE_WAIT_HALTED;
             end
-        end else if (r.command[31: 24] == 8'h02) begin
+        end else if (r.command[31: 24] == 8'd2) begin
             // Memory access command
             v.cmdstate = CMD_STATE_REQUEST;
             v.cmd_memaccess = 1'b1;
@@ -428,19 +428,19 @@ begin: comb_proc
             v.dport_resp_ready = 1'b0;
             if (r.cmd_read == 1'b1) begin
                 case (r.command[22: 20])                    // aamsize/aarsize
-                3'h0: begin
-                    v.data0 = {24'h000000, i_dport_rdata[7: 0]};
-                    v.data1 = '0;
+                3'd0: begin
+                    v.data0 = {24'd0, i_dport_rdata[7: 0]};
+                    v.data1 = 32'd0;
                 end
-                3'h1: begin
-                    v.data0 = {16'h0000, i_dport_rdata[15: 0]};
-                    v.data1 = '0;
+                3'd1: begin
+                    v.data0 = {16'd0, i_dport_rdata[15: 0]};
+                    v.data1 = 32'd0;
                 end
-                3'h2: begin
+                3'd2: begin
                     v.data0 = i_dport_rdata[31: 0];
-                    v.data1 = '0;
+                    v.data1 = 32'd0;
                 end
-                3'h3: begin
+                3'd3: begin
                     v.data0 = i_dport_rdata[31: 0];
                     v.data1 = i_dport_rdata[63: 32];
                 end
@@ -450,24 +450,24 @@ begin: comb_proc
             end
             if (r.postincrement == 1'b1) begin
                 v.postincrement = 1'b0;
-                if (r.command[31: 24] == 8'h00) begin
+                if (r.command[31: 24] == 8'd0) begin
                     // Register access command:
                     t_command[15: 0] = (r.command[15: 0] + 1);
                     v.command = t_command;
-                end else if (r.command[31: 24] == 8'h02) begin
+                end else if (r.command[31: 24] == 8'd2) begin
                     // Memory access command
                     case (r.command[22: 20])                // aamsize
-                    3'h0: begin
-                        vb_arg1 = (vb_arg1 + 64'h0000000000000001);
+                    3'd0: begin
+                        vb_arg1 = (vb_arg1 + 64'd1);
                     end
-                    3'h1: begin
-                        vb_arg1 = (vb_arg1 + 64'h0000000000000002);
+                    3'd1: begin
+                        vb_arg1 = (vb_arg1 + 64'd2);
                     end
-                    3'h2: begin
-                        vb_arg1 = (vb_arg1 + 64'h0000000000000004);
+                    3'd2: begin
+                        vb_arg1 = (vb_arg1 + 64'd4);
                     end
-                    3'h3: begin
-                        vb_arg1 = (vb_arg1 + 64'h0000000000000008);
+                    3'd3: begin
+                        vb_arg1 = (vb_arg1 + 64'd8);
                     end
                     default: begin
                     end

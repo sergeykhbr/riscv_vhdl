@@ -19,10 +19,10 @@ import types_amba_pkg::*;
 import types_pnp_pkg::*;
 import types_bus1_pkg::*;
 
-localparam bit [1:0] State_Idle = 2'h0;
-localparam bit [1:0] State_setup = 2'h1;
-localparam bit [1:0] State_access = 2'h2;
-localparam bit [1:0] State_out = 2'h3;
+localparam bit [1:0] State_Idle = 2'd0;
+localparam bit [1:0] State_setup = 2'd1;
+localparam bit [1:0] State_access = 2'd2;
+localparam bit [1:0] State_out = 2'd3;
 
 typedef struct {
     logic [2:0] state;
@@ -42,7 +42,7 @@ typedef struct {
 
 const axi2apb_bus1_registers axi2apb_bus1_r_reset = '{
     State_Idle,                         // state
-    '0,                                 // selidx
+    3'd0,                               // selidx
     1'b0,                               // pvalid
     '0,                                 // paddr
     '0,                                 // pwdata

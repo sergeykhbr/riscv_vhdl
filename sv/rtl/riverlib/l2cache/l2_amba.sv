@@ -57,12 +57,12 @@ begin: comb_proc
     logic v_next_ready;
     axi4_l2_out_type vmsto;
 
-    v_req_mem_ready = 0;
-    v_resp_mem_valid = 0;
-    v_resp_mem_ack = 0;
-    v_mem_er_load_fault = 0;
-    v_mem_er_store_fault = 0;
-    v_next_ready = 0;
+    v_req_mem_ready = 1'b0;
+    v_resp_mem_valid = 1'b0;
+    v_resp_mem_ack = 1'b0;
+    v_mem_er_load_fault = 1'b0;
+    v_mem_er_store_fault = 1'b0;
+    v_next_ready = 1'b0;
     vmsto = axi4_l2_out_none;
 
     v = r;
@@ -134,14 +134,14 @@ begin: comb_proc
 
     // o_msto_aw_valid = vmsto_aw_valid;
     vmsto.aw_bits.addr = i_req_addr;
-    vmsto.aw_bits.len = '0;
+    vmsto.aw_bits.len = 8'd0;
     vmsto.aw_bits.size = i_req_size;                        // 0=1B; 1=2B; 2=4B; 3=8B; 4=16B; 5=32B; 6=64B; 7=128B
     vmsto.aw_bits.burst = 2'h1;                             // 00=FIX; 01=INCR; 10=WRAP
     vmsto.aw_bits.lock = 1'b0;
     vmsto.aw_bits.cache = i_req_type[REQ_MEM_TYPE_CACHED];
     vmsto.aw_bits.prot = i_req_prot;
-    vmsto.aw_bits.qos = '0;
-    vmsto.aw_bits.region = '0;
+    vmsto.aw_bits.qos = 4'd0;
+    vmsto.aw_bits.region = 4'd0;
     vmsto.aw_id = 1'b0;
     vmsto.aw_user = 1'b0;
     // vmsto.w_valid = vmsto_w_valid;
@@ -153,14 +153,14 @@ begin: comb_proc
 
     // vmsto.ar_valid = vmsto_ar_valid;
     vmsto.ar_bits.addr = i_req_addr;
-    vmsto.ar_bits.len = '0;
+    vmsto.ar_bits.len = 8'd0;
     vmsto.ar_bits.size = i_req_size;                        // 0=1B; 1=2B; 2=4B; 3=8B; ...
     vmsto.ar_bits.burst = 2'h1;                             // INCR
     vmsto.ar_bits.lock = 1'b0;
     vmsto.ar_bits.cache = i_req_type[REQ_MEM_TYPE_CACHED];
     vmsto.ar_bits.prot = i_req_prot;
-    vmsto.ar_bits.qos = '0;
-    vmsto.ar_bits.region = '0;
+    vmsto.ar_bits.qos = 4'd0;
+    vmsto.ar_bits.region = 4'd0;
     vmsto.ar_id = 1'b0;
     vmsto.ar_user = 1'b0;
     // vmsto.r_ready = vmsto_r_ready;

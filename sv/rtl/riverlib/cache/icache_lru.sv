@@ -119,25 +119,25 @@ begin: comb_proc
     logic v_ready_next;
     logic [CFG_CPU_ADDR_BITS-1:0] vb_addr_direct_next;
 
-    t_cache_line_i = 0;
-    v_req_ready = 0;
-    v_resp_valid = 0;
-    vb_cached_data = 0;
-    vb_uncached_data = 0;
-    vb_resp_data = 0;
-    v_resp_er_load_fault = 0;
-    v_direct_access = 0;
-    v_invalidate = 0;
-    v_line_cs_read = 0;
-    v_line_cs_write = 0;
-    vb_line_addr = 0;
-    vb_line_wdata = 0;
-    vb_line_wstrb = 0;
-    v_line_wflags = 0;
+    t_cache_line_i = '0;
+    v_req_ready = 1'b0;
+    v_resp_valid = 1'b0;
+    vb_cached_data = '0;
+    vb_uncached_data = '0;
+    vb_resp_data = '0;
+    v_resp_er_load_fault = 1'b0;
+    v_direct_access = 1'b0;
+    v_invalidate = 1'b0;
+    v_line_cs_read = 1'b0;
+    v_line_cs_write = 1'b0;
+    vb_line_addr = '0;
+    vb_line_wdata = '0;
+    vb_line_wstrb = '0;
+    v_line_wflags = 1'b0;
     sel_cached = 0;
     sel_uncached = 0;
-    v_ready_next = 0;
-    vb_addr_direct_next = 0;
+    v_ready_next = 1'b0;
+    vb_addr_direct_next = '0;
 
     v = r;
 
@@ -152,9 +152,9 @@ begin: comb_proc
         v.req_flush_all = i_flush_address[0];
         if (i_flush_address[0] == 1'b1) begin
             v.req_flush_cnt = FLUSH_ALL_VALUE;
-            v.req_flush_addr = '0;
+            v.req_flush_addr = 48'd0;
         end else begin
-            v.req_flush_cnt = '0;
+            v.req_flush_cnt = 32'd0;
             v.req_flush_addr = i_flush_address;
         end
     end
@@ -189,7 +189,7 @@ begin: comb_proc
     end
     State_TranslateAddress: begin
         if (i_pmp_x == 1'b0) begin
-            t_cache_line_i = '0;
+            t_cache_line_i = 256'd0;
             v.cache_line_i = (~t_cache_line_i);
             v.state = State_CheckResp;
             v.load_fault = 1'b1;
@@ -209,9 +209,9 @@ begin: comb_proc
                 v.req_mem_type = ReadShared();
                 v.req_mem_size = CFG_LOG2_L1CACHE_BYTES_PER_LINE;
             end else begin
-                v.mem_addr = {r.req_addr[(CFG_CPU_ADDR_BITS - 1): 3], 3'h0};
+                v.mem_addr = {r.req_addr[(CFG_CPU_ADDR_BITS - 1): 3], 3'd0};
                 v.req_mem_type = ReadNoSnoop();
-                v.req_mem_size = 3'h4;                      // uncached, 16 B
+                v.req_mem_size = 3'd4;                      // uncached, 16 B
             end
         end
     end
@@ -256,7 +256,7 @@ begin: comb_proc
         v.state = State_FlushCheck;
         v_direct_access = r.req_flush_all;                  // 0=only if hit; 1=will be applied ignoring hit
         v_invalidate = 1'b1;                                // generate: wstrb='1; wflags='0
-        v.cache_line_i = '0;
+        v.cache_line_i = 256'd0;
     end
     State_FlushCheck: begin
         v.state = State_FlushAddr;
@@ -303,7 +303,7 @@ begin: comb_proc
         if (r.req_flush == 1'b1) begin
             v.state = State_FlushAddr;
             v.req_flush = 1'b0;
-            v.cache_line_i = '0;
+            v.cache_line_i = 256'd0;
             v.req_addr = (r.req_flush_addr & (~LINE_BYTES_MASK));
             v.flush_cnt = r.req_flush_cnt;
         end else begin
@@ -336,8 +336,8 @@ begin: comb_proc
     o_req_mem_addr = r.mem_addr;
     o_req_mem_type = r.req_mem_type;
     o_req_mem_size = r.req_mem_size;
-    o_req_mem_strob = '0;
-    o_req_mem_data = '0;
+    o_req_mem_strob = 32'd0;
+    o_req_mem_data = 256'd0;
 
     o_resp_valid = v_resp_valid;
     o_resp_data = vb_resp_data;

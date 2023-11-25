@@ -18,10 +18,10 @@ package apb_slv_pkg;
 import types_amba_pkg::*;
 import types_pnp_pkg::*;
 
-localparam bit [1:0] State_Idle = 2'h0;
-localparam bit [1:0] State_Request = 2'h1;
-localparam bit [1:0] State_WaitResp = 2'h2;
-localparam bit [1:0] State_Resp = 2'h3;
+localparam bit [1:0] State_Idle = 2'd0;
+localparam bit [1:0] State_Request = 2'd1;
+localparam bit [1:0] State_WaitResp = 2'd2;
+localparam bit [1:0] State_Resp = 2'd3;
 
 typedef struct {
     logic [2:0] state;

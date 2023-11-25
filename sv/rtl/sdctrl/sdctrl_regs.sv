@@ -93,9 +93,9 @@ begin: comb_proc
     logic v_negedge;
     logic [31:0] vb_rdata;
 
-    v_posedge = 0;
-    v_negedge = 0;
-    vb_rdata = 0;
+    v_posedge = 1'b0;
+    v_negedge = 1'b0;
+    vb_rdata = '0;
 
     v = r;
 
@@ -114,7 +114,7 @@ begin: comb_proc
     if (r.sclk_ena == 1'b1) begin
         if (((i_400khz_ena == 1'b1) && (r.scaler_cnt >= r.scaler_400khz))
                 || ((i_400khz_ena == 1'b0) && (r.scaler_cnt >= r.scaler_data))) begin
-            v.scaler_cnt = '0;
+            v.scaler_cnt = 32'd0;
             v.level = (~r.level);
             v_posedge = (~r.level);
             v_negedge = r.level;
@@ -129,7 +129,7 @@ begin: comb_proc
         if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
             v.scaler_data = wb_req_wdata[31: 24];
             v.scaler_400khz = wb_req_wdata[23: 0];
-            v.scaler_cnt = '0;
+            v.scaler_cnt = 32'd0;
         end
     end
     10'h001: begin                                          // {0x04, 'RW', 'control', 'Global Control register'}

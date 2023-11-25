@@ -87,33 +87,33 @@ begin: comb_proc
     logic [10:0] vb_res_exp;
     logic [51:0] vb_res_mant;
 
-    vb_ena = 0;
-    signA = 0;
-    signB = 0;
-    mantA = 0;
-    mantB = 0;
-    zeroA = 0;
-    zeroB = 0;
-    expAB_t = 0;
-    expAB = 0;
-    mantAlign = 0;
-    expAlign_t = 0;
-    expAlign = 0;
-    postShift = 0;
-    mantPostScale = 0;
-    mantShort = 0;
-    tmpMant05 = 0;
-    mantOnes = 0;
-    mantEven = 0;
-    mant05 = 0;
-    rndBit = 0;
-    nanA = 0;
-    nanB = 0;
-    mantZeroA = 0;
-    mantZeroB = 0;
-    v_res_sign = 0;
-    vb_res_exp = 0;
-    vb_res_mant = 0;
+    vb_ena = '0;
+    signA = 1'b0;
+    signB = 1'b0;
+    mantA = '0;
+    mantB = '0;
+    zeroA = 1'b0;
+    zeroB = 1'b0;
+    expAB_t = '0;
+    expAB = '0;
+    mantAlign = '0;
+    expAlign_t = '0;
+    expAlign = '0;
+    postShift = '0;
+    mantPostScale = '0;
+    mantShort = '0;
+    tmpMant05 = '0;
+    mantOnes = 1'b0;
+    mantEven = 1'b0;
+    mant05 = 1'b0;
+    rndBit = 1'b0;
+    nanA = 1'b0;
+    nanB = 1'b0;
+    mantZeroA = 1'b0;
+    mantZeroB = 1'b0;
+    v_res_sign = 1'b0;
+    vb_res_exp = '0;
+    vb_res_mant = '0;
 
     v = r;
 
@@ -141,20 +141,20 @@ begin: comb_proc
     end
 
     mantA[51: 0] = r.a[51: 0];
-    mantA[52] = 1'h0;
+    mantA[52] = 1'b0;
     if ((|r.a[62: 52]) == 1'b1) begin
-        mantA[52] = 1'h1;
+        mantA[52] = 1'b1;
     end
 
     mantB[51: 0] = r.b[51: 0];
-    mantB[52] = 1'h0;
+    mantB[52] = 1'b0;
     if ((|r.b[62: 52]) == 1'b1) begin
-        mantB[52] = 1'h1;
+        mantB[52] = 1'b1;
     end
 
     // expA - expB + 1023
-    expAB_t = ({1'h0, r.a[62: 52]} + {1'h0, r.b[62: 52]});
-    expAB = ({1'h0, expAB_t} - 13'h03ff);
+    expAB_t = ({1'b0, r.a[62: 52]} + {1'b0, r.b[62: 52]});
+    expAB = ({1'b0, expAB_t} - 13'd1023);
 
     if (r.ena[0] == 1'b1) begin
         v.expAB = expAB;
@@ -183,9 +183,9 @@ begin: comb_proc
     if (wb_imul_result[105] == 1'b1) begin
         expAlign = expAlign_t;
     end else if (((|r.a[62: 52]) == 1'b0) || ((|r.b[62: 52]) == 1'b0)) begin
-        expAlign = (expAlign_t - {6'h00, wb_imul_shift});
+        expAlign = (expAlign_t - {6'd0, wb_imul_shift});
     end else begin
-        expAlign = (r.expAB - {6'h00, wb_imul_shift});
+        expAlign = (r.expAB - {6'd0, wb_imul_shift});
     end
 
     // IMPORTANT exception! new ZERO value
@@ -194,7 +194,7 @@ begin: comb_proc
                 || (wb_imul_result[105] == 1'b1)
                 || ((|r.a[62: 52]) == 1'b0)
                 || ((|r.b[62: 52]) == 1'b0)) begin
-            postShift = ((~expAlign[11: 0]) + 12'h002);
+            postShift = ((~expAlign[11: 0]) + 12'd2);
         end else begin
             postShift = ((~expAlign[11: 0]) + 1);
         end
@@ -223,7 +223,7 @@ begin: comb_proc
     // Prepare to mantissa post-scale
     if ((|r.postShift) == 1'b0) begin
         mantPostScale = r.mantAlign;
-    end else if (r.postShift < 12'h069) begin
+    end else if (r.postShift < 12'd105) begin
         for (int i = 1; i < 105; i++) begin
             if (i == int'(r.postShift)) begin
                 mantPostScale = (r.mantAlign >> i);
@@ -262,7 +262,7 @@ begin: comb_proc
 
     // Result multiplexers:
     if ((nanA && mantZeroA && r.zeroB) || (nanB && mantZeroB && r.zeroA)) begin
-        v_res_sign = 1'h1;
+        v_res_sign = 1'b1;
     end else if ((nanA && (~mantZeroA)) == 1'b1) begin
         // when both values are NaN, value B has higher priority if sign=1
         v_res_sign = (signA || (nanA && signB));
@@ -291,9 +291,9 @@ begin: comb_proc
         vb_res_mant = '0;
     end else if ((nanA && (~(nanB && signB))) == 1'b1) begin
         // when both values are NaN, value B has higher priority if sign=1
-        vb_res_mant = {1'h1, r.a[50: 0]};
+        vb_res_mant = {1'b1, r.a[50: 0]};
     end else if (nanB == 1'b1) begin
-        vb_res_mant = {1'h1, r.b[50: 0]};
+        vb_res_mant = {1'b1, r.b[50: 0]};
     end else begin
         vb_res_mant = (mantShort[51: 0] + rndBit);
     end

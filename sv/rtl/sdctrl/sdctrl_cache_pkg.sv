@@ -23,18 +23,18 @@ localparam int lnbits = CFG_LOG2_SDCACHE_BYTES_PER_LINE;
 localparam int flbits = SDCACHE_FL_TOTAL;
 
 // State machine states:
-localparam bit [3:0] State_Idle = 4'h0;
-localparam bit [3:0] State_CheckHit = 4'h2;
-localparam bit [3:0] State_TranslateAddress = 4'h3;
-localparam bit [3:0] State_WaitGrant = 4'h4;
-localparam bit [3:0] State_WaitResp = 4'h5;
-localparam bit [3:0] State_CheckResp = 4'h6;
-localparam bit [3:0] State_SetupReadAdr = 4'h1;
-localparam bit [3:0] State_WriteBus = 4'h7;
-localparam bit [3:0] State_FlushAddr = 4'h8;
-localparam bit [3:0] State_FlushCheck = 4'h9;
-localparam bit [3:0] State_Reset = 4'ha;
-localparam bit [3:0] State_ResetWrite = 4'hb;
+localparam bit [3:0] State_Idle = 4'd0;
+localparam bit [3:0] State_CheckHit = 4'd2;
+localparam bit [3:0] State_TranslateAddress = 4'd3;
+localparam bit [3:0] State_WaitGrant = 4'd4;
+localparam bit [3:0] State_WaitResp = 4'd5;
+localparam bit [3:0] State_CheckResp = 4'd6;
+localparam bit [3:0] State_SetupReadAdr = 4'd1;
+localparam bit [3:0] State_WriteBus = 4'd7;
+localparam bit [3:0] State_FlushAddr = 4'd8;
+localparam bit [3:0] State_FlushCheck = 4'd9;
+localparam bit [3:0] State_Reset = 4'd10;
+localparam bit [3:0] State_ResetWrite = 4'd11;
 
 localparam bit [CFG_SDCACHE_ADDR_BITS-1:0] LINE_BYTES_MASK = ((2**CFG_LOG2_SDCACHE_BYTES_PER_LINE) - 1);
 

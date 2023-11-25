@@ -19,15 +19,15 @@ import types_amba_pkg::*;
 import river_cfg_pkg::*;
 import types_river_pkg::*;
 
-localparam bit [3:0] Idle = 4'h0;                           // axi ar_ready=1,aw_ready=1
-localparam bit [3:0] ReadLineRequest = 4'h1;                // l1 ar_valid=1
-localparam bit [3:0] WaitReadLineResponse = 4'h2;           // l1 r_ready=1
-localparam bit [3:0] WriteDataAccept = 4'h3;                // axi w_ready=1
-localparam bit [3:0] WriteLineRequest = 4'h4;               // l1 w_valid=1
-localparam bit [3:0] WaitWriteConfirmResponse = 4'h5;       // l1 b_ready
-localparam bit [3:0] WaitWriteAccept = 4'h6;                // axi b_valid
-localparam bit [3:0] WaitReadAccept = 4'h7;                 // axi r_valid
-localparam bit [3:0] CheckBurst = 4'h8;
+localparam bit [3:0] Idle = 4'd0;                           // axi ar_ready=1,aw_ready=1
+localparam bit [3:0] ReadLineRequest = 4'd1;                // l1 ar_valid=1
+localparam bit [3:0] WaitReadLineResponse = 4'd2;           // l1 r_ready=1
+localparam bit [3:0] WriteDataAccept = 4'd3;                // axi w_ready=1
+localparam bit [3:0] WriteLineRequest = 4'd4;               // l1 w_valid=1
+localparam bit [3:0] WaitWriteConfirmResponse = 4'd5;       // l1 b_ready
+localparam bit [3:0] WaitWriteAccept = 4'd6;                // axi b_valid
+localparam bit [3:0] WaitReadAccept = 4'd7;                 // axi r_valid
+localparam bit [3:0] CheckBurst = 4'd8;
 
 typedef struct {
     logic [3:0] state;

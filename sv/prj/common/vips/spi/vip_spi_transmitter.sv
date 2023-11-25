@@ -51,9 +51,9 @@ begin: comb_proc
     logic v_neg;
     logic v_resp_ready;
 
-    v_pos = 0;
-    v_neg = 0;
-    v_resp_ready = 0;
+    v_pos = 1'b0;
+    v_neg = 1'b0;
+    v_resp_ready = 1'b0;
 
     v = r;
 
@@ -73,7 +73,7 @@ begin: comb_proc
             v.byterdy = 1'b1;
         end
     end else if (i_csn == 1'b1) begin
-        v.bitcnt = '0;
+        v.bitcnt = 4'd0;
     end
 
     if ((i_csn == 1'b0) && (v_neg == 1'b1)) begin
@@ -82,14 +82,14 @@ begin: comb_proc
             // There's one negedge before CSn goes high:
             v.txshift = i_resp_rdata;
         end else begin
-            v.txshift = {r.txshift[31: 0], 1'h1};
+            v.txshift = {r.txshift[31: 0], 1'b1};
         end
     end
 
     if (r.byterdy == 1'b1) begin
         case (r.state)
         state_cmd: begin
-            v.bytecnt = '0;
+            v.bytecnt = 3'd0;
             if (r.rxshift[7: 0] == 8'h41) begin
                 v.state = state_addr;
                 v.req_write = 1'b0;                         // Read request
@@ -100,8 +100,8 @@ begin: comb_proc
         end
         state_addr: begin
             v.bytecnt = (r.bytecnt + 1);
-            if (r.bytecnt == 3'h3) begin
-                v.bytecnt = '0;
+            if (r.bytecnt == 3'd3) begin
+                v.bytecnt = 3'd0;
                 v.state = state_data;
                 v.req_addr = r.rxshift;
                 v.req_valid = (~r.req_write);
@@ -109,8 +109,8 @@ begin: comb_proc
         end
         state_data: begin
             v.bytecnt = (r.bytecnt + 1);
-            if (r.bytecnt == 3'h3) begin
-                v.bytecnt = '0;
+            if (r.bytecnt == 3'd3) begin
+                v.bytecnt = 3'd0;
                 v.state = state_cmd;
                 v.req_wdata = r.rxshift;
                 v.req_valid = r.req_write;

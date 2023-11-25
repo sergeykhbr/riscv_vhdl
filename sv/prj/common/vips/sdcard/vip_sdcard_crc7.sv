@@ -38,8 +38,8 @@ begin: comb_proc
     logic v_inv7;
     logic [6:0] vb_crc7;
 
-    v_inv7 = 0;
-    vb_crc7 = 0;
+    v_inv7 = 1'b0;
+    vb_crc7 = '0;
 
     v = r;
 
@@ -57,7 +57,7 @@ begin: comb_proc
     vb_crc7[0] = v_inv7;
 
     if (i_clear == 1'b1) begin
-        v.crc7 = '0;
+        v.crc7 = 7'd0;
     end else if (i_next == 1'b1) begin
         v.crc7 = vb_crc7;
     end

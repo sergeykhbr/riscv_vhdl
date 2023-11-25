@@ -56,26 +56,26 @@ begin: comb_proc
     logic v_a2s_nzero;
     logic v_ena;
 
-    vb_a1 = 0;
-    vb_a2 = 0;
-    wb_mux_lvl0 = 0;
+    vb_a1 = '0;
+    vb_a2 = '0;
+    wb_mux_lvl0 = '0;
     for (int i = 0; i < 32; i++) begin
-        wb_lvl0[i] = '0;
+        wb_lvl0[i] = 66'd0;
     end
     for (int i = 0; i < 8; i++) begin
-        wb_lvl2[i] = '0;
+        wb_lvl2[i] = 74'd0;
     end
     for (int i = 0; i < 2; i++) begin
-        wb_lvl4[i] = '0;
+        wb_lvl4[i] = 100'd0;
     end
-    wb_lvl5 = 0;
-    wb_res32 = 0;
-    wb_res = 0;
-    vb_a1s = 0;
-    vb_a2s = 0;
-    v_a1s_nzero = 0;
-    v_a2s_nzero = 0;
-    v_ena = 0;
+    wb_lvl5 = '0;
+    wb_res32 = '0;
+    wb_res = '0;
+    vb_a1s = '0;
+    vb_a2s = '0;
+    v_a1s_nzero = 1'b0;
+    v_a2s_nzero = 1'b0;
+    v_ena = 1'b0;
 
     v.busy = r.busy;
     v.ena = r.ena;
@@ -167,30 +167,30 @@ begin: comb_proc
     if (r.ena[0] == 1'b1) begin
         for (int i = 0; i < 32; i++) begin
             wb_mux_lvl0 = r.a2[(2 * i) +: 2];
-            if (wb_mux_lvl0 == 2'h0) begin
+            if (wb_mux_lvl0 == 2'd0) begin
                 wb_lvl0[i] = '0;
-            end else if (wb_mux_lvl0 == 2'h1) begin
-                wb_lvl0[i] = {2'h0, r.a1};
-            end else if (wb_mux_lvl0 == 2'h2) begin
-                wb_lvl0[i] = {r.a1, 1'h0};
+            end else if (wb_mux_lvl0 == 2'd1) begin
+                wb_lvl0[i] = {2'd0, r.a1};
+            end else if (wb_mux_lvl0 == 2'd2) begin
+                wb_lvl0[i] = {r.a1, 1'b0};
             end else begin
-                wb_lvl0[i] = ({2'h0, r.a1}
-                        + {1'h0, r.a1, 1'h0});
+                wb_lvl0[i] = ({2'd0, r.a1}
+                        + {1'b0, r.a1, 1'b0});
             end
         end
         for (int i = 0; i < 16; i++) begin
-            v.lvl1[i] = ({1'h0, wb_lvl0[((2 * i) + 1)], 2'h0}
-                    + {3'h0, wb_lvl0[(2 * i)]});
+            v.lvl1[i] = ({1'b0, wb_lvl0[((2 * i) + 1)], 2'd0}
+                    + {3'd0, wb_lvl0[(2 * i)]});
         end
     end
 
     if (r.ena[1] == 1'b1) begin
         for (int i = 0; i < 8; i++) begin
-            wb_lvl2[i] = ({r.lvl1[((2 * i) + 1)], 4'h0}
+            wb_lvl2[i] = ({r.lvl1[((2 * i) + 1)], 4'd0}
                     + r.lvl1[(2 * i)]);
         end
         for (int i = 0; i < 4; i++) begin
-            v.lvl3[i] = ({wb_lvl2[((2 * i) + 1)], 8'h00}
+            v.lvl3[i] = ({wb_lvl2[((2 * i) + 1)], 8'd0}
                     + wb_lvl2[(2 * i)]);
         end
     end
@@ -198,10 +198,10 @@ begin: comb_proc
     if (r.ena[2] == 1'b1) begin
         v.busy = 1'b0;
         for (int i = 0; i < 2; i++) begin
-            wb_lvl4[i] = ({r.lvl3[((2 * i) + 1)], 16'h0000}
+            wb_lvl4[i] = ({r.lvl3[((2 * i) + 1)], 16'd0}
                     + r.lvl3[(2 * i)]);
         end
-        wb_lvl5 = ({wb_lvl4[1], 32'h00000000}
+        wb_lvl5 = ({wb_lvl4[1], 32'd0}
                 + wb_lvl4[0]);
         if (r.rv32 == 1'b1) begin
             wb_res32[31: 0] = wb_lvl5[31: 0];
@@ -213,7 +213,7 @@ begin: comb_proc
             v.result = wb_res32;
         end else if (r.high == 1'b1) begin
             if (r.zero == 1'b1) begin
-                v.result = '0;
+                v.result = 128'd0;
             end else if (r.inv == 1'b1) begin
                 v.result = (~wb_lvl5);
             end else begin
@@ -230,24 +230,24 @@ begin: comb_proc
     end
 
     if (~async_reset && i_nrst == 1'b0) begin
-        v.busy = 1'h0;
-        v.ena = 4'h0;
-        v.a1 = 64'h0000000000000000;
-        v.a2 = 64'h0000000000000000;
-        v.unsign = 1'h0;
-        v.high = 1'h0;
-        v.rv32 = 1'h0;
-        v.zero = 1'h0;
-        v.inv = 1'h0;
+        v.busy = 1'b0;
+        v.ena = '0;
+        v.a1 = '0;
+        v.a2 = '0;
+        v.unsign = 1'b0;
+        v.high = 1'b0;
+        v.rv32 = 1'b0;
+        v.zero = 1'b0;
+        v.inv = 1'b0;
         v.result = '0;
-        v.a1_dbg = 64'h0000000000000000;
-        v.a2_dbg = 64'h0000000000000000;
-        v.reference_mul = 64'h0000000000000000;
+        v.a1_dbg = '0;
+        v.a2_dbg = '0;
+        v.reference_mul = 64'd0;
         for (int i = 0; i < 16; i++) begin
-            v.lvl1[i] = '0;
+            v.lvl1[i] = 69'd0;
         end
         for (int i = 0; i < 4; i++) begin
-            v.lvl3[i] = '0;
+            v.lvl3[i] = 83'd0;
         end
     end
 
@@ -280,24 +280,24 @@ generate
 
         always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
             if (i_nrst == 1'b0) begin
-                r.busy <= 1'h0;
-                r.ena <= 4'h0;
-                r.a1 <= 64'h0000000000000000;
-                r.a2 <= 64'h0000000000000000;
-                r.unsign <= 1'h0;
-                r.high <= 1'h0;
-                r.rv32 <= 1'h0;
-                r.zero <= 1'h0;
-                r.inv <= 1'h0;
+                r.busy <= 1'b0;
+                r.ena <= '0;
+                r.a1 <= '0;
+                r.a2 <= '0;
+                r.unsign <= 1'b0;
+                r.high <= 1'b0;
+                r.rv32 <= 1'b0;
+                r.zero <= 1'b0;
+                r.inv <= 1'b0;
                 r.result <= '0;
-                r.a1_dbg <= 64'h0000000000000000;
-                r.a2_dbg <= 64'h0000000000000000;
-                r.reference_mul <= 64'h0000000000000000;
+                r.a1_dbg <= '0;
+                r.a2_dbg <= '0;
+                r.reference_mul <= 64'd0;
                 for (int i = 0; i < 16; i++) begin
-                    r.lvl1[i] <= '0;
+                    r.lvl1[i] <= 69'd0;
                 end
                 for (int i = 0; i < 4; i++) begin
-                    r.lvl3[i] <= '0;
+                    r.lvl3[i] <= 83'd0;
                 end
             end else begin
                 r.busy <= rin.busy;

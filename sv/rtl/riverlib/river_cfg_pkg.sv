@@ -117,10 +117,10 @@ localparam int CFG_MMU_PTE_DWIDTH = ((2 * RISCV_ARCH) - 12);// PTE entry size in
 localparam int CFG_MMU_PTE_DBYTES = (CFG_MMU_PTE_DWIDTH / 8);// PTE entry size in bytes
 
 
-localparam bit [1:0] MEMOP_8B = 2'h3;
-localparam bit [1:0] MEMOP_4B = 2'h2;
-localparam bit [1:0] MEMOP_2B = 2'h1;
-localparam bit [1:0] MEMOP_1B = 2'h0;
+localparam bit [1:0] MEMOP_8B = 2'd3;
+localparam bit [1:0] MEMOP_4B = 2'd2;
+localparam bit [1:0] MEMOP_2B = 2'd1;
+localparam bit [1:0] MEMOP_1B = 2'd0;
 
 // Integer Registers specified by ISA
 localparam int REG_ZERO = 0;
@@ -338,13 +338,13 @@ localparam int Instr_FPU_Total = ((Instr_FSUB_D - Instr_FADD_D) + 1);
 // @name PRV bits possible values:
 // @{
 // User-mode
-localparam bit [1:0] PRV_U = 2'h0;
+localparam bit [1:0] PRV_U = 2'd0;
 // super-visor mode
-localparam bit [1:0] PRV_S = 2'h1;
+localparam bit [1:0] PRV_S = 2'd1;
 // hyper-visor mode
-localparam bit [1:0] PRV_H = 2'h2;
+localparam bit [1:0] PRV_H = 2'd2;
 // machine mode
-localparam bit [1:0] PRV_M = 2'h3;
+localparam bit [1:0] PRV_M = 2'd3;
 // @}
 
 // Dport request types:
@@ -356,19 +356,19 @@ localparam int DPortReq_Progexec = 4;
 localparam int DPortReq_Total = 5;
 
 // DCSR register halt causes:
-localparam bit [2:0] HALT_CAUSE_EBREAK = 3'h1;              // software breakpoint
-localparam bit [2:0] HALT_CAUSE_TRIGGER = 3'h2;             // hardware breakpoint
-localparam bit [2:0] HALT_CAUSE_HALTREQ = 3'h3;             // halt request via debug interface
-localparam bit [2:0] HALT_CAUSE_STEP = 3'h4;                // step done
-localparam bit [2:0] HALT_CAUSE_RESETHALTREQ = 3'h5;        // not implemented
+localparam bit [2:0] HALT_CAUSE_EBREAK = 3'd1;              // software breakpoint
+localparam bit [2:0] HALT_CAUSE_TRIGGER = 3'd2;             // hardware breakpoint
+localparam bit [2:0] HALT_CAUSE_HALTREQ = 3'd3;             // halt request via debug interface
+localparam bit [2:0] HALT_CAUSE_STEP = 3'd4;                // step done
+localparam bit [2:0] HALT_CAUSE_RESETHALTREQ = 3'd5;        // not implemented
 
-localparam bit [2:0] PROGBUF_ERR_NONE = 3'h0;               // no error
-localparam bit [2:0] PROGBUF_ERR_BUSY = 3'h1;               // abstract command in progress
-localparam bit [2:0] PROGBUF_ERR_NOT_SUPPORTED = 3'h2;      // Request command not supported
-localparam bit [2:0] PROGBUF_ERR_EXCEPTION = 3'h3;          // Exception occurs while executing progbuf
-localparam bit [2:0] PROGBUF_ERR_HALT_RESUME = 3'h4;        // Command cannot be executed because of wrong CPU state
-localparam bit [2:0] PROGBUF_ERR_BUS = 3'h5;                // Bus error occurs
-localparam bit [2:0] PROGBUF_ERR_OTHER = 3'h7;              // Other reason
+localparam bit [2:0] PROGBUF_ERR_NONE = 3'd0;               // no error
+localparam bit [2:0] PROGBUF_ERR_BUSY = 3'd1;               // abstract command in progress
+localparam bit [2:0] PROGBUF_ERR_NOT_SUPPORTED = 3'd2;      // Request command not supported
+localparam bit [2:0] PROGBUF_ERR_EXCEPTION = 3'd3;          // Exception occurs while executing progbuf
+localparam bit [2:0] PROGBUF_ERR_HALT_RESUME = 3'd4;        // Command cannot be executed because of wrong CPU state
+localparam bit [2:0] PROGBUF_ERR_BUS = 3'd5;                // Bus error occurs
+localparam bit [2:0] PROGBUF_ERR_OTHER = 3'd7;              // Other reason
 
 localparam int EXCEPTION_InstrMisalign = 0;                 // Instruction address misaligned
 localparam int EXCEPTION_InstrFault = 1;                    // Instruction access fault
@@ -444,7 +444,7 @@ localparam int REQ_MEM_TYPE_BITS = 3;
 function automatic logic [REQ_MEM_TYPE_BITS-1:0] ReadNoSnoop();
 logic [REQ_MEM_TYPE_BITS-1:0] ret;
 begin
-    ret = '0;
+    ret = 3'd0;
     return ret;
 end
 endfunction: ReadNoSnoop
@@ -453,7 +453,7 @@ endfunction: ReadNoSnoop
 function automatic logic [REQ_MEM_TYPE_BITS-1:0] ReadShared();
 logic [REQ_MEM_TYPE_BITS-1:0] ret;
 begin
-    ret = '0;
+    ret = 3'd0;
     ret[REQ_MEM_TYPE_CACHED] = 1;
     return ret;
 end
@@ -463,7 +463,7 @@ endfunction: ReadShared
 function automatic logic [REQ_MEM_TYPE_BITS-1:0] ReadMakeUnique();
 logic [REQ_MEM_TYPE_BITS-1:0] ret;
 begin
-    ret = '0;
+    ret = 3'd0;
     ret[REQ_MEM_TYPE_CACHED] = 1;
     ret[REQ_MEM_TYPE_UNIQUE] = 1;
     return ret;
@@ -474,7 +474,7 @@ endfunction: ReadMakeUnique
 function automatic logic [REQ_MEM_TYPE_BITS-1:0] WriteNoSnoop();
 logic [REQ_MEM_TYPE_BITS-1:0] ret;
 begin
-    ret = '0;
+    ret = 3'd0;
     ret[REQ_MEM_TYPE_WRITE] = 1;
     return ret;
 end
@@ -484,7 +484,7 @@ endfunction: WriteNoSnoop
 function automatic logic [REQ_MEM_TYPE_BITS-1:0] WriteLineUnique();
 logic [REQ_MEM_TYPE_BITS-1:0] ret;
 begin
-    ret = '0;
+    ret = 3'd0;
     ret[REQ_MEM_TYPE_WRITE] = 1;
     ret[REQ_MEM_TYPE_CACHED] = 1;
     ret[REQ_MEM_TYPE_UNIQUE] = 1;
@@ -496,7 +496,7 @@ endfunction: WriteLineUnique
 function automatic logic [REQ_MEM_TYPE_BITS-1:0] WriteBack();
 logic [REQ_MEM_TYPE_BITS-1:0] ret;
 begin
-    ret = '0;
+    ret = 3'd0;
     ret[REQ_MEM_TYPE_WRITE] = 1;
     ret[REQ_MEM_TYPE_CACHED] = 1;
     return ret;

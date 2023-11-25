@@ -76,21 +76,21 @@ begin: comb_proc
     logic [1:0] vb_memop_size;
     logic v_rv32;
 
-    v_error = 0;
-    vb_instr = 0;
-    vb_opcode1 = 0;
-    vb_opcode2 = 0;
-    vb_dec = 0;
-    vb_isa_type = 0;
-    vb_radr1 = 0;
-    vb_radr2 = 0;
-    vb_waddr = 0;
-    vb_imm = 0;
-    v_memop_store = 0;
-    v_memop_load = 0;
-    v_memop_sign_ext = 0;
-    vb_memop_size = 0;
-    v_rv32 = 0;
+    v_error = 1'b0;
+    vb_instr = '0;
+    vb_opcode1 = '0;
+    vb_opcode2 = '0;
+    vb_dec = '0;
+    vb_isa_type = '0;
+    vb_radr1 = '0;
+    vb_radr2 = '0;
+    vb_waddr = '0;
+    vb_imm = '0;
+    v_memop_store = 1'b0;
+    v_memop_load = 1'b0;
+    v_memop_sign_ext = 1'b0;
+    vb_memop_size = '0;
+    v_rv32 = 1'b0;
 
     v = r;
 
@@ -118,16 +118,16 @@ begin: comb_proc
     OPCODE_C_SLLI: begin
         vb_isa_type[ISA_I_type] = 1'b1;
         vb_dec[Instr_SLLI] = 1'b1;
-        vb_radr1 = {1'h0, vb_instr[11: 7]};                 // rs1
-        vb_waddr = {1'h0, vb_instr[11: 7]};                 // rd
+        vb_radr1 = {1'b0, vb_instr[11: 7]};                 // rs1
+        vb_waddr = {1'b0, vb_instr[11: 7]};                 // rd
         vb_imm[5: 0] = {vb_instr[12], vb_instr[6: 2]};
     end
     OPCODE_C_JAL_ADDIW: begin
         // JAL is the RV32C only instruction
         vb_isa_type[ISA_I_type] = 1'b1;
         vb_dec[Instr_ADDIW] = 1'b1;
-        vb_radr1 = {1'h0, vb_instr[11: 7]};                 // rs1
-        vb_waddr = {1'h0, vb_instr[11: 7]};                 // rd
+        vb_radr1 = {1'b0, vb_instr[11: 7]};                 // rs1
+        vb_waddr = {1'b0, vb_instr[11: 7]};                 // rd
         vb_imm[4: 0] = vb_instr[6: 2];
         if (vb_instr[12] == 1'b1) begin
             vb_imm[(RISCV_ARCH - 1): 5] = '1;
@@ -143,7 +143,7 @@ begin: comb_proc
     OPCODE_C_LI: begin                                      // ADDI rd = r0 + imm
         vb_isa_type[ISA_I_type] = 1'b1;
         vb_dec[Instr_ADDI] = 1'b1;
-        vb_waddr = {1'h0, vb_instr[11: 7]};                 // rd
+        vb_waddr = {1'b0, vb_instr[11: 7]};                 // rd
         vb_imm[4: 0] = vb_instr[6: 2];
         if (vb_instr[12] == 1'b1) begin
             vb_imm[(RISCV_ARCH - 1): 5] = '1;
@@ -176,7 +176,7 @@ begin: comb_proc
         end else begin
             vb_isa_type[ISA_U_type] = 1'b1;
             vb_dec[Instr_LUI] = 1'b1;
-            vb_waddr = {1'h0, vb_instr[11: 7]};             // rd
+            vb_waddr = {1'b0, vb_instr[11: 7]};             // rd
             vb_imm[16: 12] = vb_instr[6: 2];
             if (vb_instr[12] == 1'b1) begin
                 vb_imm[(RISCV_ARCH - 1): 17] = '1;
@@ -191,19 +191,19 @@ begin: comb_proc
         vb_imm[8: 3] = {vb_instr[4: 2], vb_instr[12], vb_instr[6: 5]};
     end
     OPCODE_C_MATH: begin
-        if (vb_instr[11: 10] == 2'h0) begin
+        if (vb_instr[11: 10] == 2'd0) begin
             vb_isa_type[ISA_I_type] = 1'b1;
             vb_dec[Instr_SRLI] = 1'b1;
             vb_radr1 = {3'h1, vb_instr[9: 7]};              // rs1
             vb_waddr = {3'h1, vb_instr[9: 7]};              // rd
             vb_imm[5: 0] = {vb_instr[12], vb_instr[6: 2]};
-        end else if (vb_instr[11: 10] == 2'h1) begin
+        end else if (vb_instr[11: 10] == 2'd1) begin
             vb_isa_type[ISA_I_type] = 1'b1;
             vb_dec[Instr_SRAI] = 1'b1;
             vb_radr1 = {3'h1, vb_instr[9: 7]};              // rs1
             vb_waddr = {3'h1, vb_instr[9: 7]};              // rd
             vb_imm[5: 0] = {vb_instr[12], vb_instr[6: 2]};
-        end else if (vb_instr[11: 10] == 2'h2) begin
+        end else if (vb_instr[11: 10] == 2'd2) begin
             vb_isa_type[ISA_I_type] = 1'b1;
             vb_dec[Instr_ANDI] = 1'b1;
             vb_radr1 = {3'h1, vb_instr[9: 7]};              // rs1
@@ -218,13 +218,13 @@ begin: comb_proc
             vb_radr2 = {3'h1, vb_instr[4: 2]};              // rs2
             vb_waddr = {3'h1, vb_instr[9: 7]};              // rd
             case (vb_instr[6: 5])
-            2'h0: begin
+            2'd0: begin
                 vb_dec[Instr_SUB] = 1'b1;
             end
-            2'h1: begin
+            2'd1: begin
                 vb_dec[Instr_XOR] = 1'b1;
             end
-            2'h2: begin
+            2'd2: begin
                 vb_dec[Instr_OR] = 1'b1;
             end
             default: begin
@@ -237,10 +237,10 @@ begin: comb_proc
             vb_radr2 = {3'h1, vb_instr[4: 2]};              // rs2
             vb_waddr = {3'h1, vb_instr[9: 7]};              // rd
             case (vb_instr[6: 5])
-            2'h0: begin
+            2'd0: begin
                 vb_dec[Instr_SUBW] = 1'b1;
             end
-            2'h1: begin
+            2'd1: begin
                 vb_dec[Instr_ADDW] = 1'b1;
             end
             default: begin
@@ -254,25 +254,25 @@ begin: comb_proc
         if (vb_instr[12] == 1'b0) begin
             if ((|vb_instr[6: 2]) == 1'b0) begin
                 vb_dec[Instr_JALR] = 1'b1;
-                vb_radr1 = {1'h0, vb_instr[11: 7]};         // rs1
+                vb_radr1 = {1'b0, vb_instr[11: 7]};         // rs1
             end else begin
                 vb_dec[Instr_ADDI] = 1'b1;
-                vb_radr1 = {1'h0, vb_instr[6: 2]};          // rs1
-                vb_waddr = {1'h0, vb_instr[11: 7]};         // rd
+                vb_radr1 = {1'b0, vb_instr[6: 2]};          // rs1
+                vb_waddr = {1'b0, vb_instr[11: 7]};         // rd
             end
         end else begin
             if (((|vb_instr[11: 7]) == 1'b0) && ((|vb_instr[6: 2]) == 1'b0)) begin
                 vb_dec[Instr_EBREAK] = 1'b1;
             end else if ((|vb_instr[6: 2]) == 1'b0) begin
                 vb_dec[Instr_JALR] = 1'b1;
-                vb_radr1 = {1'h0, vb_instr[11: 7]};         // rs1
+                vb_radr1 = {1'b0, vb_instr[11: 7]};         // rs1
                 vb_waddr = 6'h01;
             end else begin
                 vb_dec[Instr_ADD] = 1'b1;
                 vb_isa_type[ISA_R_type] = 1'b1;
-                vb_radr1 = {1'h0, vb_instr[11: 7]};         // rs1
-                vb_radr2 = {1'h0, vb_instr[6: 2]};          // rs2
-                vb_waddr = {1'h0, vb_instr[11: 7]};         // rd
+                vb_radr1 = {1'b0, vb_instr[11: 7]};         // rs1
+                vb_radr2 = {1'b0, vb_instr[6: 2]};          // rs2
+                vb_waddr = {1'b0, vb_instr[11: 7]};         // rd
             end
         end
     end
@@ -310,7 +310,7 @@ begin: comb_proc
         vb_isa_type[ISA_S_type] = 1'b1;
         vb_dec[Instr_SW] = 1'b1;
         vb_radr1 = 6'h02;                                   // rs1 = sp
-        vb_radr2 = {1'h0, vb_instr[6: 2]};                  // rs2
+        vb_radr2 = {1'b0, vb_instr[6: 2]};                  // rs2
         vb_imm[7: 2] = {vb_instr[8: 7], vb_instr[12], vb_instr[11: 9]};
     end
     OPCODE_C_SD: begin
@@ -333,7 +333,7 @@ begin: comb_proc
         vb_isa_type[ISA_S_type] = 1'b1;
         vb_dec[Instr_SD] = 1'b1;
         vb_radr1 = 6'h02;                                   // rs1 = sp
-        vb_radr2 = {1'h0, vb_instr[6: 2]};                  // rs2
+        vb_radr2 = {1'b0, vb_instr[6: 2]};                  // rs2
         vb_imm[8: 3] = {vb_instr[9: 7], vb_instr[12], vb_instr[11: 10]};
     end
     default: begin
@@ -376,7 +376,7 @@ begin: comb_proc
     end
 
     o_pc = r.pc;
-    o_instr = {16'h0000, r.instr};
+    o_instr = {16'd0, r.instr};
     o_memop_load = r.memop_load;
     o_memop_store = r.memop_store;
     o_memop_sign_ext = r.memop_sign_ext;
@@ -394,7 +394,7 @@ begin: comb_proc
     o_radr1 = r.radr1;
     o_radr2 = r.radr2;
     o_waddr = r.waddr;
-    o_csr_addr = '0;
+    o_csr_addr = 12'd0;
     o_imm = r.imm;
     o_progbuf_ena = r.progbuf_ena;
 

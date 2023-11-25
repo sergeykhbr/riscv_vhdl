@@ -55,15 +55,15 @@ begin: comb_proc
     logic shift_ena_up;
     logic shift_ena_down;
 
-    wb_tbl_rdata = 0;
-    vb_tbl_wadr = 0;
-    vb_tbl_wdata_init = 0;
-    vb_tbl_wdata_up = 0;
-    vb_tbl_wdata_down = 0;
-    vb_tbl_wdata = 0;
-    v_we = 0;
-    shift_ena_up = 0;
-    shift_ena_down = 0;
+    wb_tbl_rdata = '0;
+    vb_tbl_wadr = '0;
+    vb_tbl_wdata_init = '0;
+    vb_tbl_wdata_up = '0;
+    vb_tbl_wdata_down = '0;
+    vb_tbl_wdata = '0;
+    v_we = 1'b0;
+    shift_ena_up = 1'b0;
+    shift_ena_down = 1'b0;
 
     v.radr = r.radr;
     for (int i = 0; i < LINES_TOTAL; i++) begin
@@ -119,7 +119,7 @@ begin: comb_proc
     end else if (i_down == 1'b1) begin
         vb_tbl_wdata = vb_tbl_wdata_down;
     end else begin
-        vb_tbl_wdata = '0;
+        vb_tbl_wdata = 8'd0;
     end
 
     if (v_we == 1'b1) begin

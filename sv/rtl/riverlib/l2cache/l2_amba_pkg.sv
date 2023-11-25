@@ -19,10 +19,10 @@ import types_amba_pkg::*;
 import river_cfg_pkg::*;
 import types_river_pkg::*;
 
-localparam bit [1:0] idle = 2'h0;
-localparam bit [1:0] reading = 2'h1;
-localparam bit [1:0] writing = 2'h2;
-localparam bit [1:0] wack = 2'h3;
+localparam bit [1:0] idle = 2'd0;
+localparam bit [1:0] reading = 2'd1;
+localparam bit [1:0] writing = 2'd2;
+localparam bit [1:0] wack = 2'd3;
 
 typedef struct {
     logic [1:0] state;

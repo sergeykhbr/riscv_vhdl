@@ -47,7 +47,7 @@ const IntDiv_registers IntDiv_r_reset = '{
     '0,                                 // bits_i
     '0,                                 // result
     '0,                                 // reference_div
-    '0,                                 // a1_dbg
+    64'd0,                              // a1_dbg
     '0                                  // a2_dbg
 };
 

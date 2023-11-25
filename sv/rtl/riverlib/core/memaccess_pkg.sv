@@ -17,10 +17,10 @@ package memaccess_pkg;
 
 import river_cfg_pkg::*;
 
-localparam bit [1:0] State_Idle = 2'h0;
-localparam bit [1:0] State_WaitReqAccept = 2'h1;
-localparam bit [1:0] State_WaitResponse = 2'h2;
-localparam bit [1:0] State_Hold = 2'h3;
+localparam bit [1:0] State_Idle = 2'd0;
+localparam bit [1:0] State_WaitReqAccept = 2'd1;
+localparam bit [1:0] State_WaitResponse = 2'd2;
+localparam bit [1:0] State_Hold = 2'd3;
 localparam int QUEUE_WIDTH = (1  // memop_debug
         + 1  // i_flushd_valid
         + 1  // i_mmu_ena

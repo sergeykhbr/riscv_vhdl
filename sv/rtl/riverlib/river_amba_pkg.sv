@@ -20,18 +20,18 @@ import river_cfg_pkg::*;
 import types_river_pkg::*;
 import target_cfg_pkg::*;
 
-localparam bit [2:0] state_idle = 3'h0;
-localparam bit [2:0] state_ar = 3'h1;
-localparam bit [2:0] state_r = 3'h2;
-localparam bit [2:0] state_aw = 3'h3;
-localparam bit [2:0] state_w = 3'h4;
-localparam bit [2:0] state_b = 3'h5;
-localparam bit [2:0] snoop_idle = 3'h0;
-localparam bit [2:0] snoop_ac_wait_accept = 3'h1;
-localparam bit [2:0] snoop_cr = 3'h2;
-localparam bit [2:0] snoop_cr_wait_accept = 3'h3;
-localparam bit [2:0] snoop_cd = 3'h4;
-localparam bit [2:0] snoop_cd_wait_accept = 3'h5;
+localparam bit [2:0] state_idle = 3'd0;
+localparam bit [2:0] state_ar = 3'd1;
+localparam bit [2:0] state_r = 3'd2;
+localparam bit [2:0] state_aw = 3'd3;
+localparam bit [2:0] state_w = 3'd4;
+localparam bit [2:0] state_b = 3'd5;
+localparam bit [2:0] snoop_idle = 3'd0;
+localparam bit [2:0] snoop_ac_wait_accept = 3'd1;
+localparam bit [2:0] snoop_cr = 3'd2;
+localparam bit [2:0] snoop_cr_wait_accept = 3'd3;
+localparam bit [2:0] snoop_cd = 3'd4;
+localparam bit [2:0] snoop_cd_wait_accept = 3'd5;
 
 typedef struct {
     logic [2:0] state;
@@ -66,7 +66,7 @@ const RiverAmba_registers RiverAmba_r_reset = '{
     '0,                                 // req_aw_snoop
     snoop_idle,                         // snoop_state
     '0,                                 // ac_addr
-    '0,                                 // ac_snoop
+    4'd0,                               // ac_snoop
     '0,                                 // cr_resp
     '0,                                 // req_snoop_type
     '0,                                 // resp_snoop_data

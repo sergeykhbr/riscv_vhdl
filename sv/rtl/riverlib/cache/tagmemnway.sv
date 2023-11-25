@@ -146,16 +146,16 @@ begin: comb_proc
     logic v_snoop_ready;
     logic [flbits-1:0] vb_snoop_flags;
 
-    vb_raddr = 0;
-    vb_rdata = 0;
-    vb_rflags = 0;
-    v_hit = 0;
-    vb_hit_idx = 0;
-    v_way_we = 0;
-    vb_wstrb = 0;
-    vb_wflags = 0;
-    v_snoop_ready = 0;
-    vb_snoop_flags = 0;
+    vb_raddr = '0;
+    vb_rdata = '0;
+    vb_rflags = '0;
+    v_hit = 1'b0;
+    vb_hit_idx = '0;
+    v_way_we = 1'b0;
+    vb_wstrb = '0;
+    vb_wflags = '0;
+    v_snoop_ready = 1'b0;
+    vb_snoop_flags = '0;
 
     v = r;
 
@@ -181,7 +181,7 @@ begin: comb_proc
     v_hit = way_o[int'(vb_hit_idx)].hit;
 
     if (r.invalidate == 1'b1) begin
-        vb_wflags = '0;
+        vb_wflags = 4'd0;
         vb_wstrb = '1;
     end else begin
         vb_wflags = i_wflags;

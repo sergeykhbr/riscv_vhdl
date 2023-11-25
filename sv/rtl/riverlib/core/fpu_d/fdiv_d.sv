@@ -93,33 +93,33 @@ begin: comb_proc
     logic mantZeroB;
     logic [63:0] res;
 
-    vb_ena = 0;
-    signA = 0;
-    signB = 0;
-    mantA = 0;
-    mantB = 0;
-    zeroA = 0;
-    zeroB = 0;
-    divisor = 0;
-    preShift = 0;
-    expAB_t = 0;
-    expAB = 0;
-    mantAlign = 0;
-    expShift = 0;
-    expAlign = 0;
-    postShift = 0;
-    mantPostScale = 0;
-    mantShort = 0;
-    tmpMant05 = 0;
-    mantOnes = 0;
-    mantEven = 0;
-    mant05 = 0;
-    rndBit = 0;
-    nanA = 0;
-    nanB = 0;
-    mantZeroA = 0;
-    mantZeroB = 0;
-    res = 0;
+    vb_ena = '0;
+    signA = 1'b0;
+    signB = 1'b0;
+    mantA = '0;
+    mantB = '0;
+    zeroA = 1'b0;
+    zeroB = 1'b0;
+    divisor = '0;
+    preShift = '0;
+    expAB_t = '0;
+    expAB = '0;
+    mantAlign = '0;
+    expShift = '0;
+    expAlign = '0;
+    postShift = '0;
+    mantPostScale = '0;
+    mantShort = '0;
+    tmpMant05 = '0;
+    mantOnes = 1'b0;
+    mantEven = 1'b0;
+    mant05 = 1'b0;
+    rndBit = 1'b0;
+    nanA = 1'b0;
+    nanB = 1'b0;
+    mantZeroA = 1'b0;
+    mantZeroB = 1'b0;
+    res = '0;
 
     v = r;
 
@@ -149,15 +149,15 @@ begin: comb_proc
     end
 
     mantA[51: 0] = r.a[51: 0];
-    mantA[52] = 1'h0;
+    mantA[52] = 1'b0;
     if ((|r.a[62: 52]) == 1'b1) begin
-        mantA[52] = 1'h1;
+        mantA[52] = 1'b1;
     end
 
     mantB[51: 0] = r.b[51: 0];
-    mantB[52] = 1'h0;
+    mantB[52] = 1'b0;
     if ((|r.b[62: 52]) == 1'b1) begin
-        mantB[52] = 1'h1;
+        mantB[52] = 1'b1;
         divisor = mantB;
     end else begin
         // multiplexer for operation with zero expanent
@@ -171,8 +171,8 @@ begin: comb_proc
     end
 
     // expA - expB + 1023
-    expAB_t = ({1'h0, r.a[62: 52]} + 12'h3ff);
-    expAB = ({1'h0, expAB_t} - {2'h0, r.b[62: 52]});        // signed value
+    expAB_t = ({1'b0, r.a[62: 52]} + 12'd1023);
+    expAB = ({1'b0, expAB_t} - {2'd0, r.b[62: 52]});        // signed value
 
     if (r.ena[0] == 1'b1) begin
         v.divisor = divisor;
@@ -193,7 +193,7 @@ begin: comb_proc
         end
     end
 
-    expShift = ({6'h00, r.preShift} - {5'h00, wb_idiv_lshift});
+    expShift = ({6'd0, r.preShift} - {5'd0, wb_idiv_lshift});
     if (((|r.b[62: 52]) == 1'b0) && ((|r.a[62: 52]) == 1'b1)) begin
         expShift = (expShift - 1);
     end else if (((|r.b[62: 52]) == 1'b1) && ((|r.a[62: 52]) == 1'b0)) begin
@@ -202,9 +202,9 @@ begin: comb_proc
 
     expAlign = (r.expAB + {expShift[11], expShift});
     if (expAlign[12] == 1'b1) begin
-        postShift = ((~expAlign[11: 0]) + 12'h002);
+        postShift = ((~expAlign[11: 0]) + 12'd2);
     end else begin
-        postShift = '0;
+        postShift = 12'd0;
     end
 
     if (w_idiv_rdy == 1'b1) begin
@@ -224,7 +224,7 @@ begin: comb_proc
     // Prepare to mantissa post-scale
     if ((|r.postShift) == 1'b0) begin
         mantPostScale = r.mantAlign;
-    end else if (r.postShift < 12'h069) begin
+    end else if (r.postShift < 12'd105) begin
         for (int i = 0; i < 105; i++) begin
             if (i == r.postShift) begin
                 mantPostScale = (r.mantAlign >> i);
@@ -263,13 +263,13 @@ begin: comb_proc
 
     // Result multiplexers:
     if (nanA && mantZeroA && nanB && mantZeroB) begin
-        res[63] = 1'h1;
+        res[63] = 1'b1;
     end else if (nanA && (~mantZeroA)) begin
         res[63] = signA;
     end else if (nanB && (~mantZeroB)) begin
         res[63] = signB;
     end else if (r.zeroA && r.zeroB) begin
-        res[63] = 1'h1;
+        res[63] = 1'b1;
     end else begin
         res[63] = (r.a[63] ^ r.b[63]);
     end
@@ -290,13 +290,13 @@ begin: comb_proc
 
     if (((r.zeroA && r.zeroB)
             || (nanA && mantZeroA && nanB && mantZeroB)) == 1'b1) begin
-        res[51] = 1'h1;
+        res[51] = 1'b1;
         res[50: 0] = '0;
     end else if ((nanA && (~mantZeroA)) == 1'b1) begin
-        res[51] = 1'h1;
+        res[51] = 1'b1;
         res[50: 0] = r.a[50: 0];
     end else if ((nanB && (~mantZeroB)) == 1'b1) begin
-        res[51] = 1'h1;
+        res[51] = 1'b1;
         res[50: 0] = r.b[50: 0];
     end else if ((r.overflow
                 || r.nanRes

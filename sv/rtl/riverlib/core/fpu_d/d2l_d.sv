@@ -55,20 +55,20 @@ begin: comb_proc
     logic [63:0] resMant;
     logic [63:0] res;
 
-    v_ena = 0;
-    mantA = 0;
-    expDif_gr = 1'h0;
-    expDif_lt = 1'h0;
-    overflow = 0;
-    underflow = 0;
-    expDif = 0;
-    mantPreScale = 0;
-    mantPostScale = 0;
-    expMax = 0;
-    expShift = 0;
-    resSign = 0;
-    resMant = 0;
-    res = 0;
+    v_ena = 1'b0;
+    mantA = '0;
+    expDif_gr = 1'b0;
+    expDif_lt = 1'b0;
+    overflow = 1'b0;
+    underflow = 1'b0;
+    expDif = '0;
+    mantPreScale = '0;
+    mantPostScale = '0;
+    expMax = '0;
+    expShift = '0;
+    resSign = 1'b0;
+    resMant = '0;
+    res = '0;
 
     v = r;
 
@@ -76,9 +76,9 @@ begin: comb_proc
     v.ena = {r.ena[1: 0], v_ena};
 
     mantA[51: 0] = i_a[51: 0];
-    mantA[52] = 1'h0;
+    mantA[52] = 1'b0;
     if ((|i_a[62: 52]) == 1'b1) begin
-        mantA[52] = 1'h1;
+        mantA[52] = 1'b1;
     end
 
     if (i_ena == 1'b1) begin
@@ -96,18 +96,18 @@ begin: comb_proc
     expShift = (6'h3e - r.expA[5: 0]);
     if (r.w32 == 1'b1) begin
         if (r.op_signed == 1'b1) begin
-            expMax = 11'h41d;
+            expMax = 11'd1053;
         end else begin
-            expMax = 11'h43d;
+            expMax = 11'd1085;
         end
     end else begin
         if ((r.op_signed || r.signA) == 1'b1) begin
-            expMax = 11'h43d;
+            expMax = 11'd1085;
         end else begin
-            expMax = 11'h43e;
+            expMax = 11'd1086;
         end
     end
-    expDif = ({1'h0, expMax} - {1'h0, r.expA});
+    expDif = ({1'b0, expMax} - {1'b0, r.expA});
 
     expDif_gr = expDif[11];
     expDif_lt = 1'b0;
@@ -115,9 +115,9 @@ begin: comb_proc
         expDif_lt = 1'b1;
     end
 
-    mantPreScale = {r.mantA, 11'h000};
+    mantPreScale = {r.mantA, 11'd0};
 
-    mantPostScale = '0;
+    mantPostScale = 64'd0;
     if (expDif_gr == 1'b1) begin
         overflow = 1'b1;
         underflow = 1'b0;
@@ -155,14 +155,14 @@ begin: comb_proc
             if (r.w32 == 1'b1) begin
                 res[63: 31] = '1;
             end else begin
-                res[63] = 1'h1;
+                res[63] = 1'b1;
             end
         end
     end else begin
         if (r.w32 == 1'b1) begin
             res[63: 32] = '0;
         end else if (r.overflow == 1'b1) begin
-            res[63] = 1'h1;
+            res[63] = 1'b1;
         end
     end
 

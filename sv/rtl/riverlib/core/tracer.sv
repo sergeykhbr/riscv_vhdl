@@ -125,65 +125,65 @@ Tracer_registers r, rin;
 function string TaskDisassembler(input logic [31:0] instr);
 string ostr;
 begin
-    if (instr[1: 0] != 2'h3) begin
+    if (instr[1: 0] != 2'd3) begin
         case (instr[1: 0])
-        2'h0: begin
+        2'd0: begin
             case (instr[15: 13])
-            3'h0: begin
+            3'd0: begin
                 if ((|instr[12: 2]) == 1'b0) begin
                     ostr = $sformatf("%10s", "ERROR");
                 end else begin
                     ostr = $sformatf("%10s", "c.addi4spn");
                 end
             end
-            3'h1: begin
+            3'd1: begin
                 ostr = $sformatf("%10s", "c.fld");
             end
-            3'h2: begin
+            3'd2: begin
                 ostr = $sformatf("%10s", "c.lw");
             end
-            3'h3: begin
+            3'd3: begin
                 ostr = $sformatf("%10s", "c.ld");
             end
-            3'h4: begin
+            3'd4: begin
                 ostr = $sformatf("%10s", "ERROR");
             end
-            3'h5: begin
+            3'd5: begin
                 ostr = $sformatf("%10s", "c.fsd");
             end
-            3'h6: begin
+            3'd6: begin
                 ostr = $sformatf("%10s", "c.sw");
             end
-            3'h7: begin
+            3'd7: begin
                 ostr = $sformatf("%10s", "c.sd");
             end
             endcase
         end
-        2'h1: begin
+        2'd1: begin
             case (instr[15: 13])
-            3'h0: begin
+            3'd0: begin
                 if ((|instr[12: 2]) == 1'b0) begin
                     ostr = $sformatf("%10s", "c.nop");
                 end else begin
                     ostr = $sformatf("%10s", "c.addi");
                 end
             end
-            3'h1: begin
+            3'd1: begin
                 if ((|instr[11: 7]) == 1'b0) begin
                     ostr = $sformatf("%10s", "ERROR");
                 end else begin
                     ostr = $sformatf("%10s", "c.addiw");
                 end
             end
-            3'h2: begin
+            3'd2: begin
                 if ((|instr[11: 7]) == 1'b0) begin
                     ostr = $sformatf("%10s", "ERROR");
                 end else begin
                     ostr = $sformatf("%10s", "c.li");
                 end
             end
-            3'h3: begin
-                if (instr[11: 7] == 5'h02) begin
+            3'd3: begin
+                if (instr[11: 7] == 5'd2) begin
                     ostr = $sformatf("%10s", "c.addi16sp");
                 end else if ((|instr[11: 7]) == 1'b1) begin
                     ostr = $sformatf("%10s", "c.lui");
@@ -191,88 +191,88 @@ begin
                     ostr = $sformatf("%10s", "ERROR");
                 end
             end
-            3'h4: begin
-                if (instr[11: 10] == 2'h0) begin
-                    if ((instr[12] == 1'b0) && (instr[6: 2] == 5'h00)) begin
+            3'd4: begin
+                if (instr[11: 10] == 2'd0) begin
+                    if ((instr[12] == 1'b0) && (instr[6: 2] == 5'd0)) begin
                         ostr = $sformatf("%10s", "c.srli64");
                     end else begin
                         ostr = $sformatf("%10s", "c.srli");
                     end
-                end else if (instr[11: 10] == 2'h1) begin
-                    if ((instr[12] == 1'b0) && (instr[6: 2] == 5'h00)) begin
+                end else if (instr[11: 10] == 2'd1) begin
+                    if ((instr[12] == 1'b0) && (instr[6: 2] == 5'd0)) begin
                         ostr = $sformatf("%10s", "c.srai64");
                     end else begin
                         ostr = $sformatf("%10s", "c.srai");
                     end
-                end else if (instr[11: 10] == 2'h2) begin
+                end else if (instr[11: 10] == 2'd2) begin
                     ostr = $sformatf("%10s", "c.andi");
                 end else begin
-                    if ((instr[12] == 1'b0) && (instr[6: 5] == 2'h0)) begin
+                    if ((instr[12] == 1'b0) && (instr[6: 5] == 2'd0)) begin
                         ostr = $sformatf("%10s", "c.sub");
-                    end else if ((instr[12] == 1'b0) && (instr[6: 5] == 2'h1)) begin
+                    end else if ((instr[12] == 1'b0) && (instr[6: 5] == 2'd1)) begin
                         ostr = $sformatf("%10s", "c.xor");
-                    end else if ((instr[12] == 1'b0) && (instr[6: 5] == 2'h2)) begin
+                    end else if ((instr[12] == 1'b0) && (instr[6: 5] == 2'd2)) begin
                         ostr = $sformatf("%10s", "c.or");
-                    end else if ((instr[12] == 1'b0) && (instr[6: 5] == 2'h3)) begin
+                    end else if ((instr[12] == 1'b0) && (instr[6: 5] == 2'd3)) begin
                         ostr = $sformatf("%10s", "c.and");
-                    end else if ((instr[12] == 1'b1) && (instr[6: 5] == 2'h0)) begin
+                    end else if ((instr[12] == 1'b1) && (instr[6: 5] == 2'd0)) begin
                         ostr = $sformatf("%10s", "c.subw");
-                    end else if ((instr[12] == 1'b1) && (instr[6: 5] == 2'h1)) begin
+                    end else if ((instr[12] == 1'b1) && (instr[6: 5] == 2'd1)) begin
                         ostr = $sformatf("%10s", "c.addw");
                     end else begin
                         ostr = $sformatf("%10s", "ERROR");
                     end
                 end
             end
-            3'h5: begin
+            3'd5: begin
                 ostr = $sformatf("%10s", "c.j");
             end
-            3'h6: begin
+            3'd6: begin
                 ostr = $sformatf("%10s", "c.beqz");
             end
-            3'h7: begin
+            3'd7: begin
                 ostr = $sformatf("%10s", "c.bnez");
             end
             endcase
         end
-        2'h2: begin
+        2'd2: begin
             case (instr[15: 13])
-            3'h0: begin
-                if ((instr[12] == 1'b0) && (instr[6: 5] == 2'h0)) begin
+            3'd0: begin
+                if ((instr[12] == 1'b0) && (instr[6: 5] == 2'd0)) begin
                     ostr = $sformatf("%10s", "c.slli64");
                 end else begin
                     ostr = $sformatf("%10s", "c.slli");
                 end
             end
-            3'h1: begin
+            3'd1: begin
                 ostr = $sformatf("%10s", "c.fldsp");
             end
-            3'h2: begin
+            3'd2: begin
                 ostr = $sformatf("%10s", "c.lwsp");
             end
-            3'h3: begin
+            3'd3: begin
                 ostr = $sformatf("%10s", "c.ldsp");
             end
-            3'h4: begin
-                if ((instr[12] == 1'b0) && (instr[6: 2] == 5'h00)) begin
+            3'd4: begin
+                if ((instr[12] == 1'b0) && (instr[6: 2] == 5'd0)) begin
                     ostr = $sformatf("%10s", "c.jr");
-                end else if ((instr[12] == 1'b0) && (instr[6: 2] != 5'h00)) begin
+                end else if ((instr[12] == 1'b0) && (instr[6: 2] != 5'd0)) begin
                     ostr = $sformatf("%10s", "c.mv");
-                end else if ((instr[12] == 1'b1) && (instr[6: 2] == 5'h00) && (instr[11: 7] == 5'h00)) begin
+                end else if ((instr[12] == 1'b1) && (instr[6: 2] == 5'd0) && (instr[11: 7] == 5'd0)) begin
                     ostr = $sformatf("%10s", "c.ebreak");
-                end else if ((instr[12] == 1'b1) && (instr[6: 2] == 5'h00)) begin
+                end else if ((instr[12] == 1'b1) && (instr[6: 2] == 5'd0)) begin
                     ostr = $sformatf("%10s", "c.jalr");
                 end else begin
                     ostr = $sformatf("%10s", "c.add");
                 end
             end
-            3'h5: begin
+            3'd5: begin
                 ostr = $sformatf("%10s", "c.fsdsp");
             end
-            3'h6: begin
+            3'd6: begin
                 ostr = $sformatf("%10s", "c.swsp");
             end
-            3'h7: begin
+            3'd7: begin
                 ostr = $sformatf("%10s", "c.sdsp");
             end
             endcase
@@ -286,25 +286,25 @@ begin
         case (instr[6: 0])
         7'h03: begin
             case (instr[14: 12])
-            3'h0: begin
+            3'd0: begin
                 ostr = $sformatf("%10s", "lb");
             end
-            3'h1: begin
+            3'd1: begin
                 ostr = $sformatf("%10s", "lh");
             end
-            3'h2: begin
+            3'd2: begin
                 ostr = $sformatf("%10s", "lw");
             end
-            3'h3: begin
+            3'd3: begin
                 ostr = $sformatf("%10s", "ld");
             end
-            3'h4: begin
+            3'd4: begin
                 ostr = $sformatf("%10s", "lbu");
             end
-            3'h5: begin
+            3'd5: begin
                 ostr = $sformatf("%10s", "lhu");
             end
-            3'h6: begin
+            3'd6: begin
                 ostr = $sformatf("%10s", "lwu");
             end
             default: begin
@@ -314,7 +314,7 @@ begin
         end
         7'h07: begin
             case (instr[14: 12])
-            3'h3: begin
+            3'd3: begin
                 ostr = $sformatf("%10s", "fld");
             end
             default: begin
@@ -324,10 +324,10 @@ begin
         end
         7'h0f: begin
             case (instr[14: 12])
-            3'h0: begin
+            3'd0: begin
                 ostr = $sformatf("%10s", "fence");
             end
-            3'h1: begin
+            3'd1: begin
                 ostr = $sformatf("%10s", "fence.i");
             end
             default: begin
@@ -337,26 +337,26 @@ begin
         end
         7'h13: begin
             case (instr[14: 12])
-            3'h0: begin
+            3'd0: begin
                 ostr = $sformatf("%10s", "addi");
             end
-            3'h1: begin
+            3'd1: begin
                 if ((|instr[31: 26]) == 1'b0) begin
                     ostr = $sformatf("%10s", "slli");
                 end else begin
                     ostr = $sformatf("%10s", "ERROR");
                 end
             end
-            3'h2: begin
+            3'd2: begin
                 ostr = $sformatf("%10s", "slti");
             end
-            3'h3: begin
+            3'd3: begin
                 ostr = $sformatf("%10s", "sltiu");
             end
-            3'h4: begin
+            3'd4: begin
                 ostr = $sformatf("%10s", "xori");
             end
-            3'h5: begin
+            3'd5: begin
                 if ((|instr[31: 26]) == 1'b0) begin
                     ostr = $sformatf("%10s", "srli");
                 end else if (instr[31: 26] == 6'h10) begin
@@ -365,10 +365,10 @@ begin
                     ostr = $sformatf("%10s", "ERROR");
                 end
             end
-            3'h6: begin
+            3'd6: begin
                 ostr = $sformatf("%10s", "ori");
             end
-            3'h7: begin
+            3'd7: begin
                 ostr = $sformatf("%10s", "andi");
             end
             default: begin
@@ -381,19 +381,19 @@ begin
         end
         7'h1b: begin
             case (instr[14: 12])
-            3'h0: begin
+            3'd0: begin
                 ostr = $sformatf("%10s", "addiw");
             end
-            3'h1: begin
+            3'd1: begin
                 if (instr[31: 25] == 7'h00) begin
                     ostr = $sformatf("%10s", "slliw");
                 end else begin
                     ostr = $sformatf("%10s", "ERROR");
                 end
             end
-            3'h5: begin
+            3'd5: begin
                 case (instr[31: 25])
-                7'h00: begin
+                7'd0: begin
                     ostr = $sformatf("%10s", "srliw");
                 end
                 7'h20: begin
@@ -411,16 +411,16 @@ begin
         end
         7'h23: begin
             case (instr[14: 12])
-            3'h0: begin
+            3'd0: begin
                 ostr = $sformatf("%10s", "sb");
             end
-            3'h1: begin
+            3'd1: begin
                 ostr = $sformatf("%10s", "sh");
             end
-            3'h2: begin
+            3'd2: begin
                 ostr = $sformatf("%10s", "sw");
             end
-            3'h3: begin
+            3'd3: begin
                 ostr = $sformatf("%10s", "sd");
             end
             default: begin
@@ -430,7 +430,7 @@ begin
         end
         7'h27: begin
             case (instr[14: 12])
-            3'h3: begin
+            3'd3: begin
                 ostr = $sformatf("%10s", "fsd");
             end
             default: begin
@@ -439,7 +439,7 @@ begin
             endcase
         end
         7'h2f: begin
-            if (instr[14: 12] == 3'h2) begin
+            if (instr[14: 12] == 3'd2) begin
                 case (instr[31: 27])
                 5'h00: begin
                     ostr = $sformatf("%10s", "amoadd.w");
@@ -482,7 +482,7 @@ begin
                     ostr = $sformatf("%10s", "ERROR");
                 end
                 endcase
-            end else if (instr[14: 12] == 3'h3) begin
+            end else if (instr[14: 12] == 3'd3) begin
                 case (instr[31: 27])
                 5'h00: begin
                     ostr = $sformatf("%10s", "amoadd.d");
@@ -531,9 +531,9 @@ begin
         end
         7'h33: begin
             case (instr[14: 12])
-            3'h0: begin
+            3'd0: begin
                 case (instr[31: 25])
-                7'h00: begin
+                7'd0: begin
                     ostr = $sformatf("%10s", "add");
                 end
                 7'h01: begin
@@ -547,9 +547,9 @@ begin
                 end
                 endcase
             end
-            3'h1: begin
+            3'd1: begin
                 case (instr[31: 25])
-                7'h00: begin
+                7'd0: begin
                     ostr = $sformatf("%10s", "sll");
                 end
                 7'h01: begin
@@ -560,9 +560,9 @@ begin
                 end
                 endcase
             end
-            3'h2: begin
+            3'd2: begin
                 case (instr[31: 25])
-                7'h00: begin
+                7'd0: begin
                     ostr = $sformatf("%10s", "slt");
                 end
                 7'h01: begin
@@ -573,9 +573,9 @@ begin
                 end
                 endcase
             end
-            3'h3: begin
+            3'd3: begin
                 case (instr[31: 25])
-                7'h00: begin
+                7'd0: begin
                     ostr = $sformatf("%10s", "sltu");
                 end
                 7'h01: begin
@@ -586,9 +586,9 @@ begin
                 end
                 endcase
             end
-            3'h4: begin
+            3'd4: begin
                 case (instr[31: 25])
-                7'h00: begin
+                7'd0: begin
                     ostr = $sformatf("%10s", "xor");
                 end
                 7'h01: begin
@@ -599,9 +599,9 @@ begin
                 end
                 endcase
             end
-            3'h5: begin
+            3'd5: begin
                 case (instr[31: 25])
-                7'h00: begin
+                7'd0: begin
                     ostr = $sformatf("%10s", "srl");
                 end
                 7'h01: begin
@@ -615,9 +615,9 @@ begin
                 end
                 endcase
             end
-            3'h6: begin
+            3'd6: begin
                 case (instr[31: 25])
-                7'h00: begin
+                7'd0: begin
                     ostr = $sformatf("%10s", "or");
                 end
                 7'h01: begin
@@ -628,9 +628,9 @@ begin
                 end
                 endcase
             end
-            3'h7: begin
+            3'd7: begin
                 case (instr[31: 25])
-                7'h00: begin
+                7'd0: begin
                     ostr = $sformatf("%10s", "and");
                 end
                 7'h01: begin
@@ -651,9 +651,9 @@ begin
         end
         7'h3b: begin
             case (instr[14: 12])
-            3'h0: begin
+            3'd0: begin
                 case (instr[31: 25])
-                7'h00: begin
+                7'd0: begin
                     ostr = $sformatf("%10s", "addw");
                 end
                 7'h01: begin
@@ -667,14 +667,14 @@ begin
                 end
                 endcase
             end
-            3'h1: begin
+            3'd1: begin
                 if ((|instr[31: 25]) == 1'b0) begin
                     ostr = $sformatf("%10s", "sllw");
                 end else begin
                     ostr = $sformatf("%10s", "ERROR");
                 end
             end
-            3'h4: begin
+            3'd4: begin
                 case (instr[31: 25])
                 7'h01: begin
                     ostr = $sformatf("%10s", "divw");
@@ -684,9 +684,9 @@ begin
                 end
                 endcase
             end
-            3'h5: begin
+            3'd5: begin
                 case (instr[31: 25])
-                7'h00: begin
+                7'd0: begin
                     ostr = $sformatf("%10s", "srlw");
                 end
                 7'h01: begin
@@ -700,7 +700,7 @@ begin
                 end
                 endcase
             end
-            3'h6: begin
+            3'd6: begin
                 case (instr[31: 25])
                 7'h01: begin
                     ostr = $sformatf("%10s", "remw");
@@ -710,7 +710,7 @@ begin
                 end
                 endcase
             end
-            3'h7: begin
+            3'd7: begin
                 case (instr[31: 25])
                 7'h01: begin
                     ostr = $sformatf("%10s", "remuw");
@@ -741,10 +741,10 @@ begin
             end
             7'h15: begin
                 case (instr[14: 12])
-                3'h0: begin
+                3'd0: begin
                     ostr = $sformatf("%10s", "fmin");
                 end
-                3'h1: begin
+                3'd1: begin
                     ostr = $sformatf("%10s", "fmax");
                 end
                 default: begin
@@ -754,13 +754,13 @@ begin
             end
             7'h51: begin
                 case (instr[14: 12])
-                3'h0: begin
+                3'd0: begin
                     ostr = $sformatf("%10s", "fle");
                 end
-                3'h1: begin
+                3'd1: begin
                     ostr = $sformatf("%10s", "flt");
                 end
-                3'h2: begin
+                3'd2: begin
                     ostr = $sformatf("%10s", "feq");
                 end
                 default: begin
@@ -827,22 +827,22 @@ begin
         end
         7'h63: begin
             case (instr[14: 12])
-            3'h0: begin
+            3'd0: begin
                 ostr = $sformatf("%10s", "beq");
             end
-            3'h1: begin
+            3'd1: begin
                 ostr = $sformatf("%10s", "bne");
             end
-            3'h4: begin
+            3'd4: begin
                 ostr = $sformatf("%10s", "blt");
             end
-            3'h5: begin
+            3'd5: begin
                 ostr = $sformatf("%10s", "bge");
             end
-            3'h6: begin
+            3'd6: begin
                 ostr = $sformatf("%10s", "bltu");
             end
-            3'h7: begin
+            3'd7: begin
                 ostr = $sformatf("%10s", "bgeu");
             end
             default: begin
@@ -858,7 +858,7 @@ begin
         end
         7'h73: begin
             case (instr[14: 12])
-            3'h0: begin
+            3'd0: begin
                 if (instr == 32'h00000073) begin
                     ostr = $sformatf("%10s", "ecall");
                 end else if (instr == 32'h00100073) begin
@@ -877,22 +877,22 @@ begin
                     ostr = $sformatf("%10s", "ERROR");
                 end
             end
-            3'h1: begin
+            3'd1: begin
                 ostr = $sformatf("%10s", "csrrw");
             end
-            3'h2: begin
+            3'd2: begin
                 ostr = $sformatf("%10s", "csrrs");
             end
-            3'h3: begin
+            3'd3: begin
                 ostr = $sformatf("%10s", "csrrc");
             end
-            3'h5: begin
+            3'd5: begin
                 ostr = $sformatf("%10s", "csrrwi");
             end
-            3'h6: begin
+            3'd6: begin
                 ostr = $sformatf("%10s", "csrrsi");
             end
-            3'h7: begin
+            3'd7: begin
                 ostr = $sformatf("%10s", "csrrci");
             end
             default: begin
@@ -984,12 +984,12 @@ begin: comb_proc
     rcnt = 0;
     regcnt = 0;
     memcnt = 0;
-    mskoff = 0;
-    mask = 0;
-    tr_wcnt_nxt = 0;
-    checked = 0;
-    entry_valid = 0;
-    rcnt_inc = 0;
+    mskoff = '0;
+    mask = '0;
+    tr_wcnt_nxt = '0;
+    checked = 1'b0;
+    entry_valid = 1'b0;
+    rcnt_inc = '0;
 
     for (int i = 0; i < TRACE_TBL_SZ; i++) begin
         v.trace_tbl[i].exec_cnt = r.trace_tbl[i].exec_cnt;
@@ -1043,13 +1043,13 @@ begin: comb_proc
         v.trace_tbl[wcnt].memaction[memcnt].memaddr = i_e_memop_addr;
         v.trace_tbl[wcnt].memaction[memcnt].size = i_e_memop_size;
         // Compute and save mask bit
-        mskoff = '0;
+        mskoff = 7'd0;
         mask = '1;
-        mskoff[int'(i_e_memop_size)] = 1'h1;
-        mskoff = {mskoff, 3'h0};
+        mskoff[int'(i_e_memop_size)] = 1'b1;
+        mskoff = {mskoff, 3'd0};
         if (mskoff < 64) begin
-            mask = '0;
-            mask[int'(mskoff)] = 1'h1;
+            mask = 64'd0;
+            mask[int'(mskoff)] = 1'b1;
             mask = (mask - 1);
         end
         v.trace_tbl[wcnt].memaction[memcnt].mask = mask;
@@ -1060,7 +1060,7 @@ begin: comb_proc
         if (((|i_e_waddr) == 1'b0)
                 || ((i_e_memop_type[MemopType_Store] == 1'b1)
                         && (i_e_memop_type[MemopType_Release] == 1'b0))) begin
-            v.trace_tbl[wcnt].memaction[memcnt].complete = 1'h1;
+            v.trace_tbl[wcnt].memaction[memcnt].complete = 1'b1;
         end
         v.trace_tbl[wcnt].memaction[memcnt].sc_release = i_e_memop_type[MemopType_Release];
     end
@@ -1081,11 +1081,11 @@ begin: comb_proc
             for (int i = 0; i < int'(r.trace_tbl[xcnt].memactioncnt); i++) begin
                 if ((checked == 1'b0) && (r.trace_tbl[xcnt].memaction[i].complete == 1'b0)) begin
                     checked = 1'b1;
-                    v.trace_tbl[xcnt].memaction[i].complete = 1'h1;
+                    v.trace_tbl[xcnt].memaction[i].complete = 1'b1;
                     v.trace_tbl[xcnt].memaction[i].ignored = i_reg_ignored;
                     if (r.trace_tbl[xcnt].memaction[i].sc_release == 1'b1) begin
-                        if (i_m_wdata == 64'h0000000000000001) begin
-                            v.trace_tbl[xcnt].memaction[i].ignored = 1'h1;
+                        if (i_m_wdata == 64'd1) begin
+                            v.trace_tbl[xcnt].memaction[i].ignored = 1'b1;
                         end
                         // do not re-write stored value by returning error status
                     end else begin
@@ -1125,32 +1125,32 @@ begin: comb_proc
 
     if (~async_reset && i_nrst == 1'b0) begin
         for (int i = 0; i < TRACE_TBL_SZ; i++) begin
-            v.trace_tbl[i].exec_cnt = 64'h0000000000000000;
-            v.trace_tbl[i].pc = 64'h0000000000000000;
-            v.trace_tbl[i].instr = 32'h00000000;
-            v.trace_tbl[i].regactioncnt = 32'h00000000;
-            v.trace_tbl[i].memactioncnt = 32'h00000000;
+            v.trace_tbl[i].exec_cnt = '0;
+            v.trace_tbl[i].pc = '0;
+            v.trace_tbl[i].instr = '0;
+            v.trace_tbl[i].regactioncnt = '0;
+            v.trace_tbl[i].memactioncnt = '0;
             for (int j = 0; j < TRACE_TBL_SZ; j++) begin
-                v.trace_tbl[i].regaction[j].waddr = 6'h00;
-                v.trace_tbl[i].regaction[j].wres = 64'h0000000000000000;
+                v.trace_tbl[i].regaction[j].waddr = '0;
+                v.trace_tbl[i].regaction[j].wres = '0;
             end
             for (int j = 0; j < TRACE_TBL_SZ; j++) begin
-                v.trace_tbl[i].memaction[j].store = 1'h0;
-                v.trace_tbl[i].memaction[j].size = 2'h0;
-                v.trace_tbl[i].memaction[j].mask = 64'h0000000000000000;
-                v.trace_tbl[i].memaction[j].memaddr = 64'h0000000000000000;
-                v.trace_tbl[i].memaction[j].data = 64'h0000000000000000;
-                v.trace_tbl[i].memaction[j].regaddr = 6'h00;
-                v.trace_tbl[i].memaction[j].complete = 1'h0;
-                v.trace_tbl[i].memaction[j].sc_release = 1'h0;
-                v.trace_tbl[i].memaction[j].ignored = 1'h0;
+                v.trace_tbl[i].memaction[j].store = 1'b0;
+                v.trace_tbl[i].memaction[j].size = '0;
+                v.trace_tbl[i].memaction[j].mask = '0;
+                v.trace_tbl[i].memaction[j].memaddr = '0;
+                v.trace_tbl[i].memaction[j].data = '0;
+                v.trace_tbl[i].memaction[j].regaddr = 6'd0;
+                v.trace_tbl[i].memaction[j].complete = 1'b0;
+                v.trace_tbl[i].memaction[j].sc_release = 1'b0;
+                v.trace_tbl[i].memaction[j].ignored = 1'b0;
             end
-            v.trace_tbl[i].completed = 1'h0;
+            v.trace_tbl[i].completed = 1'b0;
         end
-        v.tr_wcnt = 6'h00;
-        v.tr_rcnt = 6'h00;
-        v.tr_total = 6'h00;
-        v.tr_opened = 6'h00;
+        v.tr_wcnt = '0;
+        v.tr_rcnt = '0;
+        v.tr_total = '0;
+        v.tr_opened = '0;
     end
 
     for (int i = 0; i < TRACE_TBL_SZ; i++) begin
@@ -1188,32 +1188,32 @@ generate
         always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
             if (i_nrst == 1'b0) begin
                 for (int i = 0; i < TRACE_TBL_SZ; i++) begin
-                    r.trace_tbl[i].exec_cnt <= 64'h0000000000000000;
-                    r.trace_tbl[i].pc <= 64'h0000000000000000;
-                    r.trace_tbl[i].instr <= 32'h00000000;
-                    r.trace_tbl[i].regactioncnt <= 32'h00000000;
-                    r.trace_tbl[i].memactioncnt <= 32'h00000000;
+                    r.trace_tbl[i].exec_cnt <= '0;
+                    r.trace_tbl[i].pc <= '0;
+                    r.trace_tbl[i].instr <= '0;
+                    r.trace_tbl[i].regactioncnt <= '0;
+                    r.trace_tbl[i].memactioncnt <= '0;
                     for (int j = 0; j < TRACE_TBL_SZ; j++) begin
-                        r.trace_tbl[i].regaction[j].waddr <= 6'h00;
-                        r.trace_tbl[i].regaction[j].wres <= 64'h0000000000000000;
+                        r.trace_tbl[i].regaction[j].waddr <= '0;
+                        r.trace_tbl[i].regaction[j].wres <= '0;
                     end
                     for (int j = 0; j < TRACE_TBL_SZ; j++) begin
-                        r.trace_tbl[i].memaction[j].store <= 1'h0;
-                        r.trace_tbl[i].memaction[j].size <= 2'h0;
-                        r.trace_tbl[i].memaction[j].mask <= 64'h0000000000000000;
-                        r.trace_tbl[i].memaction[j].memaddr <= 64'h0000000000000000;
-                        r.trace_tbl[i].memaction[j].data <= 64'h0000000000000000;
-                        r.trace_tbl[i].memaction[j].regaddr <= 6'h00;
-                        r.trace_tbl[i].memaction[j].complete <= 1'h0;
-                        r.trace_tbl[i].memaction[j].sc_release <= 1'h0;
-                        r.trace_tbl[i].memaction[j].ignored <= 1'h0;
+                        r.trace_tbl[i].memaction[j].store <= 1'b0;
+                        r.trace_tbl[i].memaction[j].size <= '0;
+                        r.trace_tbl[i].memaction[j].mask <= '0;
+                        r.trace_tbl[i].memaction[j].memaddr <= '0;
+                        r.trace_tbl[i].memaction[j].data <= '0;
+                        r.trace_tbl[i].memaction[j].regaddr <= 6'd0;
+                        r.trace_tbl[i].memaction[j].complete <= 1'b0;
+                        r.trace_tbl[i].memaction[j].sc_release <= 1'b0;
+                        r.trace_tbl[i].memaction[j].ignored <= 1'b0;
                     end
-                    r.trace_tbl[i].completed <= 1'h0;
+                    r.trace_tbl[i].completed <= 1'b0;
                 end
-                r.tr_wcnt <= 6'h00;
-                r.tr_rcnt <= 6'h00;
-                r.tr_total <= 6'h00;
-                r.tr_opened <= 6'h00;
+                r.tr_wcnt <= '0;
+                r.tr_rcnt <= '0;
+                r.tr_total <= '0;
+                r.tr_opened <= '0;
             end else begin
                 for (int i = 0; i < TRACE_TBL_SZ; i++) begin
                     r.trace_tbl[i].exec_cnt <= rin.trace_tbl[i].exec_cnt;

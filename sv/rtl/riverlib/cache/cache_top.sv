@@ -256,19 +256,19 @@ begin: comb_proc
     logic [RISCV_ARCH-1:0] vb_resp_ctrl_addr;
     logic [RISCV_ARCH-1:0] vb_resp_data_addr;
 
-    vb_ctrl_bus = 55'h00000000000000;
-    vb_data_bus = 55'h00000000000000;
-    vb_queue_bus = 55'h00000000000000;
+    vb_ctrl_bus = '0;
+    vb_data_bus = '0;
+    vb_queue_bus = '0;
     ctrl_path_id = CTRL_PATH;
     data_path_id = DATA_PATH;
-    v_queue_we = 0;
-    v_queue_re = 0;
-    v_req_mem_path_o = 0;
-    vb_req_mem_type_o = 0;
-    vb_req_mem_size_o = 0;
-    vb_req_mem_addr_o = 0;
-    vb_resp_ctrl_addr = 0;
-    vb_resp_data_addr = 0;
+    v_queue_we = 1'b0;
+    v_queue_re = 1'b0;
+    v_req_mem_path_o = 1'b0;
+    vb_req_mem_type_o = '0;
+    vb_req_mem_size_o = '0;
+    vb_req_mem_addr_o = '0;
+    vb_resp_ctrl_addr = '0;
+    vb_resp_data_addr = '0;
 
     wb_i_req_ctrl_addr = i_req_ctrl_addr[(CFG_CPU_ADDR_BITS - 1): 0];
     wb_i_req_data_addr = i_req_data_addr[(CFG_CPU_ADDR_BITS - 1): 0];

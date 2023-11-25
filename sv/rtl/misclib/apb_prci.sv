@@ -70,7 +70,7 @@ begin: comb_proc
     apb_prci_registers v;
     logic [31:0] vb_rdata;
 
-    vb_rdata = 0;
+    vb_rdata = '0;
 
     v = r;
 
@@ -80,11 +80,11 @@ begin: comb_proc
 
     // Registers access:
     case (wb_req_addr[11: 2])
-    10'h000: begin                                          // 0x00: pll statuses
+    10'd0: begin                                            // 0x00: pll statuses
         vb_rdata[0] = i_sys_locked;
         vb_rdata[1] = i_ddr_locked;
     end
-    10'h001: begin                                          // 0x04: reset status
+    10'd1: begin                                            // 0x04: reset status
         vb_rdata[0] = r.sys_nrst;
         vb_rdata[1] = r.dbg_nrst;
         if (w_req_valid == 1'b1) begin

@@ -30,24 +30,24 @@ localparam int Res_IDiv = 9;
 localparam int Res_FPU = 10;
 localparam int Res_Total = 11;
 
-localparam bit [3:0] State_Idle = 4'h0;
-localparam bit [3:0] State_WaitMemAcces = 4'h1;
-localparam bit [3:0] State_WaitMulti = 4'h2;
-localparam bit [3:0] State_Amo = 4'h5;
-localparam bit [3:0] State_Csr = 4'h6;
-localparam bit [3:0] State_Halted = 4'h7;
-localparam bit [3:0] State_DebugMemRequest = 4'h8;
-localparam bit [3:0] State_DebugMemError = 4'h9;
+localparam bit [3:0] State_Idle = 4'd0;
+localparam bit [3:0] State_WaitMemAcces = 4'd1;
+localparam bit [3:0] State_WaitMulti = 4'd2;
+localparam bit [3:0] State_Amo = 4'd5;
+localparam bit [3:0] State_Csr = 4'd6;
+localparam bit [3:0] State_Halted = 4'd7;
+localparam bit [3:0] State_DebugMemRequest = 4'd8;
+localparam bit [3:0] State_DebugMemError = 4'd9;
 localparam bit [3:0] State_Wfi = 4'hf;
 
-localparam bit [1:0] CsrState_Idle = 2'h0;
-localparam bit [1:0] CsrState_Req = 2'h1;
-localparam bit [1:0] CsrState_Resp = 2'h2;
+localparam bit [1:0] CsrState_Idle = 2'd0;
+localparam bit [1:0] CsrState_Req = 2'd1;
+localparam bit [1:0] CsrState_Resp = 2'd2;
 
-localparam bit [1:0] AmoState_WaitMemAccess = 2'h0;
-localparam bit [1:0] AmoState_Read = 2'h1;
-localparam bit [1:0] AmoState_Modify = 2'h2;
-localparam bit [1:0] AmoState_Write = 2'h3;
+localparam bit [1:0] AmoState_WaitMemAccess = 2'd0;
+localparam bit [1:0] AmoState_Read = 2'd1;
+localparam bit [1:0] AmoState_Modify = 2'd2;
+localparam bit [1:0] AmoState_Write = 2'd3;
 
 typedef struct {
     logic ena;
@@ -148,7 +148,7 @@ const InstrExecute_registers InstrExecute_r_reset = '{
     '0,                                 // isa_type
     '0,                                 // imm
     '0,                                 // instr
-    '0,                                 // tagcnt
+    192'd0,                             // tagcnt
     1'b0,                               // reg_write
     '0,                                 // reg_waddr
     '0,                                 // reg_wtag

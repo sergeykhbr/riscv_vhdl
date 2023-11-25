@@ -36,11 +36,11 @@ module apb_uart #(
 import types_amba_pkg::*;
 import types_pnp_pkg::*;
 // Rx/Tx states
-localparam bit [2:0] idle = 3'h0;
-localparam bit [2:0] startbit = 3'h1;
-localparam bit [2:0] data = 3'h2;
-localparam bit [2:0] parity = 3'h3;
-localparam bit [2:0] stopbit = 3'h4;
+localparam bit [2:0] idle = 3'd0;
+localparam bit [2:0] startbit = 3'd1;
+localparam bit [2:0] data = 3'd2;
+localparam bit [2:0] parity = 3'd3;
+localparam bit [2:0] stopbit = 3'd4;
 
 localparam int fifosz = (2**log2_fifosz);
 
@@ -131,21 +131,21 @@ begin: comb_proc
     logic v_posedge_flag;
     logic par;
 
-    vb_rdata = 0;
-    vb_tx_wr_cnt_next = 0;
-    v_tx_fifo_full = 0;
-    v_tx_fifo_empty = 0;
-    vb_tx_fifo_rdata = 0;
-    v_tx_fifo_we = 0;
-    vb_rx_wr_cnt_next = 0;
-    v_rx_fifo_full = 0;
-    v_rx_fifo_empty = 0;
-    vb_rx_fifo_rdata = 0;
-    v_rx_fifo_we = 0;
-    v_rx_fifo_re = 0;
-    v_negedge_flag = 0;
-    v_posedge_flag = 0;
-    par = 0;
+    vb_rdata = '0;
+    vb_tx_wr_cnt_next = '0;
+    v_tx_fifo_full = 1'b0;
+    v_tx_fifo_empty = 1'b0;
+    vb_tx_fifo_rdata = '0;
+    v_tx_fifo_we = 1'b0;
+    vb_rx_wr_cnt_next = '0;
+    v_rx_fifo_full = 1'b0;
+    v_rx_fifo_empty = 1'b0;
+    vb_rx_fifo_rdata = '0;
+    v_rx_fifo_we = 1'b0;
+    v_rx_fifo_re = 1'b0;
+    v_negedge_flag = 1'b0;
+    v_posedge_flag = 1'b0;
+    par = 1'b0;
 
     v.scaler = r.scaler;
     v.scaler_cnt = r.scaler_cnt;
@@ -210,7 +210,7 @@ begin: comb_proc
 
     if (r.tx_rd_cnt == r.tx_wr_cnt) begin
         v_tx_fifo_empty = 1'b1;
-        v.tx_byte_cnt = '0;
+        v.tx_byte_cnt = 4'd0;
     end
     // Receiver's FIFO:
     vb_rx_wr_cnt_next = (r.rx_wr_cnt + 1);
@@ -220,13 +220,13 @@ begin: comb_proc
 
     if (r.rx_rd_cnt == r.rx_wr_cnt) begin
         v_rx_fifo_empty = 1'b1;
-        v.rx_byte_cnt = '0;
+        v.rx_byte_cnt = 4'd0;
     end
 
     // system bus clock scaler to baudrate:
     if ((|r.scaler) == 1'b1) begin
         if (r.scaler_cnt == (r.scaler - 1)) begin
-            v.scaler_cnt = '0;
+            v.scaler_cnt = 32'd0;
             v.level = (~r.level);
             v_posedge_flag = (~r.level);
             v_negedge_flag = r.level;
@@ -236,7 +236,7 @@ begin: comb_proc
 
         if (((r.rx_state == idle) && (i_rd == 1'b1))
                 && ((r.tx_state == idle) && (v_tx_fifo_empty == 1'b1))) begin
-            v.scaler_cnt = '0;
+            v.scaler_cnt = 32'd0;
             v.level = 1'b1;
         end
     end
@@ -256,15 +256,15 @@ begin: comb_proc
                             ^ vb_tx_fifo_rdata[2]
                             ^ vb_tx_fifo_rdata[1]
                             ^ vb_tx_fifo_rdata[0]);
-                    v.tx_shift = {1'h1, par, vb_tx_fifo_rdata, 1'h0};
+                    v.tx_shift = {1'b1, par, vb_tx_fifo_rdata, 1'b0};
                 end else begin
-                    v.tx_shift = {2'h3, vb_tx_fifo_rdata, 1'h0};
+                    v.tx_shift = {2'd3, vb_tx_fifo_rdata, 1'b0};
                 end
 
                 v.tx_state = startbit;
                 v.tx_rd_cnt = (r.tx_rd_cnt + 1);
                 v.tx_byte_cnt = (r.tx_byte_cnt - 1);
-                v.tx_frame_cnt = '0;
+                v.tx_frame_cnt = 4'd0;
             end else begin
                 v.tx_shift = '1;
             end
@@ -299,7 +299,7 @@ begin: comb_proc
 
         if ((r.tx_state != idle) && (r.tx_state != stopbit)) begin
             v.tx_frame_cnt = (r.tx_frame_cnt + 1);
-            v.tx_shift = {1'h1, r.tx_shift[10: 1]};
+            v.tx_shift = {1'b1, r.tx_shift[10: 1]};
         end
     end
 
@@ -309,13 +309,13 @@ begin: comb_proc
         idle: begin
             if ((i_rd == 1'b0) && (r.rx_ena == 1'b1)) begin
                 v.rx_state = data;
-                v.rx_shift = '0;
-                v.rx_frame_cnt = '0;
+                v.rx_shift = 11'd0;
+                v.rx_frame_cnt = 4'd0;
             end
         end
         data: begin
             v.rx_shift = {i_rd, r.rx_shift[7: 1]};
-            if (r.rx_frame_cnt == 4'h7) begin
+            if (r.rx_frame_cnt == 4'd7) begin
                 if (r.rx_par == 1'b1) begin
                     v.rx_state = parity;
                 end else begin
@@ -366,7 +366,7 @@ begin: comb_proc
 
     // Registers access:
     case (wb_req_addr[11: 2])
-    10'h000: begin                                          // 0x00: txdata
+    10'd0: begin                                            // 0x00: txdata
         vb_rdata[31] = v_tx_fifo_full;
         if (w_req_valid == 1'b1) begin
             if (w_req_write == 1'b1) begin
@@ -376,7 +376,7 @@ begin: comb_proc
             end
         end
     end
-    10'h001: begin                                          // 0x04: rxdata
+    10'd1: begin                                            // 0x04: rxdata
         vb_rdata[31] = v_rx_fifo_empty;
         vb_rdata[7: 0] = vb_rx_fifo_rdata;
         if (w_req_valid == 1'b1) begin
@@ -387,7 +387,7 @@ begin: comb_proc
             end
         end
     end
-    10'h002: begin                                          // 0x08: txctrl
+    10'd2: begin                                            // 0x08: txctrl
         vb_rdata[0] = r.tx_ena;                             // [0] tx ena
         vb_rdata[1] = r.tx_nstop;                           // [1] Number of stop bits
         vb_rdata[2] = r.tx_par;                             // [2] parity bit enable
@@ -399,7 +399,7 @@ begin: comb_proc
             v.tx_irq_thresh = wb_req_wdata[18: 16];
         end
     end
-    10'h003: begin                                          // 0x0C: rxctrl
+    10'd3: begin                                            // 0x0C: rxctrl
         vb_rdata[0] = r.rx_ena;                             // [0] txena
         vb_rdata[1] = r.rx_nstop;                           // [1] Number of stop bits
         vb_rdata[2] = r.rx_par;
@@ -411,7 +411,7 @@ begin: comb_proc
             v.rx_irq_thresh = wb_req_wdata[18: 16];
         end
     end
-    10'h004: begin                                          // 0x10: ie
+    10'd4: begin                                            // 0x10: ie
         vb_rdata[0] = r.tx_ie;
         vb_rdata[1] = r.rx_ie;
         if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
@@ -419,7 +419,7 @@ begin: comb_proc
             v.rx_ie = wb_req_wdata[1];
         end
     end
-    10'h005: begin                                          // 0x14: ip
+    10'd5: begin                                            // 0x14: ip
         vb_rdata[0] = r.tx_ip;
         vb_rdata[1] = r.rx_ip;
         if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
@@ -427,14 +427,14 @@ begin: comb_proc
             v.rx_ip = wb_req_wdata[1];
         end
     end
-    10'h006: begin                                          // 0x18: scaler
+    10'd6: begin                                            // 0x18: scaler
         vb_rdata = r.scaler;
         if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
             v.scaler = wb_req_wdata[30: sim_speedup_rate];
-            v.scaler_cnt = '0;
+            v.scaler_cnt = 32'd0;
         end
     end
-    10'h007: begin                                          // 0x1C: fwcpuid
+    10'd7: begin                                            // 0x1C: fwcpuid
         vb_rdata = r.fwcpuid;
         if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
             if (((|r.fwcpuid) == 1'b0) || ((|wb_req_wdata) == 1'b0)) begin
@@ -465,48 +465,48 @@ begin: comb_proc
     v.resp_err = 1'b0;
 
     if (~async_reset && i_nrst == 1'b0) begin
-        v.scaler = 32'h00000000;
-        v.scaler_cnt = 32'h00000000;
-        v.level = 1'h1;
-        v.err_parity = 1'h0;
-        v.err_stopbit = 1'h0;
-        v.fwcpuid = 32'h00000000;
+        v.scaler = '0;
+        v.scaler_cnt = '0;
+        v.level = 1'b1;
+        v.err_parity = 1'b0;
+        v.err_stopbit = 1'b0;
+        v.fwcpuid = '0;
         for (int i = 0; i < fifosz; i++) begin
-            v.rx_fifo[i] = 8'h00;
+            v.rx_fifo[i] = 8'd0;
         end
         v.rx_state = idle;
-        v.rx_ena = 1'h0;
-        v.rx_ie = 1'h0;
-        v.rx_ip = 1'h0;
-        v.rx_nstop = 1'h0;
-        v.rx_par = 1'h0;
-        v.rx_wr_cnt = 4'h0;
-        v.rx_rd_cnt = 4'h0;
-        v.rx_byte_cnt = 4'h0;
-        v.rx_irq_thresh = 4'h0;
-        v.rx_frame_cnt = 4'h0;
-        v.rx_stop_cnt = 1'h0;
-        v.rx_shift = 11'h000;
+        v.rx_ena = 1'b0;
+        v.rx_ie = 1'b0;
+        v.rx_ip = 1'b0;
+        v.rx_nstop = 1'b0;
+        v.rx_par = 1'b0;
+        v.rx_wr_cnt = '0;
+        v.rx_rd_cnt = '0;
+        v.rx_byte_cnt = '0;
+        v.rx_irq_thresh = '0;
+        v.rx_frame_cnt = '0;
+        v.rx_stop_cnt = 1'b0;
+        v.rx_shift = '0;
         for (int i = 0; i < fifosz; i++) begin
-            v.tx_fifo[i] = 8'h00;
+            v.tx_fifo[i] = 8'd0;
         end
         v.tx_state = idle;
-        v.tx_ena = 1'h0;
-        v.tx_ie = 1'h0;
-        v.tx_ip = 1'h0;
-        v.tx_nstop = 1'h0;
-        v.tx_par = 1'h0;
-        v.tx_wr_cnt = 4'h0;
-        v.tx_rd_cnt = 4'h0;
-        v.tx_byte_cnt = 4'h0;
-        v.tx_irq_thresh = 4'h0;
-        v.tx_frame_cnt = 4'h0;
-        v.tx_stop_cnt = 1'h0;
+        v.tx_ena = 1'b0;
+        v.tx_ie = 1'b0;
+        v.tx_ip = 1'b0;
+        v.tx_nstop = 1'b0;
+        v.tx_par = 1'b0;
+        v.tx_wr_cnt = '0;
+        v.tx_rd_cnt = '0;
+        v.tx_byte_cnt = '0;
+        v.tx_irq_thresh = '0;
+        v.tx_frame_cnt = '0;
+        v.tx_stop_cnt = 1'b0;
         v.tx_shift = '1;
-        v.tx_amo_guard = 1'h0;
-        v.resp_valid = 1'h0;
-        v.resp_rdata = 32'h00000000;
-        v.resp_err = 1'h0;
+        v.tx_amo_guard = 1'b0;
+        v.resp_valid = 1'b0;
+        v.resp_rdata = '0;
+        v.resp_err = 1'b0;
     end
 
     o_td = r.tx_shift[0];
@@ -561,48 +561,48 @@ generate
 
         always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
             if (i_nrst == 1'b0) begin
-                r.scaler <= 32'h00000000;
-                r.scaler_cnt <= 32'h00000000;
-                r.level <= 1'h1;
-                r.err_parity <= 1'h0;
-                r.err_stopbit <= 1'h0;
-                r.fwcpuid <= 32'h00000000;
+                r.scaler <= '0;
+                r.scaler_cnt <= '0;
+                r.level <= 1'b1;
+                r.err_parity <= 1'b0;
+                r.err_stopbit <= 1'b0;
+                r.fwcpuid <= '0;
                 for (int i = 0; i < fifosz; i++) begin
-                    r.rx_fifo[i] <= 8'h00;
+                    r.rx_fifo[i] <= 8'd0;
                 end
                 r.rx_state <= idle;
-                r.rx_ena <= 1'h0;
-                r.rx_ie <= 1'h0;
-                r.rx_ip <= 1'h0;
-                r.rx_nstop <= 1'h0;
-                r.rx_par <= 1'h0;
-                r.rx_wr_cnt <= 4'h0;
-                r.rx_rd_cnt <= 4'h0;
-                r.rx_byte_cnt <= 4'h0;
-                r.rx_irq_thresh <= 4'h0;
-                r.rx_frame_cnt <= 4'h0;
-                r.rx_stop_cnt <= 1'h0;
-                r.rx_shift <= 11'h000;
+                r.rx_ena <= 1'b0;
+                r.rx_ie <= 1'b0;
+                r.rx_ip <= 1'b0;
+                r.rx_nstop <= 1'b0;
+                r.rx_par <= 1'b0;
+                r.rx_wr_cnt <= '0;
+                r.rx_rd_cnt <= '0;
+                r.rx_byte_cnt <= '0;
+                r.rx_irq_thresh <= '0;
+                r.rx_frame_cnt <= '0;
+                r.rx_stop_cnt <= 1'b0;
+                r.rx_shift <= '0;
                 for (int i = 0; i < fifosz; i++) begin
-                    r.tx_fifo[i] <= 8'h00;
+                    r.tx_fifo[i] <= 8'd0;
                 end
                 r.tx_state <= idle;
-                r.tx_ena <= 1'h0;
-                r.tx_ie <= 1'h0;
-                r.tx_ip <= 1'h0;
-                r.tx_nstop <= 1'h0;
-                r.tx_par <= 1'h0;
-                r.tx_wr_cnt <= 4'h0;
-                r.tx_rd_cnt <= 4'h0;
-                r.tx_byte_cnt <= 4'h0;
-                r.tx_irq_thresh <= 4'h0;
-                r.tx_frame_cnt <= 4'h0;
-                r.tx_stop_cnt <= 1'h0;
+                r.tx_ena <= 1'b0;
+                r.tx_ie <= 1'b0;
+                r.tx_ip <= 1'b0;
+                r.tx_nstop <= 1'b0;
+                r.tx_par <= 1'b0;
+                r.tx_wr_cnt <= '0;
+                r.tx_rd_cnt <= '0;
+                r.tx_byte_cnt <= '0;
+                r.tx_irq_thresh <= '0;
+                r.tx_frame_cnt <= '0;
+                r.tx_stop_cnt <= 1'b0;
                 r.tx_shift <= '1;
-                r.tx_amo_guard <= 1'h0;
-                r.resp_valid <= 1'h0;
-                r.resp_rdata <= 32'h00000000;
-                r.resp_err <= 1'h0;
+                r.tx_amo_guard <= 1'b0;
+                r.resp_valid <= 1'b0;
+                r.resp_rdata <= '0;
+                r.resp_err <= 1'b0;
             end else begin
                 r.scaler <= rin.scaler;
                 r.scaler_cnt <= rin.scaler_cnt;

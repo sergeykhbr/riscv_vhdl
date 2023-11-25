@@ -94,53 +94,53 @@ begin: comb_proc
     logic [63:0] resMax;
     logic [63:0] resMin;
 
-    v_ena = 0;
-    signOp = 0;
-    signA = 0;
-    signB = 0;
-    signOpB = 0;
-    mantA = 0;
-    mantB = 0;
-    mantDif = 0;
-    expDif = 0;
-    v_flMore = 0;
-    v_flEqual = 0;
-    v_flLess = 0;
-    vb_preShift = 0;
-    v_signOpMore = 0;
-    vb_expMore = 0;
-    vb_mantMore = 0;
-    vb_mantLess = 0;
-    mantMoreScale = 0;
-    mantLessScale = 0;
-    vb_mantSum = 0;
-    vb_lshift = 0;
-    vb_mantAlign = 0;
-    vb_expPostScale = 0;
-    vb_mantPostScale = 0;
-    vb_mantSumInv = 0;
-    vb_lshift_p1 = 0;
-    vb_lshift_p2 = 0;
-    mantShort = 0;
-    tmpMant05 = 0;
-    mantOnes = 0;
-    mantEven = 0;
-    mant05 = 0;
-    rndBit = 0;
-    mantZeroA = 0;
-    mantZeroB = 0;
-    allZero = 0;
-    sumZero = 0;
-    nanA = 0;
-    nanB = 0;
-    nanAB = 0;
-    overflow = 0;
-    resAdd = 0;
-    resEQ = 0;
-    resLT = 0;
-    resLE = 0;
-    resMax = 0;
-    resMin = 0;
+    v_ena = 1'b0;
+    signOp = 1'b0;
+    signA = 1'b0;
+    signB = 1'b0;
+    signOpB = 1'b0;
+    mantA = '0;
+    mantB = '0;
+    mantDif = '0;
+    expDif = '0;
+    v_flMore = 1'b0;
+    v_flEqual = 1'b0;
+    v_flLess = 1'b0;
+    vb_preShift = '0;
+    v_signOpMore = 1'b0;
+    vb_expMore = '0;
+    vb_mantMore = '0;
+    vb_mantLess = '0;
+    mantMoreScale = '0;
+    mantLessScale = '0;
+    vb_mantSum = '0;
+    vb_lshift = '0;
+    vb_mantAlign = '0;
+    vb_expPostScale = '0;
+    vb_mantPostScale = '0;
+    vb_mantSumInv = '0;
+    vb_lshift_p1 = '0;
+    vb_lshift_p2 = '0;
+    mantShort = '0;
+    tmpMant05 = '0;
+    mantOnes = 1'b0;
+    mantEven = 1'b0;
+    mant05 = 1'b0;
+    rndBit = 1'b0;
+    mantZeroA = 1'b0;
+    mantZeroB = 1'b0;
+    allZero = 1'b0;
+    sumZero = 1'b0;
+    nanA = 1'b0;
+    nanB = 1'b0;
+    nanAB = 1'b0;
+    overflow = 1'b0;
+    resAdd = '0;
+    resEQ = '0;
+    resLT = '0;
+    resLE = '0;
+    resMax = '0;
+    resMin = '0;
 
     v = r;
 
@@ -168,26 +168,26 @@ begin: comb_proc
     signOpB = (signB ^ signOp);
 
     mantA[51: 0] = r.a[51: 0];
-    mantA[52] = 1'h0;
+    mantA[52] = 1'b0;
     if ((|r.a[62: 52]) == 1'b1) begin
-        mantA[52] = 1'h1;
+        mantA[52] = 1'b1;
     end
 
     mantB[51: 0] = r.b[51: 0];
-    mantB[52] = 1'h0;
+    mantB[52] = 1'b0;
     if ((|r.b[62: 52]) == 1'b1) begin
-        mantB[52] = 1'h1;
+        mantB[52] = 1'b1;
     end
 
     if (((|r.a[62: 52]) == 1'b1) && ((|r.b[62: 52]) == 1'b0)) begin
         expDif = (r.a[62: 52] - 1);
     end else if (((|r.a[62: 52]) == 1'b0) && ((|r.b[62: 52]) == 1'b1)) begin
-        expDif = (12'h001 - r.b[62: 52]);
+        expDif = (12'd1 - r.b[62: 52]);
     end else begin
         expDif = (r.a[62: 52] - r.b[62: 52]);
     end
 
-    mantDif = ({1'h0, mantA} - {1'h0, mantB});
+    mantDif = ({1'b0, mantA} - {1'b0, mantB});
     if ((|expDif) == 1'b0) begin
         vb_preShift = expDif;
         if ((|mantDif) == 1'b0) begin
@@ -255,7 +255,7 @@ begin: comb_proc
     mantLessScale = r.mantLess;
     mantLessScale = {mantLessScale, {52{1'b0}}};
     if (r.ena[1] == 1'b1) begin
-        v.mantLessScale = '0;
+        v.mantLessScale = 105'd0;
         for (int i = 0; i < 105; i++) begin
             if (i == r.preShift) begin
                 v.mantLessScale = (mantLessScale >> i);
@@ -292,7 +292,7 @@ begin: comb_proc
     for (int i = 0; i < 41; i++) begin
         if (((|vb_lshift_p2) == 1'b0) && (vb_mantSumInv[(64 + i)] == 1'b1)) begin
             vb_lshift_p2 = i;
-            vb_lshift_p2[6] = 1'h1;
+            vb_lshift_p2[6] = 1'b1;
         end
     end
 
@@ -301,7 +301,7 @@ begin: comb_proc
         // shift right
         vb_lshift = '1;
     end else if (r.mantSum[104] == 1'b1) begin
-        vb_lshift = '0;
+        vb_lshift = 7'd0;
     end else if ((|vb_lshift_p1) == 1'b1) begin
         vb_lshift = vb_lshift_p1;
     end else begin
@@ -325,15 +325,15 @@ begin: comb_proc
     end
     if (r.lshift == 7'h7f) begin
         if (r.expMore == 11'h7ff) begin
-            vb_expPostScale = {1'h0, r.expMore};
+            vb_expPostScale = {1'b0, r.expMore};
         end else begin
-            vb_expPostScale = {1'h0, (r.expMore + 1)};
+            vb_expPostScale = {1'b0, (r.expMore + 1)};
         end
     end else begin
         if (((|r.expMore) == 1'b0) && ((|r.lshift) == 1'b0)) begin
-            vb_expPostScale = 12'h001;
+            vb_expPostScale = 12'd1;
         end else begin
-            vb_expPostScale = ({1'h0, r.expMore} - {1'h0, r.lshift});
+            vb_expPostScale = ({1'b0, r.expMore} - {1'b0, r.lshift});
         end
     end
     if ((signA ^ signOpB) == 1'b1) begin
@@ -413,7 +413,7 @@ begin: comb_proc
     end else if (allZero == 1'b1) begin
         resAdd[63] = (signA && signOpB);
     end else if (sumZero == 1'b1) begin
-        resAdd[63] = 1'h0;
+        resAdd[63] = 1'b0;
     end else begin
         resAdd[63] = r.signOpMore;
     end
@@ -431,10 +431,10 @@ begin: comb_proc
         resAdd[50: 0] = '0;
     end else if ((nanA && (~(nanB && signOpB))) == 1'b1) begin
         // when both values are NaN, value B has higher priority if sign=1
-        resAdd[51] = 1'h1;
+        resAdd[51] = 1'b1;
         resAdd[50: 0] = r.a[50: 0];
     end else if (nanB == 1'b1) begin
-        resAdd[51] = 1'h1;
+        resAdd[51] = 1'b1;
         resAdd[50: 0] = r.b[50: 0];
     end else if (overflow == 1'b1) begin
         resAdd[51: 0] = '0;

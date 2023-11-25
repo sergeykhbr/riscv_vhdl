@@ -16,9 +16,9 @@
 package vip_spi_transmitter_pkg;
 
 
-localparam bit [1:0] state_cmd = 2'h0;
-localparam bit [1:0] state_addr = 2'h1;
-localparam bit [1:0] state_data = 2'h2;
+localparam bit [1:0] state_cmd = 2'd0;
+localparam bit [1:0] state_addr = 2'd1;
+localparam bit [1:0] state_data = 2'd2;
 
 typedef struct {
     logic [1:0] state;

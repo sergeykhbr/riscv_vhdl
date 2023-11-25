@@ -78,18 +78,18 @@ begin: comb_proc
     logic v_crc7_dat;
     logic v_crc7_next;
 
-    v_req_ready = 0;
-    vb_cmdshift = 0;
-    vb_resp_spistatus = 0;
-    v_crc7_dat = 0;
-    v_crc7_next = 0;
+    v_req_ready = 1'b0;
+    vb_cmdshift = '0;
+    vb_resp_spistatus = '0;
+    v_crc7_dat = 1'b0;
+    v_crc7_next = 1'b0;
 
     v = r;
 
     vb_cmdshift = r.cmdshift;
     vb_resp_spistatus = r.resp_spistatus;
     v.err_valid = 1'b0;
-    v.err_setcode = '0;
+    v.err_setcode = 4'd0;
     if (i_resp_ready == 1'b1) begin
         v.resp_valid = 1'b0;
     end
@@ -100,7 +100,7 @@ begin: comb_proc
         if (r.cmdstate == CMDSTATE_IDLE) begin
             if (i_cmd_set_low == 1'b1) begin
                 // Used during p-init state (power-up)
-                vb_cmdshift = '0;
+                vb_cmdshift = 48'd0;
             end else begin
                 vb_cmdshift = '1;
             end
@@ -116,24 +116,24 @@ begin: comb_proc
                 v.req_cmd = i_req_cmd;
                 v.req_rn = i_req_rn;
                 vb_cmdshift = {2'h1, i_req_cmd, i_req_arg};
-                v.cmdbitcnt = 7'h27;
+                v.cmdbitcnt = 7'd39;
                 v.crc7_clear = 1'b0;
                 v.cmdstate = CMDSTATE_REQ_CONTENT;
             end
         end else if (r.cmdstate == CMDSTATE_REQ_CONTENT) begin
             v_crc7_next = 1'b1;
-            vb_cmdshift = {r.cmdshift[38: 0], 1'h1};
+            vb_cmdshift = {r.cmdshift[38: 0], 1'b1};
             if ((|r.cmdbitcnt) == 1'b1) begin
                 v.cmdbitcnt = (r.cmdbitcnt - 1);
             end else begin
                 v.cmdstate = CMDSTATE_REQ_CRC7;
                 v.crc_calc = wb_crc7;
-                vb_cmdshift[39: 32] = {wb_crc7, 1'h1};
-                v.cmdbitcnt = 7'h06;
+                vb_cmdshift[39: 32] = {wb_crc7, 1'b1};
+                v.cmdbitcnt = 7'd6;
                 v.crc7_clear = 1'b1;
             end
         end else if (r.cmdstate == CMDSTATE_REQ_CRC7) begin
-            vb_cmdshift = {r.cmdshift[38: 0], 1'h1};
+            vb_cmdshift = {r.cmdshift[38: 0], 1'b1};
             if ((|r.cmdbitcnt) == 1'b1) begin
                 v.cmdbitcnt = (r.cmdbitcnt - 1);
             end else begin
@@ -166,10 +166,10 @@ begin: comb_proc
                 end else begin
                     // Response in SPI mode:
                     v.cmdstate = CMDSTATE_RESP_SPI_R1;
-                    v.cmdbitcnt = 7'h06;
+                    v.cmdbitcnt = 7'd6;
                     v.cmdmirror = r.req_cmd;
-                    v.resp_spistatus = '0;
-                    v.regshift = '0;
+                    v.resp_spistatus = 15'd0;
+                    v.regshift = 32'd0;
                 end
             end else if (i_wdog_trigger == 1'b1) begin
                 v.wdog_ena = 1'b0;
@@ -183,8 +183,8 @@ begin: comb_proc
             v_crc7_next = 1'b1;
             if (i_cmd == 1'b0) begin
                 v.cmdstate = CMDSTATE_RESP_CMD_MIRROR;
-                v.cmdmirror = '0;
-                v.cmdbitcnt = 7'h05;
+                v.cmdmirror = 6'd0;
+                v.cmdbitcnt = 7'd5;
             end else begin
                 v.err_valid = 1'b1;
                 v.err_setcode = CMDERR_WRONG_RESP_STARTBIT;
@@ -199,10 +199,10 @@ begin: comb_proc
                 v.cmdbitcnt = (r.cmdbitcnt - 1);
             end else begin
                 if (r.req_rn == R2) begin
-                    v.cmdbitcnt = 7'h77;
+                    v.cmdbitcnt = 7'd119;
                     v.cmdstate = CMDSTATE_RESP_CID_CSD;
                 end else begin
-                    v.cmdbitcnt = 7'h1f;
+                    v.cmdbitcnt = 7'd31;
                     v.cmdstate = CMDSTATE_RESP_REG;
                 end
             end
@@ -214,7 +214,7 @@ begin: comb_proc
                 v.cmdbitcnt = (r.cmdbitcnt - 1);
             end else begin
                 v.crc_calc = wb_crc7;
-                v.cmdbitcnt = 7'h06;
+                v.cmdbitcnt = 7'd6;
                 v.cmdstate = CMDSTATE_RESP_CRC7;
             end
         end else if (r.cmdstate == CMDSTATE_RESP_CID_CSD) begin
@@ -224,7 +224,7 @@ begin: comb_proc
                 v.cmdbitcnt = (r.cmdbitcnt - 1);
             end else begin
                 v.crc_calc = wb_crc7;
-                v.cmdbitcnt = 7'h06;
+                v.cmdbitcnt = 7'd6;
                 v.cmdstate = CMDSTATE_RESP_CRC7;
             end
         end else if (r.cmdstate == CMDSTATE_RESP_CRC7) begin
@@ -242,7 +242,7 @@ begin: comb_proc
                 v.err_setcode = CMDERR_WRONG_RESP_STOPBIT;
             end
             v.cmdstate = CMDSTATE_PAUSE;
-            v.cmdbitcnt = 7'h02;
+            v.cmdbitcnt = 7'd2;
             v.resp_valid = 1'b1;
         end else if (r.cmdstate == CMDSTATE_RESP_SPI_R1) begin
             vb_resp_spistatus[14: 8] = {r.resp_spistatus[13: 8], i_cmd};
@@ -250,14 +250,14 @@ begin: comb_proc
                 v.cmdbitcnt = (r.cmdbitcnt - 1);
             end else begin
                 if (r.req_rn == R2) begin
-                    v.cmdbitcnt = 7'h07;
+                    v.cmdbitcnt = 7'd7;
                     v.cmdstate = CMDSTATE_RESP_SPI_R2;
                 end else if ((r.req_rn == R3) || (r.req_rn == R7)) begin
-                    v.cmdbitcnt = 7'h1f;
+                    v.cmdbitcnt = 7'd31;
                     v.cmdstate = CMDSTATE_RESP_SPI_DATA;
                 end else begin
                     v.cmdstate = CMDSTATE_PAUSE;
-                    v.cmdbitcnt = 7'h02;
+                    v.cmdbitcnt = 7'd2;
                     v.resp_valid = 1'b1;
                 end
             end
@@ -267,7 +267,7 @@ begin: comb_proc
                 v.cmdbitcnt = (r.cmdbitcnt - 1);
             end else begin
                 v.cmdstate = CMDSTATE_PAUSE;
-                v.cmdbitcnt = 7'h02;
+                v.cmdbitcnt = 7'd2;
                 v.resp_valid = 1'b1;
             end
         end else if (r.cmdstate == CMDSTATE_RESP_SPI_DATA) begin
@@ -276,7 +276,7 @@ begin: comb_proc
                 v.cmdbitcnt = (r.cmdbitcnt - 1);
             end else begin
                 v.cmdstate = CMDSTATE_PAUSE;
-                v.cmdbitcnt = 7'h02;
+                v.cmdbitcnt = 7'd2;
                 v.resp_valid = 1'b1;
             end
         end

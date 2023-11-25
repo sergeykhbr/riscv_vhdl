@@ -109,24 +109,24 @@ begin: comb_proc
     logic v_mem_addr_last;
     logic [CFG_SDCACHE_ADDR_BITS-1:0] vb_addr_direct_next;
 
-    vb_cache_line_i_modified = 0;
-    vb_line_rdata_o_modified = 0;
-    vb_line_rdata_o_wstrb = 0;
-    v_req_ready = 0;
-    t_cache_line_i = 0;
-    vb_cached_data = 0;
-    vb_uncached_data = 0;
-    v_resp_valid = 0;
-    vb_resp_data = 0;
-    v_flush_end = 0;
-    vb_line_wdata = 0;
-    vb_line_wstrb = 0;
-    vb_req_mask = 0;
-    vb_line_wflags = 0;
-    ridx = 0;
-    v_req_same_line = 0;
-    v_mem_addr_last = 0;
-    vb_addr_direct_next = 0;
+    vb_cache_line_i_modified = '0;
+    vb_line_rdata_o_modified = '0;
+    vb_line_rdata_o_wstrb = '0;
+    v_req_ready = 1'b0;
+    t_cache_line_i = '0;
+    vb_cached_data = '0;
+    vb_uncached_data = '0;
+    v_resp_valid = 1'b0;
+    vb_resp_data = '0;
+    v_flush_end = 1'b0;
+    vb_line_wdata = '0;
+    vb_line_wstrb = '0;
+    vb_req_mask = '0;
+    vb_line_wflags = '0;
+    ridx = '0;
+    v_req_same_line = 1'b0;
+    v_mem_addr_last = 1'b0;
+    vb_addr_direct_next = '0;
 
     v = r;
 
@@ -175,7 +175,7 @@ begin: comb_proc
         v.mem_fault = 1'b0;
         if (r.req_flush == 1'b1) begin
             v.state = State_FlushAddr;
-            v.cache_line_i = '0;
+            v.cache_line_i = 512'd0;
             v.flush_cnt = FLUSH_ALL_VALUE;
         end else begin
             v_req_ready = 1'b1;
@@ -236,7 +236,7 @@ begin: comb_proc
             v.req_mem_write = r.req_write;
         end
         v.cache_line_o = line_rdata_o;
-        v.cache_line_i = '0;
+        v.cache_line_i = 512'd0;
     end
     State_WaitGrant: begin
         if (i_req_mem_ready == 1'b1) begin
@@ -303,9 +303,9 @@ begin: comb_proc
     State_FlushAddr: begin
         v.state = State_FlushCheck;
         vb_line_wstrb = '1;
-        vb_line_wflags = '0;
+        vb_line_wflags = 2'd0;
         v.write_flush = 1'b0;
-        v.cache_line_i = '0;
+        v.cache_line_i = 512'd0;
     end
     State_FlushCheck: begin
         v.cache_line_o = line_rdata_o;
@@ -332,13 +332,13 @@ begin: comb_proc
     end
     State_Reset: begin
         // Write clean line
-        v.line_addr_i = '0;
+        v.line_addr_i = 48'd0;
         v.flush_cnt = FLUSH_ALL_VALUE;                      // Init after power-on-reset
         v.state = State_ResetWrite;
     end
     State_ResetWrite: begin
         vb_line_wstrb = '1;
-        vb_line_wflags = '0;
+        vb_line_wflags = 2'd0;
         v.line_addr_i = (r.line_addr_i + SDCACHE_BYTES_PER_LINE);
         if ((|r.flush_cnt) == 1'b1) begin
             v.flush_cnt = (r.flush_cnt - 1);
@@ -357,7 +357,7 @@ begin: comb_proc
     line_wdata_i = vb_line_wdata;
     line_wstrb_i = vb_line_wstrb;
     line_wflags_i = vb_line_wflags;
-    line_snoop_addr_i = '0;
+    line_snoop_addr_i = 48'd0;
 
     o_req_ready = v_req_ready;
     o_req_mem_valid = r.req_mem_valid;

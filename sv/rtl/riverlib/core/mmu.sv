@@ -126,43 +126,43 @@ begin: comb_proc
     logic [CFG_MMU_PTE_DWIDTH-1:0] t_tlb_wdata;
     int t_idx_lsb;
 
-    v_core_req_x = 0;
-    v_core_req_r = 0;
-    v_core_req_w = 0;
-    last_page_fault_x = 0;
-    last_page_fault_r = 0;
-    last_page_fault_w = 0;
-    v_core_req_ready = 0;
-    v_core_resp_valid = 0;
-    vb_core_resp_addr = 0;
-    vb_core_resp_data = 0;
-    v_core_resp_load_fault = 0;
-    v_core_resp_store_fault = 0;
-    vb_last_pa_req = 0;
-    v_mem_req_valid = 0;
-    vb_mem_req_addr = 0;
-    vb_mem_req_type = 0;
-    vb_mem_req_wdata = 0;
-    vb_mem_req_wstrb = 0;
-    vb_mem_req_size = 0;
-    v_mem_resp_ready = 0;
-    v_tlb_wena = 0;
-    vb_tlb_adr = 0;
-    vb_pte_start_va = 0;
-    vb_resp_ppn = 0;
-    v_va_ena = 0;
-    vb_level0_off = 0;
-    vb_level1_off = 0;
-    vb_level2_off = 0;
-    vb_level3_off = 0;
-    v_last_valid = 0;
-    v_tlb_hit = 0;
-    vb_tlb_pa0 = 64'h0000000000000000;
-    vb_tlb_pa1 = 64'h0000000000000000;
-    vb_tlb_pa2 = 64'h0000000000000000;
-    vb_tlb_pa3 = 64'h0000000000000000;
-    vb_tlb_pa_hit = 0;
-    t_tlb_wdata = 0;
+    v_core_req_x = 1'b0;
+    v_core_req_r = 1'b0;
+    v_core_req_w = 1'b0;
+    last_page_fault_x = 1'b0;
+    last_page_fault_r = 1'b0;
+    last_page_fault_w = 1'b0;
+    v_core_req_ready = 1'b0;
+    v_core_resp_valid = 1'b0;
+    vb_core_resp_addr = '0;
+    vb_core_resp_data = '0;
+    v_core_resp_load_fault = 1'b0;
+    v_core_resp_store_fault = 1'b0;
+    vb_last_pa_req = '0;
+    v_mem_req_valid = 1'b0;
+    vb_mem_req_addr = '0;
+    vb_mem_req_type = '0;
+    vb_mem_req_wdata = '0;
+    vb_mem_req_wstrb = '0;
+    vb_mem_req_size = '0;
+    v_mem_resp_ready = 1'b0;
+    v_tlb_wena = 1'b0;
+    vb_tlb_adr = '0;
+    vb_pte_start_va = '0;
+    vb_resp_ppn = '0;
+    v_va_ena = 1'b0;
+    vb_level0_off = '0;
+    vb_level1_off = '0;
+    vb_level2_off = '0;
+    vb_level3_off = '0;
+    v_last_valid = 1'b0;
+    v_tlb_hit = 1'b0;
+    vb_tlb_pa0 = 64'd0;
+    vb_tlb_pa1 = 64'd0;
+    vb_tlb_pa2 = 64'd0;
+    vb_tlb_pa3 = 64'd0;
+    vb_tlb_pa_hit = '0;
+    t_tlb_wdata = '0;
     t_idx_lsb = 0;
 
     v = r;
@@ -206,27 +206,27 @@ begin: comb_proc
         // Use physical address
         v_va_ena = 1'b0;
     end
-    vb_level0_off = {r.last_va[47: 39], 3'h0};
-    vb_level1_off = {r.last_va[38: 30], 3'h0};
-    vb_level2_off = {r.last_va[29: 21], 3'h0};
-    vb_level3_off = {r.last_va[20: 12], 3'h0};
+    vb_level0_off = {r.last_va[47: 39], 3'd0};
+    vb_level1_off = {r.last_va[38: 30], 3'd0};
+    vb_level2_off = {r.last_va[29: 21], 3'd0};
+    vb_level3_off = {r.last_va[20: 12], 3'd0};
 
     // Pages: 4 KB, 8MB, 16 GB and 32 TB for sv48 only
     // Check the last hit depending page size:
     v_last_valid = 1'b0;
-    if ((r.last_page_size == 2'h0)
+    if ((r.last_page_size == 2'd0)
             && (i_core_req_addr[63: 12] == r.last_va[63: 12])) begin
         v_last_valid = 1'b1;
         vb_last_pa_req = {r.last_pa, i_core_req_addr[11: 0]};
-    end else if ((r.last_page_size == 2'h1)
+    end else if ((r.last_page_size == 2'd1)
                 && (i_core_req_addr[63: 21] == r.last_va[63: 21])) begin
         v_last_valid = 1'b1;
         vb_last_pa_req = {r.last_pa[51: 9], i_core_req_addr[20: 0]};
-    end else if ((r.last_page_size == 2'h2)
+    end else if ((r.last_page_size == 2'd2)
                 && (i_core_req_addr[63: 30] == r.last_va[63: 30])) begin
         v_last_valid = 1'b1;
         vb_last_pa_req = {r.last_pa[51: 18], i_core_req_addr[29: 0]};
-    end else if ((r.last_page_size == 2'h3)
+    end else if ((r.last_page_size == 2'd3)
                 && (i_core_req_addr[63: 39] == r.last_va[63: 39])) begin
         v_last_valid = 1'b1;
         vb_last_pa_req = {r.last_pa[51: 27], i_core_req_addr[38: 0]};
@@ -243,15 +243,15 @@ begin: comb_proc
     vb_tlb_pa3[38: 0] = r.last_va[38: 0];
 
     if (wb_tlb_rdata[PTE_V] == 1'b1) begin
-        if (wb_tlb_rdata[9: 8] == 2'h3) begin
+        if (wb_tlb_rdata[9: 8] == 2'd3) begin
             // 32 TB pages:
             v_tlb_hit = (~(r.last_va[63: 39] ^ wb_tlb_rdata[115: 91]));
             vb_tlb_pa_hit = vb_tlb_pa3;
-        end else if (wb_tlb_rdata[9: 8] == 2'h2) begin
+        end else if (wb_tlb_rdata[9: 8] == 2'd2) begin
             // 16 GB pages:
             v_tlb_hit = (~(r.last_va[63: 30] ^ wb_tlb_rdata[115: 82]));
             vb_tlb_pa_hit = vb_tlb_pa2;
-        end else if (wb_tlb_rdata[9: 8] == 2'h1) begin
+        end else if (wb_tlb_rdata[9: 8] == 2'd1) begin
             // 8 MB pages:
             v_tlb_hit = (~(r.last_va[63: 21] ^ wb_tlb_rdata[115: 73]));
             vb_tlb_pa_hit = vb_tlb_pa1;
@@ -283,7 +283,7 @@ begin: comb_proc
         end
         if (r.req_flush == 1'b1) begin
             v.req_flush = 1'b0;
-            v.tlb_wdata = '0;
+            v.tlb_wdata = 116'd0;
             v.state = FlushTlb;
         end else if ((i_mmu_ena == 1'b0) || (v_va_ena == 1'b0)) begin// MMU disabled
             // Direct connection to Cache
@@ -407,11 +407,11 @@ begin: comb_proc
             // TLB miss
             if (i_mmu_sv39 == 1'b1) begin
                 v.tlb_level = 4'h2;                         // Start page decoding sv39
-                v.tlb_page_size = 2'h2;
+                v.tlb_page_size = 2'd2;
                 v.req_pa = {vb_pte_start_va, vb_level1_off};
             end else begin
                 v.tlb_level = 4'h1;                         // Start page decoding sv48
-                v.tlb_page_size = 2'h3;
+                v.tlb_page_size = 2'd3;
                 v.req_pa = {vb_pte_start_va, vb_level0_off};
             end
         end
@@ -421,7 +421,7 @@ begin: comb_proc
         v_mem_req_valid = 1'b1;
         vb_mem_req_addr = r.req_pa;
         if (r.tlb_hit == 1'b0) begin
-            vb_mem_req_type = '0;                           // Load tlb item
+            vb_mem_req_type = 4'd0;                         // Load tlb item
         end else begin
             vb_mem_req_type = r.req_type;
         end
@@ -490,13 +490,13 @@ begin: comb_proc
             // Pages more than 4KB support:
             if (r.tlb_level[0] == 1'b1) begin
                 v.req_pa = {vb_resp_ppn[51: 27], r.last_va[38: 0]};
-                v.last_pa = {vb_resp_ppn[51: 27], 27'h0000000};
+                v.last_pa = {vb_resp_ppn[51: 27], 27'd0};
             end else if (r.tlb_level[1] == 1'b1) begin
                 v.req_pa = {vb_resp_ppn[51: 18], r.last_va[29: 0]};
-                v.last_pa = {vb_resp_ppn[51: 18], 18'h00000};
+                v.last_pa = {vb_resp_ppn[51: 18], 18'd0};
             end else if (r.tlb_level[2] == 1'b1) begin
                 v.req_pa = {vb_resp_ppn[51: 9], r.last_va[20: 0]};
-                v.last_pa = {vb_resp_ppn[51: 9], 9'h000};
+                v.last_pa = {vb_resp_ppn[51: 9], 9'd0};
             end else begin
                 v.req_pa = {vb_resp_ppn, r.last_va[11: 0]};
                 v.last_pa = vb_resp_ppn;
@@ -545,7 +545,7 @@ begin: comb_proc
         // Clear whole table ignoring i_fence_addr
         v.req_flush = 1'b1;
         v.tlb_flush_cnt = '1;
-        v.tlb_flush_adr = '0;
+        v.tlb_flush_adr = 6'd0;
     end
 
     if (~async_reset && i_nrst == 1'b0) begin

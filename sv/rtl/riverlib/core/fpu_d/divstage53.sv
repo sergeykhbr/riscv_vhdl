@@ -40,95 +40,95 @@ begin: comb_proc
     logic [6:0] wb_muxind;
     logic w_muxind_rdy;
 
-    wb_bits = 0;
-    wb_divx3 = 55'h00000000000000;
-    wb_divx2 = 55'h00000000000000;
-    wb_muxind = 0;
-    w_muxind_rdy = 0;
+    wb_bits = '0;
+    wb_divx3 = 55'd0;
+    wb_divx2 = 55'd0;
+    wb_muxind = '0;
+    w_muxind_rdy = 1'b0;
 
-    wb_divx2 = {i_divisor, 1'h0};
+    wb_divx2 = {i_divisor, 1'b0};
     wb_divx3 = (wb_divx2 + i_divisor);
 
     // stage 1 of 4
-    wb_thresh[15] = ({1'h0, i_divident} - {1'h0, wb_divx3, 6'h00});
-    wb_thresh[14] = ({1'h0, i_divident} - {1'h0, wb_divx2, 6'h00});
-    wb_thresh[13] = ({1'h0, i_divident} - {3'h0, i_divisor, 6'h00});
-    wb_thresh[12] = {1'h0, i_divident};
+    wb_thresh[15] = ({1'b0, i_divident} - {1'b0, wb_divx3, 6'd0});
+    wb_thresh[14] = ({1'b0, i_divident} - {1'b0, wb_divx2, 6'd0});
+    wb_thresh[13] = ({1'b0, i_divident} - {3'd0, i_divisor, 6'd0});
+    wb_thresh[12] = {1'b0, i_divident};
 
     if (wb_thresh[15][61] == 1'b0) begin
-        wb_bits[7: 6] = 2'h3;
+        wb_bits[7: 6] = 2'd3;
         wb_dif[0] = wb_thresh[15][60: 0];
     end else if (wb_thresh[14][61] == 1'b0) begin
-        wb_bits[7: 6] = 2'h2;
+        wb_bits[7: 6] = 2'd2;
         wb_dif[0] = wb_thresh[14][60: 0];
     end else if (wb_thresh[13][61] == 1'b0) begin
-        wb_bits[7: 6] = 2'h1;
+        wb_bits[7: 6] = 2'd1;
         wb_dif[0] = wb_thresh[13][60: 0];
     end else begin
-        wb_bits[7: 6] = 2'h0;
+        wb_bits[7: 6] = 2'd0;
         wb_dif[0] = wb_thresh[12][60: 0];
     end
 
     // stage 2 of 4
-    wb_thresh[11] = ({1'h0, wb_dif[0]} - {3'h0, wb_divx3, 4'h0});
-    wb_thresh[10] = ({1'h0, wb_dif[0]} - {3'h0, wb_divx2, 4'h0});
-    wb_thresh[9] = ({1'h0, wb_dif[0]} - {5'h00, i_divisor, 4'h0});
-    wb_thresh[8] = {1'h0, wb_dif[0]};
+    wb_thresh[11] = ({1'b0, wb_dif[0]} - {3'd0, wb_divx3, 4'd0});
+    wb_thresh[10] = ({1'b0, wb_dif[0]} - {3'd0, wb_divx2, 4'd0});
+    wb_thresh[9] = ({1'b0, wb_dif[0]} - {5'd0, i_divisor, 4'd0});
+    wb_thresh[8] = {1'b0, wb_dif[0]};
 
     if (wb_thresh[11][61] == 1'b0) begin
-        wb_bits[5: 4] = 2'h3;
+        wb_bits[5: 4] = 2'd3;
         wb_dif[1] = wb_thresh[11][60: 0];
     end else if (wb_thresh[10][61] == 1'b0) begin
-        wb_bits[5: 4] = 2'h2;
+        wb_bits[5: 4] = 2'd2;
         wb_dif[1] = wb_thresh[10][60: 0];
     end else if (wb_thresh[9][61] == 1'b0) begin
-        wb_bits[5: 4] = 2'h1;
+        wb_bits[5: 4] = 2'd1;
         wb_dif[1] = wb_thresh[9][60: 0];
     end else begin
-        wb_bits[5: 4] = 2'h0;
+        wb_bits[5: 4] = 2'd0;
         wb_dif[1] = wb_thresh[8][60: 0];
     end
 
     // stage 3 of 4
-    wb_thresh[7] = ({1'h0, wb_dif[1]} - {5'h00, wb_divx3, 2'h0});
-    wb_thresh[6] = ({1'h0, wb_dif[1]} - {5'h00, wb_divx2, 2'h0});
-    wb_thresh[5] = ({1'h0, wb_dif[1]} - {7'h00, i_divisor, 2'h0});
-    wb_thresh[4] = {1'h0, wb_dif[1]};
+    wb_thresh[7] = ({1'b0, wb_dif[1]} - {5'd0, wb_divx3, 2'd0});
+    wb_thresh[6] = ({1'b0, wb_dif[1]} - {5'd0, wb_divx2, 2'd0});
+    wb_thresh[5] = ({1'b0, wb_dif[1]} - {7'd0, i_divisor, 2'd0});
+    wb_thresh[4] = {1'b0, wb_dif[1]};
     if (wb_thresh[7][61] == 1'b0) begin
-        wb_bits[3: 2] = 2'h3;
+        wb_bits[3: 2] = 2'd3;
         wb_dif[2] = wb_thresh[7][60: 0];
     end else if (wb_thresh[6][61] == 1'b0) begin
-        wb_bits[3: 2] = 2'h2;
+        wb_bits[3: 2] = 2'd2;
         wb_dif[2] = wb_thresh[6][60: 0];
     end else if (wb_thresh[5][61] == 1'b0) begin
-        wb_bits[3: 2] = 2'h1;
+        wb_bits[3: 2] = 2'd1;
         wb_dif[2] = wb_thresh[5][60: 0];
     end else begin
-        wb_bits[3: 2] = 2'h0;
+        wb_bits[3: 2] = 2'd0;
         wb_dif[2] = wb_thresh[4][60: 0];
     end
 
     // stage 4 of 4
-    wb_thresh[3] = ({1'h0, wb_dif[2]} - {7'h00, wb_divx3});
-    wb_thresh[2] = ({1'h0, wb_dif[2]} - {7'h00, wb_divx2});
-    wb_thresh[1] = ({1'h0, wb_dif[2]} - {9'h000, i_divisor});
-    wb_thresh[0] = {1'h0, wb_dif[2]};
+    wb_thresh[3] = ({1'b0, wb_dif[2]} - {7'd0, wb_divx3});
+    wb_thresh[2] = ({1'b0, wb_dif[2]} - {7'd0, wb_divx2});
+    wb_thresh[1] = ({1'b0, wb_dif[2]} - {9'd0, i_divisor});
+    wb_thresh[0] = {1'b0, wb_dif[2]};
     if (wb_thresh[3][61] == 1'b0) begin
-        wb_bits[1: 0] = 2'h3;
+        wb_bits[1: 0] = 2'd3;
         wb_dif[3] = wb_thresh[3][60: 0];
     end else if (wb_thresh[2][61] == 1'b0) begin
-        wb_bits[1: 0] = 2'h2;
+        wb_bits[1: 0] = 2'd2;
         wb_dif[3] = wb_thresh[2][60: 0];
     end else if (wb_thresh[1][61] == 1'b0) begin
-        wb_bits[1: 0] = 2'h1;
+        wb_bits[1: 0] = 2'd1;
         wb_dif[3] = wb_thresh[1][60: 0];
     end else begin
-        wb_bits[1: 0] = 2'h0;
+        wb_bits[1: 0] = 2'd0;
         wb_dif[3] = wb_thresh[0][60: 0];
     end
 
     // Number multiplexor
-    wb_muxind = '0;
+    wb_muxind = 7'd0;
     if (i_mux_ena == 1'b1) begin
         if (wb_thresh[15][61] == 1'b0) begin
             wb_muxind = i_muxind[55: 49];

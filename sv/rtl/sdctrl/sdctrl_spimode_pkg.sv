@@ -18,18 +18,18 @@ package sdctrl_spimode_pkg;
 import sdctrl_cfg_pkg::*;
 
 // Controller state
-localparam bit [3:0] STATE_CMD0 = 4'h0;
-localparam bit [3:0] STATE_CMD8 = 4'h1;
-localparam bit [3:0] STATE_CMD55 = 4'h2;
-localparam bit [3:0] STATE_ACMD41 = 4'h3;
-localparam bit [3:0] STATE_CMD58 = 4'h4;
-localparam bit [3:0] STATE_WAIT_DATA_REQ = 4'h5;
-localparam bit [3:0] STATE_CMD17_READ_SINGLE_BLOCK = 4'h6;
-localparam bit [3:0] STATE_CMD24_WRITE_SINGLE_BLOCK = 4'h7;
-localparam bit [3:0] STATE_WAIT_DATA_START = 4'h8;
-localparam bit [3:0] STATE_READING_DATA = 4'h9;
-localparam bit [3:0] STATE_READING_CRC15 = 4'ha;
-localparam bit [3:0] STATE_READING_END = 4'hb;
+localparam bit [3:0] STATE_CMD0 = 4'd0;
+localparam bit [3:0] STATE_CMD8 = 4'd1;
+localparam bit [3:0] STATE_CMD55 = 4'd2;
+localparam bit [3:0] STATE_ACMD41 = 4'd3;
+localparam bit [3:0] STATE_CMD58 = 4'd4;
+localparam bit [3:0] STATE_WAIT_DATA_REQ = 4'd5;
+localparam bit [3:0] STATE_CMD17_READ_SINGLE_BLOCK = 4'd6;
+localparam bit [3:0] STATE_CMD24_WRITE_SINGLE_BLOCK = 4'd7;
+localparam bit [3:0] STATE_WAIT_DATA_START = 4'd8;
+localparam bit [3:0] STATE_READING_DATA = 4'd9;
+localparam bit [3:0] STATE_READING_CRC15 = 4'd10;
+localparam bit [3:0] STATE_READING_END = 4'd11;
 
 typedef struct {
     logic [6:0] clkcnt;
@@ -77,19 +77,19 @@ const sdctrl_spimode_registers sdctrl_spimode_r_reset = '{
     '0,                                 // data_data
     1'b0,                               // data_resp_valid
     1'b0,                               // wdog_ena
-    1'h1,                               // crc16_clear
+    1'b1,                               // crc16_clear
     '0,                                 // crc16_calc0
     '0,                                 // crc16_rx0
-    1'h1,                               // dat_csn
+    1'b1,                               // dat_csn
     1'b0,                               // dat_reading
     1'b0,                               // err_clear
     1'b0,                               // err_valid
     '0,                                 // err_code
-    1'h1,                               // sck_400khz_ena
+    1'b1,                               // sck_400khz_ena
     STATE_CMD0,                         // state
     1'b0,                               // wait_cmd_resp
     SDCARD_UNKNOWN,                     // sdtype
-    1'h1,                               // HCS
+    1'b1,                               // HCS
     1'b0,                               // S18
     24'hff8000,                         // OCR_VoltageWindow
     '0                                  // bitcnt

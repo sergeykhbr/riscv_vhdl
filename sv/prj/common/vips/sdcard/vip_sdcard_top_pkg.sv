@@ -18,10 +18,10 @@ package vip_sdcard_top_pkg;
 
 // Generic config parameters
 localparam int CFG_SDCARD_POWERUP_DONE_DELAY = 450;         // Delay of busy bits in ACMD41 response
-localparam bit CFG_SDCARD_HCS = 1'h1;                       // High Capacity Support
+localparam bit CFG_SDCARD_HCS = 1'b1;                       // High Capacity Support
 localparam bit [3:0] CFG_SDCARD_VHS = 4'h1;                 // CMD8 Voltage supply mask
-localparam bit CFG_SDCARD_PCIE_1_2V = 1'h0;
-localparam bit CFG_SDCARD_PCIE_AVAIL = 1'h0;
+localparam bit CFG_SDCARD_PCIE_1_2V = 1'b0;
+localparam bit CFG_SDCARD_PCIE_AVAIL = 1'b0;
 localparam bit [23:0] CFG_SDCARD_VDD_VOLTAGE_WINDOW = 24'hff8000;
 
 endpackage: vip_sdcard_top_pkg

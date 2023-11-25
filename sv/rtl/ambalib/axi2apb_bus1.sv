@@ -92,8 +92,8 @@ begin: comb_proc
         vapbo[i] = i_apbo[i];                               // Cannot read vector item from port in systemc
     end
     // Unmapped default slave:
-    vapbo[CFG_BUS1_PSLV_TOTAL].pready = 1'h1;
-    vapbo[CFG_BUS1_PSLV_TOTAL].pslverr = 1'h1;
+    vapbo[CFG_BUS1_PSLV_TOTAL].pready = 1'b1;
+    vapbo[CFG_BUS1_PSLV_TOTAL].pslverr = 1'b1;
     vapbo[CFG_BUS1_PSLV_TOTAL].prdata = '1;
     w_req_ready = 1'b0;
     v.pvalid = 1'b0;
@@ -115,11 +115,11 @@ begin: comb_proc
         if (w_req_valid == 1'b1) begin
             v.pwrite = w_req_write;
             v.pselx = 1'b1;
-            v.paddr = {wb_req_addr[31: 2], 2'h0};
-            v.pprot = '0;
+            v.paddr = {wb_req_addr[31: 2], 2'd0};
+            v.pprot = 3'd0;
             if (wb_req_addr[2] == 1'b1) begin
-                v.pwdata = {32'h00000000, wb_req_wdata[63: 32]};
-                v.pstrb = {4'h0, wb_req_wstrb[7: 4]};
+                v.pwdata = {32'd0, wb_req_wdata[63: 32]};
+                v.pstrb = {4'd0, wb_req_wstrb[7: 4]};
             end else begin
                 v.pwdata = wb_req_wdata;
                 v.pstrb = wb_req_wstrb;
@@ -147,11 +147,11 @@ begin: comb_proc
             end else begin
                 v.prdata = {vapbo[iselidx].prdata, r.prdata[31: 0]};
             end
-            if (r.size > 8'h04) begin
+            if (r.size > 8'd4) begin
                 v.size = (r.size - 4);
                 v.paddr = (r.paddr + 4);
-                v.pwdata = {32'h00000000, wb_req_wdata[63: 32]};
-                v.pstrb = {4'h0, wb_req_wstrb[7: 4]};
+                v.pwdata = {32'd0, wb_req_wdata[63: 32]};
+                v.pstrb = {4'd0, wb_req_wstrb[7: 4]};
                 v.state = State_setup;
             end else begin
                 v.pvalid = 1'b1;

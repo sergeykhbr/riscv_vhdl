@@ -39,12 +39,12 @@ import types_amba_pkg::*;
 import types_pnp_pkg::*;
 localparam int fifo_dbits = 8;
 // SPI states
-localparam bit [2:0] idle = 3'h0;
-localparam bit [2:0] wait_edge = 3'h1;
-localparam bit [2:0] send_data = 3'h2;
-localparam bit [2:0] recv_data = 3'h3;
-localparam bit [2:0] recv_sync = 3'h4;
-localparam bit [2:0] ending = 3'h5;
+localparam bit [2:0] idle = 3'd0;
+localparam bit [2:0] wait_edge = 3'd1;
+localparam bit [2:0] send_data = 3'd2;
+localparam bit [2:0] recv_data = 3'd3;
+localparam bit [2:0] recv_sync = 3'd4;
+localparam bit [2:0] ending = 3'd5;
 
 typedef struct {
     logic [31:0] scaler;
@@ -83,7 +83,7 @@ const apb_spi_registers apb_spi_r_reset = '{
     1'b0,                               // rx_ena
     1'b0,                               // rx_synced
     1'b0,                               // rx_data_block
-    1'h1,                               // level
+    1'b1,                               // level
     1'b0,                               // cs
     idle,                               // state
     '1,                                 // shiftreg
@@ -187,18 +187,18 @@ begin: comb_proc
     logic [31:0] vb_rdata;
     logic [7:0] vb_shiftreg_next;
 
-    v_posedge = 0;
-    v_negedge = 0;
-    v_txfifo_re = 0;
-    v_txfifo_we = 0;
-    vb_txfifo_wdata = 0;
-    v_rxfifo_re = 0;
-    v_inv7 = 0;
-    vb_crc7 = 0;
-    v_inv16 = 0;
-    vb_crc16 = 0;
-    vb_rdata = 0;
-    vb_shiftreg_next = 0;
+    v_posedge = 1'b0;
+    v_negedge = 1'b0;
+    v_txfifo_re = 1'b0;
+    v_txfifo_we = 1'b0;
+    vb_txfifo_wdata = '0;
+    v_rxfifo_re = 1'b0;
+    v_inv7 = 1'b0;
+    vb_crc7 = '0;
+    v_inv16 = 1'b0;
+    vb_crc16 = '0;
+    vb_rdata = '0;
+    vb_shiftreg_next = '0;
 
     v = r;
 
@@ -233,7 +233,7 @@ begin: comb_proc
     // system bus clock scaler to baudrate:
     if ((|r.scaler) == 1'b1) begin
         if (r.scaler_cnt == (r.scaler - 1)) begin
-            v.scaler_cnt = '0;
+            v.scaler_cnt = 32'd0;
             v.level = (~r.level);
             v_posedge = (~r.level);
             v_negedge = r.level;
@@ -243,7 +243,7 @@ begin: comb_proc
     end
 
     if (r.rx_ena == 1'b0) begin
-        vb_shiftreg_next = {r.shiftreg[6: 0], 1'h1};
+        vb_shiftreg_next = {r.shiftreg[6: 0], 1'b1};
     end else begin
         vb_shiftreg_next = {r.shiftreg[6: 0], i_miso};
     end
@@ -297,7 +297,7 @@ begin: comb_proc
             v.cs = 1'b1;
             v.bit_cnt = 7;
             if (r.rx_ena == 1'b1) begin
-                v.shiftreg = '0;
+                v.shiftreg = 8'd0;
                 if (r.rx_data_block == 1'b1) begin
                     v.state = recv_sync;
                 end else begin
@@ -322,7 +322,7 @@ begin: comb_proc
                 v.state = wait_edge;
                 v.ena_byte_cnt = (r.ena_byte_cnt - 1);
             end else if (r.generate_crc == 1'b1) begin
-                v.tx_val = {vb_crc7, 1'h1};
+                v.tx_val = {vb_crc7, 1'b1};
                 v.generate_crc = 1'b0;
                 v.state = wait_edge;
             end else begin
@@ -363,9 +363,9 @@ begin: comb_proc
                 v.state = ending;
                 v.rx_val = vb_shiftreg_next;
                 v.rx_ready = 1'b1;
-                v.ena_byte_cnt = '0;
-                v.bit_cnt = '0;
-                v.crc16 = '0;
+                v.ena_byte_cnt = 16'd0;
+                v.bit_cnt = 3'd0;
+                v.crc16 = 16'd0;
             end else begin
                 v.wdog_cnt = (r.wdog_cnt - 1);
             end
@@ -386,7 +386,7 @@ begin: comb_proc
         vb_rdata = r.scaler;
         if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
             v.scaler = wb_req_wdata[30: 0];
-            v.scaler_cnt = '0;
+            v.scaler_cnt = 32'd0;
         end
     end
     10'h002: begin                                          // 0x08: reserved (watchdog)
@@ -417,7 +417,7 @@ begin: comb_proc
         vb_rdata[31] = (&wb_txfifo_count);
         if (w_req_valid == 1'b1) begin
             if (w_req_write == 1'b1) begin
-                v_txfifo_we = 1'h1;
+                v_txfifo_we = 1'b1;
                 vb_txfifo_wdata = wb_req_wdata[7: 0];
             end
         end
@@ -429,7 +429,7 @@ begin: comb_proc
             if (w_req_write == 1'b1) begin
                 // do nothing:
             end else begin
-                v_rxfifo_re = 1'h1;
+                v_rxfifo_re = 1'b1;
             end
         end
     end

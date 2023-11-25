@@ -117,7 +117,7 @@ begin: comb_proc
         // Clear pipeline stage
         v.req_valid = 1'b0;
         v.pc = '1;
-        v.instr = '0;
+        v.instr = 64'd0;
         v.instr_load_fault = 1'b0;
         v.instr_page_fault_x = 1'b0;
     end

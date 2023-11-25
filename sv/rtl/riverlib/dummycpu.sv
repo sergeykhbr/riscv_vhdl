@@ -33,9 +33,9 @@ always_comb
 begin: comb_proc
     o_msto = axi4_l1_out_none;
     o_dport = dport_out_none;
-    o_flush_l2 = 1'h0;
-    o_halted = 1'h0;
-    o_available = 1'h0;
+    o_flush_l2 = 1'b0;
+    o_halted = 1'b0;
+    o_available = 1'b0;
 end: comb_proc
 
 endmodule: DummyCpu

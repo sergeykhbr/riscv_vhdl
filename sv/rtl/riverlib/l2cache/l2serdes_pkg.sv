@@ -24,9 +24,9 @@ localparam int busw = CFG_SYSBUS_DATA_BITS;
 localparam int lineb = (linew / 8);
 localparam int busb = (busw / 8);
 localparam int SERDES_BURST_LEN = (lineb / busb);
-localparam bit [1:0] State_Idle = 2'h0;
-localparam bit [1:0] State_Read = 2'h1;
-localparam bit [1:0] State_Write = 2'h2;
+localparam bit [1:0] State_Idle = 2'd0;
+localparam bit [1:0] State_Read = 2'd1;
+localparam bit [1:0] State_Write = 2'd2;
 
 typedef struct {
     logic [1:0] state;

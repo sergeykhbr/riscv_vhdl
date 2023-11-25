@@ -707,10 +707,10 @@ begin: comb_proc
     w_f_flush_ready = 1'b1;
     w_immu_core_req_fetch = 1'b1;
     w_dmmu_core_req_fetch = 1'b0;
-    unused_immu_core_req_type = '0;
-    unused_immu_core_req_wdata = '0;
-    unused_immu_core_req_wstrb = '0;
-    unused_immu_core_req_size = '0;
+    unused_immu_core_req_type = 4'd0;
+    unused_immu_core_req_wdata = 64'd0;
+    unused_immu_core_req_wstrb = 8'd0;
+    unused_immu_core_req_size = 2'd0;
     unused_immu_mem_resp_store_fault = 1'b0;
     o_flushi_valid = csr.flushi_valid;
     o_flushi_addr = csr.flush_addr;

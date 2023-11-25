@@ -18,18 +18,18 @@ package vip_sdcard_cmdio_pkg;
 
 // 
 // Receiver CMD state:
-localparam bit [3:0] CMDSTATE_REQ_STARTBIT = 4'h0;
-localparam bit [3:0] CMDSTATE_REQ_TXBIT = 4'h1;
-localparam bit [3:0] CMDSTATE_REQ_CMD = 4'h2;
-localparam bit [3:0] CMDSTATE_REQ_ARG = 4'h3;
-localparam bit [3:0] CMDSTATE_REQ_CRC7 = 4'h4;
-localparam bit [3:0] CMDSTATE_REQ_STOPBIT = 4'h5;
-localparam bit [3:0] CMDSTATE_REQ_VALID = 4'h6;
-localparam bit [3:0] CMDSTATE_WAIT_RESP = 4'h7;
-localparam bit [3:0] CMDSTATE_RESP = 4'h8;
-localparam bit [3:0] CMDSTATE_RESP_CRC7 = 4'h9;
-localparam bit [3:0] CMDSTATE_RESP_STOPBIT = 4'ha;
-localparam bit [3:0] CMDSTATE_INIT = 4'hf;
+localparam bit [3:0] CMDSTATE_REQ_STARTBIT = 4'd0;
+localparam bit [3:0] CMDSTATE_REQ_TXBIT = 4'd1;
+localparam bit [3:0] CMDSTATE_REQ_CMD = 4'd2;
+localparam bit [3:0] CMDSTATE_REQ_ARG = 4'd3;
+localparam bit [3:0] CMDSTATE_REQ_CRC7 = 4'd4;
+localparam bit [3:0] CMDSTATE_REQ_STOPBIT = 4'd5;
+localparam bit [3:0] CMDSTATE_REQ_VALID = 4'd6;
+localparam bit [3:0] CMDSTATE_WAIT_RESP = 4'd7;
+localparam bit [3:0] CMDSTATE_RESP = 4'd8;
+localparam bit [3:0] CMDSTATE_RESP_CRC7 = 4'd9;
+localparam bit [3:0] CMDSTATE_RESP_STOPBIT = 4'd10;
+localparam bit [3:0] CMDSTATE_INIT = 4'd15;
 
 typedef struct {
     logic [7:0] clkcnt;
@@ -55,8 +55,8 @@ const vip_sdcard_cmdio_registers vip_sdcard_cmdio_r_reset = '{
     '0,                                 // clkcnt
     1'b0,                               // cs
     1'b0,                               // spi_mode
-    1'h1,                               // cmdz
-    1'h1,                               // cmd_dir
+    1'b1,                               // cmdz
+    1'b1,                               // cmd_dir
     '1,                                 // cmd_rxshift
     '1,                                 // cmd_txshift
     CMDSTATE_INIT,                      // cmd_state

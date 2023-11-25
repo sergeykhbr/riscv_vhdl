@@ -54,10 +54,10 @@ begin: comb_proc
         vlxi[i] = axi4_l1_in_none;
     end
     vl2o = axi4_l2_out_none;
-    vb_src_aw = 0;
-    vb_src_ar = 0;
+    vb_src_aw = '0;
+    vb_src_ar = '0;
     vb_srcid = 0;
-    v_selected = 0;
+    v_selected = 1'b0;
 
     v = r;
 
@@ -90,8 +90,8 @@ begin: comb_proc
     Idle: begin
         if ((|vb_src_aw) == 1'b1) begin
             v.state = state_aw;
-            vlxi[vb_srcid].aw_ready = 1'h1;
-            vlxi[vb_srcid].w_ready = 1'h1;                  // AXI-Lite-interface
+            vlxi[vb_srcid].aw_ready = 1'b1;
+            vlxi[vb_srcid].w_ready = 1'b1;                  // AXI-Lite-interface
 
             v.srcid = vb_srcid;
             v.req_addr = vl1o[vb_srcid].aw_bits.addr;
@@ -105,7 +105,7 @@ begin: comb_proc
             v.req_wstrb = vl1o[vb_srcid].w_strb;
         end else if ((|vb_src_ar) == 1'b1) begin
             v.state = state_ar;
-            vlxi[vb_srcid].ar_ready = 1'h1;
+            vlxi[vb_srcid].ar_ready = 1'b1;
 
             v.srcid = vb_srcid;
             v.req_addr = vl1o[vb_srcid].ar_bits.addr;
@@ -137,10 +137,10 @@ begin: comb_proc
         end
     end
     l1_r_resp: begin
-        vlxi[int'(r.srcid)].r_valid = 1'h1;
-        vlxi[int'(r.srcid)].r_last = 1'h1;
+        vlxi[int'(r.srcid)].r_valid = 1'b1;
+        vlxi[int'(r.srcid)].r_last = 1'b1;
         vlxi[int'(r.srcid)].r_data = r.rdata;
-        vlxi[int'(r.srcid)].r_resp = {2'h0, r.resp};
+        vlxi[int'(r.srcid)].r_resp = {2'd0, r.resp};
         vlxi[int'(r.srcid)].r_id = r.req_id;
         vlxi[int'(r.srcid)].r_user = r.req_user;
         if (vl1o[int'(r.srcid)].r_ready == 1'b1) begin
@@ -186,7 +186,7 @@ begin: comb_proc
         end
     end
     l1_w_resp: begin
-        vlxi[int'(r.srcid)].b_valid = 1'h1;
+        vlxi[int'(r.srcid)].b_valid = 1'b1;
         vlxi[int'(r.srcid)].b_resp = r.resp;
         vlxi[int'(r.srcid)].b_id = r.req_id;
         vlxi[int'(r.srcid)].b_user = r.req_user;

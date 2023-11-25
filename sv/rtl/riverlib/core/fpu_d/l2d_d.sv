@@ -50,17 +50,17 @@ begin: comb_proc
     logic [63:0] vb_A;
     logic [63:0] res;
 
-    v_ena = 0;
-    mantAlign = 0;
-    lshift = 0;
-    expAlign = 0;
-    mantEven = 0;
-    mant05 = 0;
-    mantOnes = 0;
-    rndBit = 0;
-    v_signA = 0;
-    vb_A = 0;
-    res = 0;
+    v_ena = 1'b0;
+    mantAlign = '0;
+    lshift = '0;
+    expAlign = '0;
+    mantEven = 1'b0;
+    mant05 = 1'b0;
+    mantOnes = 1'b0;
+    rndBit = 1'b0;
+    v_signA = 1'b0;
+    vb_A = '0;
+    res = '0;
 
     v = r;
 
@@ -92,12 +92,12 @@ begin: comb_proc
     end
 
     // multiplexer, probably if/elsif in rtl:
-    lshift = 6'h3f;
+    lshift = 6'd63;
     if (r.absA[63] == 1'b1) begin
         mantAlign = r.absA;
     end else begin
         for (int i = 1; i < 64; i++) begin
-            if ((lshift == 6'h3f) && (r.absA[(63 - i)] == 1'b1)) begin
+            if ((lshift == 6'd63) && (r.absA[(63 - i)] == 1'b1)) begin
                 mantAlign = (r.absA << i);
                 lshift = i;
             end
@@ -110,9 +110,9 @@ begin: comb_proc
     end
 
     if ((|r.absA) == 1'b0) begin
-        expAlign = '0;
+        expAlign = 11'd0;
     end else begin
-        expAlign = (11'h43e - r.lshift);
+        expAlign = (11'd1086 - r.lshift);
     end
 
     mantEven = r.mantAlign[11];

@@ -167,7 +167,7 @@ begin: comb_proc
     FpuTop_registers v;
     logic [Instr_FPU_Total-1:0] iv;
 
-    iv = 0;
+    iv = '0;
 
     v = r;
 

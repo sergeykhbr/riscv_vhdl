@@ -319,78 +319,78 @@ begin: comb_proc
     logic [6:0] t_addsub_mode;
     logic [3:0] t_shifter_mode;
 
-    v_d_valid = 0;
-    v_csr_req_valid = 0;
-    v_csr_resp_ready = 0;
-    vb_csr_cmd_wdata = 0;
-    vb_res = 0;
-    vb_prog_npc = 0;
-    vb_npc_incr = 0;
-    vb_off = 0;
-    vb_sub64 = 0;
-    vb_memop_memaddr = 0;
-    vb_memop_memaddr_load = 0;
-    vb_memop_memaddr_store = 0;
-    vb_memop_wdata = 0;
-    wv = 0;
-    opcode_len = 0;
-    v_call = 0;
-    v_ret = 0;
-    v_pc_branch = 0;
-    v_eq = 1'h0;
-    v_ge = 1'h0;
-    v_geu = 1'h0;
-    v_lt = 1'h0;
-    v_ltu = 1'h0;
-    v_neq = 1'h0;
-    vb_rdata1 = 0;
-    vb_rdata2 = 0;
-    vb_rdata1_amo = 0;
-    v_check_tag1 = 0;
-    v_check_tag2 = 0;
-    vb_select = 0;
-    vb_tagcnt_next = 0;
-    v_latch_input = 0;
-    v_memop_ena = 0;
-    v_memop_debug = 0;
-    v_reg_ena = 0;
-    vb_reg_waddr = 0;
-    v_instr_misaligned = 0;
-    v_store_misaligned = 0;
-    v_load_misaligned = 0;
-    v_debug_misaligned = 1'h0;
-    v_csr_cmd_ena = 0;
-    v_mem_ex = 0;
-    vb_csr_cmd_addr = 0;
-    vb_csr_cmd_type = 0;
-    v_dbg_mem_req_ready = 0;
-    v_dbg_mem_req_error = 0;
-    v_halted = 0;
-    v_idle = 0;
-    mux.radr1 = 0;
-    mux.radr2 = 0;
-    mux.waddr = 0;
-    mux.imm = 0;
-    mux.pc = 0;
-    mux.instr = 0;
-    mux.memop_type = 0;
-    mux.memop_sign_ext = 0;
-    mux.memop_size = 0;
-    mux.unsigned_op = 0;
-    mux.rv32 = 0;
-    mux.compressed = 0;
-    mux.f64 = 0;
-    mux.ivec = 0;
-    mux.isa_type = 0;
-    vb_o_npc = 0;
+    v_d_valid = 1'b0;
+    v_csr_req_valid = 1'b0;
+    v_csr_resp_ready = 1'b0;
+    vb_csr_cmd_wdata = '0;
+    vb_res = '0;
+    vb_prog_npc = '0;
+    vb_npc_incr = '0;
+    vb_off = '0;
+    vb_sub64 = '0;
+    vb_memop_memaddr = '0;
+    vb_memop_memaddr_load = '0;
+    vb_memop_memaddr_store = '0;
+    vb_memop_wdata = '0;
+    wv = '0;
+    opcode_len = '0;
+    v_call = 1'b0;
+    v_ret = 1'b0;
+    v_pc_branch = 1'b0;
+    v_eq = 1'b0;
+    v_ge = 1'b0;
+    v_geu = 1'b0;
+    v_lt = 1'b0;
+    v_ltu = 1'b0;
+    v_neq = 1'b0;
+    vb_rdata1 = '0;
+    vb_rdata2 = '0;
+    vb_rdata1_amo = '0;
+    v_check_tag1 = 1'b0;
+    v_check_tag2 = 1'b0;
+    vb_select = '0;
+    vb_tagcnt_next = '0;
+    v_latch_input = 1'b0;
+    v_memop_ena = 1'b0;
+    v_memop_debug = 1'b0;
+    v_reg_ena = 1'b0;
+    vb_reg_waddr = '0;
+    v_instr_misaligned = 1'b0;
+    v_store_misaligned = 1'b0;
+    v_load_misaligned = 1'b0;
+    v_debug_misaligned = 1'b0;
+    v_csr_cmd_ena = 1'b0;
+    v_mem_ex = 1'b0;
+    vb_csr_cmd_addr = '0;
+    vb_csr_cmd_type = '0;
+    v_dbg_mem_req_ready = 1'b0;
+    v_dbg_mem_req_error = 1'b0;
+    v_halted = 1'b0;
+    v_idle = 1'b0;
+    mux.radr1 = '0;
+    mux.radr2 = '0;
+    mux.waddr = '0;
+    mux.imm = '0;
+    mux.pc = '0;
+    mux.instr = '0;
+    mux.memop_type = '0;
+    mux.memop_sign_ext = 1'b0;
+    mux.memop_size = '0;
+    mux.unsigned_op = 1'b0;
+    mux.rv32 = 1'b0;
+    mux.compressed = 1'b0;
+    mux.f64 = 1'b0;
+    mux.ivec = '0;
+    mux.isa_type = '0;
+    vb_o_npc = '0;
     t_radr1 = 0;
     t_radr2 = 0;
     t_waddr = 0;
-    t_type = 0;
-    t_tagcnt_wr = 0;
-    t_alu_mode = 0;
-    t_addsub_mode = 0;
-    t_shifter_mode = 0;
+    t_type = '0;
+    t_tagcnt_wr = '0;
+    t_alu_mode = '0;
+    t_addsub_mode = '0;
+    t_shifter_mode = '0;
 
     v = r;
 
@@ -399,7 +399,7 @@ begin: comb_proc
     v.ret = 1'b0;
     v.reg_write = 1'b0;
     for (int i = 0; i < Res_Total; i++) begin
-        wb_select[i].ena = '0;
+        wb_select[i].ena = 0;
     end
     vb_reg_waddr = i_d_waddr;
 
@@ -479,7 +479,7 @@ begin: comb_proc
     end
     // AMO value read from memory[rs1]
     if ((wv[Instr_AMOSWAP_D] || wv[Instr_AMOSWAP_W]) == 1'b1) begin
-        vb_rdata1_amo = '0;
+        vb_rdata1_amo = 64'd0;
     end else if (i_mem_valid == 1'b1) begin
         if (mux.rv32 == 1'b1) begin
             // All AMO are sign-extended:
@@ -571,9 +571,9 @@ begin: comb_proc
             || ((wv[Instr_SH] && (vb_memop_memaddr_store[0] == 1'b1)) == 1'b1)) begin
         v_store_misaligned = 1'b1;
     end
-    if (((i_dbg_mem_req_size == 2'h3) && ((|i_dbg_mem_req_addr[2: 0]) == 1'b1))
-            || ((i_dbg_mem_req_size == 2'h2) && ((|i_dbg_mem_req_addr[1: 0]) == 1'b1))
-            || ((i_dbg_mem_req_size == 2'h1) && (i_dbg_mem_req_addr[0] == 1'b1))) begin
+    if (((i_dbg_mem_req_size == 2'd3) && ((|i_dbg_mem_req_addr[2: 0]) == 1'b1))
+            || ((i_dbg_mem_req_size == 2'd2) && ((|i_dbg_mem_req_addr[1: 0]) == 1'b1))
+            || ((i_dbg_mem_req_size == 2'd1) && (i_dbg_mem_req_addr[0] == 1'b1))) begin
         v_debug_misaligned = 1'b1;
     end
     if (i_stack_overflow == 1'b1) begin
@@ -599,9 +599,9 @@ begin: comb_proc
         v.mem_ex_addr = i_mem_ex_addr;
     end
 
-    opcode_len = 3'h4;
+    opcode_len = 3'd4;
     if (mux.compressed == 1'b1) begin
-        opcode_len = 3'h2;
+        opcode_len = 3'd2;
     end
     vb_npc_incr = (mux.pc + opcode_len);
 
@@ -893,7 +893,7 @@ begin: comb_proc
     end else if (r.select[Res_FPU] == 1'b1) begin
         vb_res = wb_select[Res_FPU].res;
     end else begin
-        vb_res = '0;
+        vb_res = 64'd0;
     end
 
     if (((i_d_pc == r.npc)
@@ -1110,8 +1110,8 @@ begin: comb_proc
             v.state = State_Csr;
             v.csrstate = CsrState_Req;
             v.csr_req_type = CsrReq_ResumeCmd;
-            v.csr_req_addr = '0;
-            v.csr_req_data = '0;
+            v.csr_req_addr = 12'd0;
+            v.csr_req_data = 64'd0;
         end else if (i_dbg_mem_req_valid == 1'b1) begin
             v_dbg_mem_req_ready = 1'b1;
             v_dbg_mem_req_error = v_debug_misaligned;
@@ -1165,7 +1165,7 @@ begin: comb_proc
     vb_tagcnt_next[(CFG_REG_TAG_WIDTH * t_waddr) +: CFG_REG_TAG_WIDTH] = t_tagcnt_wr;
     vb_tagcnt_next[(CFG_REG_TAG_WIDTH - 1): 0] = '0;        // r0 always 0
     if (i_dbg_progbuf_ena == 1'b0) begin
-        v.dnpc = '0;
+        v.dnpc = 64'd0;
     end
 
     // Latch decoder's data into internal registers:
@@ -1173,7 +1173,7 @@ begin: comb_proc
         if (i_dbg_progbuf_ena == 1'b1) begin
             v.dnpc = (r.dnpc + opcode_len);
         end else begin
-            v.dnpc = '0;
+            v.dnpc = 64'd0;
             v.pc = i_d_pc;
             v.npc = vb_prog_npc;                            // Actually this value will be restored on resume request
         end

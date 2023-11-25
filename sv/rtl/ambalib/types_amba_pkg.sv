@@ -53,35 +53,35 @@ endfunction: XSizeToBytes
 // @brief Normal access success.
 // @details Indicates that a normal access has been
 // successful. Can also indicate an exclusive access has failed.
-localparam bit [1:0] AXI_RESP_OKAY = 2'h0;
+localparam bit [1:0] AXI_RESP_OKAY = 2'd0;
 // @brief Exclusive access okay.
 // @details Indicates that either the read or write
 // portion of an exclusive access has been successful.
-localparam bit [1:0] AXI_RESP_EXOKAY = 2'h1;
+localparam bit [1:0] AXI_RESP_EXOKAY = 2'd1;
 // @brief Slave error.
 // @details Used the access has reached the slave successfully,
 // but the slave wishes to return an error condition to the originating
 // master.
-localparam bit [1:0] AXI_RESP_SLVERR = 2'h2;
+localparam bit [1:0] AXI_RESP_SLVERR = 2'd2;
 // @brief Decode error.
 // @details Generated, typically by an interconnect component,
 // to indicate that there is no slave at the transaction address.
-localparam bit [1:0] AXI_RESP_DECERR = 2'h3;
+localparam bit [1:0] AXI_RESP_DECERR = 2'd3;
 
 // @brief Fixed address burst operation.
 // @details The address is the same for every transfer in the burst
 //          (FIFO type)
-localparam bit [1:0] AXI_BURST_FIXED = 2'h0;
+localparam bit [1:0] AXI_BURST_FIXED = 2'd0;
 // @brief Burst operation with address increment.
 // @details The address for each transfer in the burst is an increment of
 //         the address for the previous transfer. The increment value depends
 //        on the size of the transfer.
-localparam bit [1:0] AXI_BURST_INCR = 2'h1;
+localparam bit [1:0] AXI_BURST_INCR = 2'd1;
 // @brief Burst operation with address increment and wrapping.
 // @details A wrapping burst is similar to an incrementing burst, except that
 //          the address wraps around to a lower address if an upper address
 //          limit is reached
-localparam bit [1:0] AXI_BURST_WRAP = 2'h2;
+localparam bit [1:0] AXI_BURST_WRAP = 2'd2;
 // @}
 
 localparam bit [3:0] ARCACHE_DEVICE_NON_BUFFERABLE = 4'h0;
@@ -172,7 +172,7 @@ const axi4_metadata_type META_NONE = '{
     '0,  // len
     '0,  // size
     AXI_BURST_INCR,  // burst
-    1'h0,  // lock
+    1'b0,  // lock
     '0,  // cache
     '0,  // prot
     '0,  // qos
@@ -202,21 +202,21 @@ typedef struct {
 // @warning If the master is not connected to the vector begin vector value
 //          MUST BE initialized by this value.
 const axi4_master_out_type axi4_master_out_none = '{
-    1'h0,  // aw_valid
+    1'b0,  // aw_valid
     META_NONE,  // aw_bits
     '0,  // aw_id
-    1'h0,  // aw_user
-    1'h0,  // w_valid
+    1'b0,  // aw_user
+    1'b0,  // w_valid
     '0,  // w_data
-    1'h0,  // w_last
+    1'b0,  // w_last
     '0,  // w_strb
-    1'h0,  // w_user
-    1'h0,  // b_ready
-    1'h0,  // ar_valid
+    1'b0,  // w_user
+    1'b0,  // b_ready
+    1'b0,  // ar_valid
     META_NONE,  // ar_bits
     '0,  // ar_id
-    1'h0,  // ar_user
-    1'h0  // r_ready
+    1'b0,  // ar_user
+    1'b0  // r_ready
 };
 
 // @brief Master device input signals.
@@ -237,19 +237,19 @@ typedef struct {
 } axi4_master_in_type;
 
 const axi4_master_in_type axi4_master_in_none = '{
-    1'h0,  // aw_ready
-    1'h0,  // w_ready
-    1'h0,  // b_valid
+    1'b0,  // aw_ready
+    1'b0,  // w_ready
+    1'b0,  // b_valid
     '0,  // b_resp
     '0,  // b_id
-    1'h0,  // b_user
-    1'h0,  // ar_ready
-    1'h0,  // r_valid
+    1'b0,  // b_user
+    1'b0,  // ar_ready
+    1'b0,  // r_valid
     '0,  // r_resp
     '0,  // r_data
-    1'h0,  // r_last
+    1'b0,  // r_last
     '0,  // r_id
-    1'h0  // r_user
+    1'b0  // r_user
 };
 
 
@@ -272,21 +272,21 @@ typedef struct {
 } axi4_slave_in_type;
 
 const axi4_slave_in_type axi4_slave_in_none = '{
-    1'h0,  // aw_valid
+    1'b0,  // aw_valid
     META_NONE,  // aw_bits
     '0,  // aw_id
-    1'h0,  // aw_user
-    1'h0,  // w_valid
+    1'b0,  // aw_user
+    1'b0,  // w_valid
     '0,  // w_data
-    1'h0,  // w_last
+    1'b0,  // w_last
     '0,  // w_strb
-    1'h0,  // w_user
-    1'h0,  // b_ready
-    1'h0,  // ar_valid
+    1'b0,  // w_user
+    1'b0,  // b_ready
+    1'b0,  // ar_valid
     META_NONE,  // ar_bits
     '0,  // ar_id
-    1'h0,  // ar_user
-    1'h0  // r_ready
+    1'b0,  // ar_user
+    1'b0  // r_ready
 };
 
 typedef struct {
@@ -306,19 +306,19 @@ typedef struct {
 } axi4_slave_out_type;
 
 const axi4_slave_out_type axi4_slave_out_none = '{
-    1'h0,  // aw_ready
-    1'h0,  // w_ready
-    1'h0,  // b_valid
+    1'b0,  // aw_ready
+    1'b0,  // w_ready
+    1'b0,  // b_valid
     '0,  // b_resp
     '0,  // b_id
-    1'h0,  // b_user
-    1'h0,  // ar_ready
-    1'h0,  // r_valid
+    1'b0,  // b_user
+    1'b0,  // ar_ready
+    1'b0,  // r_valid
     '0,  // r_resp
     '0,  // r_data
-    1'h0,  // r_last
+    1'b0,  // r_last
     '0,  // r_id
-    1'h0  // r_user
+    1'b0  // r_user
 };
 
 
@@ -335,9 +335,9 @@ typedef struct {
 const apb_in_type apb_in_none = '{
     '0,  // paddr
     '0,  // pprot
-    1'h0,  // pselx
-    1'h0,  // penable
-    1'h0,  // pwrite
+    1'b0,  // pselx
+    1'b0,  // penable
+    1'b0,  // pwrite
     '0,  // pwdata
     '0  // pstrb
 };
@@ -349,9 +349,9 @@ typedef struct {
 } apb_out_type;
 
 const apb_out_type apb_out_none = '{
-    1'h0,  // pready
+    1'b0,  // pready
     '0,  // prdata
-    1'h0  // pslverr
+    1'b0  // pslverr
 };
 
 endpackage: types_amba_pkg

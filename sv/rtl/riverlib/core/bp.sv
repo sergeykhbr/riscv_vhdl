@@ -91,17 +91,17 @@ begin: comb_proc
     logic [1:0] vb_ignore_pd;
 
     for (int i = 0; i < CFG_BP_DEPTH; i++) begin
-        vb_addr[i] = 64'h0000000000000000;
+        vb_addr[i] = 64'd0;
     end
     for (int i = 0; i < 4; i++) begin
-        vb_piped[i] = 62'h0000000000000000;
+        vb_piped[i] = 62'd0;
     end
-    vb_fetch_npc = 0;
-    v_btb_we = 0;
-    vb_btb_we_pc = 0;
-    vb_btb_we_npc = 0;
-    vb_hit = 0;
-    vb_ignore_pd = 0;
+    vb_fetch_npc = '0;
+    v_btb_we = 1'b0;
+    vb_btb_we_pc = '0;
+    vb_btb_we_npc = '0;
+    vb_hit = '0;
+    vb_ignore_pd = '0;
 
     // Transform address into 2-dimesional array for convinience
     for (int i = 0; i < CFG_BP_DEPTH; i++) begin
@@ -117,7 +117,7 @@ begin: comb_proc
     for (int n = 0; n < 4; n++) begin
         for (int i = n; i < 4; i++) begin
             if (vb_addr[n][(RISCV_ARCH - 1): 2] == vb_piped[i]) begin
-                vb_hit[n] = 1'h1;
+                vb_hit[n] = 1'b1;
             end
         end
     end
@@ -138,10 +138,10 @@ begin: comb_proc
     vb_ignore_pd = '0;
     for (int i = 0; i < 4; i++) begin
         if (wb_pd[0].npc[(RISCV_ARCH - 1): 2] == vb_piped[i]) begin
-            vb_ignore_pd[0] = 1'h1;
+            vb_ignore_pd[0] = 1'b1;
         end
         if (wb_pd[1].npc[(RISCV_ARCH - 1): 2] == vb_piped[i]) begin
-            vb_ignore_pd[1] = 1'h1;
+            vb_ignore_pd[1] = 1'b1;
         end
     end
 
@@ -172,8 +172,8 @@ begin: comb_proc
     wb_btb_we_pc = vb_btb_we_pc;
     wb_btb_we_npc = vb_btb_we_npc;
 
-    o_f_valid = 1'h1;
-    o_f_pc = {vb_fetch_npc[(RISCV_ARCH - 1): 2], 2'h0};
+    o_f_valid = 1'b1;
+    o_f_pc = {vb_fetch_npc[(RISCV_ARCH - 1): 2], 2'd0};
 end: comb_proc
 
 endmodule: BranchPredictor

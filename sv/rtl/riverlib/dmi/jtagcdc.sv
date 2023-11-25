@@ -46,7 +46,7 @@ begin: comb_proc
     jtagcdc_registers v;
     logic [CDC_REG_WIDTH-1:0] vb_bus;
 
-    vb_bus = 0;
+    vb_bus = '0;
 
     v = r;
 

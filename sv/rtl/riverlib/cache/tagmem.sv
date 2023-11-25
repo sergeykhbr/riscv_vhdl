@@ -50,9 +50,9 @@ typedef struct {
 } TagMem_registers;
 
 const TagMem_registers TagMem_r_reset = '{
-    '0,                                 // tagaddr
-    '0,                                 // index
-    '0                                  // snoop_tagaddr
+    53'd0,                              // tagaddr
+    6'd0,                               // index
+    53'd0                               // snoop_tagaddr
 };
 
 logic [ibits-1:0] wb_index;
@@ -120,13 +120,13 @@ begin: comb_proc
     logic [TAG_BITS-1:0] vb_snoop_tagaddr;
     logic [flbits-1:0] vb_snoop_flags;
 
-    vb_index = 0;
-    vb_raddr = 0;
-    vb_tagi_wdata = 0;
-    v_hit = 0;
-    vb_snoop_index = 0;
-    vb_snoop_tagaddr = 0;
-    vb_snoop_flags = 0;
+    vb_index = '0;
+    vb_raddr = '0;
+    vb_tagi_wdata = '0;
+    v_hit = 1'b0;
+    vb_snoop_index = '0;
+    vb_snoop_tagaddr = '0;
+    vb_snoop_flags = '0;
 
     v = r;
 
@@ -150,7 +150,7 @@ begin: comb_proc
             vb_snoop_index = vb_index;
         end
         if (r.snoop_tagaddr != wb_tago_snoop_rdata[(TAG_BITS - 1): 0]) begin
-            vb_snoop_flags = '0;
+            vb_snoop_flags = 4'd0;
         end
     end
 

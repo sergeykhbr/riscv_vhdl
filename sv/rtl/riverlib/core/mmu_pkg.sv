@@ -79,7 +79,7 @@ const Mmu_registers Mmu_r_reset = '{
     1'b0,                               // last_mmu_ena
     '1,                                 // last_va
     '1,                                 // last_pa
-    '0,                                 // last_permission
+    8'd0,                               // last_permission
     '0,                                 // last_page_size
     '0,                                 // resp_addr
     '0,                                 // resp_data

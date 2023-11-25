@@ -55,8 +55,8 @@ begin: comb_proc
     dev_config_type vcfg;
     axi4_slave_out_type vxslvo;
 
-    vb_req_addr_next = 0;
-    vb_req_len_next = 0;
+    vb_req_addr_next = '0;
+    vb_req_len_next = '0;
     vcfg = dev_config_none;
     vxslvo = axi4_slave_out_none;
 
@@ -236,11 +236,11 @@ begin: comb_proc
 
     vxslvo.b_id = r.req_id;
     vxslvo.b_user = r.req_user;
-    vxslvo.b_resp = {i_resp_err, 1'h0};
+    vxslvo.b_resp = {i_resp_err, 1'b0};
     vxslvo.r_valid = r.resp_valid;
     vxslvo.r_id = r.req_id;
     vxslvo.r_user = r.req_user;
-    vxslvo.r_resp = {r.resp_err, 1'h0};
+    vxslvo.r_resp = {r.resp_err, 1'b0};
     vxslvo.r_data = r.resp_rdata;
     vxslvo.r_last = r.resp_last;
     o_xslvo = vxslvo;

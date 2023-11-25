@@ -129,39 +129,39 @@ begin: comb_proc
     logic v_idle;
     logic t_memop_debug;
 
-    vb_req_addr = 0;
-    vb_memop_wdata = 0;
-    vb_memop_wstrb = 0;
-    v_mem_valid = 0;
-    v_mem_debug = 0;
-    vb_mem_type = 0;
-    v_mem_sign_ext = 0;
-    vb_mem_sz = 0;
-    vb_mem_addr = 0;
-    vb_mem_rdata = 0;
-    v_queue_re = 0;
-    v_flushd = 0;
-    v_mmu_ena = 0;
-    v_mmu_sv39 = 0;
-    v_mmu_sv48 = 0;
-    vb_res_wtag = 0;
-    vb_mem_wdata = 0;
-    vb_mem_wstrb = 0;
-    vb_mem_resp_shifted = 0;
-    vb_mem_data_unsigned = 0;
-    vb_mem_data_signed = 0;
-    vb_res_data = 0;
-    vb_res_addr = 0;
-    vb_e_pc = 0;
-    vb_e_instr = 0;
-    v_memop_ready = 0;
-    v_o_wena = 0;
-    vb_o_waddr = 0;
-    vb_o_wdata = 0;
-    vb_o_wtag = 0;
-    v_valid = 0;
-    v_idle = 0;
-    t_memop_debug = 0;
+    vb_req_addr = '0;
+    vb_memop_wdata = '0;
+    vb_memop_wstrb = '0;
+    v_mem_valid = 1'b0;
+    v_mem_debug = 1'b0;
+    vb_mem_type = '0;
+    v_mem_sign_ext = 1'b0;
+    vb_mem_sz = '0;
+    vb_mem_addr = '0;
+    vb_mem_rdata = '0;
+    v_queue_re = 1'b0;
+    v_flushd = 1'b0;
+    v_mmu_ena = 1'b0;
+    v_mmu_sv39 = 1'b0;
+    v_mmu_sv48 = 1'b0;
+    vb_res_wtag = '0;
+    vb_mem_wdata = '0;
+    vb_mem_wstrb = '0;
+    vb_mem_resp_shifted = '0;
+    vb_mem_data_unsigned = '0;
+    vb_mem_data_signed = '0;
+    vb_res_data = '0;
+    vb_res_addr = '0;
+    vb_e_pc = '0;
+    vb_e_instr = '0;
+    v_memop_ready = 1'b0;
+    v_o_wena = 1'b0;
+    vb_o_waddr = '0;
+    vb_o_wdata = '0;
+    vb_o_wtag = '0;
+    v_valid = 1'b0;
+    v_idle = 1'b0;
+    t_memop_debug = 1'b0;
 
     v = r;
 
@@ -174,7 +174,7 @@ begin: comb_proc
     end
 
     case (i_memop_size)
-    2'h0: begin
+    2'd0: begin
         vb_memop_wdata = {i_memop_wdata[7: 0],
                 i_memop_wdata[7: 0],
                 i_memop_wdata[7: 0],
@@ -201,22 +201,22 @@ begin: comb_proc
             vb_memop_wstrb = 8'h80;
         end
     end
-    2'h1: begin
+    2'd1: begin
         vb_memop_wdata = {i_memop_wdata[15: 0],
                 i_memop_wdata[15: 0],
                 i_memop_wdata[15: 0],
                 i_memop_wdata[15: 0]};
-        if (i_memop_addr[2: 1] == 2'h0) begin
+        if (i_memop_addr[2: 1] == 2'd0) begin
             vb_memop_wstrb = 8'h03;
-        end else if (i_memop_addr[2: 1] == 2'h1) begin
+        end else if (i_memop_addr[2: 1] == 2'd1) begin
             vb_memop_wstrb = 8'h0c;
-        end else if (i_memop_addr[2: 1] == 2'h2) begin
+        end else if (i_memop_addr[2: 1] == 2'd2) begin
             vb_memop_wstrb = 8'h30;
         end else begin
             vb_memop_wstrb = 8'hc0;
         end
     end
-    2'h2: begin
+    2'd2: begin
         vb_memop_wdata = {i_memop_wdata[31: 0],
                 i_memop_wdata[31: 0]};
         if (i_memop_addr[2] == 1'b1) begin
@@ -225,7 +225,7 @@ begin: comb_proc
             vb_memop_wstrb = 8'h0f;
         end
     end
-    2'h3: begin
+    2'd3: begin
         vb_memop_wdata = i_memop_wdata;
         vb_memop_wstrb = 8'hff;
     end
@@ -272,25 +272,25 @@ begin: comb_proc
     vb_mem_addr = queue_data_o[63: 0];
 
     case (r.memop_addr[2: 0])
-    3'h1: begin
+    3'd1: begin
         vb_mem_resp_shifted[55: 0] = i_mem_data[63: 8];
     end
-    3'h2: begin
+    3'd2: begin
         vb_mem_resp_shifted[47: 0] = i_mem_data[63: 16];
     end
-    3'h3: begin
+    3'd3: begin
         vb_mem_resp_shifted[39: 0] = i_mem_data[63: 24];
     end
-    3'h4: begin
+    3'd4: begin
         vb_mem_resp_shifted[31: 0] = i_mem_data[63: 32];
     end
-    3'h5: begin
+    3'd5: begin
         vb_mem_resp_shifted[23: 0] = i_mem_data[63: 40];
     end
-    3'h6: begin
+    3'd6: begin
         vb_mem_resp_shifted[15: 0] = i_mem_data[63: 48];
     end
-    3'h7: begin
+    3'd7: begin
         vb_mem_resp_shifted[7: 0] = i_mem_data[63: 56];
     end
     default: begin

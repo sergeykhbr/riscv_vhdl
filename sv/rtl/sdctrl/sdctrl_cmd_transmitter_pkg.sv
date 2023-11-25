@@ -18,21 +18,21 @@ package sdctrl_cmd_transmitter_pkg;
 import sdctrl_cfg_pkg::*;
 
 // Command request states:
-localparam bit [3:0] CMDSTATE_IDLE = 4'h0;
-localparam bit [3:0] CMDSTATE_REQ_CONTENT = 4'h1;
-localparam bit [3:0] CMDSTATE_REQ_CRC7 = 4'h2;
-localparam bit [3:0] CMDSTATE_REQ_STOPBIT = 4'h3;
-localparam bit [3:0] CMDSTATE_RESP_WAIT = 4'h4;
-localparam bit [3:0] CMDSTATE_RESP_TRANSBIT = 4'h5;
-localparam bit [3:0] CMDSTATE_RESP_CMD_MIRROR = 4'h6;
-localparam bit [3:0] CMDSTATE_RESP_REG = 4'h7;
-localparam bit [3:0] CMDSTATE_RESP_CID_CSD = 4'h8;
-localparam bit [3:0] CMDSTATE_RESP_CRC7 = 4'h9;
-localparam bit [3:0] CMDSTATE_RESP_STOPBIT = 4'ha;
-localparam bit [3:0] CMDSTATE_RESP_SPI_R1 = 4'hb;
-localparam bit [3:0] CMDSTATE_RESP_SPI_R2 = 4'hc;
-localparam bit [3:0] CMDSTATE_RESP_SPI_DATA = 4'hd;
-localparam bit [3:0] CMDSTATE_PAUSE = 4'hf;
+localparam bit [3:0] CMDSTATE_IDLE = 4'd0;
+localparam bit [3:0] CMDSTATE_REQ_CONTENT = 4'd1;
+localparam bit [3:0] CMDSTATE_REQ_CRC7 = 4'd2;
+localparam bit [3:0] CMDSTATE_REQ_STOPBIT = 4'd3;
+localparam bit [3:0] CMDSTATE_RESP_WAIT = 4'd4;
+localparam bit [3:0] CMDSTATE_RESP_TRANSBIT = 4'd5;
+localparam bit [3:0] CMDSTATE_RESP_CMD_MIRROR = 4'd6;
+localparam bit [3:0] CMDSTATE_RESP_REG = 4'd7;
+localparam bit [3:0] CMDSTATE_RESP_CID_CSD = 4'd8;
+localparam bit [3:0] CMDSTATE_RESP_CRC7 = 4'd9;
+localparam bit [3:0] CMDSTATE_RESP_STOPBIT = 4'd10;
+localparam bit [3:0] CMDSTATE_RESP_SPI_R1 = 4'd11;
+localparam bit [3:0] CMDSTATE_RESP_SPI_R2 = 4'd12;
+localparam bit [3:0] CMDSTATE_RESP_SPI_DATA = 4'd13;
+localparam bit [3:0] CMDSTATE_PAUSE = 4'd15;
 
 typedef struct {
     logic [5:0] req_cmd;
@@ -71,12 +71,12 @@ const sdctrl_cmd_transmitter_registers sdctrl_cmd_transmitter_r_reset = '{
     '0,                                 // crc_calc
     '0,                                 // crc_rx
     '0,                                 // cmdbitcnt
-    1'h1,                               // crc7_clear
+    1'b1,                               // crc7_clear
     CMDSTATE_IDLE,                      // cmdstate
     1'b0,                               // err_valid
     CMDERR_NONE,                        // err_setcode
-    1'h1,                               // cmd_cs
-    1'h1,                               // cmd_dir
+    1'b1,                               // cmd_cs
+    1'b1,                               // cmd_dir
     1'b0                                // wdog_ena
 };
 

@@ -91,8 +91,8 @@ begin: comb_proc
     int_waddr = 0;
     int_radr1 = 0;
     int_radr2 = 0;
-    v_inordered = 0;
-    next_tag = 0;
+    v_inordered = 1'b0;
+    next_tag = '0;
 
     for (int i = 0; i < REGS_TOTAL; i++) begin
         v.arr[i].val = r.arr[i].val;
@@ -121,8 +121,8 @@ begin: comb_proc
 
     if (~async_reset && i_nrst == 1'b0) begin
         for (int i = 0; i < REGS_TOTAL; i++) begin
-            v.arr[i].val = 64'h0000000000000000;
-            v.arr[i].tag = 3'h0;
+            v.arr[i].val = '0;
+            v.arr[i].tag = '0;
         end
     end
 
@@ -176,8 +176,8 @@ generate
         always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
             if (i_nrst == 1'b0) begin
                 for (int i = 0; i < REGS_TOTAL; i++) begin
-                    r.arr[i].val <= 64'h0000000000000000;
-                    r.arr[i].tag <= 3'h0;
+                    r.arr[i].val <= '0;
+                    r.arr[i].tag <= '0;
                 end
             end else begin
                 for (int i = 0; i < REGS_TOTAL; i++) begin

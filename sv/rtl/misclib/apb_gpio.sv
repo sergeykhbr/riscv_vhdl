@@ -91,7 +91,7 @@ begin: comb_proc
     apb_gpio_registers v;
     logic [31:0] vb_rdata;
 
-    vb_rdata = 0;
+    vb_rdata = '0;
 
     v = r;
 
@@ -99,34 +99,34 @@ begin: comb_proc
 
     // Registers access:
     case (wb_req_addr[11: 2])
-    10'h000: begin                                          // 0x00: RO input_val
+    10'd0: begin                                            // 0x00: RO input_val
         vb_rdata[(width - 1): 0] = r.input_val;
     end
-    10'h001: begin                                          // 0x04: input_en
+    10'd1: begin                                            // 0x04: input_en
         vb_rdata[(width - 1): 0] = r.input_en;
         if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
             v.input_en = wb_req_wdata[(width - 1): 0];
         end
     end
-    10'h002: begin                                          // 0x08: output_en
+    10'd2: begin                                            // 0x08: output_en
         vb_rdata[(width - 1): 0] = r.output_en;
         if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
             v.output_en = wb_req_wdata[(width - 1): 0];
         end
     end
-    10'h003: begin                                          // 0x0C: output_val
+    10'd3: begin                                            // 0x0C: output_val
         vb_rdata[(width - 1): 0] = r.output_val;
         if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
             v.output_val = wb_req_wdata[(width - 1): 0];
         end
     end
-    10'h004: begin                                          // 0x10: ie
+    10'd4: begin                                            // 0x10: ie
         vb_rdata[(width - 1): 0] = r.ie;
         if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
             v.ie = wb_req_wdata[(width - 1): 0];
         end
     end
-    10'h005: begin                                          // 0x14: ip
+    10'd5: begin                                            // 0x14: ip
         vb_rdata[(width - 1): 0] = r.ip;
         if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
             v.ip = wb_req_wdata[(width - 1): 0];

@@ -331,8 +331,8 @@ begin: comb_proc
     logic v_gnd1;                                           // 1
     logic [SOC_PLIC_IRQ_TOTAL-1:0] vb_ext_irqs;
 
-    v_gnd1 = 0;
-    vb_ext_irqs = 0;
+    v_gnd1 = 1'b0;
+    vb_ext_irqs = '0;
 
 
     // assign interrupts:

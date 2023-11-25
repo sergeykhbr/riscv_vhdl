@@ -39,20 +39,20 @@ function logic [7:0] size2len(input logic [2:0] size);
 logic [7:0] ret;
 begin
     case (size)
-    3'h4: begin                                             // 16 Bytes
-        ret = 8'h01;
+    3'd4: begin                                             // 16 Bytes
+        ret = 8'd1;
     end
-    3'h5: begin                                             // 32 Bytes
-        ret = 8'h03;
+    3'd5: begin                                             // 32 Bytes
+        ret = 8'd3;
     end
-    3'h6: begin                                             // 64 Bytes
-        ret = 8'h07;
+    3'd6: begin                                             // 64 Bytes
+        ret = 8'd7;
     end
-    3'h7: begin                                             // 128 Bytes
-        ret = 8'h0f;
+    3'd7: begin                                             // 128 Bytes
+        ret = 8'd15;
     end
     default: begin
-        ret = '0;
+        ret = 8'd0;
     end
     endcase
     return ret;
@@ -62,8 +62,8 @@ endfunction: size2len
 function logic [2:0] size2size(input logic [2:0] size);
 logic [2:0] ret;
 begin
-    if (size >= 3'h3) begin
-        ret = 3'h3;
+    if (size >= 3'd3) begin
+        ret = 3'd3;
     end else begin
         ret = size;
     end
@@ -88,17 +88,17 @@ begin: comb_proc
     axi4_l2_in_type vl2i;
     axi4_master_out_type vmsto;
 
-    v_req_mem_ready = 0;
-    vb_r_data = 0;
-    vb_line_o = 0;
-    v_r_valid = 0;
-    v_w_valid = 0;
-    v_w_last = 0;
-    v_w_ready = 0;
-    vb_len = 0;
-    vb_size = 0;
-    t_line = 0;
-    t_wstrb = 0;
+    v_req_mem_ready = 1'b0;
+    vb_r_data = '0;
+    vb_line_o = '0;
+    v_r_valid = 1'b0;
+    v_w_valid = 1'b0;
+    v_w_last = 1'b0;
+    v_w_ready = 1'b0;
+    vb_len = '0;
+    vb_size = '0;
+    t_line = '0;
+    t_wstrb = '0;
     vl2i = axi4_l2_in_none;
     vmsto = axi4_master_out_none;
 

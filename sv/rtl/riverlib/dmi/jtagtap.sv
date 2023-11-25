@@ -53,22 +53,22 @@ localparam int DTMCONTROL_DMIRESET = 16;
 localparam int DTMCONTROL_DMIHARDRESET = 17;
 
 // JTAG states:
-localparam bit [3:0] RESET_TAP = 4'h0;
-localparam bit [3:0] IDLE = 4'h1;
-localparam bit [3:0] SELECT_DR_SCAN = 4'h2;
-localparam bit [3:0] CAPTURE_DR = 4'h3;
-localparam bit [3:0] SHIFT_DR = 4'h4;
-localparam bit [3:0] EXIT1_DR = 4'h5;
-localparam bit [3:0] PAUSE_DR = 4'h6;
-localparam bit [3:0] EXIT2_DR = 4'h7;
-localparam bit [3:0] UPDATE_DR = 4'h8;
-localparam bit [3:0] SELECT_IR_SCAN = 4'h9;
-localparam bit [3:0] CAPTURE_IR = 4'ha;
-localparam bit [3:0] SHIFT_IR = 4'hb;
-localparam bit [3:0] EXIT1_IR = 4'hc;
-localparam bit [3:0] PAUSE_IR = 4'hd;
-localparam bit [3:0] EXIT2_IR = 4'he;
-localparam bit [3:0] UPDATE_IR = 4'hf;
+localparam bit [3:0] RESET_TAP = 4'd0;
+localparam bit [3:0] IDLE = 4'd1;
+localparam bit [3:0] SELECT_DR_SCAN = 4'd2;
+localparam bit [3:0] CAPTURE_DR = 4'd3;
+localparam bit [3:0] SHIFT_DR = 4'd4;
+localparam bit [3:0] EXIT1_DR = 4'd5;
+localparam bit [3:0] PAUSE_DR = 4'd6;
+localparam bit [3:0] EXIT2_DR = 4'd7;
+localparam bit [3:0] UPDATE_DR = 4'd8;
+localparam bit [3:0] SELECT_IR_SCAN = 4'd9;
+localparam bit [3:0] CAPTURE_IR = 4'd10;
+localparam bit [3:0] SHIFT_IR = 4'd11;
+localparam bit [3:0] EXIT1_IR = 4'd12;
+localparam bit [3:0] PAUSE_IR = 4'd13;
+localparam bit [3:0] EXIT2_IR = 4'd14;
+localparam bit [3:0] UPDATE_IR = 4'd15;
 
 localparam int drlen = ((abits + 32) + 2);
 
@@ -117,13 +117,13 @@ begin: comb_proc
     logic [1:0] vb_err_sticky;
     logic v_dmi_hardreset;
 
-    vb_dr = 0;
-    v_dmi_req_valid = 0;
-    v_dmi_req_write = 0;
-    vb_dmi_req_data = 0;
-    vb_dmi_req_addr = 0;
-    vb_err_sticky = 0;
-    v_dmi_hardreset = 0;
+    vb_dr = '0;
+    v_dmi_req_valid = 1'b0;
+    v_dmi_req_write = 1'b0;
+    vb_dmi_req_data = '0;
+    vb_dmi_req_addr = '0;
+    vb_err_sticky = '0;
+    v_dmi_hardreset = 1'b0;
 
     v = r;
     nv = nr;
@@ -162,13 +162,13 @@ begin: comb_proc
         end
         if (nr.ir == IR_IDCODE) begin
             vb_dr = idcode;
-            v.dr_length = 7'h20;
+            v.dr_length = 7'd32;
         end else if (nr.ir == IR_DTMCONTROL) begin
             vb_dr[31: 0] = '0;
             vb_dr[3: 0] = 4'h1;                             // version
             vb_dr[9: 4] = abits;                            // the size of the address
             vb_dr[11: 10] = r.err_sticky;
-            v.dr_length = 7'h20;
+            v.dr_length = 7'd32;
         end else if (nr.ir == IR_DBUS) begin
             if (i_dmi_error == 1'b1) begin
                 vb_err_sticky = DMISTAT_FAILED;
@@ -178,12 +178,12 @@ begin: comb_proc
             end
             vb_dr[33: 2] = i_dmi_resp_data;
             vb_dr[((34 + abits) - 1): 34] = nr.dmi_addr;
-            v.dr_length = (abits + 7'h22);
+            v.dr_length = (abits + 7'd34);
         end else if (nr.ir == IR_BYPASS) begin
             vb_dr[0] = r.bypass;
-            v.dr_length = 7'h01;
+            v.dr_length = 7'd1;
         end
-        v.datacnt = '0;
+        v.datacnt = 32'd0;
     end
     SHIFT_DR: begin
         if (i_tms == 1'b1) begin
@@ -191,9 +191,9 @@ begin: comb_proc
         end else begin
             v.state = SHIFT_DR;
         end
-        if (r.dr_length > 7'h01) begin
+        if (r.dr_length > 7'd1) begin
             // For the bypass dr_length = 1
-            vb_dr = {1'h0, r.dr[(drlen - 1): 1]};
+            vb_dr = {1'b0, r.dr[(drlen - 1): 1]};
             vb_dr[(int'(r.dr_length) - 1)] = i_tdi;
         end else begin
             vb_dr[0] = i_tdi;

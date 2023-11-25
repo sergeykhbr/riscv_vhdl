@@ -20,9 +20,9 @@ import types_pnp_pkg::*;
 import sdctrl_cfg_pkg::*;
 
 // SD controller modes:
-localparam bit [1:0] MODE_PRE_INIT = 2'h0;
-localparam bit [1:0] MODE_SPI = 2'h1;
-localparam bit [1:0] MODE_SD = 2'h2;
+localparam bit [1:0] MODE_PRE_INIT = 2'd0;
+localparam bit [1:0] MODE_SPI = 2'd1;
+localparam bit [1:0] MODE_SD = 2'd2;
 
 typedef struct {
     logic nrst_spimode;

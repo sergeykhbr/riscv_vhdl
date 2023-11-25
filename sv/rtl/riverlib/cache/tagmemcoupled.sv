@@ -133,21 +133,21 @@ begin: comb_proc
     logic v_o_hit_next;
     logic [flbits-1:0] vb_o_rflags;
 
-    v_addr_sel = 0;
-    v_addr_sel_r = 0;
-    v_use_overlay = 0;
-    v_use_overlay_r = 0;
-    vb_index = 0;
-    vb_index_next = 0;
-    vb_addr_next = 0;
-    vb_addr_tag_direct = 0;
-    vb_addr_tag_next = 0;
-    vb_raddr_tag = 0;
-    vb_o_raddr = 0;
-    vb_o_rdata = 0;
-    v_o_hit = 0;
-    v_o_hit_next = 0;
-    vb_o_rflags = 0;
+    v_addr_sel = 1'b0;
+    v_addr_sel_r = 1'b0;
+    v_use_overlay = 1'b0;
+    v_use_overlay_r = 1'b0;
+    vb_index = '0;
+    vb_index_next = '0;
+    vb_addr_next = '0;
+    vb_addr_tag_direct = '0;
+    vb_addr_tag_next = '0;
+    vb_raddr_tag = '0;
+    vb_o_raddr = '0;
+    vb_o_rdata = '0;
+    v_o_hit = 1'b0;
+    v_o_hit_next = 1'b0;
+    vb_o_rflags = '0;
 
     v = r;
 
