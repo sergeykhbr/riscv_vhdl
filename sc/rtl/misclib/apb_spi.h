@@ -137,8 +137,8 @@ SC_MODULE(apb_spi) {
     sc_signal<sc_uint<(log2_fifosz + 1)>> wb_txfifo_count;
 
     apb_slv *pslv0;
-    sfifo<fifo_dbits, 9> *rxfifo;
-    sfifo<fifo_dbits, 9> *txfifo;
+    sfifo<fifo_dbits, log2_fifosz> *rxfifo;
+    sfifo<fifo_dbits, log2_fifosz> *txfifo;
 
 };
 
@@ -183,7 +183,7 @@ apb_spi<log2_fifosz>::apb_spi(sc_module_name name,
 
 
     rxfifo = new sfifo<fifo_dbits,
-                       9>("rxfifo", async_reset);
+                       log2_fifosz>("rxfifo", async_reset);
     rxfifo->i_clk(i_clk);
     rxfifo->i_nrst(i_nrst);
     rxfifo->i_we(w_rxfifo_we);
@@ -194,7 +194,7 @@ apb_spi<log2_fifosz>::apb_spi(sc_module_name name,
 
 
     txfifo = new sfifo<fifo_dbits,
-                       9>("txfifo", async_reset);
+                       log2_fifosz>("txfifo", async_reset);
     txfifo->i_clk(i_clk);
     txfifo->i_nrst(i_nrst);
     txfifo->i_we(w_txfifo_we);

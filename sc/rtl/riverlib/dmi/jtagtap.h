@@ -99,7 +99,7 @@ SC_MODULE(jtagtap) {
     void jtagtap_r_reset(jtagtap_registers &iv) {
         iv.state = RESET_TAP;
         iv.dr_length = 0;
-        iv.dr = idcode;
+        iv.dr = idcode_;
         iv.bypass = 0;
         iv.datacnt = 0;
         iv.dmi_busy = 0;

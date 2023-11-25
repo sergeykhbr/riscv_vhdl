@@ -144,7 +144,7 @@ apb_slv #(
 sfifo #(
     .async_reset(async_reset),
     .dbits(fifo_dbits),
-    .log2_depth(9)
+    .log2_depth(log2_fifosz)
 ) rxfifo (
     .i_clk(i_clk),
     .i_nrst(i_nrst),
@@ -159,7 +159,7 @@ sfifo #(
 sfifo #(
     .async_reset(async_reset),
     .dbits(fifo_dbits),
-    .log2_depth(9)
+    .log2_depth(log2_fifosz)
 ) txfifo (
     .i_clk(i_clk),
     .i_nrst(i_nrst),
