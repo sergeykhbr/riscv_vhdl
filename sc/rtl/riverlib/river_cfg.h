@@ -55,6 +55,9 @@ static const int CFG_BP_DEPTH = 5;
 // 
 static const int CFG_DEC_DEPTH = (CFG_BP_DEPTH - 3);        // requested, fetching, fetched
 
+// Jtag TAP ID, contains device and manufacturer values
+static const uint32_t CFG_DMI_TAP_ID = 0x10e31913;
+
 // Valid size 0..16
 static const int CFG_PROGBUF_REG_TOTAL = 16;
 // Must be at least 2 to support RV64I

@@ -77,9 +77,9 @@ logic w_jtag_dmi_error;
 dmidebug_registers r, rin;
 
 jtagtap #(
-    .idcode(32'h10e31913),
     .abits(7),
-    .irlen(5)
+    .irlen(5),
+    .idcode(CFG_DMI_TAP_ID)
 ) tap (
     .i_trst(i_trst),
     .i_tck(i_tck),

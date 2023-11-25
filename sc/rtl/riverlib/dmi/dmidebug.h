@@ -198,7 +198,7 @@ SC_MODULE(dmidebug) {
     sc_signal<bool> w_jtag_dmi_error;
 
     jtagcdc *cdc;
-    jtagtap<0x10e31913, 7, 5> *tap;
+    jtagtap<7, 5> *tap;
 
 };
 

@@ -57,9 +57,9 @@ dmidebug::dmidebug(sc_module_name name,
     cdc = 0;
     tap = 0;
 
-    tap = new jtagtap<0x10e31913,
-                      7,
-                      5>("tap");
+    tap = new jtagtap<7,
+                      5>("tap",
+                         CFG_DMI_TAP_ID);
     tap->i_trst(i_trst);
     tap->i_tck(i_tck);
     tap->i_tms(i_tms);

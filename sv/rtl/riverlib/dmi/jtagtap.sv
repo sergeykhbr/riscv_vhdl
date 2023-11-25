@@ -17,9 +17,9 @@
 `timescale 1ns/10ps
 
 module jtagtap #(
-    parameter logic [31:0] idcode = 32'h10e31913,
     parameter int abits = 7,
-    parameter int irlen = 5
+    parameter int irlen = 5,
+    parameter logic [31:0] idcode = 32'h10e31913
 )
 (
     input logic i_trst,                                     // Must be open-train, pullup
