@@ -65,11 +65,11 @@ SC_MODULE(Double2Long) {
         iv.ena = 0;
         iv.signA = 0;
         iv.expA = 0;
-        iv.mantA = 0ull;
-        iv.result = 0ull;
+        iv.mantA = 0;
+        iv.result = 0;
         iv.op_signed = 0;
         iv.w32 = 0;
-        iv.mantPostScale = 0ull;
+        iv.mantPostScale = 0;
         iv.overflow = 0;
         iv.underflow = 0;
     }

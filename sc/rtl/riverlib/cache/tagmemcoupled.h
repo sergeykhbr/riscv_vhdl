@@ -89,7 +89,7 @@ SC_MODULE(TagMemCoupled) {
     } v, r;
 
     void TagMemCoupled_r_reset(TagMemCoupled_registers &iv) {
-        iv.req_addr = 0ull;
+        iv.req_addr = 0;
     }
 
     tagmem_in_type linei[MemTotal];

@@ -102,18 +102,18 @@ SC_MODULE(RiverAmba) {
         iv.req_addr = state_idle;
         iv.req_path = 0;
         iv.req_cached = 0;
-        iv.req_wdata = 0ull;
+        iv.req_wdata = 0;
         iv.req_wstrb = 0;
         iv.req_size = 0;
         iv.req_prot = 0;
         iv.req_ar_snoop = 0;
         iv.req_aw_snoop = 0;
         iv.snoop_state = snoop_idle;
-        iv.ac_addr = 0ull;
+        iv.ac_addr = 0;
         iv.ac_snoop = 0;
         iv.cr_resp = 0;
         iv.req_snoop_type = 0;
-        iv.resp_snoop_data = 0ull;
+        iv.resp_snoop_data = 0;
         iv.cache_access = 0;
     }
 

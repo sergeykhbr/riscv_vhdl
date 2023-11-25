@@ -75,8 +75,8 @@ SC_MODULE(axi2apb_bus1) {
         iv.selidx = 0;
         iv.pvalid = 0;
         iv.paddr = 0;
-        iv.pwdata = 0ull;
-        iv.prdata = 0ull;
+        iv.pwdata = 0;
+        iv.prdata = 0;
         iv.pwrite = 0;
         iv.pstrb = 0;
         iv.pprot = 0;

@@ -70,7 +70,7 @@ SC_MODULE(jtagcdc) {
 
     void jtagcdc_r_reset(jtagcdc_registers &iv) {
         iv.l1 = ~0ull;
-        iv.l2 = 0ull;
+        iv.l2 = 0;
         iv.req_valid = 0;
         iv.req_accepted = 0;
         iv.req_write = 0;

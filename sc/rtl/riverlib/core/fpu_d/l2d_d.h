@@ -59,10 +59,10 @@ SC_MODULE(Long2Double) {
         iv.busy = 0;
         iv.ena = 0;
         iv.signA = 0;
-        iv.absA = 0ull;
-        iv.result = 0ull;
+        iv.absA = 0;
+        iv.result = 0;
         iv.op_signed = 0;
-        iv.mantAlign = 0ull;
+        iv.mantAlign = 0;
         iv.lshift = 0;
     }
 

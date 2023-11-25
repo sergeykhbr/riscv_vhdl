@@ -202,7 +202,7 @@ void RegIntBank::comb() {
 
     if (!async_reset_ && i_nrst.read() == 0) {
         for (int i = 0; i < REGS_TOTAL; i++) {
-            v.arr[i].val = 0ull;
+            v.arr[i].val = 0;
             v.arr[i].tag = 0;
         }
     }
@@ -249,7 +249,7 @@ void RegIntBank::comb() {
 void RegIntBank::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
         for (int i = 0; i < REGS_TOTAL; i++) {
-            r.arr[i].val = 0ull;
+            r.arr[i].val = 0;
             r.arr[i].tag = 0;
         }
     } else {

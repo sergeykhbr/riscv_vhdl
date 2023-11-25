@@ -72,15 +72,15 @@ SC_MODULE(L2Dummy) {
     void L2Dummy_r_reset(L2Dummy_registers &iv) {
         iv.state = Idle;
         iv.srcid = CFG_SLOT_L1_TOTAL;
-        iv.req_addr = 0ull;
+        iv.req_addr = 0;
         iv.req_size = 0;
         iv.req_prot = 0;
         iv.req_lock = 0;
         iv.req_id = 0;
         iv.req_user = 0;
-        iv.req_wdata = 0ull;
+        iv.req_wdata = 0;
         iv.req_wstrb = 0;
-        iv.rdata = 0ull;
+        iv.rdata = 0;
         iv.resp = 0;
     }
 

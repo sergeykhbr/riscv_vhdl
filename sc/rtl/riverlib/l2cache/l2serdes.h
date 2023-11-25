@@ -69,7 +69,7 @@ SC_MODULE(L2SerDes) {
         iv.state = State_Idle;
         iv.req_len = 0;
         iv.b_wait = 0;
-        iv.line = 0ull;
+        iv.line = 0;
         iv.wstrb = 0;
         iv.rmux = 0;
     }

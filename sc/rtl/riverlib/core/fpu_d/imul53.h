@@ -59,8 +59,8 @@ SC_MODULE(imul53) {
         iv.delay = 0;
         iv.shift = 0;
         iv.accum_ena = 0;
-        iv.b = 0ull;
-        iv.sum = 0ull;
+        iv.b = 0;
+        iv.sum = 0;
         iv.overflow = 0;
     }
 

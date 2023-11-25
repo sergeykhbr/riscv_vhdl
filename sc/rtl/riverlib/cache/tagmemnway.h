@@ -91,7 +91,7 @@ SC_MODULE(TagMemNWay) {
     } v, r;
 
     void TagMemNWay_r_reset(TagMemNWay_registers &iv) {
-        iv.req_addr = 0ull;
+        iv.req_addr = 0;
         iv.direct_access = 0;
         iv.invalidate = 0;
         iv.re = 0;

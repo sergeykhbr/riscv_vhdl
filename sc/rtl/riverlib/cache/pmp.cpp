@@ -142,8 +142,8 @@ void PMP::comb() {
 
     if (!async_reset_ && i_nrst.read() == 0) {
         for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) {
-            v.tbl[i].start_addr = 0ull;
-            v.tbl[i].end_addr = 0ull;
+            v.tbl[i].start_addr = 0;
+            v.tbl[i].end_addr = 0;
             v.tbl[i].flags = 0;
         }
     }
@@ -156,8 +156,8 @@ void PMP::comb() {
 void PMP::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
         for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) {
-            r.tbl[i].start_addr = 0ull;
-            r.tbl[i].end_addr = 0ull;
+            r.tbl[i].start_addr = 0;
+            r.tbl[i].end_addr = 0;
             r.tbl[i].flags = 0;
         }
     } else {

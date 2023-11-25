@@ -106,21 +106,21 @@ SC_MODULE(sdctrl_cache) {
 
     void sdctrl_cache_r_reset(sdctrl_cache_registers &iv) {
         iv.req_write = 0;
-        iv.req_addr = 0ull;
-        iv.req_wdata = 0ull;
+        iv.req_addr = 0;
+        iv.req_wdata = 0;
         iv.req_wstrb = 0;
         iv.state = State_Reset;
         iv.req_mem_valid = 0;
         iv.req_mem_write = 0;
-        iv.mem_addr = 0ull;
+        iv.mem_addr = 0;
         iv.mem_fault = 0;
         iv.write_first = 0;
         iv.write_flush = 0;
         iv.req_flush = 0;
         iv.flush_cnt = 0;
-        iv.line_addr_i = 0ull;
-        iv.cache_line_i = 0ull;
-        iv.cache_line_o = 0ull;
+        iv.line_addr_i = 0;
+        iv.cache_line_i = 0;
+        iv.cache_line_o = 0;
     }
 
     sc_signal<sc_biguint<SDCACHE_LINE_BITS>> line_wdata_i;

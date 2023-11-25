@@ -1302,18 +1302,18 @@ void CsrRegs::comb() {
         v.irq_pending = 0;
         v.cmd_type = 0;
         v.cmd_addr = 0;
-        v.cmd_data = 0ull;
+        v.cmd_data = 0;
         v.cmd_exception = 0;
         v.progbuf_end = 0;
         v.progbuf_err = 0;
         v.mip_ssip = 0;
         v.mip_stip = 0;
         v.mip_seip = 0;
-        v.medeleg = 0ull;
+        v.medeleg = 0;
         v.mideleg = 0;
         v.mcountinhibit = 0;
-        v.mstackovr = 0ull;
-        v.mstackund = 0ull;
+        v.mstackovr = 0;
+        v.mstackund = 0;
         v.mmu_ena = 0;
         v.satp_ppn = 0ull;
         v.satp_sv39 = 0;
@@ -1328,11 +1328,11 @@ void CsrRegs::comb() {
         v.ex_fpu_overflow = 0;
         v.ex_fpu_underflow = 0;
         v.ex_fpu_inexact = 0;
-        v.trap_addr = 0ull;
+        v.trap_addr = 0;
         v.mcycle_cnt = 0ull;
         v.minstret_cnt = 0ull;
-        v.dscratch0 = 0ull;
-        v.dscratch1 = 0ull;
+        v.dscratch0 = 0;
+        v.dscratch1 = 0;
         v.dpc = CFG_RESET_VECTOR;
         v.halt_cause = 0;
         v.dcsr_ebreakm = 0;
@@ -1347,8 +1347,8 @@ void CsrRegs::comb() {
         v.pmp_ena = 0;
         v.pmp_we = 0;
         v.pmp_region = 0;
-        v.pmp_start_addr = 0ull;
-        v.pmp_end_addr = 0ull;
+        v.pmp_start_addr = 0;
+        v.pmp_end_addr = 0;
         v.pmp_flags = 0;
     }
 
@@ -1412,18 +1412,18 @@ void CsrRegs::registers() {
         r.irq_pending = 0;
         r.cmd_type = 0;
         r.cmd_addr = 0;
-        r.cmd_data = 0ull;
+        r.cmd_data = 0;
         r.cmd_exception = 0;
         r.progbuf_end = 0;
         r.progbuf_err = 0;
         r.mip_ssip = 0;
         r.mip_stip = 0;
         r.mip_seip = 0;
-        r.medeleg = 0ull;
+        r.medeleg = 0;
         r.mideleg = 0;
         r.mcountinhibit = 0;
-        r.mstackovr = 0ull;
-        r.mstackund = 0ull;
+        r.mstackovr = 0;
+        r.mstackund = 0;
         r.mmu_ena = 0;
         r.satp_ppn = 0ull;
         r.satp_sv39 = 0;
@@ -1438,11 +1438,11 @@ void CsrRegs::registers() {
         r.ex_fpu_overflow = 0;
         r.ex_fpu_underflow = 0;
         r.ex_fpu_inexact = 0;
-        r.trap_addr = 0ull;
+        r.trap_addr = 0;
         r.mcycle_cnt = 0ull;
         r.minstret_cnt = 0ull;
-        r.dscratch0 = 0ull;
-        r.dscratch1 = 0ull;
+        r.dscratch0 = 0;
+        r.dscratch1 = 0;
         r.dpc = CFG_RESET_VECTOR;
         r.halt_cause = 0;
         r.dcsr_ebreakm = 0;
@@ -1457,8 +1457,8 @@ void CsrRegs::registers() {
         r.pmp_ena = 0;
         r.pmp_we = 0;
         r.pmp_region = 0;
-        r.pmp_start_addr = 0ull;
-        r.pmp_end_addr = 0ull;
+        r.pmp_start_addr = 0;
+        r.pmp_end_addr = 0;
         r.pmp_flags = 0;
     } else {
         for (int i = 0; i < 4; i++) {

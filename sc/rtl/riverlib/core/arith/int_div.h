@@ -73,13 +73,13 @@ SC_MODULE(IntDiv) {
         iv.overflow = 0;
         iv.busy = 0;
         iv.ena = 0;
-        iv.divident_i = 0ull;
-        iv.divisor_i = 0ull;
-        iv.bits_i = 0ull;
-        iv.result = 0ull;
-        iv.reference_div = 0ull;
+        iv.divident_i = 0;
+        iv.divisor_i = 0;
+        iv.bits_i = 0;
+        iv.result = 0;
+        iv.reference_div = 0;
         iv.a1_dbg = 0ull;
-        iv.a2_dbg = 0ull;
+        iv.a2_dbg = 0;
     }
 
     sc_signal<sc_biguint<124>> wb_divisor0_i;

@@ -291,16 +291,16 @@ void IntMul::comb() {
     if (!async_reset_ && i_nrst.read() == 0) {
         v.busy = 0;
         v.ena = 0;
-        v.a1 = 0ull;
-        v.a2 = 0ull;
+        v.a1 = 0;
+        v.a2 = 0;
         v.unsign = 0;
         v.high = 0;
         v.rv32 = 0;
         v.zero = 0;
         v.inv = 0;
-        v.result = 0ull;
-        v.a1_dbg = 0ull;
-        v.a2_dbg = 0ull;
+        v.result = 0;
+        v.a1_dbg = 0;
+        v.a2_dbg = 0;
         v.reference_mul = 0ull;
         for (int i = 0; i < 16; i++) {
             v.lvl1[i] = 0ull;
@@ -318,16 +318,16 @@ void IntMul::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
         r.busy = 0;
         r.ena = 0;
-        r.a1 = 0ull;
-        r.a2 = 0ull;
+        r.a1 = 0;
+        r.a2 = 0;
         r.unsign = 0;
         r.high = 0;
         r.rv32 = 0;
         r.zero = 0;
         r.inv = 0;
-        r.result = 0ull;
-        r.a1_dbg = 0ull;
-        r.a2_dbg = 0ull;
+        r.result = 0;
+        r.a1_dbg = 0;
+        r.a2_dbg = 0;
         r.reference_mul = 0ull;
         for (int i = 0; i < 16; i++) {
             r.lvl1[i] = 0ull;

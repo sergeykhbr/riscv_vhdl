@@ -108,12 +108,12 @@ SC_MODULE(ICacheLru) {
     } v, r;
 
     void ICacheLru_r_reset(ICacheLru_registers &iv) {
-        iv.req_addr = 0ull;
-        iv.req_addr_next = 0ull;
-        iv.write_addr = 0ull;
+        iv.req_addr = 0;
+        iv.req_addr_next = 0;
+        iv.write_addr = 0;
         iv.state = State_Reset;
         iv.req_mem_valid = 0;
-        iv.mem_addr = 0ull;
+        iv.mem_addr = 0;
         iv.req_mem_type = 0;
         iv.req_mem_size = 0;
         iv.load_fault = 0;
@@ -122,7 +122,7 @@ SC_MODULE(ICacheLru) {
         iv.req_flush_addr = 0ull;
         iv.req_flush_cnt = 0;
         iv.flush_cnt = 0;
-        iv.cache_line_i = 0ull;
+        iv.cache_line_i = 0;
     }
 
     sc_signal<bool> line_direct_access_i;

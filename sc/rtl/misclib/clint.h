@@ -234,13 +234,13 @@ void clint<cpu_total>::comb() {
     v.rdata = vrdata;
 
     if (!async_reset_ && i_nrst.read() == 0) {
-        v.mtime = 0ull;
+        v.mtime = 0;
         for (int i = 0; i < cpu_total; i++) {
             v.hart[i].msip = 0;
             v.hart[i].mtip = 0;
             v.hart[i].mtimecmp = 0ull;
         }
-        v.rdata = 0ull;
+        v.rdata = 0;
     }
 
     for (int i = 0; i < cpu_total; i++) {
@@ -260,13 +260,13 @@ void clint<cpu_total>::comb() {
 template<int cpu_total>
 void clint<cpu_total>::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
-        r.mtime = 0ull;
+        r.mtime = 0;
         for (int i = 0; i < cpu_total; i++) {
             r.hart[i].msip = 0;
             r.hart[i].mtip = 0;
             r.hart[i].mtimecmp = 0ull;
         }
-        r.rdata = 0ull;
+        r.rdata = 0;
     } else {
         r.mtime = v.mtime;
         for (int i = 0; i < cpu_total; i++) {

@@ -143,15 +143,15 @@ SC_MODULE(DCacheLru) {
 
     void DCacheLru_r_reset(DCacheLru_registers &iv) {
         iv.req_type = 0;
-        iv.req_addr = 0ull;
-        iv.req_wdata = 0ull;
+        iv.req_addr = 0;
+        iv.req_wdata = 0;
         iv.req_wstrb = 0;
         iv.req_size = 0;
         iv.state = State_Reset;
         iv.req_mem_valid = 0;
         iv.req_mem_type = 0;
         iv.req_mem_size = 0;
-        iv.mem_addr = 0ull;
+        iv.mem_addr = 0;
         iv.load_fault = 0;
         iv.write_first = 0;
         iv.write_flush = 0;
@@ -162,13 +162,13 @@ SC_MODULE(DCacheLru) {
         iv.req_flush_addr = 0ull;
         iv.req_flush_cnt = 0;
         iv.flush_cnt = 0;
-        iv.cache_line_i = 0ull;
-        iv.cache_line_o = 0ull;
+        iv.cache_line_i = 0;
+        iv.cache_line_o = 0;
         iv.req_snoop_type = 0;
         iv.snoop_flags_valid = 0;
         iv.snoop_restore_wait_resp = 0;
         iv.snoop_restore_write_bus = 0;
-        iv.req_addr_restore = 0ull;
+        iv.req_addr_restore = 0;
     }
 
     sc_signal<bool> line_direct_access_i;

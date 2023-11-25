@@ -132,9 +132,9 @@ SC_MODULE(Mmu) {
         iv.req_x = 0;
         iv.req_r = 0;
         iv.req_w = 0;
-        iv.req_pa = 0ull;
+        iv.req_pa = 0;
         iv.req_type = 0;
-        iv.req_wdata = 0ull;
+        iv.req_wdata = 0;
         iv.req_wstrb = 0;
         iv.req_size = 0;
         iv.req_flush = 0;
@@ -143,15 +143,15 @@ SC_MODULE(Mmu) {
         iv.last_pa = ~0ull;
         iv.last_permission = 0;
         iv.last_page_size = 0;
-        iv.resp_addr = 0ull;
-        iv.resp_data = 0ull;
+        iv.resp_addr = 0;
+        iv.resp_data = 0;
         iv.resp_load_fault = 0;
         iv.resp_store_fault = 0;
         iv.ex_page_fault = 0;
         iv.tlb_hit = 0;
         iv.tlb_level = 0;
         iv.tlb_page_size = 0;
-        iv.tlb_wdata = 0ull;
+        iv.tlb_wdata = 0;
         iv.tlb_flush_cnt = ~0ul;
         iv.tlb_flush_adr = 0;
     }

@@ -87,9 +87,9 @@ SC_MODULE(DoubleAdd) {
     void DoubleAdd_r_reset(DoubleAdd_registers &iv) {
         iv.busy = 0;
         iv.ena = 0;
-        iv.a = 0ull;
-        iv.b = 0ull;
-        iv.result = 0ull;
+        iv.a = 0;
+        iv.b = 0;
+        iv.result = 0;
         iv.illegal_op = 0;
         iv.overflow = 0;
         iv.add = 0;
@@ -105,15 +105,15 @@ SC_MODULE(DoubleAdd) {
         iv.preShift = 0;
         iv.signOpMore = 0;
         iv.expMore = 0;
-        iv.mantMore = 0ull;
-        iv.mantLess = 0ull;
-        iv.mantLessScale = 0ull;
-        iv.mantSum = 0ull;
+        iv.mantMore = 0;
+        iv.mantLess = 0;
+        iv.mantLessScale = 0;
+        iv.mantSum = 0;
         iv.lshift = 0;
-        iv.mantAlign = 0ull;
+        iv.mantAlign = 0;
         iv.expPostScale = 0;
         iv.expPostScaleInv = 0;
-        iv.mantPostScale = 0ull;
+        iv.mantPostScale = 0;
     }
 
 };

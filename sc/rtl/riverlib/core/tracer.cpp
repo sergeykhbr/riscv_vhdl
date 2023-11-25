@@ -1417,21 +1417,21 @@ void Tracer::comb() {
 
     if (!async_reset_ && i_nrst.read() == 0) {
         for (int i = 0; i < TRACE_TBL_SZ; i++) {
-            v.trace_tbl[i].exec_cnt = 0ull;
-            v.trace_tbl[i].pc = 0ull;
+            v.trace_tbl[i].exec_cnt = 0;
+            v.trace_tbl[i].pc = 0;
             v.trace_tbl[i].instr = 0;
             v.trace_tbl[i].regactioncnt = 0;
             v.trace_tbl[i].memactioncnt = 0;
             for (int j = 0; j < TRACE_TBL_SZ; j++) {
                 v.trace_tbl[i].regaction[j].waddr = 0;
-                v.trace_tbl[i].regaction[j].wres = 0ull;
+                v.trace_tbl[i].regaction[j].wres = 0;
             }
             for (int j = 0; j < TRACE_TBL_SZ; j++) {
                 v.trace_tbl[i].memaction[j].store = 0;
                 v.trace_tbl[i].memaction[j].size = 0;
-                v.trace_tbl[i].memaction[j].mask = 0ull;
-                v.trace_tbl[i].memaction[j].memaddr = 0ull;
-                v.trace_tbl[i].memaction[j].data = 0ull;
+                v.trace_tbl[i].memaction[j].mask = 0;
+                v.trace_tbl[i].memaction[j].memaddr = 0;
+                v.trace_tbl[i].memaction[j].data = 0;
                 v.trace_tbl[i].memaction[j].regaddr = 0;
                 v.trace_tbl[i].memaction[j].complete = 0;
                 v.trace_tbl[i].memaction[j].sc_release = 0;
@@ -1449,21 +1449,21 @@ void Tracer::comb() {
 void Tracer::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
         for (int i = 0; i < TRACE_TBL_SZ; i++) {
-            r.trace_tbl[i].exec_cnt = 0ull;
-            r.trace_tbl[i].pc = 0ull;
+            r.trace_tbl[i].exec_cnt = 0;
+            r.trace_tbl[i].pc = 0;
             r.trace_tbl[i].instr = 0;
             r.trace_tbl[i].regactioncnt = 0;
             r.trace_tbl[i].memactioncnt = 0;
             for (int j = 0; j < TRACE_TBL_SZ; j++) {
                 r.trace_tbl[i].regaction[j].waddr = 0;
-                r.trace_tbl[i].regaction[j].wres = 0ull;
+                r.trace_tbl[i].regaction[j].wres = 0;
             }
             for (int j = 0; j < TRACE_TBL_SZ; j++) {
                 r.trace_tbl[i].memaction[j].store = 0;
                 r.trace_tbl[i].memaction[j].size = 0;
-                r.trace_tbl[i].memaction[j].mask = 0ull;
-                r.trace_tbl[i].memaction[j].memaddr = 0ull;
-                r.trace_tbl[i].memaction[j].data = 0ull;
+                r.trace_tbl[i].memaction[j].mask = 0;
+                r.trace_tbl[i].memaction[j].memaddr = 0;
+                r.trace_tbl[i].memaction[j].data = 0;
                 r.trace_tbl[i].memaction[j].regaddr = 0;
                 r.trace_tbl[i].memaction[j].complete = 0;
                 r.trace_tbl[i].memaction[j].sc_release = 0;

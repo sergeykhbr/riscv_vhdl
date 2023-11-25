@@ -119,18 +119,18 @@ SC_MODULE(DbgPort) {
 
     void DbgPort_r_reset(DbgPort_registers &iv) {
         iv.dport_write = 0;
-        iv.dport_addr = 0ull;
-        iv.dport_wdata = 0ull;
-        iv.dport_rdata = 0ull;
+        iv.dport_addr = 0;
+        iv.dport_wdata = 0;
+        iv.dport_rdata = 0;
         iv.dport_size = 0;
         iv.dstate = idle;
-        iv.rdata = 0ull;
+        iv.rdata = 0;
         iv.stack_trace_cnt = 0;
         iv.req_accepted = 0;
         iv.resp_error = 0;
         iv.progbuf_ena = 0;
-        iv.progbuf_pc = 0ull;
-        iv.progbuf_instr = 0ull;
+        iv.progbuf_pc = 0;
+        iv.progbuf_instr = 0;
     }
 
     sc_signal<sc_uint<CFG_LOG2_STACK_TRACE_ADDR>> wb_stack_raddr;

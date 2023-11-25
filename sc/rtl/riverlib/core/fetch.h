@@ -83,7 +83,7 @@ SC_MODULE(InstrFetch) {
         iv.req_addr = ~0ull;
         iv.mem_resp_shadow = ~0ull;
         iv.pc = ~0ull;
-        iv.instr = 0ull;
+        iv.instr = 0;
         iv.instr_load_fault = 0;
         iv.instr_page_fault_x = 0;
         iv.progbuf_ena = 0;

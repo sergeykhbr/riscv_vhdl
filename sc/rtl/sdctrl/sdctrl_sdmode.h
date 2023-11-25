@@ -159,7 +159,7 @@ SC_MODULE(sdctrl_sdmode) {
         iv.cmd_resp_cmd = 0;
         iv.cmd_resp_arg32 = 0;
         iv.data_addr = 0;
-        iv.data_data = 0ull;
+        iv.data_data = 0;
         iv.data_resp_valid = 0;
         iv.wdog_ena = 0;
         iv.crc16_clear = 1;

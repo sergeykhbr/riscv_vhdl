@@ -329,7 +329,7 @@ void InstrDecoder::comb() {
         for (int i = 0; i < FULL_DEC_DEPTH; i++) {
             v.d[i].pc = ~0ull;
             v.d[i].isa_type = 0;
-            v.d[i].instr_vec = 0ull;
+            v.d[i].instr_vec = 0;
             v.d[i].instr = ~0ul;
             v.d[i].memop_store = 0;
             v.d[i].memop_load = 0;
@@ -347,7 +347,7 @@ void InstrDecoder::comb() {
             v.d[i].radr2 = 0;
             v.d[i].waddr = 0;
             v.d[i].csr_addr = 0;
-            v.d[i].imm = 0ull;
+            v.d[i].imm = 0;
             v.d[i].progbuf_ena = 0;
         }
     }
@@ -381,7 +381,7 @@ void InstrDecoder::registers() {
         for (int i = 0; i < FULL_DEC_DEPTH; i++) {
             r.d[i].pc = ~0ull;
             r.d[i].isa_type = 0;
-            r.d[i].instr_vec = 0ull;
+            r.d[i].instr_vec = 0;
             r.d[i].instr = ~0ul;
             r.d[i].memop_store = 0;
             r.d[i].memop_load = 0;
@@ -399,7 +399,7 @@ void InstrDecoder::registers() {
             r.d[i].radr2 = 0;
             r.d[i].waddr = 0;
             r.d[i].csr_addr = 0;
-            r.d[i].imm = 0ull;
+            r.d[i].imm = 0;
             r.d[i].progbuf_ena = 0;
         }
     } else {

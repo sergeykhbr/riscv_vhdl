@@ -149,7 +149,7 @@ void BpBTB::comb() {
     if ((!async_reset_ && i_nrst.read() == 0) || i_flush_pipeline) {
         for (int i = 0; i < CFG_BTB_SIZE; i++) {
             v.btb[i].pc = ~0ull;
-            v.btb[i].npc = 0ull;
+            v.btb[i].npc = 0;
             v.btb[i].exec = 0;
         }
     }
@@ -165,7 +165,7 @@ void BpBTB::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
         for (int i = 0; i < CFG_BTB_SIZE; i++) {
             r.btb[i].pc = ~0ull;
-            r.btb[i].npc = 0ull;
+            r.btb[i].npc = 0;
             r.btb[i].exec = 0;
         }
     } else {

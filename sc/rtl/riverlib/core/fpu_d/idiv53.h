@@ -62,9 +62,9 @@ SC_MODULE(idiv53) {
         iv.delay = 0;
         iv.lshift = 0;
         iv.lshift_rdy = 0;
-        iv.divisor = 0ull;
-        iv.divident = 0ull;
-        iv.bits = 0ull;
+        iv.divisor = 0;
+        iv.divident = 0;
+        iv.bits = 0;
         iv.overflow = 0;
         iv.zero_resid = 0;
     }

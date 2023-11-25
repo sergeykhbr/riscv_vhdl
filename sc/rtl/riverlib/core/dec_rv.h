@@ -114,7 +114,7 @@ SC_MODULE(DecoderRv) {
     void DecoderRv_r_reset(DecoderRv_registers &iv) {
         iv.pc = ~0ull;
         iv.isa_type = 0;
-        iv.instr_vec = 0ull;
+        iv.instr_vec = 0;
         iv.instr = ~0ul;
         iv.memop_store = 0;
         iv.memop_load = 0;
@@ -132,7 +132,7 @@ SC_MODULE(DecoderRv) {
         iv.radr2 = 0;
         iv.waddr = 0;
         iv.csr_addr = 0;
-        iv.imm = 0ull;
+        iv.imm = 0;
         iv.progbuf_ena = 0;
     }
 

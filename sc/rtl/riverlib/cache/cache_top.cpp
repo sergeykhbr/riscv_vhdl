@@ -374,9 +374,9 @@ void CacheTop::comb() {
     sc_uint<RISCV_ARCH> vb_resp_ctrl_addr;
     sc_uint<RISCV_ARCH> vb_resp_data_addr;
 
-    vb_ctrl_bus = 0ull;
-    vb_data_bus = 0ull;
-    vb_queue_bus = 0ull;
+    vb_ctrl_bus = 0;
+    vb_data_bus = 0;
+    vb_queue_bus = 0;
     ctrl_path_id = CTRL_PATH;
     data_path_id = DATA_PATH;
     v_queue_we = 0;

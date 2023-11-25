@@ -139,7 +139,7 @@ void IntDiv::comb() {
     sc_uint<64> vb_div;
     bool v_a1_m0;                                           // a1 == -0ll
     bool v_a2_m1;                                           // a2 == -1ll
-    sc_uint<1> v_ena;                                       // 1
+    sc_uint<1> v_ena;
     sc_biguint<120> t_divisor;
 
     v_invert64 = 0;

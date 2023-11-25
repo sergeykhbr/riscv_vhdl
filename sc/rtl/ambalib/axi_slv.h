@@ -90,9 +90,9 @@ SC_MODULE(axi_slv) {
     void axi_slv_r_reset(axi_slv_registers &iv) {
         iv.state = State_Idle;
         iv.req_valid = 0;
-        iv.req_addr = 0ull;
+        iv.req_addr = 0;
         iv.req_write = 0;
-        iv.req_wdata = 0ull;
+        iv.req_wdata = 0;
         iv.req_wstrb = 0;
         iv.req_xsize = 0;
         iv.req_len = 0;
@@ -104,7 +104,7 @@ SC_MODULE(axi_slv) {
         iv.req_done = 0;
         iv.resp_valid = 0;
         iv.resp_last = 0;
-        iv.resp_rdata = 0ull;
+        iv.resp_rdata = 0;
         iv.resp_err = 0;
     }
 

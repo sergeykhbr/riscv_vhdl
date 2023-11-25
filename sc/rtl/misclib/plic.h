@@ -367,8 +367,8 @@ void plic<ctxmax, irqmax>::comb() {
     }
 
     if (!async_reset_ && i_nrst.read() == 0) {
-        v.src_priority = 0ull;
-        v.pending = 0ull;
+        v.src_priority = 0;
+        v.pending = 0;
         v.ip = 0;
         for (int i = 0; i < ctxmax; i++) {
             v.ctx[i].priority_th = 0;
@@ -379,7 +379,7 @@ void plic<ctxmax, irqmax>::comb() {
             v.ctx[i].irq_idx = 0;
             v.ctx[i].irq_prio = 0;
         }
-        v.rdata = 0ull;
+        v.rdata = 0;
     }
 
     w_req_ready = 1;
@@ -392,8 +392,8 @@ void plic<ctxmax, irqmax>::comb() {
 template<int ctxmax, int irqmax>
 void plic<ctxmax, irqmax>::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
-        r.src_priority = 0ull;
-        r.pending = 0ull;
+        r.src_priority = 0;
+        r.pending = 0;
         r.ip = 0;
         for (int i = 0; i < ctxmax; i++) {
             r.ctx[i].priority_th = 0;
@@ -404,7 +404,7 @@ void plic<ctxmax, irqmax>::registers() {
             r.ctx[i].irq_idx = 0;
             r.ctx[i].irq_prio = 0;
         }
-        r.rdata = 0ull;
+        r.rdata = 0;
     } else {
         r.src_priority = v.src_priority;
         r.pending = v.pending;

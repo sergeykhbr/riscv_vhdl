@@ -173,10 +173,10 @@ SC_MODULE(dmidebug) {
         iv.data1 = 0;
         iv.data2 = 0;
         iv.data3 = 0;
-        iv.progbuf_data = 0ull;
+        iv.progbuf_data = 0;
         iv.dport_req_valid = 0;
-        iv.dport_addr = 0ull;
-        iv.dport_wdata = 0ull;
+        iv.dport_addr = 0;
+        iv.dport_wdata = 0;
         iv.dport_size = 0;
         iv.dport_resp_ready = 0;
         iv.pready = 0;

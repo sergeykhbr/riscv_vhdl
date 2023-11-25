@@ -71,18 +71,18 @@ SC_MODULE(DoubleMul) {
     void DoubleMul_r_reset(DoubleMul_registers &iv) {
         iv.busy = 0;
         iv.ena = 0;
-        iv.a = 0ull;
-        iv.b = 0ull;
-        iv.result = 0ull;
+        iv.a = 0;
+        iv.b = 0;
+        iv.result = 0;
         iv.zeroA = 0;
         iv.zeroB = 0;
-        iv.mantA = 0ull;
-        iv.mantB = 0ull;
+        iv.mantA = 0;
+        iv.mantB = 0;
         iv.expAB = 0;
         iv.expAlign = 0;
-        iv.mantAlign = 0ull;
+        iv.mantAlign = 0;
         iv.postShift = 0;
-        iv.mantPostScale = 0ull;
+        iv.mantPostScale = 0;
         iv.nanA = 0;
         iv.nanB = 0;
         iv.overflow = 0;

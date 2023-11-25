@@ -47,7 +47,7 @@ SC_MODULE(Shifter) {
     } v, r;
 
     void Shifter_r_reset(Shifter_registers &iv) {
-        iv.res = 0ull;
+        iv.res = 0;
     }
 
 };

@@ -79,9 +79,9 @@ SC_MODULE(FpuTop) {
         iv.ivec = 0;
         iv.busy = 0;
         iv.ready = 0;
-        iv.a = 0ull;
-        iv.b = 0ull;
-        iv.result = 0ull;
+        iv.a = 0;
+        iv.b = 0;
+        iv.result = 0;
         iv.ex_invalidop = 0;
         iv.ex_divbyzero = 0;
         iv.ex_overflow = 0;

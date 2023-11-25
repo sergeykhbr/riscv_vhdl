@@ -75,19 +75,19 @@ SC_MODULE(ic_axi4_to_l1) {
 
     void ic_axi4_to_l1_r_reset(ic_axi4_to_l1_registers &iv) {
         iv.state = Idle;
-        iv.req_addr = 0ull;
+        iv.req_addr = 0;
         iv.req_id = 0;
         iv.req_user = 0;
         iv.req_wstrb = 0;
-        iv.req_wdata = 0ull;
+        iv.req_wdata = 0;
         iv.req_len = 0;
         iv.req_size = 0;
         iv.req_prot = 0;
         iv.writing = 0;
         iv.read_modify_write = 0;
-        iv.line_data = 0ull;
+        iv.line_data = 0;
         iv.line_wstrb = 0;
-        iv.resp_data = 0ull;
+        iv.resp_data = 0;
     }
 
 };

@@ -115,7 +115,7 @@ SC_MODULE(sdctrl_cmd_transmitter) {
         iv.cmdshift = ~0ull;
         iv.cmdmirror = 0;
         iv.regshift = 0;
-        iv.cidshift = 0ull;
+        iv.cidshift = 0;
         iv.crc_calc = 0;
         iv.crc_rx = 0;
         iv.cmdbitcnt = 0;
