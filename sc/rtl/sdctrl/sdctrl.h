@@ -146,6 +146,7 @@ SC_MODULE(sdctrl) {
     sc_signal<bool> w_wdog_trigger;
     sc_signal<sc_uint<4>> wb_err_code;
     sc_signal<bool> w_err_pending;
+
     // SPI-mode controller signals:
     sc_signal<bool> w_spi_dat;
     sc_signal<bool> w_spi_dat_csn;
@@ -164,6 +165,7 @@ SC_MODULE(sdctrl) {
     sc_signal<bool> w_spi_wdog_ena;
     sc_signal<bool> w_spi_crc16_clear;
     sc_signal<bool> w_spi_crc16_next;
+
     // SD-mode controller signals:
     sc_signal<bool> w_sd_dat0;
     sc_signal<bool> w_sd_dat0_dir;
@@ -188,6 +190,7 @@ SC_MODULE(sdctrl) {
     sc_signal<bool> w_sd_wdog_ena;
     sc_signal<bool> w_sd_crc16_clear;
     sc_signal<bool> w_sd_crc16_next;
+
     // Mode multiplexed signals:
     sc_signal<bool> w_cmd_req_valid;
     sc_signal<sc_uint<6>> wb_cmd_req_cmd;

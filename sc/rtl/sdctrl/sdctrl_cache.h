@@ -68,7 +68,7 @@ SC_MODULE(sdctrl_cache) {
     static const int ibits = CFG_LOG2_SDCACHE_LINEBITS;
     static const int lnbits = CFG_LOG2_SDCACHE_BYTES_PER_LINE;
     static const int flbits = SDCACHE_FL_TOTAL;
-    
+
     // State machine states:
     static const uint8_t State_Idle = 0;
     static const uint8_t State_CheckHit = 2;
@@ -82,7 +82,7 @@ SC_MODULE(sdctrl_cache) {
     static const uint8_t State_FlushCheck = 9;
     static const uint8_t State_Reset = 10;
     static const uint8_t State_ResetWrite = 11;
-    
+
     static const uint64_t LINE_BYTES_MASK = ((1 << CFG_LOG2_SDCACHE_BYTES_PER_LINE) - 1);
 
     struct sdctrl_cache_registers {

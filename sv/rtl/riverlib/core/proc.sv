@@ -91,6 +91,7 @@ IntRegsType ireg;
 CsrType csr;
 DebugType dbg;
 BranchPredictorType bp;
+
 // csr bridge to executor unit
 logic iccsr_m0_req_ready;
 logic iccsr_m0_resp_valid;
@@ -108,6 +109,7 @@ logic [11:0] iccsr_s0_req_addr;
 logic [RISCV_ARCH-1:0] iccsr_s0_req_data;
 logic iccsr_s0_resp_ready;
 logic iccsr_s0_resp_exception;
+
 logic w_mem_resp_error;
 logic w_writeback_ready;
 logic w_reg_wena;

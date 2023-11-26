@@ -21,7 +21,8 @@
 namespace debugger {
 
 template<int abits = 7,
-         int irlen = 5>
+         int irlen = 5,
+         uint32_t idcode = 0x10e31913>
 SC_MODULE(jtagtap) {
  public:
     sc_in<bool> i_trst;                                     // Must be open-train, pullup
@@ -44,30 +45,27 @@ SC_MODULE(jtagtap) {
 
     SC_HAS_PROCESS(jtagtap);
 
-    jtagtap(sc_module_name name,
-            sc_uint<32> idcode);
+    jtagtap(sc_module_name name);
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
-    sc_uint<32> idcode_;
-
     static const int drlen = ((abits + 32) + 2);
-    
+
     static const uint8_t IR_IDCODE = 0x01;
     static const uint8_t IR_DTMCONTROL = 0x10;
     static const uint8_t IR_DBUS = 0x11;
     static const uint8_t IR_BYPASS = 0x1f;
-    
+
     static const uint8_t DMISTAT_SUCCESS = 0x0;
     static const uint8_t DMISTAT_RESERVED = 0x1;
     static const uint8_t DMISTAT_FAILED = 0x2;
     static const uint8_t DMISTAT_BUSY = 0x3;
-    
+
     // DTMCONTROL register bits
     static const int DTMCONTROL_DMIRESET = 16;
     static const int DTMCONTROL_DMIHARDRESET = 17;
-    
+
     // JTAG states:
     static const uint8_t RESET_TAP = 0;
     static const uint8_t IDLE = 1;
@@ -99,7 +97,7 @@ SC_MODULE(jtagtap) {
     void jtagtap_r_reset(jtagtap_registers &iv) {
         iv.state = RESET_TAP;
         iv.dr_length = 0;
-        iv.dr = idcode_;
+        iv.dr = idcode;
         iv.bypass = 0;
         iv.datacnt = 0;
         iv.dmi_busy = 0;
@@ -118,9 +116,8 @@ SC_MODULE(jtagtap) {
 
 };
 
-template<int abits, int irlen>
-jtagtap<abits, irlen>::jtagtap(sc_module_name name,
-                               sc_uint<32> idcode)
+template<int abits, int irlen, uint32_t idcode>
+jtagtap<abits, irlen, idcode>::jtagtap(sc_module_name name)
     : sc_module(name),
     i_trst("i_trst"),
     i_tck("i_tck"),
@@ -136,7 +133,6 @@ jtagtap<abits, irlen>::jtagtap(sc_module_name name,
     i_dmi_error("i_dmi_error"),
     o_dmi_hardreset("o_dmi_hardreset") {
 
-    idcode_ = idcode;
 
     SC_METHOD(comb);
     sensitive << i_trst;
@@ -165,8 +161,8 @@ jtagtap<abits, irlen>::jtagtap(sc_module_name name,
     sensitive << i_tck.neg();
 }
 
-template<int abits, int irlen>
-void jtagtap<abits, irlen>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+template<int abits, int irlen, uint32_t idcode>
+void jtagtap<abits, irlen, idcode>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     std::string pn(name());
     if (o_vcd) {
         sc_trace(o_vcd, i_trst, i_trst.name());
@@ -195,8 +191,8 @@ void jtagtap<abits, irlen>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_v
 
 }
 
-template<int abits, int irlen>
-void jtagtap<abits, irlen>::comb() {
+template<int abits, int irlen, uint32_t idcode>
+void jtagtap<abits, irlen, idcode>::comb() {
     sc_uint<drlen> vb_dr;
     bool v_dmi_req_valid;
     bool v_dmi_req_write;
@@ -249,7 +245,7 @@ void jtagtap<abits, irlen>::comb() {
             v.state = SHIFT_DR;
         }
         if (nr.ir.read() == IR_IDCODE) {
-            vb_dr = idcode_;
+            vb_dr = idcode;
             v.dr_length = 32;
         } else if (nr.ir.read() == IR_DTMCONTROL) {
             vb_dr(31, 0) = 0;
@@ -406,8 +402,8 @@ void jtagtap<abits, irlen>::comb() {
     o_dmi_hardreset = v_dmi_hardreset;
 }
 
-template<int abits, int irlen>
-void jtagtap<abits, irlen>::registers() {
+template<int abits, int irlen, uint32_t idcode>
+void jtagtap<abits, irlen, idcode>::registers() {
     if (i_trst.read() == 1) {
         jtagtap_r_reset(r);
     } else {
@@ -415,8 +411,8 @@ void jtagtap<abits, irlen>::registers() {
     }
 }
 
-template<int abits, int irlen>
-void jtagtap<abits, irlen>::nregisters() {
+template<int abits, int irlen, uint32_t idcode>
+void jtagtap<abits, irlen, idcode>::nregisters() {
     if (i_trst.read() == 1) {
         jtagtap_nr_reset(nr);
     } else {

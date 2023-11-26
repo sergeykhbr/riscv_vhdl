@@ -72,7 +72,7 @@ SC_MODULE(ICacheLru) {
     static const int lnbits = CFG_LOG2_L1CACHE_BYTES_PER_LINE;
     static const int flbits = ITAG_FL_TOTAL;
     static const int ways = (1 << CFG_ILOG2_NWAYS);
-    
+
     // State machine states:
     static const uint8_t State_Idle = 0;
     static const uint8_t State_CheckHit = 1;
@@ -85,7 +85,7 @@ SC_MODULE(ICacheLru) {
     static const uint8_t State_FlushCheck = 9;
     static const uint8_t State_Reset = 10;
     static const uint8_t State_ResetWrite = 11;
-    
+
     static const uint64_t LINE_BYTES_MASK = ((1 << CFG_LOG2_L1CACHE_BYTES_PER_LINE) - 1);
     static const uint32_t FLUSH_ALL_VALUE = ((1 << (CFG_ILOG2_LINES_PER_WAY + CFG_ILOG2_NWAYS)) - 1);
 

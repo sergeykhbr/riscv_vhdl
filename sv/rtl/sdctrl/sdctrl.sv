@@ -104,6 +104,7 @@ logic [15:0] wb_crc16_3;
 logic w_wdog_trigger;
 logic [3:0] wb_err_code;
 logic w_err_pending;
+
 // SPI-mode controller signals:
 logic w_spi_dat;
 logic w_spi_dat_csn;
@@ -122,6 +123,7 @@ logic [2:0] wb_spi_sdtype;
 logic w_spi_wdog_ena;
 logic w_spi_crc16_clear;
 logic w_spi_crc16_next;
+
 // SD-mode controller signals:
 logic w_sd_dat0;
 logic w_sd_dat0_dir;
@@ -146,6 +148,7 @@ logic [2:0] wb_sd_sdtype;
 logic w_sd_wdog_ena;
 logic w_sd_crc16_clear;
 logic w_sd_crc16_next;
+
 // Mode multiplexed signals:
 logic w_cmd_req_valid;
 logic [5:0] wb_cmd_req_cmd;

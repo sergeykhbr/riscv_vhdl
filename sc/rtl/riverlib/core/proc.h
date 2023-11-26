@@ -322,6 +322,7 @@ SC_MODULE(Processor) {
     CsrType csr;
     DebugType dbg;
     BranchPredictorType bp;
+
     // csr bridge to executor unit
     sc_signal<bool> iccsr_m0_req_ready;
     sc_signal<bool> iccsr_m0_resp_valid;
@@ -339,6 +340,7 @@ SC_MODULE(Processor) {
     sc_signal<sc_uint<RISCV_ARCH>> iccsr_s0_req_data;
     sc_signal<bool> iccsr_s0_resp_ready;
     sc_signal<bool> iccsr_s0_resp_exception;
+
     sc_signal<bool> w_mem_resp_error;
     sc_signal<bool> w_writeback_ready;
     sc_signal<bool> w_reg_wena;

@@ -49,7 +49,7 @@ SC_MODULE(CsrRegs) {
     sc_in<bool> i_flushd_end;
     sc_in<sc_uint<64>> i_mtimer;                            // Read-only shadow value of memory-mapped mtimer register (see CLINT).
     sc_out<sc_uint<64>> o_executed_cnt;                     // Number of executed instructions
-    
+
     sc_out<bool> o_step;                                    // Stepping enabled
     sc_in<bool> i_dbg_progbuf_ena;                          // Executing progbuf is in progress
     sc_out<bool> o_progbuf_end;                             // End of execution from prog buffer
@@ -59,14 +59,14 @@ SC_MODULE(CsrRegs) {
     sc_out<bool> o_flushmmu_valid;                          // clear specific leaf entry in MMU
     sc_out<bool> o_flushpipeline_valid;                     // flush pipeline, must be don for fence.VMA and fence.i
     sc_out<sc_uint<RISCV_ARCH>> o_flush_addr;               // Cache address to flush. All ones means flush all.
-    
+
     sc_out<bool> o_pmp_ena;                                 // PMP is active in S or U modes or if L/MPRV bit is set in M-mode
     sc_out<bool> o_pmp_we;                                  // write enable into PMP
     sc_out<sc_uint<CFG_PMP_TBL_WIDTH>> o_pmp_region;        // selected PMP region
     sc_out<sc_uint<RISCV_ARCH>> o_pmp_start_addr;           // PMP region start address
     sc_out<sc_uint<RISCV_ARCH>> o_pmp_end_addr;             // PMP region end address (inclusive)
     sc_out<sc_uint<CFG_PMP_FL_TOTAL>> o_pmp_flags;          // {ena, lock, r, w, x}
-    
+
     sc_out<bool> o_mmu_ena;                                 // MMU enabled in U and S modes. Sv48 only.
     sc_out<bool> o_mmu_sv39;                                // Translation mode sv39 is active
     sc_out<bool> o_mmu_sv48;                                // Translation mode sv48 is active
@@ -102,14 +102,14 @@ SC_MODULE(CsrRegs) {
     static const uint32_t State_Fence = 9;
     static const uint32_t State_WaitPmp = 10;
     static const uint32_t State_Response = 11;
-    
+
     static const uint8_t Fence_None = 0;
     static const uint8_t Fence_DataBarrier = 1;
     static const uint8_t Fence_DataFlush = 2;
     static const uint8_t Fence_WaitDataFlushEnd = 3;
     static const uint8_t Fence_FlushInstr = 4;
     static const uint8_t Fence_End = 7;
-    
+
     static const uint8_t SATP_MODE_SV39 = 8;
     static const uint8_t SATP_MODE_SV48 = 9;
 

@@ -48,7 +48,7 @@ module CsrRegs #(
     input logic i_flushd_end,
     input logic [63:0] i_mtimer,                            // Read-only shadow value of memory-mapped mtimer register (see CLINT).
     output logic [63:0] o_executed_cnt,                     // Number of executed instructions
-    
+
     output logic o_step,                                    // Stepping enabled
     input logic i_dbg_progbuf_ena,                          // Executing progbuf is in progress
     output logic o_progbuf_end,                             // End of execution from prog buffer
@@ -58,14 +58,14 @@ module CsrRegs #(
     output logic o_flushmmu_valid,                          // clear specific leaf entry in MMU
     output logic o_flushpipeline_valid,                     // flush pipeline, must be don for fence.VMA and fence.i
     output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_flush_addr,// Cache address to flush. All ones means flush all.
-    
+
     output logic o_pmp_ena,                                 // PMP is active in S or U modes or if L/MPRV bit is set in M-mode
     output logic o_pmp_we,                                  // write enable into PMP
     output logic [river_cfg_pkg::CFG_PMP_TBL_WIDTH-1:0] o_pmp_region,// selected PMP region
     output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_pmp_start_addr,// PMP region start address
     output logic [river_cfg_pkg::RISCV_ARCH-1:0] o_pmp_end_addr,// PMP region end address (inclusive)
     output logic [river_cfg_pkg::CFG_PMP_FL_TOTAL-1:0] o_pmp_flags,// {ena, lock, r, w, x}
-    
+
     output logic o_mmu_ena,                                 // MMU enabled in U and S modes. Sv48 only.
     output logic o_mmu_sv39,                                // Translation mode sv39 is active
     output logic o_mmu_sv48,                                // Translation mode sv48 is active

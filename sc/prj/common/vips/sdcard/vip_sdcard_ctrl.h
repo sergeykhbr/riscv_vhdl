@@ -84,7 +84,7 @@ SC_MODULE(vip_sdcard_ctrl) {
     static const uint8_t SDSTATE_PRG = 7;
     static const uint8_t SDSTATE_DIS = 8;
     static const uint8_t SDSTATE_INA = 9;
-    
+
     // Data block access state machine:
     static const uint8_t DATASTATE_IDLE = 0;
     static const uint8_t DATASTATE_START = 1;

@@ -91,7 +91,7 @@ SC_MODULE(DCacheLru) {
     static const int lnbits = CFG_LOG2_L1CACHE_BYTES_PER_LINE;
     static const int flbits = DTAG_FL_TOTAL;
     static const int ways = (1 << CFG_DLOG2_NWAYS);
-    
+
     // State machine states:
     static const uint8_t State_Idle = 0;
     static const uint8_t State_CheckHit = 1;
@@ -107,7 +107,7 @@ SC_MODULE(DCacheLru) {
     static const uint8_t State_ResetWrite = 11;
     static const uint8_t State_SnoopSetupAddr = 12;
     static const uint8_t State_SnoopReadData = 13;
-    
+
     static const uint64_t LINE_BYTES_MASK = ((1 << CFG_LOG2_L1CACHE_BYTES_PER_LINE) - 1);
     static const uint32_t FLUSH_ALL_VALUE = ((1 << (CFG_DLOG2_LINES_PER_WAY + CFG_DLOG2_NWAYS)) - 1);
 
