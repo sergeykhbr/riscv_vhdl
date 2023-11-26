@@ -38,7 +38,6 @@ SC_MODULE(zeroenc) {
  private:
     sc_signal<sc_uint<shiftwidth>> wb_muxind[(iwidth + 1)];
 
-
 };
 
 template<int iwidth, int shiftwidth>

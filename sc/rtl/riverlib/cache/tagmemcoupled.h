@@ -51,6 +51,7 @@ SC_MODULE(TagMemCoupled) {
 
     TagMemCoupled(sc_module_name name,
                   bool async_reset);
+    virtual ~TagMemCoupled();
 
 
  private:
@@ -188,6 +189,15 @@ TagMemCoupled<abus, waybits, ibits, lnbits, flbits>::TagMemCoupled(sc_module_nam
     SC_METHOD(registers);
     sensitive << i_nrst;
     sensitive << i_clk.pos();
+}
+
+template<int abus, int waybits, int ibits, int lnbits, int flbits>
+TagMemCoupled<abus, waybits, ibits, lnbits, flbits>::~TagMemCoupled() {
+    for (int i = 0; i < MemTotal; i++) {
+        if (memx[i]) {
+            delete memx[i];
+        }
+    }
 }
 
 template<int abus, int waybits, int ibits, int lnbits, int flbits>

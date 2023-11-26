@@ -64,6 +64,7 @@ SC_MODULE(InstrDecoder) {
     InstrDecoder(sc_module_name name,
                  bool async_reset,
                  bool fpu_ena);
+    virtual ~InstrDecoder();
 
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 

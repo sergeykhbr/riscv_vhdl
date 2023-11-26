@@ -111,7 +111,6 @@ SC_MODULE(Tracer) {
     std::string tracestr;
     FILE *fl;
 
-
 };
 
 }  // namespace debugger

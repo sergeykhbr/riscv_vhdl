@@ -51,7 +51,6 @@ SC_MODULE(lrunway) {
         sc_signal<sc_uint<LINE_WIDTH>> mem[LINES_TOTAL];
     } v, r;
 
-
 };
 
 template<int abits, int waybits>

@@ -54,7 +54,6 @@ SC_MODULE(sfifo) {
         sc_signal<sc_uint<(log2_depth + 1)>> total_cnt;
     } v, r;
 
-
 };
 
 template<int dbits, int log2_depth>

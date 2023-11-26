@@ -195,7 +195,6 @@ SC_MODULE(CsrRegs) {
         sc_signal<sc_uint<CFG_PMP_FL_TOTAL>> pmp_flags;
     } v, r;
 
-
 };
 
 }  // namespace debugger

@@ -52,7 +52,6 @@ SC_MODULE(Queue) {
         sc_signal<sc_biguint<dbits>> mem[DEPTH];
     } v, r;
 
-
 };
 
 template<int abits, int dbits>

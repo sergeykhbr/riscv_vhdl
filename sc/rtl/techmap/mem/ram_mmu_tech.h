@@ -43,7 +43,6 @@ SC_MODULE(ram_mmu_tech) {
     sc_biguint<dbits> rdata;
     sc_biguint<dbits> mem[DEPTH];
 
-
 };
 
 template<int abits, int dbits>

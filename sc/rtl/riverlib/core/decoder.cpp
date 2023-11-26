@@ -209,6 +209,19 @@ InstrDecoder::InstrDecoder(sc_module_name name,
     sensitive << i_clk.pos();
 }
 
+InstrDecoder::~InstrDecoder() {
+    for (int i = 0; i < DEC_NUM; i++) {
+        if (rv[i]) {
+            delete rv[i];
+        }
+    }
+    for (int i = 0; i < DEC_NUM; i++) {
+        if (rvc[i]) {
+            delete rvc[i];
+        }
+    }
+}
+
 void InstrDecoder::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     std::string pn(name());
     if (o_vcd) {

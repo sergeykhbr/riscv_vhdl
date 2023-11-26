@@ -96,7 +96,6 @@ SC_MODULE(RegIntBank) {
         RegValueType arr[REGS_TOTAL];
     } v, r;
 
-
 };
 
 }  // namespace debugger

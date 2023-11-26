@@ -65,7 +65,6 @@ SC_MODULE(IntMul) {
         sc_signal<sc_biguint<83>> lvl3[4];
     } v, r;
 
-
 };
 
 }  // namespace debugger

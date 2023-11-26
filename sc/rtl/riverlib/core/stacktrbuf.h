@@ -43,7 +43,6 @@ SC_MODULE(StackTraceBuffer) {
         sc_signal<sc_biguint<(2 * RISCV_ARCH)>> stackbuf[STACK_TRACE_BUF_SIZE];// [pc, npc]
     } v, r;
 
-
 };
 
 }  // namespace debugger

@@ -36,6 +36,7 @@ SC_MODULE(ram_cache_bwe_tech) {
     SC_HAS_PROCESS(ram_cache_bwe_tech);
 
     ram_cache_bwe_tech(sc_module_name name);
+    virtual ~ram_cache_bwe_tech();
 
 
  private:
@@ -86,6 +87,15 @@ ram_cache_bwe_tech<abits, dbits>::ram_cache_bwe_tech(sc_module_name name)
     }
     for (int i = 0; i < (dbits / 8); i++) {
         sensitive << wb_rdata[i];
+    }
+}
+
+template<int abits, int dbits>
+ram_cache_bwe_tech<abits, dbits>::~ram_cache_bwe_tech() {
+    for (int i = 0; i < (dbits / 8); i++) {
+        if (rx[i]) {
+            delete rx[i];
+        }
     }
 }
 

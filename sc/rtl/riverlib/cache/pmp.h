@@ -60,7 +60,6 @@ SC_MODULE(PMP) {
         PmpTableItemType tbl[CFG_PMP_TBL_SIZE];
     } v, r;
 
-
 };
 
 }  // namespace debugger

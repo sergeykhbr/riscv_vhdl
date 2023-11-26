@@ -37,6 +37,7 @@ SC_MODULE(ram_bytes_tech) {
     SC_HAS_PROCESS(ram_bytes_tech);
 
     ram_bytes_tech(sc_module_name name);
+    virtual ~ram_bytes_tech();
 
 
  private:
@@ -94,6 +95,15 @@ ram_bytes_tech<abits, log2_dbytes>::ram_bytes_tech(sc_module_name name)
     }
     for (int i = 0; i < dbytes; i++) {
         sensitive << wb_rdata[i];
+    }
+}
+
+template<int abits, int log2_dbytes>
+ram_bytes_tech<abits, log2_dbytes>::~ram_bytes_tech() {
+    for (int i = 0; i < dbytes; i++) {
+        if (mem[i]) {
+            delete mem[i];
+        }
     }
 }
 

@@ -48,7 +48,6 @@ SC_MODULE(rom_inferred_2x32) {
     sc_uint<32> mem0[DEPTH];
     sc_uint<32> mem1[DEPTH];
 
-
 };
 
 template<int abits>

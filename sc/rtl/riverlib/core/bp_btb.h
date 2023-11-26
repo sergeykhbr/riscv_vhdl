@@ -59,7 +59,6 @@ SC_MODULE(BpBTB) {
 
     sc_signal<sc_uint<RISCV_ARCH>> dbg_npc[CFG_BP_DEPTH];
 
-
 };
 
 }  // namespace debugger

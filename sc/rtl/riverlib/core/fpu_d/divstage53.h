@@ -42,7 +42,6 @@ SC_MODULE(divstage53) {
     sc_uint<62> wb_thresh[16];
     sc_uint<61> wb_dif[4];
 
-
 };
 
 }  // namespace debugger

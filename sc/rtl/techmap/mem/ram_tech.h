@@ -43,7 +43,6 @@ SC_MODULE(ram_tech) {
     sc_uint<dbits> rdata;
     sc_uint<dbits> mem[DEPTH];
 
-
 };
 
 template<int abits, int dbits>
