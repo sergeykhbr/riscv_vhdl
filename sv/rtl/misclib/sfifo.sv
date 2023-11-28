@@ -84,7 +84,7 @@ begin: comb_proc
 
     if (~async_reset && i_nrst == 1'b0) begin
         for (int i = 0; i < DEPTH; i++) begin
-            v.databuf[i] = 8'd0;
+            v.databuf[i] = '0;
         end
         v.wr_cnt = '0;
         v.rd_cnt = '0;
@@ -108,7 +108,7 @@ generate
         always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
             if (i_nrst == 1'b0) begin
                 for (int i = 0; i < DEPTH; i++) begin
-                    r.databuf[i] <= 8'd0;
+                    r.databuf[i] <= '0;
                 end
                 r.wr_cnt <= '0;
                 r.rd_cnt <= '0;

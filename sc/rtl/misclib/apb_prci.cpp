@@ -98,8 +98,6 @@ void apb_prci::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_sys_rst, o_sys_rst.name());
         sc_trace(o_vcd, o_sys_nrst, o_sys_nrst.name());
         sc_trace(o_vcd, o_dbg_nrst, o_dbg_nrst.name());
-        sc_trace(o_vcd, i_mapinfo, i_mapinfo.name());
-        sc_trace(o_vcd, o_cfg, o_cfg.name());
         sc_trace(o_vcd, i_apbi, i_apbi.name());
         sc_trace(o_vcd, o_apbo, o_apbo.name());
         sc_trace(o_vcd, r.sys_rst, pn + ".r_sys_rst");

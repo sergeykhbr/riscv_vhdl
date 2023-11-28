@@ -81,8 +81,6 @@ axi_slv::axi_slv(sc_module_name name,
 void axi_slv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     std::string pn(name());
     if (o_vcd) {
-        sc_trace(o_vcd, i_mapinfo, i_mapinfo.name());
-        sc_trace(o_vcd, o_cfg, o_cfg.name());
         sc_trace(o_vcd, i_xslvi, i_xslvi.name());
         sc_trace(o_vcd, o_xslvo, o_xslvo.name());
         sc_trace(o_vcd, o_req_valid, o_req_valid.name());

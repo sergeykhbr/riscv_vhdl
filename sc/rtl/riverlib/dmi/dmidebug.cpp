@@ -183,8 +183,6 @@ void dmidebug::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_tms, i_tms.name());
         sc_trace(o_vcd, i_tdi, i_tdi.name());
         sc_trace(o_vcd, o_tdo, o_tdo.name());
-        sc_trace(o_vcd, i_mapinfo, i_mapinfo.name());
-        sc_trace(o_vcd, o_cfg, o_cfg.name());
         sc_trace(o_vcd, i_apbi, i_apbi.name());
         sc_trace(o_vcd, o_apbo, o_apbo.name());
         sc_trace(o_vcd, o_ndmreset, o_ndmreset.name());

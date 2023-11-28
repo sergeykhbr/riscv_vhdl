@@ -57,7 +57,7 @@ begin: comb_proc
 
     v_ena = 1'b0;
     for (int i = 0; i < 17; i++) begin
-        vb_mux[i] = 57'd0;
+        vb_mux[i] = '0;
     end
     vb_sel = '0;
     vb_shift = '0;

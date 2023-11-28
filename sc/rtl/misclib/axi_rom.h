@@ -147,8 +147,6 @@ axi_rom<abits>::~axi_rom() {
 template<int abits>
 void axi_rom<abits>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     if (o_vcd) {
-        sc_trace(o_vcd, i_mapinfo, i_mapinfo.name());
-        sc_trace(o_vcd, o_cfg, o_cfg.name());
         sc_trace(o_vcd, i_xslvi, i_xslvi.name());
         sc_trace(o_vcd, o_xslvo, o_xslvo.name());
     }

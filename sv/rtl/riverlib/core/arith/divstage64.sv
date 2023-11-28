@@ -70,7 +70,7 @@ begin: comb_proc
     wb_divident = '0;
     wb_divisor = '0;
     for (int i = 0; i < 16; i++) begin
-        wb_thresh[i] = 66'd0;
+        wb_thresh[i] = '0;
     end
 
     wb_divident = i_divident;

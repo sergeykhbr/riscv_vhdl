@@ -119,13 +119,13 @@ void IntMul::comb() {
     vb_a2 = 0;
     wb_mux_lvl0 = 0;
     for (int i = 0; i < 32; i++) {
-        wb_lvl0[i] = 0ull;
+        wb_lvl0[i] = 0;
     }
     for (int i = 0; i < 8; i++) {
-        wb_lvl2[i] = 0ull;
+        wb_lvl2[i] = 0;
     }
     for (int i = 0; i < 2; i++) {
-        wb_lvl4[i] = 0ull;
+        wb_lvl4[i] = 0;
     }
     wb_lvl5 = 0;
     wb_res32 = 0;
@@ -303,10 +303,10 @@ void IntMul::comb() {
         v.a2_dbg = 0;
         v.reference_mul = 0ull;
         for (int i = 0; i < 16; i++) {
-            v.lvl1[i] = 0ull;
+            v.lvl1[i] = 0;
         }
         for (int i = 0; i < 4; i++) {
-            v.lvl3[i] = 0ull;
+            v.lvl3[i] = 0;
         }
     }
 
@@ -330,10 +330,10 @@ void IntMul::registers() {
         r.a2_dbg = 0;
         r.reference_mul = 0ull;
         for (int i = 0; i < 16; i++) {
-            r.lvl1[i] = 0ull;
+            r.lvl1[i] = 0;
         }
         for (int i = 0; i < 4; i++) {
-            r.lvl3[i] = 0ull;
+            r.lvl3[i] = 0;
         }
     } else {
         r.busy = v.busy;

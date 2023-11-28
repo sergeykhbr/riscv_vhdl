@@ -314,14 +314,13 @@ void Workgroup::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_mtimer, i_mtimer.name());
         sc_trace(o_vcd, i_acpo, i_acpo.name());
         sc_trace(o_vcd, o_acpi, o_acpi.name());
-        sc_trace(o_vcd, o_xmst_cfg, o_xmst_cfg.name());
         sc_trace(o_vcd, i_msti, i_msti.name());
         sc_trace(o_vcd, o_msto, o_msto.name());
-        sc_trace(o_vcd, i_dmi_mapinfo, i_dmi_mapinfo.name());
-        sc_trace(o_vcd, o_dmi_cfg, o_dmi_cfg.name());
         sc_trace(o_vcd, i_dmi_apbi, i_dmi_apbi.name());
         sc_trace(o_vcd, o_dmi_apbo, o_dmi_apbo.name());
         sc_trace(o_vcd, o_dmreset, o_dmreset.name());
+        sc_trace(o_vcd, l2i, l2i.name());
+        sc_trace(o_vcd, l2o, l2o.name());
     }
 
     if (dmi0) {

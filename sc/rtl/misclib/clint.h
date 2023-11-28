@@ -135,8 +135,6 @@ clint<cpu_total>::clint(sc_module_name name,
     sensitive << wb_resp_rdata;
     sensitive << wb_resp_err;
     sensitive << r.mtime;
-    for (int i = 0; i < cpu_total; i++) {
-    }
     sensitive << r.rdata;
 
     SC_METHOD(registers);
@@ -155,8 +153,6 @@ template<int cpu_total>
 void clint<cpu_total>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     std::string pn(name());
     if (o_vcd) {
-        sc_trace(o_vcd, i_mapinfo, i_mapinfo.name());
-        sc_trace(o_vcd, o_cfg, o_cfg.name());
         sc_trace(o_vcd, i_xslvi, i_xslvi.name());
         sc_trace(o_vcd, o_xslvo, o_xslvo.name());
         sc_trace(o_vcd, o_mtimer, o_mtimer.name());
@@ -165,6 +161,12 @@ void clint<cpu_total>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, r.mtime, pn + ".r_mtime");
         for (int i = 0; i < cpu_total; i++) {
             char tstr[1024];
+            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_hart%d_msip", pn.c_str(), i);
+            sc_trace(o_vcd, r.hart[i].msip, tstr);
+            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_hart%d_mtip", pn.c_str(), i);
+            sc_trace(o_vcd, r.hart[i].mtip, tstr);
+            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_hart%d_mtimecmp", pn.c_str(), i);
+            sc_trace(o_vcd, r.hart[i].mtimecmp, tstr);
         }
         sc_trace(o_vcd, r.rdata, pn + ".r_rdata");
     }

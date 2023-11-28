@@ -60,13 +60,13 @@ begin: comb_proc
     vb_a2 = '0;
     wb_mux_lvl0 = '0;
     for (int i = 0; i < 32; i++) begin
-        wb_lvl0[i] = 66'd0;
+        wb_lvl0[i] = '0;
     end
     for (int i = 0; i < 8; i++) begin
-        wb_lvl2[i] = 74'd0;
+        wb_lvl2[i] = '0;
     end
     for (int i = 0; i < 2; i++) begin
-        wb_lvl4[i] = 100'd0;
+        wb_lvl4[i] = '0;
     end
     wb_lvl5 = '0;
     wb_res32 = '0;
@@ -244,10 +244,10 @@ begin: comb_proc
         v.a2_dbg = '0;
         v.reference_mul = 64'd0;
         for (int i = 0; i < 16; i++) begin
-            v.lvl1[i] = 69'd0;
+            v.lvl1[i] = '0;
         end
         for (int i = 0; i < 4; i++) begin
-            v.lvl3[i] = 83'd0;
+            v.lvl3[i] = '0;
         end
     end
 
@@ -294,10 +294,10 @@ generate
                 r.a2_dbg <= '0;
                 r.reference_mul <= 64'd0;
                 for (int i = 0; i < 16; i++) begin
-                    r.lvl1[i] <= 69'd0;
+                    r.lvl1[i] <= '0;
                 end
                 for (int i = 0; i < 4; i++) begin
-                    r.lvl3[i] <= 83'd0;
+                    r.lvl3[i] <= '0;
                 end
             end else begin
                 r.busy <= rin.busy;

@@ -415,18 +415,14 @@ void riscv_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_sd_detected, i_sd_detected.name());
         sc_trace(o_vcd, i_sd_protect, i_sd_protect.name());
         sc_trace(o_vcd, o_dmreset, o_dmreset.name());
-        sc_trace(o_vcd, o_prci_pmapinfo, o_prci_pmapinfo.name());
-        sc_trace(o_vcd, i_prci_pdevcfg, i_prci_pdevcfg.name());
         sc_trace(o_vcd, o_prci_apbi, o_prci_apbi.name());
         sc_trace(o_vcd, i_prci_apbo, i_prci_apbo.name());
-        sc_trace(o_vcd, o_ddr_pmapinfo, o_ddr_pmapinfo.name());
-        sc_trace(o_vcd, i_ddr_pdevcfg, i_ddr_pdevcfg.name());
         sc_trace(o_vcd, o_ddr_apbi, o_ddr_apbi.name());
         sc_trace(o_vcd, i_ddr_apbo, i_ddr_apbo.name());
-        sc_trace(o_vcd, o_ddr_xmapinfo, o_ddr_xmapinfo.name());
-        sc_trace(o_vcd, i_ddr_xdevcfg, i_ddr_xdevcfg.name());
         sc_trace(o_vcd, o_ddr_xslvi, o_ddr_xslvi.name());
         sc_trace(o_vcd, i_ddr_xslvo, i_ddr_xslvo.name());
+        sc_trace(o_vcd, acpo, acpo.name());
+        sc_trace(o_vcd, acpi, acpi.name());
     }
 
     if (bus0) {

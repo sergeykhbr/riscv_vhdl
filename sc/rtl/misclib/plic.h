@@ -143,8 +143,6 @@ plic<ctxmax, irqmax>::plic(sc_module_name name,
     sensitive << r.src_priority;
     sensitive << r.pending;
     sensitive << r.ip;
-    for (int i = 0; i < ctxmax; i++) {
-    }
     sensitive << r.rdata;
 
     SC_METHOD(registers);
@@ -163,8 +161,6 @@ template<int ctxmax, int irqmax>
 void plic<ctxmax, irqmax>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     std::string pn(name());
     if (o_vcd) {
-        sc_trace(o_vcd, i_mapinfo, i_mapinfo.name());
-        sc_trace(o_vcd, o_cfg, o_cfg.name());
         sc_trace(o_vcd, i_xslvi, i_xslvi.name());
         sc_trace(o_vcd, o_xslvo, o_xslvo.name());
         sc_trace(o_vcd, i_irq_request, i_irq_request.name());
@@ -174,6 +170,20 @@ void plic<ctxmax, irqmax>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vc
         sc_trace(o_vcd, r.ip, pn + ".r_ip");
         for (int i = 0; i < ctxmax; i++) {
             char tstr[1024];
+            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_ctx%d_priority_th", pn.c_str(), i);
+            sc_trace(o_vcd, r.ctx[i].priority_th, tstr);
+            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_ctx%d_ie", pn.c_str(), i);
+            sc_trace(o_vcd, r.ctx[i].ie, tstr);
+            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_ctx%d_ip_prio", pn.c_str(), i);
+            sc_trace(o_vcd, r.ctx[i].ip_prio, tstr);
+            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_ctx%d_prio_mask", pn.c_str(), i);
+            sc_trace(o_vcd, r.ctx[i].prio_mask, tstr);
+            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_ctx%d_sel_prio", pn.c_str(), i);
+            sc_trace(o_vcd, r.ctx[i].sel_prio, tstr);
+            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_ctx%d_irq_idx", pn.c_str(), i);
+            sc_trace(o_vcd, r.ctx[i].irq_idx, tstr);
+            RISCV_sprintf(tstr, sizeof(tstr), "%s.r_ctx%d_irq_prio", pn.c_str(), i);
+            sc_trace(o_vcd, r.ctx[i].irq_prio, tstr);
         }
         sc_trace(o_vcd, r.rdata, pn + ".r_rdata");
     }

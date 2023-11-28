@@ -105,10 +105,10 @@ begin: comb_proc
 
     vrdata = '0;
     for (int i = 0; i < ctxmax; i++) begin
-        vb_irq_idx[i] = 10'd0;
+        vb_irq_idx[i] = '0;
     end
     for (int i = 0; i < ctxmax; i++) begin
-        vb_irq_prio[i] = 10'd0;
+        vb_irq_prio[i] = '0;
     end
     for (int i = 0; i < ctxmax; i++) begin
         vb_ctx[i].priority_th = 4'd0;

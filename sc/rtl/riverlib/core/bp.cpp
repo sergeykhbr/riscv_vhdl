@@ -154,10 +154,10 @@ void BranchPredictor::comb() {
     sc_uint<2> vb_ignore_pd;
 
     for (int i = 0; i < CFG_BP_DEPTH; i++) {
-        vb_addr[i] = 0ull;
+        vb_addr[i] = 0;
     }
     for (int i = 0; i < 4; i++) {
-        vb_piped[i] = 0ull;
+        vb_piped[i] = 0;
     }
     vb_fetch_npc = 0;
     v_btb_we = 0;

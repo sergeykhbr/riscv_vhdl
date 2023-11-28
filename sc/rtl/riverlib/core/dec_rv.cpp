@@ -119,14 +119,12 @@ void DecoderRv::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_f64, o_f64.name());
         sc_trace(o_vcd, o_unsigned_op, o_unsigned_op.name());
         sc_trace(o_vcd, o_isa_type, o_isa_type.name());
-        sc_trace(o_vcd, o_instr_vec, o_instr_vec.name());
         sc_trace(o_vcd, o_exception, o_exception.name());
         sc_trace(o_vcd, o_instr_load_fault, o_instr_load_fault.name());
         sc_trace(o_vcd, o_instr_page_fault_x, o_instr_page_fault_x.name());
         sc_trace(o_vcd, o_progbuf_ena, o_progbuf_ena.name());
         sc_trace(o_vcd, r.pc, pn + ".r_pc");
         sc_trace(o_vcd, r.isa_type, pn + ".r_isa_type");
-        sc_trace(o_vcd, r.instr_vec, pn + ".r_instr_vec");
         sc_trace(o_vcd, r.instr, pn + ".r_instr");
         sc_trace(o_vcd, r.memop_store, pn + ".r_memop_store");
         sc_trace(o_vcd, r.memop_load, pn + ".r_memop_load");

@@ -111,7 +111,7 @@ begin: comb_proc
     logic [31:0] vrdata;
 
     for (int i = 0; i < (8 * cfg_slots); i++) begin
-        cfgmap[i] = 32'd0;
+        cfgmap[i] = '0;
     end
     vrdata = '0;
 

@@ -495,12 +495,8 @@ sdctrl::~sdctrl() {
 void sdctrl::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     std::string pn(name());
     if (o_vcd) {
-        sc_trace(o_vcd, i_xmapinfo, i_xmapinfo.name());
-        sc_trace(o_vcd, o_xcfg, o_xcfg.name());
         sc_trace(o_vcd, i_xslvi, i_xslvi.name());
         sc_trace(o_vcd, o_xslvo, o_xslvo.name());
-        sc_trace(o_vcd, i_pmapinfo, i_pmapinfo.name());
-        sc_trace(o_vcd, o_pcfg, o_pcfg.name());
         sc_trace(o_vcd, i_apbi, i_apbi.name());
         sc_trace(o_vcd, o_apbo, o_apbo.name());
         sc_trace(o_vcd, o_sclk, o_sclk.name());

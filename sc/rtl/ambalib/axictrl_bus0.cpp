@@ -100,7 +100,8 @@ axictrl_bus0::~axictrl_bus0() {
 void axictrl_bus0::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     std::string pn(name());
     if (o_vcd) {
-        sc_trace(o_vcd, o_cfg, o_cfg.name());
+        sc_trace(o_vcd, wb_def_xslvi, wb_def_xslvi.name());
+        sc_trace(o_vcd, wb_def_xslvo, wb_def_xslvo.name());
         sc_trace(o_vcd, r.r_midx, pn + ".r_r_midx");
         sc_trace(o_vcd, r.r_sidx, pn + ".r_r_sidx");
         sc_trace(o_vcd, r.w_midx, pn + ".r_w_midx");

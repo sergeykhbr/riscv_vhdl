@@ -86,7 +86,7 @@ void divstage64::comb() {
     wb_divident = 0;
     wb_divisor = 0;
     for (int i = 0; i < 16; i++) {
-        wb_thresh[i] = 0ull;
+        wb_thresh[i] = 0;
     }
 
     wb_divident = i_divident.read().to_uint64();

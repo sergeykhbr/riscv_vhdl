@@ -156,20 +156,20 @@ Tracer::Tracer(sc_module_name name,
         sensitive << r.trace_tbl[i].instr;
         sensitive << r.trace_tbl[i].regactioncnt;
         sensitive << r.trace_tbl[i].memactioncnt;
-        for (int i = 0; i < TRACE_TBL_SZ; i++) {
-            sensitive << r.trace_tbl[i].regaction[i].waddr;
-            sensitive << r.trace_tbl[i].regaction[i].wres;
+        for (int j = 0; j < TRACE_TBL_SZ; j++) {
+            sensitive << r.trace_tbl[i].regaction[j].waddr;
+            sensitive << r.trace_tbl[i].regaction[j].wres;
         }
-        for (int i = 0; i < TRACE_TBL_SZ; i++) {
-            sensitive << r.trace_tbl[i].memaction[i].store;
-            sensitive << r.trace_tbl[i].memaction[i].size;
-            sensitive << r.trace_tbl[i].memaction[i].mask;
-            sensitive << r.trace_tbl[i].memaction[i].memaddr;
-            sensitive << r.trace_tbl[i].memaction[i].data;
-            sensitive << r.trace_tbl[i].memaction[i].regaddr;
-            sensitive << r.trace_tbl[i].memaction[i].complete;
-            sensitive << r.trace_tbl[i].memaction[i].sc_release;
-            sensitive << r.trace_tbl[i].memaction[i].ignored;
+        for (int j = 0; j < TRACE_TBL_SZ; j++) {
+            sensitive << r.trace_tbl[i].memaction[j].store;
+            sensitive << r.trace_tbl[i].memaction[j].size;
+            sensitive << r.trace_tbl[i].memaction[j].mask;
+            sensitive << r.trace_tbl[i].memaction[j].memaddr;
+            sensitive << r.trace_tbl[i].memaction[j].data;
+            sensitive << r.trace_tbl[i].memaction[j].regaddr;
+            sensitive << r.trace_tbl[i].memaction[j].complete;
+            sensitive << r.trace_tbl[i].memaction[j].sc_release;
+            sensitive << r.trace_tbl[i].memaction[j].ignored;
         }
         sensitive << r.trace_tbl[i].completed;
     }

@@ -223,6 +223,12 @@ void asic_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, io_sd_cd_dat3, io_sd_cd_dat3.name());
         sc_trace(o_vcd, i_sd_detected, i_sd_detected.name());
         sc_trace(o_vcd, i_sd_protect, i_sd_protect.name());
+        sc_trace(o_vcd, ddr_xslvo, ddr_xslvo.name());
+        sc_trace(o_vcd, ddr_xslvi, ddr_xslvi.name());
+        sc_trace(o_vcd, ddr_apbi, ddr_apbi.name());
+        sc_trace(o_vcd, ddr_apbo, ddr_apbo.name());
+        sc_trace(o_vcd, prci_apbi, prci_apbi.name());
+        sc_trace(o_vcd, prci_apbo, prci_apbo.name());
     }
 
     if (iclk0) {

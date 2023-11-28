@@ -91,10 +91,10 @@ begin: comb_proc
     logic [1:0] vb_ignore_pd;
 
     for (int i = 0; i < CFG_BP_DEPTH; i++) begin
-        vb_addr[i] = 64'd0;
+        vb_addr[i] = '0;
     end
     for (int i = 0; i < 4; i++) begin
-        vb_piped[i] = 62'd0;
+        vb_piped[i] = '0;
     end
     vb_fetch_npc = '0;
     v_btb_we = 1'b0;

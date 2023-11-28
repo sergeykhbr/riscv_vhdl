@@ -250,7 +250,7 @@ begin: comb_proc
     vb_halted = '0;
     vb_available = '0;
     for (int i = 0; i < CFG_CPU_MAX; i++) begin
-        vb_irq[i] = 16'd0;
+        vb_irq[i] = '0;
     end
 
     vb_xmst_cfg.descrsize = PNP_CFG_DEV_DESCR_BYTES;

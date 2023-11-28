@@ -135,8 +135,6 @@ sdctrl_regs::~sdctrl_regs() {
 void sdctrl_regs::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
     std::string pn(name());
     if (o_vcd) {
-        sc_trace(o_vcd, i_pmapinfo, i_pmapinfo.name());
-        sc_trace(o_vcd, o_pcfg, o_pcfg.name());
         sc_trace(o_vcd, i_apbi, i_apbi.name());
         sc_trace(o_vcd, o_apbo, o_apbo.name());
         sc_trace(o_vcd, o_sck, o_sck.name());

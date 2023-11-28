@@ -254,9 +254,6 @@ void InstrDecoder::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_instr_load_fault, o_instr_load_fault.name());
         sc_trace(o_vcd, o_instr_page_fault_x, o_instr_page_fault_x.name());
         sc_trace(o_vcd, o_progbuf_ena, o_progbuf_ena.name());
-        for (int i = 0; i < FULL_DEC_DEPTH; i++) {
-            char tstr[1024];
-        }
     }
 
     for (int i = 0; i < DEC_NUM; i++) {
