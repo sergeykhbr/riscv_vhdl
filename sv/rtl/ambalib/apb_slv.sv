@@ -43,6 +43,7 @@ import apb_slv_pkg::*;
 
 apb_slv_registers r, rin;
 
+
 always_comb
 begin: comb_proc
     apb_slv_registers v;
@@ -116,6 +117,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

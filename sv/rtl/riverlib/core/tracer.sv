@@ -961,8 +961,7 @@ initial begin
     assert (fl)
     else begin
         $warning("Cannot open log-file");
-    end
-end
+    endend
 
 always_comb
 begin: comb_proc
@@ -1181,6 +1180,7 @@ begin: comb_proc
     rin.tr_total = v.tr_total;
     rin.tr_opened = v.tr_opened;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

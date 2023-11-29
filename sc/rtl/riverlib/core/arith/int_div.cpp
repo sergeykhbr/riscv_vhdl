@@ -43,14 +43,11 @@ IntDiv::IntDiv(sc_module_name name,
     stage0->o_resid(wb_resid0_o);
     stage0->o_bits(wb_bits0_o);
 
-
     stage1 = new divstage64("stage1");
     stage1->i_divident(wb_resid0_o);
     stage1->i_divisor(wb_divisor1_i);
     stage1->o_resid(wb_resid1_o);
     stage1->o_bits(wb_bits1_o);
-
-
 
     SC_METHOD(comb);
     sensitive << i_nrst;

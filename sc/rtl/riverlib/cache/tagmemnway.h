@@ -160,7 +160,6 @@ TagMemNWay<abus, waybits, ibits, lnbits, flbits, snoop>::TagMemNWay(sc_module_na
         wayx[i]->o_hit(way_o[i].hit);
         wayx[i]->i_snoop_addr(way_i[i].snoop_addr);
         wayx[i]->o_snoop_flags(way_o[i].snoop_flags);
-
     }
 
     lru0 = new lrunway<ibits,
@@ -173,8 +172,6 @@ TagMemNWay<abus, waybits, ibits, lnbits, flbits, snoop>::TagMemNWay(sc_module_na
     lru0->i_down(w_lrui_down);
     lru0->i_lru(wb_lrui_lru);
     lru0->o_lru(wb_lruo_lru);
-
-
 
     SC_METHOD(comb);
     sensitive << i_nrst;

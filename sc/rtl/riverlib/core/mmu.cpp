@@ -75,8 +75,6 @@ Mmu::Mmu(sc_module_name name,
     tlb->i_wdata(wb_tlb_wdata);
     tlb->o_rdata(wb_tlb_rdata);
 
-
-
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_core_req_valid;

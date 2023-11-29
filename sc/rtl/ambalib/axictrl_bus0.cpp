@@ -55,8 +55,6 @@ axictrl_bus0::axictrl_bus0(sc_module_name name,
     xdef0->i_resp_rdata(wb_def_resp_rdata);
     xdef0->i_resp_err(w_def_resp_err);
 
-
-
     SC_METHOD(comb);
     sensitive << i_nrst;
     for (int i = 0; i < CFG_BUS0_XMST_TOTAL; i++) {

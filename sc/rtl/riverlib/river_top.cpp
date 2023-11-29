@@ -130,7 +130,6 @@ RiverTop::RiverTop(sc_module_name name,
     proc0->o_flushd_addr(wb_flushd_addr);
     proc0->i_flushd_end(w_flushd_end);
 
-
     cache0 = new CacheTop("cache0", async_reset,
                            coherence_ena);
     cache0->i_clk(i_clk);
@@ -188,8 +187,6 @@ RiverTop::RiverTop(sc_module_name name,
     cache0->i_flushd_valid(w_flushd_valid);
     cache0->i_flushd_addr(wb_flushd_addr);
     cache0->o_flushd_end(w_flushd_end);
-
-
 
     SC_METHOD(comb);
     sensitive << i_nrst;

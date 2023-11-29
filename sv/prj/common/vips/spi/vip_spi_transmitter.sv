@@ -44,6 +44,7 @@ localparam int scaler_mid = scaler;
 
 vip_spi_transmitter_registers r, rin;
 
+
 always_comb
 begin: comb_proc
     vip_spi_transmitter_registers v;
@@ -135,6 +136,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

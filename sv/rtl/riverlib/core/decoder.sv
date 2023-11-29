@@ -98,7 +98,6 @@ for (genvar i = 0; i < DEC_NUM; i++) begin: rvx
         .o_instr_page_fault_x(wd[(2 * i)].instr_page_fault_x),
         .o_progbuf_ena(wd[(2 * i)].progbuf_ena)
     );
-
 end: rvx
 
 for (genvar i = 0; i < DEC_NUM; i++) begin: rvcx
@@ -136,7 +135,6 @@ for (genvar i = 0; i < DEC_NUM; i++) begin: rvcx
         .o_instr_page_fault_x(wd[((2 * i) + 1)].instr_page_fault_x),
         .o_progbuf_ena(wd[((2 * i) + 1)].progbuf_ena)
     );
-
 end: rvcx
 
 always_comb
@@ -283,6 +281,7 @@ begin: comb_proc
         rin.d[i].progbuf_ena = v.d[i].progbuf_ena;
     end
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

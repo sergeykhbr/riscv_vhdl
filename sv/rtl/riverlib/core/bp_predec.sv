@@ -35,6 +35,7 @@ logic v_branch;                                             // One of branch ins
 logic v_c_j;                                                // compressed J instruction
 logic v_c_ret;                                              // compressed RET pseudo-instruction
 
+
 always_comb
 begin: comb_proc
     logic [31:0] vb_tmp;

@@ -86,7 +86,6 @@ sdctrl::sdctrl(sc_module_name name,
     xslv0->i_resp_rdata(wb_cache_resp_rdata);
     xslv0->i_resp_err(w_cache_resp_err);
 
-
     regs0 = new sdctrl_regs("regs0", async_reset);
     regs0->i_clk(i_clk);
     regs0->i_nrst(i_nrst);
@@ -120,14 +119,12 @@ sdctrl::sdctrl(sc_module_name name,
     regs0->i_cmd_resp_crc7_rx(wb_cmd_resp_crc7_rx);
     regs0->i_cmd_resp_crc7_calc(wb_cmd_resp_crc7_calc);
 
-
     wdog0 = new sdctrl_wdog("wdog0", async_reset);
     wdog0->i_clk(i_clk);
     wdog0->i_nrst(i_nrst);
     wdog0->i_ena(w_wdog_ena);
     wdog0->i_period(wb_regs_watchdog);
     wdog0->o_trigger(w_wdog_trigger);
-
 
     err0 = new sdctrl_err("err0", async_reset);
     err0->i_clk(i_clk);
@@ -138,7 +135,6 @@ sdctrl::sdctrl(sc_module_name name,
     err0->o_err_code(wb_err_code);
     err0->o_err_pending(w_err_pending);
 
-
     crcdat0 = new sdctrl_crc16("crcdat0", async_reset);
     crcdat0->i_clk(i_clk);
     crcdat0->i_nrst(i_nrst);
@@ -146,7 +142,6 @@ sdctrl::sdctrl(sc_module_name name,
     crcdat0->i_next(w_crc16_next);
     crcdat0->i_dat(i_dat0);
     crcdat0->o_crc15(wb_crc16_0);
-
 
     crcdat1 = new sdctrl_crc16("crcdat1", async_reset);
     crcdat1->i_clk(i_clk);
@@ -156,7 +151,6 @@ sdctrl::sdctrl(sc_module_name name,
     crcdat1->i_dat(i_dat1);
     crcdat1->o_crc15(wb_crc16_1);
 
-
     crcdat2 = new sdctrl_crc16("crcdat2", async_reset);
     crcdat2->i_clk(i_clk);
     crcdat2->i_nrst(i_nrst);
@@ -165,7 +159,6 @@ sdctrl::sdctrl(sc_module_name name,
     crcdat2->i_dat(i_dat2);
     crcdat2->o_crc15(wb_crc16_2);
 
-
     crcdat3 = new sdctrl_crc16("crcdat3", async_reset);
     crcdat3->i_clk(i_clk);
     crcdat3->i_nrst(i_nrst);
@@ -173,7 +166,6 @@ sdctrl::sdctrl(sc_module_name name,
     crcdat3->i_next(w_crc16_next);
     crcdat3->i_dat(i_cd_dat3);
     crcdat3->o_crc15(wb_crc16_3);
-
 
     spimode0 = new sdctrl_spimode("spimode0", async_reset);
     spimode0->i_clk(i_clk);
@@ -214,7 +206,6 @@ sdctrl::sdctrl(sc_module_name name,
     spimode0->o_err_code(wb_spi_err_setcode);
     spimode0->o_400khz_ena(w_spi_400kHz_ena);
     spimode0->o_sdtype(wb_spi_sdtype);
-
 
     sdmode0 = new sdctrl_sdmode("sdmode0", async_reset);
     sdmode0->i_clk(i_clk);
@@ -268,7 +259,6 @@ sdctrl::sdctrl(sc_module_name name,
     sdmode0->o_400khz_ena(w_sd_400kHz_ena);
     sdmode0->o_sdtype(wb_sd_sdtype);
 
-
     cmdtrx0 = new sdctrl_cmd_transmitter("cmdtrx0", async_reset);
     cmdtrx0->i_clk(i_clk);
     cmdtrx0->i_nrst(i_nrst);
@@ -298,7 +288,6 @@ sdctrl::sdctrl(sc_module_name name,
     cmdtrx0->o_err_valid(w_trx_err_valid);
     cmdtrx0->o_err_setcode(wb_trx_err_setcode);
 
-
     cache0 = new sdctrl_cache("cache0", async_reset);
     cache0->i_clk(i_clk);
     cache0->i_nrst(i_nrst);
@@ -322,8 +311,6 @@ sdctrl::sdctrl(sc_module_name name,
     cache0->i_mem_fault(w_err_pending);
     cache0->i_flush_valid(w_regs_flush_valid);
     cache0->o_flush_end(w_cache_flush_end);
-
-
 
     SC_METHOD(comb);
     sensitive << i_nrst;

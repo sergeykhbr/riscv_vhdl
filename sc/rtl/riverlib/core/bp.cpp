@@ -56,7 +56,6 @@ BranchPredictor::BranchPredictor(sc_module_name name,
         predec[i]->o_jmp(wb_pd[i].jmp);
         predec[i]->o_pc(wb_pd[i].pc);
         predec[i]->o_npc(wb_pd[i].npc);
-
     }
 
     btb = new BpBTB("btb", async_reset);
@@ -70,8 +69,6 @@ BranchPredictor::BranchPredictor(sc_module_name name,
     btb->i_bp_pc(wb_start_pc);
     btb->o_bp_npc(wb_npc);
     btb->o_bp_exec(wb_bp_exec);
-
-
 
     SC_METHOD(comb);
     sensitive << i_nrst;

@@ -16,8 +16,8 @@
 package l2dummy_pkg;
 
 import types_amba_pkg::*;
-import river_cfg_pkg::*;
 import types_river_pkg::*;
+import river_cfg_pkg::*;
 
 localparam bit [2:0] Idle = 3'd0;
 localparam bit [2:0] state_ar = 3'd1;

@@ -39,8 +39,8 @@ module RiverAmba #(
 );
 
 import types_amba_pkg::*;
-import river_cfg_pkg::*;
 import types_river_pkg::*;
+import river_cfg_pkg::*;
 import target_cfg_pkg::*;
 import river_amba_pkg::*;
 
@@ -163,7 +163,6 @@ RiverTop #(
     .i_progbuf(i_progbuf),
     .o_halted(o_halted)
 );
-
 
 always_comb
 begin: comb_proc
@@ -455,6 +454,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

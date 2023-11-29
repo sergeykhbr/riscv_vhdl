@@ -37,8 +37,6 @@ L2Top::L2Top(sc_module_name name,
 
     wb_flush_address = ~0ull;
 
-
-
     dst0 = new L2Destination("dst0", async_reset);
     dst0->i_clk(i_clk);
     dst0->i_nrst(i_nrst);
@@ -55,7 +53,6 @@ L2Top::L2Top(sc_module_name name,
     dst0->o_req_prot(wb_req_prot);
     dst0->o_req_wdata(wb_req_wdata);
     dst0->o_req_wstrb(wb_req_wstrb);
-
 
     cache0 = new L2CacheLru("cache0", async_reset);
     cache0->i_clk(i_clk);
@@ -88,7 +85,6 @@ L2Top::L2Top(sc_module_name name,
     cache0->i_flush_valid(i_flush_valid);
     cache0->o_flush_end(w_flush_end);
 
-
     amba0 = new L2Amba("amba0", async_reset);
     amba0->i_clk(i_clk);
     amba0->i_nrst(i_nrst);
@@ -107,8 +103,6 @@ L2Top::L2Top(sc_module_name name,
     amba0->o_resp_store_fault(w_mem_store_fault);
     amba0->i_msti(i_l2i);
     amba0->o_msto(o_l2o);
-
-
 }
 
 L2Top::~L2Top() {

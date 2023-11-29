@@ -191,7 +191,6 @@ axi_slv #(
     .i_resp_err(w_cache_resp_err)
 );
 
-
 sdctrl_regs #(
     .async_reset(async_reset)
 ) regs0 (
@@ -228,7 +227,6 @@ sdctrl_regs #(
     .i_cmd_resp_crc7_calc(wb_cmd_resp_crc7_calc)
 );
 
-
 sdctrl_wdog #(
     .async_reset(async_reset)
 ) wdog0 (
@@ -238,7 +236,6 @@ sdctrl_wdog #(
     .i_period(wb_regs_watchdog),
     .o_trigger(w_wdog_trigger)
 );
-
 
 sdctrl_err #(
     .async_reset(async_reset)
@@ -252,7 +249,6 @@ sdctrl_err #(
     .o_err_pending(w_err_pending)
 );
 
-
 sdctrl_crc16 #(
     .async_reset(async_reset)
 ) crcdat0 (
@@ -263,7 +259,6 @@ sdctrl_crc16 #(
     .i_dat(i_dat0),
     .o_crc15(wb_crc16_0)
 );
-
 
 sdctrl_crc16 #(
     .async_reset(async_reset)
@@ -276,7 +271,6 @@ sdctrl_crc16 #(
     .o_crc15(wb_crc16_1)
 );
 
-
 sdctrl_crc16 #(
     .async_reset(async_reset)
 ) crcdat2 (
@@ -288,7 +282,6 @@ sdctrl_crc16 #(
     .o_crc15(wb_crc16_2)
 );
 
-
 sdctrl_crc16 #(
     .async_reset(async_reset)
 ) crcdat3 (
@@ -299,7 +292,6 @@ sdctrl_crc16 #(
     .i_dat(i_cd_dat3),
     .o_crc15(wb_crc16_3)
 );
-
 
 sdctrl_spimode #(
     .async_reset(async_reset)
@@ -343,7 +335,6 @@ sdctrl_spimode #(
     .o_400khz_ena(w_spi_400kHz_ena),
     .o_sdtype(wb_spi_sdtype)
 );
-
 
 sdctrl_sdmode #(
     .async_reset(async_reset)
@@ -400,7 +391,6 @@ sdctrl_sdmode #(
     .o_sdtype(wb_sd_sdtype)
 );
 
-
 sdctrl_cmd_transmitter #(
     .async_reset(async_reset)
 ) cmdtrx0 (
@@ -433,7 +423,6 @@ sdctrl_cmd_transmitter #(
     .o_err_setcode(wb_trx_err_setcode)
 );
 
-
 sdctrl_cache #(
     .async_reset(async_reset)
 ) cache0 (
@@ -460,7 +449,6 @@ sdctrl_cache #(
     .i_flush_valid(w_regs_flush_valid),
     .o_flush_end(w_cache_flush_end)
 );
-
 
 always_comb
 begin: comb_proc
@@ -638,6 +626,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

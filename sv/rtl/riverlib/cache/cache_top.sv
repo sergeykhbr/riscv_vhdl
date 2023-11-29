@@ -147,7 +147,6 @@ ICacheLru #(
     .i_flush_valid(i_flushi_valid)
 );
 
-
 DCacheLru #(
     .async_reset(async_reset),
     .coherence_ena(coherence_ena)
@@ -195,7 +194,6 @@ DCacheLru #(
     .o_flush_end(o_flushd_end)
 );
 
-
 PMA pma0 (
     .i_clk(i_clk),
     .i_iaddr(i.mpu_addr),
@@ -203,7 +201,6 @@ PMA pma0 (
     .o_icached(w_pma_icached),
     .o_dcached(w_pma_dcached)
 );
-
 
 PMP #(
     .async_reset(async_reset)
@@ -223,7 +220,6 @@ PMP #(
     .o_x(w_pmp_x)
 );
 
-
 Queue #(
     .async_reset(async_reset),
     .abits(2),
@@ -238,7 +234,6 @@ Queue #(
     .o_full(queue_full_o),
     .o_nempty(queue_nempty_o)
 );
-
 
 always_comb
 begin: comb_proc

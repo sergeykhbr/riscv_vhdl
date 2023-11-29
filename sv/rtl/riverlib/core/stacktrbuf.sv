@@ -30,6 +30,7 @@ import stacktrbuf_pkg::*;
 
 StackTraceBuffer_registers r, rin;
 
+
 always_comb
 begin: comb_proc
     StackTraceBuffer_registers v;
@@ -50,6 +51,7 @@ begin: comb_proc
         rin.stackbuf[i] = v.stackbuf[i];
     end
 end: comb_proc
+
 
 always_ff @(posedge i_clk) begin: rg_proc
     r.raddr <= rin.raddr;

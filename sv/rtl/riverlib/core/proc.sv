@@ -177,7 +177,6 @@ Mmu #(
     .i_fence_addr(csr.flush_addr)
 );
 
-
 InstrFetch #(
     .async_reset(async_reset)
 ) fetch0 (
@@ -205,7 +204,6 @@ InstrFetch #(
     .o_pc(w.f.pc),
     .o_instr(w.f.instr)
 );
-
 
 InstrDecoder #(
     .async_reset(async_reset),
@@ -243,7 +241,6 @@ InstrDecoder #(
     .o_instr_page_fault_x(w.d.page_fault_x),
     .o_progbuf_ena(w.d.progbuf_ena)
 );
-
 
 InstrExecute #(
     .async_reset(async_reset),
@@ -335,7 +332,6 @@ InstrExecute #(
     .o_halted(w.e.halted)
 );
 
-
 MemAccess #(
     .async_reset(async_reset)
 ) mem0 (
@@ -384,7 +380,6 @@ MemAccess #(
     .o_debug_valid(w.m.debug_valid)
 );
 
-
 Mmu #(
     .async_reset(async_reset)
 ) dmmu0 (
@@ -431,7 +426,6 @@ Mmu #(
     .i_fence_addr(csr.flush_addr)
 );
 
-
 BranchPredictor #(
     .async_reset(async_reset)
 ) predic0 (
@@ -452,7 +446,6 @@ BranchPredictor #(
     .i_f_fetched_pc(w.f.pc),
     .i_d_pc(w.d.pc)
 );
-
 
 RegIntBank #(
     .async_reset(async_reset)
@@ -509,7 +502,6 @@ RegIntBank #(
     .o_t6(ireg.t6)
 );
 
-
 ic_csr_m2_s1 #(
     .async_reset(async_reset)
 ) iccsr0 (
@@ -543,7 +535,6 @@ ic_csr_m2_s1 #(
     .i_s0_resp_data(csr.resp_data),
     .i_s0_resp_exception(csr.resp_exception)
 );
-
 
 CsrRegs #(
     .async_reset(async_reset),
@@ -600,7 +591,6 @@ CsrRegs #(
     .o_sum(csr.sum)
 );
 
-
 DbgPort #(
     .async_reset(async_reset)
 ) dbg0 (
@@ -654,7 +644,6 @@ DbgPort #(
     .i_m_valid(w.m.valid)
 );
 
-
 generate
     if (tracer_ena) begin: tr_en
         Tracer #(
@@ -686,7 +675,6 @@ generate
             .i_reg_ignored(w_reg_ignored)
         );
     end: tr_en
-
 endgenerate
 
 always_comb

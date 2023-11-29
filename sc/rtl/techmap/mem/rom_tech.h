@@ -63,20 +63,14 @@ rom_tech<abits, log2_dbytes>::rom_tech(sc_module_name name,
     inf0 = 0;
 
     // if (dbits != 64) begin
-
     //     TODO: GENERATE assert
-
     // else
-
     inf0 = new rom_inferred_2x32<(abits - log2_dbytes)>("inf0",
                                                         filename);
     inf0->i_clk(i_clk);
     inf0->i_addr(wb_addr);
     inf0->o_rdata(o_rdata);
-
-
     // endif
-
 
     SC_METHOD(comb);
     sensitive << i_addr;

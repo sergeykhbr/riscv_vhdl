@@ -77,9 +77,7 @@ ram_bytes_tech<abits, log2_dbytes>::ram_bytes_tech(sc_module_name name)
         mem[i]->i_wena(wb_wena[i]);
         mem[i]->i_wdata(wb_wdata[i]);
         mem[i]->o_rdata(wb_rdata[i]);
-
     }
-
 
     SC_METHOD(comb);
     sensitive << i_addr;

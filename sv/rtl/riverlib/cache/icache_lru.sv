@@ -95,7 +95,6 @@ TagMemCoupled #(
     .o_hit_next(line_hit_next_o)
 );
 
-
 always_comb
 begin: comb_proc
     ICacheLru_registers v;
@@ -347,6 +346,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

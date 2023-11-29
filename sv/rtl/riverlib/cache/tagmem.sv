@@ -65,7 +65,6 @@ logic [TAG_WITH_FLAGS-1:0] wb_tago_snoop_rdata;
 TagMem_registers r, rin;
 
 // bwe = byte write enable
-
 ram_cache_bwe_tech #(
     .abits(ibits),
     .dbits((8 * (2**lnbits)))
@@ -77,7 +76,6 @@ ram_cache_bwe_tech #(
     .o_rdata(o_rdata)
 );
 
-
 ram_tech #(
     .abits(ibits),
     .dbits(TAG_WITH_FLAGS)
@@ -88,7 +86,6 @@ ram_tech #(
     .i_wdata(wb_tagi_wdata),
     .o_rdata(wb_tago_rdata)
 );
-
 
 generate
     if (snoop) begin: snoop_en
@@ -106,7 +103,6 @@ generate
     else begin: snoop_dis
         assign wb_tago_snoop_rdata = '0;
     end: snoop_dis
-
 endgenerate
 
 always_comb
@@ -176,6 +172,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

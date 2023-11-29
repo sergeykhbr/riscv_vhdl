@@ -34,6 +34,7 @@ import sdctrl_err_pkg::*;
 
 sdctrl_err_registers r, rin;
 
+
 always_comb
 begin: comb_proc
     sdctrl_err_registers v;
@@ -55,6 +56,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

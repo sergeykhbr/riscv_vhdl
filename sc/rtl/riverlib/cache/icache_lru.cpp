@@ -72,8 +72,6 @@ ICacheLru::ICacheLru(sc_module_name name,
     mem0->o_hit(line_hit_o);
     mem0->o_hit_next(line_hit_next_o);
 
-
-
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_req_valid;

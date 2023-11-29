@@ -69,7 +69,6 @@ axi_slv #(
     .i_resp_err(wb_resp_err)
 );
 
-
 rom_tech #(
     .abits(abits),
     .log2_dbytes(CFG_LOG2_SYSBUS_DATA_BYTES),
@@ -79,7 +78,6 @@ rom_tech #(
     .i_addr(wb_req_addr_abits),
     .o_rdata(wb_resp_rdata)
 );
-
 
 always_comb
 begin: comb_proc

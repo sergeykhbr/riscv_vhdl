@@ -80,7 +80,6 @@ MemAccess::MemAccess(sc_module_name name,
     queue0->o_full(queue_full);
     queue0->o_nempty(queue_nempty);
 
-
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_e_pc;

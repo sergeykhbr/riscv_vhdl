@@ -38,6 +38,7 @@ import int_mul_pkg::*;
 
 IntMul_registers r, rin;
 
+
 always_comb
 begin: comb_proc
     IntMul_registers v;
@@ -274,6 +275,7 @@ begin: comb_proc
         rin.lvl3[i] = v.lvl3[i];
     end
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

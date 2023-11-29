@@ -138,7 +138,6 @@ Processor::Processor(sc_module_name name,
     immu0->i_fence(csr.flushmmu_valid);
     immu0->i_fence_addr(csr.flush_addr);
 
-
     fetch0 = new InstrFetch("fetch0", async_reset);
     fetch0->i_clk(i_clk);
     fetch0->i_nrst(i_nrst);
@@ -163,7 +162,6 @@ Processor::Processor(sc_module_name name,
     fetch0->o_instr_page_fault_x(w.f.instr_page_fault_x);
     fetch0->o_pc(w.f.pc);
     fetch0->o_instr(w.f.instr);
-
 
     dec0 = new InstrDecoder("dec0", async_reset,
                              fpu_ena);
@@ -198,7 +196,6 @@ Processor::Processor(sc_module_name name,
     dec0->o_instr_load_fault(w.d.instr_load_fault);
     dec0->o_instr_page_fault_x(w.d.page_fault_x);
     dec0->o_progbuf_ena(w.d.progbuf_ena);
-
 
     exec0 = new InstrExecute("exec0", async_reset,
                               fpu_ena);
@@ -287,7 +284,6 @@ Processor::Processor(sc_module_name name,
     exec0->o_jmp(w.e.jmp);
     exec0->o_halted(w.e.halted);
 
-
     mem0 = new MemAccess("mem0", async_reset);
     mem0->i_clk(i_clk);
     mem0->i_nrst(i_nrst);
@@ -333,7 +329,6 @@ Processor::Processor(sc_module_name name,
     mem0->o_idle(w.m.idle);
     mem0->o_debug_valid(w.m.debug_valid);
 
-
     dmmu0 = new Mmu("dmmu0", async_reset);
     dmmu0->i_clk(i_clk);
     dmmu0->i_nrst(i_nrst);
@@ -377,7 +372,6 @@ Processor::Processor(sc_module_name name,
     dmmu0->i_fence(csr.flushmmu_valid);
     dmmu0->i_fence_addr(csr.flush_addr);
 
-
     predic0 = new BranchPredictor("predic0", async_reset);
     predic0->i_clk(i_clk);
     predic0->i_nrst(i_nrst);
@@ -395,7 +389,6 @@ Processor::Processor(sc_module_name name,
     predic0->i_f_fetching_pc(w.f.fetching_pc);
     predic0->i_f_fetched_pc(w.f.pc);
     predic0->i_d_pc(w.d.pc);
-
 
     iregs0 = new RegIntBank("iregs0", async_reset);
     iregs0->i_clk(i_clk);
@@ -449,7 +442,6 @@ Processor::Processor(sc_module_name name,
     iregs0->o_t5(ireg.t5);
     iregs0->o_t6(ireg.t6);
 
-
     iccsr0 = new ic_csr_m2_s1("iccsr0", async_reset);
     iccsr0->i_clk(i_clk);
     iccsr0->i_nrst(i_nrst);
@@ -480,7 +472,6 @@ Processor::Processor(sc_module_name name,
     iccsr0->o_s0_resp_ready(iccsr_s0_resp_ready);
     iccsr0->i_s0_resp_data(csr.resp_data);
     iccsr0->i_s0_resp_exception(csr.resp_exception);
-
 
     csr0 = new CsrRegs("csr0", async_reset,
                         hartid);
@@ -534,7 +525,6 @@ Processor::Processor(sc_module_name name,
     csr0->o_mxr(csr.mxr);
     csr0->o_sum(csr.sum);
 
-
     dbg0 = new DbgPort("dbg0", async_reset);
     dbg0->i_clk(i_clk);
     dbg0->i_nrst(i_nrst);
@@ -585,7 +575,6 @@ Processor::Processor(sc_module_name name,
     dbg0->i_e_memop_valid(w.e.memop_valid);
     dbg0->i_m_valid(w.m.valid);
 
-
     // generate
     if (tracer_ena_) {
         trace0 = new Tracer("trace0", async_reset,
@@ -614,9 +603,7 @@ Processor::Processor(sc_module_name name,
         trace0->i_m_wdata(w.w.wdata);
         trace0->i_reg_ignored(w_reg_ignored);
     }
-
     // endgenerate
-
 
     SC_METHOD(comb);
     sensitive << i_nrst;

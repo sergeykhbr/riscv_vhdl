@@ -17,8 +17,8 @@
 
 #include <systemc.h>
 #include "../ambalib/types_amba.h"
-#include "river_cfg.h"
 #include "types_river.h"
+#include "river_cfg.h"
 #include "../../prj/impl/asic/target_cfg.h"
 #include "river_top.h"
 

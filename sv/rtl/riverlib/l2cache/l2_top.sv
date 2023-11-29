@@ -30,8 +30,8 @@ module L2Top #(
 );
 
 import types_amba_pkg::*;
-import river_cfg_pkg::*;
 import types_river_pkg::*;
+import river_cfg_pkg::*;
 import target_cfg_pkg::*;
 import l2_top_pkg::*;
 
@@ -67,8 +67,6 @@ logic w_flush_end;
 
 assign wb_flush_address = '1;
 
-
-
 L2Destination #(
     .async_reset(async_reset)
 ) dst0 (
@@ -88,7 +86,6 @@ L2Destination #(
     .o_req_wdata(wb_req_wdata),
     .o_req_wstrb(wb_req_wstrb)
 );
-
 
 L2CacheLru #(
     .async_reset(async_reset)
@@ -124,7 +121,6 @@ L2CacheLru #(
     .o_flush_end(w_flush_end)
 );
 
-
 L2Amba #(
     .async_reset(async_reset)
 ) amba0 (
@@ -146,6 +142,4 @@ L2Amba #(
     .i_msti(i_l2i),
     .o_msto(o_l2o)
 );
-
-
 endmodule: L2Top

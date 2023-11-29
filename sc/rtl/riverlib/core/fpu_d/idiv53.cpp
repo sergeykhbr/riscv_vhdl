@@ -46,8 +46,6 @@ idiv53::idiv53(sc_module_name name,
     divstage0->o_muxind(wb_muxind_o);
     divstage0->o_muxind_rdy(w_muxind_rdy_o);
 
-
-
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_ena;

@@ -167,7 +167,6 @@ AluLogic #(
     .o_res(wb_select[Res_Alu].res)
 );
 
-
 IntAddSub #(
     .async_reset(async_reset)
 ) addsub0 (
@@ -178,7 +177,6 @@ IntAddSub #(
     .i_a2(wb_rdata2),
     .o_res(wb_select[Res_AddSub].res)
 );
-
 
 IntMul #(
     .async_reset(async_reset)
@@ -196,7 +194,6 @@ IntMul #(
     .o_valid(wb_select[Res_IMul].valid)
 );
 
-
 IntDiv #(
     .async_reset(async_reset)
 ) div0 (
@@ -212,7 +209,6 @@ IntDiv #(
     .o_valid(wb_select[Res_IDiv].valid)
 );
 
-
 Shifter #(
     .async_reset(async_reset)
 ) sh0 (
@@ -223,7 +219,6 @@ Shifter #(
     .i_a2(wb_shifter_a2),
     .o_res(wb_select[Res_Shifter].res)
 );
-
 
 generate
     if (fpu_ena) begin: fpu_en
@@ -254,7 +249,6 @@ generate
         assign w_ex_fpu_underflow = 1'b0;
         assign w_ex_fpu_inexact = 1'b0;
     end: fpu_dis
-
 endgenerate
 
 always_comb
@@ -1352,6 +1346,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

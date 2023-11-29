@@ -117,8 +117,6 @@ clint<cpu_total>::clint(sc_module_name name,
     xslv0->i_resp_rdata(wb_resp_rdata);
     xslv0->i_resp_err(wb_resp_err);
 
-
-
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_mapinfo;

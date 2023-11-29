@@ -125,7 +125,6 @@ InstrExecute::InstrExecute(sc_module_name name,
     alu0->i_a2(wb_rdata2);
     alu0->o_res(wb_select[Res_Alu].res);
 
-
     addsub0 = new IntAddSub("addsub0", async_reset);
     addsub0->i_clk(i_clk);
     addsub0->i_nrst(i_nrst);
@@ -133,7 +132,6 @@ InstrExecute::InstrExecute(sc_module_name name,
     addsub0->i_a1(wb_rdata1);
     addsub0->i_a2(wb_rdata2);
     addsub0->o_res(wb_select[Res_AddSub].res);
-
 
     mul0 = new IntMul("mul0", async_reset);
     mul0->i_clk(i_clk);
@@ -148,7 +146,6 @@ InstrExecute::InstrExecute(sc_module_name name,
     mul0->o_res(wb_select[Res_IMul].res);
     mul0->o_valid(wb_select[Res_IMul].valid);
 
-
     div0 = new IntDiv("div0", async_reset);
     div0->i_clk(i_clk);
     div0->i_nrst(i_nrst);
@@ -161,7 +158,6 @@ InstrExecute::InstrExecute(sc_module_name name,
     div0->o_res(wb_select[Res_IDiv].res);
     div0->o_valid(wb_select[Res_IDiv].valid);
 
-
     sh0 = new Shifter("sh0", async_reset);
     sh0->i_clk(i_clk);
     sh0->i_nrst(i_nrst);
@@ -169,7 +165,6 @@ InstrExecute::InstrExecute(sc_module_name name,
     sh0->i_a1(wb_shifter_a1);
     sh0->i_a2(wb_shifter_a2);
     sh0->o_res(wb_select[Res_Shifter].res);
-
 
     // generate
     if (fpu_ena_) {
@@ -196,9 +191,7 @@ InstrExecute::InstrExecute(sc_module_name name,
         w_ex_fpu_underflow = 0;
         w_ex_fpu_inexact = 0;
     }
-
     // endgenerate
-
 
     SC_METHOD(comb);
     sensitive << i_nrst;

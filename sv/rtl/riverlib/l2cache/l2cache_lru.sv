@@ -103,7 +103,6 @@ TagMemNWay #(
     .o_snoop_flags(line_snoop_flags_o)
 );
 
-
 always_comb
 begin: comb_proc
     L2CacheLru_registers v;
@@ -507,6 +506,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

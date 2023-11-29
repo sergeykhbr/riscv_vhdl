@@ -61,7 +61,6 @@ idiv53 #(
     .o_zero_resid(w_idiv_zeroresid)
 );
 
-
 always_comb
 begin: comb_proc
     DoubleDiv_registers v;
@@ -327,6 +326,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

@@ -31,6 +31,7 @@ import sdctrl_wdog_pkg::*;
 
 sdctrl_wdog_registers r, rin;
 
+
 always_comb
 begin: comb_proc
     sdctrl_wdog_registers v;
@@ -53,6 +54,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

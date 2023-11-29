@@ -71,9 +71,7 @@ ram_cache_bwe_tech<abits, dbits>::ram_cache_bwe_tech(sc_module_name name)
         rx[i]->i_wena(wb_we[i]);
         rx[i]->i_wdata(wb_wdata[i]);
         rx[i]->o_rdata(wb_rdata[i]);
-
     }
-
 
     SC_METHOD(comb);
     sensitive << i_addr;

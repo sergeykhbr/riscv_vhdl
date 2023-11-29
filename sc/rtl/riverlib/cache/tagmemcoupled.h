@@ -151,9 +151,7 @@ TagMemCoupled<abus, waybits, ibits, lnbits, flbits>::TagMemCoupled(sc_module_nam
         memx[i]->i_snoop_addr(linei[i].snoop_addr);
         memx[i]->o_snoop_ready(lineo[i].snoop_ready);
         memx[i]->o_snoop_flags(lineo[i].snoop_flags);
-
     }
-
 
     SC_METHOD(comb);
     sensitive << i_nrst;

@@ -35,6 +35,7 @@ import l2d_d_pkg::*;
 
 Long2Double_registers r, rin;
 
+
 always_comb
 begin: comb_proc
     Long2Double_registers v;
@@ -144,6 +145,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

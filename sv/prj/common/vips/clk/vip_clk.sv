@@ -29,12 +29,11 @@ logic pll;
 
 initial begin
     pll = 1'b0;
-
 end
-
 always begin
     #(0.5 * 1000000000 * period) pll = ~pll;
 end
+
 
 always_comb
 begin: comb_proc

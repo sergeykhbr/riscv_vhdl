@@ -33,6 +33,7 @@ import shift_pkg::*;
 
 Shifter_registers r, rin;
 
+
 always_comb
 begin: comb_proc
     Shifter_registers v;
@@ -601,6 +602,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

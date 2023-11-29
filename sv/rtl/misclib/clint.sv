@@ -84,7 +84,6 @@ axi_slv #(
     .i_resp_err(wb_resp_err)
 );
 
-
 always_comb
 begin: comb_proc
     clint_registers v;
@@ -176,6 +175,7 @@ begin: comb_proc
     end
     rin.rdata = v.rdata;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

@@ -77,6 +77,7 @@ import regibank_pkg::*;
 
 RegIntBank_registers r, rin;
 
+
 always_comb
 begin: comb_proc
     RegIntBank_registers v;
@@ -169,6 +170,7 @@ begin: comb_proc
         rin.arr[i].tag = v.arr[i].tag;
     end
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

@@ -62,7 +62,6 @@ FpuTop::FpuTop(sc_module_name name,
     fadd_d0->o_valid(w_valid_fadd);
     fadd_d0->o_busy(w_busy_fadd);
 
-
     fdiv_d0 = new DoubleDiv("fdiv_d0", async_reset);
     fdiv_d0->i_clk(i_clk);
     fdiv_d0->i_nrst(i_nrst);
@@ -77,7 +76,6 @@ FpuTop::FpuTop(sc_module_name name,
     fdiv_d0->o_valid(w_valid_fdiv);
     fdiv_d0->o_busy(w_busy_fdiv);
 
-
     fmul_d0 = new DoubleMul("fmul_d0", async_reset);
     fmul_d0->i_clk(i_clk);
     fmul_d0->i_nrst(i_nrst);
@@ -89,7 +87,6 @@ FpuTop::FpuTop(sc_module_name name,
     fmul_d0->o_overflow(w_overflow_fmul);
     fmul_d0->o_valid(w_valid_fmul);
     fmul_d0->o_busy(w_busy_fmul);
-
 
     d2l_d0 = new Double2Long("d2l_d0", async_reset);
     d2l_d0->i_clk(i_clk);
@@ -104,7 +101,6 @@ FpuTop::FpuTop(sc_module_name name,
     d2l_d0->o_valid(w_valid_d2l);
     d2l_d0->o_busy(w_busy_d2l);
 
-
     l2d_d0 = new Long2Double("l2d_d0", async_reset);
     l2d_d0->i_clk(i_clk);
     l2d_d0->i_nrst(i_nrst);
@@ -115,8 +111,6 @@ FpuTop::FpuTop(sc_module_name name,
     l2d_d0->o_res(wb_res_l2d);
     l2d_d0->o_valid(w_valid_l2d);
     l2d_d0->o_busy(w_busy_l2d);
-
-
 
     SC_METHOD(comb);
     sensitive << i_nrst;

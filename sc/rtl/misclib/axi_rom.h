@@ -106,15 +106,12 @@ axi_rom<abits>::axi_rom(sc_module_name name,
     xslv0->i_resp_rdata(wb_resp_rdata);
     xslv0->i_resp_err(wb_resp_err);
 
-
     tech0 = new rom_tech<abits,
                          CFG_LOG2_SYSBUS_DATA_BYTES>("tech0",
                                                      filename);
     tech0->i_clk(i_clk);
     tech0->i_addr(wb_req_addr_abits);
     tech0->o_rdata(wb_resp_rdata);
-
-
 
     SC_METHOD(comb);
     sensitive << i_nrst;

@@ -105,7 +105,6 @@ riscv_soc::riscv_soc(sc_module_name name,
     bus0->o_xslvi(axisi);
     bus0->o_mapinfo(bus0_mapinfo);
 
-
     bus1 = new axi2apb_bus1("bus1", async_reset);
     bus1->i_clk(i_sys_clk);
     bus1->i_nrst(i_sys_nrst);
@@ -116,7 +115,6 @@ riscv_soc::riscv_soc(sc_module_name name,
     bus1->i_apbo(apbo);
     bus1->o_apbi(apbi);
     bus1->o_mapinfo(bus1_mapinfo);
-
 
     group0 = new Workgroup("group0", async_reset,
                             CFG_CPU_NUM,
@@ -145,7 +143,6 @@ riscv_soc::riscv_soc(sc_module_name name,
     group0->o_dmi_apbo(apbo[CFG_BUS1_PSLV_DMI]);
     group0->o_dmreset(o_dmreset);
 
-
     rom0 = new axi_rom<CFG_BOOTROM_LOG2_SIZE>("rom0", async_reset,
                                               CFG_BOOTROM_FILE_HEX);
     rom0->i_clk(i_sys_clk);
@@ -155,7 +152,6 @@ riscv_soc::riscv_soc(sc_module_name name,
     rom0->i_xslvi(axisi[CFG_BUS0_XSLV_BOOTROM]);
     rom0->o_xslvo(axiso[CFG_BUS0_XSLV_BOOTROM]);
 
-
     sram0 = new axi_sram<CFG_SRAM_LOG2_SIZE>("sram0", async_reset);
     sram0->i_clk(i_sys_clk);
     sram0->i_nrst(i_sys_nrst);
@@ -163,7 +159,6 @@ riscv_soc::riscv_soc(sc_module_name name,
     sram0->o_cfg(dev_pnp[SOC_PNP_SRAM]);
     sram0->i_xslvi(axisi[CFG_BUS0_XSLV_SRAM]);
     sram0->o_xslvo(axiso[CFG_BUS0_XSLV_SRAM]);
-
 
     clint0 = new clint<CFG_CPU_MAX>("clint0", async_reset);
     clint0->i_clk(i_sys_clk);
@@ -176,7 +171,6 @@ riscv_soc::riscv_soc(sc_module_name name,
     clint0->o_msip(wb_clint_msip);
     clint0->o_mtip(wb_clint_mtip);
 
-
     plic0 = new plic<SOC_PLIC_CONTEXT_TOTAL,
                      SOC_PLIC_IRQ_TOTAL>("plic0", async_reset);
     plic0->i_clk(i_sys_clk);
@@ -188,7 +182,6 @@ riscv_soc::riscv_soc(sc_module_name name,
     plic0->i_irq_request(wb_ext_irqs);
     plic0->o_ip(wb_plic_xeip);
 
-
     u_cdc_ddr0 = new cdc_axi_sync_tech("u_cdc_ddr0");
     u_cdc_ddr0->i_xslv_clk(i_sys_clk);
     u_cdc_ddr0->i_xslv_nrst(i_sys_nrst);
@@ -198,7 +191,6 @@ riscv_soc::riscv_soc(sc_module_name name,
     u_cdc_ddr0->i_xmst_nrst(i_ddr_nrst);
     u_cdc_ddr0->o_xmsto(o_ddr_xslvi);
     u_cdc_ddr0->i_xmsti(i_ddr_xslvo);
-
 
     uart1 = new apb_uart<SOC_UART1_LOG2_FIFOSZ>("uart1", async_reset,
                                                 sim_uart_speedup_rate);
@@ -212,7 +204,6 @@ riscv_soc::riscv_soc(sc_module_name name,
     uart1->o_td(o_uart1_td);
     uart1->o_irq(w_irq_uart1);
 
-
     gpio0 = new apb_gpio<SOC_GPIO0_WIDTH>("gpio0", async_reset);
     gpio0->i_clk(i_sys_clk);
     gpio0->i_nrst(i_sys_nrst);
@@ -224,7 +215,6 @@ riscv_soc::riscv_soc(sc_module_name name,
     gpio0->o_gpio_dir(o_gpio_dir);
     gpio0->o_gpio(o_gpio);
     gpio0->o_irq(wb_irq_gpio);
-
 
     sdctrl0 = new sdctrl("sdctrl0", async_reset);
     sdctrl0->i_clk(i_sys_clk);
@@ -256,7 +246,6 @@ riscv_soc::riscv_soc(sc_module_name name,
     sdctrl0->i_detected(i_sd_detected);
     sdctrl0->i_protect(i_sd_protect);
 
-
     pnp0 = new apb_pnp<SOC_PNP_TOTAL>("pnp0", async_reset,
                                       SOC_HW_ID,
                                       CFG_CPU_NUM,
@@ -270,8 +259,6 @@ riscv_soc::riscv_soc(sc_module_name name,
     pnp0->i_apbi(apbi[CFG_BUS1_PSLV_PNP]);
     pnp0->o_apbo(apbo[CFG_BUS1_PSLV_PNP]);
     pnp0->o_irq(w_irq_pnp);
-
-
 
     SC_METHOD(comb);
     sensitive << i_sys_nrst;

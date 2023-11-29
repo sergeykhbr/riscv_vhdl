@@ -95,7 +95,6 @@ DoubleAdd #(
     .o_busy(w_busy_fadd)
 );
 
-
 DoubleDiv #(
     .async_reset(async_reset)
 ) fdiv_d0 (
@@ -113,7 +112,6 @@ DoubleDiv #(
     .o_busy(w_busy_fdiv)
 );
 
-
 DoubleMul #(
     .async_reset(async_reset)
 ) fmul_d0 (
@@ -128,7 +126,6 @@ DoubleMul #(
     .o_valid(w_valid_fmul),
     .o_busy(w_busy_fmul)
 );
-
 
 Double2Long #(
     .async_reset(async_reset)
@@ -146,7 +143,6 @@ Double2Long #(
     .o_busy(w_busy_d2l)
 );
 
-
 Long2Double #(
     .async_reset(async_reset)
 ) l2d_d0 (
@@ -160,7 +156,6 @@ Long2Double #(
     .o_valid(w_valid_l2d),
     .o_busy(w_busy_l2d)
 );
-
 
 always_comb
 begin: comb_proc
@@ -275,6 +270,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

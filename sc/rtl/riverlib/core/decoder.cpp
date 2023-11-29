@@ -99,7 +99,6 @@ InstrDecoder::InstrDecoder(sc_module_name name,
         rv[i]->o_instr_load_fault(wd[(2 * i)].instr_load_fault);
         rv[i]->o_instr_page_fault_x(wd[(2 * i)].instr_page_fault_x);
         rv[i]->o_progbuf_ena(wd[(2 * i)].progbuf_ena);
-
     }
 
     for (int i = 0; i < DEC_NUM; i++) {
@@ -136,9 +135,7 @@ InstrDecoder::InstrDecoder(sc_module_name name,
         rvc[i]->o_instr_load_fault(wd[((2 * i) + 1)].instr_load_fault);
         rvc[i]->o_instr_page_fault_x(wd[((2 * i) + 1)].instr_page_fault_x);
         rvc[i]->o_progbuf_ena(wd[((2 * i) + 1)].progbuf_ena);
-
     }
-
 
     SC_METHOD(comb);
     sensitive << i_nrst;

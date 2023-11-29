@@ -55,8 +55,6 @@ apb_prci::apb_prci(sc_module_name name,
     pslv0->i_resp_rdata(r.resp_rdata);
     pslv0->i_resp_err(r.resp_err);
 
-
-
     SC_METHOD(comb);
     sensitive << i_pwrreset;
     sensitive << i_dmireset;

@@ -181,7 +181,6 @@ apb_spi<log2_fifosz>::apb_spi(sc_module_name name,
     pslv0->i_resp_rdata(r.resp_rdata);
     pslv0->i_resp_err(r.resp_err);
 
-
     rxfifo = new sfifo<fifo_dbits,
                        log2_fifosz>("rxfifo", async_reset);
     rxfifo->i_clk(i_clk);
@@ -192,7 +191,6 @@ apb_spi<log2_fifosz>::apb_spi(sc_module_name name,
     rxfifo->o_rdata(wb_rxfifo_rdata);
     rxfifo->o_count(wb_rxfifo_count);
 
-
     txfifo = new sfifo<fifo_dbits,
                        log2_fifosz>("txfifo", async_reset);
     txfifo->i_clk(i_clk);
@@ -202,8 +200,6 @@ apb_spi<log2_fifosz>::apb_spi(sc_module_name name,
     txfifo->i_re(w_txfifo_re);
     txfifo->o_rdata(wb_txfifo_rdata);
     txfifo->o_count(wb_txfifo_count);
-
-
 
     SC_METHOD(comb);
     sensitive << i_nrst;

@@ -50,8 +50,6 @@ DoubleDiv::DoubleDiv(sc_module_name name,
     u_idiv53->o_overflow(w_idiv_overflow);
     u_idiv53->o_zero_resid(w_idiv_zeroresid);
 
-
-
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_ena;

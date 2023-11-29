@@ -114,7 +114,6 @@ for (genvar i = 0; i < NWAYS; i++) begin: waygen
         .i_snoop_addr(way_i[i].snoop_addr),
         .o_snoop_flags(way_o[i].snoop_flags)
     );
-
 end: waygen
 
 lrunway #(
@@ -130,7 +129,6 @@ lrunway #(
     .i_lru(wb_lrui_lru),
     .o_lru(wb_lruo_lru)
 );
-
 
 always_comb
 begin: comb_proc
@@ -239,6 +237,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

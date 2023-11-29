@@ -85,7 +85,6 @@ apb_slv #(
     .i_resp_err(r.resp_err)
 );
 
-
 always_comb
 begin: comb_proc
     sdctrl_regs_registers v;
@@ -215,6 +214,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

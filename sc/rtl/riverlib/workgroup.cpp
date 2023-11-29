@@ -105,7 +105,6 @@ Workgroup::Workgroup(sc_module_name name,
     dmi0->i_dport_rdata(wb_ic_dport_rdata);
     dmi0->o_progbuf(wb_progbuf);
 
-
     dport_ic0 = new ic_dport("dport_ic0", async_reset);
     dport_ic0->i_clk(i_clk);
     dport_ic0->i_nrst(i_dmi_nrst);
@@ -127,7 +126,6 @@ Workgroup::Workgroup(sc_module_name name,
     dport_ic0->o_dporti(wb_dport_i);
     dport_ic0->i_dporto(wb_dport_o);
 
-
     acp_bridge = new ic_axi4_to_l1("acp_bridge", async_reset);
     acp_bridge->i_clk(i_clk);
     acp_bridge->i_nrst(i_cores_nrst);
@@ -135,7 +133,6 @@ Workgroup::Workgroup(sc_module_name name,
     acp_bridge->o_xmsti(o_acpi);
     acp_bridge->i_l1i(corei[ACP_SLOT_IDX]);
     acp_bridge->o_l1o(coreo[ACP_SLOT_IDX]);
-
 
     // generate
     for (int i = 0; i < cpu_num_; i++) {
@@ -159,6 +156,7 @@ Workgroup::Workgroup(sc_module_name name,
         cpux[i]->o_available(vec_available[i]);
         cpux[i]->i_progbuf(wb_progbuf);
     }
+
     for (int i = cpu_num_; i < CFG_CPU_MAX; i++) {
         char tstr[256];
         RISCV_sprintf(tstr, sizeof(tstr), "dumx%d", i);
@@ -169,7 +167,6 @@ Workgroup::Workgroup(sc_module_name name,
         dumx[i]->o_halted(vec_halted[i]);
         dumx[i]->o_available(vec_available[i]);
     }
-
     // endgenerate
 
     if (l2cache_ena_ == 1) {
@@ -190,7 +187,6 @@ Workgroup::Workgroup(sc_module_name name,
         l2dummy->i_l2i(l2i);
         l2dummy->o_l2o(l2o);
         l2dummy->i_flush_valid(w_flush_l2);
-
     }
 
     l2serdes0 = new L2SerDes("l2serdes0", async_reset);
@@ -200,8 +196,6 @@ Workgroup::Workgroup(sc_module_name name,
     l2serdes0->i_l2o(l2o);
     l2serdes0->i_msti(i_msti);
     l2serdes0->o_msto(o_msto);
-
-
 
     SC_METHOD(comb);
     sensitive << i_cores_nrst;

@@ -54,7 +54,6 @@ vip_clk #(
     .o_clk(w_clk)
 );
 
-
 vip_spi_transmitter #(
     .async_reset(async_reset),
     .scaler(scaler)
@@ -75,13 +74,14 @@ vip_spi_transmitter #(
     .o_resp_ready(w_resp_ready)
 );
 
-
 always_comb
 begin: comb_proc
     vip_spi_top_registers v;
     logic [31:0] rdata;
+    logic vb_gpio_in;
 
     rdata = '0;
+    vb_gpio_in = 1'b0;
 
     v = r;
 
@@ -149,6 +149,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

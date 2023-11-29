@@ -47,8 +47,6 @@ DoubleMul::DoubleMul(sc_module_name name,
     u_imul53->o_rdy(w_imul_rdy);
     u_imul53->o_overflow(w_imul_overflow);
 
-
-
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_ena;

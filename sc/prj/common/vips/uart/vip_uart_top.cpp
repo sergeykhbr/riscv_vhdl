@@ -55,13 +55,10 @@ vip_uart_top::vip_uart_top(sc_module_name name,
             instnum_);
     outfilename = std::string(tstr);
     fl_tmp = fopen(outfilename.c_str(), "wb");
-
     // end initial
-
     clk0 = new vip_clk("clk0",
                         pll_period);
     clk0->o_clk(w_clk);
-
 
     rx0 = new vip_uart_receiver("rx0", async_reset,
                                  scaler);
@@ -72,7 +69,6 @@ vip_uart_top::vip_uart_top(sc_module_name name,
     rx0->i_rdy_clr(w_rx_rdy_clr);
     rx0->o_data(wb_rdata);
 
-
     tx0 = new vip_uart_transmitter("tx0", async_reset,
                                     scaler);
     tx0->i_nrst(i_nrst);
@@ -81,8 +77,6 @@ vip_uart_top::vip_uart_top(sc_module_name name,
     tx0->i_wdata(wb_rdata);
     tx0->o_full(w_tx_full);
     tx0->o_tx(o_tx);
-
-
 
     SC_METHOD(comb);
     sensitive << i_nrst;

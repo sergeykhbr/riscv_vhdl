@@ -68,7 +68,6 @@ sdctrl_crc7 #(
     .o_crc7(wb_crc7)
 );
 
-
 always_comb
 begin: comb_proc
     sdctrl_cmd_transmitter_registers v;
@@ -313,6 +312,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

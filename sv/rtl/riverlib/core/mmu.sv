@@ -83,7 +83,6 @@ ram_mmu_tech #(
     .o_rdata(wb_tlb_rdata)
 );
 
-
 always_comb
 begin: comb_proc
     Mmu_registers v;
@@ -574,6 +573,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

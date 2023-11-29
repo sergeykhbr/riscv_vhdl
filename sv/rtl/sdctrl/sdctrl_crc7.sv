@@ -32,6 +32,7 @@ import sdctrl_crc7_pkg::*;
 
 sdctrl_crc7_registers r, rin;
 
+
 always_comb
 begin: comb_proc
     sdctrl_crc7_registers v;
@@ -70,6 +71,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

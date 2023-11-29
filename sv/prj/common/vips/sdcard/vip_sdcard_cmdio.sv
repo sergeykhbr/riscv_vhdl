@@ -75,7 +75,6 @@ vip_sdcard_crc7 #(
     .o_crc7(wb_crc7)
 );
 
-
 always_comb
 begin: comb_proc
     vip_sdcard_cmdio_registers v;
@@ -282,6 +281,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

@@ -75,7 +75,6 @@ axi_slv #(
     .i_resp_err(w_def_resp_err)
 );
 
-
 always_comb
 begin: comb_proc
     axictrl_bus0_registers v;
@@ -287,6 +286,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

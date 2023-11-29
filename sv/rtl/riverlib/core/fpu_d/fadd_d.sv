@@ -43,6 +43,7 @@ import fadd_d_pkg::*;
 
 DoubleAdd_registers r, rin;
 
+
 always_comb
 begin: comb_proc
     DoubleAdd_registers v;
@@ -507,6 +508,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

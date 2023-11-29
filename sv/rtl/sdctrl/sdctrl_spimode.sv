@@ -65,6 +65,7 @@ import sdctrl_spimode_pkg::*;
 
 sdctrl_spimode_registers r, rin;
 
+
 always_comb
 begin: comb_proc
     sdctrl_spimode_registers v;
@@ -302,6 +303,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

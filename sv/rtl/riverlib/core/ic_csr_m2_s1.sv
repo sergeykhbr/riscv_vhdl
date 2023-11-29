@@ -59,6 +59,7 @@ import ic_csr_m2_s1_pkg::*;
 
 ic_csr_m2_s1_registers r, rin;
 
+
 always_comb
 begin: comb_proc
     ic_csr_m2_s1_registers v;
@@ -113,6 +114,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

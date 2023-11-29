@@ -124,7 +124,6 @@ dmidebug #(
     .o_progbuf(wb_progbuf)
 );
 
-
 ic_dport #(
     .async_reset(async_reset)
 ) dport_ic0 (
@@ -149,7 +148,6 @@ ic_dport #(
     .i_dporto(wb_dport_o)
 );
 
-
 ic_axi4_to_l1 #(
     .async_reset(async_reset)
 ) acp_bridge (
@@ -160,7 +158,6 @@ ic_axi4_to_l1 #(
     .i_l1i(corei[ACP_SLOT_IDX]),
     .o_l1o(coreo[ACP_SLOT_IDX])
 );
-
 
 generate
     for (genvar i = 0; i < cpu_num; i++) begin: xslotcpu
@@ -185,6 +182,7 @@ generate
             .i_progbuf(wb_progbuf)
         );
     end: xslotcpu
+
     for (genvar i = cpu_num; i < CFG_CPU_MAX; i++) begin: xdummycpu
         DummyCpu dumx (
             .o_msto(coreo[i]),
@@ -194,7 +192,6 @@ generate
             .o_available(vec_available[i])
         );
     end: xdummycpu
-
 endgenerate
 
 if (l2cache_ena == 1) begin: l2_en
@@ -222,7 +219,6 @@ else begin: l2_dis
         .o_l2o(l2o),
         .i_flush_valid(w_flush_l2)
     );
-
 end: l2_dis
 
 L2SerDes #(
@@ -235,7 +231,6 @@ L2SerDes #(
     .i_msti(i_msti),
     .o_msto(o_msto)
 );
-
 
 always_comb
 begin: comb_proc

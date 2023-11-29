@@ -70,7 +70,6 @@ axi_slv #(
     .i_resp_err(r.pslverr)
 );
 
-
 always_comb
 begin: comb_proc
     axi2apb_bus1_registers v;
@@ -189,6 +188,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

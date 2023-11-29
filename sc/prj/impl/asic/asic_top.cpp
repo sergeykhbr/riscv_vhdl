@@ -59,13 +59,11 @@ asic_top::asic_top(sc_module_name name,
     iclk0->i_clk_n(i_sclk_n);
     iclk0->o_clk(ib_clk_tcxo);
 
-
     iosdcmd0 = new iobuf_tech("iosdcmd0");
     iosdcmd0->io(io_sd_cmd);
     iosdcmd0->o(ib_sd_cmd);
     iosdcmd0->i(ob_sd_cmd);
     iosdcmd0->t(ob_sd_cmd_direction);
-
 
     iosddat0 = new iobuf_tech("iosddat0");
     iosddat0->io(io_sd_dat0);
@@ -73,13 +71,11 @@ asic_top::asic_top(sc_module_name name,
     iosddat0->i(ob_sd_dat0);
     iosddat0->t(ob_sd_dat0_direction);
 
-
     iosddat1 = new iobuf_tech("iosddat1");
     iosddat1->io(io_sd_dat1);
     iosddat1->o(ib_sd_dat1);
     iosddat1->i(ob_sd_dat1);
     iosddat1->t(ob_sd_dat1_direction);
-
 
     iosddat2 = new iobuf_tech("iosddat2");
     iosddat2->io(io_sd_dat2);
@@ -87,13 +83,11 @@ asic_top::asic_top(sc_module_name name,
     iosddat2->i(ob_sd_dat2);
     iosddat2->t(ob_sd_dat2_direction);
 
-
     iosddat3 = new iobuf_tech("iosddat3");
     iosddat3->io(io_sd_cd_dat3);
     iosddat3->o(ib_sd_cd_dat3);
     iosddat3->i(ob_sd_cd_dat3);
     iosddat3->t(ob_sd_cd_dat3_direction);
-
 
     pll0 = new SysPLL_tech("pll0");
     pll0->i_reset(i_rst);
@@ -101,7 +95,6 @@ asic_top::asic_top(sc_module_name name,
     pll0->o_clk_sys(w_sys_clk);
     pll0->o_clk_ddr(w_ddr_clk);
     pll0->o_locked(w_pll_lock);
-
 
     prci0 = new apb_prci("prci0", async_reset);
     prci0->i_clk(ib_clk_tcxo);
@@ -116,7 +109,6 @@ asic_top::asic_top(sc_module_name name,
     prci0->o_cfg(prci_dev_cfg);
     prci0->i_apbi(prci_apbi);
     prci0->o_apbo(prci_apbo);
-
 
     soc0 = new riscv_soc("soc0", async_reset,
                           sim_uart_speedup_rate);
@@ -167,8 +159,6 @@ asic_top::asic_top(sc_module_name name,
     soc0->i_ddr_xdevcfg(ddr_xdev_cfg);
     soc0->o_ddr_xslvi(ddr_xslvi);
     soc0->i_ddr_xslvo(ddr_xslvo);
-
-
 }
 
 asic_top::~asic_top() {

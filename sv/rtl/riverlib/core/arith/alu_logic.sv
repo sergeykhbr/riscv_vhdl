@@ -33,6 +33,7 @@ import alu_logic_pkg::*;
 
 AluLogic_registers r, rin;
 
+
 always_comb
 begin: comb_proc
     AluLogic_registers v;
@@ -54,6 +55,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

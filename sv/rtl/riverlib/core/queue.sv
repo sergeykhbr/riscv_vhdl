@@ -41,6 +41,7 @@ typedef struct {
 
 Queue_registers r, rin;
 
+
 always_comb
 begin: comb_proc
     Queue_registers v;
@@ -112,6 +113,7 @@ begin: comb_proc
         rin.mem[i] = v.mem[i];
     end
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

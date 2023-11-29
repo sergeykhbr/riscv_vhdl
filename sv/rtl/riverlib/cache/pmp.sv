@@ -40,6 +40,7 @@ import pmp_pkg::*;
 
 PMP_registers r, rin;
 
+
 always_comb
 begin: comb_proc
     PMP_registers v;
@@ -120,6 +121,7 @@ begin: comb_proc
         rin.tbl[i].flags = v.tbl[i].flags;
     end
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

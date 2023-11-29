@@ -109,7 +109,6 @@ TagMem<abus, ibits, lnbits, flbits, snoop>::TagMem(sc_module_name name,
     tagsnoop0 = 0;
 
     // bwe = byte write enable
-
     data0 = new ram_cache_bwe_tech<ibits,
                                    (8 * (1 << lnbits))>("data0");
     data0->i_clk(i_clk);
@@ -118,7 +117,6 @@ TagMem<abus, ibits, lnbits, flbits, snoop>::TagMem(sc_module_name name,
     data0->i_wdata(i_wdata);
     data0->o_rdata(o_rdata);
 
-
     tag0 = new ram_tech<ibits,
                         TAG_WITH_FLAGS>("tag0");
     tag0->i_clk(i_clk);
@@ -126,7 +124,6 @@ TagMem<abus, ibits, lnbits, flbits, snoop>::TagMem(sc_module_name name,
     tag0->i_wena(w_tagi_we);
     tag0->i_wdata(wb_tagi_wdata);
     tag0->o_rdata(wb_tago_rdata);
-
 
     // generate
     if (snoop) {
@@ -140,9 +137,7 @@ TagMem<abus, ibits, lnbits, flbits, snoop>::TagMem(sc_module_name name,
     } else {
         wb_tago_snoop_rdata = 0;
     }
-
     // endgenerate
-
 
     SC_METHOD(comb);
     sensitive << i_nrst;

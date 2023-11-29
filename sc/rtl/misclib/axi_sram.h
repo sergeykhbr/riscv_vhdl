@@ -101,7 +101,6 @@ axi_sram<abits>::axi_sram(sc_module_name name,
     xslv0->i_resp_rdata(wb_resp_rdata);
     xslv0->i_resp_err(wb_resp_err);
 
-
     tech0 = new ram_bytes_tech<abits,
                                CFG_LOG2_SYSBUS_DATA_BYTES>("tech0");
     tech0->i_clk(i_clk);
@@ -110,8 +109,6 @@ axi_sram<abits>::axi_sram(sc_module_name name,
     tech0->i_wstrb(wb_req_wstrb);
     tech0->i_wdata(wb_req_wdata);
     tech0->o_rdata(wb_resp_rdata);
-
-
 
     SC_METHOD(comb);
     sensitive << i_nrst;

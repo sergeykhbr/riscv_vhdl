@@ -46,6 +46,7 @@ import l2_amba_pkg::*;
 
 L2Amba_registers r, rin;
 
+
 always_comb
 begin: comb_proc
     L2Amba_registers v;
@@ -175,6 +176,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

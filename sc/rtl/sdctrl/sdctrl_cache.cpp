@@ -67,8 +67,6 @@ sdctrl_cache::sdctrl_cache(sc_module_name name,
     mem0->i_snoop_addr(line_snoop_addr_i);
     mem0->o_snoop_flags(line_snoop_flags_o);
 
-
-
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_req_valid;

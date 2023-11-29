@@ -16,8 +16,8 @@
 package ic_axi4_to_l1_pkg;
 
 import types_amba_pkg::*;
-import river_cfg_pkg::*;
 import types_river_pkg::*;
+import river_cfg_pkg::*;
 
 localparam bit [3:0] Idle = 4'd0;                           // axi ar_ready=1,aw_ready=1
 localparam bit [3:0] ReadLineRequest = 4'd1;                // l1 ar_valid=1

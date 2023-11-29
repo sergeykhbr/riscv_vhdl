@@ -45,6 +45,7 @@ import l2_dst_pkg::*;
 
 L2Destination_registers r, rin;
 
+
 always_comb
 begin: comb_proc
     L2Destination_registers v;
@@ -296,6 +297,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

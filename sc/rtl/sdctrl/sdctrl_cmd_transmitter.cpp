@@ -61,8 +61,6 @@ sdctrl_cmd_transmitter::sdctrl_cmd_transmitter(sc_module_name name,
     crc0->i_dat(w_crc7_dat);
     crc0->o_crc7(wb_crc7);
 
-
-
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_sclk_posedge;

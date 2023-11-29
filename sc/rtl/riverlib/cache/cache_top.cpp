@@ -114,7 +114,6 @@ CacheTop::CacheTop(sc_module_name name,
     i1->i_flush_address(wb_i_flushi_addr);
     i1->i_flush_valid(i_flushi_valid);
 
-
     d0 = new DCacheLru("d0", async_reset,
                         coherence_ena);
     d0->i_clk(i_clk);
@@ -159,14 +158,12 @@ CacheTop::CacheTop(sc_module_name name,
     d0->i_flush_valid(i_flushd_valid);
     d0->o_flush_end(o_flushd_end);
 
-
     pma0 = new PMA("pma0");
     pma0->i_clk(i_clk);
     pma0->i_iaddr(i.mpu_addr);
     pma0->i_daddr(d.mpu_addr);
     pma0->o_icached(w_pma_icached);
     pma0->o_dcached(w_pma_dcached);
-
 
     pmp0 = new PMP("pmp0", async_reset);
     pmp0->i_clk(i_clk);
@@ -183,7 +180,6 @@ CacheTop::CacheTop(sc_module_name name,
     pmp0->o_w(w_pmp_w);
     pmp0->o_x(w_pmp_x);
 
-
     queue0 = new Queue<2,
                        QUEUE_WIDTH>("queue0", async_reset);
     queue0->i_clk(i_clk);
@@ -194,8 +190,6 @@ CacheTop::CacheTop(sc_module_name name,
     queue0->o_rdata(queue_rdata_o);
     queue0->o_full(queue_full_o);
     queue0->o_nempty(queue_nempty_o);
-
-
 
     SC_METHOD(comb);
     sensitive << i_nrst;

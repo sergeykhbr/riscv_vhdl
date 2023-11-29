@@ -40,8 +40,6 @@ imul53::imul53(sc_module_name name,
     enc0->i_value(wb_sumInv);
     enc0->o_shift(wb_lshift);
 
-
-
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_ena;

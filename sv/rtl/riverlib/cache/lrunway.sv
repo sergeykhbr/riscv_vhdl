@@ -42,6 +42,7 @@ typedef struct {
 
 lrunway_registers r, rin;
 
+
 always_comb
 begin: comb_proc
     lrunway_registers v;
@@ -132,6 +133,7 @@ begin: comb_proc
         rin.mem[i] = v.mem[i];
     end
 end: comb_proc
+
 
 always_ff @(posedge i_clk) begin: rg_proc
     r.radr <= rin.radr;

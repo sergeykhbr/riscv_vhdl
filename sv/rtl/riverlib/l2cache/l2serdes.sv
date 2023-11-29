@@ -29,8 +29,8 @@ module L2SerDes #(
 );
 
 import types_amba_pkg::*;
-import river_cfg_pkg::*;
 import types_river_pkg::*;
+import river_cfg_pkg::*;
 import l2serdes_pkg::*;
 
 L2SerDes_registers r, rin;
@@ -70,6 +70,7 @@ begin
     return ret;
 end
 endfunction: size2size
+
 
 always_comb
 begin: comb_proc
@@ -236,6 +237,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

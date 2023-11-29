@@ -146,8 +146,6 @@ apb_uart<log2_fifosz>::apb_uart(sc_module_name name,
     pslv0->i_resp_rdata(r.resp_rdata);
     pslv0->i_resp_err(r.resp_err);
 
-
-
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_mapinfo;

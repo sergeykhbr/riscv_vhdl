@@ -67,8 +67,6 @@ vip_sdcard_cmdio::vip_sdcard_cmdio(sc_module_name name,
     crccmd0->i_dat(w_crc7_dat);
     crccmd0->o_crc7(wb_crc7);
 
-
-
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_cs;

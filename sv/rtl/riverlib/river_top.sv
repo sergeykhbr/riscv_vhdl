@@ -167,7 +167,6 @@ Processor #(
     .i_flushd_end(w_flushd_end)
 );
 
-
 CacheTop #(
     .async_reset(async_reset),
     .coherence_ena(coherence_ena)
@@ -228,7 +227,6 @@ CacheTop #(
     .i_flushd_addr(wb_flushd_addr),
     .o_flushd_end(w_flushd_end)
 );
-
 
 always_comb
 begin: comb_proc

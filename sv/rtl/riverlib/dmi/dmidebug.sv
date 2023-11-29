@@ -96,7 +96,6 @@ jtagtap #(
     .o_dmi_hardreset(w_tap_dmi_hardreset)
 );
 
-
 jtagcdc #(
     .async_reset(async_reset)
 ) cdc (
@@ -114,7 +113,6 @@ jtagcdc #(
     .o_dmi_req_data(wb_cdc_dmi_req_data),
     .o_dmi_hardreset(w_cdc_dmi_hardreset)
 );
-
 
 always_comb
 begin: comb_proc
@@ -568,6 +566,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

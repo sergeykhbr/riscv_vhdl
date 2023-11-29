@@ -25,6 +25,7 @@ module divstage64(
 
 import divstage64_pkg::*;
 
+
 always_comb
 begin: comb_proc
     logic [3:0] wb_bits;

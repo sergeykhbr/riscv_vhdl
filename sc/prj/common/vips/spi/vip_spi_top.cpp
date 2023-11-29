@@ -45,7 +45,6 @@ vip_spi_top::vip_spi_top(sc_module_name name,
                         pll_period);
     clk0->o_clk(w_clk);
 
-
     tx0 = new vip_spi_transmitter("tx0", async_reset,
                                    scaler);
     tx0->i_nrst(i_nrst);
@@ -62,8 +61,6 @@ vip_spi_top::vip_spi_top(sc_module_name name,
     tx0->i_resp_valid(w_resp_valid);
     tx0->i_resp_rdata(wb_resp_rdata);
     tx0->o_resp_ready(w_resp_ready);
-
-
 
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -133,8 +130,10 @@ void vip_spi_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
 void vip_spi_top::comb() {
     sc_uint<32> rdata;
+    bool vb_gpio_in;
 
     rdata = 0;
+    vb_gpio_in = 0;
 
     v = r;
 

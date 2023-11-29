@@ -124,9 +124,7 @@ Tracer::Tracer(sc_module_name name,
             hartid_);
     trfilename = std::string(tstr);
     fl = fopen(trfilename.c_str(), "wb");
-
     // end initial
-
 
     SC_METHOD(comb);
     sensitive << i_nrst;

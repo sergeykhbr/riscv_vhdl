@@ -111,7 +111,6 @@ for (genvar i = 0; i < MemTotal; i++) begin: memgen
         .o_snoop_ready(lineo[i].snoop_ready),
         .o_snoop_flags(lineo[i].snoop_flags)
     );
-
 end: memgen
 
 always_comb
@@ -249,6 +248,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

@@ -74,7 +74,6 @@ dmidebug::dmidebug(sc_module_name name,
     tap->i_dmi_error(w_jtag_dmi_error);
     tap->o_dmi_hardreset(w_tap_dmi_hardreset);
 
-
     cdc = new jtagcdc("cdc", async_reset);
     cdc->i_clk(i_clk);
     cdc->i_nrst(i_nrst);
@@ -89,8 +88,6 @@ dmidebug::dmidebug(sc_module_name name,
     cdc->o_dmi_req_addr(wb_cdc_dmi_req_addr);
     cdc->o_dmi_req_data(wb_cdc_dmi_req_data);
     cdc->o_dmi_hardreset(w_cdc_dmi_hardreset);
-
-
 
     SC_METHOD(comb);
     sensitive << i_nrst;

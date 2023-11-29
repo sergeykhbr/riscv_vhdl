@@ -38,6 +38,7 @@ import bp_btb_pkg::*;
 logic [RISCV_ARCH-1:0] dbg_npc[0: CFG_BP_DEPTH - 1];
 BpBTB_registers r, rin;
 
+
 always_comb
 begin: comb_proc
     BpBTB_registers v;
@@ -125,6 +126,7 @@ begin: comb_proc
         rin.btb[i].exec = v.btb[i].exec;
     end
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

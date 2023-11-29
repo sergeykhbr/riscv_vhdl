@@ -45,13 +45,11 @@ vip_sdcard_top::vip_sdcard_top(sc_module_name name,
     iobufcmd0->i(w_cmd_out);
     iobufcmd0->t(w_cmd_dir);
 
-
     iobufdat0 = new iobuf_tech("iobufdat0");
     iobufdat0->io(io_dat0);
     iobufdat0->o(w_dat0_in);
     iobufdat0->i(w_dat0_out);
     iobufdat0->t(w_dat0_dir);
-
 
     iobufdat1 = new iobuf_tech("iobufdat1");
     iobufdat1->io(io_dat1);
@@ -59,20 +57,17 @@ vip_sdcard_top::vip_sdcard_top(sc_module_name name,
     iobufdat1->i(w_dat1_out);
     iobufdat1->t(w_dat1_dir);
 
-
     iobufdat2 = new iobuf_tech("iobufdat2");
     iobufdat2->io(io_dat2);
     iobufdat2->o(w_dat2_in);
     iobufdat2->i(w_dat2_out);
     iobufdat2->t(w_dat2_dir);
 
-
     iobufdat3 = new iobuf_tech("iobufdat3");
     iobufdat3->io(io_cd_dat3);
     iobufdat3->o(w_dat3_in);
     iobufdat3->i(w_dat3_out);
     iobufdat3->t(w_dat3_dir);
-
 
     cmdio0 = new vip_sdcard_cmdio("cmdio0", async_reset);
     cmdio0->i_nrst(i_nrst);
@@ -109,7 +104,6 @@ vip_sdcard_top::vip_sdcard_top(sc_module_name name,
     cmdio0->i_stat_out_of_range(w_stat_out_of_range);
     cmdio0->o_busy(w_cmdio_busy);
 
-
     ctrl0 = new vip_sdcard_ctrl("ctrl0", async_reset,
                                  CFG_SDCARD_POWERUP_DONE_DELAY,
                                  CFG_SDCARD_HCS,
@@ -142,8 +136,6 @@ vip_sdcard_top::vip_sdcard_top(sc_module_name name,
     ctrl0->o_dat_trans(w_dat_trans);
     ctrl0->o_dat(wb_dat);
     ctrl0->i_cmdio_busy(w_cmdio_busy);
-
-
 
     SC_METHOD(comb);
     sensitive << i_nrst;

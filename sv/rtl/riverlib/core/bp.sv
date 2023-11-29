@@ -60,7 +60,6 @@ for (genvar i = 0; i < 2; i++) begin: predecx
         .o_pc(wb_pd[i].pc),
         .o_npc(wb_pd[i].npc)
     );
-
 end: predecx
 
 BpBTB #(
@@ -77,7 +76,6 @@ BpBTB #(
     .o_bp_npc(wb_npc),
     .o_bp_exec(wb_bp_exec)
 );
-
 
 always_comb
 begin: comb_proc

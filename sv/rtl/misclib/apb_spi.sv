@@ -140,7 +140,6 @@ apb_slv #(
     .i_resp_err(r.resp_err)
 );
 
-
 sfifo #(
     .async_reset(async_reset),
     .dbits(fifo_dbits),
@@ -155,7 +154,6 @@ sfifo #(
     .o_count(wb_rxfifo_count)
 );
 
-
 sfifo #(
     .async_reset(async_reset),
     .dbits(fifo_dbits),
@@ -169,7 +167,6 @@ sfifo #(
     .o_rdata(wb_txfifo_rdata),
     .o_count(wb_txfifo_count)
 );
-
 
 always_comb
 begin: comb_proc
@@ -483,6 +480,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

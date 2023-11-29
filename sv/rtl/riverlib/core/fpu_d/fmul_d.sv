@@ -55,7 +55,6 @@ imul53 #(
     .o_overflow(w_imul_overflow)
 );
 
-
 always_comb
 begin: comb_proc
     DoubleMul_registers v;
@@ -316,6 +315,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

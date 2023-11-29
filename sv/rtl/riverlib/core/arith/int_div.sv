@@ -50,14 +50,12 @@ divstage64 stage0 (
     .o_bits(wb_bits0_o)
 );
 
-
 divstage64 stage1 (
     .i_divident(wb_resid0_o),
     .i_divisor(wb_divisor1_i),
     .o_resid(wb_resid1_o),
     .o_bits(wb_bits1_o)
 );
-
 
 always_comb
 begin: comb_proc
@@ -228,6 +226,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

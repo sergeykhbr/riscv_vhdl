@@ -32,6 +32,7 @@ import divstage53_pkg::*;
 logic [61:0] wb_thresh[0: 16 - 1];
 logic [60:0] wb_dif[0: 4 - 1];
 
+
 always_comb
 begin: comb_proc
     logic [7:0] wb_bits;

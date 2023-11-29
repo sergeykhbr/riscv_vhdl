@@ -33,6 +33,7 @@ import int_addsub_pkg::*;
 
 IntAddSub_registers r, rin;
 
+
 always_comb
 begin: comb_proc
     IntAddSub_registers v;
@@ -132,6 +133,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

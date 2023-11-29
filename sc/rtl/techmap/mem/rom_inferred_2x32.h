@@ -68,9 +68,7 @@ rom_inferred_2x32<abits>::rom_inferred_2x32(sc_module_name name,
     RISCV_sprintf(tstr, sizeof(tstr), "%s_hi.hex", filename_.c_str());
     hexname1 = std::string(tstr);
     SV_readmemh(hexname1.c_str(), mem1);
-
     // end initial
-
 
     SC_METHOD(registers);
     sensitive << i_clk.pos();

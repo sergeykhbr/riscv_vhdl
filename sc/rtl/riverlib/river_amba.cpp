@@ -92,8 +92,6 @@ RiverAmba::RiverAmba(sc_module_name name,
     river0->i_progbuf(i_progbuf);
     river0->o_halted(o_halted);
 
-
-
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_mtimer;

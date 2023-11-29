@@ -28,9 +28,7 @@ vip_clk::vip_clk(sc_module_name name,
     period_ = period;
     // initial
     // pll = 0;
-
     // end initial
-
 
     SC_METHOD(comb);
     sensitive << pll;

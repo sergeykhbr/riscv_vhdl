@@ -56,8 +56,6 @@ axi2apb_bus1::axi2apb_bus1(sc_module_name name,
     axi0->i_resp_rdata(r.prdata);
     axi0->i_resp_err(r.pslverr);
 
-
-
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_mapinfo;

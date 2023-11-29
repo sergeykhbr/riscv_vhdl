@@ -105,6 +105,7 @@ const jtagtap_nregisters jtagtap_nr_reset = '{
 jtagtap_registers r, rin;
 jtagtap_nregisters nr, nrin;
 
+
 always_comb
 begin: comb_proc
     jtagtap_registers v;
@@ -320,6 +321,7 @@ begin: comb_proc
     rin = v;
     nrin = nv;
 end: comb_proc
+
 
 always_ff @(posedge i_tck, posedge i_trst) begin: rg_proc
     if (i_trst == 1'b1) begin

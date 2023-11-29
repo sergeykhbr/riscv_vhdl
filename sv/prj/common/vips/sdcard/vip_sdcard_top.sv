@@ -93,14 +93,12 @@ iobuf_tech iobufcmd0 (
     .t(w_cmd_dir)
 );
 
-
 iobuf_tech iobufdat0 (
     .io(io_dat0),
     .o(w_dat0_in),
     .i(w_dat0_out),
     .t(w_dat0_dir)
 );
-
 
 iobuf_tech iobufdat1 (
     .io(io_dat1),
@@ -109,7 +107,6 @@ iobuf_tech iobufdat1 (
     .t(w_dat1_dir)
 );
 
-
 iobuf_tech iobufdat2 (
     .io(io_dat2),
     .o(w_dat2_in),
@@ -117,14 +114,12 @@ iobuf_tech iobufdat2 (
     .t(w_dat2_dir)
 );
 
-
 iobuf_tech iobufdat3 (
     .io(io_cd_dat3),
     .o(w_dat3_in),
     .i(w_dat3_out),
     .t(w_dat3_dir)
 );
-
 
 vip_sdcard_cmdio #(
     .async_reset(async_reset)
@@ -164,7 +159,6 @@ vip_sdcard_cmdio #(
     .o_busy(w_cmdio_busy)
 );
 
-
 vip_sdcard_ctrl #(
     .async_reset(async_reset),
     .CFG_SDCARD_POWERUP_DONE_DELAY(CFG_SDCARD_POWERUP_DONE_DELAY),
@@ -200,7 +194,6 @@ vip_sdcard_ctrl #(
     .o_dat(wb_dat),
     .i_cmdio_busy(w_cmdio_busy)
 );
-
 
 always_comb
 begin: comb_proc

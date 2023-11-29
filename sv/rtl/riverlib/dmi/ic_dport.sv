@@ -49,6 +49,7 @@ import ic_dport_pkg::*;
 
 ic_dport_registers r, rin;
 
+
 always_comb
 begin: comb_proc
     ic_dport_registers v;
@@ -142,6 +143,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

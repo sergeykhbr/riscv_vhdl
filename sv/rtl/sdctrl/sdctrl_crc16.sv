@@ -32,6 +32,7 @@ import sdctrl_crc16_pkg::*;
 
 sdctrl_crc16_registers r, rin;
 
+
 always_comb
 begin: comb_proc
     sdctrl_crc16_registers v;
@@ -76,6 +77,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

@@ -31,11 +31,12 @@ module ic_axi4_to_l1 #(
 );
 
 import types_amba_pkg::*;
-import river_cfg_pkg::*;
 import types_river_pkg::*;
+import river_cfg_pkg::*;
 import ic_axi4_to_l1_pkg::*;
 
 ic_axi4_to_l1_registers r, rin;
+
 
 always_comb
 begin: comb_proc
@@ -221,6 +222,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

@@ -30,11 +30,12 @@ module L2Dummy #(
 );
 
 import types_amba_pkg::*;
-import river_cfg_pkg::*;
 import types_river_pkg::*;
+import river_cfg_pkg::*;
 import l2dummy_pkg::*;
 
 L2Dummy_registers r, rin;
+
 
 always_comb
 begin: comb_proc
@@ -209,6 +210,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

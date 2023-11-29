@@ -42,6 +42,7 @@ typedef struct {
 
 sfifo_registers r, rin;
 
+
 always_comb
 begin: comb_proc
     sfifo_registers v;
@@ -101,6 +102,7 @@ begin: comb_proc
     rin.rd_cnt = v.rd_cnt;
     rin.total_cnt = v.total_cnt;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

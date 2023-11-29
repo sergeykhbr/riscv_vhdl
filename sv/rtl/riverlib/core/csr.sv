@@ -80,6 +80,7 @@ import csr_pkg::*;
 
 CsrRegs_registers r, rin;
 
+
 always_comb
 begin: comb_proc
     CsrRegs_registers v;
@@ -1218,6 +1219,7 @@ begin: comb_proc
     rin.pmp_end_addr = v.pmp_end_addr;
     rin.pmp_flags = v.pmp_flags;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen

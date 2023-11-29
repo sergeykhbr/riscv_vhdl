@@ -84,9 +84,7 @@ DbgPort::DbgPort(sc_module_name name,
         trbuf0->i_waddr(wb_stack_waddr);
         trbuf0->i_wdata(wb_stack_wdata);
     }
-
     // endgenerate
-
 
     SC_METHOD(comb);
     sensitive << i_nrst;

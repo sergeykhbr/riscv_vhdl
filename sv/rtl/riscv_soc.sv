@@ -121,7 +121,6 @@ axictrl_bus0 #(
     .o_mapinfo(bus0_mapinfo)
 );
 
-
 axi2apb_bus1 #(
     .async_reset(async_reset)
 ) bus1 (
@@ -135,7 +134,6 @@ axi2apb_bus1 #(
     .o_apbi(apbi),
     .o_mapinfo(bus1_mapinfo)
 );
-
 
 Workgroup #(
     .async_reset(async_reset),
@@ -167,7 +165,6 @@ Workgroup #(
     .o_dmreset(o_dmreset)
 );
 
-
 axi_rom #(
     .async_reset(async_reset),
     .abits(CFG_BOOTROM_LOG2_SIZE),
@@ -181,7 +178,6 @@ axi_rom #(
     .o_xslvo(axiso[CFG_BUS0_XSLV_BOOTROM])
 );
 
-
 axi_sram #(
     .async_reset(async_reset),
     .abits(CFG_SRAM_LOG2_SIZE)
@@ -193,7 +189,6 @@ axi_sram #(
     .i_xslvi(axisi[CFG_BUS0_XSLV_SRAM]),
     .o_xslvo(axiso[CFG_BUS0_XSLV_SRAM])
 );
-
 
 clint #(
     .async_reset(async_reset),
@@ -210,7 +205,6 @@ clint #(
     .o_mtip(wb_clint_mtip)
 );
 
-
 plic #(
     .async_reset(async_reset),
     .ctxmax(SOC_PLIC_CONTEXT_TOTAL),
@@ -226,7 +220,6 @@ plic #(
     .o_ip(wb_plic_xeip)
 );
 
-
 cdc_axi_sync_tech u_cdc_ddr0 (
     .i_xslv_clk(i_sys_clk),
     .i_xslv_nrst(i_sys_nrst),
@@ -237,7 +230,6 @@ cdc_axi_sync_tech u_cdc_ddr0 (
     .o_xmsto(o_ddr_xslvi),
     .i_xmsti(i_ddr_xslvo)
 );
-
 
 apb_uart #(
     .async_reset(async_reset),
@@ -255,7 +247,6 @@ apb_uart #(
     .o_irq(w_irq_uart1)
 );
 
-
 apb_gpio #(
     .async_reset(async_reset),
     .width(SOC_GPIO0_WIDTH)
@@ -271,7 +262,6 @@ apb_gpio #(
     .o_gpio(o_gpio),
     .o_irq(wb_irq_gpio)
 );
-
 
 sdctrl #(
     .async_reset(async_reset)
@@ -306,7 +296,6 @@ sdctrl #(
     .i_protect(i_sd_protect)
 );
 
-
 apb_pnp #(
     .async_reset(async_reset),
     .cfg_slots(SOC_PNP_TOTAL),
@@ -324,7 +313,6 @@ apb_pnp #(
     .o_apbo(apbo[CFG_BUS1_PSLV_PNP]),
     .o_irq(w_irq_pnp)
 );
-
 
 always_comb
 begin: comb_proc

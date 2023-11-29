@@ -93,8 +93,6 @@ DCacheLru::DCacheLru(sc_module_name name,
     mem0->o_snoop_ready(line_snoop_ready_o);
     mem0->o_snoop_flags(line_snoop_flags_o);
 
-
-
     SC_METHOD(comb);
     sensitive << i_nrst;
     sensitive << i_req_valid;

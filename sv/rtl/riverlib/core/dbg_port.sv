@@ -93,7 +93,6 @@ generate
             .i_wdata(wb_stack_wdata)
         );
     end: tracebuf_en
-
 endgenerate
 
 always_comb
@@ -336,6 +335,7 @@ begin: comb_proc
 
     rin = v;
 end: comb_proc
+
 
 generate
     if (async_reset) begin: async_rst_gen
