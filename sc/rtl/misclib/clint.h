@@ -51,9 +51,9 @@ SC_MODULE(clint) {
     bool async_reset_;
 
     struct clint_cpu_type {
-        bool msip;
-        bool mtip;
-        sc_uint<64> mtimecmp;
+        sc_signal<bool> msip;
+        sc_signal<bool> mtip;
+        sc_signal<sc_uint<64>> mtimecmp;
     };
 
 
@@ -133,6 +133,11 @@ clint<cpu_total>::clint(sc_module_name name,
     sensitive << wb_resp_rdata;
     sensitive << wb_resp_err;
     sensitive << r.mtime;
+    for (int i = 0; i < cpu_total; i++) {
+        sensitive << r.hart[i].msip;
+        sensitive << r.hart[i].mtip;
+        sensitive << r.hart[i].mtimecmp;
+    }
     sensitive << r.rdata;
 
     SC_METHOD(registers);

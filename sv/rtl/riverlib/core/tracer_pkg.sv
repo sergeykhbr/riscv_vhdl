@@ -19,6 +19,72 @@ import river_cfg_pkg::*;
 
 localparam int TRACE_TBL_ABITS = 6;
 localparam int TRACE_TBL_SZ = 64;
+localparam rname = '{
+    "zero",  // x0
+    "ra",  // x1
+    "sp",  // x2
+    "gp",  // x3
+    "tp",  // x4
+    "t0",  // x5
+    "t1",  // x6
+    "t2",  // x7
+    "s0",  // x8
+    "s1",  // x9
+    "a0",  // x10
+    "a1",  // x11
+    "a2",  // x12
+    "a3",  // x13
+    "a4",  // x14
+    "a5",  // x15
+    "a6",  // x16
+    "a7",  // x17
+    "s2",  // x18
+    "s3",  // x19
+    "s4",  // x20
+    "s5",  // x21
+    "s6",  // x22
+    "s7",  // x23
+    "s8",  // x24
+    "s9",  // x25
+    "s10",  // x26
+    "s11",  // x27
+    "t3",  // x28
+    "t4",  // x29
+    "t5",  // x30
+    "t6",  // x31
+    "ft0",  // x32
+    "ft1",  // x33
+    "ft2",  // x34
+    "ft3",  // x35
+    "ft4",  // x36
+    "ft5",  // x37
+    "ft6",  // x38
+    "ft7",  // x39
+    "fs0",  // x40
+    "fs1",  // x41
+    "fa0",  // x42
+    "fa1",  // x43
+    "fa2",  // x44
+    "fa3",  // x45
+    "fa4",  // x46
+    "fa5",  // x47
+    "fa6",  // x48
+    "fa7",  // x49
+    "fs2",  // x50
+    "fs3",  // x51
+    "fs4",  // x52
+    "fs5",  // x53
+    "fs6",  // x54
+    "fs7",  // x55
+    "fs8",  // x56
+    "fs9",  // x57
+    "fs10",  // x58
+    "fs11",  // x59
+    "ft8",  // x60
+    "ft9",  // x61
+    "ft10",  // x62
+    "ft11"  // x63
+};
 
 typedef struct {
     logic store;                                            // 0=load;1=store
