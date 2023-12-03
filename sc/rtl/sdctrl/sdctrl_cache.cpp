@@ -46,7 +46,6 @@ sdctrl_cache::sdctrl_cache(sc_module_name name,
     o_flush_end("o_flush_end") {
 
     async_reset_ = async_reset;
-    FLUSH_ALL_VALUE = ((1 << ibits) - 1);
     mem0 = 0;
 
     mem0 = new TagMem<abus,

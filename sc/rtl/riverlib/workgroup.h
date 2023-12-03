@@ -20,7 +20,6 @@
 #include "../ambalib/types_pnp.h"
 #include "river_cfg.h"
 #include "types_river.h"
-#include "../../prj/impl/asic/target_cfg.h"
 #include "dmi/dmidebug.h"
 #include "dmi/ic_dport.h"
 #include "ic_axi4_to_l1.h"

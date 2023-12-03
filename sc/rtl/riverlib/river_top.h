@@ -17,7 +17,6 @@
 
 #include <systemc.h>
 #include "river_cfg.h"
-#include "../../prj/impl/asic/target_cfg.h"
 #include "core/proc.h"
 #include "cache/cache_top.h"
 

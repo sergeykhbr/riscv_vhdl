@@ -19,7 +19,6 @@
 #include "../ambalib/types_amba.h"
 #include "types_river.h"
 #include "river_cfg.h"
-#include "../../prj/impl/asic/target_cfg.h"
 #include "river_top.h"
 
 namespace debugger {

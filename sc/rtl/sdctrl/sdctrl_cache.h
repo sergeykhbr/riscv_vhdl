@@ -62,7 +62,6 @@ SC_MODULE(sdctrl_cache) {
 
  private:
     bool async_reset_;
-    uint32_t FLUSH_ALL_VALUE;
 
     static const int abus = CFG_SDCACHE_ADDR_BITS;
     static const int ibits = CFG_LOG2_SDCACHE_LINEBITS;
@@ -84,6 +83,7 @@ SC_MODULE(sdctrl_cache) {
     static const uint8_t State_ResetWrite = 11;
 
     static const uint64_t LINE_BYTES_MASK = ((1 << CFG_LOG2_SDCACHE_BYTES_PER_LINE) - 1);
+    static const uint32_t FLUSH_ALL_VALUE = ((1 << ibits) - 1);
 
     struct sdctrl_cache_registers {
         sc_signal<bool> req_write;

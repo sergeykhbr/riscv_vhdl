@@ -18,12 +18,6 @@
 #include <systemc.h>
 #include "../../../rtl/ambalib/types_amba.h"
 #include "../../../rtl/ambalib/types_pnp.h"
-#include "../../../rtl/ambalib/types_bus0.h"
-#include "../../../rtl/ambalib/types_bus1.h"
-#include "../../../rtl/riverlib/river_cfg.h"
-#include "../../../rtl/riverlib/types_river.h"
-#include "../../../rtl/sdctrl/sdctrl_cfg.h"
-#include "target_cfg.h"
 #include "../../../rtl/techmap/bufg/ids_tech.h"
 #include "../../../rtl/techmap/bufg/iobuf_tech.h"
 #include "../../../rtl/techmap/pll/SysPLL_tech.h"

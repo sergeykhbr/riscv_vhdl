@@ -17,7 +17,6 @@
 
 #include <systemc.h>
 #include "../river_cfg.h"
-#include "../../../prj/impl/asic/target_cfg.h"
 #include "icache_lru.h"
 #include "dcache_lru.h"
 #include "pma.h"
