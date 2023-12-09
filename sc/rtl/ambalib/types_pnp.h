@@ -119,6 +119,20 @@ class dev_config_type {
         did = SLV_DID_EMPTY;
     }
 
+    dev_config_type(sc_uint<8> descrsize_,
+                    sc_uint<2> descrtype_,
+                    sc_uint<64> addr_start_,
+                    sc_uint<64> addr_end_,
+                    sc_uint<16> vid_,
+                    sc_uint<16> did_) {
+        descrsize = descrsize_;
+        descrtype = descrtype_;
+        addr_start = addr_start_;
+        addr_end = addr_end_;
+        vid = vid_;
+        did = did_;
+    }
+
     inline bool operator == (const dev_config_type &rhs) const {
         bool ret = true;
         ret = ret

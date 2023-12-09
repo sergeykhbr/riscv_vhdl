@@ -211,6 +211,26 @@ class axi4_metadata_type {
         region = 0;
     }
 
+    axi4_metadata_type(sc_uint<CFG_SYSBUS_ADDR_BITS> addr_,
+                       sc_uint<8> len_,
+                       sc_uint<3> size_,
+                       sc_uint<2> burst_,
+                       bool lock_,
+                       sc_uint<4> cache_,
+                       sc_uint<3> prot_,
+                       sc_uint<4> qos_,
+                       sc_uint<4> region_) {
+        addr = addr_;
+        len = len_;
+        size = size_;
+        burst = burst_;
+        lock = lock_;
+        cache = cache_;
+        prot = prot_;
+        qos = qos_;
+        region = region_;
+    }
+
     inline bool operator == (const axi4_metadata_type &rhs) const {
         bool ret = true;
         ret = ret
@@ -358,6 +378,38 @@ class axi4_master_out_type {
         ar_id = 0;
         ar_user = 0;
         r_ready = 0;
+    }
+
+    axi4_master_out_type(bool aw_valid_,
+                         axi4_metadata_type aw_bits_,
+                         sc_uint<CFG_SYSBUS_ID_BITS> aw_id_,
+                         sc_uint<CFG_SYSBUS_USER_BITS> aw_user_,
+                         bool w_valid_,
+                         sc_uint<CFG_SYSBUS_DATA_BITS> w_data_,
+                         bool w_last_,
+                         sc_uint<CFG_SYSBUS_DATA_BYTES> w_strb_,
+                         sc_uint<CFG_SYSBUS_USER_BITS> w_user_,
+                         bool b_ready_,
+                         bool ar_valid_,
+                         axi4_metadata_type ar_bits_,
+                         sc_uint<CFG_SYSBUS_ID_BITS> ar_id_,
+                         sc_uint<CFG_SYSBUS_USER_BITS> ar_user_,
+                         bool r_ready_) {
+        aw_valid = aw_valid_;
+        aw_bits = aw_bits_;
+        aw_id = aw_id_;
+        aw_user = aw_user_;
+        w_valid = w_valid_;
+        w_data = w_data_;
+        w_last = w_last_;
+        w_strb = w_strb_;
+        w_user = w_user_;
+        b_ready = b_ready_;
+        ar_valid = ar_valid_;
+        ar_bits = ar_bits_;
+        ar_id = ar_id_;
+        ar_user = ar_user_;
+        r_ready = r_ready_;
     }
 
     inline bool operator == (const axi4_master_out_type &rhs) const {
@@ -547,6 +599,34 @@ class axi4_master_in_type {
         r_user = 0;
     }
 
+    axi4_master_in_type(bool aw_ready_,
+                        bool w_ready_,
+                        bool b_valid_,
+                        sc_uint<2> b_resp_,
+                        sc_uint<CFG_SYSBUS_ID_BITS> b_id_,
+                        sc_uint<CFG_SYSBUS_USER_BITS> b_user_,
+                        bool ar_ready_,
+                        bool r_valid_,
+                        sc_uint<2> r_resp_,
+                        sc_uint<CFG_SYSBUS_DATA_BITS> r_data_,
+                        bool r_last_,
+                        sc_uint<CFG_SYSBUS_ID_BITS> r_id_,
+                        sc_uint<CFG_SYSBUS_USER_BITS> r_user_) {
+        aw_ready = aw_ready_;
+        w_ready = w_ready_;
+        b_valid = b_valid_;
+        b_resp = b_resp_;
+        b_id = b_id_;
+        b_user = b_user_;
+        ar_ready = ar_ready_;
+        r_valid = r_valid_;
+        r_resp = r_resp_;
+        r_data = r_data_;
+        r_last = r_last_;
+        r_id = r_id_;
+        r_user = r_user_;
+    }
+
     inline bool operator == (const axi4_master_in_type &rhs) const {
         bool ret = true;
         ret = ret
@@ -673,6 +753,38 @@ class axi4_slave_in_type {
         ar_id = 0;
         ar_user = 0;
         r_ready = 0;
+    }
+
+    axi4_slave_in_type(bool aw_valid_,
+                       axi4_metadata_type aw_bits_,
+                       sc_uint<CFG_SYSBUS_ID_BITS> aw_id_,
+                       sc_uint<CFG_SYSBUS_USER_BITS> aw_user_,
+                       bool w_valid_,
+                       sc_uint<CFG_SYSBUS_DATA_BITS> w_data_,
+                       bool w_last_,
+                       sc_uint<CFG_SYSBUS_DATA_BYTES> w_strb_,
+                       sc_uint<CFG_SYSBUS_USER_BITS> w_user_,
+                       bool b_ready_,
+                       bool ar_valid_,
+                       axi4_metadata_type ar_bits_,
+                       sc_uint<CFG_SYSBUS_ID_BITS> ar_id_,
+                       sc_uint<CFG_SYSBUS_USER_BITS> ar_user_,
+                       bool r_ready_) {
+        aw_valid = aw_valid_;
+        aw_bits = aw_bits_;
+        aw_id = aw_id_;
+        aw_user = aw_user_;
+        w_valid = w_valid_;
+        w_data = w_data_;
+        w_last = w_last_;
+        w_strb = w_strb_;
+        w_user = w_user_;
+        b_ready = b_ready_;
+        ar_valid = ar_valid_;
+        ar_bits = ar_bits_;
+        ar_id = ar_id_;
+        ar_user = ar_user_;
+        r_ready = r_ready_;
     }
 
     inline bool operator == (const axi4_slave_in_type &rhs) const {
@@ -858,6 +970,34 @@ class axi4_slave_out_type {
         r_user = 0;
     }
 
+    axi4_slave_out_type(bool aw_ready_,
+                        bool w_ready_,
+                        bool b_valid_,
+                        sc_uint<2> b_resp_,
+                        sc_uint<CFG_SYSBUS_ID_BITS> b_id_,
+                        sc_uint<CFG_SYSBUS_USER_BITS> b_user_,
+                        bool ar_ready_,
+                        bool r_valid_,
+                        sc_uint<2> r_resp_,
+                        sc_uint<CFG_SYSBUS_DATA_BITS> r_data_,
+                        bool r_last_,
+                        sc_uint<CFG_SYSBUS_ID_BITS> r_id_,
+                        sc_uint<CFG_SYSBUS_USER_BITS> r_user_) {
+        aw_ready = aw_ready_;
+        w_ready = w_ready_;
+        b_valid = b_valid_;
+        b_resp = b_resp_;
+        b_id = b_id_;
+        b_user = b_user_;
+        ar_ready = ar_ready_;
+        r_valid = r_valid_;
+        r_resp = r_resp_;
+        r_data = r_data_;
+        r_last = r_last_;
+        r_id = r_id_;
+        r_user = r_user_;
+    }
+
     inline bool operator == (const axi4_slave_out_type &rhs) const {
         bool ret = true;
         ret = ret
@@ -962,6 +1102,22 @@ class apb_in_type {
         pstrb = 0;
     }
 
+    apb_in_type(sc_uint<32> paddr_,
+                sc_uint<3> pprot_,
+                bool pselx_,
+                bool penable_,
+                bool pwrite_,
+                sc_uint<32> pwdata_,
+                sc_uint<4> pstrb_) {
+        paddr = paddr_;
+        pprot = pprot_;
+        pselx = pselx_;
+        penable = penable_;
+        pwrite = pwrite_;
+        pwdata = pwdata_;
+        pstrb = pstrb_;
+    }
+
     inline bool operator == (const apb_in_type &rhs) const {
         bool ret = true;
         ret = ret
@@ -1029,6 +1185,14 @@ class apb_out_type {
         pready = 0;
         prdata = 0;
         pslverr = 0;
+    }
+
+    apb_out_type(bool pready_,
+                 sc_uint<32> prdata_,
+                 bool pslverr_) {
+        pready = pready_;
+        prdata = prdata_;
+        pslverr = pslverr_;
     }
 
     inline bool operator == (const apb_out_type &rhs) const {
