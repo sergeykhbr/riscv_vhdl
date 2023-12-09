@@ -274,7 +274,7 @@ void L2CacheLru::comb() {
         v.req_flush_all = i_flush_address.read()[0];
         if (i_flush_address.read()[0] == 1) {
             v.req_flush_cnt = FLUSH_ALL_VALUE;
-            v.req_flush_addr = 0ull;
+            v.req_flush_addr = 0;
         } else {
             v.req_flush_cnt = 0;
             v.req_flush_addr = i_flush_address;

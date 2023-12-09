@@ -221,7 +221,7 @@ void vip_sdcard_cmdio::comb() {
     case CMDSTATE_REQ_STARTBIT:
         v_busy = 0;
         v_crc7_clear = 1;
-        if ((r.spi_mode && i_cs) == 1) {
+        if ((r.spi_mode.read() && i_cs.read()) == 1) {
             // Do nothing
         } else if ((r.cmdz.read() == 1) && (i_cmd.read() == 0)) {
             v.cs = i_cs;
@@ -291,7 +291,7 @@ void vip_sdcard_cmdio::comb() {
             v.cmd_state = CMDSTATE_RESP;
             if (r.spi_mode.read() == 0) {
                 v.bitcnt = 39;
-                vb_cmd_txshift = 0ull;
+                vb_cmd_txshift = 0;
                 vb_cmd_txshift(45, 40) = r.cmd_rxshift.read()(45, 40);
                 vb_cmd_txshift(39, 8) = i_cmd_resp_data32;
                 vb_cmd_txshift(7, 0) = 0xFF;

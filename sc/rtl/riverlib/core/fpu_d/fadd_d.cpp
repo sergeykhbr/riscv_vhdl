@@ -239,7 +239,7 @@ void DoubleAdd::comb() {
 
     v = r;
 
-    v_ena = (i_ena && (!r.busy));
+    v_ena = (i_ena.read() && (!r.busy.read()));
     v.ena = (r.ena.read()(6, 0), v_ena);
 
     if (i_ena.read() == 1) {
@@ -462,11 +462,11 @@ void DoubleAdd::comb() {
     mantShort = r.mantPostScale.read()(104, 52).to_uint64();
     tmpMant05 = r.mantPostScale.read()(51, 0).to_uint64();
     mantOnes = 0;
-    if (mantShort == 0x001fffffffffffffull) {
+    if (mantShort == 0x1FFFFFFFFFFFFF) {
         mantOnes = 1;
     }
     mantEven = r.mantPostScale.read()[52];
-    if (tmpMant05 == 0x0008000000000000ull) {
+    if (tmpMant05 == 0x8000000000000) {
         mant05 = 1;
     }
     rndBit = (r.mantPostScale.read()[51] && (!(mant05 && (!mantEven))));
@@ -486,10 +486,10 @@ void DoubleAdd::comb() {
     if (r.mantPostScale.read().or_reduce() == 0) {
         sumZero = 1;
     }
-    if (r.a.read()(62, 52) == 0x7ff) {
+    if (r.a.read()(62, 52) == 0x7FF) {
         nanA = 1;
     }
-    if (r.b.read()(62, 52) == 0x7ff) {
+    if (r.b.read()(62, 52) == 0x7FF) {
         nanB = 1;
     }
     nanAB = (nanA && mantZeroA && nanB && mantZeroB);

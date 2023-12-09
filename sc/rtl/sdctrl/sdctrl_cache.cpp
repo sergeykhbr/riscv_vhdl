@@ -405,7 +405,7 @@ void sdctrl_cache::comb() {
         break;
     case State_Reset:
         // Write clean line
-        v.line_addr_i = 0ull;
+        v.line_addr_i = 0;
         v.flush_cnt = FLUSH_ALL_VALUE;                      // Init after power-on-reset
         v.state = State_ResetWrite;
         break;
@@ -430,7 +430,7 @@ void sdctrl_cache::comb() {
     line_wdata_i = vb_line_wdata;
     line_wstrb_i = vb_line_wstrb;
     line_wflags_i = vb_line_wflags;
-    line_snoop_addr_i = 0ull;
+    line_snoop_addr_i = 0;
 
     o_req_ready = v_req_ready;
     o_req_mem_valid = r.req_mem_valid;

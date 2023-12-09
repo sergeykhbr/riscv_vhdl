@@ -22,7 +22,7 @@ namespace debugger {
 
 template<int abits = 7,
          int irlen = 5,
-         uint32_t idcode = 0x10e31913>
+         uint32_t idcode = 0x10E31913>
 SC_MODULE(jtagtap) {
  public:
     sc_in<bool> i_trst;                                     // Must be open-train, pullup
@@ -55,7 +55,7 @@ SC_MODULE(jtagtap) {
     static const uint8_t IR_IDCODE = 0x01;
     static const uint8_t IR_DTMCONTROL = 0x10;
     static const uint8_t IR_DBUS = 0x11;
-    static const uint8_t IR_BYPASS = 0x1f;
+    static const uint8_t IR_BYPASS = 0x1F;
 
     static const uint8_t DMISTAT_SUCCESS = 0x0;
     static const uint8_t DMISTAT_RESERVED = 0x1;

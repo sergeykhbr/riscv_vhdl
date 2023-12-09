@@ -103,12 +103,12 @@ void Long2Double::comb() {
 
     v = r;
 
-    v_ena = (i_ena && (!r.busy));
+    v_ena = (i_ena.read() && (!r.busy.read()));
     v.ena = (r.ena.read()(1, 0), v_ena);
     if (i_w32.read() == 0) {
         v_signA = i_a.read()[63];
         vb_A = i_a;
-    } else if ((i_signed && i_a.read()[31]) == 1) {
+    } else if ((i_signed.read() && i_a.read()[31]) == 1) {
         v_signA = 1;
         vb_A(63, 32) = ~0ull;
         vb_A(31, 0) = i_a.read()(31, 0);
@@ -120,7 +120,7 @@ void Long2Double::comb() {
 
     if (i_ena.read() == 1) {
         v.busy = 1;
-        if ((i_signed && v_signA) == 1) {
+        if ((i_signed.read() && v_signA) == 1) {
             v.signA = 1;
             v.absA = ((~vb_A) + 1);
         } else {
@@ -155,16 +155,16 @@ void Long2Double::comb() {
     }
 
     mantEven = r.mantAlign.read()[11];
-    if (r.mantAlign.read()(10, 0) == 0x7ff) {
+    if (r.mantAlign.read()(10, 0) == 0x7FF) {
         mant05 = 1;
     }
     rndBit = (r.mantAlign.read()[10] && (!(mant05 && mantEven)));
-    if (r.mantAlign.read()(63, 11) == 0x000fffffffffffffull) {
+    if (r.mantAlign.read()(63, 11) == 0xFFFFFFFFFFFFF) {
         mantOnes = 1;
     }
 
     // Result multiplexers:
-    res[63] = (r.signA && r.op_signed);
+    res[63] = (r.signA.read() && r.op_signed.read());
     res(62, 52) = (expAlign + (mantOnes && rndBit));
     res(51, 0) = (r.mantAlign.read()(62, 11) + rndBit);
 

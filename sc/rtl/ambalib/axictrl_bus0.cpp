@@ -172,8 +172,8 @@ void axictrl_bus0::comb() {
 
     v = r;
 
-    vb_def_mapinfo.addr_start = 0ull;
-    vb_def_mapinfo.addr_end = 0ull;
+    vb_def_mapinfo.addr_start = 0;
+    vb_def_mapinfo.addr_end = 0;
     for (int i = 0; i < CFG_BUS0_XMST_TOTAL; i++) {
         vmsto[i] = i_xmsto[i];                              // Cannot read vector item from port in systemc
         vmsti[i] = axi4_master_in_none;

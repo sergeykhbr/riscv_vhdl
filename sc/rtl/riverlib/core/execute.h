@@ -150,7 +150,7 @@ SC_MODULE(InstrExecute) {
     static const uint8_t State_Halted = 7;
     static const uint8_t State_DebugMemRequest = 8;
     static const uint8_t State_DebugMemError = 9;
-    static const uint8_t State_Wfi = 0xf;
+    static const uint8_t State_Wfi = 0xF;
 
     static const uint8_t CsrState_Idle = 0;
     static const uint8_t CsrState_Req = 1;

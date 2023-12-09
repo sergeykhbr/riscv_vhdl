@@ -51,7 +51,7 @@ SC_MODULE(vip_sdcard_top) {
     static const uint8_t CFG_SDCARD_VHS = 0x1;
     static const bool CFG_SDCARD_PCIE_1_2V = 0;
     static const bool CFG_SDCARD_PCIE_AVAIL = 0;
-    static const uint32_t CFG_SDCARD_VDD_VOLTAGE_WINDOW = 0xff8000;
+    static const uint32_t CFG_SDCARD_VDD_VOLTAGE_WINDOW = 0xFF8000;
 
     sc_signal<bool> w_clk;
     sc_signal<sc_uint<8>> wb_rdata;

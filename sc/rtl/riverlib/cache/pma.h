@@ -37,12 +37,12 @@ SC_MODULE(PMA) {
     void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
 
  private:
-    static const uint64_t CLINT_BAR = 0x0000000002000000ull;
-    static const uint64_t CLINT_MASK = 0x000000000000FFFFull;
-    static const uint64_t PLIC_BAR = 0x000000000C000000ull;
-    static const uint64_t PLIC_MASK = 0x0000000003FFFFFFull;
-    static const uint64_t IO1_BAR = 0x0000000010000000ull;
-    static const uint64_t IO1_MASK = 0x00000000000FFFFFull;
+    static const uint64_t CLINT_BAR = 0x000002000000;
+    static const uint64_t CLINT_MASK = 0x00000000FFFF;
+    static const uint64_t PLIC_BAR = 0x00000C000000;
+    static const uint64_t PLIC_MASK = 0x000003FFFFFF;
+    static const uint64_t IO1_BAR = 0x000010000000;
+    static const uint64_t IO1_MASK = 0x0000000FFFFF;
 
 };
 

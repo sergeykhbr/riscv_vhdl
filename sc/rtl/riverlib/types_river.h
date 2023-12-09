@@ -33,8 +33,8 @@ class dport_in_type {
         hartreset = 0;
         req_valid = 0;
         dtype = 0;
-        addr = 0ull;
-        wdata = 0ull;
+        addr = 0;
+        wdata = 0;
         size = 0;
         resp_ready = 0;
     }
@@ -121,7 +121,7 @@ class dport_out_type {
         req_ready = 1;
         resp_valid = 1;
         resp_error = 0;
-        rdata = 0ull;
+        rdata = 0;
     }
 
     inline bool operator == (const dport_out_type &rhs) const {
@@ -181,7 +181,7 @@ class axi4_l1_out_type {
  public:
     axi4_l1_out_type() {
         aw_valid = 0;
-        aw_bits.addr = 0ull;
+        aw_bits.addr = 0;
         aw_bits.len = 0;
         aw_bits.size = 0;
         aw_bits.burst = AXI_BURST_INCR;
@@ -199,7 +199,7 @@ class axi4_l1_out_type {
         w_user = 0;
         b_ready = 0;
         ar_valid = 0;
-        ar_bits.addr = 0ull;
+        ar_bits.addr = 0;
         ar_bits.len = 0;
         ar_bits.size = 0;
         ar_bits.burst = AXI_BURST_INCR;
@@ -481,7 +481,7 @@ class axi4_l1_in_type {
         r_id = 0;
         r_user = 0;
         ac_valid = 0;
-        ac_addr = 0ull;
+        ac_addr = 0;
         ac_snoop = 0;
         ac_prot = 0;
         cr_ready = 1;
@@ -616,7 +616,7 @@ class axi4_l2_out_type {
  public:
     axi4_l2_out_type() {
         aw_valid = 0;
-        aw_bits.addr = 0ull;
+        aw_bits.addr = 0;
         aw_bits.len = 0;
         aw_bits.size = 0;
         aw_bits.burst = AXI_BURST_INCR;
@@ -634,7 +634,7 @@ class axi4_l2_out_type {
         w_user = 0;
         b_ready = 0;
         ar_valid = 0;
-        ar_bits.addr = 0ull;
+        ar_bits.addr = 0;
         ar_bits.len = 0;
         ar_bits.size = 0;
         ar_bits.burst = AXI_BURST_INCR;

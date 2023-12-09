@@ -93,15 +93,15 @@ void jtagcdc::comb() {
 
     v = r;
 
-    vb_bus = (i_dmi_hardreset,
-            i_dmi_req_addr,
-            i_dmi_req_data,
-            i_dmi_req_write,
-            i_dmi_req_valid);
+    vb_bus = (i_dmi_hardreset.read(),
+            i_dmi_req_addr.read(),
+            i_dmi_req_data.read(),
+            i_dmi_req_write.read(),
+            i_dmi_req_valid.read());
 
     v.l1 = vb_bus;
     v.l2 = r.l1;
-    if ((r.l2.read()[0] && (!r.req_valid) && (!r.req_accepted)) == 1) {
+    if ((r.l2.read()[0] && (!r.req_valid.read()) && (!r.req_accepted.read())) == 1) {
         // To avoid request repeading
         v.req_valid = 1;
         v.req_write = r.l2.read()[1];

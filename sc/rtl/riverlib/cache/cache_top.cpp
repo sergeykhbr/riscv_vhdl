@@ -390,14 +390,14 @@ void CacheTop::comb() {
     v_queue_we = (i.req_mem_valid || d.req_mem_valid);
 
     vb_ctrl_bus = (ctrl_path_id,
-            i.req_mem_type,
-            i.req_mem_size,
-            i.req_mem_addr);
+            i.req_mem_type.read(),
+            i.req_mem_size.read(),
+            i.req_mem_addr.read());
 
     vb_data_bus = (data_path_id,
-            d.req_mem_type,
-            d.req_mem_size,
-            d.req_mem_addr);
+            d.req_mem_type.read(),
+            d.req_mem_size.read(),
+            d.req_mem_addr.read());
 
     if (d.req_mem_valid.read() == 1) {
         vb_queue_bus = vb_data_bus;
@@ -410,7 +410,7 @@ void CacheTop::comb() {
     queue_re_i = v_queue_re;
 
     w_data_req_ready = 1;
-    w_ctrl_req_ready = (!d.req_mem_valid);
+    w_ctrl_req_ready = (!d.req_mem_valid.read());
     if (i_resp_mem_path.read() == CTRL_PATH) {
         w_ctrl_resp_mem_data_valid = i_resp_mem_valid;
         w_ctrl_resp_mem_load_fault = i_resp_mem_load_fault;

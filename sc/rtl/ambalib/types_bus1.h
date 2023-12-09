@@ -50,13 +50,13 @@ typedef sc_vector<sc_signal<mapinfo_type>> bus1_mapinfo_vector;
 
 // Bus 1 device tree
 static const mapinfo_type CFG_BUS1_MAP[CFG_BUS1_PSLV_TOTAL] = {
-    {0x0000000010000ull, 0x0000000011000ull},               // 0, uart1 4KB
-    {0x0000000012000ull, 0x0000000013000ull},               // 1, PRCI 4KB
-    {0x000000001E000ull, 0x000000001F000ull},               // 2, dmi 4KB. TODO: change base address
-    {0x0000000050000ull, 0x0000000051000ull},               // 4, SPI SD-card 4KB
-    {0x0000000060000ull, 0x0000000061000ull},               // 3, GPIO 4KB
-    {0x00000000C0000ull, 0x00000000C1000ull},               // 5, DDR MGMT 4KB
-    {0x00000000ff000ull, 0x0000000100000ull}                // 6, Plug'n'Play 4KB
+    {0x0000000000010000, 0x0000000000011000},               // 0, uart1 4KB
+    {0x0000000000012000, 0x0000000000013000},               // 1, PRCI 4KB
+    {0x000000000001E000, 0x000000000001F000},               // 2, dmi 4KB. TODO: change base address
+    {0x0000000000050000, 0x0000000000051000},               // 4, SPI SD-card 4KB
+    {0x0000000000060000, 0x0000000000061000},               // 3, GPIO 4KB
+    {0x00000000000C0000, 0x00000000000C1000},               // 5, DDR MGMT 4KB
+    {0x00000000000FF000, 0x0000000000100000}                // 6, Plug'n'Play 4KB
 };
 
 }  // namespace debugger

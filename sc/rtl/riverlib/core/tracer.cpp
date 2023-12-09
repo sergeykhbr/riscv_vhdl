@@ -19,7 +19,7 @@
 
 namespace debugger {
 
-static std::string rname[64] = {
+static const std::string rname[64] = {
     "zero",  // x0
     "ra",  // x1
     "sp",  // x2
@@ -550,7 +550,7 @@ std::string Tracer::TaskDisassembler(sc_uint<32> instr) {
                 ostr = std::string(tstr);
                 break;
             case 1:
-                if (instr(31, 25) == 0x0) {
+                if (instr(31, 25) == 0x00) {
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "slliw");
                     ostr = std::string(tstr);
                 } else {
@@ -664,7 +664,7 @@ std::string Tracer::TaskDisassembler(sc_uint<32> instr) {
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "amominu.w");
                     ostr = std::string(tstr);
                     break;
-                case 0x1c:
+                case 0x1C:
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "amomaxu.w");
                     ostr = std::string(tstr);
                     break;
@@ -1031,19 +1031,19 @@ std::string Tracer::TaskDisassembler(sc_uint<32> instr) {
                 break;
             case 0x61:
                 switch (instr(24, 20)) {
-                case 0x0:
+                case 0x00:
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "fcvt.w.d");
                     ostr = std::string(tstr);
                     break;
-                case 0x1:
+                case 0x01:
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "fcvt.wu.d");
                     ostr = std::string(tstr);
                     break;
-                case 0x2:
+                case 0x02:
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "fcvt.l.d");
                     ostr = std::string(tstr);
                     break;
-                case 0x3:
+                case 0x03:
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "fcvt.lu.d");
                     ostr = std::string(tstr);
                     break;
@@ -1055,19 +1055,19 @@ std::string Tracer::TaskDisassembler(sc_uint<32> instr) {
                 break;
             case 0x69:
                 switch (instr(24, 20)) {
-                case 0x0:
+                case 0x00:
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "fcvt.d.w");
                     ostr = std::string(tstr);
                     break;
-                case 0x1:
+                case 0x01:
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "fcvt.d.wu");
                     ostr = std::string(tstr);
                     break;
-                case 0x2:
+                case 0x02:
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "fcvt.d.l");
                     ostr = std::string(tstr);
                     break;
-                case 0x3:
+                case 0x03:
                     RISCV_sprintf(tstr, sizeof(tstr), "%10s", "fcvt.d.lu");
                     ostr = std::string(tstr);
                     break;
@@ -1338,7 +1338,7 @@ void Tracer::comb() {
         mskoff[i_e_memop_size.read().to_int()] = 1;
         mskoff = (mskoff << 3);
         if (mskoff < 64) {
-            mask = 0ull;
+            mask = 0;
             mask[mskoff.to_int()] = 1;
             mask = (mask - 1);
         }
@@ -1374,7 +1374,7 @@ void Tracer::comb() {
                     v.trace_tbl[xcnt].memaction[i].complete = 1;
                     v.trace_tbl[xcnt].memaction[i].ignored = i_reg_ignored;
                     if (r.trace_tbl[xcnt].memaction[i].sc_release == 1) {
-                        if (i_m_wdata.read() == 1ull) {
+                        if (i_m_wdata.read() == 1) {
                             v.trace_tbl[xcnt].memaction[i].ignored = 1;
                         }
                         // do not re-write stored value by returning error status

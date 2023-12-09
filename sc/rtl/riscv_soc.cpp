@@ -451,7 +451,7 @@ void riscv_soc::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void riscv_soc::comb() {
-    sc_uint<1> v_gnd1;                                      // 1
+    sc_uint<1> v_gnd1;
     sc_biguint<SOC_PLIC_IRQ_TOTAL> vb_ext_irqs;
 
     v_gnd1 = 0;

@@ -37,7 +37,7 @@ vip_spi_top::vip_spi_top(sc_module_name name,
     instnum_ = instnum;
     baudrate_ = baudrate;
     scaler_ = scaler;
-    pll_period = (1.0 / ((2 * scaler) * baudrate));
+    pll_period = (1.0 / ((2 * scaler_) * baudrate_));
     clk0 = 0;
     tx0 = 0;
 
@@ -146,40 +146,40 @@ void vip_spi_top::comb() {
     }
 
     switch (wb_req_addr.read()(7, 2)) {
-    case 0x0:                                               // [0x00] hwid
+    case 0x00:                                              // [0x00] hwid
         rdata = 0xCAFECAFE;
         break;
-    case 0x1:                                               // [0x04] scratch0
+    case 0x01:                                              // [0x04] scratch0
         rdata = r.scratch0;
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             v.scratch0 = wb_req_wdata;
         }
         break;
-    case 0x2:                                               // [0x08] scratch1
+    case 0x02:                                              // [0x08] scratch1
         rdata = r.scratch1;
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             v.scratch1 = wb_req_wdata;
         }
         break;
-    case 0x3:                                               // [0x0C] scratch2
+    case 0x03:                                              // [0x0C] scratch2
         rdata = r.scratch2;
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             v.scratch2 = wb_req_wdata;
         }
         break;
-    case 0x4:                                               // [0x10] uart control
+    case 0x04:                                              // [0x10] uart control
         rdata[0] = r.uart_loopback.read();
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             v.uart_loopback = wb_req_wdata.read()[0];
         }
         break;
-    case 0x5:                                               // [0x14] gpio in
+    case 0x05:                                              // [0x14] gpio in
         rdata(15, 0) = wb_gpio_in;
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             v.gpio_out = wb_req_wdata.read()(15, 0);
         }
         break;
-    case 0x6:                                               // [0x18] gpio direction
+    case 0x06:                                              // [0x18] gpio direction
         rdata(15, 0) = r.gpio_dir;
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             v.gpio_dir = wb_req_wdata.read()(15, 0);

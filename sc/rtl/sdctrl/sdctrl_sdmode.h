@@ -185,7 +185,7 @@ SC_MODULE(sdctrl_sdmode) {
         iv.sdtype = SDCARD_UNKNOWN;
         iv.HCS = 1;
         iv.S18 = 0;
-        iv.OCR_VoltageWindow = 0xff8000;
+        iv.OCR_VoltageWindow = 0xFF8000;
         iv.bitcnt = 0;
     }
 

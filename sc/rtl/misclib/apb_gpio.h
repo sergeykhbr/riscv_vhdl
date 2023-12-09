@@ -65,7 +65,7 @@ SC_MODULE(apb_gpio) {
 
     void apb_gpio_r_reset(apb_gpio_registers &iv) {
         iv.input_val = 0;
-        iv.input_en = ~0ul;
+        iv.input_en = ~0ull;
         iv.output_en = 0;
         iv.output_val = 0;
         iv.ie = 0;

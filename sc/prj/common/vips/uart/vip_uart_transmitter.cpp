@@ -32,7 +32,7 @@ vip_uart_transmitter::vip_uart_transmitter(sc_module_name name,
 
     async_reset_ = async_reset;
     scaler_ = scaler;
-    scaler_max = ((2 * scaler) - 1);
+    scaler_max = ((2 * scaler_) - 1);
 
     SC_METHOD(comb);
     sensitive << i_nrst;

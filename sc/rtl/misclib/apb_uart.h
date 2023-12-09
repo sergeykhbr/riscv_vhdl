@@ -386,8 +386,8 @@ void apb_uart<log2_fifosz>::comb() {
     if (r.scaler.read().or_reduce() == 1) {
         if (r.scaler_cnt.read() == (r.scaler.read() - 1)) {
             v.scaler_cnt = 0;
-            v.level = (!r.level);
-            v_posedge_flag = (!r.level);
+            v.level = (!r.level.read());
+            v_posedge_flag = (!r.level.read());
             v_negedge_flag = r.level;
         } else {
             v.scaler_cnt = (r.scaler_cnt.read() + 1);
@@ -661,7 +661,7 @@ void apb_uart<log2_fifosz>::comb() {
         v.tx_irq_thresh = 0;
         v.tx_frame_cnt = 0;
         v.tx_stop_cnt = 0;
-        v.tx_shift = ~0ul;
+        v.tx_shift = ~0ull;
         v.tx_amo_guard = 0;
         v.resp_valid = 0;
         v.resp_rdata = 0;
@@ -712,7 +712,7 @@ void apb_uart<log2_fifosz>::registers() {
         r.tx_irq_thresh = 0;
         r.tx_frame_cnt = 0;
         r.tx_stop_cnt = 0;
-        r.tx_shift = ~0ul;
+        r.tx_shift = ~0ull;
         r.tx_amo_guard = 0;
         r.resp_valid = 0;
         r.resp_rdata = 0;

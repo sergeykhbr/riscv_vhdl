@@ -265,7 +265,7 @@ void sdctrl_sdmode::comb() {
         if (r.dat_full_ena.read() == 0) {
             v.data_data = (r.data_data.read()(510, 0), (i_dat0 || r.dat_csn));
         } else {
-            v.data_data = (r.data_data.read()(507, 0), (i_dat0, i_dat1, i_dat2, i_cd_dat3));
+            v.data_data = (r.data_data.read()(507, 0), (i_dat0.read(), i_dat1.read(), i_dat2.read(), i_cd_dat3.read()));
         }
         v.bitcnt = (r.bitcnt.read() + 1);
     }

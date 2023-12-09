@@ -275,7 +275,7 @@ void vip_sdcard_top::comb() {
         w_dat2_dir = 1;                                     // in: reserved
         w_dat3_dir = 1;                                     // in: cs
 
-        w_dat0_out = (((!w_dat_trans) & w_cmdio_cmd_out.read())
+        w_dat0_out = (((!w_dat_trans.read()) & w_cmdio_cmd_out.read())
                 | (w_dat_trans.read() & wb_dat.read()[3]));
         w_dat1_out = 1;
         w_dat2_out = 1;
@@ -308,7 +308,7 @@ void vip_sdcard_top::comb() {
     w_stat_erase_param = 0;
     w_stat_out_of_range = 0;
     wb_mem_rdata = 0xFF;
-    wb_crc16 = 0x7fa1;
+    wb_crc16 = 0x7FA1;
 }
 
 }  // namespace debugger

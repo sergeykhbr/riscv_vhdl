@@ -254,7 +254,7 @@ void axi_slv::comb() {
         }
         break;
     case State_data_r:
-        v.req_valid = ((!r.req_last_r) & i_xslvi.read().r_ready);
+        v.req_valid = ((!r.req_last_r.read()) & i_xslvi.read().r_ready);
         if ((i_resp_valid.read() == 1) && (r.req_done.read() == 1)) {
             v.req_done = 0;
             v.resp_valid = 1;
@@ -272,7 +272,7 @@ void axi_slv::comb() {
             v.req_len = vb_req_len_next;
             v.req_last_a = (!vb_req_len_next.or_reduce());
             v.req_last_r = r.req_last_a;
-            v.req_valid = ((!r.req_last_a) & i_xslvi.read().r_ready);
+            v.req_valid = ((!r.req_last_a.read()) & i_xslvi.read().r_ready);
             v.req_done = 1;
         }
         break;

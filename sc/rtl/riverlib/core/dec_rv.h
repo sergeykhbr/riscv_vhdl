@@ -115,7 +115,7 @@ SC_MODULE(DecoderRv) {
         iv.pc = ~0ull;
         iv.isa_type = 0;
         iv.instr_vec = 0;
-        iv.instr = ~0ul;
+        iv.instr = ~0ull;
         iv.memop_store = 0;
         iv.memop_load = 0;
         iv.memop_sign_ext = 0;

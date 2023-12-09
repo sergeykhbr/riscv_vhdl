@@ -36,7 +36,7 @@ vip_uart_top::vip_uart_top(sc_module_name name,
     baudrate_ = baudrate;
     scaler_ = scaler;
     logpath_ = logpath;
-    pll_period = (1.0 / ((2 * scaler) * baudrate));
+    pll_period = (1.0 / ((2 * scaler_) * baudrate_));
     clk0 = 0;
     rx0 = 0;
     tx0 = 0;
@@ -145,7 +145,7 @@ void vip_uart_top::comb() {
     v = r;
 
     w_tx_we = (w_rx_rdy.read() & i_loopback_ena.read());
-    w_rx_rdy_clr = (!w_tx_full);
+    w_rx_rdy_clr = (!w_tx_full.read());
     v.initdone = ((r.initdone.read()[0] << 1) | 1);
 
     if (!async_reset_ && i_nrst.read() == 0) {

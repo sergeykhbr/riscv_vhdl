@@ -138,7 +138,7 @@ SC_MODULE(vip_sdcard_ctrl) {
         iv.ocr_vdd_window = 0;
         iv.req_mem_valid = 0;
         iv.req_mem_addr = 0;
-        iv.shiftdat = ~0ul;
+        iv.shiftdat = ~0ull;
         iv.bitcnt = 0;
         iv.crc16_clear = 0;
         iv.crc16_next = 0;

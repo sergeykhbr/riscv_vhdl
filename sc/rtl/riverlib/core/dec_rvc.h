@@ -74,7 +74,7 @@ SC_MODULE(DecoderRvc) {
     static const uint8_t OPCODE_C_LI = 0x09;
     static const uint8_t OPCODE_C_LWSP = 0x0A;
     static const uint8_t OPCODE_C_LD = 0x0C;
-    static const uint8_t OPCODE_C_ADDI16SP_LUI = 0xD;
+    static const uint8_t OPCODE_C_ADDI16SP_LUI = 0x0D;
     static const uint8_t OPCODE_C_LDSP = 0x0E;
     static const uint8_t OPCODE_C_MATH = 0x11;
     static const uint8_t OPCODE_C_JR_MV_EBREAK_JALR_ADD = 0x12;
@@ -110,7 +110,7 @@ SC_MODULE(DecoderRvc) {
         iv.pc = ~0ull;
         iv.isa_type = 0;
         iv.instr_vec = 0;
-        iv.instr = ~0ul;
+        iv.instr = ~0ull;
         iv.memop_store = 0;
         iv.memop_load = 0;
         iv.memop_sign_ext = 0;

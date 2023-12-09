@@ -110,7 +110,7 @@ void ic_axi4_to_l1::comb() {
     idx = r.req_addr.read()((CFG_LOG2_L1CACHE_BYTES_PER_LINE - 1), 3);
     vb_req_xbytes = XSizeToBytes(r.req_size);
 
-    vb_req_mask = 0ull;
+    vb_req_mask = 0;
     for (int i = 0; i < 8; i++) {
         if (r.req_wstrb.read()[i] == 1) {
             vb_req_mask((8 * i) + 8- 1, (8 * i)) = 0xFF;

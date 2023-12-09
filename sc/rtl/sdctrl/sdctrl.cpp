@@ -629,14 +629,14 @@ void sdctrl::comb() {
     } else if (r.mode.read() == MODE_SPI) {
         // SPI MOSI:
         v_cmd_dir = DIR_OUTPUT;
-        v_cmd_out = (!(((!w_trx_cmd) && (!w_trx_cmd_csn))
-                || ((!w_spi_dat) && (!w_spi_dat_csn))));
+        v_cmd_out = (!(((!w_trx_cmd.read()) && (!w_trx_cmd_csn.read()))
+                || ((!w_spi_dat.read()) && (!w_spi_dat_csn.read()))));
         // SPI MISO:
         v_dat0_dir = DIR_INPUT;
         v_cmd_in = i_dat0;
         // SPI CSn:
         v_dat3_dir = DIR_OUTPUT;
-        v_dat3_out = (w_trx_cmd_csn && w_spi_dat_csn);
+        v_dat3_out = (w_trx_cmd_csn.read() && w_spi_dat_csn.read());
         // Unused in SPI mode:
         v_dat2_dir = DIR_OUTPUT;
         v_dat2_out = 1;

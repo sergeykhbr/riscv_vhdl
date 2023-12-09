@@ -119,7 +119,7 @@ SC_MODULE(ICacheLru) {
         iv.load_fault = 0;
         iv.req_flush = 1;
         iv.req_flush_all = 0;
-        iv.req_flush_addr = 0ull;
+        iv.req_flush_addr = 0;
         iv.req_flush_cnt = 0;
         iv.flush_cnt = 0;
         iv.cache_line_i = 0;

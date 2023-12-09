@@ -182,7 +182,7 @@ void DoubleMul::comb() {
 
     v = r;
 
-    vb_ena[0] = (i_ena && (!r.busy));
+    vb_ena[0] = (i_ena.read() && (!r.busy.read()));
     vb_ena[1] = r.ena.read()[0];
     vb_ena(4, 2) = (r.ena.read()(3, 2), w_imul_rdy.read());
     v.ena = vb_ena;
@@ -280,7 +280,7 @@ void DoubleMul::comb() {
             v.nanB = 1;
         }
         v.overflow = 0;
-        if ((expAlign[12] == 0) && (expAlign >= 0x7FF)) {
+        if ((expAlign[12] == 0) && (expAlign >= 0x07FF)) {
             v.overflow = 1;
         }
     }
@@ -302,20 +302,20 @@ void DoubleMul::comb() {
     // Rounding bit
     mantShort = r.mantPostScale.read()(104, 52).to_uint64();
     tmpMant05 = r.mantPostScale.read()(51, 0).to_uint64();
-    if (mantShort == 0x001fffffffffffffull) {
+    if (mantShort == 0x1FFFFFFFFFFFFF) {
         mantOnes = 1;
     }
     mantEven = r.mantPostScale.read()[52];
-    if (tmpMant05 == 0x0008000000000000ull) {
+    if (tmpMant05 == 0x8000000000000) {
         mant05 = 1;
     }
     rndBit = (r.mantPostScale.read()[51] && (!(mant05 && (!mantEven))));
 
     // Check Borders
-    if (r.a.read()(62, 52) == 0x7ff) {
+    if (r.a.read()(62, 52) == 0x7FF) {
         nanA = 1;
     }
-    if (r.b.read()(62, 52) == 0x7ff) {
+    if (r.b.read()(62, 52) == 0x7FF) {
         nanB = 1;
     }
     if (r.a.read()(51, 0).or_reduce() == 0) {
@@ -347,7 +347,7 @@ void DoubleMul::comb() {
         vb_res_exp = ~0ull;
     } else {
         vb_res_exp = (r.expAlign.read()(10, 0)
-                + (mantOnes && rndBit && (!r.overflow)));
+                + (mantOnes && rndBit && (!r.overflow.read())));
     }
 
     if ((nanA && mantZeroA && (!mantZeroB))

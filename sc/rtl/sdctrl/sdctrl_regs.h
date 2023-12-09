@@ -109,12 +109,12 @@ SC_MODULE(sdctrl_regs) {
         iv.resp_valid = 0;
         iv.resp_rdata = 0;
         iv.resp_err = 0;
-        iv.last_req_cmd = ~0ul;
+        iv.last_req_cmd = ~0ull;
         iv.last_resp_cmd = 0;
         iv.last_resp_crc7_rx = 0;
         iv.last_resp_crc7_calc = 0;
         iv.last_resp_reg = 0;
-        iv.pcie_12V_support = 00;
+        iv.pcie_12V_support = 0;
         iv.pcie_available = 0;
         iv.voltage_supply = 0x1;
         iv.check_pattern = 0x55;

@@ -285,10 +285,10 @@ void Mmu::comb() {
     vb_level3_off = 0;
     v_last_valid = 0;
     v_tlb_hit = 0;
-    vb_tlb_pa0 = 0ull;
-    vb_tlb_pa1 = 0ull;
-    vb_tlb_pa2 = 0ull;
-    vb_tlb_pa3 = 0ull;
+    vb_tlb_pa0 = 0;
+    vb_tlb_pa1 = 0;
+    vb_tlb_pa2 = 0;
+    vb_tlb_pa3 = 0;
     vb_tlb_pa_hit = 0;
     t_tlb_wdata = 0;
     t_idx_lsb = 0;
@@ -402,7 +402,7 @@ void Mmu::comb() {
         v.resp_store_fault = 0;
         v.ex_page_fault = 0;
         if (i_core_req_valid.read() == 1) {
-            v.last_mmu_ena = (i_mmu_ena && v_va_ena);
+            v.last_mmu_ena = (i_mmu_ena.read() && v_va_ena);
             v.last_va = i_core_req_addr;
             v.req_type = i_core_req_type;
             v.req_wdata = i_core_req_wdata;
@@ -428,7 +428,7 @@ void Mmu::comb() {
             vb_mem_req_wstrb = i_core_req_wstrb;
             vb_mem_req_size = i_core_req_size;
             v_mem_resp_ready = i_core_resp_ready;
-            if ((i_core_req_valid && i_mem_req_ready) == 1) {
+            if ((i_core_req_valid.read() && i_mem_req_ready.read()) == 1) {
                 v.state = WaitRespNoMmu;
             }
         } else if ((r.last_mmu_ena.read() == 1) && (v_last_valid == 1)) {// MMU enabled: Check the request to the same page:
@@ -446,7 +446,7 @@ void Mmu::comb() {
             vb_mem_req_wstrb = i_core_req_wstrb;
             vb_mem_req_size = i_core_req_size;
             v_mem_resp_ready = i_core_resp_ready;
-            if ((i_core_req_valid && i_mem_req_ready) == 1) {
+            if ((i_core_req_valid.read() && i_mem_req_ready.read()) == 1) {
                 v.state = WaitRespLast;
             }
         } else {
@@ -474,7 +474,7 @@ void Mmu::comb() {
         vb_mem_req_wstrb = i_core_req_wstrb;
         vb_mem_req_size = i_core_req_size;
         v_mem_resp_ready = i_core_resp_ready;
-        if ((i_mem_resp_valid && i_core_resp_ready) == 1) {
+        if ((i_mem_resp_valid.read() && i_core_resp_ready.read()) == 1) {
             if (i_mmu_ena.read() == 1) {
                 // Do not accept new request because MMU state changed
                 v_core_req_ready = 0;
@@ -499,7 +499,7 @@ void Mmu::comb() {
         vb_mem_req_wstrb = i_core_req_wstrb;
         vb_mem_req_size = i_core_req_size;
         v_mem_resp_ready = i_core_resp_ready;
-        if ((i_mem_resp_valid && i_core_resp_ready) == 1) {
+        if ((i_mem_resp_valid.read() && i_core_resp_ready.read()) == 1) {
             if (v_last_valid == 0) {
                 // Do not accept new request because of new VA request
                 v_core_req_ready = 0;
@@ -689,9 +689,9 @@ void Mmu::comb() {
     o_core_resp_data = vb_core_resp_data;
     o_core_resp_load_fault = v_core_resp_load_fault;
     o_core_resp_store_fault = v_core_resp_store_fault;
-    o_core_resp_page_x_fault = (r.ex_page_fault && r.req_x);
-    o_core_resp_page_r_fault = (r.ex_page_fault && r.req_r);
-    o_core_resp_page_w_fault = (r.ex_page_fault && r.req_w);
+    o_core_resp_page_x_fault = (r.ex_page_fault.read() && r.req_x.read());
+    o_core_resp_page_r_fault = (r.ex_page_fault.read() && r.req_r.read());
+    o_core_resp_page_w_fault = (r.ex_page_fault.read() && r.req_w.read());
     o_mem_req_valid = v_mem_req_valid;
     o_mem_req_addr = vb_mem_req_addr;
     o_mem_req_type = vb_mem_req_type;

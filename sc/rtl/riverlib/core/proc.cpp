@@ -19,7 +19,7 @@
 
 namespace debugger {
 
-static std::string trace_file = "trace_river_sysc";
+static const std::string trace_file = "trace_river_sysc";
 
 Processor::Processor(sc_module_name name,
                      bool async_reset,
@@ -973,7 +973,7 @@ void Processor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 
 void Processor::comb() {
     w_mem_resp_error = (i_resp_data_load_fault || i_resp_data_store_fault);
-    w_writeback_ready = (!w.e.reg_wena);
+    w_writeback_ready = (!w.e.reg_wena.read());
     if (w.e.reg_wena.read() == 1) {
         w_reg_wena = w.e.reg_wena;
         wb_reg_waddr = w.e.reg_waddr;
@@ -991,7 +991,7 @@ void Processor::comb() {
     w_immu_core_req_fetch = 1;
     w_dmmu_core_req_fetch = 0;
     unused_immu_core_req_type = 0;
-    unused_immu_core_req_wdata = 0ull;
+    unused_immu_core_req_wdata = 0;
     unused_immu_core_req_wstrb = 0;
     unused_immu_core_req_size = 0;
     unused_immu_mem_resp_store_fault = 0;

@@ -194,7 +194,7 @@ void sdctrl_cmd_transmitter::comb() {
         if (r.cmdstate.read() == CMDSTATE_IDLE) {
             if (i_cmd_set_low.read() == 1) {
                 // Used during p-init state (power-up)
-                vb_cmdshift = 0ull;
+                vb_cmdshift = 0;
             } else {
                 vb_cmdshift = ~0ull;
             }
@@ -209,7 +209,7 @@ void sdctrl_cmd_transmitter::comb() {
                 v.cmd_cs = 0;
                 v.req_cmd = i_req_cmd;
                 v.req_rn = i_req_rn;
-                vb_cmdshift = (0x1, i_req_cmd, i_req_arg);
+                vb_cmdshift = (0x1, i_req_cmd.read(), i_req_arg.read());
                 v.cmdbitcnt = 39;
                 v.crc7_clear = 0;
                 v.cmdstate = CMDSTATE_REQ_CONTENT;

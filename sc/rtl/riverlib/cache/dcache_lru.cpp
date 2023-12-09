@@ -325,7 +325,7 @@ void DCacheLru::comb() {
         v.req_flush_all = i_flush_address.read()[0];
         if (i_flush_address.read()[0] == 1) {
             v.req_flush_cnt = FLUSH_ALL_VALUE;
-            v.req_flush_addr = 0ull;
+            v.req_flush_addr = 0;
         } else {
             v.req_flush_cnt = 0;
             v.req_flush_addr = i_flush_address;
@@ -386,14 +386,14 @@ void DCacheLru::comb() {
                     vb_line_wstrb = vb_line_rdata_o_wstrb;
                     vb_line_wdata = vb_line_rdata_o_modified;
                     if (r.req_type.read()[MemopType_Release] == 1) {
-                        vb_resp_data = 0ull;
+                        vb_resp_data = 0;
                     }
                     if ((r.req_type.read()[MemopType_Release] == 1)
                             && (line_rflags_o.read()[DTAG_FL_RESERVED] == 0)) {
                         // ignore writing if cacheline wasn't reserved before:
                         v_line_cs_write = 0;
                         vb_line_wstrb = 0;
-                        vb_resp_data = 1ull;                // return error
+                        vb_resp_data = 1;                   // return error
                         v.state = State_Idle;
                     } else {
                         if (coherence_ena_ && (line_rflags_o.read()[DTAG_FL_SHARED] == 1)) {
@@ -427,7 +427,7 @@ void DCacheLru::comb() {
             // Miss
             if ((r.req_type.read()[MemopType_Store] == 1)
                     && (r.req_type.read()[MemopType_Release] == 1)) {
-                vb_resp_data = 1ull;                        // return error. Cannot store into unreserved cache line
+                vb_resp_data = 1;                           // return error. Cannot store into unreserved cache line
                 v.state = State_Idle;
             } else {
                 v.state = State_TranslateAddress;
@@ -529,8 +529,8 @@ void DCacheLru::comb() {
             // uncached read only (write goes to WriteBus) or cached load-modify fault
             v_resp_valid = 1;
             vb_resp_data = vb_uncached_data;
-            v_resp_er_store_fault = (r.load_fault && r.req_type.read()[MemopType_Store]);
-            v_resp_er_load_fault = (r.load_fault && (!r.req_type.read()[MemopType_Store]));
+            v_resp_er_store_fault = (r.load_fault.read() && r.req_type.read()[MemopType_Store]);
+            v_resp_er_load_fault = (r.load_fault.read() && (!r.req_type.read()[MemopType_Store]));
             if (i_resp_ready.read() == 1) {
                 v.state = State_Idle;
             }
@@ -684,7 +684,7 @@ void DCacheLru::comb() {
         break;
     }
 
-    v_req_snoop_ready = ((line_snoop_ready_o && (!i_req_snoop_type.read().or_reduce()))
+    v_req_snoop_ready = ((line_snoop_ready_o.read() && (!i_req_snoop_type.read().or_reduce()))
             || (coherence_ena_ && v_ready_next && i_req_snoop_type.read().or_reduce())
             || v_req_snoop_ready_on_wait);
 

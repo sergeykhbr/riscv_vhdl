@@ -366,10 +366,10 @@ void CsrRegs::comb() {
     vb_xpp = 0;
     vb_pending = 0;
     vb_irq_ena = 0;
-    vb_e_emux = 0ull;
+    vb_e_emux = 0;
     vb_e_imux = 0;
     wb_trap_cause = 0;
-    vb_xtval = 0ull;
+    vb_xtval = 0;
     w_mstackovr = 0;
     w_mstackund = 0;
     v_csr_rena = 0;
@@ -383,8 +383,8 @@ void CsrRegs::comb() {
     v_resp_valid = 0;
     v_medeleg_ena = 0;
     v_mideleg_ena = 0;
-    vb_xtvec_off_ideleg = 0ull;
-    vb_xtvec_off_edeleg = 0ull;
+    vb_xtvec_off_ideleg = 0;
+    vb_xtvec_off_edeleg = 0;
     v_flushd = 0;
     v_flushi = 0;
     v_flushmmu = 0;
@@ -472,9 +472,9 @@ void CsrRegs::comb() {
 
     vb_xpp = r.xmode[r.mode.read().to_int()].xpp;
     vb_pmp_upd_ena = r.pmp_upd_ena;
-    t_pmpdataidx = (r.cmd_addr.read().to_int() - 0x3B0);
+    t_pmpdataidx = (r.cmd_addr.read().to_int() - 0x00000000000003B0);
     t_pmpcfgidx = (8 * r.cmd_addr.read()(3, 1).to_int());
-    vb_pmp_napot_mask = 0x7;
+    vb_pmp_napot_mask = 0x0000000000000007;
 
     vb_xtvec_off_edeleg = r.xmode[iM].xtvec_off;
     if ((r.mode.read() <= PRV_S) && (r.medeleg.read()[r.cmd_addr.read()(4, 0).to_int()] == 1)) {
@@ -578,7 +578,7 @@ void CsrRegs::comb() {
     case State_Resume:
         v.state = State_Response;
         if (i_dbg_progbuf_ena.read() == 1) {
-            v.cmd_data = 0ull;
+            v.cmd_data = 0;
         } else {
             v.cmd_data = (0, r.dpc.read());
         }
@@ -618,11 +618,11 @@ void CsrRegs::comb() {
         break;
     case State_Wfi:
         v.state = State_Response;
-        v.cmd_data = 0ull;                                  // no error, valid for all mdoes
+        v.cmd_data = 0;                                     // no error, valid for all mdoes
         break;
     case State_Fence:
         if (r.fencestate.read() == Fence_End) {
-            v.cmd_data = 0ull;
+            v.cmd_data = 0;
             v.state = State_Response;
             v.fencestate = Fence_None;
         }
@@ -944,7 +944,7 @@ void CsrRegs::comb() {
         vb_rdata = r.medeleg;
         if (v_csr_wena) {
             // page 31. Read-only zero for exceptions that could not be delegated, especially Call from M-mode
-            v.medeleg = (r.cmd_data.read() & 0xb3ffull);
+            v.medeleg = (r.cmd_data.read() & 0x000000000000B3FF);
         }
     } else if (r.cmd_addr.read() == 0x303) {                // mideleg: [MRW] Machine interrupt delegation
         vb_rdata = r.mideleg;
@@ -1150,12 +1150,12 @@ void CsrRegs::comb() {
         if (r.mode.read()[1] == 0) {
             // S and U modes
             v.mmu_ena = 1;
-            v_flushpipeline = (!r.mmu_ena);                 // Flush pipeline on MMU turning on
+            v_flushpipeline = (!r.mmu_ena.read());          // Flush pipeline on MMU turning on
         } else if ((r.mprv.read() == 1) && (vb_xpp[1] == 0)) {
             // Previous state is S or U mode
             // Instruction address-translation and protection are unaffected
             v.mmu_ena = 1;
-            v_flushpipeline = (!r.mmu_ena);                 // Flush pipeline on MMU turning on
+            v_flushpipeline = (!r.mmu_ena.read());          // Flush pipeline on MMU turning on
         }
     }
 
@@ -1184,7 +1184,7 @@ void CsrRegs::comb() {
     }
 
     // Step is not enabled or interrupt enabled during stepping
-    if (((!r.dcsr_step) || r.dcsr_stepie) == 1) {
+    if (((!r.dcsr_step.read()) || r.dcsr_stepie) == 1) {
         if (r.xmode[iM].xie) {
             // ALL not-delegated interrupts
             vb_irq_ena = (~r.mideleg.read());
@@ -1212,7 +1212,7 @@ void CsrRegs::comb() {
         v.pmp_region = r.pmp_upd_cnt;
         if (r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()(4, 3) == 0) {
             // OFF: Null region (disabled)
-            v.pmp_start_addr = 0ull;
+            v.pmp_start_addr = 0;
             v.pmp_end_addr = r.pmp[r.pmp_upd_cnt.read().to_int()].addr.read();
             v.pmp_flags = 0;
         } else if (r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()(4, 3) == 1) {
@@ -1223,22 +1223,22 @@ void CsrRegs::comb() {
                 v.pmp_start_addr = r.pmp_end_addr;
             }
             v.pmp_end_addr = (r.pmp[r.pmp_upd_cnt.read().to_int()].addr.read() - 1);
-            v.pmp_flags = (0x1, r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()[7], r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()(2, 0));
+            v.pmp_flags = (1, r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()[7], r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()(2, 0));
         } else if (r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()(4, 3) == 2) {
             // NA4: Naturally aligned four-bytes region
             v.pmp_start_addr = r.pmp[r.pmp_upd_cnt.read().to_int()].addr.read();
             v.pmp_end_addr = (r.pmp[r.pmp_upd_cnt.read().to_int()].addr.read() | 0x3);
-            v.pmp_flags = (0x1, r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()[7], r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()(2, 0));
+            v.pmp_flags = (1, r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()[7], r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()(2, 0));
         } else {
             // NAPOT: Naturally aligned power-of-two region, >=8 bytes
             v.pmp_start_addr = (r.pmp[r.pmp_upd_cnt.read().to_int()].addr.read() & (~r.pmp[r.pmp_upd_cnt.read().to_int()].mask.read()));
             v.pmp_end_addr = (r.pmp[r.pmp_upd_cnt.read().to_int()].addr.read() | r.pmp[r.pmp_upd_cnt.read().to_int()].mask.read());
-            v.pmp_flags = (0x1, r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()[7], r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()(2, 0));
+            v.pmp_flags = (1, r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()[7], r.pmp[r.pmp_upd_cnt.read().to_int()].cfg.read()(2, 0));
         }
     } else {
         v.pmp_upd_cnt = 0;
-        v.pmp_start_addr = 0ull;
-        v.pmp_end_addr = 0ull;
+        v.pmp_start_addr = 0;
+        v.pmp_end_addr = 0;
         v.pmp_flags = 0;
         v.pmp_we = 0;
     }
@@ -1248,12 +1248,12 @@ void CsrRegs::comb() {
     w_mstackovr = 0;
     if ((r.mstackovr.read().or_reduce() == 1) && (i_sp.read() < r.mstackovr.read())) {
         w_mstackovr = 1;
-        v.mstackovr = 0ull;
+        v.mstackovr = 0;
     }
     w_mstackund = 0;
     if ((r.mstackund.read().or_reduce() == 1) && (i_sp.read() > r.mstackund.read())) {
         w_mstackund = 1;
-        v.mstackund = 0ull;
+        v.mstackund = 0;
     }
 
     // if (i_fpu_valid.read()) {
@@ -1277,25 +1277,25 @@ void CsrRegs::comb() {
 
     if (!async_reset_ && i_nrst.read() == 0) {
         for (int i = 0; i < 4; i++) {
-            v.xmode[i].xepc = 0ull;
+            v.xmode[i].xepc = 0;
             v.xmode[i].xpp = 0;
             v.xmode[i].xpie = 0;
             v.xmode[i].xie = 0;
             v.xmode[i].xsie = 0;
             v.xmode[i].xtie = 0;
             v.xmode[i].xeie = 0;
-            v.xmode[i].xtvec_off = 0ull;
+            v.xmode[i].xtvec_off = 0;
             v.xmode[i].xtvec_mode = 0;
-            v.xmode[i].xtval = 0ull;
+            v.xmode[i].xtval = 0;
             v.xmode[i].xcause_irq = 0;
             v.xmode[i].xcause_code = 0;
-            v.xmode[i].xscratch = 0ull;
+            v.xmode[i].xscratch = 0;
             v.xmode[i].xcounteren = 0;
         }
         for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) {
             v.pmp[i].cfg = 0;
-            v.pmp[i].addr = 0ull;
-            v.pmp[i].mask = 0ull;
+            v.pmp[i].addr = 0;
+            v.pmp[i].mask = 0;
         }
         v.state = State_Idle;
         v.fencestate = Fence_None;
@@ -1315,7 +1315,7 @@ void CsrRegs::comb() {
         v.mstackovr = 0;
         v.mstackund = 0;
         v.mmu_ena = 0;
-        v.satp_ppn = 0ull;
+        v.satp_ppn = 0;
         v.satp_sv39 = 0;
         v.satp_sv48 = 0;
         v.mode = PRV_M;
@@ -1329,8 +1329,8 @@ void CsrRegs::comb() {
         v.ex_fpu_underflow = 0;
         v.ex_fpu_inexact = 0;
         v.trap_addr = 0;
-        v.mcycle_cnt = 0ull;
-        v.minstret_cnt = 0ull;
+        v.mcycle_cnt = 0;
+        v.minstret_cnt = 0;
         v.dscratch0 = 0;
         v.dscratch1 = 0;
         v.dpc = CFG_RESET_VECTOR;
@@ -1340,8 +1340,8 @@ void CsrRegs::comb() {
         v.dcsr_stoptimer = 0;
         v.dcsr_step = 0;
         v.dcsr_stepie = 0;
-        v.stepping_mode_cnt = 0ull;
-        v.ins_per_step = 1ull;
+        v.stepping_mode_cnt = 0;
+        v.ins_per_step = 1;
         v.pmp_upd_ena = 0;
         v.pmp_upd_cnt = 0;
         v.pmp_ena = 0;
@@ -1356,8 +1356,8 @@ void CsrRegs::comb() {
     o_resp_valid = v_resp_valid;
     o_resp_data = r.cmd_data;
     o_resp_exception = r.cmd_exception;
-    o_progbuf_end = (r.progbuf_end && i_resp_ready);
-    o_progbuf_error = (r.progbuf_err && i_resp_ready);
+    o_progbuf_end = (r.progbuf_end.read() && i_resp_ready.read());
+    o_progbuf_error = (r.progbuf_err.read() && i_resp_ready.read());
     o_irq_pending = (r.irq_pending.read() & vb_irq_ena);
     o_wakeup = r.irq_pending.read().or_reduce();
     o_stack_overflow = w_mstackovr;
@@ -1387,25 +1387,25 @@ void CsrRegs::comb() {
 void CsrRegs::registers() {
     if (async_reset_ && i_nrst.read() == 0) {
         for (int i = 0; i < 4; i++) {
-            r.xmode[i].xepc = 0ull;
+            r.xmode[i].xepc = 0;
             r.xmode[i].xpp = 0;
             r.xmode[i].xpie = 0;
             r.xmode[i].xie = 0;
             r.xmode[i].xsie = 0;
             r.xmode[i].xtie = 0;
             r.xmode[i].xeie = 0;
-            r.xmode[i].xtvec_off = 0ull;
+            r.xmode[i].xtvec_off = 0;
             r.xmode[i].xtvec_mode = 0;
-            r.xmode[i].xtval = 0ull;
+            r.xmode[i].xtval = 0;
             r.xmode[i].xcause_irq = 0;
             r.xmode[i].xcause_code = 0;
-            r.xmode[i].xscratch = 0ull;
+            r.xmode[i].xscratch = 0;
             r.xmode[i].xcounteren = 0;
         }
         for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) {
             r.pmp[i].cfg = 0;
-            r.pmp[i].addr = 0ull;
-            r.pmp[i].mask = 0ull;
+            r.pmp[i].addr = 0;
+            r.pmp[i].mask = 0;
         }
         r.state = State_Idle;
         r.fencestate = Fence_None;
@@ -1425,7 +1425,7 @@ void CsrRegs::registers() {
         r.mstackovr = 0;
         r.mstackund = 0;
         r.mmu_ena = 0;
-        r.satp_ppn = 0ull;
+        r.satp_ppn = 0;
         r.satp_sv39 = 0;
         r.satp_sv48 = 0;
         r.mode = PRV_M;
@@ -1439,8 +1439,8 @@ void CsrRegs::registers() {
         r.ex_fpu_underflow = 0;
         r.ex_fpu_inexact = 0;
         r.trap_addr = 0;
-        r.mcycle_cnt = 0ull;
-        r.minstret_cnt = 0ull;
+        r.mcycle_cnt = 0;
+        r.minstret_cnt = 0;
         r.dscratch0 = 0;
         r.dscratch1 = 0;
         r.dpc = CFG_RESET_VECTOR;
@@ -1450,8 +1450,8 @@ void CsrRegs::registers() {
         r.dcsr_stoptimer = 0;
         r.dcsr_step = 0;
         r.dcsr_stepie = 0;
-        r.stepping_mode_cnt = 0ull;
-        r.ins_per_step = 1ull;
+        r.stepping_mode_cnt = 0;
+        r.ins_per_step = 1;
         r.pmp_upd_ena = 0;
         r.pmp_upd_cnt = 0;
         r.pmp_ena = 0;

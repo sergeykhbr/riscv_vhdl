@@ -40,7 +40,7 @@ vip_spi_transmitter::vip_spi_transmitter(sc_module_name name,
 
     async_reset_ = async_reset;
     scaler_ = scaler;
-    scaler_max = ((2 * scaler) - 1);
+    scaler_max = ((2 * scaler_) - 1);
     scaler_mid = scaler;
 
     SC_METHOD(comb);
@@ -115,8 +115,8 @@ void vip_spi_transmitter::comb() {
     }
 
     v.sclk = i_sclk;
-    v_pos = ((!r.sclk) && i_sclk);
-    v_neg = (r.sclk && (!i_sclk));
+    v_pos = ((!r.sclk.read()) && i_sclk.read());
+    v_neg = (r.sclk.read() && (!i_sclk.read()));
 
     if ((i_csn.read() == 0) && (v_pos == 1)) {
         v.rxshift = (r.rxshift.read()(31, 0), i_mosi.read());
@@ -156,7 +156,7 @@ void vip_spi_transmitter::comb() {
                 v.bytecnt = 0;
                 v.state = state_data;
                 v.req_addr = r.rxshift;
-                v.req_valid = (!r.req_write);
+                v.req_valid = (!r.req_write.read());
             }
             break;
         case state_data:

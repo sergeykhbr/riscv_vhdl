@@ -337,7 +337,7 @@ void InstrDecoder::comb() {
             v.d[i].pc = ~0ull;
             v.d[i].isa_type = 0;
             v.d[i].instr_vec = 0;
-            v.d[i].instr = ~0ul;
+            v.d[i].instr = ~0ull;
             v.d[i].memop_store = 0;
             v.d[i].memop_load = 0;
             v.d[i].memop_sign_ext = 0;
@@ -389,7 +389,7 @@ void InstrDecoder::registers() {
             r.d[i].pc = ~0ull;
             r.d[i].isa_type = 0;
             r.d[i].instr_vec = 0;
-            r.d[i].instr = ~0ul;
+            r.d[i].instr = ~0ull;
             r.d[i].memop_store = 0;
             r.d[i].memop_load = 0;
             r.d[i].memop_sign_ext = 0;

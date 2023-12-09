@@ -49,7 +49,7 @@ static const uint16_t OPTIMITECH_SPI_FLASH = 0x0075;
 // General purpose IOs
 static const uint16_t OPTIMITECH_GPIO = 0x0076;
 // rs-232 UART Device ID
-static const uint16_t OPTIMITECH_UART = 0x007a;
+static const uint16_t OPTIMITECH_UART = 0x007A;
 // Core local interrupt controller
 static const uint16_t OPTIMITECH_CLINT = 0x0083;
 // External interrupt controller
@@ -65,9 +65,9 @@ static const uint16_t OPTIMITECH_DDRCTRL = 0x0088;
 // SD-card controller control registers
 static const uint16_t OPTIMITECH_SDCTRL_REG = 0x0089;
 // SD-card controller memory
-static const uint16_t OPTIMITECH_SDCTRL_MEM = 0x008b;
+static const uint16_t OPTIMITECH_SDCTRL_MEM = 0x008B;
 // RIVER debug registers:
-static const uint16_t OPTIMITECH_RIVER_DMI = 0x008a;
+static const uint16_t OPTIMITECH_RIVER_DMI = 0x008A;
 
 // Plug'n'Play descriptor localparams.
 // Undefined type of the descriptor (empty device).
@@ -110,9 +110,9 @@ class dev_config_type {
         // Descriptor type.
         descrtype = PNP_CFG_TYPE_SLAVE;
         // Base Address.
-        addr_start = 0ull;
+        addr_start = 0;
         // End of the base address.
-        addr_end = 0ull;
+        addr_end = 0;
         // Vendor ID.
         vid = VENDOR_GNSSSENSOR;
         // Device ID.

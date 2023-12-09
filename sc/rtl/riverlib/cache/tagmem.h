@@ -67,9 +67,9 @@ SC_MODULE(TagMem) {
     } v, r;
 
     void TagMem_r_reset(TagMem_registers &iv) {
-        iv.tagaddr = 0ull;
+        iv.tagaddr = 0;
         iv.index = 0;
-        iv.snoop_tagaddr = 0ull;
+        iv.snoop_tagaddr = 0;
     }
 
     sc_signal<sc_uint<ibits>> wb_index;

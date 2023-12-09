@@ -244,7 +244,7 @@ void L2SerDes::comb() {
 
     vl2i.aw_ready = i_msti.read().aw_ready;
     vl2i.w_ready = v_w_ready;
-    vl2i.b_valid = (i_msti.read().b_valid && r.b_wait);
+    vl2i.b_valid = (i_msti.read().b_valid && r.b_wait.read());
     vl2i.b_resp = i_msti.read().b_resp;
     vl2i.b_id = i_msti.read().b_id;
     vl2i.b_user = i_msti.read().b_user;

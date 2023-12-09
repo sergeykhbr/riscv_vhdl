@@ -263,7 +263,7 @@ void sdctrl_spimode::comb() {
         v.HCS = 1;
         v.S18 = 0;
         v.data_addr = 0;
-        v.OCR_VoltageWindow = 0xff8000;
+        v.OCR_VoltageWindow = 0x0000000000FF8000;
         v.cmd_req_valid = 1;
         v.cmd_req_cmd = CMD0;
         v.cmd_req_rn = R1;
@@ -325,7 +325,7 @@ void sdctrl_spimode::comb() {
         //   [31] reserved bit
         //   [30] HCS (high capacity support)
         //   [29:0] reserved
-        if (r.cmd_resp_r1.read() != 0x1) {
+        if (r.cmd_resp_r1.read() != 0x01) {
             // SD card not in idle state
             v.state = STATE_CMD55;
         } else {

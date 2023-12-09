@@ -108,9 +108,9 @@ void PMP::comb() {
     }
 
     // PMP is active for S,U modes or in M-mode when L-bit is set:
-    v_r = (!i_ena);
-    v_w = (!i_ena);
-    v_x = (!i_ena);
+    v_r = (!i_ena.read());
+    v_w = (!i_ena.read());
+    v_x = (!i_ena.read());
 
     vb_flags = i_flags;
     if (i_flags.read()[CFG_PMP_FL_V] == 1) {

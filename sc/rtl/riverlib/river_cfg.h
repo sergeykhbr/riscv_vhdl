@@ -40,7 +40,7 @@ static const int CFG_CPU_MAX = (1 << CFG_LOG2_CPU_MAX);
 static const int CFG_SLOT_L1_TOTAL = (CFG_CPU_MAX + 1);
 
 // Power-on start address can be free changed
-static const uint64_t CFG_RESET_VECTOR = 0x10000ull;
+static const uint64_t CFG_RESET_VECTOR = 0x000000010000;
 
 // 
 // Branch Predictor Branch Target Buffer (BTB) size
@@ -56,7 +56,7 @@ static const int CFG_BP_DEPTH = 5;
 static const int CFG_DEC_DEPTH = (CFG_BP_DEPTH - 3);        // requested, fetching, fetched
 
 // Jtag TAP ID, contains device and manufacturer values
-static const uint32_t CFG_DMI_TAP_ID = 0x10e31913;
+static const uint32_t CFG_DMI_TAP_ID = 0x10E31913;
 
 // Valid size 0..16
 static const int CFG_PROGBUF_REG_TOTAL = 16;

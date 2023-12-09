@@ -139,7 +139,7 @@ void InstrFetch::comb() {
         break;
     case WaitReqAccept:
         if (i_mem_req_ready.read() == 1) {
-            v.req_valid = (i_bp_valid && (!i_progbuf_ena));
+            v.req_valid = (i_bp_valid.read() && (!i_progbuf_ena.read()));
             v.req_addr = i_bp_pc;
             v.mem_resp_shadow = r.req_addr;
             v.resp_ready = 1;
@@ -155,7 +155,7 @@ void InstrFetch::comb() {
             v.instr = i_mem_data;
             v.instr_load_fault = i_mem_load_fault;
             v.instr_page_fault_x = i_mem_page_fault_x;
-            v.req_valid = (i_bp_valid && (!i_progbuf_ena));
+            v.req_valid = (i_bp_valid.read() && (!i_progbuf_ena.read()));
 
             if (r.req_valid.read() == 1) {
                 if (i_mem_req_ready.read() == 1) {
@@ -181,7 +181,7 @@ void InstrFetch::comb() {
         // Clear pipeline stage
         v.req_valid = 0;
         v.pc = ~0ull;
-        v.instr = 0ull;
+        v.instr = 0;
         v.instr_load_fault = 0;
         v.instr_page_fault_x = 0;
     }

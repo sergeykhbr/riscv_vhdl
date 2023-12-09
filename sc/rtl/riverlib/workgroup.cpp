@@ -59,7 +59,7 @@ Workgroup::Workgroup(sc_module_name name,
     async_reset_ = async_reset;
     cpu_num_ = cpu_num;
     l2cache_ena_ = l2cache_ena;
-    coherence_ena = ((cpu_num * l2cache_ena) > 1 ? 1: 0);
+    coherence_ena = ((cpu_num_ * l2cache_ena_) > 1);
     dmi0 = 0;
     dport_ic0 = 0;
     acp_bridge = 0;

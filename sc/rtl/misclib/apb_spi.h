@@ -103,7 +103,7 @@ SC_MODULE(apb_spi) {
         iv.level = 1;
         iv.cs = 0;
         iv.state = idle;
-        iv.shiftreg = ~0ul;
+        iv.shiftreg = ~0ull;
         iv.ena_byte_cnt = 0;
         iv.bit_cnt = 0;
         iv.tx_val = 0;
@@ -378,8 +378,8 @@ void apb_spi<log2_fifosz>::comb() {
     if (r.scaler.read().or_reduce() == 1) {
         if (r.scaler_cnt.read() == (r.scaler.read() - 1)) {
             v.scaler_cnt = 0;
-            v.level = (!r.level);
-            v_posedge = (!r.level);
+            v.level = (!r.level.read());
+            v_posedge = (!r.level.read());
             v_negedge = r.level;
         } else {
             v.scaler_cnt = (r.scaler_cnt.read() + 1);
@@ -422,7 +422,7 @@ void apb_spi<log2_fifosz>::comb() {
     case idle:
         v.wdog_cnt = r.wdog;
         if (r.ena_byte_cnt.read().or_reduce() == 1) {
-            v_txfifo_re = (!r.rx_ena);
+            v_txfifo_re = (!r.rx_ena.read());
             if ((wb_txfifo_count.read().or_reduce() == 0) || (r.rx_ena.read() == 1)) {
                 // FIFO is empty or RX is enabled:
                 v.tx_val = ~0ull;
@@ -477,7 +477,7 @@ void apb_spi<log2_fifosz>::comb() {
     case recv_data:
         if (v_posedge == 1) {
             if (r.rx_synced.read() == 0) {
-                v.rx_synced = ((r.cs.read() == 1) && (!i_miso));
+                v.rx_synced = ((r.cs.read() == 1) && (!i_miso.read()));
                 if (r.wdog_cnt.read().or_reduce() == 1) {
                     v.wdog_cnt = (r.wdog_cnt.read() - 1);
                 } else if (r.wdog.read().or_reduce() == 0) {
@@ -526,20 +526,20 @@ void apb_spi<log2_fifosz>::comb() {
 
     // Registers access:
     switch (wb_req_addr.read()(11, 2)) {
-    case 0x0:                                               // 0x00: sckdiv
+    case 0x000:                                             // 0x00: sckdiv
         vb_rdata = r.scaler;
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             v.scaler = wb_req_wdata.read()(30, 0);
             v.scaler_cnt = 0;
         }
         break;
-    case 0x2:                                               // 0x08: reserved (watchdog)
+    case 0x002:                                             // 0x08: reserved (watchdog)
         vb_rdata(15, 0) = r.wdog;
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             v.wdog = wb_req_wdata.read()(15, 0);
         }
         break;
-    case 0x11:                                              // 0x44: reserved 4 (txctrl)
+    case 0x011:                                             // 0x44: reserved 4 (txctrl)
         vb_rdata[0] = i_detected.read();                    // [0] sd card inserted
         vb_rdata[1] = i_protect.read();                     // [1] write protect
         vb_rdata[2] = i_miso.read();                        // [2] miso data bit
@@ -557,7 +557,7 @@ void apb_spi<log2_fifosz>::comb() {
             v.ena_byte_cnt = wb_req_wdata.read()(31, 16);
         }
         break;
-    case 0x12:                                              // 0x48: Tx FIFO Data
+    case 0x012:                                             // 0x48: Tx FIFO Data
         vb_rdata[31] = wb_txfifo_count.read().and_reduce();
         if (w_req_valid.read() == 1) {
             if (w_req_write.read() == 1) {
@@ -566,7 +566,7 @@ void apb_spi<log2_fifosz>::comb() {
             }
         }
         break;
-    case 0x13:                                              // 0x4C: Rx FIFO Data
+    case 0x013:                                             // 0x4C: Rx FIFO Data
         vb_rdata(7, 0) = wb_rxfifo_rdata;
         vb_rdata[31] = (!wb_rxfifo_count.read().or_reduce());
         if (w_req_valid.read() == 1) {
@@ -577,7 +577,7 @@ void apb_spi<log2_fifosz>::comb() {
             }
         }
         break;
-    case 0x14:                                              // 0x50: Tx FIFO Watermark
+    case 0x014:                                             // 0x50: Tx FIFO Watermark
         vb_rdata((log2_fifosz - 1), 0) = r.txmark;
         if (w_req_valid.read() == 1) {
             if (w_req_write.read() == 1) {
@@ -585,7 +585,7 @@ void apb_spi<log2_fifosz>::comb() {
             }
         }
         break;
-    case 0x15:                                              // 0x54: Rx FIFO Watermark
+    case 0x015:                                             // 0x54: Rx FIFO Watermark
         vb_rdata((log2_fifosz - 1), 0) = r.rxmark;
         if (w_req_valid.read() == 1) {
             if (w_req_write.read() == 1) {
@@ -593,7 +593,7 @@ void apb_spi<log2_fifosz>::comb() {
             }
         }
         break;
-    case 0x16:                                              // 0x58: CRC16 value (reserved FU740)
+    case 0x016:                                             // 0x58: CRC16 value (reserved FU740)
         vb_rdata(15, 0) = r.crc16;
         if (w_req_valid.read() == 1) {
             if (w_req_write.read() == 1) {
@@ -623,7 +623,7 @@ void apb_spi<log2_fifosz>::comb() {
 
     o_sclk = (r.level.read() & r.cs.read());
     o_mosi = (r.rx_ena || r.shiftreg.read()[7]);
-    o_cs = (!r.cs);
+    o_cs = (!r.cs.read());
 }
 
 template<int log2_fifosz>

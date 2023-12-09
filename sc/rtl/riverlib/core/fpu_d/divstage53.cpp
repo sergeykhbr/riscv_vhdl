@@ -60,8 +60,8 @@ void divstage53::comb() {
     bool w_muxind_rdy;
 
     wb_bits = 0;
-    wb_divx3 = 0ull;
-    wb_divx2 = 0ull;
+    wb_divx3 = 0;
+    wb_divx2 = 0;
     wb_muxind = 0;
     w_muxind_rdy = 0;
 

@@ -463,7 +463,7 @@ void dmidebug::comb() {
                 v.autoexecdata = r.wdata.read()((CFG_DATA_REG_TOTAL - 1), 0);
                 v.autoexecprogbuf = r.wdata.read()(((16 + CFG_PROGBUF_REG_TOTAL) - 1), 16);
             }
-        } else if (r.regidx.read()(6, 4) == 0x02) {         // progbuf[n]
+        } else if (r.regidx.read()(6, 4) == 0x2) {          // progbuf[n]
             vb_resp_data = r.progbuf_data.read()((32 * t_idx) + 32 - 1, (32 * t_idx)).to_uint64();
             if (r.regwr.read() == 1) {
                 t_progbuf((32 * t_idx) + 32- 1, (32 * t_idx)) = r.wdata;
@@ -510,7 +510,7 @@ void dmidebug::comb() {
                 v.cmd_write = r.command.read()[CmdWriteBit];
 
                 v.dport_req_valid = 1;
-                v.dport_addr = (0ull, r.command.read()(15, 0));
+                v.dport_addr = (0, r.command.read()(15, 0));
                 v.dport_wdata = (r.data1.read(), r.data0.read());
                 v.dport_size = r.command.read()(22, 20);
             } else if (r.command.read()[CmdPostexecBit] == 1) {// no transfer only buffer execution
@@ -591,16 +591,16 @@ void dmidebug::comb() {
                     // Memory access command
                     switch (r.command.read()(22, 20)) {     // aamsize
                     case 0:
-                        vb_arg1 = (vb_arg1 + 1ull);
+                        vb_arg1 = (vb_arg1 + 1);
                         break;
                     case 1:
-                        vb_arg1 = (vb_arg1 + 2ull);
+                        vb_arg1 = (vb_arg1 + 2);
                         break;
                     case 2:
-                        vb_arg1 = (vb_arg1 + 4ull);
+                        vb_arg1 = (vb_arg1 + 4);
                         break;
                     case 3:
-                        vb_arg1 = (vb_arg1 + 8ull);
+                        vb_arg1 = (vb_arg1 + 8);
                         break;
                     default:
                         break;

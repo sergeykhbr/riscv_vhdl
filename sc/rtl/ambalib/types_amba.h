@@ -32,9 +32,9 @@ class mapinfo_type {
  public:
     mapinfo_type() {
         // Base Address.
-        addr_start = 0ull;
+        addr_start = 0;
         // Maskable bits of the base address.
-        addr_end = 0ull;
+        addr_end = 0;
     }
 
     mapinfo_type(uint64_t addr_start_,
@@ -80,7 +80,7 @@ class mapinfo_type {
 };
 
 // @brief Empty entry value for the map info table
-static const mapinfo_type mapinfo_none;
+static const mapinfo_type mapinfo_none = {0, 0};
 
 // Burst length size decoder
 static const int XSIZE_TOTAL = 8;
@@ -159,7 +159,7 @@ static const uint8_t AC_SNOOP_MAKE_INVALID = 0xD;
 class axi4_metadata_type {
  public:
     axi4_metadata_type() {
-        addr = 0ull;
+        addr = 0;
         // @brief   Burst length.
         // @details This signal indicates the exact number of transfers in
         //          a burst. This changes between AXI3 and AXI4. nastiXLenBits=8 so
@@ -328,7 +328,7 @@ class axi4_master_out_type {
  public:
     axi4_master_out_type() {
         aw_valid = 0;
-        aw_bits.addr = 0ull;
+        aw_bits.addr = 0;
         aw_bits.len = 0;
         aw_bits.size = 0;
         aw_bits.burst = AXI_BURST_INCR;
@@ -340,13 +340,13 @@ class axi4_master_out_type {
         aw_id = 0;
         aw_user = 0;
         w_valid = 0;
-        w_data = 0ull;
+        w_data = 0;
         w_last = 0;
         w_strb = 0;
         w_user = 0;
         b_ready = 0;
         ar_valid = 0;
-        ar_bits.addr = 0ull;
+        ar_bits.addr = 0;
         ar_bits.len = 0;
         ar_bits.size = 0;
         ar_bits.burst = AXI_BURST_INCR;
@@ -541,7 +541,7 @@ class axi4_master_in_type {
         ar_ready = 0;
         r_valid = 0;
         r_resp = 0;
-        r_data = 0ull;
+        r_data = 0;
         r_last = 0;
         r_id = 0;
         r_user = 0;
@@ -643,7 +643,7 @@ class axi4_slave_in_type {
  public:
     axi4_slave_in_type() {
         aw_valid = 0;
-        aw_bits.addr = 0ull;
+        aw_bits.addr = 0;
         aw_bits.len = 0;
         aw_bits.size = 0;
         aw_bits.burst = AXI_BURST_INCR;
@@ -655,13 +655,13 @@ class axi4_slave_in_type {
         aw_id = 0;
         aw_user = 0;
         w_valid = 0;
-        w_data = 0ull;
+        w_data = 0;
         w_last = 0;
         w_strb = 0;
         w_user = 0;
         b_ready = 0;
         ar_valid = 0;
-        ar_bits.addr = 0ull;
+        ar_bits.addr = 0;
         ar_bits.len = 0;
         ar_bits.size = 0;
         ar_bits.burst = AXI_BURST_INCR;
@@ -852,7 +852,7 @@ class axi4_slave_out_type {
         ar_ready = 0;
         r_valid = 0;
         r_resp = 0;
-        r_data = 0ull;
+        r_data = 0;
         r_last = 0;
         r_id = 0;
         r_user = 0;

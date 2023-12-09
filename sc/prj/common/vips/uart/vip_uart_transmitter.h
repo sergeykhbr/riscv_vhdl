@@ -64,7 +64,7 @@ SC_MODULE(vip_uart_transmitter) {
         iv.sample = 0;
         iv.txdata_rdy = 0;
         iv.txdata = 0;
-        iv.shiftreg = ~0ul;
+        iv.shiftreg = ~0ull;
         iv.bitpos = 0;
         iv.overflow = 0;
     }

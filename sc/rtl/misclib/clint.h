@@ -229,7 +229,7 @@ void clint<cpu_total>::comb() {
         }
         break;
     case 2:
-        if (wb_req_addr.read()(13, 3) == 0x7ff) {
+        if (wb_req_addr.read()(13, 3) == 0x7FF) {
             vrdata = r.mtime;                               // [RO]
         }
         break;
@@ -243,7 +243,7 @@ void clint<cpu_total>::comb() {
         for (int i = 0; i < cpu_total; i++) {
             v.hart[i].msip = 0;
             v.hart[i].mtip = 0;
-            v.hart[i].mtimecmp = 0ull;
+            v.hart[i].mtimecmp = 0;
         }
         v.rdata = 0;
     }
@@ -269,7 +269,7 @@ void clint<cpu_total>::registers() {
         for (int i = 0; i < cpu_total; i++) {
             r.hart[i].msip = 0;
             r.hart[i].mtip = 0;
-            r.hart[i].mtimecmp = 0ull;
+            r.hart[i].mtimecmp = 0;
         }
         r.rdata = 0;
     } else {

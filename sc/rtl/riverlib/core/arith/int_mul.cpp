@@ -175,7 +175,7 @@ void IntMul::comb() {
         vb_a2s = i_a2;
     }
 
-    v_ena = (i_ena && (!r.busy));
+    v_ena = (i_ena.read() && (!r.busy.read()));
     v.ena = (r.ena.read()(2, 0), v_ena);
 
     if (i_ena.read() == 1) {
@@ -301,7 +301,7 @@ void IntMul::comb() {
         v.result = 0;
         v.a1_dbg = 0;
         v.a2_dbg = 0;
-        v.reference_mul = 0ull;
+        v.reference_mul = 0;
         for (int i = 0; i < 16; i++) {
             v.lvl1[i] = 0;
         }
@@ -328,7 +328,7 @@ void IntMul::registers() {
         r.result = 0;
         r.a1_dbg = 0;
         r.a2_dbg = 0;
-        r.reference_mul = 0ull;
+        r.reference_mul = 0;
         for (int i = 0; i < 16; i++) {
             r.lvl1[i] = 0;
         }

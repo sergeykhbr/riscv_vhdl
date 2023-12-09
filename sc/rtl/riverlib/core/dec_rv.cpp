@@ -208,7 +208,7 @@ void DecoderRv::comb() {
         vb_radr2 = (0, vb_instr(24, 20));
         vb_waddr = vb_instr(11, 7);
         switch (vb_instr(31, 27)) {
-        case 0x0:
+        case 0x00:
             if (vb_opcode2 == 2) {
                 vb_dec[Instr_AMOADD_W] = 1;
             } else if (vb_opcode2 == 3) {
@@ -217,7 +217,7 @@ void DecoderRv::comb() {
                 v_error = 1;
             }
             break;
-        case 0x1:
+        case 0x01:
             if (vb_opcode2 == 2) {
                 vb_dec[Instr_AMOSWAP_W] = 1;
             } else if (vb_opcode2 == 3) {
@@ -226,7 +226,7 @@ void DecoderRv::comb() {
                 v_error = 1;
             }
             break;
-        case 0x2:
+        case 0x02:
             if ((vb_opcode2 == 2) && (vb_instr(24, 20).or_reduce() == 0)) {
                 vb_dec[Instr_LR_W] = 1;
             } else if ((vb_opcode2 == 3) && (vb_instr(24, 20).or_reduce() == 0)) {
@@ -235,7 +235,7 @@ void DecoderRv::comb() {
                 v_error = 1;
             }
             break;
-        case 0x3:
+        case 0x03:
             if (vb_opcode2 == 2) {
                 vb_dec[Instr_SC_W] = 1;
             } else if (vb_opcode2 == 3) {
@@ -244,7 +244,7 @@ void DecoderRv::comb() {
                 v_error = 1;
             }
             break;
-        case 0x4:
+        case 0x04:
             if (vb_opcode2 == 2) {
                 vb_dec[Instr_AMOXOR_W] = 1;
             } else if (vb_opcode2 == 3) {
@@ -253,7 +253,7 @@ void DecoderRv::comb() {
                 v_error = 1;
             }
             break;
-        case 0x8:
+        case 0x08:
             if (vb_opcode2 == 2) {
                 vb_dec[Instr_AMOOR_W] = 1;
             } else if (vb_opcode2 == 3) {
@@ -262,7 +262,7 @@ void DecoderRv::comb() {
                 v_error = 1;
             }
             break;
-        case 0xC:
+        case 0x0C:
             if (vb_opcode2 == 2) {
                 vb_dec[Instr_AMOAND_W] = 1;
             } else if (vb_opcode2 == 3) {
@@ -770,16 +770,16 @@ void DecoderRv::comb() {
                 vb_radr2 = (1, vb_instr(24, 20));
                 vb_waddr = (1, vb_instr(11, 7));            // rd
                 switch (vb_instr(31, 25)) {
-                case 0x1:
+                case 0x01:
                     vb_dec[Instr_FADD_D] = 1;
                     break;
-                case 0x5:
+                case 0x05:
                     vb_dec[Instr_FSUB_D] = 1;
                     break;
-                case 0x9:
+                case 0x09:
                     vb_dec[Instr_FMUL_D] = 1;
                     break;
-                case 0xD:
+                case 0x0D:
                     vb_dec[Instr_FDIV_D] = 1;
                     break;
                 case 0x15:

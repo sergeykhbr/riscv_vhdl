@@ -269,7 +269,7 @@ void DbgPort::comb() {
     switch (r.dstate.read()) {
     case idle:
         v_req_ready = 1;
-        vrdata = 0ull;
+        vrdata = 0;
         v.req_accepted = 0;
         v.resp_error = 0;
         v.progbuf_ena = 0;
@@ -308,7 +308,7 @@ void DbgPort::comb() {
         }
         break;
     case csr_region:
-        v_csr_req_valid = (!r.req_accepted);
+        v_csr_req_valid = (!r.req_accepted.read());
         v_csr_resp_ready = r.req_accepted;
         if ((r.req_accepted.read() == 0) && (i_csr_req_ready.read() == 1)) {
             v.req_accepted = 1;
@@ -320,7 +320,7 @@ void DbgPort::comb() {
         }
         vb_csr_req_addr = r.dport_addr.read()(11, 0);
         vb_csr_req_data = r.dport_wdata;
-        if ((r.req_accepted && i_csr_resp_valid) == 1) {
+        if ((r.req_accepted.read() && i_csr_resp_valid.read()) == 1) {
             vrdata = i_csr_resp_data;
             v.dstate = wait_to_accept;
         }
@@ -336,7 +336,7 @@ void DbgPort::comb() {
         v.dstate = wait_to_accept;
         break;
     case reg_stktr_cnt:
-        vrdata = 0ull;
+        vrdata = 0;
         vrdata((CFG_LOG2_STACK_TRACE_ADDR - 1), 0) = r.stack_trace_cnt;
         if (r.dport_write.read() == 1) {
             v.stack_trace_cnt = r.dport_wdata.read()((CFG_LOG2_STACK_TRACE_ADDR - 1), 0);
@@ -357,7 +357,7 @@ void DbgPort::comb() {
         break;
     case exec_progbuf_start:
         v.progbuf_ena = 1;
-        v.progbuf_pc = 0ull;
+        v.progbuf_pc = 0;
         v.progbuf_instr = i_progbuf.read()(63, 0).to_uint64();
         v.dstate = exec_progbuf_next;
         break;
@@ -370,8 +370,8 @@ void DbgPort::comb() {
             v.dstate = exec_progbuf_waitmemop;
         } else {
             t_idx = i_e_npc.read()(5, 2);
-            v.progbuf_pc = (0ull, (i_e_npc.read()(5, 2) << 2));
-            if (t_idx == 0xf) {
+            v.progbuf_pc = (0, (i_e_npc.read()(5, 2) << 2));
+            if (t_idx == 0xF) {
                 v.progbuf_instr = (0, i_progbuf.read()(255, 224)).to_uint64();
             } else {
                 v.progbuf_instr = i_progbuf.read()((32 * t_idx) + 64 - 1, (32 * t_idx)).to_uint64();

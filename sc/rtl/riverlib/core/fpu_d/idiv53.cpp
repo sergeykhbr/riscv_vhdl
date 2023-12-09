@@ -129,11 +129,11 @@ void idiv53::comb() {
         v.overflow = 0;
         v.zero_resid = 0;
     } else if (r.delay.read()[0] == 1) {
-        v_mux_ena_i = (!r.lshift_rdy);
+        v_mux_ena_i = (!r.lshift_rdy.read());
         v.divident = (wb_dif_o.read() << 8);
         vb_bits[104] = (!wb_dif_o.read()[52]);
     } else if (r.delay.read()[1] == 1) {
-        v_mux_ena_i = (!r.lshift_rdy);
+        v_mux_ena_i = (!r.lshift_rdy.read());
         v.divident = (wb_dif_o.read() << 8);
         vb_muxind(55, 49) = 1;
         vb_muxind(48, 42) = 2;
@@ -145,7 +145,7 @@ void idiv53::comb() {
         vb_muxind(6, 0) = 8;
         vb_bits(103, 96) = wb_bits_o;
     } else if (r.delay.read()[2] == 1) {
-        v_mux_ena_i = (!r.lshift_rdy);
+        v_mux_ena_i = (!r.lshift_rdy.read());
         v.divident = (wb_dif_o.read() << 8);
         vb_muxind(55, 49) = 9;
         vb_muxind(48, 42) = 10;
@@ -157,7 +157,7 @@ void idiv53::comb() {
         vb_muxind(6, 0) = 16;
         vb_bits(95, 88) = wb_bits_o;
     } else if (r.delay.read()[3] == 1) {
-        v_mux_ena_i = (!r.lshift_rdy);
+        v_mux_ena_i = (!r.lshift_rdy.read());
         v.divident = (wb_dif_o.read() << 8);
         vb_muxind(55, 49) = 17;
         vb_muxind(48, 42) = 18;
@@ -169,7 +169,7 @@ void idiv53::comb() {
         vb_muxind(6, 0) = 24;
         vb_bits(87, 80) = wb_bits_o;
     } else if (r.delay.read()[4] == 1) {
-        v_mux_ena_i = (!r.lshift_rdy);
+        v_mux_ena_i = (!r.lshift_rdy.read());
         v.divident = (wb_dif_o.read() << 8);
         vb_muxind(55, 49) = 25;
         vb_muxind(48, 42) = 26;
@@ -181,7 +181,7 @@ void idiv53::comb() {
         vb_muxind(6, 0) = 32;
         vb_bits(79, 72) = wb_bits_o;
     } else if (r.delay.read()[5] == 1) {
-        v_mux_ena_i = (!r.lshift_rdy);
+        v_mux_ena_i = (!r.lshift_rdy.read());
         v.divident = (wb_dif_o.read() << 8);
         vb_muxind(55, 49) = 33;
         vb_muxind(48, 42) = 34;
@@ -193,7 +193,7 @@ void idiv53::comb() {
         vb_muxind(6, 0) = 40;
         vb_bits(71, 64) = wb_bits_o;
     } else if (r.delay.read()[6] == 1) {
-        v_mux_ena_i = (!r.lshift_rdy);
+        v_mux_ena_i = (!r.lshift_rdy.read());
         v.divident = (wb_dif_o.read() << 8);
         vb_muxind(55, 49) = 41;
         vb_muxind(48, 42) = 42;
@@ -205,7 +205,7 @@ void idiv53::comb() {
         vb_muxind(6, 0) = 48;
         vb_bits(63, 56) = wb_bits_o;
     } else if (r.delay.read()[7] == 1) {
-        v_mux_ena_i = (!r.lshift_rdy);
+        v_mux_ena_i = (!r.lshift_rdy.read());
         v.divident = (wb_dif_o.read() << 8);
         vb_muxind(55, 49) = 49;
         vb_muxind(48, 42) = 50;
@@ -217,7 +217,7 @@ void idiv53::comb() {
         vb_muxind(6, 0) = 56;
         vb_bits(55, 48) = wb_bits_o;
     } else if (r.delay.read()[8] == 1) {
-        v_mux_ena_i = (!r.lshift_rdy);
+        v_mux_ena_i = (!r.lshift_rdy.read());
         v.divident = (wb_dif_o.read() << 8);
         vb_muxind(55, 49) = 57;
         vb_muxind(48, 42) = 58;
@@ -229,7 +229,7 @@ void idiv53::comb() {
         vb_muxind(6, 0) = 64;
         vb_bits(47, 40) = wb_bits_o;
     } else if (r.delay.read()[9] == 1) {
-        v_mux_ena_i = (!r.lshift_rdy);
+        v_mux_ena_i = (!r.lshift_rdy.read());
         v.divident = (wb_dif_o.read() << 8);
         vb_muxind(55, 49) = 65;
         vb_muxind(48, 42) = 66;
@@ -241,7 +241,7 @@ void idiv53::comb() {
         vb_muxind(6, 0) = 72;
         vb_bits(39, 32) = wb_bits_o;
     } else if (r.delay.read()[10] == 1) {
-        v_mux_ena_i = (!r.lshift_rdy);
+        v_mux_ena_i = (!r.lshift_rdy.read());
         v.divident = (wb_dif_o.read() << 8);
         vb_muxind(55, 49) = 73;
         vb_muxind(48, 42) = 74;
@@ -253,7 +253,7 @@ void idiv53::comb() {
         vb_muxind(6, 0) = 80;
         vb_bits(31, 24) = wb_bits_o;
     } else if (r.delay.read()[11] == 1) {
-        v_mux_ena_i = (!r.lshift_rdy);
+        v_mux_ena_i = (!r.lshift_rdy.read());
         v.divident = (wb_dif_o.read() << 8);
         vb_muxind(55, 49) = 81;
         vb_muxind(48, 42) = 82;
@@ -265,7 +265,7 @@ void idiv53::comb() {
         vb_muxind(6, 0) = 88;
         vb_bits(23, 16) = wb_bits_o;
     } else if (r.delay.read()[12] == 1) {
-        v_mux_ena_i = (!r.lshift_rdy);
+        v_mux_ena_i = (!r.lshift_rdy.read());
         v.divident = (wb_dif_o.read() << 8);
         vb_muxind(55, 49) = 89;
         vb_muxind(48, 42) = 90;
@@ -277,7 +277,7 @@ void idiv53::comb() {
         vb_muxind(6, 0) = 96;
         vb_bits(15, 8) = wb_bits_o;
     } else if (r.delay.read()[13] == 1) {
-        v_mux_ena_i = (!r.lshift_rdy);
+        v_mux_ena_i = (!r.lshift_rdy.read());
         v.divident = (wb_dif_o.read() << 8);
         vb_muxind(55, 49) = 97;
         vb_muxind(48, 42) = 98;

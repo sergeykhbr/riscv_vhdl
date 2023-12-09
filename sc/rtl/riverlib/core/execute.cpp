@@ -758,7 +758,7 @@ void InstrExecute::comb() {
     }
     // AMO value read from memory[rs1]
     if ((wv[Instr_AMOSWAP_D] || wv[Instr_AMOSWAP_W]) == 1) {
-        vb_rdata1_amo = 0ull;
+        vb_rdata1_amo = 0;
     } else if (i_mem_valid.read() == 1) {
         if (mux.rv32 == 1) {
             // All AMO are sign-extended:
@@ -993,7 +993,7 @@ void InstrExecute::comb() {
             || r.page_fault_r
             || r.page_fault_w);
     v_csr_cmd_ena = (i_haltreq
-            || (i_step && r.stepdone)
+            || (i_step.read() && r.stepdone.read())
             || i_unsup_exception
             || i_instr_load_fault
             || v_mem_ex
@@ -1172,7 +1172,7 @@ void InstrExecute::comb() {
     } else if (r.select.read()[Res_FPU] == 1) {
         vb_res = wb_select[Res_FPU].res;
     } else {
-        vb_res = 0ull;
+        vb_res = 0;
     }
 
     if (((i_d_pc.read() == r.npc.read())
@@ -1191,7 +1191,7 @@ void InstrExecute::comb() {
         } else if ((v_d_valid == 1) && (w_hazard1.read() == 0) && (w_hazard2.read() == 0)) {
             v_latch_input = 1;
             // opencocd doesn't clear 'step' value in dcsr after step has been done
-            v.stepdone = (i_step && (!i_dbg_progbuf_ena));
+            v.stepdone = (i_step.read() && (!i_dbg_progbuf_ena.read()));
             if (i_dbg_mem_req_valid.read() == 1) {
                 v_dbg_mem_req_ready = 1;
                 v_dbg_mem_req_error = v_debug_misaligned;
@@ -1241,7 +1241,7 @@ void InstrExecute::comb() {
                 }
             } else {
                 v.valid = 1;
-                v_reg_ena = (i_d_waddr.read().or_reduce() && (!i_memop_load));// should be written by memaccess, but tag must be updated
+                v_reg_ena = (i_d_waddr.read().or_reduce() && (!i_memop_load.read()));// should be written by memaccess, but tag must be updated
             }
         }
         break;
@@ -1390,7 +1390,7 @@ void InstrExecute::comb() {
             v.csrstate = CsrState_Req;
             v.csr_req_type = CsrReq_ResumeCmd;
             v.csr_req_addr = 0;
-            v.csr_req_data = 0ull;
+            v.csr_req_data = 0;
         } else if (i_dbg_mem_req_valid.read() == 1) {
             v_dbg_mem_req_ready = 1;
             v_dbg_mem_req_error = v_debug_misaligned;
@@ -1444,7 +1444,7 @@ void InstrExecute::comb() {
     vb_tagcnt_next((CFG_REG_TAG_WIDTH * t_waddr) + CFG_REG_TAG_WIDTH- 1, (CFG_REG_TAG_WIDTH * t_waddr)) = t_tagcnt_wr;
     vb_tagcnt_next((CFG_REG_TAG_WIDTH - 1), 0) = 0;         // r0 always 0
     if (i_dbg_progbuf_ena.read() == 0) {
-        v.dnpc = 0ull;
+        v.dnpc = 0;
     }
 
     // Latch decoder's data into internal registers:
@@ -1452,7 +1452,7 @@ void InstrExecute::comb() {
         if (i_dbg_progbuf_ena.read() == 1) {
             v.dnpc = (r.dnpc.read() + opcode_len);
         } else {
-            v.dnpc = 0ull;
+            v.dnpc = 0;
             v.pc = i_d_pc;
             v.npc = vb_prog_npc;                            // Actually this value will be restored on resume request
         }

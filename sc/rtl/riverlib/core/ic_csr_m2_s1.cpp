@@ -125,12 +125,12 @@ void ic_csr_m2_s1::comb() {
             v.midx = 1;
         }
     }
-    if (((r.midx.read() == 0) && ((i_s0_resp_valid && i_m0_resp_ready) == 1))
-            || ((r.midx.read() == 1) && ((i_s0_resp_valid && i_m1_resp_ready) == 1))) {
+    if (((r.midx.read() == 0) && ((i_s0_resp_valid.read() && i_m0_resp_ready.read()) == 1))
+            || ((r.midx.read() == 1) && ((i_s0_resp_valid.read() && i_m1_resp_ready.read()) == 1))) {
         v.acquired = 0;
     }
 
-    if ((r.midx.read() == 0) || (((!r.acquired) && i_m0_req_valid) == 1)) {
+    if ((r.midx.read() == 0) || (((!r.acquired.read()) && i_m0_req_valid.read()) == 1)) {
         o_s0_req_valid = i_m0_req_valid;
         o_m0_req_ready = i_s0_req_ready;
         o_s0_req_type = i_m0_req_type;
@@ -142,7 +142,7 @@ void ic_csr_m2_s1::comb() {
         o_m0_resp_exception = i_s0_resp_exception;
         o_m1_req_ready = 0;
         o_m1_resp_valid = 0;
-        o_m1_resp_data = 0ull;
+        o_m1_resp_data = 0;
         o_m1_resp_exception = 0;
     } else {
         o_s0_req_valid = i_m1_req_valid;
@@ -156,7 +156,7 @@ void ic_csr_m2_s1::comb() {
         o_m1_resp_exception = i_s0_resp_exception;
         o_m0_req_ready = 0;
         o_m0_resp_valid = 0;
-        o_m0_resp_data = 0ull;
+        o_m0_resp_data = 0;
         o_m0_resp_exception = 0;
     }
 

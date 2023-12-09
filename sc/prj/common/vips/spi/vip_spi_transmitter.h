@@ -74,8 +74,8 @@ SC_MODULE(vip_spi_transmitter) {
     void vip_spi_transmitter_r_reset(vip_spi_transmitter_registers &iv) {
         iv.state = state_cmd;
         iv.sclk = 0;
-        iv.rxshift = ~0ul;
-        iv.txshift = ~0ul;
+        iv.rxshift = ~0ull;
+        iv.txshift = ~0ull;
         iv.bitcnt = 0;
         iv.bytecnt = 0;
         iv.byterdy = 0;

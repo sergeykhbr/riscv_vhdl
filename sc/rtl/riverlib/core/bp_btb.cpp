@@ -125,7 +125,7 @@ void BpBTB::comb() {
     for (int i = 0; i < CFG_BTB_SIZE; i++) {
         if (r.btb[i].pc == i_we_pc.read()) {
             vb_pc_equal[i] = 1;
-            v_dont_update = (r.btb[i].exec && (!i_e));
+            v_dont_update = (r.btb[i].exec && (!i_e.read()));
         }
     }
     vb_pc_nshift = 0;
@@ -133,7 +133,7 @@ void BpBTB::comb() {
         vb_pc_nshift[i] = (vb_pc_equal[(i - 1)] || vb_pc_nshift[(i - 1)]);
     }
 
-    if ((i_we && (!v_dont_update)) == 1) {
+    if ((i_we.read() && (!v_dont_update)) == 1) {
         v.btb[0].exec = i_e;
         v.btb[0].pc = i_we_pc;
         v.btb[0].npc = i_we_npc;

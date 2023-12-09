@@ -32,7 +32,7 @@ vip_uart_receiver::vip_uart_receiver(sc_module_name name,
 
     async_reset_ = async_reset;
     scaler_ = scaler;
-    scaler_max = ((2 * scaler) - 1);
+    scaler_max = ((2 * scaler_) - 1);
     scaler_mid = scaler;
 
     SC_METHOD(comb);
@@ -82,8 +82,8 @@ void vip_uart_receiver::comb() {
     v = r;
 
     v.rx = i_rx;
-    v_rx_pos = ((!r.rx) && i_rx);
-    v_rx_neg = (r.rx && (!i_rx));
+    v_rx_pos = ((!r.rx.read()) && i_rx.read());
+    v_rx_neg = (r.rx.read() && (!i_rx.read()));
     if (i_rdy_clr.read() == 1) {
         v.rdy = 0;
     }

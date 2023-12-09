@@ -190,7 +190,7 @@ void DoubleDiv::comb() {
 
     v = r;
 
-    vb_ena[0] = (i_ena && (!r.busy));
+    vb_ena[0] = (i_ena.read() && (!r.busy.read()));
     vb_ena[1] = r.ena.read()[0];
     vb_ena(4, 2) = (r.ena.read()(3, 2), w_idiv_rdy.read());
     v.ena = vb_ena;
@@ -281,7 +281,7 @@ void DoubleDiv::comb() {
 
         // Exceptions:
         v.nanRes = 0;
-        if (expAlign == 0x7FF) {
+        if (expAlign == 0x07FF) {
             v.nanRes = 1;
         }
         v.overflow = ((!expAlign[12]) && expAlign[11]);
@@ -305,20 +305,20 @@ void DoubleDiv::comb() {
     // Rounding bit
     mantShort = r.mantPostScale.read()(104, 52).to_uint64();
     tmpMant05 = r.mantPostScale.read()(51, 0).to_uint64();
-    if (mantShort == 0x001fffffffffffffull) {
+    if (mantShort == 0x1FFFFFFFFFFFFF) {
         mantOnes = 1;
     }
     mantEven = r.mantPostScale.read()[52];
-    if (tmpMant05 == 0x0008000000000000ull) {
+    if (tmpMant05 == 0x8000000000000) {
         mant05 = 1;
     }
     rndBit = (r.mantPostScale.read()[51] && (!(mant05 && (!mantEven))));
 
     // Check Borders
-    if (r.a.read()(62, 52) == 0x7ff) {
+    if (r.a.read()(62, 52) == 0x7FF) {
         nanA = 1;
     }
-    if (r.b.read()(62, 52) == 0x7ff) {
+    if (r.b.read()(62, 52) == 0x7FF) {
         nanB = 1;
     }
     if (r.a.read()(51, 0).or_reduce() == 0) {
@@ -335,7 +335,7 @@ void DoubleDiv::comb() {
         res[63] = signA;
     } else if (nanB && (!mantZeroB)) {
         res[63] = signB;
-    } else if (r.zeroA && r.zeroB) {
+    } else if (r.zeroA.read() && r.zeroB.read()) {
         res[63] = 1;
     } else {
         res[63] = (r.a.read()[63] ^ r.b.read()[63]);
@@ -343,7 +343,7 @@ void DoubleDiv::comb() {
 
     if ((nanB && (!mantZeroB)) == 1) {
         res(62, 52) = r.b.read()(62, 52);
-    } else if (((r.underflow || r.zeroA) && (!r.zeroB)) == 1) {
+    } else if (((r.underflow || r.zeroA) && (!r.zeroB.read())) == 1) {
         res(62, 52) = 0;
     } else if ((r.overflow || r.zeroB) == 1) {
         res(62, 52) = ~0ull;
@@ -352,10 +352,10 @@ void DoubleDiv::comb() {
     } else if (((nanB && mantZeroB) || r.expAlign.read()[11]) == 1) {
         res(62, 52) = 0;
     } else {
-        res(62, 52) = (r.expAlign.read()(10, 0) + (mantOnes && rndBit && (!r.overflow)));
+        res(62, 52) = (r.expAlign.read()(10, 0) + (mantOnes && rndBit && (!r.overflow.read())));
     }
 
-    if (((r.zeroA && r.zeroB)
+    if (((r.zeroA.read() && r.zeroB.read())
             || (nanA && mantZeroA && nanB && mantZeroB)) == 1) {
         res[51] = 1;
         res(50, 0) = 0;

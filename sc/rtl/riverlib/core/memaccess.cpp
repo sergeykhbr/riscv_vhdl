@@ -351,22 +351,22 @@ void MemAccess::comb() {
     // Form Queue inputs:
     t_memop_debug = i_memop_debug;                          // looks like bug in systemc, cannot handle bool properly
     queue_data_i = (t_memop_debug,
-            i_flushd_valid,
-            i_mmu_ena,
-            i_mmu_sv39,
-            i_mmu_sv48,
-            i_reg_wtag,
+            i_flushd_valid.read(),
+            i_mmu_ena.read(),
+            i_mmu_sv39.read(),
+            i_mmu_sv48.read(),
+            i_reg_wtag.read(),
             vb_memop_wdata,
             vb_memop_wstrb,
-            i_memop_wdata,
-            i_reg_waddr,
-            i_e_instr,
-            i_e_pc,
-            i_memop_size,
-            i_memop_sign_ext,
-            i_memop_type,
+            i_memop_wdata.read(),
+            i_reg_waddr.read(),
+            i_e_instr.read(),
+            i_e_pc.read(),
+            i_memop_size.read(),
+            i_memop_sign_ext.read(),
+            i_memop_type.read(),
             vb_req_addr);
-    queue_we = ((i_memop_valid.read() | i_flushd_valid.read()) & (!queue_full));
+    queue_we = ((i_memop_valid.read() | i_flushd_valid.read()) & (!queue_full.read()));
 
     // Split Queue outputs:
     v_mem_debug = queue_data_o.read()[316];
@@ -632,14 +632,14 @@ void MemAccess::comb() {
     o_mem_wstrb = vb_mem_wstrb;
     o_mem_size = vb_mem_sz;
     o_memop_ready = v_memop_ready;
-    o_wb_wena = (v_o_wena && (!r.memop_debug));
+    o_wb_wena = (v_o_wena && (!r.memop_debug.read()));
     o_wb_waddr = vb_o_waddr;
     o_wb_wdata = vb_o_wdata;
     o_wb_wtag = vb_o_wtag;
     o_pc = r.pc;
-    o_valid = ((r.valid || v_valid) && (!r.memop_debug));
+    o_valid = ((r.valid || v_valid) && (!r.memop_debug.read()));
     o_idle = v_idle;
-    o_debug_valid = ((r.valid || v_valid) && r.memop_debug);
+    o_debug_valid = ((r.valid || v_valid) && r.memop_debug.read());
 }
 
 void MemAccess::registers() {

@@ -119,7 +119,7 @@ void Double2Long::comb() {
 
     v = r;
 
-    v_ena = (i_ena && (!r.busy));
+    v_ena = (i_ena.read() && (!r.busy.read()));
     v.ena = (r.ena.read()(1, 0), v_ena);
 
     mantA(51, 0) = i_a.read()(51, 0);
@@ -140,7 +140,7 @@ void Double2Long::comb() {
     }
 
     // (1086 - expA)[5:0]
-    expShift = (0x3e - r.expA.read()(5, 0));
+    expShift = (0x3E - r.expA.read()(5, 0));
     if (r.w32.read() == 1) {
         if (r.op_signed.read() == 1) {
             expMax = 1053;
@@ -164,7 +164,7 @@ void Double2Long::comb() {
 
     mantPreScale = (r.mantA.read().to_uint64() << 11);
 
-    mantPostScale = 0ull;
+    mantPostScale = 0;
     if (expDif_gr == 1) {
         overflow = 1;
         underflow = 0;
@@ -189,7 +189,7 @@ void Double2Long::comb() {
     }
 
     // Result multiplexers:
-    resSign = ((r.signA || r.overflow) && (!r.underflow));
+    resSign = ((r.signA || r.overflow) && (!r.underflow.read()));
     if (r.signA.read() == 1) {
         resMant = ((~r.mantPostScale.read()) + 1);
     } else {

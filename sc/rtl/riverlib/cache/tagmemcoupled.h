@@ -277,17 +277,17 @@ void TagMemCoupled<abus, waybits, ibits, lnbits, flbits>::comb() {
         linei[ODD].wstrb = i_wstrb;
     }
 
-    linei[EVEN].direct_access = (i_direct_access && ((!v_addr_sel) || v_use_overlay));
-    linei[ODD].direct_access = (i_direct_access && (v_addr_sel || v_use_overlay));
+    linei[EVEN].direct_access = (i_direct_access.read() && ((!v_addr_sel) || v_use_overlay));
+    linei[ODD].direct_access = (i_direct_access.read() && (v_addr_sel || v_use_overlay));
 
-    linei[EVEN].invalidate = (i_invalidate && ((!v_addr_sel) || v_use_overlay));
-    linei[ODD].invalidate = (i_invalidate && (v_addr_sel || v_use_overlay));
+    linei[EVEN].invalidate = (i_invalidate.read() && ((!v_addr_sel) || v_use_overlay));
+    linei[ODD].invalidate = (i_invalidate.read() && (v_addr_sel || v_use_overlay));
 
-    linei[EVEN].re = (i_re && ((!v_addr_sel) || v_use_overlay));
-    linei[ODD].re = (i_re && (v_addr_sel || v_use_overlay));
+    linei[EVEN].re = (i_re.read() && ((!v_addr_sel) || v_use_overlay));
+    linei[ODD].re = (i_re.read() && (v_addr_sel || v_use_overlay));
 
-    linei[EVEN].we = (i_we && ((!v_addr_sel) || v_use_overlay));
-    linei[ODD].we = (i_we && (v_addr_sel || v_use_overlay));
+    linei[EVEN].we = (i_we.read() && ((!v_addr_sel) || v_use_overlay));
+    linei[ODD].we = (i_we.read() && (v_addr_sel || v_use_overlay));
 
     linei[EVEN].wdata = i_wdata;
     linei[ODD].wdata = i_wdata;

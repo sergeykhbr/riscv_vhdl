@@ -152,7 +152,7 @@ SC_MODULE(Mmu) {
         iv.tlb_level = 0;
         iv.tlb_page_size = 0;
         iv.tlb_wdata = 0;
-        iv.tlb_flush_cnt = ~0ul;
+        iv.tlb_flush_cnt = ~0ull;
         iv.tlb_flush_adr = 0;
     }
 

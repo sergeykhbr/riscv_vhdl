@@ -78,7 +78,7 @@ SC_MODULE(IntDiv) {
         iv.bits_i = 0;
         iv.result = 0;
         iv.reference_div = 0;
-        iv.a1_dbg = 0ull;
+        iv.a1_dbg = 0;
         iv.a2_dbg = 0;
     }
 

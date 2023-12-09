@@ -183,7 +183,7 @@ void IntDiv::comb() {
         v_a2_m1 = 1;                                        // = -1ll
     }
 
-    v_ena = (i_ena && (!r.busy));
+    v_ena = (i_ena.read() && (!r.busy.read()));
     v.ena = (r.ena.read()(8, 0), v_ena);
 
     if (r.invert.read() == 1) {
@@ -219,14 +219,14 @@ void IntDiv::comb() {
         v.divident_i = vb_a1;
         t_divisor(119, 56) = vb_a2;
         v.divisor_i = t_divisor;
-        v_invert32 = ((!i_unsigned)
-                && (((!i_residual) && (i_a1.read()[31] ^ i_a2.read()[31]))
-                        || (i_residual && i_a1.read()[31])));
-        v_invert64 = ((!i_unsigned)
-                && (((!i_residual) && (i_a1.read()[63] ^ i_a2.read()[63]))
-                        || (i_residual && i_a1.read()[63])));
-        v.invert = (((!i_rv32) && v_invert64)
-                || (i_rv32 && v_invert32));
+        v_invert32 = ((!i_unsigned.read())
+                && (((!i_residual.read()) && (i_a1.read()[31] ^ i_a2.read()[31]))
+                        || (i_residual.read() && i_a1.read()[31])));
+        v_invert64 = ((!i_unsigned.read())
+                && (((!i_residual.read()) && (i_a1.read()[63] ^ i_a2.read()[63]))
+                        || (i_residual.read() && i_a1.read()[63])));
+        v.invert = (((!i_rv32.read()) && v_invert64)
+                || (i_rv32.read() && v_invert32));
 
         if (i_rv32.read() == 1) {
             if (i_unsigned.read() == 1) {
@@ -266,21 +266,21 @@ void IntDiv::comb() {
         v.busy = 0;
         if (r.resid.read() == 1) {
             if (r.overflow.read() == 1) {
-                v.result = 0ull;
+                v.result = 0;
             } else {
                 v.result = vb_rem;
             }
         } else if (r.div_on_zero.read() == 1) {
             v.result = ~0ull;
         } else if (r.overflow.read() == 1) {
-            v.result = 0x8000000000000000ull;
+            v.result = 0x8000000000000000;
         } else {
             v.result = vb_div;
         }
     } else if (r.busy.read() == 1) {
         v.divident_i = wb_resid1_o;
         v.divisor_i = (0, r.divisor_i.read()(119, 8));
-        v.bits_i = (r.bits_i, wb_bits0_o, wb_bits1_o);
+        v.bits_i = (r.bits_i.read(), wb_bits0_o.read(), wb_bits1_o.read());
     }
     wb_divisor0_i = (r.divisor_i.read() << 4);
     wb_divisor1_i = (0, r.divisor_i.read());

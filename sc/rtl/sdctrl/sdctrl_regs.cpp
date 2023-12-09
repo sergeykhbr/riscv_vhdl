@@ -215,8 +215,8 @@ void sdctrl_regs::comb() {
         if (((i_400khz_ena.read() == 1) && (r.scaler_cnt.read() >= r.scaler_400khz.read()))
                 || ((i_400khz_ena.read() == 0) && (r.scaler_cnt.read() >= r.scaler_data.read()))) {
             v.scaler_cnt = 0;
-            v.level = (!r.level);
-            v_posedge = (!r.level);
+            v.level = (!r.level.read());
+            v_posedge = (!r.level.read());
             v_negedge = r.level;
         } else {
             v.scaler_cnt = (r.scaler_cnt.read() + 1);
@@ -224,7 +224,7 @@ void sdctrl_regs::comb() {
     }
     // Registers access:
     switch (wb_req_addr.read()(11, 2)) {
-    case 0x0:                                               // {0x00, 'RW', 'sckdiv', 'Clock Divivder'}
+    case 0x000:                                             // {0x00, 'RW', 'sckdiv', 'Clock Divivder'}
         vb_rdata = (r.scaler_data.read(), r.scaler_400khz.read());
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             v.scaler_data = wb_req_wdata.read()(31, 24);
@@ -232,7 +232,7 @@ void sdctrl_regs::comb() {
             v.scaler_cnt = 0;
         }
         break;
-    case 0x1:                                               // {0x04, 'RW', 'control', 'Global Control register'}
+    case 0x001:                                             // {0x04, 'RW', 'control', 'Global Control register'}
         vb_rdata[0] = r.sclk_ena.read();
         vb_rdata[3] = r.spi_mode.read();
         vb_rdata[4] = i_sd_dat0.read();
@@ -246,26 +246,26 @@ void sdctrl_regs::comb() {
             v.spi_mode = wb_req_wdata.read()[3];
         }
         break;
-    case 0x2:                                               // {0x08, 'RW', 'watchdog', 'Watchdog'}
+    case 0x002:                                             // {0x08, 'RW', 'watchdog', 'Watchdog'}
         vb_rdata(15, 0) = r.wdog;
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             v.wdog = wb_req_wdata.read()(15, 0);
         }
         break;
-    case 0x4:                                               // {0x10, 'RO', 'status', 'state machines status'}
+    case 0x004:                                             // {0x10, 'RO', 'status', 'state machines status'}
         vb_rdata(3, 0) = i_err_code;                        // the latest error code
         vb_rdata(14, 12) = i_sdtype;                        // detected card type
         break;
-    case 0x5:                                               // {0x14, 'RO', 'last_cmd_response', 'Last CMD response data'}
+    case 0x005:                                             // {0x14, 'RO', 'last_cmd_response', 'Last CMD response data'}
         vb_rdata(5, 0) = r.last_req_cmd;
         vb_rdata(13, 8) = r.last_resp_cmd;
         vb_rdata(22, 16) = r.last_resp_crc7_rx;
         vb_rdata(30, 24) = r.last_resp_crc7_calc;
         break;
-    case 0x6:                                               // {0x18, 'RO', 'last_cmd_resp_arg'}
+    case 0x006:                                             // {0x18, 'RO', 'last_cmd_resp_arg'}
         vb_rdata = r.last_resp_reg;
         break;
-    case 0x8:                                               // {0x20, 'RW', 'interface_condition', 'CMD8 parameters'}
+    case 0x008:                                             // {0x20, 'RW', 'interface_condition', 'CMD8 parameters'}
         vb_rdata(7, 0) = r.check_pattern;
         vb_rdata(11, 8) = r.voltage_supply;
         vb_rdata[12] = r.pcie_available.read();
@@ -277,17 +277,17 @@ void sdctrl_regs::comb() {
             v.pcie_12V_support = wb_req_wdata.read()[13];
         }
         break;
-    case 0x11:                                              // 0x44: reserved 4 (txctrl)
+    case 0x011:                                             // 0x44: reserved 4 (txctrl)
         break;
-    case 0x12:                                              // 0x48: Tx FIFO Data
+    case 0x012:                                             // 0x48: Tx FIFO Data
         break;
-    case 0x13:                                              // 0x4C: Rx FIFO Data
+    case 0x013:                                             // 0x4C: Rx FIFO Data
         break;
-    case 0x14:                                              // 0x50: Tx FIFO Watermark
+    case 0x014:                                             // 0x50: Tx FIFO Watermark
         break;
-    case 0x15:                                              // 0x54: Rx FIFO Watermark
+    case 0x015:                                             // 0x54: Rx FIFO Watermark
         break;
-    case 0x16:                                              // 0x58: CRC16 value (reserved FU740)
+    case 0x016:                                             // 0x58: CRC16 value (reserved FU740)
         break;
     default:
         break;
