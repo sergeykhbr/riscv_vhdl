@@ -209,25 +209,25 @@ begin: comb_proc
         if (i_memop_addr[2: 1] == 2'd0) begin
             vb_memop_wstrb = 8'h03;
         end else if (i_memop_addr[2: 1] == 2'd1) begin
-            vb_memop_wstrb = 8'h0c;
+            vb_memop_wstrb = 8'h0C;
         end else if (i_memop_addr[2: 1] == 2'd2) begin
             vb_memop_wstrb = 8'h30;
         end else begin
-            vb_memop_wstrb = 8'hc0;
+            vb_memop_wstrb = 8'hC0;
         end
     end
     2'd2: begin
         vb_memop_wdata = {i_memop_wdata[31: 0],
                 i_memop_wdata[31: 0]};
         if (i_memop_addr[2] == 1'b1) begin
-            vb_memop_wstrb = 8'hf0;
+            vb_memop_wstrb = 8'hF0;
         end else begin
-            vb_memop_wstrb = 8'h0f;
+            vb_memop_wstrb = 8'h0F;
         end
     end
     2'd3: begin
         vb_memop_wdata = i_memop_wdata;
-        vb_memop_wstrb = 8'hff;
+        vb_memop_wstrb = 8'hFF;
     end
     default: begin
     end
@@ -540,7 +540,6 @@ generate
                 r <= rin;
             end
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

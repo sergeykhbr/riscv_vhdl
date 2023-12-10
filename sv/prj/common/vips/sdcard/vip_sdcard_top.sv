@@ -246,8 +246,8 @@ begin: comb_proc
     w_stat_wp_violation = 1'b0;
     w_stat_erase_param = 1'b0;
     w_stat_out_of_range = 1'b0;
-    wb_mem_rdata = 8'hff;
-    wb_crc16 = 16'h7fa1;
+    wb_mem_rdata = 8'hFF;
+    wb_crc16 = 16'h7FA1;
 end: comb_proc
 
 endmodule: vip_sdcard_top

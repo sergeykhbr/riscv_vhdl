@@ -116,7 +116,7 @@ const sdctrl_sdmode_registers sdctrl_sdmode_r_reset = '{
     SDCARD_UNKNOWN,                     // sdtype
     1'b1,                               // HCS
     1'b0,                               // S18
-    24'hff8000,                         // OCR_VoltageWindow
+    24'hFF8000,                         // OCR_VoltageWindow
     '0                                  // bitcnt
 };
 

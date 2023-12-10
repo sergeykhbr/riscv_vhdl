@@ -244,7 +244,7 @@ begin: comb_proc
         if ((|wb_dif_o) == 1'b0) begin
             v.zero_resid = 1'b1;
         end
-        if (r.lshift == 7'h7f) begin
+        if (r.lshift == 7'h7F) begin
             v.overflow = 1'b1;
         end
     end
@@ -289,7 +289,6 @@ generate
                 r <= rin;
             end
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

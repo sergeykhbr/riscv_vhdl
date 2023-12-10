@@ -282,7 +282,7 @@ begin: comb_proc
         end
         if (r.req_flush == 1'b1) begin
             v.req_flush = 1'b0;
-            v.tlb_wdata = 116'd0;
+            v.tlb_wdata = '0;
             v.state = FlushTlb;
         end else if ((i_mmu_ena == 1'b0) || (v_va_ena == 1'b0)) begin// MMU disabled
             // Direct connection to Cache
@@ -585,7 +585,6 @@ generate
                 r <= rin;
             end
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

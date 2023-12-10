@@ -127,7 +127,6 @@ generate
             end
         end: rg_proc
 
-
     end: async_rst_gen
     else begin: no_rst_gen
 

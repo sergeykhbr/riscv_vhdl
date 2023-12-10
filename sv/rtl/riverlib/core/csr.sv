@@ -233,9 +233,9 @@ begin: comb_proc
 
     vb_xpp = r.xmode[int'(r.mode)].xpp;
     vb_pmp_upd_ena = r.pmp_upd_ena;
-    t_pmpdataidx = (int'(r.cmd_addr) - 32'h000003b0);
+    t_pmpdataidx = (int'(r.cmd_addr) - 64'h00000000000003B0);
     t_pmpcfgidx = (8 * int'(r.cmd_addr[3: 1]));
-    vb_pmp_napot_mask = 32'h00000007;
+    vb_pmp_napot_mask = 64'h0000000000000007;
 
     vb_xtvec_off_edeleg = r.xmode[iM].xtvec_off;
     if ((r.mode <= PRV_S) && (r.medeleg[int'(r.cmd_addr[4: 0])] == 1'b1)) begin
@@ -369,7 +369,7 @@ begin: comb_proc
         end else begin
             v_csr_rena = r.cmd_type[CsrReq_ReadBit];
             v_csr_wena = r.cmd_type[CsrReq_WriteBit];
-            if (r.cmd_addr[11: 4] == 8'h3a) begin           // pmpcfgx
+            if (r.cmd_addr[11: 4] == 8'h3A) begin           // pmpcfgx
                 v.state = State_WaitPmp;
             end
         end
@@ -470,7 +470,7 @@ begin: comb_proc
         if (CFG_HW_FPU_ENABLE) begin
             vb_rdata[7: 5] = 3'd4;                          // Round mode: round to Nearest (RMM)
         end
-    end else if (r.cmd_addr == 12'hc00) begin               // cycle: [URO] User Cycle counter for RDCYCLE pseudo-instruction
+    end else if (r.cmd_addr == 12'hC00) begin               // cycle: [URO] User Cycle counter for RDCYCLE pseudo-instruction
         if ((r.mode == PRV_U)
                 && ((r.xmode[iM].xcounteren[0] == 1'b0)
                         || (r.xmode[iS].xcounteren[0] == 1'b0))) begin
@@ -483,7 +483,7 @@ begin: comb_proc
         end else begin
             vb_rdata = r.mcycle_cnt;                        // Read-only shadows of mcycle
         end
-    end else if (r.cmd_addr == 12'hc01) begin               // time: [URO] User Timer for RDTIME pseudo-instruction
+    end else if (r.cmd_addr == 12'hC01) begin               // time: [URO] User Timer for RDTIME pseudo-instruction
         if ((r.mode == PRV_U)
                 && ((r.xmode[iM].xcounteren[1] == 1'b0)
                         || (r.xmode[iS].xcounteren[1] == 1'b0))) begin
@@ -496,7 +496,7 @@ begin: comb_proc
         end else begin
             vb_rdata = i_mtimer;
         end
-    end else if (r.cmd_addr == 12'hc03) begin               // insret: [URO] User Instructions-retired counter for RDINSTRET pseudo-instruction
+    end else if (r.cmd_addr == 12'hC03) begin               // insret: [URO] User Instructions-retired counter for RDINSTRET pseudo-instruction
         if ((r.mode == PRV_U)
                 && ((r.xmode[iM].xcounteren[2] == 1'b0)
                         || (r.xmode[iS].xcounteren[2] == 1'b0))) begin
@@ -557,7 +557,7 @@ begin: comb_proc
         if (v_csr_wena == 1'b1) begin
             v.xmode[iS].xcounteren = r.cmd_data[15: 0];
         end
-    end else if (r.cmd_addr == 12'h10a) begin               // senvcfg: [SRW] Supervisor environment configuration register
+    end else if (r.cmd_addr == 12'h10A) begin               // senvcfg: [SRW] Supervisor environment configuration register
     end else if (r.cmd_addr == 12'h140) begin               // sscratch: [SRW] Supervisor register for supervisor trap handlers
         vb_rdata = r.xmode[iS].xscratch;
         if (v_csr_wena) begin
@@ -608,15 +608,15 @@ begin: comb_proc
                 end
             end
         end
-    end else if (r.cmd_addr == 12'h5a8) begin               // scontext: [SRW] Supervisor-mode context register
-    end else if (r.cmd_addr == 12'hf11) begin               // mvendorid: [MRO] Vendor ID
+    end else if (r.cmd_addr == 12'h5A8) begin               // scontext: [SRW] Supervisor-mode context register
+    end else if (r.cmd_addr == 12'hF11) begin               // mvendorid: [MRO] Vendor ID
         vb_rdata = CFG_VENDOR_ID;
-    end else if (r.cmd_addr == 12'hf12) begin               // marchid: [MRO] Architecture ID
-    end else if (r.cmd_addr == 12'hf13) begin               // mimplementationid: [MRO] Implementation ID
+    end else if (r.cmd_addr == 12'hF12) begin               // marchid: [MRO] Architecture ID
+    end else if (r.cmd_addr == 12'hF13) begin               // mimplementationid: [MRO] Implementation ID
         vb_rdata = CFG_IMPLEMENTATION_ID;
-    end else if (r.cmd_addr == 12'hf14) begin               // mhartid: [MRO] Hardware thread ID
+    end else if (r.cmd_addr == 12'hF14) begin               // mhartid: [MRO] Hardware thread ID
         vb_rdata[63: 0] = hartid;
-    end else if (r.cmd_addr == 12'hf15) begin               // mconfigptr: [MRO] Pointer to configuration data structure
+    end else if (r.cmd_addr == 12'hF15) begin               // mconfigptr: [MRO] Pointer to configuration data structure
     end else if (r.cmd_addr == 12'h300) begin               // mstatus: [MRW] Machine mode status register
         // [0] WPRI
         vb_rdata[1] = r.xmode[iS].xie;
@@ -705,7 +705,7 @@ begin: comb_proc
         vb_rdata = r.medeleg;
         if (v_csr_wena) begin
             // page 31. Read-only zero for exceptions that could not be delegated, especially Call from M-mode
-            v.medeleg = (r.cmd_data & 64'h000000000000b3ff);
+            v.medeleg = (r.cmd_data & 64'h000000000000B3FF);
         end
     end else if (r.cmd_addr == 12'h303) begin               // mideleg: [MRW] Machine interrupt delegation
         vb_rdata = r.mideleg;
@@ -766,11 +766,11 @@ begin: comb_proc
             v.mip_stip = r.cmd_data[IRQ_STIP];
             v.mip_seip = r.cmd_data[IRQ_SEIP];
         end
-    end else if (r.cmd_addr == 12'h34a) begin               // mtinst: [MRW] Machine trap instruction (transformed)
-    end else if (r.cmd_addr == 12'h34b) begin               // mtval2: [MRW] Machine bad guest physical register
-    end else if (r.cmd_addr == 12'h30a) begin               // menvcfg: [MRW] Machine environment configuration register
+    end else if (r.cmd_addr == 12'h34A) begin               // mtinst: [MRW] Machine trap instruction (transformed)
+    end else if (r.cmd_addr == 12'h34B) begin               // mtval2: [MRW] Machine bad guest physical register
+    end else if (r.cmd_addr == 12'h30A) begin               // menvcfg: [MRW] Machine environment configuration register
     end else if (r.cmd_addr == 12'h747) begin               // mseccfg: [MRW] Machine security configuration register
-    end else if (r.cmd_addr[11: 4] == 8'h3a) begin          // pmpcfg0..63: [MRW] Physical memory protection configuration
+    end else if (r.cmd_addr[11: 4] == 8'h3A) begin          // pmpcfg0..63: [MRW] Physical memory protection configuration
         if (r.cmd_addr[0] == 1'b1) begin
             v.cmd_exception = 1'b1;                         // RV32 only
         end else if (t_pmpcfgidx < CFG_PMP_TBL_SIZE) begin
@@ -784,8 +784,8 @@ begin: comb_proc
                 end
             end
         end
-    end else if ((r.cmd_addr >= 12'h3b0)
-                && (r.cmd_addr <= 12'h3ef)) begin
+    end else if ((r.cmd_addr >= 12'h3B0)
+                && (r.cmd_addr <= 12'h3EF)) begin
         // pmpaddr0..63: [MRW] Physical memory protection address register
         for (int i = 0; i < (RISCV_ARCH - 2); i++) begin
             if ((r.cmd_data[i] == 1'b1) && (v_napot_shift == 1'b0)) begin
@@ -802,13 +802,13 @@ begin: comb_proc
                 v.pmp[t_pmpdataidx].mask = vb_pmp_napot_mask;
             end
         end
-    end else if (r.cmd_addr <= 12'h3ef) begin               // pmpaddr63: [MRW] Physical memory protection address register
-    end else if (r.cmd_addr == 12'hb00) begin               // mcycle: [MRW] Machine cycle counter
+    end else if (r.cmd_addr <= 12'h3EF) begin               // pmpaddr63: [MRW] Physical memory protection address register
+    end else if (r.cmd_addr == 12'hB00) begin               // mcycle: [MRW] Machine cycle counter
         vb_rdata = r.mcycle_cnt;
         if (v_csr_wena) begin
             v.mcycle_cnt = r.cmd_data;
         end
-    end else if (r.cmd_addr == 12'hb02) begin               // minstret: [MRW] Machine instructions-retired counter
+    end else if (r.cmd_addr == 12'hB02) begin               // minstret: [MRW] Machine instructions-retired counter
         vb_rdata = r.minstret_cnt;
         if (v_csr_wena) begin
             v.minstret_cnt = r.cmd_data;
@@ -820,13 +820,13 @@ begin: comb_proc
         end
     end else if (r.cmd_addr == 12'h323) begin               // mpevent3: [MRW] Machine performance-monitoring event selector
     end else if (r.cmd_addr == 12'h324) begin               // mpevent4: [MRW] Machine performance-monitoring event selector
-    end else if (r.cmd_addr == 12'h33f) begin               // mpevent31: [MRW] Machine performance-monitoring event selector
-    end else if (r.cmd_addr == 12'h7a0) begin               // tselect: [MRW] Debug/Trace trigger register select
-    end else if (r.cmd_addr == 12'h7a1) begin               // tdata1: [MRW] First Debug/Trace trigger data register
-    end else if (r.cmd_addr == 12'h7a2) begin               // tdata2: [MRW] Second Debug/Trace trigger data register
-    end else if (r.cmd_addr == 12'h7a3) begin               // tdata3: [MRW] Third Debug/Trace trigger data register
-    end else if (r.cmd_addr == 12'h7a8) begin               // mcontext: [MRW] Machine-mode context register
-    end else if (r.cmd_addr == 12'h7b0) begin               // dcsr: [DRW] Debug control and status register
+    end else if (r.cmd_addr == 12'h33F) begin               // mpevent31: [MRW] Machine performance-monitoring event selector
+    end else if (r.cmd_addr == 12'h7A0) begin               // tselect: [MRW] Debug/Trace trigger register select
+    end else if (r.cmd_addr == 12'h7A1) begin               // tdata1: [MRW] First Debug/Trace trigger data register
+    end else if (r.cmd_addr == 12'h7A2) begin               // tdata2: [MRW] Second Debug/Trace trigger data register
+    end else if (r.cmd_addr == 12'h7A3) begin               // tdata3: [MRW] Third Debug/Trace trigger data register
+    end else if (r.cmd_addr == 12'h7A8) begin               // mcontext: [MRW] Machine-mode context register
+    end else if (r.cmd_addr == 12'h7B0) begin               // dcsr: [DRW] Debug control and status register
         vb_rdata[31: 28] = 4'd4;                            // xdebugver: 4=External debug supported
         vb_rdata[15] = r.dcsr_ebreakm;
         vb_rdata[11] = r.dcsr_stepie;                       // interrupt dis/ena during step
@@ -842,7 +842,7 @@ begin: comb_proc
             v.dcsr_stoptimer = r.cmd_data[9];
             v.dcsr_step = r.cmd_data[2];
         end
-    end else if (r.cmd_addr == 12'h7b1) begin               // dpc: [DRW] Debug PC
+    end else if (r.cmd_addr == 12'h7B1) begin               // dpc: [DRW] Debug PC
         // Upon entry into debug mode DPC must contains:
         //        cause        |   Address
         // --------------------|----------------
@@ -860,22 +860,22 @@ begin: comb_proc
         if (v_csr_wena == 1'b1) begin
             v.dpc = r.cmd_data;
         end
-    end else if (r.cmd_addr == 12'h7b2) begin               // dscratch0: [DRW] Debug scratch register 0
+    end else if (r.cmd_addr == 12'h7B2) begin               // dscratch0: [DRW] Debug scratch register 0
         vb_rdata = r.dscratch0;
         if (v_csr_wena == 1'b1) begin
             v.dscratch0 = r.cmd_data;
         end
-    end else if (r.cmd_addr == 12'h7b3) begin               // dscratch1: [DRW] Debug scratch register 1
+    end else if (r.cmd_addr == 12'h7B3) begin               // dscratch1: [DRW] Debug scratch register 1
         vb_rdata = r.dscratch1;
         if (v_csr_wena) begin
             v.dscratch1 = r.cmd_data;
         end
-    end else if (r.cmd_addr == 12'hbc0) begin               // mstackovr: [MRW] Machine Stack Overflow
+    end else if (r.cmd_addr == 12'hBC0) begin               // mstackovr: [MRW] Machine Stack Overflow
         vb_rdata = r.mstackovr;
         if (v_csr_wena == 1'b1) begin
             v.mstackovr = r.cmd_data;
         end
-    end else if (r.cmd_addr == 12'hbc1) begin               // mstackund: [MRW] Machine Stack Underflow
+    end else if (r.cmd_addr == 12'hBC1) begin               // mstackund: [MRW] Machine Stack Underflow
         vb_rdata = r.mstackund;
         if (v_csr_wena == 1'b1) begin
             v.mstackund = r.cmd_data;
@@ -1377,7 +1377,6 @@ generate
                 r.pmp_flags <= rin.pmp_flags;
             end
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

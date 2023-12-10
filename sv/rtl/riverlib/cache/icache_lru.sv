@@ -132,7 +132,7 @@ begin: comb_proc
     vb_line_addr = '0;
     vb_line_wdata = '0;
     vb_line_wstrb = '0;
-    v_line_wflags = 1'b0;
+    v_line_wflags = '0;
     sel_cached = 0;
     sel_uncached = 0;
     v_ready_next = 1'b0;
@@ -188,7 +188,7 @@ begin: comb_proc
     end
     State_TranslateAddress: begin
         if (i_pmp_x == 1'b0) begin
-            t_cache_line_i = 256'd0;
+            t_cache_line_i = '0;
             v.cache_line_i = (~t_cache_line_i);
             v.state = State_CheckResp;
             v.load_fault = 1'b1;
@@ -255,7 +255,7 @@ begin: comb_proc
         v.state = State_FlushCheck;
         v_direct_access = r.req_flush_all;                  // 0=only if hit; 1=will be applied ignoring hit
         v_invalidate = 1'b1;                                // generate: wstrb='1; wflags='0
-        v.cache_line_i = 256'd0;
+        v.cache_line_i = '0;
     end
     State_FlushCheck: begin
         v.state = State_FlushAddr;
@@ -302,7 +302,7 @@ begin: comb_proc
         if (r.req_flush == 1'b1) begin
             v.state = State_FlushAddr;
             v.req_flush = 1'b0;
-            v.cache_line_i = 256'd0;
+            v.cache_line_i = '0;
             v.req_addr = (r.req_flush_addr & (~LINE_BYTES_MASK));
             v.flush_cnt = r.req_flush_cnt;
         end else begin
@@ -336,7 +336,7 @@ begin: comb_proc
     o_req_mem_type = r.req_mem_type;
     o_req_mem_size = r.req_mem_size;
     o_req_mem_strob = 32'd0;
-    o_req_mem_data = 256'd0;
+    o_req_mem_data = '0;
 
     o_resp_valid = v_resp_valid;
     o_resp_data = vb_resp_data;
@@ -358,7 +358,6 @@ generate
                 r <= rin;
             end
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

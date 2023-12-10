@@ -22,6 +22,6 @@ localparam bit CFG_SDCARD_HCS = 1'b1;                       // High Capacity Sup
 localparam bit [3:0] CFG_SDCARD_VHS = 4'h1;                 // CMD8 Voltage supply mask
 localparam bit CFG_SDCARD_PCIE_1_2V = 1'b0;
 localparam bit CFG_SDCARD_PCIE_AVAIL = 1'b0;
-localparam bit [23:0] CFG_SDCARD_VDD_VOLTAGE_WINDOW = 24'hff8000;
+localparam bit [23:0] CFG_SDCARD_VDD_VOLTAGE_WINDOW = 24'hFF8000;
 
 endpackage: vip_sdcard_top_pkg

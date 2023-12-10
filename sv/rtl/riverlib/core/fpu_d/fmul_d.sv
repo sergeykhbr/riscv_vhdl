@@ -206,15 +206,15 @@ begin: comb_proc
 
         // Exceptions:
         v.nanA = 1'b0;
-        if (r.a[62: 52] == 11'h7ff) begin
+        if (r.a[62: 52] == 11'h7FF) begin
             v.nanA = 1'b1;
         end
         v.nanB = 1'b0;
-        if (r.b[62: 52] == 11'h7ff) begin
+        if (r.b[62: 52] == 11'h7FF) begin
             v.nanB = 1'b1;
         end
         v.overflow = 1'b0;
-        if ((expAlign[12] == 1'b0) && (expAlign >= 13'h07ff)) begin
+        if ((expAlign[12] == 1'b0) && (expAlign >= 13'h07FF)) begin
             v.overflow = 1'b1;
         end
     end
@@ -236,7 +236,7 @@ begin: comb_proc
     // Rounding bit
     mantShort = r.mantPostScale[104: 52];
     tmpMant05 = r.mantPostScale[51: 0];
-    if (mantShort == 53'h1fffffffffffff) begin
+    if (mantShort == 53'h1FFFFFFFFFFFFF) begin
         mantOnes = 1'b1;
     end
     mantEven = r.mantPostScale[52];
@@ -246,10 +246,10 @@ begin: comb_proc
     rndBit = (r.mantPostScale[51] && (~(mant05 && (~mantEven))));
 
     // Check Borders
-    if (r.a[62: 52] == 11'h7ff) begin
+    if (r.a[62: 52] == 11'h7FF) begin
         nanA = 1'b1;
     end
-    if (r.b[62: 52] == 11'h7ff) begin
+    if (r.b[62: 52] == 11'h7FF) begin
         nanB = 1'b1;
     end
     if ((|r.a[51: 0]) == 1'b0) begin
@@ -327,7 +327,6 @@ generate
                 r <= rin;
             end
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

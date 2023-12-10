@@ -50,8 +50,8 @@ const L2Dummy_registers L2Dummy_r_reset = '{
     '0,                                 // req_size
     '0,                                 // req_prot
     1'b0,                               // req_lock
-    1'b0,                               // req_id
-    1'b0,                               // req_user
+    '0,                                 // req_id
+    '0,                                 // req_user
     '0,                                 // req_wdata
     '0,                                 // req_wstrb
     '0,                                 // rdata

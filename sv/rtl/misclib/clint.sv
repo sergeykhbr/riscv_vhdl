@@ -135,7 +135,7 @@ begin: comb_proc
         end
     end
     2'd2: begin
-        if (wb_req_addr[13: 3] == 11'h7ff) begin
+        if (wb_req_addr[13: 3] == 11'h7FF) begin
             vrdata = r.mtime;                               // [RO]
         end
     end
@@ -199,7 +199,6 @@ generate
                 r.rdata <= rin.rdata;
             end
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

@@ -255,7 +255,7 @@ begin
             end
             endcase
         end
-        7'h0f: begin
+        7'h0F: begin
             case (instr[14: 12])
             3'd0: begin
                 ostr = $sformatf("%10s", "fence");
@@ -312,7 +312,7 @@ begin
         7'h17: begin
             ostr = $sformatf("%10s", "auipc");
         end
-        7'h1b: begin
+        7'h1B: begin
             case (instr[14: 12])
             3'd0: begin
                 ostr = $sformatf("%10s", "addiw");
@@ -371,7 +371,7 @@ begin
             end
             endcase
         end
-        7'h2f: begin
+        7'h2F: begin
             if (instr[14: 12] == 3'd2) begin
                 case (instr[31: 27])
                 5'h00: begin
@@ -396,7 +396,7 @@ begin
                 5'h08: begin
                     ostr = $sformatf("%10s", "amoor.w");
                 end
-                5'h0c: begin
+                5'h0C: begin
                     ostr = $sformatf("%10s", "amoand.w");
                 end
                 5'h10: begin
@@ -408,7 +408,7 @@ begin
                 5'h18: begin
                     ostr = $sformatf("%10s", "amominu.w");
                 end
-                5'h1c: begin
+                5'h1C: begin
                     ostr = $sformatf("%10s", "amomaxu.w");
                 end
                 default: begin
@@ -439,7 +439,7 @@ begin
                 5'h08: begin
                     ostr = $sformatf("%10s", "amoor.d");
                 end
-                5'h0c: begin
+                5'h0C: begin
                     ostr = $sformatf("%10s", "amoand.d");
                 end
                 5'h10: begin
@@ -451,7 +451,7 @@ begin
                 5'h18: begin
                     ostr = $sformatf("%10s", "amominu.d");
                 end
-                5'h1c: begin
+                5'h1C: begin
                     ostr = $sformatf("%10s", "amomaxu.d");
                 end
                 default: begin
@@ -582,7 +582,7 @@ begin
         7'h37: begin
             ostr = $sformatf("%10s", "lui");
         end
-        7'h3b: begin
+        7'h3B: begin
             case (instr[14: 12])
             3'd0: begin
                 case (instr[31: 25])
@@ -669,7 +669,7 @@ begin
             7'h09: begin
                 ostr = $sformatf("%10s", "fmul");
             end
-            7'h0d: begin
+            7'h0D: begin
                 ostr = $sformatf("%10s", "fdiv");
             end
             7'h15: begin
@@ -786,7 +786,7 @@ begin
         7'h67: begin
             ostr = $sformatf("%10s", "jalr");
         end
-        7'h6f: begin
+        7'h6F: begin
             ostr = $sformatf("%10s", "jal");
         end
         7'h73: begin
@@ -1182,7 +1182,6 @@ generate
             end
             outstr = {""};
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

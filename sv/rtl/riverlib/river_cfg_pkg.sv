@@ -16,10 +16,10 @@
 package river_cfg_pkg;
 
 
-localparam bit [31:0] CFG_VENDOR_ID = 32'h000000f1;
+localparam bit [31:0] CFG_VENDOR_ID = 32'h000000F1;
 localparam bit [31:0] CFG_IMPLEMENTATION_ID = 32'h20220813;
-localparam bit CFG_HW_FPU_ENABLE = 1'b1;
-localparam bit CFG_TRACER_ENABLE = 1'b0;
+localparam bit CFG_HW_FPU_ENABLE = 1;
+localparam bit CFG_TRACER_ENABLE = 0;
 
 // Architectural size definition
 localparam int RISCV_ARCH = 64;
@@ -53,7 +53,7 @@ localparam int CFG_BP_DEPTH = 5;
 localparam int CFG_DEC_DEPTH = (CFG_BP_DEPTH - 3);          // requested, fetching, fetched
 
 // Jtag TAP ID, contains device and manufacturer values
-localparam bit [31:0] CFG_DMI_TAP_ID = 32'h10e31913;
+localparam bit [31:0] CFG_DMI_TAP_ID = 32'h10E31913;
 
 // Valid size 0..16
 localparam int CFG_PROGBUF_REG_TOTAL = 16;

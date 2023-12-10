@@ -23,7 +23,7 @@ module vip_sdcard_ctrl #(
     parameter logic [3:0] CFG_SDCARD_VHS = 4'h1,            // CMD8 Voltage supply mask
     parameter logic CFG_SDCARD_PCIE_1_2V = 1'b0,
     parameter logic CFG_SDCARD_PCIE_AVAIL = 1'b0,
-    parameter logic [23:0] CFG_SDCARD_VDD_VOLTAGE_WINDOW = 24'hff8000
+    parameter logic [23:0] CFG_SDCARD_VDD_VOLTAGE_WINDOW = 24'hFF8000
 )
 (
     input logic i_nrst,
@@ -241,7 +241,7 @@ begin: comb_proc
         if ((r.req_mem_valid == 1'b1) && (i_cmdio_busy == 1'b0) && (i_cs == 1'b0)) begin
             v.req_mem_valid = 1'b0;
             v.datastate = DATASTATE_START;
-            v.shiftdat = 16'hfe00;
+            v.shiftdat = 16'hFE00;
             v.bitcnt = 13'd0;
             v.dat_trans = 1'b1;
         end
@@ -314,7 +314,6 @@ generate
                 r <= rin;
             end
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

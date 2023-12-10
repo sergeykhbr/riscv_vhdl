@@ -18,7 +18,7 @@
 
 module InstrExecute #(
     parameter bit async_reset = 1'b0,
-    parameter bit fpu_ena = 1'b1
+    parameter bit fpu_ena = 1
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -1358,7 +1358,6 @@ generate
                 r <= rin;
             end
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

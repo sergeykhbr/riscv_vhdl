@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module vip_clk #(
-    parameter realtime period = 1
+    parameter realtime period = 1.0
 )
 (
     output logic o_clk
@@ -28,7 +28,7 @@ import vip_clk_pkg::*;
 logic pll;
 
 initial begin
-    pll = 1'b0;
+    pll = 0;
 end
 always begin
     #(0.5 * 1000000000 * period) pll = ~pll;

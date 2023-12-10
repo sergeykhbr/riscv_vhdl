@@ -187,7 +187,7 @@ begin: comb_proc
                 vb_cmd_txshift = 48'd0;
                 vb_cmd_txshift[45: 40] = r.cmd_rxshift[45: 40];
                 vb_cmd_txshift[39: 8] = i_cmd_resp_data32;
-                vb_cmd_txshift[7: 0] = 8'hff;
+                vb_cmd_txshift[7: 0] = 8'hFF;
             end else begin
                 // Default R1 response in SPI mode:
                 v.bitcnt = 6'd7;
@@ -293,7 +293,6 @@ generate
                 r <= rin;
             end
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

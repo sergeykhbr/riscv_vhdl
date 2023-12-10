@@ -38,7 +38,7 @@ typedef struct {
 } FpuTop_registers;
 
 const FpuTop_registers FpuTop_r_reset = '{
-    '0,                                 // ivec
+    21'd0,                              // ivec
     1'b0,                               // busy
     1'b0,                               // ready
     '0,                                 // a

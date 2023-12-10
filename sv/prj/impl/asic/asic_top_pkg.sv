@@ -15,6 +15,9 @@
 // 
 package asic_top_pkg;
 
+import types_amba_pkg::*;
+import types_pnp_pkg::*;
+
 localparam bit async_reset = 0;
 
 endpackage: asic_top_pkg

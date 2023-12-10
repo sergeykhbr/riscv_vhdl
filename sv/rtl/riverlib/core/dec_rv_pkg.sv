@@ -25,15 +25,15 @@ localparam bit [4:0] OPCODE_AUIPC = 5'h05;                  // 00101: AUIPC
 localparam bit [4:0] OPCODE_ADDIW = 5'h06;                  // 00110: ADDIW, SLLIW, SRAIW, SRLIW
 localparam bit [4:0] OPCODE_SB = 5'h08;                     // 01000: SB, SH, SW, SD
 localparam bit [4:0] OPCODE_FPU_SD = 5'h09;                 // 01001: FSD
-localparam bit [4:0] OPCODE_AMO = 5'h0b;                    // 01011: Atomic opcode (AMO)
-localparam bit [4:0] OPCODE_ADD = 5'h0c;                    // 01100: ADD, AND, OR, SLT, SLTU, SLL, SRA, SRL, SUB, XOR, DIV, DIVU, MUL, REM, REMU
-localparam bit [4:0] OPCODE_LUI = 5'h0d;                    // 01101: LUI
-localparam bit [4:0] OPCODE_ADDW = 5'h0e;                   // 01110: ADDW, SLLW, SRAW, SRLW, SUBW, DIVW, DIVUW, MULW, REMW, REMUW
+localparam bit [4:0] OPCODE_AMO = 5'h0B;                    // 01011: Atomic opcode (AMO)
+localparam bit [4:0] OPCODE_ADD = 5'h0C;                    // 01100: ADD, AND, OR, SLT, SLTU, SLL, SRA, SRL, SUB, XOR, DIV, DIVU, MUL, REM, REMU
+localparam bit [4:0] OPCODE_LUI = 5'h0D;                    // 01101: LUI
+localparam bit [4:0] OPCODE_ADDW = 5'h0E;                   // 01110: ADDW, SLLW, SRAW, SRLW, SUBW, DIVW, DIVUW, MULW, REMW, REMUW
 localparam bit [4:0] OPCODE_FPU_OP = 5'h14;                 // 10100: FPU operation
 localparam bit [4:0] OPCODE_BEQ = 5'h18;                    // 11000: BEQ, BNE, BLT, BGE, BLTU, BGEU
 localparam bit [4:0] OPCODE_JALR = 5'h19;                   // 11001: JALR
-localparam bit [4:0] OPCODE_JAL = 5'h1b;                    // 11011: JAL
-localparam bit [4:0] OPCODE_CSRR = 5'h1c;                   // 11100: CSRRC, CSRRCI, CSRRS, CSRRSI, CSRRW, CSRRWI, URET, SRET, HRET, MRET
+localparam bit [4:0] OPCODE_JAL = 5'h1B;                    // 11011: JAL
+localparam bit [4:0] OPCODE_CSRR = 5'h1C;                   // 11100: CSRRC, CSRRCI, CSRRS, CSRRSI, CSRRW, CSRRWI, URET, SRET, HRET, MRET
 
 typedef struct {
     logic [RISCV_ARCH-1:0] pc;

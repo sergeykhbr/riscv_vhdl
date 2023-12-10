@@ -140,7 +140,7 @@ begin: comb_proc
         v.HCS = 1'b1;
         v.S18 = 1'b0;
         v.data_addr = 32'd0;
-        v.OCR_VoltageWindow = 32'h00ff8000;
+        v.OCR_VoltageWindow = 64'h0000000000FF8000;
         v.cmd_req_valid = 1'b1;
         v.cmd_req_cmd = CMD0;
         v.cmd_req_rn = R1;
@@ -243,7 +243,7 @@ begin: comb_proc
         v.wdog_ena = 1'b1;
         if (i_err_code != CMDERR_NONE) begin
             v.state = STATE_WAIT_DATA_REQ;
-        end else if (r.data_data[7: 0] == 8'hfe) begin
+        end else if (r.data_data[7: 0] == 8'hFE) begin
             v.state = STATE_READING_DATA;
             v.bitcnt = 12'd0;
             v.crc16_clear = 1'b0;
@@ -315,7 +315,6 @@ generate
                 r <= rin;
             end
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

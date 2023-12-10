@@ -19,7 +19,7 @@
 module jtagtap #(
     parameter int abits = 7,
     parameter int irlen = 5,
-    parameter logic [31:0] idcode = 32'h10e31913
+    parameter logic [31:0] idcode = 32'h10E31913
 )
 (
     input logic i_trst,                                     // Must be open-train, pullup
@@ -41,7 +41,7 @@ module jtagtap #(
 localparam bit [irlen-1:0] IR_IDCODE = 5'h01;
 localparam bit [irlen-1:0] IR_DTMCONTROL = 5'h10;
 localparam bit [irlen-1:0] IR_DBUS = 5'h11;
-localparam bit [irlen-1:0] IR_BYPASS = 5'h1f;
+localparam bit [irlen-1:0] IR_BYPASS = 5'h1F;
 
 localparam bit [1:0] DMISTAT_SUCCESS = 2'h0;
 localparam bit [1:0] DMISTAT_RESERVED = 2'h1;
@@ -338,5 +338,4 @@ always_ff @(negedge i_tck, posedge i_trst) begin
         nr <= nrin;
     end
 end
-
 endmodule: jtagtap

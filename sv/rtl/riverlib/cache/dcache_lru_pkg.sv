@@ -90,7 +90,7 @@ const DCacheLru_registers DCacheLru_r_reset = '{
     '0,                                 // mem_wstrb
     1'b1,                               // req_flush
     1'b0,                               // req_flush_all
-    48'd0,                              // req_flush_addr
+    '0,                                 // req_flush_addr
     '0,                                 // req_flush_cnt
     '0,                                 // flush_cnt
     '0,                                 // cache_line_i

@@ -50,7 +50,7 @@ const ic_axi4_to_l1_registers ic_axi4_to_l1_r_reset = '{
     Idle,                               // state
     '0,                                 // req_addr
     '0,                                 // req_id
-    1'b0,                               // req_user
+    '0,                                 // req_user
     '0,                                 // req_wstrb
     '0,                                 // req_wdata
     '0,                                 // req_len

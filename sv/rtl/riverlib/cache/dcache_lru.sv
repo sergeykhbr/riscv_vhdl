@@ -18,7 +18,7 @@
 
 module DCacheLru #(
     parameter bit async_reset = 1'b0,
-    parameter bit coherence_ena = 1'b0
+    parameter bit coherence_ena = 0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -209,7 +209,7 @@ begin: comb_proc
 
     for (int i = 0; i < 8; i++) begin
         if (r.req_wstrb[i] == 1'b1) begin
-            vb_req_mask[(8 * i) +: 8] = 8'hff;
+            vb_req_mask[(8 * i) +: 8] = 8'hFF;
         end
     end
 
@@ -312,12 +312,12 @@ begin: comb_proc
     State_TranslateAddress: begin
         if ((r.req_type[MemopType_Store] == 1'b1) && (i_pmp_w == 1'b0)) begin
             v.load_fault = 1'b1;
-            t_cache_line_i = 256'd0;
+            t_cache_line_i = '0;
             v.cache_line_i = (~t_cache_line_i);
             v.state = State_CheckResp;
         end else if ((r.req_type[MemopType_Store] == 1'b0) && (i_pmp_r == 1'b0)) begin
             v.load_fault = 1'b1;
-            t_cache_line_i = 256'd0;
+            t_cache_line_i = '0;
             v.cache_line_i = (~t_cache_line_i);
             v.state = State_CheckResp;
         end else begin
@@ -357,12 +357,12 @@ begin: comb_proc
                 end else begin
                     v.req_mem_type = ReadNoSnoop();
                 end
-                t_cache_line_i = 256'd0;
+                t_cache_line_i = '0;
                 t_cache_line_i[63: 0] = r.req_wdata;
                 v.cache_line_o = t_cache_line_i;
             end
         end
-        v.cache_line_i = 256'd0;
+        v.cache_line_i = '0;
     end
     State_WaitGrant: begin
         if (i_req_mem_ready == 1'b1) begin
@@ -474,7 +474,7 @@ begin: comb_proc
         v_direct_access = r.req_flush_all;                  // 0=only if hit; 1=will be applied ignoring hit
         v_invalidate = 1'b1;                                // generate: wstrb='1; wflags='0
         v.write_flush = 1'b0;
-        v.cache_line_i = 256'd0;
+        v.cache_line_i = '0;
     end
     State_FlushCheck: begin
         v.cache_line_o = line_rdata_o;
@@ -577,7 +577,7 @@ begin: comb_proc
         end else if (r.req_flush == 1'b1) begin
             v.state = State_FlushAddr;
             v.req_flush = 1'b0;
-            v.cache_line_i = 256'd0;
+            v.cache_line_i = '0;
             v.req_addr = (r.req_flush_addr & (~LINE_BYTES_MASK));
             v.req_mem_size = CFG_LOG2_L1CACHE_BYTES_PER_LINE;
             v.flush_cnt = r.req_flush_cnt;
@@ -646,7 +646,6 @@ generate
                 r <= rin;
             end
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

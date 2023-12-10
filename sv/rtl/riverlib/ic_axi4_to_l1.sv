@@ -73,7 +73,7 @@ begin: comb_proc
     vb_req_mask = 64'd0;
     for (int i = 0; i < 8; i++) begin
         if (r.req_wstrb[i] == 1'b1) begin
-            vb_req_mask[(8 * i) +: 8] = 8'hff;
+            vb_req_mask[(8 * i) +: 8] = 8'hFF;
         end
     end
 
@@ -234,7 +234,6 @@ generate
                 r <= rin;
             end
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

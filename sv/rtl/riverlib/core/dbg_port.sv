@@ -170,7 +170,7 @@ begin: comb_proc
                     v.dstate = csr_region;
                 end else if (i_dport_addr[15: 12] == 4'h1) begin
                     v.dstate = reg_bank;
-                end else if (i_dport_addr[15: 12] == 4'hc) begin
+                end else if (i_dport_addr[15: 12] == 4'hC) begin
                     // non-standard extension
                     if (vb_idx == 12'd64) begin
                         v.dstate = reg_stktr_cnt;
@@ -259,7 +259,7 @@ begin: comb_proc
         end else begin
             t_idx = i_e_npc[5: 2];
             v.progbuf_pc = {58'd0, {i_e_npc[5: 2], 2'd0}};
-            if (t_idx == 4'hf) begin
+            if (t_idx == 4'hF) begin
                 v.progbuf_instr = {32'd0, i_progbuf[255: 224]};
             end else begin
                 v.progbuf_instr = i_progbuf[(32 * t_idx) +: 64];
@@ -347,7 +347,6 @@ generate
                 r <= rin;
             end
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

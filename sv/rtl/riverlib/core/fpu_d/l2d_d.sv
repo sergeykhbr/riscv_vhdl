@@ -117,11 +117,11 @@ begin: comb_proc
     end
 
     mantEven = r.mantAlign[11];
-    if (r.mantAlign[10: 0] == 11'h7ff) begin
+    if (r.mantAlign[10: 0] == 11'h7FF) begin
         mant05 = 1'b1;
     end
     rndBit = (r.mantAlign[10] && (~(mant05 && mantEven)));
-    if (r.mantAlign[63: 11] == 52'hfffffffffffff) begin
+    if (r.mantAlign[63: 11] == 52'hFFFFFFFFFFFFF) begin
         mantOnes = 1'b1;
     end
 
@@ -157,7 +157,6 @@ generate
                 r <= rin;
             end
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

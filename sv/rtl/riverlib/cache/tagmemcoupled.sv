@@ -42,11 +42,11 @@ module TagMemCoupled #(
     output logic o_hit_next
 );
 
+localparam int LINE_SZ = (2**lnbits);
 localparam int EVEN = 0;
 localparam int ODD = 1;
 localparam int MemTotal = 2;
 
-localparam int LINE_SZ = (2**lnbits);
 localparam int TAG_START = (abus - (ibits + lnbits));
 
 typedef struct {
@@ -260,7 +260,6 @@ generate
                 r <= rin;
             end
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

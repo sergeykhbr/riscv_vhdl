@@ -214,7 +214,7 @@ begin: comb_proc
             v.result = wb_res32;
         end else if (r.high == 1'b1) begin
             if (r.zero == 1'b1) begin
-                v.result = 128'd0;
+                v.result = '0;
             end else if (r.inv == 1'b1) begin
                 v.result = (~wb_lvl5);
             end else begin
@@ -323,7 +323,6 @@ generate
                 end
             end
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

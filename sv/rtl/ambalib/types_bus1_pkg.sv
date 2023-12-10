@@ -49,11 +49,11 @@ typedef mapinfo_type bus1_mapinfo_vector[0:CFG_BUS1_PSLV_TOTAL - 1];
 const bus1_mapinfo_vector CFG_BUS1_MAP = '{
     '{64'h0000000000010000, 64'h0000000000011000},          // 0, uart1 4KB
     '{64'h0000000000012000, 64'h0000000000013000},          // 1, PRCI 4KB
-    '{64'h000000000001e000, 64'h000000000001f000},          // 2, dmi 4KB. TODO: change base address
+    '{64'h000000000001E000, 64'h000000000001F000},          // 2, dmi 4KB. TODO: change base address
     '{64'h0000000000050000, 64'h0000000000051000},          // 4, SPI SD-card 4KB
     '{64'h0000000000060000, 64'h0000000000061000},          // 3, GPIO 4KB
-    '{64'h00000000000c0000, 64'h00000000000c1000},          // 5, DDR MGMT 4KB
-    '{64'h00000000000ff000, 64'h0000000000100000}           // 6, Plug'n'Play 4KB
+    '{64'h00000000000C0000, 64'h00000000000C1000},          // 5, DDR MGMT 4KB
+    '{64'h00000000000FF000, 64'h0000000000100000}           // 6, Plug'n'Play 4KB
 };
 
 endpackage: types_bus1_pkg

@@ -32,7 +32,6 @@ module L2Top #(
 import types_amba_pkg::*;
 import types_river_pkg::*;
 import river_cfg_pkg::*;
-import target_cfg_pkg::*;
 import l2_top_pkg::*;
 
 logic w_req_ready;

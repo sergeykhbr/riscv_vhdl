@@ -19,9 +19,9 @@
 module RiverTop #(
     parameter bit async_reset = 1'b0,
     parameter int unsigned hartid = 0,
-    parameter bit fpu_ena = 1'b1,
-    parameter bit coherence_ena = 1'b0,
-    parameter bit tracer_ena = 1'b1
+    parameter bit fpu_ena = 1,
+    parameter bit coherence_ena = 0,
+    parameter bit tracer_ena = 1
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -71,7 +71,6 @@ module RiverTop #(
 );
 
 import river_cfg_pkg::*;
-import target_cfg_pkg::*;
 import river_top_pkg::*;
 
 // Control path:

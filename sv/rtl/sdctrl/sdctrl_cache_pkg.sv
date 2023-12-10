@@ -37,6 +37,7 @@ localparam bit [3:0] State_Reset = 4'd10;
 localparam bit [3:0] State_ResetWrite = 4'd11;
 
 localparam bit [CFG_SDCACHE_ADDR_BITS-1:0] LINE_BYTES_MASK = ((2**CFG_LOG2_SDCACHE_BYTES_PER_LINE) - 1);
+localparam bit [31:0] FLUSH_ALL_VALUE = ((2**ibits) - 1);
 
 typedef struct {
     logic req_write;

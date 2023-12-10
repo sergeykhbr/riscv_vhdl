@@ -23,19 +23,19 @@ localparam bit [4:0] OPCODE_C_SLLI = 5'h02;
 localparam bit [4:0] OPCODE_C_JAL_ADDIW = 5'h05;
 localparam bit [4:0] OPCODE_C_LW = 5'h08;
 localparam bit [4:0] OPCODE_C_LI = 5'h09;
-localparam bit [4:0] OPCODE_C_LWSP = 5'h0a;
-localparam bit [4:0] OPCODE_C_LD = 5'h0c;
-localparam bit [4:0] OPCODE_C_ADDI16SP_LUI = 5'h0d;
-localparam bit [4:0] OPCODE_C_LDSP = 5'h0e;
+localparam bit [4:0] OPCODE_C_LWSP = 5'h0A;
+localparam bit [4:0] OPCODE_C_LD = 5'h0C;
+localparam bit [4:0] OPCODE_C_ADDI16SP_LUI = 5'h0D;
+localparam bit [4:0] OPCODE_C_LDSP = 5'h0E;
 localparam bit [4:0] OPCODE_C_MATH = 5'h11;
 localparam bit [4:0] OPCODE_C_JR_MV_EBREAK_JALR_ADD = 5'h12;
 localparam bit [4:0] OPCODE_C_J = 5'h15;
 localparam bit [4:0] OPCODE_C_SW = 5'h18;
 localparam bit [4:0] OPCODE_C_BEQZ = 5'h19;
-localparam bit [4:0] OPCODE_C_SWSP = 5'h1a;
-localparam bit [4:0] OPCODE_C_SD = 5'h1c;
-localparam bit [4:0] OPCODE_C_BNEZ = 5'h1d;
-localparam bit [4:0] OPCODE_C_SDSP = 5'h1e;
+localparam bit [4:0] OPCODE_C_SWSP = 5'h1A;
+localparam bit [4:0] OPCODE_C_SD = 5'h1C;
+localparam bit [4:0] OPCODE_C_BNEZ = 5'h1D;
+localparam bit [4:0] OPCODE_C_SDSP = 5'h1E;
 
 typedef struct {
     logic [RISCV_ARCH-1:0] pc;

@@ -38,7 +38,7 @@ localparam bit [3:0] State_Csr = 4'd6;
 localparam bit [3:0] State_Halted = 4'd7;
 localparam bit [3:0] State_DebugMemRequest = 4'd8;
 localparam bit [3:0] State_DebugMemError = 4'd9;
-localparam bit [3:0] State_Wfi = 4'hf;
+localparam bit [3:0] State_Wfi = 4'hF;
 
 localparam bit [1:0] CsrState_Idle = 2'd0;
 localparam bit [1:0] CsrState_Req = 2'd1;
@@ -148,7 +148,7 @@ const InstrExecute_registers InstrExecute_r_reset = '{
     '0,                                 // isa_type
     '0,                                 // imm
     '0,                                 // instr
-    192'd0,                             // tagcnt
+    '0,                                 // tagcnt
     1'b0,                               // reg_write
     '0,                                 // reg_waddr
     '0,                                 // reg_wtag

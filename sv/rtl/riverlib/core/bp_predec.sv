@@ -74,7 +74,7 @@ begin: comb_proc
     vb_jal_addr = (vb_pc + vb_jal_off);
 
     v_jal = 1'b0;
-    if (vb_tmp[6: 0] == 7'h6f) begin
+    if (vb_tmp[6: 0] == 7'h6F) begin
         v_jal = 1'b1;
     end
 

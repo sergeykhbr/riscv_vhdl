@@ -95,7 +95,7 @@ begin: comb_proc
 
     case (wb_req_addr[7: 2])
     6'h00: begin                                            // [0x00] hwid
-        rdata = 32'hcafecafe;
+        rdata = 32'hCAFECAFE;
     end
     6'h01: begin                                            // [0x04] scratch0
         rdata = r.scratch0;
@@ -161,7 +161,6 @@ generate
                 r <= rin;
             end
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

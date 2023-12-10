@@ -49,7 +49,7 @@ const sdctrl_regs_registers sdctrl_regs_r_reset = '{
     '0,                                 // scaler_400khz
     '0,                                 // scaler_data
     '0,                                 // scaler_cnt
-    16'h0fff,                           // wdog
+    16'h0FFF,                           // wdog
     '0,                                 // wdog_cnt
     1'b0,                               // level
     1'b0,                               // resp_valid

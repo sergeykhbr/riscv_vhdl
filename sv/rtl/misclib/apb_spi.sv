@@ -355,7 +355,7 @@ begin: comb_proc
     end
     recv_sync: begin
         if (v_posedge == 1'b1) begin
-            if ((vb_shiftreg_next == 8'hfe)
+            if ((vb_shiftreg_next == 8'hFE)
                     || ((|r.wdog_cnt) == 1'b0)) begin
                 v.state = ending;
                 v.rx_val = vb_shiftreg_next;
@@ -492,7 +492,6 @@ generate
                 r <= rin;
             end
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

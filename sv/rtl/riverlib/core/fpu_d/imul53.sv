@@ -90,7 +90,7 @@ begin: comb_proc
         v.b = {3'd0, i_b};
         v.overflow = 1'b0;
         v.accum_ena = 1'b1;
-        v.sum = 106'd0;
+        v.sum = '0;
         v.shift = 7'd0;
     end else if (r.delay[13] == 1'b1) begin
         v.accum_ena = 1'b0;
@@ -170,7 +170,7 @@ begin: comb_proc
     if (r.delay[14] == 1'b1) begin
         v.shift = vb_shift;
         v.overflow = 1'b0;
-        if (vb_shift == 7'h7f) begin
+        if (vb_shift == 7'h7F) begin
             v.overflow = 1'b1;
         end
     end
@@ -198,7 +198,6 @@ generate
                 r <= rin;
             end
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

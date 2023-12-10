@@ -94,7 +94,7 @@ begin: comb_proc
     end
 
     // (1086 - expA)[5:0]
-    expShift = (6'h3e - r.expA[5: 0]);
+    expShift = (6'h3E - r.expA[5: 0]);
     if (r.w32 == 1'b1) begin
         if (r.op_signed == 1'b1) begin
             expMax = 11'd1053;
@@ -112,7 +112,7 @@ begin: comb_proc
 
     expDif_gr = expDif[11];
     expDif_lt = 1'b0;
-    if ((r.expA != 11'h3ff) && (r.expA[10] == 1'b0)) begin
+    if ((r.expA != 11'h3FF) && (r.expA[10] == 1'b0)) begin
         expDif_lt = 1'b1;
     end
 
@@ -196,7 +196,6 @@ generate
                 r <= rin;
             end
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

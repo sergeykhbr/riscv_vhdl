@@ -54,10 +54,9 @@ import types_amba_pkg::*;
 import types_pnp_pkg::*;
 import river_cfg_pkg::*;
 import types_river_pkg::*;
-import target_cfg_pkg::*;
 import workgroup_pkg::*;
 
-localparam bit coherence_ena = ((cpu_num * l2cache_ena) > 1 ? 1: 0);
+localparam bit coherence_ena = ((cpu_num * l2cache_ena) > 1);
 
 axi4_l1_out_vector coreo;
 axi4_l1_in_vector corei;

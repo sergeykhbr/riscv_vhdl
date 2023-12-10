@@ -33,10 +33,7 @@ typedef struct {
 } mapinfo_type;
 
 // @brief Empty entry value for the map info table
-const mapinfo_type mapinfo_none = '{
-    '0,  // addr_start
-    '0  // addr_end
-};
+const mapinfo_type mapinfo_none = '{0, 0};
 
 // Burst length size decoder
 localparam int XSIZE_TOTAL = 8;
@@ -85,10 +82,10 @@ localparam bit [1:0] AXI_BURST_WRAP = 2'd2;
 // @}
 
 localparam bit [3:0] ARCACHE_DEVICE_NON_BUFFERABLE = 4'h0;
-localparam bit [3:0] ARCACHE_WRBACK_READ_ALLOCATE = 4'hf;
+localparam bit [3:0] ARCACHE_WRBACK_READ_ALLOCATE = 4'hF;
 
 localparam bit [3:0] AWCACHE_DEVICE_NON_BUFFERABLE = 4'h0;
-localparam bit [3:0] AWCACHE_WRBACK_WRITE_ALLOCATE = 4'hf;
+localparam bit [3:0] AWCACHE_WRBACK_WRITE_ALLOCATE = 4'hF;
 
 // see table C3-7 Permitted read address control signal combinations
 //  
@@ -98,7 +95,7 @@ localparam bit [3:0] AWCACHE_WRBACK_WRITE_ALLOCATE = 4'hf;
 //     0    |    1     |    1     |    ReadMakeUnique
 localparam bit [3:0] ARSNOOP_READ_NO_SNOOP = 4'h0;
 localparam bit [3:0] ARSNOOP_READ_SHARED = 4'h1;
-localparam bit [3:0] ARSNOOP_READ_MAKE_UNIQUE = 4'hc;
+localparam bit [3:0] ARSNOOP_READ_MAKE_UNIQUE = 4'hC;
 
 // see table C3-8 Permitted read address control signal combinations
 //  
@@ -112,7 +109,7 @@ localparam bit [2:0] AWSNOOP_WRITE_BACK = 3'h3;
 
 // see table C3-19
 localparam bit [3:0] AC_SNOOP_READ_UNIQUE = 4'h7;
-localparam bit [3:0] AC_SNOOP_MAKE_INVALID = 4'hd;
+localparam bit [3:0] AC_SNOOP_MAKE_INVALID = 4'hD;
 
 typedef struct {
     logic [CFG_SYSBUS_ADDR_BITS-1:0] addr;
@@ -167,17 +164,7 @@ typedef struct {
     logic [3:0] region;
 } axi4_metadata_type;
 
-const axi4_metadata_type META_NONE = '{
-    '0,  // addr
-    '0,  // len
-    '0,  // size
-    AXI_BURST_INCR,  // burst
-    1'b0,  // lock
-    '0,  // cache
-    '0,  // prot
-    '0,  // qos
-    '0  // region
-};
+const axi4_metadata_type META_NONE = '{'0, '0, '0, AXI_BURST_INCR, 1'b0, '0, '0, '0, '0};
 
 
 typedef struct {
@@ -201,23 +188,7 @@ typedef struct {
 // @brief   Master device empty value.
 // @warning If the master is not connected to the vector begin vector value
 //          MUST BE initialized by this value.
-const axi4_master_out_type axi4_master_out_none = '{
-    1'b0,  // aw_valid
-    META_NONE,  // aw_bits
-    '0,  // aw_id
-    1'b0,  // aw_user
-    1'b0,  // w_valid
-    '0,  // w_data
-    1'b0,  // w_last
-    '0,  // w_strb
-    1'b0,  // w_user
-    1'b0,  // b_ready
-    1'b0,  // ar_valid
-    META_NONE,  // ar_bits
-    '0,  // ar_id
-    1'b0,  // ar_user
-    1'b0  // r_ready
-};
+const axi4_master_out_type axi4_master_out_none = '{1'b0, META_NONE, '0, '0, 1'b0, '0, 1'b0, '0, '0, 1'b0, 1'b0, META_NONE, '0, '0, 1'b0};
 
 // @brief Master device input signals.
 typedef struct {
@@ -236,21 +207,7 @@ typedef struct {
     logic [CFG_SYSBUS_USER_BITS-1:0] r_user;
 } axi4_master_in_type;
 
-const axi4_master_in_type axi4_master_in_none = '{
-    1'b0,  // aw_ready
-    1'b0,  // w_ready
-    1'b0,  // b_valid
-    '0,  // b_resp
-    '0,  // b_id
-    1'b0,  // b_user
-    1'b0,  // ar_ready
-    1'b0,  // r_valid
-    '0,  // r_resp
-    '0,  // r_data
-    1'b0,  // r_last
-    '0,  // r_id
-    1'b0  // r_user
-};
+const axi4_master_in_type axi4_master_in_none = '{1'b0, 1'b0, 1'b0, '0, '0, '0, 1'b0, 1'b0, '0, '0, 1'b0, '0, '0};
 
 
 typedef struct {
@@ -271,23 +228,7 @@ typedef struct {
     logic r_ready;
 } axi4_slave_in_type;
 
-const axi4_slave_in_type axi4_slave_in_none = '{
-    1'b0,  // aw_valid
-    META_NONE,  // aw_bits
-    '0,  // aw_id
-    1'b0,  // aw_user
-    1'b0,  // w_valid
-    '0,  // w_data
-    1'b0,  // w_last
-    '0,  // w_strb
-    1'b0,  // w_user
-    1'b0,  // b_ready
-    1'b0,  // ar_valid
-    META_NONE,  // ar_bits
-    '0,  // ar_id
-    1'b0,  // ar_user
-    1'b0  // r_ready
-};
+const axi4_slave_in_type axi4_slave_in_none = '{1'b0, META_NONE, '0, '0, 1'b0, '0, 1'b0, '0, '0, 1'b0, 1'b0, META_NONE, '0, '0, 1'b0};
 
 typedef struct {
     logic aw_ready;
@@ -305,21 +246,7 @@ typedef struct {
     logic [CFG_SYSBUS_USER_BITS-1:0] r_user;
 } axi4_slave_out_type;
 
-const axi4_slave_out_type axi4_slave_out_none = '{
-    1'b0,  // aw_ready
-    1'b0,  // w_ready
-    1'b0,  // b_valid
-    '0,  // b_resp
-    '0,  // b_id
-    1'b0,  // b_user
-    1'b0,  // ar_ready
-    1'b0,  // r_valid
-    '0,  // r_resp
-    '0,  // r_data
-    1'b0,  // r_last
-    '0,  // r_id
-    1'b0  // r_user
-};
+const axi4_slave_out_type axi4_slave_out_none = '{1'b0, 1'b0, 1'b0, '0, '0, '0, 1'b0, 1'b0, '0, '0, 1'b0, '0, '0};
 
 
 typedef struct {
@@ -332,15 +259,7 @@ typedef struct {
     logic [3:0] pstrb;
 } apb_in_type;
 
-const apb_in_type apb_in_none = '{
-    '0,  // paddr
-    '0,  // pprot
-    1'b0,  // pselx
-    1'b0,  // penable
-    1'b0,  // pwrite
-    '0,  // pwdata
-    '0  // pstrb
-};
+const apb_in_type apb_in_none = '{'0, '0, 1'b0, 1'b0, 1'b0, '0, '0};
 
 typedef struct {
     logic pready;                                           // when 1 it breaks callback to functional model
@@ -348,10 +267,6 @@ typedef struct {
     logic pslverr;
 } apb_out_type;
 
-const apb_out_type apb_out_none = '{
-    1'b0,  // pready
-    '0,  // prdata
-    1'b0  // pslverr
-};
+const apb_out_type apb_out_none = '{1'b0, '0, 1'b0};
 
 endpackage: types_amba_pkg

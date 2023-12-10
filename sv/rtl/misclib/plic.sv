@@ -111,8 +111,8 @@ begin: comb_proc
     end
     for (int i = 0; i < ctxmax; i++) begin
         vb_ctx[i].priority_th = 4'd0;
-        vb_ctx[i].ie = 1024'd0;
-        vb_ctx[i].ip_prio = 4096'd0;
+        vb_ctx[i].ie = '0;
+        vb_ctx[i].ip_prio = '0;
         vb_ctx[i].prio_mask = 16'd0;
         vb_ctx[i].sel_prio = 4'd0;
         vb_ctx[i].irq_idx = 10'd0;
@@ -346,7 +346,6 @@ generate
                 r.rdata <= rin.rdata;
             end
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

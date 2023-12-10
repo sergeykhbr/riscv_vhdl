@@ -19,8 +19,8 @@
 module Processor #(
     parameter bit async_reset = 1'b0,
     parameter int unsigned hartid = 0,
-    parameter bit fpu_ena = 1'b1,
-    parameter bit tracer_ena = 1'b1
+    parameter bit fpu_ena = 1,
+    parameter bit tracer_ena = 1
 )
 (
     input logic i_clk,                                      // CPU clock

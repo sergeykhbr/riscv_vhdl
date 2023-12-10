@@ -35,14 +35,13 @@ module apb_uart #(
 
 import types_amba_pkg::*;
 import types_pnp_pkg::*;
+localparam int fifosz = (2**log2_fifosz);
 // Rx/Tx states
 localparam bit [2:0] idle = 3'd0;
 localparam bit [2:0] startbit = 3'd1;
 localparam bit [2:0] data = 3'd2;
 localparam bit [2:0] parity = 3'd3;
 localparam bit [2:0] stopbit = 3'd4;
-
-localparam int fifosz = (2**log2_fifosz);
 
 typedef struct {
     logic [31:0] scaler;
@@ -648,7 +647,6 @@ generate
                 r.resp_err <= rin.resp_err;
             end
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

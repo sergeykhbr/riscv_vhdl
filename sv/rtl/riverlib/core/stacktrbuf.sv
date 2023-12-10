@@ -59,5 +59,4 @@ always_ff @(posedge i_clk) begin: rg_proc
         r.stackbuf[i] <= rin.stackbuf[i];
     end
 end: rg_proc
-
 endmodule: StackTraceBuffer

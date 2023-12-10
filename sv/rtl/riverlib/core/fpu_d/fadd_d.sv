@@ -256,7 +256,7 @@ begin: comb_proc
     mantLessScale = r.mantLess;
     mantLessScale = {mantLessScale, {52{1'b0}}};
     if (r.ena[1] == 1'b1) begin
-        v.mantLessScale = 105'd0;
+        v.mantLessScale = '0;
         for (int i = 0; i < 105; i++) begin
             if (i == r.preShift) begin
                 v.mantLessScale = (mantLessScale >> i);
@@ -313,7 +313,7 @@ begin: comb_proc
     end
 
     // Prepare to mantissa post-scale
-    if (r.lshift == 7'h7f) begin
+    if (r.lshift == 7'h7F) begin
         vb_mantAlign = {'0, r.mantSum[106 - 1: 1]};
     end else if ((|r.lshift) == 1'b0) begin
         vb_mantAlign = r.mantSum;
@@ -324,8 +324,8 @@ begin: comb_proc
             end
         end
     end
-    if (r.lshift == 7'h7f) begin
-        if (r.expMore == 11'h7ff) begin
+    if (r.lshift == 7'h7F) begin
+        if (r.expMore == 11'h7FF) begin
             vb_expPostScale = {1'b0, r.expMore};
         end else begin
             vb_expPostScale = {1'b0, (r.expMore + 1)};
@@ -368,7 +368,7 @@ begin: comb_proc
     mantShort = r.mantPostScale[104: 52];
     tmpMant05 = r.mantPostScale[51: 0];
     mantOnes = 1'b0;
-    if (mantShort == 53'h1fffffffffffff) begin
+    if (mantShort == 53'h1FFFFFFFFFFFFF) begin
         mantOnes = 1'b1;
     end
     mantEven = r.mantPostScale[52];
@@ -392,14 +392,14 @@ begin: comb_proc
     if ((|r.mantPostScale) == 1'b0) begin
         sumZero = 1'b1;
     end
-    if (r.a[62: 52] == 11'h7ff) begin
+    if (r.a[62: 52] == 11'h7FF) begin
         nanA = 1'b1;
     end
-    if (r.b[62: 52] == 11'h7ff) begin
+    if (r.b[62: 52] == 11'h7FF) begin
         nanB = 1'b1;
     end
     nanAB = (nanA && mantZeroA && nanB && mantZeroB);
-    if (r.expPostScale == 12'h7ff) begin                    // positive
+    if (r.expPostScale == 12'h7FF) begin                    // positive
         overflow = 1'b1;
     end
 
@@ -520,7 +520,6 @@ generate
                 r <= rin;
             end
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

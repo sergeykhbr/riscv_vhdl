@@ -18,7 +18,6 @@ package river_amba_pkg;
 import types_amba_pkg::*;
 import types_river_pkg::*;
 import river_cfg_pkg::*;
-import target_cfg_pkg::*;
 
 localparam bit [2:0] state_idle = 3'd0;
 localparam bit [2:0] state_ar = 3'd1;
@@ -54,8 +53,8 @@ typedef struct {
 } RiverAmba_registers;
 
 const RiverAmba_registers RiverAmba_r_reset = '{
-    '0,                                 // state
-    state_idle,                         // req_addr
+    state_idle,                         // state
+    '0,                                 // req_addr
     1'b0,                               // req_path
     '0,                                 // req_cached
     '0,                                 // req_wdata

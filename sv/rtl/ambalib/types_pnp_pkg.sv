@@ -17,8 +17,8 @@ package types_pnp_pkg;
 
 
 // @name Vendor IDs defintion.
-localparam bit [15:0] VENDOR_GNSSSENSOR = 16'h00f1;
-localparam bit [15:0] VENDOR_OPTIMITECH = 16'h00f2;
+localparam bit [15:0] VENDOR_GNSSSENSOR = 16'h00F1;
+localparam bit [15:0] VENDOR_OPTIMITECH = 16'h00F2;
 
 // @name Master Device IDs definition:
 // Empty master slot device
@@ -28,9 +28,9 @@ localparam bit [15:0] RISCV_RIVER_CPU = 16'h0505;
 // "Wasserfall" CPU Device ID.
 localparam bit [15:0] RISCV_RIVER_WORKGROUP = 16'h0506;
 // UART with DMA: Test Access Point (TAP)
-localparam bit [15:0] GNSSSENSOR_UART_TAP = 16'h050a;
+localparam bit [15:0] GNSSSENSOR_UART_TAP = 16'h050A;
 // JTAG Test Access Point (TAP) with SBA interface (DMA without progbuf)
-localparam bit [15:0] OPTIMITECH_JTAG_SBA = 16'h050b;
+localparam bit [15:0] OPTIMITECH_JTAG_SBA = 16'h050B;
 
 // @name Slave Device IDs definition:
 // Empty slave slot device
@@ -46,7 +46,7 @@ localparam bit [15:0] OPTIMITECH_SPI_FLASH = 16'h0075;
 // General purpose IOs
 localparam bit [15:0] OPTIMITECH_GPIO = 16'h0076;
 // rs-232 UART Device ID
-localparam bit [15:0] OPTIMITECH_UART = 16'h007a;
+localparam bit [15:0] OPTIMITECH_UART = 16'h007A;
 // Core local interrupt controller
 localparam bit [15:0] OPTIMITECH_CLINT = 16'h0083;
 // External interrupt controller
@@ -62,9 +62,9 @@ localparam bit [15:0] OPTIMITECH_DDRCTRL = 16'h0088;
 // SD-card controller control registers
 localparam bit [15:0] OPTIMITECH_SDCTRL_REG = 16'h0089;
 // SD-card controller memory
-localparam bit [15:0] OPTIMITECH_SDCTRL_MEM = 16'h008b;
+localparam bit [15:0] OPTIMITECH_SDCTRL_MEM = 16'h008B;
 // RIVER debug registers:
-localparam bit [15:0] OPTIMITECH_RIVER_DMI = 16'h008a;
+localparam bit [15:0] OPTIMITECH_RIVER_DMI = 16'h008A;
 
 // Plug'n'Play descriptor localparams.
 // Undefined type of the descriptor (empty device).
@@ -115,14 +115,7 @@ typedef struct {
 } dev_config_type;
 
 // @brief Default config value for empty slot.
-const dev_config_type dev_config_none = '{
-    PNP_CFG_DEV_DESCR_BYTES,  // descrsize
-    PNP_CFG_TYPE_SLAVE,  // descrtype
-    '0,  // addr_start
-    '0,  // addr_end
-    VENDOR_GNSSSENSOR,  // vid
-    SLV_DID_EMPTY  // did
-};
+const dev_config_type dev_config_none = '{PNP_CFG_DEV_DESCR_BYTES, PNP_CFG_TYPE_SLAVE, '0, '0, VENDOR_GNSSSENSOR, SLV_DID_EMPTY};
 
 typedef dev_config_type soc_pnp_vector[0:SOC_PNP_TOTAL - 1];
 

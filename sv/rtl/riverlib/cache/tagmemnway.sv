@@ -46,9 +46,8 @@ module TagMemNWay #(
     output logic [flbits-1:0] o_snoop_flags
 );
 
-localparam int FL_VALID = 0;
-
 localparam int NWAYS = (2**waybits);
+localparam int FL_VALID = 0;
 
 typedef struct {
     logic [abus-1:0] addr;
@@ -249,7 +248,6 @@ generate
                 r <= rin;
             end
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

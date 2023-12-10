@@ -33,6 +33,7 @@ module lrunway #(
 
 localparam int LINES_TOTAL = (2**abits);
 localparam int WAYS_TOTAL = (2**waybits);
+
 localparam int LINE_WIDTH = (WAYS_TOTAL * waybits);
 
 typedef struct {
@@ -141,5 +142,4 @@ always_ff @(posedge i_clk) begin: rg_proc
         r.mem[i] <= rin.mem[i];
     end
 end: rg_proc
-
 endmodule: lrunway

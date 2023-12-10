@@ -50,8 +50,6 @@ module sdctrl_cache #(
 import sdctrl_cfg_pkg::*;
 import sdctrl_cache_pkg::*;
 
-localparam bit [31:0] FLUSH_ALL_VALUE = ((2**ibits) - 1);
-
 logic [SDCACHE_LINE_BITS-1:0] line_wdata_i;
 logic [SDCACHE_BYTES_PER_LINE-1:0] line_wstrb_i;
 logic [SDCACHE_FL_TOTAL-1:0] line_wflags_i;
@@ -145,7 +143,7 @@ begin: comb_proc
 
     for (int i = 0; i < 8; i++) begin
         if (r.req_wstrb[i] == 1'b1) begin
-            vb_req_mask[(8 * i) +: 8] = 8'hff;
+            vb_req_mask[(8 * i) +: 8] = 8'hFF;
         end
     end
 
@@ -174,7 +172,7 @@ begin: comb_proc
         v.mem_fault = 1'b0;
         if (r.req_flush == 1'b1) begin
             v.state = State_FlushAddr;
-            v.cache_line_i = 512'd0;
+            v.cache_line_i = '0;
             v.flush_cnt = FLUSH_ALL_VALUE;
         end else begin
             v_req_ready = 1'b1;
@@ -235,7 +233,7 @@ begin: comb_proc
             v.req_mem_write = r.req_write;
         end
         v.cache_line_o = line_rdata_o;
-        v.cache_line_i = 512'd0;
+        v.cache_line_i = '0;
     end
     State_WaitGrant: begin
         if (i_req_mem_ready == 1'b1) begin
@@ -304,7 +302,7 @@ begin: comb_proc
         vb_line_wstrb = '1;
         vb_line_wflags = 2'd0;
         v.write_flush = 1'b0;
-        v.cache_line_i = 512'd0;
+        v.cache_line_i = '0;
     end
     State_FlushCheck: begin
         v.cache_line_o = line_rdata_o;
@@ -384,7 +382,6 @@ generate
                 r <= rin;
             end
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

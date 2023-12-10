@@ -205,7 +205,7 @@ begin: comb_proc
         end else if (r.div_on_zero == 1'b1) begin
             v.result = '1;
         end else if (r.overflow == 1'b1) begin
-            v.result = 64'h7fffffffffffffff;
+            v.result = 64'h8000000000000000;
         end else begin
             v.result = vb_div;
         end
@@ -238,7 +238,6 @@ generate
                 r <= rin;
             end
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

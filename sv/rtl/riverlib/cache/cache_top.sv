@@ -18,7 +18,7 @@
 
 module CacheTop #(
     parameter bit async_reset = 1'b0,
-    parameter bit coherence_ena = 1'b0
+    parameter bit coherence_ena = 0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -85,7 +85,6 @@ module CacheTop #(
 );
 
 import river_cfg_pkg::*;
-import target_cfg_pkg::*;
 import cache_top_pkg::*;
 
 logic [CFG_CPU_ADDR_BITS-1:0] wb_i_req_ctrl_addr;

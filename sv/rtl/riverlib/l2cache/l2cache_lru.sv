@@ -186,7 +186,7 @@ begin: comb_proc
 
     for (int i = 0; i < L1CACHE_BYTES_PER_LINE; i++) begin
         if (r.req_wstrb[i] == 1'b1) begin
-            vb_req_mask[(8 * i) +: 8] = 8'hff;
+            vb_req_mask[(8 * i) +: 8] = 8'hFF;
         end
     end
 
@@ -310,7 +310,7 @@ begin: comb_proc
             v.cache_line_o = t_cache_line_i;
         end
 
-        v.cache_line_i = 256'd0;
+        v.cache_line_i = '0;
         v.rb_resp = 2'd0;
     end
     State_WaitGrant: begin
@@ -393,7 +393,7 @@ begin: comb_proc
         v_direct_access = r.req_flush_all;                  // 0=only if hit; 1=will be applied ignoring hit
         v_invalidate = 1'b1;                                // generate: wstrb='1; wflags='0
         v.write_flush = 1'b0;
-        v.cache_line_i = 256'd0;
+        v.cache_line_i = '0;
     end
     State_FlushCheck: begin
         v.cache_line_o = line_rdata_o;
@@ -455,7 +455,7 @@ begin: comb_proc
         if (r.req_flush == 1'b1) begin
             v.state = State_FlushAddr;
             v.req_flush = 1'b0;
-            v.cache_line_i = 256'd0;
+            v.cache_line_i = '0;
             v.req_addr = (r.req_flush_addr & (~LINE_BYTES_MASK));
             v.req_size = CFG_L2_LOG2_BYTES_PER_LINE;
             v.flush_cnt = r.req_flush_cnt;
@@ -518,7 +518,6 @@ generate
                 r <= rin;
             end
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

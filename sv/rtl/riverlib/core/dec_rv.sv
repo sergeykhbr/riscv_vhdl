@@ -18,7 +18,7 @@
 
 module DecoderRv #(
     parameter bit async_reset = 1'b0,
-    parameter bit fpu_ena = 1'b1
+    parameter bit fpu_ena = 1
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -175,7 +175,7 @@ begin: comb_proc
                 v_error = 1'b1;
             end
         end
-        5'h0c: begin
+        5'h0C: begin
             if (vb_opcode2 == 3'd2) begin
                 vb_dec[Instr_AMOAND_W] = 1'b1;
             end else if (vb_opcode2 == 3'd3) begin
@@ -211,7 +211,7 @@ begin: comb_proc
                 v_error = 1'b1;
             end
         end
-        5'h1c: begin
+        5'h1C: begin
             if (vb_opcode2 == 3'd2) begin
                 vb_dec[Instr_AMOMAXU_W] = 1'b1;
             end else if (vb_opcode2 == 3'd3) begin
@@ -692,7 +692,7 @@ begin: comb_proc
                 7'h09: begin
                     vb_dec[Instr_FMUL_D] = 1'b1;
                 end
-                7'h0d: begin
+                7'h0D: begin
                     vb_dec[Instr_FDIV_D] = 1'b1;
                 end
                 7'h15: begin
@@ -1030,7 +1030,6 @@ generate
                 r <= rin;
             end
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

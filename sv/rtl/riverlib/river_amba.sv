@@ -19,9 +19,9 @@
 module RiverAmba #(
     parameter bit async_reset = 1'b0,
     parameter int unsigned hartid = 0,
-    parameter bit fpu_ena = 1'b1,
-    parameter bit coherence_ena = 1'b0,
-    parameter bit tracer_ena = 1'b1
+    parameter bit fpu_ena = 1,
+    parameter bit coherence_ena = 0,
+    parameter bit tracer_ena = 1
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -41,7 +41,6 @@ module RiverAmba #(
 import types_amba_pkg::*;
 import types_river_pkg::*;
 import river_cfg_pkg::*;
-import target_cfg_pkg::*;
 import river_amba_pkg::*;
 
 logic req_mem_ready_i;
@@ -232,7 +231,7 @@ begin: comb_proc
             v.req_prot = {req_mem_path_o, {2{1'b0}}};
             if (req_mem_type_o[REQ_MEM_TYPE_WRITE] == 1'b0) begin
                 v.state = state_ar;
-                v.req_wdata = 256'd0;
+                v.req_wdata = '0;
                 v.req_wstrb = 32'd0;
                 if (req_mem_type_o[REQ_MEM_TYPE_CACHED] == 1'b1) begin
                     v.req_cached = ARCACHE_WRBACK_READ_ALLOCATE;
@@ -466,7 +465,6 @@ generate
                 r <= rin;
             end
         end: rg_proc
-
 
     end: async_rst_gen
     else begin: no_rst_gen

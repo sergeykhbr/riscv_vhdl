@@ -56,7 +56,7 @@ const axi_slv_registers axi_slv_r_reset = '{
     '0,                                 // req_wstrb
     '0,                                 // req_xsize
     '0,                                 // req_len
-    1'b0,                               // req_user
+    '0,                                 // req_user
     '0,                                 // req_id
     '0,                                 // req_burst
     1'b0,                               // req_last_a
