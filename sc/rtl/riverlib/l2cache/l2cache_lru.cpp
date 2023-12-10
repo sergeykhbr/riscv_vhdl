@@ -407,7 +407,7 @@ void L2CacheLru::comb() {
             v.cache_line_o = t_cache_line_i;
         }
 
-        v.cache_line_i = 0ull;
+        v.cache_line_i = 0;
         v.rb_resp = 0;
         break;
     case State_WaitGrant:
@@ -490,7 +490,7 @@ void L2CacheLru::comb() {
         v_direct_access = r.req_flush_all;                  // 0=only if hit; 1=will be applied ignoring hit
         v_invalidate = 1;                                   // generate: wstrb='1; wflags='0
         v.write_flush = 0;
-        v.cache_line_i = 0ull;
+        v.cache_line_i = 0;
         break;
     case State_FlushCheck:
         v.cache_line_o = line_rdata_o;
@@ -552,7 +552,7 @@ void L2CacheLru::comb() {
         if (r.req_flush.read() == 1) {
             v.state = State_FlushAddr;
             v.req_flush = 0;
-            v.cache_line_i = 0ull;
+            v.cache_line_i = 0;
             v.req_addr = (r.req_flush_addr.read() & (!LINE_BYTES_MASK));
             v.req_size = CFG_L2_LOG2_BYTES_PER_LINE;
             v.flush_cnt = r.req_flush_cnt;

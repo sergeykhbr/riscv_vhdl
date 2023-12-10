@@ -97,8 +97,8 @@ SC_MODULE(RiverAmba) {
     } v, r;
 
     void RiverAmba_r_reset(RiverAmba_registers &iv) {
-        iv.state = 0;
-        iv.req_addr = state_idle;
+        iv.state = state_idle;
+        iv.req_addr = 0;
         iv.req_path = 0;
         iv.req_cached = 0;
         iv.req_wdata = 0;

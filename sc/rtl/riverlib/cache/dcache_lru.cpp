@@ -437,12 +437,12 @@ void DCacheLru::comb() {
     case State_TranslateAddress:
         if ((r.req_type.read()[MemopType_Store] == 1) && (i_pmp_w.read() == 0)) {
             v.load_fault = 1;
-            t_cache_line_i = 0ull;
+            t_cache_line_i = 0;
             v.cache_line_i = (~t_cache_line_i);
             v.state = State_CheckResp;
         } else if ((r.req_type.read()[MemopType_Store] == 0) && (i_pmp_r.read() == 0)) {
             v.load_fault = 1;
-            t_cache_line_i = 0ull;
+            t_cache_line_i = 0;
             v.cache_line_i = (~t_cache_line_i);
             v.state = State_CheckResp;
         } else {
@@ -482,12 +482,12 @@ void DCacheLru::comb() {
                 } else {
                     v.req_mem_type = ReadNoSnoop();
                 }
-                t_cache_line_i = 0ull;
+                t_cache_line_i = 0;
                 t_cache_line_i(63, 0) = r.req_wdata;
                 v.cache_line_o = t_cache_line_i;
             }
         }
-        v.cache_line_i = 0ull;
+        v.cache_line_i = 0;
         break;
     case State_WaitGrant:
         if (i_req_mem_ready.read() == 1) {
@@ -599,7 +599,7 @@ void DCacheLru::comb() {
         v_direct_access = r.req_flush_all;                  // 0=only if hit; 1=will be applied ignoring hit
         v_invalidate = 1;                                   // generate: wstrb='1; wflags='0
         v.write_flush = 0;
-        v.cache_line_i = 0ull;
+        v.cache_line_i = 0;
         break;
     case State_FlushCheck:
         v.cache_line_o = line_rdata_o;
@@ -702,7 +702,7 @@ void DCacheLru::comb() {
         } else if (r.req_flush.read() == 1) {
             v.state = State_FlushAddr;
             v.req_flush = 0;
-            v.cache_line_i = 0ull;
+            v.cache_line_i = 0;
             v.req_addr = (r.req_flush_addr.read() & (~LINE_BYTES_MASK));
             v.req_mem_size = CFG_LOG2_L1CACHE_BYTES_PER_LINE;
             v.flush_cnt = r.req_flush_cnt;

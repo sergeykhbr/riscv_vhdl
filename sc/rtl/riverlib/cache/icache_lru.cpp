@@ -261,7 +261,7 @@ void ICacheLru::comb() {
         break;
     case State_TranslateAddress:
         if (i_pmp_x.read() == 0) {
-            t_cache_line_i = 0ull;
+            t_cache_line_i = 0;
             v.cache_line_i = (~t_cache_line_i);
             v.state = State_CheckResp;
             v.load_fault = 1;
@@ -328,7 +328,7 @@ void ICacheLru::comb() {
         v.state = State_FlushCheck;
         v_direct_access = r.req_flush_all;                  // 0=only if hit; 1=will be applied ignoring hit
         v_invalidate = 1;                                   // generate: wstrb='1; wflags='0
-        v.cache_line_i = 0ull;
+        v.cache_line_i = 0;
         break;
     case State_FlushCheck:
         v.state = State_FlushAddr;
@@ -375,7 +375,7 @@ void ICacheLru::comb() {
         if (r.req_flush.read() == 1) {
             v.state = State_FlushAddr;
             v.req_flush = 0;
-            v.cache_line_i = 0ull;
+            v.cache_line_i = 0;
             v.req_addr = (r.req_flush_addr.read() & (~LINE_BYTES_MASK));
             v.flush_cnt = r.req_flush_cnt;
         } else {
@@ -409,7 +409,7 @@ void ICacheLru::comb() {
     o_req_mem_type = r.req_mem_type;
     o_req_mem_size = r.req_mem_size;
     o_req_mem_strob = 0;
-    o_req_mem_data = 0ull;
+    o_req_mem_data = 0;
 
     o_resp_valid = v_resp_valid;
     o_resp_data = vb_resp_data;

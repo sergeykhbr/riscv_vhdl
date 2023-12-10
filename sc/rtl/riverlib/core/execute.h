@@ -262,7 +262,7 @@ SC_MODULE(InstrExecute) {
         iv.isa_type = 0;
         iv.imm = 0;
         iv.instr = 0;
-        iv.tagcnt = 0ull;
+        iv.tagcnt = 0;
         iv.reg_write = 0;
         iv.reg_waddr = 0;
         iv.reg_wtag = 0;

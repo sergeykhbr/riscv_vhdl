@@ -225,7 +225,7 @@ class axi4_l1_out_type {
         aw_id = 0;
         aw_user = 0;
         w_valid = 0;
-        w_data = 0ull;
+        w_data = 0;
         w_last = 0;
         w_strb = 0;
         w_user = 0;
@@ -254,7 +254,7 @@ class axi4_l1_out_type {
         cr_valid = 1;
         cr_resp = 0;
         cd_valid = 0;
-        cd_data = 0ull;
+        cd_data = 0;
         cd_last = 0;
         rack = 0;
         wack = 0;
@@ -568,7 +568,7 @@ class axi4_l1_in_type {
         ar_ready = 0;
         r_valid = 0;
         r_resp = 0;
-        r_data = 0ull;
+        r_data = 0;
         r_last = 0;
         r_id = 0;
         r_user = 0;
@@ -760,7 +760,7 @@ class axi4_l2_out_type {
         aw_id = 0;
         aw_user = 0;
         w_valid = 0;
-        w_data = 0ull;
+        w_data = 0;
         w_last = 0;
         w_strb = 0;
         w_user = 0;
@@ -989,7 +989,7 @@ class axi4_l2_in_type {
         ar_ready = 0;
         r_valid = 0;
         r_resp = 0;
-        r_data = 0ull;
+        r_data = 0;
         r_last = 0;
         r_id = 0;
         r_user = 0;

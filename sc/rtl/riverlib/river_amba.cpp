@@ -297,7 +297,7 @@ void RiverAmba::comb() {
             v.req_prot = (req_mem_path_o.read() << 2);
             if (req_mem_type_o.read()[REQ_MEM_TYPE_WRITE] == 0) {
                 v.state = state_ar;
-                v.req_wdata = 0ull;
+                v.req_wdata = 0;
                 v.req_wstrb = 0;
                 if (req_mem_type_o.read()[REQ_MEM_TYPE_CACHED] == 1) {
                     v.req_cached = ARCACHE_WRBACK_READ_ALLOCATE;

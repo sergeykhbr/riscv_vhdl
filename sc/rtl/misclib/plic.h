@@ -211,8 +211,8 @@ void plic<ctxmax, irqmax>::comb() {
     }
     for (int i = 0; i < ctxmax; i++) {
         vb_ctx[i].priority_th = 0;
-        vb_ctx[i].ie = 0ull;
-        vb_ctx[i].ip_prio = 0ull;
+        vb_ctx[i].ie = 0;
+        vb_ctx[i].ip_prio = 0;
         vb_ctx[i].prio_mask = 0;
         vb_ctx[i].sel_prio = 0;
         vb_ctx[i].irq_idx = 0;
@@ -380,8 +380,8 @@ void plic<ctxmax, irqmax>::comb() {
         v.ip = 0;
         for (int i = 0; i < ctxmax; i++) {
             v.ctx[i].priority_th = 0;
-            v.ctx[i].ie = 0ull;
-            v.ctx[i].ip_prio = 0ull;
+            v.ctx[i].ie = 0;
+            v.ctx[i].ip_prio = 0;
             v.ctx[i].prio_mask = 0;
             v.ctx[i].sel_prio = 0;
             v.ctx[i].irq_idx = 0;
@@ -405,8 +405,8 @@ void plic<ctxmax, irqmax>::registers() {
         r.ip = 0;
         for (int i = 0; i < ctxmax; i++) {
             r.ctx[i].priority_th = 0;
-            r.ctx[i].ie = 0ull;
-            r.ctx[i].ip_prio = 0ull;
+            r.ctx[i].ie = 0;
+            r.ctx[i].ip_prio = 0;
             r.ctx[i].prio_mask = 0;
             r.ctx[i].sel_prio = 0;
             r.ctx[i].irq_idx = 0;
