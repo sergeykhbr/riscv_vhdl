@@ -894,7 +894,8 @@ initial begin
     assert (fl)
     else begin
         $warning("Cannot open log-file");
-    endend
+    end
+end
 
 always_comb
 begin: comb_proc

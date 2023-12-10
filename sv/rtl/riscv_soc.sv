@@ -76,6 +76,7 @@ module riscv_soc #(
     input types_amba_pkg::axi4_slave_out_type i_ddr_xslvo   // AXI DDR memory interface
 );
 
+import target_cfg_pkg::*;
 import types_amba_pkg::*;
 import types_pnp_pkg::*;
 import types_bus0_pkg::*;

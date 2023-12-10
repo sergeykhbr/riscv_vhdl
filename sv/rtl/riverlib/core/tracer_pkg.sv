@@ -19,7 +19,7 @@ import river_cfg_pkg::*;
 
 localparam int TRACE_TBL_ABITS = 6;
 localparam int TRACE_TBL_SZ = 64;
-localparam rname[0:64-1] = '{
+localparam string rname[0:64-1] = '{
     "zero",  // x0
     "ra",  // x1
     "sp",  // x2
