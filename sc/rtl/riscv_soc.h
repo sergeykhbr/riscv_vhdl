@@ -21,6 +21,7 @@
 #include "ambalib/types_bus0.h"
 #include "ambalib/types_bus1.h"
 #include "riverlib/river_cfg.h"
+#include "../prj/impl/asic/target_cfg.h"
 #include "ambalib/axictrl_bus0.h"
 #include "ambalib/axi2apb_bus1.h"
 #include "misclib/axi_rom.h"

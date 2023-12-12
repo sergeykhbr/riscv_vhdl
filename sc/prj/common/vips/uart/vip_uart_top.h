@@ -76,8 +76,8 @@ SC_MODULE(vip_uart_top) {
     std::string outstr;
     std::string outstrtmp;
     std::string outfilename;                                // formatted string name with instnum
-    FILE *fl;
-    FILE *fl_tmp;
+    FILE* fl;
+    FILE* fl_tmp;
 
     vip_clk *clk0;
     vip_uart_receiver *rx0;

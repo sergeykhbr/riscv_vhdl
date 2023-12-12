@@ -109,7 +109,7 @@ SC_MODULE(Tracer) {
     std::string trfilename;                                 // formatted string name with hartid
     std::string outstr;
     std::string tracestr;
-    FILE *fl;
+    FILE* fl;
 
 };
 
