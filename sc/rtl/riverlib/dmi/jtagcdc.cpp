@@ -111,7 +111,7 @@ void jtagcdc::comb() {
     } else if (i_dmi_req_ready.read() == 1) {
         v.req_valid = 0;
     }
-    if ((r.l2.read()[0] && r.req_valid && i_dmi_req_ready) == 1) {
+    if ((r.l2.read()[0] && r.req_valid.read() && i_dmi_req_ready.read()) == 1) {
         v.req_accepted = 1;
     } else if (r.l2.read()[0] == 0) {
         v.req_accepted = 0;

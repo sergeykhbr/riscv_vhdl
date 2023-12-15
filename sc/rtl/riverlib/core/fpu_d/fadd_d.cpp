@@ -257,7 +257,7 @@ void DoubleAdd::comb() {
         v.overflow = 0;
     }
 
-    signOp = (r.sub || r.le || r.lt);
+    signOp = (r.sub.read() || r.le.read() || r.lt.read());
     signA = r.a.read()[63];
     signB = r.b.read()[63];
     signOpB = (signB ^ signOp);

@@ -688,8 +688,8 @@ void DCacheLru::comb() {
             || (coherence_ena_ && v_ready_next && i_req_snoop_type.read().or_reduce())
             || v_req_snoop_ready_on_wait);
 
-    v.snoop_flags_valid = (i_req_snoop_valid
-            && line_snoop_ready_o
+    v.snoop_flags_valid = (i_req_snoop_valid.read()
+            && line_snoop_ready_o.read()
             && (!i_req_snoop_type.read().or_reduce()));
 
     if (v_ready_next == 1) {

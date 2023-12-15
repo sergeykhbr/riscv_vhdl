@@ -620,7 +620,7 @@ void MemAccess::comb() {
     }
 
     queue_re = v_queue_re;
-    o_flushd = (queue_nempty && v_flushd && v_queue_re);
+    o_flushd = (queue_nempty.read() && v_flushd && v_queue_re);
     o_mmu_ena = v_mmu_ena;
     o_mmu_sv39 = v_mmu_sv39;
     o_mmu_sv48 = v_mmu_sv48;

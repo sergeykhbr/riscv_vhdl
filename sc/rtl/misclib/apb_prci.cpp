@@ -120,8 +120,8 @@ void apb_prci::comb() {
 
     v = r;
 
-    v.sys_rst = (i_pwrreset || (!i_sys_locked.read()) || i_dmireset);
-    v.sys_nrst = (!(i_pwrreset || (!i_sys_locked.read()) || i_dmireset));
+    v.sys_rst = (i_pwrreset.read() || (!i_sys_locked.read()) || i_dmireset.read());
+    v.sys_nrst = (!(i_pwrreset.read() || (!i_sys_locked.read()) || i_dmireset.read()));
     v.dbg_nrst = (!(i_pwrreset.read() || (!i_sys_locked.read())));
 
     // Registers access:

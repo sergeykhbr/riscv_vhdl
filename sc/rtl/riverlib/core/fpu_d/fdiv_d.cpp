@@ -365,8 +365,8 @@ void DoubleDiv::comb() {
     } else if ((nanB && (!mantZeroB)) == 1) {
         res[51] = 1;
         res(50, 0) = r.b.read()(50, 0);
-    } else if ((r.overflow
-                || r.nanRes
+    } else if ((r.overflow.read()
+                || r.nanRes.read()
                 || (nanA && mantZeroA)
                 || (nanB && mantZeroB)) == 1) {
         res(51, 0) = 0;

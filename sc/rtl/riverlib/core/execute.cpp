@@ -987,18 +987,18 @@ void InstrExecute::comb() {
         v_ret = 1;
     }
 
-    v_mem_ex = (r.mem_ex_load_fault
-            || r.mem_ex_store_fault
-            || i_page_fault_x
-            || r.page_fault_r
-            || r.page_fault_w);
-    v_csr_cmd_ena = (i_haltreq
+    v_mem_ex = (r.mem_ex_load_fault.read()
+            || r.mem_ex_store_fault.read()
+            || i_page_fault_x.read()
+            || r.page_fault_r.read()
+            || r.page_fault_w.read());
+    v_csr_cmd_ena = (i_haltreq.read()
             || (i_step.read() && r.stepdone.read())
-            || i_unsup_exception
-            || i_instr_load_fault
+            || i_unsup_exception.read()
+            || i_instr_load_fault.read()
             || v_mem_ex
-            || r.stack_overflow
-            || r.stack_underflow
+            || r.stack_overflow.read()
+            || r.stack_underflow.read()
             || v_instr_misaligned
             || v_load_misaligned
             || v_store_misaligned

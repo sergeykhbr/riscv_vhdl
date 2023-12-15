@@ -205,7 +205,7 @@ void BranchPredictor::comb() {
         }
     }
 
-    v_btb_we = (i_e_jmp || wb_pd[0].jmp || wb_pd[1].jmp);
+    v_btb_we = (i_e_jmp.read() || wb_pd[0].jmp || wb_pd[1].jmp);
     if (i_e_jmp.read() == 1) {
         vb_btb_we_pc = i_e_pc;
         vb_btb_we_npc = i_e_npc;

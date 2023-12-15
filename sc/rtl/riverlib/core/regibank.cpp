@@ -207,7 +207,7 @@ void RegIntBank::comb() {
         }
     }
 
-    o_ignored = (i_wena && i_waddr.read().or_reduce() && i_inorder && (!v_inordered));
+    o_ignored = (i_wena.read() && i_waddr.read().or_reduce() && i_inorder.read() && (!v_inordered));
     o_rdata1 = r.arr[int_radr1].val;
     o_rtag1 = r.arr[int_radr1].tag;
     o_rdata2 = r.arr[int_radr2].val;

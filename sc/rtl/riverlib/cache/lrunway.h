@@ -112,7 +112,7 @@ void lrunway<abits, waybits>::comb() {
     v.radr = i_raddr;
     wb_tbl_rdata = r.mem[r.radr.read().to_int()];
 
-    v_we = (i_up || i_down || i_init);
+    v_we = (i_up.read() || i_down.read() || i_init.read());
 
     // init table value
     for (int i = 0; i < WAYS_TOTAL; i++) {

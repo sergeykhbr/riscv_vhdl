@@ -567,7 +567,7 @@ void Mmu::comb() {
             v.resp_data = i_mem_resp_data;
             v.resp_load_fault = i_mem_resp_load_fault;      // Hardware error Load (unmapped access)
             v.resp_store_fault = i_mem_resp_store_fault;    // Hardware error Store/AMO (unmapped access)
-            if ((r.tlb_hit || i_mem_resp_load_fault || i_mem_resp_store_fault) == 1) {
+            if ((r.tlb_hit.read() || i_mem_resp_load_fault.read() || i_mem_resp_store_fault.read()) == 1) {
                 v.state = AcceptCore;
             } else {
                 v.state = HandleResp;

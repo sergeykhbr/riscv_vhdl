@@ -153,7 +153,7 @@ void BpPreDecoder::comb() {
         vb_npc = (vb_pc + 4);
     }
 
-    o_jmp = (v_jal || v_branch || v_c_j || v_c_ret);
+    o_jmp = (v_jal.read() || v_branch.read() || v_c_j.read() || v_c_ret.read());
     o_pc = vb_pc;
     o_npc = vb_npc;
 }

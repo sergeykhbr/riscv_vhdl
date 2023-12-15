@@ -326,7 +326,7 @@ void DoubleMul::comb() {
     }
 
     // Result multiplexers:
-    if ((nanA && mantZeroA && r.zeroB) || (nanB && mantZeroB && r.zeroA)) {
+    if ((nanA && mantZeroA && r.zeroB.read()) || (nanB && mantZeroB && r.zeroA.read())) {
         v_res_sign = 1;
     } else if ((nanA && (!mantZeroA)) == 1) {
         // when both values are NaN, value B has higher priority if sign=1
@@ -341,7 +341,7 @@ void DoubleMul::comb() {
         vb_res_exp = r.a.read()(62, 52);
     } else if (nanB == 1) {
         vb_res_exp = r.b.read()(62, 52);
-    } else if ((r.expAlign.read()[11] || r.zeroA || r.zeroB) == 1) {
+    } else if ((r.expAlign.read()[11] || r.zeroA.read() || r.zeroB.read()) == 1) {
         vb_res_exp = 0;
     } else if (r.overflow.read() == 1) {
         vb_res_exp = ~0ull;
@@ -352,7 +352,7 @@ void DoubleMul::comb() {
 
     if ((nanA && mantZeroA && (!mantZeroB))
             || (nanB && mantZeroB && (!mantZeroA))
-            || ((!nanA) && (!nanB) && r.overflow)) {
+            || ((!nanA) && (!nanB) && r.overflow.read())) {
         vb_res_mant = 0;
     } else if ((nanA && (!(nanB && signB))) == 1) {
         // when both values are NaN, value B has higher priority if sign=1
