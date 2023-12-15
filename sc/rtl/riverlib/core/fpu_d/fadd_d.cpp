@@ -544,7 +544,7 @@ void DoubleAdd::comb() {
     resLT[0] = r.flLess.read();
 
     resLE(63, 1) = 0;
-    resLE[0] = (r.flLess || r.flEqual);
+    resLE[0] = (r.flLess.read() || r.flEqual.read());
 
     if ((nanA || nanB) == 1) {
         resMax = r.b;

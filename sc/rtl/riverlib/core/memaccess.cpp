@@ -637,9 +637,9 @@ void MemAccess::comb() {
     o_wb_wdata = vb_o_wdata;
     o_wb_wtag = vb_o_wtag;
     o_pc = r.pc;
-    o_valid = ((r.valid || v_valid) && (!r.memop_debug.read()));
+    o_valid = ((r.valid.read() || v_valid) && (!r.memop_debug.read()));
     o_idle = v_idle;
-    o_debug_valid = ((r.valid || v_valid) && r.memop_debug.read());
+    o_debug_valid = ((r.valid.read() || v_valid) && r.memop_debug.read());
 }
 
 void MemAccess::registers() {

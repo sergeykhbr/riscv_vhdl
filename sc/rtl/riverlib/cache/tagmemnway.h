@@ -326,7 +326,7 @@ void TagMemNWay<abus, waybits, ibits, lnbits, flbits, snoop>::comb() {
         way_i[i].snoop_addr = i_snoop_addr;
     }
 
-    v_way_we = (i_we || (r.invalidate.read() && v_hit));
+    v_way_we = (i_we.read() || (r.invalidate.read() && v_hit));
     if (v_way_we == 1) {
         way_i[vb_hit_idx.to_int()].wstrb = vb_wstrb;
     }
@@ -352,7 +352,7 @@ void TagMemNWay<abus, waybits, ibits, lnbits, flbits, snoop>::comb() {
     w_lrui_init = r.direct_access;
     wb_lrui_raddr = i_addr.read()(((ibits + lnbits) - 1), lnbits);
     wb_lrui_waddr = r.req_addr.read()(((ibits + lnbits) - 1), lnbits);
-    w_lrui_up = (i_we || (v_hit && r.re.read()));
+    w_lrui_up = (i_we.read() || (v_hit && r.re.read()));
     w_lrui_down = (v_hit && r.invalidate.read());
     wb_lrui_lru = vb_hit_idx;
 

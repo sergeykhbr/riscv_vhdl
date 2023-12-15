@@ -117,7 +117,7 @@ void ic_csr_m2_s1::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 void ic_csr_m2_s1::comb() {
     v = r;
 
-    if ((r.acquired.read() == 0) && ((i_m0_req_valid || i_m1_req_valid) == 1)) {
+    if ((r.acquired.read() == 0) && ((i_m0_req_valid.read() || i_m1_req_valid.read()) == 1)) {
         v.acquired = 1;
         if (i_m0_req_valid) {
             v.midx = 0;

@@ -387,7 +387,7 @@ void CacheTop::comb() {
     wb_i_flushi_addr = i_flushi_addr.read()((CFG_CPU_ADDR_BITS - 1), 0);
     wb_i_flushd_addr = i_flushd_addr.read()((CFG_CPU_ADDR_BITS - 1), 0);
     v_queue_re = i_req_mem_ready;
-    v_queue_we = (i.req_mem_valid || d.req_mem_valid);
+    v_queue_we = (i.req_mem_valid.read() || d.req_mem_valid.read());
 
     vb_ctrl_bus = (ctrl_path_id,
             i.req_mem_type.read(),

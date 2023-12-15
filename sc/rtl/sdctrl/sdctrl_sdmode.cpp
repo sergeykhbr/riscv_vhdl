@@ -263,7 +263,7 @@ void sdctrl_sdmode::comb() {
     if (i_posedge) {
         // Not a full block 4096 bits just a cache line (dat_csn is active LOW):
         if (r.dat_full_ena.read() == 0) {
-            v.data_data = (r.data_data.read()(510, 0), (i_dat0 || r.dat_csn));
+            v.data_data = (r.data_data.read()(510, 0), (i_dat0.read() || r.dat_csn.read()));
         } else {
             v.data_data = (r.data_data.read()(507, 0), (i_dat0.read(), i_dat1.read(), i_dat2.read(), i_cd_dat3.read()));
         }

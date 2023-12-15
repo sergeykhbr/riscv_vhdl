@@ -212,7 +212,7 @@ void sdctrl_spimode::comb() {
 
     if (i_posedge) {
         // Not a full block 4096 bits just a cache line (dat_csn is active LOW):
-        v.data_data = (r.data_data.read()(510, 0), (i_miso || r.dat_csn));
+        v.data_data = (r.data_data.read()(510, 0), (i_miso.read() || r.dat_csn.read()));
         v.bitcnt = (r.bitcnt.read() + 1);
     }
 
@@ -400,7 +400,7 @@ void sdctrl_spimode::comb() {
     }
 
     v.cmd_req_arg = vb_cmd_req_arg;
-    v_dat = (r.dat_reading || r.data_data.read()[511]);
+    v_dat = (r.dat_reading.read() || r.data_data.read()[511]);
 
     if (!async_reset_ && i_nrst.read() == 0) {
         sdctrl_spimode_r_reset(v);

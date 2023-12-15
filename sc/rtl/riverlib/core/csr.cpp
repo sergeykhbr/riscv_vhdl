@@ -1184,7 +1184,7 @@ void CsrRegs::comb() {
     }
 
     // Step is not enabled or interrupt enabled during stepping
-    if (((!r.dcsr_step.read()) || r.dcsr_stepie) == 1) {
+    if (((!r.dcsr_step.read()) || r.dcsr_stepie.read()) == 1) {
         if (r.xmode[iM].xie) {
             // ALL not-delegated interrupts
             vb_irq_ena = (~r.mideleg.read());
@@ -1199,9 +1199,9 @@ void CsrRegs::comb() {
     vb_pending[IRQ_MSIP] = (i_irq_pending.read()[IRQ_MSIP] && r.xmode[iM].xsie);
     vb_pending[IRQ_MTIP] = (i_irq_pending.read()[IRQ_MTIP] && r.xmode[iM].xtie);
     vb_pending[IRQ_MEIP] = (i_irq_pending.read()[IRQ_MEIP] && r.xmode[iM].xeie);
-    vb_pending[IRQ_SSIP] = ((i_irq_pending.read()[IRQ_SSIP] || r.mip_ssip) && r.xmode[iS].xsie);
-    vb_pending[IRQ_STIP] = ((i_irq_pending.read()[IRQ_STIP] || r.mip_stip) && r.xmode[iS].xtie);
-    vb_pending[IRQ_SEIP] = ((i_irq_pending.read()[IRQ_SEIP] || r.mip_seip) && r.xmode[iS].xeie);
+    vb_pending[IRQ_SSIP] = ((i_irq_pending.read()[IRQ_SSIP] || r.mip_ssip.read()) && r.xmode[iS].xsie);
+    vb_pending[IRQ_STIP] = ((i_irq_pending.read()[IRQ_STIP] || r.mip_stip.read()) && r.xmode[iS].xtie);
+    vb_pending[IRQ_SEIP] = ((i_irq_pending.read()[IRQ_SEIP] || r.mip_seip.read()) && r.xmode[iS].xeie);
     v.irq_pending = vb_pending;
 
     // Transmit data to MPU

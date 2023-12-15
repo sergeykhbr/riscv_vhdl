@@ -622,7 +622,7 @@ void apb_spi<log2_fifosz>::comb() {
     }
 
     o_sclk = (r.level.read() & r.cs.read());
-    o_mosi = (r.rx_ena || r.shiftreg.read()[7]);
+    o_mosi = (r.rx_ena.read() || r.shiftreg.read()[7]);
     o_cs = (!r.cs.read());
 }
 

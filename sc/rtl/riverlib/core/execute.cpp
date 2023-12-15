@@ -1230,7 +1230,7 @@ void InstrExecute::comb() {
                 } else {
                     v.amostate = AmoState_Read;
                 }
-            } else if ((i_memop_load || i_memop_store) == 1) {
+            } else if ((i_memop_load.read() || i_memop_store.read()) == 1) {
                 v_memop_ena = 1;
                 vb_memop_wdata = vb_rdata2;
                 if (i_memop_ready.read() == 0) {
@@ -1427,7 +1427,7 @@ void InstrExecute::comb() {
         }
         break;
     case State_Wfi:
-        if ((i_haltreq || i_wakeup) == 1) {
+        if ((i_haltreq.read() || i_wakeup.read()) == 1) {
             v.state = State_Idle;
         }
         break;

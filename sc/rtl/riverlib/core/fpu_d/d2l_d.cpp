@@ -148,7 +148,7 @@ void Double2Long::comb() {
             expMax = 1085;
         }
     } else {
-        if ((r.op_signed || r.signA) == 1) {
+        if ((r.op_signed.read() || r.signA.read()) == 1) {
             expMax = 1085;
         } else {
             expMax = 1086;
@@ -189,7 +189,7 @@ void Double2Long::comb() {
     }
 
     // Result multiplexers:
-    resSign = ((r.signA || r.overflow) && (!r.underflow.read()));
+    resSign = ((r.signA.read() || r.overflow.read()) && (!r.underflow.read()));
     if (r.signA.read() == 1) {
         resMant = ((~r.mantPostScale.read()) + 1);
     } else {

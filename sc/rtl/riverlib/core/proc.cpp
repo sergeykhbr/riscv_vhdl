@@ -972,7 +972,7 @@ void Processor::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
 }
 
 void Processor::comb() {
-    w_mem_resp_error = (i_resp_data_load_fault || i_resp_data_store_fault);
+    w_mem_resp_error = (i_resp_data_load_fault.read() || i_resp_data_store_fault.read());
     w_writeback_ready = (!w.e.reg_wena.read());
     if (w.e.reg_wena.read() == 1) {
         w_reg_wena = w.e.reg_wena;

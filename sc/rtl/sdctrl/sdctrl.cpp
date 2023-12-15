@@ -651,11 +651,11 @@ void sdctrl::comb() {
         v_resp_sdmem_valid = w_spi_resp_sdmem_valid;
         vb_resp_sdmem_data = wb_spi_resp_sdmem_data;
         v_err_valid = w_spi_err_valid;
-        v_err_clear = (w_regs_err_clear || w_spi_err_clear);
+        v_err_clear = (w_regs_err_clear.read() || w_spi_err_clear.read());
         vb_err_setcode = wb_spi_err_setcode;
         v_400kHz_ena = w_spi_400kHz_ena;
         vb_sdtype = wb_spi_sdtype;
-        v_wdog_ena = (w_spi_wdog_ena || w_trx_wdog_ena);
+        v_wdog_ena = (w_spi_wdog_ena.read() || w_trx_wdog_ena.read());
         v_crc16_clear = w_spi_crc16_clear;
         v_crc16_next = w_spi_crc16_next;
     } else {
@@ -679,11 +679,11 @@ void sdctrl::comb() {
         v_resp_sdmem_valid = w_sd_resp_sdmem_valid;
         vb_resp_sdmem_data = wb_sd_resp_sdmem_data;
         v_err_valid = w_sd_err_valid;
-        v_err_clear = (w_regs_err_clear || w_sd_err_clear);
+        v_err_clear = (w_regs_err_clear.read() || w_sd_err_clear.read());
         vb_err_setcode = wb_sd_err_setcode;
         v_400kHz_ena = w_sd_400kHz_ena;
         vb_sdtype = wb_sd_sdtype;
-        v_wdog_ena = (w_sd_wdog_ena || w_trx_wdog_ena);
+        v_wdog_ena = (w_sd_wdog_ena.read() || w_trx_wdog_ena.read());
         v_crc16_clear = w_sd_crc16_clear;
         v_crc16_next = w_sd_crc16_next;
     }

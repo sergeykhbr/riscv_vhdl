@@ -343,9 +343,9 @@ void DoubleDiv::comb() {
 
     if ((nanB && (!mantZeroB)) == 1) {
         res(62, 52) = r.b.read()(62, 52);
-    } else if (((r.underflow || r.zeroA) && (!r.zeroB.read())) == 1) {
+    } else if (((r.underflow.read() || r.zeroA.read()) && (!r.zeroB.read())) == 1) {
         res(62, 52) = 0;
-    } else if ((r.overflow || r.zeroB) == 1) {
+    } else if ((r.overflow.read() || r.zeroB.read()) == 1) {
         res(62, 52) = ~0ull;
     } else if (nanA == 1) {
         res(62, 52) = r.a.read()(62, 52);

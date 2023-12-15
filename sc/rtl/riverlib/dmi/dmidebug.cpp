@@ -386,7 +386,7 @@ void dmidebug::comb() {
             if (r.regwr.read() == 1) {
                 if (r.wdata.read()[31] == 1) {
                     // Do not set cmderr before/after ndmreset
-                    if (((r.wdata.read()[1] || r.ndmreset) == 0)
+                    if (((r.wdata.read()[1] || r.ndmreset.read()) == 0)
                             && (i_halted.read()[vb_hartselnext] == 1)) {
                         v.cmderr = CMDERR_WRONGSTATE;
                     } else {
