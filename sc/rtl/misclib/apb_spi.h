@@ -540,14 +540,14 @@ void apb_spi<log2_fifosz>::comb() {
         }
         break;
     case 0x011:                                             // 0x44: reserved 4 (txctrl)
-        vb_rdata[0] = i_detected.read();                    // [0] sd card inserted
-        vb_rdata[1] = i_protect.read();                     // [1] write protect
-        vb_rdata[2] = i_miso.read();                        // [2] miso data bit
+        vb_rdata[0] = i_detected;                           // [0] sd card inserted
+        vb_rdata[1] = i_protect;                            // [1] write protect
+        vb_rdata[2] = i_miso;                               // [2] miso data bit
         vb_rdata(6, 4) = r.state;                           // [6:4] state machine
-        vb_rdata[7] = r.generate_crc.read();                // [7] Compute and generate CRC as the last Tx byte
-        vb_rdata[8] = r.rx_ena.read();                      // [8] Receive data and write into FIFO only if rx_synced
-        vb_rdata[9] = r.rx_synced.read();                   // [9] rx_ena=1 and start bit received
-        vb_rdata[10] = r.rx_data_block.read();              // [10] rx_data_block=1 receive certain template byte
+        vb_rdata[7] = r.generate_crc;                       // [7] Compute and generate CRC as the last Tx byte
+        vb_rdata[8] = r.rx_ena;                             // [8] Receive data and write into FIFO only if rx_synced
+        vb_rdata[9] = r.rx_synced;                          // [9] rx_ena=1 and start bit received
+        vb_rdata[10] = r.rx_data_block;                     // [10] rx_data_block=1 receive certain template byte
         vb_rdata(31, 16) = r.ena_byte_cnt;                  // [31:16] Number of bytes to transmit
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             v.generate_crc = wb_req_wdata.read()[7];

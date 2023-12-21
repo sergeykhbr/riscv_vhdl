@@ -461,9 +461,9 @@ void riscv_soc::comb() {
     // assign interrupts:
     vb_ext_irqs(22, 0) = 0;
     vb_ext_irqs(((23 + SOC_GPIO0_WIDTH) - 1), 23) = wb_irq_gpio;// FU740: 16 bits, current 12-bits
-    vb_ext_irqs[39] = w_irq_uart1.read();
+    vb_ext_irqs[39] = w_irq_uart1;
     vb_ext_irqs(69, 40) = 0;
-    vb_ext_irqs[70] = w_irq_pnp.read();
+    vb_ext_irqs[70] = w_irq_pnp;
     vb_ext_irqs((SOC_PLIC_IRQ_TOTAL - 1), 71) = 0;
     wb_ext_irqs = vb_ext_irqs;
 

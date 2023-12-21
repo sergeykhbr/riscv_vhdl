@@ -690,7 +690,7 @@ void InstrExecute::comb() {
         mux.imm = i_d_imm;
         mux.pc = i_d_pc;
         mux.instr = i_d_instr;
-        mux.memop_type[MemopType_Store] = i_memop_store.read();
+        mux.memop_type[MemopType_Store] = i_memop_store;
         mux.memop_type[MemopType_Locked] = (i_amo.read() & i_memop_load.read());
         mux.memop_type[MemopType_Reserve] = (i_ivec.read()[Instr_LR_D] || i_ivec.read()[Instr_LR_W]);
         mux.memop_type[MemopType_Release] = (i_ivec.read()[Instr_SC_D] || i_ivec.read()[Instr_SC_W]);
@@ -1202,7 +1202,7 @@ void InstrExecute::comb() {
                 }
                 v.memop_halted = 0;
                 v.memop_sign_ext = 0;
-                t_type[MemopType_Store] = i_dbg_mem_req_write.read();
+                t_type[MemopType_Store] = i_dbg_mem_req_write;
                 v.memop_type = t_type;
                 v.memop_size = i_dbg_mem_req_size;
             } else if (v_csr_cmd_ena == 1) {
@@ -1401,7 +1401,7 @@ void InstrExecute::comb() {
             }
             v.memop_halted = 1;
             v.memop_sign_ext = 0;
-            t_type[MemopType_Store] = i_dbg_mem_req_write.read();
+            t_type[MemopType_Store] = i_dbg_mem_req_write;
             v.memop_type = t_type;
             v.memop_size = i_dbg_mem_req_size;
         }
@@ -1441,7 +1441,7 @@ void InstrExecute::comb() {
     t_tagcnt_wr = (r.tagcnt.read()((CFG_REG_TAG_WIDTH * t_waddr) + CFG_REG_TAG_WIDTH - 1, (CFG_REG_TAG_WIDTH * t_waddr)) + 1);
 
     vb_tagcnt_next = r.tagcnt;
-    vb_tagcnt_next((CFG_REG_TAG_WIDTH * t_waddr) + CFG_REG_TAG_WIDTH- 1, (CFG_REG_TAG_WIDTH * t_waddr)) = t_tagcnt_wr;
+    vb_tagcnt_next((CFG_REG_TAG_WIDTH * t_waddr) + CFG_REG_TAG_WIDTH - 1, (CFG_REG_TAG_WIDTH * t_waddr)) = t_tagcnt_wr;
     vb_tagcnt_next((CFG_REG_TAG_WIDTH - 1), 0) = 0;         // r0 always 0
     if (i_dbg_progbuf_ena.read() == 0) {
         v.dnpc = 0;

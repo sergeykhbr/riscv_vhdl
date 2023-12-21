@@ -105,17 +105,17 @@ void BpBTB::comb() {
     }
 
     vb_addr((RISCV_ARCH - 1), 0) = i_bp_pc;
-    vb_bp_exec[0] = i_e.read();
+    vb_bp_exec[0] = i_e;
 
     for (int i = 1; i < CFG_BP_DEPTH; i++) {
         t_addr = vb_addr(((i - 1) * RISCV_ARCH) + RISCV_ARCH - 1, ((i - 1) * RISCV_ARCH));
         for (int n = (CFG_BTB_SIZE - 1); n >= 0; n--) {
             if (t_addr == r.btb[n].pc) {
-                vb_addr((i * RISCV_ARCH) + RISCV_ARCH- 1, (i * RISCV_ARCH)) = r.btb[n].npc;
+                vb_addr((i * RISCV_ARCH) + RISCV_ARCH - 1, (i * RISCV_ARCH)) = r.btb[n].npc;
                 vb_hit[i] = 1;
                 vb_bp_exec[i] = r.btb[n].exec;              // Used for: Do not override by pre-decoded jumps
             } else if (vb_hit[i] == 0) {
-                vb_addr((i * RISCV_ARCH) + RISCV_ARCH- 1, (i * RISCV_ARCH)) = (t_addr + 4);
+                vb_addr((i * RISCV_ARCH) + RISCV_ARCH - 1, (i * RISCV_ARCH)) = (t_addr + 4);
             }
         }
     }

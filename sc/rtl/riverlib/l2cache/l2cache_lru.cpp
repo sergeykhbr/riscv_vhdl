@@ -283,7 +283,7 @@ void L2CacheLru::comb() {
 
     for (int i = 0; i < L1CACHE_BYTES_PER_LINE; i++) {
         if (r.req_wstrb.read()[i] == 1) {
-            vb_req_mask((8 * i) + 8- 1, (8 * i)) = 0xFF;
+            vb_req_mask((8 * i) + 8 - 1, (8 * i)) = 0xFF;
         }
     }
 
@@ -291,13 +291,13 @@ void L2CacheLru::comb() {
     vb_cache_line_i_modified = r.cache_line_i;
     for (int i = 0; i < (L2CACHE_BYTES_PER_LINE / L1CACHE_BYTES_PER_LINE); i++) {
         if (i == ridx) {
-            vb_line_rdata_o_modified((L1CACHE_LINE_BITS * i) + L1CACHE_LINE_BITS- 1, (L1CACHE_LINE_BITS * i)) = ((vb_line_rdata_o_modified((L1CACHE_LINE_BITS * i) + L1CACHE_LINE_BITS - 1, (L1CACHE_LINE_BITS * i))
+            vb_line_rdata_o_modified((L1CACHE_LINE_BITS * i) + L1CACHE_LINE_BITS - 1, (L1CACHE_LINE_BITS * i)) = ((vb_line_rdata_o_modified((L1CACHE_LINE_BITS * i) + L1CACHE_LINE_BITS - 1, (L1CACHE_LINE_BITS * i))
                             & (~vb_req_mask))
                     | (r.req_wdata.read() & vb_req_mask));
-            vb_cache_line_i_modified((L1CACHE_LINE_BITS * i) + L1CACHE_LINE_BITS- 1, (L1CACHE_LINE_BITS * i)) = ((vb_cache_line_i_modified((L1CACHE_LINE_BITS * i) + L1CACHE_LINE_BITS - 1, (L1CACHE_LINE_BITS * i))
+            vb_cache_line_i_modified((L1CACHE_LINE_BITS * i) + L1CACHE_LINE_BITS - 1, (L1CACHE_LINE_BITS * i)) = ((vb_cache_line_i_modified((L1CACHE_LINE_BITS * i) + L1CACHE_LINE_BITS - 1, (L1CACHE_LINE_BITS * i))
                             & (~vb_req_mask))
                     | (r.req_wdata.read() & vb_req_mask));
-            vb_line_rdata_o_wstrb((L1CACHE_BYTES_PER_LINE * i) + L1CACHE_BYTES_PER_LINE- 1, (L1CACHE_BYTES_PER_LINE * i)) = r.req_wstrb;
+            vb_line_rdata_o_wstrb((L1CACHE_BYTES_PER_LINE * i) + L1CACHE_BYTES_PER_LINE - 1, (L1CACHE_BYTES_PER_LINE * i)) = r.req_wstrb;
         }
     }
 
@@ -481,7 +481,7 @@ void L2CacheLru::comb() {
                 // Non-cached write
                 v.state = State_Idle;
                 v_resp_valid = 1;
-                vb_resp_status[1] = i_mem_store_fault.read();// rb_resp
+                vb_resp_status[1] = i_mem_store_fault;      // rb_resp
             }
         }
         break;

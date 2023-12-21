@@ -115,7 +115,7 @@ void ram_bytes_tech<abits, log2_dbytes>::comb() {
     for (int i = 0; i < dbytes; i++) {
         wb_wena[i] = (i_wena.read() && i_wstrb.read()[i]);
         wb_wdata[i] = i_wdata.read()((8 * i) + 8 - 1, (8 * i)).to_uint64();
-        vb_rdata((8 * i) + 8- 1, (8 * i)) = wb_rdata[i];
+        vb_rdata((8 * i) + 8 - 1, (8 * i)) = wb_rdata[i];
     }
 
     o_rdata = vb_rdata;

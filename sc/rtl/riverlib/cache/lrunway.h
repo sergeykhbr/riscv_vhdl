@@ -116,18 +116,18 @@ void lrunway<abits, waybits>::comb() {
 
     // init table value
     for (int i = 0; i < WAYS_TOTAL; i++) {
-        vb_tbl_wdata_init((i * waybits) + waybits- 1, (i * waybits)) = i;
+        vb_tbl_wdata_init((i * waybits) + waybits - 1, (i * waybits)) = i;
     }
 
     // LRU next value, last used goes on top
     vb_tbl_wdata_up = wb_tbl_rdata;
     if (wb_tbl_rdata((LINE_WIDTH - waybits) + waybits - 1, (LINE_WIDTH - waybits)) != i_lru.read()) {
-        vb_tbl_wdata_up((LINE_WIDTH - waybits) + waybits- 1, (LINE_WIDTH - waybits)) = i_lru;
+        vb_tbl_wdata_up((LINE_WIDTH - waybits) + waybits - 1, (LINE_WIDTH - waybits)) = i_lru;
         shift_ena_up = 1;
 
         for (int i = (WAYS_TOTAL - 2); i >= 0; i--) {
             if (shift_ena_up == 1) {
-                vb_tbl_wdata_up((i * waybits) + waybits- 1, (i * waybits)) = wb_tbl_rdata(((i + 1) * waybits) + waybits - 1, ((i + 1) * waybits));
+                vb_tbl_wdata_up((i * waybits) + waybits - 1, (i * waybits)) = wb_tbl_rdata(((i + 1) * waybits) + waybits - 1, ((i + 1) * waybits));
                 if (wb_tbl_rdata((i * waybits) + waybits - 1, (i * waybits)) == i_lru.read()) {
                     shift_ena_up = 0;
                 }
@@ -143,7 +143,7 @@ void lrunway<abits, waybits>::comb() {
 
         for (int i = 1; i < WAYS_TOTAL; i++) {
             if (shift_ena_down == 1) {
-                vb_tbl_wdata_down((i * waybits) + waybits- 1, (i * waybits)) = wb_tbl_rdata(((i - 1) * waybits) + waybits - 1, ((i - 1) * waybits));
+                vb_tbl_wdata_down((i * waybits) + waybits - 1, (i * waybits)) = wb_tbl_rdata(((i - 1) * waybits) + waybits - 1, ((i - 1) * waybits));
                 if (wb_tbl_rdata((i * waybits) + waybits - 1, (i * waybits)) == i_lru.read()) {
                     shift_ena_down = 0;
                 }

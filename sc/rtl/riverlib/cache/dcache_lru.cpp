@@ -334,7 +334,7 @@ void DCacheLru::comb() {
 
     for (int i = 0; i < 8; i++) {
         if (r.req_wstrb.read()[i] == 1) {
-            vb_req_mask((8 * i) + 8- 1, (8 * i)) = 0xFF;
+            vb_req_mask((8 * i) + 8 - 1, (8 * i)) = 0xFF;
         }
     }
 
@@ -342,13 +342,13 @@ void DCacheLru::comb() {
     vb_cache_line_i_modified = r.cache_line_i;
     for (int i = 0; i < (L1CACHE_BYTES_PER_LINE / 8); i++) {
         if (i == ridx.to_int()) {
-            vb_line_rdata_o_modified((64 * i) + 64- 1, (64 * i)) = ((vb_line_rdata_o_modified((64 * i) + 64 - 1, (64 * i))
+            vb_line_rdata_o_modified((64 * i) + 64 - 1, (64 * i)) = ((vb_line_rdata_o_modified((64 * i) + 64 - 1, (64 * i))
                             & (~vb_req_mask))
                     | (r.req_wdata.read() & vb_req_mask));
-            vb_cache_line_i_modified((64 * i) + 64- 1, (64 * i)) = ((vb_cache_line_i_modified((64 * i) + 64 - 1, (64 * i))
+            vb_cache_line_i_modified((64 * i) + 64 - 1, (64 * i)) = ((vb_cache_line_i_modified((64 * i) + 64 - 1, (64 * i))
                             & (~vb_req_mask))
                     | (r.req_wdata.read() & vb_req_mask));
-            vb_line_rdata_o_wstrb((8 * i) + 8- 1, (8 * i)) = r.req_wstrb;
+            vb_line_rdata_o_wstrb((8 * i) + 8 - 1, (8 * i)) = r.req_wstrb;
         }
     }
 

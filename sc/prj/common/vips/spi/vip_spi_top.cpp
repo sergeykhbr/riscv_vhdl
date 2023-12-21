@@ -168,7 +168,7 @@ void vip_spi_top::comb() {
         }
         break;
     case 0x04:                                              // [0x10] uart control
-        rdata[0] = r.uart_loopback.read();
+        rdata[0] = r.uart_loopback;
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             v.uart_loopback = wb_req_wdata.read()[0];
         }

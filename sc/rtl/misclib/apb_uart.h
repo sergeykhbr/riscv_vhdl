@@ -547,9 +547,9 @@ void apb_uart<log2_fifosz>::comb() {
         }
         break;
     case 2:                                                 // 0x08: txctrl
-        vb_rdata[0] = r.tx_ena.read();                      // [0] tx ena
-        vb_rdata[1] = r.tx_nstop.read();                    // [1] Number of stop bits
-        vb_rdata[2] = r.tx_par.read();                      // [2] parity bit enable
+        vb_rdata[0] = r.tx_ena;                             // [0] tx ena
+        vb_rdata[1] = r.tx_nstop;                           // [1] Number of stop bits
+        vb_rdata[2] = r.tx_par;                             // [2] parity bit enable
         vb_rdata(18, 16) = r.tx_irq_thresh.read()(2, 0);    // [18:16] FIFO threshold to raise irq
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             v.tx_ena = wb_req_wdata.read()[0];
@@ -559,9 +559,9 @@ void apb_uart<log2_fifosz>::comb() {
         }
         break;
     case 3:                                                 // 0x0C: rxctrl
-        vb_rdata[0] = r.rx_ena.read();                      // [0] txena
-        vb_rdata[1] = r.rx_nstop.read();                    // [1] Number of stop bits
-        vb_rdata[2] = r.rx_par.read();
+        vb_rdata[0] = r.rx_ena;                             // [0] txena
+        vb_rdata[1] = r.rx_nstop;                           // [1] Number of stop bits
+        vb_rdata[2] = r.rx_par;
         vb_rdata(18, 16) = r.rx_irq_thresh.read()(2, 0);
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             v.rx_ena = wb_req_wdata.read()[0];
@@ -571,16 +571,16 @@ void apb_uart<log2_fifosz>::comb() {
         }
         break;
     case 4:                                                 // 0x10: ie
-        vb_rdata[0] = r.tx_ie.read();
-        vb_rdata[1] = r.rx_ie.read();
+        vb_rdata[0] = r.tx_ie;
+        vb_rdata[1] = r.rx_ie;
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             v.tx_ie = wb_req_wdata.read()[0];
             v.rx_ie = wb_req_wdata.read()[1];
         }
         break;
     case 5:                                                 // 0x14: ip
-        vb_rdata[0] = r.tx_ip.read();
-        vb_rdata[1] = r.rx_ip.read();
+        vb_rdata[0] = r.tx_ip;
+        vb_rdata[1] = r.rx_ip;
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             v.tx_ip = wb_req_wdata.read()[0];
             v.rx_ip = wb_req_wdata.read()[1];

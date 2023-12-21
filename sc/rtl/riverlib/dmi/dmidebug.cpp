@@ -377,12 +377,12 @@ void dmidebug::comb() {
                 }
             }
         } else if (r.regidx.read() == 0x10) {               // dmcontrol
-            vb_resp_data[29] = r.hartreset.read();          // hartreset
+            vb_resp_data[29] = r.hartreset;                 // hartreset
             vb_resp_data[28] = 0;                           // ackhavereset
             vb_resp_data[26] = 0;                           // hasel: single selected hart only
             vb_resp_data(((16 + CFG_LOG2_CPU_MAX) - 1), 16) = r.hartsel;// hartsello
-            vb_resp_data[1] = r.ndmreset.read();
-            vb_resp_data[0] = r.dmactive.read();
+            vb_resp_data[1] = r.ndmreset;
+            vb_resp_data[0] = r.dmactive;
             if (r.regwr.read() == 1) {
                 if (r.wdata.read()[31] == 1) {
                     // Do not set cmderr before/after ndmreset
@@ -415,8 +415,8 @@ void dmidebug::comb() {
             vb_resp_data[22] = 0;                           // impebreak
             vb_resp_data[19] = 0;                           // allhavereset: selected hart reset but not acknowledged
             vb_resp_data[18] = 0;                           // anyhavereset
-            vb_resp_data[17] = r.resumeack.read();          // allresumeack
-            vb_resp_data[16] = r.resumeack.read();          // anyresumeack
+            vb_resp_data[17] = r.resumeack;                 // allresumeack
+            vb_resp_data[16] = r.resumeack;                 // anyresumeack
             vb_resp_data[15] = (!i_available.read()[hsel]); // allnonexistent
             vb_resp_data[14] = (!i_available.read()[hsel]); // anynonexistent
             vb_resp_data[13] = (!i_available.read()[hsel]); // allunavail
@@ -466,7 +466,7 @@ void dmidebug::comb() {
         } else if (r.regidx.read()(6, 4) == 0x2) {          // progbuf[n]
             vb_resp_data = r.progbuf_data.read()((32 * t_idx) + 32 - 1, (32 * t_idx)).to_uint64();
             if (r.regwr.read() == 1) {
-                t_progbuf((32 * t_idx) + 32- 1, (32 * t_idx)) = r.wdata;
+                t_progbuf((32 * t_idx) + 32 - 1, (32 * t_idx)) = r.wdata;
                 v.progbuf_data = t_progbuf;
             }
             if ((r.autoexecprogbuf.read()[t_idx] == 1)
@@ -665,11 +665,11 @@ void dmidebug::comb() {
     vapbo.pready = r.pready;
     vapbo.prdata = r.prdata;
 
-    vb_req_type[DPortReq_Write] = r.cmd_write.read();
-    vb_req_type[DPortReq_RegAccess] = r.cmd_regaccess.read();
-    vb_req_type[DPortReq_MemAccess] = r.cmd_memaccess.read();
-    vb_req_type[DPortReq_MemVirtual] = r.aamvirtual.read();
-    vb_req_type[DPortReq_Progexec] = r.cmd_progexec.read();
+    vb_req_type[DPortReq_Write] = r.cmd_write;
+    vb_req_type[DPortReq_RegAccess] = r.cmd_regaccess;
+    vb_req_type[DPortReq_MemAccess] = r.cmd_memaccess;
+    vb_req_type[DPortReq_MemVirtual] = r.aamvirtual;
+    vb_req_type[DPortReq_Progexec] = r.cmd_progexec;
 
     if ((!async_reset_ && i_nrst.read() == 0) || (w_cdc_dmi_hardreset.read() == 1)) {
         dmidebug_r_reset(v);

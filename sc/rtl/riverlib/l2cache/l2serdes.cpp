@@ -135,7 +135,7 @@ void L2SerDes::comb() {
     vb_line_o = r.line;
     for (int i = 0; i < SERDES_BURST_LEN; i++) {
         if (r.rmux.read()[i] == 1) {
-            vb_line_o((i * busw) + busw- 1, (i * busw)) = vb_r_data;
+            vb_line_o((i * busw) + busw - 1, (i * busw)) = vb_r_data;
         }
     }
 

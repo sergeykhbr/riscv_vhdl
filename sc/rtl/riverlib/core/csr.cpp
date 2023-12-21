@@ -691,21 +691,21 @@ void CsrRegs::comb() {
     } else if (r.cmd_addr.read() == 0x043) {                // utval: [URW] User bad address or instruction
     } else if (r.cmd_addr.read() == 0x044) {                // uip: [URW] User interrupt pending
     } else if (r.cmd_addr.read() == 0x001) {                // fflags: [URW] Floating-Point Accrued Exceptions
-        vb_rdata[0] = r.ex_fpu_inexact.read();
-        vb_rdata[1] = r.ex_fpu_underflow.read();
-        vb_rdata[2] = r.ex_fpu_overflow.read();
-        vb_rdata[3] = r.ex_fpu_divbyzero.read();
-        vb_rdata[4] = r.ex_fpu_invalidop.read();
+        vb_rdata[0] = r.ex_fpu_inexact;
+        vb_rdata[1] = r.ex_fpu_underflow;
+        vb_rdata[2] = r.ex_fpu_overflow;
+        vb_rdata[3] = r.ex_fpu_divbyzero;
+        vb_rdata[4] = r.ex_fpu_invalidop;
     } else if (r.cmd_addr.read() == 0x002) {                // fflags: [URW] Floating-Point Dynamic Rounding Mode
         if (CFG_HW_FPU_ENABLE) {
             vb_rdata(2, 0) = 4;                             // Round mode: round to Nearest (RMM)
         }
     } else if (r.cmd_addr.read() == 0x003) {                // fcsr: [URW] Floating-Point Control and Status Register (frm + fflags)
-        vb_rdata[0] = r.ex_fpu_inexact.read();
-        vb_rdata[1] = r.ex_fpu_underflow.read();
-        vb_rdata[2] = r.ex_fpu_overflow.read();
-        vb_rdata[3] = r.ex_fpu_divbyzero.read();
-        vb_rdata[4] = r.ex_fpu_invalidop.read();
+        vb_rdata[0] = r.ex_fpu_inexact;
+        vb_rdata[1] = r.ex_fpu_underflow;
+        vb_rdata[2] = r.ex_fpu_overflow;
+        vb_rdata[3] = r.ex_fpu_divbyzero;
+        vb_rdata[4] = r.ex_fpu_invalidop;
         if (CFG_HW_FPU_ENABLE) {
             vb_rdata(7, 5) = 4;                             // Round mode: round to Nearest (RMM)
         }
@@ -872,10 +872,10 @@ void CsrRegs::comb() {
             vb_rdata(14, 13) = 0x1;                         // FS field: Initial state
         }
         // [16:15] XS
-        vb_rdata[17] = r.mprv.read();
-        vb_rdata[18] = r.sum.read();
-        vb_rdata[19] = r.mxr.read();
-        vb_rdata[20] = r.tvm.read();                        // Trap Virtual Memory
+        vb_rdata[17] = r.mprv;
+        vb_rdata[18] = r.sum;
+        vb_rdata[19] = r.mxr;
+        vb_rdata[20] = r.tvm;                               // Trap Virtual Memory
         // [21] TW
         // [22] TSR
         // [31:23] WPRI
@@ -1014,7 +1014,7 @@ void CsrRegs::comb() {
             v.cmd_exception = 1;                            // RV32 only
         } else if (t_pmpcfgidx < CFG_PMP_TBL_SIZE) {
             for (int i = 0; i < 8; i++) {
-                vb_rdata((8 * i) + 8- 1, (8 * i)) = r.pmp[(t_pmpcfgidx + i)].cfg;
+                vb_rdata((8 * i) + 8 - 1, (8 * i)) = r.pmp[(t_pmpcfgidx + i)].cfg;
                 if ((v_csr_wena == 1)
                         && (r.pmp[(t_pmpcfgidx + i)].cfg.read()[7] == 0)) {
                     // [7] Bit L = locked cannot be modified upto reset
@@ -1067,12 +1067,12 @@ void CsrRegs::comb() {
     } else if (r.cmd_addr.read() == 0x7A8) {                // mcontext: [MRW] Machine-mode context register
     } else if (r.cmd_addr.read() == 0x7B0) {                // dcsr: [DRW] Debug control and status register
         vb_rdata(31, 28) = 4;                               // xdebugver: 4=External debug supported
-        vb_rdata[15] = r.dcsr_ebreakm.read();
-        vb_rdata[11] = r.dcsr_stepie.read();                // interrupt dis/ena during step
-        vb_rdata[10] = r.dcsr_stopcount.read();             // don't increment any counter
-        vb_rdata[9] = r.dcsr_stoptimer.read();              // don't increment timer
+        vb_rdata[15] = r.dcsr_ebreakm;
+        vb_rdata[11] = r.dcsr_stepie;                       // interrupt dis/ena during step
+        vb_rdata[10] = r.dcsr_stopcount;                    // don't increment any counter
+        vb_rdata[9] = r.dcsr_stoptimer;                     // don't increment timer
         vb_rdata(8, 6) = r.halt_cause;
-        vb_rdata[2] = r.dcsr_step.read();
+        vb_rdata[2] = r.dcsr_step;
         vb_rdata(1, 0) = 3;                                 // prv: privilege in debug mode: 3=machine
         if (v_csr_wena == 1) {
             v.dcsr_ebreakm = r.cmd_data.read()[15];

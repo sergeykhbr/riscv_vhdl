@@ -221,7 +221,7 @@ void vip_sdcard_ctrl::comb() {
                 v.ocr_vdd_window = (i_cmd_req_data.read()(23, 0) & CFG_SDCARD_VDD_VOLTAGE_WINDOW_);
                 v.cmd_resp_valid = 1;
                 v.delay_cnt = 20;
-                vb_resp_data32[31] = r.powerup_done.read();
+                vb_resp_data32[31] = r.powerup_done;
                 vb_resp_data32[30] = (i_cmd_req_data.read()[30] & CFG_SDCARD_HCS_);
                 vb_resp_data32(23, 0) = (i_cmd_req_data.read()(23, 0) & CFG_SDCARD_VDD_VOLTAGE_WINDOW_);
                 if ((i_cmd_req_data.read()(23, 0) & CFG_SDCARD_VDD_VOLTAGE_WINDOW_) == 0) {
@@ -238,8 +238,8 @@ void vip_sdcard_ctrl::comb() {
                 v.delay_cnt = 20;
                 if (i_spi_mode.read() == 1) {
                     vb_resp_data32 = 0;
-                    vb_resp_data32[31] = r.powerup_done.read();
-                    vb_resp_data32[30] = r.ocr_hcs.read();
+                    vb_resp_data32[31] = r.powerup_done;
+                    vb_resp_data32[30] = r.ocr_hcs;
                     vb_resp_data32(23, 0) = r.ocr_vdd_window;
                 } else {
                     v.illegal_cmd = 1;

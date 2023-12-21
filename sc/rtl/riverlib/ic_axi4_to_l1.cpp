@@ -113,18 +113,18 @@ void ic_axi4_to_l1::comb() {
     vb_req_mask = 0;
     for (int i = 0; i < 8; i++) {
         if (r.req_wstrb.read()[i] == 1) {
-            vb_req_mask((8 * i) + 8- 1, (8 * i)) = 0xFF;
+            vb_req_mask((8 * i) + 8 - 1, (8 * i)) = 0xFF;
         }
     }
 
     vb_resp_data = i_l1i.read().r_data((idx * 64) + 64 - 1, (idx * 64));
 
     vb_r_data_modified = i_l1i.read().r_data;
-    vb_r_data_modified((idx * 64) + 64- 1, (idx * 64)) = ((i_l1i.read().r_data((idx * 64) + 64 - 1, (idx * 64)) & (~vb_req_mask))
+    vb_r_data_modified((idx * 64) + 64 - 1, (idx * 64)) = ((i_l1i.read().r_data((idx * 64) + 64 - 1, (idx * 64)) & (~vb_req_mask))
             | (r.req_wdata.read() & vb_req_mask));
 
     vb_line_wstrb = 0;
-    vb_line_wstrb((idx * 8) + 8- 1, (idx * 8)) = r.req_wstrb;
+    vb_line_wstrb((idx * 8) + 8 - 1, (idx * 8)) = r.req_wstrb;
 
     switch (r.state.read()) {
     case Idle:

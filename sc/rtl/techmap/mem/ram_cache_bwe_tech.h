@@ -106,7 +106,7 @@ void ram_cache_bwe_tech<abits, dbits>::comb() {
     for (int i = 0; i < (dbits / 8); i++) {
         wb_we[i] = i_wena.read()[i];
         wb_wdata[i] = i_wdata.read()((8 * i) + 8 - 1, (8 * i)).to_uint64();
-        vb_rdata((8 * i) + 8- 1, (8 * i)) = wb_rdata[i];
+        vb_rdata((8 * i) + 8 - 1, (8 * i)) = wb_rdata[i];
     }
     o_rdata = vb_rdata;
 }

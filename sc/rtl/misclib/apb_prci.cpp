@@ -127,12 +127,12 @@ void apb_prci::comb() {
     // Registers access:
     switch (wb_req_addr.read()(11, 2)) {
     case 0:                                                 // 0x00: pll statuses
-        vb_rdata[0] = i_sys_locked.read();
-        vb_rdata[1] = i_ddr_locked.read();
+        vb_rdata[0] = i_sys_locked;
+        vb_rdata[1] = i_ddr_locked;
         break;
     case 1:                                                 // 0x04: reset status
-        vb_rdata[0] = r.sys_nrst.read();
-        vb_rdata[1] = r.dbg_nrst.read();
+        vb_rdata[0] = r.sys_nrst;
+        vb_rdata[1] = r.dbg_nrst;
         if (w_req_valid.read() == 1) {
             if (w_req_write.read() == 1) {
                 // todo:

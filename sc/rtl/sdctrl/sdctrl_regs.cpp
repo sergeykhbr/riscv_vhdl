@@ -233,13 +233,13 @@ void sdctrl_regs::comb() {
         }
         break;
     case 0x001:                                             // {0x04, 'RW', 'control', 'Global Control register'}
-        vb_rdata[0] = r.sclk_ena.read();
-        vb_rdata[3] = r.spi_mode.read();
-        vb_rdata[4] = i_sd_dat0.read();
-        vb_rdata[5] = i_sd_dat1.read();
-        vb_rdata[6] = i_sd_dat2.read();
-        vb_rdata[7] = i_sd_dat3.read();
-        vb_rdata[8] = i_sd_cmd.read();
+        vb_rdata[0] = r.sclk_ena;
+        vb_rdata[3] = r.spi_mode;
+        vb_rdata[4] = i_sd_dat0;
+        vb_rdata[5] = i_sd_dat1;
+        vb_rdata[6] = i_sd_dat2;
+        vb_rdata[7] = i_sd_dat3;
+        vb_rdata[8] = i_sd_cmd;
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             v.sclk_ena = wb_req_wdata.read()[0];
             v.err_clear = wb_req_wdata.read()[1];
@@ -268,8 +268,8 @@ void sdctrl_regs::comb() {
     case 0x008:                                             // {0x20, 'RW', 'interface_condition', 'CMD8 parameters'}
         vb_rdata(7, 0) = r.check_pattern;
         vb_rdata(11, 8) = r.voltage_supply;
-        vb_rdata[12] = r.pcie_available.read();
-        vb_rdata[13] = r.pcie_12V_support.read();
+        vb_rdata[12] = r.pcie_available;
+        vb_rdata[13] = r.pcie_12V_support;
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             v.check_pattern = wb_req_wdata.read()(7, 0);
             v.voltage_supply = wb_req_wdata.read()(11, 8);

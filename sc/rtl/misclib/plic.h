@@ -260,7 +260,7 @@ void plic<ctxmax, irqmax>::comb() {
             if ((r.pending.read()[i] == 1)
                     && (r.ctx[n].ie[i] == 1)
                     && (r.src_priority.read()((4 * i) + 4 - 1, (4 * i)).to_int() > r.ctx[n].priority_th)) {
-                vb_ctx[n].ip_prio((4 * i) + 4- 1, (4 * i)) = r.src_priority.read()((4 * i) + 4 - 1, (4 * i));
+                vb_ctx[n].ip_prio((4 * i) + 4 - 1, (4 * i)) = r.src_priority.read()((4 * i) + 4 - 1, (4 * i));
                 vb_ctx[n].prio_mask[r.src_priority.read()((4 * i) + 4 - 1, (4 * i)).to_int()] = 1;
             }
         }
@@ -301,7 +301,7 @@ void plic<ctxmax, irqmax>::comb() {
             vrdata(3, 0) = r.src_priority.read()((8 * wb_req_addr.read()(11, 3)) + 4 - 1, (8 * wb_req_addr.read()(11, 3))).to_uint64();
             if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
                 if (wb_req_wstrb.read()(3, 0).or_reduce() == 1) {
-                    vb_src_priority((8 * wb_req_addr.read()(11, 3)) + 4- 1, (8 * wb_req_addr.read()(11, 3))) = wb_req_wdata.read()(3, 0);
+                    vb_src_priority((8 * wb_req_addr.read()(11, 3)) + 4 - 1, (8 * wb_req_addr.read()(11, 3))) = wb_req_wdata.read()(3, 0);
                 }
             }
         }
@@ -309,7 +309,7 @@ void plic<ctxmax, irqmax>::comb() {
         vrdata(35, 32) = r.src_priority.read()(((8 * wb_req_addr.read()(11, 3)) + 32) + 4 - 1, ((8 * wb_req_addr.read()(11, 3)) + 32)).to_uint64();
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             if (wb_req_wstrb.read()(7, 4).or_reduce() == 1) {
-                vb_src_priority(((8 * wb_req_addr.read()(11, 3)) + 32) + 4- 1, ((8 * wb_req_addr.read()(11, 3)) + 32)) = wb_req_wdata.read()(35, 32);
+                vb_src_priority(((8 * wb_req_addr.read()(11, 3)) + 32) + 4 - 1, ((8 * wb_req_addr.read()(11, 3)) + 32)) = wb_req_wdata.read()(35, 32);
             }
         }
     } else if (wb_req_addr.read()(21, 12) == 1) {
@@ -317,10 +317,10 @@ void plic<ctxmax, irqmax>::comb() {
         vrdata = r.pending.read()((64 * wb_req_addr.read()(6, 3)) + 64 - 1, (64 * wb_req_addr.read()(6, 3))).to_uint64();
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             if (wb_req_wstrb.read()(3, 0).or_reduce() == 1) {
-                vb_pending((64 * wb_req_addr.read()(6, 3)) + 32- 1, (64 * wb_req_addr.read()(6, 3))) = wb_req_wdata.read()(31, 0);
+                vb_pending((64 * wb_req_addr.read()(6, 3)) + 32 - 1, (64 * wb_req_addr.read()(6, 3))) = wb_req_wdata.read()(31, 0);
             }
             if (wb_req_wstrb.read()(7, 4).or_reduce() == 1) {
-                vb_pending(((64 * wb_req_addr.read()(6, 3)) + 32) + 32- 1, ((64 * wb_req_addr.read()(6, 3)) + 32)) = wb_req_wdata.read()(63, 32);
+                vb_pending(((64 * wb_req_addr.read()(6, 3)) + 32) + 32 - 1, ((64 * wb_req_addr.read()(6, 3)) + 32)) = wb_req_wdata.read()(63, 32);
             }
         }
     } else if ((wb_req_addr.read()(21, 12) == 2)
@@ -330,10 +330,10 @@ void plic<ctxmax, irqmax>::comb() {
         vrdata = r.ctx[wb_req_addr.read()(11, 7)].ie((64 * wb_req_addr.read()(6, 3)) + 64 - 1, (64 * wb_req_addr.read()(6, 3))).to_uint64();
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             if (wb_req_wstrb.read()(3, 0).or_reduce() == 1) {
-                vb_ctx[wb_req_addr.read()(11, 7)].ie((64 * wb_req_addr.read()(6, 3)) + 32- 1, (64 * wb_req_addr.read()(6, 3))) = wb_req_wdata.read()(31, 0);
+                vb_ctx[wb_req_addr.read()(11, 7)].ie((64 * wb_req_addr.read()(6, 3)) + 32 - 1, (64 * wb_req_addr.read()(6, 3))) = wb_req_wdata.read()(31, 0);
             }
             if (wb_req_wstrb.read()(7, 4).or_reduce() == 1) {
-                vb_ctx[wb_req_addr.read()(11, 7)].ie(((64 * wb_req_addr.read()(6, 3)) + 32) + 32- 1, ((64 * wb_req_addr.read()(6, 3)) + 32)) = wb_req_wdata.read()(63, 32);
+                vb_ctx[wb_req_addr.read()(11, 7)].ie(((64 * wb_req_addr.read()(6, 3)) + 32) + 32 - 1, ((64 * wb_req_addr.read()(6, 3)) + 32)) = wb_req_wdata.read()(63, 32);
             }
         }
     } else if ((wb_req_addr.read()(21, 12) >= 0x200) && (wb_req_addr.read()(20, 12) < ctxmax)) {

@@ -135,16 +135,16 @@ void apb_ddr::comb() {
     // Registers access:
     switch (wb_req_addr.read()(11, 2)) {
     case 0:                                                 // 0x00: clock status
-        vb_rdata[0] = r.pll_locked.read();
-        vb_rdata[1] = r.init_calib_done.read();
+        vb_rdata[0] = r.pll_locked;
+        vb_rdata[1] = r.init_calib_done;
         break;
     case 1:                                                 // 0x04: temperature
         vb_rdata(11, 0) = r.device_temp;
         break;
     case 2:                                                 // 0x08: app bits
-        vb_rdata[0] = r.sr_active.read();                   // [0] 
-        vb_rdata[1] = r.ref_ack.read();                     // [1] 
-        vb_rdata[2] = r.zq_ack.read();                      // [2] 
+        vb_rdata[0] = r.sr_active;                          // [0] 
+        vb_rdata[1] = r.ref_ack;                            // [1] 
+        vb_rdata[2] = r.zq_ack;                             // [2] 
         break;
     default:
         break;
