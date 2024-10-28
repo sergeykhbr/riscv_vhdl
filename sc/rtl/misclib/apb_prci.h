@@ -38,7 +38,7 @@ SC_MODULE(apb_prci) {
     sc_out<apb_out_type> o_apbo;                            // APB Bridge to Slave interface
 
     void comb();
-    void registers();
+    void rhegisters();
 
     SC_HAS_PROCESS(apb_prci);
 
@@ -51,7 +51,7 @@ SC_MODULE(apb_prci) {
  private:
     bool async_reset_;
 
-    struct apb_prci_registers {
+    struct apb_prci_rhegisters {
         sc_signal<bool> sys_rst;
         sc_signal<bool> sys_nrst;
         sc_signal<bool> dbg_nrst;
@@ -60,9 +60,9 @@ SC_MODULE(apb_prci) {
         sc_signal<bool> resp_valid;
         sc_signal<sc_uint<32>> resp_rdata;
         sc_signal<bool> resp_err;
-    } v, r;
+    } vh, rh;
 
-    void apb_prci_r_reset(apb_prci_registers &iv) {
+    void apb_prci_rh_reset(apb_prci_rhegisters &iv) {
         iv.sys_rst = 0;
         iv.sys_nrst = 0;
         iv.dbg_nrst = 0;

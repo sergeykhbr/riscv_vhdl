@@ -40,8 +40,8 @@ SC_MODULE(jtagtap) {
     sc_out<bool> o_dmi_hardreset;
 
     void comb();
-    void registers();
-    void nregisters();
+    void nrhegisters();
+    void rhegisters();
 
     SC_HAS_PROCESS(jtagtap);
 
@@ -84,7 +84,17 @@ SC_MODULE(jtagtap) {
     static const uint8_t EXIT2_IR = 14;
     static const uint8_t UPDATE_IR = 15;
 
-    struct jtagtap_registers {
+    struct jtagtap_nrhegisters {
+        sc_signal<sc_uint<irlen>> ir;
+        sc_signal<sc_uint<abits>> dmi_addr;
+    } nvh, nrh;
+
+    void jtagtap_nrh_reset(jtagtap_nrhegisters &iv) {
+        iv.ir = IR_IDCODE;
+        iv.dmi_addr = 0;
+    }
+
+    struct jtagtap_rhegisters {
         sc_signal<sc_uint<4>> state;
         sc_signal<sc_uint<7>> dr_length;
         sc_signal<sc_uint<drlen>> dr;
@@ -92,9 +102,9 @@ SC_MODULE(jtagtap) {
         sc_signal<sc_uint<32>> datacnt;
         sc_signal<bool> dmi_busy;
         sc_signal<sc_uint<2>> err_sticky;
-    } v, r;
+    } vh, rh;
 
-    void jtagtap_r_reset(jtagtap_registers &iv) {
+    void jtagtap_rh_reset(jtagtap_rhegisters &iv) {
         iv.state = RESET_TAP;
         iv.dr_length = 0;
         iv.dr = idcode;
@@ -102,16 +112,6 @@ SC_MODULE(jtagtap) {
         iv.datacnt = 0;
         iv.dmi_busy = 0;
         iv.err_sticky = 0;
-    }
-
-    struct jtagtap_nregisters {
-        sc_signal<sc_uint<irlen>> ir;
-        sc_signal<sc_uint<abits>> dmi_addr;
-    } nv, nr;
-
-    void jtagtap_nr_reset(jtagtap_nregisters &iv) {
-        iv.ir = IR_IDCODE;
-        iv.dmi_addr = 0;
     }
 
 };
@@ -142,23 +142,23 @@ jtagtap<abits, irlen, idcode>::jtagtap(sc_module_name name)
     sensitive << i_dmi_resp_data;
     sensitive << i_dmi_busy;
     sensitive << i_dmi_error;
-    sensitive << r.state;
-    sensitive << r.dr_length;
-    sensitive << r.dr;
-    sensitive << r.bypass;
-    sensitive << r.datacnt;
-    sensitive << r.dmi_busy;
-    sensitive << r.err_sticky;
-    sensitive << nr.ir;
-    sensitive << nr.dmi_addr;
+    sensitive << rh.state;
+    sensitive << rh.dr_length;
+    sensitive << rh.dr;
+    sensitive << rh.bypass;
+    sensitive << rh.datacnt;
+    sensitive << rh.dmi_busy;
+    sensitive << rh.err_sticky;
+    sensitive << nrh.ir;
+    sensitive << nrh.dmi_addr;
 
-    SC_METHOD(registers);
+    SC_METHOD(nrhegisters);
     sensitive << i_trst;
     sensitive << i_tck.pos();
 
-    SC_METHOD(nregisters);
+    SC_METHOD(rhegisters);
     sensitive << i_trst;
-    sensitive << i_tck.neg();
+    sensitive << i_tck.pos();
 }
 
 template<int abits, int irlen, uint32_t idcode>
@@ -178,15 +178,15 @@ void jtagtap<abits, irlen, idcode>::generateVCD(sc_trace_file *i_vcd, sc_trace_f
         sc_trace(o_vcd, i_dmi_busy, i_dmi_busy.name());
         sc_trace(o_vcd, i_dmi_error, i_dmi_error.name());
         sc_trace(o_vcd, o_dmi_hardreset, o_dmi_hardreset.name());
-        sc_trace(o_vcd, r.state, pn + ".r_state");
-        sc_trace(o_vcd, r.dr_length, pn + ".r_dr_length");
-        sc_trace(o_vcd, r.dr, pn + ".r_dr");
-        sc_trace(o_vcd, r.bypass, pn + ".r_bypass");
-        sc_trace(o_vcd, r.datacnt, pn + ".r_datacnt");
-        sc_trace(o_vcd, r.dmi_busy, pn + ".r_dmi_busy");
-        sc_trace(o_vcd, r.err_sticky, pn + ".r_err_sticky");
-        sc_trace(o_vcd, nr.ir, pn + ".nr_ir");
-        sc_trace(o_vcd, nr.dmi_addr, pn + ".nr_dmi_addr");
+        sc_trace(o_vcd, rh.state, pn + ".rh_state");
+        sc_trace(o_vcd, rh.dr_length, pn + ".rh_dr_length");
+        sc_trace(o_vcd, rh.dr, pn + ".rh_dr");
+        sc_trace(o_vcd, rh.bypass, pn + ".rh_bypass");
+        sc_trace(o_vcd, rh.datacnt, pn + ".rh_datacnt");
+        sc_trace(o_vcd, rh.dmi_busy, pn + ".rh_dmi_busy");
+        sc_trace(o_vcd, rh.err_sticky, pn + ".rh_err_sticky");
+        sc_trace(o_vcd, nrh.ir, pn + ".nrh_ir");
+        sc_trace(o_vcd, nrh.dmi_addr, pn + ".nrh_dmi_addr");
     }
 
 }
@@ -209,192 +209,192 @@ void jtagtap<abits, irlen, idcode>::comb() {
     vb_err_sticky = 0;
     v_dmi_hardreset = 0;
 
-    v = r;
-    nv = nr;
+    nvh = nrh;
+    vh = rh;
 
-    vb_dr = r.dr;
-    vb_err_sticky = r.err_sticky;
+    vb_dr = rh.dr;
+    vb_err_sticky = rh.err_sticky;
 
-    switch (r.state.read()) {
+    switch (rh.state.read()) {
     case RESET_TAP:
-        nv.ir = IR_IDCODE;
+        nvh.ir = IR_IDCODE;
         if (i_tms.read() == 1) {
-            v.state = RESET_TAP;
+            vh.state = RESET_TAP;
         } else {
-            v.state = IDLE;
+            vh.state = IDLE;
         }
         break;
     case IDLE:
         if (i_tms.read() == 1) {
-            v.state = SELECT_DR_SCAN;
+            vh.state = SELECT_DR_SCAN;
         } else {
-            v.state = IDLE;
+            vh.state = IDLE;
         }
         break;
     case SELECT_DR_SCAN:
         if (i_tms.read() == 1) {
-            v.state = SELECT_IR_SCAN;
+            vh.state = SELECT_IR_SCAN;
         } else {
-            v.state = CAPTURE_DR;
+            vh.state = CAPTURE_DR;
         }
         break;
     case CAPTURE_DR:
         if (i_tms.read() == 1) {
-            v.state = EXIT1_DR;
+            vh.state = EXIT1_DR;
         } else {
-            v.state = SHIFT_DR;
+            vh.state = SHIFT_DR;
         }
-        if (nr.ir.read() == IR_IDCODE) {
+        if (nrh.ir.read() == IR_IDCODE) {
             vb_dr = idcode;
-            v.dr_length = 32;
-        } else if (nr.ir.read() == IR_DTMCONTROL) {
+            vh.dr_length = 32;
+        } else if (nrh.ir.read() == IR_DTMCONTROL) {
             vb_dr(31, 0) = 0;
             vb_dr(3, 0) = 0x1;                              // version
             vb_dr(9, 4) = abits;                            // the size of the address
-            vb_dr(11, 10) = r.err_sticky;
-            v.dr_length = 32;
-        } else if (nr.ir.read() == IR_DBUS) {
+            vb_dr(11, 10) = rh.err_sticky;
+            vh.dr_length = 32;
+        } else if (nrh.ir.read() == IR_DBUS) {
             if (i_dmi_error.read() == 1) {
                 vb_err_sticky = DMISTAT_FAILED;
                 vb_dr(1, 0) = DMISTAT_FAILED;
             } else {
-                vb_dr(1, 0) = r.err_sticky;
+                vb_dr(1, 0) = rh.err_sticky;
             }
             vb_dr(33, 2) = i_dmi_resp_data;
-            vb_dr(((34 + abits) - 1), 34) = nr.dmi_addr;
-            v.dr_length = (abits + 34);
-        } else if (nr.ir.read() == IR_BYPASS) {
-            vb_dr[0] = r.bypass;
-            v.dr_length = 1;
+            vb_dr(((34 + abits) - 1), 34) = nrh.dmi_addr;
+            vh.dr_length = (abits + 34);
+        } else if (nrh.ir.read() == IR_BYPASS) {
+            vb_dr[0] = rh.bypass;
+            vh.dr_length = 1;
         }
-        v.datacnt = 0;
+        vh.datacnt = 0;
         break;
     case SHIFT_DR:
         if (i_tms.read() == 1) {
-            v.state = EXIT1_DR;
+            vh.state = EXIT1_DR;
         } else {
-            v.state = SHIFT_DR;
+            vh.state = SHIFT_DR;
         }
-        if (r.dr_length.read() > 1) {
+        if (rh.dr_length.read() > 1) {
             // For the bypass dr_length = 1
-            vb_dr = (0, r.dr.read()((drlen - 1), 1));
-            vb_dr[(r.dr_length.read().to_int() - 1)] = i_tdi;
+            vb_dr = (0, rh.dr.read()((drlen - 1), 1));
+            vb_dr[(rh.dr_length.read().to_int() - 1)] = i_tdi;
         } else {
             vb_dr[0] = i_tdi;
         }
-        v.datacnt = (r.datacnt.read() + 1);                 // debug counter no need in rtl
+        vh.datacnt = (rh.datacnt.read() + 1);               // debug counter no need in rtl
         break;
     case EXIT1_DR:
         if (i_tms.read() == 1) {
-            v.state = UPDATE_DR;
+            vh.state = UPDATE_DR;
         } else {
-            v.state = PAUSE_DR;
+            vh.state = PAUSE_DR;
         }
         break;
     case PAUSE_DR:
         if (i_tms.read() == 1) {
-            v.state = EXIT2_DR;
+            vh.state = EXIT2_DR;
         } else {
-            v.state = PAUSE_DR;
+            vh.state = PAUSE_DR;
         }
         break;
     case EXIT2_DR:
         if (i_tms.read() == 1) {
-            v.state = UPDATE_DR;
+            vh.state = UPDATE_DR;
         } else {
-            v.state = SHIFT_DR;
+            vh.state = SHIFT_DR;
         }
         break;
     case UPDATE_DR:
         if (i_tms.read() == 1) {
-            v.state = SELECT_DR_SCAN;
+            vh.state = SELECT_DR_SCAN;
         } else {
-            v.state = IDLE;
+            vh.state = IDLE;
         }
-        if (nr.ir.read() == IR_DTMCONTROL) {
-            v_dmi_hardreset = r.dr.read()[DTMCONTROL_DMIHARDRESET];
-            if (r.dr.read()[DTMCONTROL_DMIRESET] == 1) {
+        if (nrh.ir.read() == IR_DTMCONTROL) {
+            v_dmi_hardreset = rh.dr.read()[DTMCONTROL_DMIHARDRESET];
+            if (rh.dr.read()[DTMCONTROL_DMIRESET] == 1) {
                 vb_err_sticky = DMISTAT_SUCCESS;
             }
-        } else if (nr.ir.read() == IR_BYPASS) {
-            v.bypass = r.dr.read()[0];
-        } else if (nr.ir.read() == IR_DBUS) {
-            if (r.err_sticky.read() != DMISTAT_SUCCESS) {
+        } else if (nrh.ir.read() == IR_BYPASS) {
+            vh.bypass = rh.dr.read()[0];
+        } else if (nrh.ir.read() == IR_DBUS) {
+            if (rh.err_sticky.read() != DMISTAT_SUCCESS) {
                 // This operation should never result in a busy or error response.
-            } else if (r.dmi_busy.read() == 1) {
+            } else if (rh.dmi_busy.read() == 1) {
                 vb_err_sticky = DMISTAT_BUSY;
             } else {
-                v_dmi_req_valid = r.dr.read()(1, 0).or_reduce();
+                v_dmi_req_valid = rh.dr.read()(1, 0).or_reduce();
             }
-            v_dmi_req_write = r.dr.read()[1];
-            vb_dmi_req_data = r.dr.read()(33, 2);
-            vb_dmi_req_addr = r.dr.read()(((34 + abits) - 1), 34);
+            v_dmi_req_write = rh.dr.read()[1];
+            vb_dmi_req_data = rh.dr.read()(33, 2);
+            vb_dmi_req_addr = rh.dr.read()(((34 + abits) - 1), 34);
 
-            nv.dmi_addr = r.dr.read()(((34 + abits) - 1), 34);
+            nvh.dmi_addr = rh.dr.read()(((34 + abits) - 1), 34);
         }
         break;
     case SELECT_IR_SCAN:
         if (i_tms.read() == 1) {
-            v.state = RESET_TAP;
+            vh.state = RESET_TAP;
         } else {
-            v.state = CAPTURE_IR;
+            vh.state = CAPTURE_IR;
         }
         break;
     case CAPTURE_IR:
         if (i_tms.read() == 1) {
-            v.state = EXIT1_IR;
+            vh.state = EXIT1_IR;
         } else {
-            v.state = SHIFT_IR;
+            vh.state = SHIFT_IR;
         }
-        vb_dr((irlen - 1), 2) = nr.ir.read()((irlen - 1), 2);
+        vb_dr((irlen - 1), 2) = nrh.ir.read()((irlen - 1), 2);
         vb_dr(1, 0) = 0x1;
         break;
     case SHIFT_IR:
         if (i_tms.read() == 1) {
-            v.state = EXIT1_IR;
+            vh.state = EXIT1_IR;
         } else {
-            v.state = SHIFT_IR;
+            vh.state = SHIFT_IR;
         }
         vb_dr[(irlen - 1)] = i_tdi;
-        vb_dr((irlen - 2), 0) = r.dr.read()((irlen - 1), 1);
+        vb_dr((irlen - 2), 0) = rh.dr.read()((irlen - 1), 1);
         break;
     case EXIT1_IR:
         if (i_tms.read() == 1) {
-            v.state = UPDATE_IR;
+            vh.state = UPDATE_IR;
         } else {
-            v.state = PAUSE_IR;
+            vh.state = PAUSE_IR;
         }
         break;
     case PAUSE_IR:
         if (i_tms.read() == 1) {
-            v.state = EXIT2_IR;
+            vh.state = EXIT2_IR;
         } else {
-            v.state = PAUSE_IR;
+            vh.state = PAUSE_IR;
         }
         break;
     case EXIT2_IR:
         if (i_tms.read() == 1) {
-            v.state = UPDATE_IR;
+            vh.state = UPDATE_IR;
         } else {
-            v.state = SHIFT_IR;
+            vh.state = SHIFT_IR;
         }
         break;
     case UPDATE_IR:
         if (i_tms.read() == 1) {
-            v.state = SELECT_DR_SCAN;
+            vh.state = SELECT_DR_SCAN;
         } else {
-            v.state = IDLE;
+            vh.state = IDLE;
         }
-        nv.ir = r.dr.read()((irlen - 1), 0);
+        nvh.ir = rh.dr.read()((irlen - 1), 0);
         break;
     default:
         break;
     }
-    v.dr = vb_dr;
-    v.dmi_busy = i_dmi_busy;
-    v.err_sticky = vb_err_sticky;
+    vh.dr = vb_dr;
+    vh.dmi_busy = i_dmi_busy;
+    vh.err_sticky = vb_err_sticky;
 
-    o_tdo = r.dr.read()[0];
+    o_tdo = rh.dr.read()[0];
     o_dmi_req_valid = v_dmi_req_valid;
     o_dmi_req_write = v_dmi_req_write;
     o_dmi_req_data = vb_dmi_req_data;
@@ -403,20 +403,20 @@ void jtagtap<abits, irlen, idcode>::comb() {
 }
 
 template<int abits, int irlen, uint32_t idcode>
-void jtagtap<abits, irlen, idcode>::registers() {
+void jtagtap<abits, irlen, idcode>::nrhegisters() {
     if (i_trst.read() == 1) {
-        jtagtap_r_reset(r);
+        jtagtap_nrh_reset(nrh);
     } else {
-        r = v;
+        nrh = nvh;
     }
 }
 
 template<int abits, int irlen, uint32_t idcode>
-void jtagtap<abits, irlen, idcode>::nregisters() {
+void jtagtap<abits, irlen, idcode>::rhegisters() {
     if (i_trst.read() == 1) {
-        jtagtap_nr_reset(nr);
+        jtagtap_rh_reset(rh);
     } else {
-        nr = nv;
+        rh = vh;
     }
 }
 

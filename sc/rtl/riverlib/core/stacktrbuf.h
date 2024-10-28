@@ -30,7 +30,7 @@ SC_MODULE(StackTraceBuffer) {
     sc_in<sc_biguint<(2 * RISCV_ARCH)>> i_wdata;
 
     void comb();
-    void registers();
+    void rxegisters();
 
     SC_HAS_PROCESS(StackTraceBuffer);
 
@@ -38,10 +38,10 @@ SC_MODULE(StackTraceBuffer) {
 
 
  private:
-    struct StackTraceBuffer_registers {
+    struct StackTraceBuffer_rxegisters {
         sc_signal<sc_uint<5>> raddr;
         sc_signal<sc_biguint<(2 * RISCV_ARCH)>> stackbuf[STACK_TRACE_BUF_SIZE];
-    } v, r;
+    } vx, rx;
 
 };
 

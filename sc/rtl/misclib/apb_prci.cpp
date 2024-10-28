@@ -42,7 +42,7 @@ apb_prci::apb_prci(sc_module_name name,
                          VENDOR_OPTIMITECH,
                          OPTIMITECH_PRCI);
     pslv0->i_clk(i_clk);
-    pslv0->i_nrst(r.sys_nrst);
+    pslv0->i_nrst(rh.sys_nrst);
     pslv0->i_mapinfo(i_mapinfo);
     pslv0->o_cfg(o_cfg);
     pslv0->i_apbi(i_apbi);
@@ -51,9 +51,9 @@ apb_prci::apb_prci(sc_module_name name,
     pslv0->o_req_addr(wb_req_addr);
     pslv0->o_req_write(w_req_write);
     pslv0->o_req_wdata(wb_req_wdata);
-    pslv0->i_resp_valid(r.resp_valid);
-    pslv0->i_resp_rdata(r.resp_rdata);
-    pslv0->i_resp_err(r.resp_err);
+    pslv0->i_resp_valid(rh.resp_valid);
+    pslv0->i_resp_rdata(rh.resp_rdata);
+    pslv0->i_resp_err(rh.resp_err);
 
     SC_METHOD(comb);
     sensitive << i_pwrreset;
@@ -66,16 +66,16 @@ apb_prci::apb_prci(sc_module_name name,
     sensitive << wb_req_addr;
     sensitive << w_req_write;
     sensitive << wb_req_wdata;
-    sensitive << r.sys_rst;
-    sensitive << r.sys_nrst;
-    sensitive << r.dbg_nrst;
-    sensitive << r.sys_locked;
-    sensitive << r.ddr_locked;
-    sensitive << r.resp_valid;
-    sensitive << r.resp_rdata;
-    sensitive << r.resp_err;
+    sensitive << rh.sys_rst;
+    sensitive << rh.sys_nrst;
+    sensitive << rh.dbg_nrst;
+    sensitive << rh.sys_locked;
+    sensitive << rh.ddr_locked;
+    sensitive << rh.resp_valid;
+    sensitive << rh.resp_rdata;
+    sensitive << rh.resp_err;
 
-    SC_METHOD(registers);
+    SC_METHOD(rhegisters);
     sensitive << i_pwrreset;
     sensitive << i_clk.pos();
 }
@@ -98,14 +98,14 @@ void apb_prci::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_dbg_nrst, o_dbg_nrst.name());
         sc_trace(o_vcd, i_apbi, i_apbi.name());
         sc_trace(o_vcd, o_apbo, o_apbo.name());
-        sc_trace(o_vcd, r.sys_rst, pn + ".r_sys_rst");
-        sc_trace(o_vcd, r.sys_nrst, pn + ".r_sys_nrst");
-        sc_trace(o_vcd, r.dbg_nrst, pn + ".r_dbg_nrst");
-        sc_trace(o_vcd, r.sys_locked, pn + ".r_sys_locked");
-        sc_trace(o_vcd, r.ddr_locked, pn + ".r_ddr_locked");
-        sc_trace(o_vcd, r.resp_valid, pn + ".r_resp_valid");
-        sc_trace(o_vcd, r.resp_rdata, pn + ".r_resp_rdata");
-        sc_trace(o_vcd, r.resp_err, pn + ".r_resp_err");
+        sc_trace(o_vcd, rh.sys_rst, pn + ".rh_sys_rst");
+        sc_trace(o_vcd, rh.sys_nrst, pn + ".rh_sys_nrst");
+        sc_trace(o_vcd, rh.dbg_nrst, pn + ".rh_dbg_nrst");
+        sc_trace(o_vcd, rh.sys_locked, pn + ".rh_sys_locked");
+        sc_trace(o_vcd, rh.ddr_locked, pn + ".rh_ddr_locked");
+        sc_trace(o_vcd, rh.resp_valid, pn + ".rh_resp_valid");
+        sc_trace(o_vcd, rh.resp_rdata, pn + ".rh_resp_rdata");
+        sc_trace(o_vcd, rh.resp_err, pn + ".rh_resp_err");
     }
 
     if (pslv0) {
@@ -118,11 +118,11 @@ void apb_prci::comb() {
 
     vb_rdata = 0;
 
-    v = r;
+    vh = rh;
 
-    v.sys_rst = (i_pwrreset.read() || (!i_sys_locked.read()) || i_dmireset.read());
-    v.sys_nrst = (!(i_pwrreset.read() || (!i_sys_locked.read()) || i_dmireset.read()));
-    v.dbg_nrst = (!(i_pwrreset.read() || (!i_sys_locked.read())));
+    vh.sys_rst = (i_pwrreset.read() || (!i_sys_locked.read()) || i_dmireset.read());
+    vh.sys_nrst = (!(i_pwrreset.read() || (!i_sys_locked.read()) || i_dmireset.read()));
+    vh.dbg_nrst = (!(i_pwrreset.read() || (!i_sys_locked.read())));
 
     // Registers access:
     switch (wb_req_addr.read()(11, 2)) {
@@ -131,8 +131,8 @@ void apb_prci::comb() {
         vb_rdata[1] = i_ddr_locked;
         break;
     case 1:                                                 // 0x04: reset status
-        vb_rdata[0] = r.sys_nrst;
-        vb_rdata[1] = r.dbg_nrst;
+        vb_rdata[0] = rh.sys_nrst;
+        vb_rdata[1] = rh.dbg_nrst;
         if (w_req_valid.read() == 1) {
             if (w_req_write.read() == 1) {
                 // todo:
@@ -143,24 +143,24 @@ void apb_prci::comb() {
         break;
     }
 
-    v.resp_valid = w_req_valid;
-    v.resp_rdata = vb_rdata;
-    v.resp_err = 0;
+    vh.resp_valid = w_req_valid;
+    vh.resp_rdata = vb_rdata;
+    vh.resp_err = 0;
 
     if (!async_reset_ && i_pwrreset.read() == 1) {
-        apb_prci_r_reset(v);
+        apb_prci_rh_reset(vh);
     }
 
-    o_sys_rst = r.sys_rst;
-    o_sys_nrst = r.sys_nrst;
-    o_dbg_nrst = r.dbg_nrst;
+    o_sys_rst = rh.sys_rst;
+    o_sys_nrst = rh.sys_nrst;
+    o_dbg_nrst = rh.dbg_nrst;
 }
 
-void apb_prci::registers() {
+void apb_prci::rhegisters() {
     if (async_reset_ && i_pwrreset.read() == 1) {
-        apb_prci_r_reset(r);
+        apb_prci_rh_reset(rh);
     } else {
-        r = v;
+        rh = vh;
     }
 }
 

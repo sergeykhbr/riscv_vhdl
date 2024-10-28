@@ -34,33 +34,33 @@ StackTraceBuffer::StackTraceBuffer(sc_module_name name)
     sensitive << i_we;
     sensitive << i_waddr;
     sensitive << i_wdata;
-    sensitive << r.raddr;
+    sensitive << rx.raddr;
     for (int i = 0; i < STACK_TRACE_BUF_SIZE; i++) {
-        sensitive << r.stackbuf[i];
+        sensitive << rx.stackbuf[i];
     }
 
-    SC_METHOD(registers);
+    SC_METHOD(rxegisters);
     sensitive << i_clk.pos();
 }
 
 void StackTraceBuffer::comb() {
-    v.raddr = r.raddr;
+    vx.raddr = rx.raddr;
     for (int i = 0; i < STACK_TRACE_BUF_SIZE; i++) {
-        v.stackbuf[i] = r.stackbuf[i];
+        vx.stackbuf[i] = rx.stackbuf[i];
     }
 
-    v.raddr = i_raddr;
+    vx.raddr = i_raddr;
     if (i_we.read() == 1) {
-        v.stackbuf[i_waddr.read().to_int()] = i_wdata;
+        vx.stackbuf[i_waddr.read().to_int()] = i_wdata;
     }
 
-    o_rdata = r.stackbuf[r.raddr.read().to_int()];
+    o_rdata = rx.stackbuf[rx.raddr.read().to_int()];
 }
 
-void StackTraceBuffer::registers() {
-    r.raddr = v.raddr;
+void StackTraceBuffer::rxegisters() {
+    rx.raddr = vx.raddr;
     for (int i = 0; i < STACK_TRACE_BUF_SIZE; i++) {
-        r.stackbuf[i] = v.stackbuf[i];
+        rx.stackbuf[i] = vx.stackbuf[i];
     }
 }
 

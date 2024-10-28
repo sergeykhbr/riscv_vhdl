@@ -34,7 +34,7 @@ SC_MODULE(lrunway) {
     sc_out<sc_uint<waybits>> o_lru;
 
     void comb();
-    void registers();
+    void rxegisters();
 
     SC_HAS_PROCESS(lrunway);
 
@@ -46,10 +46,10 @@ SC_MODULE(lrunway) {
     static const int WAYS_TOTAL = (1 << waybits);
     static const int LINE_WIDTH = (WAYS_TOTAL * waybits);
 
-    struct lrunway_registers {
+    struct lrunway_rxegisters {
         sc_signal<sc_uint<abits>> radr;
         sc_signal<sc_uint<LINE_WIDTH>> mem[LINES_TOTAL];
-    } v, r;
+    } vx, rx;
 
 };
 
@@ -73,12 +73,12 @@ lrunway<abits, waybits>::lrunway(sc_module_name name)
     sensitive << i_up;
     sensitive << i_down;
     sensitive << i_lru;
-    sensitive << r.radr;
+    sensitive << rx.radr;
     for (int i = 0; i < LINES_TOTAL; i++) {
-        sensitive << r.mem[i];
+        sensitive << rx.mem[i];
     }
 
-    SC_METHOD(registers);
+    SC_METHOD(rxegisters);
     sensitive << i_clk.pos();
 }
 
@@ -104,13 +104,13 @@ void lrunway<abits, waybits>::comb() {
     shift_ena_up = 0;
     shift_ena_down = 0;
 
-    v.radr = r.radr;
+    vx.radr = rx.radr;
     for (int i = 0; i < LINES_TOTAL; i++) {
-        v.mem[i] = r.mem[i];
+        vx.mem[i] = rx.mem[i];
     }
 
-    v.radr = i_raddr;
-    wb_tbl_rdata = r.mem[r.radr.read().to_int()];
+    vx.radr = i_raddr;
+    wb_tbl_rdata = rx.mem[rx.radr.read().to_int()];
 
     v_we = (i_up.read() || i_down.read() || i_init.read());
 
@@ -162,16 +162,16 @@ void lrunway<abits, waybits>::comb() {
     }
 
     if (v_we == 1) {
-        v.mem[i_waddr.read().to_int()] = vb_tbl_wdata;
+        vx.mem[i_waddr.read().to_int()] = vb_tbl_wdata;
     }
     o_lru = wb_tbl_rdata((waybits - 1), 0);
 }
 
 template<int abits, int waybits>
-void lrunway<abits, waybits>::registers() {
-    r.radr = v.radr;
+void lrunway<abits, waybits>::rxegisters() {
+    rx.radr = vx.radr;
     for (int i = 0; i < LINES_TOTAL; i++) {
-        r.mem[i] = v.mem[i];
+        rx.mem[i] = vx.mem[i];
     }
 }
 

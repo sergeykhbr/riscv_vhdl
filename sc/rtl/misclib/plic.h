@@ -51,13 +51,13 @@ SC_MODULE(plic) {
     bool async_reset_;
 
     struct plic_context_type {
-        sc_uint<4> priority_th;
-        sc_bv<1024> ie;                                     // interrupt enable per context
-        sc_bv<(4 * 1024)> ip_prio;                          // interrupt pending priority per context
-        sc_uint<16> prio_mask;                              // pending interrupts priorites
-        sc_uint<4> sel_prio;                                // the most available priority
-        sc_uint<10> irq_idx;                                // currently selected most prio irq
-        sc_uint<10> irq_prio;                               // currently selected prio level
+        sc_signal<sc_uint<4>> priority_th;
+        sc_signal<sc_bv<1024>> ie;                          // interrupt enable per context
+        sc_signal<sc_bv<(4 * 1024)>> ip_prio;               // interrupt pending priority per context
+        sc_signal<sc_uint<16>> prio_mask;                   // pending interrupts priorites
+        sc_signal<sc_uint<4>> sel_prio;                     // the most available priority
+        sc_signal<sc_uint<10>> irq_idx;                     // currently selected most prio irq
+        sc_signal<sc_uint<10>> irq_prio;                    // currently selected prio level
     };
 
 
@@ -141,6 +141,15 @@ plic<ctxmax, irqmax>::plic(sc_module_name name,
     sensitive << r.src_priority;
     sensitive << r.pending;
     sensitive << r.ip;
+    for (int i = 0; i < ctxmax; i++) {
+        sensitive << r.ctx[i].priority_th;
+        sensitive << r.ctx[i].ie;
+        sensitive << r.ctx[i].ip_prio;
+        sensitive << r.ctx[i].prio_mask;
+        sensitive << r.ctx[i].sel_prio;
+        sensitive << r.ctx[i].irq_idx;
+        sensitive << r.ctx[i].irq_prio;
+    }
     sensitive << r.rdata;
 
     SC_METHOD(registers);
@@ -196,7 +205,13 @@ void plic<ctxmax, irqmax>::comb() {
     sc_uint<CFG_SYSBUS_DATA_BITS> vrdata;
     sc_uint<10> vb_irq_idx[ctxmax];                         // Currently selected most prio irq
     sc_uint<10> vb_irq_prio[ctxmax];                        // Currently selected prio level
-    plic_context_type vb_ctx[ctxmax];
+    sc_uint<4> vb_ctx_priority_th[ctxmax];
+    sc_bv<1024> vb_ctx_ie[ctxmax];
+    sc_bv<(4 * 1024)> vb_ctx_ip_prio[ctxmax];
+    sc_uint<16> vb_ctx_prio_mask[ctxmax];
+    sc_uint<4> vb_ctx_sel_prio[ctxmax];
+    sc_uint<10> vb_ctx_irq_idx[ctxmax];
+    sc_uint<10> vb_ctx_irq_prio[ctxmax];
     sc_bv<(4 * 1024)> vb_src_priority;
     sc_bv<1024> vb_pending;
     sc_uint<ctxmax> vb_ip;
@@ -210,13 +225,25 @@ void plic<ctxmax, irqmax>::comb() {
         vb_irq_prio[i] = 0;
     }
     for (int i = 0; i < ctxmax; i++) {
-        vb_ctx[i].priority_th = 0;
-        vb_ctx[i].ie = 0;
-        vb_ctx[i].ip_prio = 0;
-        vb_ctx[i].prio_mask = 0;
-        vb_ctx[i].sel_prio = 0;
-        vb_ctx[i].irq_idx = 0;
-        vb_ctx[i].irq_prio = 0;
+        vb_ctx_priority_th[i] = 0;
+    }
+    for (int i = 0; i < ctxmax; i++) {
+        vb_ctx_ie[i] = 0;
+    }
+    for (int i = 0; i < ctxmax; i++) {
+        vb_ctx_ip_prio[i] = 0;
+    }
+    for (int i = 0; i < ctxmax; i++) {
+        vb_ctx_prio_mask[i] = 0;
+    }
+    for (int i = 0; i < ctxmax; i++) {
+        vb_ctx_sel_prio[i] = 0;
+    }
+    for (int i = 0; i < ctxmax; i++) {
+        vb_ctx_irq_idx[i] = 0;
+    }
+    for (int i = 0; i < ctxmax; i++) {
+        vb_ctx_irq_prio[i] = 0;
     }
     vb_src_priority = 0;
     vb_pending = 0;
@@ -243,10 +270,10 @@ void plic<ctxmax, irqmax>::comb() {
     vb_src_priority = r.src_priority;
     vb_pending = r.pending;
     for (int i = 0; i < ctxmax; i++) {
-        vb_ctx[i].priority_th = r.ctx[i].priority_th;
-        vb_ctx[i].ie = r.ctx[i].ie;
-        vb_ctx[i].irq_idx = r.ctx[i].irq_idx;
-        vb_ctx[i].irq_prio = r.ctx[i].irq_prio;
+        vb_ctx_priority_th[i] = r.ctx[i].priority_th;
+        vb_ctx_ie[i] = r.ctx[i].ie;
+        vb_ctx_irq_idx[i] = r.ctx[i].irq_idx;
+        vb_ctx_irq_prio[i] = r.ctx[i].irq_prio;
     }
 
     for (int i = 1; i < irqmax; i++) {
@@ -258,10 +285,10 @@ void plic<ctxmax, irqmax>::comb() {
     for (int n = 0; n < ctxmax; n++) {
         for (int i = 0; i < irqmax; i++) {
             if ((r.pending.read()[i] == 1)
-                    && (r.ctx[n].ie[i] == 1)
-                    && (r.src_priority.read()((4 * i) + 4 - 1, (4 * i)).to_int() > r.ctx[n].priority_th)) {
-                vb_ctx[n].ip_prio((4 * i) + 4 - 1, (4 * i)) = r.src_priority.read()((4 * i) + 4 - 1, (4 * i));
-                vb_ctx[n].prio_mask[r.src_priority.read()((4 * i) + 4 - 1, (4 * i)).to_int()] = 1;
+                    && (r.ctx[n].ie.read()[i] == 1)
+                    && (r.src_priority.read()((4 * i) + 4 - 1, (4 * i)).to_int() > r.ctx[n].priority_th.read())) {
+                vb_ctx_ip_prio[n]((4 * i) + 4 - 1, (4 * i)) = r.src_priority.read()((4 * i) + 4 - 1, (4 * i));
+                vb_ctx_prio_mask[n][r.src_priority.read()((4 * i) + 4 - 1, (4 * i)).to_int()] = 1;
             }
         }
     }
@@ -269,8 +296,8 @@ void plic<ctxmax, irqmax>::comb() {
     // Select max priority in each context
     for (int n = 0; n < ctxmax; n++) {
         for (int i = 0; i < 16; i++) {
-            if (r.ctx[n].prio_mask[i] == 1) {
-                vb_ctx[n].sel_prio = i;
+            if (r.ctx[n].prio_mask.read()[i] == 1) {
+                vb_ctx_sel_prio[n] = i;
             }
         }
     }
@@ -278,8 +305,8 @@ void plic<ctxmax, irqmax>::comb() {
     // Select max priority in each context
     for (int n = 0; n < ctxmax; n++) {
         for (int i = 0; i < irqmax; i++) {
-            if (r.ctx[n].sel_prio.or_reduce()
-                    && (r.ctx[n].ip_prio((4 * i) + 4 - 1, (4 * i)) == r.ctx[n].sel_prio)) {
+            if (r.ctx[n].sel_prio.read().or_reduce()
+                    && (r.ctx[n].ip_prio.read()((4 * i) + 4 - 1, (4 * i)) == r.ctx[n].sel_prio)) {
                 // Most prio irq and prio level
                 vb_irq_idx[n] = i;
                 vb_irq_prio[n] = r.ctx[n].sel_prio;
@@ -288,8 +315,8 @@ void plic<ctxmax, irqmax>::comb() {
     }
 
     for (int n = 0; n < ctxmax; n++) {
-        vb_ctx[n].irq_idx = vb_irq_idx[n];
-        vb_ctx[n].irq_prio = vb_irq_prio[n];
+        vb_ctx_irq_idx[n] = vb_irq_idx[n];
+        vb_ctx_irq_prio[n] = vb_irq_prio[n];
         vb_ip[n] = vb_irq_idx[n].or_reduce();
     }
 
@@ -327,13 +354,13 @@ void plic<ctxmax, irqmax>::comb() {
                 && (wb_req_addr.read()(11, 7) < ctxmax)) {
         // First 32 context of 15867 support only
         // 0x002000,0x002080,...,0x200000
-        vrdata = r.ctx[wb_req_addr.read()(11, 7)].ie((64 * wb_req_addr.read()(6, 3)) + 64 - 1, (64 * wb_req_addr.read()(6, 3))).to_uint64();
+        vrdata = r.ctx[wb_req_addr.read()(11, 7)].ie.read()((64 * wb_req_addr.read()(6, 3)) + 64 - 1, (64 * wb_req_addr.read()(6, 3))).to_uint64();
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             if (wb_req_wstrb.read()(3, 0).or_reduce() == 1) {
-                vb_ctx[wb_req_addr.read()(11, 7)].ie((64 * wb_req_addr.read()(6, 3)) + 32 - 1, (64 * wb_req_addr.read()(6, 3))) = wb_req_wdata.read()(31, 0);
+                vb_ctx_ie[wb_req_addr.read()(11, 7)]((64 * wb_req_addr.read()(6, 3)) + 32 - 1, (64 * wb_req_addr.read()(6, 3))) = wb_req_wdata.read()(31, 0);
             }
             if (wb_req_wstrb.read()(7, 4).or_reduce() == 1) {
-                vb_ctx[wb_req_addr.read()(11, 7)].ie(((64 * wb_req_addr.read()(6, 3)) + 32) + 32 - 1, ((64 * wb_req_addr.read()(6, 3)) + 32)) = wb_req_wdata.read()(63, 32);
+                vb_ctx_ie[wb_req_addr.read()(11, 7)](((64 * wb_req_addr.read()(6, 3)) + 32) + 32 - 1, ((64 * wb_req_addr.read()(6, 3)) + 32)) = wb_req_wdata.read()(63, 32);
             }
         }
     } else if ((wb_req_addr.read()(21, 12) >= 0x200) && (wb_req_addr.read()(20, 12) < ctxmax)) {
@@ -344,15 +371,15 @@ void plic<ctxmax, irqmax>::comb() {
             vrdata(41, 32) = r.ctx[rctx_idx].irq_idx;
             // claim/ complete. Reading clears pending bit
             if (r.ip.read()[rctx_idx] == 1) {
-                vb_pending[r.ctx[rctx_idx].irq_idx] = 0;
+                vb_pending[r.ctx[rctx_idx].irq_idx.read()] = 0;
             }
             if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
                 if (wb_req_wstrb.read()(3, 0).or_reduce() == 1) {
-                    vb_ctx[rctx_idx].priority_th = wb_req_wdata.read()(3, 0);
+                    vb_ctx_priority_th[rctx_idx] = wb_req_wdata.read()(3, 0);
                 }
                 if (wb_req_wstrb.read()(7, 4).or_reduce() == 1) {
                     // claim/ complete. Reading clears pedning bit
-                    vb_ctx[rctx_idx].irq_idx = 0;
+                    vb_ctx_irq_idx[rctx_idx] = 0;
                 }
             }
         } else {
@@ -365,13 +392,13 @@ void plic<ctxmax, irqmax>::comb() {
     v.pending = vb_pending;
     v.ip = vb_ip;
     for (int n = 0; n < ctxmax; n++) {
-        v.ctx[n].priority_th = vb_ctx[n].priority_th;
-        v.ctx[n].ie = vb_ctx[n].ie;
-        v.ctx[n].ip_prio = vb_ctx[n].ip_prio;
-        v.ctx[n].prio_mask = vb_ctx[n].prio_mask;
-        v.ctx[n].sel_prio = vb_ctx[n].sel_prio;
-        v.ctx[n].irq_idx = vb_ctx[n].irq_idx;
-        v.ctx[n].irq_prio = vb_ctx[n].irq_prio;
+        v.ctx[n].priority_th = vb_ctx_priority_th[n];
+        v.ctx[n].ie = vb_ctx_ie[n];
+        v.ctx[n].ip_prio = vb_ctx_ip_prio[n];
+        v.ctx[n].prio_mask = vb_ctx_prio_mask[n];
+        v.ctx[n].sel_prio = vb_ctx_sel_prio[n];
+        v.ctx[n].irq_idx = vb_ctx_irq_idx[n];
+        v.ctx[n].irq_prio = vb_ctx_irq_prio[n];
     }
 
     if (!async_reset_ && i_nrst.read() == 0) {
