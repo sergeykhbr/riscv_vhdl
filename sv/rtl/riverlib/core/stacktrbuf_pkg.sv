@@ -20,6 +20,6 @@ import river_cfg_pkg::*;
 typedef struct {
     logic [4:0] raddr;
     logic [(2 * RISCV_ARCH)-1:0] stackbuf[0: STACK_TRACE_BUF_SIZE - 1];
-} StackTraceBuffer_registers;
+} StackTraceBuffer_rxegisters;
 
 endpackage: stacktrbuf_pkg

@@ -109,7 +109,7 @@ begin: comb_proc
     if ((~async_reset && i_nrst == 1'b0) || i_flush_pipeline) begin
         for (int i = 0; i < CFG_BTB_SIZE; i++) begin
             v.btb[i].pc = '1;
-            v.btb[i].npc = '0;
+            v.btb[i].npc = 64'd0;
             v.btb[i].exec = 1'b0;
         end
     end
@@ -135,7 +135,7 @@ generate
             if (i_nrst == 1'b0) begin
                 for (int i = 0; i < CFG_BTB_SIZE; i++) begin
                     r.btb[i].pc <= '1;
-                    r.btb[i].npc <= '0;
+                    r.btb[i].npc <= 64'd0;
                     r.btb[i].exec <= 1'b0;
                 end
             end else begin

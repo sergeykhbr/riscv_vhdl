@@ -96,7 +96,13 @@ begin: comb_proc
     logic [CFG_SYSBUS_DATA_BITS-1:0] vrdata;
     logic [9:0] vb_irq_idx[0: ctxmax-1];                    // Currently selected most prio irq
     logic [9:0] vb_irq_prio[0: ctxmax-1];                   // Currently selected prio level
-    plic_context_type vb_ctx[0: ctxmax-1];
+    logic [3:0] vb_ctx_priority_th[0: ctxmax-1];
+    logic [1023:0] vb_ctx_ie[0: ctxmax-1];
+    logic [(4 * 1024)-1:0] vb_ctx_ip_prio[0: ctxmax-1];
+    logic [15:0] vb_ctx_prio_mask[0: ctxmax-1];
+    logic [3:0] vb_ctx_sel_prio[0: ctxmax-1];
+    logic [9:0] vb_ctx_irq_idx[0: ctxmax-1];
+    logic [9:0] vb_ctx_irq_prio[0: ctxmax-1];
     logic [(4 * 1024)-1:0] vb_src_priority;
     logic [1023:0] vb_pending;
     logic [ctxmax-1:0] vb_ip;
@@ -110,13 +116,25 @@ begin: comb_proc
         vb_irq_prio[i] = '0;
     end
     for (int i = 0; i < ctxmax; i++) begin
-        vb_ctx[i].priority_th = 4'd0;
-        vb_ctx[i].ie = '0;
-        vb_ctx[i].ip_prio = '0;
-        vb_ctx[i].prio_mask = 16'd0;
-        vb_ctx[i].sel_prio = 4'd0;
-        vb_ctx[i].irq_idx = 10'd0;
-        vb_ctx[i].irq_prio = 10'd0;
+        vb_ctx_priority_th[i] = 4'd0;
+    end
+    for (int i = 0; i < ctxmax; i++) begin
+        vb_ctx_ie[i] = '0;
+    end
+    for (int i = 0; i < ctxmax; i++) begin
+        vb_ctx_ip_prio[i] = '0;
+    end
+    for (int i = 0; i < ctxmax; i++) begin
+        vb_ctx_prio_mask[i] = 16'd0;
+    end
+    for (int i = 0; i < ctxmax; i++) begin
+        vb_ctx_sel_prio[i] = 4'd0;
+    end
+    for (int i = 0; i < ctxmax; i++) begin
+        vb_ctx_irq_idx[i] = 10'd0;
+    end
+    for (int i = 0; i < ctxmax; i++) begin
+        vb_ctx_irq_prio[i] = 10'd0;
     end
     vb_src_priority = '0;
     vb_pending = '0;
@@ -143,10 +161,10 @@ begin: comb_proc
     vb_src_priority = r.src_priority;
     vb_pending = r.pending;
     for (int i = 0; i < ctxmax; i++) begin
-        vb_ctx[i].priority_th = r.ctx[i].priority_th;
-        vb_ctx[i].ie = r.ctx[i].ie;
-        vb_ctx[i].irq_idx = r.ctx[i].irq_idx;
-        vb_ctx[i].irq_prio = r.ctx[i].irq_prio;
+        vb_ctx_priority_th[i] = r.ctx[i].priority_th;
+        vb_ctx_ie[i] = r.ctx[i].ie;
+        vb_ctx_irq_idx[i] = r.ctx[i].irq_idx;
+        vb_ctx_irq_prio[i] = r.ctx[i].irq_prio;
     end
 
     for (int i = 1; i < irqmax; i++) begin
@@ -160,8 +178,8 @@ begin: comb_proc
             if ((r.pending[i] == 1'b1)
                     && (r.ctx[n].ie[i] == 1'b1)
                     && (int'(r.src_priority[(4 * i) +: 4]) > r.ctx[n].priority_th)) begin
-                vb_ctx[n].ip_prio[(4 * i) +: 4] = r.src_priority[(4 * i) +: 4];
-                vb_ctx[n].prio_mask[int'(r.src_priority[(4 * i) +: 4])] = 1'b1;
+                vb_ctx_ip_prio[n][(4 * i) +: 4] = r.src_priority[(4 * i) +: 4];
+                vb_ctx_prio_mask[n][int'(r.src_priority[(4 * i) +: 4])] = 1'b1;
             end
         end
     end
@@ -170,7 +188,7 @@ begin: comb_proc
     for (int n = 0; n < ctxmax; n++) begin
         for (int i = 0; i < 16; i++) begin
             if (r.ctx[n].prio_mask[i] == 1'b1) begin
-                vb_ctx[n].sel_prio = i;
+                vb_ctx_sel_prio[n] = i;
             end
         end
     end
@@ -188,8 +206,8 @@ begin: comb_proc
     end
 
     for (int n = 0; n < ctxmax; n++) begin
-        vb_ctx[n].irq_idx = vb_irq_idx[n];
-        vb_ctx[n].irq_prio = vb_irq_prio[n];
+        vb_ctx_irq_idx[n] = vb_irq_idx[n];
+        vb_ctx_irq_prio[n] = vb_irq_prio[n];
         vb_ip[n] = (|vb_irq_idx[n]);
     end
 
@@ -230,10 +248,10 @@ begin: comb_proc
         vrdata = r.ctx[wb_req_addr[11: 7]].ie[(64 * wb_req_addr[6: 3]) +: 64];
         if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
             if ((|wb_req_wstrb[3: 0]) == 1'b1) begin
-                vb_ctx[wb_req_addr[11: 7]].ie[(64 * wb_req_addr[6: 3]) +: 32] = wb_req_wdata[31: 0];
+                vb_ctx_ie[wb_req_addr[11: 7]][(64 * wb_req_addr[6: 3]) +: 32] = wb_req_wdata[31: 0];
             end
             if ((|wb_req_wstrb[7: 4]) == 1'b1) begin
-                vb_ctx[wb_req_addr[11: 7]].ie[((64 * wb_req_addr[6: 3]) + 32) +: 32] = wb_req_wdata[63: 32];
+                vb_ctx_ie[wb_req_addr[11: 7]][((64 * wb_req_addr[6: 3]) + 32) +: 32] = wb_req_wdata[63: 32];
             end
         end
     end else if ((wb_req_addr[21: 12] >= 10'h200) && (wb_req_addr[20: 12] < ctxmax)) begin
@@ -248,11 +266,11 @@ begin: comb_proc
             end
             if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
                 if ((|wb_req_wstrb[3: 0]) == 1'b1) begin
-                    vb_ctx[rctx_idx].priority_th = wb_req_wdata[3: 0];
+                    vb_ctx_priority_th[rctx_idx] = wb_req_wdata[3: 0];
                 end
                 if ((|wb_req_wstrb[7: 4]) == 1'b1) begin
                     // claim/ complete. Reading clears pedning bit
-                    vb_ctx[rctx_idx].irq_idx = '0;
+                    vb_ctx_irq_idx[rctx_idx] = '0;
                 end
             end
         end else begin
@@ -265,13 +283,13 @@ begin: comb_proc
     v.pending = vb_pending;
     v.ip = vb_ip;
     for (int n = 0; n < ctxmax; n++) begin
-        v.ctx[n].priority_th = vb_ctx[n].priority_th;
-        v.ctx[n].ie = vb_ctx[n].ie;
-        v.ctx[n].ip_prio = vb_ctx[n].ip_prio;
-        v.ctx[n].prio_mask = vb_ctx[n].prio_mask;
-        v.ctx[n].sel_prio = vb_ctx[n].sel_prio;
-        v.ctx[n].irq_idx = vb_ctx[n].irq_idx;
-        v.ctx[n].irq_prio = vb_ctx[n].irq_prio;
+        v.ctx[n].priority_th = vb_ctx_priority_th[n];
+        v.ctx[n].ie = vb_ctx_ie[n];
+        v.ctx[n].ip_prio = vb_ctx_ip_prio[n];
+        v.ctx[n].prio_mask = vb_ctx_prio_mask[n];
+        v.ctx[n].sel_prio = vb_ctx_sel_prio[n];
+        v.ctx[n].irq_idx = vb_ctx_irq_idx[n];
+        v.ctx[n].irq_prio = vb_ctx_irq_prio[n];
     end
 
     if (~async_reset && i_nrst == 1'b0) begin

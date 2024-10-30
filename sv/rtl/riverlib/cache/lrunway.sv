@@ -39,9 +39,9 @@ localparam int LINE_WIDTH = (WAYS_TOTAL * waybits);
 typedef struct {
     logic [abits-1:0] radr;
     logic [LINE_WIDTH-1:0] mem[0: LINES_TOTAL - 1];
-} lrunway_registers;
+} lrunway_rxegisters;
 
-lrunway_registers r, rin;
+lrunway_rxegisters rx, rxin;
 
 
 always_comb
@@ -67,13 +67,13 @@ begin: comb_proc
     shift_ena_up = 1'b0;
     shift_ena_down = 1'b0;
 
-    v.radr = r.radr;
+    vx.radr = rx.radr;
     for (int i = 0; i < LINES_TOTAL; i++) begin
-        v.mem[i] = r.mem[i];
+        vx.mem[i] = rx.mem[i];
     end
 
-    v.radr = i_raddr;
-    wb_tbl_rdata = r.mem[int'(r.radr)];
+    vx.radr = i_raddr;
+    wb_tbl_rdata = rx.mem[int'(rx.radr)];
 
     v_we = (i_up || i_down || i_init);
 
@@ -125,21 +125,21 @@ begin: comb_proc
     end
 
     if (v_we == 1'b1) begin
-        v.mem[int'(i_waddr)] = vb_tbl_wdata;
+        vx.mem[int'(i_waddr)] = vb_tbl_wdata;
     end
     o_lru = wb_tbl_rdata[(waybits - 1): 0];
 
-    rin.radr = v.radr;
+    rxin.radr = vx.radr;
     for (int i = 0; i < LINES_TOTAL; i++) begin
-        rin.mem[i] = v.mem[i];
+        rxin.mem[i] = vx.mem[i];
     end
 end: comb_proc
 
-
-always_ff @(posedge i_clk) begin: rg_proc
-    r.radr <= rin.radr;
+always_ff @(posedge i_clk) begin: rxg_proc
+    rx.radr <= rxin.radr;
     for (int i = 0; i < LINES_TOTAL; i++) begin
-        r.mem[i] <= rin.mem[i];
+        rx.mem[i] <= rxin.mem[i];
     end
-end: rg_proc
+end: rxg_proc
+
 endmodule: lrunway

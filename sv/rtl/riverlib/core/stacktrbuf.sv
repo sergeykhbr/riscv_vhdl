@@ -28,35 +28,35 @@ module StackTraceBuffer(
 import river_cfg_pkg::*;
 import stacktrbuf_pkg::*;
 
-StackTraceBuffer_registers r, rin;
+StackTraceBuffer_rxegisters rx, rxin;
 
 
 always_comb
 begin: comb_proc
     StackTraceBuffer_registers v;
-    v.raddr = r.raddr;
+    vx.raddr = rx.raddr;
     for (int i = 0; i < STACK_TRACE_BUF_SIZE; i++) begin
-        v.stackbuf[i] = r.stackbuf[i];
+        vx.stackbuf[i] = rx.stackbuf[i];
     end
 
-    v.raddr = i_raddr;
+    vx.raddr = i_raddr;
     if (i_we == 1'b1) begin
-        v.stackbuf[int'(i_waddr)] = i_wdata;
+        vx.stackbuf[int'(i_waddr)] = i_wdata;
     end
 
-    o_rdata = r.stackbuf[int'(r.raddr)];
+    o_rdata = rx.stackbuf[int'(rx.raddr)];
 
-    rin.raddr = v.raddr;
+    rxin.raddr = vx.raddr;
     for (int i = 0; i < STACK_TRACE_BUF_SIZE; i++) begin
-        rin.stackbuf[i] = v.stackbuf[i];
+        rxin.stackbuf[i] = vx.stackbuf[i];
     end
 end: comb_proc
 
-
-always_ff @(posedge i_clk) begin: rg_proc
-    r.raddr <= rin.raddr;
+always_ff @(posedge i_clk) begin: rxg_proc
+    rx.raddr <= rxin.raddr;
     for (int i = 0; i < STACK_TRACE_BUF_SIZE; i++) begin
-        r.stackbuf[i] <= rin.stackbuf[i];
+        rx.stackbuf[i] <= rxin.stackbuf[i];
     end
-end: rg_proc
+end: rxg_proc
+
 endmodule: StackTraceBuffer

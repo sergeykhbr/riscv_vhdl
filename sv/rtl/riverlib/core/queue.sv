@@ -36,10 +36,18 @@ localparam int DEPTH = (2**abits);
 
 typedef struct {
     logic [(abits + 1)-1:0] wcnt;
-    logic [dbits-1:0] mem[0: DEPTH - 1];
 } Queue_registers;
 
+const Queue_registers Queue_r_reset = '{
+    7'd0                                // wcnt
+};
+
+typedef struct {
+    logic [dbits-1:0] mem[0: DEPTH - 1];
+} Queue_rxegisters;
+
 Queue_registers r, rin;
+Queue_rxegisters rx, rxin;
 
 
 always_comb
@@ -55,9 +63,9 @@ begin: comb_proc
     full = 1'b0;
     show_full = 1'b0;
 
-    v.wcnt = r.wcnt;
+    v = r;
     for (int i = 0; i < DEPTH; i++) begin
-        v.mem[i] = r.mem[i];
+        vx.mem[i] = rx.mem[i];
     end
 
     if (r.wcnt == DEPTH) begin
@@ -69,31 +77,31 @@ begin: comb_proc
 
     if ((i_re == 1'b1) && (i_we == 1'b1)) begin
         for (int i = 1; i < DEPTH; i++) begin
-            v.mem[(i - 1)] = r.mem[i];
+            vx.mem[(i - 1)] = rx.mem[i];
         end
         if ((|r.wcnt) == 1'b1) begin
-            v.mem[(int'(r.wcnt) - 1)] = i_wdata;
+            vx.mem[(int'(r.wcnt) - 1)] = i_wdata;
         end else begin
             // do nothing, it will directly pass to output
         end
     end else if ((i_re == 1'b0) && (i_we == 1'b1)) begin
         if (full == 1'b0) begin
             v.wcnt = (r.wcnt + 1);
-            v.mem[int'(r.wcnt)] = i_wdata;
+            vx.mem[int'(r.wcnt)] = i_wdata;
         end
     end else if ((i_re == 1'b1) && (i_we == 1'b0)) begin
         if ((|r.wcnt) == 1'b1) begin
             v.wcnt = (r.wcnt - 1);
         end
         for (int i = 1; i < DEPTH; i++) begin
-            v.mem[(i - 1)] = r.mem[i];
+            vx.mem[(i - 1)] = rx.mem[i];
         end
     end
 
     if ((|r.wcnt) == 1'b0) begin
         vb_data_o = i_wdata;
     end else begin
-        vb_data_o = r.mem[0];
+        vb_data_o = rx.mem[0];
     end
 
     if ((i_we == 1'b1) || ((|r.wcnt) == 1'b1)) begin
@@ -101,16 +109,16 @@ begin: comb_proc
     end
 
     if (~async_reset && i_nrst == 1'b0) begin
-        v.wcnt = 7'd0;
+        v = Queue_r_reset;
     end
 
     o_nempty = nempty;
     o_full = show_full;
     o_rdata = vb_data_o;
 
-    rin.wcnt = v.wcnt;
+    rin = v;
     for (int i = 0; i < DEPTH; i++) begin
-        rin.mem[i] = v.mem[i];
+        rxin.mem[i] = vx.mem[i];
     end
 end: comb_proc
 
@@ -120,24 +128,30 @@ generate
 
         always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
             if (i_nrst == 1'b0) begin
-                r.wcnt <= 7'd0;
+                r <= Queue_r_reset;
             end else begin
-                r.wcnt <= rin.wcnt;
-                for (int i = 0; i < DEPTH; i++) begin
-                    r.mem[i] <= rin.mem[i];
-                end
+                r <= rin;
             end
         end: rg_proc
+
+        always_ff @(posedge i_clk) begin: rxg_proc
+            for (int i = 0; i < DEPTH; i++) begin
+                rx.mem[i] <= rxin.mem[i];
+            end
+        end: rxg_proc
 
     end: async_rst_gen
     else begin: no_rst_gen
 
         always_ff @(posedge i_clk) begin: rg_proc
-            r.wcnt <= rin.wcnt;
-            for (int i = 0; i < DEPTH; i++) begin
-                r.mem[i] <= rin.mem[i];
-            end
+            r <= rin;
         end: rg_proc
+
+        always_ff @(posedge i_clk) begin: rxg_proc
+            for (int i = 0; i < DEPTH; i++) begin
+                rx.mem[i] <= rxin.mem[i];
+            end
+        end: rxg_proc
 
     end: no_rst_gen
 endgenerate

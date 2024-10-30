@@ -1058,21 +1058,21 @@ begin: comb_proc
 
     if (~async_reset && i_nrst == 1'b0) begin
         for (int i = 0; i < TRACE_TBL_SZ; i++) begin
-            v.trace_tbl[i].exec_cnt = '0;
+            v.trace_tbl[i].exec_cnt = 64'd0;
             v.trace_tbl[i].pc = '0;
-            v.trace_tbl[i].instr = '0;
-            v.trace_tbl[i].regactioncnt = '0;
-            v.trace_tbl[i].memactioncnt = '0;
+            v.trace_tbl[i].instr = 32'd0;
+            v.trace_tbl[i].regactioncnt = 32'd0;
+            v.trace_tbl[i].memactioncnt = 32'd0;
             for (int j = 0; j < TRACE_TBL_SZ; j++) begin
-                v.trace_tbl[i].regaction[j].waddr = '0;
-                v.trace_tbl[i].regaction[j].wres = '0;
+                v.trace_tbl[i].regaction[j].waddr = 6'd0;
+                v.trace_tbl[i].regaction[j].wres = 64'd0;
             end
             for (int j = 0; j < TRACE_TBL_SZ; j++) begin
                 v.trace_tbl[i].memaction[j].store = 1'b0;
-                v.trace_tbl[i].memaction[j].size = '0;
-                v.trace_tbl[i].memaction[j].mask = '0;
-                v.trace_tbl[i].memaction[j].memaddr = '0;
-                v.trace_tbl[i].memaction[j].data = '0;
+                v.trace_tbl[i].memaction[j].size = 2'd0;
+                v.trace_tbl[i].memaction[j].mask = 64'd0;
+                v.trace_tbl[i].memaction[j].memaddr = 64'd0;
+                v.trace_tbl[i].memaction[j].data = 64'd0;
                 v.trace_tbl[i].memaction[j].regaddr = 6'd0;
                 v.trace_tbl[i].memaction[j].complete = 1'b0;
                 v.trace_tbl[i].memaction[j].sc_release = 1'b0;
@@ -1122,21 +1122,21 @@ generate
         always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
             if (i_nrst == 1'b0) begin
                 for (int i = 0; i < TRACE_TBL_SZ; i++) begin
-                    r.trace_tbl[i].exec_cnt <= '0;
+                    r.trace_tbl[i].exec_cnt <= 64'd0;
                     r.trace_tbl[i].pc <= '0;
-                    r.trace_tbl[i].instr <= '0;
-                    r.trace_tbl[i].regactioncnt <= '0;
-                    r.trace_tbl[i].memactioncnt <= '0;
+                    r.trace_tbl[i].instr <= 32'd0;
+                    r.trace_tbl[i].regactioncnt <= 32'd0;
+                    r.trace_tbl[i].memactioncnt <= 32'd0;
                     for (int j = 0; j < TRACE_TBL_SZ; j++) begin
-                        r.trace_tbl[i].regaction[j].waddr <= '0;
-                        r.trace_tbl[i].regaction[j].wres <= '0;
+                        r.trace_tbl[i].regaction[j].waddr <= 6'd0;
+                        r.trace_tbl[i].regaction[j].wres <= 64'd0;
                     end
                     for (int j = 0; j < TRACE_TBL_SZ; j++) begin
                         r.trace_tbl[i].memaction[j].store <= 1'b0;
-                        r.trace_tbl[i].memaction[j].size <= '0;
-                        r.trace_tbl[i].memaction[j].mask <= '0;
-                        r.trace_tbl[i].memaction[j].memaddr <= '0;
-                        r.trace_tbl[i].memaction[j].data <= '0;
+                        r.trace_tbl[i].memaction[j].size <= 2'd0;
+                        r.trace_tbl[i].memaction[j].mask <= 64'd0;
+                        r.trace_tbl[i].memaction[j].memaddr <= 64'd0;
+                        r.trace_tbl[i].memaction[j].data <= 64'd0;
                         r.trace_tbl[i].memaction[j].regaddr <= 6'd0;
                         r.trace_tbl[i].memaction[j].complete <= 1'b0;
                         r.trace_tbl[i].memaction[j].sc_release <= 1'b0;

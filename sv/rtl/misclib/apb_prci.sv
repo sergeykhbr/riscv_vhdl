@@ -42,7 +42,7 @@ logic w_req_valid;
 logic [31:0] wb_req_addr;
 logic w_req_write;
 logic [31:0] wb_req_wdata;
-apb_prci_registers r, rin;
+apb_prci_rhegisters rh, rhin;
 
 apb_slv #(
     .async_reset(async_reset),
@@ -50,7 +50,7 @@ apb_slv #(
     .did(OPTIMITECH_PRCI)
 ) pslv0 (
     .i_clk(i_clk),
-    .i_nrst(r.sys_nrst),
+    .i_nrst(rh.sys_nrst),
     .i_mapinfo(i_mapinfo),
     .o_cfg(o_cfg),
     .i_apbi(i_apbi),
@@ -59,9 +59,9 @@ apb_slv #(
     .o_req_addr(wb_req_addr),
     .o_req_write(w_req_write),
     .o_req_wdata(wb_req_wdata),
-    .i_resp_valid(r.resp_valid),
-    .i_resp_rdata(r.resp_rdata),
-    .i_resp_err(r.resp_err)
+    .i_resp_valid(rh.resp_valid),
+    .i_resp_rdata(rh.resp_rdata),
+    .i_resp_err(rh.resp_err)
 );
 
 always_comb
@@ -71,11 +71,11 @@ begin: comb_proc
 
     vb_rdata = '0;
 
-    v = r;
+    vh = rh;
 
-    v.sys_rst = (i_pwrreset || (~i_sys_locked) || i_dmireset);
-    v.sys_nrst = (~(i_pwrreset || (~i_sys_locked) || i_dmireset));
-    v.dbg_nrst = (~(i_pwrreset || (~i_sys_locked)));
+    vh.sys_rst = (i_pwrreset || (~i_sys_locked) || i_dmireset);
+    vh.sys_nrst = (~(i_pwrreset || (~i_sys_locked) || i_dmireset));
+    vh.dbg_nrst = (~(i_pwrreset || (~i_sys_locked)));
 
     // Registers access:
     case (wb_req_addr[11: 2])
@@ -84,8 +84,8 @@ begin: comb_proc
         vb_rdata[1] = i_ddr_locked;
     end
     10'd1: begin                                            // 0x04: reset status
-        vb_rdata[0] = r.sys_nrst;
-        vb_rdata[1] = r.dbg_nrst;
+        vb_rdata[0] = rh.sys_nrst;
+        vb_rdata[1] = rh.dbg_nrst;
         if (w_req_valid == 1'b1) begin
             if (w_req_write == 1'b1) begin
                 // todo:
@@ -96,39 +96,39 @@ begin: comb_proc
     end
     endcase
 
-    v.resp_valid = w_req_valid;
-    v.resp_rdata = vb_rdata;
-    v.resp_err = 1'b0;
+    vh.resp_valid = w_req_valid;
+    vh.resp_rdata = vb_rdata;
+    vh.resp_err = 1'b0;
 
     if (~async_reset && i_pwrreset == 1'b1) begin
-        v = apb_prci_r_reset;
+        vh = apb_prci_rh_reset;
     end
 
-    o_sys_rst = r.sys_rst;
-    o_sys_nrst = r.sys_nrst;
-    o_dbg_nrst = r.dbg_nrst;
+    o_sys_rst = rh.sys_rst;
+    o_sys_nrst = rh.sys_nrst;
+    o_dbg_nrst = rh.dbg_nrst;
 
-    rin = v;
+    rhin = vh;
 end: comb_proc
 
 
 generate
     if (async_reset) begin: async_rst_gen
 
-        always_ff @(posedge i_clk, posedge i_pwrreset) begin: rg_proc
+        always_ff @(posedge i_clk, posedge i_pwrreset) begin: rhg_proc
             if (i_pwrreset == 1'b1) begin
-                r <= apb_prci_r_reset;
+                rh <= apb_prci_rh_reset;
             end else begin
-                r <= rin;
+                rh <= rhin;
             end
-        end: rg_proc
+        end: rhg_proc
 
     end: async_rst_gen
     else begin: no_rst_gen
 
-        always_ff @(posedge i_clk) begin: rg_proc
-            r <= rin;
-        end: rg_proc
+        always_ff @(posedge i_clk) begin: rhg_proc
+            rh <= rhin;
+        end: rhg_proc
 
     end: no_rst_gen
 endgenerate

@@ -27,9 +27,9 @@ typedef struct {
     logic resp_valid;
     logic [31:0] resp_rdata;
     logic resp_err;
-} apb_prci_registers;
+} apb_prci_rhegisters;
 
-const apb_prci_registers apb_prci_r_reset = '{
+const apb_prci_rhegisters apb_prci_rh_reset = '{
     1'b0,                               // sys_rst
     1'b0,                               // sys_nrst
     1'b0,                               // dbg_nrst

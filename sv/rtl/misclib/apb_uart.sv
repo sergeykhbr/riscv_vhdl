@@ -470,7 +470,7 @@ begin: comb_proc
         v.err_stopbit = 1'b0;
         v.fwcpuid = '0;
         for (int i = 0; i < fifosz; i++) begin
-            v.rx_fifo[i] = '0;
+            v.rx_fifo[i] = 8'd0;
         end
         v.rx_state = idle;
         v.rx_ena = 1'b0;
@@ -486,7 +486,7 @@ begin: comb_proc
         v.rx_stop_cnt = 1'b0;
         v.rx_shift = '0;
         for (int i = 0; i < fifosz; i++) begin
-            v.tx_fifo[i] = '0;
+            v.tx_fifo[i] = 8'd0;
         end
         v.tx_state = idle;
         v.tx_ena = 1'b0;
@@ -567,7 +567,7 @@ generate
                 r.err_stopbit <= 1'b0;
                 r.fwcpuid <= '0;
                 for (int i = 0; i < fifosz; i++) begin
-                    r.rx_fifo[i] <= '0;
+                    r.rx_fifo[i] <= 8'd0;
                 end
                 r.rx_state <= idle;
                 r.rx_ena <= 1'b0;
@@ -583,7 +583,7 @@ generate
                 r.rx_stop_cnt <= 1'b0;
                 r.rx_shift <= '0;
                 for (int i = 0; i < fifosz; i++) begin
-                    r.tx_fifo[i] <= '0;
+                    r.tx_fifo[i] <= 8'd0;
                 end
                 r.tx_state <= idle;
                 r.tx_ena <= 1'b0;
