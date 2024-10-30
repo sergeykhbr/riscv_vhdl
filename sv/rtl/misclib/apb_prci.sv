@@ -66,7 +66,7 @@ apb_slv #(
 
 always_comb
 begin: comb_proc
-    apb_prci_registers v;
+    apb_prci_rhegisters vh;
     logic [31:0] vb_rdata;
 
     vb_rdata = '0;

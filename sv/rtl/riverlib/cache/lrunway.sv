@@ -46,7 +46,7 @@ lrunway_rxegisters rx, rxin;
 
 always_comb
 begin: comb_proc
-    lrunway_registers v;
+    lrunway_rxegisters vx;
     logic [LINE_WIDTH-1:0] wb_tbl_rdata;
     logic [abits-1:0] vb_tbl_wadr;
     logic [LINE_WIDTH-1:0] vb_tbl_wdata_init;

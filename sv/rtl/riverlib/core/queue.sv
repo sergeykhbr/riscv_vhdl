@@ -53,6 +53,7 @@ Queue_rxegisters rx, rxin;
 always_comb
 begin: comb_proc
     Queue_registers v;
+    Queue_rxegisters vx;
     logic nempty;
     logic [dbits-1:0] vb_data_o;
     logic full;

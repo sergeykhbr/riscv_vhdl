@@ -108,8 +108,8 @@ jtagtap_rhegisters rh, rhin;
 
 always_comb
 begin: comb_proc
-    jtagtap_registers v;
-    jtagtap_nregisters nv;
+    jtagtap_nrhegisters nvh;
+    jtagtap_rhegisters vh;
     logic [drlen-1:0] vb_dr;
     logic v_dmi_req_valid;
     logic v_dmi_req_write;

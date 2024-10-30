@@ -33,7 +33,7 @@ StackTraceBuffer_rxegisters rx, rxin;
 
 always_comb
 begin: comb_proc
-    StackTraceBuffer_registers v;
+    StackTraceBuffer_rxegisters vx;
     vx.raddr = rx.raddr;
     for (int i = 0; i < STACK_TRACE_BUF_SIZE; i++) begin
         vx.stackbuf[i] = rx.stackbuf[i];
