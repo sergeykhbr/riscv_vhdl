@@ -33,8 +33,8 @@ localparam int DEPTH = (2**abits);
 logic [dbits-1:0] rdata;
 logic [dbits-1:0] mem[0: DEPTH - 1];
 
-always_ff @(posedge i_clk) begin: rg_proc
 
+always_ff @(posedge i_clk) begin: registers_proc
     if (i_wena == 1'b1) begin
         mem[int'(i_addr)] = i_wdata;
     end else begin
@@ -42,6 +42,6 @@ always_ff @(posedge i_clk) begin: rg_proc
     end
 
     o_rdata = rdata;
-end: rg_proc
+end: registers_proc
 
 endmodule: ram_mmu_tech

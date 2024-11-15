@@ -61,7 +61,6 @@ ram_mmu_tech<abits, dbits>::ram_mmu_tech(sc_module_name name)
 
 template<int abits, int dbits>
 void ram_mmu_tech<abits, dbits>::registers() {
-
     if (i_wena.read() == 1) {
         mem[i_addr.read().to_int()] = i_wdata;
     } else {

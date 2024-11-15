@@ -76,7 +76,6 @@ rom_inferred_2x32<abits>::rom_inferred_2x32(sc_module_name name,
 
 template<int abits>
 void rom_inferred_2x32<abits>::registers() {
-
     wb_rdata0 = mem0[i_addr.read().to_int()];
     wb_rdata1 = mem1[i_addr.read().to_int()];
 
