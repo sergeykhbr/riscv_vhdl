@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.10)
 project(cpu_arm_plugin DESCRIPTION "cpu_arm_plugin shared library")
 
 set(src_top "${CMAKE_CURRENT_SOURCE_DIR}/../../src")

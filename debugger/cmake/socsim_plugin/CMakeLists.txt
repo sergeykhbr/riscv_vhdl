@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.10)
 project(socsim_plugin DESCRIPTION "socsim_plugin shared library")
 
 set(src_top "${CMAKE_CURRENT_SOURCE_DIR}/../../src")

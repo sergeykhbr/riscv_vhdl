@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.10)
 project(cpu_sysc_plugin DESCRIPTION "cpu_sysc_plugin shared library")
 
 if (NOT DEFINED ENV{SYSTEMC_SRC} OR NOT DEFINED ENV{SYSTEMC_LIB})
@@ -10,6 +10,7 @@ set(src_top "${CMAKE_CURRENT_SOURCE_DIR}/../../..")
 if(UNIX)
 	set(LIBRARY_OUTPUT_PATH "../linuxbuild/bin/plugins")
 else()
+	add_definitions(-DNOMINMAX)
 	add_definitions(-D_UNICODE)
 	add_definitions(-DUNICODE)
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
@@ -63,6 +64,7 @@ add_library(cpu_sysc_plugin SHARED
     ${cpu_sysc_plugin_src}
 )
 
+set_property(TARGET cpu_sysc_plugin PROPERTY CXX_STANDARD 17)
 if(UNIX)
     set_target_properties(cpu_sysc_plugin PROPERTIES PREFIX "")
 else()
