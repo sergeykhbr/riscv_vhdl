@@ -48,6 +48,7 @@ comp: prep clr_logs
 
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} ../kc705/target_cfg_pkg.sv
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/ambalib.f
+	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/cdc.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/riverlib.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/techmap.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/techmap_ddr_kc705.f
@@ -79,6 +80,7 @@ mce_flow: prep clr_logs
     +UART_LOG_PATH=uart -input run.tcl  ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} \
 	../kc705/target_cfg_pkg.sv \
 	-f ${LISTS_HOME}/ambalib.f \
+	-f ${LISTS_HOME}/cdc.f \
 	-f ${LISTS_HOME}/riverlib.f \
 	-f ${LISTS_HOME}/techmap.f \
 	-f ${LISTS_HOME}/techmap_ddr_kc705.f \
