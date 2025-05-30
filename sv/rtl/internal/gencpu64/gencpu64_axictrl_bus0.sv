@@ -16,24 +16,24 @@
 
 `timescale 1ns/10ps
 
-module axictrl_bus0 #(
-    parameter bit async_reset = 1'b0
+module gencpu64_axictrl_bus0 #(
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
     input logic i_nrst,                                     // Reset: active LOW
     output types_pnp_pkg::dev_config_type o_cfg,            // Slave config descriptor
-    input types_bus0_pkg::bus0_xmst_out_vector i_xmsto,     // AXI4 masters output vector
-    output types_bus0_pkg::bus0_xmst_in_vector o_xmsti,     // AXI4 masters input vector
-    input types_bus0_pkg::bus0_xslv_out_vector i_xslvo,     // AXI4 slaves output vectors
-    output types_bus0_pkg::bus0_xslv_in_vector o_xslvi,     // AXI4 slaves input vectors
-    output types_bus0_pkg::bus0_mapinfo_vector o_mapinfo    // AXI devices memory mapping information
+    input types_gencpu64_bus0_pkg::bus0_xmst_out_vector i_xmsto,// AXI4 masters output vector
+    output types_gencpu64_bus0_pkg::bus0_xmst_in_vector o_xmsti,// AXI4 masters input vector
+    input types_gencpu64_bus0_pkg::bus0_xslv_out_vector i_xslvo,// AXI4 slaves output vectors
+    output types_gencpu64_bus0_pkg::bus0_xslv_in_vector o_xslvi,// AXI4 slaves input vectors
+    output types_gencpu64_bus0_pkg::bus0_mapinfo_vector o_mapinfo// AXI devices memory mapping information
 );
 
 import types_pnp_pkg::*;
 import types_amba_pkg::*;
-import types_bus0_pkg::*;
-import axictrl_bus0_pkg::*;
+import types_gencpu64_bus0_pkg::*;
+import gencpu64_axictrl_bus0_pkg::*;
 
 mapinfo_type wb_def_mapinfo;
 axi4_slave_in_type wb_def_xslvi;
@@ -49,7 +49,8 @@ logic w_def_req_ready;
 logic w_def_resp_valid;
 logic [CFG_SYSBUS_DATA_BITS-1:0] wb_def_resp_rdata;
 logic w_def_resp_err;
-axictrl_bus0_registers r, rin;
+gencpu64_axictrl_bus0_registers r;
+gencpu64_axictrl_bus0_registers rin;
 
 axi_slv #(
     .async_reset(async_reset),
@@ -77,7 +78,7 @@ axi_slv #(
 
 always_comb
 begin: comb_proc
-    axictrl_bus0_registers v;
+    gencpu64_axictrl_bus0_registers v;
     axi4_master_in_type vmsti[0: (CFG_BUS0_XMST_TOTAL + 1)-1];
     axi4_master_out_type vmsto[0: (CFG_BUS0_XMST_TOTAL + 1)-1];
     axi4_slave_in_type vslvi[0: (CFG_BUS0_XSLV_TOTAL + 1)-1];
@@ -102,6 +103,7 @@ begin: comb_proc
     logic v_b_fire;
     logic v_b_busy;
 
+    v = r;
     for (int i = 0; i < (CFG_BUS0_XMST_TOTAL + 1); i++) begin
         vmsti[i] = axi4_master_in_none;
     end
@@ -133,8 +135,6 @@ begin: comb_proc
     v_r_busy = 1'b0;
     v_b_fire = 1'b0;
     v_b_busy = 1'b0;
-
-    v = r;
 
     vb_def_mapinfo.addr_start = 0;
     vb_def_mapinfo.addr_end = 0;
@@ -270,8 +270,8 @@ begin: comb_proc
     vmsti[i_b_midx].b_user = vslvo[i_b_sidx].b_user;
     vslvi[i_b_sidx].b_ready = vmsto[i_b_midx].b_ready;
 
-    if (~async_reset && i_nrst == 1'b0) begin
-        v = axictrl_bus0_r_reset;
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
+        v = gencpu64_axictrl_bus0_r_reset;
     end
 
     for (int i = 0; i < CFG_BUS0_XMST_TOTAL; i++) begin
@@ -287,26 +287,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
-                r <= axictrl_bus0_r_reset;
+                r <= gencpu64_axictrl_bus0_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
-endmodule: axictrl_bus0
+endmodule: gencpu64_axictrl_bus0

@@ -211,7 +211,7 @@ iobuf_tech iosddat3 (
     .o_apbo(prci_apbo)
   );
   
-  riscv_soc #(
+  gencpu64_soc #(
     .async_reset(async_reset),
     .sim_uart_speedup_rate(sim_uart_speedup_rate)
   ) soc0 (

@@ -53,7 +53,7 @@ comp: prep clr_logs
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/techmap_ddr_kc705.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/misclib.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/sdctrl.f
-	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/riscv_soc.f
+	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/gencpu64_soc.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ../kc705/kc705_top.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f kc705_top_sim.f
 
@@ -84,7 +84,7 @@ mce_flow: prep clr_logs
 	-f ${LISTS_HOME}/techmap_ddr_kc705.f \
 	-f ${LISTS_HOME}/misclib.f \
 	-f ${LISTS_HOME}/sdctrl.f \
-	-f ${LISTS_HOME}/riscv_soc.f \
+	-f ${LISTS_HOME}/gencpu64_soc.f \
 	-f ../kc705/kc705_top.f \
 	-f kc705_top_sim.f \
 	-top kc705_top_tb \

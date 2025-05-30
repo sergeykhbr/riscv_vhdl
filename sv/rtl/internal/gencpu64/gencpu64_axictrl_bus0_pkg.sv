@@ -13,11 +13,11 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 // 
-package axictrl_bus0_pkg;
+package gencpu64_axictrl_bus0_pkg;
 
 import types_pnp_pkg::*;
 import types_amba_pkg::*;
-import types_bus0_pkg::*;
+import types_gencpu64_bus0_pkg::*;
 
 typedef struct {
     logic [CFG_BUS0_XMST_LOG2_TOTAL-1:0] r_midx;
@@ -26,9 +26,9 @@ typedef struct {
     logic [CFG_BUS0_XSLV_LOG2_TOTAL-1:0] w_sidx;
     logic [CFG_BUS0_XMST_LOG2_TOTAL-1:0] b_midx;
     logic [CFG_BUS0_XSLV_LOG2_TOTAL-1:0] b_sidx;
-} axictrl_bus0_registers;
+} gencpu64_axictrl_bus0_registers;
 
-const axictrl_bus0_registers axictrl_bus0_r_reset = '{
+const gencpu64_axictrl_bus0_registers gencpu64_axictrl_bus0_r_reset = '{
     CFG_BUS0_XMST_TOTAL,                // r_midx
     CFG_BUS0_XSLV_TOTAL,                // r_sidx
     CFG_BUS0_XMST_TOTAL,                // w_midx
@@ -36,5 +36,4 @@ const axictrl_bus0_registers axictrl_bus0_r_reset = '{
     CFG_BUS0_XMST_TOTAL,                // b_midx
     CFG_BUS0_XSLV_TOTAL                 // b_sidx
 };
-
-endpackage: axictrl_bus0_pkg
+endpackage: gencpu64_axictrl_bus0_pkg

@@ -31,6 +31,8 @@ localparam bit [15:0] RISCV_RIVER_WORKGROUP = 16'h0506;
 localparam bit [15:0] GNSSSENSOR_UART_TAP = 16'h050A;
 // JTAG Test Access Point (TAP) with SBA interface (DMA without progbuf)
 localparam bit [15:0] OPTIMITECH_JTAG_SBA = 16'h050B;
+// PCIE DMA engine
+localparam bit [15:0] OPTIMITECH_PCIE_DMA = 16'h050C;
 
 // @name Slave Device IDs definition:
 // Empty slave slot device
@@ -65,6 +67,10 @@ localparam bit [15:0] OPTIMITECH_SDCTRL_REG = 16'h0089;
 localparam bit [15:0] OPTIMITECH_SDCTRL_MEM = 16'h008B;
 // RIVER debug registers:
 localparam bit [15:0] OPTIMITECH_RIVER_DMI = 16'h008A;
+// PCIE end-point APB controller:
+localparam bit [15:0] OPTIMITECH_PCIE_CTRL = 16'h008C;
+// I2C master interface meant for ADV7511 HDMI transmitter
+localparam bit [15:0] OPTIMITECH_I2C = 16'h008D;
 
 // Plug'n'Play descriptor localparams.
 // Undefined type of the descriptor (empty device).
@@ -76,25 +82,6 @@ localparam bit [1:0] PNP_CFG_TYPE_SLAVE = 2'h2;
 // @brief Size in bytes of the standard slave descriptor..
 // @details Firmware uses this value instead of sizeof(slave_config_type).
 localparam bit [7:0] PNP_CFG_DEV_DESCR_BYTES = 8'h10;
-
-// Plug-and-Play device descriptors array connected to pnp module:
-localparam int SOC_PNP_XCTRL0 = 0;
-localparam int SOC_PNP_GROUP0 = 1;
-localparam int SOC_PNP_BOOTROM = 2;
-localparam int SOC_PNP_SRAM = 3;
-localparam int SOC_PNP_DDR_AXI = 4;
-localparam int SOC_PNP_DDR_APB = 5;
-localparam int SOC_PNP_PRCI = 6;
-localparam int SOC_PNP_GPIO = 7;
-localparam int SOC_PNP_CLINT = 8;
-localparam int SOC_PNP_PLIC = 9;
-localparam int SOC_PNP_PNP = 10;
-localparam int SOC_PNP_PBRIDGE0 = 11;
-localparam int SOC_PNP_DMI = 12;
-localparam int SOC_PNP_UART1 = 13;
-localparam int SOC_PNP_SDCTRL_REG = 14;
-localparam int SOC_PNP_SDCTRL_MEM = 15;
-localparam int SOC_PNP_TOTAL = 16;
 
 // @brief   Plug-n-play descriptor structure for connected device.
 // @details Each device must generates this datatype output that
@@ -115,7 +102,36 @@ typedef struct {
 } dev_config_type;
 
 // @brief Default config value for empty slot.
-const dev_config_type dev_config_none = '{PNP_CFG_DEV_DESCR_BYTES, PNP_CFG_TYPE_SLAVE, '0, '0, VENDOR_GNSSSENSOR, SLV_DID_EMPTY};
+const dev_config_type dev_config_none = '{
+    PNP_CFG_DEV_DESCR_BYTES,            // descrsize
+    PNP_CFG_TYPE_SLAVE,                 // descrtype
+    '0,                                 // addr_start
+    '0,                                 // addr_end
+    VENDOR_GNSSSENSOR,                  // vid
+    SLV_DID_EMPTY                       // did
+};
+
+// Plug-and-Play device descriptors array connected to pnp module:
+localparam int SOC_PNP_XCTRL0 = 0;
+localparam int SOC_PNP_GROUP0 = 1;
+localparam int SOC_PNP_BOOTROM = 2;
+localparam int SOC_PNP_SRAM = 3;
+localparam int SOC_PNP_DDR_AXI = 4;
+localparam int SOC_PNP_DDR_APB = 5;
+localparam int SOC_PNP_PRCI = 6;
+localparam int SOC_PNP_GPIO = 7;
+localparam int SOC_PNP_CLINT = 8;
+localparam int SOC_PNP_PLIC = 9;
+localparam int SOC_PNP_PNP = 10;
+localparam int SOC_PNP_PBRIDGE0 = 11;
+localparam int SOC_PNP_DMI = 12;
+localparam int SOC_PNP_UART1 = 13;
+localparam int SOC_PNP_SDCTRL_REG = 14;
+localparam int SOC_PNP_SDCTRL_MEM = 15;
+localparam int SOC_PNP_I2C = 16;
+localparam int SOC_PNP_PCIE_DMA = 17;
+localparam int SOC_PNP_PCIE_APB = 18;
+localparam int SOC_PNP_TOTAL = 19;
 
 typedef dev_config_type soc_pnp_vector[0:SOC_PNP_TOTAL - 1];
 

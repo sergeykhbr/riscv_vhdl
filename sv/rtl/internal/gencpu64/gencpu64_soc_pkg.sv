@@ -13,12 +13,12 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 // 
-package riscv_soc_pkg;
+package gencpu64_soc_pkg;
 
 import types_amba_pkg::*;
 import types_pnp_pkg::*;
-import types_bus0_pkg::*;
-import types_bus1_pkg::*;
+import types_gencpu64_bus0_pkg::*;
+import types_gencpu64_bus1_pkg::*;
 import river_cfg_pkg::*;
 import target_cfg_pkg::*;
 
@@ -42,4 +42,4 @@ localparam int SOC_PLIC_CONTEXT_TOTAL = 9;
 // Any number up to 1024. Zero interrupt must be 0.
 localparam int SOC_PLIC_IRQ_TOTAL = 73;
 
-endpackage: riscv_soc_pkg
+endpackage: gencpu64_soc_pkg

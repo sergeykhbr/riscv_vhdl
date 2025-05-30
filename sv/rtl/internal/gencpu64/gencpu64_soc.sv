@@ -16,8 +16,8 @@
 
 `timescale 1ns/10ps
 
-module riscv_soc #(
-    parameter bit async_reset = 1'b0,
+module gencpu64_soc #(
+    parameter logic async_reset = 1'b0,
     parameter int sim_uart_speedup_rate = 0                 // simulation UART speed-up: 0=no speed up, 1=2x, 2=4x, etc
 )
 (
@@ -78,11 +78,11 @@ module riscv_soc #(
 
 import types_amba_pkg::*;
 import types_pnp_pkg::*;
-import types_bus0_pkg::*;
-import types_bus1_pkg::*;
+import types_gencpu64_bus0_pkg::*;
+import types_gencpu64_bus1_pkg::*;
 import river_cfg_pkg::*;
 import target_cfg_pkg::*;
-import riscv_soc_pkg::*;
+import gencpu64_soc_pkg::*;
 
 axi4_master_out_type acpo;
 axi4_master_in_type acpi;
@@ -106,7 +106,7 @@ logic [SOC_GPIO0_WIDTH-1:0] wb_irq_gpio;
 logic w_irq_pnp;
 logic [SOC_PLIC_IRQ_TOTAL-1:0] wb_ext_irqs;
 
-axictrl_bus0 #(
+gencpu64_axictrl_bus0 #(
     .async_reset(async_reset)
 ) bus0 (
     .i_clk(i_sys_clk),
@@ -119,7 +119,7 @@ axictrl_bus0 #(
     .o_mapinfo(bus0_mapinfo)
 );
 
-axi2apb_bus1 #(
+gencpu64_axi2apb_bus1 #(
     .async_reset(async_reset)
 ) bus1 (
     .i_clk(i_sys_clk),
@@ -164,8 +164,8 @@ Workgroup #(
 );
 
 axi_rom #(
-    .async_reset(async_reset),
     .abits(CFG_BOOTROM_LOG2_SIZE),
+    .async_reset(async_reset),
     .filename(CFG_BOOTROM_FILE_HEX)
 ) rom0 (
     .i_clk(i_sys_clk),
@@ -177,8 +177,8 @@ axi_rom #(
 );
 
 axi_sram #(
-    .async_reset(async_reset),
-    .abits(CFG_SRAM_LOG2_SIZE)
+    .abits(CFG_SRAM_LOG2_SIZE),
+    .async_reset(async_reset)
 ) sram0 (
     .i_clk(i_sys_clk),
     .i_nrst(i_sys_nrst),
@@ -189,8 +189,8 @@ axi_sram #(
 );
 
 clint #(
-    .async_reset(async_reset),
-    .cpu_total(CFG_CPU_MAX)
+    .cpu_total(CFG_CPU_MAX),
+    .async_reset(async_reset)
 ) clint0 (
     .i_clk(i_sys_clk),
     .i_nrst(i_sys_nrst),
@@ -204,9 +204,9 @@ clint #(
 );
 
 plic #(
-    .async_reset(async_reset),
     .ctxmax(SOC_PLIC_CONTEXT_TOTAL),
-    .irqmax(SOC_PLIC_IRQ_TOTAL)
+    .irqmax(SOC_PLIC_IRQ_TOTAL),
+    .async_reset(async_reset)
 ) plic0 (
     .i_clk(i_sys_clk),
     .i_nrst(i_sys_nrst),
@@ -230,8 +230,8 @@ cdc_axi_sync_tech u_cdc_ddr0 (
 );
 
 apb_uart #(
-    .async_reset(async_reset),
     .log2_fifosz(SOC_UART1_LOG2_FIFOSZ),
+    .async_reset(async_reset),
     .sim_speedup_rate(sim_uart_speedup_rate)
 ) uart1 (
     .i_clk(i_sys_clk),
@@ -246,8 +246,8 @@ apb_uart #(
 );
 
 apb_gpio #(
-    .async_reset(async_reset),
-    .width(SOC_GPIO0_WIDTH)
+    .width(SOC_GPIO0_WIDTH),
+    .async_reset(async_reset)
 ) gpio0 (
     .i_clk(i_sys_clk),
     .i_nrst(i_sys_nrst),
@@ -295,8 +295,8 @@ sdctrl #(
 );
 
 apb_pnp #(
-    .async_reset(async_reset),
     .cfg_slots(SOC_PNP_TOTAL),
+    .async_reset(async_reset),
     .hwid(SOC_HW_ID),
     .cpu_max(CFG_CPU_NUM),
     .l2cache_ena(CFG_L2CACHE_ENA),
@@ -361,6 +361,11 @@ begin: comb_proc
     dev_pnp[SOC_PNP_DDR_APB] = i_ddr_pdevcfg;
     o_ddr_apbi = apbi[CFG_BUS1_PSLV_DDR];
     apbo[CFG_BUS1_PSLV_DDR] = i_ddr_apbo;
+    // I2C Controller disabled:
+    dev_pnp[SOC_PNP_I2C] = dev_config_none;
+    // PCIe disabled:
+    dev_pnp[SOC_PNP_PCIE_DMA] = dev_config_none;
+    dev_pnp[SOC_PNP_PCIE_APB] = dev_config_none;
 end: comb_proc
 
-endmodule: riscv_soc
+endmodule: gencpu64_soc

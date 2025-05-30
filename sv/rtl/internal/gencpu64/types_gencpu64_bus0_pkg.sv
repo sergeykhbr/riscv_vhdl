@@ -13,7 +13,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 // 
-package types_bus0_pkg;
+package types_gencpu64_bus0_pkg;
 
 import types_amba_pkg::*;
 
@@ -64,13 +64,34 @@ typedef mapinfo_type bus0_mapinfo_vector[0:CFG_BUS0_XSLV_TOTAL - 1];
 
 // Bus 0 device tree
 const bus0_mapinfo_vector CFG_BUS0_MAP = '{
-    '{64'h0000000000010000, 64'h0000000000050000},          // 0, bootrom, 256 KB
-    '{64'h0000000002000000, 64'h0000000002010000},          // 1, clint
-    '{64'h0000000008000000, 64'h0000000008200000},          // 2, sram, 2MB
-    '{64'h000000000C000000, 64'h0000000010000000},          // 3, plic
-    '{64'h0000000010000000, 64'h0000000010100000},          // 4, APB bridge: uart1
-    '{64'h0000000080000000, 64'h00000000C0000000},          // 5, ddr, 512 MB
-    '{64'h0000000800000000, 64'h0000001000000000}           // 6, sdctrl, 32 GB
+        '{
+            64'h0000000000010000,       // addr_start
+            64'h0000000000050000        // addr_end
+        },// 0, bootrom, 256 KB
+        '{
+            64'h0000000002000000,       // addr_start
+            64'h0000000002010000        // addr_end
+        },// 1, clint
+        '{
+            64'h0000000008000000,       // addr_start
+            64'h0000000008200000        // addr_end
+        },// 2, sram, 2MB
+        '{
+            64'h000000000C000000,       // addr_start
+            64'h0000000010000000        // addr_end
+        },// 3, plic
+        '{
+            64'h0000000010000000,       // addr_start
+            64'h0000000010100000        // addr_end
+        },// 4, APB bridge: uart1
+        '{
+            64'h0000000080000000,       // addr_start
+            64'h00000000C0000000        // addr_end
+        },// 5, ddr, 1 GB
+        '{
+            64'h0000000800000000,       // addr_start
+            64'h0000001000000000        // addr_end
+        }// 6, sdctrl, 32 GB
 };
 
-endpackage: types_bus0_pkg
+endpackage: types_gencpu64_bus0_pkg
