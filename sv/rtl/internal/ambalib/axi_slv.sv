@@ -314,19 +314,38 @@ begin: comb_proc
     State_w_pipe: begin
         v.w_ready = ((i_req_ready | i_resp_valid) & (~r.req_last));
         if ((r.w_ready == 1'b1) && (i_xslvi.w_valid == 1'b1)) begin
-            v.req_valid = 1'b1;
-            v.req_addr = {r.req_addr[(CFG_SYSBUS_ADDR_BITS - 1): 12], vb_aw_addr_next};
-            v.req_wdata = i_xslvi.w_data;
-            v.req_wstrb = i_xslvi.w_strb;
-            v.req_last = i_xslvi.w_last;
+            if (i_req_ready == 1'b0) begin
+                v.wstate = State_w_buf;
+                v.req_addr_buf = {r.req_addr[(CFG_SYSBUS_ADDR_BITS - 1): 12], vb_aw_addr_next};
+                v.req_wdata_buf = i_xslvi.w_data;
+                v.req_wstrb_buf = i_xslvi.w_strb;
+                v.req_last_buf = i_xslvi.w_last;
+            end else begin
+                v.req_valid = 1'b1;
+                v.req_addr = {r.req_addr[(CFG_SYSBUS_ADDR_BITS - 1): 12], vb_aw_addr_next};
+                v.req_wdata = i_xslvi.w_data;
+                v.req_wstrb = i_xslvi.w_strb;
+                v.req_last = i_xslvi.w_last;
+            end
         end
-        if ((r.req_valid == 1'b1) && (i_req_ready == 1'b1) && (r.req_last == 1'b1)) begin
+        if ((r.req_valid == 1'b1) && (r.req_last == 1'b1) && (i_req_ready == 1'b1)) begin
             v.req_last = 1'b0;
             v.wstate = State_w_resp;
-        end else if ((i_resp_valid == 1'b1) && (i_xslvi.w_valid == 1'b0) && (r.req_valid == 1'b0)) begin
+        end
+        if ((i_resp_valid == 1'b1) && (i_xslvi.w_valid == 1'b0) && (r.req_valid == 1'b0)) begin
             v.w_ready = 1'b1;
             v.req_addr = {r.req_addr[(CFG_SYSBUS_ADDR_BITS - 1): 12], vb_aw_addr_next};
             v.wstate = State_w_req;
+        end
+    end
+    State_w_buf: begin
+        if (i_req_ready == 1'b1) begin
+            v.req_valid = 1'b1;
+            v.req_last = r.req_last_buf;
+            v.req_addr = r.req_addr_buf;
+            v.req_wdata = r.req_wdata_buf;
+            v.req_wstrb = r.req_wstrb_buf;
+            v.wstate = State_w_pipe;
         end
     end
     State_w_resp: begin

@@ -24,17 +24,18 @@ localparam bit [4:0] State_r_data = 5'h02;
 localparam bit [4:0] State_r_last = 5'h04;
 localparam bit [4:0] State_r_buf = 5'h08;
 localparam bit [4:0] State_r_wait_writing = 5'h10;
-localparam bit [5:0] State_w_idle = 6'd0;
-localparam bit [5:0] State_w_wait_reading = 6'h01;
-localparam bit [5:0] State_w_wait_reading_light = 6'h02;
-localparam bit [5:0] State_w_req = 6'h04;
-localparam bit [5:0] State_w_pipe = 6'h08;
-localparam bit [5:0] State_w_resp = 6'h10;
-localparam bit [5:0] State_b = 6'h20;
+localparam bit [6:0] State_w_idle = 7'd0;
+localparam bit [6:0] State_w_wait_reading = 7'h01;
+localparam bit [6:0] State_w_wait_reading_light = 7'h02;
+localparam bit [6:0] State_w_req = 7'h04;
+localparam bit [6:0] State_w_pipe = 7'h08;
+localparam bit [6:0] State_w_buf = 7'h10;
+localparam bit [6:0] State_w_resp = 7'h20;
+localparam bit [6:0] State_b = 7'h40;
 
 typedef struct {
     logic [4:0] rstate;
-    logic [5:0] wstate;
+    logic [6:0] wstate;
     logic ar_ready;
     logic [CFG_SYSBUS_ADDR_BITS-1:0] ar_addr;
     logic [8:0] ar_len;
@@ -67,6 +68,10 @@ typedef struct {
     logic [CFG_SYSBUS_DATA_BITS-1:0] req_wdata;
     logic [CFG_SYSBUS_DATA_BYTES-1:0] req_wstrb;
     logic [7:0] req_bytes;
+    logic [CFG_SYSBUS_ADDR_BITS-1:0] req_addr_buf;
+    logic req_last_buf;
+    logic [CFG_SYSBUS_DATA_BITS-1:0] req_wdata_buf;
+    logic [CFG_SYSBUS_DATA_BYTES-1:0] req_wstrb_buf;
 } axi_slv_registers;
 
 const axi_slv_registers axi_slv_r_reset = '{
@@ -103,6 +108,10 @@ const axi_slv_registers axi_slv_r_reset = '{
     1'b0,                               // req_write
     '0,                                 // req_wdata
     '0,                                 // req_wstrb
-    '0                                  // req_bytes
+    '0,                                 // req_bytes
+    '0,                                 // req_addr_buf
+    1'b0,                               // req_last_buf
+    '0,                                 // req_wdata_buf
+    '0                                  // req_wstrb_buf
 };
 endpackage: axi_slv_pkg
