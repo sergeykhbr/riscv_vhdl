@@ -23,5 +23,4 @@ typedef struct {
 const sdctrl_crc7_registers sdctrl_crc7_r_reset = '{
     '0                                  // crc7
 };
-
 endpackage: sdctrl_crc7_pkg

@@ -94,5 +94,4 @@ const sdctrl_spimode_registers sdctrl_spimode_r_reset = '{
     24'hFF8000,                         // OCR_VoltageWindow
     '0                                  // bitcnt
 };
-
 endpackage: sdctrl_spimode_pkg

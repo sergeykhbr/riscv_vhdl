@@ -39,5 +39,4 @@ const sdctrl_registers sdctrl_r_reset = '{
     1'b0,                               // cmd_set_low
     MODE_PRE_INIT                       // mode
 };
-
 endpackage: sdctrl_pkg

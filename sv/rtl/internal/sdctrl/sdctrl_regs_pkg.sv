@@ -65,5 +65,4 @@ const sdctrl_regs_registers sdctrl_regs_r_reset = '{
     4'h1,                               // voltage_supply
     8'h55                               // check_pattern
 };
-
 endpackage: sdctrl_regs_pkg

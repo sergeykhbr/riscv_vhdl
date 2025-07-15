@@ -6,6 +6,8 @@ ${RTL_HOME}/internal/misclib/apb_ddr.sv
 ${RTL_HOME}/internal/misclib/apb_uart.sv
 ${RTL_HOME}/internal/misclib/apb_gpio.sv
 ${RTL_HOME}/internal/misclib/apb_spi.sv
+${RTL_HOME}/internal/misclib/apb_i2c_pkg.sv
+${RTL_HOME}/internal/misclib/apb_i2c.sv
 ${RTL_HOME}/internal/misclib/apb_pnp.sv
 ${RTL_HOME}/internal/misclib/axi_rom.sv
 ${RTL_HOME}/internal/misclib/axi_sram.sv

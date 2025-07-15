@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module sdctrl_regs #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -63,7 +63,8 @@ logic w_req_valid;
 logic [31:0] wb_req_addr;
 logic w_req_write;
 logic [31:0] wb_req_wdata;
-sdctrl_regs_registers r, rin;
+sdctrl_regs_registers r;
+sdctrl_regs_registers rin;
 
 apb_slv #(
     .async_reset(async_reset),
@@ -92,11 +93,10 @@ begin: comb_proc
     logic v_negedge;
     logic [31:0] vb_rdata;
 
+    v = r;
     v_posedge = 1'b0;
     v_negedge = 1'b0;
     vb_rdata = '0;
-
-    v = r;
 
     v.err_clear = 1'b0;
     if (i_cmd_req_valid == 1'b1) begin
@@ -196,7 +196,7 @@ begin: comb_proc
     v.resp_rdata = vb_rdata;
     v.resp_err = 1'b0;
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = sdctrl_regs_r_reset;
     end
 
@@ -215,26 +215,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= sdctrl_regs_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: sdctrl_regs

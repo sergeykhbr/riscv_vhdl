@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module sdctrl_cmd_transmitter #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -55,7 +55,8 @@ import sdctrl_cmd_transmitter_pkg::*;
 logic [6:0] wb_crc7;
 logic w_crc7_next;
 logic w_crc7_dat;
-sdctrl_cmd_transmitter_registers r, rin;
+sdctrl_cmd_transmitter_registers r;
+sdctrl_cmd_transmitter_registers rin;
 
 sdctrl_crc7 #(
     .async_reset(async_reset)
@@ -77,13 +78,12 @@ begin: comb_proc
     logic v_crc7_dat;
     logic v_crc7_next;
 
+    v = r;
     v_req_ready = 1'b0;
     vb_cmdshift = '0;
     vb_resp_spistatus = '0;
     v_crc7_dat = 1'b0;
     v_crc7_next = 1'b0;
-
-    v = r;
 
     vb_cmdshift = r.cmdshift;
     vb_resp_spistatus = r.resp_spistatus;
@@ -290,7 +290,7 @@ begin: comb_proc
         v_crc7_dat = i_cmd;
     end
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = sdctrl_cmd_transmitter_r_reset;
     end
 
@@ -313,26 +313,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= sdctrl_cmd_transmitter_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: sdctrl_cmd_transmitter

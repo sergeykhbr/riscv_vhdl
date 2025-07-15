@@ -79,5 +79,4 @@ const sdctrl_cmd_transmitter_registers sdctrl_cmd_transmitter_r_reset = '{
     1'b1,                               // cmd_dir
     1'b0                                // wdog_ena
 };
-
 endpackage: sdctrl_cmd_transmitter_pkg

@@ -119,5 +119,4 @@ const sdctrl_sdmode_registers sdctrl_sdmode_r_reset = '{
     24'hFF8000,                         // OCR_VoltageWindow
     '0                                  // bitcnt
 };
-
 endpackage: sdctrl_sdmode_pkg

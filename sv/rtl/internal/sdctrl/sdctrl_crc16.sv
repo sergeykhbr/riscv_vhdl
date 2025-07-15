@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module sdctrl_crc16 #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -30,7 +30,8 @@ module sdctrl_crc16 #(
 
 import sdctrl_crc16_pkg::*;
 
-sdctrl_crc16_registers r, rin;
+sdctrl_crc16_registers r;
+sdctrl_crc16_registers rin;
 
 
 always_comb
@@ -39,10 +40,9 @@ begin: comb_proc
     logic v_inv16_0;
     logic [15:0] vb_crc16_0;
 
+    v = r;
     v_inv16_0 = 1'b0;
     vb_crc16_0 = '0;
-
-    v = r;
 
     // CRC16 = x^16 + x^12 + x^5 + 1
     v_inv16_0 = (r.crc16[15] ^ i_dat);
@@ -69,7 +69,7 @@ begin: comb_proc
         v.crc16 = vb_crc16_0;
     end
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = sdctrl_crc16_r_reset;
     end
 
@@ -78,26 +78,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= sdctrl_crc16_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: sdctrl_crc16

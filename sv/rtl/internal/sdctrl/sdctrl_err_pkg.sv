@@ -24,5 +24,4 @@ typedef struct {
 const sdctrl_err_registers sdctrl_err_r_reset = '{
     CMDERR_NONE                         // code
 };
-
 endpackage: sdctrl_err_pkg

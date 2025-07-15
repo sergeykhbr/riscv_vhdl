@@ -76,5 +76,4 @@ const sdctrl_cache_registers sdctrl_cache_r_reset = '{
     '0,                                 // cache_line_i
     '0                                  // cache_line_o
 };
-
 endpackage: sdctrl_cache_pkg

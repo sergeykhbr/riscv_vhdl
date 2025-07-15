@@ -25,5 +25,4 @@ const sdctrl_wdog_registers sdctrl_wdog_r_reset = '{
     '0,                                 // cnt
     1'b0                                // trigger
 };
-
 endpackage: sdctrl_wdog_pkg
