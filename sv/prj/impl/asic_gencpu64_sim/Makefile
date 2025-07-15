@@ -45,7 +45,7 @@ comp: prep clr_logs
 	@echo " START COMPILATION: "
 	@echo "==========================================================================================="
 
-	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} ../asic/target_cfg_pkg.sv
+	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} ../asic_gencpu64/target_cfg_pkg.sv
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/ambalib.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/cdc.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/mem.f

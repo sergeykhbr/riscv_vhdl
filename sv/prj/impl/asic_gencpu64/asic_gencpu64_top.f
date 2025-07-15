@@ -14,7 +14,7 @@ ${RTL_HOME}/sim/io/igdsbuf_tech.sv
 ${RTL_HOME}/sim/io/iobuf_tech.sv
 ${RTL_HOME}/sim/io/obuf_tech.sv
 ${RTL_HOME}/sim/io/obuf_arr_tech.sv
-${RTL_HOME}/sim/dll/ddr3_tech.sv
+${RTL_HOME}/sim/ddr3_phy/ddr3_tech.sv
 ${IMPL_ROOT}/asic_gencpu64/asic_gencpu64_top.sv
 
 

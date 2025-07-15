@@ -26,11 +26,11 @@ module SysPLL_tech (
     w_clk_sys = 0;
     w_clk_ddr = 0;
     w_locked = 0;
+    w_locked = #100ns 1'b1;
   end
 
   always #12.5ns w_clk_sys=~w_clk_sys;   // half period of system clock = 40 MHz
   always #2.5ns w_clk_ddr=~w_clk_ddr;    // half period of ddr clock = 200 MHz
-  assign w_locked = #100ns 1'b1;
 
   assign o_clk_sys = w_clk_sys;
   assign o_clk_ddr = w_clk_ddr;

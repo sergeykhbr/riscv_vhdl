@@ -14,7 +14,7 @@
 //! limitations under the License.
 //!
 
-module asic_top #(
+module asic_gencpu64_top #(
     parameter logic async_reset = target_cfg_pkg::CFG_ASYNC_RESET,
     parameter int sim_uart_speedup_rate = 0                 // simulation UART speed-up: 0=no speed up, 1=2x, 2=4x, etc
 )
@@ -48,7 +48,7 @@ module asic_top #(
 
 import types_amba_pkg::*;
 import types_pnp_pkg::*;
-import asic_top_pkg::*;
+import target_cfg_pkg::*;
 
 logic ib_rst;
 logic ib_clk_tcxo;
@@ -238,7 +238,6 @@ SysPLL_tech pll0 (
     .i_clk_tcxo(ib_clk_tcxo),
     .o_clk_sys(w_sys_clk),
     .o_clk_ddr(w_ddr_clk),
-    .o_clk_pcie(w_pcie_clk),
     .o_locked(w_pll_lock)
   );  
 
@@ -247,7 +246,7 @@ SysPLL_tech pll0 (
 apb_prci #(
     .async_reset(async_reset)
 ) prci0 (
-    .i_clk(ib_clk_tcxo),
+    .i_clk(w_sys_clk),
     .i_pwrreset(ib_rst),
     .i_dmireset(w_dmreset),
     .i_sys_locked(w_pll_lock),
@@ -335,20 +334,16 @@ ddr3_tech #(
     //.i_ctrl_clk,      // UberDDR3: CONTROLLER_CLK_PERIOD
     //.i_phy_clk,       // UberDDR3: DDR3_CLK_PERIOD must be 4:1 CONTROLLER_CLK_PERIOD
     //.i_ref_clk200,    // UberDDR3: 200MHz
-    .i_apb_nrst,
-    .i_apb_clk,
-    .i_xslv_nrst,
-    .i_xslv_clk,
-     // AXI memory access (ddr clock)
+    .i_apb_nrst(w_sys_nrst),
+    .i_apb_clk(w_sys_clk),
     .i_xslv_nrst(w_sys_nrst),
-    .i_xslv_clk(ib_clk_tcxo),
+    .i_xslv_clk(w_sys_clk),
+     // AXI memory access (ddr clock)
     .i_xmapinfo(ddr_xmapinfo),
     .o_xcfg(ddr_xdev_cfg),
     .i_xslvi(ddr_xslvi),
     .o_xslvo(ddr_xslvo),
     // APB control interface (sys clock):
-    .i_apb_nrst(w_sys_nrst),
-    .i_apb_clk(w_sys_clk),
     .i_pmapinfo(ddr_pmapinfo),
     .o_pcfg(ddr_pdev_cfg),
     .i_apbi(ddr_apbi),
