@@ -1,5 +1,5 @@
 //!
-//! Copyright 2022 Sergey Khabarov, sergeykhbr@gmail.com
+//! Copyright 2018 Sergey Khabarov, sergeykhbr@gmail.com
 //!
 //! Licensed under the Apache License, Version 2.0 (the "License");
 //! you may not use this file except in compliance with the License.
@@ -14,30 +14,27 @@
 //! limitations under the License.
 //!
 
-module kc705_top #(
-    parameter logic async_reset     = target_cfg_pkg::CFG_ASYNC_RESET,
-    parameter SIM_BYPASS_INIT_CAL   = "OFF",
-    parameter SIMULATION            = "FALSE",
+module asic_top #(
+    parameter logic async_reset = target_cfg_pkg::CFG_ASYNC_RESET,
     parameter int sim_uart_speedup_rate = 0                 // simulation UART speed-up: 0=no speed up, 1=2x, 2=4x, etc
 )
 ( 
-    //! Input reset. Active HIGH.
-    input                     i_rst,
-    //! Differential clock (LVDS) positive/negaive signal.
-    input                     i_sclk_p,
-    input                     i_sclk_n,
-    //! GPIO: [11:4] LEDs; [3:0] DIP switch
-    inout [11:0]              io_gpio,
-    //! JTAG signals:
-    input                     i_jtag_tck,
-    input                     i_jtag_trst,
-    input                     i_jtag_tms,
-    input                     i_jtag_tdi,
-    output                    o_jtag_tdo,
-    output                    o_jtag_vref,
-    //! UART1 signals:
-    input                     i_uart1_rd,
-    output                    o_uart1_td,
+    input logic i_rst,                                      // Power-on system reset active HIGH
+    // Differential clock (LVDS) positive/negaive signal.
+    input logic i_sclk_p,
+    input logic i_sclk_n,
+    // GPIO: [11:4] LEDs; [3:0] DIP switch
+    inout logic [11:0] io_gpio,
+    // JTAG signals:
+    input logic i_jtag_trst,
+    input logic i_jtag_tck,
+    input logic i_jtag_tms,
+    input logic i_jtag_tdi,
+    output logic o_jtag_tdo,
+    output logic o_jtag_vref,
+    // UART1 signals
+    input logic i_uart1_rd,
+    output logic o_uart1_td,
     // SD-card signals:
     output logic o_sd_sclk,
     inout logic io_sd_cmd,                                  // CMD IO Command/Resonse; Data output in SPI mode
@@ -46,51 +43,34 @@ module kc705_top #(
     inout logic io_sd_dat2,
     inout logic io_sd_cd_dat3,                              // CD/DAT3 IO CardDetect/Data[3]; CS output in SPI mode
     input logic i_sd_detected,                              // SD-card detected
-    input logic i_sd_protect,                               // SD-card write protect
-    // DDR3 signals:
-    output o_ddr3_reset_n,
-    output [0:0] o_ddr3_ck_n,
-    output [0:0] o_ddr3_ck_p,
-    output [0:0] o_ddr3_cke,
-    output [0:0] o_ddr3_cs_n,
-    output o_ddr3_ras_n,
-    output o_ddr3_cas_n,
-    output o_ddr3_we_n,
-    output [7:0] o_ddr3_dm,
-    output [2:0] o_ddr3_ba,
-    output [13:0] o_ddr3_addr,
-    inout [63:0] io_ddr3_dq,
-    inout [7:0] io_ddr3_dqs_n,
-    inout [7:0] io_ddr3_dqs_p,
-    output [0:0] o_ddr3_odt,
-    output o_ddr3_init_calib_complete
+    input logic i_sd_protect                                // SD-card write protect
 );
 
-  import types_amba_pkg::*;
-  import types_pnp_pkg::*;
+import types_amba_pkg::*;
+import types_pnp_pkg::*;
+import asic_top_pkg::*;
 
-  logic             ib_rst;
-  logic             ib_clk_tcxo;
-  logic             ib_sclk_n;  
-
-  logic [11:0]      ob_gpio_direction;
-  logic [11:0]      ob_gpio_opins;
-  logic [11:0]      ib_gpio_ipins;  
-  logic ib_sd_cmd;
-  logic ob_sd_cmd;
-  logic ob_sd_cmd_direction;
-  logic ib_sd_dat0;
-  logic ob_sd_dat0;
-  logic ob_sd_dat0_direction;
-  logic ib_sd_dat1;
-  logic ob_sd_dat1;
-  logic ob_sd_dat1_direction;
-  logic ib_sd_dat2;
-  logic ob_sd_dat2;
-  logic ob_sd_dat2_direction;
-  logic ib_sd_cd_dat3;
-  logic ob_sd_cd_dat3;
-  logic ob_sd_cd_dat3_direction;
+logic ib_rst;
+logic ib_clk_tcxo;
+logic ib_sclk_n;  
+logic [11:0] ib_gpio_ipins;  
+logic [11:0] ob_gpio_opins;
+logic [11:0] ob_gpio_direction;
+logic ib_sd_cmd;
+logic ob_sd_cmd;
+logic ob_sd_cmd_direction;
+logic ib_sd_dat0;
+logic ob_sd_dat0;
+logic ob_sd_dat0_direction;
+logic ib_sd_dat1;
+logic ob_sd_dat1;
+logic ob_sd_dat1_direction;
+logic ib_sd_dat2;
+logic ob_sd_dat2;
+logic ob_sd_dat2_direction;
+logic ib_sd_cd_dat3;
+logic ob_sd_cd_dat3;
+logic ob_sd_cd_dat3_direction;
 logic ib_uart1_rd;  
 logic ob_uart1_td;  
 //! JTAG signals:  
@@ -107,50 +87,44 @@ logic ob_spi_mosi;
 logic ib_spi_miso;
 logic ib_sd_detected;
 logic ib_sd_protect;
-
-logic w_sys_rst;
-logic w_sys_nrst;
-logic w_dbg_nrst;
+logic             w_sys_rst;
+logic             w_sys_nrst;
+logic             w_dbg_nrst;
+logic             w_dmreset;
+logic             w_sys_clk;
+logic             w_ddr_clk;
+logic             w_pll_lock;
+// DDR interface
+mapinfo_type ddr_xmapinfo;
+dev_config_type ddr_xdev_cfg;
+axi4_slave_out_type ddr_xslvo;
+axi4_slave_in_type ddr_xslvi;
+//
+mapinfo_type ddr_pmapinfo;
+dev_config_type ddr_pdev_cfg;
+apb_in_type ddr_apbi;
+apb_out_type ddr_apbo;
+//
+logic w_ddr_ui_nrst;
+logic w_ddr_ui_clk;
+logic w_ddr3_init_calib_complete;
+// PRCI intefrace:
+mapinfo_type prci_pmapinfo;
+dev_config_type prci_dev_cfg;
+apb_in_type prci_apbi;
+apb_out_type prci_apbo;
+// PCIe (disabled)
+logic w_pcie_phy_lnk_up;
+logic w_pcie_user_clk;
+logic w_pcie_user_rst;
 logic w_pcie_nrst;
+// HDMI (disabled)
 logic w_hdmi_nrst;
-logic w_dmreset;
-logic w_sys_clk;
-logic w_ddr_clk;
-logic w_ddr_phy_clk;
-logic w_pll_lock;
 
-  // DDR interface
-  mapinfo_type ddr_xmapinfo;
-  dev_config_type ddr_xdev_cfg;
-  axi4_slave_out_type ddr_xslvo;
-  axi4_slave_in_type ddr_xslvi;
-
-  mapinfo_type ddr_pmapinfo;
-  dev_config_type ddr_pdev_cfg;
-  apb_in_type ddr_apbi;
-  apb_out_type ddr_apbo;
-
-  logic w_ddr_ui_nrst;
-  logic w_ddr_ui_clk;
-  logic w_ddr3_init_calib_complete;
-
-  // PCIE interface
-  wire w_pcie_user_clk;
-  wire w_pcie_user_rst;
-  logic w_pcie_phy_lnk_up;
-
-  // PRCI intefrace:
-  mapinfo_type prci_pmapinfo;
-  dev_config_type prci_dev_cfg;
-  apb_in_type prci_apbi;
-  apb_out_type prci_apbo;
-
-// PCIe disabled (see gpu3d project)
+assign w_pcie_phy_lnk_up = 1'b0;
 assign w_pcie_user_clk = 1'b0;
 assign w_pcie_user_rst = 1'b0;
-assign w_pcie_phy_lnk_up = 1'b0;
-
-
+ 
 ibuf_tech irst0 (
     .o(ib_rst),
     .i(i_rst)
@@ -172,17 +146,17 @@ obuf_tech otd1 (
     .i(ob_uart1_td)
 );
 
-  genvar i;
-  generate 
-    for(i=0; i<=11; i++) begin: gpiox  
-      iobuf_tech iob0 (
-         .o(ib_gpio_ipins[i]),
-         .io(io_gpio[i]),
-         .i(ob_gpio_opins[i]),
-         .t(ob_gpio_direction[i])
-      ); 
+genvar i;
+generate 
+    for (i = 0; i <= 11; i++) begin: gpiox  
+        iobuf_tech iob0 (
+            .o(ib_gpio_ipins[i]),
+            .io(io_gpio[i]),
+            .i(ob_gpio_opins[i]),
+            .t(ob_gpio_direction[i])
+        ); 
     end
-  endgenerate
+endgenerate
 
 iobuf_tech iosdcmd0 (
     .io(io_sd_cmd),
@@ -191,14 +165,12 @@ iobuf_tech iosdcmd0 (
     .t(ob_sd_cmd_direction)
 );
 
-
 iobuf_tech iosddat0 (
     .io(io_sd_dat0),
     .o(ib_sd_dat0),
     .i(ob_sd_dat0),
     .t(ob_sd_dat0_direction)
 );
-
 
 iobuf_tech iosddat1 (
     .io(io_sd_dat1),
@@ -207,7 +179,6 @@ iobuf_tech iosddat1 (
     .t(ob_sd_dat1_direction)
 );
 
-
 iobuf_tech iosddat2 (
     .io(io_sd_dat2),
     .o(ib_sd_dat2),
@@ -215,41 +186,67 @@ iobuf_tech iosddat2 (
     .t(ob_sd_dat2_direction)
 );
 
-
 iobuf_tech iosddat3 (
     .io(io_sd_cd_dat3),
     .o(ib_sd_cd_dat3),
     .i(ob_sd_cd_dat3),
     .t(ob_sd_cd_dat3_direction)
 );
+
+ibuf_tech isddet0 (
+    .o(ib_sd_detected),
+    .i(i_sd_detected)
+);  
+
+ibuf_tech isdwp0 (
+    .o(ib_sd_protect),
+    .i(i_sd_protect)
+);  
   
-  ibuf_tech isddet0(.o(ib_sd_detected),.i(i_sd_detected));  
-  ibuf_tech isdwp0(.o(ib_sd_protect),.i(i_sd_protect));  
+ibuf_tech ijtck0 (
+    .o(ib_jtag_tck),
+    .i(i_jtag_tck)
+);
 
-  ibuf_tech ijtck0(.o(ib_jtag_tck),.i(i_jtag_tck));  
-  ibuf_tech ijtrst0(.o(ib_jtag_trst),.i(i_jtag_trst)); 
-  ibuf_tech ijtms0(.o(ib_jtag_tms),.i(i_jtag_tms));   
-  ibuf_tech ijtdi0(.o(ib_jtag_tdi),.i(i_jtag_tdi)); 
-  obuf_tech ojtdo0(.o(o_jtag_tdo),.i(ob_jtag_tdo));   
-  obuf_tech ojvrf0(.o(o_jtag_vref),.i(ob_jtag_vref)); 
+ibuf_tech ijtrst0 (
+    .o(ib_jtag_trst),
+    .i(i_jtag_trst)
+);
 
-  assign o_ddr3_init_calib_complete = w_ddr3_init_calib_complete;
+ibuf_tech ijtms0 (
+    .o(ib_jtag_tms),
+    .i(i_jtag_tms)
+);
+
+ibuf_tech ijtdi0 (
+    .o(ib_jtag_tdi),
+    .i(i_jtag_tdi)
+);
+
+obuf_tech ojtdo0 (
+    .o(o_jtag_tdo),
+    .i(ob_jtag_tdo)
+);
+
+obuf_tech ojvrf0 (
+    .o(o_jtag_vref),
+    .i(ob_jtag_vref)
+);
   
-
-  SysPLL_tech pll0(
+SysPLL_tech pll0 (
     .i_reset(ib_rst),
     .i_clk_tcxo(ib_clk_tcxo),
     .o_clk_sys(w_sys_clk),
     .o_clk_ddr(w_ddr_clk),
-    .o_clk_ddr_phy(w_ddr_phy_clk),   // 800 (4:1 to ddr for UberDDR3). It is possible 400:100
+    .o_clk_pcie(w_pcie_clk),
     .o_locked(w_pll_lock)
   );  
 
   
-  // PLL and Reset Control Interface:
-  apb_prci #(
+// PLL and Reset Control Interface:
+apb_prci #(
     .async_reset(async_reset)
-  ) prci0 (
+) prci0 (
     .i_clk(ib_clk_tcxo),
     .i_pwrreset(ib_rst),
     .i_dmireset(w_dmreset),
@@ -268,8 +265,7 @@ iobuf_tech iosddat3 (
     .i_apbi(prci_apbi),
     .o_apbo(prci_apbo)
   );
-
- 
+  
   gencpu64_soc #(
     .async_reset(async_reset),
     .sim_uart_speedup_rate(sim_uart_speedup_rate)
@@ -329,15 +325,20 @@ iobuf_tech iosddat3 (
     .i_ddr_xslvo(ddr_xslvo)
   );
 
+
 ddr3_tech #(
     .async_reset(async_reset),
-    .SYSCLK_TYPE("NO BUFFER"), // "NO_BUFFER,"DIFFERENTIAL"
-    .SIM_BYPASS_INIT_CAL(SIM_BYPASS_INIT_CAL),  // "FAST"-for simulation true; "OFF"
-    .SIMULATION(SIMULATION)
+    .SYSCLK_TYPE("NO_BUFFER"), // "NO_BUFFER,"DIFFERENTIAL"
+    .SIM_BYPASS_INIT_CAL("FAST"),  // "FAST"-for simulation true; "OFF"
+    .SIMULATION("TRUE")
 ) ddr0 (
-    .i_ctrl_clk(w_ddr_clk),        // CONTROLLER_CLK_PERIOD
-    .i_phy_clk(w_ddr_phy_clk),     // DDR3_CLK_PERIOD must be 4:1 CONTROLLER_CLK_PERIOD
-    .i_ref_clk200(ib_clk_tcxo),    // 200MHz
+    //.i_ctrl_clk,      // UberDDR3: CONTROLLER_CLK_PERIOD
+    //.i_phy_clk,       // UberDDR3: DDR3_CLK_PERIOD must be 4:1 CONTROLLER_CLK_PERIOD
+    //.i_ref_clk200,    // UberDDR3: 200MHz
+    .i_apb_nrst,
+    .i_apb_clk,
+    .i_xslv_nrst,
+    .i_xslv_clk,
      // AXI memory access (ddr clock)
     .i_xslv_nrst(w_sys_nrst),
     .i_xslv_clk(ib_clk_tcxo),
@@ -356,21 +357,21 @@ ddr3_tech #(
     .o_ui_nrst(w_ddr_ui_nrst),  // xilinx generte ddr clock inside ddr controller
     .o_ui_clk(w_ddr_ui_clk),  // xilinx generte ddr clock inside ddr controller
     // DDR signals:
-    .io_ddr3_dq(io_ddr3_dq),
-    .io_ddr3_dqs_n(io_ddr3_dqs_n),
-    .io_ddr3_dqs_p(io_ddr3_dqs_p),
-    .o_ddr3_addr(o_ddr3_addr),
-    .o_ddr3_ba(o_ddr3_ba),
-    .o_ddr3_ras_n(o_ddr3_ras_n),
-    .o_ddr3_cas_n(o_ddr3_cas_n),
-    .o_ddr3_we_n(o_ddr3_we_n),
-    .o_ddr3_reset_n(o_ddr3_reset_n),
-    .o_ddr3_ck_p(o_ddr3_ck_p),
-    .o_ddr3_ck_n(o_ddr3_ck_n),
-    .o_ddr3_cke(o_ddr3_cke),
-    .o_ddr3_cs_n(o_ddr3_cs_n),
-    .o_ddr3_dm(o_ddr3_dm),
-    .o_ddr3_odt(o_ddr3_odt),
+//    .io_ddr3_dq(),
+//    .io_ddr3_dqs_n(),
+//    .io_ddr3_dqs_p(),
+//    .o_ddr3_addr(),
+//    .o_ddr3_ba(),
+//    .o_ddr3_ras_n(),
+//    .o_ddr3_cas_n(),
+//    .o_ddr3_we_n(),
+//    .o_ddr3_reset_n(),
+//    .o_ddr3_ck_p(),
+//    .o_ddr3_ck_n(),
+//    .o_ddr3_cke(),
+//    .o_ddr3_cs_n(),
+//    .o_ddr3_dm(),
+//    .o_ddr3_odt(),
     .o_init_calib_done(w_ddr3_init_calib_complete)
 );
 

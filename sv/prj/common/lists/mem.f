@@ -1,0 +1,9 @@
+${RTL_HOME}/sim/mem/ram_cache_bwe_tech.sv
+${RTL_HOME}/sim/mem/ram_mmu_tech.sv
+${RTL_HOME}/sim/mem/ram_bytes_tech.sv
+${RTL_HOME}/sim/mem/ram_inferred.sv
+${RTL_HOME}/sim/mem/ram_fpga_distr.sv
+${RTL_HOME}/sim/mem/ram_tech.sv
+${RTL_HOME}/sim/mem/rom_inferred_32.sv
+${RTL_HOME}/sim/mem/rom_inferred_2x32.sv
+${RTL_HOME}/sim/mem/rom_tech.sv

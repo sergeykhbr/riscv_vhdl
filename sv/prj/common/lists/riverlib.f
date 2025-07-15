@@ -81,6 +81,7 @@ ${RTL_HOME}/internal/riverlib/cache/pma.sv
 ${RTL_HOME}/internal/riverlib/cache/pmp.sv
 ${RTL_HOME}/internal/riverlib/cache/cache_top.sv
 ${RTL_HOME}/internal/riverlib/river_top.sv
+${RTL_HOME}/internal/riverlib/l1_dma_snoop.sv
 ${RTL_HOME}/internal/riverlib/river_amba.sv
 ${RTL_HOME}/internal/riverlib/ic_axi4_to_l1.sv
 ${RTL_HOME}/internal/riverlib/dmi/dmidebug_pkg.sv
@@ -90,7 +91,6 @@ ${RTL_HOME}/internal/riverlib/dmi/jtagtap.sv
 ${RTL_HOME}/internal/riverlib/dmi/jtagcdc.sv
 ${RTL_HOME}/internal/riverlib/dmi/dmidebug.sv
 ${RTL_HOME}/internal/riverlib/dmi/ic_dport.sv
-${RTL_HOME}/internal/riverlib/l1_dma_snoop.sv
 ${RTL_HOME}/internal/riverlib/l2cache/l2cache_lru_pkg.sv
 ${RTL_HOME}/internal/riverlib/l2cache/l2serdes_pkg.sv
 ${RTL_HOME}/internal/riverlib/l2cache/l2_amba_pkg.sv

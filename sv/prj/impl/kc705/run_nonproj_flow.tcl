@@ -84,11 +84,10 @@ file mkdir $outputDir
 
 # Main verilog defines:
 set VERILOG_DEF ""
-lappend VERILOG_DEF TARGET_KC705
+# No need in global definition. Create tech file for each target
+#lappend VERILOG_DEF TARGET_KC705
 lappend VERILOG_DEF FPGA
 lappend VERILOG_DEF WF_CPU_CLOCK=40.0
-#lappend VERILOG_DEF WF_CPU_CLOCK=100.0
-
 
 #
 # STEP#1: setup design sources and constraints
@@ -101,12 +100,13 @@ source -notrace scripts/set_paths.tcl
 if {[string is true $load_files]} {
 	read_verilog -sv target_cfg_pkg.sv
 	set filelist_name ${LIST_ROOT}/ambalib.f;       source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
-	set filelist_name ${LIST_ROOT}/techmap.f;	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
-	set filelist_name ${LIST_ROOT}/techmap_ddr_kc705.f; source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
+	set filelist_name ${LIST_ROOT}/mem.f;		source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
+	set filelist_name ${LIST_ROOT}/cdc.f;		source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
 	set filelist_name ${LIST_ROOT}/riverlib.f;     	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
 	set filelist_name ${LIST_ROOT}/misclib.f;    	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
 	set filelist_name ${LIST_ROOT}/sdctrl.f;    	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
 	set filelist_name ${LIST_ROOT}/riscv_soc.f;    	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
+	set filelist_name ${PRJ_ROOT}/kc705_ddr3_phy.f; source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
 	set filelist_name ${PRJ_ROOT}/kc705_top.f;  	source -notrace scripts/get_file_list.tcl; read_verilog -sv [subst $filelist]
 
 	# Apply Verilog Defines:

@@ -5,18 +5,17 @@
 include src.mk
 
 TIMESCALE=1ns/10ps
-BENCH=kc705_top_tb
+BENCH=asic_gencpu64_top_tb
 CYCLES=30000
 
 INC=+incdir+${RTL_HOME}
-INC+=+incdir+${VIPS_HOME}/ddr3
 VLOG_PARAMS_TB=-64 -sv -work work
 ELAB_PARAMS=-64 -v93 -namemap_mixgen -timescale ${TIMESCALE} -access +rwc
 SIM_OPTS = -64 -input ./ncsim_settings work.${BENCH} +cycles=${CYCLES} \
            +UART_LOG_PATH=uart
 
-# No need in global definition. Create tech file for each target
-#GLOBAL_DEFINE+=+define+TARGET_KC705
+# No need in global definition. USE PROPER FILES INSTEAD.
+#GLOBAL_DEFINE+=+define+TARGET_INFERRED
 
 #================================================================================================
 
@@ -46,17 +45,15 @@ comp: prep clr_logs
 	@echo " START COMPILATION: "
 	@echo "==========================================================================================="
 
-	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} ../kc705/target_cfg_pkg.sv
+	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} ../asic/target_cfg_pkg.sv
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/ambalib.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/cdc.f
+	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/mem.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/riverlib.f
-	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/techmap.f
-	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/techmap_ddr_kc705.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/misclib.f
 	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/sdctrl.f
-	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ${LISTS_HOME}/gencpu64_soc.f
-	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ../kc705/kc705_top.f
-	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f kc705_top_sim.f
+	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f ../asic_gencpu64/asic_gencpu64_top.f
+	${SRUN} xmvlog ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} -f asic_gencpu64_top_sim.f
 
 
 build: comp
@@ -78,19 +75,17 @@ mce_flow: prep clr_logs
 	-timescale 1ns/10ps \
 	-access -rwc \
     +UART_LOG_PATH=uart -input run.tcl  ${VLOG_PARAMS_TB} ${INC} ${GLOBAL_DEFINE} \
-	../kc705/target_cfg_pkg.sv \
+	../asic/target_cfg_pkg.sv \
 	-f ${LISTS_HOME}/ambalib.f \
 	-f ${LISTS_HOME}/cdc.f \
+	-f ${LISTS_HOME}/mem.f \
 	-f ${LISTS_HOME}/riverlib.f \
-	-f ${LISTS_HOME}/techmap.f \
-	-f ${LISTS_HOME}/techmap_ddr_kc705.f \
 	-f ${LISTS_HOME}/misclib.f \
 	-f ${LISTS_HOME}/sdctrl.f \
-	-f ${LISTS_HOME}/gencpu64_soc.f \
-	-f ../kc705/kc705_top.f \
-	-f kc705_top_sim.f \
-	-top kc705_top_tb \
-	-mce_top kc705_top_tb.tt
+	-f ../asic_gencpu64/asic_gencpu64_top.f \
+	-f asic_gencpu64_top_sim.f \
+	-top asic_gencpu64_top_tb \
+	-mce_top asic_gencpu64_top_tb.tt
 
 
 clean:
