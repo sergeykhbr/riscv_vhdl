@@ -9,7 +9,6 @@ BENCH=kc705_top_tb
 CYCLES=30000
 
 INC=+incdir+${RTL_HOME}
-INC+=+incdir+${RTL_HOME}/techmap/cdc_axi_sync/kc705
 INC+=+incdir+${VIPS_HOME}/ddr3
 VLOG_PARAMS_TB=-64 -sv -work work
 ELAB_PARAMS=-64 -v93 -namemap_mixgen -timescale ${TIMESCALE} -access +rwc

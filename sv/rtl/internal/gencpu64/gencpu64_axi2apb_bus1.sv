@@ -20,7 +20,7 @@ module gencpu64_axi2apb_bus1 #(
     parameter logic async_reset = 1'b0
 )
 (
-    input logic i_clk,                                      // CPU clock
+    input logic i_clk,                                      // APB clock
     input logic i_nrst,                                     // Reset: active LOW
     input types_amba_pkg::mapinfo_type i_mapinfo,           // Base address information from the interconnect port
     output types_pnp_pkg::dev_config_type o_cfg,            // Slave config descriptor
@@ -77,6 +77,7 @@ begin: comb_proc
     int iselidx;
     apb_in_type vapbi[0: (CFG_BUS1_PSLV_TOTAL + 1)-1];
     apb_out_type vapbo[0: (CFG_BUS1_PSLV_TOTAL + 1)-1];
+    logic [31:0] sel_rdata;
 
     v = r;
     iselidx = 0;
@@ -86,6 +87,7 @@ begin: comb_proc
     for (int i = 0; i < (CFG_BUS1_PSLV_TOTAL + 1); i++) begin
         vapbo[i] = apb_out_none;
     end
+    sel_rdata = '0;
 
     for (int i = 0; i < CFG_BUS1_PSLV_TOTAL; i++) begin
         vapbo[i] = i_apbo[i];                               // Cannot read vector item from port in systemc
@@ -97,6 +99,7 @@ begin: comb_proc
     w_req_ready = 1'b0;
     v.pvalid = 1'b0;
     iselidx = int'(r.selidx);
+    sel_rdata = vapbo[iselidx].prdata;
 
     case (r.state)
     State_Idle: begin
@@ -116,20 +119,27 @@ begin: comb_proc
             v.pselx = 1'b1;
             v.paddr = {wb_req_addr[31: 2], 2'd0};
             v.pprot = 3'd0;
-            if (wb_req_addr[2] == 1'b1) begin
-                v.pwdata = {32'd0, wb_req_wdata[63: 32]};
-                v.pstrb = {4'd0, wb_req_wstrb[7: 4]};
-            end else begin
-                v.pwdata = wb_req_wdata;
-                v.pstrb = wb_req_wstrb;
-            end
-            v.state = State_setup;
             v.size = wb_req_size;
+            v.state = State_setup;
             if (w_req_last == 1'b0) begin
                 v.state = State_out;                        // Burst is not supported
                 v.pselx = 1'b0;
+                v.pvalid = 1'b1;
                 v.pslverr = 1'b1;
                 v.prdata = '1;
+            end else if (wb_req_addr[2] == 1'b1) begin
+                v.pwdata = {32'd0, wb_req_wdata[63: 32]};
+                v.pstrb = {4'd0, wb_req_wstrb[7: 4]};
+                if (wb_req_size > 8'd4) begin
+                    v.state = State_out;                    // Unaligned request
+                    v.pselx = 1'b0;
+                    v.pvalid = 1'b1;
+                    v.pslverr = 1'b1;
+                    v.prdata = '1;
+                end
+            end else begin
+                v.pwdata = wb_req_wdata;
+                v.pstrb = wb_req_wstrb;
             end
         end
     end
@@ -141,22 +151,28 @@ begin: comb_proc
         v.pslverr = vapbo[iselidx].pslverr;
         if (vapbo[iselidx].pready == 1'b1) begin
             v.penable = 1'b0;
-            if (r.paddr[2] == 1'b0) begin
-                v.prdata = {r.prdata[63: 32], vapbo[iselidx].prdata};
-            end else begin
-                v.prdata = {vapbo[iselidx].prdata, r.prdata[31: 0]};
-            end
-            if (r.size > 8'd4) begin
-                v.size = (r.size - 4);
+            if ((r.size == 8'd8) && (r.paddr[2] == 1'b0)) begin
                 v.paddr = (r.paddr + 4);
                 v.pwdata = {32'd0, wb_req_wdata[63: 32]};
                 v.pstrb = {4'd0, wb_req_wstrb[7: 4]};
                 v.state = State_setup;
+                if (r.paddr[2] == 1'b0) begin
+                    v.prdata = {r.prdata[63: 32], sel_rdata};
+                end else begin
+                    v.prdata = {sel_rdata, r.prdata[31: 0]};
+                end
             end else begin
                 v.pvalid = 1'b1;
                 v.state = State_out;
                 v.pselx = 1'b0;
                 v.pwrite = 1'b0;
+                if (r.size <= 8'd4) begin
+                    v.prdata = {sel_rdata, sel_rdata};
+                end else if (r.paddr[2] == 1'b0) begin
+                    v.prdata = {r.prdata[63: 32], sel_rdata};
+                end else begin
+                    v.prdata = {sel_rdata, r.prdata[31: 0]};
+                end
             end
         end
     end

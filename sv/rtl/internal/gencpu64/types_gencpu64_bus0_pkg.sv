@@ -51,10 +51,12 @@ localparam int CFG_BUS0_XSLV_PBRIDGE = 4;
 localparam int CFG_BUS0_XSLV_DDR = 5;
 // SD-card direct memory access.
 localparam int CFG_BUS0_XSLV_SDCTRL_MEM = 6;
+// Unmapped error access
+localparam int CFG_BUS0_XSLV_UNMAP = 7;
 // Total number of the slaves devices.
-localparam int CFG_BUS0_XSLV_TOTAL = 7;
-// Necessary bus width to store index + 1.
-localparam int CFG_BUS0_XSLV_LOG2_TOTAL = 3;                // $clog2(CFG_BUS0_XSLV_TOTAL + 1)
+localparam int CFG_BUS0_XSLV_TOTAL = 8;
+// Necessary bus width to store index.
+localparam int CFG_BUS0_XSLV_LOG2_TOTAL = 3;                // $clog2(CFG_BUS0_XSLV_TOTAL)
 
 typedef axi4_master_in_type bus0_xmst_in_vector[0:CFG_BUS0_XMST_TOTAL - 1];
 typedef axi4_master_out_type bus0_xmst_out_vector[0:CFG_BUS0_XMST_TOTAL - 1];
@@ -91,7 +93,11 @@ const bus0_mapinfo_vector CFG_BUS0_MAP = '{
         '{
             64'h0000000800000000,       // addr_start
             64'h0000001000000000        // addr_end
-        }// 6, sdctrl, 32 GB
+        },// 6, sdctrl, 32 GB
+        '{
+            64'h0000000000000000,       // addr_start
+            64'h0000000000000000        // addr_end
+        }// Unampped access, lowest priority
 };
 
 endpackage: types_gencpu64_bus0_pkg

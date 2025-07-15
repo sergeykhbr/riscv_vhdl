@@ -20,20 +20,14 @@ import types_amba_pkg::*;
 import types_gencpu64_bus0_pkg::*;
 
 typedef struct {
-    logic [CFG_BUS0_XMST_LOG2_TOTAL-1:0] r_midx;
-    logic [CFG_BUS0_XSLV_LOG2_TOTAL-1:0] r_sidx;
-    logic [CFG_BUS0_XMST_LOG2_TOTAL-1:0] w_midx;
-    logic [CFG_BUS0_XSLV_LOG2_TOTAL-1:0] w_sidx;
-    logic [CFG_BUS0_XMST_LOG2_TOTAL-1:0] b_midx;
-    logic [CFG_BUS0_XSLV_LOG2_TOTAL-1:0] b_sidx;
+    logic [(CFG_BUS0_XMST_TOTAL * CFG_BUS0_XSLV_LOG2_TOTAL)-1:0] w_select;
+    logic [CFG_BUS0_XMST_TOTAL-1:0] w_active;
+    logic r_def_valid;
 } gencpu64_axictrl_bus0_registers;
 
 const gencpu64_axictrl_bus0_registers gencpu64_axictrl_bus0_r_reset = '{
-    CFG_BUS0_XMST_TOTAL,                // r_midx
-    CFG_BUS0_XSLV_TOTAL,                // r_sidx
-    CFG_BUS0_XMST_TOTAL,                // w_midx
-    CFG_BUS0_XSLV_TOTAL,                // w_sidx
-    CFG_BUS0_XMST_TOTAL,                // b_midx
-    CFG_BUS0_XSLV_TOTAL                 // b_sidx
+    '0,                                 // w_select
+    '0,                                 // w_active
+    1'b0                                // r_def_valid
 };
 endpackage: gencpu64_axictrl_bus0_pkg

@@ -20,7 +20,7 @@ module gencpu64_axictrl_bus0 #(
     parameter logic async_reset = 1'b0
 )
 (
-    input logic i_clk,                                      // CPU clock
+    input logic i_clk,                                      // Bus clock
     input logic i_nrst,                                     // Reset: active LOW
     output types_pnp_pkg::dev_config_type o_cfg,            // Slave config descriptor
     input types_gencpu64_bus0_pkg::bus0_xmst_out_vector i_xmsto,// AXI4 masters output vector
@@ -35,9 +35,9 @@ import types_amba_pkg::*;
 import types_gencpu64_bus0_pkg::*;
 import gencpu64_axictrl_bus0_pkg::*;
 
-mapinfo_type wb_def_mapinfo;
 axi4_slave_in_type wb_def_xslvi;
 axi4_slave_out_type wb_def_xslvo;
+mapinfo_type wb_def_mapinfo;
 logic w_def_req_valid;
 logic [CFG_SYSBUS_ADDR_BITS-1:0] wb_def_req_addr;
 logic [7:0] wb_def_req_size;
@@ -79,196 +79,168 @@ axi_slv #(
 always_comb
 begin: comb_proc
     gencpu64_axictrl_bus0_registers v;
-    axi4_master_in_type vmsti[0: (CFG_BUS0_XMST_TOTAL + 1)-1];
-    axi4_master_out_type vmsto[0: (CFG_BUS0_XMST_TOTAL + 1)-1];
-    axi4_slave_in_type vslvi[0: (CFG_BUS0_XSLV_TOTAL + 1)-1];
-    axi4_slave_out_type vslvo[0: (CFG_BUS0_XSLV_TOTAL + 1)-1];
-    mapinfo_type vb_def_mapinfo;
-    int i_ar_midx;
-    int i_aw_midx;
-    int i_ar_sidx;
-    int i_aw_sidx;
-    int i_r_midx;
-    int i_r_sidx;
-    int i_w_midx;
-    int i_w_sidx;
-    int i_b_midx;
-    int i_b_sidx;
-    logic v_aw_fire;
-    logic v_ar_fire;
-    logic v_w_fire;
-    logic v_w_busy;
-    logic v_r_fire;
-    logic v_r_busy;
-    logic v_b_fire;
-    logic v_b_busy;
+    axi4_master_in_type vmsti[0: CFG_BUS0_XMST_TOTAL-1];
+    axi4_master_out_type vmsto[0: CFG_BUS0_XMST_TOTAL-1];
+    axi4_slave_in_type vslvi[0: CFG_BUS0_XSLV_TOTAL-1];
+    axi4_slave_out_type vslvo[0: CFG_BUS0_XSLV_TOTAL-1];
+    logic [(CFG_BUS0_XMST_TOTAL * CFG_BUS0_XSLV_TOTAL)-1:0] vb_ar_select;
+    logic [((CFG_BUS0_XMST_TOTAL + 1) * CFG_BUS0_XSLV_TOTAL)-1:0] vb_ar_available;
+    logic [CFG_BUS0_XMST_TOTAL-1:0] vb_ar_hit;
+    logic [(CFG_BUS0_XMST_TOTAL * CFG_BUS0_XSLV_TOTAL)-1:0] vb_aw_select;
+    logic [((CFG_BUS0_XMST_TOTAL + 1) * CFG_BUS0_XSLV_TOTAL)-1:0] vb_aw_available;
+    logic [CFG_BUS0_XMST_TOTAL-1:0] vb_aw_hit;
+    logic [(CFG_BUS0_XMST_TOTAL * CFG_BUS0_XSLV_LOG2_TOTAL)-1:0] vb_w_select;
+    logic [CFG_BUS0_XMST_TOTAL-1:0] vb_w_active;
 
     v = r;
-    for (int i = 0; i < (CFG_BUS0_XMST_TOTAL + 1); i++) begin
+    for (int i = 0; i < CFG_BUS0_XMST_TOTAL; i++) begin
         vmsti[i] = axi4_master_in_none;
     end
-    for (int i = 0; i < (CFG_BUS0_XMST_TOTAL + 1); i++) begin
+    for (int i = 0; i < CFG_BUS0_XMST_TOTAL; i++) begin
         vmsto[i] = axi4_master_out_none;
     end
-    for (int i = 0; i < (CFG_BUS0_XSLV_TOTAL + 1); i++) begin
+    for (int i = 0; i < CFG_BUS0_XSLV_TOTAL; i++) begin
         vslvi[i] = axi4_slave_in_none;
     end
-    for (int i = 0; i < (CFG_BUS0_XSLV_TOTAL + 1); i++) begin
+    for (int i = 0; i < CFG_BUS0_XSLV_TOTAL; i++) begin
         vslvo[i] = axi4_slave_out_none;
     end
-    vb_def_mapinfo = mapinfo_none;
-    i_ar_midx = 0;
-    i_aw_midx = 0;
-    i_ar_sidx = 0;
-    i_aw_sidx = 0;
-    i_r_midx = 0;
-    i_r_sidx = 0;
-    i_w_midx = 0;
-    i_w_sidx = 0;
-    i_b_midx = 0;
-    i_b_sidx = 0;
-    v_aw_fire = 1'b0;
-    v_ar_fire = 1'b0;
-    v_w_fire = 1'b0;
-    v_w_busy = 1'b0;
-    v_r_fire = 1'b0;
-    v_r_busy = 1'b0;
-    v_b_fire = 1'b0;
-    v_b_busy = 1'b0;
+    vb_ar_select = '0;
+    vb_ar_available = '1;
+    vb_ar_hit = '0;
+    vb_aw_select = '0;
+    vb_aw_available = '1;
+    vb_aw_hit = '0;
+    vb_w_select = '0;
+    vb_w_active = '0;
 
-    vb_def_mapinfo.addr_start = 0;
-    vb_def_mapinfo.addr_end = 0;
+
     for (int i = 0; i < CFG_BUS0_XMST_TOTAL; i++) begin
         vmsto[i] = i_xmsto[i];                              // Cannot read vector item from port in systemc
         vmsti[i] = axi4_master_in_none;
     end
-    // Unmapped default slots:
-    vmsto[CFG_BUS0_XMST_TOTAL] = axi4_master_out_none;
-    vmsti[CFG_BUS0_XMST_TOTAL] = axi4_master_in_none;
 
     for (int i = 0; i < CFG_BUS0_XSLV_TOTAL; i++) begin
         vslvo[i] = i_xslvo[i];                              // Cannot read vector item from port in systemc
         vslvi[i] = axi4_slave_in_none;
     end
-    // Unmapped default slots:
-    vslvo[CFG_BUS0_XSLV_TOTAL] = wb_def_xslvo;
-    vslvi[CFG_BUS0_XSLV_TOTAL] = axi4_slave_in_none;
+    // Local unmapped slots:
+    vslvo[(CFG_BUS0_XSLV_TOTAL - 1)] = wb_def_xslvo;
+
+    for (int i = 0; i < CFG_BUS0_XMST_TOTAL; i++) begin
+        for (int ii = 0; ii < (CFG_BUS0_XSLV_TOTAL - 1); ii++) begin
+            // Connect AR channel
+            if ((CFG_BUS0_MAP[ii].addr_start[(CFG_SYSBUS_ADDR_BITS - 1): 12] <= vmsto[i].ar_bits.addr[(CFG_SYSBUS_ADDR_BITS - 1): 12])
+                    && (vmsto[i].ar_bits.addr[(CFG_SYSBUS_ADDR_BITS - 1): 12] < CFG_BUS0_MAP[ii].addr_end[(CFG_SYSBUS_ADDR_BITS - 1): 12])) begin
+                vb_ar_hit[i] = vmsto[i].ar_valid;
+                vb_ar_select[((i * CFG_BUS0_XSLV_TOTAL) + ii)] = (vmsto[i].ar_valid && vb_ar_available[((i * CFG_BUS0_XSLV_TOTAL) + ii)]);
+                // Update availability bit for the next master and this slave:
+                vb_ar_available[(((i + 1) * CFG_BUS0_XSLV_TOTAL) + ii)] = ((~vmsto[i].ar_valid) && vb_ar_available[((i * CFG_BUS0_XSLV_TOTAL) + ii)]);
+            end else begin
+                vb_ar_available[(((i + 1) * CFG_BUS0_XSLV_TOTAL) + ii)] = vb_ar_available[((i * CFG_BUS0_XSLV_TOTAL) + ii)];
+            end
+
+            // Connect AW channel
+            if ((CFG_BUS0_MAP[ii].addr_start[(CFG_SYSBUS_ADDR_BITS - 1): 12] <= vmsto[i].aw_bits.addr[(CFG_SYSBUS_ADDR_BITS - 1): 12])
+                    && (vmsto[i].aw_bits.addr[(CFG_SYSBUS_ADDR_BITS - 1): 12] < CFG_BUS0_MAP[ii].addr_end[(CFG_SYSBUS_ADDR_BITS - 1): 12])) begin
+                vb_aw_hit[i] = vmsto[i].aw_valid;
+                vb_aw_select[((i * CFG_BUS0_XSLV_TOTAL) + ii)] = (vmsto[i].aw_valid && vb_aw_available[((i * CFG_BUS0_XSLV_TOTAL) + ii)]);
+                // Update availability bit for the next master and this slave:
+                vb_aw_available[(((i + 1) * CFG_BUS0_XSLV_TOTAL) + ii)] = ((~vmsto[i].aw_valid) && vb_aw_available[((i * CFG_BUS0_XSLV_TOTAL) + ii)]);
+            end else begin
+                vb_aw_available[(((i + 1) * CFG_BUS0_XSLV_TOTAL) + ii)] = vb_aw_available[((i * CFG_BUS0_XSLV_TOTAL) + ii)];
+            end
+        end
+    end
+
+    // access to unmapped slave:
+    for (int i = 0; i < CFG_BUS0_XMST_TOTAL; i++) begin
+        if ((vmsto[i].ar_valid == 1'b1) && (vb_ar_hit[i] == 1'b0)) begin
+            vb_ar_select[((i * CFG_BUS0_XSLV_TOTAL) + (CFG_BUS0_XSLV_TOTAL - 1))] = (vmsto[i].ar_valid && vb_ar_available[((i * CFG_BUS0_XSLV_TOTAL) + (CFG_BUS0_XSLV_TOTAL - 1))]);
+        end
+        vb_ar_available[(((i + 1) * CFG_BUS0_XSLV_TOTAL) + (CFG_BUS0_XSLV_TOTAL - 1))] = ((~vb_ar_select[((i * CFG_BUS0_XSLV_TOTAL) + (CFG_BUS0_XSLV_TOTAL - 1))])
+                && vb_ar_available[((i * CFG_BUS0_XSLV_TOTAL) + (CFG_BUS0_XSLV_TOTAL - 1))]);
+
+        if ((vmsto[i].aw_valid == 1'b1) && (vb_aw_hit[i] == 1'b0)) begin
+            vb_aw_select[((i * CFG_BUS0_XSLV_TOTAL) + (CFG_BUS0_XSLV_TOTAL - 1))] = (vmsto[i].aw_valid && vb_aw_available[((i * CFG_BUS0_XSLV_TOTAL) + (CFG_BUS0_XSLV_TOTAL - 1))]);
+        end
+        vb_aw_available[(((i + 1) * CFG_BUS0_XSLV_TOTAL) + (CFG_BUS0_XSLV_TOTAL - 1))] = ((~vb_aw_select[((i * CFG_BUS0_XSLV_TOTAL) + (CFG_BUS0_XSLV_TOTAL - 1))])
+                && vb_aw_available[((i * CFG_BUS0_XSLV_TOTAL) + (CFG_BUS0_XSLV_TOTAL - 1))]);
+    end
+
+    vb_w_select = r.w_select;
+    vb_w_active = r.w_active;
+    for (int i = 0; i < CFG_BUS0_XMST_TOTAL; i++) begin
+        for (int ii = 0; ii < CFG_BUS0_XSLV_TOTAL; ii++) begin
+            if (vb_ar_select[((i * CFG_BUS0_XSLV_TOTAL) + ii)] == 1'b1) begin
+                vmsti[i].ar_ready = vslvo[ii].ar_ready;
+                vslvi[ii].ar_valid = vmsto[i].ar_valid;
+                vslvi[ii].ar_bits = vmsto[i].ar_bits;
+                vslvi[ii].ar_user = vmsto[i].ar_user;
+                vslvi[ii].ar_id = {vmsto[i].ar_id, i};
+            end
+            if (vb_aw_select[((i * CFG_BUS0_XSLV_TOTAL) + ii)] == 1'b1) begin
+                vmsti[i].aw_ready = vslvo[ii].aw_ready;
+                vslvi[ii].aw_valid = vmsto[i].aw_valid;
+                vslvi[ii].aw_bits = vmsto[i].aw_bits;
+                vslvi[ii].aw_user = vmsto[i].aw_user;
+                vslvi[ii].aw_id = {vmsto[i].aw_id, i};
+                if (vslvo[ii].aw_ready == 1'b1) begin
+                    // Switch W-channel index to future w-transaction without id
+                    vb_w_select[(i * CFG_BUS0_XSLV_LOG2_TOTAL) +: CFG_BUS0_XSLV_LOG2_TOTAL] = ii;
+                    vb_w_active[i] = 1'b1;
+                end
+            end
+        end
+    end
+    v.w_select = vb_w_select;
+
+    // W-channel
+    for (int i = 0; i < CFG_BUS0_XMST_TOTAL; i++) begin
+        if ((vmsto[i].w_valid == 1'b1) && (r.w_active[i] == 1'b1)) begin
+            vmsti[i].w_ready = vslvo[int'(r.w_select[(i * CFG_BUS0_XSLV_LOG2_TOTAL) +: CFG_BUS0_XSLV_LOG2_TOTAL])].w_ready;
+            vslvi[int'(r.w_select[(i * CFG_BUS0_XSLV_LOG2_TOTAL) +: CFG_BUS0_XSLV_LOG2_TOTAL])].w_valid = vmsto[i].w_valid;
+            vslvi[int'(r.w_select[(i * CFG_BUS0_XSLV_LOG2_TOTAL) +: CFG_BUS0_XSLV_LOG2_TOTAL])].w_data = vmsto[i].w_data;
+            vslvi[int'(r.w_select[(i * CFG_BUS0_XSLV_LOG2_TOTAL) +: CFG_BUS0_XSLV_LOG2_TOTAL])].w_strb = vmsto[i].w_strb;
+            vslvi[int'(r.w_select[(i * CFG_BUS0_XSLV_LOG2_TOTAL) +: CFG_BUS0_XSLV_LOG2_TOTAL])].w_last = vmsto[i].w_last;
+            vslvi[int'(r.w_select[(i * CFG_BUS0_XSLV_LOG2_TOTAL) +: CFG_BUS0_XSLV_LOG2_TOTAL])].w_user = vmsto[i].w_user;
+            if ((vmsto[i].w_last == 1'b1)
+                    && (vslvo[int'(r.w_select[(i * CFG_BUS0_XSLV_LOG2_TOTAL) +: CFG_BUS0_XSLV_LOG2_TOTAL])].w_ready == 1'b1)) begin
+                vb_w_active[i] = 1'b0;
+            end
+        end
+    end
+    v.w_active = vb_w_active;
+
+    // B-channel
+    for (int ii = 0; ii < CFG_BUS0_XSLV_TOTAL; ii++) begin
+        if (vslvo[ii].b_valid == 1'b1) begin
+            vslvi[ii].b_ready = vmsto[int'(vslvo[ii].b_id[(CFG_BUS0_XMST_LOG2_TOTAL - 1): 0])].b_ready;
+            vmsti[int'(vslvo[ii].b_id[(CFG_BUS0_XMST_LOG2_TOTAL - 1): 0])].b_valid = vslvo[ii].b_valid;
+            vmsti[int'(vslvo[ii].b_id[(CFG_BUS0_XMST_LOG2_TOTAL - 1): 0])].b_resp = vslvo[ii].b_resp;
+            vmsti[int'(vslvo[ii].b_id[(CFG_BUS0_XMST_LOG2_TOTAL - 1): 0])].b_user = vslvo[ii].b_user;
+            vmsti[int'(vslvo[ii].b_id[(CFG_BUS0_XMST_LOG2_TOTAL - 1): 0])].b_id = vslvo[ii].b_id[(CFG_SYSBUS_ID_BITS - 1): CFG_BUS0_XMST_LOG2_TOTAL];
+        end
+    end
+
+    // R-channel
+    for (int ii = 0; ii < CFG_BUS0_XSLV_TOTAL; ii++) begin
+        if (vslvo[ii].r_valid == 1'b1) begin
+            vslvi[ii].r_ready = vmsto[int'(vslvo[ii].r_id[(CFG_BUS0_XMST_LOG2_TOTAL - 1): 0])].r_ready;
+            vmsti[int'(vslvo[ii].r_id[(CFG_BUS0_XMST_LOG2_TOTAL - 1): 0])].r_valid = vslvo[ii].r_valid;
+            vmsti[int'(vslvo[ii].r_id[(CFG_BUS0_XMST_LOG2_TOTAL - 1): 0])].r_data = vslvo[ii].r_data;
+            vmsti[int'(vslvo[ii].r_id[(CFG_BUS0_XMST_LOG2_TOTAL - 1): 0])].r_last = vslvo[ii].r_last;
+            vmsti[int'(vslvo[ii].r_id[(CFG_BUS0_XMST_LOG2_TOTAL - 1): 0])].r_resp = vslvo[ii].r_resp;
+            vmsti[int'(vslvo[ii].r_id[(CFG_BUS0_XMST_LOG2_TOTAL - 1): 0])].r_user = vslvo[ii].r_user;
+            vmsti[int'(vslvo[ii].r_id[(CFG_BUS0_XMST_LOG2_TOTAL - 1): 0])].r_id = vslvo[ii].r_id[(CFG_SYSBUS_ID_BITS - 1): CFG_BUS0_XMST_LOG2_TOTAL];
+        end
+    end
 
     w_def_req_ready = 1'b1;
-    w_def_resp_valid = 1'b1;
+    v.r_def_valid = w_def_req_valid;
+    w_def_resp_valid = r.r_def_valid;
     wb_def_resp_rdata = '1;
     w_def_resp_err = 1'b1;
-    i_ar_midx = CFG_BUS0_XMST_TOTAL;
-    i_aw_midx = CFG_BUS0_XMST_TOTAL;
-    i_ar_sidx = CFG_BUS0_XSLV_TOTAL;
-    i_aw_sidx = CFG_BUS0_XSLV_TOTAL;
-    i_r_midx = int'(r.r_midx);
-    i_r_sidx = int'(r.r_sidx);
-    i_w_midx = int'(r.w_midx);
-    i_w_sidx = int'(r.w_sidx);
-    i_b_midx = int'(r.b_midx);
-    i_b_sidx = int'(r.b_sidx);
-
-    // Select Master bus:
-    for (int i = 0; i < CFG_BUS0_XMST_TOTAL; i++) begin
-        if (vmsto[i].ar_valid == 1'b1) begin
-            i_ar_midx = i;
-        end
-        if (vmsto[i].aw_valid == 1'b1) begin
-            i_aw_midx = i;
-        end
-    end
-
-    // Select Slave interface:
-    for (int i = 0; i < CFG_BUS0_XSLV_TOTAL; i++) begin
-        if ((CFG_BUS0_MAP[i].addr_start[(CFG_SYSBUS_ADDR_BITS - 1): 12] <= vmsto[i_ar_midx].ar_bits.addr[(CFG_SYSBUS_ADDR_BITS - 1): 12])
-                && (vmsto[i_ar_midx].ar_bits.addr[(CFG_SYSBUS_ADDR_BITS - 1): 12] < CFG_BUS0_MAP[i].addr_end[(CFG_SYSBUS_ADDR_BITS - 1): 12])) begin
-            i_ar_sidx = i;
-        end
-        if ((CFG_BUS0_MAP[i].addr_start[(CFG_SYSBUS_ADDR_BITS - 1): 12] <= vmsto[i_aw_midx].aw_bits.addr[(CFG_SYSBUS_ADDR_BITS - 1): 12])
-                && (vmsto[i_aw_midx].aw_bits.addr[(CFG_SYSBUS_ADDR_BITS - 1): 12] < CFG_BUS0_MAP[i].addr_end[(CFG_SYSBUS_ADDR_BITS - 1): 12])) begin
-            i_aw_sidx = i;
-        end
-    end
-
-    // Read Channel:
-    v_ar_fire = (vmsto[i_ar_midx].ar_valid & vslvo[i_ar_sidx].ar_ready);
-    v_r_fire = (vmsto[i_r_midx].r_ready & vslvo[i_r_sidx].r_valid & vslvo[i_r_sidx].r_last);
-    // Write channel:
-    v_aw_fire = (vmsto[i_aw_midx].aw_valid & vslvo[i_aw_sidx].aw_ready);
-    v_w_fire = (vmsto[i_w_midx].w_valid & vmsto[i_w_midx].w_last & vslvo[i_w_sidx].w_ready);
-    // Write confirm channel
-    v_b_fire = (vmsto[i_b_midx].b_ready & vslvo[i_b_sidx].b_valid);
-
-    if ((r.r_sidx != CFG_BUS0_XSLV_TOTAL) && (v_r_fire == 1'b0)) begin
-        v_r_busy = 1'b1;
-    end
-
-    if (((r.w_sidx != CFG_BUS0_XSLV_TOTAL) && (v_w_fire == 1'b0))
-            || ((r.b_sidx != CFG_BUS0_XSLV_TOTAL) && (v_b_fire == 1'b0))) begin
-        v_w_busy = 1'b1;
-    end
-
-    if ((r.b_sidx != CFG_BUS0_XSLV_TOTAL) && (v_b_fire == 1'b0)) begin
-        v_b_busy = 1'b1;
-    end
-
-    if ((v_ar_fire == 1'b1) && (v_r_busy == 1'b0)) begin
-        v.r_sidx = i_ar_sidx;
-        v.r_midx = i_ar_midx;
-    end else if (v_r_fire == 1'b1) begin
-        v.r_sidx = CFG_BUS0_XSLV_TOTAL;
-        v.r_midx = CFG_BUS0_XMST_TOTAL;
-    end
-
-    if ((v_aw_fire == 1'b1) && (v_w_busy == 1'b0)) begin
-        v.w_sidx = i_aw_sidx;
-        v.w_midx = i_aw_midx;
-    end else if ((v_w_fire == 1'b1) && (v_b_busy == 1'b0)) begin
-        v.w_sidx = CFG_BUS0_XSLV_TOTAL;
-        v.w_midx = CFG_BUS0_XMST_TOTAL;
-    end
-
-    if ((v_w_fire == 1'b1) && (v_b_busy == 1'b0)) begin
-        v.b_sidx = r.w_sidx;
-        v.b_midx = r.w_midx;
-    end else if (v_b_fire == 1'b1) begin
-        v.b_sidx = CFG_BUS0_XSLV_TOTAL;
-        v.b_midx = CFG_BUS0_XMST_TOTAL;
-    end
-
-    vmsti[i_ar_midx].ar_ready = (vslvo[i_ar_sidx].ar_ready & (~v_r_busy));
-    vslvi[i_ar_sidx].ar_valid = (vmsto[i_ar_midx].ar_valid & (~v_r_busy));
-    vslvi[i_ar_sidx].ar_bits = vmsto[i_ar_midx].ar_bits;
-    vslvi[i_ar_sidx].ar_id = vmsto[i_ar_midx].ar_id;
-    vslvi[i_ar_sidx].ar_user = vmsto[i_ar_midx].ar_user;
-
-    vmsti[i_r_midx].r_valid = vslvo[i_r_sidx].r_valid;
-    vmsti[i_r_midx].r_resp = vslvo[i_r_sidx].r_resp;
-    vmsti[i_r_midx].r_data = vslvo[i_r_sidx].r_data;
-    vmsti[i_r_midx].r_last = vslvo[i_r_sidx].r_last;
-    vmsti[i_r_midx].r_id = vslvo[i_r_sidx].r_id;
-    vmsti[i_r_midx].r_user = vslvo[i_r_sidx].r_user;
-    vslvi[i_r_sidx].r_ready = vmsto[i_r_midx].r_ready;
-
-    vmsti[i_aw_midx].aw_ready = (vslvo[i_aw_sidx].aw_ready & (~v_w_busy));
-    vslvi[i_aw_sidx].aw_valid = (vmsto[i_aw_midx].aw_valid & (~v_w_busy));
-    vslvi[i_aw_sidx].aw_bits = vmsto[i_aw_midx].aw_bits;
-    vslvi[i_aw_sidx].aw_id = vmsto[i_aw_midx].aw_id;
-    vslvi[i_aw_sidx].aw_user = vmsto[i_aw_midx].aw_user;
-
-    vmsti[i_w_midx].w_ready = (vslvo[i_w_sidx].w_ready & (~v_b_busy));
-    vslvi[i_w_sidx].w_valid = (vmsto[i_w_midx].w_valid & (~v_b_busy));
-    vslvi[i_w_sidx].w_data = vmsto[i_w_midx].w_data;
-    vslvi[i_w_sidx].w_last = vmsto[i_w_midx].w_last;
-    vslvi[i_w_sidx].w_strb = vmsto[i_w_midx].w_strb;
-    vslvi[i_w_sidx].w_user = vmsto[i_w_midx].w_user;
-
-    vmsti[i_b_midx].b_valid = vslvo[i_b_sidx].b_valid;
-    vmsti[i_b_midx].b_resp = vslvo[i_b_sidx].b_resp;
-    vmsti[i_b_midx].b_id = vslvo[i_b_sidx].b_id;
-    vmsti[i_b_midx].b_user = vslvo[i_b_sidx].b_user;
-    vslvi[i_b_sidx].b_ready = vmsto[i_b_midx].b_ready;
 
     if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = gencpu64_axictrl_bus0_r_reset;
@@ -281,8 +253,8 @@ begin: comb_proc
         o_xslvi[i] = vslvi[i];
         o_mapinfo[i] = CFG_BUS0_MAP[i];
     end
-    wb_def_xslvi = vslvi[CFG_BUS0_XSLV_TOTAL];
-    wb_def_mapinfo = vb_def_mapinfo;
+    wb_def_xslvi = vslvi[(CFG_BUS0_XSLV_TOTAL - 1)];
+    wb_def_mapinfo = CFG_BUS0_MAP[(CFG_BUS0_XSLV_TOTAL - 1)];
 
     rin = v;
 end: comb_proc

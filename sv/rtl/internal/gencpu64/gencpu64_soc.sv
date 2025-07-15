@@ -218,13 +218,16 @@ plic #(
     .o_ip(wb_plic_xeip)
 );
 
-cdc_axi_sync_tech u_cdc_ddr0 (
-    .i_xslv_clk(i_sys_clk),
+afifo_xslv #(
+    .abits_depth(2),
+    .dbits_depth(9)
+) afifo_ddr0 (
     .i_xslv_nrst(i_sys_nrst),
+    .i_xslv_clk(i_sys_clk),
     .i_xslvi(axisi[CFG_BUS0_XSLV_DDR]),
     .o_xslvo(axiso[CFG_BUS0_XSLV_DDR]),
-    .i_xmst_clk(i_ddr_clk),
     .i_xmst_nrst(i_ddr_nrst),
+    .i_xmst_clk(i_ddr_clk),
     .o_xmsto(o_ddr_xslvi),
     .i_xmsti(i_ddr_xslvo)
 );

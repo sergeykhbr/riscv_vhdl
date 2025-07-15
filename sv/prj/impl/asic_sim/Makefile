@@ -9,7 +9,6 @@ BENCH=asic_top_tb
 CYCLES=30000
 
 INC=+incdir+${RTL_HOME}
-INC+=+incdir+${RTL_HOME}/techmap/cdc_axi_sync/kc705
 VLOG_PARAMS_TB=-64 -sv -work work
 ELAB_PARAMS=-64 -v93 -namemap_mixgen -timescale ${TIMESCALE} -access +rwc
 SIM_OPTS = -64 -input ./ncsim_settings work.${BENCH} +cycles=${CYCLES} \
