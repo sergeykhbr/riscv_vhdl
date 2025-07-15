@@ -60,14 +60,14 @@ void vip_uart_receiver::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) 
         sc_trace(o_vcd, o_rdy, o_rdy.name());
         sc_trace(o_vcd, i_rdy_clr, i_rdy_clr.name());
         sc_trace(o_vcd, o_data, o_data.name());
-        sc_trace(o_vcd, r.rx, pn + ".r_rx");
-        sc_trace(o_vcd, r.state, pn + ".r_state");
-        sc_trace(o_vcd, r.rdy, pn + ".r_rdy");
-        sc_trace(o_vcd, r.rdata, pn + ".r_rdata");
-        sc_trace(o_vcd, r.sample, pn + ".r_sample");
-        sc_trace(o_vcd, r.bitpos, pn + ".r_bitpos");
-        sc_trace(o_vcd, r.scratch, pn + ".r_scratch");
-        sc_trace(o_vcd, r.rx_err, pn + ".r_rx_err");
+        sc_trace(o_vcd, r.rx, pn + ".r.rx");
+        sc_trace(o_vcd, r.state, pn + ".r.state");
+        sc_trace(o_vcd, r.rdy, pn + ".r.rdy");
+        sc_trace(o_vcd, r.rdata, pn + ".r.rdata");
+        sc_trace(o_vcd, r.sample, pn + ".r.sample");
+        sc_trace(o_vcd, r.bitpos, pn + ".r.bitpos");
+        sc_trace(o_vcd, r.scratch, pn + ".r.scratch");
+        sc_trace(o_vcd, r.rx_err, pn + ".r.rx_err");
     }
 
 }
@@ -76,12 +76,11 @@ void vip_uart_receiver::comb() {
     bool v_rx_pos;
     bool v_rx_neg;
 
+    v = r;
     v_rx_pos = 0;
     v_rx_neg = 0;
 
-    v = r;
-
-    v.rx = i_rx;
+    v.rx = i_rx.read();
     v_rx_pos = ((!r.rx.read()) && i_rx.read());
     v_rx_neg = (r.rx.read() && (!i_rx.read()));
     if (i_rdy_clr.read() == 1) {
@@ -124,7 +123,7 @@ void vip_uart_receiver::comb() {
         break;
     case stopbit:
         if (r.sample.read() == scaler_mid) {
-            v.rdata = r.scratch;
+            v.rdata = r.scratch.read();
             v.rdy = 1;
             if (i_rx.read() == 0) {
                 v.rx_err = 1;
@@ -153,16 +152,16 @@ void vip_uart_receiver::comb() {
         break;
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         vip_uart_receiver_r_reset(v);
     }
 
-    o_rdy = r.rdy;
-    o_data = r.rdata;
+    o_rdy = r.rdy.read();
+    o_data = r.rdata.read();
 }
 
 void vip_uart_receiver::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         vip_uart_receiver_r_reset(r);
     } else {
         r = v;

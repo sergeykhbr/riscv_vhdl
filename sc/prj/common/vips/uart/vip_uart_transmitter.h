@@ -31,8 +31,6 @@ SC_MODULE(vip_uart_transmitter) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(vip_uart_transmitter);
-
     vip_uart_transmitter(sc_module_name name,
                          bool async_reset,
                          int scaler);
@@ -44,10 +42,10 @@ SC_MODULE(vip_uart_transmitter) {
     int scaler_;
     int scaler_max;
 
-    static const uint8_t idle = 0;
-    static const uint8_t startbit = 1;
-    static const uint8_t data = 2;
-    static const uint8_t stopbit = 3;
+    static const uint8_t idle = 0x0;
+    static const uint8_t startbit = 0x1;
+    static const uint8_t data = 0x2;
+    static const uint8_t stopbit = 0x3;
 
     struct vip_uart_transmitter_registers {
         sc_signal<sc_uint<2>> state;
@@ -57,9 +55,9 @@ SC_MODULE(vip_uart_transmitter) {
         sc_signal<sc_uint<9>> shiftreg;
         sc_signal<sc_uint<4>> bitpos;
         sc_signal<bool> overflow;
-    } v, r;
+    };
 
-    void vip_uart_transmitter_r_reset(vip_uart_transmitter_registers &iv) {
+    void vip_uart_transmitter_r_reset(vip_uart_transmitter_registers& iv) {
         iv.state = idle;
         iv.sample = 0;
         iv.txdata_rdy = 0;
@@ -68,6 +66,9 @@ SC_MODULE(vip_uart_transmitter) {
         iv.bitpos = 0;
         iv.overflow = 0;
     }
+
+    vip_uart_transmitter_registers v;
+    vip_uart_transmitter_registers r;
 
 };
 

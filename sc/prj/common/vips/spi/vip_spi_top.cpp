@@ -41,11 +41,12 @@ vip_spi_top::vip_spi_top(sc_module_name name,
     clk0 = 0;
     tx0 = 0;
 
-    clk0 = new vip_clk("clk0",
-                        pll_period);
+    clk0 = new pll_generic("clk0",
+                            pll_period);
     clk0->o_clk(w_clk);
 
-    tx0 = new vip_spi_transmitter("tx0", async_reset,
+    tx0 = new vip_spi_transmitter("tx0",
+                                   async_reset,
                                    scaler);
     tx0->i_nrst(i_nrst);
     tx0->i_clk(w_clk);
@@ -110,14 +111,14 @@ void vip_spi_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_miso, o_miso.name());
         sc_trace(o_vcd, o_vip_uart_loopback_ena, o_vip_uart_loopback_ena.name());
         sc_trace(o_vcd, io_vip_gpio, io_vip_gpio.name());
-        sc_trace(o_vcd, r.resp_valid, pn + ".r_resp_valid");
-        sc_trace(o_vcd, r.resp_rdata, pn + ".r_resp_rdata");
-        sc_trace(o_vcd, r.scratch0, pn + ".r_scratch0");
-        sc_trace(o_vcd, r.scratch1, pn + ".r_scratch1");
-        sc_trace(o_vcd, r.scratch2, pn + ".r_scratch2");
-        sc_trace(o_vcd, r.uart_loopback, pn + ".r_uart_loopback");
-        sc_trace(o_vcd, r.gpio_out, pn + ".r_gpio_out");
-        sc_trace(o_vcd, r.gpio_dir, pn + ".r_gpio_dir");
+        sc_trace(o_vcd, r.resp_valid, pn + ".r.resp_valid");
+        sc_trace(o_vcd, r.resp_rdata, pn + ".r.resp_rdata");
+        sc_trace(o_vcd, r.scratch0, pn + ".r.scratch0");
+        sc_trace(o_vcd, r.scratch1, pn + ".r.scratch1");
+        sc_trace(o_vcd, r.scratch2, pn + ".r.scratch2");
+        sc_trace(o_vcd, r.uart_loopback, pn + ".r.uart_loopback");
+        sc_trace(o_vcd, r.gpio_out, pn + ".r.gpio_out");
+        sc_trace(o_vcd, r.gpio_dir, pn + ".r.gpio_dir");
     }
 
     if (clk0) {
@@ -132,12 +133,11 @@ void vip_spi_top::comb() {
     sc_uint<32> rdata;
     bool vb_gpio_in;
 
+    v = r;
     rdata = 0;
     vb_gpio_in = 0;
 
-    v = r;
-
-    rdata = r.resp_rdata;
+    rdata = r.resp_rdata.read();
 
     if ((r.resp_valid.read() == 1) && (w_resp_ready.read() == 1)) {
         v.resp_valid = 0;
@@ -150,37 +150,37 @@ void vip_spi_top::comb() {
         rdata = 0xCAFECAFE;
         break;
     case 0x01:                                              // [0x04] scratch0
-        rdata = r.scratch0;
+        rdata = r.scratch0.read();
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
-            v.scratch0 = wb_req_wdata;
+            v.scratch0 = wb_req_wdata.read();
         }
         break;
     case 0x02:                                              // [0x08] scratch1
-        rdata = r.scratch1;
+        rdata = r.scratch1.read();
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
-            v.scratch1 = wb_req_wdata;
+            v.scratch1 = wb_req_wdata.read();
         }
         break;
     case 0x03:                                              // [0x0C] scratch2
-        rdata = r.scratch2;
+        rdata = r.scratch2.read();
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
-            v.scratch2 = wb_req_wdata;
+            v.scratch2 = wb_req_wdata.read();
         }
         break;
     case 0x04:                                              // [0x10] uart control
-        rdata[0] = r.uart_loopback;
+        rdata[0] = r.uart_loopback.read();
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             v.uart_loopback = wb_req_wdata.read()[0];
         }
         break;
     case 0x05:                                              // [0x14] gpio in
-        rdata(15, 0) = wb_gpio_in;
+        rdata(15, 0) = wb_gpio_in.read();
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             v.gpio_out = wb_req_wdata.read()(15, 0);
         }
         break;
     case 0x06:                                              // [0x18] gpio direction
-        rdata(15, 0) = r.gpio_dir;
+        rdata(15, 0) = r.gpio_dir.read();
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             v.gpio_dir = wb_req_wdata.read()(15, 0);
         }
@@ -190,18 +190,18 @@ void vip_spi_top::comb() {
     }
     v.resp_rdata = rdata;
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         vip_spi_top_r_reset(v);
     }
 
     w_req_ready = 1;
-    w_resp_valid = r.resp_valid;
-    wb_resp_rdata = r.resp_rdata;
-    o_vip_uart_loopback_ena = r.uart_loopback;
+    w_resp_valid = r.resp_valid.read();
+    wb_resp_rdata = r.resp_rdata.read();
+    o_vip_uart_loopback_ena = r.uart_loopback.read();
 }
 
 void vip_spi_top::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         vip_spi_top_r_reset(r);
     } else {
         r = v;

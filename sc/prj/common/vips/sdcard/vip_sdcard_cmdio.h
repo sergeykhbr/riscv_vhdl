@@ -59,8 +59,6 @@ SC_MODULE(vip_sdcard_cmdio) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(vip_sdcard_cmdio);
-
     vip_sdcard_cmdio(sc_module_name name,
                      bool async_reset);
     virtual ~vip_sdcard_cmdio();
@@ -103,9 +101,9 @@ SC_MODULE(vip_sdcard_cmdio) {
         sc_signal<sc_uint<6>> cmd_req_cmd;
         sc_signal<sc_uint<32>> cmd_req_data;
         sc_signal<bool> cmd_resp_ready;
-    } v, r;
+    };
 
-    void vip_sdcard_cmdio_r_reset(vip_sdcard_cmdio_registers &iv) {
+    void vip_sdcard_cmdio_r_reset(vip_sdcard_cmdio_registers& iv) {
         iv.clkcnt = 0;
         iv.cs = 0;
         iv.spi_mode = 0;
@@ -130,6 +128,8 @@ SC_MODULE(vip_sdcard_cmdio) {
     sc_signal<bool> w_crc7_next;
     sc_signal<bool> w_crc7_dat;
     sc_signal<sc_uint<7>> wb_crc7;
+    vip_sdcard_cmdio_registers v;
+    vip_sdcard_cmdio_registers r;
 
     vip_sdcard_crc7 *crccmd0;
 

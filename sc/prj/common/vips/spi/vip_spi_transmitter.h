@@ -39,8 +39,6 @@ SC_MODULE(vip_spi_transmitter) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(vip_spi_transmitter);
-
     vip_spi_transmitter(sc_module_name name,
                         bool async_reset,
                         int scaler);
@@ -69,9 +67,9 @@ SC_MODULE(vip_spi_transmitter) {
         sc_signal<bool> req_write;
         sc_signal<sc_uint<32>> req_addr;
         sc_signal<sc_uint<32>> req_wdata;
-    } v, r;
+    };
 
-    void vip_spi_transmitter_r_reset(vip_spi_transmitter_registers &iv) {
+    void vip_spi_transmitter_r_reset(vip_spi_transmitter_registers& iv) {
         iv.state = state_cmd;
         iv.sclk = 0;
         iv.rxshift = ~0ull;
@@ -84,6 +82,9 @@ SC_MODULE(vip_spi_transmitter) {
         iv.req_addr = 0;
         iv.req_wdata = 0;
     }
+
+    vip_spi_transmitter_registers v;
+    vip_spi_transmitter_registers r;
 
 };
 

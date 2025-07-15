@@ -50,7 +50,7 @@ void vip_sdcard_crc7::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_next, i_next.name());
         sc_trace(o_vcd, i_dat, i_dat.name());
         sc_trace(o_vcd, o_crc7, o_crc7.name());
-        sc_trace(o_vcd, r.crc7, pn + ".r_crc7");
+        sc_trace(o_vcd, r.crc7, pn + ".r.crc7");
     }
 
 }
@@ -59,10 +59,9 @@ void vip_sdcard_crc7::comb() {
     bool v_inv7;
     sc_uint<7> vb_crc7;
 
+    v = r;
     v_inv7 = 0;
     vb_crc7 = 0;
-
-    v = r;
 
     // CRC7 = x^7 + x^3 + 1
     // CMD0 -> 01 000000 0000..000000000000000000000000 1001010 1 -> 0x4A (0x95)
@@ -83,7 +82,7 @@ void vip_sdcard_crc7::comb() {
         v.crc7 = vb_crc7;
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         vip_sdcard_crc7_r_reset(v);
     }
 
@@ -91,7 +90,7 @@ void vip_sdcard_crc7::comb() {
 }
 
 void vip_sdcard_crc7::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         vip_sdcard_crc7_r_reset(r);
     } else {
         r = v;

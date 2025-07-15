@@ -31,8 +31,6 @@ SC_MODULE(vip_uart_receiver) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(vip_uart_receiver);
-
     vip_uart_receiver(sc_module_name name,
                       bool async_reset,
                       int scaler);
@@ -45,10 +43,10 @@ SC_MODULE(vip_uart_receiver) {
     int scaler_max;
     int scaler_mid;
 
-    static const uint8_t startbit = 0;
-    static const uint8_t data = 1;
-    static const uint8_t stopbit = 2;
-    static const uint8_t dummy = 3;
+    static const uint8_t startbit = 0x0;
+    static const uint8_t data = 0x1;
+    static const uint8_t stopbit = 0x2;
+    static const uint8_t dummy = 0x3;
 
     struct vip_uart_receiver_registers {
         sc_signal<bool> rx;
@@ -59,9 +57,9 @@ SC_MODULE(vip_uart_receiver) {
         sc_signal<sc_uint<4>> bitpos;
         sc_signal<sc_uint<8>> scratch;
         sc_signal<bool> rx_err;
-    } v, r;
+    };
 
-    void vip_uart_receiver_r_reset(vip_uart_receiver_registers &iv) {
+    void vip_uart_receiver_r_reset(vip_uart_receiver_registers& iv) {
         iv.rx = 0;
         iv.state = startbit;
         iv.rdy = 0;
@@ -71,6 +69,9 @@ SC_MODULE(vip_uart_receiver) {
         iv.scratch = 0;
         iv.rx_err = 0;
     }
+
+    vip_uart_receiver_registers v;
+    vip_uart_receiver_registers r;
 
 };
 

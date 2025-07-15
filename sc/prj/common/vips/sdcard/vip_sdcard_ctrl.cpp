@@ -129,30 +129,30 @@ void vip_sdcard_ctrl::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, o_dat_trans, o_dat_trans.name());
         sc_trace(o_vcd, o_dat, o_dat.name());
         sc_trace(o_vcd, i_cmdio_busy, i_cmdio_busy.name());
-        sc_trace(o_vcd, r.sdstate, pn + ".r_sdstate");
-        sc_trace(o_vcd, r.datastate, pn + ".r_datastate");
-        sc_trace(o_vcd, r.powerup_cnt, pn + ".r_powerup_cnt");
-        sc_trace(o_vcd, r.preinit_cnt, pn + ".r_preinit_cnt");
-        sc_trace(o_vcd, r.delay_cnt, pn + ".r_delay_cnt");
-        sc_trace(o_vcd, r.powerup_done, pn + ".r_powerup_done");
-        sc_trace(o_vcd, r.cmd_req_ready, pn + ".r_cmd_req_ready");
-        sc_trace(o_vcd, r.cmd_resp_valid, pn + ".r_cmd_resp_valid");
-        sc_trace(o_vcd, r.cmd_resp_valid_delayed, pn + ".r_cmd_resp_valid_delayed");
-        sc_trace(o_vcd, r.cmd_resp_data32, pn + ".r_cmd_resp_data32");
-        sc_trace(o_vcd, r.cmd_resp_r1b, pn + ".r_cmd_resp_r1b");
-        sc_trace(o_vcd, r.cmd_resp_r2, pn + ".r_cmd_resp_r2");
-        sc_trace(o_vcd, r.cmd_resp_r3, pn + ".r_cmd_resp_r3");
-        sc_trace(o_vcd, r.cmd_resp_r7, pn + ".r_cmd_resp_r7");
-        sc_trace(o_vcd, r.illegal_cmd, pn + ".r_illegal_cmd");
-        sc_trace(o_vcd, r.ocr_hcs, pn + ".r_ocr_hcs");
-        sc_trace(o_vcd, r.ocr_vdd_window, pn + ".r_ocr_vdd_window");
-        sc_trace(o_vcd, r.req_mem_valid, pn + ".r_req_mem_valid");
-        sc_trace(o_vcd, r.req_mem_addr, pn + ".r_req_mem_addr");
-        sc_trace(o_vcd, r.shiftdat, pn + ".r_shiftdat");
-        sc_trace(o_vcd, r.bitcnt, pn + ".r_bitcnt");
-        sc_trace(o_vcd, r.crc16_clear, pn + ".r_crc16_clear");
-        sc_trace(o_vcd, r.crc16_next, pn + ".r_crc16_next");
-        sc_trace(o_vcd, r.dat_trans, pn + ".r_dat_trans");
+        sc_trace(o_vcd, r.sdstate, pn + ".r.sdstate");
+        sc_trace(o_vcd, r.datastate, pn + ".r.datastate");
+        sc_trace(o_vcd, r.powerup_cnt, pn + ".r.powerup_cnt");
+        sc_trace(o_vcd, r.preinit_cnt, pn + ".r.preinit_cnt");
+        sc_trace(o_vcd, r.delay_cnt, pn + ".r.delay_cnt");
+        sc_trace(o_vcd, r.powerup_done, pn + ".r.powerup_done");
+        sc_trace(o_vcd, r.cmd_req_ready, pn + ".r.cmd_req_ready");
+        sc_trace(o_vcd, r.cmd_resp_valid, pn + ".r.cmd_resp_valid");
+        sc_trace(o_vcd, r.cmd_resp_valid_delayed, pn + ".r.cmd_resp_valid_delayed");
+        sc_trace(o_vcd, r.cmd_resp_data32, pn + ".r.cmd_resp_data32");
+        sc_trace(o_vcd, r.cmd_resp_r1b, pn + ".r.cmd_resp_r1b");
+        sc_trace(o_vcd, r.cmd_resp_r2, pn + ".r.cmd_resp_r2");
+        sc_trace(o_vcd, r.cmd_resp_r3, pn + ".r.cmd_resp_r3");
+        sc_trace(o_vcd, r.cmd_resp_r7, pn + ".r.cmd_resp_r7");
+        sc_trace(o_vcd, r.illegal_cmd, pn + ".r.illegal_cmd");
+        sc_trace(o_vcd, r.ocr_hcs, pn + ".r.ocr_hcs");
+        sc_trace(o_vcd, r.ocr_vdd_window, pn + ".r.ocr_vdd_window");
+        sc_trace(o_vcd, r.req_mem_valid, pn + ".r.req_mem_valid");
+        sc_trace(o_vcd, r.req_mem_addr, pn + ".r.req_mem_addr");
+        sc_trace(o_vcd, r.shiftdat, pn + ".r.shiftdat");
+        sc_trace(o_vcd, r.bitcnt, pn + ".r.bitcnt");
+        sc_trace(o_vcd, r.crc16_clear, pn + ".r.crc16_clear");
+        sc_trace(o_vcd, r.crc16_next, pn + ".r.crc16_next");
+        sc_trace(o_vcd, r.dat_trans, pn + ".r.dat_trans");
     }
 
 }
@@ -161,12 +161,11 @@ void vip_sdcard_ctrl::comb() {
     bool v_resp_valid;
     sc_uint<32> vb_resp_data32;
 
+    v = r;
     v_resp_valid = 0;
     vb_resp_data32 = 0;
 
-    v = r;
-
-    vb_resp_data32 = r.cmd_resp_data32;
+    vb_resp_data32 = r.cmd_resp_data32.read();
 
     if ((r.cmd_resp_valid_delayed.read() == 1) && (i_cmd_resp_ready.read() == 1)) {
         v.cmd_resp_valid_delayed = 0;
@@ -221,7 +220,7 @@ void vip_sdcard_ctrl::comb() {
                 v.ocr_vdd_window = (i_cmd_req_data.read()(23, 0) & CFG_SDCARD_VDD_VOLTAGE_WINDOW_);
                 v.cmd_resp_valid = 1;
                 v.delay_cnt = 20;
-                vb_resp_data32[31] = r.powerup_done;
+                vb_resp_data32[31] = r.powerup_done.read();
                 vb_resp_data32[30] = (i_cmd_req_data.read()[30] & CFG_SDCARD_HCS_);
                 vb_resp_data32(23, 0) = (i_cmd_req_data.read()(23, 0) & CFG_SDCARD_VDD_VOLTAGE_WINDOW_);
                 if ((i_cmd_req_data.read()(23, 0) & CFG_SDCARD_VDD_VOLTAGE_WINDOW_) == 0) {
@@ -238,9 +237,9 @@ void vip_sdcard_ctrl::comb() {
                 v.delay_cnt = 20;
                 if (i_spi_mode.read() == 1) {
                     vb_resp_data32 = 0;
-                    vb_resp_data32[31] = r.powerup_done;
-                    vb_resp_data32[30] = r.ocr_hcs;
-                    vb_resp_data32(23, 0) = r.ocr_vdd_window;
+                    vb_resp_data32[31] = r.powerup_done.read();
+                    vb_resp_data32[30] = r.ocr_hcs.read();
+                    vb_resp_data32(23, 0) = r.ocr_vdd_window.read();
                 } else {
                     v.illegal_cmd = 1;
                 }
@@ -350,7 +349,7 @@ void vip_sdcard_ctrl::comb() {
             v.crc16_next = 1;
             if (r.bitcnt.read()(12, 3) == 512) {
                 v.datastate = DATASTATE_CRC15;
-                v.shiftdat = i_crc16;
+                v.shiftdat = i_crc16.read();
                 v.bitcnt = 0;
                 v.crc16_next = 0;
             } else {
@@ -375,31 +374,31 @@ void vip_sdcard_ctrl::comb() {
     v.cmd_req_ready = (!r.delay_cnt.read().or_reduce());
     if (r.cmd_resp_valid.read() == 1) {
         if (r.delay_cnt.read().or_reduce() == 0) {
-            v.cmd_resp_valid_delayed = r.cmd_resp_valid;
+            v.cmd_resp_valid_delayed = r.cmd_resp_valid.read();
             v.cmd_resp_valid = 0;
         } else {
             v.delay_cnt = (r.delay_cnt.read() - 1);
         }
     }
 
-    o_cmd_req_ready = r.cmd_req_ready;
-    o_cmd_resp_valid = r.cmd_resp_valid_delayed;
-    o_cmd_resp_data32 = r.cmd_resp_data32;
-    o_cmd_resp_r1b = r.cmd_resp_r1b;
-    o_cmd_resp_r2 = r.cmd_resp_r2;
-    o_cmd_resp_r3 = r.cmd_resp_r3;
-    o_cmd_resp_r7 = r.cmd_resp_r7;
-    o_stat_illegal_cmd = r.illegal_cmd;
-    o_stat_idle_state = r.powerup_done;
-    o_mem_addr = r.req_mem_addr;
-    o_crc16_clear = r.crc16_clear;
-    o_crc16_next = r.crc16_next;
-    o_dat_trans = r.dat_trans;
+    o_cmd_req_ready = r.cmd_req_ready.read();
+    o_cmd_resp_valid = r.cmd_resp_valid_delayed.read();
+    o_cmd_resp_data32 = r.cmd_resp_data32.read();
+    o_cmd_resp_r1b = r.cmd_resp_r1b.read();
+    o_cmd_resp_r2 = r.cmd_resp_r2.read();
+    o_cmd_resp_r3 = r.cmd_resp_r3.read();
+    o_cmd_resp_r7 = r.cmd_resp_r7.read();
+    o_stat_illegal_cmd = r.illegal_cmd.read();
+    o_stat_idle_state = r.powerup_done.read();
+    o_mem_addr = r.req_mem_addr.read();
+    o_crc16_clear = r.crc16_clear.read();
+    o_crc16_next = r.crc16_next.read();
+    o_dat_trans = r.dat_trans.read();
     o_dat = r.shiftdat.read()(15, 12);
 }
 
 void vip_sdcard_ctrl::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         vip_sdcard_ctrl_r_reset(r);
     } else {
         r = v;

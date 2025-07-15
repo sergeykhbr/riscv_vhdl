@@ -58,13 +58,13 @@ void vip_uart_transmitter::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vc
         sc_trace(o_vcd, i_wdata, i_wdata.name());
         sc_trace(o_vcd, o_full, o_full.name());
         sc_trace(o_vcd, o_tx, o_tx.name());
-        sc_trace(o_vcd, r.state, pn + ".r_state");
-        sc_trace(o_vcd, r.sample, pn + ".r_sample");
-        sc_trace(o_vcd, r.txdata_rdy, pn + ".r_txdata_rdy");
-        sc_trace(o_vcd, r.txdata, pn + ".r_txdata");
-        sc_trace(o_vcd, r.shiftreg, pn + ".r_shiftreg");
-        sc_trace(o_vcd, r.bitpos, pn + ".r_bitpos");
-        sc_trace(o_vcd, r.overflow, pn + ".r_overflow");
+        sc_trace(o_vcd, r.state, pn + ".r.state");
+        sc_trace(o_vcd, r.sample, pn + ".r.sample");
+        sc_trace(o_vcd, r.txdata_rdy, pn + ".r.txdata_rdy");
+        sc_trace(o_vcd, r.txdata, pn + ".r.txdata");
+        sc_trace(o_vcd, r.shiftreg, pn + ".r.shiftreg");
+        sc_trace(o_vcd, r.bitpos, pn + ".r.bitpos");
+        sc_trace(o_vcd, r.overflow, pn + ".r.overflow");
     }
 
 }
@@ -72,16 +72,15 @@ void vip_uart_transmitter::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vc
 void vip_uart_transmitter::comb() {
     bool v_next;
 
-    v_next = 0;
-
     v = r;
+    v_next = 0;
 
     if (i_we.read() == 1) {
         if (r.txdata_rdy.read() == 1) {
             v.overflow = 1;
         } else {
             v.txdata_rdy = 1;
-            v.txdata = i_wdata;
+            v.txdata = i_wdata.read();
         }
     }
 
@@ -124,16 +123,16 @@ void vip_uart_transmitter::comb() {
         }
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         vip_uart_transmitter_r_reset(v);
     }
 
-    o_full = r.txdata_rdy;
+    o_full = r.txdata_rdy.read();
     o_tx = r.shiftreg.read()[0];
 }
 
 void vip_uart_transmitter::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         vip_uart_transmitter_r_reset(r);
     } else {
         r = v;

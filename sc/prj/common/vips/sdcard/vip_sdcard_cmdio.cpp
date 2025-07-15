@@ -59,7 +59,8 @@ vip_sdcard_cmdio::vip_sdcard_cmdio(sc_module_name name,
     async_reset_ = async_reset;
     crccmd0 = 0;
 
-    crccmd0 = new vip_sdcard_crc7("crccmd0", async_reset);
+    crccmd0 = new vip_sdcard_crc7("crccmd0",
+                                   async_reset);
     crccmd0->i_clk(i_clk);
     crccmd0->i_nrst(i_nrst);
     crccmd0->i_clear(w_crc7_clear);
@@ -160,23 +161,23 @@ void vip_sdcard_cmdio::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_stat_erase_param, i_stat_erase_param.name());
         sc_trace(o_vcd, i_stat_out_of_range, i_stat_out_of_range.name());
         sc_trace(o_vcd, o_busy, o_busy.name());
-        sc_trace(o_vcd, r.clkcnt, pn + ".r_clkcnt");
-        sc_trace(o_vcd, r.cs, pn + ".r_cs");
-        sc_trace(o_vcd, r.spi_mode, pn + ".r_spi_mode");
-        sc_trace(o_vcd, r.cmdz, pn + ".r_cmdz");
-        sc_trace(o_vcd, r.cmd_dir, pn + ".r_cmd_dir");
-        sc_trace(o_vcd, r.cmd_rxshift, pn + ".r_cmd_rxshift");
-        sc_trace(o_vcd, r.cmd_txshift, pn + ".r_cmd_txshift");
-        sc_trace(o_vcd, r.cmd_state, pn + ".r_cmd_state");
-        sc_trace(o_vcd, r.cmd_req_crc_err, pn + ".r_cmd_req_crc_err");
-        sc_trace(o_vcd, r.bitcnt, pn + ".r_bitcnt");
-        sc_trace(o_vcd, r.txbit, pn + ".r_txbit");
-        sc_trace(o_vcd, r.crc_calc, pn + ".r_crc_calc");
-        sc_trace(o_vcd, r.crc_rx, pn + ".r_crc_rx");
-        sc_trace(o_vcd, r.cmd_req_valid, pn + ".r_cmd_req_valid");
-        sc_trace(o_vcd, r.cmd_req_cmd, pn + ".r_cmd_req_cmd");
-        sc_trace(o_vcd, r.cmd_req_data, pn + ".r_cmd_req_data");
-        sc_trace(o_vcd, r.cmd_resp_ready, pn + ".r_cmd_resp_ready");
+        sc_trace(o_vcd, r.clkcnt, pn + ".r.clkcnt");
+        sc_trace(o_vcd, r.cs, pn + ".r.cs");
+        sc_trace(o_vcd, r.spi_mode, pn + ".r.spi_mode");
+        sc_trace(o_vcd, r.cmdz, pn + ".r.cmdz");
+        sc_trace(o_vcd, r.cmd_dir, pn + ".r.cmd_dir");
+        sc_trace(o_vcd, r.cmd_rxshift, pn + ".r.cmd_rxshift");
+        sc_trace(o_vcd, r.cmd_txshift, pn + ".r.cmd_txshift");
+        sc_trace(o_vcd, r.cmd_state, pn + ".r.cmd_state");
+        sc_trace(o_vcd, r.cmd_req_crc_err, pn + ".r.cmd_req_crc_err");
+        sc_trace(o_vcd, r.bitcnt, pn + ".r.bitcnt");
+        sc_trace(o_vcd, r.txbit, pn + ".r.txbit");
+        sc_trace(o_vcd, r.crc_calc, pn + ".r.crc_calc");
+        sc_trace(o_vcd, r.crc_rx, pn + ".r.crc_rx");
+        sc_trace(o_vcd, r.cmd_req_valid, pn + ".r.cmd_req_valid");
+        sc_trace(o_vcd, r.cmd_req_cmd, pn + ".r.cmd_req_cmd");
+        sc_trace(o_vcd, r.cmd_req_data, pn + ".r.cmd_req_data");
+        sc_trace(o_vcd, r.cmd_resp_ready, pn + ".r.cmd_resp_ready");
     }
 
     if (crccmd0) {
@@ -191,16 +192,15 @@ void vip_sdcard_cmdio::comb() {
     bool v_crc7_in;
     bool v_busy;
 
+    v = r;
     vb_cmd_txshift = 0;
     v_crc7_clear = 0;
     v_crc7_next = 0;
     v_crc7_in = 0;
     v_busy = 1;
 
-    v = r;
-
     vb_cmd_txshift = ((r.cmd_txshift.read()(46, 0) << 1) | 1);
-    v_crc7_in = i_cmd;
+    v_crc7_in = i_cmd.read();
 
     if (i_cmd_req_ready.read() == 1) {
         v.cmd_req_valid = 0;
@@ -224,7 +224,7 @@ void vip_sdcard_cmdio::comb() {
         if ((r.spi_mode.read() && i_cs.read()) == 1) {
             // Do nothing
         } else if ((r.cmdz.read() == 1) && (i_cmd.read() == 0)) {
-            v.cs = i_cs;
+            v.cs = i_cs.read();
             v.cmd_state = CMDSTATE_REQ_TXBIT;
         }
         break;
@@ -232,7 +232,7 @@ void vip_sdcard_cmdio::comb() {
         v.cmd_state = CMDSTATE_REQ_CMD;
         v.bitcnt = 5;
         v_crc7_next = 1;
-        v.txbit = i_cmd;
+        v.txbit = i_cmd.read();
         break;
     case CMDSTATE_REQ_CMD:
         v_crc7_next = 1;
@@ -248,7 +248,7 @@ void vip_sdcard_cmdio::comb() {
         if (r.bitcnt.read().or_reduce() == 0) {
             v.cmd_state = CMDSTATE_REQ_CRC7;
             v.bitcnt = 6;
-            v.crc_calc = wb_crc7;
+            v.crc_calc = wb_crc7.read();
         } else {
             v.bitcnt = (r.bitcnt.read() - 1);
         }
@@ -293,33 +293,33 @@ void vip_sdcard_cmdio::comb() {
                 v.bitcnt = 39;
                 vb_cmd_txshift = 0;
                 vb_cmd_txshift(45, 40) = r.cmd_rxshift.read()(45, 40);
-                vb_cmd_txshift(39, 8) = i_cmd_resp_data32;
+                vb_cmd_txshift(39, 8) = i_cmd_resp_data32.read();
                 vb_cmd_txshift(7, 0) = 0xFF;
             } else {
                 // Default R1 response in SPI mode:
                 v.bitcnt = 7;
                 vb_cmd_txshift = ~0ull;
                 vb_cmd_txshift[47] = 0;
-                vb_cmd_txshift[46] = i_stat_err_parameter;
-                vb_cmd_txshift[45] = i_stat_err_address;
-                vb_cmd_txshift[44] = i_stat_err_erase_sequence;
-                vb_cmd_txshift[43] = r.cmd_req_crc_err;
-                vb_cmd_txshift[42] = i_stat_illegal_cmd;
-                vb_cmd_txshift[41] = i_stat_erase_reset;
-                vb_cmd_txshift[40] = i_stat_idle_state;
+                vb_cmd_txshift[46] = i_stat_err_parameter.read();
+                vb_cmd_txshift[45] = i_stat_err_address.read();
+                vb_cmd_txshift[44] = i_stat_err_erase_sequence.read();
+                vb_cmd_txshift[43] = r.cmd_req_crc_err.read();
+                vb_cmd_txshift[42] = i_stat_illegal_cmd.read();
+                vb_cmd_txshift[41] = i_stat_erase_reset.read();
+                vb_cmd_txshift[40] = i_stat_idle_state.read();
                 if (i_cmd_resp_r2.read() == 1) {
                     v.bitcnt = 15;
-                    vb_cmd_txshift[39] = i_stat_out_of_range;
-                    vb_cmd_txshift[38] = i_stat_erase_param;
-                    vb_cmd_txshift[37] = i_stat_wp_violation;
-                    vb_cmd_txshift[36] = i_stat_ecc_failed;
-                    vb_cmd_txshift[35] = i_stat_err_cc;
-                    vb_cmd_txshift[34] = i_stat_err;
-                    vb_cmd_txshift[33] = i_stat_wp_erase_skip;
-                    vb_cmd_txshift[32] = i_stat_locked;
+                    vb_cmd_txshift[39] = i_stat_out_of_range.read();
+                    vb_cmd_txshift[38] = i_stat_erase_param.read();
+                    vb_cmd_txshift[37] = i_stat_wp_violation.read();
+                    vb_cmd_txshift[36] = i_stat_ecc_failed.read();
+                    vb_cmd_txshift[35] = i_stat_err_cc.read();
+                    vb_cmd_txshift[34] = i_stat_err.read();
+                    vb_cmd_txshift[33] = i_stat_wp_erase_skip.read();
+                    vb_cmd_txshift[32] = i_stat_locked.read();
                 } else if ((i_cmd_resp_r3.read() == 1) || (i_cmd_resp_r7.read() == 1)) {
                     v.bitcnt = 39;
-                    vb_cmd_txshift(39, 8) = i_cmd_resp_data32;
+                    vb_cmd_txshift(39, 8) = i_cmd_resp_data32.read();
                 }
             }
         }
@@ -331,7 +331,7 @@ void vip_sdcard_cmdio::comb() {
                 v.bitcnt = 6;
                 v.cmd_state = CMDSTATE_RESP_CRC7;
                 vb_cmd_txshift(47, 40) = ((wb_crc7.read() << 1) | 1);
-                v.crc_calc = wb_crc7;
+                v.crc_calc = wb_crc7.read();
             } else {
                 v.cmd_state = CMDSTATE_RESP_STOPBIT;
             }
@@ -371,24 +371,24 @@ void vip_sdcard_cmdio::comb() {
         v.cmdz = r.cmd_txshift.read()[47];
     } else {
         // Input:
-        v.cmdz = i_cmd;
+        v.cmdz = i_cmd.read();
     }
 
     w_crc7_clear = v_crc7_clear;
     w_crc7_next = v_crc7_next;
     w_crc7_dat = v_crc7_in;
     o_cmd = r.cmd_txshift.read()[47];
-    o_cmd_dir = r.cmd_dir;
-    o_cmd_req_valid = r.cmd_req_valid;
-    o_cmd_req_cmd = r.cmd_req_cmd;
-    o_cmd_req_data = r.cmd_req_data;
-    o_cmd_resp_ready = r.cmd_resp_ready;
-    o_spi_mode = r.spi_mode;
+    o_cmd_dir = r.cmd_dir.read();
+    o_cmd_req_valid = r.cmd_req_valid.read();
+    o_cmd_req_cmd = r.cmd_req_cmd.read();
+    o_cmd_req_data = r.cmd_req_data.read();
+    o_cmd_resp_ready = r.cmd_resp_ready.read();
+    o_spi_mode = r.spi_mode.read();
     o_busy = v_busy;
 }
 
 void vip_sdcard_cmdio::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         vip_sdcard_cmdio_r_reset(r);
     } else {
         r = v;

@@ -83,17 +83,17 @@ void vip_spi_transmitter::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd
         sc_trace(o_vcd, i_resp_valid, i_resp_valid.name());
         sc_trace(o_vcd, i_resp_rdata, i_resp_rdata.name());
         sc_trace(o_vcd, o_resp_ready, o_resp_ready.name());
-        sc_trace(o_vcd, r.state, pn + ".r_state");
-        sc_trace(o_vcd, r.sclk, pn + ".r_sclk");
-        sc_trace(o_vcd, r.rxshift, pn + ".r_rxshift");
-        sc_trace(o_vcd, r.txshift, pn + ".r_txshift");
-        sc_trace(o_vcd, r.bitcnt, pn + ".r_bitcnt");
-        sc_trace(o_vcd, r.bytecnt, pn + ".r_bytecnt");
-        sc_trace(o_vcd, r.byterdy, pn + ".r_byterdy");
-        sc_trace(o_vcd, r.req_valid, pn + ".r_req_valid");
-        sc_trace(o_vcd, r.req_write, pn + ".r_req_write");
-        sc_trace(o_vcd, r.req_addr, pn + ".r_req_addr");
-        sc_trace(o_vcd, r.req_wdata, pn + ".r_req_wdata");
+        sc_trace(o_vcd, r.state, pn + ".r.state");
+        sc_trace(o_vcd, r.sclk, pn + ".r.sclk");
+        sc_trace(o_vcd, r.rxshift, pn + ".r.rxshift");
+        sc_trace(o_vcd, r.txshift, pn + ".r.txshift");
+        sc_trace(o_vcd, r.bitcnt, pn + ".r.bitcnt");
+        sc_trace(o_vcd, r.bytecnt, pn + ".r.bytecnt");
+        sc_trace(o_vcd, r.byterdy, pn + ".r.byterdy");
+        sc_trace(o_vcd, r.req_valid, pn + ".r.req_valid");
+        sc_trace(o_vcd, r.req_write, pn + ".r.req_write");
+        sc_trace(o_vcd, r.req_addr, pn + ".r.req_addr");
+        sc_trace(o_vcd, r.req_wdata, pn + ".r.req_wdata");
     }
 
 }
@@ -103,18 +103,17 @@ void vip_spi_transmitter::comb() {
     bool v_neg;
     bool v_resp_ready;
 
+    v = r;
     v_pos = 0;
     v_neg = 0;
     v_resp_ready = 0;
-
-    v = r;
 
     v.byterdy = 0;
     if ((r.req_valid.read() == 1) && (i_req_ready.read() == 1)) {
         v.req_valid = 0;
     }
 
-    v.sclk = i_sclk;
+    v.sclk = i_sclk.read();
     v_pos = ((!r.sclk.read()) && i_sclk.read());
     v_neg = (r.sclk.read() && (!i_sclk.read()));
 
@@ -132,7 +131,7 @@ void vip_spi_transmitter::comb() {
         v_resp_ready = 1;
         if (i_resp_valid.read() == 1) {
             // There's one negedge before CSn goes high:
-            v.txshift = i_resp_rdata;
+            v.txshift = i_resp_rdata.read();
         } else {
             v.txshift = ((r.txshift.read()(31, 0) << 1) | 1);
         }
@@ -155,7 +154,7 @@ void vip_spi_transmitter::comb() {
             if (r.bytecnt.read() == 3) {
                 v.bytecnt = 0;
                 v.state = state_data;
-                v.req_addr = r.rxshift;
+                v.req_addr = r.rxshift.read();
                 v.req_valid = (!r.req_write.read());
             }
             break;
@@ -164,8 +163,8 @@ void vip_spi_transmitter::comb() {
             if (r.bytecnt.read() == 3) {
                 v.bytecnt = 0;
                 v.state = state_cmd;
-                v.req_wdata = r.rxshift;
-                v.req_valid = r.req_write;
+                v.req_wdata = r.rxshift.read();
+                v.req_valid = r.req_write.read();
             }
             break;
         default:
@@ -174,20 +173,20 @@ void vip_spi_transmitter::comb() {
         }
     }
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         vip_spi_transmitter_r_reset(v);
     }
 
-    o_req_valid = r.req_valid;
-    o_req_write = r.req_write;
-    o_req_addr = r.req_addr;
-    o_req_wdata = r.req_wdata;
+    o_req_valid = r.req_valid.read();
+    o_req_write = r.req_write.read();
+    o_req_addr = r.req_addr.read();
+    o_req_wdata = r.req_wdata.read();
     o_resp_ready = v_resp_ready;
     o_miso = r.txshift.read()[31];
 }
 
 void vip_spi_transmitter::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
         vip_spi_transmitter_r_reset(r);
     } else {
         r = v;

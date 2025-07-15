@@ -16,7 +16,7 @@
 #pragma once
 
 #include <systemc.h>
-#include "../../../../rtl/techmap/bufg/iobuf_tech.h"
+#include "../../../../rtl/sim/io/iobuf_tech.h"
 #include "vip_sdcard_cmdio.h"
 #include "vip_sdcard_ctrl.h"
 
@@ -34,8 +34,6 @@ SC_MODULE(vip_sdcard_top) {
 
     void comb();
 
-    SC_HAS_PROCESS(vip_sdcard_top);
-
     vip_sdcard_top(sc_module_name name,
                    bool async_reset);
     virtual ~vip_sdcard_top();
@@ -46,9 +44,9 @@ SC_MODULE(vip_sdcard_top) {
     bool async_reset_;
 
     // Generic config parameters
-    static const int CFG_SDCARD_POWERUP_DONE_DELAY = 450;
-    static const bool CFG_SDCARD_HCS = 1;
-    static const uint8_t CFG_SDCARD_VHS = 0x1;
+    static const int CFG_SDCARD_POWERUP_DONE_DELAY = 450;   // Delay of busy bits in ACMD41 response
+    static const bool CFG_SDCARD_HCS = 1;                   // High Capacity Support
+    static const uint8_t CFG_SDCARD_VHS = 0x1;              // CMD8 Voltage supply mask
     static const bool CFG_SDCARD_PCIE_1_2V = 0;
     static const bool CFG_SDCARD_PCIE_AVAIL = 0;
     static const uint32_t CFG_SDCARD_VDD_VOLTAGE_WINDOW = 0xFF8000;

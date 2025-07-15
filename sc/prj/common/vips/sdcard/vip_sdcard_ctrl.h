@@ -50,8 +50,6 @@ SC_MODULE(vip_sdcard_ctrl) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(vip_sdcard_ctrl);
-
     vip_sdcard_ctrl(sc_module_name name,
                     bool async_reset,
                     int CFG_SDCARD_POWERUP_DONE_DELAY,
@@ -116,9 +114,9 @@ SC_MODULE(vip_sdcard_ctrl) {
         sc_signal<bool> crc16_clear;
         sc_signal<bool> crc16_next;
         sc_signal<bool> dat_trans;
-    } v, r;
+    };
 
-    void vip_sdcard_ctrl_r_reset(vip_sdcard_ctrl_registers &iv) {
+    void vip_sdcard_ctrl_r_reset(vip_sdcard_ctrl_registers& iv) {
         iv.sdstate = SDSTATE_IDLE;
         iv.datastate = DATASTATE_IDLE;
         iv.powerup_cnt = 0;
@@ -144,6 +142,9 @@ SC_MODULE(vip_sdcard_ctrl) {
         iv.crc16_next = 0;
         iv.dat_trans = 0;
     }
+
+    vip_sdcard_ctrl_registers v;
+    vip_sdcard_ctrl_registers r;
 
 };
 

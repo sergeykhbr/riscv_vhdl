@@ -1,0 +1,404 @@
+// 
+//  Copyright 2022 Sergey Khabarov, sergeykhbr@gmail.com
+// 
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+// 
+//      http://www.apache.org/licenses/LICENSE-2.0
+// 
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+// 
+#pragma once
+
+#include <systemc.h>
+#include "../ambalib/types_amba.h"
+#include "cdc_afifo.h"
+#include "api_core.h"
+
+namespace debugger {
+
+template<int abits_depth = 2,                               // Depth of the address channels AR/AW/B
+         int dbits_depth = 10>                              // Depth of the data channels R/W
+SC_MODULE(afifo_xmst) {
+ public:
+    sc_in<bool> i_xmst_nrst;                                // Input requests reset A
+    sc_in<bool> i_xmst_clk;                                 // Input requests clock A
+    sc_in<axi4_master_out_type> i_xmsto;                    // Input slave interface
+    sc_out<axi4_master_in_type> o_xmsti;                    // Response on input slave reuqest
+    sc_in<bool> i_xslv_nrst;                                // Output request reset B
+    sc_in<bool> i_xslv_clk;                                 // Output request clock B
+    sc_out<axi4_master_out_type> o_xslvi;                   // Output request to connected slave
+    sc_in<axi4_master_in_type> i_xslvo;                     // Response from the connected slave
+
+    void comb();
+
+    afifo_xmst(sc_module_name name);
+    virtual ~afifo_xmst();
+
+    void generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd);
+
+ private:
+    static const int AR_REQ_WIDTH = (CFG_SYSBUS_ADDR_BITS  // addr
+            + 8  // len
+            + 3  // size
+            + 2  // burst
+            + 1  // lock
+            + 4  // cache
+            + 3  // prot
+            + 4  // qos
+            + 4  // region
+            + CFG_SYSBUS_ID_BITS  // ar_id
+            + CFG_SYSBUS_USER_BITS  // ar_user
+    );
+    static const int AW_REQ_WIDTH = (CFG_SYSBUS_ADDR_BITS  // addr
+            + 8  // len
+            + 3  // size
+            + 2  // burst
+            + 1  // lock
+            + 4  // cache
+            + 3  // prot
+            + 4  // qos
+            + 4  // region
+            + CFG_SYSBUS_ID_BITS  // aw_id
+            + CFG_SYSBUS_USER_BITS  // aw_user
+    );
+    static const int W_REQ_WIDTH = (CFG_SYSBUS_DATA_BITS  // w_data
+            + 1  // w_last
+            + CFG_SYSBUS_DATA_BYTES  // w_strb
+            + CFG_SYSBUS_USER_BITS  // w_user
+    );
+    static const int R_RESP_WIDTH = (2  // r_resp
+            + CFG_SYSBUS_DATA_BITS  // r_data
+            + 1  // r_last
+            + CFG_SYSBUS_ID_BITS  // r_id
+            + CFG_SYSBUS_USER_BITS  // r_user
+    );
+    static const int B_RESP_WIDTH = (2  // b_resp
+            + CFG_SYSBUS_ID_BITS  // b_id
+            + CFG_SYSBUS_USER_BITS  // b_user
+    );
+
+    sc_signal<bool> w_req_ar_valid_i;
+    sc_signal<sc_biguint<AR_REQ_WIDTH>> wb_req_ar_payload_i;
+    sc_signal<bool> w_req_ar_wready_o;
+    sc_signal<bool> w_req_ar_rd_i;
+    sc_signal<sc_biguint<AR_REQ_WIDTH>> wb_req_ar_payload_o;
+    sc_signal<bool> w_req_ar_rvalid_o;
+    sc_signal<bool> w_req_aw_valid_i;
+    sc_signal<sc_biguint<AW_REQ_WIDTH>> wb_req_aw_payload_i;
+    sc_signal<bool> w_req_aw_wready_o;
+    sc_signal<bool> w_req_aw_rd_i;
+    sc_signal<sc_biguint<AW_REQ_WIDTH>> wb_req_aw_payload_o;
+    sc_signal<bool> w_req_aw_rvalid_o;
+    sc_signal<bool> w_req_w_valid_i;
+    sc_signal<sc_biguint<W_REQ_WIDTH>> wb_req_w_payload_i;
+    sc_signal<bool> w_req_w_wready_o;
+    sc_signal<bool> w_req_w_rd_i;
+    sc_signal<sc_biguint<W_REQ_WIDTH>> wb_req_w_payload_o;
+    sc_signal<bool> w_req_w_rvalid_o;
+    sc_signal<bool> w_resp_r_valid_i;
+    sc_signal<sc_biguint<R_RESP_WIDTH>> wb_resp_r_payload_i;
+    sc_signal<bool> w_resp_r_wready_o;
+    sc_signal<bool> w_resp_r_rd_i;
+    sc_signal<sc_biguint<R_RESP_WIDTH>> wb_resp_r_payload_o;
+    sc_signal<bool> w_resp_r_rvalid_o;
+    sc_signal<bool> w_resp_b_valid_i;
+    sc_signal<sc_biguint<B_RESP_WIDTH>> wb_resp_b_payload_i;
+    sc_signal<bool> w_resp_b_wready_o;
+    sc_signal<bool> w_resp_b_rd_i;
+    sc_signal<sc_biguint<B_RESP_WIDTH>> wb_resp_b_payload_o;
+    sc_signal<bool> w_resp_b_rvalid_o;
+
+    cdc_afifo<abits_depth, AR_REQ_WIDTH> *req_ar;
+    cdc_afifo<abits_depth, AW_REQ_WIDTH> *req_aw;
+    cdc_afifo<dbits_depth, W_REQ_WIDTH> *req_w;
+    cdc_afifo<dbits_depth, R_RESP_WIDTH> *resp_r;
+    cdc_afifo<abits_depth, B_RESP_WIDTH> *resp_b;
+
+};
+
+template<int abits_depth, int dbits_depth>
+afifo_xmst<abits_depth, dbits_depth>::afifo_xmst(sc_module_name name)
+    : sc_module(name),
+    i_xmst_nrst("i_xmst_nrst"),
+    i_xmst_clk("i_xmst_clk"),
+    i_xmsto("i_xmsto"),
+    o_xmsti("o_xmsti"),
+    i_xslv_nrst("i_xslv_nrst"),
+    i_xslv_clk("i_xslv_clk"),
+    o_xslvi("o_xslvi"),
+    i_xslvo("i_xslvo") {
+
+    req_ar = 0;
+    req_aw = 0;
+    req_w = 0;
+    resp_r = 0;
+    resp_b = 0;
+
+    req_ar = new cdc_afifo<abits_depth,
+                           AR_REQ_WIDTH>("req_ar");
+    req_ar->i_nrst(i_xslv_nrst);
+    req_ar->i_wclk(i_xslv_clk);
+    req_ar->i_wr(w_req_ar_valid_i);
+    req_ar->i_wdata(wb_req_ar_payload_i);
+    req_ar->o_wready(w_req_ar_wready_o);
+    req_ar->i_rclk(i_xmst_clk);
+    req_ar->i_rd(w_req_ar_rd_i);
+    req_ar->o_rdata(wb_req_ar_payload_o);
+    req_ar->o_rvalid(w_req_ar_rvalid_o);
+
+    req_aw = new cdc_afifo<abits_depth,
+                           AW_REQ_WIDTH>("req_aw");
+    req_aw->i_nrst(i_xslv_nrst);
+    req_aw->i_wclk(i_xslv_clk);
+    req_aw->i_wr(w_req_aw_valid_i);
+    req_aw->i_wdata(wb_req_aw_payload_i);
+    req_aw->o_wready(w_req_aw_wready_o);
+    req_aw->i_rclk(i_xmst_clk);
+    req_aw->i_rd(w_req_aw_rd_i);
+    req_aw->o_rdata(wb_req_aw_payload_o);
+    req_aw->o_rvalid(w_req_aw_rvalid_o);
+
+    req_w = new cdc_afifo<dbits_depth,
+                          W_REQ_WIDTH>("req_w");
+    req_w->i_nrst(i_xslv_nrst);
+    req_w->i_wclk(i_xslv_clk);
+    req_w->i_wr(w_req_w_valid_i);
+    req_w->i_wdata(wb_req_w_payload_i);
+    req_w->o_wready(w_req_w_wready_o);
+    req_w->i_rclk(i_xmst_clk);
+    req_w->i_rd(w_req_w_rd_i);
+    req_w->o_rdata(wb_req_w_payload_o);
+    req_w->o_rvalid(w_req_w_rvalid_o);
+
+    resp_r = new cdc_afifo<dbits_depth,
+                           R_RESP_WIDTH>("resp_r");
+    resp_r->i_nrst(i_xmst_nrst);
+    resp_r->i_wclk(i_xmst_clk);
+    resp_r->i_wr(w_resp_r_valid_i);
+    resp_r->i_wdata(wb_resp_r_payload_i);
+    resp_r->o_wready(w_resp_r_wready_o);
+    resp_r->i_rclk(i_xslv_clk);
+    resp_r->i_rd(w_resp_r_rd_i);
+    resp_r->o_rdata(wb_resp_r_payload_o);
+    resp_r->o_rvalid(w_resp_r_rvalid_o);
+
+    resp_b = new cdc_afifo<abits_depth,
+                           B_RESP_WIDTH>("resp_b");
+    resp_b->i_nrst(i_xmst_nrst);
+    resp_b->i_wclk(i_xmst_clk);
+    resp_b->i_wr(w_resp_b_valid_i);
+    resp_b->i_wdata(wb_resp_b_payload_i);
+    resp_b->o_wready(w_resp_b_wready_o);
+    resp_b->i_rclk(i_xslv_clk);
+    resp_b->i_rd(w_resp_b_rd_i);
+    resp_b->o_rdata(wb_resp_b_payload_o);
+    resp_b->o_rvalid(w_resp_b_rvalid_o);
+
+    SC_METHOD(comb);
+    sensitive << i_xmst_nrst;
+    sensitive << i_xmst_clk;
+    sensitive << i_xmsto;
+    sensitive << i_xslv_nrst;
+    sensitive << i_xslv_clk;
+    sensitive << i_xslvo;
+    sensitive << w_req_ar_valid_i;
+    sensitive << wb_req_ar_payload_i;
+    sensitive << w_req_ar_wready_o;
+    sensitive << w_req_ar_rd_i;
+    sensitive << wb_req_ar_payload_o;
+    sensitive << w_req_ar_rvalid_o;
+    sensitive << w_req_aw_valid_i;
+    sensitive << wb_req_aw_payload_i;
+    sensitive << w_req_aw_wready_o;
+    sensitive << w_req_aw_rd_i;
+    sensitive << wb_req_aw_payload_o;
+    sensitive << w_req_aw_rvalid_o;
+    sensitive << w_req_w_valid_i;
+    sensitive << wb_req_w_payload_i;
+    sensitive << w_req_w_wready_o;
+    sensitive << w_req_w_rd_i;
+    sensitive << wb_req_w_payload_o;
+    sensitive << w_req_w_rvalid_o;
+    sensitive << w_resp_r_valid_i;
+    sensitive << wb_resp_r_payload_i;
+    sensitive << w_resp_r_wready_o;
+    sensitive << w_resp_r_rd_i;
+    sensitive << wb_resp_r_payload_o;
+    sensitive << w_resp_r_rvalid_o;
+    sensitive << w_resp_b_valid_i;
+    sensitive << wb_resp_b_payload_i;
+    sensitive << w_resp_b_wready_o;
+    sensitive << w_resp_b_rd_i;
+    sensitive << wb_resp_b_payload_o;
+    sensitive << w_resp_b_rvalid_o;
+}
+
+template<int abits_depth, int dbits_depth>
+afifo_xmst<abits_depth, dbits_depth>::~afifo_xmst() {
+    if (req_ar) {
+        delete req_ar;
+    }
+    if (req_aw) {
+        delete req_aw;
+    }
+    if (req_w) {
+        delete req_w;
+    }
+    if (resp_r) {
+        delete resp_r;
+    }
+    if (resp_b) {
+        delete resp_b;
+    }
+}
+
+template<int abits_depth, int dbits_depth>
+void afifo_xmst<abits_depth, dbits_depth>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
+    if (o_vcd) {
+        sc_trace(o_vcd, i_xmst_nrst, i_xmst_nrst.name());
+        sc_trace(o_vcd, i_xmst_clk, i_xmst_clk.name());
+        sc_trace(o_vcd, i_xmsto, i_xmsto.name());
+        sc_trace(o_vcd, o_xmsti, o_xmsti.name());
+        sc_trace(o_vcd, i_xslv_nrst, i_xslv_nrst.name());
+        sc_trace(o_vcd, i_xslv_clk, i_xslv_clk.name());
+        sc_trace(o_vcd, o_xslvi, o_xslvi.name());
+        sc_trace(o_vcd, i_xslvo, i_xslvo.name());
+    }
+
+    if (req_ar) {
+        req_ar->generateVCD(i_vcd, o_vcd);
+    }
+    if (req_aw) {
+        req_aw->generateVCD(i_vcd, o_vcd);
+    }
+    if (req_w) {
+        req_w->generateVCD(i_vcd, o_vcd);
+    }
+    if (resp_r) {
+        resp_r->generateVCD(i_vcd, o_vcd);
+    }
+    if (resp_b) {
+        resp_b->generateVCD(i_vcd, o_vcd);
+    }
+}
+
+template<int abits_depth, int dbits_depth>
+void afifo_xmst<abits_depth, dbits_depth>::comb() {
+    axi4_master_in_type vb_xmsti;
+    axi4_master_out_type vb_xslvi;
+
+    // ar channel write side:
+    w_req_ar_valid_i = i_xmsto.read().ar_valid;
+    vb_xmsti.ar_ready = w_req_ar_wready_o.read();
+    wb_req_ar_payload_i = (i_xmsto.read().ar_bits.addr,
+            i_xmsto.read().ar_bits.len,
+            i_xmsto.read().ar_bits.size,
+            i_xmsto.read().ar_bits.burst,
+            i_xmsto.read().ar_bits.lock,
+            i_xmsto.read().ar_bits.cache,
+            i_xmsto.read().ar_bits.prot,
+            i_xmsto.read().ar_bits.qos,
+            i_xmsto.read().ar_bits.region,
+            i_xmsto.read().ar_id,
+            i_xmsto.read().ar_user);
+    // ar channel read side:
+    vb_xslvi.ar_valid = w_req_ar_rvalid_o.read();
+    w_req_ar_rd_i = i_xslvo.read().ar_ready;
+    vb_xslvi.ar_bits.addr = wb_req_ar_payload_o.read()(84, 37);
+    vb_xslvi.ar_bits.len = wb_req_ar_payload_o.read()(36, 29);
+    vb_xslvi.ar_bits.size = wb_req_ar_payload_o.read()(28, 26);
+    vb_xslvi.ar_bits.burst = wb_req_ar_payload_o.read()(25, 24);
+    vb_xslvi.ar_bits.lock = wb_req_ar_payload_o.read()[23];
+    vb_xslvi.ar_bits.cache = wb_req_ar_payload_o.read()(22, 19);
+    vb_xslvi.ar_bits.prot = wb_req_ar_payload_o.read()(18, 16);
+    vb_xslvi.ar_bits.qos = wb_req_ar_payload_o.read()(15, 12);
+    vb_xslvi.ar_bits.region = wb_req_ar_payload_o.read()(11, 8);
+    vb_xslvi.ar_id = wb_req_ar_payload_o.read()(7, 3);
+    vb_xslvi.ar_user = wb_req_ar_payload_o.read()(2, 0);
+
+    // aw channel write side:
+    w_req_aw_valid_i = i_xmsto.read().aw_valid;
+    vb_xmsti.aw_ready = w_req_aw_wready_o.read();
+    wb_req_aw_payload_i = (i_xmsto.read().aw_bits.addr,
+            i_xmsto.read().aw_bits.len,
+            i_xmsto.read().aw_bits.size,
+            i_xmsto.read().aw_bits.burst,
+            i_xmsto.read().aw_bits.lock,
+            i_xmsto.read().aw_bits.cache,
+            i_xmsto.read().aw_bits.prot,
+            i_xmsto.read().aw_bits.qos,
+            i_xmsto.read().aw_bits.region,
+            i_xmsto.read().aw_id,
+            i_xmsto.read().aw_user);
+    // aw channel read side:
+    vb_xslvi.aw_valid = w_req_aw_rvalid_o.read();
+    w_req_aw_rd_i = i_xslvo.read().aw_ready;
+    vb_xslvi.aw_bits.addr = wb_req_aw_payload_o.read()(84, 37);
+    vb_xslvi.aw_bits.len = wb_req_aw_payload_o.read()(36, 29);
+    vb_xslvi.aw_bits.size = wb_req_aw_payload_o.read()(28, 26);
+    vb_xslvi.aw_bits.burst = wb_req_aw_payload_o.read()(25, 24);
+    vb_xslvi.aw_bits.lock = wb_req_aw_payload_o.read()[23];
+    vb_xslvi.aw_bits.cache = wb_req_aw_payload_o.read()(22, 19);
+    vb_xslvi.aw_bits.prot = wb_req_aw_payload_o.read()(18, 16);
+    vb_xslvi.aw_bits.qos = wb_req_aw_payload_o.read()(15, 12);
+    vb_xslvi.aw_bits.region = wb_req_aw_payload_o.read()(11, 8);
+    vb_xslvi.aw_id = wb_req_aw_payload_o.read()(7, 3);
+    vb_xslvi.aw_user = wb_req_aw_payload_o.read()(2, 0);
+
+    // w channel write side:
+    w_req_w_valid_i = i_xmsto.read().w_valid;
+    vb_xmsti.w_ready = w_req_w_wready_o.read();
+    wb_req_w_payload_i = (i_xmsto.read().w_data,
+            i_xmsto.read().w_last,
+            i_xmsto.read().w_strb,
+            i_xmsto.read().w_user);
+    // w channel read side:
+    vb_xslvi.w_valid = w_req_w_rvalid_o.read();
+    w_req_w_rd_i = i_xslvo.read().w_ready;
+    vb_xslvi.w_data = wb_req_w_payload_o.read()(75, 12);
+    vb_xslvi.w_last = wb_req_w_payload_o.read()[11];
+    vb_xslvi.w_strb = wb_req_w_payload_o.read()(10, 3);
+    vb_xslvi.w_user = wb_req_w_payload_o.read()(2, 0);
+
+    // r channel write side:
+    w_resp_r_valid_i = i_xslvo.read().r_valid;
+    vb_xslvi.r_ready = w_resp_r_wready_o.read();
+    wb_resp_r_payload_i = (i_xslvo.read().r_resp,
+            i_xslvo.read().r_data,
+            i_xslvo.read().r_last,
+            i_xslvo.read().r_id,
+            i_xslvo.read().r_user);
+    // r channel read side:
+    vb_xmsti.r_valid = w_resp_r_rvalid_o.read();
+    w_resp_r_rd_i = i_xmsto.read().r_ready;
+    vb_xmsti.r_resp = wb_resp_r_payload_o.read()(74, 73);
+    vb_xmsti.r_data = wb_resp_r_payload_o.read()(72, 9);
+    vb_xmsti.r_last = wb_resp_r_payload_o.read()[8];
+    vb_xmsti.r_id = wb_resp_r_payload_o.read()(7, 3);
+    vb_xmsti.r_user = wb_resp_r_payload_o.read()(2, 0);
+
+    // b channel write side:
+    w_resp_b_valid_i = i_xslvo.read().b_valid;
+    vb_xslvi.b_ready = w_resp_b_wready_o.read();
+    wb_resp_b_payload_i = (i_xslvo.read().b_resp,
+            i_xslvo.read().b_id,
+            i_xslvo.read().b_user);
+    // b channel read side:
+    vb_xmsti.b_valid = w_resp_b_rvalid_o.read();
+    w_resp_b_rd_i = i_xmsto.read().b_ready;
+    vb_xmsti.b_resp = wb_resp_b_payload_o.read()(9, 8);
+    vb_xmsti.b_id = wb_resp_b_payload_o.read()(7, 3);
+    vb_xmsti.b_user = wb_resp_b_payload_o.read()(2, 0);
+
+    o_xmsti = vb_xmsti;
+    o_xslvi = vb_xslvi;
+}
+
+}  // namespace debugger
+

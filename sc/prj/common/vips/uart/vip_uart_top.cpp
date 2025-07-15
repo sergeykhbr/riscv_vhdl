@@ -36,31 +36,18 @@ vip_uart_top::vip_uart_top(sc_module_name name,
     baudrate_ = baudrate;
     scaler_ = scaler;
     logpath_ = logpath;
-    pll_period = (1.0 / ((2 * scaler_) * baudrate_));
+    pll_period = (1000000000.0 / ((2 * scaler_) * baudrate_));
     clk0 = 0;
     rx0 = 0;
     tx0 = 0;
 
-    // initial
-    char tstr[256];
-    RISCV_sprintf(tstr, sizeof(tstr), "%s_%1d.log",
-            logpath_.c_str(),
-            instnum_);
-    outfilename = std::string(tstr);
-    fl = fopen(outfilename.c_str(), "wb");
 
-    // Output string with each new symbol ended
-    RISCV_sprintf(tstr, sizeof(tstr), "%s_%1d.log.tmp",
-            logpath_.c_str(),
-            instnum_);
-    outfilename = std::string(tstr);
-    fl_tmp = fopen(outfilename.c_str(), "wb");
-    // end initial
-    clk0 = new vip_clk("clk0",
-                        pll_period);
+    clk0 = new pll_generic("clk0",
+                            pll_period);
     clk0->o_clk(w_clk);
 
-    rx0 = new vip_uart_receiver("rx0", async_reset,
+    rx0 = new vip_uart_receiver("rx0",
+                                 async_reset,
                                  scaler);
     rx0->i_nrst(i_nrst);
     rx0->i_clk(w_clk);
@@ -69,7 +56,8 @@ vip_uart_top::vip_uart_top(sc_module_name name,
     rx0->i_rdy_clr(w_rx_rdy_clr);
     rx0->o_data(wb_rdata);
 
-    tx0 = new vip_uart_transmitter("tx0", async_reset,
+    tx0 = new vip_uart_transmitter("tx0",
+                                    async_reset,
                                     scaler);
     tx0->i_nrst(i_nrst);
     tx0->i_clk(w_clk);
@@ -77,6 +65,8 @@ vip_uart_top::vip_uart_top(sc_module_name name,
     tx0->i_wdata(wb_rdata);
     tx0->o_full(w_tx_full);
     tx0->o_tx(o_tx);
+
+    SC_THREAD(init);
 
     SC_METHOD(comb);
     sensitive << i_nrst;
@@ -90,6 +80,10 @@ vip_uart_top::vip_uart_top(sc_module_name name,
     sensitive << wb_rdata;
     sensitive << wb_rdataz;
     sensitive << r.initdone;
+
+    SC_METHOD(fileout);
+    sensitive << i_nrst;
+    sensitive << w_clk.posedge_event();
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -114,7 +108,7 @@ void vip_uart_top::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd) {
         sc_trace(o_vcd, i_rx, i_rx.name());
         sc_trace(o_vcd, o_tx, o_tx.name());
         sc_trace(o_vcd, i_loopback_ena, i_loopback_ena.name());
-        sc_trace(o_vcd, r.initdone, pn + ".r_initdone");
+        sc_trace(o_vcd, r.initdone, pn + ".r.initdone");
     }
 
     if (clk0) {
@@ -141,6 +135,22 @@ std::string vip_uart_top::U8ToString(
     return ostr;
 }
 
+void vip_uart_top::init() {
+    char tstr[256];
+    RISCV_sprintf(tstr, sizeof(tstr), "%s_%1d.log",
+            logpath_.c_str(),
+            instnum_);
+    outfilename = std::string(tstr);
+    fl = fopen(outfilename.c_str(), "wb");
+
+    // Output string with each new symbol ended
+    RISCV_sprintf(tstr, sizeof(tstr), "%s_%1d.log.tmp",
+            logpath_.c_str(),
+            instnum_);
+    outfilename = std::string(tstr);
+    fl_tmp = fopen(outfilename.c_str(), "wb");
+}
+
 void vip_uart_top::comb() {
     v = r;
 
@@ -148,18 +158,12 @@ void vip_uart_top::comb() {
     w_rx_rdy_clr = (!w_tx_full.read());
     v.initdone = ((r.initdone.read()[0] << 1) | 1);
 
-    if (!async_reset_ && i_nrst.read() == 0) {
+    if ((!async_reset_) && (i_nrst.read() == 0)) {
         vip_uart_top_r_reset(v);
     }
 }
 
-void vip_uart_top::registers() {
-    if (async_reset_ && i_nrst.read() == 0) {
-        vip_uart_top_r_reset(r);
-    } else {
-        r = v;
-    }
-
+void vip_uart_top::fileout() {
     if (r.initdone.read()[1] == 0) {
         outstrtmp = "";
         outstrtmp = U8ToString(outstrtmp,
@@ -174,9 +178,9 @@ void vip_uart_top::registers() {
         }
         // Add symbol to string:
         outstr = U8ToString(outstr,
-                wb_rdata);
+                wb_rdata.read());
         outstrtmp = U8ToString(outstrtmp,
-                wb_rdata);
+                wb_rdata.read());
 
         if (wb_rdata.read() == 0x0A) {
             // Output simple string:
@@ -196,7 +200,15 @@ void vip_uart_top::registers() {
             outstrtmp = U8ToString(outstrtmp,
                     EOF_0x0D);
         }
-        wb_rdataz = wb_rdata;
+        wb_rdataz = wb_rdata.read();
+    }
+}
+
+void vip_uart_top::registers() {
+    if ((async_reset_ == 1) && (i_nrst.read() == 0)) {
+        vip_uart_top_r_reset(r);
+    } else {
+        r = v;
     }
 }
 

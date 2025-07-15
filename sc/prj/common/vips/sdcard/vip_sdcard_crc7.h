@@ -31,8 +31,6 @@ SC_MODULE(vip_sdcard_crc7) {
     void comb();
     void registers();
 
-    SC_HAS_PROCESS(vip_sdcard_crc7);
-
     vip_sdcard_crc7(sc_module_name name,
                     bool async_reset);
 
@@ -43,11 +41,14 @@ SC_MODULE(vip_sdcard_crc7) {
 
     struct vip_sdcard_crc7_registers {
         sc_signal<sc_uint<7>> crc7;
-    } v, r;
+    };
 
-    void vip_sdcard_crc7_r_reset(vip_sdcard_crc7_registers &iv) {
+    void vip_sdcard_crc7_r_reset(vip_sdcard_crc7_registers& iv) {
         iv.crc7 = 0;
     }
+
+    vip_sdcard_crc7_registers v;
+    vip_sdcard_crc7_registers r;
 
 };
 
