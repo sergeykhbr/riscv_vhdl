@@ -17,9 +17,9 @@
 `timescale 1ns/10ps
 
 module sfifo #(
-    parameter bit async_reset = 1'b0,
     parameter int dbits = 8,                                // Data width bits
-    parameter int log2_depth = 4                            // Fifo depth
+    parameter int log2_depth = 4,                           // Fifo depth
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -40,7 +40,8 @@ typedef struct {
     logic [(log2_depth + 1)-1:0] total_cnt;
 } sfifo_registers;
 
-sfifo_registers r, rin;
+sfifo_registers r;
+sfifo_registers rin;
 
 
 always_comb
@@ -49,15 +50,14 @@ begin: comb_proc
     logic v_full;
     logic v_empty;
 
-    v_full = 1'b0;
-    v_empty = 1'b0;
-
     for (int i = 0; i < DEPTH; i++) begin
         v.databuf[i] = r.databuf[i];
     end
     v.wr_cnt = r.wr_cnt;
     v.rd_cnt = r.rd_cnt;
     v.total_cnt = r.total_cnt;
+    v_full = 1'b0;
+    v_empty = 1'b0;
 
 
     // Check FIFO counter:
@@ -83,7 +83,7 @@ begin: comb_proc
         end
     end
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         for (int i = 0; i < DEPTH; i++) begin
             v.databuf[i] = '0;
         end
@@ -103,11 +103,10 @@ begin: comb_proc
     rin.total_cnt = v.total_cnt;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 for (int i = 0; i < DEPTH; i++) begin
                     r.databuf[i] <= '0;
@@ -123,21 +122,21 @@ generate
                 r.rd_cnt <= rin.rd_cnt;
                 r.total_cnt <= rin.total_cnt;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             for (int i = 0; i < DEPTH; i++) begin
                 r.databuf[i] <= rin.databuf[i];
             end
             r.wr_cnt <= rin.wr_cnt;
             r.rd_cnt <= rin.rd_cnt;
             r.total_cnt <= rin.total_cnt;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: sfifo

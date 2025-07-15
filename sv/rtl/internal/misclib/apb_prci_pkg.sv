@@ -19,25 +19,14 @@ import types_amba_pkg::*;
 import types_pnp_pkg::*;
 
 typedef struct {
-    logic sys_rst;
-    logic sys_nrst;
-    logic dbg_nrst;
-    logic sys_locked;
-    logic ddr_locked;
     logic resp_valid;
     logic [31:0] resp_rdata;
     logic resp_err;
-} apb_prci_rhegisters;
+} apb_prci_registers;
 
-const apb_prci_rhegisters apb_prci_rh_reset = '{
-    1'b0,                               // sys_rst
-    1'b0,                               // sys_nrst
-    1'b0,                               // dbg_nrst
-    1'b0,                               // sys_locked
-    1'b0,                               // ddr_locked
+const apb_prci_registers apb_prci_r_reset = '{
     1'b0,                               // resp_valid
     '0,                                 // resp_rdata
     1'b0                                // resp_err
 };
-
 endpackage: apb_prci_pkg

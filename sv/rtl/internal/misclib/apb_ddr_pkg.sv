@@ -41,5 +41,4 @@ const apb_ddr_registers apb_ddr_r_reset = '{
     '0,                                 // resp_rdata
     1'b0                                // resp_err
 };
-
 endpackage: apb_ddr_pkg

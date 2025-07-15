@@ -17,8 +17,8 @@
 `timescale 1ns/10ps
 
 module apb_spi #(
-    parameter bit async_reset = 1'b0,
-    parameter int log2_fifosz = 9
+    parameter int log2_fifosz = 9,
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -101,7 +101,6 @@ const apb_spi_registers apb_spi_r_reset = '{
     '0,                                 // resp_rdata
     1'b0                                // resp_err
 };
-
 logic w_req_valid;
 logic [31:0] wb_req_addr;
 logic w_req_write;
@@ -118,7 +117,8 @@ logic [7:0] wb_txfifo_wdata;
 logic w_txfifo_re;
 logic [7:0] wb_txfifo_rdata;
 logic [(log2_fifosz + 1)-1:0] wb_txfifo_count;
-apb_spi_registers r, rin;
+apb_spi_registers r;
+apb_spi_registers rin;
 
 apb_slv #(
     .async_reset(async_reset),
@@ -141,9 +141,9 @@ apb_slv #(
 );
 
 sfifo #(
-    .async_reset(async_reset),
     .dbits(fifo_dbits),
-    .log2_depth(log2_fifosz)
+    .log2_depth(log2_fifosz),
+    .async_reset(async_reset)
 ) rxfifo (
     .i_clk(i_clk),
     .i_nrst(i_nrst),
@@ -155,9 +155,9 @@ sfifo #(
 );
 
 sfifo #(
-    .async_reset(async_reset),
     .dbits(fifo_dbits),
-    .log2_depth(log2_fifosz)
+    .log2_depth(log2_fifosz),
+    .async_reset(async_reset)
 ) txfifo (
     .i_clk(i_clk),
     .i_nrst(i_nrst),
@@ -184,6 +184,7 @@ begin: comb_proc
     logic [31:0] vb_rdata;
     logic [7:0] vb_shiftreg_next;
 
+    v = r;
     v_posedge = 1'b0;
     v_negedge = 1'b0;
     v_txfifo_re = 1'b0;
@@ -196,8 +197,6 @@ begin: comb_proc
     vb_crc16 = '0;
     vb_rdata = '0;
     vb_shiftreg_next = '0;
-
-    v = r;
 
     // CRC7 = x^7 + x^3 + 1
     v_inv7 = (r.crc7[6] ^ r.shiftreg[7]);
@@ -470,7 +469,7 @@ begin: comb_proc
     v.resp_rdata = vb_rdata;
     v.resp_err = 1'b0;
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = apb_spi_r_reset;
     end
 
@@ -481,26 +480,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= apb_spi_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: apb_spi

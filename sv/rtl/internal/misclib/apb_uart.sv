@@ -17,8 +17,8 @@
 `timescale 1ns/10ps
 
 module apb_uart #(
-    parameter bit async_reset = 1'b0,
     parameter int log2_fifosz = 4,
+    parameter logic async_reset = 1'b0,
     parameter int sim_speedup_rate = 0                      // simulation speed-up: 0=no speed up, 1=2x, 2=4x, etc
 )
 (
@@ -88,7 +88,8 @@ logic w_req_valid;
 logic [31:0] wb_req_addr;
 logic w_req_write;
 logic [31:0] wb_req_wdata;
-apb_uart_registers r, rin;
+apb_uart_registers r;
+apb_uart_registers rin;
 
 apb_slv #(
     .async_reset(async_reset),
@@ -128,22 +129,6 @@ begin: comb_proc
     logic v_negedge_flag;
     logic v_posedge_flag;
     logic par;
-
-    vb_rdata = '0;
-    vb_tx_wr_cnt_next = '0;
-    v_tx_fifo_full = 1'b0;
-    v_tx_fifo_empty = 1'b0;
-    vb_tx_fifo_rdata = '0;
-    v_tx_fifo_we = 1'b0;
-    vb_rx_wr_cnt_next = '0;
-    v_rx_fifo_full = 1'b0;
-    v_rx_fifo_empty = 1'b0;
-    vb_rx_fifo_rdata = '0;
-    v_rx_fifo_we = 1'b0;
-    v_rx_fifo_re = 1'b0;
-    v_negedge_flag = 1'b0;
-    v_posedge_flag = 1'b0;
-    par = 1'b0;
 
     v.scaler = r.scaler;
     v.scaler_cnt = r.scaler_cnt;
@@ -187,6 +172,21 @@ begin: comb_proc
     v.resp_valid = r.resp_valid;
     v.resp_rdata = r.resp_rdata;
     v.resp_err = r.resp_err;
+    vb_rdata = '0;
+    vb_tx_wr_cnt_next = '0;
+    v_tx_fifo_full = 1'b0;
+    v_tx_fifo_empty = 1'b0;
+    vb_tx_fifo_rdata = '0;
+    v_tx_fifo_we = 1'b0;
+    vb_rx_wr_cnt_next = '0;
+    v_rx_fifo_full = 1'b0;
+    v_rx_fifo_empty = 1'b0;
+    vb_rx_fifo_rdata = '0;
+    v_rx_fifo_we = 1'b0;
+    v_rx_fifo_re = 1'b0;
+    v_negedge_flag = 1'b0;
+    v_posedge_flag = 1'b0;
+    par = 1'b0;
 
     vb_rx_fifo_rdata = r.rx_fifo[int'(r.rx_rd_cnt)];
     vb_tx_fifo_rdata = r.tx_fifo[int'(r.tx_rd_cnt)];
@@ -462,7 +462,7 @@ begin: comb_proc
     v.resp_rdata = vb_rdata;
     v.resp_err = 1'b0;
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v.scaler = '0;
         v.scaler_cnt = '0;
         v.level = 1'b1;
@@ -554,11 +554,10 @@ begin: comb_proc
     rin.resp_err = v.resp_err;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r.scaler <= '0;
                 r.scaler_cnt <= '0;
@@ -646,12 +645,12 @@ generate
                 r.resp_rdata <= rin.resp_rdata;
                 r.resp_err <= rin.resp_err;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r.scaler <= rin.scaler;
             r.scaler_cnt <= rin.scaler_cnt;
             r.level <= rin.level;
@@ -694,9 +693,9 @@ generate
             r.resp_valid <= rin.resp_valid;
             r.resp_rdata <= rin.resp_rdata;
             r.resp_err <= rin.resp_err;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: apb_uart

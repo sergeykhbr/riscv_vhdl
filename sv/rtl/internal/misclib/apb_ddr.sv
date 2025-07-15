@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module apb_ddr #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // APB clock
@@ -42,7 +42,8 @@ logic w_req_valid;
 logic [31:0] wb_req_addr;
 logic w_req_write;
 logic [31:0] wb_req_wdata;
-apb_ddr_registers r, rin;
+apb_ddr_registers r;
+apb_ddr_registers rin;
 
 apb_slv #(
     .async_reset(async_reset),
@@ -69,9 +70,8 @@ begin: comb_proc
     apb_ddr_registers v;
     logic [31:0] vb_rdata;
 
-    vb_rdata = '0;
-
     v = r;
+    vb_rdata = '0;
 
     v.pll_locked = i_pll_locked;
     v.init_calib_done = i_init_calib_done;
@@ -102,33 +102,32 @@ begin: comb_proc
     v.resp_valid = w_req_valid;
     v.resp_rdata = vb_rdata;
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = apb_ddr_r_reset;
     end
 
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= apb_ddr_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: apb_ddr

@@ -17,8 +17,8 @@
 `timescale 1ns/10ps
 
 module apb_pnp #(
-    parameter bit async_reset = 1'b0,
     parameter int cfg_slots = 1,
+    parameter logic async_reset = 1'b0,
     parameter logic [31:0] hwid = 32'h20221123,
     parameter int cpu_max = 1,
     parameter int l2cache_ena = 1,
@@ -76,12 +76,12 @@ const apb_pnp_registers apb_pnp_r_reset = '{
     '0,                                 // resp_rdata
     1'b0                                // resp_err
 };
-
 logic w_req_valid;
 logic [31:0] wb_req_addr;
 logic w_req_write;
 logic [31:0] wb_req_wdata;
-apb_pnp_registers r, rin;
+apb_pnp_registers r;
+apb_pnp_registers rin;
 
 apb_slv #(
     .async_reset(async_reset),
@@ -109,12 +109,11 @@ begin: comb_proc
     logic [31:0] cfgmap[0: (8 * cfg_slots)-1];
     logic [31:0] vrdata;
 
+    v = r;
     for (int i = 0; i < (8 * cfg_slots); i++) begin
         cfgmap[i] = '0;
     end
     vrdata = '0;
-
-    v = r;
 
     v.irq = 1'b0;
 
@@ -209,7 +208,7 @@ begin: comb_proc
         vrdata = cfgmap[(int'(wb_req_addr[11: 2]) - 16)];
     end
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = apb_pnp_r_reset;
     end
 
@@ -221,26 +220,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= apb_pnp_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: apb_pnp

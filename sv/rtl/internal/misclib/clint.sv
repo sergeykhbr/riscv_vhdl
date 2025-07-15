@@ -17,8 +17,8 @@
 `timescale 1ns/10ps
 
 module clint #(
-    parameter bit async_reset = 1'b0,
-    parameter int cpu_total = 4
+    parameter int cpu_total = 4,
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -40,11 +40,11 @@ typedef struct {
     logic [63:0] mtimecmp;
 } clint_cpu_type;
 
-
 typedef struct {
     logic [63:0] mtime;
     clint_cpu_type hart[0: cpu_total - 1];
     logic [63:0] rdata;
+    logic resp_valid;
 } clint_registers;
 
 logic w_req_valid;
@@ -58,7 +58,8 @@ logic w_req_ready;
 logic w_resp_valid;
 logic [CFG_SYSBUS_DATA_BITS-1:0] wb_resp_rdata;
 logic wb_resp_err;
-clint_registers r, rin;
+clint_registers r;
+clint_registers rin;
 
 axi_slv #(
     .async_reset(async_reset),
@@ -92,11 +93,6 @@ begin: comb_proc
     logic [cpu_total-1:0] vb_mtip;
     int regidx;
 
-    vrdata = '0;
-    vb_msip = '0;
-    vb_mtip = '0;
-    regidx = 0;
-
     v.mtime = r.mtime;
     for (int i = 0; i < cpu_total; i++) begin
         v.hart[i].msip = r.hart[i].msip;
@@ -104,9 +100,15 @@ begin: comb_proc
         v.hart[i].mtimecmp = r.hart[i].mtimecmp;
     end
     v.rdata = r.rdata;
+    v.resp_valid = r.resp_valid;
+    vrdata = '0;
+    vb_msip = '0;
+    vb_mtip = '0;
+    regidx = 0;
 
     v.mtime = (r.mtime + 1);
     regidx = int'(wb_req_addr[13: 3]);
+    v.resp_valid = w_req_valid;
 
     for (int i = 0; i < cpu_total; i++) begin
         v.hart[i].mtip = 1'b0;
@@ -144,7 +146,7 @@ begin: comb_proc
     endcase
     v.rdata = vrdata;
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v.mtime = '0;
         for (int i = 0; i < cpu_total; i++) begin
             v.hart[i].msip = 1'b0;
@@ -152,6 +154,7 @@ begin: comb_proc
             v.hart[i].mtimecmp = 64'd0;
         end
         v.rdata = '0;
+        v.resp_valid = 1'b0;
     end
 
     for (int i = 0; i < cpu_total; i++) begin
@@ -160,7 +163,7 @@ begin: comb_proc
     end
 
     w_req_ready = 1'b1;
-    w_resp_valid = 1'b1;
+    w_resp_valid = r.resp_valid;
     wb_resp_rdata = r.rdata;
     wb_resp_err = 1'b0;
     o_msip = vb_msip;
@@ -174,13 +177,13 @@ begin: comb_proc
         rin.hart[i].mtimecmp = v.hart[i].mtimecmp;
     end
     rin.rdata = v.rdata;
+    rin.resp_valid = v.resp_valid;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r.mtime <= '0;
                 for (int i = 0; i < cpu_total; i++) begin
@@ -189,6 +192,7 @@ generate
                     r.hart[i].mtimecmp <= 64'd0;
                 end
                 r.rdata <= '0;
+                r.resp_valid <= 1'b0;
             end else begin
                 r.mtime <= rin.mtime;
                 for (int i = 0; i < cpu_total; i++) begin
@@ -197,13 +201,14 @@ generate
                     r.hart[i].mtimecmp <= rin.hart[i].mtimecmp;
                 end
                 r.rdata <= rin.rdata;
+                r.resp_valid <= rin.resp_valid;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r.mtime <= rin.mtime;
             for (int i = 0; i < cpu_total; i++) begin
                 r.hart[i].msip <= rin.hart[i].msip;
@@ -211,9 +216,10 @@ generate
                 r.hart[i].mtimecmp <= rin.hart[i].mtimecmp;
             end
             r.rdata <= rin.rdata;
-        end: rg_proc
+            r.resp_valid <= rin.resp_valid;
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: clint

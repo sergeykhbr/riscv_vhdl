@@ -17,8 +17,8 @@
 `timescale 1ns/10ps
 
 module axi_rom #(
-    parameter bit async_reset = 1'b0,
     parameter int abits = 17,
+    parameter logic async_reset = 1'b0,
     parameter filename = ""
 )
 (
@@ -81,11 +81,14 @@ rom_tech #(
 
 always_comb
 begin: comb_proc
-
     wb_req_addr_abits = wb_req_addr[(abits - 1): 0];
     w_req_ready = 1'b1;
-    w_resp_valid = 1'b1;
     wb_resp_err = 1'b0;
 end: comb_proc
+
+
+always_ff @(posedge i_clk) begin: ff_proc
+    w_resp_valid <= w_req_valid;
+end: ff_proc
 
 endmodule: axi_rom
