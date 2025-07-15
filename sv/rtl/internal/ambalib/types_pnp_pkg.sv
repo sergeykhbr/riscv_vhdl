@@ -33,6 +33,8 @@ localparam bit [15:0] GNSSSENSOR_UART_TAP = 16'h050A;
 localparam bit [15:0] OPTIMITECH_JTAG_SBA = 16'h050B;
 // PCIE DMA engine
 localparam bit [15:0] OPTIMITECH_PCIE_DMA = 16'h050C;
+// HDMI DMA engine
+localparam bit [15:0] OPTIMITECH_HDMI_DMA = 16'h050D;
 
 // @name Slave Device IDs definition:
 // Empty slave slot device
@@ -131,7 +133,8 @@ localparam int SOC_PNP_SDCTRL_MEM = 15;
 localparam int SOC_PNP_I2C = 16;
 localparam int SOC_PNP_PCIE_DMA = 17;
 localparam int SOC_PNP_PCIE_APB = 18;
-localparam int SOC_PNP_TOTAL = 19;
+localparam int SOC_PNP_HDMI_DMA = 19;
+localparam int SOC_PNP_TOTAL = 20;
 
 typedef dev_config_type soc_pnp_vector[0:SOC_PNP_TOTAL - 1];
 

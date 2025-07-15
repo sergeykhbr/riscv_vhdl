@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module apb_slv #(
-    parameter bit async_reset = 1'b0,
+    parameter logic async_reset = 1'b0,
     parameter int unsigned vid = 0,                         // Vendor ID
     parameter int unsigned did = 0                          // Device ID
 )
@@ -41,7 +41,8 @@ import types_amba_pkg::*;
 import types_pnp_pkg::*;
 import apb_slv_pkg::*;
 
-apb_slv_registers r, rin;
+apb_slv_registers r;
+apb_slv_registers rin;
 
 
 always_comb
@@ -51,11 +52,10 @@ begin: comb_proc
     dev_config_type vcfg;
     apb_out_type vapbo;
 
+    v = r;
     vb_rdata = '0;
     vcfg = dev_config_none;
     vapbo = apb_out_none;
-
-    v = r;
 
     vcfg.descrsize = PNP_CFG_DEV_DESCR_BYTES;
     vcfg.descrtype = PNP_CFG_TYPE_SLAVE;
@@ -100,7 +100,7 @@ begin: comb_proc
     end
     endcase
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = apb_slv_r_reset;
     end
 
@@ -118,26 +118,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= apb_slv_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: apb_slv

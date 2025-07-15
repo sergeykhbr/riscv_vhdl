@@ -54,7 +54,7 @@ begin: comb_proc
     axi_slv_registers v;
     logic [11:0] vb_ar_addr_next;
     logic [11:0] vb_aw_addr_next;
-    logic [8:0] vb_ar_len_next;
+    logic [7:0] vb_ar_len_next;
     dev_config_type vcfg;
     axi4_slave_out_type vxslvo;
 
@@ -131,20 +131,23 @@ begin: comb_proc
     end
     if ((r.req_valid & i_req_ready) == 1'b1) begin
         v.req_valid = 1'b0;
+        v.requested = 1'b1;
+    end else if (i_resp_valid == 1'b1) begin
+        v.requested = 1'b0;
     end
 
     // Reading channel (write first):
     case (r.rstate)
     State_r_idle: begin
         v.ar_addr = (i_xslvi.ar_bits.addr - i_mapinfo.addr_start);
-        v.ar_len = ({1'b0, i_xslvi.ar_bits.len} + 9'd1);
+        v.ar_len = i_xslvi.ar_bits.len;
         v.ar_burst = i_xslvi.ar_bits.burst;
         v.ar_bytes = XSizeToBytes(i_xslvi.ar_bits.size);
         v.ar_last = (~(|i_xslvi.ar_bits.len));
         v.ar_id = i_xslvi.ar_id;
         v.ar_user = i_xslvi.ar_user;
         if ((r.ar_ready == 1'b1) && (i_xslvi.ar_valid == 1'b1)) begin
-            if ((i_xslvi.aw_valid == 1'b1) || ((|r.wstate) == 1'b1)) begin
+            if (((i_xslvi.aw_valid & r.aw_ready) == 1'b1) || ((|r.wstate) == 1'b1)) begin
                 v.rstate = State_r_wait_writing;
             end else begin
                 v.rstate = State_r_addr;
@@ -159,72 +162,114 @@ begin: comb_proc
         end
     end
     State_r_addr: begin
-        v.req_valid = i_xslvi.r_ready;
-        if ((r.req_valid == 1'b1) && (i_req_ready == 1'b1)) begin
-            if (r.ar_len > 9'h001) begin
+        if (i_req_ready == 1'b1) begin
+            v.resp_last = r.req_last;
+            if (r.req_last == 1'b1) begin
+                v.rstate = State_r_resp_last;
+            end else begin
+                v.rstate = State_r_pipe;
                 v.ar_len = (r.ar_len - 1);
                 v.req_addr = {r.req_addr[(CFG_SYSBUS_ADDR_BITS - 1): 12], vb_ar_addr_next};
-                v.req_last = (~(|vb_ar_len_next[8: 1]));
-                v.rstate = State_r_data;
-            end else begin
-                v.req_valid = 1'b0;
-                v.ar_len = 9'd0;
-                v.ar_last = 1'b1;
-                v.rstate = State_r_last;
+                v.req_last = (~(|vb_ar_len_next));
+                v.req_valid = 1'b1;
             end
         end
     end
-    State_r_data: begin
-        v.req_valid = i_xslvi.r_ready;
-        if ((r.req_valid == 1'b1) && (i_req_ready == 1'b1)) begin
-            if (r.ar_len > 9'h001) begin
-                v.ar_len = vb_ar_len_next;
+    State_r_pipe: begin
+        //   r_ready  | resp_valid | req_ready |
+        //      0     |     0      |     0     | do nothing
+        //      0     |     0      |     1     | --- cannot be second ack without resp --
+        //      0     |     1      |     0     | r_wait_accept
+        //      0     |     1      |     1     | r_wait_accept (-> bufferred)
+        //      1     |     0      |     0     | do nothing
+        //      1     |     0      |     1     | --- cannot be second ack without resp --
+        //      1     |     1      |     0     | r_addr
+        //      1     |     1      |     1     | stay here, latch new data
+        if (i_resp_valid == 1'b1) begin
+            v.r_valid = 1'b1;
+            v.r_last = 1'b0;
+            v.r_data = i_resp_rdata;
+            v.r_err = i_resp_err;
+            if ((i_xslvi.r_ready == 1'b1) && (i_req_ready == 1'b0)) begin
+                v.rstate = State_r_addr;
+            end else if (i_xslvi.r_ready == 1'b0) begin
+                v.rstate = State_r_wait_accept;
+            end
+        end
+        if (i_req_ready == 1'b1) begin
+            v.resp_last = r.req_last;
+            if (r.req_last == 1'b1) begin
+                v.rstate = State_r_resp_last;
+            end else if (i_xslvi.r_ready == 1'b0) begin
+                // Goto r_wait_accept without new request
+            end else begin
+                v.ar_len = (r.ar_len - 1);
                 v.req_addr = {r.req_addr[(CFG_SYSBUS_ADDR_BITS - 1): 12], vb_ar_addr_next};
-                v.req_last = (~(|vb_ar_len_next[8: 1]));
-            end else begin
-                v.ar_len = 9'd0;
-                v.req_last = 1'b1;
-            end
-        end
-        if ((r.req_valid & r.req_last & i_req_ready) == 1'b1) begin
-            v.rstate = State_r_last;
-            v.req_valid = 1'b0;
-        end
-        if (i_resp_valid == 1'b1) begin
-            if ((r.r_valid == 1'b1) && (i_xslvi.r_ready == 1'b0)) begin
-                // We already requested the last value but previous was not accepted yet
-                v.r_data_buf = i_resp_rdata;
-                v.r_err_buf = i_resp_err;
-                v.r_last_buf = (r.req_valid & r.req_last & i_req_ready);
-                v.rstate = State_r_buf;
-            end else begin
-                v.r_valid = 1'b1;
-                v.r_last = 1'b0;
-                v.r_data = i_resp_rdata;
-                v.r_err = i_resp_err;
+                v.req_last = (~(|vb_ar_len_next));
+                v.req_valid = 1'b1;
             end
         end
     end
-    State_r_last: begin
+    State_r_resp_last: begin
         if (i_resp_valid == 1'b1) begin
             if ((r.r_valid == 1'b1) && (i_xslvi.r_ready == 1'b0)) begin
-                // We already requested the last value but previous was not accepted yet
                 v.r_data_buf = i_resp_rdata;
                 v.r_err_buf = i_resp_err;
                 v.r_last_buf = 1'b1;
                 v.rstate = State_r_buf;
             end else begin
                 v.r_valid = 1'b1;
-                v.r_last = 1'b1;
                 v.r_data = i_resp_rdata;
                 v.r_err = i_resp_err;
+                v.r_last = 1'b1;
+                v.rstate = State_r_wait_accept;
             end
         end
-        if ((r.r_valid == 1'b1) && (r.r_last == 1'b1) && (i_xslvi.r_ready == 1'b1)) begin
-            v.ar_ready = 1'b1;
-            v.r_last = 1'b0;
-            v.r_valid = 1'b0;                               // We need it in a case of i_resp_valid is always HIGH
-            v.rstate = State_r_idle;
+    end
+    State_r_wait_accept: begin
+        if (i_xslvi.r_ready == 1'b1) begin
+            if (r.r_last == 1'b1) begin
+                v.rstate = State_r_idle;
+                v.r_last = 1'b0;
+            end else if (i_resp_valid == 1'b1) begin
+                v.r_valid = 1'b1;
+                v.r_data = i_resp_rdata;
+                v.r_err = i_resp_err;
+                v.r_last = r.resp_last;
+            end else if ((r.req_valid == 1'b1) && (i_req_ready == 1'b0)) begin
+                // the last request still wasn't accepted since pipe stage
+                v.rstate = State_r_addr;
+            end else if ((r.req_valid == 1'b1) && (i_req_ready == 1'b1)) begin
+                if (r.req_last == 1'b1) begin
+                    v.rstate = State_r_resp_last;
+                end else begin
+                    v.rstate = State_r_pipe;
+                end
+            end else if (r.requested == 1'b1) begin
+                // The latest one was already requested and request was accepeted
+                // Just wait i_resp_valid here
+            end else begin
+                v.rstate = State_r_addr;
+                v.ar_len = (r.ar_len - 1);
+                v.req_addr = {r.req_addr[(CFG_SYSBUS_ADDR_BITS - 1): 12], vb_ar_addr_next};
+                v.req_last = (~(|vb_ar_len_next));
+                v.req_valid = 1'b1;
+            end
+        end else if ((r.r_valid == 1'b1) && (r.r_last == 1'b0) && (i_resp_valid == 1'b1)) begin
+            // We already requested the last value but previous was not accepted yet
+            v.r_data_buf = i_resp_rdata;
+            v.r_err_buf = i_resp_err;
+            v.r_last_buf = r.resp_last;
+            v.rstate = State_r_buf;
+        end else if ((r.r_last == 1'b0) && (i_resp_valid == 1'b1)) begin
+            // We recieve new data after some pause
+            v.r_data = i_resp_rdata;
+            v.r_err = i_resp_err;
+            v.r_last = r.resp_last;
+            v.r_valid = 1'b1;
+        end
+        if (i_req_ready == 1'b1) begin
+            v.resp_last = r.req_last;
         end
     end
     State_r_buf: begin
@@ -233,11 +278,7 @@ begin: comb_proc
             v.r_last = r.r_last_buf;
             v.r_data = r.r_data_buf;
             v.r_err = r.r_err_buf;
-            if (r.r_last_buf == 1'b1) begin
-                v.rstate = State_r_last;
-            end else begin
-                v.rstate = State_r_data;
-            end
+            v.rstate = State_r_wait_accept;
         end
     end
     State_r_wait_writing: begin
@@ -260,7 +301,6 @@ begin: comb_proc
     // Writing channel:
     case (r.wstate)
     State_w_idle: begin
-        v.w_ready = 1'b1;
         v.aw_addr = (i_xslvi.aw_bits.addr - i_mapinfo.addr_start);
         v.aw_burst = i_xslvi.aw_bits.burst;
         v.aw_bytes = XSizeToBytes(i_xslvi.aw_bits.size);
@@ -268,28 +308,11 @@ begin: comb_proc
         v.aw_id = i_xslvi.aw_id;
         v.aw_user = i_xslvi.aw_user;
         if ((r.aw_ready == 1'b1) && (i_xslvi.aw_valid == 1'b1)) begin
-            v.req_wdata = i_xslvi.w_data;
-            v.req_wstrb = i_xslvi.w_strb;
-            if ((r.w_ready == 1'b1) && (i_xslvi.w_valid == 1'b1)) begin
-                // AXI Light support:
-                v.wstate = State_w_pipe;
-                v.w_last = i_xslvi.w_last;
-                if ((|r.rstate) == 1'b1) begin
-                    // Postpone writing
-                    v.w_ready = 1'b0;
-                    v.wstate = State_w_wait_reading_light;
-                end else begin
-                    // Start writing now
-                    v.req_addr = (i_xslvi.aw_bits.addr - i_mapinfo.addr_start);
-                    v.req_bytes = XSizeToBytes(i_xslvi.aw_bits.size);
-                    v.req_last = i_xslvi.w_last;
-                    v.req_write = 1'b1;
-                    v.req_valid = 1'b1;
-                    v.w_ready = i_req_ready;
-                end
-            end else if ((|r.rstate) == 1'b1) begin
+            // Warning: Do not try to support AXI Light here!!
+            //     It is Devil that overcomplicates your inteconnect and stuck your system
+            //     when 2 masters (AXI and AXI Light) will try to write into the same slave.
+            if ((|r.rstate) == 1'b1) begin
                 v.wstate = State_w_wait_reading;
-                v.w_ready = 1'b0;
             end else begin
                 v.req_addr = (i_xslvi.aw_bits.addr - i_mapinfo.addr_start);
                 v.req_bytes = XSizeToBytes(i_xslvi.aw_bits.size);
@@ -316,6 +339,7 @@ begin: comb_proc
         if ((r.w_ready == 1'b1) && (i_xslvi.w_valid == 1'b1)) begin
             if (i_req_ready == 1'b0) begin
                 v.wstate = State_w_buf;
+                v.w_ready = 1'b0;
                 v.req_addr_buf = {r.req_addr[(CFG_SYSBUS_ADDR_BITS - 1): 12], vb_aw_addr_next};
                 v.req_wdata_buf = i_xslvi.w_data;
                 v.req_wstrb_buf = i_xslvi.w_strb;
@@ -329,7 +353,6 @@ begin: comb_proc
             end
         end
         if ((r.req_valid == 1'b1) && (r.req_last == 1'b1) && (i_req_ready == 1'b1)) begin
-            v.req_last = 1'b0;
             v.wstate = State_w_resp;
         end
         if ((i_resp_valid == 1'b1) && (i_xslvi.w_valid == 1'b0) && (r.req_valid == 1'b0)) begin
@@ -366,23 +389,11 @@ begin: comb_proc
             v.wstate = State_w_req;
         end
     end
-    State_w_wait_reading_light: begin
-        // Not ready to accept new data before writing the last one
-        if (((|r.rstate) == 1'b0) || ((r.r_valid & r.r_last & i_xslvi.r_ready) == 1'b1)) begin
-            v.req_valid = 1'b1;
-            v.req_write = 1'b1;
-            v.req_addr = r.aw_addr;
-            v.req_bytes = r.aw_bytes;
-            v.req_last = r.w_last;
-            v.wstate = State_w_pipe;
-        end
-    end
     State_b: begin
         if ((r.b_valid == 1'b1) && (i_xslvi.b_ready == 1'b1)) begin
             v.b_valid = 1'b0;
             v.b_err = 1'b0;
             v.aw_ready = 1'b1;
-            v.w_ready = 1'b1;                               // AXI light
             v.wstate = State_w_idle;
         end
     end

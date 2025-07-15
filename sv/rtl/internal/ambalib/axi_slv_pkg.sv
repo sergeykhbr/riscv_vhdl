@@ -18,27 +18,27 @@ package axi_slv_pkg;
 import types_amba_pkg::*;
 import types_pnp_pkg::*;
 
-localparam bit [4:0] State_r_idle = 5'd0;
-localparam bit [4:0] State_r_addr = 5'h01;
-localparam bit [4:0] State_r_data = 5'h02;
-localparam bit [4:0] State_r_last = 5'h04;
-localparam bit [4:0] State_r_buf = 5'h08;
-localparam bit [4:0] State_r_wait_writing = 5'h10;
-localparam bit [6:0] State_w_idle = 7'd0;
-localparam bit [6:0] State_w_wait_reading = 7'h01;
-localparam bit [6:0] State_w_wait_reading_light = 7'h02;
-localparam bit [6:0] State_w_req = 7'h04;
-localparam bit [6:0] State_w_pipe = 7'h08;
-localparam bit [6:0] State_w_buf = 7'h10;
-localparam bit [6:0] State_w_resp = 7'h20;
-localparam bit [6:0] State_b = 7'h40;
+localparam bit [5:0] State_r_idle = 6'd0;
+localparam bit [5:0] State_r_addr = 6'h01;
+localparam bit [5:0] State_r_pipe = 6'h02;
+localparam bit [5:0] State_r_resp_last = 6'h04;
+localparam bit [5:0] State_r_wait_accept = 6'h08;
+localparam bit [5:0] State_r_buf = 6'h10;
+localparam bit [5:0] State_r_wait_writing = 6'h20;
+localparam bit [5:0] State_w_idle = 6'd0;
+localparam bit [5:0] State_w_wait_reading = 6'h01;
+localparam bit [5:0] State_w_req = 6'h02;
+localparam bit [5:0] State_w_pipe = 6'h04;
+localparam bit [5:0] State_w_buf = 6'h08;
+localparam bit [5:0] State_w_resp = 6'h10;
+localparam bit [5:0] State_b = 6'h20;
 
 typedef struct {
-    logic [4:0] rstate;
-    logic [6:0] wstate;
+    logic [5:0] rstate;
+    logic [5:0] wstate;
     logic ar_ready;
     logic [CFG_SYSBUS_ADDR_BITS-1:0] ar_addr;
-    logic [8:0] ar_len;
+    logic [7:0] ar_len;
     logic [XSIZE_TOTAL-1:0] ar_bytes;
     logic [1:0] ar_burst;
     logic [CFG_SYSBUS_ID_BITS-1:0] ar_id;
@@ -72,6 +72,8 @@ typedef struct {
     logic req_last_buf;
     logic [CFG_SYSBUS_DATA_BITS-1:0] req_wdata_buf;
     logic [CFG_SYSBUS_DATA_BYTES-1:0] req_wstrb_buf;
+    logic requested;
+    logic resp_last;
 } axi_slv_registers;
 
 const axi_slv_registers axi_slv_r_reset = '{
@@ -112,6 +114,8 @@ const axi_slv_registers axi_slv_r_reset = '{
     '0,                                 // req_addr_buf
     1'b0,                               // req_last_buf
     '0,                                 // req_wdata_buf
-    '0                                  // req_wstrb_buf
+    '0,                                 // req_wstrb_buf
+    1'b0,                               // requested
+    1'b0                                // resp_last
 };
 endpackage: axi_slv_pkg

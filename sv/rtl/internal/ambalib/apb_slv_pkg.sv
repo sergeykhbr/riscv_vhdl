@@ -44,5 +44,4 @@ const apb_slv_registers apb_slv_r_reset = '{
     '0,                                 // resp_rdata
     1'b0                                // resp_err
 };
-
 endpackage: apb_slv_pkg

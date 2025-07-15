@@ -19,7 +19,7 @@ package types_amba_pkg;
 localparam int CFG_SYSBUS_ADDR_BITS = 48;
 localparam int CFG_LOG2_SYSBUS_DATA_BYTES = 3;
 localparam int CFG_SYSBUS_ID_BITS = 5;
-localparam int CFG_SYSBUS_USER_BITS = 1;
+localparam int CFG_SYSBUS_USER_BITS = 3;
 
 localparam int CFG_SYSBUS_DATA_BYTES = (2**CFG_LOG2_SYSBUS_DATA_BYTES);
 localparam int CFG_SYSBUS_DATA_BITS = (8 * CFG_SYSBUS_DATA_BYTES);
@@ -33,7 +33,10 @@ typedef struct {
 } mapinfo_type;
 
 // @brief Empty entry value for the map info table
-const mapinfo_type mapinfo_none = '{0, 0};
+const mapinfo_type mapinfo_none = '{
+    0,                                  // addr_start
+    0                                   // addr_end
+};
 
 // Burst length size decoder
 localparam int XSIZE_TOTAL = 8;
@@ -164,7 +167,17 @@ typedef struct {
     logic [3:0] region;
 } axi4_metadata_type;
 
-const axi4_metadata_type META_NONE = '{'0, '0, '0, AXI_BURST_INCR, 1'b0, '0, '0, '0, '0};
+const axi4_metadata_type META_NONE = '{
+    '0,                                 // addr
+    '0,                                 // len
+    '0,                                 // size
+    AXI_BURST_INCR,                     // burst
+    1'b0,                               // lock
+    '0,                                 // cache
+    '0,                                 // prot
+    '0,                                 // qos
+    '0                                  // region
+};
 
 
 typedef struct {
@@ -188,7 +201,23 @@ typedef struct {
 // @brief   Master device empty value.
 // @warning If the master is not connected to the vector begin vector value
 //          MUST BE initialized by this value.
-const axi4_master_out_type axi4_master_out_none = '{1'b0, META_NONE, '0, '0, 1'b0, '0, 1'b0, '0, '0, 1'b0, 1'b0, META_NONE, '0, '0, 1'b0};
+const axi4_master_out_type axi4_master_out_none = '{
+    1'b0,                               // aw_valid
+    META_NONE,                          // aw_bits
+    '0,                                 // aw_id
+    '0,                                 // aw_user
+    1'b0,                               // w_valid
+    '0,                                 // w_data
+    1'b0,                               // w_last
+    '0,                                 // w_strb
+    '0,                                 // w_user
+    1'b0,                               // b_ready
+    1'b0,                               // ar_valid
+    META_NONE,                          // ar_bits
+    '0,                                 // ar_id
+    '0,                                 // ar_user
+    1'b0                                // r_ready
+};
 
 // @brief Master device input signals.
 typedef struct {
@@ -207,7 +236,21 @@ typedef struct {
     logic [CFG_SYSBUS_USER_BITS-1:0] r_user;
 } axi4_master_in_type;
 
-const axi4_master_in_type axi4_master_in_none = '{1'b0, 1'b0, 1'b0, '0, '0, '0, 1'b0, 1'b0, '0, '0, 1'b0, '0, '0};
+const axi4_master_in_type axi4_master_in_none = '{
+    1'b0,                               // aw_ready
+    1'b0,                               // w_ready
+    1'b0,                               // b_valid
+    '0,                                 // b_resp
+    '0,                                 // b_id
+    '0,                                 // b_user
+    1'b0,                               // ar_ready
+    1'b0,                               // r_valid
+    '0,                                 // r_resp
+    '0,                                 // r_data
+    1'b0,                               // r_last
+    '0,                                 // r_id
+    '0                                  // r_user
+};
 
 
 typedef struct {
@@ -228,7 +271,23 @@ typedef struct {
     logic r_ready;
 } axi4_slave_in_type;
 
-const axi4_slave_in_type axi4_slave_in_none = '{1'b0, META_NONE, '0, '0, 1'b0, '0, 1'b0, '0, '0, 1'b0, 1'b0, META_NONE, '0, '0, 1'b0};
+const axi4_slave_in_type axi4_slave_in_none = '{
+    1'b0,                               // aw_valid
+    META_NONE,                          // aw_bits
+    '0,                                 // aw_id
+    '0,                                 // aw_user
+    1'b0,                               // w_valid
+    '0,                                 // w_data
+    1'b0,                               // w_last
+    '0,                                 // w_strb
+    '0,                                 // w_user
+    1'b0,                               // b_ready
+    1'b0,                               // ar_valid
+    META_NONE,                          // ar_bits
+    '0,                                 // ar_id
+    '0,                                 // ar_user
+    1'b0                                // r_ready
+};
 
 typedef struct {
     logic aw_ready;
@@ -246,7 +305,21 @@ typedef struct {
     logic [CFG_SYSBUS_USER_BITS-1:0] r_user;
 } axi4_slave_out_type;
 
-const axi4_slave_out_type axi4_slave_out_none = '{1'b0, 1'b0, 1'b0, '0, '0, '0, 1'b0, 1'b0, '0, '0, 1'b0, '0, '0};
+const axi4_slave_out_type axi4_slave_out_none = '{
+    1'b0,                               // aw_ready
+    1'b0,                               // w_ready
+    1'b0,                               // b_valid
+    '0,                                 // b_resp
+    '0,                                 // b_id
+    '0,                                 // b_user
+    1'b0,                               // ar_ready
+    1'b0,                               // r_valid
+    '0,                                 // r_resp
+    '0,                                 // r_data
+    1'b0,                               // r_last
+    '0,                                 // r_id
+    '0                                  // r_user
+};
 
 
 typedef struct {
@@ -259,7 +332,15 @@ typedef struct {
     logic [3:0] pstrb;
 } apb_in_type;
 
-const apb_in_type apb_in_none = '{'0, '0, 1'b0, 1'b0, 1'b0, '0, '0};
+const apb_in_type apb_in_none = '{
+    '0,                                 // paddr
+    '0,                                 // pprot
+    1'b0,                               // pselx
+    1'b0,                               // penable
+    1'b0,                               // pwrite
+    '0,                                 // pwdata
+    '0                                  // pstrb
+};
 
 typedef struct {
     logic pready;                                           // when 1 it breaks callback to functional model
@@ -267,6 +348,10 @@ typedef struct {
     logic pslverr;
 } apb_out_type;
 
-const apb_out_type apb_out_none = '{1'b0, '0, 1'b0};
+const apb_out_type apb_out_none = '{
+    1'b0,                               // pready
+    '0,                                 // prdata
+    1'b0                                // pslverr
+};
 
 endpackage: types_amba_pkg
