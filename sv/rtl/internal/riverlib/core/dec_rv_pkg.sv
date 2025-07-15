@@ -84,5 +84,4 @@ const DecoderRv_registers DecoderRv_r_reset = '{
     '0,                                 // imm
     1'b0                                // progbuf_ena
 };
-
 endpackage: dec_rv_pkg

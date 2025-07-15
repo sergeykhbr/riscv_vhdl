@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module jtagcdc #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,
@@ -39,7 +39,8 @@ module jtagcdc #(
 
 import jtagcdc_pkg::*;
 
-jtagcdc_registers r, rin;
+jtagcdc_registers r;
+jtagcdc_registers rin;
 
 
 always_comb
@@ -47,9 +48,8 @@ begin: comb_proc
     jtagcdc_registers v;
     logic [CDC_REG_WIDTH-1:0] vb_bus;
 
-    vb_bus = '0;
-
     v = r;
+    vb_bus = '0;
 
     vb_bus = {i_dmi_hardreset,
             i_dmi_req_addr,
@@ -75,7 +75,7 @@ begin: comb_proc
         v.req_accepted = 1'b0;
     end
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = jtagcdc_r_reset;
     end
 
@@ -88,26 +88,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= jtagcdc_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: jtagcdc

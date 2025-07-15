@@ -27,8 +27,6 @@ module BpPreDecoder(
 );
 
 import river_cfg_pkg::*;
-import bp_predec_pkg::*;
-
 logic [RISCV_ARCH-1:0] vb_npc;
 logic v_jal;                                                // JAL instruction
 logic v_branch;                                             // One of branch instructions (only negative offset)

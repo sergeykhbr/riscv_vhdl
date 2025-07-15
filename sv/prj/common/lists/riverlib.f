@@ -1,9 +1,6 @@
 ${RTL_HOME}/internal/riverlib/river_cfg_pkg.sv
 ${RTL_HOME}/internal/riverlib/types_river_pkg.sv
-${RTL_HOME}/internal/riverlib/river_top_pkg.sv
-${RTL_HOME}/internal/riverlib/river_amba_pkg.sv
 ${RTL_HOME}/internal/riverlib/l2cache/l2dummy_pkg.sv
-${RTL_HOME}/internal/riverlib/dummycpu_pkg.sv
 ${RTL_HOME}/internal/riverlib/workgroup_pkg.sv
 ${RTL_HOME}/internal/riverlib/core/regibank_pkg.sv
 ${RTL_HOME}/internal/riverlib/core/proc_pkg.sv
@@ -11,12 +8,10 @@ ${RTL_HOME}/internal/riverlib/core/mmu_pkg.sv
 ${RTL_HOME}/internal/riverlib/core/csr_pkg.sv
 ${RTL_HOME}/internal/riverlib/core/arith/alu_logic_pkg.sv
 ${RTL_HOME}/internal/riverlib/core/arith/int_mul_pkg.sv
-${RTL_HOME}/internal/riverlib/core/arith/divstage64_pkg.sv
 ${RTL_HOME}/internal/riverlib/core/arith/int_div_pkg.sv
 ${RTL_HOME}/internal/riverlib/core/arith/int_addsub_pkg.sv
 ${RTL_HOME}/internal/riverlib/core/arith/shift_pkg.sv
 ${RTL_HOME}/internal/riverlib/core/fpu_d/fdiv_d_pkg.sv
-${RTL_HOME}/internal/riverlib/core/fpu_d/divstage53_pkg.sv
 ${RTL_HOME}/internal/riverlib/core/fpu_d/fmul_d_pkg.sv
 ${RTL_HOME}/internal/riverlib/core/fpu_d/d2l_d_pkg.sv
 ${RTL_HOME}/internal/riverlib/core/fpu_d/idiv53_pkg.sv
@@ -29,7 +24,6 @@ ${RTL_HOME}/internal/riverlib/ic_axi4_to_l1_pkg.sv
 ${RTL_HOME}/internal/riverlib/core/dbg_port_pkg.sv
 ${RTL_HOME}/internal/riverlib/core/fetch_pkg.sv
 ${RTL_HOME}/internal/riverlib/core/bp_pkg.sv
-${RTL_HOME}/internal/riverlib/core/bp_predec_pkg.sv
 ${RTL_HOME}/internal/riverlib/core/bp_btb_pkg.sv
 ${RTL_HOME}/internal/riverlib/core/dec_rv_pkg.sv
 ${RTL_HOME}/internal/riverlib/core/dec_rvc_pkg.sv
@@ -96,11 +90,11 @@ ${RTL_HOME}/internal/riverlib/dmi/jtagtap.sv
 ${RTL_HOME}/internal/riverlib/dmi/jtagcdc.sv
 ${RTL_HOME}/internal/riverlib/dmi/dmidebug.sv
 ${RTL_HOME}/internal/riverlib/dmi/ic_dport.sv
+${RTL_HOME}/internal/riverlib/l1_dma_snoop.sv
 ${RTL_HOME}/internal/riverlib/l2cache/l2cache_lru_pkg.sv
 ${RTL_HOME}/internal/riverlib/l2cache/l2serdes_pkg.sv
 ${RTL_HOME}/internal/riverlib/l2cache/l2_amba_pkg.sv
 ${RTL_HOME}/internal/riverlib/l2cache/l2_dst_pkg.sv
-${RTL_HOME}/internal/riverlib/l2cache/l2_top_pkg.sv
 ${RTL_HOME}/internal/riverlib/l2cache/l2cache_lru.sv
 ${RTL_HOME}/internal/riverlib/l2cache/l2serdes.sv
 ${RTL_HOME}/internal/riverlib/l2cache/l2_amba.sv

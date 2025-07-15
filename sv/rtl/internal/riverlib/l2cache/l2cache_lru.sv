@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module L2CacheLru #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -73,16 +73,17 @@ logic line_hit_o;
 logic [CFG_CPU_ADDR_BITS-1:0] line_snoop_addr_i;
 logic line_snoop_ready_o;
 logic [L2TAG_FL_TOTAL-1:0] line_snoop_flags_o;
-L2CacheLru_registers r, rin;
+L2CacheLru_registers r;
+L2CacheLru_registers rin;
 
 TagMemNWay #(
-    .async_reset(async_reset),
     .abus(abus),
     .waybits(CFG_L2_LOG2_NWAYS),
     .ibits(CFG_L2_LOG2_LINES_PER_WAY),
     .lnbits(lnbits),
     .flbits(flbits),
-    .snoop(0)
+    .snoop(0),
+    .async_reset(async_reset)
 ) mem0 (
     .i_clk(i_clk),
     .i_nrst(i_nrst),
@@ -132,6 +133,7 @@ begin: comb_proc
     logic [L2_REQ_TYPE_BITS-1:0] vb_req_type;
     logic [CFG_CPU_ADDR_BITS-1:0] vb_addr_direct_next;
 
+    v = r;
     vb_cache_line_i_modified = '0;
     vb_line_rdata_o_modified = '0;
     vb_line_rdata_o_wstrb = '0;
@@ -157,8 +159,6 @@ begin: comb_proc
     v_ready_next = 1'b0;
     vb_req_type = '0;
     vb_addr_direct_next = '0;
-
-    v = r;
 
     vb_req_type = r.req_type;                               // systemc specific
     if (L2CACHE_LINE_BITS != L1CACHE_LINE_BITS) begin
@@ -476,7 +476,7 @@ begin: comb_proc
         end
     end
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = L2CacheLru_r_reset;
     end
 
@@ -507,26 +507,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= L2CacheLru_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: L2CacheLru

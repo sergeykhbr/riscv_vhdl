@@ -44,5 +44,4 @@ const jtagcdc_registers jtagcdc_r_reset = '{
     '0,                                 // req_data
     1'b0                                // req_hardreset
 };
-
 endpackage: jtagcdc_pkg

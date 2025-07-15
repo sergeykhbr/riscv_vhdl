@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module ic_csr_m2_s1 #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -57,12 +57,14 @@ module ic_csr_m2_s1 #(
 import river_cfg_pkg::*;
 import ic_csr_m2_s1_pkg::*;
 
-ic_csr_m2_s1_registers r, rin;
+ic_csr_m2_s1_registers r;
+ic_csr_m2_s1_registers rin;
 
 
 always_comb
 begin: comb_proc
     ic_csr_m2_s1_registers v;
+
     v = r;
 
     if ((r.acquired == 1'b0) && ((i_m0_req_valid || i_m1_req_valid) == 1'b1)) begin
@@ -108,33 +110,32 @@ begin: comb_proc
         o_m0_resp_exception = 1'b0;
     end
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = ic_csr_m2_s1_r_reset;
     end
 
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= ic_csr_m2_s1_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: ic_csr_m2_s1

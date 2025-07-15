@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module CacheTop #(
-    parameter bit async_reset = 1'b0,
+    parameter logic async_reset = 1'b0,
     parameter bit coherence_ena = 0
 )
 (
@@ -220,9 +220,9 @@ PMP #(
 );
 
 Queue #(
-    .async_reset(async_reset),
     .abits(2),
-    .dbits(QUEUE_WIDTH)
+    .dbits(QUEUE_WIDTH),
+    .async_reset(async_reset)
 ) queue0 (
     .i_clk(i_clk),
     .i_nrst(i_nrst),

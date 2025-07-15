@@ -101,5 +101,4 @@ const DCacheLru_registers DCacheLru_r_reset = '{
     1'b0,                               // snoop_restore_write_bus
     '0                                  // req_addr_restore
 };
-
 endpackage: dcache_lru_pkg

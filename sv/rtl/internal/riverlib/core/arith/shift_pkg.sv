@@ -24,5 +24,4 @@ typedef struct {
 const Shifter_registers Shifter_r_reset = '{
     '0                                  // res
 };
-
 endpackage: shift_pkg

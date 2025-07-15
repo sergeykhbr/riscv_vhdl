@@ -17,9 +17,9 @@
 `timescale 1ns/10ps
 
 module Queue #(
-    parameter bit async_reset = 1'b0,
     parameter int abits = 6,
-    parameter int dbits = 128
+    parameter int dbits = 128,
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -41,33 +41,33 @@ typedef struct {
 const Queue_registers Queue_r_reset = '{
     7'd0                                // wcnt
 };
-
 typedef struct {
     logic [dbits-1:0] mem[0: DEPTH - 1];
 } Queue_rxegisters;
 
-Queue_registers r, rin;
-Queue_rxegisters rx, rxin;
+Queue_registers r;
+Queue_registers rin;
+Queue_rxegisters rx;
+Queue_rxegisters rxin;
 
 
 always_comb
 begin: comb_proc
-    Queue_registers v;
     Queue_rxegisters vx;
+    Queue_registers v;
     logic nempty;
     logic [dbits-1:0] vb_data_o;
     logic full;
     logic show_full;
 
+    for (int i = 0; i < DEPTH; i++) begin
+        vx.mem[i] = rx.mem[i];
+    end
+    v = r;
     nempty = 1'b0;
     vb_data_o = '0;
     full = 1'b0;
     show_full = 1'b0;
-
-    v = r;
-    for (int i = 0; i < DEPTH; i++) begin
-        vx.mem[i] = rx.mem[i];
-    end
 
     if (r.wcnt == DEPTH) begin
         full = 1'b1;
@@ -109,7 +109,7 @@ begin: comb_proc
         nempty = 1'b1;
     end
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = Queue_r_reset;
     end
 
@@ -123,38 +123,31 @@ begin: comb_proc
     end
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= Queue_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-        always_ff @(posedge i_clk) begin: rxg_proc
-            for (int i = 0; i < DEPTH; i++) begin
-                rx.mem[i] <= rxin.mem[i];
-            end
-        end: rxg_proc
+    end: async_r_en
+    else begin: async_r_dis
 
-    end: async_rst_gen
-    else begin: no_rst_gen
-
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-        always_ff @(posedge i_clk) begin: rxg_proc
-            for (int i = 0; i < DEPTH; i++) begin
-                rx.mem[i] <= rxin.mem[i];
-            end
-        end: rxg_proc
-
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
+
+always_ff @(posedge i_clk) begin
+    for (int i = 0; i < DEPTH; i++) begin
+        rx.mem[i] <= rxin.mem[i];
+    end
+end
 
 endmodule: Queue

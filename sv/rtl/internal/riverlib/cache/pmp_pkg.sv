@@ -23,7 +23,6 @@ typedef struct {
     logic [CFG_PMP_FL_TOTAL-1:0] flags;
 } PmpTableItemType;
 
-
 typedef struct {
     PmpTableItemType tbl[0: CFG_PMP_TBL_SIZE - 1];
 } PMP_registers;

@@ -27,8 +27,6 @@ module divstage53(
     output logic o_muxind_rdy                               // seeking was successfull
 );
 
-import divstage53_pkg::*;
-
 logic [61:0] wb_thresh[0: 16 - 1];
 logic [60:0] wb_dif[0: 4 - 1];
 

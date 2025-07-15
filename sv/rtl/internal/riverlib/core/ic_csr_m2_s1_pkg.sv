@@ -26,5 +26,4 @@ const ic_csr_m2_s1_registers ic_csr_m2_s1_r_reset = '{
     1'b0,                               // midx
     1'b0                                // acquired
 };
-
 endpackage: ic_csr_m2_s1_pkg

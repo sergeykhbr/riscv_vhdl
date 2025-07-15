@@ -24,5 +24,4 @@ typedef struct {
 const IntAddSub_registers IntAddSub_r_reset = '{
     '0                                  // res
 };
-
 endpackage: int_addsub_pkg

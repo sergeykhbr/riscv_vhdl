@@ -23,7 +23,6 @@ typedef struct {
     logic exec;                                             // 0=predec; 1=exec (high priority)
 } BtbEntryType;
 
-
 typedef struct {
     BtbEntryType btb[0: CFG_BTB_SIZE - 1];
 } BpBTB_registers;

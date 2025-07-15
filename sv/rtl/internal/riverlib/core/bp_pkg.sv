@@ -26,5 +26,4 @@ typedef struct {
     logic [RISCV_ARCH-1:0] npc;
 } PreDecType;
 
-
 endpackage: bp_pkg

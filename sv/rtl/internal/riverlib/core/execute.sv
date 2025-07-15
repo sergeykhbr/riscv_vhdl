@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module InstrExecute #(
-    parameter bit async_reset = 1'b0,
+    parameter logic async_reset = 1'b0,
     parameter bit fpu_ena = 1
 )
 (
@@ -129,7 +129,8 @@ logic [RISCV_ARCH-1:0] wb_rdata2;
 logic [RISCV_ARCH-1:0] wb_shifter_a1;                       // Shifters operand 1
 logic [5:0] wb_shifter_a2;                                  // Shifters operand 2
 logic [CFG_REG_TAG_WIDTH-1:0] tag_expected[0: INTREGS_TOTAL - 1];
-InstrExecute_registers r, rin;
+InstrExecute_registers r;
+InstrExecute_registers rin;
 
 function logic [3:0] irq2idx(input logic [IRQ_TOTAL-1:0] irqbus);
 logic [3:0] ret;
@@ -313,6 +314,7 @@ begin: comb_proc
     logic [6:0] t_addsub_mode;
     logic [3:0] t_shifter_mode;
 
+    v = r;
     v_d_valid = 1'b0;
     v_csr_req_valid = 1'b0;
     v_csr_resp_ready = 1'b0;
@@ -361,21 +363,6 @@ begin: comb_proc
     v_dbg_mem_req_error = 1'b0;
     v_halted = 1'b0;
     v_idle = 1'b0;
-    mux.radr1 = '0;
-    mux.radr2 = '0;
-    mux.waddr = '0;
-    mux.imm = '0;
-    mux.pc = '0;
-    mux.instr = '0;
-    mux.memop_type = '0;
-    mux.memop_sign_ext = 1'b0;
-    mux.memop_size = '0;
-    mux.unsigned_op = 1'b0;
-    mux.rv32 = 1'b0;
-    mux.compressed = 1'b0;
-    mux.f64 = 1'b0;
-    mux.ivec = '0;
-    mux.isa_type = '0;
     vb_o_npc = '0;
     t_radr1 = 0;
     t_radr2 = 0;
@@ -385,8 +372,6 @@ begin: comb_proc
     t_alu_mode = '0;
     t_addsub_mode = '0;
     t_shifter_mode = '0;
-
-    v = r;
 
     v.valid = 1'b0;
     v.call = 1'b0;
@@ -1229,7 +1214,7 @@ begin: comb_proc
         v.memop_debug = 1'b0;
     end
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = InstrExecute_r_reset;
     end
 
@@ -1347,26 +1332,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= InstrExecute_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: InstrExecute

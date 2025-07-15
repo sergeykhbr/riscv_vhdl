@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module IntAddSub #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -31,7 +31,8 @@ module IntAddSub #(
 import river_cfg_pkg::*;
 import int_addsub_pkg::*;
 
-IntAddSub_registers r, rin;
+IntAddSub_registers r;
+IntAddSub_registers rin;
 
 
 always_comb
@@ -43,13 +44,12 @@ begin: comb_proc
     logic [RISCV_ARCH-1:0] vb_sub;
     logic [RISCV_ARCH-1:0] vb_res;
 
+    v = r;
     vb_rdata1 = '0;
     vb_rdata2 = '0;
     vb_add = '0;
     vb_sub = '0;
     vb_res = '0;
-
-    v = r;
 
     // To support 32-bits instruction transform 32-bits operands to 64 bits
     if (i_mode[0] == 1'b1) begin
@@ -125,7 +125,7 @@ begin: comb_proc
 
     v.res = vb_res;
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = IntAddSub_r_reset;
     end
 
@@ -134,26 +134,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= IntAddSub_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: IntAddSub

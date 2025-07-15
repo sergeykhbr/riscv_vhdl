@@ -93,5 +93,4 @@ const Mmu_registers Mmu_r_reset = '{
     '1,                                 // tlb_flush_cnt
     '0                                  // tlb_flush_adr
 };
-
 endpackage: mmu_pkg

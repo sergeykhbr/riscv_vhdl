@@ -84,5 +84,4 @@ const MemAccess_registers MemAccess_r_reset = '{
     '0,                                 // pc
     1'b0                                // valid
 };
-
 endpackage: memaccess_pkg

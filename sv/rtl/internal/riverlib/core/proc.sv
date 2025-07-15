@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module Processor #(
-    parameter bit async_reset = 1'b0,
+    parameter logic async_reset = 1'b0,
     parameter int unsigned hartid = 0,
     parameter bit fpu_ena = 1,
     parameter bit tracer_ena = 1

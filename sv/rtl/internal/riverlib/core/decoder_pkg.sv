@@ -47,7 +47,6 @@ typedef struct {
     logic progbuf_ena;
 } DecoderDataType;
 
-
 typedef struct {
     DecoderDataType d[0: FULL_DEC_DEPTH - 1];
 } InstrDecoder_registers;

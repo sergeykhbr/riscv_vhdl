@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module BranchPredictor #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock

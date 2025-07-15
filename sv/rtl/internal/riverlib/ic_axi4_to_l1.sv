@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module ic_axi4_to_l1 #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -35,7 +35,8 @@ import types_river_pkg::*;
 import river_cfg_pkg::*;
 import ic_axi4_to_l1_pkg::*;
 
-ic_axi4_to_l1_registers r, rin;
+ic_axi4_to_l1_registers r;
+ic_axi4_to_l1_registers rin;
 
 
 always_comb
@@ -51,6 +52,7 @@ begin: comb_proc
     logic [63:0] vb_resp_data;
     logic [CFG_SYSBUS_ADDR_BITS-1:0] t_req_addr;
 
+    v = r;
     vb_xmsti = axi4_master_in_none;
     vb_l1o = axi4_l1_out_none;
     idx = 2'd0;
@@ -60,8 +62,6 @@ begin: comb_proc
     vb_line_wstrb = '0;
     vb_resp_data = '0;
     t_req_addr = '0;
-
-    v = r;
 
     vb_xmsti = axi4_master_in_none;
     vb_l1o = axi4_l1_out_none;
@@ -223,26 +223,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= ic_axi4_to_l1_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: ic_axi4_to_l1

@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module DecoderRv #(
-    parameter bit async_reset = 1'b0,
+    parameter logic async_reset = 1'b0,
     parameter bit fpu_ena = 1
 )
 (
@@ -56,7 +56,8 @@ module DecoderRv #(
 import river_cfg_pkg::*;
 import dec_rv_pkg::*;
 
-DecoderRv_registers r, rin;
+DecoderRv_registers r;
+DecoderRv_registers rin;
 
 
 always_comb
@@ -83,6 +84,7 @@ begin: comb_proc
     logic v_f64;
     logic v_amo;
 
+    v = r;
     v_error = 1'b0;
     v_compressed = 1'b0;
     vb_instr = '0;
@@ -103,8 +105,6 @@ begin: comb_proc
     v_rv32 = 1'b0;
     v_f64 = 1'b0;
     v_amo = 1'b0;
-
-    v = r;
 
     vb_instr = i_f_instr;
 
@@ -989,7 +989,7 @@ begin: comb_proc
     v.imm = vb_imm;
     v.progbuf_ena = i_progbuf_ena;
 
-    if ((~async_reset && i_nrst == 1'b0) || (i_flush_pipeline == 1'b1)) begin
+    if (((~async_reset) && (i_nrst == 1'b0)) || (i_flush_pipeline == 1'b1)) begin
         v = DecoderRv_r_reset;
     end
 
@@ -1019,26 +1019,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= DecoderRv_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: DecoderRv

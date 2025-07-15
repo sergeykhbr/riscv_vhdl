@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module PMP #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -38,7 +38,8 @@ module PMP #(
 import river_cfg_pkg::*;
 import pmp_pkg::*;
 
-PMP_registers r, rin;
+PMP_registers r;
+PMP_registers rin;
 
 
 always_comb
@@ -51,18 +52,17 @@ begin: comb_proc
     logic [RISCV_ARCH-1:0] vb_end_addr;
     logic [CFG_PMP_FL_TOTAL-1:0] vb_flags;
 
+    for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) begin
+        v.tbl[i].start_addr = r.tbl[i].start_addr;
+        v.tbl[i].end_addr = r.tbl[i].end_addr;
+        v.tbl[i].flags = r.tbl[i].flags;
+    end
     v_r = 1'b0;
     v_w = 1'b0;
     v_x = 1'b0;
     vb_start_addr = '0;
     vb_end_addr = '0;
     vb_flags = '0;
-
-    for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) begin
-        v.tbl[i].start_addr = r.tbl[i].start_addr;
-        v.tbl[i].end_addr = r.tbl[i].end_addr;
-        v.tbl[i].flags = r.tbl[i].flags;
-    end
 
     // PMP is active for S,U modes or in M-mode when L-bit is set:
     v_r = (~i_ena);
@@ -103,7 +103,7 @@ begin: comb_proc
         v.tbl[int'(i_region)].flags = vb_flags;
     end
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) begin
             v.tbl[i].start_addr = 64'd0;
             v.tbl[i].end_addr = 64'd0;
@@ -122,11 +122,10 @@ begin: comb_proc
     end
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) begin
                     r.tbl[i].start_addr <= 64'd0;
@@ -140,20 +139,20 @@ generate
                     r.tbl[i].flags <= rin.tbl[i].flags;
                 end
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             for (int i = 0; i < CFG_PMP_TBL_SIZE; i++) begin
                 r.tbl[i].start_addr <= rin.tbl[i].start_addr;
                 r.tbl[i].end_addr <= rin.tbl[i].end_addr;
                 r.tbl[i].flags <= rin.tbl[i].flags;
             end
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: PMP

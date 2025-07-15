@@ -61,5 +61,4 @@ const DbgPort_registers DbgPort_r_reset = '{
     '0,                                 // progbuf_pc
     '0                                  // progbuf_instr
 };
-
 endpackage: dbg_port_pkg

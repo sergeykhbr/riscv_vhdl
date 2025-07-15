@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module DoubleMul #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -39,7 +39,8 @@ logic [105:0] wb_imul_result;
 logic [6:0] wb_imul_shift;
 logic w_imul_rdy;
 logic w_imul_overflow;
-DoubleMul_registers r, rin;
+DoubleMul_registers r;
+DoubleMul_registers rin;
 
 imul53 #(
     .async_reset(async_reset)
@@ -86,6 +87,7 @@ begin: comb_proc
     logic [10:0] vb_res_exp;
     logic [51:0] vb_res_mant;
 
+    v = r;
     vb_ena = '0;
     signA = 1'b0;
     signB = 1'b0;
@@ -113,8 +115,6 @@ begin: comb_proc
     v_res_sign = 1'b0;
     vb_res_exp = '0;
     vb_res_mant = '0;
-
-    v = r;
 
     vb_ena[0] = (i_ena && (~r.busy));
     vb_ena[1] = r.ena[0];
@@ -303,7 +303,7 @@ begin: comb_proc
         v.busy = 1'b0;
     end
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = DoubleMul_r_reset;
     end
 
@@ -316,26 +316,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= DoubleMul_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: DoubleMul

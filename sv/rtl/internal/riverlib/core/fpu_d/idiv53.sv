@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module idiv53 #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -42,7 +42,8 @@ logic [52:0] wb_dif_o;
 logic [7:0] wb_bits_o;
 logic [6:0] wb_muxind_o;
 logic w_muxind_rdy_o;
-idiv53_registers r, rin;
+idiv53_registers r;
+idiv53_registers rin;
 
 divstage53 divstage0 (
     .i_mux_ena(w_mux_ena_i),
@@ -63,12 +64,11 @@ begin: comb_proc
     logic [104:0] vb_bits;
     logic v_mux_ena_i;
 
+    v = r;
     v_ena = 1'b0;
     vb_muxind = '0;
     vb_bits = '0;
     v_mux_ena_i = 1'b0;
-
-    v = r;
 
     vb_bits = r.bits;
 
@@ -265,7 +265,7 @@ begin: comb_proc
     wb_muxind_i = vb_muxind;
     v.bits = vb_bits;
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = idiv53_r_reset;
     end
 
@@ -278,26 +278,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= idiv53_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: idiv53

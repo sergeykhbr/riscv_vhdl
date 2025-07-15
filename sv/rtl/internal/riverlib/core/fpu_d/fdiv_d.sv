@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module DoubleDiv #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -44,7 +44,8 @@ logic [6:0] wb_idiv_lshift;
 logic w_idiv_rdy;
 logic w_idiv_overflow;
 logic w_idiv_zeroresid;
-DoubleDiv_registers r, rin;
+DoubleDiv_registers r;
+DoubleDiv_registers rin;
 
 idiv53 #(
     .async_reset(async_reset)
@@ -92,6 +93,7 @@ begin: comb_proc
     logic mantZeroB;
     logic [63:0] res;
 
+    v = r;
     vb_ena = '0;
     signA = 1'b0;
     signB = 1'b0;
@@ -119,8 +121,6 @@ begin: comb_proc
     mantZeroA = 1'b0;
     mantZeroB = 1'b0;
     res = '0;
-
-    v = r;
 
     vb_ena[0] = (i_ena && (~r.busy));
     vb_ena[1] = r.ena[0];
@@ -312,7 +312,7 @@ begin: comb_proc
         v.busy = 1'b0;
     end
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = DoubleDiv_r_reset;
     end
 
@@ -327,26 +327,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= DoubleDiv_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: DoubleDiv

@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module IntMul #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -36,7 +36,8 @@ module IntMul #(
 import river_cfg_pkg::*;
 import int_mul_pkg::*;
 
-IntMul_registers r, rin;
+IntMul_registers r;
+IntMul_registers rin;
 
 
 always_comb
@@ -57,6 +58,25 @@ begin: comb_proc
     logic v_a2s_nzero;
     logic v_ena;
 
+    v.busy = r.busy;
+    v.ena = r.ena;
+    v.a1 = r.a1;
+    v.a2 = r.a2;
+    v.unsign = r.unsign;
+    v.high = r.high;
+    v.rv32 = r.rv32;
+    v.zero = r.zero;
+    v.inv = r.inv;
+    v.result = r.result;
+    v.a1_dbg = r.a1_dbg;
+    v.a2_dbg = r.a2_dbg;
+    v.reference_mul = r.reference_mul;
+    for (int i = 0; i < 16; i++) begin
+        v.lvl1[i] = r.lvl1[i];
+    end
+    for (int i = 0; i < 4; i++) begin
+        v.lvl3[i] = r.lvl3[i];
+    end
     vb_a1 = '0;
     vb_a2 = '0;
     wb_mux_lvl0 = '0;
@@ -77,26 +97,6 @@ begin: comb_proc
     v_a1s_nzero = 1'b0;
     v_a2s_nzero = 1'b0;
     v_ena = 1'b0;
-
-    v.busy = r.busy;
-    v.ena = r.ena;
-    v.a1 = r.a1;
-    v.a2 = r.a2;
-    v.unsign = r.unsign;
-    v.high = r.high;
-    v.rv32 = r.rv32;
-    v.zero = r.zero;
-    v.inv = r.inv;
-    v.result = r.result;
-    v.a1_dbg = r.a1_dbg;
-    v.a2_dbg = r.a2_dbg;
-    v.reference_mul = r.reference_mul;
-    for (int i = 0; i < 16; i++) begin
-        v.lvl1[i] = r.lvl1[i];
-    end
-    for (int i = 0; i < 4; i++) begin
-        v.lvl3[i] = r.lvl3[i];
-    end
 
 
     if ((|i_a1[62: 0]) == 1'b1) begin
@@ -230,7 +230,7 @@ begin: comb_proc
         wb_res = r.result[127: 64];
     end
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v.busy = 1'b0;
         v.ena = '0;
         v.a1 = '0;
@@ -276,11 +276,10 @@ begin: comb_proc
     end
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r.busy <= 1'b0;
                 r.ena <= '0;
@@ -322,12 +321,12 @@ generate
                     r.lvl3[i] <= rin.lvl3[i];
                 end
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r.busy <= rin.busy;
             r.ena <= rin.ena;
             r.a1 <= rin.a1;
@@ -347,9 +346,9 @@ generate
             for (int i = 0; i < 4; i++) begin
                 r.lvl3[i] <= rin.lvl3[i];
             end
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: IntMul

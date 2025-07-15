@@ -46,5 +46,4 @@ const InstrFetch_registers InstrFetch_r_reset = '{
     1'b0,                               // instr_page_fault_x
     1'b0                                // progbuf_ena
 };
-
 endpackage: fetch_pkg

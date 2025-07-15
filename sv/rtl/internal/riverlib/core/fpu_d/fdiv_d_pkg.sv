@@ -57,5 +57,4 @@ const DoubleDiv_registers DoubleDiv_r_reset = '{
     1'b0,                               // underflow
     1'b0                                // illegal_op
 };
-
 endpackage: fdiv_d_pkg

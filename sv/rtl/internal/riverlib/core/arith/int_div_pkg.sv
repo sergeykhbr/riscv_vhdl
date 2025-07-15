@@ -50,5 +50,4 @@ const IntDiv_registers IntDiv_r_reset = '{
     '0,                                 // a1_dbg
     '0                                  // a2_dbg
 };
-
 endpackage: int_div_pkg

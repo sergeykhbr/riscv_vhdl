@@ -57,5 +57,4 @@ const DoubleMul_registers DoubleMul_r_reset = '{
     1'b0,                               // overflow
     1'b0                                // illegal_op
 };
-
 endpackage: fmul_d_pkg

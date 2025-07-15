@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module IntDiv #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -41,7 +41,8 @@ logic [63:0] wb_resid0_o;
 logic [63:0] wb_resid1_o;
 logic [3:0] wb_bits0_o;
 logic [3:0] wb_bits1_o;
-IntDiv_registers r, rin;
+IntDiv_registers r;
+IntDiv_registers rin;
 
 divstage64 stage0 (
     .i_divident(r.divident_i),
@@ -71,6 +72,7 @@ begin: comb_proc
     logic v_ena;
     logic [119:0] t_divisor;
 
+    v = r;
     v_invert64 = 1'b0;
     v_invert32 = 1'b0;
     vb_a1 = '0;
@@ -81,8 +83,6 @@ begin: comb_proc
     v_a2_m1 = 1'b0;
     v_ena = 1'b0;
     t_divisor = '0;
-
-    v = r;
 
     if (i_rv32 == 1'b1) begin
         if ((i_unsigned == 1'b1) || (i_a1[31] == 1'b0)) begin
@@ -217,7 +217,7 @@ begin: comb_proc
     wb_divisor0_i = {r.divisor_i, 4'd0};
     wb_divisor1_i = {4'd0, r.divisor_i};
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = IntDiv_r_reset;
     end
 
@@ -227,26 +227,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= IntDiv_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: IntDiv

@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module imul53 #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -35,7 +35,8 @@ import imul53_pkg::*;
 
 logic [104:0] wb_sumInv;
 logic [6:0] wb_lshift;
-imul53_registers r, rin;
+imul53_registers r;
+imul53_registers rin;
 
 zeroenc #(
     .iwidth(105),
@@ -54,6 +55,7 @@ begin: comb_proc
     logic [6:0] vb_shift;
     logic [104:0] vb_sumInv;
 
+    v = r;
     v_ena = 1'b0;
     for (int i = 0; i < 17; i++) begin
         vb_mux[i] = '0;
@@ -61,8 +63,6 @@ begin: comb_proc
     vb_sel = '0;
     vb_shift = '0;
     vb_sumInv = '0;
-
-    v = r;
 
 
     vb_mux[0] = '0;
@@ -175,7 +175,7 @@ begin: comb_proc
         end
     end
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = imul53_r_reset;
     end
 
@@ -187,26 +187,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= imul53_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: imul53

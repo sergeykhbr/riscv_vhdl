@@ -23,8 +23,6 @@ module divstage64(
     output logic [3:0] o_bits                               // resulting bits
 );
 
-import divstage64_pkg::*;
-
 
 always_comb
 begin: comb_proc

@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module L2Top #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -32,8 +32,6 @@ module L2Top #(
 import types_amba_pkg::*;
 import types_river_pkg::*;
 import river_cfg_pkg::*;
-import l2_top_pkg::*;
-
 logic w_req_ready;
 logic w_req_valid;
 logic [L2_REQ_TYPE_BITS-1:0] wb_req_type;

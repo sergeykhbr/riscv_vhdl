@@ -43,5 +43,4 @@ const Double2Long_registers Double2Long_r_reset = '{
     1'b0,                               // overflow
     1'b0                                // underflow
 };
-
 endpackage: d2l_d_pkg

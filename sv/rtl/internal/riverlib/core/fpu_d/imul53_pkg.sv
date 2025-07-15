@@ -33,5 +33,4 @@ const imul53_registers imul53_r_reset = '{
     '0,                                 // sum
     1'b0                                // overflow
 };
-
 endpackage: imul53_pkg

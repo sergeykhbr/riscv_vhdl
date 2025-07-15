@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module L2SerDes #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -33,7 +33,8 @@ import types_river_pkg::*;
 import river_cfg_pkg::*;
 import l2serdes_pkg::*;
 
-L2SerDes_registers r, rin;
+L2SerDes_registers r;
+L2SerDes_registers rin;
 
 function logic [7:0] size2len(input logic [2:0] size);
 logic [7:0] ret;
@@ -89,6 +90,7 @@ begin: comb_proc
     axi4_l2_in_type vl2i;
     axi4_master_out_type vmsto;
 
+    v = r;
     v_req_mem_ready = 1'b0;
     vb_r_data = '0;
     vb_line_o = '0;
@@ -102,8 +104,6 @@ begin: comb_proc
     t_wstrb = '0;
     vl2i = axi4_l2_in_none;
     vmsto = axi4_master_out_none;
-
-    v = r;
 
     t_line = r.line;
     t_wstrb = r.wstrb;
@@ -182,7 +182,7 @@ begin: comb_proc
         v.req_len = vb_len;
     end
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = L2SerDes_r_reset;
     end
 
@@ -238,26 +238,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= L2SerDes_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: L2SerDes

@@ -57,5 +57,4 @@ const L2Destination_registers L2Destination_r_reset = '{
     '0,                                 // cr_ready
     '0                                  // cd_ready
 };
-
 endpackage: l2_dst_pkg

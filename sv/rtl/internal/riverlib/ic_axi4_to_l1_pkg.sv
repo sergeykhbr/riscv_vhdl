@@ -62,5 +62,4 @@ const ic_axi4_to_l1_registers ic_axi4_to_l1_r_reset = '{
     '0,                                 // line_wstrb
     '0                                  // resp_data
 };
-
 endpackage: ic_axi4_to_l1_pkg

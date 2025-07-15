@@ -28,12 +28,14 @@ module StackTraceBuffer(
 import river_cfg_pkg::*;
 import stacktrbuf_pkg::*;
 
-StackTraceBuffer_rxegisters rx, rxin;
+StackTraceBuffer_rxegisters rx;
+StackTraceBuffer_rxegisters rxin;
 
 
 always_comb
 begin: comb_proc
     StackTraceBuffer_rxegisters vx;
+
     vx.raddr = rx.raddr;
     for (int i = 0; i < STACK_TRACE_BUF_SIZE; i++) begin
         vx.stackbuf[i] = rx.stackbuf[i];
@@ -52,11 +54,11 @@ begin: comb_proc
     end
 end: comb_proc
 
-always_ff @(posedge i_clk) begin: rxg_proc
+always_ff @(posedge i_clk) begin
     rx.raddr <= rxin.raddr;
     for (int i = 0; i < STACK_TRACE_BUF_SIZE; i++) begin
         rx.stackbuf[i] <= rxin.stackbuf[i];
     end
-end: rxg_proc
+end
 
 endmodule: StackTraceBuffer

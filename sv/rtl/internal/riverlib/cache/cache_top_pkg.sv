@@ -36,5 +36,4 @@ typedef struct {
     logic [CFG_CPU_ADDR_BITS-1:0] resp_addr;
 } CacheOutputType;
 
-
 endpackage: cache_top_pkg

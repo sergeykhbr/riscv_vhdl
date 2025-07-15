@@ -24,5 +24,4 @@ typedef struct {
 const AluLogic_registers AluLogic_r_reset = '{
     '0                                  // res
 };
-
 endpackage: alu_logic_pkg

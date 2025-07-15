@@ -18,6 +18,7 @@ package proc_pkg;
 import river_cfg_pkg::*;
 
 localparam trace_file = "trace_river_sysc";
+
 typedef struct {
     logic instr_load_fault;
     logic instr_page_fault_x;
@@ -222,6 +223,5 @@ typedef struct {
     MemoryType m;                                           // Memory load/store
     WriteBackType w;                                        // Write back registers value
 } PipelineType;
-
 
 endpackage: proc_pkg

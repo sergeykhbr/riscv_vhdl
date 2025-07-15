@@ -17,13 +17,13 @@
 `timescale 1ns/10ps
 
 module TagMemNWay #(
-    parameter bit async_reset = 1'b0,
     parameter int abus = 64,                                // system bus address width (64 or 32 bits)
     parameter int waybits = 2,                              // log2 of number of ways bits (2 for 4 ways cache; 3 for 8 ways)
     parameter int ibits = 6,                                // lines memory address width (usually 6..8)
     parameter int lnbits = 5,                               // One line bits: log2(bytes_per_line)
     parameter int flbits = 4,                               // total flags number saved with address tag
-    parameter int snoop = 0                                 // 0 Snoop port disabled; 1 Enabled (L2 caching)
+    parameter int snoop = 0,                                // 0 Snoop port disabled; 1 Enabled (L2 caching)
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -65,7 +65,6 @@ typedef struct {
     logic [flbits-1:0] snoop_flags;
 } WayOutType;
 
-
 typedef struct {
     logic [abus-1:0] req_addr;
     logic direct_access;
@@ -79,7 +78,6 @@ const TagMemNWay_registers TagMemNWay_r_reset = '{
     1'b0,                               // invalidate
     1'b0                                // re
 };
-
 logic w_lrui_init;
 logic [ibits-1:0] wb_lrui_raddr;
 logic [ibits-1:0] wb_lrui_waddr;
@@ -89,16 +87,17 @@ logic [waybits-1:0] wb_lrui_lru;
 logic [waybits-1:0] wb_lruo_lru;
 WayInType way_i[0: NWAYS - 1];
 WayOutType way_o[0: NWAYS - 1];
-TagMemNWay_registers r, rin;
+TagMemNWay_registers r;
+TagMemNWay_registers rin;
 
 for (genvar i = 0; i < NWAYS; i++) begin: waygen
     TagMem #(
-        .async_reset(async_reset),
         .abus(abus),
         .ibits(ibits),
         .lnbits(lnbits),
         .flbits(flbits),
-        .snoop(snoop)
+        .snoop(snoop),
+        .async_reset(async_reset)
     ) wayx (
         .i_clk(i_clk),
         .i_nrst(i_nrst),
@@ -143,6 +142,7 @@ begin: comb_proc
     logic v_snoop_ready;
     logic [flbits-1:0] vb_snoop_flags;
 
+    v = r;
     vb_raddr = '0;
     vb_rdata = '0;
     vb_rflags = '0;
@@ -153,8 +153,6 @@ begin: comb_proc
     vb_wflags = '0;
     v_snoop_ready = 1'b0;
     vb_snoop_flags = '0;
-
-    v = r;
 
 
     v.direct_access = i_direct_access;
@@ -216,7 +214,7 @@ begin: comb_proc
         end
     end
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = TagMemNWay_r_reset;
     end
 
@@ -237,26 +235,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= TagMemNWay_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: TagMemNWay

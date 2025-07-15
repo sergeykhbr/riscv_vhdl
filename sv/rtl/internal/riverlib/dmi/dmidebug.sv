@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module dmidebug #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,
@@ -67,14 +67,14 @@ logic [31:0] wb_tap_dmi_req_data;
 logic w_tap_dmi_hardreset;
 logic w_cdc_dmi_req_valid;
 logic w_cdc_dmi_req_ready;
-logic w_cdc_dmi_req_write;
-logic [6:0] wb_cdc_dmi_req_addr;
-logic [31:0] wb_cdc_dmi_req_data;
-logic w_cdc_dmi_hardreset;
 logic [31:0] wb_jtag_dmi_resp_data;
 logic w_jtag_dmi_busy;
 logic w_jtag_dmi_error;
-dmidebug_registers r, rin;
+logic w_reqfifo_wready_unused;
+logic [CDC_REG_WIDTH-1:0] wb_reqfifo_payload_i;
+logic [CDC_REG_WIDTH-1:0] wb_reqfifo_payload_o;
+dmidebug_registers r;
+dmidebug_registers rin;
 
 jtagtap #(
     .abits(7),
@@ -96,22 +96,19 @@ jtagtap #(
     .o_dmi_hardreset(w_tap_dmi_hardreset)
 );
 
-jtagcdc #(
-    .async_reset(async_reset)
+cdc_afifo #(
+    .abits(3),
+    .dbits(CDC_REG_WIDTH)
 ) cdc (
-    .i_clk(i_clk),
     .i_nrst(i_nrst),
-    .i_dmi_req_valid(w_tap_dmi_req_valid),
-    .i_dmi_req_write(w_tap_dmi_req_write),
-    .i_dmi_req_addr(wb_tap_dmi_req_addr),
-    .i_dmi_req_data(wb_tap_dmi_req_data),
-    .i_dmi_hardreset(w_tap_dmi_hardreset),
-    .i_dmi_req_ready(w_cdc_dmi_req_ready),
-    .o_dmi_req_valid(w_cdc_dmi_req_valid),
-    .o_dmi_req_write(w_cdc_dmi_req_write),
-    .o_dmi_req_addr(wb_cdc_dmi_req_addr),
-    .o_dmi_req_data(wb_cdc_dmi_req_data),
-    .o_dmi_hardreset(w_cdc_dmi_hardreset)
+    .i_wclk(i_tck),
+    .i_wr(w_tap_dmi_req_valid),
+    .i_wdata(wb_reqfifo_payload_i),
+    .o_wready(w_reqfifo_wready_unused),
+    .i_rclk(i_clk),
+    .i_rd(w_cdc_dmi_req_ready),
+    .o_rdata(wb_reqfifo_payload_o),
+    .o_rvalid(w_cdc_dmi_req_valid)
 );
 
 always_comb
@@ -126,11 +123,16 @@ begin: comb_proc
     int hsel;
     logic v_cmd_busy;
     logic v_cdc_dmi_req_ready;
+    logic v_cdc_dmi_req_write;
+    logic [6:0] vb_cdc_dmi_req_addr;
+    logic [31:0] vb_cdc_dmi_req_data;
+    logic v_cdc_dmi_hardreset;
     logic [63:0] vb_arg1;
     logic [31:0] t_command;
     logic [(32 * CFG_PROGBUF_REG_TOTAL)-1:0] t_progbuf;
     int t_idx;
 
+    v = r;
     vcfg = dev_config_none;
     vapbo = apb_out_none;
     vb_req_type = '0;
@@ -140,12 +142,14 @@ begin: comb_proc
     hsel = 0;
     v_cmd_busy = 1'b0;
     v_cdc_dmi_req_ready = 1'b0;
+    v_cdc_dmi_req_write = 1'b0;
+    vb_cdc_dmi_req_addr = 7'd0;
+    vb_cdc_dmi_req_data = 32'd0;
+    v_cdc_dmi_hardreset = 1'b0;
     vb_arg1 = '0;
     t_command = '0;
     t_progbuf = '0;
     t_idx = 0;
-
-    v = r;
 
     vcfg.descrsize = PNP_CFG_DEV_DESCR_BYTES;
     vcfg.descrtype = PNP_CFG_TYPE_SLAVE;
@@ -153,6 +157,11 @@ begin: comb_proc
     vcfg.addr_end = i_mapinfo.addr_end;
     vcfg.vid = VENDOR_OPTIMITECH;
     vcfg.did = OPTIMITECH_RIVER_DMI;
+
+    v_cdc_dmi_hardreset = wb_reqfifo_payload_o[40];
+    vb_cdc_dmi_req_addr = wb_reqfifo_payload_o[39: 33];
+    vb_cdc_dmi_req_data = wb_reqfifo_payload_o[32: 1];
+    v_cdc_dmi_req_write = wb_reqfifo_payload_o[0];
 
     vb_hartselnext = r.wdata[((16 + CFG_LOG2_CPU_MAX) - 1): 16];
     hsel = int'(r.hartsel);
@@ -176,10 +185,10 @@ begin: comb_proc
             v_cdc_dmi_req_ready = 1'b1;
             v.bus_jtag = 1'b1;
             v.dmstate = DM_STATE_ACCESS;
-            v.regidx = wb_cdc_dmi_req_addr;
-            v.wdata = wb_cdc_dmi_req_data;
-            v.regwr = w_cdc_dmi_req_write;
-            v.regrd = (~w_cdc_dmi_req_write);
+            v.regidx = vb_cdc_dmi_req_addr;
+            v.wdata = vb_cdc_dmi_req_data;
+            v.regwr = v_cdc_dmi_req_write;
+            v.regrd = (~v_cdc_dmi_req_write);
         end else if (((i_apbi.pselx == 1'b1) && (i_apbi.pwrite == 1'b0))
                     || ((i_apbi.pselx == 1'b1) && (i_apbi.penable == 1'b1) && (i_apbi.pwrite == 1'b1))) begin
             v.bus_jtag = 1'b0;
@@ -536,7 +545,7 @@ begin: comb_proc
     vb_req_type[DPortReq_MemVirtual] = r.aamvirtual;
     vb_req_type[DPortReq_Progexec] = r.cmd_progexec;
 
-    if ((~async_reset && i_nrst == 1'b0) || (w_cdc_dmi_hardreset == 1'b1)) begin
+    if (((~async_reset) && (i_nrst == 1'b0)) || (v_cdc_dmi_hardreset == 1'b1)) begin
         v = dmidebug_r_reset;
     end
 
@@ -568,25 +577,30 @@ begin: comb_proc
 end: comb_proc
 
 
-generate
-    if (async_reset) begin: async_rst_gen
+assign wb_reqfifo_payload_i = {w_tap_dmi_hardreset,
+        wb_tap_dmi_req_addr,
+        wb_tap_dmi_req_data,
+        w_tap_dmi_req_write};
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+generate
+    if (async_reset) begin: async_r_en
+
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= dmidebug_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: dmidebug

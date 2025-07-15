@@ -37,6 +37,7 @@ module jtagtap #(
     output logic o_dmi_hardreset
 );
 
+localparam int drlen = ((abits + 32) + 2);
 
 localparam bit [irlen-1:0] IR_IDCODE = 5'h01;
 localparam bit [irlen-1:0] IR_DTMCONTROL = 5'h10;
@@ -70,18 +71,6 @@ localparam bit [3:0] PAUSE_IR = 4'd13;
 localparam bit [3:0] EXIT2_IR = 4'd14;
 localparam bit [3:0] UPDATE_IR = 4'd15;
 
-localparam int drlen = ((abits + 32) + 2);
-
-typedef struct {
-    logic [irlen-1:0] ir;
-    logic [abits-1:0] dmi_addr;
-} jtagtap_nrhegisters;
-
-const jtagtap_nrhegisters jtagtap_nrh_reset = '{
-    IR_IDCODE,                          // ir
-    '0                                  // dmi_addr
-};
-
 typedef struct {
     logic [3:0] state;
     logic [6:0] dr_length;
@@ -101,14 +90,24 @@ const jtagtap_rhegisters jtagtap_rh_reset = '{
     1'b0,                               // dmi_busy
     '0                                  // err_sticky
 };
+typedef struct {
+    logic [irlen-1:0] ir;
+    logic [abits-1:0] dmi_addr;
+} jtagtap_rnhegisters;
 
-jtagtap_nrhegisters nrh, nrhin;
-jtagtap_rhegisters rh, rhin;
+const jtagtap_rnhegisters jtagtap_rnh_reset = '{
+    IR_IDCODE,                          // ir
+    '0                                  // dmi_addr
+};
+jtagtap_rhegisters rh;
+jtagtap_rhegisters rhin;
+jtagtap_rnhegisters rnh;
+jtagtap_rnhegisters rnhin;
 
 
 always_comb
 begin: comb_proc
-    jtagtap_nrhegisters nvh;
+    jtagtap_rnhegisters vnh;
     jtagtap_rhegisters vh;
     logic [drlen-1:0] vb_dr;
     logic v_dmi_req_valid;
@@ -118,6 +117,8 @@ begin: comb_proc
     logic [1:0] vb_err_sticky;
     logic v_dmi_hardreset;
 
+    vnh = rnh;
+    vh = rh;
     vb_dr = '0;
     v_dmi_req_valid = 1'b0;
     v_dmi_req_write = 1'b0;
@@ -126,15 +127,12 @@ begin: comb_proc
     vb_err_sticky = '0;
     v_dmi_hardreset = 1'b0;
 
-    nvh = nrh;
-    vh = rh;
-
     vb_dr = rh.dr;
     vb_err_sticky = rh.err_sticky;
 
     case (rh.state)
     RESET_TAP: begin
-        nvh.ir = IR_IDCODE;
+        vnh.ir = IR_IDCODE;
         if (i_tms == 1'b1) begin
             vh.state = RESET_TAP;
         end else begin
@@ -161,16 +159,16 @@ begin: comb_proc
         end else begin
             vh.state = SHIFT_DR;
         end
-        if (nrh.ir == IR_IDCODE) begin
+        if (rnh.ir == IR_IDCODE) begin
             vb_dr = idcode;
             vh.dr_length = 7'd32;
-        end else if (nrh.ir == IR_DTMCONTROL) begin
+        end else if (rnh.ir == IR_DTMCONTROL) begin
             vb_dr[31: 0] = '0;
             vb_dr[3: 0] = 4'h1;                             // version
             vb_dr[9: 4] = abits;                            // the size of the address
             vb_dr[11: 10] = rh.err_sticky;
             vh.dr_length = 7'd32;
-        end else if (nrh.ir == IR_DBUS) begin
+        end else if (rnh.ir == IR_DBUS) begin
             if (i_dmi_error == 1'b1) begin
                 vb_err_sticky = DMISTAT_FAILED;
                 vb_dr[1: 0] = DMISTAT_FAILED;
@@ -178,9 +176,9 @@ begin: comb_proc
                 vb_dr[1: 0] = rh.err_sticky;
             end
             vb_dr[33: 2] = i_dmi_resp_data;
-            vb_dr[((34 + abits) - 1): 34] = nrh.dmi_addr;
+            vb_dr[((34 + abits) - 1): 34] = rnh.dmi_addr;
             vh.dr_length = (abits + 7'd34);
-        end else if (nrh.ir == IR_BYPASS) begin
+        end else if (rnh.ir == IR_BYPASS) begin
             vb_dr[0] = rh.bypass;
             vh.dr_length = 7'd1;
         end
@@ -228,14 +226,14 @@ begin: comb_proc
         end else begin
             vh.state = IDLE;
         end
-        if (nrh.ir == IR_DTMCONTROL) begin
+        if (rnh.ir == IR_DTMCONTROL) begin
             v_dmi_hardreset = rh.dr[DTMCONTROL_DMIHARDRESET];
             if (rh.dr[DTMCONTROL_DMIRESET] == 1'b1) begin
                 vb_err_sticky = DMISTAT_SUCCESS;
             end
-        end else if (nrh.ir == IR_BYPASS) begin
+        end else if (rnh.ir == IR_BYPASS) begin
             vh.bypass = rh.dr[0];
-        end else if (nrh.ir == IR_DBUS) begin
+        end else if (rnh.ir == IR_DBUS) begin
             if (rh.err_sticky != DMISTAT_SUCCESS) begin
                 // This operation should never result in a busy or error response.
             end else if (rh.dmi_busy == 1'b1) begin
@@ -247,7 +245,7 @@ begin: comb_proc
             vb_dmi_req_data = rh.dr[33: 2];
             vb_dmi_req_addr = rh.dr[((34 + abits) - 1): 34];
 
-            nvh.dmi_addr = rh.dr[((34 + abits) - 1): 34];
+            vnh.dmi_addr = rh.dr[((34 + abits) - 1): 34];
         end
     end
     SELECT_IR_SCAN: begin
@@ -263,7 +261,7 @@ begin: comb_proc
         end else begin
             vh.state = SHIFT_IR;
         end
-        vb_dr[(irlen - 1): 2] = nrh.ir[(irlen - 1): 2];
+        vb_dr[(irlen - 1): 2] = rnh.ir[(irlen - 1): 2];
         vb_dr[1: 0] = 2'h1;
     end
     SHIFT_IR: begin
@@ -302,7 +300,7 @@ begin: comb_proc
         end else begin
             vh.state = IDLE;
         end
-        nvh.ir = rh.dr[(irlen - 1): 0];
+        vnh.ir = rh.dr[(irlen - 1): 0];
     end
     default: begin
     end
@@ -318,24 +316,24 @@ begin: comb_proc
     o_dmi_req_addr = vb_dmi_req_addr;
     o_dmi_hardreset = v_dmi_hardreset;
 
-    nrhin = nvh;
     rhin = vh;
+    rnhin = vnh;
 end: comb_proc
 
-always_ff @(negedge i_tck, posedge i_trst) begin: nrhg_proc
-    if (i_trst == 1'b1) begin
-        nrh <= jtagtap_nrh_reset;
-    end else begin
-        nrh <= nrhin;
-    end
-end: nrhg_proc
-
-always_ff @(posedge i_tck, posedge i_trst) begin: rhg_proc
+always_ff @(posedge i_tck, posedge i_trst) begin
     if (i_trst == 1'b1) begin
         rh <= jtagtap_rh_reset;
     end else begin
         rh <= rhin;
     end
-end: rhg_proc
+end
+
+always_ff @(negedge i_tck, posedge i_trst) begin
+    if (i_trst == 1'b1) begin
+        rnh <= jtagtap_rnh_reset;
+    end else begin
+        rnh <= rnhin;
+    end
+end
 
 endmodule: jtagtap

@@ -37,5 +37,4 @@ const Long2Double_registers Long2Double_r_reset = '{
     '0,                                 // mantAlign
     '0                                  // lshift
 };
-
 endpackage: l2d_d_pkg

@@ -87,5 +87,4 @@ const L2CacheLru_registers L2CacheLru_r_reset = '{
     '0,                                 // cache_line_i
     '0                                  // cache_line_o
 };
-
 endpackage: l2cache_lru_pkg

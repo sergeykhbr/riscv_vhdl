@@ -114,7 +114,6 @@ typedef struct {
     logic completed;
 } TraceStepType;
 
-
 typedef struct {
     TraceStepType trace_tbl[0: TRACE_TBL_SZ - 1];
     logic [TRACE_TBL_ABITS-1:0] tr_wcnt;

@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module Mmu #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -70,7 +70,8 @@ logic [CFG_MMU_TLB_AWIDTH-1:0] wb_tlb_adr;
 logic w_tlb_wena;
 logic [CFG_MMU_PTE_DWIDTH-1:0] wb_tlb_wdata;
 logic [CFG_MMU_PTE_DWIDTH-1:0] wb_tlb_rdata;
-Mmu_registers r, rin;
+Mmu_registers r;
+Mmu_registers rin;
 
 ram_mmu_tech #(
     .abits(CFG_MMU_TLB_AWIDTH),
@@ -125,6 +126,7 @@ begin: comb_proc
     logic [CFG_MMU_PTE_DWIDTH-1:0] t_tlb_wdata;
     int t_idx_lsb;
 
+    v = r;
     v_core_req_x = 1'b0;
     v_core_req_r = 1'b0;
     v_core_req_w = 1'b0;
@@ -163,8 +165,6 @@ begin: comb_proc
     vb_tlb_pa_hit = '0;
     t_tlb_wdata = '0;
     t_idx_lsb = 0;
-
-    v = r;
 
     t_idx_lsb = (12 + (9 * int'(r.last_page_size)));
     vb_tlb_adr = i_core_req_addr[t_idx_lsb +: CFG_MMU_TLB_AWIDTH];
@@ -547,7 +547,7 @@ begin: comb_proc
         v.tlb_flush_adr = 6'd0;
     end
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = Mmu_r_reset;
     end
 
@@ -574,26 +574,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= Mmu_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: Mmu

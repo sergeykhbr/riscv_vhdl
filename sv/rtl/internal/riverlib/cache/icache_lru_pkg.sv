@@ -74,5 +74,4 @@ const ICacheLru_registers ICacheLru_r_reset = '{
     '0,                                 // flush_cnt
     '0                                  // cache_line_i
 };
-
 endpackage: icache_lru_pkg

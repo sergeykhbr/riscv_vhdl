@@ -76,5 +76,4 @@ const DecoderRvc_registers DecoderRvc_r_reset = '{
     '0,                                 // imm
     1'b0                                // progbuf_ena
 };
-
 endpackage: dec_rvc_pkg

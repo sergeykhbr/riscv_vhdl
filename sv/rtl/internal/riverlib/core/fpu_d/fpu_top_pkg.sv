@@ -56,5 +56,4 @@ const FpuTop_registers FpuTop_r_reset = '{
     1'b0,                               // ena_l2d
     1'b0                                // ena_w32
 };
-
 endpackage: fpu_top_pkg

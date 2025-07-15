@@ -34,7 +34,18 @@ typedef struct {
     logic resp_ready;
 } dport_in_type;
 
-const dport_in_type dport_in_none = '{1'b0, 1'b0, 1'b0, 1'b0, 1'b0, '0, '0, '0, '0, 1'b0};
+const dport_in_type dport_in_none = '{
+    1'b0,                               // haltreq
+    1'b0,                               // resumereq
+    1'b0,                               // resethaltreq
+    1'b0,                               // hartreset
+    1'b0,                               // req_valid
+    '0,                                 // dtype
+    '0,                                 // addr
+    '0,                                 // wdata
+    '0,                                 // size
+    1'b0                                // resp_ready
+};
 
 typedef struct {
     logic req_ready;                                        // ready to accept request
@@ -43,7 +54,12 @@ typedef struct {
     logic [RISCV_ARCH-1:0] rdata;
 } dport_out_type;
 
-const dport_out_type dport_out_none = '{1'b1, 1'b1, 1'b0, '0};
+const dport_out_type dport_out_none = '{
+    1'b1,                               // req_ready
+    1'b1,                               // resp_valid
+    1'b0,                               // resp_error
+    '0                                  // rdata
+};
 
 typedef dport_in_type dport_in_vector[0:CFG_CPU_MAX - 1];
 typedef dport_out_type dport_out_vector[0:CFG_CPU_MAX - 1];
@@ -85,7 +101,37 @@ typedef struct {
     logic wack;
 } axi4_l1_out_type;
 
-const axi4_l1_out_type axi4_l1_out_none = '{1'b0, META_NONE, '0, '0, 1'b0, '0, 1'b0, '0, '0, 1'b0, 1'b0, META_NONE, '0, '0, 1'b0, 2'd0, 4'd0, 2'd0, 2'd0, 3'd0, 2'd0, 1'b1, 1'b1, 5'd0, 1'b0, '0, 1'b0, 1'b0, 1'b0};
+const axi4_l1_out_type axi4_l1_out_none = '{
+    1'b0,                               // aw_valid
+    META_NONE,                          // aw_bits
+    '0,                                 // aw_id
+    '0,                                 // aw_user
+    1'b0,                               // w_valid
+    '0,                                 // w_data
+    1'b0,                               // w_last
+    '0,                                 // w_strb
+    '0,                                 // w_user
+    1'b0,                               // b_ready
+    1'b0,                               // ar_valid
+    META_NONE,                          // ar_bits
+    '0,                                 // ar_id
+    '0,                                 // ar_user
+    1'b0,                               // r_ready
+    2'd0,                               // ar_domain
+    4'd0,                               // ar_snoop
+    2'd0,                               // ar_bar
+    2'd0,                               // aw_domain
+    3'd0,                               // aw_snoop
+    2'd0,                               // aw_bar
+    1'b1,                               // ac_ready
+    1'b1,                               // cr_valid
+    5'd0,                               // cr_resp
+    1'b0,                               // cd_valid
+    '0,                                 // cd_data
+    1'b0,                               // cd_last
+    1'b0,                               // rack
+    1'b0                                // wack
+};
 
 typedef struct {
     logic aw_ready;
@@ -109,7 +155,27 @@ typedef struct {
     logic cd_ready;
 } axi4_l1_in_type;
 
-const axi4_l1_in_type axi4_l1_in_none = '{1'b0, 1'b0, 1'b0, 2'd0, '0, '0, 1'b0, 1'b0, '0, '0, 1'b0, '0, '0, 1'b0, '0, 4'd0, 3'd0, 1'b1, 1'b1};
+const axi4_l1_in_type axi4_l1_in_none = '{
+    1'b0,                               // aw_ready
+    1'b0,                               // w_ready
+    1'b0,                               // b_valid
+    2'd0,                               // b_resp
+    '0,                                 // b_id
+    '0,                                 // b_user
+    1'b0,                               // ar_ready
+    1'b0,                               // r_valid
+    '0,                                 // r_resp
+    '0,                                 // r_data
+    1'b0,                               // r_last
+    '0,                                 // r_id
+    '0,                                 // r_user
+    1'b0,                               // ac_valid
+    '0,                                 // ac_addr
+    4'd0,                               // ac_snoop
+    3'd0,                               // ac_prot
+    1'b1,                               // cr_ready
+    1'b1                                // cd_ready
+};
 
 typedef axi4_l1_in_type axi4_l1_in_vector[0:CFG_SLOT_L1_TOTAL - 1];
 typedef axi4_l1_out_type axi4_l1_out_vector[0:CFG_SLOT_L1_TOTAL - 1];
@@ -132,7 +198,23 @@ typedef struct {
     logic r_ready;
 } axi4_l2_out_type;
 
-const axi4_l2_out_type axi4_l2_out_none = '{1'b0, META_NONE, '0, '0, 1'b0, '0, 1'b0, '0, '0, 1'b0, 1'b0, META_NONE, '0, '0, 1'b0};
+const axi4_l2_out_type axi4_l2_out_none = '{
+    1'b0,                               // aw_valid
+    META_NONE,                          // aw_bits
+    '0,                                 // aw_id
+    '0,                                 // aw_user
+    1'b0,                               // w_valid
+    '0,                                 // w_data
+    1'b0,                               // w_last
+    '0,                                 // w_strb
+    '0,                                 // w_user
+    1'b0,                               // b_ready
+    1'b0,                               // ar_valid
+    META_NONE,                          // ar_bits
+    '0,                                 // ar_id
+    '0,                                 // ar_user
+    1'b0                                // r_ready
+};
 
 typedef struct {
     logic aw_ready;
@@ -150,7 +232,21 @@ typedef struct {
     logic [CFG_SYSBUS_USER_BITS-1:0] r_user;
 } axi4_l2_in_type;
 
-const axi4_l2_in_type axi4_l2_in_none = '{1'b0, 1'b0, 1'b0, 2'd0, '0, '0, 1'b0, 1'b0, 2'd0, '0, 1'b0, '0, '0};
+const axi4_l2_in_type axi4_l2_in_none = '{
+    1'b0,                               // aw_ready
+    1'b0,                               // w_ready
+    1'b0,                               // b_valid
+    2'd0,                               // b_resp
+    '0,                                 // b_id
+    '0,                                 // b_user
+    1'b0,                               // ar_ready
+    1'b0,                               // r_valid
+    2'd0,                               // r_resp
+    '0,                                 // r_data
+    1'b0,                               // r_last
+    '0,                                 // r_id
+    '0                                  // r_user
+};
 
 
 endpackage: types_river_pkg

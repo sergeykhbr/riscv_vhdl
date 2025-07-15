@@ -27,5 +27,4 @@ typedef struct {
 const ic_dport_registers ic_dport_r_reset = '{
     '0                                  // hartsel
 };
-
 endpackage: ic_dport_pkg

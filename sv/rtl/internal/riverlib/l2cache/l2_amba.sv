@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module L2Amba #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -44,7 +44,8 @@ import river_cfg_pkg::*;
 import types_river_pkg::*;
 import l2_amba_pkg::*;
 
-L2Amba_registers r, rin;
+L2Amba_registers r;
+L2Amba_registers rin;
 
 
 always_comb
@@ -58,6 +59,7 @@ begin: comb_proc
     logic v_next_ready;
     axi4_l2_out_type vmsto;
 
+    v = r;
     v_req_mem_ready = 1'b0;
     v_resp_mem_valid = 1'b0;
     v_resp_mem_ack = 1'b0;
@@ -65,8 +67,6 @@ begin: comb_proc
     v_mem_er_store_fault = 1'b0;
     v_next_ready = 1'b0;
     vmsto = axi4_l2_out_none;
-
-    v = r;
 
     vmsto.r_ready = 1'b1;
     vmsto.w_valid = 1'b0;
@@ -127,7 +127,7 @@ begin: comb_proc
         end
     end
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = L2Amba_r_reset;
     end
 
@@ -144,7 +144,7 @@ begin: comb_proc
     vmsto.aw_bits.qos = 4'd0;
     vmsto.aw_bits.region = 4'd0;
     vmsto.aw_id = 1'b0;
-    vmsto.aw_user = 1'b0;
+    vmsto.aw_user = 3'd0;
     // vmsto.w_valid = vmsto_w_valid;
     vmsto.w_data = i_req_data;
     // vmsto.w_last = vmsto_w_last;
@@ -163,7 +163,7 @@ begin: comb_proc
     vmsto.ar_bits.qos = 4'd0;
     vmsto.ar_bits.region = 4'd0;
     vmsto.ar_id = 1'b0;
-    vmsto.ar_user = 1'b0;
+    vmsto.ar_user = 3'd0;
     // vmsto.r_ready = vmsto_r_ready;
 
     o_msto = vmsto;
@@ -177,26 +177,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= L2Amba_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: L2Amba

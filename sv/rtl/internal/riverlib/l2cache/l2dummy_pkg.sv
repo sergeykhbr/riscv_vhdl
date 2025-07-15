@@ -57,5 +57,4 @@ const L2Dummy_registers L2Dummy_r_reset = '{
     '0,                                 // rdata
     '0                                  // resp
 };
-
 endpackage: l2dummy_pkg

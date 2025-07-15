@@ -27,8 +27,6 @@ module DummyCpu(
 import types_amba_pkg::*;
 import types_river_pkg::*;
 import river_cfg_pkg::*;
-import dummycpu_pkg::*;
-
 
 always_comb
 begin: comb_proc

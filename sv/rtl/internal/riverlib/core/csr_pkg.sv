@@ -63,7 +63,6 @@ typedef struct {
     logic [RISCV_ARCH-1:0] mask;                            // NAPOT mask formed from address
 } PmpItemType;
 
-
 typedef struct {
     RegModeType xmode[0: 4 - 1];
     PmpItemType pmp[0: CFG_PMP_TBL_SIZE - 1];

@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module Long2Double #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -33,7 +33,8 @@ module Long2Double #(
 
 import l2d_d_pkg::*;
 
-Long2Double_registers r, rin;
+Long2Double_registers r;
+Long2Double_registers rin;
 
 
 always_comb
@@ -51,6 +52,7 @@ begin: comb_proc
     logic [63:0] vb_A;
     logic [63:0] res;
 
+    v = r;
     v_ena = 1'b0;
     mantAlign = '0;
     lshift = '0;
@@ -62,8 +64,6 @@ begin: comb_proc
     v_signA = 1'b0;
     vb_A = '0;
     res = '0;
-
-    v = r;
 
     v_ena = (i_ena && (~r.busy));
     v.ena = {r.ena[1: 0], v_ena};
@@ -135,7 +135,7 @@ begin: comb_proc
         v.busy = 1'b0;
     end
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = Long2Double_r_reset;
     end
 
@@ -146,26 +146,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= Long2Double_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: Long2Double

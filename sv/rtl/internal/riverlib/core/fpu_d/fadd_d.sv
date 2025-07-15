@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module DoubleAdd #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -41,7 +41,8 @@ module DoubleAdd #(
 
 import fadd_d_pkg::*;
 
-DoubleAdd_registers r, rin;
+DoubleAdd_registers r;
+DoubleAdd_registers rin;
 
 
 always_comb
@@ -95,6 +96,7 @@ begin: comb_proc
     logic [63:0] resMax;
     logic [63:0] resMin;
 
+    v = r;
     v_ena = 1'b0;
     signOp = 1'b0;
     signA = 1'b0;
@@ -142,8 +144,6 @@ begin: comb_proc
     resLE = '0;
     resMax = '0;
     resMin = '0;
-
-    v = r;
 
     v_ena = (i_ena && (~r.busy));
     v.ena = {r.ena[6: 0], v_ena};
@@ -496,7 +496,7 @@ begin: comb_proc
         v.min = 1'b0;
     end
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = DoubleAdd_r_reset;
     end
 
@@ -509,26 +509,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= DoubleAdd_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: DoubleAdd

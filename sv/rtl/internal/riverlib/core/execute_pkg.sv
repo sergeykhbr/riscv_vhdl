@@ -73,7 +73,6 @@ typedef struct {
     logic [ISA_Total-1:0] isa_type;
 } input_mux_type;
 
-
 typedef struct {
     logic [3:0] state;
     logic [1:0] csrstate;
@@ -185,5 +184,4 @@ const InstrExecute_registers InstrExecute_r_reset = '{
     1'b0,                               // jmp
     1'b0                                // stepdone
 };
-
 endpackage: execute_pkg

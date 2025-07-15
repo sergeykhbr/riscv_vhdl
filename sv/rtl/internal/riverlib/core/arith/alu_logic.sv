@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module AluLogic #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -31,12 +31,14 @@ module AluLogic #(
 import river_cfg_pkg::*;
 import alu_logic_pkg::*;
 
-AluLogic_registers r, rin;
+AluLogic_registers r;
+AluLogic_registers rin;
 
 
 always_comb
 begin: comb_proc
     AluLogic_registers v;
+
     v = r;
 
     if (i_mode[1] == 1'b1) begin
@@ -47,7 +49,7 @@ begin: comb_proc
         v.res = (i_a1 & i_a2);
     end
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = AluLogic_r_reset;
     end
 
@@ -56,26 +58,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= AluLogic_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: AluLogic

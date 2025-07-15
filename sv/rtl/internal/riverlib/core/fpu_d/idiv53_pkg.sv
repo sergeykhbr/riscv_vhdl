@@ -37,5 +37,4 @@ const idiv53_registers idiv53_r_reset = '{
     1'b0,                               // overflow
     1'b0                                // zero_resid
 };
-
 endpackage: idiv53_pkg

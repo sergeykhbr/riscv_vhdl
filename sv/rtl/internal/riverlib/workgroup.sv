@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module Workgroup #(
-    parameter bit async_reset = 1'b0,
+    parameter logic async_reset = 1'b0,
     parameter int unsigned cpu_num = 1,
     parameter int unsigned l2cache_ena = 1
 )

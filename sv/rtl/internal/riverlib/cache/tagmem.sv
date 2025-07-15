@@ -17,12 +17,12 @@
 `timescale 1ns/10ps
 
 module TagMem #(
-    parameter bit async_reset = 1'b0,
     parameter int abus = 64,                                // system bus address width (64 or 32 bits)
     parameter int ibits = 6,                                // lines memory address width (usually 6..8)
     parameter int lnbits = 5,                               // One line bits: log2(bytes_per_line)
     parameter int flbits = 4,                               // total flags number saved with address tag
-    parameter int snoop = 0                                 // 0 Snoop port disabled; 1 Enabled (L2 caching)
+    parameter int snoop = 0,                                // 0 Snoop port disabled; 1 Enabled (L2 caching)
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -54,7 +54,6 @@ const TagMem_registers TagMem_r_reset = '{
     6'd0,                               // index
     53'd0                               // snoop_tagaddr
 };
-
 logic [ibits-1:0] wb_index;
 logic [TAG_WITH_FLAGS-1:0] wb_tago_rdata;
 logic [TAG_WITH_FLAGS-1:0] wb_tagi_wdata;
@@ -62,7 +61,8 @@ logic w_tagi_we;
 logic [ibits-1:0] wb_snoop_index;
 logic [TAG_BITS-1:0] wb_snoop_tagaddr;
 logic [TAG_WITH_FLAGS-1:0] wb_tago_snoop_rdata;
-TagMem_registers r, rin;
+TagMem_registers r;
+TagMem_registers rin;
 
 // bwe = byte write enable
 ram_cache_bwe_tech #(
@@ -116,6 +116,7 @@ begin: comb_proc
     logic [TAG_BITS-1:0] vb_snoop_tagaddr;
     logic [flbits-1:0] vb_snoop_flags;
 
+    v = r;
     vb_index = '0;
     vb_raddr = '0;
     vb_tagi_wdata = '0;
@@ -123,8 +124,6 @@ begin: comb_proc
     vb_snoop_index = '0;
     vb_snoop_tagaddr = '0;
     vb_snoop_flags = '0;
-
-    v = r;
 
 
     if (r.tagaddr == wb_tago_rdata[(TAG_BITS - 1): 0]) begin
@@ -154,7 +153,7 @@ begin: comb_proc
     v.index = vb_index;
     v.snoop_tagaddr = vb_snoop_tagaddr;
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = TagMem_r_reset;
     end
 
@@ -173,26 +172,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= TagMem_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: TagMem

@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module CsrRegs #(
-    parameter bit async_reset = 1'b0,
+    parameter logic async_reset = 1'b0,
     parameter int unsigned hartid = 0
 )
 (
@@ -78,7 +78,8 @@ module CsrRegs #(
 import river_cfg_pkg::*;
 import csr_pkg::*;
 
-CsrRegs_registers r, rin;
+CsrRegs_registers r;
+CsrRegs_registers rin;
 
 
 always_comb
@@ -119,42 +120,6 @@ begin: comb_proc
     logic v_napot_shift;
     int t_pmpdataidx;
     int t_pmpcfgidx;
-
-    iM = int'(PRV_M);
-    iH = int'(PRV_H);
-    iS = int'(PRV_S);
-    iU = int'(PRV_U);
-    vb_xpp = '0;
-    vb_pending = '0;
-    vb_irq_ena = '0;
-    vb_e_emux = 64'd0;
-    vb_e_imux = 16'd0;
-    wb_trap_cause = '0;
-    vb_xtval = 64'd0;
-    w_mstackovr = 1'b0;
-    w_mstackund = 1'b0;
-    v_csr_rena = 1'b0;
-    v_csr_wena = 1'b0;
-    v_csr_trapreturn = 1'b0;
-    vb_rdata = '0;
-    v_req_halt = 1'b0;
-    v_req_resume = 1'b0;
-    v_req_progbuf = 1'b0;
-    v_req_ready = 1'b0;
-    v_resp_valid = 1'b0;
-    v_medeleg_ena = 1'b0;
-    v_mideleg_ena = 1'b0;
-    vb_xtvec_off_ideleg = 64'd0;
-    vb_xtvec_off_edeleg = 64'd0;
-    v_flushd = 1'b0;
-    v_flushi = 1'b0;
-    v_flushmmu = 1'b0;
-    v_flushpipeline = 1'b0;
-    vb_pmp_upd_ena = '0;
-    vb_pmp_napot_mask = '0;
-    v_napot_shift = 1'b0;
-    t_pmpdataidx = 0;
-    t_pmpcfgidx = 0;
 
     for (int i = 0; i < 4; i++) begin
         v.xmode[i].xepc = r.xmode[i].xepc;
@@ -230,6 +195,41 @@ begin: comb_proc
     v.pmp_start_addr = r.pmp_start_addr;
     v.pmp_end_addr = r.pmp_end_addr;
     v.pmp_flags = r.pmp_flags;
+    iM = int'(PRV_M);
+    iH = int'(PRV_H);
+    iS = int'(PRV_S);
+    iU = int'(PRV_U);
+    vb_xpp = '0;
+    vb_pending = '0;
+    vb_irq_ena = '0;
+    vb_e_emux = 64'd0;
+    vb_e_imux = 16'd0;
+    wb_trap_cause = '0;
+    vb_xtval = 64'd0;
+    w_mstackovr = 1'b0;
+    w_mstackund = 1'b0;
+    v_csr_rena = 1'b0;
+    v_csr_wena = 1'b0;
+    v_csr_trapreturn = 1'b0;
+    vb_rdata = '0;
+    v_req_halt = 1'b0;
+    v_req_resume = 1'b0;
+    v_req_progbuf = 1'b0;
+    v_req_ready = 1'b0;
+    v_resp_valid = 1'b0;
+    v_medeleg_ena = 1'b0;
+    v_mideleg_ena = 1'b0;
+    vb_xtvec_off_ideleg = 64'd0;
+    vb_xtvec_off_edeleg = 64'd0;
+    v_flushd = 1'b0;
+    v_flushi = 1'b0;
+    v_flushmmu = 1'b0;
+    v_flushpipeline = 1'b0;
+    vb_pmp_upd_ena = '0;
+    vb_pmp_napot_mask = '0;
+    v_napot_shift = 1'b0;
+    t_pmpdataidx = 0;
+    t_pmpcfgidx = 0;
 
     vb_xpp = r.xmode[int'(r.mode)].xpp;
     vb_pmp_upd_ena = r.pmp_upd_ena;
@@ -1036,7 +1036,7 @@ begin: comb_proc
         v.minstret_cnt = (r.minstret_cnt + 1);
     end
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         for (int i = 0; i < 4; i++) begin
             v.xmode[i].xepc = 64'd0;
             v.xmode[i].xpp = 2'd0;
@@ -1220,11 +1220,10 @@ begin: comb_proc
     rin.pmp_flags = v.pmp_flags;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 for (int i = 0; i < 4; i++) begin
                     r.xmode[i].xepc <= 64'd0;
@@ -1376,12 +1375,12 @@ generate
                 r.pmp_end_addr <= rin.pmp_end_addr;
                 r.pmp_flags <= rin.pmp_flags;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             for (int i = 0; i < 4; i++) begin
                 r.xmode[i].xepc <= rin.xmode[i].xepc;
                 r.xmode[i].xpp <= rin.xmode[i].xpp;
@@ -1456,9 +1455,9 @@ generate
             r.pmp_start_addr <= rin.pmp_start_addr;
             r.pmp_end_addr <= rin.pmp_end_addr;
             r.pmp_flags <= rin.pmp_flags;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: CsrRegs

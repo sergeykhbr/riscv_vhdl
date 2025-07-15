@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module L2Dummy #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -34,7 +34,8 @@ import types_river_pkg::*;
 import river_cfg_pkg::*;
 import l2dummy_pkg::*;
 
-L2Dummy_registers r, rin;
+L2Dummy_registers r;
+L2Dummy_registers rin;
 
 
 always_comb
@@ -48,6 +49,7 @@ begin: comb_proc
     int vb_srcid;
     logic v_selected;
 
+    v = r;
     for (int i = 0; i < CFG_SLOT_L1_TOTAL; i++) begin
         vl1o[i] = axi4_l1_out_none;
     end
@@ -59,8 +61,6 @@ begin: comb_proc
     vb_src_ar = '0;
     vb_srcid = 0;
     v_selected = 1'b0;
-
-    v = r;
 
     for (int i = 0; i < CFG_SLOT_L1_TOTAL; i++) begin
         vl1o[i] = i_l1o[i];
@@ -199,7 +199,7 @@ begin: comb_proc
     end
     endcase
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = L2Dummy_r_reset;
     end
 
@@ -211,26 +211,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= L2Dummy_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: L2Dummy

@@ -45,5 +45,4 @@ const L2SerDes_registers L2SerDes_r_reset = '{
     '0,                                 // wstrb
     '0                                  // rmux
 };
-
 endpackage: l2serdes_pkg

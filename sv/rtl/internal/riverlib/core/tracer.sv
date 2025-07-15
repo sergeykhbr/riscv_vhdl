@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module Tracer #(
-    parameter bit async_reset = 1'b0,
+    parameter logic async_reset = 1'b0,
     parameter int unsigned hartid = 0,
     parameter trace_file = "trace_river_sysc"
 )
@@ -53,7 +53,8 @@ string trfilename;                                          // formatted string 
 string outstr;
 string tracestr;
 int fl;
-Tracer_registers r, rin;
+Tracer_registers r;
+Tracer_registers rin;
 
 function string TaskDisassembler(input logic [31:0] instr);
 string ostr;
@@ -886,6 +887,7 @@ begin
 end
 endfunction: TraceOutput
 
+
 initial begin
     trfilename = $sformatf("%s%d.log",
             trace_file,
@@ -896,6 +898,7 @@ initial begin
         $warning("Cannot open log-file");
     end
 end
+
 
 always_comb
 begin: comb_proc
@@ -911,18 +914,6 @@ begin: comb_proc
     logic checked;
     logic entry_valid;
     logic [TRACE_TBL_ABITS-1:0] rcnt_inc;
-
-    wcnt = 0;
-    xcnt = 0;
-    rcnt = 0;
-    regcnt = 0;
-    memcnt = 0;
-    mskoff = '0;
-    mask = '0;
-    tr_wcnt_nxt = '0;
-    checked = 1'b0;
-    entry_valid = 1'b0;
-    rcnt_inc = '0;
 
     for (int i = 0; i < TRACE_TBL_SZ; i++) begin
         v.trace_tbl[i].exec_cnt = r.trace_tbl[i].exec_cnt;
@@ -951,6 +942,17 @@ begin: comb_proc
     v.tr_rcnt = r.tr_rcnt;
     v.tr_total = r.tr_total;
     v.tr_opened = r.tr_opened;
+    wcnt = 0;
+    xcnt = 0;
+    rcnt = 0;
+    regcnt = 0;
+    memcnt = 0;
+    mskoff = '0;
+    mask = '0;
+    tr_wcnt_nxt = '0;
+    checked = 1'b0;
+    entry_valid = 1'b0;
+    rcnt_inc = '0;
 
     wcnt = int'(r.tr_wcnt);
     rcnt = int'(r.tr_rcnt);
@@ -1056,7 +1058,7 @@ begin: comb_proc
     end
     v.tr_rcnt = rcnt_inc;
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         for (int i = 0; i < TRACE_TBL_SZ; i++) begin
             v.trace_tbl[i].exec_cnt = 64'd0;
             v.trace_tbl[i].pc = '0;
@@ -1116,10 +1118,17 @@ begin: comb_proc
 end: comb_proc
 
 
-generate
-    if (async_reset) begin: async_rst_gen
+always_ff @(posedge i_clk) begin: traceout_proc
+    if (outstr != "") begin
+        $fwrite(fl, "%s", outstr);
+    end
+    outstr = {""};
+end: traceout_proc
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+generate
+    if (async_reset) begin: async_r_en
+
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 for (int i = 0; i < TRACE_TBL_SZ; i++) begin
                     r.trace_tbl[i].exec_cnt <= 64'd0;
@@ -1177,17 +1186,12 @@ generate
                 r.tr_total <= rin.tr_total;
                 r.tr_opened <= rin.tr_opened;
             end
+        end
 
-            if (outstr != "") begin
-                $fwrite(fl, "%s", outstr);
-            end
-            outstr = {""};
-        end: rg_proc
+    end: async_r_en
+    else begin: async_r_dis
 
-    end: async_rst_gen
-    else begin: no_rst_gen
-
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             for (int i = 0; i < TRACE_TBL_SZ; i++) begin
                 r.trace_tbl[i].exec_cnt <= rin.trace_tbl[i].exec_cnt;
                 r.trace_tbl[i].pc <= rin.trace_tbl[i].pc;
@@ -1215,14 +1219,9 @@ generate
             r.tr_rcnt <= rin.tr_rcnt;
             r.tr_total <= rin.tr_total;
             r.tr_opened <= rin.tr_opened;
+        end
 
-            if (outstr != "") begin
-                $fwrite(fl, "%s", outstr);
-            end
-            outstr = {""};
-        end: rg_proc
-
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: Tracer

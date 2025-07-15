@@ -22,7 +22,6 @@ typedef struct {
     logic [CFG_REG_TAG_WIDTH-1:0] tag;
 } RegValueType;
 
-
 typedef struct {
     RegValueType arr[0: REGS_TOTAL - 1];
 } RegIntBank_registers;

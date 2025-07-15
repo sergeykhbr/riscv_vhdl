@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module BpBTB #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -36,7 +36,8 @@ import river_cfg_pkg::*;
 import bp_btb_pkg::*;
 
 logic [RISCV_ARCH-1:0] dbg_npc[0: CFG_BP_DEPTH - 1];
-BpBTB_registers r, rin;
+BpBTB_registers r;
+BpBTB_registers rin;
 
 
 always_comb
@@ -50,6 +51,11 @@ begin: comb_proc
     logic [CFG_BP_DEPTH-1:0] vb_bp_exec;
     logic v_dont_update;
 
+    for (int i = 0; i < CFG_BTB_SIZE; i++) begin
+        v.btb[i].pc = r.btb[i].pc;
+        v.btb[i].npc = r.btb[i].npc;
+        v.btb[i].exec = r.btb[i].exec;
+    end
     vb_addr = '0;
     vb_hit = '0;
     t_addr = '0;
@@ -57,12 +63,6 @@ begin: comb_proc
     vb_pc_nshift = '0;
     vb_bp_exec = '0;
     v_dont_update = 1'b0;
-
-    for (int i = 0; i < CFG_BTB_SIZE; i++) begin
-        v.btb[i].pc = r.btb[i].pc;
-        v.btb[i].npc = r.btb[i].npc;
-        v.btb[i].exec = r.btb[i].exec;
-    end
 
     vb_addr[(RISCV_ARCH - 1): 0] = i_bp_pc;
     vb_bp_exec[0] = i_e;
@@ -106,7 +106,7 @@ begin: comb_proc
         end
     end
 
-    if ((~async_reset && i_nrst == 1'b0) || i_flush_pipeline) begin
+    if (((~async_reset) && (i_nrst == 1'b0)) || i_flush_pipeline) begin
         for (int i = 0; i < CFG_BTB_SIZE; i++) begin
             v.btb[i].pc = '1;
             v.btb[i].npc = 64'd0;
@@ -127,11 +127,10 @@ begin: comb_proc
     end
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 for (int i = 0; i < CFG_BTB_SIZE; i++) begin
                     r.btb[i].pc <= '1;
@@ -145,20 +144,20 @@ generate
                     r.btb[i].exec <= rin.btb[i].exec;
                 end
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             for (int i = 0; i < CFG_BTB_SIZE; i++) begin
                 r.btb[i].pc <= rin.btb[i].pc;
                 r.btb[i].npc <= rin.btb[i].npc;
                 r.btb[i].exec <= rin.btb[i].exec;
             end
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: BpBTB

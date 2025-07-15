@@ -31,5 +31,4 @@ typedef struct {
 const L2Amba_registers L2Amba_r_reset = '{
     idle                                // state
 };
-
 endpackage: l2_amba_pkg

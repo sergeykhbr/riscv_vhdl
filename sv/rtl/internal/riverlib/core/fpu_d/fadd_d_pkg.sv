@@ -79,5 +79,4 @@ const DoubleAdd_registers DoubleAdd_r_reset = '{
     '0,                                 // expPostScaleInv
     '0                                  // mantPostScale
 };
-
 endpackage: fadd_d_pkg

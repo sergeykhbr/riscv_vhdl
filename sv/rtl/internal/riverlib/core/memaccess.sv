@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module MemAccess #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -75,12 +75,13 @@ logic [QUEUE_WIDTH-1:0] queue_data_i;
 logic [QUEUE_WIDTH-1:0] queue_data_o;
 logic queue_nempty;
 logic queue_full;
-MemAccess_registers r, rin;
+MemAccess_registers r;
+MemAccess_registers rin;
 
 Queue #(
-    .async_reset(async_reset),
     .abits(CFG_MEMACCESS_QUEUE_DEPTH),
-    .dbits(QUEUE_WIDTH)
+    .dbits(QUEUE_WIDTH),
+    .async_reset(async_reset)
 ) queue0 (
     .i_clk(i_clk),
     .i_nrst(i_nrst),
@@ -129,6 +130,7 @@ begin: comb_proc
     logic v_idle;
     logic t_memop_debug;
 
+    v = r;
     vb_req_addr = '0;
     vb_memop_wdata = '0;
     vb_memop_wstrb = '0;
@@ -162,8 +164,6 @@ begin: comb_proc
     v_valid = 1'b0;
     v_idle = 1'b0;
     t_memop_debug = 1'b0;
-
-    v = r;
 
     v.valid = 1'b0;                                         // valid on next clock
 
@@ -500,7 +500,7 @@ begin: comb_proc
         v_idle = 1'b1;
     end
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = MemAccess_r_reset;
     end
 
@@ -529,26 +529,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= MemAccess_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: MemAccess

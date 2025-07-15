@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module InstrDecoder #(
-    parameter bit async_reset = 1'b0,
+    parameter logic async_reset = 1'b0,
     parameter bit fpu_ena = 1
 )
 (
@@ -60,7 +60,8 @@ import decoder_pkg::*;
 DecoderDataType wd[0: (FULL_DEC_DEPTH + DEC_BLOCK) - 1];
 logic [RISCV_ARCH-1:0] wb_f_pc[0: DEC_NUM - 1];
 logic [31:0] wb_f_instr[0: DEC_NUM - 1];
-InstrDecoder_registers r, rin;
+InstrDecoder_registers r;
+InstrDecoder_registers rin;
 
 for (genvar i = 0; i < DEC_NUM; i++) begin: rvx
     DecoderRv #(
@@ -143,9 +144,6 @@ begin: comb_proc
     int selidx;
     logic shift_ena;
 
-    selidx = 0;
-    shift_ena = 1'b0;
-
     for (int i = 0; i < FULL_DEC_DEPTH; i++) begin
         v.d[i].pc = r.d[i].pc;
         v.d[i].isa_type = r.d[i].isa_type;
@@ -170,6 +168,8 @@ begin: comb_proc
         v.d[i].imm = r.d[i].imm;
         v.d[i].progbuf_ena = r.d[i].progbuf_ena;
     end
+    selidx = 0;
+    shift_ena = 1'b0;
 
     for (int i = 0; i < FULL_DEC_DEPTH; i++) begin
         wd[(DEC_BLOCK + i)] = r.d[i];
@@ -206,7 +206,7 @@ begin: comb_proc
         wb_f_instr[i] = i_f_instr[(16 * i) +: 32];
     end
 
-    if ((~async_reset && i_nrst == 1'b0) || (i_flush_pipeline == 1'b1)) begin
+    if (((~async_reset) && (i_nrst == 1'b0)) || (i_flush_pipeline == 1'b1)) begin
         for (int i = 0; i < FULL_DEC_DEPTH; i++) begin
             v.d[i].pc = '1;
             v.d[i].isa_type = 6'd0;
@@ -282,11 +282,10 @@ begin: comb_proc
     end
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 for (int i = 0; i < FULL_DEC_DEPTH; i++) begin
                     r.d[i].pc <= '1;
@@ -338,12 +337,12 @@ generate
                     r.d[i].progbuf_ena <= rin.d[i].progbuf_ena;
                 end
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             for (int i = 0; i < FULL_DEC_DEPTH; i++) begin
                 r.d[i].pc <= rin.d[i].pc;
                 r.d[i].isa_type <= rin.d[i].isa_type;
@@ -368,9 +367,9 @@ generate
                 r.d[i].imm <= rin.d[i].imm;
                 r.d[i].progbuf_ena <= rin.d[i].progbuf_ena;
             end
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: InstrDecoder

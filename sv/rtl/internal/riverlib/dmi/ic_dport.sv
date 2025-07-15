@@ -17,7 +17,7 @@
 `timescale 1ns/10ps
 
 module ic_dport #(
-    parameter bit async_reset = 1'b0
+    parameter logic async_reset = 1'b0
 )
 (
     input logic i_clk,                                      // CPU clock
@@ -47,7 +47,8 @@ import river_cfg_pkg::*;
 import types_river_pkg::*;
 import ic_dport_pkg::*;
 
-ic_dport_registers r, rin;
+ic_dport_registers r;
+ic_dport_registers rin;
 
 
 always_comb
@@ -67,6 +68,7 @@ begin: comb_proc
     dport_out_type vb_dporto[0: CFG_CPU_MAX-1];
     logic v_req_accepted;
 
+    v = r;
     vb_hartsel = '0;
     vb_cpu_mask = '0;
     vb_req_ready_mask = '0;
@@ -84,8 +86,6 @@ begin: comb_proc
         vb_dporto[i] = dport_out_none;
     end
     v_req_accepted = 1'b0;
-
-    v = r;
 
     vb_cpu_mask[int'(i_hartsel)] = 1'b1;
     if (i_haltreq == 1'b1) begin
@@ -128,7 +128,7 @@ begin: comb_proc
         vb_hartsel = i_hartsel;
     end
 
-    if (~async_reset && i_nrst == 1'b0) begin
+    if ((~async_reset) && (i_nrst == 1'b0)) begin
         v = ic_dport_r_reset;
     end
 
@@ -144,26 +144,25 @@ begin: comb_proc
     rin = v;
 end: comb_proc
 
-
 generate
-    if (async_reset) begin: async_rst_gen
+    if (async_reset) begin: async_r_en
 
-        always_ff @(posedge i_clk, negedge i_nrst) begin: rg_proc
+        always_ff @(posedge i_clk, negedge i_nrst) begin
             if (i_nrst == 1'b0) begin
                 r <= ic_dport_r_reset;
             end else begin
                 r <= rin;
             end
-        end: rg_proc
+        end
 
-    end: async_rst_gen
-    else begin: no_rst_gen
+    end: async_r_en
+    else begin: async_r_dis
 
-        always_ff @(posedge i_clk) begin: rg_proc
+        always_ff @(posedge i_clk) begin
             r <= rin;
-        end: rg_proc
+        end
 
-    end: no_rst_gen
+    end: async_r_dis
 endgenerate
 
 endmodule: ic_dport
