@@ -40,7 +40,7 @@
 #include "bus_slv.h"
 #include "internal/ambalib/types_amba.h"
 #include "internal/riverlib/workgroup.h"
-#include "../prj/impl/asic/asic_top.h"
+#include "../prj/impl/asic_gencpu64/asic_gencpu64_top.h"
 #include "../prj/common/vips/uart/vip_uart_top.h"
 #include "../prj/common/vips/sdcard/vip_sdcard_top.h"
 #include <systemc.h>
@@ -171,7 +171,7 @@ class CpuRiscV_RTL : public IService,
     TapBitBang *tapbb_;
     BusSlave *dmislv_;
     Workgroup *group0_;
-    asic_top *asic0_;
+    asic_gencpu64_top *asic0_;
     vip_uart_top *uart0_;
     vip_sdcard_top *sdcard0_;
 };

@@ -211,10 +211,12 @@ void CpuRiscV_RTL::createSystemC() {
     uart0_ = 0;
     sdcard0_ = 0;
 #else
+    bool SIM_ASYNC_RESET = false;
     int SIM_UART_SPEED_UP_RATE = 3;
     int uart_scaler = 8;   // expected uart bit edge in a range 8..16 of scaler counter
-    asic0_ = new asic_top("tt",
-                          SIM_UART_SPEED_UP_RATE);
+    asic0_ = new asic_gencpu64_top("tt",
+                                   SIM_ASYNC_RESET,
+                                   SIM_UART_SPEED_UP_RATE);
 
     asic0_->i_rst(w_rst);
     asic0_->i_sclk_p(wrapper_->o_clk);
