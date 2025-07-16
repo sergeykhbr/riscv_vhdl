@@ -45,7 +45,20 @@ jobs:
             - name: Install Linux packages for build
               run: |
                   sudo apt-get update
-                  sudo apt-get install -y ccache g++-12 libstdc++-12-dev libsystemc libsystemc-dev cmake
+                  sudo apt-get install -y ccache g++-12 libstdc++-12-dev cmake
+
+            - name: Download and build latest SystemC (3.0.1)
+              run: |
+                  SYSTEMC_VERSION=3.0.1
+                  wget https://github.com/accellera-official/systemc/archive/refs/tags/${SYSTEMC_VERSION}.tar.gz
+                  tar -xzf ${SYSTEMC_VERSION}.tar.gz
+                  cd systemc-${SYSTEMC_VERSION}
+                  mkdir -p objdir
+                  cd objdir
+                  export CXXFLAGS="-std=c++17"
+                  ../configure --prefix=$HOME/systemc --enable-pthreads
+                  make -j$(nproc)
+                  make install
 
             - name: Install Qt6
               uses: jurplel/install-qt-action@v3
@@ -59,6 +72,6 @@ jobs:
               run: /bin/bash .ci/build-project.sh
               env:
                 QT_PATH: ${{github.workspace}}/${{env.Qt6_DIR}}
-                SYSTEMC_SRC: /usr/include
-                SYSTEMC_LIB: /usr/lib/x86_64-linux-gnu
+                SYSTEMC_SRC: $HOME/systemc/include
+                SYSTEMC_LIB: $HOME/systemc/lib-linux64
 

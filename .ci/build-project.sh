@@ -27,6 +27,8 @@ echo "CXX: $CXX"
 echo "CXXFLAGS: $CXXFLAGS"
 echo "CMAKE_TOOLCHAIN_FILE: $TOOLCHAIN"
 echo "CCACHE_DIR: $CCACHE_DIR"
+echo "SYSTEMC_SRC: $SYSTEMC_SRC"
+echo "SYSTEMC_LIB: $SYSTEMC_LIB"
 echo "--------------------------"
 
 #if [ -n "$CCACHE_DIR" ]; then
