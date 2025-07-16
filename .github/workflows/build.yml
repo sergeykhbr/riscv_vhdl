@@ -53,12 +53,11 @@ jobs:
                   wget https://github.com/accellera-official/systemc/archive/refs/tags/${SYSTEMC_VERSION}.tar.gz
                   tar -xzf ${SYSTEMC_VERSION}.tar.gz
                   cd systemc-${SYSTEMC_VERSION}
-                  mkdir -p objdir
-                  cd objdir
-                  export CXXFLAGS="-std=c++17"
-                  ../configure --prefix=$HOME/systemc --enable-pthreads
-                  make -j$(nproc)
-                  make install
+                  mkdir -p build
+                  cd build
+                  cmake .. -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$HOME/systemc
+                  cmake --build . --parallel
+                  cmake --install .
 
             - name: Install Qt6
               uses: jurplel/install-qt-action@v3
