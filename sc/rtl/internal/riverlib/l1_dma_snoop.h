@@ -101,7 +101,6 @@ SC_MODULE(l1_dma_snoop) {
         sc_signal<sc_uint<SNOOP_REQ_TYPE_BITS>> req_snoop_type;
         sc_signal<sc_biguint<L1CACHE_LINE_BITS>> resp_snoop_data;
         sc_signal<bool> cache_access;
-        sc_signal<sc_uint<13>> watchdog;
     };
 
     void l1_dma_snoop_r_reset(l1_dma_snoop_registers& iv) {
@@ -122,7 +121,6 @@ SC_MODULE(l1_dma_snoop) {
         iv.req_snoop_type = 0;
         iv.resp_snoop_data = 0;
         iv.cache_access = 0;
-        iv.watchdog = 0;
     }
 
     sc_uint<4> reqtype2arsnoop(sc_uint<REQ_MEM_TYPE_BITS> reqtype);
@@ -202,7 +200,6 @@ l1_dma_snoop<abits>::l1_dma_snoop(sc_module_name name,
     sensitive << r.req_snoop_type;
     sensitive << r.resp_snoop_data;
     sensitive << r.cache_access;
-    sensitive << r.watchdog;
 
     SC_METHOD(registers);
     sensitive << i_nrst;
@@ -253,7 +250,6 @@ void l1_dma_snoop<abits>::generateVCD(sc_trace_file *i_vcd, sc_trace_file *o_vcd
         sc_trace(o_vcd, r.req_snoop_type, pn + ".r.req_snoop_type");
         sc_trace(o_vcd, r.resp_snoop_data, pn + ".r.resp_snoop_data");
         sc_trace(o_vcd, r.cache_access, pn + ".r.cache_access");
-        sc_trace(o_vcd, r.watchdog, pn + ".r.watchdog");
     }
 
 }
@@ -370,16 +366,16 @@ void l1_dma_snoop<abits>::comb() {
         vmsto.ar_bits.size = r.req_size.read();
         vmsto.ar_bits.prot = r.req_prot.read();
         vmsto.ar_snoop = r.req_ar_snoop.read();
-        if ((i_msti.read().ar_ready == 1) || r.watchdog.read()[12]) {
+        if (i_msti.read().ar_ready == 1) {
             v.state = state_r;
         }
         break;
     case state_r:
         vmsto.r_ready = 1;
-        v_mem_er_load_fault = (i_msti.read().r_resp[1] | r.watchdog.read()[12]);
+        v_mem_er_load_fault = i_msti.read().r_resp[1];
         v_resp_mem_valid = i_msti.read().r_valid;
         // r_valid and r_last always should be in the same time
-        if (((i_msti.read().r_valid == 1) && (i_msti.read().r_last == 1)) || r.watchdog.read()[12]) {
+        if ((i_msti.read().r_valid == 1) && (i_msti.read().r_last == 1)) {
             v.state = state_idle;
         }
         break;
@@ -395,7 +391,7 @@ void l1_dma_snoop<abits>::comb() {
         vmsto.w_last = 1;
         vmsto.w_data = r.req_wdata.read();
         vmsto.w_strb = r.req_wstrb.read();
-        if ((i_msti.read().aw_ready == 1) || r.watchdog.read()[12]) {
+        if (i_msti.read().aw_ready == 1) {
             if (i_msti.read().w_ready == 1) {
                 v.state = state_b;
             } else {
@@ -409,26 +405,20 @@ void l1_dma_snoop<abits>::comb() {
         vmsto.w_last = 1;
         vmsto.w_data = r.req_wdata.read();
         vmsto.w_strb = r.req_wstrb.read();
-        if ((i_msti.read().w_ready == 1) || (r.watchdog.read()[12] == 1)) {
+        if (i_msti.read().w_ready == 1) {
             v.state = state_b;
         }
         break;
     case state_b:
         vmsto.b_ready = 1;
         v_resp_mem_valid = i_msti.read().b_valid;
-        v_mem_er_store_fault = (i_msti.read().b_resp[1] | r.watchdog.read()[12]);
-        if ((i_msti.read().b_valid == 1) || r.watchdog.read()[12]) {
+        v_mem_er_store_fault = i_msti.read().b_resp[1];
+        if (i_msti.read().b_valid == 1) {
             v.state = state_idle;
         }
         break;
     default:
         break;
-    }
-
-    if (r.state.read() == state_idle) {
-        v.watchdog = 0;
-    } else {
-        v.watchdog = (r.watchdog.read() + 1);
     }
 
     // Snoop processing:

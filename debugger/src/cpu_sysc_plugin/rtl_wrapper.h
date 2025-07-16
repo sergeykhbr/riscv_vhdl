@@ -23,9 +23,9 @@
 #include "coreservices/ireset.h"
 #include "coreservices/iclock.h"
 #include "coreservices/icpuriscv.h"
-#include "ambalib/types_amba.h"
-#include "riverlib/river_cfg.h"
-#include "riverlib/types_river.h"
+#include "internal/ambalib/types_amba.h"
+#include "internal/riverlib/river_cfg.h"
+#include "internal/riverlib/types_river.h"
 #include <systemc.h>
 
 namespace debugger {

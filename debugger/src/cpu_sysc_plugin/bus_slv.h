@@ -19,7 +19,7 @@
 #include "api_core.h"
 #include "coreservices/imemop.h"
 #include <systemc.h>
-#include "ambalib/types_amba.h"
+#include "internal/ambalib/types_amba.h"
 
 namespace debugger {
 
