@@ -226,10 +226,10 @@ begin: comb_proc
             end
         end
 
-        vrdata[35: 32] = r.src_priority[((8 * wb_req_addr[11: 3]) + 32) +: 4];
+        vrdata[35: 32] = r.src_priority[((8 * wb_req_addr[11: 3]) + 4) +: 4];
         if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
             if ((|wb_req_wstrb[7: 4]) == 1'b1) begin
-                vb_src_priority[((8 * wb_req_addr[11: 3]) + 32) +: 4] = wb_req_wdata[35: 32];
+                vb_src_priority[((8 * wb_req_addr[11: 3]) + 4) +: 4] = wb_req_wdata[35: 32];
             end
         end
     end else if (wb_req_addr[21: 12] == 10'd1) begin

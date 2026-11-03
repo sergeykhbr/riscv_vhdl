@@ -346,10 +346,10 @@ void plic<ctxmax, irqmax>::comb() {
             }
         }
 
-        vrdata(35, 32) = r.src_priority.read()(((8 * wb_req_addr.read()(11, 3)) + 32) + 4 - 1, ((8 * wb_req_addr.read()(11, 3)) + 32)).to_uint64();
+        vrdata(35, 32) = r.src_priority.read()(((8 * wb_req_addr.read()(11, 3)) + 4) + 4 - 1, ((8 * wb_req_addr.read()(11, 3)) + 4)).to_uint64();
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             if (wb_req_wstrb.read()(7, 4).or_reduce() == 1) {
-                vb_src_priority(((8 * wb_req_addr.read()(11, 3)) + 32) + 4 - 1, ((8 * wb_req_addr.read()(11, 3)) + 32)) = wb_req_wdata.read()(35, 32);
+                vb_src_priority(((8 * wb_req_addr.read()(11, 3)) + 4) + 4 - 1, ((8 * wb_req_addr.read()(11, 3)) + 4)) = wb_req_wdata.read()(35, 32);
             }
         }
     } else if (wb_req_addr.read()(21, 12) == 1) {
