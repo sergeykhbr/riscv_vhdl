@@ -119,14 +119,14 @@ begin: comb_proc
 
     case (wb_req_addr[15: 14])
     2'd0: begin
-        vrdata[0] = r.hart[regidx].msip;
-        vrdata[32] = r.hart[(regidx + 1)].msip;
+        vrdata[0] = r.hart[(2 * regidx)].msip;
+        vrdata[32] = r.hart[((2 * regidx) + 1)].msip;
         if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
             if ((|wb_req_wstrb[3: 0]) == 1'b1) begin
-                v.hart[regidx].msip = wb_req_wdata[0];
+                v.hart[(2 * regidx)].msip = wb_req_wdata[0];
             end
             if ((|wb_req_wstrb[7: 4]) == 1'b1) begin
-                v.hart[(regidx + 1)].msip = wb_req_wdata[32];
+                v.hart[((2 * regidx) + 1)].msip = wb_req_wdata[32];
             end
         end
     end

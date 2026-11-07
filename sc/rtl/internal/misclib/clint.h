@@ -222,14 +222,14 @@ void clint<cpu_total>::comb() {
 
     switch (wb_req_addr.read()(15, 14)) {
     case 0:
-        vrdata[0] = r.hart[regidx].msip.read();
-        vrdata[32] = r.hart[(regidx + 1)].msip.read();
+        vrdata[0] = r.hart[(2 * regidx)].msip.read();
+        vrdata[32] = r.hart[((2 * regidx) + 1)].msip.read();
         if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {
             if (wb_req_wstrb.read()(3, 0).or_reduce() == 1) {
-                v.hart[regidx].msip = wb_req_wdata.read()[0];
+                v.hart[(2 * regidx)].msip = wb_req_wdata.read()[0];
             }
             if (wb_req_wstrb.read()(7, 4).or_reduce() == 1) {
-                v.hart[(regidx + 1)].msip = wb_req_wdata.read()[32];
+                v.hart[((2 * regidx) + 1)].msip = wb_req_wdata.read()[32];
             }
         }
         break;
