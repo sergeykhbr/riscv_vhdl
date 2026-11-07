@@ -383,7 +383,9 @@ void plic<ctxmax, irqmax>::comb() {
             vrdata(3, 0) = r.ctx[rctx_idx].priority_th.read();
             vrdata(41, 32) = r.ctx[rctx_idx].irq_idx.read();
             // claim/ complete. Reading clears pending bit
-            if (r.ip.read()[rctx_idx] == 1) {
+            if ((r.ip.read()[rctx_idx] == 1)
+                    && (w_req_valid.read() == 1)
+                    && (w_req_write.read() == 0)) {
                 vb_pending[r.ctx[rctx_idx].irq_idx.read()] = 0;
             }
             if ((w_req_valid.read() == 1) && (w_req_write.read() == 1)) {

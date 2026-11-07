@@ -263,7 +263,9 @@ begin: comb_proc
             vrdata[3: 0] = r.ctx[rctx_idx].priority_th;
             vrdata[41: 32] = r.ctx[rctx_idx].irq_idx;
             // claim/ complete. Reading clears pending bit
-            if (r.ip[rctx_idx] == 1'b1) begin
+            if ((r.ip[rctx_idx] == 1'b1)
+                    && (w_req_valid == 1'b1)
+                    && (w_req_write == 1'b0)) begin
                 vb_pending[r.ctx[rctx_idx].irq_idx] = 1'b0;
             end
             if ((w_req_valid == 1'b1) && (w_req_write == 1'b1)) begin
