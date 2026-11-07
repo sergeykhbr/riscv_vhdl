@@ -92,7 +92,7 @@ assign o_wready = (~w_wgray_full);
 assign o_rvalid = (~w_rgray_empty);
 
 
-always_ff @(posedge i_wclk, negedge i_nrst) begin: proc_wff_proc
+always_ff @(posedge i_rclk, negedge i_nrst) begin: proc_wff_proc
     if (i_nrst == 1'b0) begin
         q1_wgray <= '0;
         q2_wgray <= '0;
@@ -103,7 +103,7 @@ always_ff @(posedge i_wclk, negedge i_nrst) begin: proc_wff_proc
 end: proc_wff_proc
 
 
-always_ff @(posedge i_rclk, negedge i_nrst) begin: proc_rff_proc
+always_ff @(posedge i_wclk, negedge i_nrst) begin: proc_rff_proc
     if (i_nrst == 1'b0) begin
         q1_rgray <= '0;
         q2_rgray <= '0;

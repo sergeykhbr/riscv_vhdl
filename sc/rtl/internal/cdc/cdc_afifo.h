@@ -136,11 +136,11 @@ cdc_afifo<abits, dbits>::cdc_afifo(sc_module_name name)
 
     SC_METHOD(proc_wff);
     sensitive << i_nrst;
-    sensitive << i_wclk.pos();
+    sensitive << i_rclk.pos();
 
     SC_METHOD(proc_rff);
     sensitive << i_nrst;
-    sensitive << i_rclk.pos();
+    sensitive << i_wclk.pos();
 }
 
 template<int abits, int dbits>
